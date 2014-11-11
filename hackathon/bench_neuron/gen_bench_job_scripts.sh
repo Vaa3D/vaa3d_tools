@@ -27,11 +27,12 @@ function write_vaa3d_job_config {
   echo "#" >> $outputScript;
 
   echo "## Check which queue you may use" >> $outputScript;
-  echo "#PBS -q dque" >> $outputScript;
+#  echo "#PBS -q dque" >> $outputScript;
+  echo "#PBS -q mindscope@qmaster" >> $outputScript;
   echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
   echo "#PBS -l vmem=16g" >> $outputScript;
-  echo "# Allow up to 5hr of walltime.  Default is 12 hours" >> $outputScript;
-  echo "#PBS -l walltime=00:5:00" >> $outputScript;
+  echo "# Allow up to 10min of walltime.  Default is 12 hours" >> $outputScript;
+  echo "#PBS -l walltime=00:10:00" >> $outputScript;
   echo "# Request just one core on the host" >> $outputScript;
   echo "#PBS -l ncpus=1" >> $outputScript;
   echo "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files" >> $outputScript;
