@@ -121,7 +121,6 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &p,bool
 
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile,QString &region_name,
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th);
-QString getAppPath();
 NeuronTree eliminate(NeuronTree input, double length);
  
 QStringList neuronassembler::menulist() const
@@ -218,22 +217,140 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 
 bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
 	if (func_name == tr("trace_tc"))
 	{
-		v3d_msg("To be implemented.");
+        NA_PARA P;
+        bool bmenu = false;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+        P.tcfilename  = paras.empty() ? "" : paras[k]; k++;
+
+
+        if(infiles.empty())
+        {
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+            int soma_x = file_inmarkers[0].x;
+            int soma_y = file_inmarkers[0].y;
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.tcfilename.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            QString curFilePath = QFileInfo( P.tcfilename).path();
+            curFilePath.append("/");
+            for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+            {
+                if(soma_x > vim.lut[ii].start_pos[0] && soma_y > vim.lut[ii].start_pos[1] && soma_x < vim.lut[ii].end_pos[0] && soma_y < vim.lut[ii].end_pos[1])
+                {
+                    P.inimg_file = curFilePath + QString(vim.lut[ii].fn_img.c_str());
+                    v3d_msg(P.inimg_file,0);
+                    inmarker_file =  P.inimg_file + ".marker";
+                    break;
+                }
+
+            }
+        }
+        else
+        {
+
+            P.inimg_file = infiles[0];
+        }
+
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+        P.root_1st[0] = file_inmarkers[0].x;
+        P.root_1st[1] = file_inmarkers[0].y;
+        P.root_1st[2] = file_inmarkers[0].z;
+
+        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
+        P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
+        assembler_tc(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("trace_raw"))
 	{
-		v3d_msg("To be implemented.");
+        NA_PARA P;
+        bool bmenu = false;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+        else
+        {
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+            P.root_1st[0] = file_inmarkers[0].x;
+            P.root_1st[1] = file_inmarkers[0].y;
+            P.root_1st[2] = file_inmarkers[0].z;
+        }
+
+        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+
+        assembler_raw(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printf("\n**** Usage of Neuron Assembler ****\n");
+        printf("vaa3d -x plugin_name -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+        printf("tc_file          Please specify the path of the tc file\n");
+
+        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+        printf("block size       Default 1024\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+
+        printf("vaa3d -x plugin_name -f trace_raw -i <inimg_file> -p <inmarker_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+
+        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+        printf("block size       Default 1024\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
+
 	}
 	else return false;
 
@@ -603,6 +720,11 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
     }
 
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
+
+    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+    return true;
+
 }
 
 bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool bmenu)
@@ -942,6 +1064,13 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
     }
 
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
+
+    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+
+    return true;
+
 }
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile, QString &region_name,
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th)
@@ -1180,27 +1309,4 @@ NeuronTree eliminate(NeuronTree input, double length)
         result.hashNeuron.insert(result.listNeuron[i].n, i);
     }
     return result;
-}
-
-QString getAppPath()
-{
-    QString v3dAppPath("~/Work/v3d_external/v3d");
-    QDir testPluginsDir = QDir(qApp->applicationDirPath());
-
-#if defined(Q_OS_WIN)
-    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
-        testPluginsDir.cdUp();
-#elif defined(Q_OS_MAC)
-    if (testPluginsDir.dirName() == "MacOS") {
-        QDir testUpperPluginsDir = testPluginsDir;
-        testUpperPluginsDir.cdUp();
-        testUpperPluginsDir.cdUp();
-        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
-        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
-        testPluginsDir.cdUp();
-    }
-#endif
-
-    v3dAppPath = testPluginsDir.absolutePath();
-    return v3dAppPath;
 }
