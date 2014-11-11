@@ -10,6 +10,9 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 #include "stackutil.h"
+#include "../APP2_large_scale/readRawfile_func.h"
+#include <boost/lexical_cast.hpp>
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
@@ -113,6 +116,8 @@ int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG,
 
 
 bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &p,bool bmenu);
+bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &p,bool bmenu);
+
 
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile,QString &region_name,
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th);
@@ -170,7 +175,39 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
 	else if (menu_name == tr("trace_raw"))
 	{
-		v3d_msg("To be implemented.");
+        NA_PARA P;
+        bool bmenu = true;
+
+        NeuronAssemblerDialog_raw dialog(callback, parent);
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
+        if(dialog.rawfilename.isEmpty())
+        {
+            v3d_msg("Please select the image file.");
+            return;
+        }
+
+        if(dialog.markerfilename.isEmpty())
+        {
+            v3d_msg("Please select the marker file.");
+            return;
+        }
+
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
+
+        P.bkg_thresh = dialog.bkg_thresh;
+        P.channel = dialog.channel;
+        P.block_size = dialog.block_size;
+        P.tracing_method = dialog.tracing_method;
+        P.inimg_file = dialog.rawfilename;
+
+        P.root_1st[0] = file_inmarkers[0].x;
+        P.root_1st[1] = file_inmarkers[0].y;
+        P.root_1st[2] = file_inmarkers[0].z;
+        assembler_raw(callback,parent,P,bmenu);
 	}
 	else
 	{
@@ -315,29 +352,67 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             continue;
         }
 
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
 
-        #if  defined(Q_OS_LINUX)
-            QString cmd_method;
-            switch(P.tracing_method){
-            case 0: cmd_method = QString("%1/vaa3d -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
-            case 1: cmd_method = QString("%1/vaa3d -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-            case 2: cmd_method = QString("%1/vaa3d -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-             }
-            system(qPrintable(cmd_method));
+        QString full_plugin_name;
+        QString func_name;
+
+        arg.type = "random";std::vector<char*> arg_input;
+        std:: string fileName_Qstring(walker->tilename.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input.push_back(fileName_string);
+        arg.p = (void *) & arg_input; input<< arg;
+        char channel = '0' + P.channel;
+        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
+        char* Th =  new char[T_background.length() + 1];
+        strcpy(Th, T_background.c_str());
+
+        arg.type = "random";
+        std::vector<char*> arg_para;
+
+        switch(P.tracing_method){
+        case 0: arg_para.push_back(&channel);arg_para.push_back(Th);arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
+        case 1: arg_para.push_back(&channel);arg_para.push_back("1");arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "neuTube"; func_name = "neutube_trace";break;
+        case 2: arg_para.push_back(&channel);arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "snake"; func_name = "snake_trace";break;
+        }
+       // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        {
+
+             printf("Can not find the tracing plugin!\n");
+             return false;
+        }
 
 
-        #elif defined(Q_OS_MAC)
-            QString cmd_method;
-            switch(P.tracing_method){
-            case 0: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
-            case 1: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-            case 2: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-             }
-            system(qPrintable(cmd_method));
-        #else
-                 v3d_msg("The OS is not Linux or Mac. Do nothing.",bmenu);
-                 return false;
-        #endif
+
+
+//        #if  defined(Q_OS_LINUX)
+//            QString cmd_method;
+//            switch(P.tracing_method){
+//            case 0: cmd_method = QString("%1/vaa3d -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
+//            case 1: cmd_method = QString("%1/vaa3d -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
+//            case 2: cmd_method = QString("%1/vaa3d -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
+//             }
+//            system(qPrintable(cmd_method));
+
+
+//        #elif defined(Q_OS_MAC)
+//            QString cmd_method;
+//            switch(P.tracing_method){
+//            case 0: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
+//            case 1: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
+//            case 2: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
+//             }
+//            system(qPrintable(cmd_method));
+//        #else
+//                 v3d_msg("The OS is not Linux or Mac. Do nothing.",bmenu);
+//                 return false;
+//        #endif
 
         QString swcfilename;
         switch(P.tracing_method){
@@ -530,6 +605,344 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
 }
 
+bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool bmenu)
+{
+    QString fileOpenName = P.inimg_file;
+
+    unsigned char * datald = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+
+    int datatype;
+    if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+    {
+        return false;
+    }
+
+    if(datald) {delete []datald; datald = 0;}
+
+    V3DLONG start[3], end[3];
+
+    start[0] = P.root_1st[0] - int(P.block_size/2);
+    start[1] = P.root_1st[1] - int(P.block_size/2);
+    start[2] = 0;
+
+    end[0] = start[0] + P.block_size - 1;
+    end[1] = start[1] + P.block_size - 1;
+    end[2] = in_zz[2] - 1;
+
+
+    struct root_node *head = new root_node[1];
+    struct root_node *walker;
+
+    QString startingpos="", tmps;
+    tmps.setNum(start[0]).prepend("x"); startingpos += tmps;
+    tmps.setNum(start[1]).prepend("_y"); startingpos += tmps;
+    QString region_name = startingpos + ".raw";
+
+    head->root_x = int(P.block_size/2);
+    head->root_y = int(P.block_size/2);
+    head->root_z = P.root_1st[2] ;
+
+    head->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+    head->ref_index = -1;
+
+    head->start[0] = start[0];
+    head->start[1] = start[1];
+    head->start[2] = start[2];
+    head->end[0] = end[0];
+    head->end[1] = end[1];
+    head->end[2] = end[2];
+
+    head->parent = -1;
+    head->direction = 0;
+    head->next = NULL;
+    walker = head;
+
+    QString rootposstr="", tmps2;
+    tmps2.setNum(int(P.root_1st[0]+0.5)).prepend("_x"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
+
+    QString finalswcfilename;
+
+    switch(P.tracing_method){
+    case 0: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc"; break;
+    case 1: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc"; break;
+    case 2: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
+
+    }
+
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(tmpfolder.isEmpty())
+    {
+
+        printf("Can not create a tmp folder!\n");
+        return false;
+    }
+
+
+    int swc_type = 2;
+    while(walker != NULL)
+    {
+
+        ifstream ifs_image(walker->tilename.toStdString().c_str());
+        if(!ifs_image)
+        {
+            unsigned char * datald = 0;
+            V3DLONG *in_zz = 0;
+            V3DLONG *in_sz = 0;
+
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,walker->start[0],walker->start[1],walker->start[2],walker->end[0]+1,walker->end[1]+1,walker->end[2]+1))
+            {
+                printf("can not load the region");
+                if(datald) {delete []datald; datald = 0;}
+                return false;
+            }
+            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
+            {
+                if(datald[i] < P.bkg_thresh)
+                    datald[i] = 0;
+
+            }
+            simple_saveimage_wrapper(callback, walker->tilename.toStdString().c_str(),  (unsigned char *)datald, in_sz, V3D_UINT8);
+            if(datald) {delete []datald; datald = 0;}
+        }
+        else
+        {
+            walker = walker->next;
+            continue;
+        }
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
+
+        QString full_plugin_name;
+        QString func_name;
+
+        arg.type = "random";std::vector<char*> arg_input;
+        std:: string fileName_Qstring(walker->tilename.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input.push_back(fileName_string);
+        arg.p = (void *) & arg_input; input<< arg;
+        char channel = '0' + P.channel;
+        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
+        char* Th =  new char[T_background.length() + 1];
+        strcpy(Th, T_background.c_str());
+
+        arg.type = "random";
+        std::vector<char*> arg_para;
+
+        switch(P.tracing_method){
+        case 0: arg_para.push_back(&channel);arg_para.push_back(Th);arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
+        case 1: arg_para.push_back(&channel);arg_para.push_back("1");arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "neuTube"; func_name = "neutube_trace";break;
+        case 2: arg_para.push_back(&channel);arg.p = (void *) & arg_para; input << arg;
+                full_plugin_name = "snake"; func_name = "snake_trace";break;
+        }
+       // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        {
+
+             printf("Can not find the tracing plugin!\n");
+             return false;
+        }
+
+
+        QString swcfilename;
+        switch(P.tracing_method){
+        case 0: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
+        case 1: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
+        case 2: swcfilename =  walker->tilename + QString("_snake.swc"); break;
+
+        }
+
+        ifstream ifs_swc(swcfilename.toStdString().c_str());
+        if(!ifs_swc)
+        {
+            walker = walker->next;
+            continue;
+        }
+
+        NeuronTree nt = readSWC_file(swcfilename);
+        if(nt.listNeuron.empty())
+        {
+            remove(swcfilename.toStdString().c_str());
+            walker = walker->next;
+
+            continue;
+        }
+
+
+        NeuronTree nt_pruned = eliminate(nt,3.0);
+
+        struct root_node *walker_inside;
+        struct root_node *newNode;
+        walker_inside = head;
+        while(walker_inside->next != NULL)
+        {
+             walker_inside = walker_inside->next;
+        }
+
+
+        bool left = 0, right = 0,up = 0,down = 0;
+        for(V3DLONG i = 0; i < nt_pruned.listNeuron.size(); i++)
+        {
+            NeuronSWC curr = nt_pruned.listNeuron.at(i);
+            newNode =  new root_node[1];
+            if(curr.x < 0.05* P.block_size && left == 0 && walker->direction !=2)
+            {
+
+                newNode->start[0] = walker->start[0] - P.block_size;
+                newNode->start[1] = walker->start[1];
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = newNode->start[0] + P.block_size - 1;;
+                newNode->end[1] = walker->end[1];
+                newNode->end[2] = walker->end[2];
+
+                if( newNode->start[0] < 0)  newNode->start[0] = 0;
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->direction = 2;
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+
+                left = 1;
+            }
+            else if(curr.x > 0.95 * P.block_size && right == 0 && walker->direction !=1)
+            {
+                newNode->start[0] = walker->start[0] + P.block_size;
+                newNode->start[1] = walker->start[1];
+                newNode->start[2] = walker->start[2];
+
+                newNode->end[0] = newNode->start[0] + P.block_size - 1;
+                newNode->end[1] = walker->end[1];
+                newNode->end[2] = walker->end[2];
+
+                if( newNode->end[0] > in_zz[0] - 1)  newNode->end[0] = in_zz[0] - 1;
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->direction = 1;
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+                right = 1;
+
+
+            }
+            else if(curr.y < 0.05* P.block_size && up == 0 && walker->direction !=4)
+            {
+                newNode->start[0] = walker->start[0];
+                newNode->start[1] = walker->start[1] - P.block_size;
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = walker->end[0];
+                newNode->end[1] = newNode->start[1]+ P.block_size - 1;
+                newNode->end[2] = walker->end[2];
+
+                if(newNode->start[1] < 0) newNode->start[1] = 0;
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->direction = 4;
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+                up = 1;
+
+            }
+            else if(curr.y > 0.95 * P.block_size && down == 0 && walker->direction !=3)
+            {
+                newNode->start[0] = walker->start[0];
+                newNode->start[1] = walker->start[1]  + P.block_size;
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = walker->end[0];
+                newNode->end[1] = newNode->start[1] + P.block_size - 1;
+                newNode->end[2] = walker->end[2];
+
+                if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->direction = 3;
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+                down = 1;
+            }
+
+        }
+
+        vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
+
+        ifstream ifs(finalswcfilename.toStdString().c_str());
+        if(walker->ref_index == -1)
+        {
+            if(ifs)
+               remove(finalswcfilename.toStdString().c_str());
+            for(int j = 0; j < temp_out_swc.size(); j++)
+            {
+                temp_out_swc[j]->x = temp_out_swc[j]->x + walker->start[0];
+                temp_out_swc[j]->y = temp_out_swc[j]->y + walker->start[1];
+                temp_out_swc[j]->z = temp_out_swc[j]->z + walker->start[2];
+                temp_out_swc[j]->type = swc_type;
+            }
+
+           saveSWC_file(finalswcfilename.toStdString(), temp_out_swc);
+        }
+        else
+        {
+            vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
+            vector<MyMarker*> final_out_swc_updated =  final_out_swc;
+           // temp_out_swc[0]->parent = final_out_swc[walker->parent];
+
+            for(int j = 0; j < temp_out_swc.size(); j++)
+            {
+                temp_out_swc[j]->x = temp_out_swc[j]->x + walker->start[0];
+                temp_out_swc[j]->y = temp_out_swc[j]->y + walker->start[1];
+                temp_out_swc[j]->z = temp_out_swc[j]->z + walker->start[2];
+                temp_out_swc[j]->type = swc_type;
+                final_out_swc_updated.push_back(temp_out_swc[j]);
+            }
+           saveSWC_file(finalswcfilename.toStdString(), final_out_swc_updated);
+
+        }
+
+        swc_type++;
+        walker = walker->next;
+
+    }
+
+}
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile, QString &region_name,
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th)
 {
