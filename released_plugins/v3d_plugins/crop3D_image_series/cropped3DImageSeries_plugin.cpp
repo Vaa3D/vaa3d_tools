@@ -217,7 +217,7 @@ void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &
 
         unsigned char * cropped_image = 0;
 
-        if (!loadRawRegion(const_cast<char *>(m_InputfolderName.toStdString().c_str()), cropped_image, in_zz, in_sz,datatype,dialog.xs,dialog.ys,dialog.zs,dialog.xe,dialog.ye,dialog.ze))
+        if (!loadRawRegion(const_cast<char *>(m_InputfolderName.toStdString().c_str()), cropped_image, in_zz, in_sz,datatype,dialog.xs,dialog.ys,dialog.zs,dialog.xe+1,dialog.ye+1,dialog.ze+1))
         {
             return;
         }
@@ -415,6 +415,90 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
         if(im_cropped) {delete []im_cropped; im_cropped = 0;}
         return true;
     }
+    else if (func_name == "crop3d_raw")
+    {
+        cout<<"Welcome to crop3DImageSeries plugin"<<endl;
+        if (output.size() != 1) return false;
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        long xs, ys, zs, xe, ye, ze;
+        int c;
+        if (input.size() >= 2)
+        {
+            vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+            if(paras.size() < 7)
+            {
+                cout<<"Do not have enought input paremeters"<<endl;
+                return false;
+            }
+            cout<<paras.size()<<endl;
+            if(paras.size() >= 1) xs = atoi(paras.at(0)) - 1;
+            if(paras.size() >= 2) xe = atoi(paras.at(1)) - 1;
+            if(paras.size() >= 3) ys = atoi(paras.at(2)) - 1;
+            if(paras.size() >= 4) ye = atoi(paras.at(3)) - 1;
+            if(paras.size() >= 5) zs = atoi(paras.at(4)) - 1;
+            if(paras.size() >= 6) ze = atoi(paras.at(5)) - 1;
+            if(paras.size() >= 7) c = atoi(paras.at(6)) - 1;
+         }
+        else
+        {
+            cout<<"Do not have enought input paremeters"<<endl;
+            return false;
+        }
+
+        cout<<"xs = "<<xs+1<<"; xe = "<<xe+1<<endl;
+        cout<<"ys = "<<ys+1<<"; ye = "<<ye+1<<endl;
+        cout<<"zs = "<<zs+1<<"; ze = "<<ze+1<<endl;
+        cout<<"ch = "<<c+1<<endl;
+        cout<<"inimg_folder = "<<inimg_file<<endl;
+        cout<<"outimg_file = "<<outimg_file<<endl;
+
+
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+
+        int datatype;
+
+        if (!loadRawRegion(inimg_file, datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+
+        if(datald) {delete []datald; datald = 0;}
+        unsigned char * cropped_image = 0;
+
+        if (!loadRawRegion(inimg_file, cropped_image, in_zz, in_sz,datatype,xs,ys,zs,xe+1,ye+1,ze+1))
+        {
+            return false;
+        }
+
+        if(c !=-1 && in_sz[3] > 1)
+        {
+            void* cropped_image_1channel = 0;
+            switch(datatype)
+            {
+                case 1: extract_a_channel(cropped_image, in_sz, c, cropped_image_1channel); break;
+                case 2: extract_a_channel((unsigned short int *)cropped_image, in_sz, c, cropped_image_1channel); break;
+                case 4: extract_a_channel((float *)cropped_image, in_sz, c, cropped_image_1channel); break;
+                default:
+                v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); return false;
+            }
+
+            in_sz[3] = 1;
+            simple_saveimage_wrapper(callback, outimg_file,(unsigned char *)cropped_image_1channel,in_sz,datatype);
+            if(cropped_image) {delete []cropped_image; cropped_image = 0;}
+            if(cropped_image_1channel) {delete []cropped_image_1channel; cropped_image_1channel = 0;}
+        }
+        else
+        {
+            simple_saveimage_wrapper(callback, outimg_file,(unsigned char *)cropped_image,in_sz,datatype);
+            if(cropped_image) {delete []cropped_image; cropped_image = 0;}
+        }
+
+
+
+    }
     else if (func_name == tr("help"))
     {
         cout<<"Usage : v3d -x dllname -f crop3d_imageseries -i <inimg_folder> -o <outimg_file> -p <xs> <xe> <ys> <ye> <zs> <ze> <ch>"<<endl;
@@ -428,6 +512,17 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
         cout<<"ch      the channel value,start from 1 (0 for all channels).  "<<endl;
         cout<<endl;
 
+
+        cout<<"Usage : v3d -x dllname -f crop3d_raw -i <inimg_folder> -o <outimg_file> -p <xs> <xe> <ys> <ye> <zs> <ze> <ch>"<<endl;
+        cout<<endl;
+        cout<<"xs      minimum in x dimension, start from 1    "<<endl;
+        cout<<"xe      maximum in x dimension, start from 1    "<<endl;
+        cout<<"ys      minimum in y dimension, start from 1    "<<endl;
+        cout<<"ye      maximum in y dimension, start from 1    "<<endl;
+        cout<<"zs      minimum in z dimension, start from 1    "<<endl;
+        cout<<"ze      maximum in z dimension, start from 1    "<<endl;
+        cout<<"ch      the channel value,start from 1 (0 for all channels).  "<<endl;
+        cout<<endl;
 	}
     else
         return false;
