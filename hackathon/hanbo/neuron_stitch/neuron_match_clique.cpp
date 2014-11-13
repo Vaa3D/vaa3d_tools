@@ -42,6 +42,10 @@ void NeuronMatchOnlyDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_spineLen = new QSpinBox();
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineAng = new QDoubleSpinBox();
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2);
     gridLayout->addWidget(cb_dir,9,2,1,1);
@@ -60,12 +64,18 @@ void NeuronMatchOnlyDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
     gridLayout->addWidget(label_5,11,3,1,2);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment threshold (0=keep all): ");
-    gridLayout->addWidget(label_6,12,0,1,2);
-    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_6 = new QLabel("small segment filter: ");
+    gridLayout->addWidget(label_6,12,0,1,1);
+    gridLayout->addWidget(spin_segthr,12,1,1,1);
+    QLabel* label_7 = new QLabel("spine filter: point #");
+    gridLayout->addWidget(label_7,12,2,1,1);
+    gridLayout->addWidget(spin_spineLen,12,3,1,1);
+    QLabel* label_8 = new QLabel("turning angle");
+    gridLayout->addWidget(label_8,12,4,1,1);
+    gridLayout->addWidget(spin_spineAng,12,5,1,1);
     btn_match = new QPushButton("Match"); btn_match->setAutoDefault(false);
     connect(btn_match, SIGNAL(clicked()), this, SLOT(match()));
-    gridLayout->addWidget(btn_match,12,5,1,1);
+    gridLayout->addWidget(btn_match,13,5,1,1);
 
     setLayout(gridLayout);
 }
@@ -113,17 +123,6 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
     matchfunc->initNeuronComponents();
     matchfunc->update_matchedPoints_from_Markers(mList); //to-do,not implemented yet
 
-//    //boundary
-//    double tmp, tmp_min[3], tmp_max[3];
-//    getNeuronTreeBound(ntList->at(0),bound_min[0],bound_min[1],bound_min[2],bound_max[0],bound_max[1],bound_max[2],tmp,tmp,tmp);
-//    getNeuronTreeBound(ntList->at(1),tmp_min[0],tmp_min[1],tmp_min[2],tmp_max[0],tmp_max[1],tmp_max[2],tmp,tmp,tmp);
-//    bound_min[0]=bound_min[0]<tmp_min[0]?bound_min[0]:tmp_min[0];
-//    bound_min[1]=bound_min[1]<tmp_min[1]?bound_min[1]:tmp_min[1];
-//    bound_min[2]=bound_min[2]<tmp_min[2]?bound_min[2]:tmp_min[2];
-//    bound_max[0]=bound_max[0]>tmp_min[0]?bound_max[0]:tmp_max[0];
-//    bound_max[1]=bound_max[1]>tmp_min[1]?bound_max[1]:tmp_max[1];
-//    bound_max[2]=bound_max[2]>tmp_min[2]?bound_max[2]:tmp_max[2];
-
     updateview();
 }
 
@@ -160,6 +159,10 @@ void NeuronLiveMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_spineLen = new QSpinBox();
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineAng = new QDoubleSpinBox();
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2);
     gridLayout->addWidget(cb_dir,9,2,1,1);
@@ -178,9 +181,15 @@ void NeuronLiveMatchDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
     gridLayout->addWidget(label_5,11,3,1,2);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment threshold (0=keep all): ");
-    gridLayout->addWidget(label_6,12,0,1,2);
-    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_6 = new QLabel("small segment filter: ");
+    gridLayout->addWidget(label_6,12,0,1,1);
+    gridLayout->addWidget(spin_segthr,12,1,1,1);
+    QLabel* label_7 = new QLabel("spine filter: point #");
+    gridLayout->addWidget(label_7,12,2,1,1);
+    gridLayout->addWidget(spin_spineLen,12,3,1,1);
+    QLabel* label_8 = new QLabel("turning angle");
+    gridLayout->addWidget(label_8,12,4,1,1);
+    gridLayout->addWidget(spin_spineAng,12,5,1,1);
 
     //stitching zone
     QFrame *line_1 = new QFrame();
@@ -241,6 +250,8 @@ void NeuronMatchOnlyDialog::match()
     matchfunc.spanCand = spin_searchspan->value();
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
+    matchfunc.spineLengthThr = spin_spineLen->value();
+    matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
 
     //init clique and candidate
     matchfunc.init();
@@ -335,6 +346,8 @@ void NeuronLiveMatchDialog::match()
     matchfunc->spanCand = spin_searchspan->value();
     matchfunc->cmatchThr = spin_cmatchdis->value();
     matchfunc->segmentThr = spin_segthr->value();
+    matchfunc->spineLengthThr = spin_spineLen->value();
+    matchfunc->spineAngThr = cos(spin_spineAng->value()/180*M_PI);
 
     //init clique and candidate
     matchfunc->init();
@@ -352,17 +365,6 @@ void NeuronLiveMatchDialog::match()
     callback->update_NeuronBoundingBox(v3dwin);
     updateview();
     updatematchlist();
-
-//    //update boundary
-//    double tmp, tmp_min[3], tmp_max[3];
-//    getNeuronTreeBound(ntList->at(0),bound_min[0],bound_min[1],bound_min[2],bound_max[0],bound_max[1],bound_max[2],tmp,tmp,tmp);
-//    getNeuronTreeBound(ntList->at(1),tmp_min[0],tmp_min[1],tmp_min[2],tmp_max[0],tmp_max[1],tmp_max[2],tmp,tmp,tmp);
-//    bound_min[0]=bound_min[0]<tmp_min[0]?bound_min[0]:tmp_min[0];
-//    bound_min[1]=bound_min[1]<tmp_min[1]?bound_min[1]:tmp_min[1];
-//    bound_min[2]=bound_min[2]<tmp_min[2]?bound_min[2]:tmp_min[2];
-//    bound_max[0]=bound_max[0]>tmp_min[0]?bound_max[0]:tmp_max[0];
-//    bound_max[1]=bound_max[1]>tmp_min[1]?bound_max[1]:tmp_max[1];
-//    bound_max[2]=bound_max[2]>tmp_min[2]?bound_max[2]:tmp_max[2];
 }
 
 void NeuronLiveMatchDialog::updatematchlist()
@@ -758,6 +760,10 @@ void NeuronMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_spineLen = new QSpinBox();
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineAng = new QDoubleSpinBox();
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2);
     gridLayout->addWidget(cb_dir,9,2,1,1);
@@ -776,9 +782,15 @@ void NeuronMatchDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
     gridLayout->addWidget(label_5,11,3,1,2);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment threshold (0=keep all): ");
-    gridLayout->addWidget(label_6,12,0,1,2);
-    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_6 = new QLabel("small segment filter: ");
+    gridLayout->addWidget(label_6,12,0,1,1);
+    gridLayout->addWidget(spin_segthr,12,1,1,1);
+    QLabel* label_7 = new QLabel("spine filter: point #");
+    gridLayout->addWidget(label_7,12,2,1,1);
+    gridLayout->addWidget(spin_spineLen,12,3,1,1);
+    QLabel* label_8 = new QLabel("turning angle");
+    gridLayout->addWidget(label_8,12,4,1,1);
+    gridLayout->addWidget(spin_spineAng,12,5,1,1);
 
     //operation zone
     QFrame *line_2 = new QFrame();
@@ -918,6 +930,8 @@ void NeuronMatchDialog::run()
     matchfunc.spanCand = spin_searchspan->value();
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
+    matchfunc.spineLengthThr = spin_spineLen->value();
+    matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
 
     //init clique and candidate
     matchfunc.init();
@@ -960,6 +974,9 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     backupNeuron(*nt1_stitch,*nt1_org);
     backupNeuron(*nt1_stitch,*nt1_a);
 
+    constructNeuronGraph(*nt0, ng0);
+    constructNeuronGraph(*nt1, ng1);
+
     spanCand = 20;
     direction = 2;
     midplane = 0;
@@ -970,6 +987,9 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     pmatchThr = 100;
     zscale = 1;
     segmentThr = 0;
+    spineLengthThr = 0;
+    spineAngThr = -1;
+    spineRadiusThr = 0;
 }
 
 void neuron_match_clique::globalmatch()
@@ -1145,8 +1165,8 @@ void neuron_match_clique::init()
 
     //find candidates
     qDebug()<<"search candidates";
-    initNeuronAndCandidate(*nt0,candID0,candcoord0,canddir0,canddircoord0,components0,candcomponents0,parent0,1);
-    initNeuronAndCandidate(*nt1,candID1,candcoord1,canddir1,canddircoord1,components1,candcomponents1,parent1,-1);
+    initNeuronAndCandidate(*nt0,ng0,neuronType0,candID0,candcoord0,canddir0,canddircoord0,components0,candcomponents0,parent0,1);
+    initNeuronAndCandidate(*nt1,ng1,neuronType1,candID1,candcoord1,canddir1,canddircoord1,components1,candcomponents1,parent1,-1);
     //adjust component id of nt1
     int ccmax=0;
     for(int i=0; i<components0.size(); i++){
@@ -1164,8 +1184,8 @@ void neuron_match_clique::init()
 
     //find cliques
     qDebug()<<"start find cliques";
-    getCliques(candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction);
-    getCliques(candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction);
+    getCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction);
+    getCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction);
     qDebug()<<"init neuron 0: 3clique:"<<cliqueList0.size();
     qDebug()<<"init neuron 1: 3clique:"<<cliqueList1.size();
 
@@ -1194,6 +1214,9 @@ void neuron_match_clique::output_parameter(QString fname)
     myfile<<"clique_match_threshold_distance= "<<cmatchThr<<endl;   //match threshold for length of cliques
     myfile<<"stack_direction_rescale= "<<zscale<<endl;  //resacle stack direction
     myfile<<"segment_length_for_calculate_direction= "<<dir_range<<endl;   //length of section used to calculate direction of dead end
+    myfile<<"spine_length_point_number= "<<spineLengthThr<<endl; //number of maximum points for spine
+    myfile<<"spine_angle_threshold= "<<spineAngThr<<endl; //angular threshold for spine turning
+
 
     file.close();
 }
@@ -1769,8 +1792,162 @@ void neuron_match_clique::highlight_nt0_seg(int point0, int type)
     }
 }
 
-//orientation should be 1/-1 for smaller/larger stack in direction
-void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation)
+////orientation should be 1/-1 for smaller/larger stack in direction
+//void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& cand, QList<XYZ>& candcoord,
+//                                                 QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components,
+//                                                 QList<int>& candcomponents, QList<int>& pList, int orientation)
+//{
+//    float min=midplane-spanCand;
+//    float max=midplane+spanCand;
+
+//    cand.clear();
+//    candcoord.clear();
+//    canddir.clear();
+//    canddircoord.clear();
+//    candcomponents.clear();
+
+//    QVector<int> childNum(nt.listNeuron.size(), 0);
+//    QVector<int> connNum(nt.listNeuron.size(), 0);
+//    QVector<double> sectionLength(nt.listNeuron.size(), 0);
+//    //QList<int> components;
+//    components.clear();
+//    pList.clear();
+//    QVector<V3DLONG> componentSize;
+//    QVector<V3DLONG> componentLength;
+//    V3DLONG curid=0;
+//    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+//        if(nt.listNeuron.at(i).pn<0){
+//            connNum[i]--; //root that only have 1 clide will also be a dead end
+//            components.append(curid); curid++;
+//            pList.append(-1);
+//        }
+//        else{
+//            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+//            childNum[pid]++;
+//            connNum[pid]++;
+//            sectionLength[i]=sqrt(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(pid)));
+//            components.append(-1);
+//            pList.append(pid);
+//        }
+//    }
+//    //connected component
+//    for(V3DLONG cid=0; cid<curid; cid++){
+//        QStack<int> pstack;
+//        int chid, size = 0;
+//        if(!components.contains(cid)) //should not happen, just in case
+//            continue;
+//        if(components.indexOf(cid)!=components.lastIndexOf(cid)) //should not happen
+//            qDebug("unexpected multiple tree root, please check the code: neuron_stitch_func.cpp");
+//        //recursively search for child and mark them as the same component
+//        pstack.push(components.indexOf(cid));
+//        size++;
+//        while(!pstack.isEmpty()){
+//            int pid=pstack.pop();
+//            chid = -1;
+//            chid = pList.indexOf(pid,chid+1);
+//            while(chid>=0){
+//                pstack.push(chid);
+//                components[chid]=cid;
+//                chid=pList.indexOf(pid,chid+1);
+//                size++;
+//            }
+//        }
+//        componentSize.append(size);
+//    }
+//    //component size
+//    for(V3DLONG cid=0; cid<curid; cid++){
+//        double length = 0;
+//        int idx = -1;
+//        for(V3DLONG i=0; i<componentSize[cid]; i++){
+//            idx = components.indexOf(cid,idx+1);
+//            length+=sectionLength[idx];
+//        }
+//        componentLength.append(length);
+//    }
+
+
+//    QList<int> tmpcand; tmpcand.clear();
+//    for(V3DLONG i=0; i<childNum.size(); i++){
+//        if(connNum[i]<=0 && componentLength[components[i]]>=segmentThr){
+//            if(direction==0){//x
+//                if(nt.listNeuron.at(i).x>min && nt.listNeuron.at(i).x<max){
+//                    tmpcand.append(i);
+//                }
+//            }else if(direction==1){//y
+//                if(nt.listNeuron.at(i).y>min && nt.listNeuron.at(i).y<max){
+//                    tmpcand.append(i);
+//                }
+//            }else if(direction==2){//z
+//                if(nt.listNeuron.at(i).z>min && nt.listNeuron.at(i).z<max){
+//                    tmpcand.append(i);
+//                }
+//            }else{//all tips
+//                tmpcand.append(i);
+//            }
+//        }
+//    }
+
+//    for(V3DLONG i=0; i<tmpcand.size(); i++){
+//        XYZ tmpdir(0,0,0);
+//        int id = tmpcand[i];
+//        if(childNum[id]==1){ //single child root
+//            float lentmp = 0;
+//            while(lentmp<dir_range && id>=0){
+//                int sid = pList.indexOf(id);
+//                if(sid<0) break;
+//                lentmp+=sectionLength[sid];
+//                tmpdir.x += nt.listNeuron.at(id).x-nt.listNeuron.at(sid).x;
+//                tmpdir.y += nt.listNeuron.at(id).y-nt.listNeuron.at(sid).y;
+//                tmpdir.z += nt.listNeuron.at(id).z-nt.listNeuron.at(sid).z;
+//                id=sid;
+//            }
+//        }else{ //tips
+//            float lentmp = 0;
+//            while(lentmp<dir_range && id>=0){
+//                int sid = pList[id];
+//                if(sid<0) break;
+//                lentmp+=sectionLength[id];
+//                tmpdir.x += nt.listNeuron.at(id).x-nt.listNeuron.at(sid).x;
+//                tmpdir.y += nt.listNeuron.at(id).y-nt.listNeuron.at(sid).y;
+//                tmpdir.z += nt.listNeuron.at(id).z-nt.listNeuron.at(sid).z;
+//                id=sid;
+//            }
+//        }
+//        //normalize direction
+//        double tmpNorm = sqrt(tmpdir.x*tmpdir.x+tmpdir.y*tmpdir.y+tmpdir.z*tmpdir.z);
+//        tmpdir.x/=tmpNorm; tmpdir.x*=orientation;
+//        tmpdir.y/=tmpNorm; tmpdir.y*=orientation;
+//        tmpdir.z/=tmpNorm; tmpdir.z*=orientation;
+
+//        //judgement to the direction to avoid the connection that moves from plan to
+//        double sa = 1;
+//        if(direction==0){
+//            sa = tmpdir.x;
+//        }else if(direction == 1){
+//            sa = tmpdir.y;
+//        }else if(direction == 2){
+//            sa = tmpdir.z;
+//        }
+//        //for test:
+//        //qDebug()<<i<<":"<<tmpcand[i]<<"; coord"<<nt.listNeuron.at(tmpcand[i]).x<<":"<<nt.listNeuron.at(tmpcand[i]).y<<":"<<nt.listNeuron.at(tmpcand[i]).z<<"; dir"<<tmpdir.x<<":"<<tmpdir.y<<":"<<tmpdir.z<<":"<<tmpNorm;
+
+//        if(sa<angThr_stack) continue;
+
+//        cand.append(tmpcand[i]);
+//        candcoord.append(XYZ(nt.listNeuron.at(tmpcand[i])));
+//        canddir.append(tmpdir);
+//        canddircoord.append(XYZ(candcoord.last().x+canddir.last().x,candcoord.last().y+canddir.last().y,candcoord.last().z+canddir.last().z));
+//        candcomponents.append(components.at(tmpcand[i]));
+//    }
+//}
+
+
+
+//orientation should be 1/-1 for smaller/larger stack in directio
+//new type: 1:root; 2:path; 5:fork point; 6:end point; 7:single child root;
+void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord,
+                                                 QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components,
+                                                 QList<int>& candcomponents, QList<int>& pList, int orientation)
 {
     float min=midplane-spanCand;
     float max=midplane+spanCand;
@@ -1805,6 +1982,16 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& can
             pList.append(pid);
         }
     }
+
+    //for test
+    qDebug()<<"init Nueron type";
+
+    //neuron type
+    initNeuronType(nt,ng,neuronType);
+
+    //for test
+    qDebug()<<"connected component";
+
     //connected component
     for(V3DLONG cid=0; cid<curid; cid++){
         QStack<int> pstack;
@@ -1841,9 +2028,13 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& can
     }
 
 
+    //for test
+    qDebug()<<"find candidate";
+
+    //find candidate
     QList<int> tmpcand; tmpcand.clear();
-    for(V3DLONG i=0; i<childNum.size(); i++){
-        if(connNum[i]<=0 && componentLength[components[i]]>=segmentThr){
+    for(V3DLONG i=0; i<neuronType.size(); i++){
+        if((neuronType.at(i)%10)==6 && componentLength[components[i]]>=segmentThr){
             if(direction==0){//x
                 if(nt.listNeuron.at(i).x>min && nt.listNeuron.at(i).x<max){
                     tmpcand.append(i);
@@ -1862,31 +2053,46 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& can
         }
     }
 
+    //for test
+    qDebug()<<"finalize candidate";
+
     for(V3DLONG i=0; i<tmpcand.size(); i++){
         XYZ tmpdir(0,0,0);
-        int id = tmpcand[i];
-        if(childNum[id]==1){ //single child root
+        V3DLONG curid = tmpcand[i];
+        V3DLONG nexid, preid=curid;
+        if(neuronType.at(tmpcand.at(i))==6){ //normal tips or spine tips
             float lentmp = 0;
-            while(lentmp<dir_range && id>=0){
-                int sid = pList.indexOf(id);
-                if(sid<0) break;
-                lentmp+=sectionLength[sid];
-                tmpdir.x += nt.listNeuron.at(id).x-nt.listNeuron.at(sid).x;
-                tmpdir.y += nt.listNeuron.at(id).y-nt.listNeuron.at(sid).y;
-                tmpdir.z += nt.listNeuron.at(id).z-nt.listNeuron.at(sid).z;
-                id=sid;
+            while(lentmp<dir_range && curid>=0){
+                lentmp+=sectionLength[curid];
+                nexid=nextPointNeuronGraph(ng,curid,preid);
+                preid=curid;
+                curid=nexid;
             }
-        }else{ //tips
+            tmpdir.x = nt.listNeuron.at(tmpcand[i]).x - nt.listNeuron.at(preid).x;
+            tmpdir.y = nt.listNeuron.at(tmpcand[i]).y - nt.listNeuron.at(preid).y;
+            tmpdir.z = nt.listNeuron.at(tmpcand[i]).z - nt.listNeuron.at(preid).z;
+        }else if(neuronType.at(tmpcand.at(i))==56){ //spine fork
             float lentmp = 0;
-            while(lentmp<dir_range && id>=0){
-                int sid = pList[id];
-                if(sid<0) break;
-                lentmp+=sectionLength[id];
-                tmpdir.x += nt.listNeuron.at(id).x-nt.listNeuron.at(sid).x;
-                tmpdir.y += nt.listNeuron.at(id).y-nt.listNeuron.at(sid).y;
-                tmpdir.z += nt.listNeuron.at(id).z-nt.listNeuron.at(sid).z;
-                id=sid;
+            while(lentmp<dir_range && curid>=0){
+                lentmp+=sectionLength[curid];
+                nexid=-1;
+                for(int j=0; j<ng.at(curid).size(); j++){
+                    if(ng.at(curid).at(j)==preid) continue;
+                    if(neuronType.at(ng.at(curid).at(j))==2 || neuronType.at(ng.at(curid).at(j))== 52){
+                        if(nexid==-1){
+                            nexid=ng.at(curid).at(j);
+                        }else{
+                            nexid=-2;
+                            break;
+                        }
+                    }
+                }
+                preid=curid;
+                curid=nexid;
             }
+            tmpdir.x = nt.listNeuron.at(tmpcand[i]).x - nt.listNeuron.at(preid).x;
+            tmpdir.y = nt.listNeuron.at(tmpcand[i]).y - nt.listNeuron.at(preid).y;
+            tmpdir.z = nt.listNeuron.at(tmpcand[i]).z - nt.listNeuron.at(preid).z;
         }
         //normalize direction
         double tmpNorm = sqrt(tmpdir.x*tmpdir.x+tmpdir.y*tmpdir.y+tmpdir.z*tmpdir.z);
@@ -1914,6 +2120,193 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& can
         canddircoord.append(XYZ(candcoord.last().x+canddir.last().x,candcoord.last().y+canddir.last().y,candcoord.last().z+canddir.last().z));
         candcomponents.append(components.at(tmpcand[i]));
     }
+}
+
+//initial type should have already been assigned
+//initNeuronAndCandidate required befor running this
+//normal type: 1:single root; 2:path; 5:fork point; 6:end point;
+//spine related: 21:path; 61:end point;
+//spine related fork: 51:have 0 none spine path (single root); 56:have only one none spine path (end); 52:have two none spine path (path); 55:have more than two none spine path (fork);
+//all types ended with '6' can be used for matching across sections
+int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType)
+{
+    neuronType.clear();
+    int spinecount=0;
+    int length=spineLengthThr;
+    //basic types
+    for(V3DLONG idx=0; idx<nt.listNeuron.size(); idx++){
+        if(ng.at(idx).size()<1){
+            neuronType.append(1); //single root
+        }else if(ng.at(idx).size()==1){
+            neuronType.append(6); //end point
+        }else if(ng.at(idx).size()==2){
+            neuronType.append(2); //path
+        }else{
+            neuronType.append(5); //fork point
+        }
+    }
+
+    //for test
+    qDebug()<<"init neuron type: basic done";
+
+    //spine
+    if(length<=1e-10) return 0;
+
+    QMap<V3DLONG, QVector<V3DLONG> > fork_spines_map;
+    for(V3DLONG idx=0; idx<nt.listNeuron.size(); idx++){
+        if(ng.at(idx).size()==1){ //end point
+            int count = 0;
+            V3DLONG preid=idx, nexid=idx, curid=idx;
+            do{
+                count++;
+                nexid=nextPointNeuronGraph(ng,curid,preid);
+                preid=curid;
+                curid=nexid;
+            }while(nexid>=0 && count<=length);
+
+            if(count<length){ //is spine
+                neuronType[idx]=61; //spine tip
+                curid=nextPointNeuronGraph(ng,idx);
+                preid=idx;
+                while(curid>=0 && ng.at(curid).size()==2){
+                    neuronType[curid]=21; //spine path
+                    nexid=nextPointNeuronGraph(ng,curid,preid);
+                    preid=curid;
+                    curid=nexid;
+                }
+                if(curid>=0){
+                    if(fork_spines_map.contains(curid)){
+                        fork_spines_map[curid].append(idx);
+                    }else{
+                        QVector<V3DLONG> tmp;
+                        tmp.append(idx);
+                        fork_spines_map[curid]=tmp;
+                    }
+                }
+                spinecount++;
+            }
+        }
+    }
+
+
+    //for test
+    qDebug()<<"init neuron type: spine done";
+
+    //find the spine that is matchable
+    for(QMap<V3DLONG, QVector<V3DLONG> >::Iterator iter = fork_spines_map.begin();
+        iter != fork_spines_map.end(); iter++){
+        //check the branch type (a.have only one none spine connection (end); b. have two (path); c. have more than two (fork))
+        int count=0;
+        V3DLONG idx = iter.key();
+
+        //for test
+        qDebug()<<"init neuron type: matchable "<<idx;
+
+        for(int i=0; i<ng.at(idx).size(); i++){
+            if(neuronType.at(ng.at(idx).at(i))!=21 && neuronType.at(ng.at(idx).at(i))!=61){
+                count++;
+            }
+        }
+        switch(count){
+        case 0:
+            neuronType[idx]=51; //single dendritic root
+            break;
+        case 1:
+            neuronType[idx]=56; //dendritic end
+            break;
+        case 2:
+            neuronType[idx]=52; //dendritic path
+            break;
+        default:
+            neuronType[idx]=55; //dendritic fork
+        }
+
+
+        //for test
+        qDebug()<<"init neuron type: matchable "<<idx<<":"<<count<<":"<<neuronType[idx];
+
+
+        if(neuronType[idx]==56){
+            XYZ rootDir;
+            bool spineMatchable=false;
+            for(int i=0; i<ng.at(idx).size(); i++){
+                if(neuronType.at(ng.at(idx).at(i))!=21 && neuronType.at(ng.at(idx).at(i))!=61){
+                    rootDir.x = nt.listNeuron.at(idx).x-nt.listNeuron.at(ng.at(idx).at(i)).x;
+                    rootDir.y = nt.listNeuron.at(idx).y-nt.listNeuron.at(ng.at(idx).at(i)).y;
+                    rootDir.z = nt.listNeuron.at(idx).z-nt.listNeuron.at(ng.at(idx).at(i)).z;
+                }
+            }
+
+            for(int i=0; i<iter.value().size(); i++){
+                V3DLONG curid = iter.value().at(i);
+                //check the angle condition
+                XYZ spineDir;
+                spineDir.x = nt.listNeuron.at(curid).x-nt.listNeuron.at(idx).x;
+                spineDir.y = nt.listNeuron.at(curid).y-nt.listNeuron.at(idx).y;
+                spineDir.z = nt.listNeuron.at(curid).z-nt.listNeuron.at(idx).z;
+
+                if(NTDOT(spineDir,rootDir)/(NTNORM(spineDir)*NTNORM(rootDir))<spineAngThr){
+                    continue;
+                }
+                //check radius condition if meet angle condition
+                V3DLONG preid=curid, nexid=curid;
+                while(nt.listNeuron.at(curid).radius<spineRadiusThr && curid!=idx){
+                    nexid=nextPointNeuronGraph(ng,curid,preid);
+                    preid=curid;
+                    curid=nexid;
+                }
+                if(curid!=idx){ //this could be a normal branch, not spine
+                    curid = iter.value().at(i);
+                    neuronType[curid]=6;
+                    nexid=nextPointNeuronGraph(ng,curid);
+                    preid=curid;
+                    curid=nexid;
+                    while(curid!=idx){
+                        neuronType[curid]=2;
+                        nexid=nextPointNeuronGraph(ng,curid,preid);
+                        preid=curid;
+                        curid=nexid;
+                    }
+                    spineMatchable=true;
+                }
+            }
+
+            idx = iter.key();
+            if(neuronType[idx]==56){
+                if(spineMatchable || nt.listNeuron.at(idx).radius<spineRadiusThr){
+                    neuronType[idx]=52; //radius too small or child can match, downgrade it to path of spine
+                }
+            }
+        }else if(neuronType[idx]==55 || neuronType[idx]==51){
+            //check radius condition
+            for(int i=0; i<iter.value().size(); i++){
+                V3DLONG curid = iter.value().at(i);
+                V3DLONG preid=curid, nexid=curid;
+                while(nt.listNeuron.at(curid).radius<spineRadiusThr && curid!=idx){
+                    nexid=nextPointNeuronGraph(ng,curid,preid);
+                    preid=curid;
+                    curid=nexid;
+                }
+                if(curid!=idx){ //this could be a normal branch, not spine
+                    curid = iter.value().at(i);
+                    neuronType[curid]=6;
+                    nexid=nextPointNeuronGraph(ng,curid);
+                    preid=curid;
+                    curid=nexid;
+                    while(curid!=idx){
+                        neuronType[curid]=2;
+                        nexid=nextPointNeuronGraph(ng,curid,preid);
+                        preid=curid;
+                        curid=nexid;
+                    }
+                }
+            }
+        }
+
+        //for test
+        qDebug()<<"init neuron type: matchable "<<idx<<":"<<count<<":"<<neuronType[idx];
+    }
+    return spinecount;
 }
 
 void neuron_match_clique::initNeuronComponents()

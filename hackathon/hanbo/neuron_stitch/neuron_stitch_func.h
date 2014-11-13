@@ -10,6 +10,9 @@
 
 #define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#define NTNORM(a) (sqrt((a).x*(a).x+(a).y*(a).y+(a).z*(a).z))
+
+typedef QVector<QVector<V3DLONG> > HBNeuronGraph;
 
 struct Clique3{
     int v[3]; //vertex, v[0]~v[1]=e[0], v[1]~v[2]=e[1]
@@ -18,6 +21,9 @@ struct Clique3{
     XYZ dir[3]; //take clique center as origin, the center-point axis as x axis, the direction of the neruon
 };
 
+void constructNeuronGraph(const NeuronTree& nt, HBNeuronGraph& ng);
+V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG previous=-1);
+
 void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& parent0, const QList<int>& parent1, int pid0, int pid1);
 
 bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
@@ -25,6 +31,7 @@ bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double
 
 void getCliques(const NeuronTree& nt, QList<int> list,  QList<Clique3> & cqlist, double minDis);
 void getCliques(const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir,  QVector<Clique3> & cqlist, double minDis, int stackDir);
+void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir,  QVector<Clique3> & cqlist, double minDis, int stackDir); //only candidate with type 6/7/26/27 will be chosen
 void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction);
 void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction, float segThr); //this one will not consider small segmentsbool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
 

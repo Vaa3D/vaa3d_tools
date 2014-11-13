@@ -26,6 +26,8 @@ private:
     NeuronTree *nt1_stitch;
     QList<int> components0, components1;
     QList<int> parent0, parent1;
+    HBNeuronGraph ng0, ng1;
+    QList<int> neuronType0, neuronType1;
 
     //candidate point for matching
     QList<int> candID0, candID1; //neuron tree point ids of candidates
@@ -56,6 +58,9 @@ public:
     double pmatchThr;   //match threshold for points
     double zscale;  //resacle stack direction
     double segmentThr;  //threshold to filter out small segments when selecting candidates
+    int spineLengthThr; //the length threshold of spine
+    double spineAngThr; //angular threshold of spine
+    double spineRadiusThr; //radius threshold of spine
 
     //transformation
     double shift_x, shift_y, shift_z, rotation_ang, rotation_cx, rotation_cy, rotation_cz;
@@ -81,11 +86,12 @@ public:
     bool stitch(int point0, int point1); //input is the match points, will search both direction for stiching.
     bool checkloop(int point0, int point1); //check if connect point0 and point 1 will result in loop
     void highlight_nt1_seg(int point1, int type); //highlight the component of nt1 linked to point1
-    void highlight_nt0_seg(int point0, int type); //highlight the component of nt1 linked to point1
+    void highlight_nt0_seg(int point0, int type); //highlight the component of nt0 linked to point0
 
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
-    void initNeuronAndCandidate(NeuronTree& nt, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments
+    void initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments
+    int initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType);
     void initNeuronComponents(NeuronTree& nt, QList<int>& components, QList<int>& pList);
     void matchCliquesAndCands();
 };
@@ -113,6 +119,8 @@ public:
     QComboBox *cb_dir,*cb_pair;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_match;
+    QSpinBox *spin_spineLen;
+    QDoubleSpinBox *spin_spineAng;
 };
 
 class NeuronLiveMatchDialog : public QDialog
@@ -160,6 +168,8 @@ public:
     QComboBox *cb_dir,*cb_pair;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
+    QSpinBox *spin_spineLen;
+    QDoubleSpinBox *spin_spineAng;
 };
 
 class NeuronMatchDialog : public QDialog
@@ -203,6 +213,8 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_run;
     QCheckBox *check_stitch;
+    QSpinBox *spin_spineLen;
+    QDoubleSpinBox *spin_spineAng;
 };
 
 #endif // NEURON_MATCH_CLIQUE_H

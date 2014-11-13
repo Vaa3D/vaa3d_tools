@@ -12,6 +12,36 @@
 
 using namespace std;
 
+void constructNeuronGraph(const NeuronTree& nt, HBNeuronGraph& ng)
+{
+    ng.clear();
+    ng.resize(nt.listNeuron.size());
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn>=0){
+            V3DLONG pid=nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            ng[i].append(pid);
+            ng[pid].append(i);
+        }
+    }
+}
+
+V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG previous)
+{
+    V3DLONG next=-1;
+    if(ng.at(current).size()==1 && (previous<0 || current==previous)){ //seek the next of a deadend
+        next=ng.at(current).at(0);
+    }else if(ng.at(current).size()==2 && previous>=0){ //seek the next on a path
+        if(previous==ng.at(current).at(0)){
+            next=ng.at(current).at(1);
+        }else if(previous==ng.at(current).at(1)){
+            next=ng.at(current).at(0);
+        }else{
+            next=-2;
+        }
+    }
+    return next;
+}
+
 void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& parent0, const QList<int>& parent1, int pid0, int pid1)
 {
     //get the list of points to move
@@ -514,6 +544,118 @@ void getCliques(const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ
             if(dis_ij<minDis)// || dis_ij>maxDis)
                 continue;
             for(int k=j+1; k<coord.size(); k++){
+                double dis_ik = NTDIS(coord.at(i),coord.at(k));
+                if(dis_ik<minDis)// || dis_ij>maxDis)
+                    continue;
+                double dis_jk = NTDIS(coord.at(j),coord.at(k));
+                if(dis_jk<minDis)// || dis_ij>maxDis)
+                    continue;
+                Clique3 C;
+                if(dis_ij <= dis_jk && dis_jk <= dis_ik){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_ij <= dis_ik && dis_ik <= dis_jk){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_jk <= dis_ij && dis_ij <= dis_ik){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_jk <= dis_ik && dis_ik <= dis_ij){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_ij);
+                }else if(dis_ik <= dis_ij && dis_ij <= dis_jk){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_ik <= dis_jk && dis_jk <= dis_ij){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ij);
+                }else{ //this should not happen
+                    printf("error in construction clique, unexpected situation happened! Check the code!\n");
+                    continue;
+                }
+                XYZ center;
+                center.x+=(coord[i].x+coord[j].x+coord[k].x)/3;
+                center.y+=(coord[i].y+coord[j].y+coord[k].y)/3;
+                center.z+=(coord[i].z+coord[j].z+coord[k].z)/3;
+                for(int p=0; p<3; p++){
+                    int m=C.idx[p];
+                    if(stackDir == 0){//x plane
+                        double py=coord[m].y-center.y;
+                        double pz=coord[m].z-center.z;
+                        double plen=sqrt(pz*pz+py*py);
+                        C.dir[p].y=py/plen*dir[m].y-pz/plen*dir[m].z;
+                        C.dir[p].z=pz/plen*dir[m].y+py/plen*dir[m].z;
+                        C.dir[p].x=dir[m].x;
+                    }else if(stackDir == 1){//y plane
+                        double px=coord[m].x-center.x;
+                        double pz=coord[m].z-center.z;
+                        double plen=sqrt(pz*pz+px*px);
+                        C.dir[p].z=pz/plen*dir[m].z-px/plen*dir[m].x;
+                        C.dir[p].x=px/plen*dir[m].z+pz/plen*dir[m].x;
+                        C.dir[p].y=dir[m].y;
+                    }else if(stackDir ==2){//z plane
+                        double px=coord[m].x-center.x;
+                        double py=coord[m].y-center.y;
+                        double plen=sqrt(px*px+py*py);
+                        C.dir[p].x=px/plen*dir[m].x-py/plen*dir[m].y;
+                        C.dir[p].y=py/plen*dir[m].x+px/plen*dir[m].y;
+                        C.dir[p].z=dir[m].z;
+                    }else{ //to-do: taken clique plan as reference plan for calculation
+                        C.dir[p].x=0;
+                        C.dir[p].y=0;
+                        C.dir[p].z=0;
+                    }
+                }
+                cqlist.append(C);
+            }
+        }
+    }
+}
+
+void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir, QVector<Clique3> & cqlist, double minDis,int stackDir)
+{
+    cqlist.clear();
+    minDis=minDis*minDis;
+    double maxDis=1e16;
+    cqlist.clear();
+    for(int i=0; i<coord.size(); i++){
+        if(nt.listNeuron.at(list.at(i)).type==16 || nt.listNeuron.at(list.at(i)).type==17)
+            continue;
+        for(int j=i+1; j<coord.size(); j++){
+            if(nt.listNeuron.at(list.at(j)).type==16 || nt.listNeuron.at(list.at(j)).type==17)
+                continue;
+
+            double dis_ij = NTDIS(coord.at(i),coord.at(j));
+            if(dis_ij<minDis)// || dis_ij>maxDis)
+                continue;
+            for(int k=j+1; k<coord.size(); k++){
+                if(nt.listNeuron.at(list.at(k)).type==16 || nt.listNeuron.at(list.at(k)).type==17)
+                    continue;
+
                 double dis_ik = NTDIS(coord.at(i),coord.at(k));
                 if(dis_ik<minDis)// || dis_ij>maxDis)
                     continue;
