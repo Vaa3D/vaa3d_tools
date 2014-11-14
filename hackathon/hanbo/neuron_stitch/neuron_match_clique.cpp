@@ -43,9 +43,14 @@ void NeuronMatchOnlyDialog::creat()
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
     spin_spineLen = new QSpinBox();
-    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
-    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30); spin_spineAng->setEnabled(false);
+    spin_spineRadius = new QDoubleSpinBox();
+    spin_spineRadius->setRange(0,100000); spin_spineRadius->setValue(3); spin_spineRadius->setEnabled(false);
+    check_spine = new QCheckBox("filter spines when matching:");
+    check_spine -> setChecked(false);
+    connect(check_spine, SIGNAL(stateChanged(int)), this, SLOT(spineCheck(int)));
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2);
     gridLayout->addWidget(cb_dir,9,2,1,1);
@@ -64,20 +69,87 @@ void NeuronMatchOnlyDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
     gridLayout->addWidget(label_5,11,3,1,2);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter: ");
-    gridLayout->addWidget(label_6,12,0,1,1);
-    gridLayout->addWidget(spin_segthr,12,1,1,1);
-    QLabel* label_7 = new QLabel("spine filter: point #");
-    gridLayout->addWidget(label_7,12,2,1,1);
-    gridLayout->addWidget(spin_spineLen,12,3,1,1);
-    QLabel* label_8 = new QLabel("turning angle");
-    gridLayout->addWidget(label_8,12,4,1,1);
-    gridLayout->addWidget(spin_spineAng,12,5,1,1);
+    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    gridLayout->addWidget(label_6,12,0,1,2);
+    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    gridLayout->addWidget(check_spine,13,0,1,2);
+    QLabel* label_7 = new QLabel("point #:");
+    gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineLen,14,1,1,1);
+    QLabel* label_8 = new QLabel("turning angle:");
+    gridLayout->addWidget(label_8,14,2,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineAng,14,3,1,1);
+    QLabel* label_9 = new QLabel("radius:");
+    gridLayout->addWidget(label_9,14,4,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineRadius,14,5,1,1);
+
     btn_match = new QPushButton("Match"); btn_match->setAutoDefault(false);
     connect(btn_match, SIGNAL(clicked()), this, SLOT(match()));
-    gridLayout->addWidget(btn_match,13,5,1,1);
+    gridLayout->addWidget(btn_match,15,5,1,1);
 
     setLayout(gridLayout);
+}
+
+void NeuronMatchOnlyDialog::match()
+{
+    gridLayout->setEnabled(false);
+    NeuronTree nt0_run,nt1_run;
+    backupNeuron(*nt0,nt0_run);
+    backupNeuron(*nt1,nt1_run);
+    //init matching function
+    neuron_match_clique matchfunc(&nt0_run,&nt1_run);
+
+    //parameters
+    matchfunc.direction=cb_dir->currentIndex();
+    matchfunc.zscale=spin_zscale->value();
+    matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
+    matchfunc.pmatchThr = spin_matchdis->value();
+    matchfunc.spanCand = spin_searchspan->value();
+    matchfunc.cmatchThr = spin_cmatchdis->value();
+    matchfunc.segmentThr = spin_segthr->value();
+    if(check_spine->isChecked()){
+        matchfunc.spineLengthThr = spin_spineLen->value();
+        matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+        matchfunc.spineRadiusThr = spin_spineRadius->value();
+    }else{
+        matchfunc.spineLengthThr = 0;
+        matchfunc.spineRadiusThr = 0;
+    }
+
+    //init clique and candidate
+    matchfunc.init();
+
+    //global match
+    qDebug()<<"start global search";
+    matchfunc.globalmatch();
+
+    //get parameter
+    affine[0]=matchfunc.shift_x;
+    affine[1]=matchfunc.shift_y;
+    affine[2]=matchfunc.shift_z;
+    affine[3]=matchfunc.rotation_ang;
+    affine[4]=matchfunc.rotation_cx;
+    affine[5]=matchfunc.rotation_cy;
+    affine[6]=matchfunc.rotation_cz;
+
+    //populate markers
+    matchfunc.update_matchedPoints_to_Markers(mList);
+
+    //quit
+    accept();
+}
+
+void NeuronMatchOnlyDialog::spineCheck(int c)
+{
+    if(check_spine->isChecked()){
+        spin_spineLen->setEnabled(true);
+        spin_spineAng->setEnabled(true);
+        spin_spineRadius->setEnabled(true);
+    }else{
+        spin_spineLen->setEnabled(false);
+        spin_spineAng->setEnabled(false);
+        spin_spineRadius->setEnabled(false);
+    }
 }
 
 NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
@@ -160,120 +232,103 @@ void NeuronLiveMatchDialog::creat()
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
     spin_spineLen = new QSpinBox();
-    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
-    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30); spin_spineAng->setEnabled(false);
+    spin_spineRadius = new QDoubleSpinBox();
+    spin_spineRadius->setRange(0,100000); spin_spineRadius->setValue(3); spin_spineRadius->setEnabled(false);
+    check_spine = new QCheckBox("filter spines when matching:");
+    check_spine -> setChecked(false);
+    connect(check_spine, SIGNAL(stateChanged(int)), this, SLOT(spineCheck(int)));
+
     QLabel* label_0 = new QLabel("stacking direction: ");
-    gridLayout->addWidget(label_0,9,0,1,2);
+    gridLayout->addWidget(label_0,9,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(cb_dir,9,2,1,1);
     QLabel* label_1 = new QLabel("resacle stacking direction: ");
-    gridLayout->addWidget(label_1,9,3,1,2);
+    gridLayout->addWidget(label_1,9,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_zscale,9,5,1,1);
     QLabel* label_2 = new QLabel("Max angular to match points (0~180): ");
-    gridLayout->addWidget(label_2,10,0,1,2);
+    gridLayout->addWidget(label_2,10,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_ang,10,2,1,1);
     QLabel* label_3 = new QLabel("Max distance to match points: ");
-    gridLayout->addWidget(label_3,10,3,1,2);
+    gridLayout->addWidget(label_3,10,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_matchdis,10,5,1,1);
     QLabel* label_4 = new QLabel("match candidates searching span: ");
-    gridLayout->addWidget(label_4,11,0,1,2);
+    gridLayout->addWidget(label_4,11,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_searchspan,11,2,1,1);
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
-    gridLayout->addWidget(label_5,11,3,1,2);
+    gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter: ");
-    gridLayout->addWidget(label_6,12,0,1,1);
-    gridLayout->addWidget(spin_segthr,12,1,1,1);
-    QLabel* label_7 = new QLabel("spine filter: point #");
-    gridLayout->addWidget(label_7,12,2,1,1);
-    gridLayout->addWidget(spin_spineLen,12,3,1,1);
-    QLabel* label_8 = new QLabel("turning angle");
-    gridLayout->addWidget(label_8,12,4,1,1);
-    gridLayout->addWidget(spin_spineAng,12,5,1,1);
+    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    gridLayout->addWidget(check_spine,13,0,1,2);
+    QLabel* label_7 = new QLabel("point #:");
+    gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineLen,14,1,1,1);
+    QLabel* label_8 = new QLabel("turning angle:");
+    gridLayout->addWidget(label_8,14,2,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineAng,14,3,1,1);
+    QLabel* label_9 = new QLabel("radius:");
+    gridLayout->addWidget(label_9,14,4,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineRadius,14,5,1,1);
 
     //stitching zone
+    int stitchrow=15;
     QFrame *line_1 = new QFrame();
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
-    gridLayout->addWidget(line_1,13,0,1,6);
+    gridLayout->addWidget(line_1,stitchrow,0,1,6);
     QLabel* label_b = new QLabel("Step 2: stitch paired points");
-    gridLayout->addWidget(label_b,14,0,1,5);
+    gridLayout->addWidget(label_b,stitchrow+1,0,1,5);
     cb_pair = new QComboBox();
-    gridLayout->addWidget(cb_pair,15,0,1,2);
+    gridLayout->addWidget(cb_pair,stitchrow+2,0,1,2);
     connect(cb_pair, SIGNAL(currentIndexChanged(int)), this, SLOT(change_pair(int)));
     btn_manualmatch = new QPushButton("Manually Add"); btn_manualmatch->setAutoDefault(false);
     connect(btn_manualmatch, SIGNAL(clicked()), this, SLOT(manualadd()));
-    gridLayout->addWidget(btn_manualmatch,15,2,1,1);
+    gridLayout->addWidget(btn_manualmatch,stitchrow+2,2,1,1);
     btn_skip = new QPushButton("Skip"); btn_skip->setAutoDefault(false);
     connect(btn_skip, SIGNAL(clicked()), this, SLOT(skip()));
-    gridLayout->addWidget(btn_skip,15,3,1,1);
+    gridLayout->addWidget(btn_skip,stitchrow+2,3,1,1);
     btn_stitch = new QPushButton("Stitch"); btn_stitch->setAutoDefault(false);
     connect(btn_stitch, SIGNAL(clicked()), this, SLOT(stitch()));
-    gridLayout->addWidget(btn_stitch,15,4,1,1);
+    gridLayout->addWidget(btn_stitch,stitchrow+2,4,1,1);
     btn_stitchall = new QPushButton("Stitch All"); btn_stitchall->setAutoDefault(false);
     connect(btn_stitchall, SIGNAL(clicked()), this, SLOT(stitchall()));
-    gridLayout->addWidget(btn_stitchall,15,5,1,1);
+    gridLayout->addWidget(btn_stitchall,stitchrow+2,5,1,1);
 
     btn_stitch->setEnabled(false);
     btn_stitchall->setEnabled(false);
     btn_skip->setEnabled(false);
 
     //operation zone
+    int optrow=18;
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
-    gridLayout->addWidget(line_2,16,0,1,6);
+    gridLayout->addWidget(line_2,optrow,0,1,6);
     btn_output = new QPushButton("Save"); btn_output->setAutoDefault(false);
-    gridLayout->addWidget(btn_output,17,4,1,1);
+    gridLayout->addWidget(btn_output,optrow+1,4,1,1);
     connect(btn_output,     SIGNAL(clicked()), this, SLOT(output()));
     btn_quit = new QPushButton("Quit"); btn_quit->setAutoDefault(false);
     connect(btn_quit,     SIGNAL(clicked()), this, SLOT(reject()));
-    gridLayout->addWidget(btn_quit,17,5,1,1);
+    gridLayout->addWidget(btn_quit,optrow+1,5,1,1);
 
     setLayout(gridLayout);
 }
 
-void NeuronMatchOnlyDialog::match()
+
+void NeuronLiveMatchDialog::spineCheck(int c)
 {
-    gridLayout->setEnabled(false);
-    NeuronTree nt0_run,nt1_run;
-    backupNeuron(*nt0,nt0_run);
-    backupNeuron(*nt1,nt1_run);
-    //init matching function
-    neuron_match_clique matchfunc(&nt0_run,&nt1_run);
-
-    //parameters
-    matchfunc.direction=cb_dir->currentIndex();
-    matchfunc.zscale=spin_zscale->value();
-    matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
-    matchfunc.pmatchThr = spin_matchdis->value();
-    matchfunc.spanCand = spin_searchspan->value();
-    matchfunc.cmatchThr = spin_cmatchdis->value();
-    matchfunc.segmentThr = spin_segthr->value();
-    matchfunc.spineLengthThr = spin_spineLen->value();
-    matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
-
-    //init clique and candidate
-    matchfunc.init();
-
-    //global match
-    qDebug()<<"start global search";
-    matchfunc.globalmatch();
-
-    //get parameter
-    affine[0]=matchfunc.shift_x;
-    affine[1]=matchfunc.shift_y;
-    affine[2]=matchfunc.shift_z;
-    affine[3]=matchfunc.rotation_ang;
-    affine[4]=matchfunc.rotation_cx;
-    affine[5]=matchfunc.rotation_cy;
-    affine[6]=matchfunc.rotation_cz;
-
-    //populate markers
-    matchfunc.update_matchedPoints_to_Markers(mList);
-
-    //quit
-    accept();
+    if(check_spine->isChecked()){
+        spin_spineLen->setEnabled(true);
+        spin_spineAng->setEnabled(true);
+        spin_spineRadius->setEnabled(true);
+    }else{
+        spin_spineLen->setEnabled(false);
+        spin_spineAng->setEnabled(false);
+        spin_spineRadius->setEnabled(false);
+    }
 }
 
 void NeuronLiveMatchDialog::checkwindow()
@@ -346,8 +401,14 @@ void NeuronLiveMatchDialog::match()
     matchfunc->spanCand = spin_searchspan->value();
     matchfunc->cmatchThr = spin_cmatchdis->value();
     matchfunc->segmentThr = spin_segthr->value();
-    matchfunc->spineLengthThr = spin_spineLen->value();
-    matchfunc->spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+    if(check_spine->isChecked()){
+        matchfunc->spineLengthThr = spin_spineLen->value();
+        matchfunc->spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+        matchfunc->spineRadiusThr = spin_spineRadius->value();
+    }else{
+        matchfunc->spineLengthThr = 0;
+        matchfunc->spineRadiusThr = 0;
+    }
 
     //init clique and candidate
     matchfunc->init();
@@ -761,38 +822,48 @@ void NeuronMatchDialog::creat()
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
     spin_spineLen = new QSpinBox();
-    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5);
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
-    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30);
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30); spin_spineAng->setEnabled(false);
+    spin_spineRadius = new QDoubleSpinBox();
+    spin_spineRadius->setRange(0,100000); spin_spineRadius->setValue(3); spin_spineRadius->setEnabled(false);
+    check_spine = new QCheckBox("filter spines when matching:");
+    check_spine -> setChecked(false);
+    connect(check_spine, SIGNAL(stateChanged(int)), this, SLOT(spineCheck(int)));
     QLabel* label_0 = new QLabel("stacking direction: ");
-    gridLayout->addWidget(label_0,9,0,1,2);
+    gridLayout->addWidget(label_0,9,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(cb_dir,9,2,1,1);
     QLabel* label_1 = new QLabel("resacle stacking direction: ");
-    gridLayout->addWidget(label_1,9,3,1,2);
+    gridLayout->addWidget(label_1,9,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_zscale,9,5,1,1);
     QLabel* label_2 = new QLabel("Max angular to match points (0~180): ");
-    gridLayout->addWidget(label_2,10,0,1,2);
+    gridLayout->addWidget(label_2,10,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_ang,10,2,1,1);
     QLabel* label_3 = new QLabel("Max distance to match points: ");
-    gridLayout->addWidget(label_3,10,3,1,2);
+    gridLayout->addWidget(label_3,10,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_matchdis,10,5,1,1);
     QLabel* label_4 = new QLabel("match candidates searching span: ");
-    gridLayout->addWidget(label_4,11,0,1,2);
+    gridLayout->addWidget(label_4,11,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_searchspan,11,2,1,1);
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
-    gridLayout->addWidget(label_5,11,3,1,2);
+    gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter: ");
-    gridLayout->addWidget(label_6,12,0,1,1);
-    gridLayout->addWidget(spin_segthr,12,1,1,1);
-    QLabel* label_7 = new QLabel("spine filter: point #");
-    gridLayout->addWidget(label_7,12,2,1,1);
-    gridLayout->addWidget(spin_spineLen,12,3,1,1);
-    QLabel* label_8 = new QLabel("turning angle");
-    gridLayout->addWidget(label_8,12,4,1,1);
-    gridLayout->addWidget(spin_spineAng,12,5,1,1);
+    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_segthr,12,2,1,1);
+    gridLayout->addWidget(check_spine,13,0,1,2);
+    QLabel* label_7 = new QLabel("point #:");
+    gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineLen,14,1,1,1);
+    QLabel* label_8 = new QLabel("turning angle:");
+    gridLayout->addWidget(label_8,14,2,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineAng,14,3,1,1);
+    QLabel* label_9 = new QLabel("radius:");
+    gridLayout->addWidget(label_9,14,4,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineRadius,14,5,1,1);
 
     //operation zone
+    int optrow=15;
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
@@ -930,8 +1001,15 @@ void NeuronMatchDialog::run()
     matchfunc.spanCand = spin_searchspan->value();
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
-    matchfunc.spineLengthThr = spin_spineLen->value();
-    matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+    if(check_spine->isChecked()){
+        matchfunc.spineLengthThr = spin_spineLen->value();
+        matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+        matchfunc.spineRadiusThr = spin_spineRadius->value();
+    }else{
+        matchfunc.spineLengthThr = 0;
+        matchfunc.spineRadiusThr = 0;
+    }
+
 
     //init clique and candidate
     matchfunc.init();
@@ -955,6 +1033,19 @@ void NeuronMatchDialog::run()
 
     gridLayout->setEnabled(true);
     v3d_msg("matching finished");
+}
+
+void NeuronMatchDialog::spineCheck(int c)
+{
+    if(check_spine->isChecked()){
+        spin_spineLen->setEnabled(true);
+        spin_spineAng->setEnabled(true);
+        spin_spineRadius->setEnabled(true);
+    }else{
+        spin_spineLen->setEnabled(false);
+        spin_spineAng->setEnabled(false);
+        spin_spineRadius->setEnabled(false);
+    }
 }
 
 neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topNeuron)
@@ -1989,8 +2080,8 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
     //neuron type
     initNeuronType(nt,ng,neuronType);
 
-    //for test
-    qDebug()<<"connected component";
+//    //for test
+//    qDebug()<<"connected component";
 
     //connected component
     for(V3DLONG cid=0; cid<curid; cid++){
@@ -2028,8 +2119,8 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
     }
 
 
-    //for test
-    qDebug()<<"find candidate";
+//    //for test
+//    qDebug()<<"find candidate";
 
     //find candidate
     QList<int> tmpcand; tmpcand.clear();
@@ -2053,8 +2144,8 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
         }
     }
 
-    //for test
-    qDebug()<<"finalize candidate";
+//    //for test
+//    qDebug()<<"finalize candidate";
 
     for(V3DLONG i=0; i<tmpcand.size(); i++){
         XYZ tmpdir(0,0,0);
@@ -2146,9 +2237,6 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
         }
     }
 
-    //for test
-    qDebug()<<"init neuron type: basic done";
-
     //spine
     if(length<=1e-10) return 0;
 
@@ -2188,10 +2276,6 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
         }
     }
 
-
-    //for test
-    qDebug()<<"init neuron type: spine done";
-
     //find the spine that is matchable
     for(QMap<V3DLONG, QVector<V3DLONG> >::Iterator iter = fork_spines_map.begin();
         iter != fork_spines_map.end(); iter++){
@@ -2220,10 +2304,6 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
         default:
             neuronType[idx]=55; //dendritic fork
         }
-
-
-        //for test
-        qDebug()<<"init neuron type: matchable "<<idx<<":"<<count<<":"<<neuronType[idx];
 
 
         if(neuronType[idx]==56){
@@ -2302,9 +2382,6 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
                 }
             }
         }
-
-        //for test
-        qDebug()<<"init neuron type: matchable "<<idx<<":"<<count<<":"<<neuronType[idx];
     }
     return spinecount;
 }

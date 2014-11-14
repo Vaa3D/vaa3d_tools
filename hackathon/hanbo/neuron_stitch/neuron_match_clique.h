@@ -108,6 +108,7 @@ private:
 
 public slots:
     void match();
+    void spineCheck(int c);
 
 private:
     NeuronTree *nt0, *nt1;
@@ -120,7 +121,8 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_match;
     QSpinBox *spin_spineLen;
-    QDoubleSpinBox *spin_spineAng;
+    QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
+    QCheckBox *check_spine;
 };
 
 class NeuronLiveMatchDialog : public QDialog
@@ -147,6 +149,7 @@ public slots:
     void stitchall();
     void output();
     void change_pair(int idx);
+    void spineCheck(int c);
 
 private:
     V3DPluginCallback2 * callback;
@@ -169,7 +172,8 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
     QSpinBox *spin_spineLen;
-    QDoubleSpinBox *spin_spineAng;
+    QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
+    QCheckBox *check_spine;
 };
 
 class NeuronMatchDialog : public QDialog
@@ -190,6 +194,7 @@ public slots:
     bool load1();
     bool output();
     void outputchange(QString text);
+    void spineCheck(int c);
 
 private:
 //    V3DPluginCallback2 * callback;
@@ -214,7 +219,8 @@ public:
     QPushButton *btn_quit, *btn_run;
     QCheckBox *check_stitch;
     QSpinBox *spin_spineLen;
-    QDoubleSpinBox *spin_spineAng;
+    QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
+    QCheckBox *check_spine;
 };
 
 #endif // NEURON_MATCH_CLIQUE_H
