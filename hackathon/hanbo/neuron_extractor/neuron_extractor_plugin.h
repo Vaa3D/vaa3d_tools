@@ -24,9 +24,12 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
     void extract(QList<NeuronTree> *ntList, LandmarkList* mList);
+    void extract_spine(const NeuronTree& nt, QList<NeuronSWC>& spine, int length);
+    void assignComponents(NeuronTree& nt);
+
 };
 
-bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
+bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName, QString orgSaveName);
 
 #endif
 
