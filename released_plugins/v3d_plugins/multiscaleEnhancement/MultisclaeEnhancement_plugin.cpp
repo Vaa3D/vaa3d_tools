@@ -84,7 +84,8 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
                                             QString temp_soma,
                                             QString temp_gsdtsoma,
                                             QString temp_ds,
-                                            QString temp_gsdtds);
+                                            QString temp_gsdtds,
+                                            LandmarkList listLandmarks);
 
 template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      const T* data1d,
@@ -710,7 +711,8 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)p4DImage->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
+        LandmarkList listLandmarks = callback.getLandmark(curwin);
+        enhancementWithsoma(callback,(unsigned char *)p4DImage->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
     }
     else
     {
@@ -1239,7 +1241,9 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
+        LandmarkList listLandmarks = callback.getLandmark(curwin);
+
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
     }
     else
     {
@@ -1364,8 +1368,9 @@ void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent)
     QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
     QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
+    LandmarkList listLandmarks = callback.getLandmark(curwin);
     unsigned char* Enhancement_soma = 0;
-    enhancementWithsoma(callback,(unsigned char *)data1d_original,(unsigned char*)data1d_enhanced,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
+    enhancementWithsoma(callback,(unsigned char *)data1d_original,(unsigned char*)data1d_enhanced,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
     simple_saveimage_wrapper(callback,p4DImage_name.toStdString().c_str(), (unsigned char *)Enhancement_soma, in_sz, 1);
     if(Enhancement_soma) {delete Enhancement_soma; Enhancement_soma = 0;}
     if(data1d_original) {delete data1d_original; data1d_original = 0;}
@@ -1496,7 +1501,9 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)subject->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
+        LandmarkList listLandmarks;
+
+        enhancementWithsoma(callback,(unsigned char *)subject->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
     }
     else
     {
@@ -1811,7 +1818,8 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
+        LandmarkList listLandmarks;
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
     }
     else
     {
@@ -2730,42 +2738,55 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
          }
     }
 
-    unsigned char * data1d_original = 0;
-    int datatype;
-    V3DLONG in_zz[4];
+//    unsigned char * data1d_original = 0;
+//    int datatype;
+//    V3DLONG in_zz[4];
 
-    if(!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d_original, in_zz, datatype))
+//    if(!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d_original, in_zz, datatype))
+//    {
+//        cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+//        return false;
+//    }
+
+//    V3DLONG N = in_zz[0];
+//    V3DLONG M = in_zz[1];
+//    V3DLONG P = in_zz[2];
+
+    unsigned char * data1d_region = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+
+    int datatype;
+
+//    V3DLONG blockpagesz = (vim.lut[index_tile].end_pos[1] - vim.lut[index_tile].start_pos[1] + 1) * (vim.lut[index_tile].end_pos[0] - vim.lut[index_tile].start_pos[0] + 1) * P;
+//    try {data1d_region = new unsigned char [blockpagesz];}
+//    catch(...)  {v3d_msg("cannot allocate memory for data1d_region."); return false;}
+
+    if (!loadRawRegion((char *)inimg_file.toStdString().c_str(), data1d_region, in_sz, in_zz,datatype,vim.lut[index_tile].start_pos[0],vim.lut[index_tile].start_pos[1],
+                                    vim.lut[index_tile].start_pos[2],vim.lut[index_tile].end_pos[0]+1,vim.lut[index_tile].end_pos[1]+1,vim.lut[index_tile].end_pos[2]+1))
     {
         cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
         return false;
     }
 
-    V3DLONG N = in_zz[0];
-    V3DLONG M = in_zz[1];
-    V3DLONG P = in_zz[2];
 
-    unsigned char * data1d_region = 0;
-    V3DLONG blockpagesz = (vim.lut[index_tile].end_pos[1] - vim.lut[index_tile].start_pos[1] + 1) * (vim.lut[index_tile].end_pos[0] - vim.lut[index_tile].start_pos[0] + 1) * P;
-    try {data1d_region = new unsigned char [blockpagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for data1d_region."); return false;}
+//    V3DLONG i = 0;
+//    for(V3DLONG iz = 0; iz < P; iz++)
+//    {
+//        V3DLONG offsetk = iz*M*N;
+//        for(V3DLONG iy = vim.lut[index_tile].start_pos[1]; iy <= vim.lut[index_tile].end_pos[1]; iy++)
+//        {
+//            V3DLONG offsetj = iy*N;
+//            for(V3DLONG ix = vim.lut[index_tile].start_pos[0]; ix <= vim.lut[index_tile].end_pos[0]; ix++)
+//            {
 
-    V3DLONG i = 0;
-    for(V3DLONG iz = 0; iz < P; iz++)
-    {
-        V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = vim.lut[index_tile].start_pos[1]; iy <= vim.lut[index_tile].end_pos[1]; iy++)
-        {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = vim.lut[index_tile].start_pos[0]; ix <= vim.lut[index_tile].end_pos[0]; ix++)
-            {
+//                data1d_region[i] = data1d_original[offsetk + offsetj + ix];
+//                i++;
+//            }
+//        }
+//    }
 
-                data1d_region[i] = data1d_original[offsetk + offsetj + ix];
-                i++;
-            }
-        }
-    }
-
-    if(data1d_original) {delete  []data1d_original; data1d_original = 0;}
+//    if(data1d_original) {delete  []data1d_original; data1d_original = 0;}
 
 //    QString temp_raw = inimg_file + "_temp.v3draw";
 //    QString temp_gf = inimg_file + "_gf.v3draw";
@@ -2779,17 +2800,22 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
     QString temp_ds = inimg_file + "_ds.v3draw";
     QString temp_gsdtds = inimg_file + "_gsdtds.v3draw";
 
-    unsigned char* Enhancement_soma = 0;
-    enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
-    string image_nosoma = fn +("_nosoma.raw");
-    rename(fn.c_str(),image_nosoma.c_str());
-    simple_saveimage_wrapper(callback,fn.c_str(), (unsigned char *)Enhancement_soma, sz_enhanced, 1);
 
     ImageMarker S;
     QList <ImageMarker> marklist;
     S.x = file_inmarkers[0].x - vim.lut[index_tile].start_pos[0] + 1;
     S.y = file_inmarkers[0].y - vim.lut[index_tile].start_pos[1] + 1;
     S.z = file_inmarkers[0].z;
+
+    LandmarkList listLandmarks;
+    LocationSimple tmpLocation(S.x,S.y ,S.z);
+
+    listLandmarks.append(tmpLocation);
+    unsigned char* Enhancement_soma = 0;
+    enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds,listLandmarks);
+    string image_nosoma = fn +("_nosoma.raw");
+    rename(fn.c_str(),image_nosoma.c_str());
+    simple_saveimage_wrapper(callback,fn.c_str(), (unsigned char *)Enhancement_soma, sz_enhanced, 1);
 
     marklist.append(S);
     string markerpath = fn +(".marker");
@@ -3596,7 +3622,8 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
                                             QString temp_soma,
                                             QString temp_gsdtsoma,
                                             QString temp_ds,
-                                            QString temp_gsdtds)
+                                            QString temp_gsdtds,
+                                            LandmarkList listLandmarks)
 
 {
     if (!in_sz)
@@ -3622,8 +3649,6 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     int soma_y = 0;
     int soma_z = 0;
 
-    v3dhandle curwin = callback.currentImageWindow();
-    LandmarkList listLandmarks = callback.getLandmark(curwin);
     if(listLandmarks.count() ==0)
         somalocation(callback,data1d,in_sz,1,soma_x,soma_y,soma_z, temp_ds, temp_gsdtds);
     else
@@ -3719,8 +3744,8 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
         return;
     }
 
-   // remove(temp_soma.toStdString().c_str());
-   // remove(temp_gsdtsoma.toStdString().c_str());
+    remove(temp_soma.toStdString().c_str());
+    remove(temp_gsdtsoma.toStdString().c_str());
 
     int Th_gsdt = 50; //was 50
 
