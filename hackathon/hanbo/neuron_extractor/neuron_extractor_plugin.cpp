@@ -28,7 +28,7 @@ QStringList neuron_extractor_by_marker::menulist() const
 QStringList neuron_extractor_by_marker::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("label_components")
 		<<tr("func2")
 		<<tr("help");
 }
@@ -180,9 +180,34 @@ bool neuron_extractor_by_marker::dofunc(const QString & func_name, const V3DPlug
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("func1"))
+    if (func_name == tr("label_components"))
     {
-        v3d_msg("To be implemented.");
+        cout<<"==== label components ===="<<endl;
+        if(infiles.size()!=1 || outfiles.size()!=1)
+        {
+            qDebug("ERROR: please set input and output!");
+            printHelp();
+            return false;
+        }
+
+        //load neurons
+        QString fname_nt = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+        NeuronTree nt;
+        if (fname_nt.toUpper().endsWith(".SWC") || fname_nt.toUpper().endsWith(".ESWC")){
+            nt = readSWC_file(fname_nt);
+        }
+        if(nt.listNeuron.size()<=0){
+            qDebug()<<"failed to read SWC file: "<<fname_nt;
+            return false;
+        }
+
+        assignComponents(nt);
+
+        //output
+        if(!export_list2file(nt.listNeuron,fname_output, fname_nt)){
+            qDebug()<<"Cannot open file "<< fname_output<< " for writing!";
+        }
     }
     else if (func_name == tr("func2"))
     {
@@ -190,11 +215,17 @@ bool neuron_extractor_by_marker::dofunc(const QString & func_name, const V3DPlug
     }
     else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printHelp();
 	}
 	else return false;
 
 	return true;
+}
+
+void neuron_extractor_by_marker::printHelp()
+{
+    cout<<"\nUsage: v3d -x neuron_extractor -f label_components -i <input.swc> -o <output.swc>"<<endl;
+    cout<<"\n";
 }
 
 void neuron_extractor_by_marker::extract_spine(const NeuronTree& nt, QList<NeuronSWC>& spine, int length)

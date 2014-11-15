@@ -27,6 +27,7 @@ public:
     void extract_spine(const NeuronTree& nt, QList<NeuronSWC>& spine, int length);
     void assignComponents(NeuronTree& nt);
 
+    void printHelp();
 };
 
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName, QString orgSaveName);
