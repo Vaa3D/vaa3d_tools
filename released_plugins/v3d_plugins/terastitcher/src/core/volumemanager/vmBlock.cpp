@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-11-04. Giulio.     @FIXED bug in conversion from pixel uint16 to float
 * 2014-09-09. Alessandro. @FIXED 'getXML()' method to deal with empty stacks.
 * 2014-09-09. Alessandro. @BUG in 'loadImageStack()'. 'first_file' and 'last_file' are set to '-1' by default. But here, they are never checked nor corrected. 
 * 2014-09-09. Alessandro. @FIXED 'loadImageStack()' method to deal with empty tiles.
@@ -67,7 +68,7 @@ Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
-    printf("\t\t\t\tin Block::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
+    printf("\t\t\t\tin Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
 		_ROW_INDEX, _COL_INDEX, _DIR_NAME);
 	#endif
 
@@ -91,7 +92,7 @@ Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
-    printf("\t\t\t\tin Block::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
+    printf("\t\t\t\tin Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
 		_ROW_INDEX, _COL_INDEX);
 	#endif
 
@@ -401,7 +402,7 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 		return STACKED_IMAGE;
 	}
 
-	Segm_t *intersect_segm = Intersects(first_file, last_file);
+	Segm_t *intersect_segm = Intersects(first_file, last_file+1); // the second parameter should be the last slice + 1
 	unsigned char *data = new unsigned char[HEIGHT * WIDTH * (last_file-first_file+1) * N_BYTESxCHAN * N_CHANS];
 	unsigned char *temp = data;
 
@@ -425,9 +426,9 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 		throw iom::exception(errMsg);
 	}
 
-	if ( N_BYTESxCHAN == 1)
+	if ( N_BYTESxCHAN == 1 )
 		scale_factor  = 255.0F;
-	else if (N_BYTESxCHAN == 2)
+	else if ( N_BYTESxCHAN == 2 )
 		scale_factor = 65535.0F;
 	else
 	{
@@ -441,8 +442,13 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 	int offset;
 
 	if ( N_CHANS == 1 ) {
-		for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-			STACKED_IMAGE[i] = (iom::real_t) data[i]/scale_factor;
+		// 2014-11-04. Giulio. @FIXED
+		if ( N_BYTESxCHAN == 1 )
+			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+				STACKED_IMAGE[i] = (iom::real_t) data[i]/scale_factor;
+		else // N_BYTESxCHAN == 2
+			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+				STACKED_IMAGE[i] = (iom::real_t) ((iom::uint16 *)data)[i]/scale_factor; // data must be interpreted as a uint16 array
 	}
 	else { // conversion to an intensity image
 		if ( iom::CHANS == iom::ALL ) {
@@ -464,8 +470,13 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): wrong value for parameter iom::CHANNEL_SELECTION.", ROW_INDEX, COL_INDEX);
 			throw iom::exception(errMsg);
 		}
-		for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-			STACKED_IMAGE[i] = (iom::real_t) data[3*i + offset]/scale_factor;
+		// 2014-11-04. Giulio. @FIXED
+		if ( N_BYTESxCHAN == 1 )
+			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+				STACKED_IMAGE[i] = (iom::real_t) data[3*i + offset]/scale_factor;
+		else // N_BYTESxCHAN == 2
+			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+				STACKED_IMAGE[i] = (iom::real_t) ((iom::uint16 *)data)[3*i + offset]/scale_factor; // data must be interpreted as a uint16 array
 	}
 
 	delete [] data;
@@ -583,6 +594,7 @@ throw (iom::exception)
 	while (pch != NULL)
 	{
 		BLOCK_SIZE[j]=atoi(pch);
+		j++; //141027_Onofri: added missing increment
 		pch = strtok (NULL, ",");
 	}
 	delete[] BLOCK_SIZES2; 
@@ -636,7 +648,7 @@ throw (iom::exception)
 
 Segm_t* Block::Intersects(int D0, int D1) {
 
-	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+BLOCK_SIZE[N_BLOCKS-1] || D1 < 0 )
+	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+BLOCK_SIZE[N_BLOCKS-1] || D1 <= 0 )
 		// there is no intersection
 		return NULL;
 
@@ -655,7 +667,7 @@ Segm_t* Block::Intersects(int D0, int D1) {
 	found1 = false;
 	i1     = (int)(N_BLOCKS-1);
 	while ( i1>0 && !found1 )
-		if ( D1 >= BLOCK_ABS_D[i1] ) // GI_140502 changed '>' to '>=' 
+		if ( D1 > BLOCK_ABS_D[i1] ) // GI_141110 re-changed '>=' to '>' (D1 is the last index + 1)
 			found1 = true;
 		else
 			i1--;

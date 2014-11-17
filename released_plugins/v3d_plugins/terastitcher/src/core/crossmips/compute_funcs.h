@@ -71,7 +71,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delay
 //					    int dimi, int dimj, int dimk, int ind_xy, int ind_xz, int ind_yz, NCC_descr_t *result);
 void compute_Alignment( NCC_parms_t *NCC_params, iom::real_t *NCC_xy, iom::real_t *NCC_xz, iom::real_t *NCC_yz,
 					    int dimi, int dimj, int dimk, int dx1, int dx2, int dy1, int dy2, int dz1, int dz2,  bool failed_xy, bool failed_xz, bool failed_yz, NCC_descr_t *result);
-/* given the three NCCs, the corresponding indicex of NCC maxima and their displacements with respect to the 
+/* given the three NCCs, the corresponding indices of NCC maxima and their displacements with respect to the 
  * initial alignment, returns in the parameter result the three alignments and the corresponding reliability indices;
  * alignments represent offsets of the second stack with respect to the first one
  */

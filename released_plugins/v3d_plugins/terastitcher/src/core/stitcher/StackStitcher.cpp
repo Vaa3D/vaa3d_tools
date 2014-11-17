@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-11-03. Giulio.     @FIXED stop and resume facility should be inactive when in test mode
+* 2014-10-31. Giulio.     @ADDED stop and resume facility - saved_img_format has been used to check if resume parameters have not been changed
 * 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
 * 2014-09-09. Alessandro. @FIXED missing buffer initialization in 'getStripe()' method.
 * 2014-09-09. Alessandro. @FIXED 'mergeTiles()' method: propagate iim::IOException from the imagemanager module (otherwise it will crash...) and disable iim::DEBUG
@@ -54,6 +56,9 @@
 #include "../imagemanager/VirtualVolume.h"
 #include "../imagemanager/StackedVolume.h"
 #include "../iomanager/IOPluginAPI.h"
+
+#include "resumer.h" // GI_141029: added stop and resume facility
+
 
 using namespace iomanager;
 using namespace volumemanager;
@@ -946,11 +951,35 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 	z_ratio= (int) depth/z_max_res;
 	buffer = new iom::real_t[height*width*z_max_res];
 
+	// 2014-10-31. Giulio. @ADDED stop and resume facility
+	FILE *fhandle;
+	sint64 z;
+	sint64 z_parts;
+	int dummy[S_MAX_MULTIRES]; // the resume facility requires parameters that are not used by the 2D series representation
+
+	// 2014-11-03. Giulio. @FIXED stop and resume facility should inactive in test mode
+	if ( !test_mode ) {
+		// WARNING: uses saved_img_format to check that the operation has been resumed withe the sae parameters
+		if ( initResumer(saved_img_format,output_path.c_str(),resolutions_size,resolutions,0,0,0,HALVE_BY_MEAN,saved_img_format,saved_img_depth,fhandle) ) {
+			readResumerState(fhandle,output_path.c_str(),resolutions_size,dummy,dummy,dummy,z,z_parts);
+		}
+		else {
+			// dummy is initialized to zeros: substitutes parameters not used in the 2D case
+			memset(dummy,0,sizeof(int)*S_MAX_MULTIRES);
+			z = this->D0;
+			z_parts = 1;
+		}
+	}
+	else { // test mode
+		z = this->D0;
+		z_parts = 1;
+	}
+
 	#ifdef S_TIME_CALC
 	double proc_time;
 	#endif
 
-	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
+	for(/* 2014-10-31. Giulio. @DELETED (sint64 z = this->D0, z_parts = 1) */; z < this->D1; z += z_max_res, z_parts++)
 	{
 		// 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
 		for(int i=0; i<height*width*z_max_res; i++)
@@ -1176,9 +1205,16 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 				}
 			}
 		}
+
+		// 2014-10-31. Giulio. @ADDED save next group data
+		if ( !test_mode )
+			saveResumerState(fhandle,resolutions_size,dummy,dummy,dummy,z+z_max_res,z_parts+1);
 	}
 
 	if ( !test_mode ) {
+		// 2014-10-31. Giulio. @ADDED close resume 
+		closeResumer(fhandle,output_path.c_str());
+
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
 		iim::ref_sys reference = *((iim::ref_sys *) &temp); // the cast is needed because there are two ref_sys in different name spaces

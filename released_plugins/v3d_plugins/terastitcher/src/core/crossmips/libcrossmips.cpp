@@ -57,6 +57,23 @@
 
 # include "compute_funcs.h"
 
+// 2014-11-04 Giulio. @ADDED improved the conditionally compiled code thaa can be used to save images involved in NCC
+
+/* Flag _WRITE_IMGS enables the saving of MIPs and NCCs
+ * Flag _WRITE_STKS enables the saving of the input substacks too
+ */
+
+#ifdef _WRITE_IMGS
+# include <string.h>
+
+# define _MAX_FNAME_LEN   1000
+# define _PREFIX_LEN   8   // digits used to generate unique file names
+# define _MAX_COUNTER  100000000 // max counter value must be 10^(_PREFIX_LEN) - 1
+
+// used to generate unique identifiers for image files
+static int _counter = 0; 
+# endif
+
 
 bool write_3D_stack ( char *fname, iom::real_t *stck, int dimi, int dimj, int dimk );
 
@@ -67,6 +84,20 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 #if CM_VERBOSE > 1
 	printf("\nin libcrossmips::norm_cross_corr_mips(A[%.6f-%.6f], B[%.6f-%.6f], dimk[%d], dimi[%d], dimj[%d], nk[%d], ni[%d], nj[%d], delayk[%d], delayi[%d], delayj[%d], side[%d]\n",
 		A[0], A[(dimk-1)*dimj*dimi + (dimi-1)*dimj + dimj -1], B[0], B[(dimk-1)*dimj*dimi + (dimi-1)*dimj + dimj -1], dimk, dimi, dimj, nk, ni, nj, delayk, delayi, delayj, side );
+#endif
+
+#ifdef _WRITE_IMGS
+	char _fname[_MAX_FNAME_LEN]; // used ti assemble file manes
+	if ( _counter < _MAX_COUNTER )
+		sprintf(_fname,"%08d",_counter); // WARNING: check the format string; the number of digits must be _PREFIX_LEN
+	else
+        throw iom::exception("CrossMIPs (_WRITE_IMGS enabled): too much substacks");
+	_counter++;
+
+#ifdef _WRITE_STKS
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_STCK_A.dat")-_PREFIX_LEN,A,dimi,dimj,dimk);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_STCK_B.dat")-_PREFIX_LEN,B,dimi,dimj,dimk);
+#endif
 #endif
 
 	NCC_descr_t *result = new NCC_descr_t;
@@ -248,12 +279,12 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 									dimi_v,dimj_v,dimk_v,stridei,stridek);
 
 #ifdef _WRITE_IMGS
-	write_3D_stack("MIP_xy1.dat",MIP_xy1,dimi_v,dimj_v,1);
-	write_3D_stack("MIP_xy2.dat",MIP_xy2,dimi_v,dimj_v,1);
-	write_3D_stack("MIP_xz1.dat",MIP_xz1,dimi_v,dimk_v,1);
-	write_3D_stack("MIP_xz2.dat",MIP_xz2,dimi_v,dimk_v,1);
-	write_3D_stack("MIP_yz1.dat",MIP_yz1,dimj_v,dimk_v,1);
-	write_3D_stack("MIP_yz2.dat",MIP_yz2,dimj_v,dimk_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xy1.dat")-_PREFIX_LEN,MIP_xy1,dimi_v,dimj_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xy2.dat")-_PREFIX_LEN,MIP_xy2,dimi_v,dimj_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xz1.dat")-_PREFIX_LEN,MIP_xz1,dimi_v,dimk_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xz2.dat")-_PREFIX_LEN,MIP_xz2,dimi_v,dimk_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_yz1.dat")-_PREFIX_LEN,MIP_yz1,dimj_v,dimk_v,1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_yz2.dat")-_PREFIX_LEN,MIP_yz2,dimj_v,dimk_v,1);
 #endif
 
 	// calcola NCC su xy
@@ -294,19 +325,19 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 
 #ifdef _WRITE_IMGS
 	if ( NCC_params->enhance ) {
-		write_3D_stack("MIP_xy1_en.dat",MIP_xy1,dimi_v,dimj_v,1);
-		write_3D_stack("MIP_xy2_en.dat",MIP_xy2,dimi_v,dimj_v,1);
-		write_3D_stack("MIP_xz1_en.dat",MIP_xz1,dimi_v,dimk_v,1);
-		write_3D_stack("MIP_xz2_en.dat",MIP_xz2,dimi_v,dimk_v,1);
-		write_3D_stack("MIP_yz1_en.dat",MIP_yz1,dimj_v,dimk_v,1);
-		write_3D_stack("MIP_yz2_en.dat",MIP_yz2,dimj_v,dimk_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xy1_en.dat")-_PREFIX_LEN,MIP_xy1,dimi_v,dimj_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xy2_en.dat")-_PREFIX_LEN,MIP_xy2,dimi_v,dimj_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xz1_en.dat")-_PREFIX_LEN,MIP_xz1,dimi_v,dimk_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_xz2_en.dat")-_PREFIX_LEN,MIP_xz2,dimi_v,dimk_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_yz1_en.dat")-_PREFIX_LEN,MIP_yz1,dimj_v,dimk_v,1);
+		write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_MIP_yz2_en.dat")-_PREFIX_LEN,MIP_yz2,dimj_v,dimk_v,1);
 	}
 #endif
 
 #ifdef _WRITE_IMGS
-	write_3D_stack("NCC_xy.dat",NCC_xy,(2*delayi+1),(2*delayj+1),1);
-	write_3D_stack("NCC_xz.dat",NCC_xz,(2*delayi+1),(2*delayk+1),1);
-	write_3D_stack("NCC_yz.dat",NCC_yz,(2*delayj+1),(2*delayk+1),1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_NCC_xy.dat")-_PREFIX_LEN,NCC_xy,(2*delayi+1),(2*delayj+1),1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_NCC_xz.dat")-_PREFIX_LEN,NCC_xz,(2*delayi+1),(2*delayk+1),1);
+	write_3D_stack(strcpy(_fname+_PREFIX_LEN,"_NCC_yz.dat")-_PREFIX_LEN,NCC_yz,(2*delayj+1),(2*delayk+1),1);
 #endif
 
 	// max su xy, xz, yz

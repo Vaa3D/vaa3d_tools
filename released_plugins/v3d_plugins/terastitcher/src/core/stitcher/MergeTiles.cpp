@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-11-03. Giulio.     @FIXED stop and resume facility should be inactive when in test mode
+* 2014-10-29. Giulio.     @ADDED stop and resume facility - saved_img_format has been used to check if resume parameters have not been changed
 * 2014-09-10. Alessandro. @FIXED 'mergeTilesVaa3DRaw' method: set 'imagemanager' module to silent mode.
 * 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
 * 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
@@ -54,6 +56,8 @@
 
 
 #include "../iomanager/ProgressBar.h"
+
+#include "resumer.h" // GI_141029: added stop and resume facility
 
 using namespace iomanager;
 using namespace volumemanager;
@@ -175,7 +179,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
     block_height = (block_height == -1 ? (int)height : block_height);
     block_width  = (block_width  == -1 ? (int)width  : block_width);
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
-    if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM || block_depth < S_MIN_SLICE_DIM)
+    if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM /* 2014-10-29. Giulio. @REMOVED (|| block_depth < S_MIN_SLICE_DIM) */)
     {
         char err_msg[5000];
         sprintf(err_msg,"The minimum dimension for block width, height and depth is %d", S_MIN_SLICE_DIM);
@@ -315,12 +319,41 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	z_ratio= static_cast<int>(depth/z_max_res);
 	buffer = new iom::real_t[height*width*z_max_res];
 
-	//slice_start and slice_end of current block depend on the resolution
-	for(int res_i=0; res_i< resolutions_size; res_i++) {
-		stack_block[res_i] = 0;
-		//slice_start[res_i] = this->D0; 
-		slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
-		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+	// 2014-10-29. Giulio. @DELETED 
+	////slice_start and slice_end of current block depend on the resolution
+	//for(int res_i=0; res_i< resolutions_size; res_i++) {
+	//	stack_block[res_i] = 0;
+	//	//slice_start[res_i] = this->D0; 
+	//	slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
+	//	slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+	//}
+
+	// 2014-10-29. Giulio. @ADDED stop and resume facility
+	FILE *fhandle;
+	sint64 z;
+	sint64 z_parts;
+
+	// 2014-11-03. Giulio. @FIXED stop and resume facility should inactive in test mode
+	if ( !test_mode ) {
+		// WARNING: uses saved_img_format to check that the operation has been resumed withe the sae parameters
+		if ( initResumer(saved_img_format,output_path.c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,HALVE_BY_MEAN,saved_img_format,saved_img_depth,fhandle) ) {
+			readResumerState(fhandle,output_path.c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts);
+		}
+		else {
+			//slice_start and slice_end of current block depend on the resolution
+			for(int res_i=0; res_i< resolutions_size; res_i++) {
+				stack_block[res_i] = 0;
+				slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
+				slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+			}
+			// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
+			z = this->D0;
+			z_parts = 1;
+		}
+	}
+	else { // test mode
+		z = this->D0;
+		z_parts = 1;
 	}
 
 	#ifdef S_TIME_CALC
@@ -328,7 +361,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	#endif
 
 	// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
-	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
+	for( /* 2014-10-29. Giulio. @DELETED (sint64 z = this->D0, z_parts = 1) */; z < this->D1; z += z_max_res, z_parts++)
 	{
 		// 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
 		for(int i=0; i<height*width*z_max_res; i++)
@@ -677,11 +710,18 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				}
 			}
 		}
+
+		// 2014-10-29. Giulio. @ADDED save next group data
+		if ( !test_mode )
+			saveResumerState(fhandle,resolutions_size,stack_block,slice_start,slice_end,z+z_max_res,z_parts+1);
 	}
 
 	int n_err = 0; // used to trigger exception in case the .bin file cannot be generated
 
 	if ( !test_mode ) {
+		// 2014-10-29. Giulio. @ADDED close resume 
+		closeResumer(fhandle,output_path.c_str());
+
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
 		iim::ref_sys reference = *((iim::ref_sys *) &temp); // the cast is needed because there are two ref_sys in different name spaces

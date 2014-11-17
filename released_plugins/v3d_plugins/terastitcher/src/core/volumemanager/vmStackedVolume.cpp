@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-11-06. Giulio.     @ADDED saved reference system into XML file
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
 * 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node.
 * 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
@@ -498,6 +499,21 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (iom::exception)
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
 	if(strcmp(pelem->Attribute("value"), stacks_dir) != 0)
 		throw iom::exception(iom::strprintf("in StackedVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), vm::BINARY_METADATA_FILENAME.c_str(), stacks_dir).c_str());
+	// 2014-11-06. Giulio. @ADDED saved reference system into XML file
+	vm::ref_sys reference_system_read;
+	if ( (pelem = hRoot.FirstChildElement("ref_sys").Element()) != 0 ) { // skip if not present (for compatibility with previous versions)
+		pelem = hRoot.FirstChildElement("ref_sys").Element();
+		pelem->QueryIntAttribute("ref1", (int *) &reference_system_read.first);
+		pelem->QueryIntAttribute("ref2", (int *) &reference_system_read.second);
+		pelem->QueryIntAttribute("ref3", (int *) &reference_system_read.third);
+		if (reference_system_read.first != reference_system.first || reference_system_read.second != reference_system.second || reference_system_read.third != reference_system.third ) 
+		{
+			char errMsg[2000];
+			sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <erf_sys> field between xml file (= (%d,%d,%d) ) and %s (= (%d,%d,%d) ).", 
+				reference_system_read.first, reference_system_read.second, reference_system_read.third, vm::BINARY_METADATA_FILENAME.c_str(), reference_system.first, reference_system.second, reference_system.third);
+			throw iom::exception(errMsg);
+		}
+	}
 	pelem = hRoot.FirstChildElement("voxel_dims").Element();
 	float VXL_V_read=0.0f, VXL_H_read=0.0f, VXL_D_read=0.0f;
 	pelem->QueryFloatAttribute("V", &VXL_V_read);
@@ -573,6 +589,17 @@ void StackedVolume::initFromXML(const char *xml_filepath) throw (iom::exception)
 
 	//reading fields
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
+	// 2014-11-06. Giulio. @ADDED saved reference system into XML file
+	if ( (pelem = hRoot.FirstChildElement("ref_sys").Element()) != 0 ) { // skip if not present (for compatibility with previous versions)
+		pelem->QueryIntAttribute("ref1", (int *) &reference_system.first);
+		pelem->QueryIntAttribute("ref2", (int *) &reference_system.second);
+		pelem->QueryIntAttribute("ref3", (int *) &reference_system.third);
+	}
+	else {
+		// 2014-11-06. Giulio. @MOVED in case XML is old
+		// 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
+		reference_system = vm::ref_sys(vm::vertical,vm::horizontal,vm::depth);
+	}
 	pelem = hRoot.FirstChildElement("voxel_dims").Element();
 	pelem->QueryFloatAttribute("V", &VXL_V);
 	pelem->QueryFloatAttribute("H", &VXL_H);
@@ -607,9 +634,6 @@ void StackedVolume::initFromXML(const char *xml_filepath) throw (iom::exception)
 
 	// check stacks have the same width and height
 	normalize_stacks_attributes();
-
-	// 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
-	reference_system = vm::ref_sys(vertical,horizontal,depth);
 }
 
 void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (iom::exception)
@@ -657,6 +681,11 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
 	pelem = new TiXmlElement("stacks_dir");
 	pelem->SetAttribute("value", stacks_dir);
 	root->LinkEndChild(pelem);
+	// 2014-11-06. Giulio. @ADDED saved reference system into XML file
+	pelem = new TiXmlElement("ref_sys");
+	pelem->SetAttribute("ref1", reference_system.first);
+	pelem->SetAttribute("ref2", reference_system.second);
+	pelem->SetAttribute("ref3", reference_system.third);
 	pelem = new TiXmlElement("voxel_dims");
 	pelem->SetDoubleAttribute("V", VXL_V);
 	pelem->SetDoubleAttribute("H", VXL_H);

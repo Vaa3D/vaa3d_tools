@@ -65,7 +65,9 @@ class Block : public VirtualStack
 		void binarizeInto(FILE* file);
 		void unBinarizeFrom(FILE* file) throw (iom::exception);
 
-		//returns a pointer to a substack descriptor
+		//returns a pointer to the intersection segment (along D) if the given segment (D0,D1-1) intersects current stack, otherwise returns NULL
+		//D0 first index of the segment
+		//D1 last index of the segment + 1
 		Segm_t* Intersects(int D0, int D1);
 
 		//******** FRIEND CLASS DECLARATION *********

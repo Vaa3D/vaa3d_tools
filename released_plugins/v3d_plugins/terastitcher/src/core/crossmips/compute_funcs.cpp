@@ -34,6 +34,11 @@
  *  Last revision: May, 31 2011
  */
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-10-31. Giulio.     @CHANGED computations in compute_NCC are performed in double precision (and not in single precision) to avoit roundoff errors
+*/
 
 # include <math.h>
 # include <stdio.h>
@@ -508,7 +513,8 @@ void compute_NCC_map ( iom::real_t *NCC_map, iom::real_t *MIP_1, iom::real_t *MI
 
 iom::real_t compute_NCC ( iom::real_t *im1, iom::real_t *im2, int dimi, int dimj, int stride ) {
 // parallelization of compute_NCC_map makes parallelization of this operation pointless
-	iom::real_t f_mean, t_mean, f_prime, t_prime, numerator, factor1, factor2;
+	// 2014-10-31 Giulio. @CHANGED       iom::real_t f_mean, t_mean, f_prime, t_prime, numerator, factor1, factor2;
+	double f_mean, t_mean, f_prime, t_prime, numerator, factor1, factor2;
 	iom::real_t *pxl1, *pxl2;
 	int i, j;
 
@@ -535,7 +541,7 @@ iom::real_t compute_NCC ( iom::real_t *im1, iom::real_t *im2, int dimi, int dimj
 			factor2 += t_prime * t_prime;
 		}
 
-	return numerator / sqrt(factor1*factor2);
+	return ((float) (numerator / sqrt(factor1*factor2))); // the result is converted to single precision
 }
 
 

@@ -97,7 +97,7 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
  * WARNING: a subtle relation is assumed to hold among dimi, dimj, dimk, ni, nj, nk, delayi, delayj, delayk, and controlling
  *          parameter wRangeThr; in practice the dimensions of the MIPS (depending on dimi, dimj, dimk, ni, nj, nk) have
  *          to be large enough with respect to delayi, delayj, delayk; moreover controlling parameter wRangeThr is supposed
- *          to be not greater than MAX(delayi,delayj,delayk)
+ *          to be not greater than MIN(delayi,delayj,delayk)
  */
 
 # endif
