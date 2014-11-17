@@ -11,6 +11,17 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.1
+November 17th, 2014
+-------------------------------------------------------------------------------------------
+- Fix: minor bug fixes in the I/O module.
+- Fix: minor bug fixes in the volume conversion tool.
+- Fix: fixed "duplicated annotation"  bug  which caused  uncontrolled  duplication of curve 
+       points annotations on zoom-in and zoom-out and thus a severe slowdown of these func-
+	   tions (and of the tool in general).
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.0
 November 4th, 2014
 --------------------------------------------------------------------------------------------

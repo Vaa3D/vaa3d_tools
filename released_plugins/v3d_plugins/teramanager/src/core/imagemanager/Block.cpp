@@ -445,7 +445,7 @@ Rect_t* Block::Intersects(const Rect_t& area)
 
 Segm_t* Block::Intersects(int D0, int D1) {
 
-	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+(int)(BLOCK_SIZE[N_BLOCKS-1]) || D1 < 0 )
+	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+(int)(BLOCK_SIZE[N_BLOCKS-1]) || D1 <= 0 ) // GI_141110: added '=' (D1 is the last slice + 1)
 		// there is no intersection
 		return NULL;
 
@@ -464,7 +464,7 @@ Segm_t* Block::Intersects(int D0, int D1) {
 	found1 = false;
 	i1     = (int)(N_BLOCKS-1);
 	while ( i1>0 && !found1 )
-		if ( D1 >= BLOCK_ABS_D[i1] ) // GI_140507: added '='
+		if ( D1 > BLOCK_ABS_D[i1] ) // GI_140507: deleted '='
 			found1 = true;
 		else
 			i1--;
@@ -478,5 +478,3 @@ Segm_t* Block::Intersects(int D0, int D1) {
 
 	return intersect_segm;
 }
-
-

@@ -34,6 +34,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	uint32 YSIZE;
 	uint16 bpp;
 	uint16 spp;
+	uint16 Cpage;
 	uint16 Npages;
     TIFF *input;
     int check;
@@ -77,18 +78,15 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 		return ((char *) "Undefined samples per pixel.");
 	}
 
-	//check=TIFFGetField(input, TIFFTAG_PAGENUMBER, &Npages);
-	//if (!check)
-	//{
-	//	TIFFClose(input);
-	//	//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
-	//	return ((char *) "Undefined samples per pixel.");
-	//}
-
-	Npages = 0;
-	do {
-		Npages++;
-	} while ( TIFFReadDirectory(input) );
+	// Onofri
+	check=TIFFGetField(input, TIFFTAG_PAGENUMBER, &Cpage, &Npages);
+	if (!check || Npages==0) { // the tag has not been read correctly
+		// Add warning?
+		Npages = 0;
+		do {
+			Npages++;
+		} while ( TIFFReadDirectory(input) );
+	}
 
 	sz0 = XSIZE;
 	sz1 = YSIZE;

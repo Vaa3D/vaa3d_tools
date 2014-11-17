@@ -65,7 +65,7 @@
 #include <string>
 #include <math.h>
 
-#include "../imagemanager/VirtualVolume.h"
+#include "../ImageManager/VirtualVolume.h"
 
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation

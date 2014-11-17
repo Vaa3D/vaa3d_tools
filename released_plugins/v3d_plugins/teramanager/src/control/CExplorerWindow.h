@@ -26,6 +26,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-11-17. Alessandro. @ADDED 'anoV0', ..., 'anoD1' VOI annotation (global) coordinates as object members in order to fix duplicated annotations bug
+*/
+
 #ifndef CEXPLORERWINDOW_H
 #define CEXPLORERWINDOW_H
 
@@ -77,6 +83,9 @@ class teramanager::CExplorerWindow : public QWidget
         QUndoStack undoStack;           //stack containing undo command actions
         int slidingViewerBlockID;
         bool forceZoomIn;
+        int anoV0, anoV1;               // @ADDED by Alessandro on 2014-11-17. First and last global coordinates of the annotation space along V (annotation VOI != VOI)
+        int anoH0, anoH1;               // @ADDED by Alessandro on 2014-11-17. First and last global coordinates of the annotation space along H (annotation VOI != VOI)
+        int anoD0, anoD1;               // @ADDED by Alessandro on 2014-11-17. First and last global coordinates of the annotation space along D (annotation VOI != VOI)
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain

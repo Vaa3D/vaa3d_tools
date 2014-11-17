@@ -278,7 +278,7 @@ namespace teramanager
                 else if(source && !short_print)
                     fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
                 else if(short_print && message)
-                    printf(    "\n                      %s\n", message);
+                    fprintf(f, "\n                      %s\n", message);
                 fclose(f);
             }
             else

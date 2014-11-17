@@ -123,12 +123,6 @@ class teramanager::CVolume : public QThread
         int getVoiT0(){return voiT0;}
         int getVoiT1(){return voiT1;}
         int getVoiResIndex(){return voiResIndex;}
-        static int scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
-        static int scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
-        static int scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
-        static float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
-        static float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
-        static float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
         void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1, int _T0, int _T1) throw (itm::RuntimeException)
         {
             /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d, _T0 = %d, _T1=%d",
@@ -176,16 +170,150 @@ class teramanager::CVolume : public QThread
                 throw itm::RuntimeException(itm::strprintf("Invalid VOI selected along T: [%d,%d]", voiT0, voiT1).c_str());
         }
 
-//        void resetBuffer() throw (itm::RuntimeException)
-//        {
-//            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+        static inline int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
 
-//            if(buffer)
-//            {
-//                delete[] buffer;
-//                buffer = 0;
-//            }
-//        }
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            // --- Alessandro added on August 8th, 2013: useful for exact boundary conversion ---
+            else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_V())
+                return CImport::instance()->getVolume(dstRes)->getDIM_V();
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
+                return static_cast<int>(coord*ratio + 0.5f);
+            }
+        }
+
+        static inline int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
+
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_H())
+                return CImport::instance()->getVolume(dstRes)->getDIM_H();
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
+                return static_cast<int>(coord*ratio + 0.5f);
+            }
+        }
+
+        static inline int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
+
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_D())
+                return CImport::instance()->getVolume(dstRes)->getDIM_D();
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);
+                return static_cast<int>(coord*ratio + 0.5f);
+            }
+        }
+
+        static inline float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
+
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_V()))
+                return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_V());
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
+                return coord*ratio;
+            }
+        }
+
+        static inline float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
+
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_H()))
+                return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_H());
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
+                return coord*ratio;
+            }
+        }
+
+        static inline float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        {
+            #ifdef terafly_enable_debug_max_level
+            /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
+            #endif
+
+            //checks
+            if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid source resolution of coordinate mapping operation");
+            if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+                throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
+
+            //computation
+            if(srcRes == dstRes)
+                return coord;
+            else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_D()))
+                return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_D());
+            else
+            {
+                float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);
+                return coord*ratio;
+            }
+        }
 
         friend class CExplorerWindow;
 

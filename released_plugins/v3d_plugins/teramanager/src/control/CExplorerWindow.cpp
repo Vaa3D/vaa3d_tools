@@ -26,6 +26,13 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-11-17. Alessandro. @FIXED "duplicated annotations" bug
+* 2014-11-17. Alessandro. @ADDED 'anoV0', ..., 'anoD1' VOI annotation (global) coordinates as object members in order to fix "duplicated annotations" bug
+*/
+
 #include "CExplorerWindow.h"
 #include "v3dr_mainwindow.h"
 #include "CVolume.h"
@@ -318,6 +325,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     this->volD1 = _volD1;
     this->volT0 = _volT0;
     this->volT1 = _volT1;
+    this->anoV0 = this->anoV1 = this->anoH0 = this->anoH1 = this->anoD0 = this->anoD1 = -1;
     this->nchannels = _nchannels;
     this->toBeClosed = false;
     this->imgData = _imgData;
@@ -1373,25 +1381,12 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
 
     QElapsedTimer timer;
 
-    //computing the current volume range in the highest resolution image space
-    /**/itm::debug(itm::LEV3, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
-    int highestResIndex = CImport::instance()->getResolutions()-1;
-    int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
-    int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
-    int voiH0 = CVolume::scaleHCoord(volH0, volResIndex, highestResIndex);
-    int voiH1 = CVolume::scaleHCoord(volH1, volResIndex, highestResIndex);
-    int voiD0 = CVolume::scaleDCoord(volD0, volResIndex, highestResIndex);
-    int voiD1 = CVolume::scaleDCoord(volD1, volResIndex, highestResIndex);
-    interval_t x_range(voiH0, voiH1);
-    interval_t y_range(voiV0, voiV1);
-    interval_t z_range(voiD0, voiD1);
-
-    //set volume range to infinite if unlimited space annotation option is active
-    if(PMain::getInstance()->spaceSizeUnlimited->isChecked() && this == CExplorerWindow::first)
-    {
-        x_range.start = y_range.start = z_range.start = 0;
-        x_range.end = y_range.end = z_range.end = std::numeric_limits<itm::uint32>::max();
-    }
+    // 2014-11-17. Alessandro. @FIXED "duplicated annotations" bug
+    // use the same annotation VOI that was set for ::loadAnnotations at current explorer creation
+    /**/itm::debug(itm::LEV3, strprintf("use annotation VOI X[%d,%d), Y[%d,%d), Z[%d,%d)", anoH0, anoH1, anoV0, anoV1, anoD0, anoD1).c_str(), __itm__current__function__);
+    interval_t x_range(anoH0, anoH1);
+    interval_t y_range(anoV0, anoV1);
+    interval_t z_range(anoD0, anoD1);
 
     /**********************************************************************************
     * MARKERS
@@ -1606,14 +1601,17 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     interval_t y_range(voiV0, voiV1);
     interval_t z_range(voiD0, voiD1);
 
-    //set volume range to infinite if unlimited space annotation option is active
+    // set volume range to infinite if unlimited space annotation option is active
     if(PMain::getInstance()->spaceSizeUnlimited->isChecked() && this == CExplorerWindow::first)
     {
+        // unlimited annotation VOI is used only in the first view (whole image) so as to include out-of-bounds annotation objects
         x_range.start = y_range.start = z_range.start = 0;
         x_range.end = y_range.end = z_range.end = std::numeric_limits<itm::uint32>::max();
     }
     else if(this != CExplorerWindow::first)
     {
+        // for subsequent views (i.e., higher resolutions at certain VOIs), the actual annotation VOI is enlarged by 100%
+        // to enable the "Show/hide markers around the displayed ROI" function in the annotation toolbar
         int vmPerc = 100;
         int vmX = (x_range.end - x_range.start)*(vmPerc/100.0f)/2;
         int vmY = (y_range.end - y_range.start)*(vmPerc/100.0f)/2;
@@ -1625,6 +1623,18 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
         z_range.start  = std::max(0, z_range.start - vmZ);
         z_range.end   += vmZ;
     }
+
+    // @FIXED "duplicated annotations" bug by Alessandro on 2014-17-11. Annotation VOI +100% enlargment is the source of "duplicated annotations" bug because
+    // this creates an asymmetry between loading annotations in the displayed VOI (which is done with +100% enlargment) and saving annotations
+    // from the displayed VOI (which is done w/o +100% enlargment !!!)
+    // Then, we save the actual annotation VOI in object members and use those at saving time.
+    anoV0 = y_range.start;
+    anoV1 = y_range.end;
+    anoH0 = x_range.start;
+    anoH1 = x_range.end;
+    anoD0 = z_range.start;
+    anoD1 = z_range.end;
+    /**/itm::debug(itm::LEV3, strprintf("store annotation VOI X[%d,%d), Y[%d,%d), Z[%d,%d)", anoH0, anoH1, anoV0, anoV1, anoD0, anoD1).c_str(), __itm__current__function__);
 
     //obtaining the annotations within the current window
     /**/itm::debug(itm::LEV3, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);

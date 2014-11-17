@@ -99,6 +99,9 @@ class iim::Block
 		//returns a pointer to the intersection rectangle if the given area intersects current stack, otherwise returns NULL
 		Rect_t* Intersects(const Rect_t& area);
 
+		//returns a pointer to the intersection segment (along D) if the given segment (D0,D1-1) intersects current stack, otherwise returns NULL
+		//D0 first index of the segment
+		//D1 last index of the segment + 1
 		Segm_t* Intersects(int D0, int D1);
 };
 

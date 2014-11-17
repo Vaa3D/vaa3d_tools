@@ -22,6 +22,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
+*/
+
 #include "VirtualVolume.h"
 #include "SimpleVolume.h"
 #include "SimpleVolumeRaw.h"
@@ -154,11 +160,11 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
                                         img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width, img_format, img_depth).c_str(), __iim__current__function__);
 
     //checking for non implemented features
-	if( img_depth != 8 ) {
-		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
-        throw IOException(err_msg);
-	}
+	//if( img_depth != 8 ) {
+	//	char err_msg[STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
+	//		throw IOException(err_msg);
+	//}
 
     //LOCAL VARIABLES
     char buffer[STATIC_STRINGS_SIZE];
@@ -232,10 +238,10 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
             }
         }
     }
-    else if(nchannels == 1)
+    else if(nchannels == 1) // source and destination depths are guarenteed to be the same
     {
         img = cvCreateImage(cvSize(img_width, img_height), (img_depth == 8 ? IPL_DEPTH_8U : IPL_DEPTH_16U), 1);
-        float scale_factor_16b = 65535.0F/255;
+        //float scale_factor_16b = 65535.0F/255; // conversion is not supported yet
         if(img->depth == IPL_DEPTH_8U)
         {
             int img_data_step = img->widthStep / sizeof(uint8);
@@ -246,14 +252,15 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
                     row_data_8bit[j] = raw_ch1[(i+start_height)*raw_img_width+j+start_width];
             }
         }
-        else
+        else // img->depth == IPL_DEPTH_16U
         {
             int img_data_step = img->widthStep / sizeof(uint16);
             for(int i = 0; i <img_height; i++)
             {
                 uint16* row_data_16bit = ((uint16*)(img->imageData)) + i*img_data_step;
                 for(int j = 0; j < img_width; j++)
-                    row_data_16bit[j] = (uint16) (raw_ch1[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b);
+                    // row_data_16bit[j] = (uint16) (raw_ch1[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b); // conversion is not supported yet
+                    row_data_16bit[j] = ((uint16 *) raw_ch1)[(i+start_height)*raw_img_width+j+start_width] /* 2014-11-10. Giulio.    removed: [* scale_factor_16b )] */;
             }
         }
     }

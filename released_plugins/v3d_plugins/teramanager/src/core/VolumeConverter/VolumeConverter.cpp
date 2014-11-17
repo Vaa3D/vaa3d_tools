@@ -22,9 +22,15 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
+*/
+
 #include "VolumeConverter.h"
-#include "../imagemanager/IM_config.h"
-#include "../imagemanager/ProgressBar.h"
+#include "../ImageManager/IM_config.h"
+#include "../ImageManager/ProgressBar.h"
 #include <math.h>
 #include <string>
 
@@ -35,16 +41,16 @@
 * StackedVolume: bidimensional matrix of 3D stacks stored in a hierarchical structure of directories
 *
 *******************************************************************************************************/
-#include "../imagemanager/SimpleVolume.h"
-#include "../imagemanager/SimpleVolumeRaw.h"
-#include "../imagemanager/RawVolume.h"
-#include "../imagemanager/TiledVolume.h"
-#include "../imagemanager/TiledMCVolume.h"
-#include "../imagemanager/StackedVolume.h"
-#include "../imagemanager/TimeSeries.h"
+#include "../ImageManager/SimpleVolume.h"
+#include "../ImageManager/SimpleVolumeRaw.h"
+#include "../ImageManager/RawVolume.h"
+#include "../ImageManager/TiledVolume.h"
+#include "../ImageManager/TiledMCVolume.h"
+#include "../ImageManager/StackedVolume.h"
+#include "../ImageManager/TimeSeries.h"
 /******************************************************************************************************/
 
-#include "../imagemanager/Tiff3DMngr.h"
+#include "../ImageManager/Tiff3DMngr.h"
 
 #include <limits>
 #include <list>
@@ -145,19 +151,19 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
     printf(", slice_height = %d, slice_width = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
            slice_height, slice_width, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
-	if ( saved_img_depth == 0 ) // Tiff2DStck currently supports only 8 bits depth 
-		saved_img_depth = 8;
+	if ( saved_img_depth == 0 ) // default value: output depth is the same of input depth
+		saved_img_depth = (volume->getBYTESxCHAN() * 8);
 		
-	if ( saved_img_depth != 8 ) {
+	if ( saved_img_depth != 8 && volume->getNACtiveChannels() > 1) {
 		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
-			volume->getBYTESxCHAN() * 8, saved_img_depth);
-        throw IOException(err_msg);
+		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d bits per channel of destination is not supported for %d channels",
+			saved_img_depth, volume->getNACtiveChannels());
+		throw IOException(err_msg);
 	}
 	
-	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
+	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) { // saveImage_from and saveImage_from_UINT8 do not support depth conversion yet
 		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
+		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: a mismatch between bits per channel of source (%d) and destination (%d) is not supported",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
         throw IOException(err_msg);
 	}
@@ -601,7 +607,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     block_height = (block_height == -1 ? (int)height : block_height);
     block_width  = (block_width  == -1 ? (int)width  : block_width);
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
-    if(block_height < TMITREE_MIN_BLOCK_DIM || block_width < TMITREE_MIN_BLOCK_DIM || block_depth < TMITREE_MIN_BLOCK_DIM)
+    if(block_height < TMITREE_MIN_BLOCK_DIM || block_width < TMITREE_MIN_BLOCK_DIM /* 2014-11-10. Giulio. @REMOVED (|| block_depth < TMITREE_MIN_BLOCK_DIM) */)
     { 
         char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", TMITREE_MIN_BLOCK_DIM);
@@ -694,13 +700,15 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		//slice_start and slice_end of current block depend on the resolution
 		for(int res_i=0; res_i< resolutions_size; res_i++) {
 			stack_block[res_i] = 0;
-			slice_start[res_i] = this->D0; 
+			//slice_start[res_i] = this->D0; 
+			slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
 			slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 		}
 		z = this->D0;
 		z_parts = 1;
 	}
 
+	// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
 	for(/* sint64 z = this->D0, z_parts = 1 */; z < this->D1; z += z_max_res, z_parts++)
 	{
 		//if ( z > (this->D1/2) ) {
@@ -746,7 +754,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			}
 
 			// check if current block is changed
-            if ( (z / powInt(2,i)) > slice_end[i] ) {
+ 			// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+			if ( ((z - this->D0) / powInt(2,i)) > slice_end[i] ) {
 				stack_block[i]++;
 				slice_start[i] = slice_end[i] + 1;
 				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
@@ -900,7 +909,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 							img_path << H_DIR_path.str() << "/" 
 										<< this->getMultiresABS_V_string(i,start_height) << "_" 
 										<< this->getMultiresABS_H_string(i,start_width) << "_";
-                            if ( (z/powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+
+							// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+							if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
 								abs_pos_z_next.width(6);
 								abs_pos_z_next.fill('0');
 								abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
@@ -1299,10 +1310,12 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	//slice_start and slice_end of current block depend on the resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++) {
 		stack_block[res_i] = 0;
-		slice_start[res_i] = this->D0; 
+		//slice_start[res_i] = this->D0; 
+		slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
 		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 	}
 
+	// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
 	{
 		// fill one slice block
@@ -1342,8 +1355,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
                                 imProgressBar::getInstance()->show();
 			}
 
-			// check if current block is changed
-			if ( (z / POW_INT(2,i)) > slice_end[i] ) {
+ 			// check if current block is changed
+			// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+			if ( ((z - this->D0) / powInt(2,i)) > slice_end[i] ) {
 				stack_block[i]++;
 				slice_start[i] = slice_end[i] + 1;
 				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
@@ -1487,7 +1501,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								img_path << H_DIR_path.str() << "/" 
 											<< this->getMultiresABS_V_string(i,start_height) << "_" 
 											<< this->getMultiresABS_H_string(i,start_width) << "_";
-								if ( (z/POW_INT(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+
+								// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+								if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
@@ -1828,10 +1844,12 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	//slice_start and slice_end of current block depend on the resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++) {
 		stack_block[res_i] = 0;
-		slice_start[res_i] = this->D0; 
+		//slice_start[res_i] = this->D0; 
+		slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
 		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 	}
 
+	// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
 	{
 		// fill one slice block
@@ -1872,7 +1890,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			}
 
 			// check if current block is changed
-            if ( (z / powInt(2,i)) > slice_end[i] ) {
+ 			// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+			if ( ((z - this->D0) / powInt(2,i)) > slice_end[i] ) {
 				stack_block[i]++;
 				slice_start[i] = slice_end[i] + 1;
 				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
@@ -2016,7 +2035,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								img_path << H_DIR_path.str() << "/" 
 											<< this->getMultiresABS_V_string(i,start_height) << "_" 
 											<< this->getMultiresABS_H_string(i,start_width) << "_";
-                                if ( (z/powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+ 
+								// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+								if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
