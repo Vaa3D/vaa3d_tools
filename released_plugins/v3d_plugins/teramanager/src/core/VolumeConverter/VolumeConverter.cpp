@@ -29,8 +29,8 @@
 */
 
 #include "VolumeConverter.h"
-#include "../ImageManager/IM_config.h"
-#include "../ImageManager/ProgressBar.h"
+#include "../imagemanager/IM_config.h"
+#include "../imagemanager/ProgressBar.h"
 #include <math.h>
 #include <string>
 
@@ -41,16 +41,16 @@
 * StackedVolume: bidimensional matrix of 3D stacks stored in a hierarchical structure of directories
 *
 *******************************************************************************************************/
-#include "../ImageManager/SimpleVolume.h"
-#include "../ImageManager/SimpleVolumeRaw.h"
-#include "../ImageManager/RawVolume.h"
-#include "../ImageManager/TiledVolume.h"
-#include "../ImageManager/TiledMCVolume.h"
-#include "../ImageManager/StackedVolume.h"
-#include "../ImageManager/TimeSeries.h"
+#include "../imagemanager/SimpleVolume.h"
+#include "../imagemanager/SimpleVolumeRaw.h"
+#include "../imagemanager/RawVolume.h"
+#include "../imagemanager/TiledVolume.h"
+#include "../imagemanager/TiledMCVolume.h"
+#include "../imagemanager/StackedVolume.h"
+#include "../imagemanager/TimeSeries.h"
 /******************************************************************************************************/
 
-#include "../ImageManager/Tiff3DMngr.h"
+#include "../imagemanager/Tiff3DMngr.h"
 
 #include <limits>
 #include <list>

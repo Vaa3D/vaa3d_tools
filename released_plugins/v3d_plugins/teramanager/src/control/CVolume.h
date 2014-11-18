@@ -170,7 +170,7 @@ class teramanager::CVolume : public QThread
                 throw itm::RuntimeException(itm::strprintf("Invalid VOI selected along T: [%d,%d]", voiT0, voiT1).c_str());
         }
 
-        static inline int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline int scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
@@ -195,7 +195,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        static inline int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline int scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
@@ -219,7 +219,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        static inline int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline int scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
@@ -243,7 +243,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        static inline float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
@@ -267,7 +267,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        static inline float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
@@ -291,7 +291,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        static inline float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
+        static inline float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
             /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
