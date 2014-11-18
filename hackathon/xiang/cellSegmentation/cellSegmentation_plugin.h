@@ -3,7 +3,6 @@
  * 2014-10-12 :by Xiang Li (lindbergh.li@gmail.com);
  */
  
-#pragma region "headers and constant defination"
 #ifndef __CELLSEGMENTATION_PLUGIN_H__
 #define __CELLSEGMENTATION_PLUGIN_H__
 #include <QtGui>
@@ -40,12 +39,12 @@ const double const_infinitesimal = 0.000000001;
 enum enum_shape_t {sphere, cube};
 #pragma endregion
 
-#pragma region "dialogDefineExemplar" 
-class dialogDefineExemplar:public QDialog
+#pragma region "dialogPreprocessing" 
+class dialogInitialization:public QDialog
 {
 	Q_OBJECT
 public:
-	dialogDefineExemplar(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent, int int_channelDim)
+	dialogInitialization(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent, int int_channelDim)
 	{
 		//channel;
 		QStringList QStringList_channel_items;
@@ -95,12 +94,16 @@ public:
 		QDoubleSpinBox_intensity_value->setMinimum(0);
 		QGridLayout_intensity_main->addWidget(QDoubleSpinBox_intensity_value, 1,3,1,1);
 		QLabel* QLabel_intensity_valueChangeRatio = new QLabel(QObject::tr("Max value change ratio:"));
-		QLineEdit_intenstiy_valueChangeRatio = new QLineEdit ("0.1", QWidget_parent);
+		QLineEdit_intenstiy_valueChangeRatio = new QLineEdit ("0.3", QWidget_parent);
 		QGridLayout_intensity_main->addWidget(QLabel_intensity_valueChangeRatio, 2, 1, 1, 1);
 		QGridLayout_intensity_main->addWidget(QLineEdit_intenstiy_valueChangeRatio, 2, 2, 1, 1);
+		QLabel* QLabel_intensity_smoothRadius = new QLabel(QObject::tr("Smooth radius:"));
+		QLineEdit_intensity_smoothRadius = new QLineEdit("5", QWidget_parent);
+		QGridLayout_intensity_main->addWidget(QLabel_intensity_smoothRadius, 2, 3, 1, 1);
+		QGridLayout_intensity_main->addWidget(QLineEdit_intensity_smoothRadius, 2, 4, 1, 1);
 		QGroupBox_intensity_main->setLayout(QGridLayout_intensity_main);
 		//control;
-		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Define exemplar"));
+		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Preprocess"));
 		QPushButton *QPushButton_control_close = new QPushButton(QObject::tr("Close"));
 		QWidget* QWidget_control_bar = new QWidget();
 		QGridLayout* QGridLayout_control_bar = new QGridLayout();
@@ -120,14 +123,16 @@ public:
 		connect(QComboBox_intensity_thresholdType, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
 		update();
 	}
-	~dialogDefineExemplar(){}
+	~dialogInitialization(){}
 	QComboBox* QComboBox_intensity_thresholdType;
 	QDoubleSpinBox* QDoubleSpinBox_intensity_value;
 	QLineEdit* QLineEdit_intenstiy_valueChangeRatio;
 	double intensity_threshold_global;
 	double intensity_threshold_valueChangeRatio;
+	V3DLONG intensity_smoothRadius;
 	QComboBox* QComboBox_channel_selection;
 	V3DLONG channel_idx_selection;
+	QLineEdit* QLineEdit_intensity_smoothRadius;
 	public slots:
 		void update()
 		{
@@ -153,6 +158,7 @@ public:
 				intensity_threshold_global = -1; //calculate automatically;
 			}
 			intensity_threshold_valueChangeRatio = this->QLineEdit_intenstiy_valueChangeRatio->text().toDouble();
+			intensity_smoothRadius = this->QLineEdit_intensity_smoothRadius->text().toInt();
 			accept();
 		}
 };
@@ -182,13 +188,13 @@ public:
 		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 1, 1, 1);
 		QGridLayout_shape->addWidget(QRadioButton_shape_cube, 1, 2, 1, 1);
 		QLabel* QLabel_shape_delta = new QLabel(QObject::tr("max anisotropic\ndeviation:"));
-		QLineEdit_Shape_delta = new QLineEdit("2.5", QWidget_parent);
+		QLineEdit_Shape_delta = new QLineEdit("3", QWidget_parent);
 		QGridLayout_shape->addWidget(QLabel_shape_delta, 1, 3, 1, 1);
 		QGridLayout_shape->addWidget(QLineEdit_Shape_delta, 1, 4, 1, 1);
 		QLabel* QLabel_shape_thresholdRegionSize = new QLabel(QObject::tr("Min region size\nvs. exemplar ratio:"));
 		QLineEdit_shape_thresholdRegionSize = new QLineEdit("0.1", QWidget_parent);
 		QLabel* QLabel_shape_uThresholdRegionSize = new QLabel(QObject::tr("Max region size\nvs. exemplar ratio:"));
-		QLineEdit_shape_uThresholdRegionSize = new QLineEdit("200000", QWidget_parent);
+		QLineEdit_shape_uThresholdRegionSize = new QLineEdit("5", QWidget_parent);
 		QGridLayout_shape->addWidget(QLabel_shape_thresholdRegionSize, 2, 1, 1, 1);
 		QGridLayout_shape->addWidget(QLineEdit_shape_thresholdRegionSize, 2, 2, 1, 1);
 		QGridLayout_shape->addWidget(QLabel_shape_uThresholdRegionSize, 2, 3, 1, 1);
@@ -258,10 +264,6 @@ public:
 		QLineEdit_GVF_maxIteration = new QLineEdit("20", QWidget_parent);
 		QLabel* QLabel_GVF_fusionThreshold = new QLabel(QObject::tr("merging threshold:"));
 		QLineEdit_GVF_fusionThreshold = new QLineEdit("1", QWidget_parent);
-		QLabel* QLabel_GVF_sigma = new QLabel(QObject::tr("sigma:"));
-		QLineEdit_GVF_sigma = new QLineEdit("0.1", QWidget_parent);
-		QLabel* QLabel_GVF_mu = new QLabel(QObject::tr("mu:"));
-		QLineEdit_GVF_mu = new QLineEdit("0.1", QWidget_parent);
 		QGroupBox *QGroupBox_GVF_main = new QGroupBox("GVF paramters");
 		QGroupBox_GVF_main->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_GVF_main = new QGridLayout();
@@ -269,10 +271,6 @@ public:
 		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_maxIteration, 1, 2,1,1);
 		QGridLayout_GVF_main->addWidget(QLabel_GVF_fusionThreshold, 1, 3,1,1);
 		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_fusionThreshold, 1, 4,1,1);
-		QGridLayout_GVF_main->addWidget(QLabel_GVF_sigma, 2, 1,1,1);
-		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_sigma, 2, 2,1,1);
-		QGridLayout_GVF_main->addWidget(QLabel_GVF_mu, 2, 3,1,1);
-		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_mu, 2, 4,1,1);
 		QGroupBox_GVF_main->setLayout(QGridLayout_GVF_main);
 		//control;
 		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Segment by GVF"));
@@ -296,19 +294,13 @@ public:
 	~dialogFurtherSegmentation(){}
 	QLineEdit* QLineEdit_GVF_maxIteration;
 	QLineEdit* QLineEdit_GVF_fusionThreshold;
-	QLineEdit* QLineEdit_GVF_sigma;
-	QLineEdit* QLineEdit_GVF_mu;
 	double GVF_para_maxIteration;
 	double GVF_para_mergingThreshold;
-	double GVF_para_sigma;
-	double GVF_para_mu;
 	public slots:
 		void _slot_start()
 		{
 			GVF_para_maxIteration = this->QLineEdit_GVF_maxIteration->text().toDouble();
 			GVF_para_mergingThreshold = this->QLineEdit_GVF_fusionThreshold->text().toDouble();
-			GVF_para_sigma = this->QLineEdit_GVF_sigma->text().toDouble();
-			GVF_para_mu = this->QLineEdit_GVF_mu->text().toDouble();
 			accept();
 		}
 };
@@ -342,14 +334,16 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<vector<V3DLONG> > colors_simpleTable;
 			
 			//Input or directly derived;
-			unsigned char* Image1D_original;
 			unsigned char* Image1D_page;
 			unsigned char* Image1D_mask;
+			unsigned char* Image1D_mask_const;
 			unsigned char*** Image3D_page;
+			unsigned char* Image1D_original;
 			V3DLONG dim_X;
 			V3DLONG dim_Y;
 			V3DLONG dim_Z;
 			V3DLONG size_page;
+			V3DLONG size_page3;
 			V3DLONG offset_channel;
 			V3DLONG offset_Z;
 			V3DLONG offset_Y;
@@ -395,93 +389,94 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			
 		class_segmentationMain() {}
 
-		#pragma region "control-intialize"
-		void control_initialize(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z , int _idx_channel)
+		~class_segmentationMain()
 		{
-			vector<V3DLONG> color_tmp(3, 0); color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 0;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 0;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 0; color_tmp[1] = 0; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 0;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 0;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 0;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 0; color_tmp[1] = 128; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 128;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 255;
-			colors_simpleTable.push_back(color_tmp);
-			
-			this->Image1D_original = _Image1D_original;
+			memory_free_uchar1D(this->Image1D_mask);
+			memory_free_uchar1D(this->Image1D_mask_const);
+			memory_free_uchar1D(this->Image1D_exemplar);
+			memory_free_uchar1D(this->Image1D_page);
+		}
+
+		#pragma region "control-intialize"
+		void control_initialize(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z , int _idx_channel, V3DLONG _count_smoothRadius, double _threshold_global, double _uThreshold_valueChangeRatio)
+		{
 			this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 			this->size_page = dim_X*dim_Y*dim_Z;
+			this->size_page3 = this->size_page+this->size_page+this->size_page;
 			this->offset_channel = (idx_channel-1)*size_page;
 			this->offset_Z = dim_X*dim_Y;
 			this->offset_Y = dim_X;
+			this->threshold_regionSize = default_threshold_regionSize;
+			this->uThreshold_regionSize = INF;
+			this->uThreshold_valueChangeRatio = _uThreshold_valueChangeRatio;
+			this->Image1D_original = _Image1D_original;
 			this->Image1D_page = memory_allocate_uchar1D(this->size_page);
 			this->Image1D_mask = memory_allocate_uchar1D(this->size_page);
-			for (V3DLONG i=0;i<size_page;i++)
+			this->Image1D_mask_const = memory_allocate_uchar1D(this->size_page);
+			this->Image1D_exemplar = memory_allocate_uchar1D(this->size_page3);
+			this->Image1D_segmentationResultPassed = memory_allocate_uchar1D(this->size_page3);
+			this->Image1D_segmentationResultOriginal = memory_allocate_uchar1D(this->size_page3);
+			this->Image1D_segmentationResultMerged = memory_allocate_uchar1D(this->size_page3);
+			this->Image1D_segmentationResultGVF = memory_allocate_uchar1D(this->size_page3);
+			Image3D_page = memory_allocate_uchar3D(this->dim_Y, this->dim_X, this->dim_Z); //tricky!
+			vector<V3DLONG> xyz_i (3, 0);
+			for (V3DLONG i=0;i<this->size_page;i++)
 			{	
-				this->Image1D_page[i] = Image1D_original[i+offset_channel];
+				this->Image1D_page[i] = _Image1D_original[i+offset_channel];
 				this->Image1D_mask[i] = const_max_voxelValue; //all available;
+				this->Image1D_mask_const[i] = const_max_voxelValue; //all available;
+				this->Image1D_exemplar[i] = 0;
+				xyz_i = this->index2Coordinate(i);
+				this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = this->Image1D_page[i];
+				this->Image1D_segmentationResultMerged[i] = this->Image1D_original[i+offset_channel];
+				this->Image1D_segmentationResultMerged[i+size_page] = this->Image1D_original[i+offset_channel];
+				this->Image1D_segmentationResultMerged[i+size_page+size_page] = this->Image1D_original[i+offset_channel];
 			}
+			this->initializeConstants();
 			ofstream ofstream_log;
-			ofstream_log.open ("log_constructor.txt");
+			ofstream_log.open ("log_initialization.txt");
 			ofstream_log<<"dim_X: "<<this->dim_X<<", dim_Y: "<<this->dim_Y<<", dim_Z: "<<this->dim_Z<<";"<<endl;
 			ofstream_log<<"size_page: "<<this->size_page<<"; "<<"current channel: "<<this->idx_channel<<";"<<endl;
+			this->smooth_GVFkernal(_count_smoothRadius);
+			ofstream_log<<"smoothing for "<<_count_smoothRadius<<" times, succeed;"<<endl;
+			if (_threshold_global<0) {this->estimateThreshold();} //store to this->threshold_global;
+			else {this->threshold_global = _threshold_global;}
+			ofstream_log<<"estimateThreshold succeed, threshold_global: "<<this->threshold_global<<";"<<endl;
+			ofstream_log<<"uThreshold_valueChangeRatio: "<<this->uThreshold_valueChangeRatio<<endl;
+			this->count_totalWhiteVoxel = this->thresholdForCurrentPage();
+			V3DLONG count_removedVoxel = this->removeSingleVoxel();
+			ofstream_log<<"removeSingleVoxel succeed, "<<count_removedVoxel<<" single voxel removed;"<<endl;
+			ofstream_log<<"count_totalWhiteVoxel: "<<this->count_totalWhiteVoxel<<endl;
+			copyImage1D(this->Image1D_mask_const, this->Image1D_mask, this->size_page);
 			ofstream_log.close();
 			return;
 		}
 		#pragma  endregion
 
 		#pragma region "control-defineExemplar"
-		void control_defineExemplar(double _threshold_global, LandmarkList _LandmarkList_exemplar, double _uThreshold_valueChangeRatio)
+		bool control_defineExemplar(LandmarkList _LandmarkList_exemplar)
 		{
-			this->uThreshold_valueChangeRatio = _uThreshold_valueChangeRatio;
-			this->createNeighborVector();
-			this->Image1D_exemplar  = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
-			for (V3DLONG i=0;i<size_page;i++)
-			{	
-				this->Image1D_exemplar[i] = 0;
-				this->Image1D_exemplar[i+size_page] = 0;
-				this->Image1D_exemplar[i+size_page+size_page] = 0;
-			}
-			ofstream ofstream_log;
-			ofstream_log.open ("log_defineExemplar.txt");
+			this->initializeConstants();
+			copyImage1D(this->Image1D_mask_const, this->Image1D_mask, this->size_page);
+			this->poss_exemplar.clear();
+			this->possVct_exemplarRegion.clear();
 			this->poss_exemplar = landMarkList2IndexList(_LandmarkList_exemplar);
-			if (_threshold_global<0) {this->estimateThreshold();} //store to this->threshold_global;
-			else {this->threshold_global = _threshold_global;}
-			ofstream_log<<"estimateThreshold succeed, threshold_global: "<<this->threshold_global<<";"<<endl;
-			this->count_totalWhiteVoxel = this->thresholdForCurrentPage();
-			V3DLONG count_removedVoxel = this->removeSingleVoxel(this->Image1D_page, this->size_page);
-			ofstream_log<<"removeSingleVoxel succeed, "<<count_removedVoxel<<" single voxel removed;"<<endl;
-			ofstream_log<<"count_totalWhiteVoxel: "<<this->count_totalWhiteVoxel<<endl;
 			this->possVct_exemplarRegion = this->regionGrowOnPoss(this->poss_exemplar);
+			memset(this->Image1D_exemplar, 0, this->size_page3);
 			this->possVct2Image1DC(this->possVct_exemplarRegion, this->Image1D_exemplar);
 			if (this->possVct_exemplarRegion.empty())
 			{
 				v3d_msg("Warning: no exemplar regions grown. Program will terminate, please re-select the exemplar(s)!");
-				ofstream_log<<"regonGrow for exemplar failed!"<<endl; ofstream_log.close(); return;
+				return false;
 			}
-			ofstream_log.close();
-			return;
+			return true;
 		}
 		#pragma  endregion
 
 		#pragma region "control-propagateExemplar"
 		void control_propagateExemplar(int _idx_shape, double _threshold_deltaShapeStat, double _threshold_histoSimilar, double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize)
 		{
+			this->initializeConstants();
 			ofstream ofstream_log;
 			ofstream_log.open ("log_propagateExemplar.txt");
 			this->idx_shape = _idx_shape;
@@ -489,21 +484,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			this->threshold_histoSimilar = _threshold_histoSimilar;
 			this->multiplier_thresholdRegionSize = _multiplier_thresholdRegionSize;
 			this->multiplier_uThresholdRegionSize = _multiplier_uThresholdRegionSize;
-			this->Image1D_segmentationResultPassed = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
-			this->Image1D_segmentationResultOriginal = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
-			this->Image3D_page = memory_allocate_uchar3D(this->dim_Y, this->dim_X, this->dim_Z); //tricky!
-			vector<V3DLONG> xyz_i (3, 0);
-			for (V3DLONG i=0;i<size_page;i++)
-			{	
-				this->Image1D_segmentationResultOriginal[i] = 0;
-				this->Image1D_segmentationResultOriginal[i+size_page] = 0;
-				this->Image1D_segmentationResultOriginal[i+size_page+size_page] = 0;
-				this->Image1D_segmentationResultPassed[i] = 0;
-				this->Image1D_segmentationResultPassed[i+size_page] = 0;
-				this->Image1D_segmentationResultPassed[i+size_page+size_page] = 0;
-				xyz_i = this->index2Coordinate(i);
-				this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = this->Image1D_page[i];
-			}
 			if (!this->analyzeExemplarRegion())
 			{
 				v3d_msg("Warning: analyzeExemplarRegion failed. Program will terminate, please re-select the exemplar(s)!");
@@ -512,7 +492,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			ofstream_log<<"threshold_deltaShapeStat: "<<this->threshold_deltaShapeStat<<endl;
 			ofstream_log<<"threshold_regionSize: "<<this->threshold_regionSize<<endl;
 			ofstream_log<<"uThreshold_regionSize: "<<this->uThreshold_regionSize<<endl;
-			ofstream_log<<"uThreshold_valueChangeRatio: "<<this->uThreshold_valueChangeRatio<<endl;
 			for (int i=0;i<this->possVct_exemplarRegion.size();i++)
 			{
 				ofstream_log<<" exemplar region"<<(i+1)<<", voxel count: "<<this->possVct_exemplarRegion[i].size()<<endl;
@@ -535,7 +514,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 				ofstream_log<<endl;
 			}
-			this->categorizeVoxelsByValue(this->histo_page, this->Image1D_page, this->size_page);
+			ofstream_log<<endl;
+			this->categorizeVoxelsByValue();
 			this->possVct_segmentationResultOriginal = this->regionGrowOnPossVector(this->possVct_segmentationSeed);
 			this->possVct2Image1DC(this->possVct_segmentationResultOriginal, this->Image1D_segmentationResultOriginal);
 			V3DLONG count_region = this->possVct_segmentationResultOriginal.size();
@@ -561,7 +541,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			V3DLONG pos_center;
 			this->possVct_segmentationResultSplitted.clear();
 			this->possVct_segmentationResultPassed.clear();
+			this->possVct_segmentationResultMerged.clear();
+			this->possVct_segmentationResultGVF.clear();
 			this->poss_segmentationResultCenterPassed.clear();
+			this->poss_segmentationResultCenterMerged.clear();
+			this->poss_segmentationResultCenterGVF.clear();
 			V3DLONG size_radius = 0;
 			double value_anisotropy;
 			vector<V3DLONG> xyz_center;
@@ -572,7 +556,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				cout<<"analyzing region["<<idx_region<<"];"<<endl;
 				poss_region = this->possVct_segmentationResultOriginal[idx_region];
 				count_voxel = poss_region.size();
-				ofstream_log<<endl<<endl<<"idx_region("<<idx_region<<"), count_voxel: "<<count_voxel<<endl;
+				ofstream_log<<endl<<endl<<"analyzing region["<<idx_region<<"), count_voxel: "<<count_voxel<<endl;
 				//fill (histo_region.begin(), histo_region.end(), 0);
 				//for (int idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 				//{
@@ -613,10 +597,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				valuesVct_regionShapeStat = this->getShapeStat(x, y, z, size_radius); //consisted of 3 vectors with length 4;
 				if (valuesVct_regionShapeStat.empty())
 				{
-					if (count_voxel<this->threshold_regionSize)
-					{ ofstream_log<<" too small, removed;"<<endl; continue; }
+					if (count_voxel<this->threshold_regionSize) {ofstream_log<<" too small, removed;"<<endl; continue;}
 					else
 					{
+						ofstream_log<<" not small enough, added to pass list;"<<endl; continue;
 						this->possVct_segmentationResultPassed.push_back(poss_region); //small but not small enough to be removed;
 						this->poss_segmentationResultCenterPassed.push_back(pos_center);
 						continue;
@@ -648,10 +632,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 				if (is_passedShapeStat)
 				{
+					ofstream_log<<" shape test passed;"<<endl;
+					cout<<"   region["<<idx_region<<"] passed shape test;"<<endl;
 					this->possVct_segmentationResultPassed.push_back(poss_region);
 					this->poss_segmentationResultCenterPassed.push_back(pos_center);
-					{ofstream_log<<" shape test passed;"<<endl;}
-					cout<<"   region["<<idx_region<<"] passed shape test;"<<endl;
 				}
 				else
 				{
@@ -680,18 +664,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma region "control-furtherSegmentation"
 		void control_furtherSegmentation(vector<double> _paras_GVF)
 		{
+			this->initializeConstants();
 			this->paras_GVF = _paras_GVF;
-			this->Image1D_segmentationResultMerged = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
-			this->Image1D_segmentationResultGVF = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
-			for (V3DLONG i=0;i<size_page;i++)
-			{	
-				this->Image1D_segmentationResultGVF[i] = 0;
-				this->Image1D_segmentationResultGVF[i+size_page] = 0;
-				this->Image1D_segmentationResultGVF[i+size_page+size_page] = 0;
-				this->Image1D_segmentationResultMerged[i] = this->Image1D_original[i+offset_channel];
-				this->Image1D_segmentationResultMerged[i+size_page] = this->Image1D_original[i+offset_channel];
-				this->Image1D_segmentationResultMerged[i+size_page+size_page] = this->Image1D_original[i+offset_channel];
-			}
 			ofstream ofstream_log;
 			ofstream_log.open ("log_furtherSegmentation.txt");
 			V3DLONG count_region = this->possVct_segmentationResultSplitted.size();
@@ -729,14 +703,12 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				double*** double3D_GVF= memory_allocate_double3D(size_X, size_Y, size_Z);
 				int*** int3D_label = memory_allocate_int3D(size_X, size_Y, size_Z);
 				this->centralizeRegion(poss_region, size_X, size_Y, size_Z, min_X, min_Y, min_Z, double3D_GVF);
-				{ofstream_log<<" centralizeRegion() passed;"<<endl;}
 				vector<V3DLONG> poss_centerGVF;
 				int count_label = class_segmentationMain::GVF_cellSegmentation(double3D_GVF, size_X, size_Y, size_Z, this->paras_GVF, int3D_label);
-				{ofstream_log<<" GVF_cellSegmentation() passed;"<<endl;}
 				possVct_GVF = int3D2possVct(int3D_label, count_label, double3D_GVF, 
 					size_X, size_Y, size_Z, min_X, min_Y, min_Z, this->offset_Y, this->offset_Z, 
 					poss_centerGVF);
-				{ofstream_log<<" int3D2possVct() passed, GVF segmented the region into "<<possVct_GVF.size()<<" sub-regions;"<<endl;}
+				ofstream_log<<" GVF segmented the region into "<<possVct_GVF.size()<<" sub-regions;"<<endl;
 				if (possVct_GVF.size()>0)
 				{
 					for (int i=0;i<possVct_GVF.size();i++)
@@ -747,8 +719,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						{
 							ofstream_log<<" too small, removed;"<<endl;
 						}
+						if (count_voxel > this->uThreshold_regionSize)
+						{
+							ofstream_log<<" too big, removed;"<<endl;
+						}
 						else
 						{
+							ofstream_log<<" added to possVct_segmentationResultGVF;"<<endl;
 							this->possVct_segmentationResultGVF.push_back(possVct_GVF[i]);
 							this->poss_segmentationResultCenterGVF.push_back(poss_centerGVF[i]);
 						}
@@ -756,8 +733,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 				else
 				{
+					/*ofstream_log<<" GVF failed to segment the region, which directly added to possVct_segmentationResultGVF;"<<endl;
 					this->possVct_segmentationResultGVF.push_back(poss_region);
-					this->poss_segmentationResultCenterGVF.push_back(pos_center);
+					this->poss_segmentationResultCenterGVF.push_back(pos_center);*/
+					ofstream_log<<" GVF failed to segment the region;"<<endl;
 				}
 				memory_free_double3D(double3D_GVF, size_Z, size_X);
 				memory_free_int3D(int3D_label, size_Z, size_X);
@@ -770,7 +749,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			this->poss_segmentationResultCenterMerged = this->mergePoss(this->poss_segmentationResultCenterMerged, this->poss_segmentationResultCenterGVF);
 			this->possVct2Image1DC(this->possVct_segmentationResultGVF, this->Image1D_segmentationResultGVF);
 			this->possVct2Image1DC(this->possVct_segmentationResultMerged, this->Image1D_segmentationResultMerged);
-			this->possVct2Image1DC(this->possVct_segmentationResultGVF, this->Image1D_segmentationResultOriginal);
 			this->LandmarkList_segmentationResultGVF = this->indexList2LandMarkList(this->poss_segmentationResultCenterGVF);
 			this->LandmarkList_segmentationResultMerged = this->indexList2LandMarkList(this->poss_segmentationResultCenterMerged);
 			ofstream_log.close();
@@ -786,7 +764,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<vector<V3DLONG> > vctList_tmp;
 			V3DLONG count_seedList = vctList_seed.size();
 			vector<V3DLONG> vct_tmp;
-			V3DLONG count_totalCoveredVoxel = 0;
 			V3DLONG count_seed = 0;
 			for (V3DLONG idx_region=0;idx_region<count_seedList;idx_region++)
 			{
@@ -794,167 +771,98 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				for (int i=0;i<vctList_tmp.size();i++)
 				{
 					vct_tmp = vctList_tmp[i];
-					if (!vct_tmp.empty()) {vctList_result.push_back(vct_tmp); count_totalCoveredVoxel+=vct_tmp.size();}
+					if (!vct_tmp.empty()) {vctList_result.push_back(vct_tmp);}
 				}
 			}
 			return vctList_result;
 		}
 
-			vector<vector<V3DLONG> > regionGrowOnPoss(vector<V3DLONG> vct_seed)
+		vector<vector<V3DLONG> > regionGrowOnPoss(vector<V3DLONG> vct_seed)
+		{
+			V3DLONG idx_tmp;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_seed = vct_seed.size();
+			for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
 			{
-				V3DLONG idx_tmp;
-				vector<vector<V3DLONG> > vctList_result;
-				vector<V3DLONG> vct_tmp;
-				V3DLONG count_seed = vct_seed.size();
-				for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
+				idx_tmp = vct_seed[idx_seed];
+				if (this->Image1D_mask[idx_tmp]>0)
 				{
-					idx_tmp = vct_seed[idx_seed];
-					if (this->Image1D_mask[idx_tmp]>0)
-					{
-						vct_tmp = this->regionGrowOnPos(idx_tmp); //Image1D_mask is updating in this function;
-						if (vct_tmp.size()>this->threshold_regionSize)	{vctList_result.push_back(vct_tmp);}
-					}
+					vct_tmp = this->regionGrowOnPos(idx_tmp); //Image1D_mask is updating in this function;
+					if (vct_tmp.size()>this->threshold_regionSize)	{vctList_result.push_back(vct_tmp);}
 				}
-				return vctList_result;
 			}
+			return vctList_result;
+		}
 
-			vector<vector<V3DLONG> > regionGrowOnPoss(vector<V3DLONG> vct_seed, unsigned char* Image1D_input)
+		vector<V3DLONG> regionGrowOnPos(V3DLONG idx_seed)
+		{
+			vector<V3DLONG> vct_empty (0, 0);
+			if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
 			{
-				V3DLONG idx_tmp;
-				vector<vector<V3DLONG> > vctList_result;
-				vector<V3DLONG> vct_tmp;
-				V3DLONG count_seed = vct_seed.size();
-				for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
-				{
-					idx_tmp = vct_seed[idx_seed];
-					if (this->Image1D_mask[idx_tmp]>0)
-					{
-						vct_tmp = this->regionGrowOnPos(idx_tmp, Image1D_input); //Image1D_mask is updating in this function;
-						if (vct_tmp.size()>this->threshold_regionSize)	{vctList_result.push_back(vct_tmp);}
-					}
-				}
-				return vctList_result;
+				return vct_empty;
 			}
-
-			vector<V3DLONG> regionGrowOnPos(V3DLONG idx_seed)
+			if (this->Image1D_mask[idx_seed]<1) //very likely;
 			{
-				vector<V3DLONG> vct_empty (0, 0);
-				if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
+				return vct_empty;
+			}
+			vector<V3DLONG> poss_result;
+			vector<V3DLONG> poss_growing;
+			vector<V3DLONG> xyz_current;
+			V3DLONG pos_current;
+			V3DLONG pos_neighbor;
+			double value_neighbor;
+			double value_current;
+			V3DLONG count_totalVolume = 1;
+			double value_seed = this->Image1D_page[idx_seed];
+			double mean_region = value_seed;
+			double sum_region = value_seed;
+			mean_region = value_seed;
+			poss_growing.push_back(idx_seed);
+			poss_result.push_back(idx_seed);
+			this->Image1D_mask[idx_seed] = 0; //scooped;
+			while (true)
+			{
+				if (poss_growing.empty()) //growing complete;
 				{
-					return vct_empty;
+					return poss_result;
 				}
-				if (this->Image1D_mask[idx_seed]<1) //very likely;
+				pos_current = poss_growing.back();
+				poss_growing.pop_back();
+				value_current = this->Image1D_page[pos_current];
+				xyz_current = this->index2Coordinate(pos_current);
+				for (int j=0;j<const_count_neighbors;j++)
 				{
-					return vct_empty;
-				}
-				vector<V3DLONG> poss_result;
-				vector<V3DLONG> poss_growing;
-				vector<V3DLONG> xyz_current;
-				V3DLONG pos_current;
-				V3DLONG pos_neighbor;
-				double value_neighbor;
-				double value_current;
-				V3DLONG count_totalVolume = 1;
-				double value_seed = this->Image1D_page[idx_seed];
-				double mean_region = value_seed;
-				double sum_region = value_seed;
-				mean_region = value_seed;
-				poss_growing.push_back(idx_seed);
-				poss_result.push_back(idx_seed);
-				this->Image1D_mask[idx_seed] = 0; //scooped;
-				while (true)
-				{
-					if (poss_growing.empty()) //growing complete;
+					if (((xyz_current[0]+point_neighborRelative[j].x)<0)||((xyz_current[0]+point_neighborRelative[j].x)>=this->dim_X)||((xyz_current[1]+point_neighborRelative[j].y)<0) || ((xyz_current[1]+point_neighborRelative[j].y)>=this->dim_Y)||((xyz_current[2]+point_neighborRelative[j].z)<0) || ((xyz_current[2]+point_neighborRelative[j].z)>=this->dim_Z))
 					{
-						return poss_result;
+						//invalide anyway;
 					}
-					pos_current = poss_growing.back();
-					poss_growing.pop_back();
-					value_current = this->Image1D_page[pos_current];
-					xyz_current = this->index2Coordinate(pos_current);
-					for (int j=0;j<const_count_neighbors;j++)
+					else
 					{
-						if (((xyz_current[0]+point_neighborRelative[j].x)<0)||((xyz_current[0]+point_neighborRelative[j].x)>=this->dim_X)||((xyz_current[1]+point_neighborRelative[j].y)<0) || ((xyz_current[1]+point_neighborRelative[j].y)>=this->dim_Y)||((xyz_current[2]+point_neighborRelative[j].z)<0) || ((xyz_current[2]+point_neighborRelative[j].z)>=this->dim_Z))
+						pos_neighbor = pos_current+poss_neighborRelative[j];
+						if (this->checkValidity(pos_neighbor)) //prevent it from going out of bounds;
 						{
-							//invalide anyway;
-						}
-						else
-						{
-							pos_neighbor = pos_current+poss_neighborRelative[j];
-
-							if (this->checkValidity(pos_neighbor)) //prevent it from going out of bounds;
+							if (this->Image1D_mask[pos_neighbor]>0) //available only;
 							{
-								if (this->Image1D_mask[pos_neighbor]>0) //available only;
+								value_neighbor = this->Image1D_page[pos_neighbor];
+								double diff_neightbor = fabs(value_neighbor-value_current);
+								double uThreshold_valueChange = mean_region*this->uThreshold_valueChangeRatio;
+								if (diff_neightbor<uThreshold_valueChange)
 								{
-									value_neighbor = this->Image1D_page[pos_neighbor];
-									if ((fabs(value_neighbor-value_current))<(mean_region*this->uThreshold_valueChangeRatio))
-									{
-										this->Image1D_mask[pos_neighbor] = 0; //scooped;
-										poss_growing.push_back(pos_neighbor);
-										poss_result.push_back(pos_neighbor);
-										sum_region += value_neighbor;
-										count_totalVolume++;
-										mean_region = sum_region/count_totalVolume; //update mean everytime a new voxel is added;
-									}
-								}
-							}
-						}
-						
-					}
-				}
-			}
-
-			vector<V3DLONG> regionGrowOnPos(V3DLONG idx_seed, unsigned char* Image1D_input)
-				//assuming [0-const_max_voxelValue] integer Image1D_page, should also work on binary image (not tested yet);
-			{
-				vector<V3DLONG> idxs_empty (0, 0);
-				if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
-				{
-					return idxs_empty;
-				}
-				if (this->Image1D_mask[idx_seed]<1) //very likely;
-				{
-					return idxs_empty;
-				}
-				vector<V3DLONG> vct_result;
-				vector<V3DLONG> vct_temp;
-				V3DLONG idx_current;
-				V3DLONG idx_neighbor;
-				double double_neightborValue;
-				double double_currentValue;
-				double double_seedValue = Image1D_input[idx_seed];
-				vct_temp.push_back(idx_seed);
-				vct_result.push_back(idx_seed);
-				this->Image1D_mask[idx_seed] = 0; //scooped;
-				while (true)
-				{
-					if (vct_temp.empty()) //growing complete;
-					{
-						return vct_result;
-					}
-					idx_current = vct_temp.back();
-					vct_temp.pop_back();
-					double_currentValue = Image1D_input[idx_current];
-					for (int j=0;j<const_count_neighbors;j++)
-					{
-						idx_neighbor = idx_current+poss_neighborRelative[j];
-						if (this->checkValidity(idx_neighbor)) //prevent it from going out of bounds;
-						{
-							if (this->Image1D_mask[idx_neighbor]>0) //available only;
-							{
-								double_neightborValue = Image1D_input[idx_neighbor];
-								if (double_neightborValue>0)
-								{
-									this->Image1D_mask[idx_neighbor] = 0; //scooped;
-									vct_temp.push_back(idx_neighbor);
-									vct_result.push_back(idx_neighbor);
+									this->Image1D_mask[pos_neighbor] = 0; //scooped;
+									poss_growing.push_back(pos_neighbor);
+									poss_result.push_back(pos_neighbor);
+									sum_region += value_neighbor;
+									count_totalVolume++;
+									mean_region = sum_region/count_totalVolume; //update mean everytime a new voxel is added;
 								}
 							}
 						}
 					}
 				}
 			}
-			#pragma endregion		
+		}
+		#pragma endregion		
 
 		#pragma region "exemplar" 
 		bool analyzeExemplarRegion()
@@ -980,7 +888,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			this->uThreshold_regionSize = -INF;
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
 			{
-				cout<<"exemplar region: "<<(idx_region+1)<<endl;
 				//fill (histo_region.begin(), histo_region.end(), 0);
 				poss_region = this->possVct_exemplarRegion[idx_region];
 				count_voxel = poss_region.size();
@@ -1055,8 +962,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma endregion
 		
 		#pragma region "threshold estimation"
-		void categorizeVoxelsByValue(vector<double> vct_histoInput, unsigned char* Image1D_input, V3DLONG count_imageSize)
-			//will only consider voxels with value higher than threshold_global;
+		void categorizeVoxelsByValue() //will only consider voxels with value higher than threshold_global;
 		{
 			this->possVct_segmentationSeed.clear();
 			vector<V3DLONG> idxs_empty (0,0);
@@ -1067,13 +973,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			}
 			int int_valueOffset=0;
 			int int_valueTmp=0;
-			for (int i=0;i<count_imageSize;i++)
+			for (int i=0;i<this->size_page;i++)
 			{
-				int_valueTmp = (int)Image1D_input[i];
+				int_valueTmp = this->Image1D_page[i];
 				int_valueOffset = const_max_voxelValue-int_valueTmp;
 				if (int_valueTmp>int_threshold)
 				{
-					possVct_segmentationSeed[int_valueOffset].push_back(i);
+					this->possVct_segmentationSeed[int_valueOffset].push_back(i);
 				}
 			}
 		}
@@ -1082,13 +988,12 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		{
 			double threshold_Yen;
 			double threshold_Ostu;
-			this->histo_page = class_segmentationMain::getHistogram(this->Image1D_page, this->size_page);
+			this->histo_page = this->getHistogram();
 			threshold_Yen = class_segmentationMain::estimateThresholdYen(histo_page);
 			//threshold_Ostu = class_segmentationMain::estimateThresholdOtsu(histo_page);
 			//if (threshold_Ostu<threshold_Yen) {this->threshold_global = threshold_Ostu;}
 			//else {this->threshold_global = threshold_Yen;}
 			this->threshold_global = threshold_Yen;
-			
 			if (this->threshold_global < default_threshold_global)
 			{
 				v3d_msg("Warning: threshold estimation failed, will use default threshold (10) instead!");
@@ -1258,7 +1163,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			V3DLONG count_voxel = poss_input.size();
 			for (V3DLONG i=0;i<count_voxel;i++)
 			{
-				value_voxel = (int)this->Image1D_page[poss_input[i]];
+				value_voxel = this->Image1D_page[poss_input[i]];
 				histo_result[value_voxel] = histo_result[value_voxel]+1;
 			}
 			for (int i=0;i<const_length_histogram;i++)
@@ -1268,21 +1173,36 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return histo_result;
 		}
 		
+		vector<double> getHistogram()
+		{
+			vector<double> histo_result (const_length_histogram, 0);
+			V3DLONG value_voxel;
+			for (V3DLONG i=0;i<this->size_page;i++)
+			{
+				value_voxel = this->Image1D_page[i];
+				histo_result[value_voxel] = histo_result[value_voxel]+1;
+			}
+			for (int i=0;i<const_length_histogram;i++)
+			{
+				histo_result[i] = histo_result[i]/this->size_page;
+			}
+			return histo_result;
+		}
+
 		V3DLONG thresholdForCurrentPage()
 		{
 			V3DLONG count_totalWhite = 0;
 			for(V3DLONG i=0; i<this->size_page; i++)
 			{	
-				if ((double)Image1D_page[i]>this->threshold_global)
+				if (Image1D_page[i]>this->threshold_global)
 				{
 					//do nothing to Image1D_page;
 					count_totalWhite = count_totalWhite + 1;
-					Image1D_mask[i] = const_max_voxelValue; //available;
+					Image1D_mask_const[i] = const_max_voxelValue; //available;
 				}
 				else
 				{
-					Image1D_page[i] = 0;
-					Image1D_mask[i] = 0; //invalid;
+					Image1D_mask_const[i] = 0; //invalid;
 				}
 			}
 			return count_totalWhite;
@@ -1301,6 +1221,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma endregion
 
 		#pragma region "utility functions"
+		void copyImage1D(unsigned char* Image1D_input, unsigned char* Image1D_output, V3DLONG size_image)
+		{
+			for (V3DLONG i=0;i<size_image;i++)
+			{
+				Image1D_output[i] = Image1D_input[i];
+			}
+		}
+
 		static void Image3D2Image1D(int*** Image3D_input, unsigned char* Image1D_output, const int size_X, const int size_Y, const int size_Z)
 		{
 			int tmp_value = 0;
@@ -1368,26 +1296,25 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return poss_result;
 		}
 
-		int removeSingleVoxel(unsigned char* Image1D_input, V3DLONG count_imageSize)
+		int removeSingleVoxel()
 		{
 			bool flag_remove = true;
 			double double_currentValue = 0;
 			double double_neightborValue = 0;
 			V3DLONG idx_neighbor = 0;
 			int count_removedVoxel = 0;
-			for (int i=0;i<count_imageSize;i++)
+			for (int i=0;i<this->size_page;i++)
 			{
-				double_currentValue = Image1D_input[i];
+				double_currentValue = this->Image1D_page[i];
 				if (double_currentValue>this->threshold_global) //valid voxel;
 				{
 					flag_remove = true;
 					for (int j=0;j<const_count_neighbors;j++)
 					{
 						idx_neighbor = i+poss_neighborRelative[j];
-						double_neightborValue = Image1D_input[idx_neighbor];
 						if(this->checkValidity(idx_neighbor)) //prevent it from going out of bounds;
 						{
-							double_neightborValue = Image1D_input[idx_neighbor];
+							double_neightborValue = this->Image1D_page[idx_neighbor];
 							if (double_neightborValue>this->threshold_global)
 							{
 								flag_remove = false; //it has neighbor;
@@ -1397,7 +1324,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					}
 					if (flag_remove)
 					{
-						Image1D_input[i] = 0; //remove it;
+						this->Image1D_page[i] = 0; //remove it;
+						this->Image1D_mask_const[i] = 0;
 						count_removedVoxel++;
 						this->count_totalWhiteVoxel--;
 					}
@@ -1475,9 +1403,12 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return z*offset_Z+y*offset_Y+x;
 		}
 
-		void createNeighborVector()
+		void initializeConstants()
 		{
 			this->poss_neighborRelative.clear();
+			this->point_neighborRelative.clear();
+			this->colors_simpleTable.clear();
+
 			double3D point_neighbor;
 			for (V3DLONG z=-1;z<=1;z++)
 			{
@@ -1498,6 +1429,31 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					}
 				}
 			}
+
+			vector<V3DLONG> color_tmp(3, 0); color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 0;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 0;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 0; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 0;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 0;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 0;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 128; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 128;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 255;
+			this->colors_simpleTable.push_back(color_tmp);
 		}
 
 		void possVct2Image1DC(vector<vector<V3DLONG> > possVct_input, unsigned char* Image1D_input)
@@ -2017,8 +1973,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			}
 			return possVct_result;
 		}
-
-		
 		#pragma endregion
 
 		#pragma region "math"
@@ -2268,7 +2222,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return(ptr_result);
 		}
 
-		static void memory_free_uchar1D(unsigned char *ptr_input, const int i_size)
+		static void memory_free_uchar1D(unsigned char *ptr_input)
 		{
 			free(ptr_input);
 		}
@@ -2325,10 +2279,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return;
 		}
 
-		void smooth_GVFkernal(unsigned char *Image1D_input, int count_smoothIteration)
+		void smooth_GVFkernal(V3DLONG count_smoothRadius)
 		{
-			unsigned char *Image1D_update;
-			Image1D_update = memory_allocate_uchar1D(this->size_page);
+			unsigned char* Image1D_update = memory_allocate_uchar1D(this->size_page);
 			V3DLONG pos_voxel;
 			V3DLONG pos_neighbor1;
 			V3DLONG pos_neighbor2;
@@ -2336,7 +2289,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			V3DLONG pos_neighbor4;
 			V3DLONG pos_neighbor5;
 			V3DLONG pos_neighbor6;
-			for(int i=0;i<count_smoothIteration;i++)
+			for(int i=0;i<count_smoothRadius;i++)
 			{
 				memset(Image1D_update, 0, this->size_page);
 				for(int z=1;z<this->dim_Z-1;z++)
@@ -2352,16 +2305,15 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 							pos_neighbor4 = this->coordinate2Index(x, y+1, z);
 							pos_neighbor5 = this->coordinate2Index(x-1, y, z);
 							pos_neighbor6 = this->coordinate2Index(x+1, y, z);
-							Image1D_update[pos_voxel] = 0.4*Image1D_input[pos_voxel]+0.1*(Image1D_input[pos_neighbor1]+Image1D_input[pos_neighbor2]+Image1D_input[pos_neighbor3]+Image1D_input[pos_neighbor4]+Image1D_input[pos_neighbor5]+Image1D_input[pos_neighbor6]);
+							Image1D_update[pos_voxel] = 0.4*this->Image1D_page[pos_voxel]+0.1*(this->Image1D_page[pos_neighbor1]+this->Image1D_page[pos_neighbor2]+this->Image1D_page[pos_neighbor3]+this->Image1D_page[pos_neighbor4]+this->Image1D_page[pos_neighbor5]+this->Image1D_page[pos_neighbor6]);
 						}
 					}
 				}
 				for (int i=0;i<this->size_page;i++)
 				{
-					Image1D_update[i] = Image1D_update[i];
+					this->Image1D_page[i] = Image1D_update[i];
 				}
 			}
-			memory_free_uchar1D(Image1D_update, this->size_page);
 			return;
 		}
 		#pragma endregion
@@ -2371,11 +2323,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			int*** Image3D_output)
 		{
 			ofstream ofstream_log;
-			{ofstream_log.open ("log_GVF.txt");}
 			int para_maxIteration = paras_GVF[0];
 			double para_fusionThreshold = paras_GVF[1];
-			double para_sigma = paras_GVF[2];
-			double para_mu = paras_GVF[3];
+			double para_mu = 0.1;
 			int count_label = 0;
 			double3D ***Image3D3_u;
 			double3D ***Image3D3_u_normalized;
@@ -2387,41 +2337,27 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			int ***Image3D_label;
 			Image3D_label = memory_allocate_int3D(size_X, size_Y, size_Z);
 			int count_page = size_X*size_Y*size_Z;
-			int smoothIteration = (int)(3*para_sigma + 0.5);
-			{ofstream_log<<"initialization passed!"<<endl;}
-			smooth_GVFkernal(Image3D_input, smoothIteration, size_X, size_Y, size_Z);
-			{ofstream_log<<"smoothing passed!"<<endl;}
 			GVF_getGradient(Image3D_input, Image3D3_gradient, size_X, size_Y, size_Z);
-			{ofstream_log<<"get gradient passed!"<<endl;}
 			Image3D3_f = memory_allocate_double3D3(size_X,size_Y,size_Z);
 			Image3D3_u = memory_allocate_double3D3(size_X,size_Y,size_Z);
 			GVF_initialize(Image3D3_gradient, Image3D3_f, Image3D3_u, size_X, size_Y, size_Z);
-			{ofstream_log<<"f/u initialization passed!"<<endl;}
 			memory_free_double3D3(Image3D3_gradient,size_Z,size_X);
 			GVF_warp(para_maxIteration, para_mu, Image3D3_u, Image3D3_f, size_X, size_Y, size_Z);
-			{ofstream_log<<"warp passed!"<<endl;}
 			memory_free_double3D3(Image3D3_f,size_Z,size_X);
 			Image3D3_u_normalized = memory_allocate_double3D3(size_X,size_Y,size_Z);
 			GVF_normalize(Image3D3_u, Image3D3_u_normalized, size_X, size_Y, size_Z);
-			{ofstream_log<<"normalization passed!"<<endl;}
 			memory_free_double3D3(Image3D3_u,size_Z,size_X);
 			Image3D3_mode = memory_allocate_int3D3(size_X,size_Y,size_Z);
 			GVF_findMode(Image3D3_u_normalized, Image3D3_mode, size_X, size_Y, size_Z);
-			{ofstream_log<<"findMode passed!"<<endl;}
 			memory_free_double3D3(Image3D3_u_normalized, size_Z, size_X);
 			GVF_fuseMode( Image3D3_mode, Image3D_label, para_fusionThreshold, size_X, size_Y, size_Z);
-			{ofstream_log<<"fuseMode passed!"<<endl;}
 			memory_free_int3D3(Image3D3_mode,size_Z,size_X);
 			//unsigned char ***Image3D_edge;
 			//Image3D_edge = memory_allocate_uchar3D(size_X,size_Y,size_Z);
 			//GVF_majorFilter(Image3D_label, const_int_GVF_majorFilterIteration, size_X, size_Y, size_Z);
-			//{ofstream_log<<"major fitler1 passed!"<<endl;}
 			//GVF_findEdge(Image3D_label, Image3D_edge, size_X, size_Y, size_Z);
-			//{ofstream_log<<"find edge passed!"<<endl;}
 			count_label = GVF_localThresholding(Image3D_input, Image3D_label, size_X, size_Y, size_Z);
-			{ofstream_log<<"local thresholding passed!"<<endl;}
 			//GVF_majorFilter(Image3D_result, const_int_GVF_majorFilterIteration, size_X, size_Y, size_Z);
-			//{ofstream_log<<"major fitler2 passed!"<<endl;}
 			V3DLONG pos_voxel = 0;
 			for (z=0;z<size_Z;z++)
 			{
@@ -2434,7 +2370,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 			}
 			memory_free_int3D(Image3D_label,size_Z,size_X);
-			{ofstream_log<<"all succeed!"<<endl;}
 			return count_label;
 		}
 
@@ -2808,23 +2743,21 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			int label_voxel = 0;
 			int value_voxel = 0;
 			int count_label = 0;
-			for(z=0;z<size_Z;z++)
-			{
-				for(x=0;x<size_X;x++)
-				{
-					for(y=0;y<size_Y;y++)
-					{
-						label_voxel = Image3D_label[z][x][y];
-						if(label_voxel>count_label) //we are assuming continuous labeling here;
-						{
-							count_label = label_voxel;
-						}
-					}
-				}
-			}
-			count_label = count_label + 1;
-			cout<<"count_label: "<<count_label<<endl;
-			//histos_local = memory_allocate_double2D(count_label, const_length_histogram);
+			//for(z=0;z<size_Z;z++)
+			//{
+			//	for(x=0;x<size_X;x++)
+			//	{
+			//		for(y=0;y<size_Y;y++)
+			//		{
+			//			label_voxel = Image3D_label[z][x][y];
+			//			if(label_voxel>count_label) //we are assuming continuous labeling here;
+			//			{
+			//				count_label = label_voxel;
+			//			}
+			//		}
+			//	}
+			//}
+			////histos_local = memory_allocate_double2D(count_label, const_length_histogram);
 			histo_global = (double *)malloc(sizeof(double)*const_length_histogram);
 			for(i=0;i<const_length_histogram;i++)
 			{
@@ -2844,8 +2777,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 			}
 			//threshold_global = estimateThresholdYen(histo_global)*0.5;
-			threshold_global = estimateThresholdOtsu(histo_global);
-			cout<<"threshold_global: "<<threshold_global<<endl;
+			threshold_global = estimateThresholdOtsu(histo_global)*0.5;
 			free(histo_global);
 			/*vct_threshold = (int *)malloc(sizeof(int)*(count_label));
 			for(idx_label=0;idx_label<count_label;idx_label++)
@@ -2854,7 +2786,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			}
 			memory_free_double2D(histos_local, count_label);*/
 			vector<V3DLONG> labels_used (0, 0);
-			count_label = 0;
+			//count_label = 0;
 			int idx_usedLabel = 0;
 			for(z=0;z<size_Z;z++)
 			{
@@ -2868,7 +2800,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						if((label_voxel>0) && (value_voxel>threshold_global))
 						{
 							idx_usedLabel = vctContains(labels_used, label_voxel);
-							if (idx_usedLabel>0)
+							if (idx_usedLabel>=0)
 							{
 								Image3D_label[z][x][y] = idx_usedLabel+1;
 							}
@@ -2886,7 +2818,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					}
 				}
 			}
-			cout<<"thresholding passed;"<<endl;
 			//free(vct_threshold);
 			return count_label;
 		}
@@ -2929,16 +2860,17 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma endregion
 	};
 	#pragma endregion
+
 	class_segmentationMain class_segmentationMain1;
-	Q_OBJECT
-	Q_INTERFACES(V3DPluginInterface2_1);
+	Q_OBJECT Q_INTERFACES(V3DPluginInterface2_1);
 	float getPluginVersion() const {return 1.1f;}
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-	bool interface_exemplarDefination(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
+	#pragma region "interface"
+	bool interface_initialization(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
 	{
 		v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
 		if (!v3dhandle_currentWindow) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
@@ -2950,27 +2882,18 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		QString QString_fileNameCurrent = _V3DPluginCallback2_currentCallback.getImageName(v3dhandle_currentWindow);
 		V3DLONG dim_X = Image4DSimple_current->getXDim(); V3DLONG dim_Y = Image4DSimple_current->getYDim();
 		V3DLONG dim_Z = Image4DSimple_current->getZDim(); V3DLONG dim_channel = Image4DSimple_current->getCDim();
-		//convert it to UNIT8;
-		ImagePixelType ImagePixelType_current = Image4DSimple_current->getDatatype(); V3DLONG size_image = dim_X*dim_Y*dim_Z*dim_channel;
-		if(ImagePixelType_current != V3D_UINT8)
-		{
-			unsigned char* Image1D_convertedToUNIT8 = class_segmentationMain::memory_allocate_uchar1D(size_image);
-			if (ImagePixelType_current==V3D_UINT16)
-			{
-				double min,max;
-				if(!rescale_to_0_255_and_copy((unsigned short int *)Image1D_current, size_image, min, max, Image1D_convertedToUNIT8)) {return false;}
-			}
-			else if(ImagePixelType_current==V3D_FLOAT32)
-			{
-				double min,max;
-				if(!rescale_to_0_255_and_copy((float *)Image1D_current, size_image, min, max, Image1D_convertedToUNIT8)) {return false;}
-			}
-			else
-			{v3d_msg("Warning: unknown voxel data type, program will terminate!"); return false; }
-			class_segmentationMain::memory_free_uchar1D(Image1D_current, size_image);
-			Image1D_current = Image1D_convertedToUNIT8;
-		}
-		
+		V3DLONG size_image = dim_X*dim_Y*dim_Z*dim_channel;
+		dialogInitialization dialogInitialization1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
+		if (dialogInitialization1.exec()!=QDialog::Accepted) {return false;}
+		this->class_segmentationMain1.control_initialize(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialization1.channel_idx_selection, dialogInitialization1.intensity_smoothRadius, dialogInitialization1.intensity_threshold_global, dialogInitialization1.intensity_threshold_valueChangeRatio);
+		visualizationImage1D(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Initialized page");
+		//visualizationImage1D(this->class_segmentationMain1.Image1D_mask, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "mask");
+		return true;
+	}
+
+	bool interface_exemplarDefination(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
+	{
+		v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
 		LandmarkList LandmarkList_userDefined = _V3DPluginCallback2_currentCallback.getLandmark(v3dhandle_currentWindow);
 		V3DLONG count_userDefinedLandmarkList = LandmarkList_userDefined.count();
 		QList<NeuronTree> * SWCList_current = _V3DPluginCallback2_currentCallback.getHandleNeuronTrees_3DGlobalViewer(v3dhandle_currentWindow);
@@ -2995,24 +2918,23 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			LandmarkList_current = LandmarkList_userDefined;
 			count_currentLandmarkList = LandmarkList_current.count();
 		}
-		dialogDefineExemplar dialogDefineExemplar1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
-		if (dialogDefineExemplar1.exec()!=QDialog::Accepted) {return false;}
-		this->class_segmentationMain1.control_initialize(Image1D_current, dim_X, dim_Y, dim_Z, dialogDefineExemplar1.channel_idx_selection);
-		this->class_segmentationMain1.control_defineExemplar(dialogDefineExemplar1.intensity_threshold_global, LandmarkList_current, dialogDefineExemplar1.intensity_threshold_valueChangeRatio);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
-		return true;
+		if (this->class_segmentationMain1.control_defineExemplar(LandmarkList_current))
+		{
+			visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	bool interface_exemplarPropagation(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
 	{
 		v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
-		if (!v3dhandle_currentWindow) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
-		Image4DSimple* Image4DSimple_current = _V3DPluginCallback2_currentCallback.getImage(v3dhandle_currentWindow);
-		if (!Image4DSimple_current) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
 		dialogPropagateExemplar dialogPropagateExemplar1(_V3DPluginCallback2_currentCallback, _QWidget_parent);
 		if (dialogPropagateExemplar1.exec()!=QDialog::Accepted) {return false;}
-		//get shape paramters;
-		int idx_shape;
+		int idx_shape; //get shape paramters;
 		if (dialogPropagateExemplar1.shape_type_selection == sphere) {idx_shape = 1;}
 		else if (dialogPropagateExemplar1.shape_type_selection == cube) {idx_shape = 0;}
 		this->class_segmentationMain1.control_propagateExemplar(idx_shape, dialogPropagateExemplar1.shape_para_delta, dialogPropagateExemplar1.intensity_threshold_histoCorr, 
@@ -3033,11 +2955,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		dialogFurtherSegmentation dialogFurtherSegmentation1(_V3DPluginCallback2_currentCallback, _QWidget_parent);
 		if (dialogFurtherSegmentation1.exec()!=QDialog::Accepted) {return false;}
 		//get GVF paramters;
-		vector<double> paras_GVF (4, 0);
+		vector<double> paras_GVF (2, 0);
 		paras_GVF[0] = dialogFurtherSegmentation1.GVF_para_maxIteration;
 		paras_GVF[1] = dialogFurtherSegmentation1.GVF_para_mergingThreshold;
-		paras_GVF[2] = dialogFurtherSegmentation1.GVF_para_sigma;
-		paras_GVF[3] = dialogFurtherSegmentation1.GVF_para_mu;
 		this->class_segmentationMain1.control_furtherSegmentation(paras_GVF);
 		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultGVF, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (splitted from irregular shapes)");
 		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultMerged, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (merged)");
@@ -3048,13 +2968,20 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 
 	void visualizationImage1D(unsigned char* Image1D_input, V3DLONG dim_X, V3DLONG dim_Y, V3DLONG dim_Z, int dim_channel, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QString string_windowName)
 	{
+		V3DLONG size_page = dim_X*dim_Y*dim_Z*dim_channel;
+		unsigned char* Image1D_tmp = class_segmentationMain::memory_allocate_uchar1D(size_page);
+		for (V3DLONG i=0;i<size_page;i++)
+		{
+			Image1D_tmp[i] = Image1D_input[i];
+		}
 		Image4DSimple Image4DSimple_temp;
-		Image4DSimple_temp.setData((unsigned char*)Image1D_input, dim_X, dim_Y, dim_Z, dim_channel, V3D_UINT8);
+		Image4DSimple_temp.setData(Image1D_tmp, dim_X, dim_Y, dim_Z, dim_channel, V3D_UINT8);
 		v3dhandle v3dhandle_main = V3DPluginCallback2_currentCallback.newImageWindow();
 		V3DPluginCallback2_currentCallback.setImage(v3dhandle_main, &Image4DSimple_temp);
 		V3DPluginCallback2_currentCallback.setImageName(v3dhandle_main, string_windowName);
 		V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_main);
 	}
+	#pragma endregion
 };
 
 

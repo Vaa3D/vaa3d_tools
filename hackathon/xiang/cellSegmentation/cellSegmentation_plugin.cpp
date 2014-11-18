@@ -2,7 +2,6 @@
  * It aims to automatically segment cells;
  * 2014-10-12 : by Xiang Li (lindbergh.li@gmail.com);
  */
- 
 
 #include "v3d_message.h"
 #include "cellSegmentation_plugin.h"
@@ -25,7 +24,8 @@ Q_EXPORT_PLUGIN2(cellSegmentation, cellSegmentation);
 QStringList cellSegmentation::menulist() const
 {
     return QStringList()
-        <<tr("Exemplar defination")
+		<<tr("Initialize")
+		<<tr("Exemplar defination")
 		<<tr("Exemplar propagation")
 		<<tr("Further segmentation")
         <<tr("About");
@@ -40,7 +40,11 @@ QStringList cellSegmentation::funclist() const
 
 void cellSegmentation::domenu(const QString &menu_name, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
 {
-    if (menu_name == tr("Exemplar defination"))
+	if (menu_name == tr("Initialize"))
+	{
+		cellSegmentation::interface_initialization(V3DPluginCallback2_currentCallback,QWidget_parent);
+	}
+    else if (menu_name == tr("Exemplar defination"))
 	{
         cellSegmentation::interface_exemplarDefination(V3DPluginCallback2_currentCallback,QWidget_parent);
     }
@@ -68,8 +72,4 @@ bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList 
 	else {return false; }
 	return true;
 }
-#pragma endregion
-
-#pragma region "Segmentation interface"
-
 #pragma endregion
