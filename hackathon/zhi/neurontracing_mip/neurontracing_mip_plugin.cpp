@@ -225,7 +225,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     }
 
     int th = Para.bkg_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/tmp");
+    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -752,7 +752,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    arg.type = "random";std::vector<char*> arg_input_sort;
    arg_input_sort.push_back(fileName_string);
    arg.p = (void *) & arg_input_sort; input_sort<< arg;
-   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("10");arg.p = (void *) & arg_sort_para; input_sort << arg;
+   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("20");arg.p = (void *) & arg_sort_para; input_sort << arg;
    QString full_plugin_name_sort = "sort_neuron_swc";
    QString func_name_sort = "sort_swc";
    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
