@@ -25,6 +25,7 @@ void constructNeuronGraph(const NeuronTree& nt, HBNeuronGraph& ng);
 V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG previous=-1);
 
 void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& parent0, const QList<int>& parent1, int pid0, int pid1);
+void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & ng0, const HBNeuronGraph & ng1, const QList<int> & neuronType0, const QList<int> & neuronType1, int pid0, int pid1);
 
 bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
 bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]

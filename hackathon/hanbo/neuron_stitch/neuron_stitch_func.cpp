@@ -42,6 +42,181 @@ V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG p
     return next;
 }
 
+void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & ng0,
+                        const HBNeuronGraph & ng1, const QList<int> & neuronType0, const QList<int> & neuronType1, int pid0, int pid1)
+{
+    //get the list of the list of points to move
+    QList<V3DLONG> record;
+    V3DLONG id = pid0;
+    QVector<QVector<V3DLONG> > idList0;
+    if(ng0.at(id).size()<=0){
+        QVector<V3DLONG> tmp;
+        tmp.append(id);
+        idList0.append(tmp);
+    }else{
+        QVector<V3DLONG> prev, next;
+        prev.append(id);
+        record.append(id);
+        while(prev.size()>0){
+            QVector<V3DLONG> cur;
+            next.clear();
+            for(int i=0; i<prev.size(); i++){
+                id=prev.at(i);
+                if(neuronType0.at(id)%10==5){ //fork
+                    continue;
+                }else{
+                    //push it to current round point
+                    cur.append(id);
+                    //check its type to see how to deal with its child
+                    if(neuronType0.at(id)==6){ //end point
+                        next.append(ng0.at(id).at(0)); //add its only neighbor to the next round
+                        record.append(ng0.at(id).at(0));
+                    }else if(neuronType0.at(id)==2){ //path point
+                        for(int j=0; j<ng0.at(id).size(); j++){
+                            if(!record.contains(ng0.at(id).at(j))){
+                                next.append(ng0.at(id).at(j)); //add its neighbor to the next round if not reached so far
+                                record.append(ng0.at(id).at(j));
+                            }
+                        }
+                    }else if(neuronType0.at(id)>10){ //spine point
+                        QQueue<V3DLONG> spinequeue;
+                        for(int j=0; j<ng0.at(id).size(); j++){
+                            if(!record.contains(ng0.at(id).at(j))){ //the point is not touched yet
+                                if(neuronType0.at(ng0.at(id).at(j))==61){ //spine end
+                                    cur.append(ng0.at(id).at(j));
+                                    record.append(ng0.at(id).at(j));
+                                }else if(neuronType0.at(ng0.at(id).at(j))==21 || //spine path
+                                         neuronType0.at(ng0.at(id).at(j))==51){ //spine fork
+                                    cur.append(ng0.at(id).at(j));
+                                    record.append(ng0.at(id).at(j));
+                                    spinequeue.append(ng0.at(id).at(j));
+                                }else{ //leave it for next round
+                                    next.append(ng0.at(id).at(j));
+                                    record.append(ng0.at(id).at(j));
+                                }
+                            }
+                        }
+                        //check the queue to obtain all spine branches
+                        while(!spinequeue.isEmpty()){
+                            V3DLONG tmpid=spinequeue.dequeue();
+                            for(int j=0; j<ng0.at(tmpid).size(); j++){
+                                if(!record.contains(ng0.at(tmpid).at(j))){
+                                    spinequeue.append(ng0.at(tmpid).at(j));
+                                    cur.append(ng0.at(tmpid).at(j));
+                                    record.append(ng0.at(tmpid).at(j));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            idList0.append(cur);
+            prev=next;
+        }
+    }
+
+    id = pid1;
+    record.clear();
+    QVector<QVector<V3DLONG> > idList1;
+    if(ng1.at(id).size()<=0){
+        QVector<V3DLONG> tmp;
+        tmp.append(id);
+        idList1.append(tmp);
+    }else{
+        QVector<V3DLONG> prev, next;
+        prev.append(id);
+        record.append(id);
+        while(prev.size()>0){
+            QVector<V3DLONG> cur;
+            next.clear();
+            for(int i=0; i<prev.size(); i++){
+                id=prev.at(i);
+                if(neuronType1.at(id)%10==5){ //fork
+                    continue;
+                }else{
+                    //push it to current round point
+                    cur.append(id);
+                    //check its type to see how to deal with its child
+                    if(neuronType1.at(id)==6){ //end point
+                        next.append(ng1.at(id).at(0)); //add its only neighbor to the next round
+                        record.append(ng1.at(id).at(0));
+                    }else if(neuronType1.at(id)==2){ //path point
+                        for(int j=0; j<ng1.at(id).size(); j++){
+                            if(!record.contains(ng1.at(id).at(j))){
+                                next.append(ng1.at(id).at(j)); //add its neighbor to the next round if not reached so far
+                                record.append(ng1.at(id).at(j));
+                            }
+                        }
+                    }else if(neuronType1.at(id)>10){ //spine point
+                        QQueue<V3DLONG> spinequeue;
+                        for(int j=0; j<ng1.at(id).size(); j++){
+                            if(!record.contains(ng1.at(id).at(j))){ //the point is not touched yet
+                                if(neuronType0.at(ng1.at(id).at(j))==61){ //spine end
+                                    cur.append(ng1.at(id).at(j));
+                                    record.append(ng1.at(id).at(j));
+                                }else if(neuronType0.at(ng1.at(id).at(j))==21 || //spine path
+                                         neuronType0.at(ng1.at(id).at(j))==51){ //spine fork
+                                    cur.append(ng1.at(id).at(j));
+                                    record.append(ng1.at(id).at(j));
+                                    spinequeue.append(ng1.at(id).at(j));
+                                }else{ //leave it for next round
+                                    next.append(ng1.at(id).at(j));
+                                    record.append(ng1.at(id).at(j));
+                                }
+                            }
+                        }
+                        //check the queue to obtain all spine branches
+                        while(!spinequeue.isEmpty()){
+                            V3DLONG tmpid=spinequeue.dequeue();
+                            for(int j=0; j<ng1.at(tmpid).size(); j++){
+                                if(!record.contains(ng1.at(tmpid).at(j))){
+                                    spinequeue.append(ng1.at(tmpid).at(j));
+                                    cur.append(ng1.at(tmpid).at(j));
+                                    record.append(ng1.at(tmpid).at(j));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            idList1.append(cur);
+            prev=next;
+        }
+    }
+
+
+    //calculate the place to go
+    XYZ goal;
+    goal.x=nt0->listNeuron.at(pid0).x+(nt1->listNeuron.at(pid1).x - nt0->listNeuron.at(pid0).x)*idList0.size()/(idList0.size()+idList1.size());
+    goal.y=nt0->listNeuron.at(pid0).y+(nt1->listNeuron.at(pid1).y - nt0->listNeuron.at(pid0).y)*idList0.size()/(idList0.size()+idList1.size());
+    goal.z=nt0->listNeuron.at(pid0).z+(nt1->listNeuron.at(pid1).z - nt0->listNeuron.at(pid0).z)*idList0.size()/(idList0.size()+idList1.size());
+    XYZ vector0;
+    vector0.x=goal.x-nt0->listNeuron.at(pid0).x;
+    vector0.y=goal.y-nt0->listNeuron.at(pid0).y;
+    vector0.z=goal.z-nt0->listNeuron.at(pid0).z;
+    for(int i=0; i<idList0.size(); i++){
+        for(int j=0; j<idList0.at(i).size(); j++){
+            NeuronSWC* p=(NeuronSWC*)&(nt0->listNeuron.at(idList0.at(i).at(j)));
+            p->x += vector0.x*(idList0.size()-i)/(idList0.size()+0);
+            p->y += vector0.y*(idList0.size()-i)/(idList0.size()+0);
+            p->z += vector0.z*(idList0.size()-i)/(idList0.size()+0);
+        }
+    }
+
+    vector0.x=goal.x-nt1->listNeuron.at(pid1).x;
+    vector0.y=goal.y-nt1->listNeuron.at(pid1).y;
+    vector0.z=goal.z-nt1->listNeuron.at(pid1).z;
+    for(int i=0; i<idList1.size(); i++){
+        for(int j=0; j<idList1.at(i).size(); j++){
+            NeuronSWC* p=(NeuronSWC*)&(nt1->listNeuron.at(idList1.at(i).at(j)));
+            p->x += vector0.x*(idList1.size()-i)/(idList1.size()+0);
+            p->y += vector0.y*(idList1.size()-i)/(idList1.size()+0);
+            p->z += vector0.z*(idList1.size()-i)/(idList1.size()+0);
+        }
+    }
+
+}
+
 void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& parent0, const QList<int>& parent1, int pid0, int pid1)
 {
     //get the list of points to move

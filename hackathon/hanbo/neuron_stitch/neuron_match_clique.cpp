@@ -1789,7 +1789,8 @@ void neuron_match_clique::stitch()
         if(components0[pmatch0.at(pid)]==components1[pmatch1.at(pid)]) //loop
             continue;
 
-        stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, pmatch0.at(pid), pmatch1.at(pid));
+        //stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, pmatch0.at(pid), pmatch1.at(pid));
+        stitchMatchedPoint(nt0_stitch, nt1_stitch, ng0, ng1, neuronType0, neuronType1, pmatch0.at(pid), pmatch1.at(pid));
 
         //update cand components
         int cid=components1[pmatch1.at(pid)];
@@ -1824,7 +1825,8 @@ bool neuron_match_clique::stitch(int point0, int point1)
             return false;
 
     //stitch
-    stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, point0, point1);
+    //stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, point0, point1);
+    stitchMatchedPoint(nt0_stitch, nt1_stitch, ng0, ng1, neuronType0, neuronType1, point0, point1);
 
     //update cand components
     int cid=components1[point1];
@@ -2187,6 +2189,7 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
         }
         //normalize direction
         double tmpNorm = sqrt(tmpdir.x*tmpdir.x+tmpdir.y*tmpdir.y+tmpdir.z*tmpdir.z);
+        if(tmpNorm<1e-16) tmpNorm=1e-16;
         tmpdir.x/=tmpNorm; tmpdir.x*=orientation;
         tmpdir.y/=tmpNorm; tmpdir.y*=orientation;
         tmpdir.z/=tmpNorm; tmpdir.z*=orientation;
