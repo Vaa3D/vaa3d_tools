@@ -132,7 +132,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &p,bool 
 bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &p,bool bmenu);
 
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile,QString &region_name,
-                 Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th);
+                 Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, NA_PARA &p);
 NeuronTree eliminate(NeuronTree input, double length);
  
 QStringList neuronassembler::menulist() const
@@ -194,6 +194,8 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
         {
             case 2: P.merge = dialog.merge; break;
             case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
+            case 5: P.b_256cube = dialog.b_256cube;
+
         }
 
         assembler_tc(callback,parent,P,bmenu);
@@ -245,6 +247,7 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
         {
             case 2: P.merge = dialog.merge; break;
             case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
+            case 5: P.b_256cube = dialog.b_256cube;
         }
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -484,6 +487,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
     case 2: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc"; break;
     case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
     case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
+    case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
 
     }
 
@@ -503,12 +507,24 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
         ifstream ifs_image(walker->tilename.toStdString().c_str());
         if(!ifs_image)
-         save_region(callback,walker->start,walker->end,tcfile,walker->tilename,vim, P.bkg_thresh);
+         save_region(callback,walker->start,walker->end,tcfile,walker->tilename,vim, P);
         else
         {
             walker = walker->next;
             continue;
         }
+
+
+        QString swcfilename;
+        switch(P.tracing_method){
+        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
+        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
+        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
+        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
+        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
+
+        }
+
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -521,6 +537,11 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         std:: string fileName_Qstring(walker->tilename.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
         arg_input.push_back(fileName_string);
         arg.p = (void *) & arg_input; input<< arg;
+
+        char* char_swcout =  new char[swcfilename.length() + 1];strcpy(char_swcout, swcfilename.toStdString().c_str());
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+
         char channel = '0' + P.channel;
         string T_background = boost::lexical_cast<string>(P.bkg_thresh);
         char* Th =  new char[T_background.length() + 1];
@@ -553,6 +574,9 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "TReMap"; func_name = "trace_mip";break;
+            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
+                    arg.p = (void *) & arg_para; input << arg;
+                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
         }
        // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
 
@@ -588,15 +612,6 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 //                 v3d_msg("The OS is not Linux or Mac. Do nothing.",bmenu);
 //                 return false;
 //        #endif
-
-        QString swcfilename;
-        switch(P.tracing_method){
-        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
-        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
-        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
-        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-
-        }
 
         ifstream ifs_swc(swcfilename.toStdString().c_str());
         if(!ifs_swc)
@@ -852,6 +867,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         case 2: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc"; break;
         case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
         case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
+        case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
 
     }
 
@@ -883,11 +899,15 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 if(datald) {delete []datald; datald = 0;}
                 return false;
             }
-            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
-            {
-                if(datald[i] < P.bkg_thresh)
-                    datald[i] = 0;
 
+            if(P.tracing_method == 2 || P.tracing_method ==3)
+            {
+                for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
+                {
+                    if(datald[i] < P.bkg_thresh)
+                        datald[i] = 0;
+
+                }
             }
             simple_saveimage_wrapper(callback, walker->tilename.toStdString().c_str(),  (unsigned char *)datald, in_sz, V3D_UINT8);
             if(datald) {delete []datald; datald = 0;}
@@ -896,6 +916,16 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         {
             walker = walker->next;
             continue;
+        }
+
+        QString swcfilename;
+        switch(P.tracing_method){
+        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
+        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
+        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
+        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
+        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
+
         }
 
         V3DPluginArgItem arg;
@@ -909,6 +939,11 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         std:: string fileName_Qstring(walker->tilename.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
         arg_input.push_back(fileName_string);
         arg.p = (void *) & arg_input; input<< arg;
+
+        char* char_swcout =  new char[swcfilename.length() + 1];strcpy(char_swcout, swcfilename.toStdString().c_str());
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+
         char channel = '0' + P.channel;
         string T_background = boost::lexical_cast<string>(P.bkg_thresh);
         char* Th =  new char[T_background.length() + 1];
@@ -924,6 +959,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         string is_break_accept_string = boost::lexical_cast<string>(P.is_break_accept);char* is_break_accept_char =  new char[is_break_accept_string.length() + 1]; strcpy(is_break_accept_char, is_break_accept_string.c_str());
         string length_thresh_string = boost::lexical_cast<string>(P.length_thresh);char* length_thresh_char =  new char[length_thresh_string.length() + 1]; strcpy(length_thresh_char, length_thresh_string.c_str());
 
+        //APP1
+        channel = '0' + P.channel - 1;
 
         arg.type = "random";
         std::vector<char*> arg_para;
@@ -941,8 +978,10 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "TReMap"; func_name = "trace_mip";break;
+            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
+                    arg.p = (void *) & arg_para; input << arg;
+                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
         }
-       // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
         {
@@ -951,14 +990,6 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
              return false;
         }
 
-
-        QString swcfilename;
-        switch(P.tracing_method){
-        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
-        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
-        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
-        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-        }
 
         ifstream ifs_swc(swcfilename.toStdString().c_str());
         if(!ifs_swc)
@@ -1150,7 +1181,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
 }
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile, QString &region_name,
-                 Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, double Th)
+                 Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, NA_PARA &P)
 {
 
     //virtual image
@@ -1291,11 +1322,15 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
     in_sz[2] = vz;
     in_sz[3] = vc;
 
-    for(V3DLONG i = 0; i < vx*vy*vz*vc; i++)
+    if(P.tracing_method == 2 || P.tracing_method ==3)
     {
-        if(pVImg_UINT8[i] < Th)
-            pVImg_UINT8[i] = 0;
+        for(V3DLONG i = 0; i < vx*vy*vz*vc; i++)
+        {
+            if(pVImg_UINT8[i] < P.bkg_thresh)
+                pVImg_UINT8[i] = 0;
+        }
     }
+
     simple_saveimage_wrapper(callback, region_name.toStdString().c_str(),  (unsigned char *)pVImg_UINT8, in_sz, V3D_UINT8);
     if(pVImg_UINT8) {delete []pVImg_UINT8; pVImg_UINT8=0;}
 

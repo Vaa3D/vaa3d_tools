@@ -8,6 +8,8 @@ INCLUDEPATH  += $$VAA3DPATH/common_lib/include
 
 HEADERS	+= neuronassembler_plugin.h
 HEADERS	+= TReMap_plugin.h
+HEADERS	+= APP1_plugin.h
+
 
 HEADERS	+= ../APP2_large_scale/readRawfile_func.h
 
