@@ -132,7 +132,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         printf("bkg_thresh       Default -1 (-1 is for auto-thresholding, otherwise the threshold specified by a user will be used.\n");
         
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
+        printf("outswc_file      If not be specified, will be named automatically based on the input image file name.\n");
 
     }
     return true;
