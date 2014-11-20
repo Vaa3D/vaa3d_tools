@@ -3,6 +3,8 @@
  * 2013-08-29 : by Zhi Zhou
  */
 
+#include <QByteArray>
+
 #include "v3d_message.h"
 #include <vector>
 #include "MultisclaeEnhancement_plugin.h"
@@ -2281,6 +2283,8 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
     #pragma omp parallel for  // FL add parallelizing
     
 	for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+//	for(V3DLONG iy = 0; iy < 10; iy = iy+Ws-Ws/10)
+
 	{
 		V3DLONG yb = iy;
 		V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
@@ -2290,6 +2294,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 		#pragma omp parllel for //FL add for parallelizing
 
 		for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+//		for(V3DLONG ix = 0; ix < 10; ix = ix+Ws-Ws/10)
 		
 		{	
 			
@@ -2556,7 +2561,10 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
  		            
 					// load section k of the current 3D block
 
-					char *bn = (char *)(blockFileName.toStdString().c_str());
+//					char *bn = (char *)(blockFileName.toStdString().c_str();	
+
+					QByteArray byteArray = blockFileName.toUtf8();
+					char* bn = byteArray.data();
 					
 					cout << "blockFileName=" << bn << endl;
 
@@ -2656,6 +2664,10 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 
 		return true;
     }
+
+    if (in_sz) {delete []in_sz; in_sz=0;}
+    if (in_zz) {delete []in_zz; in_zz=0;}
+
 }
 #endif
 
