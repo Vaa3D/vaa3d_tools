@@ -8,6 +8,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "TReMap_plugin.h"
 
 class neuronassembler : public QObject, public V3DPluginInterface2_1
 {
@@ -25,6 +26,7 @@ public:
 };
 
 #endif
+
 
 class NeuronAssemblerDialog_raw : public QDialog
     {
@@ -55,11 +57,11 @@ class NeuronAssemblerDialog_raw : public QDialog
 
 
             QStringList methodList;
-            methodList << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing";
+            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing";
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
-            layout->addWidget(new QLabel("background_threshold \n(if set as -1, \nthen auto-thresholding)"),1,0);
+            layout->addWidget(new QLabel("background_threshold"),1,0);
             layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
 
             layout->addWidget(new QLabel("block_size"),2,0);
@@ -95,7 +97,7 @@ class NeuronAssemblerDialog_raw : public QDialog
 
             connect(channel_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
-            connect(combo_method, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
+            connect(combo_method, SIGNAL(currentIndexChanged(int)), this, SLOT(_slots_method()));
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
@@ -151,6 +153,33 @@ class NeuronAssemblerDialog_raw : public QDialog
             update();
 
         }
+
+        void _slots_method()
+        {
+            if(combo_method->currentIndex() == 2)
+            {
+                merge = 0;
+                if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Merge Close Nodes?"), QMessageBox::Yes, QMessageBox::No))
+                    merge = 1;
+            }
+            else if (combo_method->currentIndex() == 4)
+            {
+                mipTracingeDialog dialog(this);
+                if (dialog.exec()!=QDialog::Accepted)
+                    return;
+                is_gsdt = dialog.is_gsdt;
+                is_break_accept = dialog.is_break_accept;
+                bkg_thresh = dialog.bkg_thresh;
+                length_thresh = dialog.length_thresh;
+                cnn_type = dialog.cnn_type;
+                SR_ratio = dialog.SR_ratio;
+                b_256cube = dialog.b_256cube;
+                b_RadiusFrom2D = dialog.b_RadiusFrom2D;
+                mip_plane = dialog.mip_plane;
+            }
+            update();
+
+        }
     public:
 
         QSpinBox * channel_spinbox;
@@ -171,6 +200,19 @@ class NeuronAssemblerDialog_raw : public QDialog
         int block_size;
         int  bkg_thresh;
         int tracing_method;
+
+        //NeuTube
+        int merge;
+
+        //TReMap
+        int is_gsdt;
+        int is_break_accept;
+        double length_thresh;
+        int  cnn_type;
+        double SR_ratio;
+        int  b_256cube;
+        int b_RadiusFrom2D;
+        int mip_plane;
 
         QString rawfilename;
         QString markerfilename;
@@ -225,11 +267,11 @@ class NeuronAssemblerDialog : public QDialog
             openTcFile = new QPushButton(QObject::tr("..."));
 
             QStringList methodList;
-            methodList << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing";
+            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing";
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
-            layout->addWidget(new QLabel("background_threshold \n(if set as -1, \nthen auto-thresholding)"),1,0);
+            layout->addWidget(new QLabel("background_threshold"),1,0);
             layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
 
             layout->addWidget(new QLabel("block_size"),2,0);
@@ -261,7 +303,7 @@ class NeuronAssemblerDialog : public QDialog
 
             connect(channel_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
-            connect(combo_method, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
+            connect(combo_method, SIGNAL(currentIndexChanged(int)), this, SLOT(_slots_method()));
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openTcFile, SIGNAL(clicked()), this, SLOT(_slots_openTcFile()));
@@ -298,6 +340,34 @@ class NeuronAssemblerDialog : public QDialog
             update();
 
         }
+
+
+        void _slots_method()
+        {
+            if(combo_method->currentIndex() == 2)
+            {
+                merge = 0;
+                if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Merge Close Nodes?"), QMessageBox::Yes, QMessageBox::No))
+                    merge = 1;
+            }
+            else if (combo_method->currentIndex() == 4)
+            {
+                mipTracingeDialog dialog(this);
+                if (dialog.exec()!=QDialog::Accepted)
+                    return;
+                is_gsdt = dialog.is_gsdt;
+                is_break_accept = dialog.is_break_accept;
+                bkg_thresh = dialog.bkg_thresh;
+                length_thresh = dialog.length_thresh;
+                cnn_type = dialog.cnn_type;
+                SR_ratio = dialog.SR_ratio;
+                b_256cube = dialog.b_256cube;
+                b_RadiusFrom2D = dialog.b_RadiusFrom2D;
+                mip_plane = dialog.mip_plane;
+            }
+            update();
+
+        }
     public:
 
         QSpinBox * channel_spinbox;
@@ -314,6 +384,20 @@ class NeuronAssemblerDialog : public QDialog
         int  bkg_thresh;
         int tracing_method;
 
+        //NeuTube
+        int merge;
+
+        //TReMap
+        int is_gsdt;
+        int is_break_accept;
+        double length_thresh;
+        int  cnn_type;
+        double SR_ratio;
+        int  b_256cube;
+        int b_RadiusFrom2D;
+        int mip_plane;
+
         QString tcfilename;
 
     };
+
