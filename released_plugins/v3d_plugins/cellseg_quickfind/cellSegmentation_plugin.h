@@ -309,7 +309,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<vector<V3DLONG> > colors_simpleTable;
 			
 			//Input or directly derived;
-			bool flag_initialized;
 			unsigned char* Image1D_page;
 			unsigned char* Image1D_mask;
 			unsigned char*** Image3D_page;
@@ -355,14 +354,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<V3DLONG> poss_segmentationResultCenterMerged;
 			#pragma endregion
 			
-		class_segmentationMain() {flag_initialized=false;}
+		class_segmentationMain() {}
 
 		~class_segmentationMain() {}
 
 		#pragma region "control-intialize"
 		bool control_initialize(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z , int _idx_channel, V3DLONG _count_smoothRadius, V3DLONG _count_medianFilterRadius)
 		{
-			if (flag_initialized) {v3d_msg("Warning: instance already initialized, please restart the program if you want a new instance!"); return false;}
 			this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 			this->size_page = dim_X*dim_Y*dim_Z;
 			this->size_page3 = this->size_page+this->size_page+this->size_page;
@@ -382,8 +380,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			{	
 				this->Image1D_page[i] = _Image1D_original[i+offset_channel];
 				this->Image1D_mask[i] = const_max_voxelValue; //all available;
-				xyz_i = this->index2Coordinate(i);
-				this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = this->Image1D_page[i];
 				this->Image1D_segmentationResultMerged[i] = this->Image1D_original[i+offset_channel];
 				this->Image1D_segmentationResultMerged[i+size_page] = this->Image1D_original[i+offset_channel];
 				this->Image1D_segmentationResultMerged[i+size_page+size_page] = this->Image1D_original[i+offset_channel];
@@ -399,7 +395,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			//ofstream_log<<"smoothing for "<<_count_smoothRadius<<" times, succeed;"<<endl;
 			//ofstream_log<<"segmentation seeds initialized, totally "<<this->poss_segmentationSeed.size()<<";"<<endl;
 			//ofstream_log.close();
-			flag_initialized = true;
 			return true;
 		}
 		#pragma  endregion
@@ -407,7 +402,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma region "control-defineExemplar"
 		bool control_defineExemplar(LandmarkList _LandmarkList_exemplar)
 		{
-			if (!flag_initialized) {v3d_msg("Warning: instance not initialized, please perform initialization first!"); return false;}
+			if (this->poss_neighborRelative.size()<1) {v3d_msg("Warning: instance not initialized, please perform initialization first!"); return false;}
 			this->initializeConstants();
 			this->poss_exemplar.clear();
 			this->possVct_exemplarRegion.clear();
@@ -465,10 +460,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma  endregion
 
 		#pragma region "control-propagateExemplar"
-		void control_propagateExemplar(int _idx_shape, double _threshold_deltaShapeStat,
+		bool control_propagateExemplar(int _idx_shape, double _threshold_deltaShapeStat,
 			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize)
 		{
-			if (!flag_initialized) {v3d_msg("Warning: instance not initialized, please perform initialization first!"); return;}
+			if (this->poss_neighborRelative.size()<1) {v3d_msg("Warning: instance not initialized, please perform initialization first!"); return false;}
+			if (this->possVct_exemplarRegion.size()<1) {v3d_msg("Warning: no exemplar data learned, please re-select the exemplars and perform the defination!"); return false;}
 			this->initializeConstants();
 			this->categorizeVoxelsByValue();
 			//ofstream ofstream_log;
@@ -653,13 +649,15 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				INF);
 			this->possVct2Image1DC(this->possVct_segmentationResultSplitted, this->Image1D_segmentationResultSplitted);
 			//ofstream_log.close();
-			return;
+			return true;
 		}
 		#pragma endregion
 
 		#pragma region "control-furtherSegmentation"
-		void control_furtherSegmentation(vector<double> _paras_GVF)
+		bool control_furtherSegmentation(vector<double> _paras_GVF)
 		{
+			if (this->poss_neighborRelative.size()<1) {v3d_msg("Warning: instance not initialized, please perform initialization first!"); return false;}
+			if (this->possVct_exemplarRegion.size()<1) {v3d_msg("Warning: no exemplar data learned, please re-select the exemplars and perform the defination!"); return false;}
 			this->initializeConstants();
 			ofstream ofstream_log;
 			ofstream_log.open ("log_furtherSegmentation.txt");
@@ -750,7 +748,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			this->possVct2Image1DC(this->possVct_segmentationResultMerged, this->Image1D_segmentationResultMerged);
 			this->LandmarkList_segmentationResultMerged = this->indexList2LandMarkList(this->poss_segmentationResultCenterMerged);
 			ofstream_log.close();
-			return;
+			return true;
 		}
 		#pragma endregion
 
@@ -2688,12 +2686,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		int idx_shape; //get shape paramters;
 		if (dialogPropagateExemplar1.shape_type_selection == sphere) {idx_shape = 1;}
 		else if (dialogPropagateExemplar1.shape_type_selection == cube) {idx_shape = 0;}
-		this->class_segmentationMain1.control_propagateExemplar(idx_shape, dialogPropagateExemplar1.shape_para_delta,
-			dialogPropagateExemplar1.shape_multiplier_thresholdRegionSize, dialogPropagateExemplar1.shape_multiplier_uThresholdRegionSize);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultPassed, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (exemplar-like shape)");
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultSplitted, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Input for GVF");
-		_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultPassed);
-		_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
+		if (this->class_segmentationMain1.control_propagateExemplar(idx_shape, dialogPropagateExemplar1.shape_para_delta,
+			dialogPropagateExemplar1.shape_multiplier_thresholdRegionSize, dialogPropagateExemplar1.shape_multiplier_uThresholdRegionSize))
+		{
+			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultPassed, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (exemplar-like shape)");
+			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultSplitted, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Input for GVF");
+			_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultPassed);
+			_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
+		}
 		return true;
 	}
 
@@ -2710,10 +2710,12 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		paras_GVF[0] = dialogFurtherSegmentation1.GVF_para_maxIteration;
 		paras_GVF[1] = dialogFurtherSegmentation1.GVF_para_mergingThreshold;
 		paras_GVF[2] = dialogFurtherSegmentation1.GVF_para_smoothRadius;
-		this->class_segmentationMain1.control_furtherSegmentation(paras_GVF);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultMerged, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (merged)");
-		_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultMerged);
-		_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
+		if (this->class_segmentationMain1.control_furtherSegmentation(paras_GVF))
+		{
+			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultMerged, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (merged)");
+			_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultMerged);
+			_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
+		}
 		return true;
 	}
 
