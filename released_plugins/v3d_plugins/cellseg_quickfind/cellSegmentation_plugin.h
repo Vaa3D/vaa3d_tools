@@ -563,7 +563,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				{	
 					vector<V3DLONG> poss_region = possVct_regionOriginal[idx_region];
 					V3DLONG count_voxel = poss_region.size();
-					cout<<"analyzing region ["<<idx_region<<"];"<<endl;
+					//cout<<"analyzing region ["<<idx_region<<"];"<<endl;
 					//ofstream_log<<"analyzing region ["<<(idx_region+1)<<"], count_voxel: "<<count_voxel<<endl;
 					if (count_voxel>uThreshold_regionSize)
 					{
@@ -2636,8 +2636,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		LandmarkList LandmarkList_current;
 		V3DLONG count_currentLandmarkList = -1;
 		if ((count_SWCList<1) && (count_userDefinedLandmarkList<1)) {v3d_msg("You have not defined any landmarks or swc structure to run the segmenation, program canceled!"); return false;}
-		dialogInitialization dialogInitialization1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
-		if (dialogInitialization1.exec()!=QDialog::Accepted) {return false;}
 		else if ((count_SWCList>0) && (count_userDefinedLandmarkList>0))
 		{
 			LandmarkList_current = LandmarkList_userDefined;
@@ -2654,16 +2652,33 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			LandmarkList_current = LandmarkList_userDefined;
 			count_currentLandmarkList = LandmarkList_current.count();
 		}
-		//if (this->class_segmentationMain1.control_defineExemplar(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialization1.channel_idx_selection, dialogInitialization1.intensity_smoothRadius, dialogInitialization1.intensity_medianFilterRadius, LandmarkList_current))
-		if (this->class_segmentationMain1.control_defineExemplar(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialization1.channel_idx_selection, LandmarkList_current))
+		if (dim_channel > 1)
 		{
-			visualizationImage1D(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Initialized page");
-			visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
-			return true;
+			dialogInitialization dialogInitialization1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
+			if (dialogInitialization1.exec()!=QDialog::Accepted) {return false;}
+			//if (this->class_segmentationMain1.control_defineExemplar(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialization1.channel_idx_selection, dialogInitialization1.intensity_smoothRadius, dialogInitialization1.intensity_medianFilterRadius, LandmarkList_current))
+			if (this->class_segmentationMain1.control_defineExemplar(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialization1.channel_idx_selection, LandmarkList_current))
+			{
+				//visualizationImage1D(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Initialized page");
+				visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
-			return false;
+			if (this->class_segmentationMain1.control_defineExemplar(Image1D_current, dim_X, dim_Y, dim_Z, 1, LandmarkList_current))
+			{
+				visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 
