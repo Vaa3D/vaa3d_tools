@@ -352,16 +352,29 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
 
     QString swc_name = PARA.inimg_file + "_MST_Tracing.swc";
 
-    NeuronTree nt_sorted;
-    hashNeuron.clear();
-    SortSWC(nt_final.listNeuron, nt_sorted.listNeuron ,1, INF);
-    for(V3DLONG i = 0; i<nt_sorted.listNeuron.size();i++)
-            hashNeuron.insert(nt_sorted.listNeuron.at(i).n,i);
-    nt_sorted.n = -1;
-    nt_sorted.on = true;
-    nt_sorted.hashNeuron = hashNeuron;
+    writeSWC_file(swc_name,nt_final);
 
-//    writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
+    V3DPluginArgItem arg;
+    V3DPluginArgList input_sort;
+    V3DPluginArgList output;
+
+    arg.type = "random";std::vector<char*> arg_input_resample;
+    std:: string fileName_Qstring(swc_name.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+    arg_input_resample.push_back(fileName_string);
+    arg.type = "random";std::vector<char*> arg_input_sort;
+    arg_input_sort.push_back(fileName_string);
+    arg.p = (void *) & arg_input_sort; input_sort<< arg;
+    arg.type = "random";std::vector<char*> arg_sort_para;arg.p = (void *) & arg_sort_para; input_sort << arg;
+    arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+    QString full_plugin_name_sort = "sort_neuron_swc";
+    QString func_name_sort = "sort_swc";
+    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
+
+
+    //writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
+
+    NeuronTree nt_sorted = readSWC_file(swc_name);
     NeuronTree nt_sorted_prund = post_process(nt_sorted);
     NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
 
@@ -631,7 +644,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     marker_MST.hashNeuron = hashNeuron;
 
     if(markEdge) {delete []markEdge, markEdge = 0;}
-   // writeSWC_file("mst.swc",marker_MST);
+  //  writeSWC_file("mst.swc",marker_MST);
     QList<NeuronSWC> marker_MST_sorted;
     if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
     return marker_MST_sorted;
