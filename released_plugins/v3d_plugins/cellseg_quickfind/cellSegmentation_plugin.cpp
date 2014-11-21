@@ -24,7 +24,6 @@ Q_EXPORT_PLUGIN2(cellSegmentation, cellSegmentation);
 QStringList cellSegmentation::menulist() const
 {
     return QStringList()
-		<<tr("Initialize")
 		<<tr("Exemplar defination")
 		<<tr("Exemplar propagation")
 		<<tr("Further segmentation")
@@ -40,11 +39,7 @@ QStringList cellSegmentation::funclist() const
 
 void cellSegmentation::domenu(const QString &menu_name, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
 {
-	if (menu_name == tr("Initialize"))
-	{
-		cellSegmentation::interface_initialization(V3DPluginCallback2_currentCallback,QWidget_parent);
-	}
-    else if (menu_name == tr("Exemplar defination"))
+	if (menu_name == tr("Exemplar defination"))
 	{
         cellSegmentation::interface_exemplarDefination(V3DPluginCallback2_currentCallback,QWidget_parent);
     }
@@ -57,7 +52,7 @@ void cellSegmentation::domenu(const QString &menu_name, V3DPluginCallback2 &V3DP
 		cellSegmentation::interface_furtherSegmentation(V3DPluginCallback2_currentCallback,QWidget_parent);
 	}
 	else
-	{ v3d_msg(tr("Segmenting neurons\nby Xiang Li (lindbergh.li@gmail.com);")); }
+	{ v3d_msg(tr("Cell segmentation and counting by exemplar matching\nby Xiang Li (lindbergh.li@gmail.com);")); }
 }
 
 bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & V3DPluginCallback2_currentCallback,  QWidget * QWidget_parent)
