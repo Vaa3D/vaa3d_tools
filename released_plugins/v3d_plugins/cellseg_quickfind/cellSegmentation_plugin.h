@@ -476,6 +476,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->Image1D_segmentationResultMerged[i] = this->Image1D_page[i];
 				this->Image1D_segmentationResultMerged[i+size_page] = this->Image1D_page[i];
 				this->Image1D_segmentationResultMerged[i+size_page+size_page] = this->Image1D_page[i];
+				this->Image1D_segmentationResultPassed[i] = this->Image1D_page[i];
+				this->Image1D_segmentationResultPassed[i+size_page] = this->Image1D_page[i];
+				this->Image1D_segmentationResultPassed[i+size_page+size_page] = this->Image1D_page[i];
 			}
 			memset(this->Image1D_segmentationResultSplitted, 0, this->size_page3);
 			//note that Image1D_mask is SHARED ACROSS EXEMPLARS! the initialization here is just for 
@@ -635,8 +638,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					}
 				}
 			}
-			this->possVct2Image1DC(this->possVct_segmentationResultPassed, this->Image1D_segmentationResultPassed);
+			this->possVct_segmentationResultPassed = this->mergePossVector(this->possVct_exemplarRegion, this->possVct_segmentationResultPassed);
+			this->poss_segmentationResultCenterPassed = this->mergePoss(this->poss_exemplar, this->poss_segmentationResultCenterPassed);
 			this->LandmarkList_segmentationResultPassed = this->indexList2LandMarkList(this->poss_segmentationResultCenterPassed);
+			this->possVct2Image1DC(this->possVct_segmentationResultPassed, this->Image1D_segmentationResultPassed);
+
 			double mean_exemplarThreshold=0;
 			for (V3DLONG i=0;i<count_exemplarRegion;i++)
 			{
@@ -2710,7 +2716,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			dialogPropagateExemplar1.shape_multiplier_thresholdRegionSize, dialogPropagateExemplar1.shape_multiplier_uThresholdRegionSize))
 		{
 			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultPassed, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (exemplar-like shape)");
-			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultSplitted, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Input for GVF");
+			//visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultSplitted, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Input for GVF");
 			_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultPassed);
 			_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
 		}
