@@ -41,7 +41,7 @@ class NeuronAssemblerDialog_raw : public QDialog
             QGridLayout * layout = new QGridLayout();
 
             channel_spinbox = new QSpinBox();
-            channel_spinbox->setRange(1,image->getCDim());
+            channel_spinbox->setRange(1,1);
             channel_spinbox->setValue(1);
             bkgthresh_spinbox = new QSpinBox();
             bkgthresh_spinbox->setRange(-1, 255);
