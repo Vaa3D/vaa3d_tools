@@ -1546,7 +1546,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
             cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
 
             // loading relative image files
-            V3DLONG *sz_relative = 0;
+            V3DLONG sz_relative[4];
             int datatype_relative = 0;
             unsigned char* relative1d = 0;
 
@@ -1576,7 +1576,8 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
 
             }
 
-            if (loadImage(const_cast<char *>(fn.c_str()), relative1d, sz_relative, datatype_relative)!=true)
+            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
+            //if (loadImage(const_cast<char *>(fn.c_str()), relative1d, sz_relative, datatype_relative)!=true)
             {
                 fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
                 continue;
@@ -1612,7 +1613,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
 
             //de-alloc
             if(relative1d) {delete []relative1d; relative1d=0;}
-            if(sz_relative) {delete []sz_relative; sz_relative=0;}
+           // if(sz_relative) {delete []sz_relative; sz_relative=0;}
         }
 
     }
