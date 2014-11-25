@@ -2342,32 +2342,37 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 				}
             }*/
 
-            loadRawRegion(inimg_file, blockarea, in_sz, in_zz,datatype,xb,yb,0,xe+1,ye+1,P);
+            if(!loadRawRegion(inimg_file, blockarea, in_sz, in_zz,datatype,xb,yb,0,xe+1,ye+1,P))
+            {
+                if(blockarea) {delete []blockarea; blockarea = 0;}
+                cerr<<"load image "<<inimg_file<<" error!"<<endl;
+                falsetag == false;
+            }
 
-			V3DLONG block_sz[4];
-			block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-		   /* unsigned char *blockarea_median=0;
-			int ws = 2;
-			//apply median filter
-			switch (datatype)
-			{
-			case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
-				 break;
-				 default: v3d_msg("Invalid data type. Do nothing."); return false;
-			}
-
-			if(blockarea) {delete []blockarea; blockarea =0;}*/
-
-			simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
-
-			unsigned char *localEnahancedArea=0;
-			try {localEnahancedArea = new unsigned char [blockpagesz];}
+            unsigned char *localEnahancedArea=0;
+            try {localEnahancedArea = new unsigned char [blockpagesz];}
 //            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;} // FL comment out, openMP does not allow exit from blocked structure
 
-            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); falsetag = false;} //FL
-		
-			if (falsetag == true) //FL
-			{
+            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea.",0); falsetag = false;} //FL
+
+            if (falsetag == true) //FL
+            {
+
+                V3DLONG block_sz[4];
+                block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+               /* unsigned char *blockarea_median=0;
+                int ws = 2;
+                //apply median filter
+                switch (datatype)
+                {
+                case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
+                     break;
+                     default: v3d_msg("Invalid data type. Do nothing."); return false;
+                }
+
+                if(blockarea) {delete []blockarea; blockarea =0;}*/
+
+                simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
 	
 				double sigma = 1;
 				for(int scale = 0; scale < count; scale++)
@@ -2403,7 +2408,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 						
 						break;
 	 //                   default: v3d_msg("Invalid data type. Do nothing."); return false; //FL comment out, openMP does not allow exit from blocked structure
-						default: v3d_msg("Invalid data type. Do nothing."); falsetag = false; //FL
+                        default: v3d_msg("Invalid data type. Do nothing.",0); falsetag = false; //FL
 	
 					}
 
@@ -2497,7 +2502,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 
   //  myfile.close(); //FL revise for multithreading
 	
-	if (data1d) {delete []data1d; data1d=0;}
+//	if (data1d) {delete []data1d; data1d=0;}
 	printf("finished enhancement\n");
 	
     if (falsetag == false)
