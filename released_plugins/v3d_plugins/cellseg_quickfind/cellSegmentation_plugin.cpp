@@ -24,9 +24,9 @@ Q_EXPORT_PLUGIN2(cellSegmentation, cellSegmentation);
 QStringList cellSegmentation::menulist() const
 {
     return QStringList()
-		<<tr("Exemplar defination")
-		<<tr("Exemplar propagation")
-		<<tr("Further segmentation")
+		//<<tr("Exemplar defination")
+		<<tr("Exemplar defination and propagation")
+		//<<tr("Further segmentation")
         <<tr("About");
 }
 
@@ -39,20 +39,11 @@ QStringList cellSegmentation::funclist() const
 
 void cellSegmentation::domenu(const QString &menu_name, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
 {
-	if (menu_name == tr("Exemplar defination"))
+	if (menu_name == tr("Exemplar defination and propagation"))
 	{
-        cellSegmentation::interface_exemplarDefination(V3DPluginCallback2_currentCallback,QWidget_parent);
+        cellSegmentation::interface_run(V3DPluginCallback2_currentCallback,QWidget_parent);
     }
-	else if (menu_name == tr("Exemplar propagation"))
-	{
-		cellSegmentation::interface_exemplarPropagation(V3DPluginCallback2_currentCallback,QWidget_parent);
-	}
-	else if (menu_name == tr("Further segmentation"))
-	{
-		cellSegmentation::interface_furtherSegmentation(V3DPluginCallback2_currentCallback,QWidget_parent);
-	}
-	else
-	{ v3d_msg(tr("Cell segmentation and counting by exemplar matching\nby Xiang Li (lindbergh.li@gmail.com);")); }
+	else { v3d_msg(tr("Cell segmentation and counting by exemplar matching\nby Xiang Li (lindbergh.li@gmail.com);")); }
 }
 
 bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & V3DPluginCallback2_currentCallback,  QWidget * QWidget_parent)
