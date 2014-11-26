@@ -224,7 +224,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		class_segmentationMain() {}
 		~class_segmentationMain() {}
 
-		#pragma region "control-propagateExemplar"
+		#pragma region "control-run"
 		bool control_run(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z ,
 			int _idx_channel, LandmarkList _LandmarkList_exemplar, int _idx_shape, double _threshold_deltaShapeStat,
 			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize, QString _name_currentWindow)
@@ -387,6 +387,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 							{
 								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
+							}
+							for (V3DLONG i=0;i<count_voxel;i++)
+							{
+								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
+								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
 							}
 							break;
 						}
@@ -1679,6 +1684,18 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		else
 		{
+			QString name_result = "Result";
+			v3dhandleList v3dhandleList_current = _V3DPluginCallback2_currentCallback.getImageWindowList();
+			V3DLONG count_v3dhandle = v3dhandleList_current.size();
+			for (V3DLONG i=0;i<count_v3dhandle;i++)
+			{
+				if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_result))
+				{
+					LandmarkList LandmarkList_empty;
+					_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], LandmarkList_empty);
+					_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
+				}
+			}
 			v3d_msg("Warning: no exemplar defined, please re-select the exemplars!");
 			return false;
 		}
