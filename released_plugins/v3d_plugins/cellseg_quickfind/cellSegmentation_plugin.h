@@ -31,8 +31,8 @@ using namespace std;
 const int const_length_histogram = 256;
 const double const_max_voxelValue = 255;
 const int const_count_neighbors = 26; //27 directions -1;
-const double default_threshold_global = 15; //a small enough value for the last resort;
-const int default_threshold_regionSize = 8; //cube of 2 voxel length;
+const double default_threshold_global = 20; //a small enough value for the last resort;
+const int default_threshold_regionSize = 8; //cube of 2 voxels length;
 const double const_infinitesimal = 0.000000001;
 #define INF 1E9
 #define NINF -1E9
@@ -283,6 +283,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				vector<V3DLONG> poss_exemplarRegionNew;
 				vector<V3DLONG> poss_exemplarRegionOld;
 				V3DLONG idx_step = 0;
+				double value_centerMovement2;
 				for (idx_step=0;idx_step<count_step;idx_step++)
 				{
 					V3DLONG threshold_exemplarRegion = value_exemplar-idx_step;
@@ -291,13 +292,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					this->poss2Image1D(poss_exemplarRegionNew, this->Image1D_mask, const_max_voxelValue);
 					pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
 					double value_centerMovement1 = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
-					double value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
+					value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
 					if (value_centerMovement1>1)	{break;}
 					if (value_centerMovement2>25)	{break;}
 					pos_massCenterOld = pos_massCenterNew;
 					poss_exemplarRegionOld = poss_exemplarRegionNew;
 				}
 				if (idx_step<1) {continue; } //failed;
+				if (value_centerMovement2>25)	{continue;} //failed;
 				if (poss_exemplarRegionOld.size()<default_threshold_regionSize) {continue; } //failed;
 				//shape property;
 				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
@@ -361,15 +363,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						if (count_voxel>uThreshold_regionSize) {continue; }
 						else if (count_voxel<threshold_regionSize)
 						{
-							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
 							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 							{
 								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
-							}
-							for (V3DLONG i=0;i<count_voxel;i++)
-							{
-								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
-								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
 							}
 							break;
 						}
@@ -377,15 +373,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						V3DLONG size_radius = this->getMinDimension(boundBox_region)/2;
 						if (size_radius<(threshold_radius*this->multiplier_thresholdRegionSize))
 						{
-							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
 							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 							{
 								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
-							}
-							for (V3DLONG i=0;i<count_voxel;i++)
-							{
-								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
-								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
 							}
 							break;
 						}
@@ -396,15 +386,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						vector<vector<double> > valuesVct_regionShapeStat = this->getShapeStat(x, y, z, size_radius); //consisted of 3 vectors with length 4;
 						if (valuesVct_regionShapeStat.empty())
 						{
-							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
 							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 							{
 								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
-							}
-							for (V3DLONG i=0;i<count_voxel;i++)
-							{
-								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
-								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
 							}
 							break;
 						}
@@ -440,7 +424,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					}
 				}
 			}
-			memset(this->Image1D_mask, const_max_voxelValue, this->size_page);
+			//memset(this->Image1D_mask, const_max_voxelValue, this->size_page);
 			this->possVct_segmentationResult = this->mergePossVector(this->possVct_exemplarRegion, this->possVct_segmentationResult);
 			this->possVct2Image1D(this->possVct_segmentationResult, this->Image1D_mask, 0);
 			this->poss_segmentationResultCenter = this->mergePoss(this->poss_exemplar, this->poss_segmentationResultCenter);
@@ -1984,13 +1968,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		if (is_success)
 		{
-			visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
+			//visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
 			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResult, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Result");
 			//visualizationImage1D(this->class_segmentationMain1.Image1D_mask, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Mask");
 			v3dhandleList v3dhandleList_current = _V3DPluginCallback2_currentCallback.getImageWindowList();
 			V3DLONG count_v3dhandle = v3dhandleList_current.size();
 			QString name_result = "Result";
-			QString name_exemplar = "Exemplar";
+			//QString name_exemplar = "Exemplar";
 			for (V3DLONG i=0;i<count_v3dhandle;i++)
 			{
 				if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(this->class_segmentationMain1.name_currentWindow))
@@ -2003,11 +1987,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					//_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], this->class_segmentationMain1.LandmarkList_exemplar);
 					//_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
 				}
-				if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_exemplar))
+				/*if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_exemplar))
 				{
 					_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], this->class_segmentationMain1.LandmarkList_exemplar);
 					_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
-				}
+				}*/
 			}
 			return true;
 		}
