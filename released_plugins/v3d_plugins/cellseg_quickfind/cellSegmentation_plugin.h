@@ -290,13 +290,21 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					if (poss_exemplarRegionNew.size()<default_threshold_regionSize) {break; }
 					this->poss2Image1D(poss_exemplarRegionNew, this->Image1D_mask, const_max_voxelValue);
 					pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
-					double value_centerMovement = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
-					if (value_centerMovement>1)	{break;}
+					double value_centerMovement1 = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
+					double value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
+					if (value_centerMovement1>1)	{break;}
+					if (value_centerMovement2>25)	{break;}
 					pos_massCenterOld = pos_massCenterNew;
 					poss_exemplarRegionOld = poss_exemplarRegionNew;
 				}
 				if (idx_step<1) {continue; } //failed;
 				if (poss_exemplarRegionOld.size()<default_threshold_regionSize) {continue; } //failed;
+				//shape property;
+				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
+				V3DLONG radius_exemplarRegion = getMinDimension(boundBox_exemplarRegion)/2;
+				vector<V3DLONG> xyz_exemplarRegionCenter = this->index2Coordinate(pos_massCenterOld);
+				vector<vector<double> > valuesVct_shapeStatExemplarRegion = this->getShapeStat(xyz_exemplarRegionCenter[0], xyz_exemplarRegionCenter[1], xyz_exemplarRegionCenter[2], radius_exemplarRegion);
+				if (valuesVct_shapeStatExemplarRegion.empty()) {continue;} //failed;
 				this->poss2Image1D(poss_exemplarRegionOld, this->Image1D_mask, 0);
 				this->possVct_exemplarRegion.push_back(poss_exemplarRegionOld);
 				poss_exemplarNew.push_back(pos_massCenterOld);
@@ -307,13 +315,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				if (size_lower<default_threshold_regionSize) {size_lower=default_threshold_regionSize;}
 				this->thresholds_regionSize.push_back(size_lower);
 				this->uThresholds_regionSize.push_back(size_upper);
-				//shape property;
-				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
-				V3DLONG radius_exemplarRegion = getMinDimension(boundBox_exemplarRegion)/2;
-				this->thresholds_radius.push_back(radius_exemplarRegion);
-				vector<V3DLONG> xyz_exemplarRegionCenter = this->index2Coordinate(pos_massCenterOld);
-				vector<vector<double> > valuesVct_shapeStatExemplarRegion = this->getShapeStat(xyz_exemplarRegionCenter[0], xyz_exemplarRegionCenter[1], xyz_exemplarRegionCenter[2], radius_exemplarRegion);
 				this->valueVctVct_exemplarShapeStat.push_back(valuesVct_shapeStatExemplarRegion);
+				this->thresholds_radius.push_back(radius_exemplarRegion);
 			}
 			if (this->possVct_exemplarRegion.empty())
 			{
@@ -350,22 +353,61 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						V3DLONG idx_exemplarMapped = mapping_exemplar[idx_exemplar];
 						V3DLONG threshold_voxelValue = this->thresholds_voxelValue[idx_exemplarMapped];
 						V3DLONG threshold_regionSize = this->thresholds_regionSize[idx_exemplarMapped];
-						if (value_seed<threshold_voxelValue) {break;}
+						if (value_seed<threshold_voxelValue) { break; }
 						V3DLONG uThreshold_regionSize = this->uThresholds_regionSize[idx_exemplarMapped];
 						V3DLONG threshold_radius = this->thresholds_radius[idx_exemplarMapped];
 						vector<V3DLONG> poss_region = this->regionGrowOnPos(pos_seed, threshold_voxelValue, uThreshold_regionSize, masks_page[idx_exemplar]);
 						V3DLONG count_voxel = poss_region.size();
 						if (count_voxel>uThreshold_regionSize) {continue; }
-						else if (count_voxel<threshold_regionSize) {break; }
+						else if (count_voxel<threshold_regionSize)
+						{
+							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
+							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
+							{
+								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
+							}
+							for (V3DLONG i=0;i<count_voxel;i++)
+							{
+								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
+								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
+							}
+							break;
+						}
 						vector<V3DLONG> boundBox_region = this->getBoundBox(poss_region);
 						V3DLONG size_radius = this->getMinDimension(boundBox_region)/2;
-						if (size_radius<(threshold_radius*this->multiplier_thresholdRegionSize)) {break;}
+						if (size_radius<(threshold_radius*this->multiplier_thresholdRegionSize))
+						{
+							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
+							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
+							{
+								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
+							}
+							for (V3DLONG i=0;i<count_voxel;i++)
+							{
+								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
+								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
+							}
+							break;
+						}
 						else if (size_radius>(threshold_radius*this->multiplier_uThresholdRegionSize)) {continue;}
 						V3DLONG pos_center = this->getCenterByMass(poss_region);
 						vector<V3DLONG> xyz_center = this->index2Coordinate(pos_center);
 						V3DLONG x = V3DLONG(xyz_center[0] + 0.5); V3DLONG y = V3DLONG(xyz_center[1] + 0.5); V3DLONG z = V3DLONG(xyz_center[2] + 0.5);
 						vector<vector<double> > valuesVct_regionShapeStat = this->getShapeStat(x, y, z, size_radius); //consisted of 3 vectors with length 4;
-						if (valuesVct_regionShapeStat.empty()) {	break;}
+						if (valuesVct_regionShapeStat.empty())
+						{
+							this->poss2Image1D(poss_region, this->Image1D_mask, 0);	
+							for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
+							{
+								this->poss2Image1D(poss_region, masks_page[idx_exemplar], 0);
+							}
+							for (V3DLONG i=0;i<count_voxel;i++)
+							{
+								vector<V3DLONG> xyz_i = this->index2Coordinate(poss_region[i]);
+								this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
+							}
+							break;
+						}
 						vector<double> values_PC1 = valuesVct_regionShapeStat[0]; vector<double> values_PC2 = valuesVct_regionShapeStat[1]; vector<double> values_PC3 = valuesVct_regionShapeStat[2];
 						bool is_passedShapeTest = true;
 						for (int m=0; m<4; m++)
@@ -1562,10 +1604,15 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<double> values_PC3;
 			double size_step = (double)(value_radius-2)/3.0;
 			V3DLONG rr=0;
-			for (int i=1;i<=4;i++) //make sure the first sample is at rr==1, the last sample at rr==value_radius;
+			for (int i=1;i<=4;i++)
 			{
 				rr=2+size_step*(i-1);
-				compute_win3d_pca(this->Image3D_page, this->dim_X, this->dim_Y, this->dim_Z, x , y, z, rr, rr, rr,value_PC1, value_PC2, value_PC3, this->idx_shape, false);
+				//bool is_valid = false;
+				/*if(getPCA(this->Image3D_page, this->dim_X, this->dim_Y, this->dim_Z, x , y, z, rr, rr, rr,value_PC1, value_PC2, value_PC3, this->idx_shape, false))
+				{
+					is_valid = true;
+				}*/
+				getPCA(this->Image3D_page, this->dim_X, this->dim_Y, this->dim_Z, x , y, z, rr, rr, rr,value_PC1, value_PC2, value_PC3, this->idx_shape, false, false);
 				values_PC1.push_back(value_PC1/rr);
 				values_PC2.push_back(value_PC2/rr);
 				values_PC3.push_back(value_PC3/rr);
@@ -1584,6 +1631,288 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			//vct_result.push_back(value_sphere);
 			return valuesVct_result;
 		}
+
+		template <class T> bool getPCA(T ***img3d, V3DLONG sx, V3DLONG sy, V3DLONG sz,
+			V3DLONG x0, V3DLONG y0, V3DLONG z0,
+			V3DLONG rx, V3DLONG ry, V3DLONG rz,
+			double &pc1, double &pc2, double &pc3, int wintype=0,
+			bool b_disp_CoM_etc=true, 	//b_disp_CoM_etc is the display option for center of mass )
+			bool b_normalize_score=false) //if the score if normalized with respect to the window size
+		{
+			if (wintype==0)
+				return getPCA_cube(img3d, sx, sy, sz, x0, y0, z0, rx, ry, rz, pc1, pc2, pc3, b_disp_CoM_etc, b_normalize_score);
+			else //wintype==1
+				return getPCA_sphere(img3d, sx, sy, sz, x0, y0, z0, rx, ry, rz, pc1, pc2, pc3, b_disp_CoM_etc, b_normalize_score);
+		}
+
+		template <class T> bool getPCA_sphere(T ***img3d, V3DLONG sx, V3DLONG sy, V3DLONG sz,
+			V3DLONG x0, V3DLONG y0, V3DLONG z0,
+			V3DLONG rx, V3DLONG ry, V3DLONG rz,
+			double &pc1, double &pc2, double &pc3,
+			bool b_disp_CoM_etc=true, //b_disp_CoM_etc is the display option for center of mass )
+			bool b_normalize_score=false)
+		{
+			if (!img3d || sx<=0 || sy<=0 || sz<=0 ||
+				x0<0 || x0>=sx || y0<0 || y0>=sy || z0<0 || z0>=sz ||
+				rx<0 || ry<0 || rz<0)
+				return false;
+
+			//get max radius
+			V3DLONG maxrr = (rx>ry)?rx:ry; maxrr = (maxrr>rz)?maxrr:rz;
+
+			//get the boundary
+
+			V3DLONG xb=x0-rx; if(xb<0) xb=0; else if (xb>=sx) xb=sx-1;
+			V3DLONG xe=x0+rx; if(xe<0) xe=0; else if (xe>=sx) xe=sx-1;
+			V3DLONG yb=y0-ry; if(yb<0) yb=0; else if (yb>=sy) yb=sy-1;
+			V3DLONG ye=y0+ry; if(ye<0) ye=0; else if (ye>=sy) ye=sy-1;
+			V3DLONG zb=z0-rz; if(zb<0) zb=0; else if (zb>=sz) zb=sz-1;
+			V3DLONG ze=z0+rz; if(ze<0) ze=0; else if (ze>=sz) ze=sz-1;
+
+			V3DLONG i,j,k;
+			double w;
+
+			//first get the center of mass
+			double x2, y2, z2;
+			double rx2 = double(rx+1)*(rx+1), ry2 = (double)(ry+1)*(ry+1), rz2 = (double)(rz+1)*(rz+1); //+1 because later need to do use it for radius cmp
+			double tmpd;
+			double xm=0,ym=0,zm=0, s=0, mv=0, n=0;
+			for (k=zb;k<=ze;k++)
+			{
+				z2 = k-z0; z2*=z2;
+				for (j=yb;j<=ye;j++)
+				{
+					y2 = j-y0; y2*=y2;
+					tmpd = y2/ry2 + z2/rz2;
+					if (tmpd>1.0)
+						continue;
+
+					for (i=xb;i<=xe;i++)
+					{
+						x2 = i-x0; x2*=x2;
+						if (x2/rx2 + tmpd > 1.0)
+							continue;
+
+						w = double(img3d[k][j][i]);
+						xm += w*i;
+						ym += w*j;
+						zm += w*k;
+						s += w;
+						n = n+1;
+					}
+				}
+			}
+			if (s>0)
+			{
+				xm /= s; ym /=s; zm /=s;
+				mv = s/n;
+				//if (b_disp_CoM_etc)
+				//{
+				//printf("center of mass is (xm, ym, zm) = %5.3f, %5.3f, %5.3f\n",xm,ym,zm);
+				//}
+
+			}
+			else
+			{
+				//printf("Sum of window pixels equals or is smaller than 0. The window is not valid or some other problems in the data. Do nothing.\n");
+				return false;
+			}
+
+			//get the covariance. Note that the center of mass must be in the ellpsoid
+
+			double cc11=0, cc12=0, cc13=0, cc22=0, cc23=0, cc33=0;
+			double dfx, dfy, dfz;
+			for (k=zb;k<=ze;k++)
+			{
+				z2 = k-z0; z2*=z2;
+
+				dfz = double(k)-zm;
+				if (b_normalize_score) dfz /= maxrr;
+
+				for (j=yb;j<=ye;j++)
+				{
+					y2 = j-y0; y2*=y2;
+					tmpd = y2/ry2 + z2/rz2;
+					if (tmpd>1.0)
+						continue;
+
+					dfy = double(j)-ym;
+					if (b_normalize_score) dfy /= maxrr;
+
+					for (i=xb;i<=xe;i++)
+					{
+						x2 = i-x0; x2*=x2;
+						if (x2/rx2 + tmpd > 1.0)
+							continue;
+
+						dfx = double(i)-xm;
+						if (b_normalize_score) dfx /= maxrr;
+
+						//                w = img3d[k][j][i]; //140128
+						w = img3d[k][j][i] - mv;  if (w<0) w=0; //140128 try the new formula
+
+						cc11 += w*dfx*dfx;
+						cc12 += w*dfx*dfy;
+						cc13 += w*dfx*dfz;
+						cc22 += w*dfy*dfy;
+						cc23 += w*dfy*dfz;
+						cc33 += w*dfz*dfz;
+					}
+				}
+			}
+
+			cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
+			//if (b_disp_CoM_etc)
+			//printf("convariance value (c11,c12,c13,c22,c23,c33) = %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f\n",cc11, cc12, cc13, cc22, cc23, cc33);
+
+			//now get the eigen vectors and eigen values
+
+			try
+			{
+				//then find the eigen vector
+				SymmetricMatrix Cov_Matrix(3);
+				Cov_Matrix.Row(1) << cc11;
+				Cov_Matrix.Row(2) << cc12 << cc22;
+				Cov_Matrix.Row(3) << cc13 << cc23 << cc33;
+
+				DiagonalMatrix DD;
+				Matrix VV;
+				EigenValues(Cov_Matrix,DD,VV);
+
+				//output the result
+				pc1 = DD(3);
+				pc2 = DD(2);
+				pc3 = DD(1);
+			}
+			catch (...)
+			{
+				pc1 = VAL_INVALID;
+				pc2 = VAL_INVALID;
+				pc3 = VAL_INVALID;
+			}
+
+			return true;
+		}
+
+		template <class T> bool getPCA_cube(T ***img3d, V3DLONG sx, V3DLONG sy, V3DLONG sz,
+			V3DLONG x0, V3DLONG y0, V3DLONG z0,
+			V3DLONG rx, V3DLONG ry, V3DLONG rz,
+			double &pc1, double &pc2, double &pc3, bool b_disp_CoM_etc=true, //b_disp_CoM_etc is the display option for center of mass
+			bool b_normalize_score=false)
+		{
+			if (!img3d || sx<=0 || sy<=0 || sz<=0 ||
+				x0<0 || x0>=sx || y0<0 || y0>=sy || z0<0 || z0>=sz ||
+				rx<0 || ry<0 || rz<0)
+				return false;
+
+			//get max radius
+			V3DLONG maxrr = (rx>ry)?rx:ry; maxrr = (maxrr>rz)?maxrr:rz;
+
+			//get the boundary
+
+			V3DLONG xb=x0-rx; if(xb<0) xb=0; else if (xb>=sx) xb=sx-1;
+			V3DLONG xe=x0+rx; if(xe<0) xe=0; else if (xe>=sx) xe=sx-1;
+			V3DLONG yb=y0-ry; if(yb<0) yb=0; else if (yb>=sy) yb=sy-1;
+			V3DLONG ye=y0+ry; if(ye<0) ye=0; else if (ye>=sy) ye=sy-1;
+			V3DLONG zb=z0-rz; if(zb<0) zb=0; else if (zb>=sz) zb=sz-1;
+			V3DLONG ze=z0+rz; if(ze<0) ze=0; else if (ze>=sz) ze=sz-1;
+
+			V3DLONG i,j,k;
+			double w;
+
+			//first get the center of mass
+			double xm=0,ym=0,zm=0, s=0, mv=0;
+			for (k=zb;k<=ze;k++)
+			{
+				for (j=yb;j<=ye;j++)
+				{
+					for (i=xb;i<=xe;i++)
+					{
+						w = double(img3d[k][j][i]);
+						xm += w*i;
+						ym += w*j;
+						zm += w*k;
+						s += w;
+					}
+				}
+			}
+
+			if (s>0)
+			{
+				xm /= s; ym /=s; zm /=s;
+				mv = s/(double(ze-zb+1)*(ye-yb+1)*(xe-xb+1));
+				if (b_disp_CoM_etc)
+					printf("center of mass is (xm, ym, zm) = %5.3f, %5.3f, %5.3f\n",xm,ym,zm);
+			}
+			else
+			{
+				printf("Sum of window pixels equals or is smaller than 0. The window is not valid or some other problems in the data. Do nothing.\n");
+				return false;
+			}
+
+			//get the covariance
+
+			double cc11=0, cc12=0, cc13=0, cc22=0, cc23=0, cc33=0;
+			double dfx, dfy, dfz;
+			for (k=zb;k<=ze;k++)
+			{
+				dfz = double(k)-zm;
+				if (b_normalize_score) dfz /= maxrr;
+				for (j=yb;j<=ye;j++)
+				{
+					dfy = double(j)-ym;
+					if (b_normalize_score) dfy /= maxrr;
+					for (i=xb;i<=xe;i++)
+					{
+						dfx = double(i)-xm;
+						if (b_normalize_score) dfx /= maxrr;
+
+						//                w = img3d[k][j][i]; //140128
+						w = img3d[k][j][i] - mv;  if (w<0) w=0; //140128 try the new formula
+
+						cc11 += w*dfx*dfx;
+						cc12 += w*dfx*dfy;
+						cc13 += w*dfx*dfz;
+						cc22 += w*dfy*dfy;
+						cc23 += w*dfy*dfz;
+						cc33 += w*dfz*dfz;
+					}
+				}
+			}
+
+			cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
+			if (b_disp_CoM_etc)
+				printf("convariance value (c11,c12,c13,c22,c23,c33) = %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f\n",cc11, cc12, cc13, cc22, cc23, cc33);
+
+			//now get the eigen vectors and eigen values
+
+			try
+			{
+				//then find the eigen vector
+				SymmetricMatrix Cov_Matrix(3);
+				Cov_Matrix.Row(1) << cc11;
+				Cov_Matrix.Row(2) << cc12 << cc22;
+				Cov_Matrix.Row(3) << cc13 << cc23 << cc33;
+
+				DiagonalMatrix DD;
+				Matrix VV;
+				EigenValues(Cov_Matrix,DD,VV);
+
+				//output the result
+				pc1 = DD(3);
+				pc2 = DD(2);
+				pc3 = DD(1);
+			}
+			catch (...)
+			{
+				pc1 = VAL_INVALID;
+				pc2 = VAL_INVALID;
+				pc3 = VAL_INVALID;
+			}
+
+			return true;
+		}
+
 		#pragma endregion
 	};
 	#pragma endregion
