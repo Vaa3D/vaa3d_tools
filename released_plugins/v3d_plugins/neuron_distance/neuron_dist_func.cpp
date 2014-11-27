@@ -76,7 +76,7 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << "   ";
         myfile << tmp_score.dist_apartnodes;
         myfile << "   ";
-        myfile << tmp_score.dist_apartnodes;
+        myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();
     }
