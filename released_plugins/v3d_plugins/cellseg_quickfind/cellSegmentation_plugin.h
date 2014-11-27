@@ -78,6 +78,18 @@ public:
 		QGroupBox_channel_main->setStyle(new QWindowsStyle());
 		QGridLayout_channel_main->addWidget(QComboBox_channel_selection, 1,1,1,1);
 		QGroupBox_channel_main->setLayout(QGridLayout_channel_main);
+		//exemplar;
+		QGroupBox *QGroupBox_exemplar_main = new QGroupBox("Exemplar definition");
+		QGridLayout *QGridLayout_exemplar_main = new QGridLayout();
+		QLabel* QLabel_exemplar_maxMovement1 = new QLabel(QObject::tr("Max movement from\nmass center"));
+		QLineEdit_exemplar_maxMovement1 = new QLineEdit("1", QWidget_parent);
+		QLabel* QLabel_exemplar_maxMovement2 = new QLabel(QObject::tr("Max movement from\nmarker position"));
+		QLineEdit_exemplar_maxMovement2 = new QLineEdit("5", QWidget_parent);
+		QGridLayout_exemplar_main->addWidget(QLabel_exemplar_maxMovement1, 1, 1, 1, 1);
+		QGridLayout_exemplar_main->addWidget(QLineEdit_exemplar_maxMovement1, 1, 2, 1, 1);
+		QGridLayout_exemplar_main->addWidget(QLabel_exemplar_maxMovement2, 1, 3, 1, 1);
+		QGridLayout_exemplar_main->addWidget(QLineEdit_exemplar_maxMovement2, 1, 4, 1, 1);
+		QGroupBox_exemplar_main->setLayout(QGridLayout_exemplar_main);
 		//shape;
 		QGroupBox *QGroupBox_shape_main = new QGroupBox("Geometry stat");
 		QGridLayout *QGridLayout_shape_main = new QGridLayout();
@@ -112,6 +124,7 @@ public:
 		QGridLayout *QGridLayout_main = new QGridLayout();
 		QGridLayout_main->addWidget(QGroupBox_channel_main);
 		QGridLayout_main->addWidget(QGroupBox_shape_main);
+		QGridLayout_main->addWidget(QGroupBox_exemplar_main);
 		QGridLayout_main->addWidget(QWidget_control_bar);
 		setLayout(QGridLayout_main);
 		setWindowTitle(QString("cellSegmentation: quickFind"));
@@ -126,13 +139,16 @@ public:
 	QLineEdit* QLineEdit_Shape_delta;
 	QLineEdit* QLineEdit_shape_thresholdRegionSize;
 	QLineEdit* QLineEdit_shape_uThresholdRegionSize;
+	QLineEdit* QLineEdit_exemplar_maxMovement1;
+	QLineEdit* QLineEdit_exemplar_maxMovement2;
 	QRadioButton* QRadioButton_shape_sphere;
 	QRadioButton* QRadioButton_shape_cube;
 	enum_shape_t shape_type_selection;
 	double shape_para_delta;
 	double shape_multiplier_thresholdRegionSize;
 	double shape_multiplier_uThresholdRegionSize;
-
+	V3DLONG exemplar_maxMovement1;
+	V3DLONG exemplar_maxMovement2;
 	public slots:
 	void _slot_start()
 	{
@@ -140,6 +156,8 @@ public:
 		shape_para_delta = this->QLineEdit_Shape_delta->text().toDouble();
 		shape_multiplier_thresholdRegionSize = this->QLineEdit_shape_thresholdRegionSize->text().toDouble();
 		shape_multiplier_uThresholdRegionSize = this->QLineEdit_shape_uThresholdRegionSize->text().toDouble();
+		exemplar_maxMovement1 = this->QLineEdit_exemplar_maxMovement1->text().toUInt();
+		exemplar_maxMovement2 = this->QLineEdit_exemplar_maxMovement2->text().toUInt();
 		if (this->QRadioButton_shape_sphere->isChecked())
 		{
 			this->shape_type_selection = sphere;
@@ -195,19 +213,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			V3DLONG offset_Y;
 			int idx_channel;
 			int idx_shape;
-			QString name_currentWindow;
-			
-			//Exemplar (or learn from it);
-			vector<V3DLONG> poss_exemplar;
-			vector<vector<V3DLONG> > possVct_exemplarRegion;
-			vector<vector<vector<double> > > valueVctVct_exemplarShapeStat;
-			vector<V3DLONG> thresholds_voxelValue;
-			vector<V3DLONG> thresholds_regionSize;
-			vector<V3DLONG> uThresholds_regionSize;
-			vector<V3DLONG> thresholds_radius;
 			double threshold_deltaShapeStat;
 			double multiplier_thresholdRegionSize;
 			double multiplier_uThresholdRegionSize;
+			V3DLONG max_movment1;
+			V3DLONG max_movment2;
+			QString name_currentWindow;
+			
+			//Exemplar (or learn from it);
 			unsigned char* Image1D_exemplar;
 
 			//segmentation;
@@ -216,7 +229,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<vector<V3DLONG> > possVct_seed;
 			unsigned char* Image1D_segmentationResult;
 			LandmarkList LandmarkList_segmentationResult;
-			LandmarkList LandmarkList_exemplar;
 			vector<V3DLONG> poss_segmentationResultCenter;
 			//vector<V3DLONG> poss_segmentationResultCenterMerged;
 			#pragma endregion
@@ -227,9 +239,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma region "control-run"
 		bool control_run(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z ,
 			int _idx_channel, LandmarkList _LandmarkList_exemplar, int _idx_shape, double _threshold_deltaShapeStat,
-			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize, QString _name_currentWindow)
+			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize, QString _name_currentWindow,
+			V3DLONG _maxMovement1, V3DLONG _maxMovement2)
 		{
-			if (this->poss_exemplar.size()<1)
+			if (this->possVct_segmentationResult.empty())
 			{
 				this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 				this->size_page = dim_X*dim_Y*dim_Z;
@@ -258,23 +271,25 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->multiplier_thresholdRegionSize = _multiplier_thresholdRegionSize;
 				this->multiplier_uThresholdRegionSize = _multiplier_uThresholdRegionSize;
 				this->name_currentWindow = _name_currentWindow;
+				this->max_movment1 = _maxMovement1;
+				this->max_movment2 = _maxMovement2*_maxMovement2;
 			}
-			//this->possVct_segmentationResult.clear();
-			this->LandmarkList_exemplar = _LandmarkList_exemplar;
+			vector<V3DLONG> thresholds_voxelValue;
+			vector<V3DLONG> thresholds_regionSize;
+			vector<V3DLONG> uThresholds_regionSize;
+			vector<V3DLONG> thresholds_radius;
 			this->initializeConstants();
-			this->poss_exemplar.clear();
-			this->possVct_exemplarRegion.clear();
-			this->thresholds_voxelValue.clear();
-			this->thresholds_radius.clear();
-			this->valueVctVct_exemplarShapeStat.clear();
-			this->thresholds_regionSize.clear();
-			this->uThresholds_regionSize.clear();
-			this->poss_exemplar = landMarkList2IndexList(_LandmarkList_exemplar);
-			V3DLONG count_exemplar = this->poss_exemplar.size();
+			vector<vector<V3DLONG> > possVct_exemplarRegion;
+			vector<vector<vector<double> > > valueVctVct_exemplarShapeStat;
+			vector<V3DLONG> poss_exemplar = landMarkList2IndexList(_LandmarkList_exemplar);
+			V3DLONG count_exemplar = poss_exemplar.size();
 			vector<V3DLONG> poss_exemplarNew;
+			cout<<max_movment1<<endl;
+			cout<<max_movment2<<endl;
+			v3d_msg("!!");
 			for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 			{
-				V3DLONG pos_exemplar = this->poss_exemplar[idx_exemplar];
+				V3DLONG pos_exemplar = poss_exemplar[idx_exemplar];
 				if (this->Image1D_mask[pos_exemplar]<1) {continue;}
 				V3DLONG value_exemplar = this->Image1D_page[pos_exemplar];
 				V3DLONG count_step = (value_exemplar-default_threshold_global);
@@ -293,13 +308,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
 					double value_centerMovement1 = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
 					value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
-					if (value_centerMovement1>1)	{break;}
-					if (value_centerMovement2>25)	{break;}
+					if (value_centerMovement1>max_movment1)	{break;}
+					if (value_centerMovement2>max_movment2)	{break;}
 					pos_massCenterOld = pos_massCenterNew;
 					poss_exemplarRegionOld = poss_exemplarRegionNew;
 				}
 				if (idx_step<1) {continue; } //failed;
-				if (value_centerMovement2>25)	{continue;} //failed;
+				if (value_centerMovement2>max_movment2)	{continue;} //failed;
 				if (poss_exemplarRegionOld.size()<default_threshold_regionSize) {continue; } //failed;
 				//shape property;
 				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
@@ -308,29 +323,28 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				vector<vector<double> > valuesVct_shapeStatExemplarRegion = this->getShapeStat(xyz_exemplarRegionCenter[0], xyz_exemplarRegionCenter[1], xyz_exemplarRegionCenter[2], radius_exemplarRegion);
 				if (valuesVct_shapeStatExemplarRegion.empty()) {continue;} //failed;
 				this->poss2Image1D(poss_exemplarRegionOld, this->Image1D_mask, 0);
-				this->possVct_exemplarRegion.push_back(poss_exemplarRegionOld);
+				possVct_exemplarRegion.push_back(poss_exemplarRegionOld);
 				poss_exemplarNew.push_back(pos_massCenterOld);
-				this->thresholds_voxelValue.push_back(this->getMin(poss_exemplarRegionOld));
+				thresholds_voxelValue.push_back(this->getMin(poss_exemplarRegionOld));
 				V3DLONG count_voxel = poss_exemplarRegionOld.size();
 				V3DLONG size_upper = count_voxel*this->multiplier_uThresholdRegionSize;
 				V3DLONG size_lower = count_voxel*this->multiplier_thresholdRegionSize;
 				if (size_lower<default_threshold_regionSize) {size_lower=default_threshold_regionSize;}
-				this->thresholds_regionSize.push_back(size_lower);
-				this->uThresholds_regionSize.push_back(size_upper);
-				this->valueVctVct_exemplarShapeStat.push_back(valuesVct_shapeStatExemplarRegion);
-				this->thresholds_radius.push_back(radius_exemplarRegion);
+				thresholds_regionSize.push_back(size_lower);
+				uThresholds_regionSize.push_back(size_upper);
+				valueVctVct_exemplarShapeStat.push_back(valuesVct_shapeStatExemplarRegion);
+				thresholds_radius.push_back(radius_exemplarRegion);
 			}
-			if (this->possVct_exemplarRegion.empty())
+			if (possVct_exemplarRegion.empty())
 			{
 				return false;
 			}
-			this->poss_exemplar.clear();
-			this->poss_exemplar = poss_exemplarNew;
-			this->LandmarkList_exemplar = this->poss2LandMarkList(poss_exemplar);
+			poss_exemplar.clear();
+			poss_exemplar = poss_exemplarNew;
 			count_exemplar = poss_exemplar.size();
 			memset(this->Image1D_exemplar, 0, this->size_page3);
-			this->possVct2Image1DC(this->possVct_exemplarRegion, this->Image1D_exemplar);
-			vector<V3DLONG> mapping_exemplar = this->sort(this->thresholds_voxelValue); // in ascending order;
+			this->possVct2Image1DC(possVct_exemplarRegion, this->Image1D_exemplar);
+			vector<V3DLONG> mapping_exemplar = this->sort(thresholds_voxelValue); // in ascending order;
 			V3DLONG count_seedCategory = this->possVct_seed.size();
 			unsigned char ** masks_page = this->memory_allocate_uchar2D(count_exemplar, this->size_page);
 			for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
@@ -344,7 +358,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			for (V3DLONG idx_seedCategoy=0;idx_seedCategoy<count_seedCategory;idx_seedCategoy++)
 			{
 				V3DLONG count_seed = this->possVct_seed[idx_seedCategoy].size();
-				cout<<"at value: "<<(255-idx_seedCategoy)<<", totally: "<<count_seed<<" seeds;"<<endl;
+				cout<<"at value: "<<(const_max_voxelValue-idx_seedCategoy)<<", totally: "<<count_seed<<" seeds;"<<endl;
 				for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
 				{
 					V3DLONG pos_seed = this->possVct_seed[idx_seedCategoy][idx_seed];
@@ -353,11 +367,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						if (masks_page[idx_exemplar][pos_seed]<1) {continue;}
 						V3DLONG value_seed = this->Image1D_page[pos_seed];
 						V3DLONG idx_exemplarMapped = mapping_exemplar[idx_exemplar];
-						V3DLONG threshold_voxelValue = this->thresholds_voxelValue[idx_exemplarMapped];
-						V3DLONG threshold_regionSize = this->thresholds_regionSize[idx_exemplarMapped];
+						V3DLONG threshold_voxelValue = thresholds_voxelValue[idx_exemplarMapped];
+						V3DLONG threshold_regionSize = thresholds_regionSize[idx_exemplarMapped];
 						if (value_seed<threshold_voxelValue) { break; }
-						V3DLONG uThreshold_regionSize = this->uThresholds_regionSize[idx_exemplarMapped];
-						V3DLONG threshold_radius = this->thresholds_radius[idx_exemplarMapped];
+						V3DLONG uThreshold_regionSize = uThresholds_regionSize[idx_exemplarMapped];
+						V3DLONG threshold_radius = thresholds_radius[idx_exemplarMapped];
 						vector<V3DLONG> poss_region = this->regionGrowOnPos(pos_seed, threshold_voxelValue, uThreshold_regionSize, masks_page[idx_exemplar]);
 						V3DLONG count_voxel = poss_region.size();
 						if (count_voxel>uThreshold_regionSize) {continue; }
@@ -382,7 +396,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						else if (size_radius>(threshold_radius*this->multiplier_uThresholdRegionSize)) {continue;}
 						V3DLONG pos_center = this->getCenterByMass(poss_region);
 						vector<V3DLONG> xyz_center = this->index2Coordinate(pos_center);
-						V3DLONG x = V3DLONG(xyz_center[0] + 0.5); V3DLONG y = V3DLONG(xyz_center[1] + 0.5); V3DLONG z = V3DLONG(xyz_center[2] + 0.5);
+						V3DLONG x = V3DLONG(xyz_center[0]); V3DLONG y = V3DLONG(xyz_center[1]); V3DLONG z = V3DLONG(xyz_center[2]);
 						vector<vector<double> > valuesVct_regionShapeStat = this->getShapeStat(x, y, z, size_radius); //consisted of 3 vectors with length 4;
 						if (valuesVct_regionShapeStat.empty())
 						{
@@ -425,9 +439,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 			}
 			//memset(this->Image1D_mask, const_max_voxelValue, this->size_page);
-			this->possVct_segmentationResult = this->mergePossVector(this->possVct_exemplarRegion, this->possVct_segmentationResult);
+			this->possVct_segmentationResult = this->mergePossVector(possVct_exemplarRegion, this->possVct_segmentationResult);
 			this->possVct2Image1D(this->possVct_segmentationResult, this->Image1D_mask, 0);
-			this->poss_segmentationResultCenter = this->mergePoss(this->poss_exemplar, this->poss_segmentationResultCenter);
+			this->poss_segmentationResultCenter = this->mergePoss(poss_exemplar, this->poss_segmentationResultCenter);
 			this->LandmarkList_segmentationResult = this->poss2LandMarkList(this->poss_segmentationResultCenter);
 			this->possVct2Image1DC(this->possVct_segmentationResult, this->Image1D_segmentationResult);
 			this->memory_free_uchar2D(masks_page, count_exemplar);
@@ -1949,14 +1963,15 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		dialogRun dialogRun1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_C);
 		bool is_success = false;
-		if (this->class_segmentationMain1.possVct_segmentationResult.size()<1)
+		if (this->class_segmentationMain1.possVct_segmentationResult.empty())
 		{
 			if (dialogRun1.exec()!=QDialog::Accepted) {return false;}
 			int idx_shape; //get shape paramters;
 			if (dialogRun1.shape_type_selection == sphere) {idx_shape = 1;}
 			else if (dialogRun1.shape_type_selection == cube) {idx_shape = 0;}
 			is_success = this->class_segmentationMain1.control_run(Image1D_current, dim_X, dim_Y, dim_Z, dialogRun1.channel_idx_selection, LandmarkList_current,
-				idx_shape, dialogRun1.shape_para_delta, dialogRun1.shape_multiplier_thresholdRegionSize, dialogRun1.shape_multiplier_uThresholdRegionSize, name_currentWindow);
+				idx_shape, dialogRun1.shape_para_delta, dialogRun1.shape_multiplier_thresholdRegionSize, dialogRun1.shape_multiplier_uThresholdRegionSize, name_currentWindow,
+				dialogRun1.exemplar_maxMovement1, dialogRun1.exemplar_maxMovement2);
 		}
 		else
 		{
@@ -1964,7 +1979,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, this->class_segmentationMain1.idx_channel, 
 				LandmarkList_current, this->class_segmentationMain1.idx_shape, 
 				this->class_segmentationMain1.threshold_deltaShapeStat, this->class_segmentationMain1.multiplier_thresholdRegionSize,
-				this->class_segmentationMain1.multiplier_uThresholdRegionSize, this->class_segmentationMain1.name_currentWindow);
+				this->class_segmentationMain1.multiplier_uThresholdRegionSize, this->class_segmentationMain1.name_currentWindow,
+				this->class_segmentationMain1.max_movment1, this->class_segmentationMain1.max_movment1);
 		}
 		if (is_success)
 		{
