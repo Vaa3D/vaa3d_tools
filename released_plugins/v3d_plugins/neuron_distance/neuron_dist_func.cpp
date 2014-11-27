@@ -12,6 +12,9 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
+
+#include <fstream>
+
 using namespace std;
 
 const QString title = QObject::tr("Neuron Distantce");
@@ -34,7 +37,7 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to neuron_dist_io"<<endl;
-	if(input.size() != 1 | output.size() != 0) 
+    if(input.size() != 1)
 	{
 		cerr<<"unrecognized parameter"<<endl;
 		return true;
@@ -55,10 +58,28 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
     NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu);
 
 	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
-	cout<<"entire-structure-average = "<<tmp_score.dist_allnodes;
+    cout<<"entire-structure-average = "<<tmp_score.dist_allnodes <<endl;
 	cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
 	cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
 
+    if (output.size() == 1)
+    {
+        char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+        ofstream myfile;
+        myfile.open (outimg_file,ios::out | ios::app );
+        myfile << name_nt1.toStdString().c_str()  ;
+        myfile << "   ";
+        myfile << name_nt2.toStdString().c_str();
+        myfile << "   ";
+        myfile << tmp_score.dist_allnodes;
+        myfile << "   ";
+        myfile << tmp_score.dist_apartnodes;
+        myfile << "   ";
+        myfile << tmp_score.dist_apartnodes;
+        myfile << "\n";
+        myfile.close();
+    }
 	return true;
 }
 
@@ -99,7 +120,7 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 void printHelp()
 {
 	cout<<"\nNeuron Distance: compute the distance between two neurons. distance is defined as the average distance among all nearest point pairs. 2012-05-04 by Yinan Wan"<<endl;
-	cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2>"<<endl;
+    cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
 	cout<<"\t-i <input_filename1> <input_filename2>: input neuron structure file (*.swc *.eswc)"<<endl;
 	cout<<"Distance result will be printed on the screen\n"<<endl;
