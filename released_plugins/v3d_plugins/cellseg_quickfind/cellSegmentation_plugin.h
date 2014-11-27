@@ -284,9 +284,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<V3DLONG> poss_exemplar = landMarkList2IndexList(_LandmarkList_exemplar);
 			V3DLONG count_exemplar = poss_exemplar.size();
 			vector<V3DLONG> poss_exemplarNew;
-			cout<<max_movment1<<endl;
-			cout<<max_movment2<<endl;
-			v3d_msg("!!");
 			for (V3DLONG idx_exemplar=0;idx_exemplar<count_exemplar;idx_exemplar++)
 			{
 				V3DLONG pos_exemplar = poss_exemplar[idx_exemplar];
