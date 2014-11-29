@@ -82,9 +82,9 @@ public:
 		QGroupBox *QGroupBox_exemplar_main = new QGroupBox("Exemplar definition");
 		QGridLayout *QGridLayout_exemplar_main = new QGridLayout();
 		QLabel* QLabel_exemplar_maxMovement1 = new QLabel(QObject::tr("Max movement from\nmass center"));
-		QLineEdit_exemplar_maxMovement1 = new QLineEdit("1", QWidget_parent);
+		QLineEdit_exemplar_maxMovement1 = new QLineEdit("3", QWidget_parent);
 		QLabel* QLabel_exemplar_maxMovement2 = new QLabel(QObject::tr("Max movement from\nmarker position"));
-		QLineEdit_exemplar_maxMovement2 = new QLineEdit("5", QWidget_parent);
+		QLineEdit_exemplar_maxMovement2 = new QLineEdit("8", QWidget_parent);
 		QGridLayout_exemplar_main->addWidget(QLabel_exemplar_maxMovement1, 1, 1, 1, 1);
 		QGridLayout_exemplar_main->addWidget(QLineEdit_exemplar_maxMovement1, 1, 2, 1, 1);
 		QGridLayout_exemplar_main->addWidget(QLabel_exemplar_maxMovement2, 1, 3, 1, 1);
@@ -274,7 +274,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->max_movment1 = _maxMovement1;
 				this->max_movment2 = _maxMovement2*_maxMovement2;
 			}
-			vector<V3DLONG> thresholds_voxelValue;
+			vector<double> thresholds_valueChangeRatio;
+			vector<V3DLONG > thresholds_voxelValue;
 			vector<V3DLONG> thresholds_regionSize;
 			vector<V3DLONG> uThresholds_regionSize;
 			vector<V3DLONG> thresholds_radius;
@@ -295,11 +296,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				vector<V3DLONG> poss_exemplarRegionNew;
 				vector<V3DLONG> poss_exemplarRegionOld;
 				V3DLONG idx_step = 0;
-				double value_centerMovement2;
+				double value_centerMovement2=0;
 				for (idx_step=0;idx_step<count_step;idx_step++)
 				{
 					V3DLONG threshold_exemplarRegion = value_exemplar-idx_step;
-					poss_exemplarRegionNew=this->regionGrowOnPos(pos_exemplar, threshold_exemplarRegion, this->size_page/1000, this->Image1D_mask);
+					poss_exemplarRegionNew=this->regionGrowOnPos(pos_exemplar, threshold_exemplarRegion, 10, this->size_page/1000, this->Image1D_mask);
 					if (poss_exemplarRegionNew.size()<default_threshold_regionSize) {break; }
 					this->poss2Image1D(poss_exemplarRegionNew, this->Image1D_mask, const_max_voxelValue);
 					pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
@@ -313,6 +314,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				if (idx_step<1) {continue; } //failed;
 				if (value_centerMovement2>max_movment2)	{continue;} //failed;
 				if (poss_exemplarRegionOld.size()<default_threshold_regionSize) {continue; } //failed;
+				if (poss_exemplarRegionOld.size()>this->size_page/1000) {continue; } //failed;
 				//shape property;
 				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
 				V3DLONG radius_exemplarRegion = getMinDimension(boundBox_exemplarRegion)/2;
@@ -322,7 +324,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->poss2Image1D(poss_exemplarRegionOld, this->Image1D_mask, 0);
 				possVct_exemplarRegion.push_back(poss_exemplarRegionOld);
 				poss_exemplarNew.push_back(pos_massCenterOld);
-				thresholds_voxelValue.push_back(this->getMin(poss_exemplarRegionOld));
+				V3DLONG min_exemplarRegionValue = this->getMin(poss_exemplarRegionOld);
+				V3DLONG threshold_exemplarRegionValue = value_exemplar-idx_step;
+				thresholds_valueChangeRatio.push_back((double)(min_exemplarRegionValue-threshold_exemplarRegionValue)/(double)min_exemplarRegionValue);
+				thresholds_voxelValue.push_back(threshold_exemplarRegionValue);
 				V3DLONG count_voxel = poss_exemplarRegionOld.size();
 				V3DLONG size_upper = count_voxel*this->multiplier_uThresholdRegionSize;
 				V3DLONG size_lower = count_voxel*this->multiplier_thresholdRegionSize;
@@ -332,10 +337,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				valueVctVct_exemplarShapeStat.push_back(valuesVct_shapeStatExemplarRegion);
 				thresholds_radius.push_back(radius_exemplarRegion);
 			}
-			if (possVct_exemplarRegion.empty())
-			{
-				return false;
-			}
+			if (possVct_exemplarRegion.empty()) { return false;	}
 			poss_exemplar.clear();
 			poss_exemplar = poss_exemplarNew;
 			count_exemplar = poss_exemplar.size();
@@ -364,12 +366,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						if (masks_page[idx_exemplar][pos_seed]<1) {continue;}
 						V3DLONG value_seed = this->Image1D_page[pos_seed];
 						V3DLONG idx_exemplarMapped = mapping_exemplar[idx_exemplar];
-						V3DLONG threshold_voxelValue = thresholds_voxelValue[idx_exemplarMapped];
+						V3DLONG threshold_backgroundValue = thresholds_voxelValue[idx_exemplarMapped];
+						double threshold_valueChangeRatio = thresholds_valueChangeRatio[idx_exemplarMapped];
 						V3DLONG threshold_regionSize = thresholds_regionSize[idx_exemplarMapped];
-						if (value_seed<threshold_voxelValue) { break; }
+						if (value_seed<threshold_backgroundValue) { break; }
 						V3DLONG uThreshold_regionSize = uThresholds_regionSize[idx_exemplarMapped];
 						V3DLONG threshold_radius = thresholds_radius[idx_exemplarMapped];
-						vector<V3DLONG> poss_region = this->regionGrowOnPos(pos_seed, threshold_voxelValue, uThreshold_regionSize, masks_page[idx_exemplar]);
+						vector<V3DLONG> poss_region = this->regionGrowOnPos(pos_seed, threshold_backgroundValue, threshold_valueChangeRatio, uThreshold_regionSize, masks_page[idx_exemplar]);
 						V3DLONG count_voxel = poss_region.size();
 						if (count_voxel>uThreshold_regionSize) {continue; }
 						else if (count_voxel<threshold_regionSize)
@@ -466,7 +469,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			}
 		}
 
-		vector<V3DLONG> regionGrowOnPos(V3DLONG _pos_seed, double _threshold_voxelValue, 
+		vector<V3DLONG> regionGrowOnPos(V3DLONG _pos_seed, V3DLONG _threshold_voxelValue, double _threshold_valueChangeRatio,
 			V3DLONG _uThreshold_regionSize, unsigned char* _mask_input)
 		{
 			vector<V3DLONG> poss_result;
@@ -475,6 +478,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			poss_result.push_back(_pos_seed);
 			V3DLONG count_voxel = 1;
 			_mask_input[_pos_seed] = 0; //scooped;
+			V3DLONG min_voxelValue = this->Image1D_page[_pos_seed];
 			while (true)
 			{
 				if (poss_growing.empty()) //growing complete;
@@ -498,13 +502,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 							if (_mask_input[pos_neighbor]>0) //available only;
 							{
 								V3DLONG value_neighbor = this->Image1D_page[pos_neighbor];
-								if (value_neighbor>_threshold_voxelValue)
+								if ((value_neighbor>_threshold_voxelValue) && ((min_voxelValue-value_neighbor)<(min_voxelValue*_threshold_valueChangeRatio)))
 								{
 									_mask_input[pos_neighbor] = 0; //scooped;
 									poss_growing.push_back(pos_neighbor);
 									poss_result.push_back(pos_neighbor);
 									count_voxel++;
-									if (count_voxel>(_uThreshold_regionSize)) //too large, +2 here so it won't pass the size filter later;
+									if (value_neighbor<min_voxelValue) {min_voxelValue=value_neighbor; }
+									if (count_voxel>(_uThreshold_regionSize+2)) //too large;
 									{
 										return poss_result;
 									}
