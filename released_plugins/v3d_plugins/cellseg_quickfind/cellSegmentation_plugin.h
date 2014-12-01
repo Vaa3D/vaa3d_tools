@@ -200,6 +200,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			vector<vector<V3DLONG> > colors_simpleTable;
 			
 			//Input or directly derived;
+			bool is_initialized;
 			unsigned char* Image1D_page;
 			unsigned char* Image1D_mask;
 			unsigned char*** Image3D_page;
@@ -233,7 +234,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			//vector<V3DLONG> poss_segmentationResultCenterMerged;
 			#pragma endregion
 			
-		class_segmentationMain() {}
+		class_segmentationMain() {is_initialized=false;}
 		~class_segmentationMain() {}
 
 		#pragma region "control-run"
@@ -242,7 +243,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize, QString _name_currentWindow,
 			V3DLONG _maxMovement1, V3DLONG _maxMovement2)
 		{
-			if (this->possVct_segmentationResult.empty())
+			if (!this->is_initialized)
 			{
 				this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 				this->size_page = dim_X*dim_Y*dim_Z;
@@ -271,8 +272,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->multiplier_thresholdRegionSize = _multiplier_thresholdRegionSize;
 				this->multiplier_uThresholdRegionSize = _multiplier_uThresholdRegionSize;
 				this->name_currentWindow = _name_currentWindow;
-				this->max_movment1 = _maxMovement1;
+				this->max_movment1 = _maxMovement1*_maxMovement1;
 				this->max_movment2 = _maxMovement2*_maxMovement2;
+				this->is_initialized=true;
 			}
 			vector<double> thresholds_valueChangeRatio;
 			vector<V3DLONG > thresholds_voxelValue;
@@ -300,9 +302,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				for (idx_step=0;idx_step<count_step;idx_step++)
 				{
 					V3DLONG threshold_exemplarRegion = value_exemplar-idx_step;
-					poss_exemplarRegionNew=this->regionGrowOnPos(pos_exemplar, threshold_exemplarRegion, 10, this->size_page/1000, this->Image1D_mask);
-					if (poss_exemplarRegionNew.size()<default_threshold_regionSize) {break; }
+					poss_exemplarRegionNew=this->regionGrowOnPos(pos_exemplar, threshold_exemplarRegion, INF, this->size_page/1000, this->Image1D_mask);
 					this->poss2Image1D(poss_exemplarRegionNew, this->Image1D_mask, const_max_voxelValue);
+					if (poss_exemplarRegionNew.size()<default_threshold_regionSize) {break; }
 					pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
 					double value_centerMovement1 = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
 					value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
@@ -311,10 +313,28 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					pos_massCenterOld = pos_massCenterNew;
 					poss_exemplarRegionOld = poss_exemplarRegionNew;
 				}
+				if ((idx_step<1) || (value_centerMovement2>max_movment2)	||
+					(poss_exemplarRegionOld.size()<default_threshold_regionSize)) //try again using loosened criteria;
+				{
+					for (idx_step=0;idx_step<count_step;idx_step++)
+					{
+						V3DLONG threshold_exemplarRegion = value_exemplar-idx_step;
+						poss_exemplarRegionNew=this->regionGrowOnPos(pos_exemplar, threshold_exemplarRegion, INF, this->size_page/1000, this->Image1D_mask);
+						this->poss2Image1D(poss_exemplarRegionNew, this->Image1D_mask, const_max_voxelValue);
+						if (poss_exemplarRegionNew.size()<default_threshold_regionSize) {break; }
+						pos_massCenterNew = this->getCenterByMass(poss_exemplarRegionNew);
+						double value_centerMovement1 = this->getEuclideanDistance2(pos_massCenterOld, pos_massCenterNew);
+						value_centerMovement2 = this->getEuclideanDistance2(pos_exemplar, pos_massCenterNew);
+						if (value_centerMovement1>(max_movment1*9))	{break;}
+						if (value_centerMovement2>(max_movment2*9))	{break;}
+						pos_massCenterOld = pos_massCenterNew;
+						poss_exemplarRegionOld = poss_exemplarRegionNew;
+					}
+				}
 				if (idx_step<1) {continue; } //failed;
-				if (value_centerMovement2>max_movment2)	{continue;} //failed;
+				if (value_centerMovement2>(max_movment2*4))	{continue;} //failed;
 				if (poss_exemplarRegionOld.size()<default_threshold_regionSize) {continue; } //failed;
-				if (poss_exemplarRegionOld.size()>this->size_page/1000) {continue; } //failed;
+				if (poss_exemplarRegionOld.size()>(this->size_page/1000)) {continue; } //failed;
 				//shape property;
 				vector<V3DLONG> boundBox_exemplarRegion = this->getBoundBox(poss_exemplarRegionOld);
 				V3DLONG radius_exemplarRegion = getMinDimension(boundBox_exemplarRegion)/2;
@@ -1965,7 +1985,16 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		dialogRun dialogRun1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_C);
 		bool is_success = false;
-		if (this->class_segmentationMain1.possVct_segmentationResult.empty())
+		if (this->class_segmentationMain1.is_initialized)
+		{
+			is_success = this->class_segmentationMain1.control_run(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, 
+				this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, this->class_segmentationMain1.idx_channel, 
+				LandmarkList_current, this->class_segmentationMain1.idx_shape, 
+				this->class_segmentationMain1.threshold_deltaShapeStat, this->class_segmentationMain1.multiplier_thresholdRegionSize,
+				this->class_segmentationMain1.multiplier_uThresholdRegionSize, this->class_segmentationMain1.name_currentWindow,
+				this->class_segmentationMain1.max_movment1, this->class_segmentationMain1.max_movment1);
+		}
+		else
 		{
 			if (dialogRun1.exec()!=QDialog::Accepted) {return false;}
 			int idx_shape; //get shape paramters;
@@ -1975,23 +2004,15 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				idx_shape, dialogRun1.shape_para_delta, dialogRun1.shape_multiplier_thresholdRegionSize, dialogRun1.shape_multiplier_uThresholdRegionSize, name_currentWindow,
 				dialogRun1.exemplar_maxMovement1, dialogRun1.exemplar_maxMovement2);
 		}
-		else
-		{
-			is_success = this->class_segmentationMain1.control_run(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, 
-				this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, this->class_segmentationMain1.idx_channel, 
-				LandmarkList_current, this->class_segmentationMain1.idx_shape, 
-				this->class_segmentationMain1.threshold_deltaShapeStat, this->class_segmentationMain1.multiplier_thresholdRegionSize,
-				this->class_segmentationMain1.multiplier_uThresholdRegionSize, this->class_segmentationMain1.name_currentWindow,
-				this->class_segmentationMain1.max_movment1, this->class_segmentationMain1.max_movment1);
-		}
+		QString name_result = "Result";
 		if (is_success)
 		{
 			//visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
-			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResult, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Result");
+			visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResult, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, name_result);
 			//visualizationImage1D(this->class_segmentationMain1.Image1D_mask, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Mask");
 			v3dhandleList v3dhandleList_current = _V3DPluginCallback2_currentCallback.getImageWindowList();
 			V3DLONG count_v3dhandle = v3dhandleList_current.size();
-			QString name_result = "Result";
+			
 			//QString name_exemplar = "Exemplar";
 			for (V3DLONG i=0;i<count_v3dhandle;i++)
 			{
@@ -1999,12 +2020,13 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				{
 					_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], this->class_segmentationMain1.LandmarkList_segmentationResult);
 					_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
+					break;
 				}
-				if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_result))
-				{
+				//if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_result))
+				//{
 					//_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], this->class_segmentationMain1.LandmarkList_exemplar);
 					//_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
-				}
+				//}
 				/*if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_exemplar))
 				{
 					_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], this->class_segmentationMain1.LandmarkList_exemplar);
@@ -2015,9 +2037,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		else
 		{
-			QString name_result = "Result";
 			v3dhandleList v3dhandleList_current = _V3DPluginCallback2_currentCallback.getImageWindowList();
 			V3DLONG count_v3dhandle = v3dhandleList_current.size();
+			bool is_foundResultWindow=false;
 			for (V3DLONG i=0;i<count_v3dhandle;i++)
 			{
 				if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(name_result))
@@ -2025,6 +2047,21 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					LandmarkList LandmarkList_empty;
 					_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], LandmarkList_empty);
 					_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
+					is_foundResultWindow=true;
+					break;
+				}
+			}
+			if (!is_foundResultWindow)
+			{
+				for (V3DLONG i=0;i<count_v3dhandle;i++)
+				{
+					if (_V3DPluginCallback2_currentCallback.getImageName(v3dhandleList_current[i]).contains(this->class_segmentationMain1.name_currentWindow))
+					{
+						LandmarkList LandmarkList_empty;
+						_V3DPluginCallback2_currentCallback.setLandmark(v3dhandleList_current[i], LandmarkList_empty);
+						_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
+						break;
+					}
 				}
 			}
 			v3d_msg("Warning: no exemplar defined, please re-select the exemplars!");
