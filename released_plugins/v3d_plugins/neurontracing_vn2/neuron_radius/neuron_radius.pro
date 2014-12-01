@@ -14,6 +14,9 @@ unix:!macx {
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
 }
 
+win32{
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
+}
 
 HEADERS	+= neuron_radius_plugin.h
 HEADERS	+= my_surf_objs.h
