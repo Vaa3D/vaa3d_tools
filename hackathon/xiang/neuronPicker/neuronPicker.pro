@@ -10,5 +10,4 @@ SOURCES	+= neuronPicker_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuronPicker)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuronPicker/
-DESTDIR = ./release
+DESTDIR = $$VAA3DPATH/bin/plugins/neuronPicker/

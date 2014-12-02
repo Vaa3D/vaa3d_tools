@@ -145,20 +145,21 @@ public:
 				return poss_result;
 			}
 			V3DLONG pos_current=poss_growing.back();
+			vector<V3DLONG> color_current=getColorFromPos(_image1Dc_input, pos_current, size_page, _dim_C);
 			poss_growing.pop_back();
 			vector<V3DLONG> xyz_current=pos2xyz(pos_current, offset_Y, offset_Z);
 			for (V3DLONG idx_neighbor=0;idx_neighbor<const_count_neighbors;idx_neighbor++)
 			{
-				vector<V3DLONG> pos_direction (4, 0);
-				pos_direction[0]=_pos4s_neighborRelative[idx_neighbor][0];
-				pos_direction[1]=_pos4s_neighborRelative[idx_neighbor][1];
-				pos_direction[2]=_pos4s_neighborRelative[idx_neighbor][2];
-				pos_direction[3]=_pos4s_neighborRelative[idx_neighbor][3];
-				V3DLONG pos_neighbor=pos_current+pos_direction[3];
+				vector<V3DLONG> poss_direction (4, 0);
+				poss_direction[0]=_pos4s_neighborRelative[idx_neighbor][0];
+				poss_direction[1]=_pos4s_neighborRelative[idx_neighbor][1];
+				poss_direction[2]=_pos4s_neighborRelative[idx_neighbor][2];
+				poss_direction[3]=_pos4s_neighborRelative[idx_neighbor][3];
+				V3DLONG pos_neighbor=pos_current+poss_direction[3];
 				vector<V3DLONG> xyz_neighbor (3, 0);
-				xyz_neighbor[0]=xyz_current[0]+pos_direction[0];
-				xyz_neighbor[1]=xyz_current[1]+pos_direction[1];
-				xyz_neighbor[2]=xyz_current[2]+pos_direction[2];
+				xyz_neighbor[0]=xyz_current[0]+poss_direction[0];
+				xyz_neighbor[1]=xyz_current[1]+poss_direction[1];
+				xyz_neighbor[2]=xyz_current[2]+poss_direction[2];
 				
 				if (isValid(pos_neighbor, size_page)) //prevent it from going out of bounds;
 				{
@@ -179,8 +180,8 @@ public:
 							poss_growing.push_back(pos_neighbor);
 							poss_result.push_back(pos_neighbor);
 						}
-						if (isGapTolerable(_image1Dc_input, pos_neighbor, color_seed, xyz_neighbor, _bandWidth_color, _thresholds_page,
-							pos_direction, _dim_X, _dim_Y, _dim_Z, _dim_C, size_page, _tolerance_gap,	_image1D_mask))
+						if (isGapTolerable(_image1Dc_input, pos_neighbor, color_seed, xyz_neighbor, _bandWidth_color, _thresholds_page, poss_direction,
+							 _dim_X, _dim_Y, _dim_Z, _dim_C, size_page, _tolerance_gap,	_image1D_mask))
 						{
 							_image1D_mask[pos_neighbor]=0; //scooped;
 							poss_growing.push_back(pos_neighbor);
@@ -191,18 +192,35 @@ public:
 			}
 		}
 	}
-	static bool isColorTolerable(vector<V3DLONG> _color_input1, vector<V3DLONG> _color_input2, double _bandWidth_color, V3DLONG _dim_C)
+	static bool isColorTolerable(vector<V3DLONG> _color_source, vector<V3DLONG> _color_target, vector<V3DLONG> _color_seed, double _bandWidth_color, V3DLONG _dim_C)
 	{
-		V3DLONG max_color1=getMaxIdx(_color_input1);
-		V3DLONG max_color2=getMaxIdx(_color_input2);
-		if (max_color1!=max_color2) {return false;}
+		V3DLONG max_seed=getMaxIdx(_color_seed);
+		V3DLONG max_target=getMaxIdx(_color_target);
+		if (max_target!=max_seed) {return false;}
 		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
 		{
-			V3DLONG diff_color=iabs(_color_input1[idx_color]-_color_input2[idx_color]);
+			double diff_color1=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
+			double diff_color2=(double)(iabs(_color_source[idx_color]+_color_target[idx_color]));
+			double diff_color=diff_color1/diff_color2;
 			if (diff_color>_bandWidth_color) {return false;}
 		}
 		return true;
-		//if (getCorrelation(_color_input1, _color_input2)>_bandWidth_color) {return true;}
+		//if (getCorrelation(_color_source, _color_target)>_bandWidth_color) {return true;}
+		//else {return false;}
+	}
+	static bool isColorTolerable(vector<V3DLONG> _color_source, vector<V3DLONG> _color_target, double _bandWidth_color, V3DLONG _dim_C)
+	{
+		V3DLONG max_source=getMaxIdx(_color_source);
+		V3DLONG max_target=getMaxIdx(_color_target);
+		if (max_target!=max_source) {return false;}
+		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		{
+			double diff_color=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
+			diff_color=diff_color/(double)_color_source[idx_color];
+			if (diff_color>_bandWidth_color) {return false;}
+		}
+		return true;
+		//if (getCorrelation(_color_source, _color_target)>_bandWidth_color) {return true;}
 		//else {return false;}
 	}
 	static bool isPassedThreshold(const unsigned char* _image1Dc_input, const V3DLONG _pos_input, 
@@ -215,7 +233,7 @@ public:
 		}
 		return false;
 	}
-	static bool isGapTolerable(const unsigned char* _image1Dc_input, const V3DLONG _pos_input, const vector<V3DLONG> _color_input,
+	static bool isGapTolerable(const unsigned char* _image1Dc_input, const V3DLONG _pos_input, const vector<V3DLONG> _color_seed,
 		const vector<V3DLONG> _xyz_input, double _bandWidth_color, vector<V3DLONG> _thresholds_page,
 		const vector<V3DLONG> _pos_direction, const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z,
 		const V3DLONG _dim_C, const V3DLONG _size_page, const V3DLONG _tolerance_gap,
@@ -238,7 +256,7 @@ public:
 				else
 				{
 					vector<V3DLONG> color_ray=getColorFromPos(_image1Dc_input, pos_ray, _size_page, _dim_C);
-					if ((isColorTolerable(_color_input, color_ray, _bandWidth_color, _dim_C))
+					if ((isColorTolerable(_color_seed, color_ray, _bandWidth_color, _dim_C))
 						&& (isPassedThreshold(_image1Dc_input, pos_ray, _thresholds_page, _dim_C, _size_page))
 						&& (_image1D_mask[pos_ray]>0))
 					{
@@ -330,7 +348,7 @@ public:
 		}
 		return value_threshold;
 	}
-	static V3DLONG estimateThresholdYen(vector<double> histo_input)
+	static V3DLONG getThresholdYen(vector<double> histo_input)
 	{
 		// Implements Yen's thresholding method;
 		// 1) Yen J.C., Chang F.J., and Chang S. (1995) "A New Criterion for Automatic Multilevel Thresholding" IEEE Trans. on Image Processing, 4(3): 370-378;
