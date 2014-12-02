@@ -70,16 +70,22 @@ function write_neuron_tracing_command {
 
   smooth_inimgfileTracing=${inimgfileTracing}.g.v3draw;
 
+#smooth image only
+
   if [ $METHOD == "smooth" ]; then
    echo "$vaa3dProgramPath -x gaussian -f gf -i $inimgfileTracing -o $smooth_inimgfileTracing -p 7 7 2 1 2" >> $outputScript;
    echo "$vaa3dProgramPath -x datatypeconvert -f dtc -i $smooth_inimgfileTracing -o $smooth_inimgfileTracing -p 1" >> $outputScript;
    echo "mv  $smooth_inimgfileTracing $finalfileFolder" >> $outputScript;
   fi;
 
+#APP1
+
   if [ $METHOD == "1" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0" >> $outputScript;
     echo "mv  $inimgfileTracing*_app1.swc $finalfileFolder" >> $outputScript;
   fi;
+
+#APP2
 
   if [ $METHOD == "2" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 1 1 1 0 5" >> $outputScript;
@@ -87,20 +93,28 @@ function write_neuron_tracing_command {
     echo "rm  $inimgfileTracing*_ini.swc" >> $outputScript;
   fi;
 
+#MOST
+
   if [ $METHOD == "3" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40" >> $outputScript;
     echo "mv  $inimgfileTracing*_MOST.swc $finalfileFolder" >> $outputScript;
   fi;
+
+#NEUTUBE
 
   if [ $METHOD == "4" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1" >> $outputScript;
     echo "mv  $inimgfileTracing*_neutube.swc $finalfileFolder" >> $outputScript;
   fi;
 
+#FARSIGHT Snake
+
   if [ $METHOD == "5" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x snake -f snake_trace -i $inimgfileTracing -p 1" >> $outputScript;
     echo "mv  $inimgfileTracing*_snake.swc $finalfileFolder" >> $outputScript;
   fi;
+
+#3 from SimpleTracing
 
   if [ $METHOD == "6" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1" >> $outputScript;
@@ -108,8 +122,27 @@ function write_neuron_tracing_command {
   fi;
 
   if [ $METHOD == "7" -o $METHOD == "-1" ]; then
+    echo "$vaa3dProgramPath -x SimpleTracing -f ray_shooting -i $inimgfileTracing -o ${inimgfileTracing}_Rayshooting.swc" >> $outputScript;
+    echo "mv  $inimgfileTracing*_Rayshooting.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+  if [ $METHOD == "8" -o $METHOD == "-1" ]; then
+    echo "$vaa3dProgramPath -x SimpleTracing -f dfs -i $inimgfileTracing -o ${inimgfileTracing}_Rollerball.swc" >> $outputScript;
+    echo "mv  $inimgfileTracing*_Rollerball.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#TreMap
+
+  if [ $METHOD == "9" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5" >> $outputScript;
     echo "mv  $inimgfileTracing*_TreMap.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#MST
+
+  if [ $METHOD == "10" -o $METHOD == "-1" ]; then
+    echo "$vaa3dProgramPath -x MST_tracing -f trace_mst -i $inimgfileTracing -p 1 5" >> $outputScript;
+    echo "mv  $inimgfileTracing*_MST_Tracing.swc $finalfileFolder" >> $outputScript;
   fi;
 
 }
