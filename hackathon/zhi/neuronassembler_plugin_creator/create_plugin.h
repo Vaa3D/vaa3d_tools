@@ -92,19 +92,49 @@ void create_plugin_cpp(PluginTemplate & pt)
     ifstream templatefile (template_path.c_str());
     if (templatefile.is_open())
     {
-        for(int i = 0; i< 5; i++)
+        for(int i = 0; i< 7; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
 
         ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
-        ofs<<"#include \""<<pt.VAA3D_PATH<< "/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h"<<"\""<<endl;
+        ofs<<"#include \""<<pt.VAA3D_PATH<< "/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readRawfile_func.h"<<"\""<<endl;
         ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/istitch/y_imglib.h"<<"\""<<endl;
-        ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/ineurontracing_vn2/app2/my_surf_objs.h"<<"\""<<endl;
+        ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"<<"\""<<endl;
+        ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 
+        for(int i = 7;i< 114; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
 
-        for(int i = 5;i< 146; i++)
+        ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::menulist() const"<<endl;
+
+        for(int i = 114;i< 122; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::funclist() const"<<endl;
+
+        for(int i = 123;i< 130; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"void "<<pt.PLUGIN_CLASS<<"::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)"<<endl;
+        for(int i = 130;i< 208; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
+        for(int i = 208;i< 1258; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -225,119 +255,21 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
 	ofs<<""<<endl;
 	ofs<<"#endif"<<endl;
 	ofs<<""<<endl;
+
+    string line;
+    string template_path = pt.VAA3D_PATH + "/../../vaa3d_tools/hackathon/zhi/neuronassembler_plugin_creator/neuronassembler_template.h";
+    ifstream templatefile (template_path.c_str());
+    if (templatefile.is_open())
+    {
+        while(getline (templatefile,line))
+        {
+            ofs<<line<<endl;
+        }
+
+        templatefile.close();
+
+    }
 	ofs.close();
-}
-
-string demo_plugin_template()
-{
-	ostringstream oss;
-	oss<<"PLUGIN_NAME = \"test\""<<endl;
-	oss<<"PLUGIN_CLASS = \"TestPlugin\""<<endl;
-	oss<<"WINDOW_TITLE = \"Test Plugin\""<<endl;
-	oss<<"PLUGIN_DESCRIPTION = \"This is a test plugin\""<<endl;
-	oss<<"PLUGIN_DATE = \"2011-06-16\""<<endl;
-	oss<<"PLUGIN_AUTHOR = \"Your name\""<<endl;
-	oss<<"#PLUGIN_GUI = \"test_gui.h\""<<endl;
-	oss<<"VAA3D_PATH = \"../../work/v3d_external\""<<endl;
-	oss<<endl;
-	oss<<"MENUS=(\"first item\" \"second item\")"<<endl;
-	oss<<"FUNCS=(\"first_item\" \"second_item\")"<<endl;
-	oss<<endl;
-	oss<<"#DOFUNC = \"yes\""<<endl;
-	oss<<endl;
-	oss<<"#MAINFUNCS=(\"mymain\" \"\")"<<endl;
-	oss<<"#SYSINVOKES=(\"\" \"mycmd\")"<<endl;
-	return oss.str();
-}
-
-string demo_gui_template()
-{
-	ostringstream oss;
-	oss<<"CLASS QDialog TestDialog"<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_subject \"Subject Image :\""<<endl;
-	oss<<"D QComboBox combo_subject | addItems(items)"<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_target \"Target Image :\""<<endl;
-	oss<<"D QComboBox combo_target | addItems(items)"<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_sub_channel \"Subject Channel :\""<<endl;
-	oss<<"D QLabel label_tar_channel \"Target Channel :\""<<endl;
-	oss<<""<<endl;
-	oss<<"D QSpinBox channel_sub | setMaximum(3) setValue(0)"<<endl;
-	oss<<"D QSpinBox channel_tar | setMaximum(3) setValue(0)"<<endl;
-	oss<<""<<endl;
-	oss<<"D QPushButton ok \"ok\""<<endl;
-	oss<<"D QPushButton cancel \"cancel\""<<endl;
-	oss<<""<<endl;
-	oss<<"D QGridLayout gridLayout"<<endl;
-	oss<<"L 0 0 label_subject"<<endl;
-	oss<<"L 0 1 combo_subject 1 5"<<endl;
-	oss<<"L 1 0 label_sub_channel"<<endl;
-	oss<<"L 1 1 channel_sub 1 1"<<endl;
-	oss<<"L 2 0 label_target"<<endl;
-	oss<<"L 2 1 combo_target 1 5"<<endl;
-	oss<<"L 3 0 label_tar_channel"<<endl;
-	oss<<"L 3 1 channel_tar"<<endl;
-	oss<<"L 5 4 cancel Qt::AlignRight"<<endl;
-	oss<<"L 5 5 ok     Qt::AlignRight"<<endl;
-	oss<<""<<endl;
-	oss<<"C ok clicked() this accept()"<<endl;
-	oss<<"C cancel clicked() this reject()"<<endl;
-	oss<<""<<endl;
-	oss<<"C combo_subject currentIndexChanged(int) this update()"<<endl;
-	oss<<"C combo_target currentIndexChanged(int) this update()"<<endl;
-	oss<<""<<endl;
-	oss<<"C channel_sub valueChanged(int) this update()"<<endl;
-	oss<<"C channel_tar valueChanged(int) this update()"<<endl;
-	oss<<""<<endl;
-	oss<<"R this | setLayout(gridLayout)"<<endl;
-	oss<<"R this | setWindowTitle(\"Test Widget\")"<<endl;
-	oss<<""<<endl;
-	oss<<"U int i1 | combo_subject->currentIndex()"<<endl;
-	oss<<"U int i2 | combo_target->currentIndex()"<<endl;
-	oss<<"U int c1 | channel_sub->text().toInt()"<<endl;
-	oss<<"U int c2 | channel_tar->text().toInt()"<<endl;
-	oss<<"================================================="<<endl;
-	oss<<"CLASS QWidget TestWidget"<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_subject \"Subject Image :\""<<endl;
-	oss<<"D QComboBox combo_subject "<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_target \"Target Image :\""<<endl;
-	oss<<"D QComboBox combo_target "<<endl;
-	oss<<""<<endl;
-	oss<<"D QLabel label_sub_channel \"Subject Channel :\""<<endl;
-	oss<<"D QLabel label_tar_channel \"Target Channel :\""<<endl;
-	oss<<""<<endl;
-	oss<<"D QSpinBox channel_sub"<<endl;
-	oss<<"D QSpinBox channel_tar"<<endl;
-	oss<<""<<endl;
-	oss<<"D QPushButton ok \"ok\""<<endl;
-	oss<<"D QPushButton cancel \"cancel\""<<endl;
-	oss<<""<<endl;
-	oss<<"D QVBoxLayout gridLayout"<<endl;
-	oss<<""<<endl;
-	oss<<"L 0 0 label_subject"<<endl;
-	oss<<"L 0 1 combo_subject 1 5"<<endl;
-	oss<<"L 1 0 label_sub_channel"<<endl;
-	oss<<"L 1 1 channel_sub 1 1"<<endl;
-	oss<<"L 2 0 label_target"<<endl;
-	oss<<"L 2 1 combo_target 1 5"<<endl;
-	oss<<"L 3 0 label_tar_channel"<<endl;
-	oss<<"L 3 1 channel_tar"<<endl;
-	oss<<"L 5 4 cancel Qt::AlignRight"<<endl;
-	oss<<"L 5 5 ok     Qt::AlignRight"<<endl;
-	oss<<""<<endl;
-	oss<<"C ok clicked() this accept()"<<endl;
-	oss<<"C cancel clicked() this reject()"<<endl;
-	oss<<""<<endl;
-	oss<<"C combo_subject currentIndexChanged(int) this onSubjectChanged()"<<endl;
-	oss<<"C combo_target currentIndexChanged(int) this onTargetChanged()"<<endl;
-	oss<<""<<endl;
-	oss<<"C channel_sub valueChanged(int) this onChannelChanged()"<<endl;
-	oss<<"C channel_tar valueChanged(int) this onChannelChanged()"<<endl;
-	return oss.str();
 }
 
 void create_plugin_all(PluginTemplate & pt)

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <QtGui>
+#include <v3d_interface.h>
 
 using namespace std;
 
@@ -14,10 +15,23 @@ public:
 	GuidingDialog(QWidget * parent) : QDialog(parent)
 	{
         label_plugin_name = new QLabel(tr("Plugin Name(Tracing Method) :"));
-        editor_plugin_name = new QLineEdit(tr("Vaa3D_Neuron2"));
+        editor_plugin_name = new QLineEdit(tr("mostVesselTracer"));
 
         label_function_name = new QLabel(tr("Function Name(Tracing Method) :"));
-        editor_function_name = new QLineEdit(tr("app1"));
+        editor_function_name = new QLineEdit(tr("MOST_trace"));
+
+        label_swc_name = new QLabel(tr("Output SWC Format(Set NULL if Defined by The User):"));
+        editor_swc_name = new QLineEdit(tr("_MOST.swc"));
+
+        parameter_panel = new QGroupBox("");
+        parameter_panel->setStyle(new QWindowsStyle());
+        parameterLayout = new QGridLayout();
+        parameterLayout->addWidget(new QLabel(QObject::tr("Number of Input Parameters                                          ")),0,0,1,1);
+        para_spinbox = new QSpinBox();
+        para_spinbox->setRange(0,10);
+        para_spinbox->setValue(0);
+        parameterLayout->addWidget(para_spinbox,0,1,1,9);
+        parameter_panel->setLayout(parameterLayout);
 
 
 		label_plugin_description = new QLabel(tr("Plugin Description :"));
@@ -45,8 +59,13 @@ public:
 		gridLayout->addWidget(editor_plugin_name,        0, 1, 1, 9);
         gridLayout->addWidget(label_function_name,        1, 0, 1, 1);
         gridLayout->addWidget(editor_function_name,       1, 1, 1, 9);
-		gridLayout->addWidget(label_plugin_description,  3, 0, 1, 1);
-		gridLayout->addWidget(editor_plugin_description, 3, 1, 1, 9);
+        gridLayout->addWidget(label_swc_name,        2, 0, 1, 1);
+        gridLayout->addWidget(editor_swc_name,       2, 1, 1, 9);
+
+        gridLayout->addWidget(parameter_panel,3,0,1,10);
+
+//		gridLayout->addWidget(label_plugin_description,  3, 0, 1, 1);
+//		gridLayout->addWidget(editor_plugin_description, 3, 1, 1, 9);
 		gridLayout->addWidget(label_plugin_date,         4, 0, 1, 1);
 		gridLayout->addWidget(editor_plugin_date,        4, 1, 1, 9);
 		gridLayout->addWidget(label_plugin_author,       5, 0, 1, 1);
@@ -64,6 +83,9 @@ public:
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
 		connect(button_vaa3d_path, SIGNAL(clicked()), this, SLOT(setFolderPath()));
 		connect(button_save_folder, SIGNAL(clicked()), this, SLOT(setFolderPath()));
+
+        connect(para_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setParameters()));
+
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(update()));
 
@@ -87,26 +109,38 @@ public slots:
 
 	void setFolderPath()
 	{
-		QPushButton * button = (QPushButton*) sender();
-		QLineEdit * editor;
-		QString title;
-		if(button == button_vaa3d_path) 
-		{
-			editor = editor_vaa3d_path;
-			title = "Open V3D_MAIN Directory";
-		}
-		else if(button == button_save_folder) 
-		{
-			editor = editor_save_folder;
-			title = "Save to Directory";
-		}
+        QPushButton * button = (QPushButton*) sender();
+        QLineEdit * editor;
+        QString title;
+        if(button == button_vaa3d_path)
+        {
+            editor = editor_vaa3d_path;
+            title = "Open V3D_MAIN Directory";
+        }
+        else if(button == button_save_folder)
+        {
+            editor = editor_save_folder;
+            title = "Save to Directory";
+        }
 
-		QString dir = QFileDialog::getExistingDirectory(this, title,
+        QString dir = QFileDialog::getExistingDirectory(this, title,
                                                  "~/",
                                                  QFileDialog::ShowDirsOnly
                                                  | QFileDialog::DontResolveSymlinks);
-		editor->setText(dir);
-	}
+        editor->setText(dir);
+
+    }
+
+    void setParameters()
+    {
+        para_number =  para_spinbox->value();
+        for(int i = 0; i < para_number; i++)
+             parameterLayout->addWidget(new QLabel(QObject::tr("...")),1+i,1,1,9);
+
+        parameter_panel->setLayout(parameterLayout);
+        gridLayout->addWidget(parameter_panel,3,0,1,10);
+
+    }
 
 	void update()
 	{
@@ -124,6 +158,8 @@ public slots:
 public:
 	string plugin_name;
     string function_name;
+    string outputswc_name;
+
 	string plugin_desp;
 	string plugin_date;
 	string plugin_author;
@@ -135,6 +171,9 @@ public:
 
     QLabel * label_function_name;
     QLineEdit * editor_function_name;
+
+    QLabel * label_swc_name;
+    QLineEdit * editor_swc_name;
 
     QLabel * label_plugin_description;
 	QLineEdit * editor_plugin_description;
@@ -157,6 +196,13 @@ public:
 	QPushButton * cancel;
 
 	QGridLayout * gridLayout;
+
+    QSpinBox * para_spinbox;
+    QGroupBox *parameter_panel;
+    QGridLayout *parameterLayout;
+
+    int para_number;
+
 };
 
 #endif

@@ -5,7 +5,7 @@
 
 
 using namespace std;
-Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
+//Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
 
 struct root_node
 {
@@ -30,24 +30,7 @@ struct NA_PARA
     int  bkg_thresh;
     int  channel;
     int block_size;
-    int tracing_method;
     int root_1st[3];
-
-    //NeuTube
-    int merge;
-
-    //TReMap
-    int is_gsdt;
-    int is_break_accept;
-    double length_thresh;
-    int  cnn_type;
-    double SR_ratio;
-    int  b_256cube;
-    int b_RadiusFrom2D;
-    int mip_plane;
-
-    //MST
-    int win_size;
 
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
@@ -128,7 +111,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, NA_PARA &p);
 NeuronTree eliminate(NeuronTree input, double length);
  
-QStringList neuronassembler::menulist() const
+//QStringList neuronassembler::menulist() const
 {
 	return QStringList() 
 		<<tr("trace_tc")
@@ -136,7 +119,7 @@ QStringList neuronassembler::menulist() const
 		<<tr("about");
 }
 
-QStringList neuronassembler::funclist() const
+//QStringList neuronassembler::funclist() const
 {
 	return QStringList()
 		<<tr("trace_tc")
@@ -144,7 +127,7 @@ QStringList neuronassembler::funclist() const
 		<<tr("help");
 }
 
-void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+//void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("trace_tc"))
 	{
@@ -168,28 +151,12 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             return;
         }
 
-        if(dialog.tracing_method ==0)
-        {
-            v3d_msg("Please select a tracing method.");
-            return;
-        }
-
-
         P.bkg_thresh = dialog.bkg_thresh;
         P.channel = dialog.channel;
         P.block_size = dialog.block_size;
-        P.tracing_method = dialog.tracing_method;
         LocationSimple tmpLocation(0,0,0);
         tmpLocation = dialog.listLandmarks.at(0);
         tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
-
-        switch(P.tracing_method)
-        {
-            case 2: P.merge = dialog.merge; break;
-            case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
-            case 5: P.b_256cube = dialog.b_256cube;
-            case 6: P.win_size = dialog.win_size;
-        }
 
         assembler_tc(callback,parent,P,bmenu);
 	}
@@ -215,35 +182,19 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             return;
         }
 
-        if(dialog.tracing_method ==0)
-        {
-            v3d_msg("Please select a tracing method.");
-            return;
-        }
-
-
-
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
 
         P.bkg_thresh = dialog.bkg_thresh;
         P.channel = dialog.channel;
         P.block_size = dialog.block_size;
-        P.tracing_method = dialog.tracing_method;
+      //  P.tracing_method = dialog.tracing_method;
         P.inimg_file = dialog.rawfilename;
 
         P.root_1st[0] = file_inmarkers[0].x;
         P.root_1st[1] = file_inmarkers[0].y;
         P.root_1st[2] = file_inmarkers[0].z;
 
-        switch(P.tracing_method)
-        {
-            case 2: P.merge = dialog.merge; break;
-            case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
-            case 5: P.b_256cube = dialog.b_256cube;
-            case 6: P.win_size = dialog.win_size;
-
-        }
         assembler_raw(callback,parent,P,bmenu);
 	}
 	else
@@ -253,7 +204,7 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
 }
 
-bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+//bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	if (func_name == tr("trace_tc"))
 	{
@@ -316,7 +267,7 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
         P.root_1st[1] = file_inmarkers[0].y;
         P.root_1st[2] = file_inmarkers[0].z;
 
-        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+     //   P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
@@ -355,7 +306,7 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
             P.root_1st[2] = file_inmarkers[0].z;
         }
 
-        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+     //   P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
@@ -365,29 +316,29 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("help"))
 	{
         printf("\n**** Usage of Neuron Assembler ****\n");
-        printf("vaa3d -x plugin_name -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
-        printf("inimg_file       Should be 8 bit image\n");
-        printf("inmarker_file    Please specify the path of the marker file\n");
-        printf("tc_file          Please specify the path of the tc file\n");
+//        printf("vaa3d -x plugin_name -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
+//        printf("inimg_file       Should be 8 bit image\n");
+//        printf("inmarker_file    Please specify the path of the marker file\n");
+//        printf("tc_file          Please specify the path of the tc file\n");
 
-        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
-        printf("block size       Default 1024\n");
+//        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
+//        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+//        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+//        printf("block size       Default 1024\n");
 
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+//        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 
-        printf("vaa3d -x plugin_name -f trace_raw -i <inimg_file> -p <inmarker_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
-        printf("inimg_file       Should be 8 bit image\n");
-        printf("inmarker_file    Please specify the path of the marker file\n");
+//        printf("vaa3d -x plugin_name -f trace_raw -i <inimg_file> -p <inmarker_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
+//        printf("inimg_file       Should be 8 bit image\n");
+//        printf("inmarker_file    Please specify the path of the marker file\n");
 
-        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
-        printf("block size       Default 1024\n");
+//        printf("tracing_method   Tracing method.0 for MOST tracing, 1 for NeuTube tracing, 2 for Farsight snake tracing, (default 0).\n");
+//        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+//        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+//        printf("block size       Default 1024\n");
 
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
+//        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
 
 	}
 	else return false;
@@ -475,17 +426,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
     tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
-    QString finalswcfilename;
-
-    switch(P.tracing_method){
-    case 1: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc"; break;
-    case 2: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc"; break;
-    case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
-    case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
-    case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
-    case 6: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MST.swc"; break;
-
-    }
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
     QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -511,16 +452,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         }
 
 
-        QString swcfilename;
-        switch(P.tracing_method){
-        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
-        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
-        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
-        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
-        case 6: swcfilename =  walker->tilename + QString("_MST.swc"); break;
-        }
-
+        QString swcfilename =  walker->tilename + QString("_MOST.swc"); break;
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -543,46 +475,13 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         char* Th =  new char[T_background.length() + 1];
         strcpy(Th, T_background.c_str());
 
-        //NeuTube
-        string merge_string = boost::lexical_cast<string>(P.merge);char* merge_char =  new char[T_background.length() + 1]; strcpy(merge_char, merge_string.c_str());
-
-        //TReMap
-        string mip_plane_string = boost::lexical_cast<string>(P.mip_plane);char* mip_plane_char =  new char[mip_plane_string.length() + 1]; strcpy(mip_plane_char, mip_plane_string.c_str());
-        string b_256cube_string = boost::lexical_cast<string>(P.b_256cube);char* b_256cube_char =  new char[b_256cube_string.length() + 1]; strcpy(b_256cube_char, b_256cube_string.c_str());
-        string is_gsdt_string = boost::lexical_cast<string>(P.is_gsdt);char* is_gsdt_char =  new char[is_gsdt_string.length() + 1]; strcpy(is_gsdt_char, is_gsdt_string.c_str());
-        string is_break_accept_string = boost::lexical_cast<string>(P.is_break_accept);char* is_break_accept_char =  new char[is_break_accept_string.length() + 1]; strcpy(is_break_accept_char, is_break_accept_string.c_str());
-        string length_thresh_string = boost::lexical_cast<string>(P.length_thresh);char* length_thresh_char =  new char[length_thresh_string.length() + 1]; strcpy(length_thresh_char, length_thresh_string.c_str());
-
-        //MST
-        string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
-
-        //APP1
-        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
-
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        switch(P.tracing_method)
-        {
-            case 1: arg_para.push_back(&channel);arg_para.push_back(Th);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
-            case 2: arg_para.push_back(&channel); arg_para.push_back(merge_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "neuTube"; func_name = "neutube_trace";break;
-            case 3: arg_para.push_back(&channel);arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "snake"; func_name = "snake_trace";break;
-            case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "TReMap"; func_name = "trace_mip";break;
-            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
-            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
-        }
-       // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+        arg_para.push_back(&channel);arg_para.push_back(Th);
+        arg.p = (void *) & arg_para; input << arg;
+        full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
+
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
         {
@@ -590,32 +489,6 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
              printf("Can not find the tracing plugin!\n");
              return false;
         }
-
-
-
-
-//        #if  defined(Q_OS_LINUX)
-//            QString cmd_method;
-//            switch(P.tracing_method){
-//            case 0: cmd_method = QString("%1/vaa3d -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
-//            case 1: cmd_method = QString("%1/vaa3d -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-//            case 2: cmd_method = QString("%1/vaa3d -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-//             }
-//            system(qPrintable(cmd_method));
-
-
-//        #elif defined(Q_OS_MAC)
-//            QString cmd_method;
-//            switch(P.tracing_method){
-//            case 0: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x mostVesselTracer -f MOST_trace -i %2 -p %3 %4").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel).arg(P.bkg_thresh); break;
-//            case 1: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x neuTube -f neutube_trace -i %2 -p %3 1").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-//            case 2: cmd_method = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x snake -f snake_trace -i %2 -p %3").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(P.channel); break;
-//             }
-//            system(qPrintable(cmd_method));
-//        #else
-//                 v3d_msg("The OS is not Linux or Mac. Do nothing.",bmenu);
-//                 return false;
-//        #endif
 
         ifstream ifs_swc(swcfilename.toStdString().c_str());
         if(!ifs_swc)
@@ -864,17 +737,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
-    QString finalswcfilename;
-
-    switch(P.tracing_method){
-        case 1: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc"; break;
-        case 2: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc"; break;
-        case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
-        case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
-        case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
-        case 6: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MST.swc"; break;
-
-    }
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
     QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -905,15 +768,6 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 return false;
             }
 
-            if(P.tracing_method == 2 || P.tracing_method ==3 || P.tracing_method ==6)
-            {
-                for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
-                {
-                    if(datald[i] < P.bkg_thresh)
-                        datald[i] = 0;
-
-                }
-            }
             simple_saveimage_wrapper(callback, walker->tilename.toStdString().c_str(),  (unsigned char *)datald, in_sz, V3D_UINT8);
             if(datald) {delete []datald; datald = 0;}
         }
@@ -923,17 +777,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             continue;
         }
 
-        QString swcfilename;
-        switch(P.tracing_method){
-        case 1: swcfilename =  walker->tilename + QString("_MOST.swc"); break;
-        case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
-        case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
-        case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
-        case 6: swcfilename =  walker->tilename + QString("_MST.swc"); break;
-
-
-        }
+        QString swcfilename =  walker->tilename + QString("_MOST.swc");;
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -956,45 +800,12 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         char* Th =  new char[T_background.length() + 1];
         strcpy(Th, T_background.c_str());
 
-        //NeuTube
-        string merge_string = boost::lexical_cast<string>(P.merge);char* merge_char =  new char[merge_string.length() + 1]; strcpy(merge_char, merge_string.c_str());
-
-        //TReMap
-        string mip_plane_string = boost::lexical_cast<string>(P.mip_plane);char* mip_plane_char =  new char[mip_plane_string.length() + 1]; strcpy(mip_plane_char, mip_plane_string.c_str());
-        string b_256cube_string = boost::lexical_cast<string>(P.b_256cube);char* b_256cube_char =  new char[b_256cube_string.length() + 1]; strcpy(b_256cube_char, b_256cube_string.c_str());
-        string is_gsdt_string = boost::lexical_cast<string>(P.is_gsdt);char* is_gsdt_char =  new char[is_gsdt_string.length() + 1]; strcpy(is_gsdt_char, is_gsdt_string.c_str());
-        string is_break_accept_string = boost::lexical_cast<string>(P.is_break_accept);char* is_break_accept_char =  new char[is_break_accept_string.length() + 1]; strcpy(is_break_accept_char, is_break_accept_string.c_str());
-        string length_thresh_string = boost::lexical_cast<string>(P.length_thresh);char* length_thresh_char =  new char[length_thresh_string.length() + 1]; strcpy(length_thresh_char, length_thresh_string.c_str());
-
-        //MST
-        string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
-
-        //APP1
-        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
-
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        switch(P.tracing_method)
-        {
-            case 1: arg_para.push_back(&channel);arg_para.push_back(Th);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
-            case 2: arg_para.push_back(&channel); arg_para.push_back(merge_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "neuTube"; func_name = "neutube_trace";break;
-            case 3: arg_para.push_back(&channel);arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "snake"; func_name = "snake_trace";break;
-            case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "TReMap"; func_name = "trace_mip";break;
-            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
-            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
-                    arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
-        }
+        arg_para.push_back(&channel);arg_para.push_back(Th);
+        arg.p = (void *) & arg_para; input << arg;
+        full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
         {
@@ -1334,15 +1145,6 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
     in_sz[1] = vy;
     in_sz[2] = vz;
     in_sz[3] = vc;
-
-    if(P.tracing_method == 2 || P.tracing_method ==3 || P.tracing_method ==6)
-    {
-        for(V3DLONG i = 0; i < vx*vy*vz*vc; i++)
-        {
-            if(pVImg_UINT8[i] < P.bkg_thresh)
-                pVImg_UINT8[i] = 0;
-        }
-    }
 
     simple_saveimage_wrapper(callback, region_name.toStdString().c_str(),  (unsigned char *)pVImg_UINT8, in_sz, V3D_UINT8);
     if(pVImg_UINT8) {delete []pVImg_UINT8; pVImg_UINT8=0;}
