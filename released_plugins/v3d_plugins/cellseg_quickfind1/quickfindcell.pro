@@ -37,4 +37,4 @@ SOURCES += $$VAA3DPATH/v3d_main/jba/newmat11/newmatrm.cpp
 SOURCES += $$VAA3DPATH/v3d_main/jba/newmat11/newmat9.cpp
 
 TARGET	= $$qtLibraryTarget(cellSegmentation)
-DESTDIR = $$VAA3DPATH/bin/plugins/cell_counting/quickFind
+DESTDIR = $$VAA3DPATH/bin/plugins/cell_counting/quickFind1
