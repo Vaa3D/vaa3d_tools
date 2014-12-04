@@ -19,6 +19,17 @@ const int const_length_histogram = 256;
 const double const_max_voxelValue = 255;
 const int const_count_neighbors = 26; //27 directions -1;
 const double const_infinitesimal = 0.000000001;
+
+static neuronPickerDialog * npdiag = 0;
+void finishnpdiag()
+{
+    if (npdiag)
+    {
+        delete npdiag;
+        npdiag=0;
+    }
+}
+
 #define INF 1E9
 #define NINF -1E9
 #define PI 3.14159265
@@ -633,8 +644,16 @@ void neuronPicker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 {
 	if (menu_name == tr("neuronPicker"))
 	{
-        neuronPickerDialog* npdiag = new neuronPickerDialog(&callback);
-        npdiag->show();
+        if(npdiag){
+            npdiag->show();
+            npdiag->raise();
+            npdiag->activateWindow();
+        }else{
+            npdiag = new neuronPickerDialog(&callback);
+            npdiag->show();
+            npdiag->raise();
+            npdiag->activateWindow();
+        }
 	}
     else if (menu_name == tr("neuronPicker_old"))
 	{
@@ -781,7 +800,25 @@ neuronPickerDialog::neuronPickerDialog(V3DPluginCallback2 * cb)
 
     creat();
     checkButtons();
+}
 
+void neuronPickerDialog::reject()
+{
+    //release memory
+    if(npdiag){
+        if(image1Dc_in != 0){
+            delete []image1Dc_in; image1Dc_in=0;
+        }
+        if(image1D_out != 0){
+            neuronPickerMain::memory_free_uchar1D(image1D_out);
+            image1D_out=0;
+        }
+        if(image1D_mask != 0){
+            neuronPickerMain::memory_free_uchar1D(image1D_mask);
+            image1D_mask=0;
+        }
+    }
+    finishnpdiag();
 }
 
 void neuronPickerDialog::creat()
@@ -853,7 +890,7 @@ void neuronPickerDialog::creat()
     btn_quit = new QPushButton("Quit");
     gridLayout->addWidget(btn_quit,11,5,1,1);
 
-    connect(btn_quit, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
 
     setLayout(gridLayout);
 }
@@ -1130,7 +1167,7 @@ void neuronPickerDialog::updateInputWindow()
                         v3d_msg("Failed to update input image");
                     }
                     callback->updateImageWindow(v3dhandleList_current[i]);
-                    callback->open3DWindow(v3dhandleList_current[i]);
+                    //callback->open3DWindow(v3dhandleList_current[i]);
                     callback->pushImageIn3DWindow(v3dhandleList_current[i]);
                 }
             }
@@ -1152,7 +1189,7 @@ void neuronPickerDialog::updateInputWindow()
                 callback->setLandmark(v3dhandleList_current[i], LList_empty);
                 callback->setImage(v3dhandleList_current[i], &image4d);
                 callback->updateImageWindow(v3dhandleList_current[i]);
-                callback->close3DWindow(v3dhandleList_current[i]);
+                callback->pushImageIn3DWindow(v3dhandleList_current[i]);
             }
         }
     }
@@ -1192,7 +1229,7 @@ void neuronPickerDialog::updateOutputWindow()
                 {
                     callback->setImage(v3dhandleList_current[i], &image4d);
                     callback->updateImageWindow(v3dhandleList_current[i]);
-                    callback->open3DWindow(v3dhandleList_current[i]);
+                    //callback->open3DWindow(v3dhandleList_current[i]);
                     callback->pushImageIn3DWindow(v3dhandleList_current[i]);
                 }
             }
@@ -1209,7 +1246,8 @@ void neuronPickerDialog::updateOutputWindow()
             {
                 callback->setImage(v3dhandleList_current[i], &image4d);
                 callback->updateImageWindow(v3dhandleList_current[i]);
-                callback->close3DWindow(v3dhandleList_current[i]);
+                //callback->close3DWindow(v3dhandleList_current[i]);
+                callback->pushImageIn3DWindow(v3dhandleList_current[i]);
             }
         }
     }

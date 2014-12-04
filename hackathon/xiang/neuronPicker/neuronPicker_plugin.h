@@ -102,6 +102,7 @@ public slots:
     void syncMarkers(int c);
     void saveFile();
     void skip();
+    void reject();
 
 public:
     QComboBox *cb_marker;
