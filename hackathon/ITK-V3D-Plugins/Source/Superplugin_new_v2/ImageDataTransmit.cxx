@@ -186,7 +186,7 @@ copyOneChannel(V3D_Image3DBasic &outputImage_t, V3D_Image3DBasic &outputImage_s)
 	    }catch(...)
 	{
 	v3d_msg(QString("Fail to allocate a buffer memory for output of the plugin in assembleProcessedChannels2Image4DClass()."));
-		return false;
+		return;
 	}
 	unsigned char *p1=0,*p2=0;
 	p1=pout;p2=outputImage_s.data1d;
