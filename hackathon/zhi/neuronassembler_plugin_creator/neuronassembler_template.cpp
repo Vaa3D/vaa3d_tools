@@ -151,8 +151,8 @@ NeuronTree eliminate(NeuronTree input, double length);
             return;
         }
 
-        P.bkg_thresh = dialog.bkg_thresh;
-        P.channel = dialog.channel;
+   //     P.bkg_thresh = dialog.bkg_thresh;
+   //     P.channel = dialog.channel;
         P.block_size = dialog.block_size;
         LocationSimple tmpLocation(0,0,0);
         tmpLocation = dialog.listLandmarks.at(0);
@@ -185,8 +185,8 @@ NeuronTree eliminate(NeuronTree input, double length);
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
 
-        P.bkg_thresh = dialog.bkg_thresh;
-        P.channel = dialog.channel;
+      //  P.bkg_thresh = dialog.bkg_thresh;
+      //  P.channel = dialog.channel;
         P.block_size = dialog.block_size;
       //  P.tracing_method = dialog.tracing_method;
         P.inimg_file = dialog.rawfilename;
@@ -307,8 +307,8 @@ NeuronTree eliminate(NeuronTree input, double length);
         }
 
      //   P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+     //   P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+    //    P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
 
         assembler_raw(callback,parent,P,bmenu);

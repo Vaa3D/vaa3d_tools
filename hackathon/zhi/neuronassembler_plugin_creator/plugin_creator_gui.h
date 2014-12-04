@@ -26,7 +26,7 @@ public:
         label_para_name = new QLabel(QObject::tr("Name list for Input Parameters:"));
         editor_para_name = new QLineEdit();
 
-        label_para_type = new QLabel(QObject::tr("Type list for Input Parameters(string, int, or float):"));
+        label_para_type = new QLabel(QObject::tr("Type list for Input Parameters(string, int, or double):"));
         editor_para_type = new QLineEdit();
 
         label_para_default = new QLabel(QObject::tr("Default Value list for Input Parameters:"));

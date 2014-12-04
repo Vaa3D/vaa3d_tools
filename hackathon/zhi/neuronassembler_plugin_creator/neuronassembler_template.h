@@ -8,6 +8,10 @@ class NeuronAssemblerDialog_raw : public QDialog
 
             QGridLayout * layout = new QGridLayout();
 
+            block_spinbox = new QSpinBox();
+            block_spinbox->setRange(1,2048);
+            block_spinbox->setValue(1024);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
 
@@ -32,7 +36,7 @@ class NeuronAssemblerDialog_raw : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,3,0,3,6);
+      //      layout->addLayout(hbox2,3,0,3,6);
             setLayout(layout);
             setWindowTitle(QString("Vaa3D-NeuronAssembler"));
 
@@ -52,8 +56,8 @@ class NeuronAssemblerDialog_raw : public QDialog
         public slots:
         void update()
         {
-            channel = channel_spinbox->value();
-            bkg_thresh = bkgthresh_spinbox->value();
+//            channel = channel_spinbox->value();
+//            bkg_thresh = bkgthresh_spinbox->value();
 
             block_size = block_spinbox->value();
 
@@ -168,7 +172,7 @@ class NeuronAssemblerDialog : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,2,0,2,6);
+          //  layout->addLayout(hbox2,2,0,2,6);
             setLayout(layout);
             setWindowTitle(QString("Vaa3D-NeuronAssembler"));
 

@@ -263,13 +263,199 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
     ifstream templatefile (template_path.c_str());
     if (templatefile.is_open())
     {
-        for(int i = 0; i< 7; i++)
+        for(int i = 0; i< 37; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
 
+        int d = 0;
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(d = 0; d < pt.PARA_NAME.size() ; d++)
+            {
+                if(pt.PARA_TYPE.at(d) == "string")
+                {
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit = new QLineEdit();"<<endl;
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit->setText(\""<<pt.PARA_VALUE.at(d)<<"\");"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+3 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_edit,"<<d+3<<",1,1,5);\n"<<endl;
 
+                }
+                else
+                {
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box->setValue("<<pt.PARA_VALUE.at(d)<<");"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+3 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+3<<",1,1,5);\n"<<endl;
+
+                }
+            }
+
+        }
+
+        ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+3<<",0,3,6);"<<endl;
+
+        for(int i = 37; i< 46; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) != "string")
+                {
+                    ofs<<"\t\t\tconnect("<<pt.PARA_NAME.at(i)<<"_box, SIGNAL(valueChanged("<< pt.PARA_TYPE.at(i)<<")), this, SLOT(update()));"<<endl;
+                }
+            }
+
+        }
+
+        for(int i = 46; i< 60; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                        ofs<<"\t\t\t"<< pt.PARA_NAME.at(i)<<" = "<<pt.PARA_NAME.at(i) <<"_edit->text();"<<endl;
+                }
+                else
+                {
+                        ofs<<"\t\t\t"<< pt.PARA_NAME.at(i)<<" = "<<pt.PARA_NAME.at(i) <<"_box->value();"<<endl;
+
+                }
+            }
+
+        }
+        for(int i = 60; i< 117; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                     ofs<<"\t\tQLineEdit *"<<pt.PARA_NAME.at(i)<<"_edit;"<<endl;
+                     ofs<<"\t\tQString "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+                else
+                {
+                    ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    ofs<<"\t\t"<<pt.PARA_TYPE.at(i)<<" "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+            }
+
+        }
+
+        for(int i = 117; i< 174; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(d = 0; d < pt.PARA_NAME.size() ; d++)
+            {
+                if(pt.PARA_TYPE.at(d) == "string")
+                {
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit = new QLineEdit();"<<endl;
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit->setText(\""<<pt.PARA_VALUE.at(d)<<"\");"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+2 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_edit,"<<d+2<<",1,1,5);\n"<<endl;
+
+                }
+                else
+                {
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box->setValue("<<pt.PARA_VALUE.at(d)<<");"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+2 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+2<<",1,1,5);\n"<<endl;
+
+                }
+            }
+
+        }
+
+        ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+2<<",0,2,6);"<<endl;
+
+        for(int i = 174; i< 181; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) != "string")
+                {
+                    ofs<<"\t\t\tconnect("<<pt.PARA_NAME.at(i)<<"_box, SIGNAL(valueChanged("<< pt.PARA_TYPE.at(i)<<")), this, SLOT(update()));"<<endl;
+                }
+            }
+
+        }
+
+        for(int i = 181; i< 194; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                        ofs<<"\t\t\t"<< pt.PARA_NAME.at(i)<<" = "<<pt.PARA_NAME.at(i) <<"_edit->text();"<<endl;
+                }
+                else
+                {
+                        ofs<<"\t\t\t"<< pt.PARA_NAME.at(i)<<" = "<<pt.PARA_NAME.at(i) <<"_box->value();"<<endl;
+
+                }
+            }
+
+        }
+        for(int i = 194; i< 225; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                     ofs<<"\t\tQLineEdit *"<<pt.PARA_NAME.at(i)<<"_edit;"<<endl;
+                     ofs<<"\t\tQString "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+                else
+                {
+                    ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    ofs<<"\t\t"<<pt.PARA_TYPE.at(i)<<" "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+            }
+
+        }
+        ofs<<"\t};"<<endl;
         templatefile.close();
 
     }
