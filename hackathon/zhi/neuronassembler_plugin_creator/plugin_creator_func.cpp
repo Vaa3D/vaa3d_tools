@@ -59,13 +59,14 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	pt.PLUGIN_DATE = dialog.plugin_date;
 	pt.PLUGIN_AUTHOR = dialog.plugin_author;
 	pt.VAA3D_PATH = dialog.vaa3d_path;
-    STRING2VECTSTRING(pt.MENUS, dialog.plugin_name);
-    STRING2VECTSTRING(pt.FUNCS, dialog.plugin_name);
-    pt.FUNCS.push_back("help");
+    STRING2VECTSTRING(pt.PARA_NAME, dialog.paranamelist);
+    STRING2VECTSTRING(pt.PARA_TYPE, dialog.paratypelist);
+    STRING2VECTSTRING(pt.PARA_VALUE, dialog.paravaluelist);
+
 	pt.DOFUNC = true;
 
-    cout<<"menus.size() = "<<pt.MENUS.size()<<endl;
-    cout<<"funcs.size() = "<<pt.FUNCS.size()<<endl;
+//    cout<<"menus.size() = "<<pt.MENUS.size()<<endl;
+//    cout<<"funcs.size() = "<<pt.FUNCS.size()<<endl;
 
     string save_folder = dialog.save_folder;
 	if(save_folder[0] == '~') {

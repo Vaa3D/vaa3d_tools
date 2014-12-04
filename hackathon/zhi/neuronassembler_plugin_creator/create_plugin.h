@@ -38,8 +38,10 @@ struct PluginTemplate
 	string WINDOW_TITLE;
 	string VAA3D_PATH;
 	bool DOFUNC;
-	vector<string> MENUS;
-	vector<string> FUNCS;
+    vector<string> PARA_NAME;
+    vector<string> PARA_TYPE;
+    vector<string> PARA_VALUE;
+
 	vector<string> MAINFUNCS;
 	vector<string> SYSINVOKES;
 };
@@ -261,10 +263,12 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
     ifstream templatefile (template_path.c_str());
     if (templatefile.is_open())
     {
-        while(getline (templatefile,line))
+        for(int i = 0; i< 7; i++)
         {
+            getline (templatefile,line);
             ofs<<line<<endl;
         }
+
 
         templatefile.close();
 
@@ -291,62 +295,5 @@ bool get_next_string(string &val, istream &is)
 	return true;
 }
 
-PluginTemplate read_plugin_template(string plugin_tmpl_file)
-{
-	PluginTemplate pt;
-	ifstream ifs(plugin_tmpl_file.c_str());
-	string str, name, value;
-	vector<string> values;
-	while(ifs.good())
-	{
-		getline(ifs, str, '\n');
-		int pos = str.find('#'); if(pos != string::npos) str = str.substr(0, pos);
-		pos = str.find('='); if(pos == string::npos) continue;
-		name = str.substr(0, pos); value = str.substr(pos+1, str.size() - pos - 1);
-		cout<<name<<" = ";
-		if(value[0] == '"') 
-		{
-			value = value.substr(1, value.size() - 2);
-			cout<<"\""<<value<<"\""<<endl;
-		}
-		else if(value[0] == '(') 
-		{
-			values.clear();
-			value = value.substr(0, value.size() - 1);
-			int pos1 = value.find('"');
-			cout<<"(";
-			while(pos1 != string::npos)
-			{
-				int pos2 = value.find('"',pos1+1); 
-				str = value.substr(pos1+1, pos2 - pos1 - 1);
-				values.push_back(str);
-				pos1 = value.find('"', pos2+1);
-				cout<<"\""<<str<<"\" "; cout.flush();
-			}
-			cout<<")"<<endl;
-		}
-		pt.PLUGIN_NAME = (name == "PLUGIN_NAME") ? value : pt.PLUGIN_NAME;
-		pt.PLUGIN_CLASS = (name == "PLUGIN_CLASS") ? value : pt.PLUGIN_CLASS;
-		pt.PLUGIN_DESCRIPTION = (name == "PLUGIN_DESCRIPTION") ? value : pt.PLUGIN_DESCRIPTION;
-		pt.PLUGIN_DATE = (name == "PLUGIN_DATE") ? value : pt.PLUGIN_DATE;
-		pt.PLUGIN_AUTHOR = (name == "PLUGIN_AUTHOR") ? value : pt.PLUGIN_AUTHOR;
-		pt.PLUGIN_GUI = (name == "PLUGIN_GUI") ? value : pt.PLUGIN_GUI;
-		pt.WINDOW_TITLE = (name == "WINDOW_TITLE") ? value : pt.WINDOW_TITLE;
-		pt.VAA3D_PATH = (name == "VAA3D_PATH") ? value : pt.VAA3D_PATH;
-		pt.MENUS = (name == "MENUS") ? values : pt.MENUS;
-		pt.FUNCS = (name == "FUNCS") ? values : pt.FUNCS;
-		pt.DOFUNC = (name == "DOFUNC") ? (value=="yes") : pt.DOFUNC;
-	}
-	ifs.close();
-
-	pt.PLUGIN_HEADER = pt.PLUGIN_NAME + "_plugin.h";
-	pt.PLUGIN_CPP = pt.PLUGIN_NAME + "_plugin.cpp";
-	pt.FUNC_HEADER = pt.PLUGIN_NAME + "_func.h";
-	pt.FUNC_CPP = pt.PLUGIN_NAME + "_func.cpp";
-	pt.PRO_FILE = pt.PLUGIN_NAME + ".pro";
-
-	cout<<endl;
-	return pt;
-}
 
 #endif

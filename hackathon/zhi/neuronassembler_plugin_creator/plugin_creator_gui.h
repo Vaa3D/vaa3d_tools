@@ -23,16 +23,14 @@ public:
         label_swc_name = new QLabel(tr("Output SWC Format(Set NULL if Defined by The User):"));
         editor_swc_name = new QLineEdit(tr("_MOST.swc"));
 
-        parameter_panel = new QGroupBox("");
-        parameter_panel->setStyle(new QWindowsStyle());
-        parameterLayout = new QGridLayout();
-        parameterLayout->addWidget(new QLabel(QObject::tr("Number of Input Parameters                                          ")),0,0,1,1);
-        para_spinbox = new QSpinBox();
-        para_spinbox->setRange(0,10);
-        para_spinbox->setValue(0);
-        parameterLayout->addWidget(para_spinbox,0,1,1,9);
-        parameter_panel->setLayout(parameterLayout);
+        label_para_name = new QLabel(QObject::tr("Name list for Input Parameters:"));
+        editor_para_name = new QLineEdit();
 
+        label_para_type = new QLabel(QObject::tr("Type list for Input Parameters(string, int, or float):"));
+        editor_para_type = new QLineEdit();
+
+        label_para_default = new QLabel(QObject::tr("Default Value list for Input Parameters:"));
+        editor_para_default = new QLineEdit();
 
 		label_plugin_description = new QLabel(tr("Plugin Description :"));
 		editor_plugin_description = new QLineEdit(tr("This is a test plugin, you can use it as a demo."));
@@ -62,30 +60,32 @@ public:
         gridLayout->addWidget(label_swc_name,        2, 0, 1, 1);
         gridLayout->addWidget(editor_swc_name,       2, 1, 1, 9);
 
-        gridLayout->addWidget(parameter_panel,3,0,1,10);
+        gridLayout->addWidget(label_para_name,  3, 0, 1, 1);
+        gridLayout->addWidget(editor_para_name, 3, 1, 1, 9);
+        gridLayout->addWidget(label_para_type,         4, 0, 1, 1);
+        gridLayout->addWidget(editor_para_type,        4, 1, 1, 9);
+        gridLayout->addWidget(label_para_default,       5, 0, 1, 1);
+        gridLayout->addWidget(editor_para_default,      5, 1, 1, 9);
 
-//		gridLayout->addWidget(label_plugin_description,  3, 0, 1, 1);
-//		gridLayout->addWidget(editor_plugin_description, 3, 1, 1, 9);
-		gridLayout->addWidget(label_plugin_date,         4, 0, 1, 1);
-		gridLayout->addWidget(editor_plugin_date,        4, 1, 1, 9);
-		gridLayout->addWidget(label_plugin_author,       5, 0, 1, 1);
-		gridLayout->addWidget(editor_plugin_author,      5, 1, 1, 9);
-		gridLayout->addWidget(label_vaa3d_path,       6, 0, 1, 1);
-		gridLayout->addWidget(editor_vaa3d_path,      6, 1, 1, 8);
-		gridLayout->addWidget(button_vaa3d_path,      6, 9, 1, 1);
-		gridLayout->addWidget(label_save_folder,         9, 0, 1, 1);
-		gridLayout->addWidget(editor_save_folder,        9, 1, 1, 8);
-		gridLayout->addWidget(button_save_folder,        9, 9, 1, 1);
-		gridLayout->addWidget(cancel, 10, 0, 1, 5, Qt::AlignRight);
-		gridLayout->addWidget(ok, 10, 5, 1, 5, Qt::AlignRight);
+        gridLayout->addWidget(label_plugin_description,  6, 0, 1, 1);
+        gridLayout->addWidget(editor_plugin_description, 6, 1, 1, 9);
+        gridLayout->addWidget(label_plugin_date,         7, 0, 1, 1);
+        gridLayout->addWidget(editor_plugin_date,        7, 1, 1, 9);
+        gridLayout->addWidget(label_plugin_author,       8, 0, 1, 1);
+        gridLayout->addWidget(editor_plugin_author,      8, 1, 1, 9);
+        gridLayout->addWidget(label_vaa3d_path,       9, 0, 1, 1);
+        gridLayout->addWidget(editor_vaa3d_path,      9, 1, 1, 8);
+        gridLayout->addWidget(button_vaa3d_path,      9, 9, 1, 1);
+        gridLayout->addWidget(label_save_folder,         12, 0, 1, 1);
+        gridLayout->addWidget(editor_save_folder,        12, 1, 1, 8);
+        gridLayout->addWidget(button_save_folder,        12, 9, 1, 1);
+        gridLayout->addWidget(cancel, 13, 0, 1, 5, Qt::AlignRight);
+        gridLayout->addWidget(ok, 13, 5, 1, 5, Qt::AlignRight);
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
 		connect(button_vaa3d_path, SIGNAL(clicked()), this, SLOT(setFolderPath()));
 		connect(button_save_folder, SIGNAL(clicked()), this, SLOT(setFolderPath()));
-
-        connect(para_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setParameters()));
-
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(update()));
 
@@ -131,23 +131,17 @@ public slots:
 
     }
 
-    void setParameters()
-    {
-        para_number =  para_spinbox->value();
-        for(int i = 0; i < para_number; i++)
-             parameterLayout->addWidget(new QLabel(QObject::tr("...")),1+i,1,1,9);
-
-        parameter_panel->setLayout(parameterLayout);
-        gridLayout->addWidget(parameter_panel,3,0,1,10);
-
-    }
-
 	void update()
 	{
 		plugin_name =  editor_plugin_name->text().toStdString();
         function_name =  editor_function_name->text().toStdString();
+        outputswc_name = editor_swc_name->text().toStdString();
 
-		plugin_desp =  editor_plugin_description->text().toStdString();
+        paranamelist = editor_para_name->text().toStdString();
+        paratypelist = editor_para_type->text().toStdString();
+        paravaluelist = editor_para_default->text().toStdString();
+
+        plugin_desp =  editor_plugin_description->text().toStdString();
 		plugin_date =  editor_plugin_date->text().toStdString();
 		plugin_author =  editor_plugin_author->text().toStdString();
 		vaa3d_path =  editor_vaa3d_path->text().toStdString();
@@ -159,6 +153,11 @@ public:
 	string plugin_name;
     string function_name;
     string outputswc_name;
+
+    string paranamelist;
+    string paratypelist;
+    string paravaluelist;
+
 
 	string plugin_desp;
 	string plugin_date;
@@ -174,6 +173,17 @@ public:
 
     QLabel * label_swc_name;
     QLineEdit * editor_swc_name;
+
+    QLabel * label_para_name;
+    QLineEdit * editor_para_name;
+
+    QLabel * label_para_type;
+    QLineEdit * editor_para_type;
+
+    QLabel * label_para_default;
+    QLineEdit * editor_para_default;
+
+
 
     QLabel * label_plugin_description;
 	QLineEdit * editor_plugin_description;
@@ -197,8 +207,6 @@ public:
 
 	QGridLayout * gridLayout;
 
-    QSpinBox * para_spinbox;
-    QGroupBox *parameter_panel;
     QGridLayout *parameterLayout;
 
     int para_number;
