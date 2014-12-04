@@ -76,7 +76,6 @@ public:
 
 private:
     QString fname_input, fname_outbase;
-    v3dhandle *v3dhandle_in, *v3dhandle_out;
     V3DPluginCallback2 * callback;
 
     unsigned char *image1Dc_in;
@@ -94,15 +93,13 @@ private:
     void checkButtons();
     void updateInputWindow();
     void updateOutputWindow();
-    v3dhandle * getInwinHandle();
-    v3dhandle * getOutwinHandle();
 
 public slots:
     bool load();
     void output();
     int loadMarkers();
     void extract();
-    void syncMarkers();
+    void syncMarkers(int c);
     void saveFile();
     void skip();
 

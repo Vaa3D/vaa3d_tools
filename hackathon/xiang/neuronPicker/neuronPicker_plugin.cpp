@@ -777,8 +777,6 @@ neuronPickerDialog::neuronPickerDialog(V3DPluginCallback2 * cb)
     image1D_mask=0;
     intype=0;
     sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
-    v3dhandle_in = 0;
-    v3dhandle_out = 0;
     LList.clear();
 
     creat();
@@ -816,10 +814,11 @@ void neuronPickerDialog::creat()
     line_1->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_1,4,0,1,6);
 
+
+    btn_update = new QPushButton("Load Markers =>");
+    gridLayout->addWidget(btn_update,5,0,1,1);
     cb_marker = new QComboBox();
-    gridLayout->addWidget(cb_marker,5,0,1,1);
-    btn_update = new QPushButton("Load Markers");
-    gridLayout->addWidget(btn_update,5,1,1,1);
+    gridLayout->addWidget(cb_marker,5,1,1,1);
     btn_extract = new QPushButton("Extract Neuron");
     gridLayout->addWidget(btn_extract,5,2,1,1);
     btn_save = new QPushButton("Accept, Save, and Next");
@@ -831,7 +830,7 @@ void neuronPickerDialog::creat()
     connect(btn_extract, SIGNAL(clicked()), this, SLOT(extract()));
     connect(btn_save, SIGNAL(clicked()), this, SLOT(saveFile()));
     connect(btn_next, SIGNAL(clicked()), this, SLOT(skip()));
-    connect(cb_marker, SIGNAL(currentIndexChanged()), this, SLOT(syncMarkers()));
+    connect(cb_marker, SIGNAL(currentIndexChanged(int)), this, SLOT(syncMarkers(int)));
 
     //extract parameters
     spin_color = new QDoubleSpinBox();
@@ -869,27 +868,27 @@ bool neuronPickerDialog::load()
     }
 
     qDebug()<<"NeuronPicker: is going to load "<<fname_input;
+    qDebug()<<"NeuronPicker: reset environment";
     {//reset previous content first
         if(image1Dc_in != 0){
-            neuronPickerMain::memory_free_uchar1D(image1Dc_in);
+            delete []image1Dc_in; image1Dc_in=0;
         }
         if(image1D_out != 0){
             neuronPickerMain::memory_free_uchar1D(image1D_out);
+            image1D_out=0;
         }
         if(image1D_mask != 0){
             neuronPickerMain::memory_free_uchar1D(image1D_mask);
+            image1D_mask=0;
         }
-        image1Dc_in=0;
-        image1D_out=0;
-        image1D_mask=0;
         fname_outbase="";
         intype=0;
         sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
         LList.clear();
         cb_marker->clear();
         qDebug()<<"NeuronPicker: reset input window";
-        updateInputWindow();
     }
+
     qDebug()<<"NeuronPicker: load new image";
     if(!simple_loadimage_wrapper(*callback, fname_input.toStdString().c_str(), image1Dc_in, sz_img, intype))
     {
@@ -946,43 +945,53 @@ void neuronPickerDialog::output()
 
 int neuronPickerDialog::loadMarkers()
 {
-    qDebug()<<"cojoc: try loading markers";
-    v3dhandle * v3dhandle_in = getInwinHandle();
-    if(v3dhandle_in!=0){
-        LList.clear();
-        QStringList cb_items;
-        LandmarkList LList_in = callback->getLandmark(*v3dhandle_in);
-        qDebug()<<"cojoc: there are "<<LList_in.size()<<" markers";
-        for(int i=0; i<LList_in.size(); i++){
-            LList.append(LList_in.at(i));
-            LList[i].color.r=196;
-            LList[i].color.g=LList[i].color.b=0;
-            cb_items.append("marker: " + QString::number(i+1));
+    LList.clear();
+    QStringList cb_items;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+        {
+
+            LandmarkList LList_in = callback->getLandmark(v3dhandleList_current[i]);
+            for(int i=0; i<LList_in.size(); i++){
+                LList.append(LList_in.at(i));
+                LList[i].color.r=196;
+                LList[i].color.g=LList[i].color.b=0;
+                cb_items.append("marker: " + QString::number(i+1));
+            }
+
+            break;
         }
-        qDebug()<<"cojoc: "<<LList.size()<<" markers";
-        cb_marker->clear();
-        cb_marker->addItems(cb_items);
-        poss_landmark=neuronPickerMain::landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    }
+    poss_landmark=neuronPickerMain::landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    cb_marker->clear();
+    cb_marker->addItems(cb_items);
+    if(LList.size()>0){
+        extract();
     }
     checkButtons();
+    return(LList.size());
 }
 
-void neuronPickerDialog::syncMarkers()
+void neuronPickerDialog::syncMarkers(int c)
 {
-    v3dhandle * v3dhandle_in = getInwinHandle();
-    if(v3dhandle_in!=0){
-        for(int i=0; i<LList.size(); i++){
-            if(i==cb_marker->currentIndex()){
-                if(LList[i].color.r>0) LList[i].color.r=255;
-                if(LList[i].color.g>0) LList[i].color.g=255;
-                if(LList[i].color.b>0) LList[i].color.b=255;
-            }else{
-                if(LList[i].color.r>0) LList[i].color.r=196;
-                if(LList[i].color.g>0) LList[i].color.g=196;
-                if(LList[i].color.b>0) LList[i].color.b=196;
+    qDebug()<<"cojoc: syncronize markers";
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+        {
+            for(int i=0; i<LList.size(); i++){
+                if(i==cb_marker->currentIndex()){
+                    LList[i].color.b=0;
+                }else{
+                    LList[i].color.b=196;
+                }
             }
+            callback->setLandmark(v3dhandleList_current[i],LList);
+            callback->pushObjectIn3DWindow(v3dhandleList_current[i]);
         }
-        callback->setLandmark(*v3dhandle_in,LList);
     }
 }
 
@@ -994,6 +1003,7 @@ void neuronPickerDialog::extract()
     int idx_landmark=cb_marker->currentIndex();
     V3DLONG pos_landmark=poss_landmark[idx_landmark];
     memset(image1D_mask, const_max_voxelValue, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+    memset(image1D_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     qDebug()<<"start extracting";
     neuronPickerMain::main(image1Dc_in, image1D_out, image1D_mask, sz_img[0], sz_img[1], sz_img[2], sz_img[3], pos_landmark,
             pos4s_neighborRelative, spin_color->value(), (V3DLONG)(spin_distance->value()), thresholds_page);
@@ -1004,12 +1014,41 @@ void neuronPickerDialog::extract()
 
 void neuronPickerDialog::saveFile()
 {
-
+    int idx_landmark=cb_marker->currentIndex();
+    V3DLONG sz_img_sub[4];
+    sz_img_sub[0]=sz_img[0];
+    sz_img_sub[1]=sz_img[1];
+    sz_img_sub[2]=sz_img[2];
+    sz_img_sub[3]=1;
+    QString fname_output=fname_outbase + "_" + QString::number(LList.at(idx_landmark).x) + "_" +
+            QString::number(LList.at(idx_landmark).y) + "_" + QString::number(LList.at(idx_landmark).z) + ".v3dpbd";
+    if(!simple_saveimage_wrapper(*callback, qPrintable(fname_output),image1D_out,sz_img_sub,1)){
+        v3d_msg("failed to save file to " + fname_output);
+        return;
+    }else{
+        qDebug()<<"NeuronPicker: "<<fname_output;
+    }
+    LList[idx_landmark].color.r = 0;
+    LList[idx_landmark].color.g = 255;
+    if(idx_landmark+1<cb_marker->count()){
+        cb_marker->setCurrentIndex(idx_landmark+1);
+        extract();
+    }else{
+        v3d_msg("Reach the end of marker list.");
+    }
+    checkButtons();
 }
 
 void neuronPickerDialog::skip()
 {
-
+    int idx_landmark=cb_marker->currentIndex();
+    if(idx_landmark+1<cb_marker->count()){
+        cb_marker->setCurrentIndex(idx_landmark+1);
+        extract();
+    }else{
+        v3d_msg("Reach the end of marker list.");
+    }
+    checkButtons();
 }
 
 
@@ -1021,24 +1060,31 @@ void neuronPickerDialog::checkButtons()
         btn_save->setEnabled(false);
         btn_next->setEnabled(false);
     }else{
-        v3dhandle * v3dhandle_in = getInwinHandle();
-        if(v3dhandle_in!=0){
-            btn_update->setEnabled(true);
+        bool winfound=false;
+        v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+        for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+        {
+            if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+            {
+                winfound=true;
+            }
         }
-        if(fname_outbase.isEmpty() || image1D_out==0){
-            btn_save->setEnabled(false);
-        }else{
-            btn_save->setEnabled(true);
+        if(winfound){
+            btn_update->setEnabled(true);
         }
         if(cb_marker->count()>0){
             btn_extract->setEnabled(true);
-            if(cb_marker->count()>cb_marker->currentIndex()+1)
-                btn_next->setEnabled(true);
-            else
+            if(fname_outbase.isEmpty() || image1D_out==0){
+                btn_save->setEnabled(false);
                 btn_next->setEnabled(false);
+            }else{
+                btn_save->setEnabled(true);
+                btn_next->setEnabled(true);
+            }
         }else{
             btn_extract->setEnabled(false);
             btn_next->setEnabled(false);
+            btn_save->setEnabled(false);
         }
     }
 }
@@ -1046,62 +1092,84 @@ void neuronPickerDialog::checkButtons()
 void neuronPickerDialog::updateInputWindow()
 {
     //search in open windows
-    v3dhandle * v3dhandle_in = getInwinHandle();
-    if(image1Dc_in != 0){ //image loaded
-        //generate a copy and show it
-        qDebug()<<"cojoc: image4d: "<<sz_img[0]<<":"<<sz_img[1]<<":"<<sz_img[2]<<":"<<sz_img[3];
-        Image4DSimple image4d;
-        V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-        unsigned char* image1D_input=neuronPickerMain::memory_allocate_uchar1D(size_page);
-        memcpy(image1D_input, image1Dc_in, size_page*sizeof(unsigned char));
-        image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
-
-        qDebug()<<"cojoc: refresh content";
-        if(v3dhandle_in==0){ //open a window if none is open
-            v3dhandle v3dhandle_main=callback->newImageWindow();
-            v3dhandle_in = &v3dhandle_main;
-            //update the image
-            callback->setImage(*v3dhandle_in, &image4d);
-            callback->setImageName(*v3dhandle_in, NAME_INWIN);
-            callback->updateImageWindow(*v3dhandle_in);
-        }else{
-            //update the image
-            callback->setImage(*v3dhandle_in, &image4d);
-            callback->updateImageWindow(*v3dhandle_in);
-        }
-    }else if(v3dhandle_in!=0){
-        //no image loaded, but there is a window? clean up the contents
-        //clean up landmarks
-        LandmarkList LList_empty;
-        callback->setLandmark(*v3dhandle_in, LList_empty);
-        //clean up window
-        Image4DSimple image4d;
-        unsigned char *image1D_input=neuronPickerMain::memory_allocate_uchar1D(1);
-        image1D_input[0]=0;
-        image4d.setData(image1D_input,1,1,1,1,V3D_UINT8);
-        callback->setImage(*v3dhandle_in, &image4d);
-        callback->setImageName(*v3dhandle_in, NAME_INWIN);
-        callback->updateImageWindow(*v3dhandle_in);
-    }
-}
-
-v3dhandle * neuronPickerDialog::getInwinHandle()
-{
+    bool winfound=false;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
         {
-            return &(v3dhandleList_current[i]);
+            winfound=true;
         }
     }
-    return 0;
+    if(image1Dc_in != 0){ //image loaded
+        //generate a copy and show it
+        qDebug()<<"cojoc: image4d: "<<sz_img[0]<<":"<<sz_img[1]<<":"<<sz_img[2]<<":"<<sz_img[3];
+        Image4DSimple image4d;
+        image4d.setFileName(fname_input.toStdString().c_str());
+        V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+        unsigned char* image1D_input=neuronPickerMain::memory_allocate_uchar1D(size_page);
+        memcpy(image1D_input, image1Dc_in, size_page*sizeof(unsigned char));
+        image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
+        if(!winfound){ //open a window if none is open
+            qDebug()<<"cojoc: creat window";
+            v3dhandle v3dhandle_main=callback->newImageWindow();
+            //update the image
+            callback->setImage(v3dhandle_main, &image4d);
+            callback->setImageName(v3dhandle_main, NAME_INWIN);
+            callback->updateImageWindow(v3dhandle_main);
+            callback->open3DWindow(v3dhandle_main);
+        }else{
+            qDebug()<<"cojoc: refresh content";
+            v3dhandleList_current=callback->getImageWindowList();
+            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+            {
+                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+                {
+                    //update the image
+                    if(!callback->setImage(v3dhandleList_current[i], &image4d)){
+                        v3d_msg("Failed to update input image");
+                    }
+                    callback->updateImageWindow(v3dhandleList_current[i]);
+                    callback->open3DWindow(v3dhandleList_current[i]);
+                    callback->pushImageIn3DWindow(v3dhandleList_current[i]);
+                }
+            }
+        }
+    }else if(winfound){
+        //no image loaded, but there is a window? clean up the contents
+        //clean up landmarks
+        LandmarkList LList_empty;
+        //clean up window
+        Image4DSimple image4d;
+        unsigned char *image1D_input=neuronPickerMain::memory_allocate_uchar1D(1);
+        image1D_input[0]=0;
+        image4d.setData(image1D_input,1,1,1,1,V3D_UINT8);
+        v3dhandleList_current=callback->getImageWindowList();
+        for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+        {
+            if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+            {
+                callback->setLandmark(v3dhandleList_current[i], LList_empty);
+                callback->setImage(v3dhandleList_current[i], &image4d);
+                callback->updateImageWindow(v3dhandleList_current[i]);
+                callback->close3DWindow(v3dhandleList_current[i]);
+            }
+        }
+    }
 }
 
 void neuronPickerDialog::updateOutputWindow()
 {
     //search in open windows
-    v3dhandle * v3dhandle_out = getOutwinHandle();
+    bool winfound=false;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
+        {
+            winfound=true;
+        }
+    }
     if(image1D_out != 0){ //image loaded
         //generate a copy and show it
         Image4DSimple image4d;
@@ -1110,38 +1178,39 @@ void neuronPickerDialog::updateOutputWindow()
         memcpy(image1D_input, image1D_out, size_page*sizeof(unsigned char));
         image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], 1, V3D_UINT8);
 
-        if(v3dhandle_out==0){ //open a window if none is open
+        if(!winfound){ //open a window if none is open
             v3dhandle v3dhandle_main=callback->newImageWindow();
-            v3dhandle_out = &v3dhandle_main;
-            callback->setImage(*v3dhandle_out, &image4d);
-            callback->setImageName(*v3dhandle_out, NAME_OUTWIN);
-            callback->updateImageWindow(*v3dhandle_out);
+            callback->setImage(v3dhandle_main, &image4d);
+            callback->setImageName(v3dhandle_main, NAME_OUTWIN);
+            callback->updateImageWindow(v3dhandle_main);
+            callback->open3DWindow(v3dhandle_main);
         }else{
             //update the image
-            callback->setImage(*v3dhandle_out, &image4d);
-            callback->updateImageWindow(*v3dhandle_out);
+            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+            {
+                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
+                {
+                    callback->setImage(v3dhandleList_current[i], &image4d);
+                    callback->updateImageWindow(v3dhandleList_current[i]);
+                    callback->open3DWindow(v3dhandleList_current[i]);
+                    callback->pushImageIn3DWindow(v3dhandleList_current[i]);
+                }
+            }
         }
-    }else if(v3dhandle_out!=0){
+    }else if(winfound){
         //no image loaded, but there is a window? clean up the window content
         Image4DSimple image4d;
         unsigned char *image1D_input=neuronPickerMain::memory_allocate_uchar1D(1);
         image1D_input[0]=0;
         image4d.setData(image1D_input,1,1,1,1,V3D_UINT8);
-        callback->setImage(*v3dhandle_out, &image4d);
-        callback->setImageName(*v3dhandle_out, NAME_OUTWIN);
-        callback->updateImageWindow(*v3dhandle_out);
-    }
-}
-
-v3dhandle * neuronPickerDialog::getOutwinHandle()
-{
-    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
-    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
-    {
-        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
+        for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
         {
-            return &(v3dhandleList_current[i]);
+            if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
+            {
+                callback->setImage(v3dhandleList_current[i], &image4d);
+                callback->updateImageWindow(v3dhandleList_current[i]);
+                callback->close3DWindow(v3dhandleList_current[i]);
+            }
         }
     }
-    return 0;
 }
