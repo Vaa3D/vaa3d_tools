@@ -8,6 +8,12 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include <vector>
+
+using namespace std;
+
+#define NAME_INWIN "Input_Neuron_Picker"
+#define NAME_OUTWIN "Output_Neuron_Picker"
 
 #pragma region "dialogRun" 
 class dialogRun:public QDialog
@@ -61,6 +67,53 @@ public:
 };
 #pragma endregion
 
+class neuronPickerDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    neuronPickerDialog(V3DPluginCallback2 * cb);
+
+private:
+    QString fname_input, fname_outbase;
+    v3dhandle *v3dhandle_in, *v3dhandle_out;
+    V3DPluginCallback2 * callback;
+
+    unsigned char *image1Dc_in;
+    unsigned char *image1D_out;
+    V3DLONG sz_img[4];
+    int intype;
+    LandmarkList LList;
+    vector<V3DLONG> poss_landmark;
+    vector<vector<V3DLONG> > pos4s_neighborRelative;
+    unsigned char* image1D_mask;
+    vector<V3DLONG> thresholds_page;
+
+private:
+    void creat();
+    void checkButtons();
+    void updateInputWindow();
+    void updateOutputWindow();
+    v3dhandle * getInwinHandle();
+    v3dhandle * getOutwinHandle();
+
+public slots:
+    bool load();
+    void output();
+    int loadMarkers();
+    void extract();
+    void syncMarkers();
+    void saveFile();
+    void skip();
+
+public:
+    QComboBox *cb_marker;
+    QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output;
+    QDoubleSpinBox *spin_color;
+    QSpinBox *spin_distance;
+    QLineEdit *edit_load, *edit_output;
+};
+
 class neuronPicker : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -76,6 +129,7 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
 };
 
 #endif
