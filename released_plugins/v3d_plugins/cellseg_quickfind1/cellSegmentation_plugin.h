@@ -626,9 +626,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		LocationSimple index2LandMark(V3DLONG idx_Input)
 		{
 			vector<V3DLONG> vct_coordinate = index2Coordinate(idx_Input);
-			V3DLONG x=vct_coordinate[0];
-			V3DLONG y=vct_coordinate[1];
-			V3DLONG z=vct_coordinate[2];
+			V3DLONG x=vct_coordinate[0]+1;
+			V3DLONG y=vct_coordinate[1]+1;
+			V3DLONG z=vct_coordinate[2]+1;
 			LocationSimple LocationSimple_result (x, y, z);
 			return LocationSimple_result;
 		}
