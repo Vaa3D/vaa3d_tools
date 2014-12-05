@@ -9,6 +9,11 @@ ADD_SUBDIRECTORY(
   ${V3D_BASIC_C_FUN_BINARY_DIR}
   )
 
+# FIXED by Alessandro on 2014-12-05. Including the CMakefile.txt in mylib_tiff to produce the missing mylib_tiff library. 
+if (NOT WIN32)
+	ADD_SUBDIRECTORY(${V3D_BASIC_C_FUN_SOURCE_DIR}/../common_lib/src_packages/mylib_tiff "${CMAKE_CURRENT_BINARY_DIR}/mylib_tiff")
+endif()
+
 ADD_SUBDIRECTORY(Common)
 ADD_SUBDIRECTORY(Superplugin_new_v1)
 ADD_SUBDIRECTORY(Superplugin_new_v2)
