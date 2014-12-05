@@ -30,6 +30,7 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
 bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
 bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
 
+void getTopCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir, QVector<Clique3> & cqlist, double minDis,int stackDir, int maxCliqueNum);
 void getCliques(const NeuronTree& nt, QList<int> list,  QList<Clique3> & cqlist, double minDis);
 void getCliques(const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir,  QVector<Clique3> & cqlist, double minDis, int stackDir);
 void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir,  QVector<Clique3> & cqlist, double minDis, int stackDir); //only candidate with type 6/7/26/27 will be chosen

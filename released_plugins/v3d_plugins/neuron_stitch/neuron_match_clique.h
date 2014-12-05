@@ -61,6 +61,7 @@ public:
     int spineLengthThr; //the length threshold of spine
     double spineAngThr; //angular threshold of spine
     double spineRadiusThr; //radius threshold of spine
+    int maxClique3Num; //the maximum number of 3 cliques considered in each stack - for speed
 
     //transformation
     double shift_x, shift_y, shift_z, rotation_ang, rotation_cx, rotation_cy, rotation_cz;
@@ -119,6 +120,7 @@ public:
     QGridLayout *gridLayout;
     QComboBox *cb_dir,*cb_pair;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_match;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
@@ -170,6 +172,7 @@ public:
     QGridLayout *gridLayout;
     QComboBox *cb_dir,*cb_pair;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
@@ -216,6 +219,7 @@ public:
     QLineEdit *edit_load0, *edit_load1, *edit_output;
     QComboBox *cb_dir;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_run;
     QCheckBox *check_stitch;
     QSpinBox *spin_spineLen;

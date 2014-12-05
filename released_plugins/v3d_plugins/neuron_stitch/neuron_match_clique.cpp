@@ -42,6 +42,8 @@ void NeuronMatchOnlyDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_maxcnum = new QSpinBox();
+    spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
     spin_spineLen = new QSpinBox();
     spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
@@ -72,6 +74,9 @@ void NeuronMatchOnlyDialog::creat()
     QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
     gridLayout->addWidget(label_6,12,0,1,2);
     gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
+    gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_maxcnum,12,5,1,1);
     gridLayout->addWidget(check_spine,13,0,1,2);
     QLabel* label_7 = new QLabel("point #:");
     gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
@@ -107,6 +112,7 @@ void NeuronMatchOnlyDialog::match()
     matchfunc.spanCand = spin_searchspan->value();
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
+    matchfunc.maxClique3Num = spin_maxcnum->value();
     if(check_spine->isChecked()){
         matchfunc.spineLengthThr = spin_spineLen->value();
         matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
@@ -231,6 +237,8 @@ void NeuronLiveMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_maxcnum = new QSpinBox();
+    spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
     spin_spineLen = new QSpinBox();
     spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
@@ -256,12 +264,15 @@ void NeuronLiveMatchDialog::creat()
     QLabel* label_4 = new QLabel("match candidates searching span: ");
     gridLayout->addWidget(label_4,11,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_searchspan,11,2,1,1);
-    QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
+    QLabel* label_5 = new QLabel("Max distance to match triangles: ");
     gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
     QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
     gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
+    gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_maxcnum,12,5,1,1);
     gridLayout->addWidget(check_spine,13,0,1,2);
     QLabel* label_7 = new QLabel("point #:");
     gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
@@ -401,6 +412,7 @@ void NeuronLiveMatchDialog::match()
     matchfunc->spanCand = spin_searchspan->value();
     matchfunc->cmatchThr = spin_cmatchdis->value();
     matchfunc->segmentThr = spin_segthr->value();
+    matchfunc->maxClique3Num = spin_maxcnum->value();
     if(check_spine->isChecked()){
         matchfunc->spineLengthThr = spin_spineLen->value();
         matchfunc->spineAngThr = cos(spin_spineAng->value()/180*M_PI);
@@ -821,6 +833,8 @@ void NeuronMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_maxcnum = new QSpinBox();
+    spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
     spin_spineLen = new QSpinBox();
     spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
     spin_spineAng = new QDoubleSpinBox();
@@ -851,6 +865,9 @@ void NeuronMatchDialog::creat()
     QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
     gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_segthr,12,2,1,1);
+    QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
+    gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_maxcnum,12,5,1,1);
     gridLayout->addWidget(check_spine,13,0,1,2);
     QLabel* label_7 = new QLabel("point #:");
     gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
@@ -1001,6 +1018,7 @@ void NeuronMatchDialog::run()
     matchfunc.spanCand = spin_searchspan->value();
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
+    matchfunc.maxClique3Num = spin_maxcnum->value();
     if(check_spine->isChecked()){
         matchfunc.spineLengthThr = spin_spineLen->value();
         matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
@@ -1081,6 +1099,7 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     spineLengthThr = 0;
     spineAngThr = -1;
     spineRadiusThr = 0;
+    maxClique3Num = 10000;
 }
 
 void neuron_match_clique::globalmatch()
@@ -1275,8 +1294,8 @@ void neuron_match_clique::init()
 
     //find cliques
     qDebug()<<"start find cliques";
-    getCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction);
-    getCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction);
+    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction, maxClique3Num);
+    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction, maxClique3Num);
     qDebug()<<"init neuron 0: 3clique:"<<cliqueList0.size();
     qDebug()<<"init neuron 1: 3clique:"<<cliqueList1.size();
 
@@ -1302,12 +1321,12 @@ void neuron_match_clique::output_parameter(QString fname)
     myfile<<"candidate_search_fragments_threshold= "<<segmentThr<<endl;  //threshold to filter out small segments when selecting candidates
     myfile<<"point_match_threshold_distance= "<<pmatchThr<<endl;   //match threshold for points
     myfile<<"point_match_threshold_angular(cos(a))= "<<angThr_match<<endl; //angular threshold for clique match (-1 ~ 1)=cos(theta), when angle is larger than theta (<cos(theta)), the point will not be matched
-    myfile<<"clique_match_threshold_distance= "<<cmatchThr<<endl;   //match threshold for length of cliques
+    myfile<<"triangle_match_threshold_distance= "<<cmatchThr<<endl;   //match threshold for length of cliques
     myfile<<"stack_direction_rescale= "<<zscale<<endl;  //resacle stack direction
     myfile<<"segment_length_for_calculate_direction= "<<dir_range<<endl;   //length of section used to calculate direction of dead end
     myfile<<"spine_length_point_number= "<<spineLengthThr<<endl; //number of maximum points for spine
     myfile<<"spine_angle_threshold= "<<spineAngThr<<endl; //angular threshold for spine turning
-
+    myfile<<"max_number_of_triangles_to_match= "<<maxClique3Num<<endl; //compare less triangles can increase the speed
 
     file.close();
 }
