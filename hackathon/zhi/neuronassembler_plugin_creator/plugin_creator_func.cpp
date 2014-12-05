@@ -59,6 +59,9 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	pt.PLUGIN_DATE = dialog.plugin_date;
 	pt.PLUGIN_AUTHOR = dialog.plugin_author;
 	pt.VAA3D_PATH = dialog.vaa3d_path;
+    pt.OUTPUTSWC = dialog.outputswc_name;
+    pt.FUNC_NAME = dialog.function_name;
+    pt.TRACINGPLUGIN_NAME = dialog.plugin_name;
     STRING2VECTSTRING(pt.PARA_NAME, dialog.paranamelist);
     STRING2VECTSTRING(pt.PARA_TYPE, dialog.paratypelist);
     STRING2VECTSTRING(pt.PARA_VALUE, dialog.paravaluelist);

@@ -44,6 +44,10 @@ struct PluginTemplate
 
 	vector<string> MAINFUNCS;
 	vector<string> SYSINVOKES;
+
+    string OUTPUTSWC;
+    string FUNC_NAME;
+    string TRACINGPLUGIN_NAME;
 };
 
 
@@ -106,11 +110,35 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"<<"\""<<endl;
         ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 
-        for(int i = 7;i< 114; i++)
+        for(int i = 7;i< 31; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
+
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                     ofs<<"\tQString "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+                else
+                {
+                    ofs<<"\t"<<pt.PARA_TYPE.at(i)<<" "<<pt.PARA_NAME.at(i)<<";"<<endl;
+                }
+            }
+
+        }
+
+        for(int i = 31;i< 114; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
 
         ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::menulist() const"<<endl;
 
@@ -129,19 +157,186 @@ void create_plugin_cpp(PluginTemplate & pt)
         }
 
         ofs<<"void "<<pt.PLUGIN_CLASS<<"::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)"<<endl;
-        for(int i = 130;i< 208; i++)
+        for(int i = 130;i< 155; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                  ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = dialog."<<pt.PARA_NAME.at(i)<<";"<<endl;
+            }
+        }
+
+        for(int i = 155;i< 189; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                  ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = dialog."<<pt.PARA_NAME.at(i)<<";"<<endl;
+            }
+        }
+
+        for(int i = 189;i< 208; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
 
         ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
-        for(int i = 208;i< 1258; i++)
+
+        for(int i = 208;i< 274; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
 
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? paras[k]:"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+                }
+                else if(pt.PARA_TYPE.at(i) == "double")
+                {
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? atof(paras[k]):"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+                }
+                else
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? atoi(paras[k]):"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+
+            }
+        }
+
+        for(int i = 274;i< 313; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? paras[k]:"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+                }
+                else if(pt.PARA_TYPE.at(i) == "double")
+                {
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? atof(paras[k]):"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+                }
+                else
+                    ofs<<"\t\tP."<<pt.PARA_NAME.at(i)<<" = (paras.size() >= k+1) ? atoi(paras[k]):"<< pt.PARA_VALUE.at(i) <<"; k++;"<<endl;
+
+            }
+        }
+
+
+        for(int i = 313;i< 430; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\tQString finalswcfilename = fileOpenName + rootposstr + \"_"<< pt.PLUGIN_NAME <<".swc\";"<<endl;
+
+
+        for(int i = 430;i< 455; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\tQString swcfilename =  walker->tilename + QString(\""<< pt.OUTPUTSWC <<"\");"<<endl;
+
+        for(int i = 455;i< 475; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                    ofs<<"\t\tstring S_"<<pt.PARA_NAME.at(i) <<" = "<<"P."<<pt.PARA_NAME.at(i) <<".toStdString();"<<endl;
+                }
+                else
+                {
+                    ofs<<"\t\tstring S_"<<pt.PARA_NAME.at(i) <<" = boost::lexical_cast<string>(P." << pt.PARA_NAME.at(i) <<");"<<endl;
+                }
+
+                ofs<<"\t\tchar* C_"<<pt.PARA_NAME.at(i) <<" = new char[S_"<<pt.PARA_NAME.at(i) <<".length() + 1];"<<endl;
+                ofs<<"\t\tstrcpy(C_"<<pt.PARA_NAME.at(i) <<",S_"<<pt.PARA_NAME.at(i) <<".c_str());"<<endl;
+                ofs<<"\t\targ_para.push_back(C_"<<pt.PARA_NAME.at(i) <<");\n"<<endl;
+            }
+        }
+
+        ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
+
+        for(int i = 475;i< 741; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\tQString finalswcfilename = fileOpenName + rootposstr + \"_"<< pt.PLUGIN_NAME <<".swc\";"<<endl;
+
+        for(int i = 741;i< 780; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\tQString swcfilename =  walker->tilename + QString(\""<< pt.OUTPUTSWC <<"\");"<<endl;
+
+
+        for(int i = 780;i< 800; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_TYPE.at(i) == "string")
+                {
+                    ofs<<"\t\tstring S_"<<pt.PARA_NAME.at(i) <<" = "<<"P."<<pt.PARA_NAME.at(i) <<".toStdString();"<<endl;
+                }
+                else
+                {
+                    ofs<<"\t\tstring S_"<<pt.PARA_NAME.at(i) <<" = boost::lexical_cast<string>(P." << pt.PARA_NAME.at(i) <<");"<<endl;
+                }
+
+                ofs<<"\t\tchar* C_"<<pt.PARA_NAME.at(i) <<" = new char[S_"<<pt.PARA_NAME.at(i) <<".length() + 1];"<<endl;
+                ofs<<"\t\tstrcpy(C_"<<pt.PARA_NAME.at(i) <<",S_"<<pt.PARA_NAME.at(i) <<".c_str());"<<endl;
+                ofs<<"\t\targ_para.push_back(C_"<<pt.PARA_NAME.at(i) <<");\n"<<endl;
+            }
+        }
+
+        ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
+
+        for(int i = 800;i< 1242; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
         templatefile.close();
 
     }

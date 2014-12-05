@@ -27,8 +27,8 @@ struct root_node
 
 struct NA_PARA
 {
-    int  bkg_thresh;
-    int  channel;
+  //  int  bkg_thresh;
+  //  int  channel;
     int block_size;
     int root_1st[3];
 
@@ -268,8 +268,8 @@ NeuronTree eliminate(NeuronTree input, double length);
         P.root_1st[2] = file_inmarkers[0].z;
 
      //   P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
+    //    P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+    //    P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
         assembler_tc(callback,parent,P,bmenu);
 	}
@@ -426,7 +426,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
     tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
-    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
+   // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
     QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -452,7 +452,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         }
 
 
-        QString swcfilename =  walker->tilename + QString("_MOST.swc"); break;
+      //  QString swcfilename =  walker->tilename + QString("_MOST.swc");
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -470,17 +470,18 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
 
 
-        char channel = '0' + P.channel;
-        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
-        char* Th =  new char[T_background.length() + 1];
-        strcpy(Th, T_background.c_str());
-
         arg.type = "random";
         std::vector<char*> arg_para;
+//        char channel = '0' + P.channel;
+//        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
+//        char* Th =  new char[T_background.length() + 1];
+//        strcpy(Th, T_background.c_str());
 
-        arg_para.push_back(&channel);arg_para.push_back(Th);
+
+
+//        arg_para.push_back(&channel);arg_para.push_back(Th);
         arg.p = (void *) & arg_para; input << arg;
-        full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";break;
+  //      full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";
 
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
@@ -737,7 +738,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
-    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
+   // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
     QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -777,7 +778,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             continue;
         }
 
-        QString swcfilename =  walker->tilename + QString("_MOST.swc");;
+       // QString swcfilename =  walker->tilename + QString("_MOST.swc");;
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -794,18 +795,18 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         char* char_swcout =  new char[swcfilename.length() + 1];strcpy(char_swcout, swcfilename.toStdString().c_str());
         arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
 
-
-        char channel = '0' + P.channel;
-        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
-        char* Th =  new char[T_background.length() + 1];
-        strcpy(Th, T_background.c_str());
-
         arg.type = "random";
         std::vector<char*> arg_para;
+//        char channel = '0' + P.channel;
+//        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
+//        char* Th =  new char[T_background.length() + 1];
+//        strcpy(Th, T_background.c_str());
 
-        arg_para.push_back(&channel);arg_para.push_back(Th);
+
+
+    //    arg_para.push_back(&channel);arg_para.push_back(Th);
         arg.p = (void *) & arg_para; input << arg;
-        full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";
+   //     full_plugin_name = "mostVesselTracer"; func_name = "MOST_trace";
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
         {

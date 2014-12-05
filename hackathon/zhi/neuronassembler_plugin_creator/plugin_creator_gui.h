@@ -24,13 +24,13 @@ public:
         editor_swc_name = new QLineEdit(tr("_MOST.swc"));
 
         label_para_name = new QLabel(QObject::tr("Name list for Input Parameters:"));
-        editor_para_name = new QLineEdit();
+        editor_para_name = new QLineEdit(tr("soma_marker channel background_th"));
 
         label_para_type = new QLabel(QObject::tr("Type list for Input Parameters(string, int, or double):"));
-        editor_para_type = new QLineEdit();
+        editor_para_type = new QLineEdit(tr("string int double"));
 
         label_para_default = new QLabel(QObject::tr("Default Value list for Input Parameters:"));
-        editor_para_default = new QLineEdit();
+        editor_para_default = new QLineEdit(tr("NULL 1 40.0"));
 
 		label_plugin_description = new QLabel(tr("Plugin Description :"));
 		editor_plugin_description = new QLineEdit(tr("This is a test plugin, you can use it as a demo."));
