@@ -8,6 +8,7 @@
 #include "eliminate_swc_plugin.h"
 #include "basic_surf_objs.h"
 #include <iostream>
+#include <map>
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "my_surf_objs.h"
 
@@ -103,6 +104,7 @@ QStringList eliminate_swc::funclist() const
 NeuronTree eliminate(NeuronTree input, double length);
 NeuronTree eliminate_overlap(NeuronTree target, NeuronTree subject, double length);
 void combineSWC_group(V3DPluginCallback2 &callback, QWidget *parent);
+void combineSWC_group_dupcheck(V3DPluginCallback2 &callback, QWidget *parent);
 void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent);
 void prunSWC(V3DPluginCallback2 &callback, QWidget *parent);
 void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
@@ -189,7 +191,7 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
     else if(menu_name == tr("combine_swc_group"))
     {
-         combineSWC_group(callback, parent);
+         combineSWC_group_dupcheck(callback, parent);
     }
     else if(menu_name == tr("combine_swc_pair"))
     {
@@ -505,13 +507,12 @@ void combineSWC_group(V3DPluginCallback2 &callback, QWidget *parent)
 
     QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
 
-
     vector<MyMarker*> outswc;
     for(int i = 0; i < swcList.size(); i++)
     {
 
         QString curPathSWC = swcList.at(i);
-        vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
+        vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());
 
         for(V3DLONG d = 0; d < inputswc.size(); d++)
         {
@@ -521,6 +522,59 @@ void combineSWC_group(V3DPluginCallback2 &callback, QWidget *parent)
     }
     QString swc_combined = m_InputfolderName + "/combined.swc";
     saveSWC_file(swc_combined.toStdString().c_str(), outswc);
+}
+
+//add by: Hanbo 2014/12/5
+void combineSWC_group_dupcheck(V3DPluginCallback2 &callback, QWidget *parent)
+{
+
+    QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
+
+    QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
+
+    bool ok;
+    double disthr=QInputDialog::getDouble(parent,"group combine swc",QString::number(swcList.size()) + " files found. Please specificy a distance threshold for checking duplicate branches.",50,0,2147483647,1,&ok);
+    if(!ok)
+        return;
+    int count = 0;
+    vector<MyMarker*> outswc;
+    multimap<int, vector<MyMarker*>, std::greater<int> > allinswc;
+    multimap<int, QString, std::greater<int> > allinname;
+    for(int i = 0; i < swcList.size(); i++)
+    {
+        QString curPathSWC = swcList.at(i);
+        vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());
+
+        allinswc.insert(pair<int, vector<MyMarker*> >(inputswc.size(), inputswc));
+        allinname.insert(pair<int, QString >(inputswc.size(), curPathSWC));
+    }
+
+    multimap<int, vector<MyMarker*>, std::greater<int> >::iterator iter_swc;
+    multimap<int, QString, std::greater<int> >::iterator iter_name=allinname.begin();
+    for(iter_swc = allinswc.begin(); iter_swc!=allinswc.end(); iter_swc++)
+    {
+        double dis = 1e16;
+        if(outswc.size()>0){
+            dis=getHDisBetweenTwoMarkers(iter_swc->second, outswc);
+            printf("file:%s; distance:%f\n",iter_name->second.toStdString().c_str(),dis);
+        }
+
+        if(dis>disthr){
+            count++;
+            for(V3DLONG d = 0; d < iter_swc->second.size(); d++){
+                outswc.push_back(iter_swc->second[d]);
+            }
+        }
+
+        iter_name++;
+    }
+
+
+    QString swc_combined = m_InputfolderName + "/combined.swc";
+    saveSWC_file(swc_combined.toStdString().c_str(), outswc);
+    v3d_msg(QString::number(count) + " out of " + QString::number(swcList.size()) + " swc files were combined to combined.swc");
 }
 
 void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent)

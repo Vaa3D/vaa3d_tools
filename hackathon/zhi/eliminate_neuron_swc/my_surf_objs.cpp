@@ -415,6 +415,32 @@ double dist(MyMarker a, MyMarker b)
 	return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
 }
 
+
+//add by: Hanbo 2014.12.5
+double getHDisBetweenTwoMarkers(const vector<MyMarker*>& marker1, const vector<MyMarker*>& marker2)
+{
+    vector<double> distances1(marker1.size(), 1e16);
+    vector<double> distances2(marker2.size(), 1e16);
+    for(V3DLONG i = 0; i<marker1.size(); i++){
+        for(V3DLONG j = 0; j<marker2.size(); j++){
+            double dis=dist(*(marker1.at(i)),*(marker2.at(j)));
+            distances1[i]=MIN(dis,distances1[i]);
+            distances2[j]=MIN(dis,distances2[j]);
+        }
+    }
+    double dis1=0;
+    for(V3DLONG i = 0; i<distances1.size(); i++){
+        dis1=MAX(dis1,distances1.at(i));
+    }
+    double dis2=0;
+    for(V3DLONG i = 0; i<distances2.size(); i++){
+        dis2=MAX(dis2,distances2.at(i));
+    }
+    //causion!, usually should return the max distance of these two
+    //but here I am using this to determine the overlapping rate, so need to return the smaller one in case one contains the other one.
+    return MIN(dis1,dis2);
+}
+
 vector<MyMarker*> getLeaf_markers(vector<MyMarker*> & inmarkers)
 {
 	set<MyMarker*> par_markers;

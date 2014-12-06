@@ -153,6 +153,7 @@ bool saveESWC_file(string swc_file, vector<MyMarkerX*> & out_markers, list<strin
 #endif
 
 double dist(MyMarker a, MyMarker b);
+double getHDisBetweenTwoMarkers(const vector<MyMarker*>& marker1, const vector<MyMarker*>& marker2); //by Hanbo Chen
 
 vector<MyMarker*> getLeaf_markers(vector<MyMarker*> & inmarkers);
 vector<MyMarker*> getLeaf_markers(vector<MyMarker*> & inmarkers, map<MyMarker *, int> & childs_num);
