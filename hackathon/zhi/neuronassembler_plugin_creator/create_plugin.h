@@ -84,8 +84,8 @@ void create_plugin_pro(PluginTemplate & pt)
     ofs<<"LIBS\t+= -lpthread"<<endl;
     ofs<<"LIBS\t+= -lv3dfftw3f -lv3dfftw3f_threads"<<endl;
 
-    ofs<<"TARGET\t= $$qtLibraryTarget(neuronassembler_single)"<<endl;
-    ofs<<"DESTDIR\t= $$VAA3DPATH/../bin/plugins/neuron_tracing/neuronassembler_single/"<<endl;
+    ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
+    ofs<<"DESTDIR\t= $$VAA3DPATH/../bin/plugins/neuron_tracing/"<<pt.PLUGIN_NAME<<"/"<<endl;
 	ofs.close();
 }
 
@@ -186,16 +186,20 @@ void create_plugin_cpp(PluginTemplate & pt)
             }
         }
 
-        for(int i = 189;i< 208; i++)
+        for(int i = 189;i< 202; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
 
+        ofs<<"\t\tv3d_msg(tr(\""<<pt.PLUGIN_DESCRIPTION<<". \"\n\t\t\t\"Developed by "<<pt.PLUGIN_AUTHOR<<", "<<pt.PLUGIN_DATE<<"\"));"<<endl;
+        ofs<<"\t}"<<endl;
+        ofs<<"}"<<endl;
+        ofs<<""<<endl;
 
         ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
 
-        for(int i = 208;i< 274; i++)
+        for(int i = 202;i< 274; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -243,8 +247,73 @@ void create_plugin_cpp(PluginTemplate & pt)
             }
         }
 
+        for(int i = 313;i< 319; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
 
-        for(int i = 313;i< 430; i++)
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size>";
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                ofs<<" <" << pt.PARA_NAME.at(i) <<">";
+            }
+        }
+
+        ofs<<"\\n\");\n";
+        ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit image\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"tc_file\t\t\tPlease specify the path of the tc file\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"block size\t\tDefault 1024\\n\");"<<endl;
+        ofs<<"\n";
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_NAME.at(i).size() > 7)
+                     ofs<<"\t\tprintf(\"" << pt.PARA_NAME.at(i) <<"\t\tRequired by the tracing algorithm. Default value is "<<pt.PARA_VALUE.at(i)<<"\\n\");"<<endl;
+                else
+                    ofs<<"\t\tprintf(\"" << pt.PARA_NAME.at(i) <<"\t\t\tRequired by the tracing algorithm. Default value is "<<pt.PARA_VALUE.at(i)<<"\\n\");"<<endl;
+
+            }
+        }
+        ofs<<"\n";
+        ofs<<"\t\tprintf(\"outswc_file\t\tWill be named automatically based on the input image file name, so you don't have to specify it.\\n\\n\");\n\n"<<endl;
+
+
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size>";
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                ofs<<" <" << pt.PARA_NAME.at(i) <<">";
+            }
+        }
+
+        ofs<<"\\n\");\n";
+        ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit image\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"block size\t\tDefault 1024\\n\");"<<endl;
+        ofs<<"\n";
+        if(pt.PARA_NAME.size() >0)
+        {
+            for(int i = 0; i < pt.PARA_NAME.size() ; i++)
+            {
+                if(pt.PARA_NAME.at(i).size() > 7)
+                     ofs<<"\t\tprintf(\"" << pt.PARA_NAME.at(i) <<"\t\tRequired by the tracing algorithm. Default value is "<<pt.PARA_VALUE.at(i)<<"\\n\");"<<endl;
+                else
+                    ofs<<"\t\tprintf(\"" << pt.PARA_NAME.at(i) <<"\t\t\tRequired by the tracing algorithm. Default value is "<<pt.PARA_VALUE.at(i)<<"\\n\");"<<endl;
+
+            }
+        }
+        ofs<<"\n";
+        ofs<<"\t\tprintf(\"outswc_file\t\tWill be named automatically based on the input image file name, so you don't have to specify it.\\n\\n\");\n\n"<<endl;
+
+
+
+        for(int i = 319;i< 430; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -490,6 +559,7 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
         }
 
         ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+3<<",0,3,6);"<<endl;
+        ofs<<"\t\t\tsetWindowTitle(QString(\"Vaa3D-NeuronAssembler("<<pt.TRACINGPLUGIN_NAME <<")\"));"<<endl;
 
         for(int i = 37; i< 46; i++)
         {
@@ -586,6 +656,7 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
         }
 
         ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+2<<",0,2,6);"<<endl;
+        ofs<<"\t\t\tsetWindowTitle(QString(\"Vaa3D-NeuronAssembler("<<pt.TRACINGPLUGIN_NAME <<")\"));"<<endl;
 
         for(int i = 174; i< 181; i++)
         {

@@ -44,6 +44,32 @@ using namespace std;
 
 const QString title = QObject::tr("Plugin Creator Plugin");
 
+
+QString getAppPath()
+{
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    // In a Mac app bundle, plugins directory could be either
+    //  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+    //  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    return testPluginsDir.absolutePath();
+}
+
+
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	GuidingDialog dialog(parent);
@@ -52,13 +78,15 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	dialog.update();
 
 	PluginTemplate pt;
-    pt.PLUGIN_NAME = "NeuronAssembler_" + dialog.plugin_name;
-    pt.PLUGIN_CLASS = "NeuronAssembler_" + dialog.plugin_name;
-    pt.WINDOW_TITLE = "NeuronAssembler_" + dialog.plugin_name;
+    string plugin_name_new = dialog.plugin_name;
+    islower(plugin_name_new[0])? plugin_name_new[0] = toupper(plugin_name_new[0]):plugin_name_new[0] = tolower(plugin_name_new[0]);
+    pt.PLUGIN_NAME = "NeuronAssembler_" + plugin_name_new;
+    pt.PLUGIN_CLASS = "NeuronAssembler_" + plugin_name_new;
+    pt.WINDOW_TITLE = "NeuronAssembler_" + plugin_name_new;
 	pt.PLUGIN_DESCRIPTION = dialog.plugin_desp;
 	pt.PLUGIN_DATE = dialog.plugin_date;
 	pt.PLUGIN_AUTHOR = dialog.plugin_author;
-	pt.VAA3D_PATH = dialog.vaa3d_path;
+    pt.VAA3D_PATH = getAppPath().toStdString() + "/../v3d_main/";
     pt.OUTPUTSWC = dialog.outputswc_name;
     pt.FUNC_NAME = dialog.function_name;
     pt.TRACINGPLUGIN_NAME = dialog.plugin_name;
@@ -105,3 +133,4 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 
 	return 1;
 }
+

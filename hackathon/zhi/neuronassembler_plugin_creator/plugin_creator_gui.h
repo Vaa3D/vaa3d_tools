@@ -41,9 +41,9 @@ public:
 		label_plugin_author = new QLabel(tr("Plugin Author :"));
 		editor_plugin_author = new QLineEdit(tr("YourName"));
 
-		label_vaa3d_path = new QLabel(tr("Vaa3D whole-project path :"));
-		editor_vaa3d_path = new QLineEdit(tr(""));
-		button_vaa3d_path = new QPushButton(tr("..."));
+//		label_vaa3d_path = new QLabel(tr("Vaa3D whole-project path :"));
+//		editor_vaa3d_path = new QLineEdit(tr(""));
+//		button_vaa3d_path = new QPushButton(tr("..."));
 
 		label_save_folder = new QLabel(tr("Save Folder : "));
 		editor_save_folder = new QLineEdit(tr(""));
@@ -73,18 +73,18 @@ public:
         gridLayout->addWidget(editor_plugin_date,        7, 1, 1, 9);
         gridLayout->addWidget(label_plugin_author,       8, 0, 1, 1);
         gridLayout->addWidget(editor_plugin_author,      8, 1, 1, 9);
-        gridLayout->addWidget(label_vaa3d_path,       9, 0, 1, 1);
-        gridLayout->addWidget(editor_vaa3d_path,      9, 1, 1, 8);
-        gridLayout->addWidget(button_vaa3d_path,      9, 9, 1, 1);
-        gridLayout->addWidget(label_save_folder,         12, 0, 1, 1);
-        gridLayout->addWidget(editor_save_folder,        12, 1, 1, 8);
-        gridLayout->addWidget(button_save_folder,        12, 9, 1, 1);
-        gridLayout->addWidget(cancel, 13, 0, 1, 5, Qt::AlignRight);
-        gridLayout->addWidget(ok, 13, 5, 1, 5, Qt::AlignRight);
+//        gridLayout->addWidget(label_vaa3d_path,       9, 0, 1, 1);
+//        gridLayout->addWidget(editor_vaa3d_path,      9, 1, 1, 8);
+//        gridLayout->addWidget(button_vaa3d_path,      9, 9, 1, 1);
+        gridLayout->addWidget(label_save_folder,         11, 0, 1, 1);
+        gridLayout->addWidget(editor_save_folder,        11, 1, 1, 8);
+        gridLayout->addWidget(button_save_folder,        11, 9, 1, 1);
+        gridLayout->addWidget(cancel, 12, 0, 1, 5, Qt::AlignRight);
+        gridLayout->addWidget(ok, 12, 5, 1, 5, Qt::AlignRight);
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
-		connect(button_vaa3d_path, SIGNAL(clicked()), this, SLOT(setFolderPath()));
+    //	connect(button_vaa3d_path, SIGNAL(clicked()), this, SLOT(setFolderPath()));
 		connect(button_save_folder, SIGNAL(clicked()), this, SLOT(setFolderPath()));
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(update()));
@@ -109,19 +109,19 @@ public slots:
 
 	void setFolderPath()
 	{
-        QPushButton * button = (QPushButton*) sender();
+//        QPushButton * button = (QPushButton*) sender();
         QLineEdit * editor;
         QString title;
-        if(button == button_vaa3d_path)
-        {
-            editor = editor_vaa3d_path;
-            title = "Open V3D_MAIN Directory";
-        }
-        else if(button == button_save_folder)
-        {
+//        if(button == button_vaa3d_path)
+//        {
+//            editor = editor_vaa3d_path;
+//            title = "Open V3D_MAIN Directory";
+//        }
+//        else if(button == button_save_folder)
+//        {
             editor = editor_save_folder;
             title = "Save to Directory";
-        }
+//        }
 
         QString dir = QFileDialog::getExistingDirectory(this, title,
                                                  "~/",
@@ -144,7 +144,7 @@ public slots:
         plugin_desp =  editor_plugin_description->text().toStdString();
 		plugin_date =  editor_plugin_date->text().toStdString();
 		plugin_author =  editor_plugin_author->text().toStdString();
-		vaa3d_path =  editor_vaa3d_path->text().toStdString();
+    //	vaa3d_path =  editor_vaa3d_path->text().toStdString();
 		save_folder =  editor_save_folder->text().toStdString();
 
 	}
@@ -194,9 +194,9 @@ public:
 	QLabel * label_plugin_author;
 	QLineEdit * editor_plugin_author;
 
-	QLabel * label_vaa3d_path;
-	QLineEdit * editor_vaa3d_path;
-	QPushButton * button_vaa3d_path;
+//	QLabel * label_vaa3d_path;
+//	QLineEdit * editor_vaa3d_path;
+//	QPushButton * button_vaa3d_path;
 
 	QLabel * label_save_folder;
 	QLineEdit * editor_save_folder;

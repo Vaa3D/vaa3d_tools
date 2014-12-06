@@ -199,10 +199,10 @@ NeuronTree eliminate(NeuronTree input, double length);
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2014-11-09"));
-	}
-}
+//        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+//            "Developed by Zhi Zhou, 2014-11-09"));
+//    }
+//}
 
 //bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {

@@ -38,7 +38,7 @@ class NeuronAssemblerDialog_raw : public QDialog
 
       //      layout->addLayout(hbox2,3,0,3,6);
             setLayout(layout);
-            setWindowTitle(QString("Vaa3D-NeuronAssembler"));
+     //       setWindowTitle(QString("Vaa3D-NeuronAssembler"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -174,7 +174,7 @@ class NeuronAssemblerDialog : public QDialog
 
           //  layout->addLayout(hbox2,2,0,2,6);
             setLayout(layout);
-            setWindowTitle(QString("Vaa3D-NeuronAssembler"));
+        //    setWindowTitle(QString("Vaa3D-NeuronAssembler"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
