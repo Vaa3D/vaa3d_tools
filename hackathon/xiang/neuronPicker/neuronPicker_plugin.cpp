@@ -129,6 +129,7 @@ public:
 				return poss_result;
 			}
 			V3DLONG pos_current=poss_growing.back();
+			//vector<V3DLONG> color_current=getColorFromPos(_image1Dc_input, pos_current, size_page, _dim_C);
 			poss_growing.pop_back();
 			vector<V3DLONG> xyz_current=pos2xyz(pos_current, offset_Y, offset_Z);
 			for (V3DLONG idx_neighbor=0;idx_neighbor<count_neighbors;idx_neighbor++)
@@ -162,7 +163,8 @@ public:
 		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
 		{
 			double diff_color=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
-			if (diff_color>(_bandWidth_color*_color_source[idx_color])) {return false;}
+			//if (diff_color>(_bandWidth_color*_color_source[idx_color])) {return false;}
+			if (diff_color>_bandWidth_color) {return false;}
 		}
 		return true;
 	}

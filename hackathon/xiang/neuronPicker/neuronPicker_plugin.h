@@ -26,9 +26,9 @@ public:
 		QGroupBox *QGroupBox_region_main = new QGroupBox("Region definition parameters");
 		QGridLayout *QGridLayout_region_main = new QGridLayout();
 		QLabel* QLabel_region_colorBandwidth = new QLabel(QObject::tr("Color filtering bandwidth:"));
-		QLineEdit_region_colorBandwidth = new QLineEdit("0.9", QWidget_parent);
+		QLineEdit_region_colorBandwidth = new QLineEdit("10", QWidget_parent);
 		QLabel* QLabel_region_neighborSize = new QLabel(QObject::tr("Neighbor size:"));
-		QLineEdit_region_neighborSize = new QLineEdit("10", QWidget_parent);
+		QLineEdit_region_neighborSize = new QLineEdit("5", QWidget_parent);
 		QGridLayout_region_main->addWidget(QLabel_region_colorBandwidth, 1, 1, 1, 1);
 		QGridLayout_region_main->addWidget(QLineEdit_region_colorBandwidth, 1, 2, 1, 1);
 		QGridLayout_region_main->addWidget(QLabel_region_neighborSize, 2, 1, 1, 1);
