@@ -202,25 +202,32 @@ public:
 		}
 		return pos4s_result;
 	}
-	static V3DLONG doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask, V3DLONG _dim_C)
+	static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask, V3DLONG _dim_C)
 	{
-		vector<double> histo_page=getHistogram(_image1D_input, _size_page*_dim_C);
-		V3DLONG threshold_page=getThresholdOtsu(histo_page);
-		cout<<"threshold for current image: "<<threshold_page<<endl;
+		vector<V3DLONG> thresholds_page;
+		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		{
+			vector<double> histo_page=getHistogram(_image1D_input, _size_page, idx_color*_size_page);
+			V3DLONG threshold_page=getThresholdYen(histo_page);
+			thresholds_page.push_back(threshold_page);
+			cout<<"threshold for current image channel ["<<idx_color<<"]: "<<threshold_page<<endl;
+		}
 		for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
 		{
 			bool is_foreground=false;
 			for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
 			{
-				if (_image1D_input[pos_i+idx_color*_size_page]>threshold_page)
+				if (_image1D_input[pos_i+idx_color*_size_page]>thresholds_page[idx_color])
 				{
 					_image1D_mask[pos_i]=const_max_voxelValue; 
 					is_foreground=true;
+					break;
 				}
 			}
 			if (!is_foreground) { _image1D_mask[pos_i]=0; }
+			else { _image1D_mask[pos_i]=const_max_voxelValue; }
 		}
-		return threshold_page;
+		return;
 	}
 	static V3DLONG getThresholdOtsu(vector<double> _histo_input)
 	{
@@ -360,6 +367,7 @@ public:
 		V3DLONG _pos_landmark, vector<vector<V3DLONG> > _pos4s_neighborRelative, double _bandWidth_color)
 	{
 		V3DLONG size_page=_dim_X*_dim_Y*_dim_Z; V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y;
+		doThresholding(_image1Dc_input, size_page, _image1D_mask, _dim_C);
 		cout<<"seed color: ";
 		vector<double> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
 		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
