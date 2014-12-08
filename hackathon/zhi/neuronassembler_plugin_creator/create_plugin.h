@@ -108,6 +108,8 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"#include \""<<pt.VAA3D_PATH<< "/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readRawfile_func.h"<<"\""<<endl;
         ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/istitch/y_imglib.h"<<"\""<<endl;
         ofs<<"#include \""<<pt.VAA3D_PATH<< "/../released_plugins_more/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"<<"\""<<endl;
+        ofs<<"#include \""<<pt.VAA3D_PATH<< "/../../vaa3d_tools/hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"<<"\""<<endl;
+
         ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 
         for(int i = 7;i< 31; i++)
@@ -283,7 +285,7 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"\t\tprintf(\"outswc_file\t\tWill be named automatically based on the input image file name, so you don't have to specify it.\\n\\n\");\n\n"<<endl;
 
 
-        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size>";
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_raw -i <inimg_file> -p <inmarker_file> <block size>";
         if(pt.PARA_NAME.size() >0)
         {
             for(int i = 0; i < pt.PARA_NAME.size() ; i++)
@@ -293,7 +295,7 @@ void create_plugin_cpp(PluginTemplate & pt)
         }
 
         ofs<<"\\n\");\n";
-        ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit image\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit v3draw/raw image\\n\");"<<endl;
         ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file\\n\");"<<endl;
         ofs<<"\t\tprintf(\"block size\t\tDefault 1024\\n\");"<<endl;
         ofs<<"\n";
@@ -357,7 +359,7 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
 
-        for(int i = 475;i< 741; i++)
+        for(int i = 475;i< 746; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -365,7 +367,7 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\tQString finalswcfilename = fileOpenName + rootposstr + \"_"<< pt.PLUGIN_NAME <<".swc\";"<<endl;
 
-        for(int i = 741;i< 780; i++)
+        for(int i = 746;i< 785; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -374,7 +376,7 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"\t\tQString swcfilename =  walker->tilename + QString(\""<< pt.OUTPUTSWC <<"\");"<<endl;
 
 
-        for(int i = 780;i< 800; i++)
+        for(int i = 785;i< 805; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -401,7 +403,7 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
 
-        for(int i = 800;i< 1242; i++)
+        for(int i = 805;i< 1250; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
