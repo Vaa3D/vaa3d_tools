@@ -673,7 +673,7 @@ void neuronPickerDialog::creat()
 
     //extract parameters
     spin_color = new QDoubleSpinBox();
-    spin_color->setRange(0,1); spin_color->setValue(10);
+    spin_color->setRange(0,256); spin_color->setValue(10);
     spin_distance = new QSpinBox();
     spin_distance->setRange(0,100000); spin_distance->setValue(5);
     QLabel* label_0 = new QLabel("color filtering bandwidth:");
@@ -847,7 +847,7 @@ void neuronPickerDialog::extract()
     memset(image1D_mask, const_max_voxelValue, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     memset(image1D_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     qDebug()<<"start extracting";
-    neuronPickerMain::main(image1Dc_in, image1D_out, image1D_mask, sz_img[0], sz_img[1], sz_img[2], sz_img[3], pos_landmark,
+    neuronPickerMain::main(image1Dc_in, image1D_out, image1D_mask, sz_img[0], sz_img[1], sz_img[2], 3, pos_landmark,
             pos4s_neighborRelative, spin_color->value());
     //visualizationImage1D(image1D_tmp, sz_img[0], sz_img[1], sz_img[2], 1, *call, QString(name_currentWindow+QString("%1").arg(idx_landmark)));
     qDebug()<<"push for visualization";
