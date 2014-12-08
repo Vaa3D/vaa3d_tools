@@ -173,7 +173,7 @@ void create_plugin_cpp(PluginTemplate & pt)
             }
         }
 
-        for(int i = 155;i< 189; i++)
+        for(int i = 155;i< 194; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -188,7 +188,7 @@ void create_plugin_cpp(PluginTemplate & pt)
             }
         }
 
-        for(int i = 189;i< 202; i++)
+        for(int i = 194;i< 202; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
@@ -296,7 +296,7 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\\n\");\n";
         ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit v3draw/raw image\\n\");"<<endl;
-        ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file, Default value is NULL\\n\");"<<endl;
         ofs<<"\t\tprintf(\"block size\t\tDefault 1024\\n\");"<<endl;
         ofs<<"\n";
         if(pt.PARA_NAME.size() >0)

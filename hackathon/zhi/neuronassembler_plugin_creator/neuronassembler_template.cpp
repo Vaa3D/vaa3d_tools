@@ -176,24 +176,24 @@ NeuronTree eliminate(NeuronTree input, double length);
             return;
         }
 
-        if(dialog.markerfilename.isEmpty())
+        if(dialog.markerfilename.isEmpty() || dialog.markerfilename == "NULL")
         {
-            v3d_msg("Please select the marker file.");
-            return;
+            P.root_1st[0] = -1;
+            P.root_1st[1] = -1;
+            P.root_1st[2] = -1;
+        }
+        else
+        {
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
+            P.root_1st[0] = file_inmarkers[0].x;
+            P.root_1st[1] = file_inmarkers[0].y;
+            P.root_1st[2] = file_inmarkers[0].z;
         }
 
-        vector<MyMarker> file_inmarkers;
-        file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
-
-      //  P.bkg_thresh = dialog.bkg_thresh;
-      //  P.channel = dialog.channel;
         P.block_size = dialog.block_size;
-      //  P.tracing_method = dialog.tracing_method;
         P.inimg_file = dialog.rawfilename;
 
-        P.root_1st[0] = file_inmarkers[0].x;
-        P.root_1st[1] = file_inmarkers[0].y;
-        P.root_1st[2] = file_inmarkers[0].z;
 
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -294,8 +294,9 @@ NeuronTree eliminate(NeuronTree input, double length);
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         if(inmarker_file.isEmpty())
         {
-            cerr<<"Need a marker file"<<endl;
-            return false;
+            P.root_1st[0] = -1;
+            P.root_1st[1] = -1;
+            P.root_1st[2] = -1;
         }
         else
         {
@@ -305,11 +306,10 @@ NeuronTree eliminate(NeuronTree input, double length);
             P.root_1st[1] = file_inmarkers[0].y;
             P.root_1st[2] = file_inmarkers[0].z;
         }
-
-     //   P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-     //   P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-    //    P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+
+
+
 
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -699,9 +699,9 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     }
 
     if(datald) {delete []datald; datald = 0;}
+    if(P.root_1st[0] == -1) { P.root_1st[0] = in_zz[0]/2;P.root_1st[1] = in_zz[1]/2;P.root_1st[2] = in_zz[2]/2;}
 
     V3DLONG start[3], end[3];
-
     start[0] = P.root_1st[0] - int(P.block_size/2);
     start[1] = P.root_1st[1] - int(P.block_size/2);
     start[2] = 0;
