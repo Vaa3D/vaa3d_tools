@@ -665,7 +665,7 @@ void neuronPickerDialog::creat()
 
     //extract parameters
     spin_color = new QDoubleSpinBox();
-    spin_color->setRange(0,1); spin_color->setValue(0.9);
+    spin_color->setRange(0,1); spin_color->setValue(10);
     spin_distance = new QSpinBox();
     spin_distance->setRange(0,100000); spin_distance->setValue(5);
     QLabel* label_0 = new QLabel("color filtering bandwidth:");
