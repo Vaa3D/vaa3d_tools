@@ -65,7 +65,7 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<endl;
 	ofs<<"HEADERS\t+= "<<pt.PLUGIN_HEADER<<endl;
 	if(pt.PLUGIN_GUI != "") ofs<<"HEADERS\t+= "<<pt.PLUGIN_GUI<<endl; 
-    ofs<<"SOURCES\t+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h"<<endl;
+ //   ofs<<"SOURCES\t+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h"<<endl;
 
     ofs<<""<<endl;
 
