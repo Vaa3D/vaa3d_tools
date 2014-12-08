@@ -17,7 +17,6 @@
 using namespace std;
 const int const_length_histogram = 256;
 const double const_max_voxelValue = 255;
-const int const_count_neighbors = 26; //27 directions -1;
 const double const_infinitesimal = 0.000000001;
 
 static neuronPickerDialog * npdiag = 0;
@@ -67,36 +66,6 @@ public:
 	#pragma endregion
 
 	#pragma region "geometry related"
-	static vector<V3DLONG> getBoundary(V3DLONG* _image1D_input, const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z, vector<vector<V3DLONG> > _pos4s_neighborRelative)
-	{
-		vector<V3DLONG> poss_boundary;
-		V3DLONG size_page=_dim_X*_dim_Y*_dim_Z;
-		V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y;
-		for (V3DLONG pos_i=0;pos_i<size_page;pos_i++)
-		{
-			vector<V3DLONG> xyz_i=pos2xyz(pos_i, offset_Y, offset_Z);
-			for (V3DLONG idx_neighbor=0;idx_neighbor<const_count_neighbors;idx_neighbor++)
-			{
-				V3DLONG pos_neighbor=pos_i+ _pos4s_neighborRelative[idx_neighbor][3];
-				if (isValid(pos_neighbor, size_page))
-				{
-					if (((xyz_i[0]+_pos4s_neighborRelative[idx_neighbor][0])<0)||
-						((xyz_i[0]+_pos4s_neighborRelative[idx_neighbor][0])>=_dim_X)||
-						((xyz_i[1]+_pos4s_neighborRelative[idx_neighbor][1])<0)||
-						((xyz_i[1]+_pos4s_neighborRelative[idx_neighbor][1])>=_dim_Y)||
-						((xyz_i[2]+_pos4s_neighborRelative[idx_neighbor][2])<0)||
-						((xyz_i[2]+_pos4s_neighborRelative[idx_neighbor][2])>=_dim_Z))
-					{} //invalide anyway;
-					else
-					{
-						V3DLONG value_neighbor=_image1D_input[pos_neighbor];
-						if (value_neighbor<1) { poss_boundary.push_back(pos_i); break;} //it is boundary;
-					}
-				}
-			}
-		}
-		return poss_boundary;
-	}
 	static vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z)
 	{
 		vector<V3DLONG> pos3_result (3, -1);
@@ -109,17 +78,22 @@ public:
 	{
 		return _z*_offset_Z+_y*_offset_Y+_x;
 	}
-	static bool isValid(const V3DLONG _pos_input, const V3DLONG _size_page)
+	static bool isValid(const vector<V3DLONG> _xyz_input, const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z)
 	{
-		if ((_pos_input>=0)&&(_pos_input<_size_page)) { return true; }
-		else { return false; }
+		if ((_xyz_input[0]<0)||(_xyz_input[0]>=_dim_X)||
+			(_xyz_input[1]<0)||(_xyz_input[1]>=_dim_Y)||
+			(_xyz_input[2]<0)||(_xyz_input[2]>=_dim_Z))
+		{
+			return false;
+		}
+		else { return true; }
 	}
-	static void poss2Image1D(const vector<V3DLONG> _poss_input, unsigned char* _image1D_input, const unsigned char value_input)
+	static void poss2Image1Dc(const vector<V3DLONG> _poss_input, unsigned char* _image1D_input, const unsigned char value_input)
 	{
 		V3DLONG size_input=_poss_input.size();
 		for (V3DLONG i=0;i<size_input;i++) {_image1D_input[_poss_input[i]]=value_input; }
 	}
-	static void poss2Image1D(const vector<V3DLONG> _poss_input, unsigned char* _image1D_output, const unsigned char* _image1Dc_input,
+	static void poss2Image1Dc(const vector<V3DLONG> _poss_input, unsigned char* _image1D_output, const unsigned char* _image1Dc_input,
 		V3DLONG _size_page)
 	{
 		V3DLONG size_input=_poss_input.size();
@@ -137,18 +111,17 @@ public:
 	#pragma region "regionGrow"
 	static vector<V3DLONG> doRegionGrow(const unsigned char* _image1Dc_input, const V3DLONG _pos_seed, 
 		const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z, V3DLONG _dim_C, unsigned char* _image1D_mask,
-		const vector<vector<V3DLONG> > _pos4s_neighborRelative, const double _bandWidth_color, const V3DLONG _tolerance_gap, const vector<V3DLONG> _thresholds_page)
+		const vector<vector<V3DLONG> > _pos4s_neighborRelative, const double _bandWidth_color)
 	{
 		vector<V3DLONG> poss_result;
 		if (_image1D_mask[_pos_seed]<1) {return poss_result;}
 		V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y; V3DLONG size_page=_dim_X*_dim_Y*_dim_Z;
-		if (!isPassedThreshold(_image1Dc_input, _pos_seed, _thresholds_page, _dim_C, size_page)) {return poss_result;} 
 		vector<V3DLONG> poss_growing;
 		poss_growing.push_back(_pos_seed);
 		poss_result.push_back(_pos_seed);
-		vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_seed, size_page, _dim_C);
-		vector<V3DLONG> thresholds_page=_thresholds_page;
+		vector<double> color_seed=getColorFromPos(_image1Dc_input, _pos_seed, size_page, _dim_C);
 		_image1D_mask[_pos_seed]=0; //scooped;
+		V3DLONG count_neighbors=_pos4s_neighborRelative.size();
 		while (true)
 		{
 			if (poss_growing.empty()) //growing complete;
@@ -156,10 +129,9 @@ public:
 				return poss_result;
 			}
 			V3DLONG pos_current=poss_growing.back();
-            //vector<V3DLONG> color_current=getColorFromPos(_image1Dc_input, pos_current, size_page, _dim_C);
 			poss_growing.pop_back();
 			vector<V3DLONG> xyz_current=pos2xyz(pos_current, offset_Y, offset_Z);
-			for (V3DLONG idx_neighbor=0;idx_neighbor<const_count_neighbors;idx_neighbor++)
+			for (V3DLONG idx_neighbor=0;idx_neighbor<count_neighbors;idx_neighbor++)
 			{
 				vector<V3DLONG> poss_direction (4, 0);
 				poss_direction[0]=_pos4s_neighborRelative[idx_neighbor][0];
@@ -171,129 +143,48 @@ public:
 				xyz_neighbor[0]=xyz_current[0]+poss_direction[0];
 				xyz_neighbor[1]=xyz_current[1]+poss_direction[1];
 				xyz_neighbor[2]=xyz_current[2]+poss_direction[2];
-				
-				if (isValid(pos_neighbor, size_page)) //prevent it from going out of bounds;
+				if (isValid(xyz_neighbor, _dim_X, _dim_Y, _dim_Z)) //prevent it from going out of bounds;
 				{
-					if ((xyz_neighbor[0]<0)||(xyz_neighbor[0]>=_dim_X)||
-						(xyz_neighbor[1]<0)||(xyz_neighbor[1]>=_dim_Y)||
-						(xyz_neighbor[2]<0)||(xyz_neighbor[2]>=_dim_Z))
+					vector<double> color_neighbor=getColorFromPos(_image1Dc_input, pos_neighbor, size_page, _dim_C);
+					if ((isColorBandpassed(color_seed, color_neighbor, _bandWidth_color, _dim_C))
+						&& (_image1D_mask[pos_neighbor]>0))
 					{
-						//invalide anyway;
-					}
-					else
-					{
-						vector<V3DLONG> color_neighbor=getColorFromPos(_image1Dc_input, pos_neighbor, size_page, _dim_C);
-						if ((isColorTolerable(color_seed, color_neighbor, _bandWidth_color, _dim_C))
-							&& (isPassedThreshold(_image1Dc_input, pos_neighbor, thresholds_page, _dim_C, size_page))
-							&& (_image1D_mask[pos_neighbor]>0))
-						{
-							_image1D_mask[pos_neighbor]=0; //scooped;
-							poss_growing.push_back(pos_neighbor);
-							poss_result.push_back(pos_neighbor);
-						}
-						if (isGapTolerable(_image1Dc_input, pos_neighbor, color_seed, xyz_neighbor, _bandWidth_color, _thresholds_page, poss_direction,
-							 _dim_X, _dim_Y, _dim_Z, _dim_C, size_page, _tolerance_gap,	_image1D_mask))
-						{
-							_image1D_mask[pos_neighbor]=0; //scooped;
-							poss_growing.push_back(pos_neighbor);
-							poss_result.push_back(pos_neighbor);
-						}
+						_image1D_mask[pos_neighbor]=0; //scooped;
+						poss_growing.push_back(pos_neighbor);
+						poss_result.push_back(pos_neighbor);
 					}
 				}
 			}
 		}
 	}
-	static bool isColorTolerable(vector<V3DLONG> _color_source, vector<V3DLONG> _color_target, vector<V3DLONG> _color_seed, double _bandWidth_color, V3DLONG _dim_C)
+	static bool isColorBandpassed(vector<double> _color_source, vector<double> _color_target, double _bandWidth_color, V3DLONG _dim_C)
 	{
-		V3DLONG max_seed=getMaxIdx(_color_seed);
-		V3DLONG max_target=getMaxIdx(_color_target);
-		if (max_target!=max_seed) {return false;}
-		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-		{
-			double diff_color1=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
-			double diff_color2=(double)(iabs(_color_source[idx_color]+_color_target[idx_color]));
-			double diff_color=diff_color1/diff_color2;
-			if (diff_color>_bandWidth_color) {return false;}
-		}
-		return true;
-		//if (getCorrelation(_color_source, _color_target)>_bandWidth_color) {return true;}
-		//else {return false;}
-	}
-	static bool isColorTolerable(vector<V3DLONG> _color_source, vector<V3DLONG> _color_target, double _bandWidth_color, V3DLONG _dim_C)
-	{
-		V3DLONG max_source=getMaxIdx(_color_source);
-		V3DLONG max_target=getMaxIdx(_color_target);
-		if (max_target!=max_source) {return false;}
-		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
 		{
 			double diff_color=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
-			diff_color=diff_color/(double)_color_source[idx_color];
-			if (diff_color>_bandWidth_color) {return false;}
+			if (diff_color>(_bandWidth_color*_color_source[idx_color])) {return false;}
 		}
 		return true;
-		//if (getCorrelation(_color_source, _color_target)>_bandWidth_color) {return true;}
-		//else {return false;}
 	}
-	static bool isPassedThreshold(const unsigned char* _image1Dc_input, const V3DLONG _pos_input, 
-		const vector<V3DLONG> _thresholds_page, const V3DLONG _dim_C, const V3DLONG _size_page)
+	static V3DLONG iabs(V3DLONG _value_input)
 	{
-		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-		{
-			V3DLONG threshold_page=_thresholds_page[idx_color];
-			if(_image1Dc_input[_pos_input+_size_page*idx_color]>threshold_page) { return true;}
-		}
-		return false;
-	}
-	static bool isGapTolerable(const unsigned char* _image1Dc_input, const V3DLONG _pos_input, const vector<V3DLONG> _color_seed,
-		const vector<V3DLONG> _xyz_input, double _bandWidth_color, vector<V3DLONG> _thresholds_page,
-		const vector<V3DLONG> _pos_direction, const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z,
-		const V3DLONG _dim_C, const V3DLONG _size_page, const V3DLONG _tolerance_gap,
-		const unsigned char* _image1D_mask)
-	{
-		for (V3DLONG idx_gap=1;idx_gap<_tolerance_gap;idx_gap++)
-		{
-			V3DLONG pos_ray=_pos_input+_pos_direction[3]*idx_gap;
-			if (isValid(pos_ray, _size_page)) //prevent it from going out of bounds;
-			{
-				if (((_xyz_input[0]+_pos_direction[0]*idx_gap)<0)||
-					((_xyz_input[0]+_pos_direction[0]*idx_gap)>=_dim_X)||
-					((_xyz_input[1]+_pos_direction[1]*idx_gap)<0)||
-					((_xyz_input[1]+_pos_direction[1]*idx_gap)>=_dim_Y)||
-					((_xyz_input[2]+_pos_direction[2]*idx_gap)<0)||
-					((_xyz_input[2]+_pos_direction[2]*idx_gap)>=_dim_Z))
-				{
-					return false; //invalide anyway;
-				}
-				else
-				{
-					vector<V3DLONG> color_ray=getColorFromPos(_image1Dc_input, pos_ray, _size_page, _dim_C);
-					if ((isColorTolerable(_color_seed, color_ray, _bandWidth_color, _dim_C))
-						&& (isPassedThreshold(_image1Dc_input, pos_ray, _thresholds_page, _dim_C, _size_page))
-						&& (_image1D_mask[pos_ray]>0))
-					{
-						return true;
-					}
-				}
-			}
-			else
-			{
-				return false;
-			}
-		}
-		return false;
+		if (_value_input>0) { return _value_input;}
+		else { return -1*_value_input; }
 	}
 	#pragma endregion	
 
 	#pragma region "preProcessings"
-	static vector<vector<V3DLONG> > initializeConstants(const V3DLONG _offset_Y, const V3DLONG _offset_Z)
+	static vector<vector<V3DLONG> > initializeConstants(const V3DLONG _offset_Y, const V3DLONG _offset_Z, const V3DLONG _size_neighbor)
 	{
 		vector<vector<V3DLONG> > pos4s_result;
 		vector<V3DLONG> pos4_neighbor(4, 0); 
-		for (V3DLONG z=-1;z<=1;z++)
+		V3DLONG min_neighbor=_size_neighbor*-1;
+		V3DLONG max_neighbor=_size_neighbor;
+		for (V3DLONG z=min_neighbor;z<=max_neighbor;z++)
 		{
-			for (V3DLONG y=-1;y<=1;y++)
+			for (V3DLONG y=min_neighbor;y<=max_neighbor;y++)
 			{
-				for (V3DLONG x=-1;x<=1;x++)
+				for (V3DLONG x=min_neighbor;x<=max_neighbor;x++)
 				{
 					if (x==0&&y==0&&z==0)
 					{
@@ -329,9 +220,6 @@ public:
 		}
 		return threshold_page;
 	}
-	#pragma endregion
-
-	#pragma region "threshold estimation"
 	static V3DLONG getThresholdOtsu(vector<double> _histo_input)
 	{
 		V3DLONG i, value_threshold;
@@ -392,28 +280,7 @@ public:
 		}
 		return value_threshold;
 	}
-	static V3DLONG getThresholdHCP(const unsigned char* _ImageID_input, const V3DLONG _size_page)
-	{
-		double mean_page=getMean(_ImageID_input, _size_page);
-		V3DLONG threshold_page = (V3DLONG)mean_page;
-		while (true)
-		{
-			vector<V3DLONG> poss_foreground;
-			vector<V3DLONG> poss_background;
-			for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
-			{
-				V3DLONG value_voxel=_ImageID_input[pos_i];
-				if (value_voxel>threshold_page) { poss_foreground.push_back(pos_i); }
-				else  { poss_background.push_back(pos_i); }
-			}
-			double mean_foreground=getMean(poss_foreground, _ImageID_input);
-			double mean_background=getMean(poss_background, _ImageID_input);
-			V3DLONG threshold_new=(V3DLONG)((mean_background+mean_foreground)/2);
-			if ((threshold_new-threshold_page)<const_infinitesimal) {break;}
-			threshold_page=threshold_new;
-		}
-		return threshold_page;
-	}
+
 	static vector<double> getHistogram(const unsigned char* _ImageID_input, const V3DLONG _size_page)
 	{
 		vector<double> histo_result (const_length_histogram, 0);
@@ -444,123 +311,7 @@ public:
 	}
 	#pragma endregion
 
-	#pragma region "statistics&math"
-	static double getCovariance(vector<V3DLONG> vct_input1, vector<V3DLONG> vct_input2)
-	{
-		double xmean = getMean(vct_input1);
-		double ymean = getMean(vct_input1);
-		double total = 0;
-		for(int i = 0; i < vct_input1.size(); i++)
-		{
-			total += ((double)vct_input1[i] - xmean) * ((double)vct_input2[i] - ymean);
-		}
-		return total/vct_input1.size();
-	}
-	static double getStdev(vector<V3DLONG> vct_input)
-	{
-		double mean = getMean(vct_input);
-		double temp = 0;
-		for(int i = 0; i < vct_input.size(); i++)
-		{
-			temp += ((double)vct_input[i] - mean)*((double)vct_input[i] - mean) ;
-		}
-		return sqrt(temp/(vct_input.size()-1));
-	}
-	static double getCorrelation(vector<V3DLONG> vct_input1, vector<V3DLONG> vct_input2)
-	{
-		double double_covariance = getCovariance(vct_input1, vct_input2);
-		return double_covariance/((getStdev(vct_input1))*(getStdev(vct_input2)));
-	}
-	static V3DLONG getMaxIdx(vector<V3DLONG> _values_input)
-	{
-		V3DLONG value_max=-INF;
-		V3DLONG idx_max=-1;
-		V3DLONG size_input=_values_input.size();
-		for (V3DLONG idx_i=0;idx_i<size_input;idx_i++)
-		{
-			if (value_max<_values_input[idx_i])
-			{
-				value_max=_values_input[idx_i];
-				idx_max=idx_i;
-			}
-		}
-		return idx_max;
-	}
-	static V3DLONG iabs(V3DLONG _value_input)
-	{
-		if (_value_input>0) { return _value_input;}
-		else { return -1*_value_input; }
-	}
-	static vector<V3DLONG> getMinMax(const V3DLONG* _values_input, const V3DLONG _size_input)
-	{
-		V3DLONG value_max=-INF;
-		V3DLONG value_min=INF;
-		for (V3DLONG pos_i=0;pos_i<_size_input;pos_i++)
-		{
-			V3DLONG value_i=_values_input[pos_i];
-			if (value_i>value_max) {value_max=value_i;}
-			if (value_i<value_min) {value_min=value_i;}
-		}
-		vector<V3DLONG> values_result (2, 0); values_result[0]=value_min; values_result[1]=value_max;
-		return values_result;
-	}
-	static double getMean(const unsigned char* _values_input, const V3DLONG _size_input)
-	{
-		V3DLONG value_mean=0;
-		for (V3DLONG pos_i=0;pos_i<_size_input;pos_i++)
-		{
-			value_mean+=_values_input[pos_i];
-		}
-		value_mean=value_mean/_size_input;
-		return value_mean;
-	}
-	static double getMean(const vector<V3DLONG> _poss_input, const unsigned char* _values_input)
-	{
-		V3DLONG value_mean=0;
-		V3DLONG size_input=_poss_input.size();
-		for (V3DLONG idx_i=0;idx_i<size_input;idx_i++)
-		{
-			value_mean+=_values_input[_poss_input[idx_i]];
-		}
-		value_mean=value_mean/size_input;
-		return value_mean;
-	}
-	static double getMean(vector<V3DLONG> vct_input)
-	{
-		double sum = 0;
-		for(int i=0;i<vct_input.size();i++)
-		{
-			sum += vct_input[i];
-		}
-		return ((double)sum/(double)vct_input.size());
-	}
-	static vector<V3DLONG> getMinMax(const vector<V3DLONG> _values_input, const V3DLONG _size_input)
-	{
-		V3DLONG value_max=-INF;
-		V3DLONG value_min=INF;
-		for (V3DLONG pos_i=0;pos_i<_size_input;pos_i++)
-		{
-			V3DLONG value_i=_values_input[pos_i];
-			if (value_i>value_max) {value_max=value_i;}
-			if (value_i<value_min) {value_min=value_i;}
-		}
-		vector<V3DLONG> values_result; values_result.push_back(value_min); values_result.push_back(value_max);
-		return values_result;
-	}
-	#pragma endregion
-
 	#pragma region "utility functions"
-	static void neuronTree2LandmarkList(const NeuronTree & NeuronTree_input, LandmarkList & LandmarkList_output)
-	{
-		LocationSimple LocationSimple_temp(0,0,0);
-		for (V3DLONG i=0;i<NeuronTree_input.listNeuron.size();i++)
-		{
-			LocationSimple_temp.x = NeuronTree_input.listNeuron.at(i).x;
-			LocationSimple_temp.y = NeuronTree_input.listNeuron.at(i).y;
-			LocationSimple_temp.z = NeuronTree_input.listNeuron.at(i).z;
-			LandmarkList_output.append(LocationSimple_temp);
-		}
-	}
 	static vector<V3DLONG> landMarkList2poss(LandmarkList LandmarkList_input, V3DLONG _offset_Y, V3DLONG _offest_Z)
 	{
 		vector<V3DLONG> poss_result;
@@ -579,24 +330,24 @@ public:
 		Landmark_input.getCoord(x, y, z);
 		return (xyz2pos(x-1, y-1, z-1, _offset_Y, _offset_Z));
 	}
-	static V3DLONG vctContains(vector<V3DLONG> vct_input, V3DLONG idx_input)
+	static vector<double> getColorFromPos(const unsigned char* _image1Dc_input, V3DLONG _pos_input, V3DLONG _size_page, V3DLONG _dim_C)
 	{
-		for (int i=0;i<vct_input.size();i++)
-		{
-			if (vct_input[i] == idx_input)
-			{
-				return i;
-			}
-		}
-		return -1;
-	}
-	static vector<V3DLONG> getColorFromPos(const unsigned char* _image1Dc_input, V3DLONG _pos_input, V3DLONG _size_page, V3DLONG _dim_C)
-	{
-		vector<V3DLONG> color_result (_dim_C, 0);
+		vector<double> color_result (_dim_C+1, 0);
+		V3DLONG color_max=0;
+		double color_sum=0;
 		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
 		{
 			color_result[idx_color]=_image1Dc_input[_pos_input+idx_color*_size_page];
+			if (color_max<color_result[idx_color]) {color_max=color_result[idx_color];}
+			color_sum+=(color_result[idx_color]*color_result[idx_color]);
 		}
+		color_sum=sqrt(color_sum);
+		double prop_color = const_max_voxelValue/color_max;
+		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		{
+			color_result[idx_color]=(double)color_result[idx_color]*prop_color;
+		}
+		color_result[_dim_C]=color_sum;
 		return color_result;
 	}
 	#pragma endregion
@@ -604,21 +355,19 @@ public:
 	#pragma region "main"
 	static void main(unsigned char* _image1Dc_input, unsigned char* _image1D_output, unsigned char* _image1D_mask,
 		V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z, V3DLONG _dim_C,
-		V3DLONG _pos_landmark, vector<vector<V3DLONG> > _pos4s_neighborRelative, double _bandWidth_color, V3DLONG _tolerance_gap,
-		vector<V3DLONG> _thresholds_page)
+		V3DLONG _pos_landmark, vector<vector<V3DLONG> > _pos4s_neighborRelative, double _bandWidth_color)
 	{
 		V3DLONG size_page=_dim_X*_dim_Y*_dim_Z; V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y;
 		cout<<"seed color: ";
-		vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
-		vector<V3DLONG> thresholds_page=_thresholds_page;
-		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		vector<double> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
+		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
 		{
 			cout<<"["<<idx_color<<"]: "<<color_seed[idx_color]<<"; ";
 		}
 		cout<<endl;
 		vector<V3DLONG> poss_region=doRegionGrow(_image1Dc_input, _pos_landmark, _dim_X, _dim_Y, _dim_Z, _dim_C,
-			_image1D_mask,	_pos4s_neighborRelative, _bandWidth_color, _tolerance_gap, thresholds_page);
-		poss2Image1D(poss_region, _image1D_output, _image1Dc_input, size_page);
+			_image1D_mask,	_pos4s_neighborRelative, _bandWidth_color);
+		poss2Image1Dc(poss_region, _image1D_output, _image1Dc_input, size_page);
 	}
 	#pragma endregion
 };
@@ -691,6 +440,58 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
 }
 
 #pragma region "interface"
+// func convert2UINT8
+void neuronPickerDialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+	unsigned short* pPre = (unsigned short*)pre1d;
+	unsigned short max_v=0, min_v = 255;
+	for(V3DLONG i=0; i<imsz; i++)
+	{
+		if(max_v<pPre[i]) max_v = pPre[i];
+		if(min_v>pPre[i]) min_v = pPre[i];
+	}
+	max_v -= min_v;
+	if(max_v>0)
+	{
+		for(V3DLONG i=0; i<imsz; i++)
+		{
+			pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+		}
+	}
+	else
+	{
+		for(V3DLONG i=0; i<imsz; i++)
+		{
+			pPost[i] = (unsigned char) pPre[i];
+		}
+	}
+}
+void neuronPickerDialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+	float* pPre = (float*)pre1d;
+	float max_v=0, min_v = 65535;
+	for(V3DLONG i=0; i<imsz; i++)
+	{
+		if(max_v<pPre[i]) max_v = pPre[i];
+		if(min_v>pPre[i]) min_v = pPre[i];
+	}
+	max_v -= min_v;
+	if(max_v>0)
+	{
+		for(V3DLONG i=0; i<imsz; i++)
+		{
+			pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+		}
+	}
+	else
+	{
+		for(V3DLONG i=0; i<imsz; i++)
+		{
+			pPost[i] = (unsigned char) pPre[i];
+		}
+	}
+}
+
 bool neuronPicker::interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
 {
 	v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
@@ -731,24 +532,15 @@ bool neuronPicker::interface_run(V3DPluginCallback2 &_V3DPluginCallback2_current
 	if (dialogRun1.exec()!=QDialog::Accepted) {return false;}
 	count_currentLandmarkList = LandmarkList_current.count();
 	vector<V3DLONG> poss_landmark=neuronPickerMain::landMarkList2poss(LandmarkList_current, offset_Y, offset_Z);
-	vector<vector<V3DLONG> > pos4s_neighborRelative=neuronPickerMain::initializeConstants(offset_Y, offset_Z);
+	vector<vector<V3DLONG> > pos4s_neighborRelative=neuronPickerMain::initializeConstants(offset_Y, offset_Z, dialogRun1.size_neighbor);
 	unsigned char* image1D_mask=neuronPickerMain::memory_allocate_uchar1D(size_page);
-	vector<V3DLONG> thresholds_page (dim_C, 0);
-	cout<<"threshold: ";
-	for (V3DLONG idx_color=0;idx_color<dim_C;idx_color++)
-	{
-		vector<double> histo_page=neuronPickerMain::getHistogram(image1Dc_current, size_page, idx_color*size_page);
-		thresholds_page[idx_color]=neuronPickerMain::getThresholdOtsu(histo_page);
-		cout<<" ["<<idx_color<<"]: "<<thresholds_page[idx_color]<<"; ";
-	}
-	cout<<endl;
 	for (V3DLONG idx_landmark=0;idx_landmark<count_currentLandmarkList;idx_landmark++)
 	{
 		V3DLONG pos_landmark=poss_landmark[idx_landmark];
 		memset(image1D_mask, const_max_voxelValue, size_page*sizeof(unsigned char));
 		unsigned char* image1D_tmp=neuronPickerMain::memory_allocate_uchar1D(size_page);
 		neuronPickerMain::main(image1Dc_current, image1D_tmp, image1D_mask, dim_X, dim_Y, dim_Z, dim_C, pos_landmark,
-			pos4s_neighborRelative, dialogRun1.bandWidth_color, dialogRun1.size_gap, thresholds_page);
+			pos4s_neighborRelative, dialogRun1.bandWidth_color);
 		visualizationImage1D(image1D_tmp, dim_X, dim_Y, dim_Z, 1, _V3DPluginCallback2_currentCallback, QString(name_currentWindow+QString("%1").arg(idx_landmark)));
 		neuronPickerMain::memory_free_uchar1D(image1D_tmp);
 	}
@@ -873,7 +665,7 @@ void neuronPickerDialog::creat()
     spin_color = new QDoubleSpinBox();
     spin_color->setRange(0,1); spin_color->setValue(0.9);
     spin_distance = new QSpinBox();
-    spin_distance->setRange(0,100000); spin_distance->setValue(10);
+    spin_distance->setRange(0,100000); spin_distance->setValue(5);
     QLabel* label_0 = new QLabel("color filtering bandwidth:");
     gridLayout->addWidget(label_0,6,0,1,2);
     gridLayout->addWidget(spin_color,6,2,1,1);
@@ -935,10 +727,22 @@ bool neuronPickerDialog::load()
     qDebug()<<"\t>>read image file "<< fname_input <<" complete.";
     qDebug()<<"\t\timage size: [w="<<sz_img[0]<<", h="<<sz_img[1]<<", z="<<sz_img[2]<<", c="<<sz_img[3]<<"]";
     qDebug()<<"\t\tdatatype: "<<intype;
+	V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
     if(intype!=1)
     {
-        v3d_msg("ERROR: Input image datatype is not UINT8.");
-        return false;
+		if (intype == 2) //V3D_UINT16;
+		{
+			neuronPickerDialog::convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+		}
+		else if(intype == 4) //V3D_FLOAT32;
+		{
+			neuronPickerDialog::convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+		}
+		else
+		{
+			v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+			return false;
+		}
     }
 
     fname_outbase=fname_input+".extract";
@@ -954,17 +758,8 @@ bool neuronPickerDialog::load()
     qDebug()<<"NeuronPicker: initialize veriables";
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
     image1D_out=neuronPickerMain::memory_allocate_uchar1D(size_page);
-    pos4s_neighborRelative=neuronPickerMain::initializeConstants(sz_img[0], sz_img[0]*sz_img[1]);
+    pos4s_neighborRelative=neuronPickerMain::initializeConstants(sz_img[0], sz_img[0]*sz_img[1], (V3DLONG)(spin_distance->value()));
     image1D_mask=neuronPickerMain::memory_allocate_uchar1D(size_page);
-    thresholds_page.resize(sz_img[3]);
-    cout<<"threshold: ";
-    for (V3DLONG idx_color=0;idx_color<sz_img[3];idx_color++)
-    {
-        vector<double> histo_page=neuronPickerMain::getHistogram(image1Dc_in, size_page, idx_color*size_page);
-        thresholds_page[idx_color]=neuronPickerMain::getThresholdOtsu(histo_page);
-        cout<<" ["<<idx_color<<"]: "<<thresholds_page[idx_color]<<"; ";
-    }
-    cout<<endl;
 }
 
 void neuronPickerDialog::output()
@@ -1043,7 +838,7 @@ void neuronPickerDialog::extract()
     memset(image1D_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     qDebug()<<"start extracting";
     neuronPickerMain::main(image1Dc_in, image1D_out, image1D_mask, sz_img[0], sz_img[1], sz_img[2], sz_img[3], pos_landmark,
-            pos4s_neighborRelative, spin_color->value(), (V3DLONG)(spin_distance->value()), thresholds_page);
+            pos4s_neighborRelative, spin_color->value());
     //visualizationImage1D(image1D_tmp, sz_img[0], sz_img[1], sz_img[2], 1, *call, QString(name_currentWindow+QString("%1").arg(idx_landmark)));
     qDebug()<<"push for visualization";
     updateOutputWindow();

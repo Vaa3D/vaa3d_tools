@@ -27,12 +27,12 @@ public:
 		QGridLayout *QGridLayout_region_main = new QGridLayout();
 		QLabel* QLabel_region_colorBandwidth = new QLabel(QObject::tr("Color filtering bandwidth:"));
 		QLineEdit_region_colorBandwidth = new QLineEdit("0.9", QWidget_parent);
-		QLabel* QLabel_region_gapSize = new QLabel(QObject::tr("Max gap size:"));
-		QLineEdit_region_gapSize = new QLineEdit("10", QWidget_parent);
+		QLabel* QLabel_region_neighborSize = new QLabel(QObject::tr("Neighbor size:"));
+		QLineEdit_region_neighborSize = new QLineEdit("10", QWidget_parent);
 		QGridLayout_region_main->addWidget(QLabel_region_colorBandwidth, 1, 1, 1, 1);
 		QGridLayout_region_main->addWidget(QLineEdit_region_colorBandwidth, 1, 2, 1, 1);
-		QGridLayout_region_main->addWidget(QLabel_region_gapSize, 2, 1, 1, 1);
-		QGridLayout_region_main->addWidget(QLineEdit_region_gapSize, 2, 2, 1, 1);
+		QGridLayout_region_main->addWidget(QLabel_region_neighborSize, 2, 1, 1, 1);
+		QGridLayout_region_main->addWidget(QLineEdit_region_neighborSize, 2, 2, 1, 1);
 		QGroupBox_region_main->setLayout(QGridLayout_region_main);
 		//control;
 		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Run"));
@@ -54,14 +54,14 @@ public:
 	}
 	~dialogRun(){}
 	QLineEdit* QLineEdit_region_colorBandwidth;
-	QLineEdit* QLineEdit_region_gapSize;
+	QLineEdit* QLineEdit_region_neighborSize;
 	double bandWidth_color;
-	V3DLONG size_gap;
+	V3DLONG size_neighbor;
 	public slots:
 		void _slot_start()
 		{
 			bandWidth_color=QLineEdit_region_colorBandwidth->text().toDouble();
-			size_gap=QLineEdit_region_gapSize->text().toUInt();
+			size_neighbor=QLineEdit_region_neighborSize->text().toUInt();
 			accept();
 		}
 };
@@ -73,6 +73,8 @@ class neuronPickerDialog : public QDialog
 
 public:
     neuronPickerDialog(V3DPluginCallback2 * cb);
+	void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+	void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 private:
     QString fname_input, fname_outbase;
@@ -119,6 +121,7 @@ class neuronPicker : public QObject, public V3DPluginInterface2_1
 
 public:
 	bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent);
+	
 
 	float getPluginVersion() const {return 1.1f;}
 
