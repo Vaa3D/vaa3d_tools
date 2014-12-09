@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include "neuron_connector_plugin.h"
+#include <iostream>
 
 #define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
@@ -25,6 +26,7 @@ QStringList neuron_connector_swc::menulist() const
 QStringList neuron_connector_swc::funclist() const
 {
 	return QStringList()
+        <<tr("connect_neuron_SWC")
 		<<tr("help");
 }
 
@@ -48,13 +50,82 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("help"))
+    if (func_name == tr("connect_neuron_SWC"))
+    {
+        //load input
+        if(infiles.size()!=1 || outfiles.size()!=1)
+        {
+            qDebug("ERROR: please set input and output!");
+            printHelp();
+            return false;
+        }
+        //load neurons
+        QString fname_input = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+        NeuronTree* nt = new NeuronTree();
+        if (fname_input.toUpper().endsWith(".SWC") || fname_input.toUpper().endsWith(".ESWC")){
+            *nt = readSWC_file(fname_input);
+        }
+        if(nt->listNeuron.size()<=0){
+            qDebug()<<"failed to read SWC file: "<<fname_input;
+            return false;
+        }
+
+        //get parameters
+        double angthr=60, disthr=10, xscale=1, yscale=1, zscale=1;
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        if(paras.size()>0){
+            double tmp=atof(paras.at(0));
+            if(tmp>0 && tmp<180)
+                angthr=tmp;
+            else
+                cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value "<<angthr<<endl;
+        }
+        if(paras.size()>1){
+            double tmp=atof(paras.at(1));
+            if(tmp>=0)
+                disthr=tmp;
+            else
+                cerr<<"error: wrong distance threshold value: "<<tmp<<"; use default value "<<disthr<<endl;
+        }
+        if(paras.size()>2){
+            double tmp=atof(paras.at(2));
+            zscale=tmp;
+        }
+        if(paras.size()>3){
+            double tmp=atof(paras.at(3));
+            xscale = tmp;
+        }
+        if(paras.size()>4){
+            double tmp=atof(paras.at(4));
+            yscale = tmp;
+        }
+        cout<<"angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
+
+        //do connect
+        QList<NeuronSWC> newNeuron;
+        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr);
+
+        qDebug()<<"output result";
+        //output result
+        if(!export_list2file(newNeuron, fname_output)){
+            qDebug()<<"error: Cannot open file "<<fname_output<<" for writing!"<<endl;
+        }
+    }
+    else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printHelp();
 	}
 	else return false;
 
 	return true;
+}
+
+void printHelp()
+{
+    cout<<"\nUsage: v3d -x neuron_connector -f connect_neuron_SWC -i <input.swc> -o <output.swc> "
+          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1>"<<endl;
+    cout<<"\n";
 }
 
 void neuron_connector_swc::doconnect(V3DPluginCallback2 &callback, QWidget *parent)
@@ -207,6 +278,21 @@ void neuron_connector_dialog::run()
     double angThr=cos((180-spin_ang->value())/180*M_PI);
     double disThr=spin_dis->value()*spin_dis->value();
 
+    QList<NeuronSWC> newNeuron;
+    connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr);
+
+    qDebug()<<"output result";
+    //output result
+    if(!export_list2file(newNeuron, fname_output)){
+        v3d_msg("Cannot open file " + fname_output + " for writing!");
+    }
+
+    this->accept();
+}
+
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr)
+{
+    newNeuron.clear();
     //rescale neurons
     QList<XYZ> scaledXYZ;
     for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
@@ -218,7 +304,7 @@ void neuron_connector_dialog::run()
     }
 
     qDebug()<<"search for components and tips";
-    //initialize tree conponents and get all tips
+    //initialize tree components and get all tips
     QList<V3DLONG> cand;
     QList<XYZ> canddir;
     QVector<int> childNum(nt->listNeuron.size(), 0);
@@ -370,9 +456,8 @@ void neuron_connector_dialog::run()
 
     qDebug()<<"reconstruct neuron tree";
     //reconstruct tree
-    QList<NeuronSWC> newNeuron;
     QVector<V3DLONG> newid(nt->listNeuron.size(), -1);
-    QVector<V3DLONG> newpn(nt->listNeuron.size(), -1);
+    QVector<V3DLONG> newpn(nt->listNeuron.size(), -1); //id starts from 1, -1: not touched, 0: touched but overlap with parent
     curid=1;
     for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
         if(newid[i]>0) continue;
@@ -383,15 +468,17 @@ void neuron_connector_dialog::run()
             //add current node to the listNeuron
             V3DLONG oid=pqueue.dequeue();
 
-            NeuronSWC tmpNeuron;
-            tmpNeuron.n = newid[oid];
-            tmpNeuron.x = nt->listNeuron.at(oid).x;
-            tmpNeuron.y = nt->listNeuron.at(oid).y;
-            tmpNeuron.z = nt->listNeuron.at(oid).z;
-            tmpNeuron.type = nt->listNeuron.at(oid).type;
-            tmpNeuron.r = nt->listNeuron.at(oid).r;
-            tmpNeuron.pn = newpn.at(oid);
-            newNeuron.append(tmpNeuron);
+            if(newid[oid]>0){
+                NeuronSWC tmpNeuron;
+                tmpNeuron.n = newid[oid];
+                tmpNeuron.x = nt->listNeuron.at(oid).x;
+                tmpNeuron.y = nt->listNeuron.at(oid).y;
+                tmpNeuron.z = nt->listNeuron.at(oid).z;
+                tmpNeuron.type = nt->listNeuron.at(oid).type;
+                tmpNeuron.r = nt->listNeuron.at(oid).r;
+                tmpNeuron.pn = newpn.at(oid);
+                newNeuron.append(tmpNeuron);
+            }
 
             //add current node's children/parent/new-neighbor to the stack
             //parent
@@ -426,14 +513,6 @@ void neuron_connector_dialog::run()
             }
         }
     }
-
-    qDebug()<<"output result";
-    //output result
-    if(!export_list2file(newNeuron, fname_output)){
-        v3d_msg("Cannot open file " + fname_output + " for writing!");
-    }
-
-    this->accept();
 }
 
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)

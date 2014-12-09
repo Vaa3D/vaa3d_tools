@@ -36,6 +36,8 @@ public:
     QPushButton *btn_quit, *btn_run;
 };
 
+
+
 class neuron_connector_swc : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -53,6 +55,8 @@ public:
     void doconnect(V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+void printHelp();
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif
