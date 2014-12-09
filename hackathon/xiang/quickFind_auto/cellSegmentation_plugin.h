@@ -43,7 +43,7 @@ const V3DLONG const_multiplier_uThresholdRegionSize = 15;
 const V3DLONG default_max_exemplar=5;
 const V3DLONG const_max_learnIteration = 5000;
 const V3DLONG const_max_iteration=100;
-const V3DLONG const_threshold_centerDistance2 = 36;
+const V3DLONG const_threshold_centerDistance2 = 16;
 #define INF 1E9
 #define NINF -1E9
 #define PI 3.14159265
