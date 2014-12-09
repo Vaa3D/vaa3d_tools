@@ -28,7 +28,7 @@ struct root_node
 struct NA_PARA
 {
   //  int  bkg_thresh;
-  //  int  channel;
+    int is_entire;
     int block_size;
     int root_1st[3];
 
@@ -193,7 +193,7 @@ NeuronTree eliminate(NeuronTree input, double length);
 
         P.block_size = dialog.block_size;
         P.inimg_file = dialog.rawfilename;
-
+        P.is_entire = dialog.is_entire;
 
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -288,7 +288,6 @@ NeuronTree eliminate(NeuronTree input, double length);
             cerr<<"Need input image"<<endl;
             return false;
         }
-
         P.inimg_file = infiles[0];
         int k=0;
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
@@ -307,7 +306,7 @@ NeuronTree eliminate(NeuronTree input, double length);
             P.root_1st[2] = file_inmarkers[0].z;
         }
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-
+        P.is_entire = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
 
 
 
@@ -771,7 +770,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             {
                 printf("can not load the region");
                 if(datald) {delete []datald; datald = 0;}
-                return false;
+                continue;//return false;
             }
 
             simple_saveimage_wrapper(callback, walker->tilename.toStdString().c_str(),  (unsigned char *)datald, in_sz, V3D_UINT8);
@@ -854,7 +853,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         {
             NeuronSWC curr = nt_pruned.listNeuron.at(i);
             newNode =  new root_node[1];
-            if(curr.x < 0.05* P.block_size && left == 0 && walker->direction !=2)
+            if((curr.x < 0.05* P.block_size || P.is_entire ==1) && left == 0 && walker->direction !=2)
             {
 
                 newNode->start[0] = walker->start[0] - P.block_size;
@@ -880,12 +879,12 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
                 left = 1;
             }
-            else if(curr.x > 0.95 * P.block_size && right == 0 && walker->direction !=1)
+            else if((curr.x > 0.95 * P.block_size ||P.is_entire ==1) && right == 0 && walker->direction !=1)
             {
+                if(walker->start[0] + P.block_size > in_zz[0] - 1 )       continue;
                 newNode->start[0] = walker->start[0] + P.block_size;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
-
                 newNode->end[0] = newNode->start[0] + P.block_size - 1;
                 newNode->end[1] = walker->end[1];
                 newNode->end[2] = walker->end[2];
@@ -908,7 +907,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
 
             }
-            else if(curr.y < 0.05* P.block_size && up == 0 && walker->direction !=4)
+            else if((curr.y < 0.05* P.block_size || P.is_entire ==1)&& up == 0 && walker->direction !=4)
             {
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1] - P.block_size;
@@ -934,15 +933,15 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 up = 1;
 
             }
-            else if(curr.y > 0.95 * P.block_size && down == 0 && walker->direction !=3)
+            else if((curr.y > 0.95 * P.block_size ||P.is_entire ==1) && down == 0 && walker->direction !=3)
             {
+                if(walker->start[1]  + P.block_size > in_zz[1] - 1) continue;
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1]  + P.block_size;
                 newNode->start[2] = walker->start[2];
                 newNode->end[0] = walker->end[0];
                 newNode->end[1] = newNode->start[1] + P.block_size - 1;
                 newNode->end[2] = walker->end[2];
-
                 if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
 
                 QString startingpos="", tmps;

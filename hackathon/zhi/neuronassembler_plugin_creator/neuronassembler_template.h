@@ -14,13 +14,13 @@ class NeuronAssemblerDialog_raw : public QDialog
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
-
             marker_filepath = new QLineEdit();
             openmarkerFile = new QPushButton(QObject::tr("..."));
+            image_checker = new QCheckBox();
+            image_checker->setChecked(false);
 
             layout->addWidget(new QLabel("block_size"),0,0);
             layout->addWidget(block_spinbox, 0,1,1,5);
-
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),1,0);
             layout->addWidget(raw_filepath,1,1,1,4);
             layout->addWidget(openrawFile,1,5,1,1);
@@ -29,6 +29,10 @@ class NeuronAssemblerDialog_raw : public QDialog
             layout->addWidget(marker_filepath,2,1,1,4);
             layout->addWidget(openmarkerFile,2,5,1,1);
 
+            layout->addWidget(new QLabel(QObject::tr("Tracing the entire image:")),3,0);
+            layout->addWidget(image_checker,3,1,1,5);
+
+
             QHBoxLayout * hbox2 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
@@ -36,10 +40,7 @@ class NeuronAssemblerDialog_raw : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-      //      layout->addLayout(hbox2,3,0,3,6);
             setLayout(layout);
-     //       setWindowTitle(QString("Vaa3D-NeuronAssembler"));
-
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
             connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
@@ -47,7 +48,7 @@ class NeuronAssemblerDialog_raw : public QDialog
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
             connect(openmarkerFile, SIGNAL(clicked()), this, SLOT(_slots_openmarkerFile()));
-
+            connect(image_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             update();
         }
 
@@ -57,8 +58,7 @@ class NeuronAssemblerDialog_raw : public QDialog
         void update()
         {
 //            channel = channel_spinbox->value();
-//            bkg_thresh = bkgthresh_spinbox->value();
-
+            image_checker->isChecked()? is_entire = 1 : is_entire = 0;
             block_size = block_spinbox->value();
 
             rawfilename = raw_filepath->text();
@@ -103,7 +103,7 @@ public:
         QSpinBox * block_spinbox;
         QLineEdit * tc_filepath;
         QPushButton *openTcFile;
-
+        QCheckBox *image_checker;
         QLineEdit * raw_filepath;
         QLineEdit * marker_filepath;
         QPushButton *openrawFile;
@@ -112,7 +112,7 @@ public:
         Image4DSimple* image;
         LandmarkList listLandmarks;
         int block_size;
-
+        int is_entire;
         QString rawfilename;
         QString markerfilename;
     };

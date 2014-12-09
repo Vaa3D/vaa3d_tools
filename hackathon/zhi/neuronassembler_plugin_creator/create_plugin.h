@@ -285,7 +285,7 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"\t\tprintf(\"outswc_file\t\tWill be named automatically based on the input image file name, so you don't have to specify it.\\n\\n\");\n\n"<<endl;
 
 
-        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_raw -i <inimg_file> -p <inmarker_file> <block size>";
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f trace_raw -i <inimg_file> -p <inmarker_file> <block size> <tracing_entire_image>";
         if(pt.PARA_NAME.size() >0)
         {
             for(int i = 0; i < pt.PARA_NAME.size() ; i++)
@@ -298,6 +298,7 @@ void create_plugin_cpp(PluginTemplate & pt)
         ofs<<"\t\tprintf(\"inimg_file\t\tShould be 8 bit v3draw/raw image\\n\");"<<endl;
         ofs<<"\t\tprintf(\"inmarker_file\t\tPlease specify the path of the marker file, Default value is NULL\\n\");"<<endl;
         ofs<<"\t\tprintf(\"block size\t\tDefault 1024\\n\");"<<endl;
+        ofs<<"\t\tprintf(\"tracing_entire_image\tYES:1, NO:0. Default value is 0\\n\");"<<endl;
         ofs<<"\n";
         if(pt.PARA_NAME.size() >0)
         {
@@ -544,23 +545,23 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
                 {
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit = new QLineEdit();"<<endl;
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_edit->setText(\""<<pt.PARA_VALUE.at(d)<<"\");"<<endl;
-                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+3 <<",0);"<<endl;
-                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_edit,"<<d+3<<",1,1,5);\n"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+4 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_edit,"<<d+4<<",1,1,5);\n"<<endl;
 
                 }
                 else
                 {
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box->setValue("<<pt.PARA_VALUE.at(d)<<");"<<endl;
-                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+3 <<",0);"<<endl;
-                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+3<<",1,1,5);\n"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+4 <<",0);"<<endl;
+                    ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+4<<",1,1,5);\n"<<endl;
 
                 }
             }
 
         }
 
-        ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+3<<",0,3,6);"<<endl;
+        ofs<<"\t\t\tlayout->addLayout(hbox2,"<<d+4<<",0,3,6);"<<endl;
         ofs<<"\t\t\tsetWindowTitle(QString(\"Vaa3D-NeuronAssembler("<<pt.TRACINGPLUGIN_NAME <<")\"));"<<endl;
 
         for(int i = 37; i< 46; i++)
