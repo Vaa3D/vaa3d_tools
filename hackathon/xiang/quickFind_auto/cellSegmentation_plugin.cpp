@@ -51,12 +51,6 @@ class class_segmentationMain
 		V3DLONG offset_Z;
 		V3DLONG offset_Y;
 		int idx_channel;
-		int idx_shape;
-		double threshold_deltaShapeStat;
-		double threshold_global;
-		V3DLONG multiplier_uThresholdRegionSize;
-		V3DLONG uThreshold_centerMovement1;
-		V3DLONG uThreshold_centerMovement2;
 		QString name_currentWindow;
 		//detection;
 		vector<vector<V3DLONG> > possVct_result;
@@ -76,9 +70,11 @@ class class_segmentationMain
 
 	#pragma region "control-run"
 	bool control_run(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z ,
-		int _idx_channel, int _idx_shape, double _threshold_deltaShapeStat,
-		V3DLONG _max_exemplar, V3DLONG _threshold_input, QString _name_currentWindow,
-		V3DLONG _maxMovement1, V3DLONG _maxMovement2, 
+		int _idx_channel, int _idx_shape, double _delta_shapeStat,
+		V3DLONG _count_exemplar, V3DLONG _threshold_intensity, QString _name_currentWindow,
+		V3DLONG _uThreshold_centerMovement1, V3DLONG _uThreshold_centerMovement2,
+		V3DLONG _threshold_centerDistance2, V3DLONG _threshold_regionSize,
+		double _multiplier_uThresholdRegionSizeGlobal, double _multiplier_uThresholdRegionSizeExemplar, 
 		V3DPluginCallback2 & _V3DPluginCallback2_currentCallback,  QWidget * _QWidget_parent)
 	{
 		cout<<"detection starting..."<<endl;
@@ -96,8 +92,6 @@ class class_segmentationMain
 		if (this->image1D_mask == NULL) {return false;}
 		V3DLONG* image1D_maskTmp = memory_allocate_int1D(size_page);
 		if (image1D_maskTmp == NULL) {return false;}
-		unsigned char* image1D_visited = memory_allocate_uchar1D(this->size_page);
-		if (image1D_visited == NULL) {return false;}
 		this->image3D_page = memory_allocate_uchar3D(this->dim_Z, this->dim_Y, this->dim_X);
 		if (this->image3D_page == NULL) {return false;}
 		//this->image1Dc_result = memory_allocate_uchar1D(this->size_page3);
@@ -115,23 +109,19 @@ class class_segmentationMain
 				}
 			}
 		}
-		this->threshold_global = _threshold_input;
-		cout<<"threshold_global: "<<threshold_global<<endl;
-		this->thresholdForCurrentPage();
+		cout<<"current threshold: "<<_threshold_intensity<<endl;
+		this->thresholdForCurrentPage(_threshold_intensity);
 		cout<<"thresholding finished;"<<endl;
-		this->idx_shape = _idx_shape;
-		this->categorizeVoxelsByIntensity();
-		this->threshold_deltaShapeStat = _threshold_deltaShapeStat;
-		this->multiplier_uThresholdRegionSize = const_multiplier_uThresholdRegionSize;
+		this->categorizeVoxelsByIntensity(_threshold_intensity);
 		this->name_currentWindow = _name_currentWindow;
-		this->uThreshold_centerMovement1 = _maxMovement1*_maxMovement1;
-		this->uThreshold_centerMovement2 = _maxMovement2*_maxMovement2;
 		this->initializeConstants();
 		cout<<"initializeConstants() finished;"<<endl;
-		V3DLONG uThreshold_regionSizeGlobal = this->size_page*const_uThresholdMultiplier_regionSize;
+		V3DLONG uThreshold_regionSizeGlobal = this->size_page*_multiplier_uThresholdRegionSizeGlobal;
 		V3DLONG count_seedCategory = this->possVct_seed.size();
 		V3DLONG count_result = 0;
 		V3DLONG count_iteration = 0;
+		V3DLONG start_seedCategory=0;
+		V3DLONG start_seed=0;
 		while (count_iteration<const_max_iteration)
 		{
 			vector<V3DLONG > thresholds_intensity;
@@ -147,20 +137,26 @@ class class_segmentationMain
 				V3DLONG count_seed = this->possVct_seed[idx_seedCategoy].size();
 				if (counts_learn>const_max_learnIteration) { break;	}
 				//cout<<"current intensity: "<<(const_max_voxelValue-idx_seedCategoy)<<endl;
-				for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
+				if (idx_seedCategoy<start_seedCategory) {continue;}
+				start_seedCategory=idx_seedCategoy;
+				start_seed=0;
+				for (V3DLONG idx_seed=start_seed;idx_seed<count_seed;idx_seed++)
 				{
+					if (idx_seed<start_seed) {continue;}
+					start_seed=idx_seed;
 					if (counts_learn>const_max_learnIteration) { break;	}
-					if (count_exemplar>=_max_exemplar) {break;}
+					if (count_exemplar>=_count_exemplar) {break;}
 					V3DLONG pos_seed = this->possVct_seed[idx_seedCategoy][idx_seed];
 					//cout<<"pos_seed: "<<pos_seed<<endl;
+					if (idx_seed<start_seed) {continue;}
+					start_seed=idx_seed;
 					if (this->image1D_mask[pos_seed]>0) {continue;}
-					if (image1D_visited[pos_seed]>0) {continue;}
-					else (image1D_visited[pos_seed]=1);
+					
 					counts_learn++;
 					V3DLONG pos_exemplar=pos_seed;
 					V3DLONG intensity_exemplar = this->image1D_page[pos_exemplar];
 					//cout<<"intensity_exemplar: "<<intensity_exemplar<<endl;
-					V3DLONG count_step = intensity_exemplar-threshold_global;
+					V3DLONG count_step = intensity_exemplar-_threshold_intensity;
 					V3DLONG center_exemplar = -1;
 					vector<V3DLONG> poss_exemplarNew;
 					vector<V3DLONG> poss_exemplar;
@@ -177,7 +173,7 @@ class class_segmentationMain
 						V3DLONG size_exemplarNew = poss_exemplarNew.size();
 						//cout<<"size_exemplarNew: "<<size_exemplarNew<<endl;
 						this->poss2Image1D(poss_exemplarNew, this->image1D_mask, 0);
-						if (size_exemplarNew<default_threshold_regionSize) {continue; }
+						if (size_exemplarNew<_threshold_regionSize) {continue; }
 						V3DLONG center_new = this->getCenterByMass(poss_exemplarNew);
 						//cout<<"center_new: "<<center_new<<endl;
 						/*boundBox_exemplar = this->getBoundBox(poss_exemplarNew);
@@ -199,25 +195,25 @@ class class_segmentationMain
 							//{
 							//	double value_anisotropyNew = shapeStat_exemplarNew[0][m];
 							//	double value_anisotropyOld = shapeStat_exemplarOld[0][m];
-							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*min(value_anisotropyOld, value_anisotropyNew)))
-							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*value_anisotropyOld, value_anisotropyNew))
+							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*min(value_anisotropyOld, value_anisotropyNew)))
+							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*value_anisotropyOld, value_anisotropyNew))
 							//	{is_passedShapeTest = false; break;}
 							//	value_anisotropyNew = shapeStat_exemplarNew[1][m];
 							//	value_anisotropyOld = shapeStat_exemplarOld[1][m];
-							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*min(value_anisotropyOld, value_anisotropyNew)))
-							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*value_anisotropyOld, value_anisotropyNew))
+							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*min(value_anisotropyOld, value_anisotropyNew)))
+							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*value_anisotropyOld, value_anisotropyNew))
 							//	{is_passedShapeTest = false; break;}
 							//	value_anisotropyNew = shapeStat_exemplarNew[2][m];
 							//	value_anisotropyOld = shapeStat_exemplarOld[2][m];
-							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*min(value_anisotropyOld, value_anisotropyNew)))
-							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(this->threshold_deltaShapeStat*value_anisotropyOld, value_anisotropyNew))
+							//	//if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*min(value_anisotropyOld, value_anisotropyNew)))
+							//	if (fabs(value_anisotropyNew-value_anisotropyOld)>(_delta_shapeStat*value_anisotropyOld, value_anisotropyNew))
 							//	{is_passedShapeTest = false; break;}
 							//}
 							//if (!is_passedShapeTest) {break;}
 							double distance_centerMovement1 = this->getEuclideanDistance2(center_new, center_exemplar);
-							if (distance_centerMovement1>uThreshold_centerMovement1) {break;}
+							if (distance_centerMovement1>_uThreshold_centerMovement1) {break;}
 							double distance_centerMovement2 = this->getEuclideanDistance2(center_new, pos_exemplar);
-							if (distance_centerMovement2>uThreshold_centerMovement2) {break;}
+							if (distance_centerMovement2>_uThreshold_centerMovement2) {break;}
 						}
 						if (size_exemplarNew>uThreshold_regionSizeGlobal)
 						{
@@ -243,7 +239,7 @@ class class_segmentationMain
 					{
 						continue; //not passed the center test, will not removed from image;
 					} //failed;
-					if (size_exemplar<default_threshold_regionSize) { continue;} //failed;
+					if (size_exemplar<_threshold_regionSize) { continue;} //failed;
 					vector<V3DLONG> boundBox_exemplar = this->getBoundBox(poss_exemplar);
 					V3DLONG radius_exemplar = ceil((double)getMaxDimension(boundBox_exemplar)/2);
 					//cout<<"radius_exemplar: "<<radius_exemplar<<endl;
@@ -279,7 +275,7 @@ class class_segmentationMain
 						continue;
 					}
 					//finally, succeed;
-					vector<vector<double> > shapeStat_exemplar=this->getShapeStat(centerXYZ_exemplar[0], centerXYZ_exemplar[1], centerXYZ_exemplar[2], radius_exemplar);
+					vector<vector<double> > shapeStat_exemplar=this->getShapeStat(centerXYZ_exemplar[0], centerXYZ_exemplar[1], centerXYZ_exemplar[2], radius_exemplar, _idx_shape);
 					//double shapeStat_sum = 0;
 					//for (V3DLONG i=0;i<3;i++)
 					//{
@@ -295,7 +291,7 @@ class class_segmentationMain
 						vector<V3DLONG> xyz_i = this->pos2xyz(poss_exemplar[i]); this->image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = 0;
 					}
 					shapeStats_exemplar.push_back(shapeStat_exemplar);
-					V3DLONG uThreshold_size = size_exemplar*this->multiplier_uThresholdRegionSize;
+					V3DLONG uThreshold_size = size_exemplar*_multiplier_uThresholdRegionSizeExemplar;
 					uThresholds_size.push_back(uThreshold_size);
 					//uThresholds_intensity.push_back(this->getMaxIntensity(poss_exemplar));
 					this->possVct_result.push_back(poss_exemplar);
@@ -304,7 +300,7 @@ class class_segmentationMain
 					count_exemplar++;
 					count_result++;
 				}
-				if (count_exemplar>=_max_exemplar) {break;}
+				if (count_exemplar>=_count_exemplar) {break;}
 			}
 			cout<<"exemplars found in this iteration: "<<count_exemplar<<endl;
 			//QString name_result = "Exemplar";
@@ -333,7 +329,7 @@ class class_segmentationMain
 						vector<V3DLONG> poss_propagate = this->regionGrowOnPos(pos_seed, threshold_current,  image1D_maskTmp, 1);
 						V3DLONG size_propagate = poss_propagate.size();
 						if (size_propagate>uThreshold_regionSizeGlobal)	{ continue; }
-						if (size_propagate<default_threshold_regionSize) { continue;}
+						if (size_propagate<_threshold_regionSize) { continue;}
 						if (size_propagate>uThreshold_size1) { continue;}
 						vector<V3DLONG> boundBox_propagate = this->getBoundBox(poss_propagate);
 						V3DLONG radius_propagate = ceil((double)this->getMaxDimension(boundBox_propagate)/2);
@@ -367,7 +363,7 @@ class class_segmentationMain
 							this->poss2Image1D(poss_propagate, this->image1D_mask, label_center); //merged;
 						}
 						vector<V3DLONG> xyz_center = this->pos2xyz(center_propagate);
-						vector<vector<double> > shapeStat_propagate = this->getShapeStat(xyz_center[0], xyz_center[1], xyz_center[2], radius_propagate); //consisted of 3 vectors with length 4;
+						vector<vector<double> > shapeStat_propagate = this->getShapeStat(xyz_center[0], xyz_center[1], xyz_center[2], radius_propagate, _idx_shape); //consisted of 3 vectors with length 4;
 						if (shapeStat_propagate.empty()) {cout<<"warning: shape stats estimation failed;"<<endl;continue;}
 						bool is_passedShapeTest = true;
 						for (int m=0; m<const_shapeStatCount; m++)
@@ -377,7 +373,7 @@ class class_segmentationMain
 							double anisotropy_propagate = fabs(shapeStat_propagate[0][m]);
 							if ((anisotropy_exemplar<const_infinitesimal) && (anisotropy_exemplar>const_infinitesimal))
 							{is_passedShapeTest = false; break;}
-							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 							{is_passedShapeTest = false; break;}
 							
 							anisotropy_exemplar = fabs(shapeStats_exemplar[idx_exemplarMapped1][1][m]);
@@ -385,7 +381,7 @@ class class_segmentationMain
 							anisotropy_propagate = fabs(shapeStat_propagate[1][m]);
 							if ((anisotropy_exemplar<const_infinitesimal) && (anisotropy_exemplar>const_infinitesimal))
 							{is_passedShapeTest = false; break;}
-							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 							{is_passedShapeTest = false; break;}
 
 							anisotropy_exemplar = fabs(shapeStats_exemplar[idx_exemplarMapped1][2][m]);
@@ -393,7 +389,7 @@ class class_segmentationMain
 							anisotropy_propagate = fabs(shapeStat_propagate[2][m]);
 							if ((anisotropy_exemplar<const_infinitesimal) && (anisotropy_exemplar>const_infinitesimal))
 							{is_passedShapeTest = false; break;}
-							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+							if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 							{is_passedShapeTest = false; break;}
 						}
 						if (is_passedShapeTest)
@@ -418,15 +414,15 @@ class class_segmentationMain
 						//	{
 						//		double anisotropy_exemplar = shapeStats_exemplar[idx_exemplarMapped2][0][m];
 						//		double anisotropy_propagate = shapeStat_propagate[0][m];
-						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 						//		{is_passedShapeTest = false; break;}
 						//		anisotropy_exemplar = shapeStats_exemplar[idx_exemplarMapped2][1][m];
 						//		anisotropy_propagate = shapeStat_propagate[1][m];
-						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 						//		{is_passedShapeTest = false; break;}
 						//		anisotropy_exemplar = shapeStats_exemplar[idx_exemplarMapped2][2][m];
 						//		anisotropy_propagate = shapeStat_propagate[2][m];
-						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(this->threshold_deltaShapeStat*anisotropy_exemplar))
+						//		if (fabs(anisotropy_propagate-anisotropy_exemplar)>(_delta_shapeStat*anisotropy_exemplar))
 						//		{is_passedShapeTest = false; break;}
 						//	}
 						//	if (is_passedShapeTest)
@@ -471,7 +467,7 @@ class class_segmentationMain
 				}
 			}
 			cout<<"count regions: "<<count_result<<endl;
-			if (count_exemplar<_max_exemplar) {break;}
+			if (count_exemplar<_count_exemplar) {break;}
 		}
 		//post-processing;
 		count_result = possVct_result.size();
@@ -502,7 +498,7 @@ class class_segmentationMain
 					{
 						V3DLONG center2 = this->centers_result[idx_result2];
 						if (center2>-1)
-						if (this->getEuclideanDistance2(center2, center1)<const_threshold_centerDistance2)
+						if (this->getEuclideanDistance2(center2, center1)<_threshold_centerDistance2)
 						{
 							/*this->possVct_result[idx_result2]=this->mergePoss(this->possVct_result[idx_result2], poss_result);
 							this->centers_result[idx_result2]=this->getCenterByMass(this->possVct_result[idx_result2]);*/
@@ -518,24 +514,23 @@ class class_segmentationMain
 		this->landmarkList_result = this->poss2landMarkList(this->centers_result);
 		//this->possVct2Image1DC(this->possVct_result, this->image1Dc_result);
 		memory_free_int1D(image1D_maskTmp);
-		memory_free_uchar1D(image1D_visited);
 		return true;
 	}
 	#pragma endregion
 
 	#pragma region "regionGrow"
-	void categorizeVoxelsByIntensity() //will only consider voxels with value higher than default_threshold_global;
+	void categorizeVoxelsByIntensity(double _threshold_intensity) //will only consider voxels with value higher than default_threshold_global;
 	{
 		this->possVct_seed.clear();
 		vector<V3DLONG> poss_empty (0,0);
-		for (V3DLONG i=threshold_global;i<const_length_histogram;i++)
+		for (V3DLONG i=_threshold_intensity;i<const_length_histogram;i++)
 		{
 			this->possVct_seed.push_back(poss_empty);
 		}
 		for (V3DLONG i=0;i<this->size_page;i++)
 		{
 			V3DLONG value_i = this->image1D_page[i];
-			if (value_i>threshold_global)
+			if (value_i>_threshold_intensity)
 			{
 				V3DLONG offset_i = const_max_voxelValue-value_i;
 				this->possVct_seed[offset_i].push_back(i);
@@ -707,100 +702,13 @@ class class_segmentationMain
 		}
 		return -1;
 	}
-	#pragma endregion		
-
-	#pragma region "threshold estimation"
-	void estimateThreshold()
+	void thresholdForCurrentPage(double _threshold_input)
 	{
-		vector<double> histo_page = this->getHistogram();
-		this->threshold_global = estimateThresholdYen(histo_page);
-		if (this->threshold_global < default_threshold_global) { this->threshold_global = default_threshold_global;}
-		cout<<"threshold estimated: "<<this->threshold_global<<endl;
-	}
-	static int estimateThresholdOtsu(vector<double> histo_input)
-	{
-		int i, value_threshold;
-		float s,ut,uk,wk,max;
-		float b,q;
-		ut = 0.0;
-		for(i=0;i<const_length_histogram;i++)
-		{
-			ut = ut + i*histo_input[i];
-		}
-		uk = 0.0; wk = 0.0; max = 0.0;
-		for(i=0;i<const_length_histogram;i++)
-		{
-			wk = wk + histo_input[i];
-			uk = uk + i*histo_input[i];
-			b = ut * wk - uk;
-			q = wk * (1.0-wk);
-			if(q<const_infinitesimal) continue;
-			b = b*b/q;
-			if(b > max)
-			{
-				max = b;
-				value_threshold = i;
-			}
-		}
-		return value_threshold;
-	}
-	static int estimateThresholdYen(vector<double> histo_input)
-	{
-		// Implements Yen's thresholding method;
-		// 1) Yen J.C., Chang F.J., and Chang S. (1995) "A New Criterion for Automatic Multilevel Thresholding" IEEE Trans. on Image Processing, 4(3): 370-378;
-		// 2) Sezgin M. and Sankur B. (2004) "Survey over Image Thresholding Techniques and Quantitative Performance Evaluation" Journal of Electronic Imaging, 13(1): 146-165;
-
-		int value_threshold;
-		int ih, it;
-		double crit;
-		double max_crit;
-		double* P1 = new double[const_length_histogram];
-		double* P1_sq = new double[const_length_histogram]; 
-		double* P2_sq = new double[const_length_histogram]; 
-		P1[0]=histo_input[0];
-		for (ih = 1; ih < const_length_histogram; ih++ )
-			P1[ih]= P1[ih-1] + histo_input[ih];
-		P1_sq[0]=histo_input[0]*histo_input[0];
-		for (ih = 1; ih < const_length_histogram; ih++ )
-			P1_sq[ih]= P1_sq[ih-1] + histo_input[ih] * histo_input[ih];
-		P2_sq[const_length_histogram-1] = 0.0;
-		for ( ih = const_max_voxelValue-1; ih >= 0; ih-- )
-			P2_sq[ih] = P2_sq[ih + 1] + histo_input[ih + 1] * histo_input[ih + 1];
-		value_threshold = -1;
-		max_crit = NINF;
-		for ( it = 0; it < const_length_histogram; it++ ) {
-			crit = -1.0 * (( P1_sq[it] * P2_sq[it] )> 0.0? log( P1_sq[it] * P2_sq[it]):0.0) +  2 * ( ( P1[it] * ( 1.0 - P1[it] ) )>0.0? log(  P1[it] * ( 1.0 - P1[it] ) ): 0.0);
-			if ( crit > max_crit ) {
-				max_crit = crit;
-				value_threshold = it;
-			}
-		}
-		return value_threshold;
-	}
-	vector<double> getHistogram()
-	{
-		vector<double> histo_result (const_length_histogram, 0);
-		V3DLONG value_voxel;
-		for (V3DLONG i=0;i<this->size_page;i++)
-		{
-			value_voxel = this->image1D_page[i];
-			histo_result[value_voxel] = histo_result[value_voxel]+1;
-		}
-		for (int i=0;i<const_length_histogram;i++)
-		{
-			histo_result[i] = histo_result[i]/this->size_page;
-		}
-		return histo_result;
-	}
-	V3DLONG thresholdForCurrentPage()
-	{
-		V3DLONG count_totalWhite = 0;
 		for(V3DLONG i=0; i<this->size_page; i++)
 		{	
-			if (image1D_page[i]>this->threshold_global)
+			if (image1D_page[i]>_threshold_input)
 			{
 				//do nothing to image1D_page;
-				count_totalWhite = count_totalWhite + 1;
 				this->image1D_mask[i] = 0; //available;
 			}
 			else
@@ -808,7 +716,7 @@ class class_segmentationMain
 				this->image1D_mask[i] = INF; //invalid;
 			}
 		}
-		return count_totalWhite;
+		return;
 	}
 	#pragma endregion
 
@@ -1275,7 +1183,7 @@ class class_segmentationMain
 	#pragma endregion
 
 	#pragma region "shapeStat"
-	vector<vector<double> > getShapeStat(V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG value_radius)
+	vector<vector<double> > getShapeStat(V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG value_radius, V3DLONG _idx_shape)
 	{
 		vector<vector<double> > valuesVct_result;
 		double value_PC1 = 0;
@@ -1289,7 +1197,7 @@ class class_segmentationMain
 		for (int i=1;i<=const_shapeStatCount;i++)
 		{
 			rr=2+size_step*(i-1);
-			getPCA(this->image3D_page, this->dim_X, this->dim_Y, this->dim_Z, x , y, z, rr, rr, rr,value_PC1, value_PC2, value_PC3, this->idx_shape, false, false);
+			getPCA(this->image3D_page, this->dim_X, this->dim_Y, this->dim_Z, x , y, z, rr, rr, rr,value_PC1, value_PC2, value_PC3, _idx_shape, false, false);
 			values_PC1.push_back(value_PC1/rr);
 			values_PC2.push_back(value_PC2/rr);
 			values_PC3.push_back(value_PC3/rr);
@@ -1624,27 +1532,32 @@ bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList 
 {
 	if (func_name == tr("run"))
 	{
-		V3DLONG c = 1;
-		V3DLONG e = 15;
-		double d = 1.5;
-		V3DLONG m1 = 2;
-		V3DLONG m2 = 4;
-		V3DLONG T = default_threshold_global;
 		vector<char*> inparas = *((vector<char*> *)input.at(1).p);
-		c = atoi(inparas.at(0));
-		e = atoi(inparas.at(1));
-		d = atof(inparas.at(2));
-		m1 = atoi(inparas.at(3));
-		m2 = atoi(inparas.at(4));
-		T = atoi(inparas.at(5));
+		V3DLONG idx_channel = atoi(inparas.at(0));
+		V3DLONG count_exemplar = atoi(inparas.at(1));
+		double delta_shapeStat = atof(inparas.at(2));
+		V3DLONG threshold_centerMovement1 = atoi(inparas.at(3));
+		threshold_centerMovement1 = threshold_centerMovement1*threshold_centerMovement1;
+		V3DLONG threshold_centerMovement2 = atoi(inparas.at(4));
+		threshold_centerMovement2 = threshold_centerMovement2*threshold_centerMovement2;
+		V3DLONG threshold_intensity = atoi(inparas.at(5));
+		V3DLONG threshold_centerDistance = atoi(inparas.at(6));
+		threshold_centerDistance = threshold_centerDistance*threshold_centerDistance;
+		V3DLONG threshold_regionSize = atoi(inparas.at(7));
+		double multipler_uThresholdRegionSizeGlobal = atof(inparas.at(8));
+		double multipler_uThresholdRegionSizeExemplar = atof(inparas.at(9));
 		char * file_input = ((vector<char*> *)(input.at(0).p))->at(0);
 		char * file_output = ((vector<char*> *)(output.at(0).p))->at(0);
-		cout<<"channel: "<<c<<endl;
-		cout<<"# of exemplars learned per iteration: "<<e<<endl;
-		cout<<"max anisotropic stat deviation: "<<d<<endl;
-		cout<<"max center movement during exemplar learning: "<<m1<<endl;
-		cout<<"max movement from seed position during exemplar learning: "<<m2<<endl;
-		cout<<"threshold for current image: "<<T<<endl;
+		cout<<"channel: "<<idx_channel<<endl;
+		cout<<"# of exemplars learned per iteration: "<<count_exemplar<<endl;
+		cout<<"max anisotropic stat deviation: "<<delta_shapeStat<<endl;
+		cout<<"max center movement during exemplar learning: "<<threshold_centerMovement1<<endl;
+		cout<<"max movement from seed position during exemplar learning: "<<threshold_centerMovement2<<endl;
+		cout<<"threshold for current image: "<<threshold_intensity<<endl;
+		cout<<"threshold for center distance (for removing duplicate centers): "<<threshold_centerDistance<<endl;
+		cout<<"threshold for region size: "<<threshold_regionSize<<endl;
+		cout<<"mutiplier for upper threshold of region size (regarding to image size): "<<multipler_uThresholdRegionSizeGlobal<<endl;
+		cout<<"mutiplier for upper threshold of region size (regarding to exemplar size): "<<multipler_uThresholdRegionSizeExemplar<<endl;
 		cout<<"input image: "<<file_input<<endl;
 		cout<<"output landmark list: "<<file_output<<endl;
 		Image4DSimple * image4D_input = _V3DPluginCallback2_currentCallback.loadImage(file_input);
@@ -1654,7 +1567,7 @@ bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList 
 		V3DLONG dim_Z=image4D_input->getZDim();
 		V3DLONG dim_C=image4D_input->getCDim();
 		V3DLONG size_image = dim_X*dim_Y*dim_Z*dim_C;
-		if (dim_C==1) { c=1; }
+		if (dim_C==1) { idx_channel=1; }
 		unsigned char * image1D_current = image4D_input->getRawData();
 		//if (type_input == 2) //V3D_UINT16;
 		//{
@@ -1672,9 +1585,10 @@ bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList 
 		QString name_result = "Result";
 		V3DLONG idx_shape = 1;
 		class_segmentationMain class_segmentationMain1;
-		if (class_segmentationMain1.control_run(image1D_current, dim_X, dim_Y, dim_Z, c, 
-			idx_shape, d, e, T, file_input,
-			m1, m2, _V3DPluginCallback2_currentCallback, _QWidget_parent))
+		if (class_segmentationMain1.control_run(image1D_current, dim_X, dim_Y, dim_Z, idx_channel, 
+			idx_shape, delta_shapeStat, count_exemplar, threshold_intensity, file_input,
+			threshold_centerMovement1, threshold_centerMovement2, threshold_centerDistance, threshold_regionSize,
+			multipler_uThresholdRegionSizeGlobal, multipler_uThresholdRegionSizeExemplar, _V3DPluginCallback2_currentCallback, _QWidget_parent))
 		{
 			landmarkList2file(file_output, class_segmentationMain1.landmarkList_result);
 		}
@@ -1689,14 +1603,14 @@ bool cellSegmentation::dofunc(const QString & func_name, const V3DPluginArgList 
 	{
 		cout<<endl;
 		cout<<endl;
-		cout<<" usage : vaa3d -x quickFind -f run -i <input filename> -o <output filename -p <c> <iter> <fusion> <size>"<<endl;
+		cout<<" usage : vaa3d -x quickFind -f run -i <input filename> -o <output filename -p <idx_channel> <iter> <fusion> <size>"<<endl;
 		cout<<" parameters: (default values in parentheses) "<<endl;
-		cout<<"c = channel of input file to use for segmentation (1);"<<endl;
-		cout<<"e = number of exemplars per iteration (5);"<<endl;
-		cout<<"d = max anisotrophc deviation (1.5);"<<endl;
-		cout<<"m1 = max movement from center during learning (2);"<<endl;
-		cout<<"m2 = max movement from seed during learning (4);"<<endl;
-		cout<<"(optional) T = threshold for current image;"<<endl;
+		cout<<"idx_channel = channel of input file to use for segmentation (1);"<<endl;
+		cout<<"count_exemplar = number of exemplars per iteration (5);"<<endl;
+		cout<<"_delta_shapeStat = max anisotrophc deviation (1.5);"<<endl;
+		cout<<"threshold_centerMovement1 = max movement from center during learning (2);"<<endl;
+		cout<<"threshold_centerMovement2 = max movement from seed during learning (4);"<<endl;
+		cout<<"(optional) threshold_intensity = threshold for current image;"<<endl;
 	}
 	return true;
 }
@@ -1718,13 +1632,15 @@ bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWid
 	dialogRun dialogRun1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_C);
 	QString name_result = "Result";
 	if (dialogRun1.exec()!=QDialog::Accepted) {return false;}
-	int idx_shape; //get shape paramters;
-	if (dialogRun1.shape_type_selection == sphere) {idx_shape = 1;}
-	else if (dialogRun1.shape_type_selection == cube) {idx_shape = 0;}
+	int _idx_shape; //get shape paramters;
+	if (dialogRun1.shape_type_selection == sphere) {_idx_shape = 1;}
+	else if (dialogRun1.shape_type_selection == cube) {_idx_shape = 0;}
 	class_segmentationMain class_segmentationMain1;
-	if (class_segmentationMain1.control_run(Image1D_current, dim_X, dim_Y, dim_Z, dialogRun1.channel_idx_selection, 
-		idx_shape, dialogRun1.shape_para_delta, dialogRun1.shape_max_exempalr, default_threshold_global, name_currentWindow,
-		dialogRun1.exemplar_maxMovement1, dialogRun1.exemplar_maxMovement2, _V3DPluginCallback2_currentCallback, _QWidget_parent))
+	if (class_segmentationMain1.control_run(Image1D_current, dim_X, dim_Y, dim_Z, dialogRun1.idx_channel, 
+		_idx_shape, dialogRun1.delta_shapeStat, dialogRun1.count_exemplar, dialogRun1.threshold_intensity, name_currentWindow,
+		dialogRun1.uThreshold_centerMovement1, dialogRun1.uThreshold_centerMovement2, dialogRun1.threshold_centerDistance,
+		dialogRun1.threshold_regionSize, dialogRun1.multiplier_uThresholdRegionSizeGlobal, dialogRun1.multiplier_uThresholdRegionSizeExemplar,
+		_V3DPluginCallback2_currentCallback, _QWidget_parent))
 	{
 		//visualizationImage1D(class_segmentationMain1.image1Dc_result, class_segmentationMain1.dim_X, class_segmentationMain1.dim_Y, class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, name_result);
 		//visualizationImage1D(class_segmentationMain1.image1D_mask, class_segmentationMain1.dim_X, class_segmentationMain1.dim_Y, class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, QString("mask"));
