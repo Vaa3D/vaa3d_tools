@@ -399,31 +399,18 @@ void PMain::about()
     #endif
 
     QMessageBox msgBox(this);
-    QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(600, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
     msgBox.setText( QString("<html><h1>TeraStitcher plugin v. ").append(terastitcher::version.c_str()).append("</h1>"
-                    "<big>A fully automated 3D Stitching tool designed for Teravoxel-sized datasets.</big><br><br>"
+                    "<big>A tool for fast automatic 3D-stitching of teravoxel-sized microscopy images</big><br>"
+                    "<a href=\"http://www.biomedcentral.com/1471-2105/13/316\">(BMC Bioinformatics 2012, 13:316)</a><br><br>"
                     "<u>Developed by:</u><ul>"
                     "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
-                           "Ph.D. Student at University of Cassino</li>"
+                           "Post-doctoral Fellow at University of Cassino</li>"
                     "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
-                           "Full Professor at University Campus Bio-Medico of Rome</li></ul><br>"
-                    "<u>Features:</u><ul>"
-                    "<li>fast and reliable stitching based on a multi-MIP approach</li>"
-                    "<li>typical memory requirement of ~2 Gigabytes for 1 Teravoxel-sized dataset</li>"
-                    "<li>full control over memory requirements and stitching parameters</li>"
-                    "<li>user can select just a subvolume to be stitched only</li>"
-                    "<li>SPIM artifacts removal option (experimental)</li></ul><br>"
-                    "<u>Supported input formats:</u><ul>"
-                    "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
-                    "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                    "<li>no restriction on the bit depth</li>"
-                    "<li>no restriction on the number of channels</li></ul><br>"
-                    "<u>Supported output formats:</u><ul>"
-                    "<li>both grid of non-overlapped image stacks or single image stack (which can be directly <b>shown into Vaa3D</b>)</li>"
-                    "<li>stacks can be saved at different resolutions</li>"
-                    "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                    "<li>no restriction on the bit depth</li>"
-                    "<li>only single-channel</li></ul></html>" ));
+                           "Full Professor at University Campus Bio-Medico of Rome</li>"
+                    "<li><b>Leonardo Onofri</b> (email: leonardonofri@gmail.com)<br>"
+                           "Post-doctoral Fellow at University Campus Bio-Medico of Rome</li></ul>"
+                    "For further info, please visit our <a href=\"http://abria.github.io/TeraStitcher/\">website</a>.</html>" ));
 
     QGridLayout* layout = (QGridLayout*)msgBox.layout();
     layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
