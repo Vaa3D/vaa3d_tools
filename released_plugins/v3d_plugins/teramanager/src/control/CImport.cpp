@@ -34,9 +34,10 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
-#include "../core/imagemanager/StackedVolume.h"
-#include "../core/imagemanager/TiledVolume.h"
-#include "../core/imagemanager/TiledMCVolume.h"
+#include "StackedVolume.h"
+#include "TiledVolume.h"
+#include "TiledMCVolume.h"
+#include "iomanager.config.h"
 
 using namespace teramanager;
 using namespace iim;
@@ -309,6 +310,7 @@ void CImport::run()
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( iim::IOException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
+    catch( iom::exception& exception)    {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
     catch( RuntimeException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
     catch(const char* error)             {reset(); emit sendOperationOutcome(new RuntimeException(error));}
     catch(...)                           {reset(); emit sendOperationOutcome(new RuntimeException("Unknown error occurred"));}

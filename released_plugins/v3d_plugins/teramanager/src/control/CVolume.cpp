@@ -30,8 +30,9 @@
 #include "CVolume.h"
 #include "CImport.h"
 #include "../presentation/PLog.h"
-#include "../core/imagemanager/TiledVolume.h"
-#include "../core/imagemanager/TiledMCVolume.h"
+#include "TiledVolume.h"
+#include "TiledMCVolume.h"
+#include "iomanager.config.h"
 
 using namespace teramanager;
 using namespace iim;
@@ -305,6 +306,18 @@ void CVolume::run()
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( iim::IOException& exception)
+    {
+        // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
+        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        /**/ updateGraphicsInProgress.lock();
+        reset();
+        //bufferMutex.unlock();
+        itm::warning(exception.what(), "CVolume");
+        /**/ updateGraphicsInProgress.unlock();
+
+        emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(exception.what()), 0, "");
+    }
+    catch( iom::exception& exception)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
         CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);

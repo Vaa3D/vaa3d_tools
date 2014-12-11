@@ -44,7 +44,7 @@
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
 #include <typeinfo>
-#include "../core/imagemanager/TimeSeries.h"
+#include "TimeSeries.h"
 
 using namespace teramanager;
 using namespace iim;

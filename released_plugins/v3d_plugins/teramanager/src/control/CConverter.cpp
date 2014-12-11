@@ -28,12 +28,13 @@
 
 #include "CConverter.h"
 #include "CPlugin.h"
-#include "../core/imagemanager/RawVolume.h"
-#include "../core/imagemanager/SimpleVolume.h"
-#include "../core/imagemanager/SimpleVolumeRaw.h"
-#include "../core/imagemanager/TiledVolume.h"
-#include "../core/imagemanager/TiledMCVolume.h"
-#include "../core/VolumeConverter/VolumeConverter.h"
+#include "RawVolume.h"
+#include "SimpleVolume.h"
+#include "SimpleVolumeRaw.h"
+#include "TiledVolume.h"
+#include "TiledMCVolume.h"
+#include "VolumeConverter.h"
+#include "iomanager.config.h"
 
 using namespace teramanager;
 using namespace iim;
@@ -147,6 +148,7 @@ void CConverter::run()
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( iim::IOException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
+    catch( iom::exception& exception)    {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
     catch( RuntimeException& exception)  {emit sendOperationOutcome(new RuntimeException(exception.what()));}
     catch(const char* error)        {emit sendOperationOutcome(new RuntimeException(error));}
     catch(...)                      {emit sendOperationOutcome(new RuntimeException("Unknown error occurred"));}

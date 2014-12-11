@@ -32,9 +32,9 @@
 #include <QThread>
 #include <string>
 #include <vector>
-#include "../core/imagemanager/VirtualVolume.h"
-#include "../core/imagemanager/StackedVolume.h"
-#include "../core/imagemanager/TiledVolume.h"
+#include "VirtualVolume.h"
+#include "StackedVolume.h"
+#include "TiledVolume.h"
 #include "CPlugin.h"
 #include "CSettings.h"
 

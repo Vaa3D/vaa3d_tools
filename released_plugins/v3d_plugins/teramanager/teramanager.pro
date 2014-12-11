@@ -5,13 +5,13 @@
 TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
-CONFIG += use_static_libs
+#CONFIG += use_static_libs
 CONFIG += use_experimental_features
 DEFINES += QT_NO_DEBUG_STREAM
 DEFINES += QT_NO_DEBUG_OUTPUT
 DEFINES += QT_NO_WARNING_OUTPUT
 #DEFINES += _USE_QT_DIALOGS
-#DEFINES += terafly_enable_debug_max_level
+#DEFINES += terafly_enable_debug_annotations
 
 #QMAKE_CXXFLAGS += -Wall
 #QMAKE_CXXFLAGS += -pedantic
@@ -27,40 +27,40 @@ else{
 }
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
 
-
+# @DEPRECATED on 2014-12-11. Alessandro. OpenCV is no longer used, so these libraries do not need to be included anymore.
 #set up third party libraries under MacOS and Linux
-use_static_libs{
-    INCLUDEPATH += ./include/opencv
-    INCLUDEPATH += ./include
-    mac{
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64"
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64/3rdparty"
-    }
-    unix:!mac{
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64"
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64/3rdparty"
-    }
-    win32{
-        #WARNING! These precompiled libraries must match with your VC (vc9, vc10 or vc11) compiler!
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64/vc9"
-        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64/vc9/3rdparty"
+#use_static_libs{
+#    INCLUDEPATH += ./include/opencv
+#    INCLUDEPATH += ./include
+#    mac{
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64"
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64/3rdparty"
+#    }
+#    unix:!mac{
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64"
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64/3rdparty"
+#    }
+#    win32{
+#        #WARNING! These precompiled libraries must match with your VC (vc9, vc10 or vc11) compiler!
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64/vc9"
+#        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64/vc9/3rdparty"
 
-        #on VC, OpenCV precompiled libraries have further dependencies
-        LIBS+=-llibpng
-        LIBS+=-ladvapi32
-        LIBS+=-lcomctl32
-    }
-} else{
-    #OpenCV headers and library folders
-    INCLUDEPATH += /usr/local/include/opencv
-    LIBS+= -L/usr/local/lib
-}
-LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
- -lzlib \
- -llibtiff \
- -llibjpeg \
- -lIlmImf \
- -llibjasper 
+#        #on VC, OpenCV precompiled libraries have further dependencies
+#        LIBS+=-llibpng
+#        LIBS+=-ladvapi32
+#        LIBS+=-lcomctl32
+#    }
+#} else{
+#    #OpenCV headers and library folders
+#    INCLUDEPATH += /usr/local/include/opencv
+#    LIBS+= -L/usr/local/lib
+#}
+#LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
+# -lzlib \
+# -llibtiff \
+# -llibjpeg \
+# -lIlmImf \
+# -llibjasper
 
 
 #set up Vaa3D stuff needed by the plugin
@@ -74,10 +74,13 @@ win32{
     #libtiff API
     INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/tiff-4.0.1/libtiff
 
+    #libtiff lib
+    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+
     #disabling experimental features if having troubles with "moc_landmark_property_dialog.cpp" and similar or with an endless sea of unresolved external symbols
     CONFIG -= use_experimental_features
 
-    #Vaa3D and OpenCV libraries are compiled using the multithread-DLL version of the run-time library
+    #Vaa3D libraries are compiled using the multithread-DLL version of the run-time library
     CONFIG(debug, debug|release) {
         QMAKE_CXXFLAGS += /MDd
         QMAKE_CXXFLAGS += /NODEFAULTLIB:MSVCRT
@@ -150,8 +153,67 @@ use_experimental_features{
     }
 }
 
+#setup TeraStitcher I/O plugins
+INCLUDEPATH += ../terastitcher/src/core/iomanager
+HEADERS += ../terastitcher/src/core/iomanager/iomanager.config.h
+HEADERS += ../terastitcher/src/core/iomanager/ioplugins.h
+HEADERS += ../terastitcher/src/core/iomanager/IOPluginAPI.h
+HEADERS += ../terastitcher/src/core/iomanager/ProgressBar.h
+HEADERS += ../terastitcher/src/core/iomanager/plugins/exampleplugin2D/exampleplugin2D.h
+#HEADERS += ../terastitcher/src/core/iomanager/plugins/opencv2D/opencv2D.h
+HEADERS += ../terastitcher/src/core/iomanager/plugins/tiff2D/tiff2D.h
+HEADERS += ../terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.h
+SOURCES += ../terastitcher/src/core/iomanager/iomanager.config.cpp
+SOURCES += ../terastitcher/src/core/iomanager/ProgressBar.cpp
+SOURCES += ../terastitcher/src/core/iomanager/plugins/exampleplugin2D/exampleplugin2D.cpp
+#SOURCES += ../terastitcher/src/core/iomanager/plugins/opencv2D/opencv2D.cpp
+SOURCES += ../terastitcher/src/core/iomanager/plugins/tiff2D/tiff2D.cpp
+SOURCES += ../terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
-#set up plugin
+#setup TeraStitcher imagemanager
+INCLUDEPATH += ../terastitcher/src/core/imagemanager
+HEADERS += ../terastitcher/src/core/imagemanager/imBlock.h
+HEADERS += ../terastitcher/src/core/imagemanager/dirent_win.h
+HEADERS += ../terastitcher/src/core/imagemanager/IM_config.h
+HEADERS += ../terastitcher/src/core/imagemanager/ProgressBar.h
+HEADERS += ../terastitcher/src/core/imagemanager/RawFmtMngr.h
+HEADERS += ../terastitcher/src/core/imagemanager/RawVolume.h
+HEADERS += ../terastitcher/src/core/imagemanager/SimpleVolume.h
+HEADERS += ../terastitcher/src/core/imagemanager/SimpleVolumeRaw.h
+HEADERS += ../terastitcher/src/core/imagemanager/Stack.h
+HEADERS += ../terastitcher/src/core/imagemanager/StackRaw.h
+HEADERS += ../terastitcher/src/core/imagemanager/StackedVolume.h
+HEADERS += ../terastitcher/src/core/imagemanager/Tiff3DMngr.h
+HEADERS += ../terastitcher/src/core/imagemanager/TiledMCVolume.h
+HEADERS += ../terastitcher/src/core/imagemanager/TiledVolume.h
+HEADERS += ../terastitcher/src/core/imagemanager/TimeSeries.h
+HEADERS += ../terastitcher/src/core/imagemanager/VirtualFmtMngr.h
+HEADERS += ../terastitcher/src/core/imagemanager/VirtualVolume.h
+SOURCES += ../terastitcher/src/core/imagemanager/imBlock.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/IM_config.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/imProgressBar.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/RawFmtMngr.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/RawVolume.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/SimpleVolume.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/SimpleVolumeRaw.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/Stack.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/StackRaw.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/StackedVolume.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/Tiff3DMngr.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/TiledMCVolume.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/TiledVolume.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/TimeSeries.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/VirtualFmtMngr.cpp
+SOURCES += ../terastitcher/src/core/imagemanager/VirtualVolume.cpp
+
+# set up volume converter
+INCLUDEPATH += ./src/core/VolumeConverter
+HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
+HEADERS += ./src/core/VolumeConverter/resumer.h
+SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
+SOURCES += ./src/core/VolumeConverter/resumer.cpp
+
+#set up TeraFly plugin (control and presentation classes)
 DEFINES += _VAA3D_TERAFLY_PLUGIN_MODE
 RESOURCES += icons.qrc
 HEADERS += ./src/control/V3Dsubclasses.h
@@ -176,29 +238,9 @@ HEADERS += ./src/presentation/QPixmapToolTip.h
 HEADERS += ./src/presentation/PAbout.h
 HEADERS += ./src/presentation/PLog.h
 HEADERS += ./src/presentation/PAnoToolBar.h
-HEADERS += ./src/core/imagemanager/Block.h
-HEADERS += ./src/core/imagemanager/dirent_win.h
-HEADERS += ./src/core/imagemanager/IM_config.h
-HEADERS += ./src/core/imagemanager/ProgressBar.h
-HEADERS += ./src/core/imagemanager/RawFmtMngr.h
-HEADERS += ./src/core/imagemanager/RawVolume.h
-HEADERS += ./src/core/imagemanager/SimpleVolume.h
-HEADERS += ./src/core/imagemanager/SimpleVolumeRaw.h
-HEADERS += ./src/core/imagemanager/Stack.h
-HEADERS += ./src/core/imagemanager/StackRaw.h
-HEADERS += ./src/core/imagemanager/StackedVolume.h
-HEADERS += ./src/core/imagemanager/Tiff3DMngr.h
-HEADERS += ./src/core/imagemanager/TiledMCVolume.h
-HEADERS += ./src/core/imagemanager/TiledVolume.h
-HEADERS += ./src/core/imagemanager/TimeSeries.h
-HEADERS += ./src/core/imagemanager/VirtualFmtMngr.h
-HEADERS += ./src/core/imagemanager/VirtualVolume.h
-HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
-HEADERS += ./src/core/VolumeConverter/resumer.h
 HEADERS += ./src/control/QUndoMarkerCreate.h
 HEADERS += ./src/control/QUndoMarkerDelete.h
 HEADERS += ./src/control/QUndoMarkerDeleteROI.h
-
 SOURCES += ./src/control/CAnnotations.cpp
 SOURCES += ./src/control/CConverter.cpp
 SOURCES += ./src/control/CExplorerWindow.cpp
@@ -220,24 +262,6 @@ SOURCES += ./src/presentation/QArrowButton.cpp
 SOURCES += ./src/presentation/QGradientBar.cpp
 SOURCES += ./src/presentation/QHelpBox.cpp
 SOURCES += ./src/presentation/QGLRefSys.cpp
-SOURCES += ./src/core/imagemanager/Block.cpp
-SOURCES += ./src/core/imagemanager/IM_config.cpp
-SOURCES += ./src/core/imagemanager/imProgressBar.cpp
-SOURCES += ./src/core/imagemanager/RawFmtMngr.cpp
-SOURCES += ./src/core/imagemanager/RawVolume.cpp
-SOURCES += ./src/core/imagemanager/SimpleVolume.cpp
-SOURCES += ./src/core/imagemanager/SimpleVolumeRaw.cpp
-SOURCES += ./src/core/imagemanager/Stack.cpp
-SOURCES += ./src/core/imagemanager/StackRaw.cpp
-SOURCES += ./src/core/imagemanager/StackedVolume.cpp
-SOURCES += ./src/core/imagemanager/Tiff3DMngr.cpp
-SOURCES += ./src/core/imagemanager/TiledMCVolume.cpp
-SOURCES += ./src/core/imagemanager/TiledVolume.cpp
-SOURCES += ./src/core/imagemanager/TimeSeries.cpp
-SOURCES += ./src/core/imagemanager/VirtualFmtMngr.cpp
-SOURCES += ./src/core/imagemanager/VirtualVolume.cpp
-SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
-SOURCES += ./src/core/VolumeConverter/resumer.cpp
 SOURCES += ./src/control/QUndoMarkerCreate.cpp
 SOURCES += ./src/control/QUndoMarkerDelete.cpp
 SOURCES += ./src/control/QUndoMarkerDeleteROI.cpp

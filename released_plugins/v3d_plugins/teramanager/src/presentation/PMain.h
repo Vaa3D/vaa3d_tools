@@ -32,7 +32,6 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "../control/CPlugin.h"
-#include "../core/imagemanager/StackedVolume.h"
 #include "../control/CVolume.h"
 #include "../control/CExplorerWindow.h"
 #include "PDialogImport.h"
