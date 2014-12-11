@@ -216,6 +216,7 @@ SOURCES += ./src/core/VolumeConverter/resumer.cpp
 #set up TeraFly plugin (control and presentation classes)
 DEFINES += _VAA3D_TERAFLY_PLUGIN_MODE
 RESOURCES += icons.qrc
+INCLUDEPATH += ./src/control
 HEADERS += ./src/control/V3Dsubclasses.h
 HEADERS += ./src/control/CAnnotations.h
 HEADERS += ./src/control/CConverter.h
@@ -226,6 +227,7 @@ HEADERS += ./src/control/CSettings.h
 HEADERS += ./src/control/CVolume.h
 HEADERS += ./src/control/CImageUtils.h
 HEADERS += ./src/control/V3Dsubclasses.h
+INCLUDEPATH += ./src/presentation
 HEADERS += ./src/presentation/PConverter.h
 HEADERS += ./src/presentation/PDialogImport.h
 HEADERS += ./src/presentation/PDialogProofreading.h
