@@ -30,8 +30,6 @@
 #include "CImport.h"
 #include <new>
 #include <iostream>
-#include <cv.h>
-#include <highgui.h>
 #include "StackStitcher.h"
 #include "ProgressBar.h"
 #include "IM_config.h"
@@ -131,33 +129,33 @@ void CMergeTiles::run()
                 voldir.setPath(voldir.path().append("/").append(second_level_list.first()));
                 QStringList slices_list = voldir.entryList(QDir::Files);
 
-                //allocation of image data
+                // use Vaa3D to load all slices
+                std::vector<Image4DSimple*> slices;
+                for (int k = 0; k < slices_list.size(); k++)
+                {
+                    slices.push_back(new Image4DSimple());
+                    slices.back()->loadImage(const_cast<char*>(QString(voldir.path().append("/").append(slices_list.at(k).toLocal8Bit().constData())).toStdString().c_str()), false);
+                }
+
+                // allocate image data assuming all slices have the same X, Y, C dimensions and bitdepth
                 img = new Image4DSimple();
                 img->setFileName(voldir.path().toStdString().c_str());
-                iom::uint8* img_data = new iom::uint8[width*height*depth];    //images with any depth are loaded in 8 bit mode with OpenCV
+                V3DLONG slice_dims = slices[0]->getXDim()*slices[0]->getYDim()*slices[0]->getCDim()*slices[0]->getUnitBytes();
+                unsigned char* img_data = new iom::uint8[slice_dims * slices_list.size()];
 
-                //loading slices and storing them into img_data
-                for (int k = 0; k < slices_list.size(); ++k)
-                {
-                    const char* slice_path = QString(voldir.path().append("/").append(slices_list.at(k).toLocal8Bit().constData())).toStdString().c_str();
-                    IplImage* slice_img = cvLoadImage(slice_path, CV_LOAD_IMAGE_GRAYSCALE);
-                    if(!slice_img)
-                        throw iom::exception(QString("Unable to load slice \"").append(slice_path).append("\" to be shown into Vaa3D").toStdString().c_str());
-                    if(slice_img->height != height || slice_img->width != width)
-                        throw iom::exception("An error occurred when loading slices to be shown into Vaa3D");
+                // copy each loaded slice into the volume
+                for (int k = 0; k < slices.size(); k++)
+                    for(V3DLONG pc = 0; pc < slice_dims; pc++)
+                        img_data[k*slice_dims + pc] = slices[k]->getRawData()[pc];
 
-                    int slice_img_step = slice_img->widthStep/sizeof(uchar);
-                    for(int i=0; i<height; i++)
-                    {
-                        iom::uint8* slice_img_data = ((iom::uint8*)slice_img->imageData)+i*slice_img_step;
-                        for(int j=0; j<width; j++)
-                            img_data[k*height*width + i*width +j] = slice_img_data[j];
-                    }
-                    cvReleaseImage(&slice_img);
-                }
-                img->setData(img_data, width, height, depth, 1, V3D_UINT8);
+                // set image data
+                img->setData(img_data, slices[0]->getXDim(), slices[0]->getYDim(), slices_list.size(), slices[0]->getCDim(), slices[0]->getDatatype());
 
-                //setting image attributes
+                // deallocate data
+                for (int k = 0; k < slices.size(); k++)
+                    delete slices[k];
+
+                // set image attributes
                 img->setRezX(volume->getVXL_H()*pow(2.0f,resolution_index_vaa3D));
                 img->setRezY(volume->getVXL_V()*pow(2.0f,resolution_index_vaa3D));
                 img->setRezZ(volume->getVXL_D()*pow(2.0f,resolution_index_vaa3D));

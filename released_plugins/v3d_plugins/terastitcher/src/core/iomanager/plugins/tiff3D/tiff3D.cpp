@@ -60,10 +60,20 @@ throw (iom::exception)
 	if (!TIFFGetField(input, TIFFTAG_SAMPLESPERPIXEL, &img_chans)) 
 		throw iom::exception(iom::strprintf("unable to determine 'TIFFTAG_SAMPLESPERPIXEL' from image \"%s\". ", img_path.c_str()), __iom__current__function__);
 
-	img_depth = 0;
-	do {
-		img_depth++;
-	} while (TIFFReadDirectory(input));
+	// Onofri
+	uint16 cpage;  // Current page. We do not actually need it.
+	uint16 npages; // Number of pages. 
+	int PNcheck=TIFFGetField(input, TIFFTAG_PAGENUMBER, &cpage, &npages);
+	if (!PNcheck || npages==0) { // the tag has not been read correctly
+		iom::warning(iom::strprintf("unable to determine 'TIFFTAG_PAGENUMBER' from image file \"%s\". ", img_path.c_str()).c_str(),__iom__current__function__);
+		img_depth = 0;
+		do {
+			img_depth++;
+		} while (TIFFReadDirectory(input));
+	}
+	else
+		img_depth = npages;
+
 	TIFFClose(input);
 }
 
@@ -87,6 +97,6 @@ throw (iom::exception)
 
 	char *err_Tiff3Dfmt;
 	if ( (err_Tiff3Dfmt = readTiff3DFile2Buffer(finName,data,XSIZE,YSIZE,first,last)) != 0 ) {
-		throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
+		throw iom::exception(iom::strprintf("(%s) unable to read tiff file %s in page range [%d,%d]",err_Tiff3Dfmt,finName,first,last), __iom__current__function__);
 	}
 }

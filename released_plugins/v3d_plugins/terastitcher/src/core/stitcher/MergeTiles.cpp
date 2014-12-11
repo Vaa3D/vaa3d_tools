@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-12-06. Giulio    . @ADDED createDirectoryHiererchy method.
 * 2014-11-03. Giulio.     @FIXED stop and resume facility should be inactive when in test mode
 * 2014-10-29. Giulio.     @ADDED stop and resume facility - saved_img_format has been used to check if resume parameters have not been changed
 * 2014-09-10. Alessandro. @FIXED 'mergeTilesVaa3DRaw' method: set 'imagemanager' module to silent mode.
@@ -78,7 +79,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
                                const char* saved_img_format, int saved_img_depth)			throw (iom::exception)
 {
 #if S_VERBOSE > 2
-	printf("......in StackStitcher::mergeTiles(output_path=\"%s\", block_height=%d, block_width=%d, block_depth=%d, exclude_nonstitchable_stacks = %s, "
+	printf("......in StackStitcher::mergeTilesVaa3DRaw(output_path=\"%s\", block_height=%d, block_width=%d, block_depth=%d, exclude_nonstitchable_stacks = %s, "
 		"_ROW_START=%d, _ROW_END=%d, _COL_START=%d, _COL_END=%d, _D0=%d, _D1=%d, restoreSPIM = %s, restore_direction = %d, test_mode = %s, resolutions = { ",
 		output_path.c_str(), slice_height, slice_width, slice_depth, (exclude_nonstitchable_stacks ? "true" : "false"), _ROW_START, _ROW_END,
 		_COL_START, _COL_END, _D0, _D1, (restoreSPIM ? "ENABLED" : "disabled"), restore_direction, (test_mode ? "ENABLED" : "disabled"));
@@ -88,9 +89,9 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 #endif
 
 	//LOCAL VARIABLES
-        sint64 height, width, depth;                                            //height, width and depth of the whole volume that covers all stacks
+	sint64 height, width, depth;                                            //height, width and depth of the whole volume that covers all stacks
 	iom::real_t* buffer;								//buffer temporary image data are stored
-        iom::real_t* stripe_up=NULL, *stripe_down;                                   //will contain up-stripe and down-stripe computed by calling 'getStripe' method
+	iom::real_t* stripe_up=NULL, *stripe_down;                                   //will contain up-stripe and down-stripe computed by calling 'getStripe' method
 	double angle;								//angle between 0 and PI used to sample overlapping zone in [0,PI]
 	double delta_angle;							//angle step
 	int z_ratio, z_max_res;
@@ -783,5 +784,183 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d errors in creating mdata.bin files", n_err);
         throw iom::exception(err_msg);
 	}
+}
+
+
+
+void StackStitcher::createDirectoryHierarchy(std::string output_path, int block_height, int block_width, int block_depth, bool* resolutions, 
+							   bool exclude_nonstitchable_stacks, int _ROW_START, int _ROW_END, int _COL_START,
+							   int _COL_END, int _D0, int _D1, bool restoreSPIM, int restore_direction,
+							   int blending_algo, bool test_mode, bool show_progress_bar, 
+                               const char* saved_img_format, int saved_img_depth)			throw (iom::exception)
+{
+#if S_VERBOSE > 2
+	printf("......in StackStitcher::createDirectoryHierarchy(output_path=\"%s\", block_height=%d, block_width=%d, block_depth=%d, exclude_nonstitchable_stacks = %s, "
+		"_ROW_START=%d, _ROW_END=%d, _COL_START=%d, _COL_END=%d, _D0=%d, _D1=%d, restoreSPIM = %s, restore_direction = %d, test_mode = %s, resolutions = { ",
+		output_path.c_str(), slice_height, slice_width, slice_depth, (exclude_nonstitchable_stacks ? "true" : "false"), _ROW_START, _ROW_END,
+		_COL_START, _COL_END, _D0, _D1, (restoreSPIM ? "ENABLED" : "disabled"), restore_direction, (test_mode ? "ENABLED" : "disabled"));
+	for(int i=0; i<S_MAX_MULTIRES && resolutions; i++)
+		printf("%d ", resolutions[i]);
+	printf("}\n");
+#endif
+
+	//LOCAL VARIABLES
+	sint64 height, width, depth;                                            //height, width and depth of the whole volume that covers all stacks
+	iom::real_t* stripe_up=NULL;                                   //will contain up-stripe and down-stripe computed by calling 'getStripe' method
+    int n_stacks_V[S_MAX_MULTIRES], n_stacks_H[S_MAX_MULTIRES], n_stacks_D[S_MAX_MULTIRES];             //array of number of tiles along V and H directions respectively at i-th resolution
+    int ***stacks_height[S_MAX_MULTIRES], ***stacks_width[S_MAX_MULTIRES], ***stacks_depth[S_MAX_MULTIRES];	//array of matrices of tiles dimensions at i-th resolution
+	int resolutions_size = 0;
+	StackRestorer *stk_rst = NULL;
+
+	std::stringstream file_path[S_MAX_MULTIRES];
+
+	/* DEFINITIONS OF VARIABILES THAT MANAGE TILES (BLOCKS) ALONG D-direction
+	 * In the following the term 'group' means the groups of slices that are 
+	 * processed together to generate slices of all resolution requested
+	 */
+
+	/* these arrays are the indices of first and last slice of current block at resolution i
+	 * WARNING: the slice index refers to the index of the slice in the volume at resolution i 
+	 */
+    int slice_start[S_MAX_MULTIRES];
+
+	/* the number of slice of already processed groups at current resolution
+	 * the index of the slice to be saved at current resolution is:
+	 *
+	 *      n_slices_pred + z_buffer
+	 */
+
+	//computing dimensions of volume to be stitched
+	this->computeVolumeDims(exclude_nonstitchable_stacks, _ROW_START, _ROW_END, _COL_START, _COL_END, _D0, _D1);
+	width = this->H1-this->H0;
+	height = this->V1-this->V0;
+	depth = this->D1-this->D0;
+
+	//activating resolutions
+    block_height = (block_height == -1 ? (int)height : block_height);
+    block_width  = (block_width  == -1 ? (int)width  : block_width);
+    block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
+    if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM /* 2014-10-29. Giulio. @REMOVED (|| block_depth < S_MIN_SLICE_DIM) */)
+    {
+        char err_msg[5000];
+        sprintf(err_msg,"The minimum dimension for block width, height and depth is %d", S_MIN_SLICE_DIM);
+        throw iom::exception(err_msg);
+    }
+	if(resolutions == NULL)
+	{
+        resolutions = new bool;
+        *resolutions = true;
+        resolutions_size = 1;
+	}
+	else
+        for(int i=0; i<S_MAX_MULTIRES; i++)
+            if(resolutions[i])
+                resolutions_size = ISR_MAX(resolutions_size, i+1);
+
+	//computing tiles dimensions at each resolution and initializing volume directories
+	for(int res_i=0; res_i< resolutions_size; res_i++)
+	{
+        n_stacks_V[res_i] = static_cast<int>(ceil ( (height/POW_INT(2,res_i)) / (float) block_height ));
+        n_stacks_H[res_i] = static_cast<int>(ceil ( (width/POW_INT(2,res_i))  / (float) block_width  ));
+        n_stacks_D[res_i] = static_cast<int>(ceil ( (depth/POW_INT(2,res_i))  / (float) block_depth  ));
+        stacks_height[res_i] = new int **[n_stacks_V[res_i]];
+        stacks_width[res_i]  = new int **[n_stacks_V[res_i]];
+        stacks_depth[res_i]  = new int **[n_stacks_V[res_i]];
+        for(int stack_row = 0; stack_row < n_stacks_V[res_i]; stack_row++)
+        {
+            stacks_height[res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            stacks_width [res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            stacks_depth [res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            for(int stack_col = 0; stack_col < n_stacks_H[res_i]; stack_col++)
+            {
+				stacks_height[res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+				stacks_width [res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+				stacks_depth [res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+				for(int stack_sli = 0; stack_sli < n_stacks_D[res_i]; stack_sli++)
+				{
+                	stacks_height[res_i][stack_row][stack_col][stack_sli] = 
+                		((int)(height/POW_INT(2,res_i))) / n_stacks_V[res_i] + (stack_row < ((int)(height/POW_INT(2,res_i))) % n_stacks_V[res_i] ? 1:0);
+                	stacks_width [res_i][stack_row][stack_col][stack_sli] = 
+                		((int)(width/POW_INT(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/POW_INT(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
+					stacks_depth[res_i][stack_row][stack_col][stack_sli] = 
+                		((int)(depth/POW_INT(2,res_i)))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/POW_INT(2,res_i)))  % n_stacks_D[res_i] ? 1:0);
+				}
+            }
+        }
+        //creating volume directory iff current resolution is selected and test mode is disabled
+        if(resolutions[res_i] == true && !test_mode)
+        {
+            //creating directory that will contain image data at current resolution
+            file_path[res_i]<<output_path<<"/RES("<<height/POW_INT(2,res_i)<<"x"<<width/POW_INT(2,res_i)<<"x"<<depth/POW_INT(2,res_i)<<")";
+            if(!make_dir(file_path[res_i].str().c_str()))
+            {
+                char err_msg[S_STATIC_STRINGS_SIZE];
+                sprintf(err_msg, "in mergeTiles(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                throw iom::exception(err_msg);
+            }
+
+			//Alessandro - 23/03/2013: saving original volume XML descriptor into each folder
+			char xmlPath[S_STATIC_STRINGS_SIZE];
+			sprintf(xmlPath, "%s/original_volume_desc.xml", file_path[res_i].str().c_str());
+			volume->saveXML(0, xmlPath);
+        }
+	}
+
+
+	//saving current buffer data at selected resolutions and in multitile format
+	for(int i=0; i< resolutions_size; i++)
+	{
+		// find abs_pos_z at resolution i
+		std::stringstream abs_pos_z;
+		abs_pos_z.width(6);
+		abs_pos_z.fill('0');
+		abs_pos_z << (int)(this->getMultiresABS_D(i,0) + // all stacks start at the same D position
+							//- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
+                            (POW_INT(2,i)*slice_start[i]) * volume->getVXL_D() * 10);
+
+		//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
+		if(resolutions[i])
+		{
+			//storing in 'base_path' the absolute path of the directory that will contain all stacks
+			std::stringstream base_path;
+            base_path << output_path << "/RES(" << (int)(height/POW_INT(2,i)) << "x" << 
+                (int)(width/POW_INT(2,i)) << "x" << (int)(depth/POW_INT(2,i)) << ")/";
+
+			//looping on new stacks
+			for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
+			{
+				//incrementing end_height
+				end_height = start_height + stacks_height[i][stack_row][0][0]-1;
+						
+				//computing V_DIR_path and creating the directory the first time it is needed
+				std::stringstream V_DIR_path;
+				V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
+				if(!test_mode && !make_dir(V_DIR_path.str().c_str()))
+				{
+					char err_msg[S_STATIC_STRINGS_SIZE];
+					sprintf(err_msg, "in mergeTiles(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
+					throw iom::exception(err_msg);
+				}
+
+				for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
+				{
+					end_width  = start_width  + stacks_width [i][stack_row][stack_column][0]-1;
+							
+					//computing H_DIR_path and creating the directory the first time it is needed
+					std::stringstream H_DIR_path;
+					H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
+					if(!test_mode && !make_dir(H_DIR_path.str().c_str()))
+					{
+						char err_msg[S_STATIC_STRINGS_SIZE];
+						sprintf(err_msg, "in mergeTiles(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
+						throw iom::exception(err_msg);
+					}
+					start_width  += stacks_width [i][stack_row][stack_column][0];
+				}
+				start_height += stacks_height[i][stack_row][0][0];
+			}
+		}
+	}
+
 }
 

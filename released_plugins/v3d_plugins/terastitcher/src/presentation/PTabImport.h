@@ -101,6 +101,7 @@ class terastitcher::PTabImport : public QWidget
         QSpinBox* slice_spinbox;
         QPushButton* preview_button;
         QComboBox* channel_selection;
+        QComboBox* imgdepth_cbox;
 
         //other widgets
         QMovie *wait_movie;             //animated wait GIF icon

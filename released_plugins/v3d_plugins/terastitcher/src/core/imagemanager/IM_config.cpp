@@ -12,9 +12,6 @@
 *    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
-*
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
-*
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
 *       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
@@ -25,28 +22,22 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "iomanager.config.h"
-#include "IOPluginAPI.h"
 
-/******************
-*    CHANGELOG    *
-*******************
-* 2014-11-25 Giulio. @CHANGED default plugins are set to "empty" because they have to be set by the application
-*/
+#include "IM_config.h"
 
-// initialize namespace parameters
-namespace iomanager
+namespace IconImageManager
 {
+
     /*******************
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    int DEBUG = NO_DEBUG;					// debug level
-    bool TIME_CALC = true;					// whether to enable time measurements
-    channel CHANS = ALL;					// channel to be loaded (default is ALL)
-	std::string IMIN_PLUGIN  = "empty";		// plugin to manage input image format 
-	std::string IMIN_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image input 
-	std::string IMOUT_PLUGIN = "empty";	// plugin to manage output image format (WARNING: must be a 2D pluging to output test image until 3D plugins do not have a write operation)
-	std::string IMOUT_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image output 
+    int DEBUG = LEV3;						//debug level
+    bool DEBUG_TO_FILE = false;             //whether debug messages should be printed on the screen or to a file (default: screen)
+    std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/iim_debug.log";   //filepath where to save debug information
+    bool ADD_NOISE_TO_TIME_SERIES = false;	// whether to mark individual frames of a time series with increasing gaussian noise
+    int CHANNEL_SELECTION = ALL;			// channel to be loaded (default is ALL)
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
+
+

@@ -45,7 +45,7 @@ class terastitcher::CPreview : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CPreview* uniqueInstance;
-        CPreview() : QThread(), volume(0), slice_index(-1)
+        CPreview() : QThread(), volume(0), slice_index(-1), bitdepth(-1)
         {
             #ifdef TSP_DEBUG
             printf("TeraStitcher plugin [thread %d] >> CPreview created\n", this->thread()->currentThreadId());
@@ -58,6 +58,7 @@ class terastitcher::CPreview : public QThread
         //members
         vm::VirtualVolume *volume;
         int slice_index;
+        int bitdepth;
 
     public:
 
@@ -75,7 +76,7 @@ class terastitcher::CPreview : public QThread
         ~CPreview();
 
         //SET methods
-        void setMembers(vm::VirtualVolume* _volume, int _slice_index){volume=_volume; slice_index=_slice_index;}
+        void setMembers(vm::VirtualVolume* _volume, int _slice_index, int _bitdepth){volume=_volume; slice_index=_slice_index; bitdepth = _bitdepth;}
 
         //reset method
         void reset(){volume=0; slice_index=0;}

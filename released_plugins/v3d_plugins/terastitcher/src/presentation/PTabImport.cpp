@@ -231,7 +231,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     slice_spinbox->setPrefix("Slice ");
     slice_spinbox->setAlignment(Qt::AlignCenter);
     channel_selection = new QComboBox();
-    channel_selection->addItem("all channels");
+    channel_selection->addItem("to gray");
     channel_selection->addItem("R");
     channel_selection->addItem("G");
     channel_selection->addItem("B");
@@ -241,6 +241,14 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     for(int i = 0; i < channel_selection->count(); i++)
         channel_selection->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     connect(channel_selection, SIGNAL(currentIndexChanged(int)),this, SLOT(channelSelectedChanged(int)));
+    imgdepth_cbox = new QComboBox();
+    imgdepth_cbox->insertItem(0, "8 bits");
+    imgdepth_cbox->insertItem(1, "16 bits");
+    imgdepth_cbox->setEditable(true);
+    imgdepth_cbox->lineEdit()->setReadOnly(true);
+    imgdepth_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < imgdepth_cbox->count(); i++)
+        imgdepth_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     preview_button = new QPushButton(this);
     preview_button->setIcon(QIcon(":/icons/preview.png"));
     preview_button->setIconSize(QSize(20,20));
@@ -337,7 +345,15 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     info_panel_layout->addWidget(ovp_Y_field,           5,5,1,3);
     info_panel_layout->addWidget(new QLabel("Stitch test:"),6,0,1,1);
     info_panel_layout->addWidget(slice_spinbox,         6,1,1,3);
-    info_panel_layout->addWidget(channel_selection,     6,5,1,3);
+
+    QHBoxLayout* slice_format_layout = new QHBoxLayout();
+//    channel_selection->setFixedWidth(80);
+//    imgdepth_cbox->setFixedWidth(80);
+    slice_format_layout->addWidget(channel_selection, 1);
+    slice_format_layout->addSpacing(10);
+    slice_format_layout->addWidget(imgdepth_cbox, 1);
+
+    info_panel_layout->addLayout(slice_format_layout,     6,5,1,3);
     info_panel_layout->addWidget(preview_button,        6,9,1,3);
     info_panel_layout->setVerticalSpacing(2);
     info_panel->setLayout(info_panel_layout);
@@ -517,7 +533,10 @@ void PTabImport::preview_button_clicked()
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
     //launching preview thread
-    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_spinbox->value()-1);
+    int bitdepth = 8;
+    if(imgdepth_cbox->currentText().compare("16 bits") == 0)
+        bitdepth = 16;
+    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_spinbox->value()-1, bitdepth);
     CPreview::instance()->start();
 
 }
@@ -743,7 +762,7 @@ void PTabImport::volumePathChanged(QString path)
             // ...and suggest an i/o plugin
             if(vformat.compare(StackedVolume::id) == 0)
             {
-                index = imin_plugin_cbox->findText("opencv2D");
+                index = imin_plugin_cbox->findText("tiff2D");
                 if ( index != -1 ) { // -1 for not found
                    imin_plugin_cbox->setCurrentIndex(index);
                 }
@@ -859,7 +878,7 @@ void PTabImport::volformatChanged(QString str)
     int index = 0;
     if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(StackedVolume::id) == 0)
     {
-        index = imin_plugin_cbox->findText("opencv2D");
+        index = imin_plugin_cbox->findText("tiff2D");
         if ( index != -1 ) { // -1 for not found
            imin_plugin_cbox->setCurrentIndex(index);
         }

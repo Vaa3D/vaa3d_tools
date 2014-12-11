@@ -7,9 +7,27 @@ include_directories (${TeraStitcher_SOURCE_DIR}/imagemanager)
 SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
 
 # ask for selection of the plugins to be included in the project
+# tiff2D and tiff3D are mandatory, thus they are set to ON by default
 FOREACH(subdir ${SUBDIRS})
-	option (WITH_IO_PLUGIN_${subdir} "Include this plugin in the project" ON) 
+	if(subdir STREQUAL "tiff2D" OR subdir STREQUAL "tiff3D")
+		option (WITH_IO_PLUGIN_${subdir} "Include this plugin (mandatory) in the project" ON)
+	else()
+		option (WITH_IO_PLUGIN_${subdir} "Include this plugin (optional) in the project" OFF)
+	endif()	 
 ENDFOREACH()
+
+# check if tiff2D and tiff3D are selected. If they are not, an error is thrown
+if(NOT WITH_IO_PLUGIN_tiff2D)
+	message(SEND_ERROR "You cannot deselect plugin tiff2D (mandatory)")
+endif()
+if(NOT WITH_IO_PLUGIN_tiff3D)
+	message(SEND_ERROR "You cannot deselect plugin tiff3D (mandatory)")
+endif()
+
+# check if opencv2D is selected. If it's not, we hide the OpenCV_DIR variable from the GUI
+if(NOT WITH_IO_PLUGIN_opencv2D)
+	set ( OpenCV_DIR CACHE INTERNAL "not set" FORCE )
+endif()
 
 # include selected plugins only
 FOREACH(subdir ${SUBDIRS})

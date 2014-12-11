@@ -861,7 +861,7 @@ void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) th
 	#endif
 
 	//LOCAL VARIABLES
-        char xml_abs_path[S_STATIC_STRINGS_SIZE];
+	char xml_abs_path[S_STATIC_STRINGS_SIZE];
 	TiXmlDocument xml;
 	TiXmlElement * root;
 	TiXmlElement * pelem;
@@ -876,7 +876,7 @@ void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) th
         throw iom::exception("in BlockVolume::saveXML(...): no xml path provided");
 
 	//initializing XML file with DTD declaration
-        fstream XML_FILE(xml_abs_path, ios::out);
+	fstream XML_FILE(xml_abs_path, ios::out);
 	XML_FILE<<"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"<<endl;
 	XML_FILE<<"<!DOCTYPE TeraStitcher SYSTEM \"TeraStitcher.DTD\">"<<endl;
 	XML_FILE.close();

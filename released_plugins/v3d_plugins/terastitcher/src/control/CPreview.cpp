@@ -31,8 +31,6 @@
 #include "src/presentation/PTabImport.h"
 #include "src/presentation/PMain.h"
 #include "StackStitcher.h"
-#include <cv.h>
-#include <highgui.h>
 #include "IM_config.h"
 
 using namespace terastitcher;
@@ -73,44 +71,12 @@ void CPreview::run()
         // stitch selected slice
         /**/tsp::debug(tsp::LEV_MAX, strprintf("stitch slice %d", slice_index).c_str(), __tsp__current__function__);
         stitcher.mergeTiles("", -1, -1, 0, false, -1, -1, -1, -1, slice_index, slice_index+1,
-                            false, false, S_SHOW_STACK_MARGIN, true, false, "tif", 8);
+                            false, false, S_SHOW_STACK_MARGIN, true, false, "tif", bitdepth);
 
-        // allocate Image4DSimple object
-        /**/tsp::debug(tsp::LEV_MAX, "allocate Image4DSimple object", __tsp__current__function__);
+        // load slice image with Vaa3D
+        /**/tsp::debug(tsp::LEV_MAX, "load slice", __tsp__current__function__);
         Image4DSimple* img = new Image4DSimple();
-
-        // load slice with OpenCV
-        /**/tsp::debug(tsp::LEV_MAX, "load slice with OpenCV", __tsp__current__function__);
-        char path[VM_STATIC_STRINGS_SIZE];
-        sprintf(path, "%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR());
-        IplImage* slice_img = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
-        if(!slice_img)
-            throw iom::exception(QString("Unable to load slice \"").append(path).append("\" to be shown into Vaa3D").toStdString().c_str());
-        int width = slice_img->width;
-        int height = slice_img->height;
-
-        // allocate Vaa3D image data
-        /**/tsp::debug(tsp::LEV_MAX, "allocate Vaa3D image data", __tsp__current__function__);
-        iom::uint8* img_data = new iom::uint8[width*height];
-
-        // copy data into Vaa3D image
-        /**/tsp::debug(tsp::LEV_MAX, "copy data into Vaa3D image", __tsp__current__function__);
-        int slice_img_step = slice_img->widthStep/sizeof(uchar);
-        for(int i=0; i<height; i++)
-        {
-            iom::uint8* slice_img_data = ((iom::uint8*)slice_img->imageData)+i*slice_img_step;
-            for(int j=0; j<width; j++)
-                img_data[i*width +j] = slice_img_data[j];
-        }
-
-        // release memory allocated by OpenCV
-        /**/tsp::debug(tsp::LEV_MAX, "release memory allocated by OpenCV", __tsp__current__function__);
-        cvReleaseImage(&slice_img);
-
-        // set Vaa3D image data
-        /**/tsp::debug(tsp::LEV_MAX, "set Vaa3D image data", __tsp__current__function__);
-        img->setData(img_data, width, height, 1, 1, V3D_UINT8);
-        img->setFileName(path);
+        img->loadImage(const_cast<char*>(iom::strprintf("%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR()).c_str()));
 
         //everything went OK
         emit sendOperationOutcome(0, img);

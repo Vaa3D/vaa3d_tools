@@ -605,7 +605,7 @@ void PTabMergeTiles::start()
         for(int i=0; i<S_MAX_MULTIRES; i++)
         {
             CMergeTiles::instance()->setResolution(i, resolutions_save_cboxs[i]->isChecked());
-            if(vol_format_cbox->currentIndex()==0 && resolutions_view_cboxs[i]->isChecked())
+            if(vol_format_cbox->currentText().compare("2Dseries")==0 && resolutions_view_cboxs[i]->isChecked())
                 CMergeTiles::instance()->setResolutionToShow(i);
         }
         CMergeTiles::instance()->start();
@@ -875,7 +875,7 @@ void PTabMergeTiles::volumeformat_changed(QString str)
     }
 
     for(int i=0; i<S_MAX_MULTIRES; i++)
-        resolutions_view_cboxs[i]->setEnabled(str.compare(StackedVolume::id.c_str()) == 0);
+        resolutions_view_cboxs[i]->setEnabled(vol_format_cbox->currentText().compare("2Dseries")==0);
 
 //    PMain::setEnabledComboBoxItem(img_format_cbox, 2, i == 2);
 //    PMain::setEnabledComboBoxItem(img_format_cbox, 3, i != 2);

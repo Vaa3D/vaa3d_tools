@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraStitcher version 1.8.0
+December 11th, 2014
+--------------------------------------------------------------------------------------------
+- New: added 8/16 bits selection for "Stitch test" function in the "Import" step.
+- Dev: added static link of winlib/libtiff.lib under Windows in the .pro file.
+- Dev: using Vaa3D for loading image files into Vaa3D.
+- New: syncronized with TeraStitcher-standalone v1.8.0: removed dependency from OpenCV libs
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraStitcher version 1.7.0
 November 17th, 2014
 --------------------------------------------------------------------------------------------

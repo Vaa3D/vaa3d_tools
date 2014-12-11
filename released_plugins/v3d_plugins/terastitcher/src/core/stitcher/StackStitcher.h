@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-12-06. Giulio    . @ADDED createDirectoryHiererchy method.
 * 2014-09-12. Alessandro. @ADDED [z0, z1] subdata selection along Z in the 'computeDisplacements()' method.
 * 2014-09-09. Alessandro. @CHANGED. Black pixels (=0) are ignored in 'sinusoidal_blending()' function (especially useful in 'sparse data' mode).
 * 2014-09-02. Alessandro. @FIXED major bug in 'getStripe()' method. Argument 2 ('d_index') has 'short' type, but it should have at least 'int'.
@@ -199,14 +200,14 @@ class StackStitcher
 		void computeTilesPlacement(int algorithm_type)											  throw (iom::exception);
 
 
-                /*************************************************************************************************************
-                * Computes final stitched volume dimensions assuming that current <StackedVolume> object contains  the correct
-                * stack coordinates. The given parameters identify the possible VOI (Volume Of Interest). If these are not us-
-                * ed, the whole volume is  considered and the parameter <exclude_nonstitchable_stacks> is used to discard rows
-                * or columns with no stitchable stacks
-                **************************************************************************************************************/
-                void computeVolumeDims(bool exclude_nonstitchable_stacks = true, int _ROW_START = -1,	   int _ROW_END = -1,
-                                                           int _COL_START = -1, int _COL_END = -1, int _D0 = -1, int _D1 = -1) throw (iom::exception);
+        /*************************************************************************************************************
+        * Computes final stitched volume dimensions assuming that current <StackedVolume> object contains  the correct
+        * stack coordinates. The given parameters identify the possible VOI (Volume Of Interest). If these are not us-
+        * ed, the whole volume is  considered and the parameter <exclude_nonstitchable_stacks> is used to discard rows
+        * or columns with no stitchable stacks
+        **************************************************************************************************************/
+        void computeVolumeDims(bool exclude_nonstitchable_stacks = true, int _ROW_START = -1,	   int _ROW_END = -1,
+                                                    int _COL_START = -1, int _COL_END = -1, int _D0 = -1, int _D1 = -1) throw (iom::exception);
 
 		/*************************************************************************************************************
 		* Method to be called for tile merging. <> parameters are mandatory, while [] are optional.
@@ -246,64 +247,74 @@ class StackStitcher
 		**************************************************************************************************************/
 		static void saveComputationTimes(const char *filename, volumemanager::VirtualVolume &stk_org, double total_time=-1);
 
-                /*************************************************************************************************************
-                * Get methods
-                **************************************************************************************************************/
-                int getV0(){return V0;}
-                int getV1(){return V1;}
-                int getH0(){return H0;}
-                int getH1(){return H1;}
-                int getD0(){return D0;}
-                int getD1(){return D1;}
-                int getROW0(){return ROW_START;}
-                int getROW1(){return ROW_END;}
-                int getCOL0(){return COL_START;}
-                int getCOL1(){return COL_END;}
+        /*************************************************************************************************************
+        * Get methods
+        **************************************************************************************************************/
+        int getV0(){return V0;}
+        int getV1(){return V1;}
+        int getH0(){return H0;}
+        int getH1(){return H1;}
+        int getD0(){return D0;}
+        int getD1(){return D1;}
+        int getROW0(){return ROW_START;}
+        int getROW1(){return ROW_END;}
+        int getCOL0(){return COL_START;}
+        int getCOL1(){return COL_END;}
 
-                /*************************************************************************************************************
-                * Functions used to obtain absolute coordinates at different resolutions from relative coordinates
-                **************************************************************************************************************/
-                int getMultiresABS_V(int res, int REL_V);
-                std::string getMultiresABS_V_string(int res, int REL_V);
-                int getMultiresABS_H(int res, int REL_H);
-                std::string getMultiresABS_H_string(int res, int REL_H);
-                int getMultiresABS_D(int res, int REL_D);
-                std::string getMultiresABS_D_string(int res, int REL_D);
+        /*************************************************************************************************************
+        * Functions used to obtain absolute coordinates at different resolutions from relative coordinates
+        **************************************************************************************************************/
+        int getMultiresABS_V(int res, int REL_V);
+        std::string getMultiresABS_V_string(int res, int REL_V);
+        int getMultiresABS_H(int res, int REL_H);
+        std::string getMultiresABS_H_string(int res, int REL_H);
+        int getMultiresABS_D(int res, int REL_D);
+        std::string getMultiresABS_D_string(int res, int REL_D);
 
-/*************************************************************************************************************
-* Method to be called for tile merging. <> parameters are mandatory, while [] are optional.
-* <output_path>			: absolute directory path where merged tiles have to be stored.
-* [block_height/width/depth]: desired dimensions of tiles  slices after merging.  It is actually an upper-bound of
-*						  the actual slice dimensions, which will be computed in such a way that all tiles di-
-*						  mensions can differ by 1 pixel only along both directions. If not given, the maximum
-*						  allowed dimensions will be set, which will result in a volume composed by  one large 
-*						  tile only.
-* [resolutions]			: pointer to an array of S_MAX_MULTIRES  size which boolean entries identify the acti-
-*						  vaction/deactivation of the i-th resolution.  If not given, all resolutions will  be
-*						  activated.
-* [exclude_nonstitc...] 
-* [_...START/END]		
-* [_D0/_D1]				: identify the possible VOI (Volume Of Interest). If these are not used, the whole vo-
-*						  lume is  considered and the parameter <exclude_nonstitchable_stacks> is used to dis-
-*						  card rows or columns with no stitchable stacks.
-* [restoreSPIM]			: enables SPIM artifacts removal (zebrated patterns) along the given direction.
-* [restore_direction]	: direction of SPIM zebrated patterns to be removed.
-* [blending_algo]		: ID of the blending algorithm to be used in the overlapping regions.
-* [test_mode]			: if enabled, the middle slice of the whole volume will be stitched and and  saved lo-
-*						  cally. Stage coordinates will be used, s o this can be used to test  their precision
-*						  as well as the selected reference system.
-* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
-* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
-* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
-**************************************************************************************************************/
+		/*************************************************************************************************************
+		* Method to be called for tile merging. <> parameters are mandatory, while [] are optional.
+		* <output_path>			: absolute directory path where merged tiles have to be stored.
+		* [block_height/width/depth]: desired dimensions of tiles  slices after merging.  It is actually an upper-bound of
+		*						  the actual slice dimensions, which will be computed in such a way that all tiles di-
+		*						  mensions can differ by 1 pixel only along both directions. If not given, the maximum
+		*						  allowed dimensions will be set, which will result in a volume composed by  one large 
+		*						  tile only.
+		* [resolutions]			: pointer to an array of S_MAX_MULTIRES  size which boolean entries identify the acti-
+		*						  vaction/deactivation of the i-th resolution.  If not given, all resolutions will  be
+		*						  activated.
+		* [exclude_nonstitc...] 
+		* [_...START/END]		
+		* [_D0/_D1]				: identify the possible VOI (Volume Of Interest). If these are not used, the whole vo-
+		*						  lume is  considered and the parameter <exclude_nonstitchable_stacks> is used to dis-
+		*						  card rows or columns with no stitchable stacks.
+		* [restoreSPIM]			: enables SPIM artifacts removal (zebrated patterns) along the given direction.
+		* [restore_direction]	: direction of SPIM zebrated patterns to be removed.
+		* [blending_algo]		: ID of the blending algorithm to be used in the overlapping regions.
+		* [test_mode]			: if enabled, the middle slice of the whole volume will be stitched and and  saved lo-
+		*						  cally. Stage coordinates will be used, s o this can be used to test  their precision
+		*						  as well as the selected reference system.
+		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
+		* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
+		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
+		**************************************************************************************************************/
 
-void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
-						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
-						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
-						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
+		void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
+								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
+								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
+								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
 
 
+		/*************************************************************************************************************
+		* Method to be called for creating the directory hierarchy without actually saving image tiles.
+		* It can be used to perform the mergeTiles operation on different volume portions in parallel
+		* Has must be called with the same parameters as mergeTilesVaa3DRaw
+		**************************************************************************************************************/
+		void createDirectoryHierarchy (std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
+								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
+								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
+								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
 };
 
 #endif

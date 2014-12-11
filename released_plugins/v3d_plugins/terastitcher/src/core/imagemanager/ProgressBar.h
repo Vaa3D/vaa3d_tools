@@ -12,9 +12,6 @@
 *    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
-*
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
-*
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
 *       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
@@ -25,28 +22,55 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "iomanager.config.h"
-#include "IOPluginAPI.h"
+#ifndef _IIM_PROGRESS_BAR_H
+#define _IIM_PROGRESS_BAR_H
 
-/******************
-*    CHANGELOG    *
-*******************
-* 2014-11-25 Giulio. @CHANGED default plugins are set to "empty" because they have to be set by the application
-*/
+#include <iostream>
+#include <string.h>
+#include "IM_config.h"
 
-// initialize namespace parameters
-namespace iomanager
+class iim::imProgressBar
 {
-    /*******************
-    *    PARAMETERS    *
-    ********************
-    ---------------------------------------------------------------------------------------------------------------------------*/
-    int DEBUG = NO_DEBUG;					// debug level
-    bool TIME_CALC = true;					// whether to enable time measurements
-    channel CHANS = ALL;					// channel to be loaded (default is ALL)
-	std::string IMIN_PLUGIN  = "empty";		// plugin to manage input image format 
-	std::string IMIN_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image input 
-	std::string IMOUT_PLUGIN = "empty";	// plugin to manage output image format (WARNING: must be a 2D pluging to output test image until 3D plugins do not have a write operation)
-	std::string IMOUT_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image output 
-    /*-------------------------------------------------------------------------------------------------------------------------*/
-}
+	private:
+
+        /*********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "istance(...)"
+        **********************************************************************************/
+        static imProgressBar* uniqueInstance;
+        imProgressBar();
+
+        char message_level_1[1000];     // main operation
+        char message_level_2[1000];     // sub-operation
+        char message_level_3[1000];     // sub-sub-operation
+        float progress_value;
+        double proctime;
+        int minutes_remaining;
+        int seconds_remaining;
+
+	public:
+
+        /**********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "instance(...)"
+        ***********************************************************************************/
+        static imProgressBar* instance();
+        static imProgressBar* getInstance()
+        {
+            if(uniqueInstance)
+                return uniqueInstance;
+            else
+                return instance();
+        }
+        ~imProgressBar(){}
+
+
+        void start(const char* new_operation_desc, bool toConverter = true);
+		void update(float new_progress_value, const char* new_progress_info);
+		void updateInfo(const char* new_progress_info);
+        void setMessage(int level, const char* message);
+        void show(bool toConverter = true);
+        void reset();
+};
+
+#endif

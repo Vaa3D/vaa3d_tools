@@ -12,9 +12,6 @@
 *    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
-*
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
-*
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
 *       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
@@ -25,28 +22,48 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "iomanager.config.h"
-#include "IOPluginAPI.h"
+# ifndef _SIMPLE_VOLUME_H
+# define _SIMPLE_VOLUME_H
 
-/******************
-*    CHANGELOG    *
-*******************
-* 2014-11-25 Giulio. @CHANGED default plugins are set to "empty" because they have to be set by the application
-*/
+# include "VirtualVolume.h" 
 
-// initialize namespace parameters
-namespace iomanager
+//FORWARD-DECLARATIONS
+class  Stack;
+
+class SimpleVolume : public iim::VirtualVolume
 {
-    /*******************
-    *    PARAMETERS    *
-    ********************
-    ---------------------------------------------------------------------------------------------------------------------------*/
-    int DEBUG = NO_DEBUG;					// debug level
-    bool TIME_CALC = true;					// whether to enable time measurements
-    channel CHANS = ALL;					// channel to be loaded (default is ALL)
-	std::string IMIN_PLUGIN  = "empty";		// plugin to manage input image format 
-	std::string IMIN_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image input 
-	std::string IMOUT_PLUGIN = "empty";	// plugin to manage output image format (WARNING: must be a 2D pluging to output test image until 3D plugins do not have a write operation)
-	std::string IMOUT_PLUGIN_PARAMS="";		// additional parameters <param1=val,param2=val,...> to the plugin for image output 
-    /*-------------------------------------------------------------------------------------------------------------------------*/
-}
+    private:
+
+        iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
+        iim::Stack ***STACKS;			//2-D array of <Stack*>
+
+        void init ( );
+
+        // iannello returns the number of channels of images composing the volume
+        void initChannels ( ) throw (iim::IOException);
+
+    public:
+
+        SimpleVolume(const char* _root_dir)  throw (iim::IOException);
+
+        ~SimpleVolume(void);
+
+        // returns a unique ID that identifies the volume format
+        std::string getPrintableFormat(){return iim::SIMPLE_FORMAT;}
+
+        // added by Alessandro on 2014-02-18: additional info on the reference system (where available)
+        float getVXL_1() {return VXL_H;}
+        float getVXL_2() {return VXL_V;}
+        float getVXL_3() {return VXL_D;}
+        iim::axis getAXS_1() {return iim::horizontal;}
+        iim::axis getAXS_2() {return iim::vertical;}
+        iim::axis getAXS_3() {return iim::depth;}
+
+        iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
+
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                   int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
+};
+
+# endif // _SIMPLE_VOLUME
+
