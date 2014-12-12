@@ -238,33 +238,33 @@ public:
 		}
 		return;
 	}
-	static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask)
-	{
-		vector<V3DLONG> thresholds_page;
-		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-		{
-			vector<double> histo_page=getHistogram(_image1D_input, _size_page, idx_color*_size_page);
-			V3DLONG threshold_page=getThresholdOtsu(histo_page);
-			thresholds_page.push_back(threshold_page);
-			cout<<"threshold for current image channel ["<<idx_color<<"]: "<<threshold_page<<endl;
-		}
-		for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
-		{
-			bool is_foreground=false;
-			for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-			{
-				if (_image1D_input[pos_i+idx_color*_size_page]>thresholds_page[idx_color])
-				{
-					_image1D_mask[pos_i]=const_max_voxelValue; 
-					is_foreground=true;
-					break;
-				}
-			}
-			if (!is_foreground) { _image1D_mask[pos_i]=0; }
-			else { _image1D_mask[pos_i]=const_max_voxelValue; }
-		}
-		return;
-	}
+	//static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask)
+	//{
+	//	vector<V3DLONG> thresholds_page;
+	//	for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+	//	{
+	//		vector<double> histo_page=getHistogram(_image1D_input, _size_page, idx_color*_size_page);
+	//		V3DLONG threshold_page=getThresholdOtsu(histo_page);
+	//		thresholds_page.push_back(threshold_page);
+	//		cout<<"threshold for current image channel ["<<idx_color<<"]: "<<threshold_page<<endl;
+	//	}
+	//	for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
+	//	{
+	//		bool is_foreground=false;
+	//		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+	//		{
+	//			if (_image1D_input[pos_i+idx_color*_size_page]>thresholds_page[idx_color])
+	//			{
+	//				_image1D_mask[pos_i]=const_max_voxelValue; 
+	//				is_foreground=true;
+	//				break;
+	//			}
+	//		}
+	//		if (!is_foreground) { _image1D_mask[pos_i]=0; }
+	//		else { _image1D_mask[pos_i]=const_max_voxelValue; }
+	//	}
+	//	return;
+	//}
 	static V3DLONG getThresholdOtsu(vector<double> _histo_input)
 	{
 		V3DLONG i, value_threshold;
