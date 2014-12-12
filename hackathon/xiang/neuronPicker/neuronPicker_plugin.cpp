@@ -114,7 +114,7 @@ public:
 	#pragma endregion
 
 	#pragma region "regionGrow"
-	static vector<V3DLONG> doRegionGrow(const unsigned char* _image1Dc_input, const V3DLONG _pos_seed, const V3DLONG _size_max,
+	static vector<V3DLONG> doRegionGrow_color(const unsigned char* _image1Dc_input, const V3DLONG _pos_seed, const V3DLONG _size_max,
 		const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z, V3DLONG _dim_C, unsigned char* _image1D_mask,
 		const vector<vector<V3DLONG> > _pos4s_neighborRelative, const double _bandWidth_color)
 	{
@@ -156,6 +156,52 @@ public:
 					vector<V3DLONG> color_neighbor=getColorFromPos(_image1Dc_input, pos_neighbor, size_page, _dim_C);
 					if ((isColorBandpassed(color_seed, color_neighbor, _bandWidth_color, _dim_C))
 						&& (_image1D_mask[pos_neighbor]>0))
+					{
+						_image1D_mask[pos_neighbor]=0; //scooped;
+						poss_growing.push_back(pos_neighbor);
+						poss_result.push_back(pos_neighbor);
+						size_region++;
+						if (size_region>_size_max) {return poss_result;}
+					}
+				}
+			}
+		}
+	}
+	static vector<V3DLONG> doRegionGrow(const unsigned char* _image1D_input, const V3DLONG _pos_seed, const V3DLONG _size_max,
+		const V3DLONG _dim_X, const V3DLONG _dim_Y, const V3DLONG _dim_Z, V3DLONG _dim_C, unsigned char* _image1D_mask,
+		const vector<vector<V3DLONG> > _pos4s_neighborRelative, const double _bandWidth_input)
+	{
+		vector<V3DLONG> poss_result;
+		if (_image1D_mask[_pos_seed]<1) {return poss_result;}
+		V3DLONG value_seed = _image1D_input[_pos_seed];
+		V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y; V3DLONG size_page=_dim_X*_dim_Y*_dim_Z;
+		vector<V3DLONG> poss_growing;
+		poss_growing.push_back(_pos_seed);
+		poss_result.push_back(_pos_seed);
+		_image1D_mask[_pos_seed]=0; //scooped;
+		V3DLONG count_neighbors=_pos4s_neighborRelative.size();
+		V3DLONG size_region = 1;
+		while (true)
+		{
+			if (poss_growing.empty()) //growing complete;
+			{
+				return poss_result;
+			}
+			V3DLONG pos_current=poss_growing.back();
+			poss_growing.pop_back();
+			vector<V3DLONG> xyz_current=pos2xyz(pos_current, offset_Y, offset_Z);
+			for (V3DLONG idx_neighbor=0;idx_neighbor<count_neighbors;idx_neighbor++)
+			{
+				vector<V3DLONG> poss_direction (4, 0);
+				V3DLONG pos_neighbor=pos_current+_pos4s_neighborRelative[idx_neighbor][3];
+				vector<V3DLONG> xyz_neighbor (3, 0);
+				xyz_neighbor[0]=xyz_current[0]+_pos4s_neighborRelative[idx_neighbor][0];
+				xyz_neighbor[1]=xyz_current[1]+_pos4s_neighborRelative[idx_neighbor][1];
+				xyz_neighbor[2]=xyz_current[2]+_pos4s_neighborRelative[idx_neighbor][2];
+				if (isValid(xyz_neighbor, _dim_X, _dim_Y, _dim_Z)) //prevent it from going out of bounds;
+				{
+					V3DLONG value_neighbor=_image1D_input[pos_neighbor];
+					if ( ((value_neighbor-value_seed)<_bandWidth_input) || ((value_neighbor-value_seed)>(-1)*_bandWidth_input))
 					{
 						_image1D_mask[pos_neighbor]=0; //scooped;
 						poss_growing.push_back(pos_neighbor);
@@ -238,33 +284,24 @@ public:
 		}
 		return;
 	}
-	//static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask)
-	//{
-	//	vector<V3DLONG> thresholds_page;
-	//	for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-	//	{
-	//		vector<double> histo_page=getHistogram(_image1D_input, _size_page, idx_color*_size_page);
-	//		V3DLONG threshold_page=getThresholdOtsu(histo_page);
-	//		thresholds_page.push_back(threshold_page);
-	//		cout<<"threshold for current image channel ["<<idx_color<<"]: "<<threshold_page<<endl;
-	//	}
-	//	for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
-	//	{
-	//		bool is_foreground=false;
-	//		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
-	//		{
-	//			if (_image1D_input[pos_i+idx_color*_size_page]>thresholds_page[idx_color])
-	//			{
-	//				_image1D_mask[pos_i]=const_max_voxelValue; 
-	//				is_foreground=true;
-	//				break;
-	//			}
-	//		}
-	//		if (!is_foreground) { _image1D_mask[pos_i]=0; }
-	//		else { _image1D_mask[pos_i]=const_max_voxelValue; }
-	//	}
-	//	return;
-	//}
+	static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask)
+	{
+		vector<double> histo_page=getHistogram(_image1D_input, _size_page);
+		V3DLONG threshold_page=getThresholdOtsu(histo_page);
+		cout<<"threshold for current image: "<<threshold_page<<endl;
+		for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
+		{
+			if (_image1D_input[pos_i]>threshold_page)
+			{
+				_image1D_mask[pos_i]=const_max_voxelValue; 
+			}
+			else
+			{
+				_image1D_mask[pos_i]=0;
+			}
+		}
+		return;
+	}
 	static V3DLONG getThresholdOtsu(vector<double> _histo_input)
 	{
 		V3DLONG i, value_threshold;
@@ -411,25 +448,25 @@ public:
 			image1D_intensity[pos_i]=floor(sqrt((double)intensity_sum));
 		}
 		doThresholding(image1D_intensity, size_page, _image1D_mask, _dim_C);
-		cout<<"seed color: ";
-		vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
-		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
-		{
-			cout<<"["<<idx_color<<"]: "<<color_seed[idx_color]<<"; ";
-		}
-		cout<<endl;
+		//cout<<"seed color: ";
+		//vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
+		//for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
+		//{
+		//	cout<<"["<<idx_color<<"]: "<<color_seed[idx_color]<<"; ";
+		//}
+		//cout<<endl;
 		V3DLONG step_bandWidth = 10;
-		V3DLONG max_seedColor = max(max(color_seed[0],color_seed[1]), color_seed[2]);
+		//V3DLONG max_seedColor = max(max(color_seed[0],color_seed[1]), color_seed[2]);
 		V3DLONG count_steps = floor(const_max_voxelValue/step_bandWidth);
 		vector<V3DLONG> poss_region;
 		V3DLONG idx_step;
 		for (idx_step=0;idx_step<count_steps;idx_step++)
 		{
-			V3DLONG bandWidth_color = (step_bandWidth)*(idx_step+1);
-			cout<<"bandWidth_color: "<<bandWidth_color<<endl;
-			poss_region=doRegionGrow(_image1Dc_input, _pos_landmark, _max_size, _dim_X, _dim_Y, _dim_Z, _dim_C,
-				_image1D_mask,	_pos4s_neighborRelative, bandWidth_color);
-			poss2Image1D(poss_region, _image1D_mask, const_max_voxelValue);
+			V3DLONG bandWidth_current = (step_bandWidth)*(idx_step+1);
+			cout<<"bandWidth_current: "<<bandWidth_current<<endl;
+			poss_region=doRegionGrow(image1D_intensity, _pos_landmark, _max_size, _dim_X, _dim_Y, _dim_Z, _dim_C,
+				_image1D_mask,	_pos4s_neighborRelative, bandWidth_current);
+			poss2Image1D(poss_region, _image1D_mask, const_max_voxelValue); //unmask;
 			if (poss_region.size()>_max_size) { break; }
 		}
 		poss_region = doRegionGrow(_image1Dc_input, _pos_landmark, _max_size, _dim_X, _dim_Y, _dim_Z, _dim_C,
