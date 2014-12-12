@@ -124,13 +124,13 @@ public:
 		vector<V3DLONG> poss_growing;
 		poss_growing.push_back(_pos_seed);
 		poss_result.push_back(_pos_seed);
-		vector<double> color_seed=getColorFromPos(_image1Dc_input, _pos_seed, size_page, _dim_C);
+		vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_seed, size_page, _dim_C);
 		_image1D_mask[_pos_seed]=0; //scooped;
 		V3DLONG count_neighbors=_pos4s_neighborRelative.size();
 		V3DLONG size_region = 1;
 		while (true)
 		{
-			cout<<"poss_growing: "<<poss_growing.size()<<endl;
+			//cout<<"poss_growing: "<<poss_growing.size()<<endl;
 			if (poss_growing.empty()) //growing complete;
 			{
 				return poss_result;
@@ -153,7 +153,7 @@ public:
 				xyz_neighbor[2]=xyz_current[2]+poss_direction[2];
 				if (isValid(xyz_neighbor, _dim_X, _dim_Y, _dim_Z)) //prevent it from going out of bounds;
 				{
-					vector<double> color_neighbor=getColorFromPos(_image1Dc_input, pos_neighbor, size_page, _dim_C);
+					vector<V3DLONG> color_neighbor=getColorFromPos(_image1Dc_input, pos_neighbor, size_page, _dim_C);
 					if ((isColorBandpassed(color_seed, color_neighbor, _bandWidth_color, _dim_C))
 						&& (_image1D_mask[pos_neighbor]>0))
 					{
@@ -167,11 +167,11 @@ public:
 			}
 		}
 	}
-	static bool isColorBandpassed(vector<double> _color_source, vector<double> _color_target, double _bandWidth_color, V3DLONG _dim_C)
+	static bool isColorBandpassed(vector<V3DLONG> _color_source, vector<V3DLONG> _color_target, double _bandWidth_color, V3DLONG _dim_C)
 	{
 		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
 		{
-			double diff_color=(double)(iabs(_color_source[idx_color]-_color_target[idx_color]));
+			V3DLONG diff_color=(iabs(_color_source[idx_color]-_color_target[idx_color]));
 			//if (diff_color>(_bandWidth_color*_color_source[idx_color])) {return false;}
 			if (diff_color>_bandWidth_color) {return false;}
 		}
@@ -212,6 +212,33 @@ public:
 		return pos4s_result;
 	}
 	static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask, V3DLONG _dim_C)
+	{
+		vector<V3DLONG> thresholds_page;
+		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+		{
+			vector<double> histo_page=getHistogram(_image1D_input, _size_page, idx_color*_size_page);
+			V3DLONG threshold_page=getThresholdOtsu(histo_page);
+			thresholds_page.push_back(threshold_page);
+			cout<<"threshold for current image channel ["<<idx_color<<"]: "<<threshold_page<<endl;
+		}
+		for (V3DLONG pos_i=0;pos_i<_size_page;pos_i++)
+		{
+			bool is_foreground=false;
+			for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+			{
+				if (_image1D_input[pos_i+idx_color*_size_page]>thresholds_page[idx_color])
+				{
+					_image1D_mask[pos_i]=const_max_voxelValue; 
+					is_foreground=true;
+					break;
+				}
+			}
+			if (!is_foreground) { _image1D_mask[pos_i]=0; }
+			else { _image1D_mask[pos_i]=const_max_voxelValue; }
+		}
+		return;
+	}
+	static void doThresholding(const unsigned char* _image1D_input, const V3DLONG _size_page, unsigned char* _image1D_mask)
 	{
 		vector<V3DLONG> thresholds_page;
 		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
@@ -348,24 +375,20 @@ public:
 		Landmark_input.getCoord(x, y, z);
 		return (xyz2pos(x-1, y-1, z-1, _offset_Y, _offset_Z));
 	}
-	static vector<double> getColorFromPos(const unsigned char* _image1Dc_input, V3DLONG _pos_input, V3DLONG _size_page, V3DLONG _dim_C)
+	static vector<V3DLONG> getColorFromPos(const unsigned char* _image1Dc_input, V3DLONG _pos_input, V3DLONG _size_page, V3DLONG _dim_C)
 	{
-		vector<double> color_result (_dim_C+1, 0);
-		V3DLONG color_max=0;
-		double color_sum=0;
+		vector<V3DLONG> color_result (_dim_C, 0);
+		double color_max=0;
 		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
 		{
 			color_result[idx_color]=_image1Dc_input[_pos_input+idx_color*_size_page];
 			if (color_max<color_result[idx_color]) {color_max=color_result[idx_color];}
-			color_sum+=(color_result[idx_color]*color_result[idx_color]);
 		}
-		color_sum=sqrt(color_sum);
-		double prop_color = const_max_voxelValue/color_max;
+		double prop_color = (double)const_max_voxelValue/color_max;
 		for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
 		{
-			color_result[idx_color]=(double)color_result[idx_color]*prop_color;
+			color_result[idx_color]=floor((double)color_result[idx_color]*prop_color);
 		}
-		color_result[_dim_C]=color_sum;
 		return color_result;
 	}
 	#pragma endregion
@@ -377,9 +400,19 @@ public:
 	{
 		V3DLONG size_page=_dim_X*_dim_Y*_dim_Z; V3DLONG offset_Y=_dim_X; V3DLONG offset_Z=_dim_X*_dim_Y;
 		if (_dim_C>3) {_dim_C=3;}
-		doThresholding(_image1Dc_input, size_page, _image1D_mask, _dim_C);
+		unsigned char* image1D_intensity = memory_allocate_uchar1D(size_page);
+		for (V3DLONG pos_i;pos_i<size_page;pos_i++)
+		{
+			V3DLONG intensity_sum = 0;
+			for (V3DLONG idx_color=0;idx_color<_dim_C;idx_color++)
+			{
+				intensity_sum += (_image1Dc_input[pos_i+idx_color*size_page]*_image1Dc_input[pos_i+idx_color*size_page]);
+			}
+			image1D_intensity[pos_i]=floor(sqrt((double)intensity_sum));
+		}
+		doThresholding(image1D_intensity, size_page, _image1D_mask, _dim_C);
 		cout<<"seed color: ";
-		vector<double> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
+		vector<V3DLONG> color_seed=getColorFromPos(_image1Dc_input, _pos_landmark, size_page, _dim_C);
 		for (V3DLONG idx_color=0;idx_color<=_dim_C;idx_color++)
 		{
 			cout<<"["<<idx_color<<"]: "<<color_seed[idx_color]<<"; ";
@@ -392,7 +425,8 @@ public:
 		V3DLONG idx_step;
 		for (idx_step=0;idx_step<count_steps;idx_step++)
 		{
-			V3DLONG bandWidth_color = const_max_voxelValue-step_bandWidth*idx_step;
+			V3DLONG bandWidth_color = (step_bandWidth)*(idx_step+1);
+			cout<<"bandWidth_color: "<<bandWidth_color<<endl;
 			poss_region=doRegionGrow(_image1Dc_input, _pos_landmark, _max_size, _dim_X, _dim_Y, _dim_Z, _dim_C,
 				_image1D_mask,	_pos4s_neighborRelative, bandWidth_color);
 			poss2Image1D(poss_region, _image1D_mask, const_max_voxelValue);
@@ -696,7 +730,7 @@ void neuronPickerDialog::creat()
 
     //extract parameters
     spin_color = new QDoubleSpinBox();
-    spin_color->setRange(0,256); spin_color->setValue(10);
+    spin_color->setRange(0,100); spin_color->setValue(10);
     spin_distance = new QSpinBox();
     spin_distance->setRange(0,100000); spin_distance->setValue(5);
     QLabel* label_0 = new QLabel("color filtering bandwidth:");
@@ -872,7 +906,7 @@ void neuronPickerDialog::extract()
     qDebug()<<"start extracting";
 	V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
     neuronPickerMain::main(image1Dc_in, image1D_out, image1D_mask, sz_img[0], sz_img[1], sz_img[2], 3, pos_landmark,
-            pos4s_neighborRelative, spin_color->value()*size_page);
+            pos4s_neighborRelative, spin_color->value()/100000*size_page);
     //visualizationImage1D(image1D_tmp, sz_img[0], sz_img[1], sz_img[2], 1, *call, QString(name_currentWindow+QString("%1").arg(idx_landmark)));
     qDebug()<<"push for visualization";
     updateOutputWindow();
