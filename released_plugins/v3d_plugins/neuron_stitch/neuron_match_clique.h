@@ -92,6 +92,7 @@ public:
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
     void initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments
+    void initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& components, QList<int>& pList);
     int initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType);
     void initNeuronComponents(NeuronTree& nt, QList<int>& components, QList<int>& pList);
     void matchCliquesAndCands();

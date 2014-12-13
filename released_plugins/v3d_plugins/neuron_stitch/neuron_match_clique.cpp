@@ -199,7 +199,9 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
 
     matchfunc = new neuron_match_clique((NeuronTree*)(&ntList->at(0)),(NeuronTree*)(&ntList->at(1)));
     matchfunc->initNeuronComponents();
-    matchfunc->update_matchedPoints_from_Markers(mList); //to-do,not implemented yet
+    //update markers
+    link_new_marker_neuron();
+    updatematchlist();
 
     updateview();
 }
@@ -2235,6 +2237,76 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
     }
 }
 
+//orientation should be 1/-1 for smaller/larger stack in directio
+//new type: 1:root; 2:path; 5:fork point; 6:end point; 7:single child root;
+void neuron_match_clique::initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& components, QList<int>& pList)
+{
+    QVector<int> childNum(nt.listNeuron.size(), 0);
+    QVector<int> connNum(nt.listNeuron.size(), 0);
+    QVector<double> sectionLength(nt.listNeuron.size(), 0);
+    //QList<int> components;
+    components.clear();
+    pList.clear();
+    QVector<V3DLONG> componentSize;
+    QVector<V3DLONG> componentLength;
+    V3DLONG curid=0;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            connNum[i]--; //root that only have 1 clide will also be a dead end
+            components.append(curid); curid++;
+            pList.append(-1);
+        }
+        else{
+            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            childNum[pid]++;
+            connNum[pid]++;
+            sectionLength[i]=sqrt(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(pid)));
+            components.append(-1);
+            pList.append(pid);
+        }
+    }
+    //neuron type
+    initNeuronType(nt,ng,neuronType);
+
+//    //for test
+//    qDebug()<<"connected component";
+
+    //connected component
+    for(V3DLONG cid=0; cid<curid; cid++){
+        QStack<int> pstack;
+        int chid, size = 0;
+        if(!components.contains(cid)) //should not happen, just in case
+            continue;
+        if(components.indexOf(cid)!=components.lastIndexOf(cid)) //should not happen
+            qDebug("unexpected multiple tree root, please check the code: neuron_stitch_func.cpp");
+        //recursively search for child and mark them as the same component
+        pstack.push(components.indexOf(cid));
+        size++;
+        while(!pstack.isEmpty()){
+            int pid=pstack.pop();
+            chid = -1;
+            chid = pList.indexOf(pid,chid+1);
+            while(chid>=0){
+                pstack.push(chid);
+                components[chid]=cid;
+                chid=pList.indexOf(pid,chid+1);
+                size++;
+            }
+        }
+        componentSize.append(size);
+    }
+    //component size
+    for(V3DLONG cid=0; cid<curid; cid++){
+        double length = 0;
+        int idx = -1;
+        for(V3DLONG i=0; i<componentSize[cid]; i++){
+            idx = components.indexOf(cid,idx+1);
+            length+=sectionLength[idx];
+        }
+        componentLength.append(length);
+    }
+}
+
 //initial type should have already been assigned
 //initNeuronAndCandidate required befor running this
 //normal type: 1:single root; 2:path; 5:fork point; 6:end point;
@@ -2410,8 +2482,10 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
 
 void neuron_match_clique::initNeuronComponents()
 {
-    initNeuronComponents(*nt0, components0, parent0);
-    initNeuronComponents(*nt1, components1, parent1);
+    //initNeuronComponents(*nt0, components0, parent0);
+    //initNeuronComponents(*nt1, components1, parent1);
+    initNeuron(*nt0, ng0, neuronType0, components0, parent0);
+    initNeuron(*nt1, ng1, neuronType1, components1, parent1);
     //adjust component id of nt1
     int ccmax=0;
     for(int i=0; i<components0.size(); i++){

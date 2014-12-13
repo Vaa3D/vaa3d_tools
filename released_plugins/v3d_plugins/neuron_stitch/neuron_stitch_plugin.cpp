@@ -108,35 +108,35 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
                 cerr<<"error: wrong stack direction: "<<tmp<<"; use default value 2 (z direction)"<<endl;
         }
         if(paras.size()>1){
-            double tmp=atoi(paras.at(1));
+            double tmp=atof(paras.at(1));
             if(tmp>1e-10)
                 matchfunc.zscale=tmp;
             else
                 cerr<<"error: wrong rescale value: "<<tmp<<"; use default value 1"<<endl;
         }
         if(paras.size()>2){
-            double tmp=atoi(paras.at(2));
+            double tmp=atof(paras.at(2));
             if(tmp>0&&tmp<180)
                 matchfunc.angThr_match=cos(tmp/180*M_PI);
             else
                 cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value 60"<<endl;
         }
         if(paras.size()>3){
-            double tmp=atoi(paras.at(3));
+            double tmp=atof(paras.at(3));
             if(tmp>=0)
                 matchfunc.pmatchThr=tmp;
             else
                 cerr<<"error: wrong match distance threshold: "<<tmp<<"; use default value 100"<<endl;
         }
         if(paras.size()>4){
-            double tmp=atoi(paras.at(4));
+            double tmp=atof(paras.at(4));
             if(tmp>0)
                 matchfunc.spanCand=tmp;
             else
                 cerr<<"error: wrong border tips seraching span: "<<tmp<<"; use default value 20"<<endl;
         }
         if(paras.size()>5){
-            double tmp=atoi(paras.at(5));
+            double tmp=atof(paras.at(5));
             if(tmp>0)
                 matchfunc.cmatchThr=tmp;
             else
