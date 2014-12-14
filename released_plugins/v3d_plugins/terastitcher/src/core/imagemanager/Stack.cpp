@@ -305,7 +305,15 @@ void Stack::init() throw (IOException)
 	int img_depth;
 	int img_chans;
 	std::string params;
-	iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	 img_depth, img_chans, params);
+
+    try
+    {
+        iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	 img_depth, img_chans, params);
+    }
+    catch (iom::exception & ex)
+    {
+        throw iim::IOException(ex.what());
+    }
 
 	/* Giulio_CV
 

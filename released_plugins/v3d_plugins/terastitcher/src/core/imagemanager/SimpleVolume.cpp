@@ -154,7 +154,14 @@ void SimpleVolume::initChannels ( ) throw (IOException)
 
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
 
-	iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
+    try
+    {
+        iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
+    }
+    catch (iom::exception & ex)
+    {
+        throw iim::IOException(ex.what());
+    }
 
 	/* Giulio_CV 
 	
