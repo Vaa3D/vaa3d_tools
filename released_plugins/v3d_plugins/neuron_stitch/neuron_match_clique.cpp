@@ -13,6 +13,14 @@
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
 
+int COLOR_ACTIVE0=4;
+int COLOR_ACTIVE1=5;
+int COLOR_ORG0=2;
+int COLOR_ORG1=7;
+int COLOR_STITCHED0=12;
+int COLOR_STITCHED1=12;
+
+
 NeuronMatchOnlyDialog::NeuronMatchOnlyDialog(NeuronTree *nt_in0, NeuronTree *nt_in1, LandmarkList *mList_in, double affineParam[7])
 {
     nt1=nt_in1;
@@ -558,12 +566,13 @@ void NeuronLiveMatchDialog::highlight_pair()
             SP->y = ntList->at(1).listNeuron.at(info[1]).y;
             SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
-
-            if(stitchmask.at(cur_pair)>0)
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
-            else
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
-            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+            if(stitchmask.at(cur_pair)>0){
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
+                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
+            }else{
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
+                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+            }
         }
 
         cur_pair=cb_pair->currentIndex();
@@ -588,8 +597,8 @@ void NeuronLiveMatchDialog::highlight_pair()
         if(stitchmask.at(cur_pair)<=0){
             //for test
             qDebug()<<"cojoc: "<<stitchmask.at(cur_pair)<<":"<<cur_pair;
-            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],5);
-            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],4);
+            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ACTIVE1);
+            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ACTIVE0);
         }
 
         updateview();
@@ -631,11 +640,14 @@ void NeuronLiveMatchDialog::manualadd()
             SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
 
-            if(stitchmask.at(cur_pair)>0)
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
-            else
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
-            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+            if(stitchmask.at(cur_pair)>0){
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
+                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
+            }else{
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
+                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+            }
+
         }
     }
 
@@ -791,7 +803,8 @@ void NeuronLiveMatchDialog::stitchall()
             SP->y = ntList->at(1).listNeuron.at(info[1]).y;
             SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
-            matchfunc->highlight_nt1_seg(pmatch1.at(idx),2);
+            matchfunc->highlight_nt1_seg(pmatch1.at(idx),COLOR_STITCHED1);
+            matchfunc->highlight_nt1_seg(pmatch0.at(idx),COLOR_STITCHED0);
         }else{
             stitchmask[idx]=-1;
             cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = failed, LOOP!");
