@@ -1391,14 +1391,14 @@ void affine_XYZList(const QList<XYZ>& in, QList<XYZ>& out, double shift_x, doubl
     }
 }
 
-bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double& cent_x,double& cent_y,double& cent_z, int dir) //angle_r is 180 based
+double compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double& cent_x,double& cent_y,double& cent_z, int dir) //angle_r is 180 based
 {
     //check
     if(c0.size() != c1.size()){
         qDebug()<<"error: the number of points for affine does not match";
         shift_x = shift_y = shift_z = angle_r = 0;
         cent_x=cent_y=cent_z = 0;
-        return false;
+        return -1;
     }
     //get center
     double cent0[3] = {0};
@@ -1503,7 +1503,7 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     }
     angle_r=mang;
     //qDebug()<<"calculated affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle_r<<":"<<mdis;
-    return true;
+    return mdis;
 }
 
 bool compute_rotation(QList<XYZ> c0, QList<XYZ> c1, double & angle_r, int dir)
@@ -2116,6 +2116,72 @@ float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int
     }
 
     printf("%d %d %d %f\n",ant,idx_firstnt,idx_secondnt,delta);
+
+    return delta;
+}
+
+float quickMoveNeuron(NeuronTree * nt0, const QList<int>& cand0, NeuronTree * nt1, const QList<int>& cand1, int stackdir)
+{
+    if(stackdir<0 || stackdir>2)
+        return 0;
+    float gap=0; // the gap between two stacks
+    float delta=0;
+
+    //adjust the neuron tree
+    if(stackdir==0) //x direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG cid = 0; cid < cand1.size(); cid++){
+            V3DLONG nid=cand1.at(cid);
+            first_min=first_min>nt1->listNeuron.at(nid).x?nt1->listNeuron.at(nid).x:first_min;
+        }
+        for(V3DLONG cid = 0; cid < cand0.size(); cid++){
+            V3DLONG nid=cand0.at(cid);
+            second_max=second_max<nt0->listNeuron.at(nid).x?nt0->listNeuron.at(nid).x:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->x+=delta;
+        }
+    }
+    else if(stackdir==1) //y direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG cid = 0; cid < cand1.size(); cid++){
+            V3DLONG nid=cand1.at(cid);
+            first_min=first_min>nt1->listNeuron.at(nid).y?nt1->listNeuron.at(nid).y:first_min;
+        }
+        for(V3DLONG cid = 0; cid < cand0.size(); cid++){
+            V3DLONG nid=cand0.at(cid);
+            second_max=second_max<nt0->listNeuron.at(nid).y?nt0->listNeuron.at(nid).y:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->y+=delta;
+        }
+    }
+    else if(stackdir==2) //z direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG cid = 0; cid < cand1.size(); cid++){
+            V3DLONG nid=cand1.at(cid);
+            first_min=first_min>nt1->listNeuron.at(nid).z?nt1->listNeuron.at(nid).z:first_min;
+        }
+        for(V3DLONG cid = 0; cid < cand0.size(); cid++){
+            V3DLONG nid=cand0.at(cid);
+            second_max=second_max<nt0->listNeuron.at(nid).z?nt0->listNeuron.at(nid).z:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->z+=delta;
+        }
+    }
 
     return delta;
 }

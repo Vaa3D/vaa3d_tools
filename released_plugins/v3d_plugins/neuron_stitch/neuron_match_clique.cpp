@@ -230,26 +230,13 @@ void NeuronLiveMatchDialog::creat()
     spin_zscale = new QDoubleSpinBox();
     spin_zscale->setRange(0,100000); spin_zscale->setValue(1);
     spin_ang = new QDoubleSpinBox();
-    spin_ang->setRange(0,180); spin_ang->setValue(60);
+    spin_ang->setRange(0,180); spin_ang->setValue(91);
     spin_matchdis = new QDoubleSpinBox();
     spin_matchdis->setRange(0,100000); spin_matchdis->setValue(100);
-    spin_searchspan = new QDoubleSpinBox();
-    spin_searchspan->setRange(0,100000); spin_searchspan->setValue(20);
     spin_cmatchdis = new QDoubleSpinBox();
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
-    spin_segthr = new QDoubleSpinBox();
-    spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
     spin_maxcnum = new QSpinBox();
     spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
-    spin_spineLen = new QSpinBox();
-    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
-    spin_spineAng = new QDoubleSpinBox();
-    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30); spin_spineAng->setEnabled(false);
-    spin_spineRadius = new QDoubleSpinBox();
-    spin_spineRadius->setRange(0,100000); spin_spineRadius->setValue(3); spin_spineRadius->setEnabled(false);
-    check_spine = new QCheckBox("filter spines when matching:");
-    check_spine -> setChecked(false);
-    connect(check_spine, SIGNAL(stateChanged(int)), this, SLOT(spineCheck(int)));
 
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2,Qt::AlignRight);
@@ -263,31 +250,58 @@ void NeuronLiveMatchDialog::creat()
     QLabel* label_3 = new QLabel("Max distance to match points: ");
     gridLayout->addWidget(label_3,10,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_matchdis,10,5,1,1);
-    QLabel* label_4 = new QLabel("match candidates searching span: ");
-    gridLayout->addWidget(label_4,11,0,1,2,Qt::AlignRight);
-    gridLayout->addWidget(spin_searchspan,11,2,1,1);
     QLabel* label_5 = new QLabel("Max distance to match triangles: ");
-    gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
-    gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
+    gridLayout->addWidget(label_5,11,0,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_cmatchdis,11,2,1,1);
+    QLabel* label_61 = new QLabel("Max number of triangles to match: ");
+    gridLayout->addWidget(label_61,11,3,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_maxcnum,11,5,1,1);
+
+    //border tips zone
+    group_marker = new QGroupBox("search for border tips, otherwise use existing ones:");
+    group_marker->setCheckable(true);
+    group_marker->setChecked(true);
+    spin_searchspan = new QDoubleSpinBox();
+    spin_searchspan->setRange(0,100000); spin_searchspan->setValue(20);
+    spin_segthr = new QDoubleSpinBox();
+    spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_gapthr = new QDoubleSpinBox();
+    spin_gapthr->setRange(0,100000); spin_gapthr->setValue(0);
+    spin_spineLen = new QSpinBox();
+    spin_spineLen->setRange(0,100000); spin_spineLen->setValue(5); spin_spineLen->setEnabled(false);
+    spin_spineAng = new QDoubleSpinBox();
+    spin_spineAng->setRange(0,180); spin_spineAng->setValue(30); spin_spineAng->setEnabled(false);
+    spin_spineRadius = new QDoubleSpinBox();
+    spin_spineRadius->setRange(0,100000); spin_spineRadius->setValue(3); spin_spineRadius->setEnabled(false);
+    check_spine = new QCheckBox("filter spines when matching:");
+    check_spine -> setChecked(false);
+    connect(check_spine, SIGNAL(stateChanged(int)), this, SLOT(spineCheck(int)));
+
+    QGridLayout* groupLayout = new QGridLayout();
+    QLabel* label_4 = new QLabel("match candidates searching span: ");
+    groupLayout->addWidget(label_4,13,0,1,2,Qt::AlignRight);
+    groupLayout->addWidget(spin_searchspan,13,2,1,1);
+    QLabel* label_62 = new QLabel("small gap filter (gap size): ");
+    groupLayout->addWidget(label_62,13,3,1,2,Qt::AlignRight);
+    groupLayout->addWidget(spin_gapthr,13,5,1,1);
     QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
-    gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
-    gridLayout->addWidget(spin_segthr,12,2,1,1);
-    QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
-    gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
-    gridLayout->addWidget(spin_maxcnum,12,5,1,1);
-    gridLayout->addWidget(check_spine,13,0,1,2);
+    groupLayout->addWidget(label_6,14,0,1,2,Qt::AlignRight);
+    groupLayout->addWidget(spin_segthr,14,2,1,1);
+    groupLayout->addWidget(check_spine,15,0,1,2);
     QLabel* label_7 = new QLabel("point #:");
-    gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineLen,14,1,1,1);
+    groupLayout->addWidget(label_7,16,0,1,1,Qt::AlignRight);
+    groupLayout->addWidget(spin_spineLen,16,1,1,1);
     QLabel* label_8 = new QLabel("turning angle:");
-    gridLayout->addWidget(label_8,14,2,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineAng,14,3,1,1);
+    groupLayout->addWidget(label_8,16,2,1,1,Qt::AlignRight);
+    groupLayout->addWidget(spin_spineAng,16,3,1,1);
     QLabel* label_9 = new QLabel("radius:");
-    gridLayout->addWidget(label_9,14,4,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineRadius,14,5,1,1);
+    groupLayout->addWidget(label_9,16,4,1,1,Qt::AlignRight);
+    groupLayout->addWidget(spin_spineRadius,16,5,1,1);
+    group_marker->setLayout(groupLayout);
+    gridLayout->addWidget(group_marker, 13,0,4,6);
 
     //stitching zone
-    int stitchrow=15;
+    int stitchrow=17;
     QFrame *line_1 = new QFrame();
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
@@ -315,7 +329,7 @@ void NeuronLiveMatchDialog::creat()
     btn_skip->setEnabled(false);
 
     //operation zone
-    int optrow=18;
+    int optrow=20;
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
@@ -387,19 +401,16 @@ void NeuronLiveMatchDialog::match()
 {
     checkwindow();
 
-    //clean up dialog storage:
-    pmatch0.clear();
-    pmatch1.clear();
-    mmatch0.clear();
-    mmatch1.clear();
-    stitchmask.clear();
-    mList->clear();
-    cur_pair=-1;
-
     //retrive backup
+    if(!group_marker->isChecked()){
+        link_new_marker_neuron();
+    }
     for(int i=0; i<2; i++){
         copyCoordinate(ntList_bk.at(i),ntList->at(i));
         copyProperty(ntList_bk.at(i),ntList->at(i));
+    }
+    if(!group_marker->isChecked()){
+        update_marker_to_neuron();
     }
 
     updateview();
@@ -414,6 +425,7 @@ void NeuronLiveMatchDialog::match()
     matchfunc->spanCand = spin_searchspan->value();
     matchfunc->cmatchThr = spin_cmatchdis->value();
     matchfunc->segmentThr = spin_segthr->value();
+    matchfunc->gapThr = spin_gapthr->value();
     matchfunc->maxClique3Num = spin_maxcnum->value();
     if(check_spine->isChecked()){
         matchfunc->spineLengthThr = spin_spineLen->value();
@@ -424,8 +436,22 @@ void NeuronLiveMatchDialog::match()
         matchfunc->spineRadiusThr = 0;
     }
 
+    //clean up dialog storage:
+    pmatch0.clear();
+    pmatch1.clear();
+    mmatch0.clear();
+    mmatch1.clear();
+    stitchmask.clear();
+    cur_pair=-1;
+
     //init clique and candidate
-    matchfunc->init();
+    if(group_marker->isChecked()){ //search for border tips
+        mList->clear(); //clean up
+        matchfunc->init(); //to-do update gap threshold part
+    }else{//use exsiting marker as border tips for match
+        matchfunc->initNeuronComponents();
+        matchfunc->init(mList);
+    }
 
     //global match
     qDebug()<<"start global search";
@@ -665,6 +691,40 @@ void NeuronLiveMatchDialog::link_new_marker_neuron()
                 p->color.r = 0;
                 p->color.g = 128;
                 p->color.b = 128;
+            }
+        }
+    }
+
+    updateview();
+}
+
+void NeuronLiveMatchDialog::update_marker_to_neuron()
+{
+    if(mList->size()<=0){
+        return;
+    }
+
+    LocationSimple *p = 0;
+    for(int i=0; i<mList->size(); i++){
+        int info[4];
+        if(!get_marker_info(mList->at(i),info))
+            continue;
+        int nid=info[0];
+        V3DLONG pid=info[1];
+
+        p = (LocationSimple *)&(mList->at(i));
+        p->name=QString::number(i).toStdString();
+        if(nid>=0){
+            QString tmp = QString::number(nid) + " " + QString::number(pid) + " -1";
+            p->comments=tmp.toStdString();
+            if(nid==0){
+                p->x=ntList->at(0).listNeuron.at(pid).x;
+                p->y=ntList->at(0).listNeuron.at(pid).y;
+                p->z=ntList->at(0).listNeuron.at(pid).z;
+            }else{
+                p->x=ntList->at(1).listNeuron.at(pid).x;
+                p->y=ntList->at(1).listNeuron.at(pid).y;
+                p->z=ntList->at(1).listNeuron.at(pid).z;
             }
         }
     }
@@ -1098,6 +1158,7 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     pmatchThr = 100;
     zscale = 1;
     segmentThr = 0;
+    gapThr = 0;
     spineLengthThr = 0;
     spineAngThr = -1;
     spineRadiusThr = 0;
@@ -1106,146 +1167,283 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
 
 void neuron_match_clique::globalmatch()
 {
-    if(rankedCliqueMatch.size()<=0)
-        return;
-
     candmatch0.clear();
     candmatch1.clear();
+    pmatch0.clear();
+    pmatch1.clear();
 
-    //search for best unconflict groups of matched points
-    double bestEnergy = -1;
-    double better_shift_x=0,better_shift_y=0,better_shift_z=0,better_angle=0,better_cent_x=0,better_cent_y=0,better_cent_z=0;
-
-    multimap<int, QVector<int> , std::greater<int> >::iterator iter_conflict=rankedCliqueMatch.begin();
-    //try 10 times, accept best one if no better one can be found with current trial
-    for(int trial=0; trial<candID0.size()+candID1.size(); trial++){
-        if(iter_conflict==rankedCliqueMatch.end()) break;
-        //construct in-conflict matching pairs
-        QList<int> tmpmatch0, tmpmatch1;
-        int c0 = iter_conflict->second.at(0);//.value().at(0);
-        int c1 = iter_conflict->second.at(1);
-        tmpmatch0.append(cliqueList0.at(c0).idx[0]);
-        tmpmatch0.append(cliqueList0.at(c0).idx[1]);
-        tmpmatch0.append(cliqueList0.at(c0).idx[2]);
-        tmpmatch1.append(cliqueList1.at(c1).idx[0]);
-        tmpmatch1.append(cliqueList1.at(c1).idx[1]);
-        tmpmatch1.append(cliqueList1.at(c1).idx[2]);
-        iter_conflict++;
-//This method will push inconflict matching point based on clique match as much as possible first.
-//Marked this method because it will be unstable and cause error result
-//        int reachConflict = 0; //not reached
-//        for(multimap<int, QVector<int> , std::greater<int> >::iterator iter_cpair=rankedCliqueMatch.begin(); iter_cpair != rankedCliqueMatch.end(); iter_cpair++){
-//            if(iter_cpair == iter_conflict){
-//                reachConflict = 1; //reached, but no new confliction so far
-//                continue;
-//            }
-//            c0=iter_cpair->second.at(0);
-//            c1=iter_cpair->second.at(1);
-//            //check confliction
-//            bool conflict = false;
-//            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
-//                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[0])) != cliqueList1.at(c1).idx[0])
-//                    conflict = true;
-//            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[0])){
-//                conflict = true;
-//            }
-//            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
-//                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[1])) != cliqueList1.at(c1).idx[1])
-//                    conflict = true;
-//            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[1])){
-//                conflict = true;
-//            }
-//            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
-//                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[2])) != cliqueList1.at(c1).idx[2])
-//                    conflict = true;
-//            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[2])){
-//                conflict = true;
-//            }
-//            if(!conflict){
-//                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
-//                    tmpmatch0.append(cliqueList0.at(c0).idx[0]);
-//                    tmpmatch1.append(cliqueList1.at(c1).idx[0]);
-//                }
-//                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
-//                    tmpmatch0.append(cliqueList0.at(c0).idx[1]);
-//                    tmpmatch1.append(cliqueList1.at(c1).idx[1]);
-//                }
-//                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
-//                    tmpmatch0.append(cliqueList0.at(c0).idx[2]);
-//                    tmpmatch1.append(cliqueList1.at(c1).idx[2]);
-//                }
-//            }
-//            if(conflict && reachConflict == 1){
-//                iter_conflict = iter_cpair;
-//                reachConflict = 2; //reached and new one has been identified
-//            }
-//        }
-        cout<<"matched points: "<<trial<<":";
-
-        //perform affine transform
-        while(1){
-            cout<<":"<<tmpmatch0.size();
-
-            double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
-            if(direction==0) tmp_shift_x=-1;
-            if(direction==1) tmp_shift_y=-1;
-            if(direction==2) tmp_shift_z=-1;
-            QList<XYZ> c0,c1,tmpcoord, tmpdir;
-            for(int i=0; i<tmpmatch0.size(); i++){
-                c0.append(XYZ(candcoord0.at(tmpmatch0.at(i))));
-                c1.append(XYZ(candcoord1.at(tmpmatch1.at(i))));
-            }
-            if(!compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction)){
-                break;
-            }
-            affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
-            affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
-            minus_XYZList(tmpdir,tmpcoord,tmpdir);
-            QList<int> tmpMatchMarkers[2];
-            tmpMatchMarkers[0]=QList<int>();
-            tmpMatchMarkers[1]=QList<int>();
-            getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
-            if(tmpMatchMarkers[0].size()>tmpmatch0.size()){
-                tmpmatch0=tmpMatchMarkers[0];
-                tmpmatch1=tmpMatchMarkers[1];
-                better_shift_x=tmp_shift_x;
-                better_shift_y=tmp_shift_y;
-                better_shift_z=tmp_shift_z;
-                better_angle=tmp_angle;
-                better_cent_x=tmp_cent_x;
-                better_cent_y=tmp_cent_y;
-                better_cent_z=tmp_cent_z;
-            }else{
-                break;
+    if(candID0.size()==0 || candID1.size()==0){
+        return;
+    }else if(candID0.size()==1){ //only one candidate, match by angle
+        double mang=-1;
+        int mid=0;
+        for(int i=0; i<candID1.size(); i++){
+            //find the one with the highest angle similarity
+            double ang=NTDOT(canddir0.at(0),canddir1.at(i));
+            if(ang>mang){
+                mang=ang;
+                mid=i;
             }
         }
-        cout<<endl;
+        candmatch0.append(0);
+        candmatch1.append(mid);
+    }else if(candID1.size()==1){ //only one candidate, match by angle
+        double mang=-1;
+        int mid=0;
+        for(int i=0; i<candID0.size(); i++){
+            //find the one with the highest angle similarity
+            double ang=NTDOT(canddir0.at(i),canddir1.at(0));
+            if(ang>mang){
+                mang=ang;
+                mid=i;
+            }
+        }
+        candmatch0.append(mid);
+        candmatch1.append(0);
+    }else if(candID0.size()==2){
+        QList<int> tmpmatch0, tmpmatch1;
+        double errdis=1e16;
+        double errang=-2;
+        for(int i=0; i<candID1.size(); i++){
+            for(int j=i+1; j<candID1.size(); j++){
+                double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
+                if(direction==0) tmp_shift_x=-1;
+                if(direction==1) tmp_shift_y=-1;
+                if(direction==2) tmp_shift_z=-1;
+                QList<XYZ> c0,c1,tmpcoord, tmpdir;
+                c0.append(XYZ(candcoord0.at(0)));
+                c0.append(XYZ(candcoord0.at(1)));
+                c1.append(XYZ(candcoord1.at(i)));
+                c1.append(XYZ(candcoord1.at(j)));
+                double dis=compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
+                if(dis<0){
+                    break;
+                }
+                if(dis<errdis){
+                    affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    minus_XYZList(tmpdir,tmpcoord,tmpdir);
+                    QList<int> tmpMatchMarkers[2];
+                    tmpMatchMarkers[0]=QList<int>();
+                    tmpMatchMarkers[1]=QList<int>();
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    double ang=NTDOT(canddir0.at(0),tmpdir.at(i));
+                    ang+=NTDOT(canddir0.at(1),tmpdir.at(j));
+                    if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                        errang=ang;
+                        errdis=dis;
+                        tmpmatch0=tmpMatchMarkers[0];
+                        tmpmatch1=tmpMatchMarkers[1];
+                    }
 
-        if(tmpmatch0.size()>bestEnergy){
-            bestEnergy = tmpmatch0.size();
-            candmatch0 = tmpmatch0;
-            candmatch1 = tmpmatch1;
-            shift_x = better_shift_x;
-            shift_y = better_shift_y;
-            shift_z = better_shift_z;
-            rotation_ang = better_angle;
-            rotation_cx = better_cent_x;
-            rotation_cy = better_cent_y;
-            rotation_cz = better_cent_z;
-            trial=0; //try another 10 times
+                    affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    minus_XYZList(tmpdir,tmpcoord,tmpdir);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    ang=NTDOT(canddir0.at(1),tmpdir.at(i));
+                    ang+=NTDOT(canddir0.at(0),tmpdir.at(j));
+                    if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                        errang=ang;
+                        errdis=dis;
+                        tmpmatch0=tmpMatchMarkers[0];
+                        tmpmatch1=tmpMatchMarkers[1];
+                    }
+                }
+            }
+        }
+        candmatch0 = tmpmatch0;
+        candmatch1 = tmpmatch1;
+    }else if(candID1.size()==2){
+        QList<int> tmpmatch0, tmpmatch1;
+        double errdis=1e16;
+        double errang=-2;
+        for(int i=0; i<candID0.size(); i++){
+            for(int j=i+1; j<candID0.size(); j++){
+                double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
+                if(direction==0) tmp_shift_x=-1;
+                if(direction==1) tmp_shift_y=-1;
+                if(direction==2) tmp_shift_z=-1;
+                QList<XYZ> c0,c1,tmpcoord, tmpdir;
+                c0.append(XYZ(candcoord0.at(i)));
+                c0.append(XYZ(candcoord0.at(j)));
+                c1.append(XYZ(candcoord1.at(0)));
+                c1.append(XYZ(candcoord1.at(1)));
+                double dis=compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
+                if(dis<0){
+                    break;
+                }
+                if(dis<errdis){
+                    affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    minus_XYZList(tmpdir,tmpcoord,tmpdir);
+                    QList<int> tmpMatchMarkers[2];
+                    tmpMatchMarkers[0]=QList<int>();
+                    tmpMatchMarkers[1]=QList<int>();
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    double ang=NTDOT(canddir0.at(i),tmpdir.at(0));
+                    ang+=NTDOT(canddir0.at(j),tmpdir.at(1));
+                    if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                        errang=ang;
+                        errdis=dis;
+                        tmpmatch0=tmpMatchMarkers[0];
+                        tmpmatch1=tmpMatchMarkers[1];
+                    }
+
+                    affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                    minus_XYZList(tmpdir,tmpcoord,tmpdir);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    ang=NTDOT(canddir0.at(i),tmpdir.at(1));
+                    ang+=NTDOT(canddir0.at(j),tmpdir.at(0));
+                    if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                        errang=ang;
+                        errdis=dis;
+                        tmpmatch0=tmpMatchMarkers[0];
+                        tmpmatch1=tmpMatchMarkers[1];
+                    }
+                }
+            }
+        }
+        candmatch0 = tmpmatch0;
+        candmatch1 = tmpmatch1;
+    }else{
+        if(rankedCliqueMatch.size()<=0)
+            return;
+
+        //search for best unconflict groups of matched points
+        double bestEnergy = -1;
+        double better_shift_x=0,better_shift_y=0,better_shift_z=0,better_angle=0,better_cent_x=0,better_cent_y=0,better_cent_z=0;
+
+        multimap<int, QVector<int> , std::greater<int> >::iterator iter_conflict=rankedCliqueMatch.begin();
+        //try 10 times, accept best one if no better one can be found with current trial
+        for(int trial=0; trial<candID0.size()+candID1.size(); trial++){
+            if(iter_conflict==rankedCliqueMatch.end()) break;
+            //construct in-conflict matching pairs
+            QList<int> tmpmatch0, tmpmatch1;
+            int c0 = iter_conflict->second.at(0);//.value().at(0);
+            int c1 = iter_conflict->second.at(1);
+            tmpmatch0.append(cliqueList0.at(c0).idx[0]);
+            tmpmatch0.append(cliqueList0.at(c0).idx[1]);
+            tmpmatch0.append(cliqueList0.at(c0).idx[2]);
+            tmpmatch1.append(cliqueList1.at(c1).idx[0]);
+            tmpmatch1.append(cliqueList1.at(c1).idx[1]);
+            tmpmatch1.append(cliqueList1.at(c1).idx[2]);
+            iter_conflict++;
+    //This method will push inconflict matching point based on clique match as much as possible first.
+    //Marked this method because it will be unstable and cause error result
+    //        int reachConflict = 0; //not reached
+    //        for(multimap<int, QVector<int> , std::greater<int> >::iterator iter_cpair=rankedCliqueMatch.begin(); iter_cpair != rankedCliqueMatch.end(); iter_cpair++){
+    //            if(iter_cpair == iter_conflict){
+    //                reachConflict = 1; //reached, but no new confliction so far
+    //                continue;
+    //            }
+    //            c0=iter_cpair->second.at(0);
+    //            c1=iter_cpair->second.at(1);
+    //            //check confliction
+    //            bool conflict = false;
+    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
+    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[0])) != cliqueList1.at(c1).idx[0])
+    //                    conflict = true;
+    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[0])){
+    //                conflict = true;
+    //            }
+    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
+    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[1])) != cliqueList1.at(c1).idx[1])
+    //                    conflict = true;
+    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[1])){
+    //                conflict = true;
+    //            }
+    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
+    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[2])) != cliqueList1.at(c1).idx[2])
+    //                    conflict = true;
+    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[2])){
+    //                conflict = true;
+    //            }
+    //            if(!conflict){
+    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
+    //                    tmpmatch0.append(cliqueList0.at(c0).idx[0]);
+    //                    tmpmatch1.append(cliqueList1.at(c1).idx[0]);
+    //                }
+    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
+    //                    tmpmatch0.append(cliqueList0.at(c0).idx[1]);
+    //                    tmpmatch1.append(cliqueList1.at(c1).idx[1]);
+    //                }
+    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
+    //                    tmpmatch0.append(cliqueList0.at(c0).idx[2]);
+    //                    tmpmatch1.append(cliqueList1.at(c1).idx[2]);
+    //                }
+    //            }
+    //            if(conflict && reachConflict == 1){
+    //                iter_conflict = iter_cpair;
+    //                reachConflict = 2; //reached and new one has been identified
+    //            }
+    //        }
+            //cout<<"matched points: "<<trial<<":";
+
+            //perform affine transform
+            while(1){
+                //cout<<":"<<tmpmatch0.size();
+
+                double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
+                if(direction==0) tmp_shift_x=-1;
+                if(direction==1) tmp_shift_y=-1;
+                if(direction==2) tmp_shift_z=-1;
+                QList<XYZ> c0,c1,tmpcoord, tmpdir;
+                for(int i=0; i<tmpmatch0.size(); i++){
+                    c0.append(XYZ(candcoord0.at(tmpmatch0.at(i))));
+                    c1.append(XYZ(candcoord1.at(tmpmatch1.at(i))));
+                }
+                if(compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction)<0){
+                    break;
+                }
+                affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
+                minus_XYZList(tmpdir,tmpcoord,tmpdir);
+                QList<int> tmpMatchMarkers[2];
+                tmpMatchMarkers[0]=QList<int>();
+                tmpMatchMarkers[1]=QList<int>();
+                getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                if(tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                    tmpmatch0=tmpMatchMarkers[0];
+                    tmpmatch1=tmpMatchMarkers[1];
+                    better_shift_x=tmp_shift_x;
+                    better_shift_y=tmp_shift_y;
+                    better_shift_z=tmp_shift_z;
+                    better_angle=tmp_angle;
+                    better_cent_x=tmp_cent_x;
+                    better_cent_y=tmp_cent_y;
+                    better_cent_z=tmp_cent_z;
+                }else{
+                    break;
+                }
+            }
+            //cout<<endl;
+
+            if(tmpmatch0.size()>bestEnergy){
+                bestEnergy = tmpmatch0.size();
+                candmatch0 = tmpmatch0;
+                candmatch1 = tmpmatch1;
+//                shift_x = better_shift_x;
+//                shift_y = better_shift_y;
+//                shift_z = better_shift_z;
+//                rotation_ang = better_angle;
+//                rotation_cx = better_cent_x;
+//                rotation_cy = better_cent_y;
+//                rotation_cz = better_cent_z;
+                trial=0; //try another 10 times
+            }
         }
     }
 
-    pmatch0.clear();
-    pmatch1.clear();
     for(int i=0; i<candmatch0.size(); i++){
         pmatch0.append(candID0.at(candmatch0.at(i)));
         pmatch1.append(candID1.at(candmatch1.at(i)));
     }
     qDebug()<<"global match: "<<pmatch0.size()<<" matched points found";
-
-    //affine based on matched points
-    affine_nt1();
+    if(pmatch0.size()>0){
+        //affine based on matched points
+        affine_nt1();
+    }
 }
 
 void neuron_match_clique::init()
@@ -1307,6 +1505,57 @@ void neuron_match_clique::init()
     matchCliquesAndCands();
 }
 
+void neuron_match_clique::init(LandmarkList* mList)
+{
+    //get markers and register them with the neurons
+    load_cand_from_Markers(mList);
+
+    qDebug()<<"rescale in stacking direction";
+    //rescale neurons for matching
+    if(zscale!=1){
+        if(direction == 0){
+            proc_neuron_multiply_factor(nt0, zscale, 1, 1);
+            proc_neuron_multiply_factor(nt1, zscale, 1, 1);
+        }else if(direction == 1){
+            proc_neuron_multiply_factor(nt0, 1, zscale, 1);
+            proc_neuron_multiply_factor(nt1, 1, zscale, 1);
+        }else{
+            proc_neuron_multiply_factor(nt0, 1, 1, zscale);
+            proc_neuron_multiply_factor(nt1, 1, 1, zscale);
+        }
+    }
+
+    qDebug()<<"align in stacking direction based on markers";
+    if(direction==0)
+        shift_x=quickMoveNeuron(nt0, candID0, nt1, candID1, direction);
+    else if(direction==1)
+        shift_y=quickMoveNeuron(nt0, candID0, nt1, candID1, direction);
+    else
+        shift_z=quickMoveNeuron(nt0, candID0, nt1, candID1, direction);
+
+    midplane=getNeuronTreeMidplane((*nt0), (*nt1), direction);
+
+    //update candidates
+    qDebug()<<"search candidates";
+    update_cand(*nt0,ng0,neuronType0,candID0,parent0,components0,candcoord0,canddir0,canddircoord0,candcomponents0,1);
+    update_cand(*nt1,ng1,neuronType1,candID1,parent1,components1,candcoord1,canddir1,canddircoord1,candcomponents1,-1);
+
+    qDebug()<<"init neuron 0: cand:"<<candID0.size();
+    qDebug()<<"init neuron 1: cand:"<<candID1.size();
+
+    //find cliques
+    qDebug()<<"start find cliques";
+    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction, maxClique3Num);
+    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction, maxClique3Num);
+    qDebug()<<"init neuron 0: 3clique:"<<cliqueList0.size();
+    qDebug()<<"init neuron 1: 3clique:"<<cliqueList1.size();
+
+    qDebug()<<"start match cliques";
+
+    //find the matched cliques
+    matchCliquesAndCands();
+}
+
 void neuron_match_clique::output_parameter(QString fname)
 {
 
@@ -1321,6 +1570,7 @@ void neuron_match_clique::output_parameter(QString fname)
     myfile<<"candidate_search_threshold_distance_to_plane= "<<spanCand<<endl;  //searching span from the stack plane for the candidate
     myfile<<"candidate_search_threshold_angle_to_plane(cos(a))= "<<angThr_stack<<endl; //angular threshold for candidate in stack direction (-1 ~ 1), -1 means nothing will be thresholded
     myfile<<"candidate_search_fragments_threshold= "<<segmentThr<<endl;  //threshold to filter out small segments when selecting candidates
+    myfile<<"candidate_search_section_gap_threshold= "<<gapThr<<endl;  //threshold to filter out small gaps between segments
     myfile<<"point_match_threshold_distance= "<<pmatchThr<<endl;   //match threshold for points
     myfile<<"point_match_threshold_angular(cos(a))= "<<angThr_match<<endl; //angular threshold for clique match (-1 ~ 1)=cos(theta), when angle is larger than theta (<cos(theta)), the point will not be matched
     myfile<<"triangle_match_threshold_distance= "<<cmatchThr<<endl;   //match threshold for length of cliques
@@ -1334,9 +1584,112 @@ void neuron_match_clique::output_parameter(QString fname)
 }
 
 //update matched point from markers, not necessary need. to do later
-void neuron_match_clique::update_matchedPoints_from_Markers(LandmarkList * mList)
+void neuron_match_clique::load_cand_from_Markers(LandmarkList * mList)
 {
+    candID0.clear();
+    candID1.clear();
 
+    if(mList->size()<=0){
+        return;
+    }
+
+    double dis;
+    for(int i=0; i<mList->size(); i++){
+        double mdis=1e10;
+        int nid=-1;
+        int pid=0;
+
+        for(int k=0; k<nt0_org->listNeuron.size(); k++){
+            dis=NTDIS(nt0_org->listNeuron[k],mList->at(i));
+            if(dis<mdis){
+                mdis=dis;
+                nid=0;
+                pid=k;
+            }
+        }
+
+        for(int k=0; k<nt1_org->listNeuron.size(); k++){
+            dis=NTDIS(nt1_org->listNeuron[k],mList->at(i));
+            if(dis<mdis){
+                mdis=dis;
+                nid=1;
+                pid=k;
+            }
+        }
+
+        //push to candidate list
+        if(nid==0)
+            candID0.append(pid);
+        else if(nid==1)
+            candID1.append(pid);
+    }
+}
+
+void neuron_match_clique::update_cand(const NeuronTree& nt, const HBNeuronGraph& ng, const QList<int>& neuronType,
+                                      const QList<int>& cand, const QList<int>& pList, const QList<int>& components,
+                                      QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& candcomponents, const int orientation)
+{
+    candcoord.clear();
+    canddir.clear();
+    canddircoord.clear();
+    candcomponents.clear();
+
+    for(V3DLONG i=0; i<cand.size(); i++){
+        XYZ tmpdir(0,0,0);
+        V3DLONG curid = cand[i];
+        V3DLONG nexid, preid=curid;
+        if(neuronType.at(cand.at(i))==6){ //normal tips or spine tips
+            float lentmp = 0;
+            while(lentmp<dir_range && curid>=0){
+                if(pList.at(curid)>0)
+                    lentmp+=sqrt(NTDIS(nt.listNeuron.at(curid),nt.listNeuron.at(pList.at(curid))));
+                nexid=nextPointNeuronGraph(ng,curid,preid);
+                preid=curid;
+                curid=nexid;
+            }
+            tmpdir.x = nt.listNeuron.at(cand[i]).x - nt.listNeuron.at(preid).x;
+            tmpdir.y = nt.listNeuron.at(cand[i]).y - nt.listNeuron.at(preid).y;
+            tmpdir.z = nt.listNeuron.at(cand[i]).z - nt.listNeuron.at(preid).z;
+        }else if(neuronType.at(cand.at(i))==56){ //spine fork
+            float lentmp = 0;
+            while(lentmp<dir_range && curid>=0){
+                if(pList.at(curid)>0)
+                    lentmp+=sqrt(NTDIS(nt.listNeuron.at(curid),nt.listNeuron.at(pList.at(curid))));
+                nexid=-1;
+                for(int j=0; j<ng.at(curid).size(); j++){
+                    if(ng.at(curid).at(j)==preid) continue;
+                    if(neuronType.at(ng.at(curid).at(j))==2 || neuronType.at(ng.at(curid).at(j))== 52){
+                        if(nexid==-1){
+                            nexid=ng.at(curid).at(j);
+                        }else{
+                            nexid=-2;
+                            break;
+                        }
+                    }
+                }
+                preid=curid;
+                curid=nexid;
+            }
+            tmpdir.x = nt.listNeuron.at(cand[i]).x - nt.listNeuron.at(preid).x;
+            tmpdir.y = nt.listNeuron.at(cand[i]).y - nt.listNeuron.at(preid).y;
+            tmpdir.z = nt.listNeuron.at(cand[i]).z - nt.listNeuron.at(preid).z;
+        }
+
+        //normalize direction
+        double tmpNorm = sqrt(tmpdir.x*tmpdir.x+tmpdir.y*tmpdir.y+tmpdir.z*tmpdir.z);
+        if(tmpNorm<1e-16) tmpNorm=1e-16;
+        tmpdir.x/=tmpNorm; tmpdir.x*=orientation;
+        tmpdir.y/=tmpNorm; tmpdir.y*=orientation;
+        tmpdir.z/=tmpNorm; tmpdir.z*=orientation;
+
+        //for test
+        //qDebug()<<candcoord.size()<<":"<<cand[i]<<":"<<neuronType.at(cand.at(i))<<"; dir"<<tmpdir.x<<":"<<tmpdir.y<<":"<<tmpdir.z<<":"<<tmpNorm;
+
+        candcoord.append(XYZ(nt.listNeuron.at(cand[i])));
+        canddir.append(tmpdir);
+        canddircoord.append(XYZ(candcoord.last().x+canddir.last().x,candcoord.last().y+canddir.last().y,candcoord.last().z+canddir.last().z));
+        candcomponents.append(components.at(cand[i]));
+    }
 }
 
 void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
@@ -1729,7 +2082,7 @@ void neuron_match_clique::output_affine(QString fname, QString fname_nt0)
 
 void neuron_match_clique::affine_nt1()
 {
-    if(pmatch0.size()<0){
+    if(pmatch0.size()<=0){
         qDebug()<<"not match point identified, quit align";
         return;
     }
@@ -1747,7 +2100,7 @@ void neuron_match_clique::affine_nt1()
     if(direction==0) tmp_shift_x=-1;
     if(direction==1) tmp_shift_y=-1;
     if(direction==2) tmp_shift_z=-1;
-    if(!compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction)){
+    if(compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction)<0){
         return;
     }
 
@@ -2225,7 +2578,8 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
             sa = tmpdir.z;
         }
         //for test:
-        //qDebug()<<i<<":"<<tmpcand[i]<<"; coord"<<nt.listNeuron.at(tmpcand[i]).x<<":"<<nt.listNeuron.at(tmpcand[i]).y<<":"<<nt.listNeuron.at(tmpcand[i]).z<<"; dir"<<tmpdir.x<<":"<<tmpdir.y<<":"<<tmpdir.z<<":"<<tmpNorm;
+//        qDebug()<<cand.size()<<":"<<tmpcand[i]<<"; coord"<<nt.listNeuron.at(tmpcand[i]).x<<":"<<nt.listNeuron.at(tmpcand[i]).y<<":"<<nt.listNeuron.at(tmpcand[i]).z<<"; dir"<<tmpdir.x<<":"<<tmpdir.y<<":"<<tmpdir.z<<":"<<tmpNorm;
+//        qDebug()<<cand.size()<<":"<<tmpcand[i]<<"; dir"<<tmpdir.x<<":"<<tmpdir.y<<":"<<tmpdir.z<<":"<<tmpNorm;
 
         if(sa<angThr_stack) continue;
 
@@ -2479,6 +2833,8 @@ int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGrap
     }
     return spinecount;
 }
+
+
 
 void neuron_match_clique::initNeuronComponents()
 {

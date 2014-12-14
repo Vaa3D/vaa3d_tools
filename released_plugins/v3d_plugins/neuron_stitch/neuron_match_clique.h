@@ -58,6 +58,7 @@ public:
     double pmatchThr;   //match threshold for points
     double zscale;  //resacle stack direction
     double segmentThr;  //threshold to filter out small segments when selecting candidates
+    double gapThr; //threshold to filter out small gaps
     int spineLengthThr; //the length threshold of spine
     double spineAngThr; //angular threshold of spine
     double spineRadiusThr; //radius threshold of spine
@@ -69,10 +70,10 @@ public:
 public:
     neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topNeuron);
     void init();
+    void init(LandmarkList * mList); //init based on markers
     void initNeuronComponents(); //this is contained in init()
     void globalmatch();
     void update_matchedPoints_to_Markers(LandmarkList * mList);
-    void update_matchedPoints_from_Markers(LandmarkList * mList);
     void output_matchedMarkers(QString fname, const NeuronTree& nt, QList<int> points);
     void output_matchedMarkers_orgspace(QString fname_0, QString fname_1);
     void output_markers_orgspace(QString fname);
@@ -91,11 +92,13 @@ public:
 
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
-    void initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments
+    void initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments, small gaps
     void initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& components, QList<int>& pList);
     int initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType);
     void initNeuronComponents(NeuronTree& nt, QList<int>& components, QList<int>& pList);
     void matchCliquesAndCands();
+    void load_cand_from_Markers(LandmarkList * mList);
+    void update_cand(const NeuronTree& nt, const HBNeuronGraph& ng, const QList<int>& neuronType, const QList<int>& cand, const QList<int>& pList, const QList<int>& components, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& candcomponents, const int orientation);
 };
 
 class NeuronMatchOnlyDialog : public QDialog
@@ -143,6 +146,7 @@ private:
     void updatematchlist();
     void highlight_pair();
     void link_new_marker_neuron();
+    void update_marker_to_neuron();
 
 public slots:
     void match();
@@ -172,12 +176,13 @@ private:
 public:
     QGridLayout *gridLayout;
     QComboBox *cb_dir,*cb_pair;
-    QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr, *spin_gapthr;
     QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
     QCheckBox *check_spine;
+    QGroupBox *group_marker;
 };
 
 class NeuronMatchDialog : public QDialog

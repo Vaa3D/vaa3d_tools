@@ -45,7 +45,7 @@ double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1);
 void rotate_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis); //angle is 0-360  based
 void affine_XYZList(const QList<XYZ>& in, QList<XYZ>& out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis); //angle is 0-360  based
 bool minus_XYZList(QList<XYZ>& a, QList<XYZ>& b, QList<XYZ>& out);
-bool compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);
+double compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);
 //double compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, QList<XYZ> reference_dir, QList<XYZ> tomove_dircoord, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);
 bool compute_rotation(QList<XYZ> reference, QList<XYZ> tomove, double& ang,int dir); //reference and tomove should all be 0 centered.
 
@@ -78,6 +78,7 @@ void copyCoordinate(const NeuronTree & source, const NeuronTree & target);
 
 float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int first_nt);
 float quickMoveNeuron(NeuronTree *nt0, NeuronTree *nt1, int stackdir);
+float quickMoveNeuron(NeuronTree * nt0, const QList<int>& cand0, NeuronTree * nt1, const QList<int>& cand1, int stackdir);
 void affineNeuron(NeuronTree &nt_in, NeuronTree &nt_out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis); //angle is 0-360  based
 
 void multiplyAmat(double* front, double* back);
