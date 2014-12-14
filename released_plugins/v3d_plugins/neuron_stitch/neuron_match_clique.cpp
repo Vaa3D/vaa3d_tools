@@ -2520,6 +2520,31 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
         }
     }
 
+    //gap filter
+    if(gapThr>1e-6){
+        QList<int> gapmask, tmpcandbk;
+        for(V3DLONG i=0; i<tmpcand.size(); i++){
+            tmpcandbk.append(tmpcand.at(i));
+            gapmask.append(0);
+        }
+        for(V3DLONG i=0; i<tmpcand.size(); i++){
+            for(V3DLONG j=i+1; j<tmpcand.size(); j++){
+                if(components.at(tmpcand.at(i)) == components.at(tmpcand.at(j)))
+                        continue;
+                if(NTDIS(nt.listNeuron.at(tmpcand.at(i)),nt.listNeuron.at(tmpcand.at(j)))<gapThr*gapThr){
+                    gapmask[i]++;
+                    gapmask[j]++;
+                }
+            }
+        }
+        tmpcand.clear();
+        for(V3DLONG i=0; i<tmpcandbk.size(); i++){
+            if(gapmask.at(i)<=0){
+                tmpcand.append(tmpcandbk.at(i));
+            }
+        }
+    }
+
 //    //for test
 //    qDebug()<<"finalize candidate";
 
