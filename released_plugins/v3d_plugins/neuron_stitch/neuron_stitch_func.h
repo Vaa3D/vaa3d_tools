@@ -21,6 +21,16 @@ struct Clique3{
     XYZ dir[3]; //take clique center as origin, the center-point axis as x axis, the direction of the neruon
 };
 
+typedef struct Candidates
+{
+    V3DLONG nid;
+    V3DLONG pid;
+    int status;
+} Candidate;
+
+void searchBorderTips(QList<NeuronTree> *ntList, QList<Candidate> &cands, int side, int dir, double zscale, double span, double gapThr, double angThr, double segmentThr, int spineLengthThr, double spineAngThr, double spineRadiusThr);
+int getNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, int spineLengthThr, double spineAngThr, double spineRadiusThr);
+
 void constructNeuronGraph(const NeuronTree& nt, HBNeuronGraph& ng);
 V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG previous=-1);
 

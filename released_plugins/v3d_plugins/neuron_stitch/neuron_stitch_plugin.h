@@ -15,8 +15,8 @@
 
 class neuron_stitch : public QObject, public V3DPluginInterface2_1
 {
-	Q_OBJECT
-	Q_INTERFACES(V3DPluginInterface2_1);
+    Q_OBJECT
+    Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
 	float getPluginVersion() const {return 1.1f;}
@@ -31,6 +31,7 @@ public:
 private:
     void domatch(V3DPluginCallback2 &callback, QWidget *parent);
     void dostitch(V3DPluginCallback2 &callback, QWidget *parent);
+    void dosearch(V3DPluginCallback2 &callback, QWidget *parent);
     void doadjust(V3DPluginCallback2 &callback, QWidget *parent);
     int dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent);
     void printHelp();
