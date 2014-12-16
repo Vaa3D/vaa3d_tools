@@ -2371,6 +2371,7 @@ void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
     dst->zthicknessBox->setValue(src->zthicknessBox->value());
     dst->comboBox_channel->setCurrentIndex(src->comboBox_channel->currentIndex());
     dst->transparentSlider->setValue(src->transparentSlider->value());
+    dst->fcutSlider->setValue(src->fcutSlider->value());
 
     //syncronizing other controls
     dst->checkBox_displayAxes->setChecked(src->checkBox_displayAxes->isChecked());
