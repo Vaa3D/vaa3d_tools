@@ -349,7 +349,7 @@ void neuron_tipspicker_dialog::save()
     QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                                                         QObject::tr(""),
             QObject::tr("Supported file (*.marker)"
-                ";;Affine Matrix    (*.marker)"
+                ";;Marker    (*.marker)"
                 ));
     if(!fileSaveName.isEmpty()){
         output_markers(fileSaveName);

@@ -25,6 +25,8 @@ QStringList neuron_stitch::menulist() const
         <<tr("manualy_affine_neuron_SWC")
         <<tr("find_border_tips_SWC_image")
         <<tr("transform_neuron_SWC_by_affine_matrix")
+        <<tr("transform_border_tips_by_affine_matrix")
+        <<tr("combine_border_tips")
 		<<tr("about");
 }
 
@@ -56,6 +58,14 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     else if (menu_name == tr("transform_neuron_SWC_by_affine_matrix"))
     {
         dotransform_swc(callback, parent);
+    }
+    else if (menu_name == tr("transform_border_tips_by_affine_matrix"))
+    {
+        dotransform_marker(callback, parent);
+    }
+    else if (menu_name == tr("combine_border_tips"))
+    {
+        docombine_marker(callback, parent);
     }
 	else
 	{
@@ -353,9 +363,14 @@ int neuron_stitch::dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent
             QObject::tr("Supported file (*.txt)"
                 ";;Affine Matrix    (*.txt)"
                 ));
+    if(fileMatName.isEmpty()) return 0;
 
     double amat[16]={0};
-    if (!readAmat(fileMatName.toStdString().c_str(),amat));
+    if (!readAmat(fileMatName.toStdString().c_str(),amat))
+    {
+            v3d_msg("error read affine transform matrix.");
+            return 0;
+    }
 
     proc_neuron_affine(&nt, amat);
 
@@ -373,4 +388,120 @@ int neuron_stitch::dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent
     }
 
     return 1;
+}
+
+int neuron_stitch::dotransform_marker(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //input file name
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
+            "",
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker file	(*.marker)"
+                ));
+    if(fileOpenName.isEmpty())
+        return 0;
+    QList <ImageMarker> inmarker;
+    if (fileOpenName.toUpper().endsWith(".MARKER"))
+    {
+         inmarker = readMarker_file(fileOpenName);
+    }
+
+    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
+            "",
+            QObject::tr("Supported file (*.txt)"
+                ";;Affine Matrix    (*.txt)"
+                ));
+    if(fileMatName.isEmpty()) return 0;
+
+    double afmatrix[16]={0};
+    if (!readAmat(fileMatName.toStdString().c_str(),afmatrix))
+    {
+        v3d_msg("error read affine transform matrix.");
+        return 0;
+    }
+
+    //marker affine
+    double x,y,z;
+    for(V3DLONG i=0; i<inmarker.size() ; i++)
+    {
+        ImageMarker* tp = &(inmarker[i]);
+        x = afmatrix[0] * tp->x + afmatrix[1] * tp->y + afmatrix[2] * tp->z + afmatrix[3];
+        y = afmatrix[4] * tp->x + afmatrix[5] * tp->y + afmatrix[6] * tp->z + afmatrix[7];
+        z = afmatrix[8] * tp->x + afmatrix[9] * tp->y + afmatrix[10] * tp->z + afmatrix[11];
+
+        //now update
+        tp->x = x;	tp->y = y; tp->z = z;
+    }
+
+    QString fileDefaultName = fileOpenName+QString("_affine.marker");
+    //write new marker to file
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker	(*.marker)"
+                ));
+    if(fileSaveName.isEmpty())
+        return 0;
+    if (!writeMarker_file(fileSaveName, inmarker))
+    {
+        v3d_msg("fail to write the output marker file.");
+        return 0;
+    }
+
+    return 1;
+}
+
+void neuron_stitch::docombine_marker(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //input file 1
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
+            "",
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker file	(*.marker)"
+                ));
+    if(fileOpenName.isEmpty())
+        return;
+    QList <ImageMarker> inmarker;
+    if (fileOpenName.toUpper().endsWith(".MARKER"))
+    {
+         inmarker = readMarker_file(fileOpenName);
+    }
+
+    //input file 2
+    QString fileOpenName_2;
+    fileOpenName_2 = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
+            fileOpenName,
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker file	(*.marker)"
+                ));
+    if(fileOpenName_2.isEmpty())
+        return;
+    QList <ImageMarker> inmarker_2;
+    if (fileOpenName.toUpper().endsWith(".MARKER"))
+    {
+         inmarker_2 = readMarker_file(fileOpenName_2);
+    }
+
+    //output file
+    for(V3DLONG i=0; i<inmarker_2.size() ; i++){
+        inmarker.append(inmarker_2[i]);
+    }
+
+    QString fileDefaultName = QFileInfo(fileOpenName).dir().filePath(QFileInfo(fileOpenName).baseName()+
+                                                                     "_"+QFileInfo(fileOpenName_2).baseName()+QString("_combine.marker"));
+    //write new marker to file
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker	(*.marker)"
+                ));
+    if(fileSaveName.isEmpty())
+        return;
+    if (!writeMarker_file(fileSaveName, inmarker))
+    {
+        v3d_msg("fail to write the output marker file.");
+        return;
+    }
 }

@@ -595,8 +595,6 @@ void NeuronLiveMatchDialog::highlight_pair()
         SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
         if(stitchmask.at(cur_pair)<=0){
-            //for test
-            qDebug()<<"cojoc: "<<stitchmask.at(cur_pair)<<":"<<cur_pair;
             matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ACTIVE1);
             matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ACTIVE0);
         }
@@ -670,15 +668,18 @@ void NeuronLiveMatchDialog::link_new_marker_neuron()
         return;
     }
 
-    LocationSimple *p = 0;
+
     double dis;
-    for(int i=0; i<mList->size(); i++){
+    QVector<int> nidList, tidList, midList;
+    QVector<V3DLONG> pidList;
+    int nonetip_count=0, cantip_count=0;
+    for(int i=0; i<mList->size(); i++){ //find new markers
         int info[4];
         double mdis=1e10;
         if(get_marker_info(mList->at(i),info))
             continue;
         int nid=-1;
-        int pid=0;
+        V3DLONG pid=0, tid=-1;
 
         for(int j=0; j<2; j++){
             for(int k=0; k<ntList->at(j).listNeuron.size(); k++){
@@ -690,6 +691,43 @@ void NeuronLiveMatchDialog::link_new_marker_neuron()
                 }
             }
         }
+        if(nid==0){
+            tid=matchfunc->search_tip0(pid);
+        }else{
+            tid=matchfunc->search_tip1(pid);
+        }
+        if(tid!=pid){
+            nonetip_count++;
+            if(tid>=0) cantip_count++;
+        }
+
+        nidList.append(nid);
+        pidList.append(pid);
+        tidList.append(tid);
+        midList.append(i);
+    }
+    if(cantip_count>0){
+        QString str_msg = QString::number(nidList.size()) + " new markers were identified.\n" +
+                QString::number(nonetip_count) + " of them are not eligible border tips.\n" +
+                QString::number(cantip_count) + " of them can be corrected.\n Do you want to correct it?";
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Match Border Tips", str_msg,
+                                        QMessageBox::Yes|QMessageBox::No);
+        if(reply==QMessageBox::Yes){
+            for(int i=0; i<nidList.size(); i++){
+                if(tidList.at(i)>=0){
+                    pidList[i]=tidList.at(i);
+                }
+            }
+        }
+    }
+
+    //update
+    LocationSimple *p = 0;
+    for(int j=0; j<nidList.size(); j++){
+        int i=midList.at(j);
+        int nid=nidList.at(j);
+        V3DLONG pid=pidList.at(j);
         p = (LocationSimple *)&(mList->at(i));
         p->name=QString::number(i).toStdString();
         if(nid>=0){
@@ -704,6 +742,9 @@ void NeuronLiveMatchDialog::link_new_marker_neuron()
                 p->color.g = 128;
                 p->color.b = 128;
             }
+            p->x=ntList->at(nid).listNeuron.at(pid).x;
+            p->y=ntList->at(nid).listNeuron.at(pid).y;
+            p->z=ntList->at(nid).listNeuron.at(pid).z;
         }
     }
 
@@ -771,8 +812,12 @@ void NeuronLiveMatchDialog::stitch()
     if(cb_pair->currentIndex() < cb_pair->count()-1)
         cb_pair->setCurrentIndex(cb_pair->currentIndex()+1);
     else{
-        v3d_msg("Reach the end. Restart from the beginnig.");
-        cb_pair->setCurrentIndex(0);
+        //v3d_msg("Reach the end. Restart from the beginnig.");
+        if(cb_pair->currentIndex()==0){
+            highlight_pair();
+        }else{
+            cb_pair->setCurrentIndex(0);
+        }
     }
 }
 
@@ -804,7 +849,7 @@ void NeuronLiveMatchDialog::stitchall()
             SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
             matchfunc->highlight_nt1_seg(pmatch1.at(idx),COLOR_STITCHED1);
-            matchfunc->highlight_nt1_seg(pmatch0.at(idx),COLOR_STITCHED0);
+            matchfunc->highlight_nt0_seg(pmatch0.at(idx),COLOR_STITCHED0);
         }else{
             stitchmask[idx]=-1;
             cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = failed, LOOP!");
@@ -825,18 +870,24 @@ void NeuronLiveMatchDialog::output()
 {
     checkwindow();
 
-    QString folder_output = QFileDialog::getExistingDirectory(this, "Select Output Folder","");
-    if(folder_output.isEmpty())
+    QString fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Select outputs folder and prefix"),
+                                                        QObject::tr(""),
+            QObject::tr(""
+                ));
+    if(fname_output.isEmpty())
         return;
-    bool ok;
-    QString fname_base = QInputDialog::getText(this, "Output Prefix","Assign a prefix for all outputs",QLineEdit::Normal,"",&ok);
-    if(!ok)
-        return;
-    QString fname_output = QDir(folder_output).filePath(fname_base);
+//    QString folder_output = QFileDialog::getExistingDirectory(this, "Select Output Folder","");
+//    if(folder_output.isEmpty())
+//        return;
+//    bool ok;
+//    QString fname_base = QInputDialog::getText(this, "Output Prefix","Assign a prefix for all outputs",QLineEdit::Normal,"",&ok);
+//    if(!ok)
+//        return;
+//    QString fname_output = QDir(folder_output).filePath(fname_base);
 
     matchfunc->output_candMatchScore(fname_output + "_matchscore.txt");
     matchfunc->output_affine(fname_output,ntList->at(0).name);
-    matchfunc->output_matchedMarkers_orgspace(QDir(folder_output).filePath(fname_base + "_nt0_matched.marker"),QDir(folder_output).filePath(fname_base + "_nt1_matched.marker"));
+    matchfunc->output_matchedMarkers_orgspace(fname_output + "_nt0_matched.marker",fname_output + "_nt1_matched.marker");
     matchfunc->output_parameter(fname_output+"_param.txt");
     matchfunc->output_stitch(fname_output);
 }
@@ -2270,6 +2321,17 @@ void neuron_match_clique::highlight_nt0_seg(int point0, int type)
         p->type=type;
         idx=components0.indexOf(cid, idx+1);
     }
+}
+
+V3DLONG neuron_match_clique::search_tip0(V3DLONG point0) //find the id of closest tips point, if there is none, return -1
+{
+    return findNearestTips(ng0, neuronType0, point0);
+}
+
+V3DLONG neuron_match_clique::search_tip1(V3DLONG point1) //find the id of closest tips point, if there is none, return -1
+{
+    return findNearestTips(ng1, neuronType1, point1);
+
 }
 
 ////orientation should be 1/-1 for smaller/larger stack in direction

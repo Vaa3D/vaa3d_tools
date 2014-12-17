@@ -469,6 +469,57 @@ V3DLONG nextPointNeuronGraph(const HBNeuronGraph& ng, V3DLONG current, V3DLONG p
     return next;
 }
 
+
+V3DLONG findNearestTips(const HBNeuronGraph & ng, const QList<int> & neuronType, V3DLONG startp)
+{
+    QList<V3DLONG> record;
+    V3DLONG tid=-1, id=startp;
+    QVector<V3DLONG> prev, next;
+    prev.append(id);
+    record.append(id);
+    while(prev.size()>0){
+        QVector<V3DLONG> cur;
+        next.clear();
+        for(int i=0; i<prev.size(); i++){
+            id=prev.at(i);
+            if(neuronType.at(id)%10==6){ //eligible border tips
+                tid=id;
+                break;
+            }
+            if(neuronType.at(id)%10==5){ //fork, ignore
+                continue;
+            }
+            if(neuronType.at(id)==2){ //path point
+                for(int j=0; j<ng.at(id).size(); j++){
+                    if(!record.contains(ng.at(id).at(j))){
+                        next.append(ng.at(id).at(j)); //add its neighbor to the next round if not reached so far
+                        record.append(ng.at(id).at(j));
+                    }
+                }
+            }else if(neuronType.at(id)>10){ //spine point
+                for(int j=0; j<ng.at(id).size(); j++){
+                    if(!record.contains(ng.at(id).at(j))){ //the point is not touched yet
+                        if(neuronType.at(ng.at(id).at(j))==61){ //spine end
+                            record.append(ng.at(id).at(j));
+                        }else if(neuronType.at(ng.at(id).at(j))==21 || //spine path
+                                 neuronType.at(ng.at(id).at(j))==51){ //spine fork
+                            record.append(ng.at(id).at(j));
+                        }else{ //leave it for next round
+                            next.append(ng.at(id).at(j));
+                            record.append(ng.at(id).at(j));
+                        }
+                    }
+                }
+            }
+        }
+        if(tid>-1){
+            break;
+        }
+        prev=next;
+    }
+    return tid;
+}
+
 void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & ng0,
                         const HBNeuronGraph & ng1, const QList<int> & neuronType0, const QList<int> & neuronType1, int pid0, int pid1)
 {
@@ -496,8 +547,10 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                     cur.append(id);
                     //check its type to see how to deal with its child
                     if(neuronType0.at(id)==6){ //end point
-                        next.append(ng0.at(id).at(0)); //add its only neighbor to the next round
-                        record.append(ng0.at(id).at(0));
+                        if(!record.contains(ng0.at(id).at(0))){
+                            next.append(ng0.at(id).at(0)); //add its only neighbor to the next round
+                            record.append(ng0.at(id).at(0));
+                        }
                     }else if(neuronType0.at(id)==2){ //path point
                         for(int j=0; j<ng0.at(id).size(); j++){
                             if(!record.contains(ng0.at(id).at(j))){
@@ -565,8 +618,10 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                     cur.append(id);
                     //check its type to see how to deal with its child
                     if(neuronType1.at(id)==6){ //end point
-                        next.append(ng1.at(id).at(0)); //add its only neighbor to the next round
-                        record.append(ng1.at(id).at(0));
+                        if(!record.contains(ng1.at(id).at(0))){
+                            next.append(ng1.at(id).at(0)); //add its only neighbor to the next round
+                            record.append(ng1.at(id).at(0));
+                        }
                     }else if(neuronType1.at(id)==2){ //path point
                         for(int j=0; j<ng1.at(id).size(); j++){
                             if(!record.contains(ng1.at(id).at(j))){

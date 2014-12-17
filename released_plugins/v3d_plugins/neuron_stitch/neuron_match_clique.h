@@ -89,6 +89,8 @@ public:
     bool checkloop(int point0, int point1); //check if connect point0 and point 1 will result in loop
     void highlight_nt1_seg(int point1, int type); //highlight the component of nt1 linked to point1
     void highlight_nt0_seg(int point0, int type); //highlight the component of nt0 linked to point0
+    V3DLONG search_tip0(V3DLONG point0); //find the id of closest tips point, if there is none, return -1
+    V3DLONG search_tip1(V3DLONG point1); //find the id of closest tips point, if there is none, return -1
 
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
