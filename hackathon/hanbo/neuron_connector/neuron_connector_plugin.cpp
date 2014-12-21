@@ -55,7 +55,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
         //load input
         if(infiles.size()!=1 || outfiles.size()!=1)
         {
-            qDebug("ERROR: please set input and output!");
+            qDebug()<<"ERROR: please set input and output! "<<infiles.size()<<":"<<outfiles.size();
             printHelp();
             return false;
         }
@@ -73,32 +73,34 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //get parameters
         double angthr=60, disthr=10, xscale=1, yscale=1, zscale=1;
-        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-        if(paras.size()>0){
-            double tmp=atof(paras.at(0));
-            if(tmp>0 && tmp<180)
-                angthr=tmp;
-            else
-                cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value "<<angthr<<endl;
-        }
-        if(paras.size()>1){
-            double tmp=atof(paras.at(1));
-            if(tmp>=0)
-                disthr=tmp;
-            else
-                cerr<<"error: wrong distance threshold value: "<<tmp<<"; use default value "<<disthr<<endl;
-        }
-        if(paras.size()>2){
-            double tmp=atof(paras.at(2));
-            zscale=tmp;
-        }
-        if(paras.size()>3){
-            double tmp=atof(paras.at(3));
-            xscale = tmp;
-        }
-        if(paras.size()>4){
-            double tmp=atof(paras.at(4));
-            yscale = tmp;
+        if(input.size() >= 2){
+            vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+            if(paras.size()>0){
+                double tmp=atof(paras.at(0));
+                if(tmp>0 && tmp<180)
+                    angthr=tmp;
+                else
+                    cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value "<<angthr<<endl;
+            }
+            if(paras.size()>1){
+                double tmp=atof(paras.at(1));
+                if(tmp>=0)
+                    disthr=tmp;
+                else
+                    cerr<<"error: wrong distance threshold value: "<<tmp<<"; use default value "<<disthr<<endl;
+            }
+            if(paras.size()>2){
+                double tmp=atof(paras.at(2));
+                zscale=tmp;
+            }
+            if(paras.size()>3){
+                double tmp=atof(paras.at(3));
+                xscale = tmp;
+            }
+            if(paras.size()>4){
+                double tmp=atof(paras.at(4));
+                yscale = tmp;
+            }
         }
         cout<<"angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
 
@@ -106,7 +108,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
         QList<NeuronSWC> newNeuron;
         connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr);
 
-        qDebug()<<"output result";
+        qDebug()<<"output result: "<<fname_output;
         //output result
         if(!export_list2file(newNeuron, fname_output)){
             qDebug()<<"error: Cannot open file "<<fname_output<<" for writing!"<<endl;
