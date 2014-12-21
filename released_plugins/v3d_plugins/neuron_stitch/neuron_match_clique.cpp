@@ -2027,10 +2027,50 @@ void neuron_match_clique::output_markers_affinespace(QString fname)
     file.close();
 }
 
+void neuron_match_clique::output_markers_stitchspace(QString fname)
+{
+    QFile file(fname);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text)){
+        v3d_msg("cannot open "+ fname +" for write");
+        return;
+    }
+    QTextStream myfile(&file);
+    myfile<<"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b"<<endl;
+    int idx=0;
+    //matched candidates first
+    for(int i=0; i<pmatch0.size(); i++){
+        int a=pmatch0.at(i);
+        int aa=candmatch0.at(i);
+        myfile<<nt0_stitch->listNeuron[a].x<<","<<nt0_stitch->listNeuron[a].y<<","<<nt0_stitch->listNeuron[a].z<<",0,1, "<<idx++<<","
+             <<"0 "<<candID0.at(aa)<<" "<<idx<<" "
+             <<canddir0[aa].x<<" "<<canddir0[aa].y<<" "<<canddir0[aa].z<<", 255, 0, 0"<<endl;
+
+        int b=pmatch1.at(i);
+        int bb=candmatch1.at(i);
+        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx++<<","
+             <<"1 "<<candID1.at(bb)<<" "<<idx-1<<" "
+             <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
+    }
+    //then unmatched
+    for(int i=0; i<candID0.size(); i++){
+        if(candmatch0.contains(i)) continue;
+        myfile<<nt0_stitch->listNeuron[candID0.at(i)].x<<","<<nt0_stitch->listNeuron[candID0.at(i)].y<<","<<nt0_stitch->listNeuron[candID0.at(i)].z<<",0,1, "<<idx++<<","
+             <<"0 "<<candID0.at(i)<<" -1 "
+             <<canddir0[i].x<<" "<<canddir0[i].y<<" "<<canddir0[i].z<<", 128, 0, 128"<<endl;
+    }
+    for(int i=0; i<candID1.size(); i++){
+        if(candmatch1.contains(i)) continue;
+        myfile<<nt1_a->listNeuron[candID1.at(i)].x<<","<<nt1_a->listNeuron[candID1.at(i)].y<<","<<nt1_a->listNeuron[candID1.at(i)].z<<",0,1, "<<idx++<<","
+             <<"1 "<<candID1.at(i)<<" -1 "
+             <<canddir1[i].x<<" "<<canddir1[i].y<<" "<<canddir1[i].z<<", 0, 128, 128"<<endl;
+    }
+    file.close();
+}
+
 void neuron_match_clique::output_stitch(QString fname)
 {
-    if(candmatch0.size()<=0)
-        return;
+//    if(candmatch0.size()<=0)
+//        return;
     if(nt0_stitch->listNeuron.size()<=0)
         return;
     if(nt1_stitch->listNeuron.size()<=0)
@@ -2092,6 +2132,8 @@ void neuron_match_clique::output_stitch(QString fname)
     //output markers
     QString fname_marker = fname+"_stitched.marker";
     output_matchedMarkers(fname_marker, *nt0_stitch, pmatch0);
+    QString fname_allmarker = fname+"_stitch_all.marker";
+    output_markers_stitchspace(fname_allmarker);
 
     //output ano
     QString fname_ano = fname+"_stitched.ano";
