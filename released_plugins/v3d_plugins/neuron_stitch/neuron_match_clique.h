@@ -79,6 +79,7 @@ public:
     void output_markers_orgspace(QString fname);
     void output_markers_candspace(QString fname);
     void output_markers_affinespace(QString fname);
+    void output_markers_stitchspace(QString fname);
     void output_candMatchScore(QString fname);
     void output_affine(QString fname_out, QString fname_nt0);
     void output_parameter(QString fname);
