@@ -222,6 +222,9 @@ namespace teramanager
         else                 return x;
     }
 
+    template<class T>
+    inline static const T saturate_trim(T value, T limit){return value <= limit ? value : limit;}
+
     //cross-platform current function macro
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
     # define __itm__current__function__ __PRETTY_FUNCTION__

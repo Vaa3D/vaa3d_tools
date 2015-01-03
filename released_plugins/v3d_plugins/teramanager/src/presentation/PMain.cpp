@@ -396,6 +396,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     diffAPO = new QAction("Diff .apo", this);
     connect(diffAPO, SIGNAL(triggered()), this, SLOT(showDialogDiffAPO()));
     utilityMenu->addAction(diffAPO);
+    displayAnoOctree = new QAction("Display annotations octree", this);
+    connect(displayAnoOctree, SIGNAL(triggered()), this, SLOT(showAnoOctree()));
+    utilityMenu->addAction(displayAnoOctree);
 
 
     helpMenu = menuBar->addMenu("Help");
@@ -2674,6 +2677,46 @@ void PMain::showDialogDiffAPO()
             }
 
         }
+    }
+    catch(itm::RuntimeException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+
+void PMain::showAnoOctree()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    try
+    {
+        CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+        if(cur_win)
+        {
+            // display warning: current annotations will be lost
+            if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("Current annotations will be lost. \n\nProceed?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+            {
+                // update Octree with recent changes
+                cur_win->storeAnnotations();
+
+                // get NeuronTree from the Octree
+                NeuronTree nt = CAnnotations::getInstance()->getOctree()->toNeuronTree();
+
+                // clear annotations
+                cur_win->clearAnnotations();
+
+                // add NeuronTree
+                interval_t x_range(cur_win->anoH0, cur_win->anoH1);
+                interval_t y_range(cur_win->anoV0, cur_win->anoV1);
+                interval_t z_range(cur_win->anoD0, cur_win->anoD1);
+                CAnnotations::getInstance()->addCurves(x_range, y_range, z_range, nt);
+
+                // update displayed annotations
+                cur_win->loadAnnotations();
+            }
+        }
+        else
+            QMessageBox::warning(this, "Warning", "No 3D viewer found");
     }
     catch(itm::RuntimeException &ex)
     {

@@ -111,6 +111,7 @@ class teramanager::CAnnotations
                 Poctant     _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
                 itm::uint32 _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
                 void        _rec_prune(const Poctant& p_octant) throw(itm::RuntimeException);
+                void        _rec_to_neuron_tree(const Poctant& p_octant, QList<NeuronSWC> &segments) throw(itm::RuntimeException);
 
                 //returns true if two given volumes intersect each other
                 bool inline intersects(const interval_t& V1_int,const interval_t& H1_int,const interval_t& D1_int,
@@ -155,6 +156,11 @@ class teramanager::CAnnotations
 
                 //print the octree content
                 void print();
+
+                /*********************************************************************************
+                * Converts the octree to a NeuronTree. This is actually a draw method.
+                **********************************************************************************/
+                NeuronTree toNeuronTree() throw (itm::RuntimeException);
 
                 friend class CAnnotations;
                 friend class annotation;
@@ -224,6 +230,8 @@ class teramanager::CAnnotations
 
         // @obsolete void removeCurves(std::list<NeuronSWC> &curves) throw (RuntimeException);
         // @obsolote void removeLandmarks(std::list<LocationSimple> &markers) throw (RuntimeException);
+
+        Octree* getOctree(){return octree;}
 
         /*********************************************************************************
         * Save/load method

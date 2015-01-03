@@ -116,10 +116,13 @@ class teramanager::PMain : public QWidget
         QWidgetAction* tShiftWidget;    // t-shift action
         QSpinBox *tShiftSBox;           // t-shift widget (a spinbox)
 
+        //utility menu widgets
         QMenu* utilityMenu;
         QAction* convertVtk2APO;
         QAction* diffAPO;
+        QAction* displayAnoOctree;      // display annotation Octree
 
+        //help menu widgets
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
         QMenu *recentVolumesMenu;
@@ -499,6 +502,7 @@ class teramanager::PMain : public QWidget
 
         void showDialogVtk2APO();
         void showDialogDiffAPO();
+        void showAnoOctree();
 
 
     signals:

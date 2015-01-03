@@ -427,6 +427,104 @@ itm::uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw
     else return 0;
 }
 
+//recursive support method of 'toNeuronTree' method
+void CAnnotations::Octree::_rec_to_neuron_tree(const Poctant& p_octant, QList<NeuronSWC> &segments) throw(itm::RuntimeException)
+{
+    if(p_octant && p_octant->V_dim > 1 && p_octant->H_dim > 1 && p_octant->D_dim > 1)
+//    if(p_octant)
+    {
+        // 12 octant edges (24 corners) to be created...
+        NeuronSWC corners[24];
+        for(int i=0; i<24; i++)
+        {
+            corners[i].type = 2;
+            corners[i].n = (i == 0 ? (segments.empty()? 0 : segments.back().n) : corners[i-1].n) + 1;
+        }
+
+
+        // assign coordinates to the 24 corners
+        // --- top-left-front corner --------------------------
+        corners[0].y = corners[8].y = corners[16].y = p_octant->V_start;
+        corners[0].x = corners[8].x = corners[16].x = p_octant->H_start;
+        corners[0].z = corners[8].z = corners[16].z = p_octant->D_start;
+        // --- top-right-front corner -------------------------
+        corners[1].y = corners[9].y = corners[17].y = p_octant->V_start;
+        corners[1].x = corners[9].x = corners[17].x = p_octant->H_start + p_octant->H_dim -1;
+        corners[1].z = corners[9].z = corners[17].z = p_octant->D_start;
+        // --- top-right-back corner --------------------------
+        corners[2].y = corners[10].y = corners[18].y = p_octant->V_start;
+        corners[2].x = corners[10].x = corners[18].x = p_octant->H_start + p_octant->H_dim - 1;
+        corners[2].z = corners[10].z = corners[18].z = p_octant->D_start + p_octant->D_dim - 1;
+        // --- top-left-back corner ---------------------------
+        corners[3].y = corners[11].y = corners[19].y = p_octant->V_start;
+        corners[3].x = corners[11].x = corners[19].x = p_octant->H_start;
+        corners[3].z = corners[11].z = corners[19].z = p_octant->D_start + p_octant->D_dim - 1;
+        // --- bottom-left-front corner -----------------------
+        corners[4].y = corners[12].y = corners[20].y = p_octant->V_start + p_octant->V_dim - 1;
+        corners[4].x = corners[12].x = corners[20].x = p_octant->H_start;
+        corners[4].z = corners[12].z = corners[20].z = p_octant->D_start;
+        // --- bottom-right-front corner ----------------------
+        corners[5].y = corners[13].y = corners[21].y = p_octant->V_start + p_octant->V_dim - 1;
+        corners[5].x = corners[13].x = corners[21].x = p_octant->H_start + p_octant->H_dim - 1;
+        corners[5].z = corners[13].z = corners[21].z =  p_octant->D_start;
+        // --- bottom-right-back corner -----------------------
+        corners[6].y = corners[14].y = corners[22].y = p_octant->V_start + p_octant->V_dim - 1;
+        corners[6].x = corners[14].x = corners[22].x = p_octant->H_start + p_octant->H_dim - 1;
+        corners[6].z = corners[14].z = corners[22].z = p_octant->D_start + p_octant->D_dim - 1;
+        // --- bottom-left-back corner ------------------------
+        corners[7].y = corners[15].y = corners[23].y = p_octant->V_start + p_octant->V_dim - 1;
+        corners[7].x = corners[15].x = corners[23].x = p_octant->H_start;
+        corners[7].z = corners[15].z = corners[23].z = p_octant->D_start + p_octant->D_dim - 1;
+
+        // create links
+        corners[0].pn = -1;
+        corners[1].pn = corners[0].n;
+        corners[2].pn = -1;
+        corners[3].pn = corners[2].n;
+        corners[4].pn = -1;
+        corners[5].pn = corners[4].n;
+        corners[6].pn = -1;
+        corners[7].pn = corners[6].n;
+        corners[8].pn = -1;
+        corners[11].pn = corners[8].n;
+        corners[9].pn = -1;
+        corners[10].pn = corners[9].n;
+        corners[12].pn = -1;
+        corners[15].pn = corners[12].n;
+        corners[13].pn = -1;
+        corners[14].pn = corners[13].n;
+        corners[16].pn = -1;
+        corners[20].pn = corners[16].n;
+        corners[17].pn = -1;
+        corners[21].pn = corners[17].n;
+        corners[18].pn = -1;
+        corners[22].pn = corners[18].n;
+        corners[19].pn = -1;
+        corners[23].pn = corners[19].n;
+
+        // add links to NeuronTree
+        for(int i=0; i<24; i++)
+        {
+            // apply trims
+            corners[i].x = itm::saturate_trim<float>(corners[i].x, DIM_H - 1);
+            corners[i].y = itm::saturate_trim<float>(corners[i].y, DIM_V - 1);
+            corners[i].z = itm::saturate_trim<float>(corners[i].z, DIM_D - 1);
+
+            segments.push_back(corners[i]);
+        }
+
+        // process children
+        _rec_to_neuron_tree(p_octant->child1, segments);
+        _rec_to_neuron_tree(p_octant->child2, segments);
+        _rec_to_neuron_tree(p_octant->child3, segments);
+        _rec_to_neuron_tree(p_octant->child4, segments);
+        _rec_to_neuron_tree(p_octant->child5, segments);
+        _rec_to_neuron_tree(p_octant->child6, segments);
+        _rec_to_neuron_tree(p_octant->child7, segments);
+        _rec_to_neuron_tree(p_octant->child8, segments);
+    }
+}
+
 //recursive support method of 'height' method
 itm::uint32 CAnnotations::Octree::_rec_height(const Poctant& p_octant) throw(RuntimeException)
 {
@@ -1400,4 +1498,25 @@ throw (itm::RuntimeException)
                                             (TPs+0.1f)/(TPs+FNs),
                                             (FPs+0.1f)/(cell2count));
     QMessageBox::information(0, "Result", message.c_str());
+}
+
+/*********************************************************************************
+* Converts the octree to a NeuronTree. This is actually a draw method.
+**********************************************************************************/
+NeuronTree CAnnotations::Octree::toNeuronTree() throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+    // unlimited octrees are not supported
+    if(DIM_V == std::numeric_limits<uint32>::max() || DIM_H == std::numeric_limits<uint32>::max() || DIM_D == std::numeric_limits<uint32>::max())
+        throw itm::RuntimeException("Cannot draw unbounded octree. Please deactivate the \"Unlimited\" option for the annotation space size and re-open the image");
+
+    NeuronTree nt;
+    nt.editable = false;
+    nt.linemode = true;
+    _rec_to_neuron_tree(root, nt.listNeuron);
+
+    /**/itm::debug(itm::LEV2, "Successfully generated the Neuron Tree", __itm__current__function__);
+
+    return nt;
 }
