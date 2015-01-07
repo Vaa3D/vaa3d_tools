@@ -788,7 +788,7 @@ void PConverter::updateContent()
         int layer_height = vc->getV1()-vc->getV0();
         int layer_width = vc->getH1()-vc->getH0();
         int layer_depth = pow(2.0f, max_res);
-        float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getBYTESxCHAN();
+        float GBytes = (layer_height/1000.0f)*(layer_width/1000.0f)*(layer_depth/1000.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getBYTESxCHAN();
         memoryField->setText(QString::number(GBytes, 'f', 3).append(" GB"));
     }
     catch(RuntimeException &ex)
@@ -817,7 +817,7 @@ void PConverter::addResolution()
            i >= iim::TMITREE_MAX_HEIGHT)
             return;
 
-        float GBytes = (height/1024.0f)*(width/1024.0f)*(depth/1024.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getDIM_T()*vc->getVolume()->getBYTESxCHAN();
+        float GBytes = (height/1000.0f)*(width/1000.0f)*(depth/1000.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getDIM_T()*vc->getVolume()->getBYTESxCHAN();
 
         resolutionsDimsX.push_back(new QSpinBox());
         resolutionsDimsX[i]->setAlignment(Qt::AlignCenter);
