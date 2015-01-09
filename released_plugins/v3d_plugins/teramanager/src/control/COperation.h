@@ -59,9 +59,19 @@ namespace teramanager
         public:
 
             static int gid;
-            virtual std::string name(){return "OP_OLD_VIEWER";}
+            virtual std::string name(){return "OP_GET_VIEWER";}
             static int newGroup(){return gid++;}
             RestoreViewerOperation(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class ZoominRoiOperation : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_ZOOMIN_ROI";}
+            static int newGroup(){return gid++;}
+            ZoominRoiOperation(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
     };
 
     class AnnotationOperation : public Operation

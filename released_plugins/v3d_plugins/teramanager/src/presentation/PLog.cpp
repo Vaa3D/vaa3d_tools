@@ -1,4 +1,5 @@
 #include <set>
+#include <cmath>
 #include "PLog.h"
 
 using namespace teramanager;

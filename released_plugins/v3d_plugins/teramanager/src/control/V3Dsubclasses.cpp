@@ -3,6 +3,10 @@
 #include "V3Dsubclasses.h"
 #include "../presentation/PMain.h"
 #include "CViewer.h"
+#include "COperation.h"
+#include "PLog.h"
+#include <QElapsedTimer>
+
 
 using namespace teramanager;
 using namespace std;
@@ -111,8 +115,14 @@ void myV3dR_GLWidget::zoomIn(const char* method)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, method = %s", data_title.toStdString().c_str(), method).c_str(), __itm__current__function__);
 
+    ZoominRoiOperation::newGroup();
+    QElapsedTimer timer;
+    timer.start();
     if(strcmp(method, "WYSIWYG (5 markers)") == 0)
+    {
         this->renderer->zoomview_wheel_event();
+        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: WYSIWYG (5 markers)", itm::ALL_COMPS, timer.elapsed()));
+    }
     else if(strcmp(method, "Foreground (1 marker)") == 0)
     {
         XYZ centralPoint = myRenderer_gl1::cast(static_cast<Renderer_gl1*>(this->getRenderer()))->get3DPoint(this->viewW/2, this->viewH/2);
@@ -124,6 +134,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = centralPoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = centralPoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = centralPoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
+        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (1 marker)", itm::ALL_COMPS, timer.elapsed()));
         if(CViewer::getCurrent())
             CViewer::getCurrent()->invokedFromVaa3D(roi);
 
@@ -221,6 +232,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = thepoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = thepoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = thepoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
+        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (20 markers + mean-shift)", itm::ALL_COMPS, timer.elapsed()));
         if(CViewer::getCurrent())
             CViewer::getCurrent()->invokedFromVaa3D(roi);
     }
