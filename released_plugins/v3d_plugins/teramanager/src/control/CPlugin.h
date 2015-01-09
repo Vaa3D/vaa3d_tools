@@ -53,10 +53,11 @@ namespace teramanager
     class CImport;              //control class to perform the import step in a separate non-GUI-blocking thread
     class CVolume;              //control class to perform data loading in a separate non-GUI-blocking thread
     class CSettings;            //control class to manage persistent platform-independent application settings
-    class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
+    class CViewer;              //control class used to encapsulate all the informations needed to manage 3D navigation windows
     class CConverter;           //control class used to perform volume conversion operations in a separate non-GUI-blocking thread
     class CAnnotations;         //control class used to manage annotations (markers, curves, etc.) among all the resolutions
     class CImageUtils;          //control class containing image processing functions
+    class COperation;           //control class to keep track of performed operations
     class QArrowButton;         //Qt-customized class to model arrow buttons
     class QHelpBox;             //Qt-customized class to model help box
     class QGradientBar;         //Qt-customized class to model a gradient-colored bar

@@ -1,6 +1,6 @@
 #include "PAnoToolBar.h"
 #include "PMain.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 
 using namespace teramanager;
 
@@ -109,7 +109,7 @@ void PAnoToolBar::buttonMarkerCreateChecked(bool checked)
 {
      /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
 
     if(checked)
     {
@@ -124,7 +124,7 @@ void PAnoToolBar::buttonMarkerCreateChecked(bool checked)
         QPixmap cur_img(":/icons/cursor_marker_add.png");
         cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
         setCursor(QCursor(cur_img, 0, 0));
-        CExplorerWindow::setCursor(QCursor(cur_img, 0, 0), true);
+        CViewer::setCursor(QCursor(cur_img, 0, 0), true);
 
         // switch to Vaa3D's 1-right-click marker create mode
         if(expl)
@@ -137,7 +137,7 @@ void PAnoToolBar::buttonMarkerCreateChecked(bool checked)
     {
         // set default cursor
         setCursor(Qt::ArrowCursor);
-        CExplorerWindow::setCursor(Qt::ArrowCursor, true);
+        CViewer::setCursor(Qt::ArrowCursor, true);
 
         // end marker create mode
         if(expl)
@@ -150,7 +150,7 @@ void PAnoToolBar::buttonMarkerDeleteChecked(bool checked)
 {
      /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
 
     if(checked)
     {
@@ -166,7 +166,7 @@ void PAnoToolBar::buttonMarkerDeleteChecked(bool checked)
             QPixmap cur_img(":/icons/cursor_marker_delete.png");
             cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
             setCursor(QCursor(cur_img, 0,0));
-            CExplorerWindow::setCursor(QCursor(cur_img, 0, 0), true);
+            CViewer::setCursor(QCursor(cur_img, 0, 0), true);
 
 //            if(expl)
 //            {
@@ -181,7 +181,7 @@ void PAnoToolBar::buttonMarkerDeleteChecked(bool checked)
     {
         // set default cursor
         setCursor(Qt::ArrowCursor);
-        CExplorerWindow::setCursor(Qt::ArrowCursor, true);
+        CViewer::setCursor(Qt::ArrowCursor, true);
 
         // end marker delete mode
 //        if(expl)
@@ -198,7 +198,7 @@ void PAnoToolBar::buttonMarkerRoiDeleteChecked(bool checked)
 {
      /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
 
     if(checked)
     {
@@ -214,7 +214,7 @@ void PAnoToolBar::buttonMarkerRoiDeleteChecked(bool checked)
         QPixmap cur_img(":/icons/cursor_marker_delete_roi.png");
         cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
         setCursor(QCursor(cur_img, 0,0));
-        CExplorerWindow::setCursor(QCursor(cur_img, 0, 0), true);
+        CViewer::setCursor(QCursor(cur_img, 0, 0), true);
 
         // switch to Vaa3D's mode "Zoom-in HighRezImage: 1-right stroke ROI"
         if(expl)
@@ -229,7 +229,7 @@ void PAnoToolBar::buttonMarkerRoiDeleteChecked(bool checked)
     {
         // set default cursor
         setCursor(Qt::ArrowCursor);
-        CExplorerWindow::setCursor(Qt::ArrowCursor, true);
+        CViewer::setCursor(Qt::ArrowCursor, true);
 
         // end Vaa3D's mode "Zoom-in HighRezImage: 1-right stroke ROI"
         if(expl)
@@ -245,7 +245,7 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
 {
     /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl)
     {
         // get TRUE markers' handle (others won't work, e.g. LandmarkList)
@@ -291,7 +291,7 @@ void PAnoToolBar::buttonUndoClicked()
 {
     /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->undoStack.canUndo())
     {
         expl->undoStack.undo();
@@ -305,7 +305,7 @@ void PAnoToolBar::buttonRedoClicked()
 {
     /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->undoStack.canRedo())
     {
         expl->undoStack.redo();

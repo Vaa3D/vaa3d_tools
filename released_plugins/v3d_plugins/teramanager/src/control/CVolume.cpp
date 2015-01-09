@@ -82,7 +82,7 @@ void CVolume::run()
 
         // check destination
         /**/itm::debug(itm::LEV2, "Check destination", __itm__current__function__);
-        CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* destination = dynamic_cast<CViewer*>(source);
         if(!destination)
             throw RuntimeException("Destination type not supported");
         /**/itm::debug(itm::LEV2, strprintf("destination registered as \"%s\"", destination->title.c_str()).c_str(), __itm__current__function__);
@@ -156,7 +156,7 @@ void CVolume::run()
 //                    // precondition checks
 //                    if(!buffer)
 //                        throw RuntimeException("Buffer not initialized");
-//                    CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+//                    CViewer* destination = dynamic_cast<CViewer*>(source);
 //                    if(!destination)
 //                        throw RuntimeException("Streaming not yet supported for this type of destination");
 //                    if(streamingSteps != 2)
@@ -181,7 +181,7 @@ void CVolume::run()
 //                        uint32 cur_t_dims[5]    = {voiH1-voiH0, voiV1-voiV0, voiD1-voiD0, volume->getDIM_C(), 1};
 //                        uint32 cur_t_offset[5]  = {0,           0,           0,           0,                            0};
 //                        uint32 cur_t_count[5]   = {voiH1-voiH0, voiV1-voiV0, voiD1-voiD0, volume->getDIM_C(), 1};
-//                        CExplorerWindow::copyVOI(cur_t_data, cur_t_dims, cur_t_offset, cur_t_count, buffer, buf_dims, buf_offset);
+//                        CViewer::copyVOI(cur_t_data, cur_t_dims, cur_t_offset, cur_t_count, buffer, buf_dims, buf_offset);
 //                        delete[] cur_t_data;
 //                        /**/ bufferMutex.unlock();
 //                        /**/itm::debug(itm::LEV3, strprintf("Time step %d/2: unlocked buffer mutex", step).c_str(), __itm__current__function__);
@@ -249,7 +249,7 @@ void CVolume::run()
 //                throw RuntimeException("Streaming not yet supported for the current format. Please restart the plugin.");
 //            if(!buffer)
 //                throw RuntimeException("Buffer not initialized");
-//            CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+//            CViewer* destination = dynamic_cast<CViewer*>(source);
 //            if(!destination)
 //                throw RuntimeException("Streaming not yet supported for this type of destination");
 
@@ -308,7 +308,7 @@ void CVolume::run()
     catch( iim::IOException& exception)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
-        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* dest = dynamic_cast<CViewer*>(source);
         /**/ updateGraphicsInProgress.lock();
         reset();
         //bufferMutex.unlock();
@@ -320,7 +320,7 @@ void CVolume::run()
     catch( iom::exception& exception)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
-        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* dest = dynamic_cast<CViewer*>(source);
         /**/ updateGraphicsInProgress.lock();
         reset();
         //bufferMutex.unlock();
@@ -332,7 +332,7 @@ void CVolume::run()
     catch( RuntimeException& exception)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
-        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* dest = dynamic_cast<CViewer*>(source);
         /**/ updateGraphicsInProgress.lock();
         reset();
         //bufferMutex.unlock();
@@ -344,7 +344,7 @@ void CVolume::run()
     catch(const char* error)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
-        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* dest = dynamic_cast<CViewer*>(source);
         /**/ updateGraphicsInProgress.lock();
         reset();
         //bufferMutex.unlock();
@@ -356,7 +356,7 @@ void CVolume::run()
     catch(...)
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
-        CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
+        CViewer* dest = dynamic_cast<CViewer*>(source);
         /**/ updateGraphicsInProgress.lock();
         reset();
         //bufferMutex.unlock();

@@ -9,6 +9,7 @@
 #include <fstream>
 #include "CAnnotations.h"
 #include "CSettings.h"
+#include "COperation.h"
 #include "../presentation/PLog.h"
 
 using namespace teramanager;
@@ -954,6 +955,8 @@ void CAnnotations::addLandmarks(itm::interval_t X_range, itm::interval_t Y_range
     clearLandmarks(X_range, Y_range, Z_range);
     /**/itm::debug(itm::LEV3, strprintf("%d markers after clearLandmarks", count()).c_str(), __itm__current__function__);
 
+    QElapsedTimer timer;
+    timer.start();
     for(int i=0; i<markers.size(); i++)
     {
        annotation* node = new annotation();
@@ -969,6 +972,7 @@ void CAnnotations::addLandmarks(itm::interval_t X_range, itm::interval_t Y_range
        node->color = markers[i].color;
        octree->insert(*node);
     }
+    PLog::getInstance()->appendOperation(new AnnotationOperation("store annotations: add landmarks", itm::CPU, timer.elapsed()));
 
     /**/itm::debug(itm::LEV3, strprintf("%d markers after insertions", count()).c_str(), __itm__current__function__);
 }
@@ -982,7 +986,7 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
     std::list<annotation*> nodes;
     std::set <annotation*> roots;
     octree->find(Y_range, X_range, Z_range, nodes);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: find curve nodes in the given range", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("clear curves: find curve nodes in the given range", itm::CPU, timer.elapsed()));
 
     // retrieve root nodes from the nodes founds so far
     timer.restart();
@@ -997,13 +1001,13 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
             roots.insert(p);
         }
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: retrieve root nodes from the nodes founds so far", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("clear curves: retrieve root nodes from the nodes founds so far", itm::CPU, timer.elapsed()));
 
     // clear all segments starting from the retrieved root nodes
     timer.restart();
     for(std::set<annotation*>::const_iterator it = roots.begin(); it != roots.end(); it++)
         delete *it;
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: clear all segments starting from the retrieved root nodes", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("clear curves: clear all segments starting from the retrieved root nodes", itm::CPU, timer.elapsed()));
 }
 
 void CAnnotations::clearLandmarks(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException)
@@ -1014,14 +1018,14 @@ void CAnnotations::clearLandmarks(itm::interval_t X_range, itm::interval_t Y_ran
     timer.start();
     std::list<annotation*> nodes;
     octree->find(Y_range, X_range, Z_range, nodes);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clear landmarks: find landmarks in the given range", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("clear landmarks: find landmarks in the given range", itm::CPU, timer.elapsed()));
 
     /**/itm::debug(itm::LEV3, strprintf("found %d nodes", nodes.size()).c_str(), __itm__current__function__);
     timer.restart();
     for(std::list<annotation*>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
         if((*it)->type == 0)
             delete *it;
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clear landmarks: remove landmarks", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("clear landmarks: remove landmarks", itm::CPU, timer.elapsed()));
 }
 
 void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, NeuronTree& nt) throw (itm::RuntimeException)
@@ -1060,7 +1064,8 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         annotationsMap[nt.listNeuron[i].n] = ann;
         swcMap[nt.listNeuron[i].n] = &(nt.listNeuron[i]);
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "store annotations: allocate and initialize curve nodes", false);
+
+    PLog::getInstance()->appendOperation(new AnnotationOperation("store annotations: allocate and initialize curve nodes", itm::CPU, timer.elapsed()));
 
     // finally linking nodes
     timer.restart();
@@ -1078,7 +1083,7 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
             it->second->parent->children.insert(it->second);
         }
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "store annotations: link curve nodes", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("store annotations: link curve nodes", itm::CPU, timer.elapsed()));
 //    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
 }
 
@@ -1096,7 +1101,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
 
     /**/itm::debug(itm::LEV3, "find all nodes in the given range", __itm__current__function__);
     octree->find(Y_range, X_range, Z_range, nodes);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "find landmarks: find all annotations in the given range", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("find landmarks: find all annotations in the given range", itm::CPU, timer.elapsed()));
 
 
     /**/itm::debug(itm::LEV3, "select markers only", __itm__current__function__);
@@ -1117,7 +1122,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
             markers.push_back(marker);
         }
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "find landmarks: select landmarks only", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("find landmarks: select landmarks only", itm::CPU, timer.elapsed()));
 }
 
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, QList<NeuronSWC> &curves) throw (RuntimeException)
@@ -1131,7 +1136,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 
     /**/itm::debug(itm::LEV3, "find all nodes in the given range", __itm__current__function__);
     octree->find(Y_range, X_range, Z_range, nodes);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: find all annotations in the given range", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("find curves: find all annotations in the given range", itm::CPU, timer.elapsed()));
 
     // find roots
     timer.restart();
@@ -1147,13 +1152,13 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
             roots.insert(p);
         }
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: find roots", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("find curves: find roots", itm::CPU, timer.elapsed()));
 
     /**/itm::debug(itm::LEV3, strprintf("%d roots found, now inserting all nodes", roots.size()).c_str(), __itm__current__function__);
     timer.restart();
     for(std::set<annotation*>::const_iterator it = roots.begin(); it != roots.end(); it++)
         (*it)->insertIntoTree(curves);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: insert all linked nodes starting from roots", false);
+    PLog::getInstance()->appendOperation(new AnnotationOperation("find curves: insert all linked nodes starting from roots", itm::CPU, timer.elapsed()));
     /**/itm::debug(itm::LEV3, strprintf("%d nodes inserted", curves.size()).c_str(), __itm__current__function__);
 }
 
@@ -1212,7 +1217,8 @@ void CAnnotations::save(const char* filepath) throw (RuntimeException)
     //file closing
     fclose(f);
 
-    PLog::getInstance()->appendIO(timer.elapsed(), "save annotations: save .ano to disk");
+
+    PLog::getInstance()->appendOperation(new AnnotationOperation("save annotations: save .ano to disk", itm::IO, timer.elapsed()));
 }
 void CAnnotations::load(const char* filepath) throw (RuntimeException)
 {
@@ -1305,7 +1311,7 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
     }
     f.close();
 
-    PLog::getInstance()->appendIO(timer.elapsed(), "load annotations: read .ano from disk");
+    PLog::getInstance()->appendOperation(new AnnotationOperation("load annotations: read .ano from disk", itm::IO, timer.elapsed()));
 }
 
 /*********************************************************************************

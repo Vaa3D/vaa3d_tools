@@ -41,7 +41,7 @@
 #include "CImport.h"
 #include "v3d_imaging_para.h"
 
-class teramanager::CExplorerWindow : public QWidget
+class teramanager::CViewer : public QWidget
 {
     Q_OBJECT
 
@@ -53,7 +53,7 @@ class teramanager::CExplorerWindow : public QWidget
         XFormWidget* triViewWidget;     //the tri-view image window
         V3dR_GLWidget* view3DWidget;    //3D renderer widget associated to the image window
         V3dR_MainWindow* window3D;      //the window enclosing <view3DWidget>
-        CExplorerWindow *next, *prev;   //the next (higher resolution) and previous (lower resolution) <CExplorerWindow> objects
+        CViewer *next, *prev;   //the next (higher resolution) and previous (lower resolution) <CExplorerWindow> objects
         int volResIndex;                //resolution index of the volume displayed in the current window (see member <volumes> of CImport)
         itm::uint8* imgData;
         int volV0, volV1;               //first and last vertical coordinates of the volume displayed in the current window
@@ -88,20 +88,21 @@ class teramanager::CExplorerWindow : public QWidget
         int anoD0, anoD1;               // @ADDED by Alessandro on 2014-11-17. First and last global coordinates of the annotation space along D (annotation VOI != VOI)
 
         //CLASS members
-        static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
-        static CExplorerWindow *last;   //pointer to the last window of the multiresolution explorer windows chain
-        static CExplorerWindow *current;//pointer to the current window of the multiresolution explorer windows chain
+        static CViewer *first;  //pointer to the first window of the multiresolution explorer windows chain
+        static CViewer *last;   //pointer to the last window of the multiresolution explorer windows chain
+        static CViewer *current;//pointer to the current window of the multiresolution explorer windows chain
         static int nInstances;          //number of instantiated objects
         static int nTotalInstances;
 
         //MUTEX
         //QMutex updateGraphicsInProgress;
 
-        //TIMER
-        QElapsedTimer newViewTimer;
+        //TIME MEASURE
+        QElapsedTimer newViewerTimer;
+        static int newViewerOperationID;
 
         //inhibiting default constructor
-        CExplorerWindow();
+        CViewer();
 
         /**********************************************************************************
         * Returns  the  global coordinate  (which starts from 0) in  the given  resolution
@@ -147,15 +148,15 @@ class teramanager::CExplorerWindow : public QWidget
     public:
 
         //CONSTRUCTOR, DECONSTRUCTOR
-        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, itm::uint8* _imgData, int _volV0, int _volV1,
-                        int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow* _prev, int _slidingViewerBlockID = -1);
-        ~CExplorerWindow();
+        CViewer(V3DPluginCallback2* _V3D_env, int _resIndex, itm::uint8* _imgData, int _volV0, int _volV1,
+                        int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CViewer* _prev, int _slidingViewerBlockID = -1);
+        ~CViewer();
         static void uninstance()
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             while(first){
-                CExplorerWindow* p = first->next;
+                CViewer* p = first->next;
                 first->toBeClosed = true;
                 delete first;
                 first = p;
@@ -167,7 +168,7 @@ class teramanager::CExplorerWindow : public QWidget
         void show();
 
         //GET methods
-        static CExplorerWindow* getCurrent(){return current;}
+        static CViewer* getCurrent(){return current;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
         V3dR_GLWidget* getGLWidget(){return view3DWidget;}
@@ -181,19 +182,19 @@ class teramanager::CExplorerWindow : public QWidget
         bool eventFilter(QObject *object, QEvent *event);
 
         /**********************************************************************************
-        * Restores the current view from the given (neighboring) source view.
+        * Restores the current viewer from the given (neighboring) source viewer.
         * Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
         * lower(higher) resoolution has to be reestabilished.
         ***********************************************************************************/
-        void restoreViewFrom(CExplorerWindow* source) throw (itm::RuntimeException);
+        void restoreViewerFrom(CViewer* source) throw (itm::RuntimeException);
 
         /**********************************************************************************
-        * Generates a new view using the given coordinates.
+        * Generates a new viewer using the given coordinates.
         * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
         * lution has to be loaded.
         ***********************************************************************************/
         void
-        newView(
+        newViewer(
             int x, int y, int z,                //can be either the VOI's center (default)
                                                 //or the VOI's ending point (see x0,y0,z0)
             int resolution,                     //resolution index of the view requested

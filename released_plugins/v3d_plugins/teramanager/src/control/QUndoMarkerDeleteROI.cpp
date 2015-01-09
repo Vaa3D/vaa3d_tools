@@ -1,9 +1,9 @@
 #include "QUndoMarkerDeleteROI.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 #include "v3dr_glwidget.h"
 #include "../presentation/PAnoToolBar.h"
 
-itm::QUndoMarkerDeleteROI::QUndoMarkerDeleteROI(itm::CExplorerWindow* _source, QList<LocationSimple> _markers) :  QUndoCommand()
+itm::QUndoMarkerDeleteROI::QUndoMarkerDeleteROI(itm::CViewer* _source, QList<LocationSimple> _markers) :  QUndoCommand()
 {
     source = _source;
     markers = _markers;

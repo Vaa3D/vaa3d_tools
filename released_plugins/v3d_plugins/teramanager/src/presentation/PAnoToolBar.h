@@ -72,7 +72,7 @@ class teramanager::PAnoToolBar : public QWidget
         void alignToLeft(QWidget* widget);
 
         friend class PMain;
-        friend class CExplorerWindow;
+        friend class CViewer;
         friend class QUndoMarkerCreate;
         friend class QUndoMarkerDelete;
         friend class QUndoMarkerDeleteROI;

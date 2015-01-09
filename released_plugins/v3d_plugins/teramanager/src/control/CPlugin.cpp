@@ -31,7 +31,7 @@
 #include "../presentation/PConverter.h"
 #include "v3d_message.h"
 #include "CPlugin.h"
-#include "CExplorerWindow.h"
+#include "CViewer.h"
 
 using namespace teramanager;
 
@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "1.1.3";          //software version
+    std::string version = "1.1.4";          //software version
     int DEBUG = LEV_MAX;                    //debug level
     bool DEBUG_TO_FILE = false;             //whether debug messages should be printed on the screen or to a file (default: screen)
     std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/terafly_debug.log";   //filepath where to save debug information
@@ -107,8 +107,8 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     }
     else if(menu_name == tr("Fetch Highrez Image Data from File"))
     {
-        if(CExplorerWindow::getCurrent())
-            CExplorerWindow::getCurrent()->invokedFromVaa3D();
+        if(CViewer::getCurrent())
+            CViewer::getCurrent()->invokedFromVaa3D();
         else
             /**/itm::warning("WARNING !! No suitable handler for Vaa3D invocation. TeraFly may not be instantiated or running in multiresolution mode.", __itm__current__function__);
     }

@@ -33,7 +33,7 @@
 #include <v3d_interface.h>
 #include "../control/CPlugin.h"
 #include "../control/CVolume.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 #include "PDialogImport.h"
 #include "v3dr_glwidget.h"
 #include "QArrowButton.h"
@@ -313,8 +313,8 @@ class teramanager::PMain : public QWidget
         void emitProgressBarChanged(int val, int minutes, int seconds, const char* message = 0)
         {emit sendProgressBarChanged(val, minutes, seconds, message);}
 
-        //<CExplorerWindow> instances need to access to all members of the current class
-        friend class CExplorerWindow;
+        //<CViewer> instances need to access to all members of the current class
+        friend class CViewer;
         friend class PAnoToolBar;
         friend class PDialogProofreading;
         friend class myV3dR_GLWidget;

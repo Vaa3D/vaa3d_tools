@@ -19,7 +19,7 @@ class teramanager::myRenderer_gl1 : public Renderer_gl1
     public:
 
         //gives public access to members
-        friend class CExplorerWindow;
+        friend class CViewer;
         friend class myV3dR_GLWidget;
 
         //converts mouse 2D position into image 3D point
@@ -38,7 +38,7 @@ class teramanager::myV3dR_GLWidget : public V3dR_GLWidget
     public:
 
         //gives public access to members
-        friend class CExplorerWindow;
+        friend class CViewer;
 
         //casting
         //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
@@ -65,7 +65,7 @@ class teramanager::myV3dR_MainWindow : public V3dR_MainWindow
     public:
 
         //gives public access to members
-        friend class CExplorerWindow;
+        friend class CViewer;
 
         //casting
         //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
@@ -77,7 +77,7 @@ class teramanager::myImage4DSimple : Image4DSimple
     public:
 
         //gives public access to members
-        friend class CExplorerWindow;
+        friend class CViewer;
         friend class myV3dR_GLWidget;
 
         //casting

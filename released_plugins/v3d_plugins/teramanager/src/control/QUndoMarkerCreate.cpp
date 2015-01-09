@@ -1,9 +1,9 @@
 #include "QUndoMarkerCreate.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 #include "v3dr_glwidget.h"
 #include "../presentation/PAnoToolBar.h"
 
-itm::QUndoMarkerCreate::QUndoMarkerCreate(itm::CExplorerWindow* _source, LocationSimple _marker) : QUndoCommand()
+itm::QUndoMarkerCreate::QUndoMarkerCreate(itm::CViewer* _source, LocationSimple _marker) : QUndoCommand()
 {
     source = _source;
     marker = _marker;

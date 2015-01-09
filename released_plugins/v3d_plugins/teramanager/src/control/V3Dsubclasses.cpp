@@ -2,7 +2,7 @@
 
 #include "V3Dsubclasses.h"
 #include "../presentation/PMain.h"
-#include "CExplorerWindow.h"
+#include "CViewer.h"
 
 using namespace teramanager;
 using namespace std;
@@ -35,7 +35,7 @@ void myV3dR_GLWidget::setZoomO(int zr)
         this->_zoom = zr;
         if (this->renderer)
         {
-            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
+            if (zr>PMain::getInstance()->zoomInSens->value() && !CViewer::getCurrent()->isHighestRes())
                 zoomIn(PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
             else
                 this->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
@@ -55,7 +55,7 @@ void myV3dR_GLWidget::setZoomO(float zr)
         this->_zoom = zr;
         if (this->renderer)
         {
-            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
+            if (zr>PMain::getInstance()->zoomInSens->value() && !CViewer::getCurrent()->isHighestRes())
                 zoomIn(PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
             else
                 this->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
@@ -124,8 +124,8 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = centralPoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = centralPoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = centralPoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
-        if(CExplorerWindow::getCurrent())
-            CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
+        if(CViewer::getCurrent())
+            CViewer::getCurrent()->invokedFromVaa3D(roi);
 
     }
     else if(strcmp(method, "Foreground (20 markers + mean-shift)") == 0)
@@ -221,8 +221,8 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = thepoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = thepoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = thepoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
-        if(CExplorerWindow::getCurrent())
-            CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
+        if(CViewer::getCurrent())
+            CViewer::getCurrent()->invokedFromVaa3D(roi);
     }
     else
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QString("Unsupported zoom-in method \"").append(method).append("\""),QObject::tr("Ok"));

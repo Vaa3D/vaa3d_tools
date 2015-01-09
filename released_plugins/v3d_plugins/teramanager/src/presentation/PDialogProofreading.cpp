@@ -233,7 +233,7 @@ void itm::PDialogProofreading::updateBlocks(int)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    CViewer* curWin = CViewer::getCurrent();
     if(curWin)
     {
         // get VOI coordinates in the selected resolution

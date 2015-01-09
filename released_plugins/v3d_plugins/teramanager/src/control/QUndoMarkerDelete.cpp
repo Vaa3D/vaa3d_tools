@@ -1,9 +1,9 @@
 #include "QUndoMarkerDelete.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 #include "v3dr_glwidget.h"
 #include "../presentation/PAnoToolBar.h"
 
-itm::QUndoMarkerDelete::QUndoMarkerDelete(itm::CExplorerWindow* _source, LocationSimple _marker) :  QUndoCommand()
+itm::QUndoMarkerDelete::QUndoMarkerDelete(itm::CViewer* _source, LocationSimple _marker) :  QUndoCommand()
 {
     source = _source;
     marker = _marker;

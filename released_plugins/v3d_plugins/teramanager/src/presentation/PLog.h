@@ -2,7 +2,8 @@
 #define PLOG_H
 
 #include <QDialog>
-#include "../control/CPlugin.h"
+#include "CPlugin.h"
+#include "COperation.h"
 #include "PMain.h"
 
 class teramanager::PLog : public QDialog
@@ -11,23 +12,34 @@ class teramanager::PLog : public QDialog
 
     private:
 
-        //object members
+        //GUI widgets
+        QGroupBox* timeComponentsPanel;
+        QTextEdit *timeComponents;
+        float timeIO, timeGPU, timeCPU, timeSum, timeActual;
+        /* ----------- */
+        QGroupBox* timeOperationsPanel;
+        QTextEdit *timeOperations;
+        /* ----------- */
+        QGroupBox* logPanel;
         QTextEdit *log;
+        /* ----------- */
         QPushButton* closeButton;
         QPushButton* resetButton;
-        QLineEdit *timeIO, *timeGPU, *timeCPU, *timeSum, *timeActual, *perfGain;
+
+        // other object members
+        std::map< std::string, std::vector<itm::Operation*> > loggedOperations; // grouped by name
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
-        * instantiated by calling static method "istance(...)"
+        * instantiated by calling static method "instance(...)"
         **********************************************************************************/
         static PLog* uniqueInstance;
 
         //extracts from the given time field in the corresponding time measure
         float toFloat(QString timeField);
 
-        //updates time percentages
-        void updatePercentages();
+        //update
+        void update();
 
     public:
 
@@ -54,11 +66,8 @@ class teramanager::PLog : public QDialog
         }
         PLog(QWidget *parent);
 
-        void append(string text);
-        void appendIO(int milliseconds, string message, bool sum = true);
-        void appendGPU(int milliseconds, string message, bool sum = true);
-        void appendCPU(int milliseconds, string message, bool sum = true);
-        void appendActual(int milliseconds, string message, bool sum = true);
+        void append(std::string text);
+        void appendOperation(itm::Operation* op);
 
     signals:
 

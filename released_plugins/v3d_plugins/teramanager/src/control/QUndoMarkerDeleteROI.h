@@ -8,13 +8,13 @@ class teramanager::QUndoMarkerDeleteROI : public QUndoCommand
 {
     private:
 
-        itm::CExplorerWindow* source;       //where the command has been applied
+        itm::CViewer* source;       //where the command has been applied
         QList<LocationSimple> markers;      //the markers being deleted
         bool redoFirstTime;                 //to disable redo's first call
 
     public:
 
-        QUndoMarkerDeleteROI(itm::CExplorerWindow* _source, QList<LocationSimple> _markers);
+        QUndoMarkerDeleteROI(itm::CViewer* _source, QList<LocationSimple> _markers);
 
         // undo and redo methods
         virtual void undo();

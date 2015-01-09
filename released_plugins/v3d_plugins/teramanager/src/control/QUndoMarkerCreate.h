@@ -8,13 +8,13 @@ class teramanager::QUndoMarkerCreate : public QUndoCommand
 {
     private:
 
-        itm::CExplorerWindow* source;       //where the command has been applied
+        itm::CViewer* source;       //where the command has been applied
         LocationSimple marker;              //the marker being created
         bool redoFirstTime;                 //to disable redo's first call
 
     public:
 
-        QUndoMarkerCreate(itm::CExplorerWindow* _source, LocationSimple _marker);
+        QUndoMarkerCreate(itm::CViewer* _source, LocationSimple _marker);
 
         // undo and redo methods
         virtual void undo();

@@ -33,7 +33,7 @@
 #include <string>
 #include "CPlugin.h"
 #include "CImport.h"
-#include "CExplorerWindow.h"
+#include "CViewer.h"
 
 class teramanager::CVolume : public QThread
 {
@@ -315,7 +315,7 @@ class teramanager::CVolume : public QThread
             }
         }
 
-        friend class CExplorerWindow;
+        friend class CViewer;
 
     signals:
 

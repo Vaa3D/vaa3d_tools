@@ -36,11 +36,12 @@
 #include "../control/CImport.h"
 #include "../control/CVolume.h"
 #include "../control/CSettings.h"
-#include "../control/CExplorerWindow.h"
+#include "../control/CViewer.h"
 #include "../control/CAnnotations.h"
 #include "../control/V3Dsubclasses.h"
 #include "../control/CAnnotations.h"
 #include "../control/CImageUtils.h"
+#include "../control/COperation.h"
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
 #include <typeinfo>
@@ -86,13 +87,13 @@ PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
         uniqueInstance->raise();
         uniqueInstance->activateWindow();
         uniqueInstance->show();
-        if(CExplorerWindow::getCurrent())
+        if(CViewer::getCurrent())
         {
-            CExplorerWindow::getCurrent()->window3D->setWindowState(Qt::WindowNoState);
-            CExplorerWindow::getCurrent()->window3D->raise();
-            CExplorerWindow::getCurrent()->window3D->activateWindow();
-            CExplorerWindow::getCurrent()->window3D->show();
-            CExplorerWindow::getCurrent()->alignToLeft(uniqueInstance);
+            CViewer::getCurrent()->window3D->setWindowState(Qt::WindowNoState);
+            CViewer::getCurrent()->window3D->raise();
+            CViewer::getCurrent()->window3D->activateWindow();
+            CViewer::getCurrent()->window3D->show();
+            CViewer::getCurrent()->alignToLeft(uniqueInstance);
         }
         return uniqueInstance;
     }
@@ -116,7 +117,7 @@ void PMain::uninstance()
     PDialogImport::uninstance();
     PAbout::uninstance();
     CVolume::uninstance();
-    CExplorerWindow::uninstance();
+    CViewer::uninstance();
     CSettings::uninstance();
     CAnnotations::uninstance();
     PLog::uninstance();
@@ -1406,7 +1407,7 @@ void PMain::closeVolume()
     CVolume::instance()->reset();
 
     PDialogImport::uninstance();
-    CExplorerWindow::uninstance();
+    CViewer::uninstance();
     CAnnotations::uninstance();
     PDialogProofreading::uninstance();
     reset();
@@ -1420,7 +1421,7 @@ void PMain::loadAnnotations()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
 
     try
     {
@@ -1455,7 +1456,7 @@ void PMain::loadAnnotations()
                 // save current cursor and set wait cursor
                 QCursor cursor = cur_win->view3DWidget->cursor();
                 PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
-                CExplorerWindow::setCursor(Qt::WaitCursor);
+                CViewer::setCursor(Qt::WaitCursor);
 
                 // load
                 cur_win->loadAnnotations();
@@ -1463,7 +1464,7 @@ void PMain::loadAnnotations()
                 virtualSpaceSizeMenu->setEnabled(false);
 
                 // reset saved cursor
-                CExplorerWindow::setCursor(cursor);
+                CViewer::setCursor(cursor);
                 PAnoToolBar::instance()->setCursor(cursor);
             }
             else
@@ -1485,7 +1486,7 @@ void PMain::saveAnnotations()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
 
     try
     {
@@ -1500,14 +1501,14 @@ void PMain::saveAnnotations()
             // save current cursor and set wait cursor
             QCursor cursor = cur_win->view3DWidget->cursor();
             PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
-            CExplorerWindow::setCursor(Qt::WaitCursor);
+            CViewer::setCursor(Qt::WaitCursor);
 
             // save
             cur_win->storeAnnotations();
             CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
 
             // reset saved cursor
-            CExplorerWindow::setCursor(cursor);
+            CViewer::setCursor(cursor);
             PAnoToolBar::instance()->setCursor(cursor);
         }
     }
@@ -1520,7 +1521,7 @@ void PMain::saveAnnotationsAs()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
 
     try
     {
@@ -1557,7 +1558,7 @@ void PMain::saveAnnotationsAs()
                 // save current cursor and set wait cursor
                 QCursor cursor = cur_win->view3DWidget->cursor();
                 PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
-                CExplorerWindow::setCursor(Qt::WaitCursor);
+                CViewer::setCursor(Qt::WaitCursor);
 
                 // save
                 cur_win->storeAnnotations();
@@ -1565,7 +1566,7 @@ void PMain::saveAnnotationsAs()
                 saveAnnotationsAction->setEnabled(true);
 
                 // reset saved cursor
-                CExplorerWindow::setCursor(cursor);
+                CViewer::setCursor(cursor);
                 PAnoToolBar::instance()->setCursor(cursor);
             }
             else
@@ -1587,7 +1588,7 @@ void PMain::clearAnnotations()
 
     try
     {
-        CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+        CViewer *cur_win = CViewer::getCurrent();
         if(cur_win)
         {
             CAnnotations::getInstance()->clear();
@@ -1642,9 +1643,12 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
     }
     else
     {
+        // create new macro-group for ImportOperation
+        itm::ImportOperation::newGroup();
+
         //first updating IO time
         /**/itm::debug(itm::LEV3, "updating IO time", __itm__current__function__);
-        PLog::getInstance()->appendIO(elapsed_time, "Volume imported and map loaded");
+        PLog::getInstance()->appendOperation(new ImportOperation("Volume imported and map loaded", itm::IO, elapsed_time));
 
         //otherwise inserting volume's informations
         /**/itm::debug(itm::LEV3, "inserting volume's informations", __itm__current__function__);
@@ -1800,14 +1804,15 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
 
         //updating GUI time
         /**/itm::debug(itm::LEV3, "updating GUI time", __itm__current__function__);
-        PLog::getInstance()->appendGPU(timerGUI.elapsed(), "TeraFly's GUI initialized");
+
+        PLog::getInstance()->appendOperation(new ImportOperation( "TeraFly's GUI initialized", itm::GPU, timerGUI.elapsed()));
 
         //starting 3D exploration
-        /**/itm::debug(itm::LEV3, "instantiating CExplorerWindow", __itm__current__function__);
-        CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMapRawData(),
+        /**/itm::debug(itm::LEV3, "instantiating CViewer", __itm__current__function__);
+        CViewer *new_win = new CViewer(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMapRawData(),
                             0, CImport::instance()->getVMapYDim(), 0, CImport::instance()->getVMapXDim(),
                             0, CImport::instance()->getVMapZDim(), 0, CImport::instance()->getVMapTDim()-1, CImport::instance()->getVMapCDim(), 0);
-        /**/itm::debug(itm::LEV3, "showing CExplorerWindow", __itm__current__function__);
+        /**/itm::debug(itm::LEV3, "showing CViewer", __itm__current__function__);
         new_win->show();
         new_win->isReady = true;
 
@@ -1820,7 +1825,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         QPixmapToolTip::instance()->installEventFilter(this);
 
         //updating actual time
-        PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
+        PLog::getInstance()->appendOperation(new ImportOperation( "TeraFly 3D exploration started", itm::ALL_COMPS, CImport::instance()->timerIO.elapsed()));
 
         //activate annotation toolbar
         showToolbarButton->setChecked(true);
@@ -1882,7 +1887,7 @@ void PMain::resolutionIndexChanged(int i)
 
     try
     {
-        if(resolution_cbox->isEnabled() && CExplorerWindow::getCurrent() && i > CExplorerWindow::getCurrent()->getResIndex())
+        if(resolution_cbox->isEnabled() && CViewer::getCurrent() && i > CViewer::getCurrent()->getResIndex())
         {
 //            int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
 //            int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
@@ -1895,24 +1900,24 @@ void PMain::resolutionIndexChanged(int i)
 //            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
 //            if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
-                int currentRes = CExplorerWindow::getCurrent()->getResIndex();
+                int currentRes = CViewer::getCurrent()->getResIndex();
                 int x0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
                 int x1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
                 int y0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
                 int y1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
                 int z0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
                 int z1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
-                int t0 = CExplorerWindow::getCurrent()->volT0;
-                int t1 = CExplorerWindow::getCurrent()->volT1;
+                int t0 = CViewer::getCurrent()->volT0;
+                int t1 = CViewer::getCurrent()->volT1;
                 /**/itm::debug(itm::LEV3, strprintf("global VOI [%d,%d) [%d,%d) [%d,%d) rescaled to [%d,%d) [%d,%d) [%d,%d) at currentRes = %d",
                                                        H0_sbox->value()-1, H1_sbox->value()-1,
                                                        V0_sbox->value()-1, V1_sbox->value()-1,
                                                        D0_sbox->value()-1, D1_sbox->value()-1,
                                                        x0, x1, y0, y1, z0, z1, currentRes).c_str(), __itm__current__function__);
-                CExplorerWindow::getCurrent()->newView(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, true);
+                CViewer::getCurrent()->newViewer(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, true);
             }
 //            else
-//                resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
+//                resolution_cbox->setCurrentIndex(CViewer::getCurrent()->getResIndex());
         }
     }
     catch(RuntimeException &ex)
@@ -1920,7 +1925,7 @@ void PMain::resolutionIndexChanged(int i)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         resetGUI();
         globalCoord_panel->setEnabled(true);
-        resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
+        resolution_cbox->setCurrentIndex(CViewer::getCurrent()->getResIndex());
     }
 }
 
@@ -1946,10 +1951,10 @@ void PMain::traslXposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
+        expl->newViewer((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1958,10 +1963,10 @@ void PMain::traslXnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
+        expl->newViewer((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1970,10 +1975,10 @@ void PMain::traslYposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*(100-CSettings::instance()->getTraslY())/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1982,10 +1987,10 @@ void PMain::traslYnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*(100-CSettings::instance()->getTraslY())/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1994,10 +1999,10 @@ void PMain::traslZposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*(100-CSettings::instance()->getTraslZ())/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -2006,10 +2011,10 @@ void PMain::traslZnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*(100-CSettings::instance()->getTraslZ())/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -2018,7 +2023,7 @@ void PMain::traslTposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
         int newT0 = expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
@@ -2028,7 +2033,7 @@ void PMain::traslTposClicked()
             newT1 = CImport::instance()->getTDim() - 1;
             newT0 = newT1 - (Tdim_sbox->value()-1);
         }
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2,
                       expl->volResIndex,
@@ -2042,7 +2047,7 @@ void PMain::traslTnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
         int newT1 = expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
@@ -2052,7 +2057,7 @@ void PMain::traslTnegClicked()
             newT0 = 0;
             newT1 = newT0 + (Tdim_sbox->value()-1);
         }
-        expl->newView((expl->volH1-expl->volH0)/2,
+        expl->newViewer((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2,
                       expl->volResIndex,
@@ -2286,7 +2291,7 @@ void PMain::curveDimsChanged(int dim)
     CSettings::instance()->setAnnotationCurvesDims(dim);
     CSettings::instance()->writeSettings();
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
     if(cur_win)
     {
         /**/itm::debug(itm::LEV3, strprintf("set Vaa3D's renderer <lineWidth> = %d", curveDimsSpinBox->value()).c_str(), __itm__current__function__);
@@ -2303,7 +2308,7 @@ void PMain::curveAspectChanged()
     CSettings::instance()->setAnnotationCurvesAspectTube(curveAspectTube->isChecked());
     CSettings::instance()->writeSettings();
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
     if(cur_win)
     {
         /**/itm::debug(itm::LEV3, strprintf("set Vaa3D's renderer <lineWidth> = %d and <lineType> = %s", curveDimsSpinBox->value(), curveAspectTube->isChecked() ? "tube" : "skeleton").c_str(), __itm__current__function__);
@@ -2352,7 +2357,7 @@ void PMain::PRsetActive(bool active)
     /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
 
     // check precondition: 3D visualization is active
-    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    CViewer* curWin = CViewer::getCurrent();
     if(!curWin)
         return;
 
@@ -2440,7 +2445,7 @@ void PMain::PRblockSpinboxEditingFinished()
 
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    CViewer* curWin = CViewer::getCurrent();
     if(curWin && curWin->isActive && !curWin->toBeClosed)
     {
         // if the selected block is the one being viewed, exit
@@ -2460,7 +2465,7 @@ void PMain::PRblockSpinboxEditingFinished()
         refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
 
         // invoke new view
-        curWin->newView(blocks[b-1].xInt.end, blocks[b-1].yInt.end, blocks[b-1].zInt.end, blocks_res,
+        curWin->newViewer(blocks[b-1].xInt.end, blocks[b-1].yInt.end, blocks[b-1].zInt.end, blocks_res,
                 curWin->volT0, curWin->volT1, false, -1, -1, -1, blocks[b-1].xInt.start, blocks[b-1].yInt.start, blocks[b-1].zInt.start, true, false, b);
 
 //        expl->newView((expl->volH1-expl->volH0)/2,
@@ -2481,7 +2486,7 @@ void PMain::PRblockSpinboxChanged(int b)
 
     try
     {
-        CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+        CViewer* curWin = CViewer::getCurrent();
         std::vector<itm::block_t> & blocks = PDialogProofreading::blocks;
         int blocks_res = PDialogProofreading::blocks_res;
         if(curWin && curWin->isActive && !curWin->toBeClosed)
@@ -2515,7 +2520,7 @@ void PMain::PRblockSpinboxChanged(int b)
             int ROIze_hr = CVolume::scaleDCoord(ROIzS+ROIzDim,  blocks_res, CImport::instance()->getResolutions()-1);
 
             // compute z-mip of the selected block on the lowest resolution image
-            uint8 *mip = CExplorerWindow::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true, 240);
+            uint8 *mip = CViewer::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true, 240);
             QImage qmip(mip, ROIxe_lr-ROIxs_lr, ROIye_lr-ROIys_lr, QImage::Format_ARGB32);
 
             // apply current color map to the mip
@@ -2592,8 +2597,8 @@ void PMain::showToolbarButtonChanged(bool changed)
     if(changed)
     {
         PAnoToolBar::instance(this)->show();
-        if(CExplorerWindow::current)
-            PAnoToolBar::instance()->alignToLeft(CExplorerWindow::current->window3D->glWidgetArea);
+        if(CViewer::current)
+            PAnoToolBar::instance()->alignToLeft(CViewer::current->window3D->glWidgetArea);
     }
     else
         PAnoToolBar::instance(this)->hide();
@@ -2631,7 +2636,7 @@ void PMain::markersSizeSpinBoxChanged(int value)
     CSettings::instance()->setAnnotationMarkerSize(value);
     CSettings::instance()->writeSettings();
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    CViewer *cur_win = CViewer::getCurrent();
     if(cur_win)
     {
         cur_win->view3DWidget->getRenderer()->markerSize = std::max(5, static_cast<int>( value / CImport::instance()->getResRatio(cur_win->volResIndex) + 0.5f));
@@ -2690,7 +2695,7 @@ void PMain::showAnoOctree()
 
     try
     {
-        CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+        CViewer *cur_win = CViewer::getCurrent();
         if(cur_win)
         {
             // display warning: current annotations will be lost
