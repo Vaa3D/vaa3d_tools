@@ -56,6 +56,9 @@ struct NA_PARA
     int b_RadiusFrom2D;
     int mip_plane;
 
+    //MST
+    int win_size;
+
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 
@@ -195,7 +198,7 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             case 2: P.merge = dialog.merge; break;
             case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
             case 5: P.b_256cube = dialog.b_256cube;
-
+           // case 6: P.win_size = dialog.win_size;
         }
 
         assembler_tc(callback,parent,P,bmenu);
@@ -248,6 +251,8 @@ void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             case 2: P.merge = dialog.merge; break;
             case 4: P.mip_plane = dialog.mip_plane;P.b_256cube = dialog.b_256cube;P.is_gsdt = dialog.is_gsdt;P.is_break_accept = dialog.is_break_accept;P.length_thresh = dialog.length_thresh;break;
             case 5: P.b_256cube = dialog.b_256cube;
+          //  case 6: P.win_size = dialog.win_size;
+
         }
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -321,10 +326,25 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
         P.root_1st[1] = file_inmarkers[0].y;
         P.root_1st[2] = file_inmarkers[0].z;
 
-        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.tracing_method = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
+
+        switch(P.tracing_method)
+        {
+            case 2: P.merge = (paras.size() >= k+1) ? atoi(paras[k]) : 1; k++; break;
+            case 4: P.mip_plane = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;;
+                    break;
+            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++; break;
+          //  case 6: P.win_size = dialog.win_size;
+
+        }
+
         assembler_tc(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("trace_raw"))
@@ -364,6 +384,21 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+
+
+        switch(P.tracing_method)
+        {
+            case 2: P.merge = (paras.size() >= k+1) ? atoi(paras[k]) : 1; k++; break;
+            case 4: P.mip_plane = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
+                    P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;;
+                    break;
+            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++; break;
+          //  case 6: P.win_size = dialog.win_size;
+
+        }
 
         assembler_raw(callback,parent,P,bmenu);
 	}
@@ -488,6 +523,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
     case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
     case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
     case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
+    case 6: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MST.swc"; break;
 
     }
 
@@ -522,7 +558,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
         case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
         case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
-
+        case 6: swcfilename =  walker->tilename + QString("_MST.swc"); break;
         }
 
 
@@ -557,6 +593,11 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         string is_break_accept_string = boost::lexical_cast<string>(P.is_break_accept);char* is_break_accept_char =  new char[is_break_accept_string.length() + 1]; strcpy(is_break_accept_char, is_break_accept_string.c_str());
         string length_thresh_string = boost::lexical_cast<string>(P.length_thresh);char* length_thresh_char =  new char[length_thresh_string.length() + 1]; strcpy(length_thresh_char, length_thresh_string.c_str());
 
+        //MST
+        string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
+
+        //APP1
+        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
 
         arg.type = "random";
         std::vector<char*> arg_para;
@@ -577,6 +618,9 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
+            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
+                    arg.p = (void *) & arg_para; input << arg;
+                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
         }
        // arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
 
@@ -796,7 +840,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
 
-    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+    system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
     return true;
 
 }
@@ -868,6 +912,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         case 3: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_Snake.swc"; break;
         case 4: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_TReMap.swc"; break;
         case 5: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_APP1.swc"; break;
+        case 6: finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MST.swc"; break;
 
     }
 
@@ -900,7 +945,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 return false;
             }
 
-            if(P.tracing_method == 2 || P.tracing_method ==3)
+            if(P.tracing_method == 2 || P.tracing_method ==3 || P.tracing_method ==6)
             {
                 for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
                 {
@@ -925,6 +970,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
         case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
         case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
+        case 6: swcfilename =  walker->tilename + QString("_MST.swc"); break;
+
 
         }
 
@@ -959,8 +1006,11 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         string is_break_accept_string = boost::lexical_cast<string>(P.is_break_accept);char* is_break_accept_char =  new char[is_break_accept_string.length() + 1]; strcpy(is_break_accept_char, is_break_accept_string.c_str());
         string length_thresh_string = boost::lexical_cast<string>(P.length_thresh);char* length_thresh_char =  new char[length_thresh_string.length() + 1]; strcpy(length_thresh_char, length_thresh_string.c_str());
 
+        //MST
+        string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
+
         //APP1
-        channel = '0' + P.channel - 1;
+        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
 
         arg.type = "random";
         std::vector<char*> arg_para;
@@ -981,6 +1031,9 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
+            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
+                    arg.p = (void *) & arg_para; input << arg;
+                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
         }
 
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
@@ -1175,7 +1228,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
 
-    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+    system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
     return true;
 
@@ -1322,7 +1375,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
     in_sz[2] = vz;
     in_sz[3] = vc;
 
-    if(P.tracing_method == 2 || P.tracing_method ==3)
+    if(P.tracing_method == 2 || P.tracing_method ==3 || P.tracing_method ==6)
     {
         for(V3DLONG i = 0; i < vx*vy*vz*vc; i++)
         {
