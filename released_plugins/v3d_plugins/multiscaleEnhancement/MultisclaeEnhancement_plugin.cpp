@@ -49,6 +49,8 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
 bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv_v2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
@@ -295,6 +297,12 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     {
         #if  defined(Q_OS_LINUX)
     	return processImage_adaptive_auto_blocks_indv_multithread(input, output,callback);
+        #endif
+    }
+    else if (func_name == tr("adaptive_auto_block_indv_multithread_v2"))
+    {
+        #if  defined(Q_OS_LINUX)
+        return processImage_adaptive_auto_blocks_indv_multithread_v2(input, output,callback);
         #endif
     }
     else if (func_name == tr("soma_detection"))
@@ -2956,6 +2964,542 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 //    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
 
 		return true;
+    }
+
+    if (in_sz) {delete []in_sz; in_sz=0;}
+    if (in_zz) {delete []in_zz; in_zz=0;}
+
+}
+
+bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to adaptive enhancement filter with individual blocks v2"<<endl;
+    if (output.size() != 1) return false;
+    unsigned int Ws = 1000, c=1;
+    float ratio = 1.0;
+
+    // FL added the following 3
+    unsigned int numOfThreads = 8; // default value for number of theads
+    unsigned int saveEnhanced2DSections = 1; // default value for saving enhanced 2D section images, 1: save; 0: not save
+    char *oriFileFolder;
+
+    if (input.size()>=2)
+    {
+
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) Ws = atoi(paras.at(0));
+        if(paras.size() >= 2) c = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atof(paras.at(2));
+        if(paras.size() >= 4) numOfThreads = atoi(paras.at(3));
+        if(paras.size() >= 5) saveEnhanced2DSections = atoi(paras.at(4));
+        if(paras.size() >= 6) oriFileFolder = paras.at(5);
+
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    cout<<"Ws = "<<Ws<<endl;
+    cout<<"c = "<<c<<endl;
+    cout<<"ratio = "<<ratio<<endl;
+    cout<<"numOfThreads = "<<numOfThreads<<endl;
+    cout<<"saveEnhanced2DSections = "<<saveEnhanced2DSections<<endl;
+
+    cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"outimg_folder = "<<outimg_file<<endl;
+
+
+   /* unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
+    }*/
+
+    unsigned char * data1d = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+
+    int datatype;
+
+    if (!loadRawRegion(inimg_file, data1d, in_sz, in_zz,datatype,0,0,0,1,1,1))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
+    }
+    if(data1d) {delete []data1d; data1d = 0;}
+
+
+//    temp_raw = QString(inimg_file) + "_temp.v3draw";
+//    temp_gf = QString(inimg_file) + "_gf.v3draw";
+//    temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+//    temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+//    temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+//
+//
+//    temp_soma = QString(inimg_file) + "_soma.v3draw";
+//    temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+//    temp_ds = QString(inimg_file) + "_ds.v3draw";
+//    temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    V3DLONG sz2d = N*M;
+
+    V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
+    int count = 2;
+    ifstream ifile(outimg_file);
+    if (!ifile)
+    {
+       printf("Can not find the output folder");
+       return false;
+    }
+
+    QString tc_name(outimg_file);
+    tc_name.append("/stitched_image.tc");
+
+    ofstream myfile;
+
+    // FL added, if the file exist, delete it first
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+
+    if (myfile.is_open()==true)
+    {
+        myfile.close();
+        remove(tc_name.toStdString().c_str());
+    }
+    // end of FL added
+
+
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << tilenum << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << N << " " << M << " " << P << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+    myfile.close(); // FL revise for multithreading
+
+
+    std::vector<QString> EnhancedBlockFilelist;
+
+//    unsigned char* EnhancedStack = 0;
+
+//    if (saveEnhanced2DSections==1)
+//    	EnhancedStack = new unsigned char [N*M*P]; // for saving enhanced 2D section purpose
+
+
+    bool falsetag = true; //FL add, openMP does not allow exit from blocked structure, it can be set by any thread competitively
+
+    omp_set_num_threads(numOfThreads);
+
+    #pragma omp parallel for  // FL add parallelizing
+
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+//	for(V3DLONG iy = 0; iy < 10; iy = iy+Ws-Ws/10)
+
+    {
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+        #pragma omp parllel for //FL add for parallelizing
+
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+//		for(V3DLONG ix = 0; ix < 10; ix = ix+Ws-Ws/10)
+
+        {
+
+//			printf("number of threads for ix and iy = %d\n", omp_get_num_threads());
+//
+//			printf("ix=%d, iy=%d\n", ix, iy);
+
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+            //set file names for calling plugin
+            QString temp_raw = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_temp.v3draw";
+            QString temp_gf = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gf.v3draw";
+            QString temp_gsdt = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdt.v3draw";
+//			QString temp_gsdt_v2 = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdt_v2.v3draw";
+//			QString temp_wogf = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_woGf.v3draw";
+//
+//			QString temp_soma = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_soma.v3draw";
+//			QString temp_gsdtsoma  = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdtsoma.v3draw";
+//			QString temp_ds = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_ds.v3draw";
+//			QString temp_gsdtds = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdtds.v3draw";
+
+            // crop block
+            unsigned char *blockarea=0;
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+            double th_global = 0;
+
+            /*blockarea = new unsigned char [blockpagesz];
+            int i = 0;
+
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+
+
+                for(V3DLONG iy = yb; iy < ye+1; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix < xe+1; ix++)
+                    {
+
+                        blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+                        i++;
+                    }
+                }
+            }*/
+
+            if(!loadRawRegion(inimg_file, blockarea, in_sz, in_zz,datatype,xb,yb,0,xe+1,ye+1,P))
+            {
+                if(blockarea) {delete []blockarea; blockarea = 0;}
+                cerr<<"load image "<<inimg_file<<" error!"<<endl;
+                falsetag == false;
+            }
+
+            unsigned char *localEnahancedArea=0;
+            try {localEnahancedArea = new unsigned char [blockpagesz];}
+//            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;} // FL comment out, openMP does not allow exit from blocked structure
+
+            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea.",0); falsetag = false;} //FL
+
+            if (falsetag == true) //FL
+            {
+
+                V3DLONG block_sz[4];
+                block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+               /* unsigned char *blockarea_median=0;
+                int ws = 2;
+                //apply median filter
+                switch (datatype)
+                {
+                case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
+                     break;
+                     default: v3d_msg("Invalid data type. Do nothing."); return false;
+                }
+
+                if(blockarea) {delete []blockarea; blockarea =0;}*/
+
+                simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
+
+                double sigma = 1;
+                for(int scale = 0; scale < count; scale++)
+                {
+                    unsigned char * data1d_gf = 0;
+                    unsigned char * gsdtld = 0;
+                    unsigned char* EnahancedImage = 0;
+                    unsigned char* data1d_gf_ds = 0;
+
+                    switch (datatype)
+                    {
+                    case V3D_UINT8:
+                        if (scale==0) //do not filter for the scale 0
+                        {
+
+                            if(count ==2)
+                                sigma = 0.3;
+
+                            data1d_gf = new unsigned char [blockpagesz];
+                            memcpy(data1d_gf, blockarea, blockpagesz);
+                        }
+                        else
+                        {
+                            sigma = 1.2;
+//							callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+
+                            callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf); //FL, change for multithreading
+
+                        }
+
+                        break;
+     //                   default: v3d_msg("Invalid data type. Do nothing."); return false; //FL comment out, openMP does not allow exit from blocked structure
+                        default: v3d_msg("Invalid data type. Do nothing.",0); falsetag = false; //FL
+
+                    }
+
+                    V3DLONG block_sz_ds[4];
+                    downsampling_img_xyz( data1d_gf, block_sz, 4, 4, data1d_gf_ds, block_sz_ds );
+
+
+                    callgsdtPlugin(callback,(unsigned char *)data1d_gf_ds, block_sz_ds, 1,th_global,(unsigned char* &)gsdtld, temp_gf, temp_gsdt); // FL, change for multithreading
+
+                    AdpThresholding_adpwindow_v2((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
+
+
+                    if (falsetag == true)
+                    {
+
+                            if (scale==0)
+                            {
+                                memcpy(localEnahancedArea, EnahancedImage, blockpagesz);
+                            }
+                            else
+                            {
+                               for(V3DLONG i = 0; i<blockpagesz; i++)
+                               {
+                                  if (localEnahancedArea[i] < EnahancedImage[i])
+                                      localEnahancedArea[i] = EnahancedImage[i];
+                                  else
+                                      localEnahancedArea[i] =  localEnahancedArea[i];
+                               }
+                               remove(temp_raw.toStdString().c_str());
+                            }
+
+                            if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+                            if(gsdtld) {delete []gsdtld; gsdtld =0;}
+                            if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+                            if(blockarea) {delete []blockarea; blockarea =0;}
+                          //  if(blockarea_median) {delete []blockarea_median; blockarea_median =0;}
+                    }
+                    else scale = count; // FL, for exiting the for scale loop
+                } // for scale end
+
+
+                if (falsetag == true)
+                {
+                    QString outputTile(outimg_file);
+                    outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+                    simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1); //write individual enhanced block images
+
+                    #pragma omp critical  // FL, does not allow multiple thread write at the same time
+                    {
+
+                        // write the block location file
+                        myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app ); //FL revise for multithreading
+                        QString outputilefull;
+
+                        QString fn = QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye);
+                        outputilefull.append(fn);
+                        outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
+                        myfile << outputilefull.toStdString();
+                        myfile << "\n";
+                        myfile.close(); //FL revise for multithreading
+
+
+//						// stcitch blocks back to the 3D enhanced stack
+                        if (saveEnhanced2DSections==1)
+                        {
+
+                            QString blockfn(outimg_file);
+                            blockfn.append(fn);
+
+                            cout << "blockfn=" << blockfn.toStdString().c_str() << endl;
+
+                            EnhancedBlockFilelist.push_back(blockfn);
+
+//							bool tag_leftmost_block;
+//							if (ix==0)
+//								tag_leftmost_block = true;
+//							else
+//								tag_leftmost_block = false;
+//
+//							fusing(EnhancedStack, localEnahancedArea, xb, xe, yb, ye, in_sz, Ws, tag_leftmost_block);
+                        }
+
+
+
+                    }
+
+                    if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+
+
+                }
+                else ix = N; // FL, for exiting the for ix loop
+
+            } //if (falsetag == true) end
+            else ix = N; // FL, for exiting the for ix loop
+        } //for ix end
+
+        if (falsetag == false) iy = M; // FL, for exiting the iy loop
+
+    } //for iy end
+
+  //  myfile.close(); //FL revise for multithreading
+
+//	if (data1d) {delete []data1d; data1d=0;}
+    printf("finished enhancement\n");
+
+    if (falsetag == false)
+    {
+//    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+        return false;
+    }
+    else
+    {
+        myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+        myfile << "\n# MST LUT\n";
+        myfile.close();
+
+        // write 2D enhanced sections
+
+        if (saveEnhanced2DSections==1)
+        {
+
+            V3DLONG sz_enhanced2d[4];
+            sz_enhanced2d[0]=in_sz[0];
+            sz_enhanced2d[1]=in_sz[1];
+            sz_enhanced2d[2]=1;
+            sz_enhanced2d[3]=1;
+
+            long enhancedBlockNum = EnhancedBlockFilelist.size();
+            QString qstr_oriFileFolder(oriFileFolder);
+            QStringList oriFileList = getSortedFileList(qstr_oriFileFolder, ".tif");
+
+            #pragma omp parallel for  // FL add parallelizing
+
+            for (long k=0; k<in_sz[2]; k++)
+            {
+                long cnt = 0;
+
+                long m;
+
+
+                unsigned char *EnhancedSectionImage = new unsigned char [sz2d];
+                unsigned char *counterImg = new unsigned char [sz2d]; // compute how many times each pixel of EnhancedSectionImage is written by blocks
+
+                unsigned int *tmpImg = new unsigned int [sz2d]; // tmpImg is unsigned int type of EnhancedSectionImage to prevent overflowing when adding
+
+                // initialize tmpImg and counterImg
+                long cc=0;
+                for (long int i=0; i<in_sz[1]; i++)
+                for (long int j=0; j<in_sz[0]; j++)
+                {
+                    tmpImg[cc] = 0;
+                    counterImg[cc] = 0;
+                    cc++;
+                }
+
+                V3DLONG *sz_block3D = 0;
+                V3DLONG *sz_block_section2D = 0;
+                unsigned char *blockSection2D=0;
+
+
+                for (int n=0; n<enhancedBlockNum; n++)
+                {
+                    QString blockFileName = EnhancedBlockFilelist.at(n);
+
+                    // load section k of the current 3D block
+
+//					char *bn = (char *)(blockFileName.toStdString().c_str();
+
+                    QByteArray byteArray = blockFileName.toUtf8();
+                    char* bn = byteArray.data();
+
+                    cout << "blockFileName=" << bn << endl;
+
+
+                    V3DLONG xb, xe, yb, ye;
+
+                    // get xb, xe, yb, ye values, this will be changed depending how block filenames are given
+                    int ind0 = blockFileName.lastIndexOf("/");
+                    int ind1 = blockFileName.indexOf("_", ind0+1);
+                    int ind2 = blockFileName.indexOf("_", ind1+1);
+                    int ind3 = blockFileName.indexOf("_", ind2+1);
+                    int ind4 = blockFileName.indexOf("_", ind3+1);
+                    int ind5 = blockFileName.indexOf("_", ind4+1);
+                    int ind6 = blockFileName.lastIndexOf(".");
+
+//					printf("%d, %d, %d, %d, %d, %d\n", ind1, ind2, ind3, ind4, ind5, ind6);
+
+                    xb = blockFileName.mid(ind1+1, ind2-(ind1+1)).toInt();
+                    xe = blockFileName.mid(ind2+1, ind3-(ind2+1)).toInt();
+                    yb = blockFileName.mid(ind4+1, ind5-(ind4+1)).toInt();
+                    ye = blockFileName.mid(ind5+1, ind6-(ind5+1)).toInt();
+
+//					printf("xb=%d, xe=%d, yb=%d, ye=%d\n", xb, xe, yb, ye);
+
+
+                    loadRawRegion(bn, blockSection2D, sz_block3D, sz_block_section2D, datatype,0,0,k,xe-xb+1,ye-yb+1,k+1);
+
+//					printf("block file has been loaded!\n");
+
+
+                    // fusing
+                    fusing2D(tmpImg, counterImg, blockSection2D, xb, xe, yb, ye, sz_enhanced2d);
+
+                    if (blockSection2D) {delete []blockSection2D; blockSection2D=0;}
+                    if (sz_block3D) {delete []sz_block3D; sz_block3D=0;}
+                    if (sz_block_section2D) {delete []sz_block_section2D; sz_block_section2D=0;}
+
+                } //for (int n=0; n<enhancedBlockNum; n++)
+
+                printf("Finish fusing section %d\n", k);
+
+                // compute the final EnhancedSectionImage by averaging
+
+                for (long i=0; i<sz_enhanced2d[1]; i++)
+                {
+                    long tmp = i*sz_enhanced2d[0];
+                    long tmp2 = tmp;
+                    for (long j=0; j<sz_enhanced2d[0]; j++)
+                    {
+                        if (counterImg[tmp2]==0)
+                            EnhancedSectionImage[tmp2] = 0;
+                        else
+                            EnhancedSectionImage[tmp2] = (unsigned char)(tmpImg[tmp2]/counterImg[tmp2]);
+                        tmp2++;
+                    }
+                }
+
+                printf("Finish computing EnhancedSectionImage\n");
+
+
+//				for (m=k*sz2d; m<(k+1)*sz2d; m++)
+//				{
+//					EnhancedSectionImage[cnt] = EnhancedStack[m];
+//					cnt++;
+//				}
+
+                QString filename;
+                int idx0, idx1;
+
+                QString qstr_outimg_file = QString(outimg_file);
+
+
+                cout << oriFileList.at(k).toStdString().c_str() << endl;
+
+
+                idx0 = oriFileList.at(k).lastIndexOf('/');
+                idx1 = oriFileList.at(k).lastIndexOf('.');
+
+//				printf("idx0=%d, idx1=%d", idx0, idx1);
+                filename = qstr_outimg_file + oriFileList.at(k).mid(idx0+1, idx1-idx0-1) + "_tubularity.tif";
+
+//				cout<< filename.toStdString().c_str() << endl;
+
+                saveImage(filename.toStdString().c_str(), EnhancedSectionImage, sz_enhanced2d, 1);
+
+                if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;}
+                if (tmpImg) {delete []tmpImg; tmpImg=0;}
+                if (counterImg) {delete []counterImg; counterImg=0;}
+
+
+            } //for (long k=0; k<in_sz[2]; k++)
+
+//			if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;}
+        } //if (saveEnhanced2DSections==1)
+
+//    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+
+        return true;
     }
 
     if (in_sz) {delete []in_sz; in_sz=0;}
