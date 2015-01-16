@@ -59,7 +59,7 @@ class NeuronAssemblerDialog_raw : public QDialog
 
 
             QStringList methodList;
-            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing" << "All-path Pruning 1(APP1) Tracing";
+            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing" << "All-path Pruning 1(APP1) Tracing"<< "All-path Pruning 2(APP2) Tracing";
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -279,7 +279,7 @@ class NeuronAssemblerDialog : public QDialog
             openTcFile = new QPushButton(QObject::tr("..."));
 
             QStringList methodList;
-            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing" << "All-path Pruning 1(APP1) Tracing";
+            methodList << "" << "MOST Tracing" << "NeuTube Tracing" << "Farsight Snake Tracing" << "TReMap Tracing" << "All-path Pruning 1(APP1) Tracing" << "All-path Pruning 2(APP2) Tracing";
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
