@@ -3,13 +3,13 @@
  * 2015-01-16 : by Zhi Zhou
  */
  
-#ifndef __NEURONTRACING_REGION_APP2_PLUGIN_H__
-#define __NEURONTRACING_REGION_APP2_PLUGIN_H__
+#ifndef __NEURONTRACING_REGION_NEURON2_PLUGIN_H__
+#define __NEURONTRACING_REGION_NEURON2_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class neurontracing_region_app2 : public QObject, public V3DPluginInterface2_1
+class neurontracing_region_neuron2 : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
@@ -24,7 +24,123 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-//define a simple dialog for choose APP2 parameters and TC file
+class regionAPP1Dialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionAPP1Dialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+
+            channel_spinbox = new QSpinBox();
+            channel_spinbox->setRange(1,1);
+            channel_spinbox->setValue(1);
+
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(-1);
+
+            visthresh_spinbox = new QSpinBox();
+            visthresh_spinbox->setRange(1, 255);
+            visthresh_spinbox->setValue(30);
+
+            downsample_spinbox = new QSpinBox();
+            downsample_spinbox->setRange(0, 10);
+            downsample_spinbox->setValue(2);
+
+            region_editor = new QLineEdit(QString("").setNum(10000));
+
+            layout->addWidget(new QLabel("color channel"),0,0);
+            layout->addWidget(channel_spinbox, 0,1,1,5);
+            layout->addWidget(new QLabel("background_threshold \n"),1,0);
+            layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
+            layout->addWidget(new QLabel("visibility threshold \n  (normally do not need to change)"),2,0);
+            layout->addWidget(visthresh_spinbox, 2,1,1,5);
+            layout->addWidget(new QLabel("region_number"),3,0);
+            layout->addWidget(region_editor, 3,1,1,5);
+
+            QHBoxLayout * hbox1 = new QHBoxLayout();
+            hbox1->addWidget(new QLabel("downsample factor \n  (set 0 for auto-downsample)"));
+            hbox1->addWidget(downsample_spinbox);
+
+            layout->addLayout(hbox1,4,0,1,6);
+
+            QHBoxLayout * hbox2 = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox2->addWidget(cancel);
+            hbox2->addWidget(ok);
+
+            layout->addLayout(hbox2,4,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions using APP1"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+
+            connect(channel_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+
+            connect(downsample_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(visthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+
+            update();
+        }
+
+        ~regionAPP1Dialog(){}
+
+        public slots:
+        void update()
+        {
+            channel = channel_spinbox->value();
+            bkg_thresh = bkgthresh_spinbox->value();
+            visible_thresh = visthresh_spinbox->value();
+            b_256cube = (downsample_spinbox->value()==0) ? 1 : 0;
+            region_number = region_editor->text().toInt();
+
+        }
+    public:
+
+        QSpinBox * channel_spinbox;
+        QSpinBox * bkgthresh_spinbox;
+        QSpinBox * downsample_spinbox;
+        QSpinBox * visthresh_spinbox;
+        QLineEdit * region_editor;
+
+        Image4DSimple* image;
+
+       // LandmarkList listLandmarks;
+        int channel;
+        int bkg_thresh;
+        int visible_thresh;
+        int b_256cube;
+        int region_number;
+
+    };
+
+//define a simple dialog for choose NEURON2 parameters and TC file
 class regionAPP2Dialog : public QDialog
     {
         Q_OBJECT
