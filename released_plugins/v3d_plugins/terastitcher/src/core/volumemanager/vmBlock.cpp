@@ -28,6 +28,9 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+* 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in many methods.
 * 2014-11-04. Giulio.     @FIXED bug in conversion from pixel uint16 to float
 * 2014-09-09. Alessandro. @FIXED 'getXML()' method to deal with empty stacks.
 * 2014-09-09. Alessandro. @BUG in 'loadImageStack()'. 'first_file' and 'last_file' are set to '-1' by default. But here, they are never checked nor corrected. 
@@ -64,7 +67,7 @@ using namespace std;
 using namespace iom;
 
 //CONSTRUCTOR WITH ARGUMENTS
-Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME)
+Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception)
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
@@ -88,7 +91,44 @@ Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char
 	init();
 }
 
-Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
+// 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
+Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception)
+	: VirtualStack()
+{
+	#if VM_VERBOSE > 3
+	printf("\t\t\t\tin Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, TiXmlElement*, int z_end=%d)\n",
+		_ROW_INDEX, _COL_INDEX, z_end);
+	#endif
+
+	// check for valid stack node
+	if(!stack_node)
+		throw iom::exception("not an xml node", __iom__current__function__);
+	if( strcmp(stack_node->ToElement()->Value(), "Stack") != 0)
+		throw iom::exception(iom::strprintf("invalid xml node name: expected \"Stack\", found \"%s\"", stack_node->ToElement()->Value()), __iom__current__function__);
+
+	CONTAINER = _CONTAINER;
+	DIR_NAME = new char[strlen(stack_node->Attribute("DIR_NAME"))+1];
+	strcpy(DIR_NAME, stack_node->Attribute("DIR_NAME"));
+	ROW_INDEX = _ROW_INDEX;
+	COL_INDEX = _COL_INDEX;
+
+	N_BLOCKS = -1;
+	BLOCK_SIZE = 0;
+	BLOCK_ABS_D = 0;
+	N_CHANS = 1;                 
+	N_BYTESxCHAN = 1;      
+
+	// first read image regex field (if any) from xml node
+	readImgRegex(stack_node);
+
+	// then scan folder for images
+	init();
+
+	// finally load other xml attributes
+	loadXML(stack_node, z_end);
+}
+
+Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception)
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
@@ -139,7 +179,7 @@ Block::~Block(void)
 		delete[] DIR_NAME;
 }
 
-void Block::init()
+void Block::init() throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
     printf("\t\t\t\tin Block[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
@@ -167,14 +207,16 @@ void Block::init()
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-        if(vm::IMG_FILTER_REGEX.empty())
+
+		// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+		if(img_regex.empty())
         {
             if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
                 entries_lev3.push_back(tmp);
         }
         else
         {
-            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(vm::IMG_FILTER_REGEX.c_str());
+            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(img_regex.c_str());
             boost::xpressive::smatch what;
             if(boost::xpressive::regex_match(tmp, what, rex))
                entries_lev3.push_back(tmp);
@@ -235,7 +277,7 @@ void Block::init()
 
 
 //binarizing-unbinarizing methods
-void Block::binarizeInto(FILE* file)
+void Block::binarizeInto(FILE* file) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
     printf("\t\t\t\tin Block[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
@@ -553,6 +595,7 @@ TiXmlElement* Block::getXML()
 	xml_representation->SetAttribute("ABS_D",ABS_D);
 	xml_representation->SetAttribute("STITCHABLE",stitchable ? "yes" : "no");
 	xml_representation->SetAttribute("DIR_NAME",DIR_NAME);
+	writeImgRegex(xml_representation);
 	vector<Displacement*>::iterator i;
 	TiXmlElement *NORTH_displacements = new TiXmlElement("NORTH_displacements");
 	for(i = NORTH.begin(); i != NORTH.end(); i++)
@@ -623,6 +666,10 @@ throw (iom::exception)
         sprintf(errMsg, "in Block[%d,%d]::loadXML(...): Mismatch between xml file and %s in <DIR_NAME> field.", ROW_INDEX, COL_INDEX, vm::BINARY_METADATA_FILENAME.c_str());
 		throw iom::exception(errMsg);
 	}
+
+	// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+	readImgRegex(stack_node);
+
 	TiXmlElement *NORTH_displacements = stack_node->FirstChildElement("NORTH_displacements");
 	for(TiXmlElement *displ_node = NORTH_displacements->FirstChildElement("Displacement"); displ_node; displ_node = displ_node->NextSiblingElement())
 		NORTH.push_back(Displacement::getDisplacementFromXML(displ_node));

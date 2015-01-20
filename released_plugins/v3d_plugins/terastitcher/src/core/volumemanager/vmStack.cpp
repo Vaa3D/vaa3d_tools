@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-12. Alessandro. @FIXED 'init()' method to deal with non-empty tiles.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
 * 2014-09-03. Alessandro. @ADDED 'Z_RANGES' attribute in the xml node.
@@ -74,6 +76,37 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const ch
 	init();
 }
 
+// 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
+Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception)
+	: VirtualStack()
+{
+	#if VM_VERBOSE > 3
+	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, TiXmlElement*, int z_end=%d)\n",
+		_ROW_INDEX, _COL_INDEX, z_end);
+	#endif
+
+	// check for valid stack node
+	if(!stack_node)
+		throw iom::exception("not an xml node", __iom__current__function__);
+	if( strcmp(stack_node->ToElement()->Value(), "Stack") != 0)
+		throw iom::exception(iom::strprintf("invalid xml node name: expected \"Stack\", found \"%s\"", stack_node->ToElement()->Value()), __iom__current__function__);
+
+	CONTAINER = _CONTAINER;
+	DIR_NAME = new char[strlen(stack_node->Attribute("DIR_NAME"))+1];
+	strcpy(DIR_NAME, stack_node->Attribute("DIR_NAME"));
+	ROW_INDEX = _ROW_INDEX;
+	COL_INDEX = _COL_INDEX;  
+
+	// first read image regex field (if any) from xml node
+	readImgRegex(stack_node);
+
+	// then scan folder for images
+	init();
+
+	// finally load other xml attributes
+	loadXML(stack_node, z_end);
+}
+
 Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception)
 	: VirtualStack()
 {
@@ -117,14 +150,16 @@ void Stack::init() throw (iom::exception)
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-        if(vm::IMG_FILTER_REGEX.empty())
+
+		// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+        if(img_regex.empty())
         {
 			if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
                 entries_lev3.push_back(tmp);
         }
         else
         {
-            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(vm::IMG_FILTER_REGEX.c_str());
+            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(img_regex.c_str());
             boost::xpressive::smatch what;
             if(boost::xpressive::regex_match(tmp, what, rex))
                 entries_lev3.push_back(tmp);
@@ -146,10 +181,10 @@ void Stack::init() throw (iom::exception)
         // ...otherwise throw an exception
         else
         {
-            if(IMG_FILTER_REGEX.empty())
+            if(img_regex.empty())
                 throw iom::exception(vm::strprintf("in Stack[%s]::init(): stack is empty. If that was your intent, please use the 'sparse data' option", DIR_NAME).c_str());
             else
-                throw iom::exception(vm::strprintf("in Stack[%s]::init(): no files found that match regular expression \"%s\"", DIR_NAME, IMG_FILTER_REGEX.c_str()).c_str());
+                throw iom::exception(vm::strprintf("in Stack[%s]::init(): no files found that match regular expression \"%s\"", DIR_NAME, img_regex.c_str()).c_str());
         }
 	}
 
@@ -322,6 +357,7 @@ TiXmlElement* Stack::getXML()
 	for(int k=0; k<z_ranges.size(); k++)
 		z_ranges_string += vm::strprintf("[%d,%d)%s", z_ranges[k].start, z_ranges[k].end, k == z_ranges.size()-1 ? "" : ";");
 	xml_representation->SetAttribute("Z_RANGES",z_ranges_string.c_str());
+	writeImgRegex(xml_representation);
 
 	vector<Displacement*>::iterator i;
 	TiXmlElement *NORTH_displacements = new TiXmlElement("NORTH_displacements");
@@ -364,6 +400,9 @@ throw (iom::exception)
 		sprintf(errMsg, "in Stack[%s]::loadXML(...): Mismatch between xml file and %s in <DIR_NAME> field.", DIR_NAME, vm::BINARY_METADATA_FILENAME.c_str());
 		throw iom::exception(errMsg);
 	}
+
+	// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+	readImgRegex(stack_node);
 
 	// 2014-09-03. Alessandro. @ADDED 'Z_RANGES' attribute in the xml node
 	const char* z_ranges_c = stack_node->Attribute("Z_RANGES");

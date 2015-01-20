@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
 * 2014-08-30. Alessandro. @REMOVED 'show()' method (obsolete).
 * 2014-08-30. Alessandro. @ADDED 'VirtualStack()' default constructor definition with member initialization.
@@ -82,4 +83,28 @@ bool VirtualStack::isEmpty(int z0, int z1)
 		intersects = z1 >= z_ranges[k].start && z_ranges[k].end > z0;
 
 	return !intersects;
+}
+
+// read img_regex from xml stack node
+std::string VirtualStack::readImgRegex(TiXmlElement *stack_node) throw (iom::exception)
+{
+	// check for valid stack node
+	if(!stack_node)
+		throw iom::exception("not an xml node", __iom__current__function__);
+	if( strcmp(stack_node->ToElement()->Value(), "Stack") != 0)
+		throw iom::exception(iom::strprintf("invalid xml node name: expected \"Stack\", found \"%s\"", stack_node->ToElement()->Value()), __iom__current__function__);
+
+	const char* img_regex_read = stack_node->Attribute("IMG_REGEX");
+	if( img_regex_read )					// field is present
+		img_regex = img_regex_read;			// store the regex read from XML
+	else
+		img_regex = vm::IMG_FILTER_REGEX;	// store the global regex read from command line
+
+	return img_regex;
+}
+
+// write img_regex to the xml stack node
+void VirtualStack::writeImgRegex(TiXmlElement *stack_node) throw (iom::exception)
+{
+	stack_node->SetAttribute("IMG_REGEX",img_regex.c_str());
 }

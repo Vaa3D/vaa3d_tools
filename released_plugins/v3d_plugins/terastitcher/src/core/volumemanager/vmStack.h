@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
 * 2014-09-01. Alessandro. @ADDED 'compute_z_ranges()' method to compute z-ranges on sparse data given the complete set of z-coordinates.
 */
@@ -74,8 +75,9 @@ class Stack : public VirtualStack
 	public:
 
 		//CONSTRUCTORS
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);
-        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);
+		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);					// build from scratch
+        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);						// build from mdata.bin
+		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception);	// build from XML
 		~Stack(void);
 
 		//GET methods

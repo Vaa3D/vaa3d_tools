@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-11-06. Giulio.     @ADDED saved reference system into XML file
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
 * 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node.
@@ -627,8 +628,11 @@ void StackedVolume::initFromXML(const char *xml_filepath) throw (iom::exception)
 		STACKS[i] = new Stack *[N_COLS];
 		for(int j = 0; j < N_COLS; j++, pelem = pelem->NextSiblingElement())
 		{
-			STACKS[i][j] = new Stack(this, i, j, pelem->Attribute("DIR_NAME"));
-			STACKS[i][j]->loadXML(pelem, N_SLICES);
+			// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+			STACKS[i][j] = new Stack(this, i, j, pelem, N_SLICES);
+
+			//STACKS[i][j] = new Stack(this, i, j, pelem->Attribute("DIR_NAME"));
+			//STACKS[i][j]->loadXML(pelem, N_SLICES);
 		}
 	}
 

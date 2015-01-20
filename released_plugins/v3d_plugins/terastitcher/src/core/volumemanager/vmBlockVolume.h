@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in loadXML and initFromXML methods.
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
 * 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
 * 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
@@ -95,8 +96,8 @@ class BlockVolume : public volumemanager::VirtualVolume
 		VirtualStack*** getSTACKS()  {return (VirtualStack***)this->BLOCKS;}
 
 		//loads/saves metadata from/in the given xml filename
-		void loadXML(const char *xml_filename);
-		void initFromXML(const char *xml_filename);
+		void loadXML(const char *xml_filename) throw (iom::exception);
+		void initFromXML(const char *xml_filename) throw (iom::exception);
         void saveXML(const char *xml_filename=0, const char *xml_filepath=0) throw (iom::exception);
 
 

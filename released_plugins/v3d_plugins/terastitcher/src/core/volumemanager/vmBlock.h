@@ -25,6 +25,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
+* 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in many methods.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
 * 2014-08-25. Alessandro. @ADDED missing 'throw (iom::iom::exception)' statement in the 'loadImageStack()' method's signature
 */
@@ -59,10 +61,10 @@ class Block : public VirtualStack
         Block(void){}
 
 		//Initializes all object's members given DIR_NAME
-		void init();
+		void init() throw (iom::exception);
 
 	    //binarizing-unbinarizing methods
-		void binarizeInto(FILE* file);
+		void binarizeInto(FILE* file) throw (iom::exception);
 		void unBinarizeFrom(FILE* file) throw (iom::exception);
 
 		//returns a pointer to the intersection segment (along D) if the given segment (D0,D1-1) intersects current stack, otherwise returns NULL
@@ -76,8 +78,9 @@ class Block : public VirtualStack
 	
 	public:
 		//CONSTRUCTORS
-		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME);
-		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file);
+		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);				// build from scratch
+		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);						// build from mdata.bin
+		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception);	// build from XML
 		~Block(void);
 
 		//GET methods

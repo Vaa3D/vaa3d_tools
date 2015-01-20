@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
 * 2014-09-03. Alessandro. @ADDED 'isEmpty()' and 'isSparse()' get methods.
@@ -68,6 +69,12 @@ class VirtualStack
         // 2014-09-01. Alessandro. @ADDED support for sparse data.
         std::vector< vm::interval<int> > z_ranges;	//vector of Z-ranges containing valid data (each range is of type [start, end) )
 													//*** WARNING ***: if vector is empty, the stack is assumed as empty
+
+		// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+		// Each stack can be associated with a regular expression to filter image filenames. 
+		std::string img_regex;
+		virtual std::string readImgRegex(TiXmlElement *stack_node) throw (iom::exception);
+		virtual void        writeImgRegex(TiXmlElement *stack_node) throw (iom::exception);
 
     public:
 

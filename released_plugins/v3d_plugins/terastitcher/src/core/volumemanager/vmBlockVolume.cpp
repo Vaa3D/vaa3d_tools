@@ -25,6 +25,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in loadXML and initFromXML methods.
+* 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-11-06. Giulio.     @ADDED saved reference system into XML file
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
 * 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
@@ -687,7 +689,7 @@ void BlockVolume::mirror(vm::axis mrr_axis)
 	BLOCKS = new_STACK_2D_ARRAY;
 }
 
-void BlockVolume::loadXML(const char *xml_filepath)
+void BlockVolume::loadXML(const char *xml_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::loadXML(char *xml_filepath = %s)\n", xml_filepath);
@@ -782,7 +784,7 @@ void BlockVolume::loadXML(const char *xml_filepath)
 			BLOCKS[i][j]->loadXML(pelem, N_SLICES);
 }
 
-void BlockVolume::initFromXML(const char *xml_filepath)
+void BlockVolume::initFromXML(const char *xml_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::initFromXML(char *xml_filename = %s)\n", xml_filename);
@@ -844,8 +846,11 @@ void BlockVolume::initFromXML(const char *xml_filepath)
 		BLOCKS[i] = new Block *[N_COLS];
 		for(int j = 0; j < N_COLS; j++, pelem = pelem->NextSiblingElement())
 		{
-			BLOCKS[i][j] = new Block(this, i, j, pelem->Attribute("DIR_NAME"));
-			BLOCKS[i][j]->loadXML(pelem, N_SLICES);
+			// 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
+			BLOCKS[i][j] = new Block(this, i, j, pelem, N_SLICES);
+
+			//BLOCKS[i][j] = new Block(this, i, j, pelem->Attribute("DIR_NAME"));
+			//BLOCKS[i][j]->loadXML(pelem, N_SLICES);
 		}
 	}
 
