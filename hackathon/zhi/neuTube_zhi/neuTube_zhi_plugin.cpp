@@ -598,6 +598,13 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
 
     unsigned char *data1d = subject->getRawData();
 
+
+//    for(V3DLONG i = 0; i < pagesz; i++)
+//    {
+//        if(data1d[i] < 100)
+//            data1d[i] = 0;
+//    }
+
     Stack *stack;
     switch (datatype)
     {
