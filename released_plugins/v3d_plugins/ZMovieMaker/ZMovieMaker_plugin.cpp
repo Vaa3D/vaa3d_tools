@@ -866,7 +866,7 @@ void controlPanel::_slot_load()
                    channelR >> channelG >> channelB >>
                    showSurf >>
                    xClip0 >> xClip1 >> yClip0 >>
-                   xClip1 >> zClip0 >> zClip1 >>
+                   yClip1 >> zClip0 >> zClip1 >>
                    frontCut >>
                    timePoint;
             QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
