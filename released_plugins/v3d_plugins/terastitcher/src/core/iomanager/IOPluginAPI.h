@@ -248,7 +248,7 @@ namespace iomanager														\
 				const std::string & params = iom::IMIN_PLUGIN_PARAMS)	\
 			throw (iom::exception);										\
 																		\
-			iom::real_t*														\
+			iom::real_t*												\
 				readData(												\
 				char **files,											\
 				int files_size,											\
@@ -263,14 +263,14 @@ namespace iomanager														\
 			virtual void												\
 				writeData(												\
 				std::string img_path,									\
-				iom::real_t* raw_img,										\
+				iom::real_t* raw_img,									\
 				int img_height,											\
 				int img_width,											\
 				int img_chans,											\
-				int y0 = -1,												\
-				int y1 = -1,												\
-				int x0 = -1,												\
-				int x1 = -1,												\
+				int y0 = -1,											\
+				int y1 = -1,											\
+				int x0 = -1,											\
+				int x1 = -1,											\
 				int bpp = iom::DEF_BPP,									\
 				const std::string & params = iom::IMOUT_PLUGIN_PARAMS)	\
 			throw (iom::exception);										\

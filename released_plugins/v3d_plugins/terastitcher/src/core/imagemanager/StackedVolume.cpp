@@ -590,7 +590,14 @@ void StackedVolume::initChannels ( ) throw (IOException)
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
 
     // Giulio_CVIplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  // 2014-10-03. Alessandro. @FIXED: eliminated CV_LOAD_IMAGE_ANYDEPTH flag since we want 16 bit images to be automatically converted to 8 bit.
-	iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
+	try
+	{
+		iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
+	}
+	catch (iom::exception & ex)
+	{
+		throw iim::IOException(ex.what());
+	}
 
 	/* Giulio_CV
 

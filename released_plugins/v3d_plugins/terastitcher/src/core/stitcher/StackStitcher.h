@@ -296,13 +296,15 @@ class StackStitcher
 		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
 		* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
 		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
+		* [par_mode]            : if enabled, do not take into account parameters _D0/_D1 is determining the mane of 
+		*                         the directories and do not generates the file mdata.bin in the output volume
 		**************************************************************************************************************/
 
 		void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
 								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
+								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
 
 
 		/*************************************************************************************************************
@@ -314,7 +316,18 @@ class StackStitcher
 								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
+								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
+
+		/*************************************************************************************************************
+		* Method to be called for creating the metadata file of the output volume starting from the importad unstitched
+		* volume. It can be used to perform the mergeTiles operation on different volume portions in parallel
+		* Has must be called with the same parameters as mergeTilesVaa3DRaw
+		**************************************************************************************************************/
+		void mdataGenerator (std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
+								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
+								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
+								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
 };
 
 #endif

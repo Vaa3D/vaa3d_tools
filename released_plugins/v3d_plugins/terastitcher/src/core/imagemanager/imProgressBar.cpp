@@ -29,8 +29,8 @@
 #include <cstdlib>
 
 #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-#include "PConverter.h"
-#include "PMain.h"
+#include "../../presentation/PConverter.h"
+#include "../../presentation/PMain.h"
 #endif
 
 

@@ -101,8 +101,15 @@ void VirtualVolume::saveImage(std::string img_path, real32* raw_img, int raw_img
 	sprintf(img_filepath, "%s.%s", img_path.c_str(), img_format);
 
 	// 2014-11-26. Giulio. @ADDED the output plugin must be explicitly set by the caller 
-	iomanager::IOPluginFactory::getPlugin2D(iomanager::IMOUT_PLUGIN)->writeData(
+	try
+	{
+		iomanager::IOPluginFactory::getPlugin2D(iomanager::IMOUT_PLUGIN)->writeData(
 		img_filepath, raw_img, img_height, img_width, 1, start_height, end_height, start_width, end_width, img_depth);
+	}
+	catch (iom::exception & ex)
+	{
+		throw iim::IOException(ex.what());
+	}
 
 	/* Giulio_CV
 
