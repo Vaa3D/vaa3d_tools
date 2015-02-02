@@ -11,7 +11,8 @@ HEADERS	+= neuron_stitch_plugin.h \
     neuron_geometry_dialog.h \
     marker_match_dialog.h \
     neuron_match_clique.h \
-    neuron_tipspicker_dialog.h
+    neuron_tipspicker_dialog.h \
+    performance_timer.h
 SOURCES	+= neuron_stitch_plugin.cpp \
     neuron_geometry_dialog.cpp \
     ../../../v3d_main/neuron_editing/neuron_xforms.cpp \

@@ -8,8 +8,10 @@
 #include "neuron_match_clique.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "marker_match_dialog.h"
+#include "performance_timer.h"
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
 
@@ -959,6 +961,8 @@ void NeuronMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    spin_gapthr = new QDoubleSpinBox();
+    spin_gapthr->setRange(0,100000); spin_gapthr->setValue(0);
     spin_maxcnum = new QSpinBox();
     spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
     spin_spineLen = new QSpinBox();
@@ -985,7 +989,7 @@ void NeuronMatchDialog::creat()
     QLabel* label_4 = new QLabel("match candidates searching span: ");
     gridLayout->addWidget(label_4,11,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_searchspan,11,2,1,1);
-    QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
+    QLabel* label_5 = new QLabel("Max distance to match triangles: ");
     gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
     QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
@@ -994,31 +998,38 @@ void NeuronMatchDialog::creat()
     QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
     gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_maxcnum,12,5,1,1);
-    gridLayout->addWidget(check_spine,13,0,1,2);
+    QLabel* label_62 = new QLabel("small gap filter (0=no filter): ");
+    gridLayout->addWidget(label_62,13,0,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_gapthr,13,2,1,1);
+    gridLayout->addWidget(check_spine,14,0,1,2);
     QLabel* label_7 = new QLabel("point #:");
-    gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineLen,14,1,1,1);
+    gridLayout->addWidget(label_7,15,0,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineLen,15,1,1,1);
     QLabel* label_8 = new QLabel("turning angle:");
-    gridLayout->addWidget(label_8,14,2,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineAng,14,3,1,1);
+    gridLayout->addWidget(label_8,15,2,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineAng,15,3,1,1);
     QLabel* label_9 = new QLabel("radius:");
-    gridLayout->addWidget(label_9,14,4,1,1,Qt::AlignRight);
-    gridLayout->addWidget(spin_spineRadius,14,5,1,1);
+    gridLayout->addWidget(label_9,15,4,1,1,Qt::AlignRight);
+    gridLayout->addWidget(spin_spineRadius,15,5,1,1);
 
     //operation zone
-    int optrow=15;
+    int optrow=16;
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
-    gridLayout->addWidget(line_2,15,0,1,6);
+    gridLayout->addWidget(line_2,optrow,0,1,6);
     check_stitch = new QCheckBox("Stitch Matched Points");
-    gridLayout->addWidget(check_stitch,16,0,1,2);
+    gridLayout->addWidget(check_stitch,optrow+1,0,1,2);
+    btn_test = new QPushButton("Test");
+    connect(btn_test, SIGNAL(clicked()), this, SLOT(examinRun()));
+    gridLayout->addWidget(btn_test,optrow+1,3,1,1);
+    btn_test->setVisible(true); //show it only for test
     btn_run = new QPushButton("Run");
     connect(btn_run,     SIGNAL(clicked()), this, SLOT(run()));
-    gridLayout->addWidget(btn_run,16,4,1,1);
+    gridLayout->addWidget(btn_run,optrow+1,4,1,1);
     btn_quit = new QPushButton("Quit");
     connect(btn_quit,     SIGNAL(clicked()), this, SLOT(reject()));
-    gridLayout->addWidget(btn_quit,16,5,1,1);
+    gridLayout->addWidget(btn_quit,optrow+1,5,1,1);
 
     btn_run->setEnabled(false);
 
@@ -1130,6 +1141,298 @@ void NeuronMatchDialog::outputchange(QString text)
     fname_output=text;
 }
 
+void NeuronMatchDialog::examinRun()
+{
+    gridLayout->setEnabled(false);
+
+
+    vector<double> walltimes;
+    vector<double> cputimes;
+    vector<int> num_TP, num_FP, num_FN, num_truth, num_bp0, num_bp1, num_tri0, num_tri1, num_trimatch;
+    vector<int> tri_number;
+    vector<double> pmatchThr,pmatchAng,tmatchThr;
+
+    //triangle number
+    for(int i=0; i<10; i++){
+        int tri=100*pow(2.0,i);
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        neuron_match_clique matchfunc(nt0,nt1);
+
+        //parameters
+        matchfunc.direction=cb_dir->currentIndex();
+        matchfunc.zscale=spin_zscale->value();
+        matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
+        matchfunc.pmatchThr = spin_matchdis->value();
+        matchfunc.spanCand = spin_searchspan->value();
+        matchfunc.cmatchThr = spin_cmatchdis->value();
+        matchfunc.segmentThr = spin_segthr->value();
+        matchfunc.maxClique3Num = tri;
+        matchfunc.gapThr = spin_gapthr->value();
+        if(check_spine->isChecked()){
+            matchfunc.spineLengthThr = spin_spineLen->value();
+            matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+            matchfunc.spineRadiusThr = spin_spineRadius->value();
+        }else{
+            matchfunc.spineLengthThr = 0;
+            matchfunc.spineRadiusThr = 0;
+        }
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //point match distance
+    for(double param=20; param<=300; param+=20){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        neuron_match_clique matchfunc(nt0,nt1);
+
+        //parameters
+        matchfunc.direction=cb_dir->currentIndex();
+        matchfunc.zscale=spin_zscale->value();
+        matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
+        matchfunc.pmatchThr = param;
+        matchfunc.spanCand = spin_searchspan->value();
+        matchfunc.cmatchThr = spin_cmatchdis->value();
+        matchfunc.segmentThr = spin_segthr->value();
+        matchfunc.maxClique3Num = spin_maxcnum->value();
+        matchfunc.gapThr = spin_gapthr->value();
+        if(check_spine->isChecked()){
+            matchfunc.spineLengthThr = spin_spineLen->value();
+            matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+            matchfunc.spineRadiusThr = spin_spineRadius->value();
+        }else{
+            matchfunc.spineLengthThr = 0;
+            matchfunc.spineRadiusThr = 0;
+        }
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //point match angular threshold
+    for(double param=10; param<181; param+=10){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        neuron_match_clique matchfunc(nt0,nt1);
+
+        //parameters
+        matchfunc.direction=cb_dir->currentIndex();
+        matchfunc.zscale=spin_zscale->value();
+        matchfunc.angThr_match=cos(param/180*M_PI);
+        matchfunc.pmatchThr = spin_matchdis->value();
+        matchfunc.spanCand = spin_searchspan->value();
+        matchfunc.cmatchThr = spin_cmatchdis->value();
+        matchfunc.segmentThr = spin_segthr->value();
+        matchfunc.maxClique3Num = spin_maxcnum->value();
+        matchfunc.gapThr = spin_gapthr->value();
+        if(check_spine->isChecked()){
+            matchfunc.spineLengthThr = spin_spineLen->value();
+            matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+            matchfunc.spineRadiusThr = spin_spineRadius->value();
+        }else{
+            matchfunc.spineLengthThr = 0;
+            matchfunc.spineRadiusThr = 0;
+        }
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //triangle match distance
+    for(double param=20; param<=300; param+=20){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        neuron_match_clique matchfunc(nt0,nt1);
+
+        //parameters
+        matchfunc.direction=cb_dir->currentIndex();
+        matchfunc.zscale=spin_zscale->value();
+        matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
+        matchfunc.pmatchThr = spin_matchdis->value();
+        matchfunc.spanCand = spin_searchspan->value();
+        matchfunc.cmatchThr = param;
+        matchfunc.segmentThr = spin_segthr->value();
+        matchfunc.maxClique3Num = spin_maxcnum->value();
+        matchfunc.gapThr = spin_gapthr->value();
+        if(check_spine->isChecked()){
+            matchfunc.spineLengthThr = spin_spineLen->value();
+            matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+            matchfunc.spineRadiusThr = spin_spineRadius->value();
+        }else{
+            matchfunc.spineLengthThr = 0;
+            matchfunc.spineRadiusThr = 0;
+        }
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //output
+    QString fname_out=fname_output+"_testlog.txt";
+    ofstream fp;
+    fp.open(fname_out.toStdString().c_str());
+    for(int i=0; i<walltimes.size(); i++){
+        fp<<tri_number[i]<<"\t";
+        fp<<pmatchThr[i]<<"\t";
+        fp<<pmatchAng[i]<<"\t";
+        fp<<tmatchThr[i]<<"\t";
+        fp<<walltimes[i]<<"\t";
+        fp<<cputimes[i]<<"\t";
+        fp<<num_TP[i]<<"\t";
+        fp<<num_FP[i]<<"\t";
+        fp<<num_FN[i]<<"\t";
+        fp<<num_truth[i]<<"\t";
+        fp<<num_bp0[i]<<"\t";
+        fp<<num_bp1[i]<<"\t";
+        fp<<num_tri0[i]<<"\t";
+        fp<<num_tri1[i]<<"\t";
+        fp<<num_trimatch[i]<<endl;
+    }
+    fp.close();
+
+    neuron_match_clique matchfunc(nt0,nt1);
+    matchfunc.direction=cb_dir->currentIndex();
+    matchfunc.zscale=spin_zscale->value();
+    matchfunc.angThr_match=cos(spin_ang->value()/180*M_PI);
+    matchfunc.pmatchThr = spin_matchdis->value();
+    matchfunc.spanCand = spin_searchspan->value();
+    matchfunc.cmatchThr = spin_cmatchdis->value();
+    matchfunc.segmentThr = spin_segthr->value();
+    matchfunc.maxClique3Num = spin_maxcnum->value();
+    matchfunc.gapThr = spin_gapthr->value();
+    if(check_spine->isChecked()){
+        matchfunc.spineLengthThr = spin_spineLen->value();
+        matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
+        matchfunc.spineRadiusThr = spin_spineRadius->value();
+    }else{
+        matchfunc.spineLengthThr = 0;
+        matchfunc.spineRadiusThr = 0;
+    }
+    matchfunc.output_parameter(fname_output+"_param.txt");
+
+
+    gridLayout->setEnabled(true);
+    v3d_msg("testing finished");
+}
+
 void NeuronMatchDialog::run()
 {
     gridLayout->setEnabled(false);
@@ -1145,6 +1448,7 @@ void NeuronMatchDialog::run()
     matchfunc.cmatchThr = spin_cmatchdis->value();
     matchfunc.segmentThr = spin_segthr->value();
     matchfunc.maxClique3Num = spin_maxcnum->value();
+    matchfunc.gapThr = spin_gapthr->value();
     if(check_spine->isChecked()){
         matchfunc.spineLengthThr = spin_spineLen->value();
         matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
@@ -1558,8 +1862,8 @@ void neuron_match_clique::init()
 
     //find cliques
     qDebug()<<"start find cliques";
-    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction, maxClique3Num);
-    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction, maxClique3Num);
+    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, 0, direction, maxClique3Num);
+    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, 0, direction, maxClique3Num);
     qDebug()<<"init neuron 0: 3clique:"<<cliqueList0.size();
     qDebug()<<"init neuron 1: 3clique:"<<cliqueList1.size();
 
@@ -1609,8 +1913,8 @@ void neuron_match_clique::init(LandmarkList* mList)
 
     //find cliques
     qDebug()<<"start find cliques";
-    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, cmatchThr, direction, maxClique3Num);
-    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, cmatchThr, direction, maxClique3Num);
+    getTopCliques(*nt0,candID0, candcoord0, canddir0, cliqueList0, 0, direction, maxClique3Num);
+    getTopCliques(*nt1,candID1, candcoord1, canddir1, cliqueList1, 0, direction, maxClique3Num);
     qDebug()<<"init neuron 0: 3clique:"<<cliqueList0.size();
     qDebug()<<"init neuron 1: 3clique:"<<cliqueList1.size();
 
@@ -2809,7 +3113,7 @@ void neuron_match_clique::initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QL
 //all types ended with '6' can be used for matching across sections
 int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType)
 {
-    getNeuronType(nt, ng, neuronType, spineLengthThr, spineAngThr, spineRadiusThr);
+    return getNeuronType(nt, ng, neuronType, spineLengthThr, spineAngThr, spineRadiusThr);
 }
 
 void neuron_match_clique::initNeuronComponents()
@@ -2872,6 +3176,64 @@ void neuron_match_clique::initNeuronComponents(NeuronTree& nt, QList<int>& compo
                 chid=pList.indexOf(pid,chid+1);
                 size++;
             }
+        }
+    }
+}
+
+void neuron_match_clique::examineMatchingResult(int num[9])
+{
+    num[4]=candID0.size();
+    num[5]=candID1.size();
+    num[6]=cliqueList0.size();
+    num[7]=cliqueList1.size();
+    num[8]=rankedCliqueMatch.size();
+
+    //find all ground truth matches
+    QSet<int> connSet0, connSet1;
+    QMap<V3DLONG, int> VtxConnMap0,VtxConnMap1;
+    for(V3DLONG pid=0; pid<nt0_org->listNeuron.size(); pid++){
+        if(nt0_org->listNeuron.at(pid).type>0){
+            connSet0.insert(nt0_org->listNeuron.at(pid).type);
+            VtxConnMap0[pid]=nt0_org->listNeuron.at(pid).type;
+        }
+    }
+    for(V3DLONG pid=0; pid<nt1_org->listNeuron.size(); pid++){
+        if(nt1_org->listNeuron.at(pid).type>0){
+            connSet1.insert(nt1_org->listNeuron.at(pid).type);
+            VtxConnMap1[pid]=nt1_org->listNeuron.at(pid).type;
+        }
+    }
+    connSet0.intersect(connSet1);
+    num[3]=connSet0.size();
+
+    //check all matches found
+    num[0]=num[1]=num[2]=0;
+    int maxcomp=0;
+    for(QSet<int>::iterator iter=connSet0.begin(); iter!=connSet0.end(); iter++){
+        maxcomp=MAX(maxcomp, *iter+1);
+    }
+    vector<int> record(maxcomp,-1);
+    for(QSet<int>::iterator iter=connSet0.begin(); iter!=connSet0.end(); iter++){
+        record[*iter]=0;
+    }
+
+    for(int i=0; i<pmatch0.size(); i++){
+        if((!VtxConnMap0.contains(pmatch0.at(i)))||(!VtxConnMap1.contains(pmatch1.at(i)))){
+            num[1]++;
+            continue;
+        }
+        if(VtxConnMap0[pmatch0.at(i)] != VtxConnMap1[pmatch1.at(i)]){
+            num[1]++;
+            continue;
+        }
+        record[VtxConnMap0[pmatch0.at(i)]]++;
+    }
+    for(int i=0; i<record.size(); i++){
+        if(record[i]==0){
+            num[2]++;
+        }
+        if(record[i]>0){
+            num[0]++;
         }
     }
 }

@@ -142,21 +142,63 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
             if(tmp>=0)
                 matchfunc.pmatchThr=tmp;
             else
-                cerr<<"error: wrong match distance threshold: "<<tmp<<"; use default value 100"<<endl;
+                cerr<<"error: wrong point match distance threshold: "<<tmp<<"; use default value 100"<<endl;
         }
         if(paras.size()>4){
             double tmp=atof(paras.at(4));
+            if(tmp>0)
+                matchfunc.cmatchThr=tmp;
+            else
+                cerr<<"error: wrong triangle match distance threshold: "<<tmp<<"; use default value 100"<<endl;
+        }
+        if(paras.size()>5){
+            int tmp=atoi(paras.at(5));
+            if(tmp>0)
+                matchfunc.maxClique3Num=tmp;
+            else
+                cerr<<"error: wrong max number of triangles: "<<tmp<<"; use default value 10000"<<endl;
+        }
+        if(paras.size()>6){
+            double tmp=atof(paras.at(6));
             if(tmp>0)
                 matchfunc.spanCand=tmp;
             else
                 cerr<<"error: wrong border tips seraching span: "<<tmp<<"; use default value 20"<<endl;
         }
-        if(paras.size()>5){
-            double tmp=atof(paras.at(5));
+        if(paras.size()>7){
+            double tmp=atof(paras.at(7));
             if(tmp>0)
-                matchfunc.cmatchThr=tmp;
+                matchfunc.gapThr=tmp;
             else
-                cerr<<"error: wrong 3-clique match distance threshold: "<<tmp<<"; use default value 100"<<endl;
+                cerr<<"error: wrong border tips gap filter: "<<tmp<<"; use default value 0, no tips will be filtered by gap"<<endl;
+        }
+        if(paras.size()>8){
+            double tmp=atof(paras.at(8));
+            if(tmp>0)
+                matchfunc.segmentThr=tmp;
+            else
+                cerr<<"error: wrong border tips segment filter: "<<tmp<<"; use default value 0, no tips will be filtered by segment"<<endl;
+        }
+        if(paras.size()>9){
+            int tmp=atoi(paras.at(9));
+            if(tmp>0)
+                matchfunc.spineLengthThr=tmp;
+            else
+                cerr<<"error: wrong border tips spine size filter: "<<tmp<<"; use default value 0, no tips will be considered as spine"<<endl;
+        }
+        if(paras.size()>10){
+            double tmp=atof(paras.at(10));
+            if(tmp>=0 & tmp<=180)
+                matchfunc.spineAngThr=cos(tmp/180*M_PI);
+            else
+                cerr<<"error: wrong border tips spine angle filter: "<<tmp<<"; use default value 180, no spine will be filtered by angle"<<endl;
+        }
+        if(paras.size()>11){
+            double tmp=atof(paras.at(11));
+            if(tmp>=0)
+                matchfunc.spineRadiusThr=tmp;
+            else
+                cerr<<"error: wrong border tips spine radius filter: "<<tmp<<"; use default value 0, no tips will be considered as spine"<<endl;
         }
 
         //do match
@@ -190,7 +232,9 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
 void neuron_stitch::printHelp()
 {
     cout<<"\nUsage: v3d -x neuron_stitch -f neuron_stitch_auto -i <input_first.swc> <input_second.swc> -o <output_base> "
-          <<"-p <stack dir=2> <stack rescale=1> <angle thr=60> <distance thr=100> <candidate serch span=20> <3-clique thr=100>"<<endl;
+       <<"-p <stack dir=2(x/y/z=0/1/2)> <stack rescale=1> <match angle thr=60> <match distance thr=100> <triangle match thr=100> <max number of triangles=10000> "<<
+            "<border tips serch span=20> <border tips gap filter=0> <border tips segment filter=0> <border tips spine filter_size=0> "<<
+            "<border tips spine filter_angle=180> <border tips spine filter_radius=0>"<<endl;
     cout<<"\n";
 }
 

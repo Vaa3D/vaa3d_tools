@@ -93,6 +93,12 @@ public:
     V3DLONG search_tip0(V3DLONG point0); //find the id of closest tips point, if there is none, return -1
     V3DLONG search_tip1(V3DLONG point1); //find the id of closest tips point, if there is none, return -1
 
+    //for testing purpose
+    //for testing data, the border tips with the same type should be matched
+    void examineMatchingResult(int num[9]); //num[0]: TP; num[1]:FP; num[2]:FN; num[3]:total number of border tips should be matched
+                                            //num[4]/num[5]: border tips number of nt0/1; num[6]/num[7]: triangle number of nt0/1
+                                            //num[8]: matched triangle numbers
+
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
     void initNeuronAndCandidate(NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType, QList<int>& cand, QList<XYZ>& candcoord, QList<XYZ>& canddir, QList<XYZ>& canddircoord, QList<int>& components, QList<int>& candcomponents, QList<int>& pList, int orientation); //this one will not consider small segments, small gaps
@@ -208,6 +214,9 @@ public slots:
     void outputchange(QString text);
     void spineCheck(int c);
 
+    //For testing performance purpose, the border tips with the same type should be matched
+    void examinRun();
+
 private:
 //    V3DPluginCallback2 * callback;
 //    V3dR_MainWindow* v3dwin;
@@ -227,9 +236,9 @@ public:
     QLabel *label_load0, *label_load1, *label_output;
     QLineEdit *edit_load0, *edit_load1, *edit_output;
     QComboBox *cb_dir;
-    QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr, *spin_gapthr;
     QSpinBox *spin_maxcnum;
-    QPushButton *btn_quit, *btn_run;
+    QPushButton *btn_quit, *btn_run, *btn_test;
     QCheckBox *check_stitch;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;

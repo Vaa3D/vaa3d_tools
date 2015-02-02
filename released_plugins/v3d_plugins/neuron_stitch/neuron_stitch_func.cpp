@@ -1297,7 +1297,6 @@ void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& 
 {
     cqlist.clear();
     minDis=minDis*minDis;
-    double maxDis=1e16;
     cqlist.clear();
     for(int i=0; i<coord.size(); i++){
         if(nt.listNeuron.at(list.at(i)).type==16 || nt.listNeuron.at(list.at(i)).type==17)
@@ -1408,7 +1407,6 @@ void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& 
 void getTopCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir, QVector<Clique3> & cqlist, double minDis,int stackDir, int maxCliqueNum)
 {
     cqlist.clear();
-    double maxDis=1e16;
     minDis=minDis*minDis;
     multimap<double, Clique3, std::greater<double> > cliqueMap;
     for(int i=0; i<coord.size(); i++){
