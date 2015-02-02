@@ -47,7 +47,7 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 #SOURCES +=  phc_image_lib.c
-SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/lib/genelib/src/image_lib.c
+#SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/lib/genelib/src/image_lib.c
 
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_lib.c

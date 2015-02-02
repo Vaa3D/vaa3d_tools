@@ -114,6 +114,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                 }
 
                 QList<NeuronSWC> list = nt.listNeuron;
+
                 for (int i=0;i<list.size();i++)
                 {
                     if (childs[i].size()==0)
