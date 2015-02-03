@@ -369,18 +369,18 @@ void tcUpsample(V3DPluginCallback2 &callback, QWidget *parent)
         V3DLONG Xs_new = (vim.lut[ii].start_pos[0] - vim.min_vim[0])*x_rez + vim.min_vim[0];
         V3DLONG Xe_new = (vim.lut[ii].end_pos[0] - vim.min_vim[0])*x_rez + 1 + vim.min_vim[0];
 
-        V3DLONG Ys_new = (vim.lut[ii].start_pos[1] - vim.min_vim[0])*y_rez + vim.min_vim[1];
-        V3DLONG Ye_new = (vim.lut[ii].end_pos[1] - vim.min_vim[0])*y_rez + 1 + vim.min_vim[1];
+        V3DLONG Ys_new = (vim.lut[ii].start_pos[1] - vim.min_vim[1])*y_rez + vim.min_vim[1];
+        V3DLONG Ye_new = (vim.lut[ii].end_pos[1] - vim.min_vim[1])*y_rez + 1 + vim.min_vim[1];
 
-        V3DLONG Zs_new = (vim.lut[ii].start_pos[2] - vim.min_vim[0])*z_rez + vim.min_vim[2];
-        V3DLONG Ze_new = (vim.lut[ii].end_pos[2] - vim.min_vim[0])*z_rez + 1 + vim.min_vim[2];
+        V3DLONG Zs_new = (vim.lut[ii].start_pos[2] - vim.min_vim[2])*z_rez + vim.min_vim[2];
+        V3DLONG Ze_new = (vim.lut[ii].end_pos[2] - vim.min_vim[2])*z_rez + 1 + vim.min_vim[2];
 
 
         myfile.open (tcresampledfilename.toStdString().c_str(),ios::out | ios::app );
         QString outputilefull;
         outputilefull.append(QString("%1").arg(vim.lut[ii].fn_img.c_str()));
-        outputilefull.append(QString("   ( %1, %2, %3) ( %4, %5, %6)").arg(Xs_new).arg(Xe_new).arg(Ys_new)
-                             .arg(Ye_new).arg(Zs_new).arg(Ze_new));
+        outputilefull.append(QString("   ( %1, %2, %3) ( %4, %5, %6)").arg(Xs_new).arg(Ys_new).arg(Zs_new)
+                             .arg(Xe_new).arg(Ye_new).arg(Ze_new));
         myfile << outputilefull.toStdString();
         myfile << "\n";
         myfile.close();
