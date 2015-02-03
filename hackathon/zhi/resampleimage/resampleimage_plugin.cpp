@@ -8,12 +8,13 @@
 #include "resampleimage_plugin.h"
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
+#include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(resampleimage, resampleimage);
 
-void upsampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent);
-bool upsampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+void resampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent,bool option);
+bool resampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output,bool option);
 
 
 QStringList resampleimage::menulist() const
@@ -36,11 +37,13 @@ void resampleimage::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
     if (menu_name == tr("up_sample"))
 	{
-        upsampleImage_domenu(callback,parent);
+        bool option = 1;
+        resampleImage_domenu(callback,parent,option);
 	}
     else if (menu_name == tr("down_sample"))
 	{
-		v3d_msg("To be implemented.");
+        bool option = 0;
+        resampleImage_domenu(callback,parent,option);
     }
 	else
 	{
@@ -53,19 +56,21 @@ bool resampleimage::dofunc(const QString & func_name, const V3DPluginArgList & i
 {
     if (func_name == tr("up_sample"))
 	{
-        upsampleImage_dofunc(callback, input, output);
+        bool option = 1;
+        resampleImage_dofunc(callback, input, output,option);
 	}
     else if (func_name == tr("down_sample"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        bool option = 0;
+        resampleImage_dofunc(callback, input, output,option);
+    }
 	else if (func_name == tr("help"))
 	{
-        cout<<"Usage : v3d -x image_resample -f up_sample -i <inimg_file> -o <outimg_file> -p <x_factor> <y_factor> <z_factor> <ch>"<<endl;
+        cout<<"Usage : v3d -x image_resample -f up_sample/down_smaple -i <inimg_file> -o <outimg_file> -p <x_factor> <y_factor> <z_factor> <ch>"<<endl;
         cout<<endl;
-        cout<<"x_factor          upsample factor (>=1) in x direction, default 1"<<endl;
-        cout<<"y_factor          upsample factor (>=1) in y direction, default 1"<<endl;
-        cout<<"z_factor          upsample factor (>=1) in z direction, default 1"<<endl;
+        cout<<"x_factor          resample factor (>=1) in x direction, default 1"<<endl;
+        cout<<"y_factor          resample factor (>=1) in y direction, default 1"<<endl;
+        cout<<"z_factor          resample factor (>=1) in z direction, default 1"<<endl;
         cout<<"ch                the input channel value, default 1 and start from 1, default 1"<<endl;
         cout<<endl;
         cout<<endl;
@@ -75,7 +80,7 @@ bool resampleimage::dofunc(const QString & func_name, const V3DPluginArgList & i
 	return true;
 }
 
-void upsampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+void resampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent, bool option)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -109,13 +114,13 @@ void upsampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent)
      double x_rez=1.0, y_rez=1.0, z_rez=1.0, c=1;
 
      x_rez = QInputDialog::getDouble(parent, "X factor ",
-                                   "Enter X upsample rate (>=1):",
+                                   "Enter X resample rate (>=1):",
                                    1.0, 1.0, 20.0, 1.0, &ok1);
 
      if(ok1)
      {
          y_rez = QInputDialog::getDouble(parent, "Y factor",
-                                       "Enter Y upsample rate (>=1):",
+                                       "Enter Y resample rate (>=1):",
                                        1.0, 1.0, 20.0, 1.0, &ok2);
      }
      else
@@ -124,7 +129,7 @@ void upsampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent)
      if(ok2)
      {
          z_rez = QInputDialog::getDouble(parent, "Z factor",
-                                       "Enter Z upsample rate (>=1)::",
+                                       "Enter Z resample rate (>=1)::",
                                        1.0, 1.0, 20.0, 1.0, &ok3);
      }
      else
@@ -154,29 +159,44 @@ void upsampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent)
      double dfactor[3];
      dfactor[0] = x_rez; dfactor[1] = y_rez;  dfactor[2] = z_rez;
 
-     V3DLONG pagesz_upsample = (V3DLONG)(ceil(x_rez*y_rez*z_rez*pagesz));
+     V3DLONG pagesz_resample = (V3DLONG)(ceil(x_rez*y_rez*z_rez*pagesz));
 
-     unsigned char * image_upsampled = 0;
-     try {image_upsampled = new unsigned char [pagesz_upsample];}
+     unsigned char * image_resampled = 0;
+     try {image_resampled = new unsigned char [pagesz_resample];}
      catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return;}
 
      V3DLONG out_sz[4];
-     out_sz[0] = (V3DLONG)(ceil(dfactor[0]*N));
-     out_sz[1] = (V3DLONG)(ceil(dfactor[1]*M));
-     out_sz[2] = (V3DLONG)(ceil(dfactor[2]*P));
-     out_sz[3] = 1;
-     upsample3dvol((unsigned char *)image_upsampled,(unsigned char *)data1d,out_sz,in_sz,dfactor);
+
+     if(option)
+     {
+         out_sz[0] = (V3DLONG)(ceil(dfactor[0]*N));
+         out_sz[1] = (V3DLONG)(ceil(dfactor[1]*M));
+         out_sz[2] = (V3DLONG)(ceil(dfactor[2]*P));
+         out_sz[3] = 1;
+         upsample3dvol((unsigned char *)image_resampled,(unsigned char *)data1d,out_sz,in_sz,dfactor);
+     }
+     else
+     {
+        out_sz[0] = (V3DLONG)(floor(double(N) / double(dfactor[0])));
+        out_sz[0] = (V3DLONG)(floor(double(M) / double(dfactor[1])));
+        out_sz[0] = (V3DLONG)(floor(double(P) / double(dfactor[2])));
+        out_sz[3] = 1;
+        downsample3dvol((unsigned char *&)image_resampled,(unsigned char *)data1d,out_sz,in_sz,dfactor,0);
+     }
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)image_upsampled, out_sz[0], out_sz[1], out_sz[2], 1, V3D_UINT8);
+     new4DImage->setData((unsigned char *)image_resampled, out_sz[0], out_sz[1], out_sz[2], 1, V3D_UINT8);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
-     callback.setImageName(newwin, "Upsampled image result");
+     if(option)
+        callback.setImageName(newwin, "Upsampled image result");
+     else
+        callback.setImageName(newwin, "Downsampled image result");
      callback.updateImageWindow(newwin);
      return;
 }
 
-bool upsampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+bool resampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, bool option)
 {
 
     cout<<"Welcome to upsample plugin"<<endl;
@@ -241,21 +261,32 @@ bool upsampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList &
     double dfactor[3];
     dfactor[0] = x_rez; dfactor[1] = y_rez;  dfactor[2] = z_rez;
 
-    V3DLONG pagesz_upsample = (V3DLONG)(ceil(x_rez*y_rez*z_rez*pagesz));
+    V3DLONG pagesz_resample = (V3DLONG)(ceil(x_rez*y_rez*z_rez*pagesz));
 
-    unsigned char * image_upsampled = 0;
-    try {image_upsampled = new unsigned char [pagesz_upsample];}
+    unsigned char * image_resampled = 0;
+    try {image_resampled = new unsigned char [pagesz_resample];}
     catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
 
     V3DLONG out_sz[4];
-    out_sz[0] = (V3DLONG)(ceil(dfactor[0]*N));
-    out_sz[1] = (V3DLONG)(ceil(dfactor[1]*M));
-    out_sz[2] = (V3DLONG)(ceil(dfactor[2]*P));
-    out_sz[3] = 1;
-    upsample3dvol((unsigned char *)image_upsampled,(unsigned char *)data1d_ch1,out_sz,in_sz,dfactor);
-    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)image_upsampled, out_sz, 1);
+    if(option)
+    {
+        out_sz[0] = (V3DLONG)(ceil(dfactor[0]*N));
+        out_sz[1] = (V3DLONG)(ceil(dfactor[1]*M));
+        out_sz[2] = (V3DLONG)(ceil(dfactor[2]*P));
+        out_sz[3] = 1;
+        upsample3dvol((unsigned char *)image_resampled,(unsigned char *)data1d_ch1,out_sz,in_sz,dfactor);
+    }
+    else
+    {
+        out_sz[0] = (V3DLONG)(floor(double(N) / double(dfactor[0])));
+        out_sz[0] = (V3DLONG)(floor(double(M) / double(dfactor[1])));
+        out_sz[0] = (V3DLONG)(floor(double(P) / double(dfactor[2])));
+        out_sz[3] = 1;
+        downsample3dvol((unsigned char *&)image_resampled,(unsigned char *)data1d_ch1,out_sz,in_sz,dfactor,0);
+    }
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)image_resampled, out_sz, 1);
     if(data1d_ch1) {delete []data1d_ch1; data1d_ch1 =0;}
-    if(image_upsampled) {delete []image_upsampled; image_upsampled =0;}
+    if(image_resampled) {delete []image_resampled; image_resampled =0;}
 
     return true;
 }
