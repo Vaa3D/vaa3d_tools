@@ -13,6 +13,19 @@ DEFINES += QT_NO_WARNING_OUTPUT
 #DEFINES += _USE_QT_DIALOGS
 #DEFINES += terafly_enable_debug_annotations
 
+# set optimization for g++/clang compilers
+win32{
+}
+else{
+    # remove possible other optimization flags
+    QMAKE_CXXFLAGS -= -O
+    QMAKE_CXXFLAGS -= -O1
+    QMAKE_CXXFLAGS -= -O2
+
+    # add the desired -O3 if not present
+    QMAKE_CXXFLAGS += -O3
+}
+
 #QMAKE_CXXFLAGS += -Wall
 #QMAKE_CXXFLAGS += -pedantic
 #QMAKE_CXXFLAGS += -Werror

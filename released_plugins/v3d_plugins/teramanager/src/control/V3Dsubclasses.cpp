@@ -121,7 +121,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
     if(strcmp(method, "WYSIWYG (5 markers)") == 0)
     {
         this->renderer->zoomview_wheel_event();
-        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: WYSIWYG (5 markers)", itm::ALL_COMPS, timer.elapsed()));
+        PLog::instance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: WYSIWYG (5 markers)", itm::ALL_COMPS, timer.elapsed()));
     }
     else if(strcmp(method, "Foreground (1 marker)") == 0)
     {
@@ -134,7 +134,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = centralPoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = centralPoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = centralPoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
-        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (1 marker)", itm::ALL_COMPS, timer.elapsed()));
+        PLog::instance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (1 marker)", itm::ALL_COMPS, timer.elapsed()));
         if(CViewer::getCurrent())
             CViewer::getCurrent()->invokedFromVaa3D(roi);
 
@@ -232,7 +232,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         roi->ye = thepoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
         roi->zs = thepoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
         roi->ze = thepoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
-        PLog::getInstance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (20 markers + mean-shift)", itm::ALL_COMPS, timer.elapsed()));
+        PLog::instance()->appendOperation(new ZoominRoiOperation( "Generated 3D ROI with method: Foreground (20 markers + mean-shift)", itm::ALL_COMPS, timer.elapsed()));
         if(CViewer::getCurrent())
             CViewer::getCurrent()->invokedFromVaa3D(roi);
     }

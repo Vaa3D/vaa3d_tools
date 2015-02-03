@@ -4,7 +4,6 @@
 #include <QDialog>
 #include "CPlugin.h"
 #include "COperation.h"
-#include "PMain.h"
 
 class teramanager::PLog : public QDialog
 {
@@ -45,17 +44,16 @@ class teramanager::PLog : public QDialog
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
-        * instantiated by calling static method "istance(...)"
+        * instantiated by calling static method "instance(...)"
         **********************************************************************************/
-        static PLog* instance(QWidget *parent)
+        static PLog* instance()
         {
             /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
 
             if (uniqueInstance == 0)
-                uniqueInstance = new PLog(parent);
+                uniqueInstance = new PLog(0);
             return uniqueInstance;
         }
-        static PLog* getInstance(){/**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__); return instance(PMain::getInstance());}
         static void uninstance()
         {
             if(uniqueInstance)
@@ -67,11 +65,32 @@ class teramanager::PLog : public QDialog
         PLog(QWidget *parent);
 
         void append(std::string text);
-        void appendOperation(itm::Operation* op);
+
+        /**********************************************************************************
+        * Called by algorithms running from different threads.
+        * Emits <sendAppend> signal
+        ***********************************************************************************/
+        void emitSendAppend(void* op)
+        {emit sendAppend(op);}
 
     signals:
 
+        /*********************************************************************************
+        * Carries op informations
+        **********************************************************************************/
+        void sendAppend(void* op);
+
     public slots:
+
+        /**********************************************************************************
+        * <sendAppend> event handler
+        ***********************************************************************************/
+        void appendOperation(itm::Operation* op);
+
+        /**********************************************************************************
+        * <sendAppend> event handler
+        ***********************************************************************************/
+        void appendOperationVoid(void* op){appendOperation((itm::Operation*)(op));}
 
         void reset();
 

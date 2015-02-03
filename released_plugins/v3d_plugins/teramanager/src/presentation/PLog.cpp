@@ -75,6 +75,9 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
 
     this->setMinimumWidth(500);
 
+    connect(this, SIGNAL(sendAppend(void*)), this, SLOT(appendOperation(void*)), Qt::QueuedConnection);
+
+
     reset();
 }
 

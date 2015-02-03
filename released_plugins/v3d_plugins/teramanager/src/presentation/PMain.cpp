@@ -1648,7 +1648,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
 
         //first updating IO time
         /**/itm::debug(itm::LEV3, "updating IO time", __itm__current__function__);
-        PLog::getInstance()->appendOperation(new ImportOperation("Volume imported and map loaded", itm::IO, elapsed_time));
+        PLog::instance()->appendOperation(new ImportOperation("Volume imported and map loaded", itm::IO, elapsed_time));
 
         //otherwise inserting volume's informations
         /**/itm::debug(itm::LEV3, "inserting volume's informations", __itm__current__function__);
@@ -1805,7 +1805,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         //updating GUI time
         /**/itm::debug(itm::LEV3, "updating GUI time", __itm__current__function__);
 
-        PLog::getInstance()->appendOperation(new ImportOperation( "TeraFly's GUI initialized", itm::GPU, timerGUI.elapsed()));
+        PLog::instance()->appendOperation(new ImportOperation( "TeraFly's GUI initialized", itm::GPU, timerGUI.elapsed()));
 
         //starting 3D exploration
         /**/itm::debug(itm::LEV3, "instantiating CViewer", __itm__current__function__);
@@ -1825,7 +1825,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         QPixmapToolTip::instance()->installEventFilter(this);
 
         //updating actual time
-        PLog::getInstance()->appendOperation(new ImportOperation( "TeraFly 3D exploration started", itm::ALL_COMPS, CImport::instance()->timerIO.elapsed()));
+        PLog::instance()->appendOperation(new ImportOperation( "TeraFly 3D exploration started", itm::ALL_COMPS, CImport::instance()->timerIO.elapsed()));
 
         //activate annotation toolbar
         showToolbarButton->setChecked(true);
@@ -2278,7 +2278,7 @@ void PMain::showLogTriggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    PLog::instance(this)->show();
+    PLog::instance()->show();
 }
 
 /**********************************************************************************

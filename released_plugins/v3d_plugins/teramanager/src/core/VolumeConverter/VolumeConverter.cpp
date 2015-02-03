@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
 * 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
 */
 
@@ -33,6 +34,12 @@
 #include "../imagemanager/ProgressBar.h"
 #include <math.h>
 #include <string>
+
+#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+#include <QElapsedTimer>
+#include "PLog.h"
+#include "COperation.h"
+#endif
 
 /*******************************************************************************************************
 * Volume formats supported:
@@ -716,6 +723,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		//	throw MyException("interruption for test");
 		//}
 
+        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_START(ConverterLoadBlockOperation)
+        #endif
+
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
             rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
@@ -734,6 +746,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			}
 		}
 		// WARNING: should check that buffer has been actually allocated
+
+        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_STOP(ConverterLoadBlockOperation, itm::ALL_COMPS, teramanager::strprintf("converter: loaded image block x(%d-%d), y(%d-%d), z(%d-%d)",H0, H1, V0, V1, ((uint32)(z-D0)),((uint32)(z-D0+z_max_res-1))))
+        #endif
 
 		//updating the progress bar
 		if(show_progress_bar)
@@ -900,6 +917,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 							}
 						}
 
+                        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+                        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+                        TERAFLY_TIME_START(ConverterWriteBlockOperation)
+                        #endif
+
 						//saving HERE
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,i)); buffer_z++)
 						{
@@ -923,6 +945,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 								img_path << abs_pos_z.str(); 
 								slice_ind = (int)(n_slices_pred - slice_start[i]) + buffer_z;
 							}
+
+
 
 							if ( internal_rep == REAL_INTERNAL_REP )
 								VirtualVolume::saveImage_to_Vaa3DRaw(
@@ -956,8 +980,13 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
 								}
-					}
+                        }
 						start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
+
+                        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+                        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+                        TERAFLY_TIME_STOP(ConverterWriteBlockOperation, itm::ALL_COMPS, teramanager::strprintf("converter: written multiresolution image block x(%d-%d), y(%d-%d), z(%d-%d)",start_width, end_width, start_height, end_height, ((uint32)(z-D0)),((uint32)(z-D0+z_max_res-1))))
+                        #endif
 					}
 					start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 				}
@@ -1200,7 +1229,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     block_height = (block_height == -1 ? (int)height : block_height);
     block_width  = (block_width  == -1 ? (int)width  : block_width);
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
-    if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM || block_depth < S_MIN_SLICE_DIM)
+    if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM /* 2014-11-10. Giulio. @REMOVED (|| block_depth < S_MIN_SLICE_DIM) */)
     { 
         char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", S_MIN_SLICE_DIM);
@@ -1727,7 +1756,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     block_height = (block_height == -1 ? (int)height : block_height);
     block_width  = (block_width  == -1 ? (int)width  : block_width);
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
-    if(block_height < TMITREE_MIN_BLOCK_DIM || block_width < TMITREE_MIN_BLOCK_DIM || block_depth < TMITREE_MIN_BLOCK_DIM)
+    if(block_height < TMITREE_MIN_BLOCK_DIM || block_width < TMITREE_MIN_BLOCK_DIM /* 2014-11-10. Giulio. @REMOVED (|| block_depth < TMITREE_MIN_BLOCK_DIM9 */)
     { 
         char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", TMITREE_MIN_BLOCK_DIM);

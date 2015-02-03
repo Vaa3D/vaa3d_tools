@@ -29,6 +29,7 @@
 #include "PConverter.h"
 #include "PMain.h"
 #include "ProgressBar.h"
+#include "PLog.h"
 #include "../control/CConverter.h"
 #include "../control/CSettings.h"
 
@@ -401,6 +402,7 @@ void PConverter::startButtonClicked()
             progressBar->setMinimum(0);
             progressBar->setMaximum(100);
         }
+        PLog::instance()->show();
         CConverter::instance()->start();
     }
     catch(RuntimeException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}

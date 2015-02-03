@@ -83,6 +83,83 @@ namespace teramanager
             static int newGroup(){return gid++;}
             AnnotationOperation(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
     };
+
+
+
+    class ConverterLoadBlockOperation : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_CONV_LOAD_BLOCK";}
+            static int newGroup(){return gid++;}
+            ConverterLoadBlockOperation(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class ConverterWriteBlockOperation : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_CONV_WRITE_BLOCK";}
+            static int newGroup(){return gid++;}
+            ConverterWriteBlockOperation(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class TiffLoadMetadata : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_TIFF_LOAD_MDATA";}
+            static int newGroup(){return gid++;}
+            TiffLoadMetadata(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class TiffLoadData : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_TIFF_LOAD_DATA";}
+            static int newGroup(){return gid++;}
+            TiffLoadData(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class TiffInitData : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_TIFF_INIT_DATA";}
+            static int newGroup(){return gid++;}
+            TiffInitData(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
+
+    class TiffAppendData : public Operation
+    {
+        public:
+
+            static int gid;
+            virtual std::string name(){return "OP_TIFF_APPEND_DATA";}
+            static int newGroup(){return gid++;}
+            TiffAppendData(std::string m, COMPONENT c, int ms) : Operation(m, c, ms, gid){}
+    };
 }
+
+//#define TERAFLY_TIME_START(classname)   \
+//QElapsedTimer timer##classname;         \
+//timer##classname.start();               \
+//teramanager::classname::newGroup();
+
+//#define TERAFLY_TIME_RESTART(classname) \
+//timer##classname.restart();
+
+//#define TERAFLY_TIME_STOP(classname, component, message)    \
+//teramanager::PLog::getInstance()->emitSendAppend(new teramanager::classname(message, component, timer##classname.elapsed()));
+
+#define TERAFLY_TIME_START(classname)
+#define TERAFLY_TIME_RESTART(classname)
+#define TERAFLY_TIME_STOP(classname, component, message)
 
 #endif // COPERATION_H

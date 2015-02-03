@@ -88,9 +88,9 @@ void CViewer::show()
             QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
         if(prev)
-            PLog::getInstance()->appendOperation(new NewViewerOperation(QString("Opened view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
+            PLog::instance()->appendOperation(new NewViewerOperation(QString("Opened view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
         else
-            PLog::getInstance()->appendOperation(new ImportOperation( "Opened first viewer", itm::GPU, timer.elapsed()));
+            PLog::instance()->appendOperation(new ImportOperation( "Opened first viewer", itm::GPU, timer.elapsed()));
 
         // install the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -155,7 +155,7 @@ void CViewer::show()
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
-            PLog::getInstance()->appendOperation(new NewViewerOperation(QString("Syncronized views \"").append(title.c_str()).append("\" and \"").append(prev->title.c_str()).append("\"").toStdString(), itm::GPU, timer.elapsed()));
+            PLog::instance()->appendOperation(new NewViewerOperation(QString("Syncronized views \"").append(title.c_str()).append("\" and \"").append(prev->title.c_str()).append("\"").toStdString(), itm::GPU, timer.elapsed()));
 
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
@@ -731,7 +731,7 @@ void CViewer::receiveData(
         try
         {
             //first updating IO time
-            PLog::getInstance()->appendOperation(new NewViewerOperation(op_dsc.toStdString(), itm::IO, elapsed_time));
+            PLog::instance()->appendOperation(new NewViewerOperation(op_dsc.toStdString(), itm::IO, elapsed_time));
 
             //copying loaded data
             QElapsedTimer timer;
@@ -753,7 +753,7 @@ void CViewer::receiveData(
             sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
                               step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(),
                               cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiT0(), cVolume->getVoiT1(), cVolume->getVoiResIndex());
-            PLog::getInstance()->appendOperation(new NewViewerOperation(message, itm::CPU, elapsedTime));
+            PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, elapsedTime));
 
             //releasing memory if streaming is not active
             if(cVolume->getStreamingSteps() == 1)
@@ -771,7 +771,7 @@ void CViewer::receiveData(
                     cVolume->getVoiV0(), cVolume->getVoiV1(),
                     cVolume->getVoiD0(), cVolume->getVoiD1(),
                     cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
-            PLog::getInstance()->appendOperation(new NewViewerOperation(message, itm::GPU, timer.elapsed()));
+            PLog::instance()->appendOperation(new NewViewerOperation(message, itm::GPU, timer.elapsed()));
 //            /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
 //            /**/ updateGraphicsInProgress.unlock();
 //            /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
@@ -817,7 +817,7 @@ void CViewer::receiveData(
                 {
                     /**/itm::debug(itm::LEV3, strprintf("title = %s: saving elapsed time to log", titleShort.c_str()).c_str(), __itm__current__function__);
                     sprintf(message, "Successfully generated view %s", title.c_str());
-                    PLog::getInstance()->appendOperation(new NewViewerOperation(message, itm::ALL_COMPS, prev->newViewerTimer.elapsed()));
+                    PLog::instance()->appendOperation(new NewViewerOperation(message, itm::ALL_COMPS, prev->newViewerTimer.elapsed()));
                 }
 
                 // refresh annotation toolbar
@@ -1057,7 +1057,7 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
                                "X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d]",
                 rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str(),
                 voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
-        PLog::getInstance()->appendOperation(new NewViewerOperation(message, itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, timer.elapsed()));
 
         //creating a new window
         this->next = new CViewer(V3D_env, resolution, lowresData,
@@ -1418,7 +1418,7 @@ void CViewer::storeAnnotations() throw (RuntimeException)
             else
                 ++it;
         }
-        PLog::getInstance()->appendOperation(new AnnotationOperation(QString("store annotations: exclude hidden landmarks, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: exclude hidden landmarks, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
 
         //converting local coordinates into global coordinates
         timer.restart();
@@ -1428,12 +1428,12 @@ void CViewer::storeAnnotations() throw (RuntimeException)
             markers[i].y = getGlobalVCoord(markers[i].y, -1, false, false, __itm__current__function__);
             markers[i].z = getGlobalDCoord(markers[i].z, -1, false, false, __itm__current__function__);
         }
-        PLog::getInstance()->appendOperation(new AnnotationOperation(QString("store annotations: convert landmark coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: convert landmark coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
 
         //storing markers
         timer.restart();
         CAnnotations::getInstance()->addLandmarks(x_range, y_range, z_range, markers);
-        PLog::getInstance()->appendOperation(new AnnotationOperation(QString("store annotations: store landmarks in the octree, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: store landmarks in the octree, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
     }
 
     /**********************************************************************************
@@ -1455,13 +1455,13 @@ void CViewer::storeAnnotations() throw (RuntimeException)
             nt.listNeuron[i].z = getGlobalDCoord(nt.listNeuron[i].z, -1, false, false, __itm__current__function__);
             /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
         }
-        PLog::getInstance()->appendOperation(new AnnotationOperation(QString("store annotations: convert curve nodes coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: convert curve nodes coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
         /* @debug */ //printf("\n");
 
         //storing curves
         timer.restart();
         CAnnotations::getInstance()->addCurves(x_range, y_range, z_range, nt);
-        PLog::getInstance()->appendOperation(new AnnotationOperation(QString("store annotations: store curves in the octree, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: store curves in the octree, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
     }
 
 }
@@ -1675,7 +1675,7 @@ void CViewer::loadAnnotations() throw (RuntimeException)
         vaa3dCurves.listNeuron[i].z = getLocalDCoord(vaa3dCurves.listNeuron[i].z);
         /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", vaa3dCurves.listNeuron[i].x, vaa3dCurves.listNeuron[i].y, vaa3dCurves.listNeuron[i].z);
     }
-    PLog::getInstance()->appendOperation(new AnnotationOperation(QString("load annotations: convert coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+    PLog::instance()->appendOperation(new AnnotationOperation(QString("load annotations: convert coordinates, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
     /* @debug */ //printf("\n\n");
 
 
@@ -1700,7 +1700,7 @@ void CViewer::loadAnnotations() throw (RuntimeException)
     //update visible markers
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
-    PLog::getInstance()->appendOperation(new AnnotationOperation(QString("load annotations: push objects into view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
+    PLog::instance()->appendOperation(new AnnotationOperation(QString("load annotations: push objects into view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
 }
 
 /**********************************************************************************
@@ -1895,7 +1895,7 @@ void CViewer::restoreViewerFrom(CViewer* source) throw (RuntimeException)
         //current windows now gets ready to user input
         isReady = true;
     }
-    PLog::getInstance()->appendOperation(new RestoreViewerOperation(strprintf("Restored viewer %d from viewer %d", ID, source->ID), itm::ALL_COMPS, timer.elapsed()));
+    PLog::instance()->appendOperation(new RestoreViewerOperation(strprintf("Restored viewer %d from viewer %d", ID, source->ID), itm::ALL_COMPS, timer.elapsed()));
 
 }
 
