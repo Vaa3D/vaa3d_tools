@@ -9,12 +9,15 @@
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
 #include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(resampleimage, resampleimage);
 
 void resampleImage_domenu(V3DPluginCallback2 &callback, QWidget *parent,bool option);
 bool resampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output,bool option);
+void tcUpsample(V3DPluginCallback2 &callback, QWidget *parent);
 
 
 QStringList resampleimage::menulist() const
@@ -22,6 +25,7 @@ QStringList resampleimage::menulist() const
 	return QStringList() 
         <<tr("up_sample")
         <<tr("down_sample")
+        <<tr("tc_upsample")
 		<<tr("about");
 }
 
@@ -44,6 +48,10 @@ void resampleimage::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	{
         bool option = 0;
         resampleImage_domenu(callback,parent,option);
+    }
+    else if (menu_name == tr("tc_upsample"))
+    {
+        tcUpsample(callback,parent);
     }
 	else
 	{
@@ -206,9 +214,9 @@ bool resampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList &
     {
         vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
         cout<<paras.size()<<endl;
-        if(paras.size() >= 1) x_rez = atoi(paras.at(0));
-        if(paras.size() >= 2) y_rez = atoi(paras.at(1));
-        if(paras.size() >= 3) z_rez = atoi(paras.at(2));
+        if(paras.size() >= 1) x_rez = atof(paras.at(0));
+        if(paras.size() >= 2) y_rez = atof(paras.at(1));
+        if(paras.size() >= 3) z_rez = atof(paras.at(2));
         if(paras.size() >= 4) ch = atoi(paras.at(3));
     }
 
@@ -289,4 +297,98 @@ bool resampleImage_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList &
     if(image_resampled) {delete []image_resampled; image_resampled =0;}
 
     return true;
+}
+
+void tcUpsample(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString tcfilename;
+    tcfilename = QFileDialog::getOpenFileName(parent, QObject::tr("Open TC File"),
+                                              "",
+                                              QObject::tr("Supported file (*.tc *.TC)"
+                                                          ));
+    if(tcfilename.isEmpty())
+        return;
+
+
+    QString tcresampledfilename = tcfilename + "_resampled.tc";
+    Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+    if( !vim.y_load(tcfilename.toStdString()) )
+    {
+        printf("Wrong stitching configuration file to be load!\n");
+        return;
+    }
+
+    //input
+    bool ok1, ok2, ok3;
+    double x_rez=1, y_rez=1, z_rez=1;
+
+    x_rez = QInputDialog::getDouble(parent, "X factor ",
+                                  "Enter X upsample rate (>=1):",
+                                  1, 1, 20, 1, &ok1);
+
+    if(ok1)
+    {
+        y_rez = QInputDialog::getDouble(parent, "Y factor",
+                                      "Enter Y upsample rate (>=1):",
+                                      1, 1, 20, 1, &ok2);
+    }
+    else
+        return;
+
+    if(ok2)
+    {
+        z_rez = QInputDialog::getDouble(parent, "Z factor",
+                                      "Enter Z upsample rate (>=1)::",
+                                      1, 1, 20, 1, &ok3);
+    }
+    else
+        return;
+
+    ofstream myfile;
+    myfile.open (tcresampledfilename.toStdString().c_str(),ios::out | ios::app );
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << vim.number_tiles << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << vim.sz[0]*x_rez << " " << vim.sz[1]*y_rez << " " << vim.sz[2]*z_rez << " " << vim.sz[3] << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << vim.min_vim[0] << " " << vim.min_vim[1] << " " << vim.min_vim[2];
+    myfile << "\n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+    myfile.close();
+
+
+    for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+    {
+        // vim.lut[ii].start_pos[0];
+        V3DLONG Xs_new = (vim.lut[ii].start_pos[0] - vim.min_vim[0])*x_rez + vim.min_vim[0];
+        V3DLONG Xe_new = (vim.lut[ii].end_pos[0] - vim.min_vim[0])*x_rez + 1 + vim.min_vim[0];
+
+        V3DLONG Ys_new = (vim.lut[ii].start_pos[1] - vim.min_vim[0])*y_rez + vim.min_vim[1];
+        V3DLONG Ye_new = (vim.lut[ii].end_pos[1] - vim.min_vim[0])*y_rez + 1 + vim.min_vim[1];
+
+        V3DLONG Zs_new = (vim.lut[ii].start_pos[2] - vim.min_vim[0])*z_rez + vim.min_vim[2];
+        V3DLONG Ze_new = (vim.lut[ii].end_pos[2] - vim.min_vim[0])*z_rez + 1 + vim.min_vim[2];
+
+
+        myfile.open (tcresampledfilename.toStdString().c_str(),ios::out | ios::app );
+        QString outputilefull;
+        outputilefull.append(QString("%1").arg(vim.lut[ii].fn_img.c_str()));
+        outputilefull.append(QString("   ( %1, %2, %3) ( %4, %5, %6)").arg(Xs_new).arg(Xe_new).arg(Ys_new)
+                             .arg(Ye_new).arg(Zs_new).arg(Ze_new));
+        myfile << outputilefull.toStdString();
+        myfile << "\n";
+        myfile.close();
+    }
+
+    myfile.open (tcresampledfilename.toStdString().c_str(),ios::out | ios::app );
+    myfile << "\n# MST LUT\n";
+    myfile.close();
+
+    return;
 }

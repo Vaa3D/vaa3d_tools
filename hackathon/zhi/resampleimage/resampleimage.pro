@@ -10,6 +10,8 @@ INCLUDEPATH += $$VAA3DPATH/common_lib/include
 HEADERS	+= resampleimage_plugin.h
 HEADERS	+= ../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h
 HEADERS	+= ../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h
+HEADERS	+= ../../../released_plugins/v3d_plugins/istitch/y_imglib.h
+
 
 SOURCES	+= resampleimage_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
