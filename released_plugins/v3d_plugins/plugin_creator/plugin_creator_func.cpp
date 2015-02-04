@@ -148,3 +148,61 @@ int create_demo2(V3DPluginCallback2 &callback, QWidget *parent)
 														"> make\n</pre>")
 			                                         .arg(save_path.c_str()));
 }
+
+int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    GuidingDialog dialog(parent);
+
+    if (dialog.exec()!=QDialog::Accepted) return -1;
+    dialog.update();
+
+    PluginTemplate pt;
+    pt.PLUGIN_NAME = dialog.plugin_name;
+    pt.PLUGIN_CLASS = dialog.plugin_class;
+    pt.WINDOW_TITLE = dialog.win_title;
+    pt.PLUGIN_DESCRIPTION = dialog.plugin_desp;
+    pt.PLUGIN_DATE = dialog.plugin_date;
+    pt.PLUGIN_AUTHOR = dialog.plugin_author;
+    pt.VAA3D_PATH = dialog.vaa3d_path;
+    STRING2VECTSTRING(pt.MENUS, dialog.menulst);
+    STRING2VECTSTRING(pt.FUNCS, dialog.funclst);
+    if(dialog.funclst.find("help") == string::npos) pt.FUNCS.push_back("help");
+    pt.DOFUNC = true;
+
+    cout<<"menus.size() = "<<pt.MENUS.size()<<endl;
+    cout<<"funcs.size() = "<<pt.FUNCS.size()<<endl;
+
+    string save_folder = dialog.save_folder;
+    if(save_folder[0] == '~') {
+        save_folder.erase(0,1);
+        save_folder = QDir::homePath().toStdString() + save_folder;
+    }
+    else if (save_folder[1] == ':') //for windows. added by PHC, 20130905
+    {
+        //do nothing
+    }
+    else if (save_folder[0] != '/' && save_folder[0] != '.')
+        save_folder = "./" + save_folder;
+
+    pt.PLUGIN_HEADER = pt.PLUGIN_NAME + "_plugin.h";
+    pt.PLUGIN_CPP =  pt.PLUGIN_NAME + "_plugin.cpp";
+    pt.FUNC_HEADER = pt.PLUGIN_NAME + "_func.h";
+    pt.FUNC_CPP =  pt.PLUGIN_NAME + "_func.cpp";
+    pt.PRO_FILE =  pt.PLUGIN_NAME + ".pro";
+
+    QDir dir(save_folder.c_str());
+    if(!dir.exists()){QMessageBox::warning(0, QObject::tr("Error"), QObject::tr("Un existing foler : %1").arg(save_folder.c_str())); return 0;}
+    else
+    {
+        v3d_msg(QString("Files:\n \t%1\n \t%2\n \t%3\n have been saved to directory: [%4]. \n\nYou can go to that folder now and run the following command to build the plugin (assuming you have Qt installed and gcc/make on your computer Mac/Linux/Windows): \n\n>qmake\n>make (or change to nmake -f Makefile.Release for instance for Windows)\n").arg(pt.PLUGIN_HEADER.c_str()).arg(pt.PLUGIN_CPP.c_str()).arg(pt.PRO_FILE.c_str()).arg(save_folder.c_str()));
+    }
+    QString cur_path = QDir::current().dirName();
+    cout<<"current path : "<<QDir::current().dirName().toStdString()<<endl;
+    QDir::setCurrent(save_folder.c_str());
+    cout<<"current path : "<<QDir::current().dirName().toStdString()<<endl;
+    create_plugin_neuronrec_all(pt);
+    QDir::setCurrent(cur_path);
+    cout<<"current path : "<<QDir::current().dirName().toStdString()<<endl;
+
+    return 1;
+}

@@ -15,6 +15,7 @@ QStringList PluginCreatorPlugin::menulist() const
 {
 	return QStringList()
 		<<tr("create plugin")
+        <<tr("create plugin for neuron reconstruction")
 		<<tr("produce simplest plugin")
 		<<tr("domenu usage demo")
 		<<tr("load image and swc demo")
@@ -27,6 +28,10 @@ void PluginCreatorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	{
 		create_plugin(callback,parent);
 	}
+    else if(menu_name == tr("create plugin for neuron reconstruction"))
+    {
+        create_plugin_neuronrec(callback,parent);
+    }
 	else if(menu_name == tr("produce simplest plugin"))
 	{
 		QString dir = QFileDialog::getExistingDirectory(0, tr("Save to directory"),

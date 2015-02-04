@@ -9,6 +9,7 @@
 #include <v3d_interface.h>
 
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent);
+int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent);
 int create_demo1(V3DPluginCallback2 &callback, QWidget *parent);
 int create_demo2(V3DPluginCallback2 &callback, QWidget *parent);
 
