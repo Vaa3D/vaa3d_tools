@@ -6,6 +6,9 @@ VAA3DPATH =  ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH  += $$VAA3DPATH/common_lib/include
 
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+}
 
 HEADERS	+= neurontracing_region_neuron2_plugin.h
 
