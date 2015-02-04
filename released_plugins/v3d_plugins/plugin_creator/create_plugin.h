@@ -95,7 +95,7 @@ void create_plugin_neuronrec_pro(PluginTemplate & pt)
     ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff"<<endl;
     ofs<<"}"<<endl;
     ofs<<"unix:!macx{"<<endl;
-    ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_maincommon_lib/lib -ltiff"<<endl;
+    ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_main/common_lib/lib -ltiff"<<endl;
     ofs<<"}"<<endl;
 
     ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
