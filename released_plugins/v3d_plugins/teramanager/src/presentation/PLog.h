@@ -46,12 +46,12 @@ class teramanager::PLog : public QDialog
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "instance(...)"
         **********************************************************************************/
-        static PLog* instance()
+        static PLog* instance(QWidget* parent=0)
         {
             /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
 
             if (uniqueInstance == 0)
-                uniqueInstance = new PLog(0);
+                uniqueInstance = new PLog(parent);
             return uniqueInstance;
         }
         static void uninstance()
@@ -64,6 +64,10 @@ class teramanager::PLog : public QDialog
         }
         PLog(QWidget *parent);
 
+        /**********************************************************************************
+        * <sendAppend> event handler
+        ***********************************************************************************/
+        void appendOperation(itm::Operation* op, bool update_time_comps = true);
         void append(std::string text);
 
         /**********************************************************************************
@@ -85,12 +89,7 @@ class teramanager::PLog : public QDialog
         /**********************************************************************************
         * <sendAppend> event handler
         ***********************************************************************************/
-        void appendOperation(itm::Operation* op);
-
-        /**********************************************************************************
-        * <sendAppend> event handler
-        ***********************************************************************************/
-        void appendOperationVoid(void* op){appendOperation((itm::Operation*)(op));}
+        void appendOperationVoid(void* op){appendOperation((itm::Operation*)(op), false);}
 
         void reset();
 

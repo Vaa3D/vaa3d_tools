@@ -64,8 +64,6 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     operationInProgress = false;
 
     //main widgets
-    QFont tinyFont = QApplication::font();
-    tinyFont.setPointSize(9);
     helpBox = new QHelpBox(this);
     helpBox->setFixedHeight(60);
     helpBox->setIconSize(35, 35);
@@ -314,6 +312,9 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setFocusPolicy(Qt::StrongFocus);
+
+    // instance PLog
+    PLog::instance(this);
 
     /**/itm::debug(itm::LEV1, "object successfully created", __itm__current__function__);
 }

@@ -46,6 +46,7 @@
 #include "v3dr_mainwindow.h"
 #include <typeinfo>
 #include "TimeSeries.h"
+#include <QtGlobal>
 
 using namespace teramanager;
 using namespace iim;
@@ -146,7 +147,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //creating fonts
     QFont tinyFont = QApplication::font();
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     tinyFont.setPointSize(9);
     #endif
 
@@ -790,7 +791,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     info_page_layout->addLayout(info_panel_layout, 0);
     info_page_layout->addStretch(1);
     info_page->setLayout(info_page_layout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     info_page->setStyle(new QWindowsStyle());
     #endif
 
@@ -814,6 +815,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     traslXpos->setFixedWidth(fixedArrowWidth);
     xShiftLayout->addStretch();
     xShiftLayout->addWidget(traslXneg, 0);
+    traslXlabel->setFixedWidth(20);
     xShiftLayout->addWidget(traslXlabel, 0);
     xShiftLayout->addWidget(traslXpos, 0);
     xShiftLayout->addStretch();
@@ -827,6 +829,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     traslYpos->setFixedWidth(fixedArrowWidth);
     yShiftLayout->addStretch();
     yShiftLayout->addWidget(traslYneg, 0);
+    traslYlabel->setFixedWidth(20);
     yShiftLayout->addWidget(traslYlabel, 0);
     yShiftLayout->addWidget(traslYpos, 0);
     yShiftLayout->addStretch();
@@ -839,6 +842,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     traslZneg->setFixedWidth(fixedArrowWidth);
     traslZpos->setFixedWidth(fixedArrowWidth);
     zShiftLayout->addStretch();
+    traslZlabel->setFixedWidth(20);
     zShiftLayout->addWidget(traslZneg, 0);
     zShiftLayout->addWidget(traslZlabel, 0);
     zShiftLayout->addWidget(traslZpos, 0);
@@ -853,6 +857,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     traslTpos->setFixedWidth(fixedArrowWidth);
     tShiftLayout->addStretch();
     tShiftLayout->addWidget(traslTneg, 0);
+    traslTlabel->setFixedWidth(20);
     tShiftLayout->addWidget(traslTlabel, 0);
     tShiftLayout->addWidget(traslTpos, 0);
     tShiftLayout->addStretch();
@@ -903,8 +908,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     global_coordinates_layout->addLayout(zGlobalCoordLayout,2, 2, 1, 2);
     global_coordinates_layout->addLayout(tGlobalCoordLayout,3, 2, 1, 2);
     /* ------------- FINALIZATION -------------- */
+    global_coordinates_layout->setContentsMargins(10,5,10,5);
     globalCoord_panel->setLayout(global_coordinates_layout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     globalCoord_panel->setStyle(new QWindowsStyle());
     #endif
 
@@ -913,8 +919,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     PR_button->setFixedWidth(marginLeft);
     esPanelLayout->addWidget(PR_button, 0);
     esPanelLayout->addWidget(PR_spbox, 1);
+    esPanelLayout->setContentsMargins(10,5,10,5);
     PR_panel->setLayout(esPanelLayout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     PR_panel->setStyle(new QWindowsStyle());
     #endif
 
@@ -955,8 +962,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     localviewer_panel_layout->addLayout(resolutionSelection_layout, 0);
     localviewer_panel_layout->addLayout(resolutionBar_layout, 0);
     localviewer_panel_layout->addLayout(VOImaxsize_layout, 0);
+    localviewer_panel_layout->setContentsMargins(10,5,10,5);
     localViewer_panel->setLayout(localviewer_panel_layout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     localViewer_panel->setStyle(new QWindowsStyle());
     #endif
 
@@ -1000,8 +1008,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     /* -------------------- FINALIZATION -------------------- */
     zoomOptions_panel_layout->addLayout(zoomInMethod_layout, 0);
     zoomOptions_panel_layout->addLayout(zoomControls_layout, 0);
+    zoomOptions_panel_layout->setContentsMargins(10,5,10,5);
     zoom_panel->setLayout(zoomOptions_panel_layout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     zoom_panel->setStyle(new QWindowsStyle());
     #endif
 
@@ -1012,6 +1021,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     controlsLayout->addWidget(globalCoord_panel, 0);
     controlsLayout->addWidget(PR_panel, 0);
     controlsLayout->addStretch(1);
+    #ifdef Q_OS_MAC
+    controlsLayout->setContentsMargins(10,0,10,10);
+    #endif
     controls_page->setLayout(controlsLayout);
 
     //pages
@@ -1027,20 +1039,16 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     innerLayout->addWidget(tabs, 0);
     innerLayout->addStretch(1);
     QHBoxLayout* helpBoxLayout = new QHBoxLayout();
-    helpBoxLayout->setContentsMargins(10,10,10,10);
-    helpBoxLayout->addWidget(helpBox);
-    //innerLayout->addLayout(helpBoxLayout, 0, Qt::AlignBottom);
-    innerLayout->addLayout(helpBoxLayout, 0);
-    innerLayout->setContentsMargins(0, 0, 0, 0);
-    //innerLayout->setContentsMargins(10, 5, 10, 10);
+    helpBoxLayout->setContentsMargins(0,0,0,0);
+    helpBoxLayout->addWidget(helpBox, 1);
+    innerLayout->addLayout(helpBoxLayout, 1);
     innerLayout->setSpacing(5);
-    //centralLayout->addWidget(toolBar, 0);
     centralLayout->addLayout(innerLayout, 1);
     bottomLayout->addWidget(statusBar);
     bottomLayout->addWidget(progressBar);
-    //bottomLayout->setContentsMargins(10,0,10,10);
     bottomLayout->setContentsMargins(10,10,10,10);
     layout->addWidget(menuBar, 0);
+    centralLayout->setContentsMargins(0,0,0,0);
     layout->addLayout(centralLayout, 1);
     layout->addLayout(bottomLayout, 0);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -1082,13 +1090,19 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //set always on top
     setWindowFlags(Qt::WindowStaysOnTopHint);
-    setMaximumSize(this->minimumWidth(), this->minimumHeight());
+    //setMaximumSize(this->minimumWidth(), this->minimumHeight());
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
+    //
     setFixedWidth(400);
 
+    // register this as event filter
     installEventFilter(this);
+
+    // instance PLog
+    PLog::instance(this);
+
 
     /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
@@ -1153,16 +1167,16 @@ void PMain::reset()
         resolution_cbox->removeItem(0);
     traslXlabel->setAlignment(Qt::AlignCenter);
 //    traslXlabel->setTextFormat(Qt::RichText);
-    traslXlabel->setText("<font size=\"4\">X</font>");
+    traslXlabel->setText("<font size=\"3\">X</font>");
     traslYlabel->setAlignment(Qt::AlignCenter);
 //    traslYlabel->setTextFormat(Qt::RichText);
-    traslYlabel->setText("<font size=\"4\">Y</font>");
+    traslYlabel->setText("<font size=\"3\">Y</font>");
     traslZlabel->setAlignment(Qt::AlignCenter);
 //    traslZlabel->setTextFormat(Qt::RichText);
-    traslZlabel->setText("<font size=\"4\">Z</font>");
+    traslZlabel->setText("<font size=\"3\">Z</font>");
     traslTlabel->setAlignment(Qt::AlignCenter);
 //    traslTlabel->setTextFormat(Qt::RichText);
-    traslTlabel->setText("<font size=\"4\">t</font>");
+    traslTlabel->setText("<font size=\"3\">t</font>");
     traslXpos->setEnabled(false);
     traslXneg->setEnabled(false);
     traslYpos->setEnabled(false);
@@ -1783,10 +1797,10 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         resolution_cbox->setEnabled(true);
 
         //updating traslation widgets
-        traslXlabel->setText("<font size=\"4\" color=\"red\"><b>X</b></font>");
-        traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
-        traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
-        traslTlabel->setText("<font size=\"4\" color=\"gray\"><b>t</b></font>");
+        traslXlabel->setText("<font size=\"3\" color=\"red\"><b>X</b></font>");
+        traslYlabel->setText("<font size=\"3\" color=\"green\"><b>Y</b></font>");
+        traslZlabel->setText("<font size=\"3\" color=\"blue\"><b>Z</b></font>");
+        traslTlabel->setText("<font size=\"3\" color=\"gray\"><b>t</b></font>");
 
         //disabling useless time-related widgets if data is < 5D
         to_label_4->setEnabled(volume->getDIM_T() > 1);
@@ -2393,10 +2407,10 @@ void PMain::PRsetActive(bool active)
         T1_sbox->setEnabled(!active);
         to_label_4->setEnabled(!active);
     }
-    traslXlabel->setText(active ? "<font size=\"4\" color=\"gray\">X</font>" : "<font size=\"4\" color=\"red\"><b>X</b></font>");
-    traslYlabel->setText(active ? "<font size=\"4\" color=\"gray\">Y</font>" : "<font size=\"4\" color=\"green\"><b>Y</b></font>");
-    traslZlabel->setText(active ? "<font size=\"4\" color=\"gray\">Z</font>" : "<font size=\"4\" color=\"blue\"><b>Z</b></font>");
-    traslTlabel->setText(active ? "<font size=\"4\" color=\"gray\">t</font>" : "<font size=\"4\" color=\"gray\"><b>t</b></font>");
+    traslXlabel->setText(active ? "<font size=\"3\" color=\"gray\">X</font>" : "<font size=\"3\" color=\"red\"><b>X</b></font>");
+    traslYlabel->setText(active ? "<font size=\"3\" color=\"gray\">Y</font>" : "<font size=\"3\" color=\"green\"><b>Y</b></font>");
+    traslZlabel->setText(active ? "<font size=\"3\" color=\"gray\">Z</font>" : "<font size=\"3\" color=\"blue\"><b>Z</b></font>");
+    traslTlabel->setText(active ? "<font size=\"3\" color=\"gray\">t</font>" : "<font size=\"3\" color=\"gray\"><b>t</b></font>");
     traslYneg->setEnabled(!active && curWin->volV0 > 0);
     traslYpos->setEnabled(!active && curWin->volV1 < CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V());
     traslXneg->setEnabled(!active && curWin->volH0 > 0);

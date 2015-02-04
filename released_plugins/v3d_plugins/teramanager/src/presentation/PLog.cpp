@@ -42,7 +42,7 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     timeComponentsPanelLayout->addWidget(timeComponents);
     timeComponentsPanel->setMaximumHeight(160);
     timeComponentsPanel->setLayout(timeComponentsPanelLayout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     timeComponentsPanel->setStyle(new QWindowsStyle());
     #endif
 
@@ -50,7 +50,7 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     QHBoxLayout* timeOperationsPanelLayout = new QHBoxLayout();
     timeOperationsPanelLayout->addWidget(timeOperations);
     timeOperationsPanel->setLayout(timeOperationsPanelLayout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     timeOperationsPanel->setStyle(new QWindowsStyle());
     #endif
 
@@ -58,7 +58,7 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     QHBoxLayout* logPanelLayout = new QHBoxLayout();
     logPanelLayout->addWidget(log);
     logPanel->setLayout(logPanelLayout);
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     logPanel->setStyle(new QWindowsStyle());
     #endif
 
@@ -75,7 +75,7 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
 
     this->setMinimumWidth(500);
 
-    connect(this, SIGNAL(sendAppend(void*)), this, SLOT(appendOperation(void*)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sendAppend(void*)), this, SLOT(appendOperationVoid(void*)), Qt::QueuedConnection);
 
 
     reset();
@@ -165,7 +165,7 @@ void PLog::append(std::string text)
     log->append(QString("@").append(QTime::currentTime().toString()).append(": ").append(text.c_str()));
 }
 
-void PLog::appendOperation(itm::Operation *op)
+void PLog::appendOperation(itm::Operation *op, bool update_time_comps /* = true */)
 {
     // add operation to its group vector
     loggedOperations[op->name()].push_back(op);
@@ -173,15 +173,18 @@ void PLog::appendOperation(itm::Operation *op)
     // add operation to log
     this->append( std::string("[") + QString::number(op->groupID).toStdString() + "]" + op->name() + "(" + op->compName() + ")( " + QString::number(op->milliseconds/1000.0f, 'f', 3).toStdString() + "s ): " + op->message);
 
-    // update time
-    if(op->comp == itm::IO)
-        timeIO += op->milliseconds / 1000.0f;
-    else if(op->comp == itm::GPU)
-        timeGPU += op->milliseconds / 1000.0f;
-    else if(op->comp == itm::CPU)
-        timeCPU += op->milliseconds / 1000.0f;
-    else if(op->comp == itm::ALL_COMPS)
-        timeActual += op->milliseconds / 1000.0f;
+    // update time components
+    if(update_time_comps)
+    {
+        if(op->comp == itm::IO)
+            timeIO += op->milliseconds / 1000.0f;
+        else if(op->comp == itm::GPU)
+            timeGPU += op->milliseconds / 1000.0f;
+        else if(op->comp == itm::CPU)
+            timeCPU += op->milliseconds / 1000.0f;
+        else if(op->comp == itm::ALL_COMPS)
+            timeActual += op->milliseconds / 1000.0f;
+    }
 
     // update GUI
     this->update();

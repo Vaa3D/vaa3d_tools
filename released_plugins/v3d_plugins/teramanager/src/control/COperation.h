@@ -147,19 +147,19 @@ namespace teramanager
     };
 }
 
-//#define TERAFLY_TIME_START(classname)   \
-//QElapsedTimer timer##classname;         \
-//timer##classname.start();               \
-//teramanager::classname::newGroup();
+#define TERAFLY_TIME_START(classname)   \
+QElapsedTimer timer##classname;         \
+timer##classname.start();               \
+teramanager::classname::newGroup();
 
-//#define TERAFLY_TIME_RESTART(classname) \
-//timer##classname.restart();
+#define TERAFLY_TIME_RESTART(classname) \
+timer##classname.restart();
 
-//#define TERAFLY_TIME_STOP(classname, component, message)    \
-//teramanager::PLog::getInstance()->emitSendAppend(new teramanager::classname(message, component, timer##classname.elapsed()));
+#define TERAFLY_TIME_STOP(classname, component, message)    \
+teramanager::PLog::instance()->emitSendAppend(new teramanager::classname(message, component, timer##classname.elapsed()));
 
-#define TERAFLY_TIME_START(classname)
-#define TERAFLY_TIME_RESTART(classname)
-#define TERAFLY_TIME_STOP(classname, component, message)
+//#define TERAFLY_TIME_START(classname)
+//#define TERAFLY_TIME_RESTART(classname)
+//#define TERAFLY_TIME_STOP(classname, component, message)
 
 #endif // COPERATION_H

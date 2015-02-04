@@ -26,7 +26,7 @@ itm::PDialogProofreading::PDialogProofreading(itm::PMain *_parent) : QWidget(0)
     parent = _parent;
 
     QFont tinyFont = QApplication::font();
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     tinyFont.setPointSize(9);
     #endif
     QFont bigFont = QApplication::font();

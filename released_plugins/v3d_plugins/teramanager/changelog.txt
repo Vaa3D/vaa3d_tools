@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraFly version 1.1.5
+February 4th, 2015
+--------------------------------------------------------------------------------------------
+- Fix: fixed minor display issues on MacOS.
+- New: enriched TeraConverter's log with multipage TIFF I/O time measurements.
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraFly version 1.1.4
 January 9th, 2015
 --------------------------------------------------------------------------------------------

@@ -104,9 +104,6 @@ win32{
 
     #this solves undefined symbols like "Read_LSM_Stack" and similar
     SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
-
-    #on Windows 7+ the best option is to use native fonts
-    DEFINES += _USE_NATIVE_FONTS
 }
 
 #Vaa3D headers and sources needed by the plugin

@@ -13,7 +13,7 @@ QHelpBox::QHelpBox(QWidget *_parent) : QWidget(_parent)
 
     helpBox = new QLabel();
 
-    #ifndef _USE_NATIVE_FONTS
+    #ifdef Q_OS_LINUX
     QFont tinyFont = QApplication::font();
     tinyFont.setPointSize(9);
     helpBox->setFont(tinyFont);
@@ -36,7 +36,16 @@ QHelpBox::QHelpBox(QWidget *_parent) : QWidget(_parent)
     helpLayout->setStackingMode(QStackedLayout::StackAll);
     setLayout(helpLayout);
 
+    #ifdef Q_OS_MAC
+    this->setFixedHeight(90);
+    #endif
+    #ifdef Q_OS_WIN32
     this->setFixedHeight(120);
+    #endif
+    #ifdef Q_OS_LINUX
+    this->setFixedHeight(120);
+    #endif
+
 }
 
 void QHelpBox::setText(string text)
