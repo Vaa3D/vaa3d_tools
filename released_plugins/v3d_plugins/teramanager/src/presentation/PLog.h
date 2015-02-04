@@ -18,6 +18,8 @@ class teramanager::PLog : public QDialog
         /* ----------- */
         QGroupBox* timeOperationsPanel;
         QTextEdit *timeOperations;
+        QCheckBox *enableIoCoreOperationsCheckBox;
+        bool enableIoCoreOperations;
         /* ----------- */
         QGroupBox* logPanel;
         QTextEdit *log;
@@ -75,7 +77,10 @@ class teramanager::PLog : public QDialog
         * Emits <sendAppend> signal
         ***********************************************************************************/
         void emitSendAppend(void* op)
-        {emit sendAppend(op);}
+        {
+            if(enableIoCoreOperations)
+                sendAppend(op);
+        }
 
     signals:
 
@@ -90,6 +95,8 @@ class teramanager::PLog : public QDialog
         * <sendAppend> event handler
         ***********************************************************************************/
         void appendOperationVoid(void* op){appendOperation((itm::Operation*)(op), false);}
+
+        void enableIoCoreOperationsCheckBoxChanged(int s){enableIoCoreOperations = enableIoCoreOperationsCheckBox->isChecked();}
 
         void reset();
 
