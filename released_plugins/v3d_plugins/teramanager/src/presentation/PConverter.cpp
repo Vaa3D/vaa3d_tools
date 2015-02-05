@@ -47,6 +47,7 @@ void PConverter::uninstance()
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CConverter::uninstance();
+    PLog::uninstance();
     if(uniqueInstance)
     {
         delete uniqueInstance;
