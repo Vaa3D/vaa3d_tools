@@ -82,21 +82,8 @@ void create_plugin_neuronrec_pro(PluginTemplate & pt)
     if(pt.PLUGIN_GUI != "") ofs<<"HEADERS\t+= "<<pt.PLUGIN_GUI<<endl;
     ofs<<"SOURCES\t+= "<<pt.PLUGIN_CPP<<endl;
     ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp"<<endl;
-    ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp"<<endl;
-    ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp"<<endl;
-    ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp"<<endl;
     ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp"<<endl;
     ofs<<""<<endl;
-
-    ofs<<"macx{"<<endl;
-    ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff"<<endl;
-    ofs<<"}"<<endl;
-    ofs<<"win32{"<<endl;
-    ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff"<<endl;
-    ofs<<"}"<<endl;
-    ofs<<"unix:!macx{"<<endl;
-    ofs<<"LIBS\t+= -L$$VAA3DPATH/v3d_main/common_lib/lib -ltiff"<<endl;
-    ofs<<"}"<<endl;
 
     ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
     ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/"<<pt.PLUGIN_NAME<<"/"<<endl;

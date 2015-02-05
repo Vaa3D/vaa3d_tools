@@ -1,7 +1,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
-#include "stackutil.h"
+
 
 using namespace std;
 
@@ -51,7 +51,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 {
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
-    V3DLONG *in_sz = 0;
+    V3DLONG in_sz[4];
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -93,7 +93,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if(!ok1)
             return;
 
-        in_sz = new V3DLONG[4];
         in_sz[0] = N;
         in_sz[1] = M;
         in_sz[2] = P;
@@ -105,7 +104,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     else
     {
         int datatype = 0;
-        if (loadImage(const_cast<char *>(PARA.inimg_file.toStdString().c_str()), data1d, in_sz, datatype)!=true)
+        if (!simple_loadimage_wrapper, PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype)
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return;
@@ -128,7 +127,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     nt.name = "tracing method";
     writeSWC_file(swc_name.toStdString().c_str(),nt);
 
-    if(in_sz) {delete []in_sz; in_sz = 0;}
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
