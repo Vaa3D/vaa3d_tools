@@ -17,4 +17,4 @@ SOURCES	+= resampleimage_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(resampleimage)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/image_resample/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/image_geometry/image_resample/
