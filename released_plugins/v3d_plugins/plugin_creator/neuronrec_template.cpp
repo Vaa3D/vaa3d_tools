@@ -31,6 +31,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     else if (func_name == tr("help"))
     {
+
+        ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
+
         printf("\n**** Usage of XXX tracing ****\n");
         printf("vaa3d -x plugin_name -f function_name -i <inimg_file> -p <channel> \n");
         printf("inimg_file       Should be 8 bit image\n");
@@ -115,6 +118,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     //main neuron reconstruction code
+
+    //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
+
+    //Output
 
     QString swc_name = PARA.inimg_file + "_Tracing.swc";
     NeuronTree nt;
