@@ -158,6 +158,7 @@ neuronPickerDialog::neuronPickerDialog(V3DPluginCallback2 * cb)
     image1Dc_in=0;
     image1D_out=0;
     image1D_h=0;
+    image1D_v=0;
     intype=0;
     sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
     LList.clear();
