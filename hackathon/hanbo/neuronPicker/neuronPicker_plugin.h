@@ -98,6 +98,7 @@ public:
     static void extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_out, V3DLONG seed, int cubSize, int colorSpan, V3DLONG sz_img[4]);
 
 private:
+    static int huedis(int a, int b);
     static V3DLONG landMark2pos(LocationSimple Landmark_input, V3DLONG _offset_Y, V3DLONG _offset_Z);
     static vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
     static V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z, const V3DLONG _offset_Y, const V3DLONG _offset_Z);

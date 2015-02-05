@@ -726,28 +726,37 @@ void neuronPickerMain::initChannels_rgb(unsigned char *image1Dc, int *image1D_h,
         }
     }
 
-    //shift the histogram
-    V3DLONG hmin_v=hhist[0];
-    int idx_shift=0;
-    for(int i=1; i<const_length_histogram-1; i++){
-        if(hmin_v>(hhist[i]+hhist[i-1]+hhist[i+1])){
-            hmin_v=hhist[i]+hhist[i-1]+hhist[i+1];
-            idx_shift=i;
-        }
-    }
+//    //shift the histogram
+//    V3DLONG hmin_v=hhist[0];
+//    int idx_shift=0;
+//    for(int i=1; i<const_length_histogram-1; i++){
+//        if(hmin_v>(hhist[i]+hhist[i-1]+hhist[i+1])){
+//            hmin_v=hhist[i]+hhist[i-1]+hhist[i+1];
+//            idx_shift=i;
+//        }
+//    }
 
-    //shift the hue
-    int hue_shift=idx_shift*hist_scale;
-    for(V3DLONG idx=0; idx<page; idx++){
-        if(image1D_h[idx]<0){
-            continue;
-        }
-        if(image1D_h[idx]>=hue_shift){
-            image1D_h[idx]-=hue_shift;
-        }else{
-            image1D_h[idx]+=360-hue_shift;
-        }
+//    //shift the hue
+//    int hue_shift=idx_shift*hist_scale;
+//    for(V3DLONG idx=0; idx<page; idx++){
+//        if(image1D_h[idx]<0){
+//            continue;
+//        }
+//        if(image1D_h[idx]>=hue_shift){
+//            image1D_h[idx]-=hue_shift;
+//        }else{
+//            image1D_h[idx]+=360-hue_shift;
+//        }
+//    }
+}
+
+int neuronPickerMain::huedis(int a, int b)
+{
+    int dis=MAX(a,b)-MIN(a,b);
+    if(dis>180){
+        dis=360-180;
     }
+    return dis;
 }
 
 void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
@@ -792,7 +801,7 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
                 pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
 //                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos]<<":"<<v_mean;
                 if(image1D_h[pos]<0)    continue;
-                if(MAX(image1D_h[pos],v_mean)-MIN(image1D_h[pos],v_mean)>colorSpan) continue;
+                if(huedis(image1D_h[pos],v_mean)>colorSpan) continue;
                 image1D_out[pos]=image1D_v[pos];
                 image1D_mask[pos]=1;
                 seeds.push_back(pos);
@@ -816,7 +825,7 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
                     pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                     if(image1D_h[pos]<0)    continue;
                     if(image1D_mask[pos]>0) continue;
-                    if(MAX(image1D_h[pos],v_mean)-MIN(image1D_h[pos],v_mean)>colorSpan) continue;
+                    if(huedis(image1D_h[pos],v_mean)>colorSpan) continue;
                     image1D_out[pos]=image1D_v[pos];
                     image1D_mask[pos]=1;
                     seeds.push_back(pos);
