@@ -12,7 +12,7 @@
 #include <QImage>
 #include <QPoint>
 #include <QWidget>
-#include <mydialog.h>
+
 class paint : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
