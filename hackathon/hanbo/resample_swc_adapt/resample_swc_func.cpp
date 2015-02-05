@@ -207,6 +207,5 @@ int resample_swc_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
 		return 0;
 	}
 
-
 	return 1;
 }

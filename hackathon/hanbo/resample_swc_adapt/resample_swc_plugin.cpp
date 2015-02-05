@@ -14,8 +14,8 @@ Q_EXPORT_PLUGIN2(resample_swc, ResamplePlugin);
 QStringList ResamplePlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("resample (fixed step)")
-		<<tr("adaptive downsample")
+        <<tr("resample")
+        <<tr("adaptive downsample")
 		<<tr("about");
 }
 

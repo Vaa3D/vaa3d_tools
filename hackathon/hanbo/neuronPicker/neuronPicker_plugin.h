@@ -53,10 +53,11 @@ public slots:
     void saveFile();
     void skip();
     void reject();
+    void runall();
 
 public:
     QComboBox *cb_marker;
-    QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output;
+    QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output, *btn_runall;
     //QDoubleSpinBox *spin_color;
     QSpinBox *spin_distance, *spin_bgthr, *spin_huedis;
     QLineEdit *edit_load, *edit_output;
@@ -96,6 +97,7 @@ public:
 
     static void initChannels_rgb(unsigned char *image1Dc, int *image1D_h, unsigned char *image1D_v, V3DLONG sz_img[4], const int bg_thr);
     static void extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_out, V3DLONG seed, int cubSize, int colorSpan, V3DLONG sz_img[4]);
+    static void saveSingleMarker(V3DLONG pos_landmark, QString fname, V3DLONG sz_img[4]);
 
 private:
     static int huedis(int a, int b);
