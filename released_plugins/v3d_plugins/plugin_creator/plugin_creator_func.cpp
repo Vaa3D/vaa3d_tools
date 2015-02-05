@@ -17,6 +17,32 @@
 
 using namespace std;
 
+
+
+QString getVaa3dPath()
+{
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    // In a Mac app bundle, plugins directory could be either
+    //  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+    //  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+    testPluginsDir.cdUp();
+    return testPluginsDir.absolutePath();
+}
+
 #define STRING2VECTSTRING(values, value) \
 { \
 	if(value.find('"') != string::npos) \
@@ -47,7 +73,7 @@ const QString title = QObject::tr("Plugin Creator Plugin");
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	GuidingDialog dialog(parent);
-
+    dialog.editor_vaa3d_path->setText(getVaa3dPath());
 	if (dialog.exec()!=QDialog::Accepted) return -1;
 	dialog.update();
 
@@ -152,7 +178,9 @@ int create_demo2(V3DPluginCallback2 &callback, QWidget *parent)
 int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent)
 {
     GuidingDialog dialog(parent);
-
+    dialog.editor_vaa3d_path->setText(getVaa3dPath());
+    dialog.editor_menu_list->setText(QString("Tracing_menu1 Tracing_menu2"));
+    dialog.editor_func_list->setText(QString("Tracing_func1 Tracing_func2"));
     if (dialog.exec()!=QDialog::Accepted) return -1;
     dialog.update();
 
