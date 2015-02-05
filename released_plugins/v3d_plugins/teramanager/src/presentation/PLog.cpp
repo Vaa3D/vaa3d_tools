@@ -24,7 +24,8 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     timeOperations->setMinimumHeight(10);
     timeOperations->setFont(font);
     timeOperations->setWordWrapMode(QTextOption::NoWrap);
-    enableIoCoreOperationsCheckBox = new QCheckBox("Enable log from I/O core routines");
+    enableIoCoreOperationsCheckBox = new QCheckBox("I/O core logs");
+    enableIoCoreOperationsCheckBox->setToolTip("Enable I/O core logs with very low-level performance measures.");
     enableIoCoreOperationsCheckBox->setChecked(false);
     enableIoCoreOperations = false;
 
@@ -35,6 +36,10 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     log->setWordWrapMode(QTextOption::NoWrap);
 
 
+    autoUpdateCheckBox = new QCheckBox("Auto update");
+    autoUpdateCheckBox->setChecked(false);
+    autoUpdateCheckBox->setToolTip("Enable automatic update of log and performance measures.");
+    updatePushButton = new QPushButton("Update");
     closeButton = new QPushButton("Close");
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
     resetButton = new QPushButton("Reset");
@@ -65,15 +70,19 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     #ifdef Q_OS_LINUX
     logPanel->setStyle(new QWindowsStyle());
     #endif
+    logPanel->setEnabled(false);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout();
-    buttonsLayout->addWidget(resetButton);
-    buttonsLayout->addWidget(closeButton);
+    buttonsLayout->addWidget(resetButton, 1);
+    buttonsLayout->addWidget(closeButton, 1);
+    buttonsLayout->setContentsMargins(0,0,0,0);
 
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(timeComponentsPanel);
     layout->addWidget(timeOperationsPanel);
     layout->addWidget(logPanel);
+    layout->addWidget(autoUpdateCheckBox);
+    layout->addWidget(updatePushButton);
     layout->addLayout(buttonsLayout);
     setLayout(layout);
 
@@ -81,6 +90,8 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
 
     connect(this, SIGNAL(sendAppend(void*)), this, SLOT(appendOperationVoid(void*)), Qt::QueuedConnection);
     connect(enableIoCoreOperationsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(enableIoCoreOperationsCheckBoxChanged(int)));
+    connect(autoUpdateCheckBox, SIGNAL(stateChanged(int)), this, SLOT(autoUpdateCheckBoxChanged(int)));
+    connect(updatePushButton, SIGNAL(clicked()), this, SLOT(updatePushButtonClicked()));
 
 
     reset();
@@ -175,24 +186,27 @@ void PLog::appendOperation(itm::Operation *op, bool update_time_comps /* = true 
     // add operation to its group vector
     loggedOperations[op->name()].push_back(op);
 
-    // update time components
-    if(update_time_comps)
-    {
-        // add operation to log
-        this->append( std::string("[") + QString::number(op->groupID).toStdString() + "]" + op->name() + "(" + op->compName() + ")( " + QString::number(op->milliseconds/1000.0f, 'f', 3).toStdString() + "s ): " + op->message);
-
-        if(op->comp == itm::IO)
-            timeIO += op->milliseconds / 1000.0f;
-        else if(op->comp == itm::GPU)
-            timeGPU += op->milliseconds / 1000.0f;
-        else if(op->comp == itm::CPU)
-            timeCPU += op->milliseconds / 1000.0f;
-        else if(op->comp == itm::ALL_COMPS)
-            timeActual += op->milliseconds / 1000.0f;
-    }
-
     // update GUI
-    this->update();
+    if(autoUpdateCheckBox->isChecked())
+    {
+        // update time components
+        if(update_time_comps)
+        {
+            // add operation to log
+            this->append( std::string("[") + QString::number(op->groupID).toStdString() + "]" + op->name() + "(" + op->compName() + ")( " + QString::number(op->milliseconds/1000.0f, 'f', 3).toStdString() + "s ): " + op->message);
+
+            if(op->comp == itm::IO)
+                timeIO += op->milliseconds / 1000.0f;
+            else if(op->comp == itm::GPU)
+                timeGPU += op->milliseconds / 1000.0f;
+            else if(op->comp == itm::CPU)
+                timeCPU += op->milliseconds / 1000.0f;
+            else if(op->comp == itm::ALL_COMPS)
+                timeActual += op->milliseconds / 1000.0f;
+        }
+
+        this->update();
+    }
 }
 
 
@@ -211,4 +225,58 @@ void PLog::reset()
         for(int k=0; k< it->second.size(); k++)
             delete it->second[k];
     loggedOperations.clear();
+}
+
+/**********************************************************************************
+* Called by algorithms running from different threads.
+* Emits <sendAppend> signal
+***********************************************************************************/
+void PLog::emitSendAppend(void* op)
+{
+    emit sendAppend(op);
+}
+
+/**********************************************************************************
+* <sendAppend> event handler
+***********************************************************************************/
+void PLog::appendOperationVoid(void* op)
+{
+    appendOperation((itm::Operation*)(op), false);
+}
+
+/**********************************************************************************
+* <enableIoCoreOperationsCheckBox> event handler
+***********************************************************************************/
+void PLog::enableIoCoreOperationsCheckBoxChanged(int s)
+{
+    if(autoUpdateCheckBox->isChecked() && s == Qt::Checked)
+    {
+        if(QMessageBox::information(this, "Warning", "Auto-update is enabled. Enabling I/O core logs will heavily deteriorate the performance.\n\n Proceed anyway?", QMessageBox::Cancel | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Cancel)
+            enableIoCoreOperationsCheckBox->setChecked(false);
+    }
+
+    enableIoCoreOperations = enableIoCoreOperationsCheckBox->isChecked();
+}
+
+/**********************************************************************************
+* <autoUpdateCheckBox> event handler
+***********************************************************************************/
+void PLog::autoUpdateCheckBoxChanged(int s)
+{
+    if(enableIoCoreOperationsCheckBox->isChecked() && s == Qt::Checked)
+    {
+        if(QMessageBox::information(this, "Warning", "I/O core logs are enabled. Enabling auto-update will heavily deteriorate the performance.\n\n Proceed anyway?", QMessageBox::Cancel | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Cancel)
+            autoUpdateCheckBox->setChecked(false);
+    }
+
+    updatePushButton->setEnabled(!autoUpdateCheckBox->isChecked());
+    logPanel->setEnabled(autoUpdateCheckBox->isChecked());
+}
+
+/**********************************************************************************
+* <updatePushButton> event handler
+***********************************************************************************/
+void PLog::updatePushButtonClicked()
+{
+    update();
 }

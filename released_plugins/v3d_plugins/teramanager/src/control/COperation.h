@@ -156,7 +156,8 @@ teramanager::classname::newGroup();
 timer##classname.restart();
 
 #define TERAFLY_TIME_STOP(classname, component, message)    \
-teramanager::PLog::instance()->emitSendAppend(new teramanager::classname(message, component, timer##classname.elapsed()));
+if(teramanager::PLog::instance()->isIoCoreOperationsEnabled()) \
+    teramanager::PLog::instance()->emitSendAppend(new teramanager::classname(message, component, timer##classname.elapsed()));
 
 //#define TERAFLY_TIME_START(classname)
 //#define TERAFLY_TIME_RESTART(classname)

@@ -24,6 +24,8 @@ class teramanager::PLog : public QDialog
         QGroupBox* logPanel;
         QTextEdit *log;
         /* ----------- */
+        QCheckBox *autoUpdateCheckBox;
+        QPushButton* updatePushButton;
         QPushButton* closeButton;
         QPushButton* resetButton;
 
@@ -65,9 +67,10 @@ class teramanager::PLog : public QDialog
             }
         }
         PLog(QWidget *parent);
+        bool isIoCoreOperationsEnabled(){return enableIoCoreOperations;}
 
         /**********************************************************************************
-        * <sendAppend> event handler
+        * append new operation to log
         ***********************************************************************************/
         void appendOperation(itm::Operation* op, bool update_time_comps = true);
         void append(std::string text);
@@ -76,11 +79,7 @@ class teramanager::PLog : public QDialog
         * Called by algorithms running from different threads.
         * Emits <sendAppend> signal
         ***********************************************************************************/
-        void emitSendAppend(void* op)
-        {
-            if(enableIoCoreOperations)
-                sendAppend(op);
-        }
+        void emitSendAppend(void* op);
 
     signals:
 
@@ -94,9 +93,22 @@ class teramanager::PLog : public QDialog
         /**********************************************************************************
         * <sendAppend> event handler
         ***********************************************************************************/
-        void appendOperationVoid(void* op){appendOperation((itm::Operation*)(op), false);}
+        void appendOperationVoid(void* op);
 
-        void enableIoCoreOperationsCheckBoxChanged(int s){enableIoCoreOperations = enableIoCoreOperationsCheckBox->isChecked();}
+        /**********************************************************************************
+        * <enableIoCoreOperationsCheckBox> event handler
+        ***********************************************************************************/
+        void enableIoCoreOperationsCheckBoxChanged(int s);
+
+        /**********************************************************************************
+        * <autoUpdateCheckBox> event handler
+        ***********************************************************************************/
+        void autoUpdateCheckBoxChanged(int s);
+
+        /**********************************************************************************
+        * <updatePushButton> event handler
+        ***********************************************************************************/
+        void updatePushButtonClicked();
 
         void reset();
 
