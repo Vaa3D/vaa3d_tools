@@ -3,6 +3,7 @@
 
 #include <string>
 #include <QtGui>
+#include "v3d_message.h"
 
 using namespace std;
 
@@ -35,7 +36,7 @@ public:
 		editor_vaa3d_path = new QLineEdit(tr(""));
 		button_vaa3d_path = new QPushButton(tr("..."));
 
-		label_menu_list = new QLabel(tr("Menu List : "));
+        label_menu_list = new QLabel(tr("Menu List : "));
 		editor_menu_list = new QLineEdit(tr("menu1 menu2"));
 
 		label_func_list = new QLabel(tr("Func List : "));
@@ -44,6 +45,7 @@ public:
 		label_save_folder = new QLabel(tr("Save Folder : "));
 		editor_save_folder = new QLineEdit(tr(""));
 		button_save_folder = new QPushButton(tr("..."));
+        button_save_folder->setBackgroundRole(QPalette::Highlight);
 
 		ok = new QPushButton(tr("ok"));
 		cancel = new QPushButton(tr("cancel"));
@@ -124,6 +126,11 @@ public slots:
 
 	void update()
 	{
+        if(editor_save_folder->text().isEmpty() || editor_vaa3d_path->text().isEmpty())
+        {
+            v3d_msg("Please select the correct path!");
+            return QDialog::reject();
+        }
 		plugin_name =  editor_plugin_name->text().toStdString();
 		plugin_class =  editor_plugin_class->text().toStdString();
 		win_title =  editor_win_title->text().toStdString();
