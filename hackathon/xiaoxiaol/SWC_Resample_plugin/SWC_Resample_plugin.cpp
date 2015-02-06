@@ -1,0 +1,190 @@
+/* SWC_Resample_plugin.cpp
+ * This plugin allows users to resample displayed SWCs.
+ * 2015-02-05 : by Xiaoxiao Liu
+ */
+ 
+#include "v3d_message.h"
+#include <vector>
+#include <QObject>
+#include "SWC_Resample_plugin.h"
+#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
+
+
+using namespace std;
+Q_EXPORT_PLUGIN2(SWC_Resample, SWCResample);
+ 
+static resampleDialog * mydialog = 0;
+
+
+void MyComboBox::enterEvent(QEvent *e)
+{
+    updateList();
+    QComboBox::enterEvent(e);
+}
+
+void MyComboBox::updateList()
+{
+    if (!m_v3d)
+        return;
+
+    QString lastDisplayfile = currentText();
+
+
+    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
+
+    QStringList items;
+    int i;
+
+    for (i=0; i<cur_list_3dviewer.count(); i++)
+    {
+        items << m_v3d->getImageName(cur_list_3dviewer[i]);
+    }
+
+
+    clear();
+    addItems(items);
+
+    int curDisplayIndex = -1; //-1 for invalid index
+    for (i = 0; i < items.size(); i++)
+        if (items[i] == lastDisplayfile)
+        {
+            curDisplayIndex = i;
+            break;
+        }
+
+    if (curDisplayIndex>=0)
+        setCurrentIndex(curDisplayIndex);
+
+    update();
+
+    return;
+}
+
+resampleDialog :: resampleDialog(V3DPluginCallback2 &_v3d, QWidget *parent) :
+    QDialog(parent), m_v3d(_v3d)
+{
+    this->combobox_win = new MyComboBox(&m_v3d); // combo box for selecting the window that contains swc objects
+    this->combobox_win->updateList();
+
+    this->label_surface = new QLabel(QObject::tr("3D Viewer Window List: "));
+
+    this->label_steplength = new QLabel(QObject::tr("Step Length"));
+
+    this->line_steplength = new QLineEdit("1");
+    QValidator *inputRange = new QDoubleValidator(0.1,INT32_MAX,1.0,this);
+    this->line_steplength->setValidator(inputRange);
+
+
+    this->btn_Run = new QPushButton("Run");
+
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(this->label_surface, 1,0,1,5);
+    gridLayout->addWidget(this->combobox_win, 2,0,1,5);
+    gridLayout->addWidget(this->label_steplength,3,0,1,1);
+    gridLayout->addWidget(this->line_steplength, 4,0,1,1);
+    gridLayout->addWidget(this->btn_Run, 5,0,1,1);
+
+    setLayout(this->gridLayout);
+    setWindowTitle(QString("Resample Parameters"));
+
+    connect(btn_Run, SIGNAL(clicked()), this, SLOT(_slot_run()));
+}
+
+
+resampleDialog::~resampleDialog()
+{
+    if ( mydialog )
+    {
+        delete mydialog;
+        mydialog = 0;
+    }
+}
+
+
+void resampleDialog::_slot_run()
+{
+    double steplength = this->line_steplength->text().toDouble();
+
+    //obtain the swc object
+    list_3dviewer = m_v3d.getListAll3DViewers();
+    surface_win = list_3dviewer[combobox_win->currentIndex()];
+
+    //debug
+    //v3d_msg(QString("slected window # %1 ").arg(combobox_win->currentIndex()));
+
+    if (surface_win){
+        QList<NeuronTree> * mTreeList;
+        mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+
+        // Deal with the first neuro tree for now
+        NeuronTree myTree = mTreeList->first();
+
+        NeuronTree resultTree = resample(myTree,steplength);
+
+        resultTree.color.r=0;
+        resultTree.color.g=0;
+        resultTree.color.b=0;
+        resultTree.color.a=0;
+
+        mTreeList->first().copy(resultTree);
+
+        m_v3d.pushObjectIn3DWindow(surface_win);
+
+    }
+    else{
+        v3d_msg("cannot find the 3d viewer!");
+    }
+}
+
+
+
+QStringList SWCResample::menulist() const
+{
+    return QStringList()
+            <<tr("resample swc")
+           <<tr("about");
+}
+
+QStringList SWCResample::funclist() const
+{
+    return QStringList()
+            <<tr("resample")
+           <<tr("help");
+}
+
+void SWCResample::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+{
+    if (menu_name == tr("resample swc"))
+    {
+        mydialog = new resampleDialog(callback, parent);
+        mydialog->show();
+
+        return;
+    }
+    else
+    {
+        v3d_msg(tr("This plugin allows users to resample displayed SWCs.. "
+                   "Developed by Xiaoxiao Liu, 2015-02-05"));
+    }
+}
+
+bool SWCResample::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+{
+	vector<char*> infiles, inparas, outfiles;
+	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+	if (func_name == tr("resample"))
+	{
+		v3d_msg("To be implemented.");
+	}
+	else if (func_name == tr("help"))
+	{
+		v3d_msg("To be implemented.");
+	}
+	else return false;
+
+	return true;
+}
+

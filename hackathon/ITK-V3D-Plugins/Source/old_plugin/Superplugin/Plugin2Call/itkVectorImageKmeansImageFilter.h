@@ -60,7 +60,7 @@ namespace itk
  */
 template <class TInputImage,
           class TOutputImage=Image<unsigned char, ::itk::GetImageDimension<TInputImage>::ImageDimension> >
-class ITK_EXPORT VectorImageKmeansImageFilter :
+class VectorImageKmeansImageFilter :
     public ImageToImageFilter< TInputImage, TOutputImage >
 {
 public:

@@ -2,22 +2,18 @@
 #  This file provides the standard configuration
 #  for a generic plugin
 #
-#  The variable PLUGIN_GROUP_NAME is expected to
-#  be pre-defined in every directory from where
-#  you call this CONFIGURE_V3D_PLUGIN function.
 #
-#
-FUNCTION(CONFIGURE_V3D_PLUGIN PLUGIN_NAME)
+function(configure_v3d_plugin PLUGIN_NAME)
 
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR} )
+include_directories( ${CMAKE_SOURCE_DIR} )
 
 SET(QtITK_SRCS ${PLUGIN_NAME}.cxx )
 
 QT4_WRAP_CPP(QT_MOC_SRCS ${PLUGIN_NAME}.h)
 
-CONFIGURE_V3D_PLUGIN_COMMON(${PLUGIN_NAME})
+configure_v3d_plugin_common(${PLUGIN_NAME})
 
-ENDFUNCTION(CONFIGURE_V3D_PLUGIN)
+endfunction(configure_v3d_plugin)
 
 
 
@@ -27,85 +23,92 @@ ENDFUNCTION(CONFIGURE_V3D_PLUGIN)
 #  plugins whose .h is trivial and can be generated
 #  via C macros.
 #
-FUNCTION(CONFIGURE_V3D_PLUGIN_SIMPLE PLUGIN_NAME)
+function(CONFIGURE_V3D_PLUGIN_SIMPLE PLUGIN_NAME)
 
-INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR} )
+include_directories( ${CMAKE_SOURCE_DIR} )
 
-SET(QtITK_SRCS ${PLUGIN_NAME}.cxx )
+set(QtITK_SRCS ${PLUGIN_NAME}.cxx )
 
-CONFIGURE_V3D_PLUGIN_COMMON(${PLUGIN_NAME})
+configure_v3d_plugin_common(${PLUGIN_NAME})
 
-ENDFUNCTION(CONFIGURE_V3D_PLUGIN_SIMPLE)
-
-
+endfunction(CONFIGURE_V3D_PLUGIN_SIMPLE)
 
 
-FUNCTION(CONFIGURE_V3D_PLUGIN_COMMON PLUGIN_NAME)
-
-ADD_LIBRARY(${PLUGIN_NAME} SHARED ${QtITK_SRCS} ${QT_MOC_SRCS})
-#TARGET_LINK_LIBRARIES(${PLUGIN_NAME} ITKIOReview ITKIO  ITKNumerics ITKStatistics ITKAlgorithms V3DInterface V3DITKCommon ${QT_LIBRARIES} )
-
-TARGET_LINK_LIBRARIES(${PLUGIN_NAME} ${ITK_LIBRARIES} V3DInterface V3DITKCommon ${QT_LIBRARIES} )
-
-SET(PLUGIN_GROUP_DIR ${INSTALLATION_DIRECTORY}/${PLUGIN_GROUP_NAME} )
-SET(PLUGIN_DESTINATION_DIR ${PLUGIN_GROUP_DIR}/${PLUGIN_NAME} )
-
-FILE(MAKE_DIRECTORY ${PLUGIN_DESTINATION_DIR})
-IF (NOT WIN32)
-INSTALL(TARGETS ${PLUGIN_NAME}
-  LIBRARY DESTINATION ${PLUGIN_DESTINATION_DIR} COMPONENT RuntimeLibraries
-  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-  )
-ENDIF(NOT WIN32)
-IF (WIN32)
-INSTALL(TARGETS ${PLUGIN_NAME}
-   DESTINATION ${PLUGIN_DESTINATION_DIR} COMPONENT RuntimeLibraries
-  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-  )
-ENDIF(WIN32)
 
 
-IF(WIN32)
-  SET(LIBRARY_BUILD_DIR ${LIBRARY_OUTPUT_PATH}/Release)
+function(configure_v3d_plugin_common PLUGIN_NAME)
 
-  MACRO(MAKE_WINDOWS_PATH pathname)
-  # An extra \\ escape is necessary to get a \ through CMake's processing.
-  STRING(REPLACE "/" "\\" ${pathname} "${${pathname}}")
-  # Enclose with UNESCAPED quotes.  This means we need to escape our
-  # quotes once here, i.e. with \"
-  SET(${pathname} \"${${pathname}}\")
-  ENDMACRO(MAKE_WINDOWS_PATH)
-  
-  SET(LIB_SOURCE ${LIBRARY_BUILD_DIR}/${CMAKE_SHARED_MODULE_PREFIX}${PLUGIN_NAME}${CMAKE_SHARED_MODULE_SUFFIX})
-  SET(LIB_DESTINATION ${PLUGIN_DESTINATION_DIR}/${CMAKE_SHARED_MODULE_PREFIX}${PLUGIN_NAME}${CMAKE_SHARED_MODULE_SUFFIX})
-  #change to native windows path
-  MAKE_WINDOWS_PATH(LIB_SOURCE)
-  MAKE_WINDOWS_PATH(LIB_DESTINATION)
-  
-  ADD_CUSTOM_COMMAND(
-    SOURCE ${PLUGIN_NAME}
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy ${LIB_SOURCE} ${LIB_DESTINATION}
-    TARGET ${PLUGIN_NAME}
-	POST_BUILD
-    OUTPUTS ${LIBRARY_DESTINATION_DIR}/${PLUG}${CMAKE_SHARED_MODULE_SUFFIX}
+add_library(${PLUGIN_NAME} SHARED ${QtITK_SRCS} ${QT_MOC_SRCS})
+if(TARGET FinishedPlugins)
+    add_dependencies(FinishedPlugins ${PLUGIN_NAME})
+endif()
+if(TARGET PluginPrerequisites)
+    add_dependencies(${PLUGIN_NAME} PluginPrerequisites)
+endif()
+target_link_libraries(${PLUGIN_NAME} ${QT_LIBRARIES} )
+# CMB Nov-03-2010
+# I apologize if I am doing this wrong...
+# Several plugins yield link errors for method v3d_message without this
+# link to the V3DInterface library
+if (TARGET V3DInterface)
+  target_link_libraries(${PLUGIN_NAME} V3DInterface)
+endif()
+
+if(NOT PLUGIN_DIRECTORY_NAME)
+  set(PLUGIN_DIRECTORY_NAME ${PLUGIN_NAME})
+endif()
+
+# Install plugins below executable for cpack installer builds
+if(V3D_INSTALL_DIR)
+  set(PLUGIN_DESTINATION_DIR ${V3D_INSTALL_DIR}/plugins/${PLUGIN_DIRECTORY_NAME})
+else()
+  set(PLUGIN_DESTINATION_DIR ${INSTALLATION_DIRECTORY}/${PLUGIN_DIRECTORY_NAME} )
+  file(MAKE_DIRECTORY ${PLUGIN_DESTINATION_DIR})
+endif()
+
+# Build plugins next to V3D executable, for testing from build area before install.
+if (V3D_BUILD_BINARY_DIR)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY_DEBUG "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}")
+    # if (MSVC)
+    #     # hack to get around the "Debug" and "Release" directories cmake tries to add on Windows
+    #     set_target_properties (${PLUGIN_NAME} PROPERTIES PREFIX "../")
+    # endif()
+endif()
+
+
+# Don't install plugins separate from app bundle on apple
+if(V3D_MAC_CREATE_BUNDLE AND BUNDLE_BUILD_DIR AND APPLE)
+    # Build plugins in place inside app bundle
+    set(dest_dir "${BUNDLE_BUILD_DIR}/Contents/MacOS/plugins/${PLUGIN_DIRECTORY_NAME}")
+    file(MAKE_DIRECTORY "${dest_dir}")
+    set_target_properties(${PLUGIN_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${dest_dir}"
+        LIBRARY_OUTPUT_DIRECTORY "${dest_dir}"
+        ARCHIVE_OUTPUT_DIRECTORY "${dest_dir}"
     )
-ENDIF(WIN32)
-IF (APPLE)
+else()
+    # Non-MacOSX bundle, so ordinary install
+    # CMB Nov 3 2010
+    # MSYS on windows requires "RUNTIME" parameter too.
+    install(TARGETS ${PLUGIN_NAME}
+      LIBRARY DESTINATION "${PLUGIN_DESTINATION_DIR}" 
+      RUNTIME DESTINATION "${PLUGIN_DESTINATION_DIR}" 
+      PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+      COMPONENT Plugins
+    )
+endif()
 
-IF(NOT SOLVED_RPATH_ISSUE)
+# Decorate target name in Visual Studio, so plugins will be placed alphabetically together
+set_target_properties(${PLUGIN_NAME} PROPERTIES PROJECT_LABEL "Plugin -- ${PLUGIN_NAME}")
 
-  SET(LIBRARY_BUILD_DIR ${LIBRARY_OUTPUT_PATH})
+endfunction(configure_v3d_plugin_common)
 
-  #ADD_CUSTOM_COMMAND(
-    #SOURCE ${PLUGIN_NAME}
-    #COMMAND ${CMAKE_COMMAND}
-    #ARGS -E copy ${LIBRARY_BUILD_DIR}/${CMAKE_SHARED_MODULE_PREFIX}${PLUGIN_NAME}.dylib ${PLUGIN_DESTINATION_DIR}/${CMAKE_SHARED_MODULE_PREFIX}${PLUGIN_NAME}.dylib
-    #TARGET ${PLUGIN_NAME}
-    #OUTPUTS ${LIBRARY_DESTINATION_DIR}/${PLUG}${CMAKE_SHARED_MODULE_SUFFIX}
-    #)
-
-ENDIF(NOT SOLVED_RPATH_ISSUE)
-ENDIF(APPLE)
-
-ENDFUNCTION(CONFIGURE_V3D_PLUGIN_COMMON)

@@ -59,8 +59,8 @@ namespace itk
  * \ingroup ClassificationFilters
  */
 template <class TInputImage,
-          class TOutputImage=Image<unsigned char, ::itk::GetImageDimension<TInputImage>::ImageDimension> >
-class ITK_EXPORT VectorImageKmeansImageFilter :
+          class TOutputImage=Image<unsigned char, TInputImage::ImageDimension> >
+class VectorImageKmeansImageFilter :
     public ImageToImageFilter< TInputImage, TOutputImage >
 {
 public:
