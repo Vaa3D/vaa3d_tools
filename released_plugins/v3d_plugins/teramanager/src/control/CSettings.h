@@ -67,6 +67,7 @@ class teramanager::CSettings
         bool annotationCurvesAspectTube;
         int annotationVirtualMargin;
         int annotationMarkerSize;
+        bool previewMode;
 
         //TeraConverter members
         string volumeConverterInputPathLRU;
@@ -110,6 +111,7 @@ class teramanager::CSettings
         bool getAnnotationCurvesAspectTube(){return annotationCurvesAspectTube;}
         int getAnnotationVirtualMargin(){return annotationVirtualMargin;}
         int getAnnotationMarkerSize(){return annotationMarkerSize;}
+        bool getPreviewMode(){return previewMode;}
 
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
         void addVolumePathToHistory(string _volumePath){
@@ -138,6 +140,7 @@ class teramanager::CSettings
         void setAnnotationCurvesAspectTube(bool newval){annotationCurvesAspectTube = newval;}
         void setAnnotationVirtualMargin(int newval){annotationVirtualMargin = newval;}
         void setAnnotationMarkerSize(int newval){annotationMarkerSize = newval;}
+        void setPreviewMode(bool newval){previewMode = newval;}
 
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}

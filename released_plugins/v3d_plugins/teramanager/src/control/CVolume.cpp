@@ -55,6 +55,43 @@ CVolume::~CVolume()
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
+// load data using the currently set VOI
+uint8* CVolume::loadData() throw (itm::RuntimeException)
+{
+    try
+    {
+        // get volume at the currently selected resolution
+        VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
+
+        // set volume active time frames
+        volume->setActiveFrames(voiT0, voiT1);
+
+        /**/itm::debug(itm::LEV3, "load data", __itm__current__function__);
+        QElapsedTimer timer;
+        timer.start();
+        uint8* imgData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+        PLog::instance()->appendOperation(new NewViewerOperation(strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
+                                                                           voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1, voiResIndex), itm::IO, timer.elapsed()));
+        return imgData;
+    }
+    catch( iim::IOException& exception)
+    {
+        throw itm::RuntimeException(exception.what());
+    }
+    catch( iom::exception& exception)
+    {
+        throw RuntimeException(exception.what());
+    }
+    catch(const char* error)
+    {
+        throw RuntimeException(error);
+    }
+    catch(...)
+    {
+        throw RuntimeException("Unknown error occurred");
+    }
+}
+
 //automatically called when current thread is started
 void CVolume::run()
 {
@@ -90,7 +127,26 @@ void CVolume::run()
         //checking for an imported volume
         if(volume)
         {
-            if(streamingSteps == 1)
+            // DIRECT mode - data are loaded from the GUI thread, no need to load here
+            if(streamingSteps == 0)
+            {
+                // wait for GUI thread to update graphics
+                /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
+                /**/ updateGraphicsInProgress.lock();
+                /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
+
+
+                // send data
+                integer_array data_s = make_vector<int>() << voiH0        << voiV0        << voiD0        << 0                            << voiT0;
+                integer_array data_c = make_vector<int>() << voiH1-voiH0  << voiV1-voiV0  << voiD1-voiD0  << volume->getNACtiveChannels() << voiT1-voiT0+1;
+                emit sendData(0, data_s, data_c, source, true);
+                /**/itm::debug(itm::LEV3, "sendData signal emitted", __itm__current__function__);
+
+                // unlock updateGraphicsInProgress mutex
+                /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
+                /**/ updateGraphicsInProgress.unlock();
+            }
+            else if(streamingSteps == 1)
             {
                 // 5D data with instant visualization of selected frame
                 if(voiT0 != voiT1 && cur_t != -1)

@@ -205,10 +205,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     regenVMap_cAction = new QAction("Regenerate volume map", this);
     regenVMap_cAction->setCheckable(true);
     importOptionsMenu-> addAction(regenVMap_cAction);
-    /* ------------------------- "Options" menu: 3D ---------------------- */
-    threeDMenu = optionsMenu->addMenu("3D annotation");
-    markersMenu = threeDMenu->addMenu("Markers");
-    curvesMenu = threeDMenu->addMenu("Curves");
+    /* ------------------------- "Options" menu: Annotation ---------------------- */
+    annotationMenu = optionsMenu->addMenu("Annotation");
+    markersMenu = annotationMenu->addMenu("Markers");
+    curvesMenu = annotationMenu->addMenu("Curves");
     curveAspectMenu = curvesMenu->addMenu("Aspect");
     curveDimsMenu = curvesMenu->addMenu("Skeleton width");
     curveAspectTube = new QAction("Tube", this);
@@ -234,7 +234,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(curveAspectTube, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     //connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
-    virtualSpaceSizeMenu = threeDMenu->addMenu("Virtual space size");
+    virtualSpaceSizeMenu = annotationMenu->addMenu("Virtual space size");
     spaceSizeAuto = new QAction("Auto", this);
     spaceSizeUnlimited = new QAction("Unlimited", this);
     spaceSizeAuto->setCheckable(true);
@@ -285,8 +285,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     markersShowROIMarginSpinBox->setValue(CSettings::instance()->getAnnotationVirtualMargin());
     connect(markersShowROIMarginSpinBox, SIGNAL(valueChanged(int)), this, SLOT(markersShowROIMarginSpinBoxChanged(int)));
     /**/
-    /* ------------------------- "Options" menu: directional shift ---------------- */
-    DirectionalShiftsMenu = optionsMenu->addMenu("Directional shift");
+    /* ------------------------- "Options" menu: Navigation ---------------- */
+    navigationMenu = optionsMenu->addMenu("Navigation");
+    /* ------------------------- "Options->Navigation" menu: Directional shift ---- */
+    DirectionalShiftsMenu = navigationMenu->addMenu("Directional shift");
     /* ------------------------------ x-shift ------------------------------------- */
     xShiftMenu = new QMenu("X-shift overlap");
     xShiftWidget = new QWidgetAction(this);
@@ -331,7 +333,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     tShiftWidget->setDefaultWidget(tShiftSBox);
     tShiftMenu->addAction(tShiftWidget);
     DirectionalShiftsMenu->addMenu(tShiftMenu);
-
+    /* ------------------------- "Options->Navigation" menu: Fetch-and-Display ---- */
+    fetchDisplayMenu = navigationMenu->addMenu("Fetch-and-Display");
+    fdPreviewAction = new QAction("Preview/streaming", this);
+    fdDirectAction = new QAction("Direct", this);
+    fdPreviewAction->setCheckable(true);
+    fdDirectAction->setCheckable(true);
+    QActionGroup* fdMutex = new QActionGroup(this);
+    fdMutex->addAction(fdPreviewAction);
+    fdMutex->addAction(fdDirectAction);
+    fdMutex->setExclusive(true);
+    fetchDisplayMenu->addAction(fdPreviewAction);
+    fetchDisplayMenu->addAction(fdDirectAction);
+    fdPreviewAction->setChecked(CSettings::instance()->getPreviewMode());
+    fdDirectAction->setChecked(!fdPreviewAction->isChecked());
+    connect(fdPreviewAction, SIGNAL(changed()), this, SLOT(fetchAndDisplayChanged()));
 
     // "Debug" menu
     debugMenu = menuBar->addMenu("Debug");
@@ -2331,6 +2347,17 @@ void PMain::curveAspectChanged()
         cur_win->view3DWidget->updateTool();
         cur_win->view3DWidget->update();
     }
+}
+
+/**********************************************************************************
+* Called when the corresponding Options->Navigation->Fetch-and-Display actions are triggered
+***********************************************************************************/
+void PMain::fetchAndDisplayChanged()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CSettings::instance()->setPreviewMode(fdPreviewAction->isChecked());
+    CSettings::instance()->writeSettings();
 }
 
 /**********************************************************************************

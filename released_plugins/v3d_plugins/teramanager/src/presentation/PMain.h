@@ -60,8 +60,10 @@ class teramanager::PMain : public QWidget
         QWidget *parentWidget;          //handle of parent widget
         string annotationsPathLRU;      //last recently used (LRU) annotations filepath
 
-        //menu widgets
+        // menu bar
         QMenuBar* menuBar;              //Menu bar
+
+        // "File" menu widgets
         QMenu* fileMenu;                //"File" menu
         QAction* openVolumeAction;      //"Open volume" menu action
         QAction* closeVolumeAction;     //"Close volume" menu action
@@ -70,10 +72,16 @@ class teramanager::PMain : public QWidget
         QAction* saveAnnotationsAsAction; //"Save annotations as" menu action
         QAction* clearAnnotationsAction;//"Clear annotations" menu action
         QAction* exitAction;            //"Exit" menu action
-        QMenu* optionsMenu;             //"Options" menu
-        QMenu* importOptionsMenu;       //"Import" menu level 2
-        QMenu* threeDMenu;              //"3D annotation" menu level 2
 
+        // "Options" menu widgets
+        QMenu* optionsMenu;             //"Options" menu
+        // ---- import menu level ------------------- 2
+        QMenu* importOptionsMenu;       //"Import" menu level 2
+        QAction *regenMData_cAction;    // if active, metadata will be regenerated
+        QAction *regenVMap_cAction;     // if active, volume map is regenerated
+        // ---- annotation menu level --------------- 2
+        QMenu* annotationMenu;          //"Annotation" menu level 2
+        // ---- curves menu level ------------------- 3
         QMenu* curvesMenu;              //"Curves" menu level 3
         QMenu* curveDimsMenu;           //"Curve dims" menu level 4
         QWidgetAction* curveDimsWidget; //"Curve dims" menu action widget
@@ -81,28 +89,29 @@ class teramanager::PMain : public QWidget
         QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
         QAction* curveAspectSkeleton;   //"Skeleton" action
-
+        // ---- markers menu level ------------------ 3
         QMenu* markersMenu;                             //"Markers" menu level 3
         QMenu* markersDeleteROIMenu;                    //"1-right-stroke to delete a group of markers" menu level 4
         QMenu* markersDeleteROISamplingMenu;            //"Sample every" menu level 5
         QWidgetAction* markersDeleteROISamplingWidget;  //"Sample every" menu action widget
         QSpinBox* markersDeleteROISamplingSpinBox;      //"Sample every" spinbox
-
-
+        // ---- markers size menu level ------------- 4
         QMenu* markersSizeMenu;                         //"Size" menu level 4
         QWidgetAction* markersSizeWidget;               //"Size" menu action widget
         QSpinBox* markersSizeSpinBox;                   //"Size" spinbox
-
+        // ---- markers show menu level ------------- 4
         QMenu* markersShowROIMenu;                      //"Show/hide markers around the displayed ROI" menu level 4
         QMenu* markersShowROIMarginMenu;                //"Virtual margin size" menu level 5
         QWidgetAction* markersShowROIMarginWidget;      //"Virtual margin size" menu action widget
         QSpinBox* markersShowROIMarginSpinBox;          //"Virtual margin size" spinbox
-
+        // ---- virtual space menu level ------------ 3
         QMenu* virtualSpaceSizeMenu;    //"Virtual space size" menu level 3
         QAction* spaceSizeAuto;         //"Auto" action
         QAction* spaceSizeUnlimited;    //"Unlimited" action
-
-        QMenu* DirectionalShiftsMenu;   //"Directional shifts" menu level 2
+        // ---- navigation menu level --------------- 2
+        QMenu* navigationMenu;          //"Navigation" menu level 2
+        // ---- directional shifts menu level ------- 3
+        QMenu* DirectionalShiftsMenu;   //"Directional shifts" menu level 3
         QMenu* xShiftMenu;              // x-shift entry
         QWidgetAction* xShiftWidget;    // x-shift action
         QSpinBox *xShiftSBox;           // x-shift widget (a spinbox)
@@ -115,20 +124,24 @@ class teramanager::PMain : public QWidget
         QMenu* tShiftMenu;              // t-shift entry
         QWidgetAction* tShiftWidget;    // t-shift action
         QSpinBox *tShiftSBox;           // t-shift widget (a spinbox)
+        // ---- directional shifts menu level ------- 3
+        QMenu* fetchDisplayMenu;        //"Fetch-and-display" menu level 3
+        QAction* fdPreviewAction;       //"Preview/streaming" checkbox
+        QAction* fdDirectAction;        //"Direct" action
 
-        //utility menu widgets
+        // "Utility" menu widgets
         QMenu* utilityMenu;
         QAction* convertVtk2APO;
         QAction* diffAPO;
         QAction* displayAnoOctree;      // display annotation Octree
 
-        //help menu widgets
+        // "Help" menu widgets
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
         QMenu *recentVolumesMenu;
         QAction* clearRecentVolumesAction;
 
-        //debug menu widgets
+        // "Debug" menu widgets
         QMenu* debugMenu;               //"Debug" menu for debugging purposes
         QAction* debugAction1;          //debug menu action #1
         QAction* debugShowLogAction;    //debug menu action "Show log"
@@ -148,9 +161,6 @@ class teramanager::PMain : public QWidget
         QToolButton *openVolumeToolButton;                  //tool button for volume opening
         QToolButton *showToolbarButton;                     //show/hide toolbar
 
-        //import form widgets
-        QAction *regenMData_cAction;                        // if active, metadata will be regenerated
-        QAction *regenVMap_cAction;                         // if active, volume map is regenerated
 
         QTabWidget *tabs;               //tab widget
         //Page "Volume's info": contains informations of the loaded volume
@@ -441,6 +451,11 @@ class teramanager::PMain : public QWidget
         * Called when the corresponding Options->3D annotation->Virtual space size actions are triggered
         ***********************************************************************************/
         void virtualSpaceSizeChanged();
+
+        /**********************************************************************************
+        * Called when the corresponding Options->Navigation->Fetch-and-Display actions are triggered
+        ***********************************************************************************/
+        void fetchAndDisplayChanged();
 
         /**********************************************************************************
         * Linked to verbosity combobox

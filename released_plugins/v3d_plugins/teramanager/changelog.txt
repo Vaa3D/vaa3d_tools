@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraFly version 1.1.6
+February 6th, 2015
+--------------------------------------------------------------------------------------------
+- New: faster automated detection of volume format.
+- New: added "Preview" / "Direct" fetch-and-display navigation option:
+       - "Preview": preview + streaming (in parallel) fetch-and-display strategy
+       - "Direct": sequencial fetch-and-display strategy (GUI waits for IO)
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraFly version 1.1.5
 February 4th, 2015
 --------------------------------------------------------------------------------------------

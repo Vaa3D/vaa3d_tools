@@ -730,53 +730,54 @@ void CViewer::receiveData(
     {
         try
         {
-            //first updating IO time
-            PLog::instance()->appendOperation(new NewViewerOperation(op_dsc.toStdString(), itm::IO, elapsed_time));
-
-            //copying loaded data
             QElapsedTimer timer;
-            timer.start();
-            uint32 img_dims[5]       = {volH1-volH0,        volV1-volV0,        volD1-volD0,        nchannels,  volT1-volT0+1};
-            uint32 img_offset[5]     = {data_s[0]-volH0,    data_s[1]-volV0,    data_s[2]-volD0,    0,          data_s[4]-volT0 };
-            uint32 new_img_dims[5]   = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
-            uint32 new_img_offset[5] = {0,                  0,                  0,                  0,          0               };
-            uint32 new_img_count[5]  = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
-            CImageUtils::copyVOI(data, new_img_dims, new_img_offset, new_img_count,
-                    view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
-            qint64 elapsedTime = timer.elapsed();
+
+            // PREVIEW+STREAMING mode only: copy loaded data
+            if(cVolume->getStreamingSteps() != 0)
+            {
+                // update IO time
+                PLog::instance()->appendOperation(new NewViewerOperation(op_dsc.toStdString(), itm::IO, elapsed_time));
+
+                // copy loaded data into Vaa3D viewer
+                timer.start();
+                uint32 img_dims[5]       = {volH1-volH0,        volV1-volV0,        volD1-volD0,        nchannels,  volT1-volT0+1};
+                uint32 img_offset[5]     = {data_s[0]-volH0,    data_s[1]-volV0,    data_s[2]-volD0,    0,          data_s[4]-volT0 };
+                uint32 new_img_dims[5]   = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
+                uint32 new_img_offset[5] = {0,                  0,                  0,                  0,          0               };
+                uint32 new_img_count[5]  = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
+                CImageUtils::copyVOI(data, new_img_dims, new_img_offset, new_img_count,
+                        view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
+                qint64 elapsedTime = timer.elapsed();
+
+                // release memory
+                delete[] data;
+
+                // update log
+                sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
+                                  step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(),
+                                  cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiT0(), cVolume->getVoiT1(), cVolume->getVoiResIndex());
+                PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, elapsedTime));
+            }
 
             // if 5D data, update selected time frame
             if(CImport::instance()->is5D())
                 view3DWidget->setVolumeTimePoint(window3D->timeSlider->value()-volT0);
 
-            //updating log
-            sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
-                              step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(),
-                              cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiT0(), cVolume->getVoiT1(), cVolume->getVoiResIndex());
-            PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, elapsedTime));
+            // PREVIEW+STREAMING mode only: update image data
+            if(cVolume->getStreamingSteps() != 0)
+            {
+                /**/itm::debug(itm::LEV1, strprintf("title = %s: update image data", titleShort.c_str()).c_str(), __itm__current__function__);
+                timer.restart();
+                view3DWidget->updateImageData();
+                sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d] rendered into view %s",
+                        step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
+                        cVolume->getVoiV0(), cVolume->getVoiV1(),
+                        cVolume->getVoiD0(), cVolume->getVoiD1(),
+                        cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
+                PLog::instance()->appendOperation(new NewViewerOperation(message, itm::GPU, timer.elapsed()));
+            }
 
-            //releasing memory if streaming is not active
-            if(cVolume->getStreamingSteps() == 1)
-                delete[] data;
-
-            //updating image data
-            /**/itm::debug(itm::LEV1, strprintf("title = %s: update image data", titleShort.c_str()).c_str(), __itm__current__function__);
-//            /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
-//            /**/ updateGraphicsInProgress.lock();
-//            /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
-            timer.restart();
-            view3DWidget->updateImageData();
-            sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d] rendered into view %s",
-                    step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
-                    cVolume->getVoiV0(), cVolume->getVoiV1(),
-                    cVolume->getVoiD0(), cVolume->getVoiD1(),
-                    cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
-            PLog::instance()->appendOperation(new NewViewerOperation(message, itm::GPU, timer.elapsed()));
-//            /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
-//            /**/ updateGraphicsInProgress.unlock();
-//            /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
-
-            //operations to be performed when all image data have been loaded
+            // operations to be performed when all image data have been loaded
             if(finished)
             {
                 // disconnect from data producer
@@ -924,6 +925,7 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
                 dz = dz == -1 ? int_inf : static_cast<int>(dz*ratioZ+0.5f);
         }
 
+
         // adjust time size so as to use all the available frames set by the user
         if(CImport::instance()->is5D() && ((t1 - t0 +1) != pMain.Tdim_sbox->value()))
         {
@@ -1036,41 +1038,55 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
         window3D->timeSlider->removeEventFilter(this);
 
 
+        // PREVIEW+STREAMING mode - obtain low res data from current window to be displayed in a new window while the user waits for the new high res data
+        if(CSettings::instance()->getPreviewMode())
+        {
+            // get low res data
+            QElapsedTimer timer;
+            timer.start();
+            int voiH0m=0, voiH1m=0, voiV0m=0, voiV1m=0,voiD0m=0, voiD1m=0, voiT0m=0, voiT1m=0;
+            int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
+            int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
+            int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
+            int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
+            int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
+            int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
+            uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(),
+                                       cVolume->getVoiH1()-cVolume->getVoiH0(),
+                                       cVolume->getVoiV1()-cVolume->getVoiV0(),
+                                       cVolume->getVoiD1()-cVolume->getVoiD0(),
+                                       voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
+            std::string message = itm::strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s, black-filled region is "
+                                   "X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d]",
+                    rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str(),
+                    voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
+            PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, timer.elapsed()));
 
-        //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
-        QElapsedTimer timer;
-        timer.start();
-        int voiH0m=0, voiH1m=0, voiV0m=0, voiV1m=0,voiD0m=0, voiD1m=0, voiT0m=0, voiT1m=0;
-        int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
-        int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
-        int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
-        int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
-        int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
-        int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
-        uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(),
-                                   cVolume->getVoiH1()-cVolume->getVoiH0(),
-                                   cVolume->getVoiV1()-cVolume->getVoiV0(),
-                                   cVolume->getVoiD1()-cVolume->getVoiD0(),
-                                   voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
-        char message[1000];
-        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s, black-filled region is "
-                               "X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d]",
-                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str(),
-                voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
-        PLog::instance()->appendOperation(new NewViewerOperation(message, itm::CPU, timer.elapsed()));
+            // create new window
+            this->next = new CViewer(V3D_env, resolution, lowresData,
+                                             cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
+                                             cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
 
-        //creating a new window
-        this->next = new CViewer(V3D_env, resolution, lowresData,
-                                         cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                         cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
+            // update CVolume with the request of the actual missing VOI along t and the current selected frame
+            cVolume->setVoiT(voiT0m, voiT1m, window3D->timeSlider->value());
 
+            // set the number of streaming steps
+            cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
+        }
+        // DIRECT mode - just wait for image data to be loaded and THEN create the new window
+        else
+        {
+            this->next = new CViewer(V3D_env, resolution, CVolume::instance()->loadData(),
+                                             cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
+                                             cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
+
+            // disable streaming mode: in this way, cVolume is told that no data have to be loaded
+            cVolume->setStreamingSteps(0);
+        }
+        
         // connect new window to data producer
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);
-
-        // update CVolume with the request of the actual missing VOI along t and the current selected frame
-        cVolume->setVoiT(voiT0m, voiT1m, window3D->timeSlider->value());
         cVolume->setSource(next);
-        cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);
 
 
 // lock updateGraphicsInProgress mutex on this thread (i.e. the GUI thread or main queue event thread)

@@ -194,7 +194,6 @@ class teramanager::CVolume : public QThread
                 return static_cast<int>(coord*ratio + 0.5f);
             }
         }
-
         static inline int scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
@@ -218,7 +217,6 @@ class teramanager::CVolume : public QThread
                 return static_cast<int>(coord*ratio + 0.5f);
             }
         }
-
         static inline int scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
@@ -242,7 +240,6 @@ class teramanager::CVolume : public QThread
                 return static_cast<int>(coord*ratio + 0.5f);
             }
         }
-
         static inline float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
@@ -266,7 +263,6 @@ class teramanager::CVolume : public QThread
                 return coord*ratio;
             }
         }
-
         static inline float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
@@ -290,7 +286,6 @@ class teramanager::CVolume : public QThread
                 return coord*ratio;
             }
         }
-
         static inline float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
         {
             #ifdef terafly_enable_debug_max_level
@@ -314,6 +309,9 @@ class teramanager::CVolume : public QThread
                 return coord*ratio;
             }
         }
+
+        // load data using the currently set VOI
+        uint8* loadData() throw (itm::RuntimeException);
 
         friend class CViewer;
 

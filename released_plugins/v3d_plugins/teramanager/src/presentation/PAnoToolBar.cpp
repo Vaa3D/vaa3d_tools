@@ -72,7 +72,7 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     /**/
     buttonOptions = new QToolButton();
     buttonOptions->setIcon(QIcon(":/icons/options.png"));
-    buttonOptions->setMenu(PMain::getInstance()->threeDMenu);
+    buttonOptions->setMenu(PMain::getInstance()->annotationMenu);
     buttonOptions->setPopupMode(QToolButton::InstantPopup);
     buttonOptions->setToolTip("Options");
     toolBar->addSeparator();
