@@ -66,23 +66,23 @@ resampleDialog :: resampleDialog(V3DPluginCallback2 &_v3d, QWidget *parent) :
     this->combobox_win = new MyComboBox(&m_v3d); // combo box for selecting the window that contains swc objects
     this->combobox_win->updateList();
 
-    this->label_surface = new QLabel(QObject::tr("3D Viewer Window List: "));
+    QLabel *label_surface = new QLabel(QObject::tr("3D Viewer Window List: "));
 
-    this->label_steplength = new QLabel(QObject::tr("Step Length"));
+    QLabel *label_steplength = new QLabel(QObject::tr("Fixed Step Length (distance between neighboring nodes"));
 
-    this->line_steplength = new QLineEdit("1");
-    QValidator *inputRange = new QDoubleValidator(0.1,INT32_MAX,1.0,this);
-    this->line_steplength->setValidator(inputRange);
+    this->spinbox_steplength = new QSpinBox;
+    this->spinbox_steplength->setRange(1, INT32_MAX);
+    this->spinbox_steplength->setSingleStep(1);
+    this->spinbox_steplength->setValue(1);
 
-
-    this->btn_Run = new QPushButton("Run");
+    QPushButton *btn_Run = new QPushButton("Run");
 
     gridLayout = new QGridLayout();
-    gridLayout->addWidget(this->label_surface, 1,0,1,5);
+    gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(this->combobox_win, 2,0,1,5);
-    gridLayout->addWidget(this->label_steplength,3,0,1,1);
-    gridLayout->addWidget(this->line_steplength, 4,0,1,1);
-    gridLayout->addWidget(this->btn_Run, 5,0,1,1);
+    gridLayout->addWidget(label_steplength,3,0,1,0);
+    gridLayout->addWidget(this->spinbox_steplength, 4,0,1,0);
+    gridLayout->addWidget(btn_Run, 5,0,1,0);
 
     setLayout(this->gridLayout);
     setWindowTitle(QString("Resample Parameters"));
@@ -103,7 +103,7 @@ resampleDialog::~resampleDialog()
 
 void resampleDialog::_slot_run()
 {
-    double steplength = this->line_steplength->text().toDouble();
+     int steplength = this->spinbox_steplength->value();
 
     //obtain the swc object
     list_3dviewer = m_v3d.getListAll3DViewers();
@@ -119,12 +119,13 @@ void resampleDialog::_slot_run()
         // Deal with the first neuro tree for now
         NeuronTree myTree = mTreeList->first();
 
-        NeuronTree resultTree = resample(myTree,steplength);
+        NeuronTree resultTree = resample(myTree,double(steplength));
 
-        resultTree.color.r=0;
-        resultTree.color.g=0;
-        resultTree.color.b=0;
-        resultTree.color.a=0;
+        // need to reset the color to zero of display with color (using the types)
+        resultTree.color.r = 0;
+        resultTree.color.g = 0;
+        resultTree.color.b = 0;
+        resultTree.color.a = 0;
 
         mTreeList->first().copy(resultTree);
 
@@ -141,7 +142,7 @@ void resampleDialog::_slot_run()
 QStringList SWCResample::menulist() const
 {
     return QStringList()
-            <<tr("resample swc")
+            <<tr("Resample SWC Displayed in 3D Views")
            <<tr("about");
 }
 
@@ -154,7 +155,7 @@ QStringList SWCResample::funclist() const
 
 void SWCResample::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("resample swc"))
+    if (menu_name == tr("Resample SWC Displayed in 3D Views"))
     {
         mydialog = new resampleDialog(callback, parent);
         mydialog->show();

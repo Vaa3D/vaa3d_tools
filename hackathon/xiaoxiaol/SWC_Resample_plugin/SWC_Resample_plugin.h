@@ -60,10 +60,9 @@ public:
     QGridLayout *gridLayout;
 
     MyComboBox* combobox_win;
-    QLabel* label_surface;
-    QLabel * label_steplength;
-    QLineEdit *line_steplength;
-    QPushButton * btn_Run;
+
+    QSpinBox *spinbox_steplength;
+
 
 
 private slots:
