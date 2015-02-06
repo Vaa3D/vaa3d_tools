@@ -25,10 +25,13 @@
 /******************
 *    CHANGELOG    *
 *******************
+*******************
+* 2015-02-06. Alessandro. @ADDED volume format metadata file for fast opening of a "directory format"
 * 2014-11-22. Giulio.     @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 * 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
 */
 
+#include <fstream>
 #include "VirtualVolume.h"
 #include "SimpleVolume.h"
 #include "SimpleVolumeRaw.h"
@@ -874,60 +877,113 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
 
     VirtualVolume* volume = 0;
 
-    // try all directory formats
+    // directory formats
     if(isDirectory(path))
     {
-        try
+        // 2015-02-06. Alessandro. @ADDED volume format metadata file for faster opening of a "directory format"
+        std::string format = "unknown";
+        if(isFile(std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME))
         {
-            volume = new TiledMCVolume(path);
-        }
-        catch(IOException &ex)
-        {
-            debug(LEV3, strprintf("Cannot import <TiledMCVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
             try
             {
-                volume = new StackedVolume(path);
+                std::ifstream f((std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME).c_str());
+                if(f.is_open())
+                {
+                    std::getline(f,format);
+                    f.close();
+                    printf("\n\nformat = %s, filename = %s\n\n", format.c_str(), (std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME).c_str());
+
+                    if(format.compare(typeid(TiledMCVolume).name()) == 0)
+                        volume = new TiledMCVolume(path);
+                    else if(format.compare(typeid(StackedVolume).name()) == 0)
+                        volume = new StackedVolume(path);
+                    else if(format.compare(typeid(TiledVolume).name()) == 0)
+                        volume = new TiledVolume(path);
+                    else if(format.compare(typeid(SimpleVolume).name()) == 0)
+                        volume = new SimpleVolume(path);
+                    else if(format.compare(typeid(SimpleVolumeRaw).name()) == 0)
+                        volume = new SimpleVolumeRaw(path);
+                    else if(format.compare(typeid(TimeSeries).name()) == 0)
+                        volume = new TimeSeries(path);
+                }
             }
             catch(IOException &ex)
             {
-                debug(LEV3, strprintf("Cannot import <StackedVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                debug(LEV3, strprintf("Cannot import <%s> format at \"%s\": %s", format.c_str(), path, ex.what()).c_str(),__iim__current__function__);
+            }
+        }
+
+        if(!volume)
+        {
+            try
+            {
+                volume = new TiledMCVolume(path);
+                format = typeid(TiledMCVolume).name();
+            }
+            catch(IOException &ex)
+            {
+                debug(LEV3, strprintf("Cannot import <TiledMCVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                 try
                 {
-                    volume = new TiledVolume(path);
+                    volume = new StackedVolume(path);
+                    format = typeid(StackedVolume).name();
                 }
                 catch(IOException &ex)
                 {
-                    debug(LEV3, strprintf("Cannot import <TiledVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                    debug(LEV3, strprintf("Cannot import <StackedVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                     try
                     {
-                        volume = new SimpleVolume(path);
+                        volume = new TiledVolume(path);
+                        format = typeid(TiledVolume).name();
                     }
                     catch(IOException &ex)
                     {
-                        debug(LEV3, strprintf("Cannot import <SimpleVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                        debug(LEV3, strprintf("Cannot import <TiledVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                         try
                         {
-                            volume = new SimpleVolumeRaw(path);
+                            volume = new SimpleVolume(path);
+                            format = typeid(SimpleVolume).name();
                         }
                         catch(IOException &ex)
                         {
-                            debug(LEV3, strprintf("Cannot import <SimpleVolumeRaw> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                            debug(LEV3, strprintf("Cannot import <SimpleVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                             try
                             {
-                                volume = new TimeSeries(path);
+                                volume = new SimpleVolumeRaw(path);
+                                format = typeid(SimpleVolumeRaw).name();
                             }
                             catch(IOException &ex)
                             {
-                                debug(LEV3, strprintf("Cannot import <TimeSeries> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                                debug(LEV3, strprintf("Cannot import <SimpleVolumeRaw> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                                try
+                                {
+                                    volume = new TimeSeries(path);
+                                    format = typeid(TimeSeries).name();
+                                }
+                                catch(IOException &ex)
+                                {
+                                    debug(LEV3, strprintf("Cannot import <TimeSeries> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+                                }
                             }
                         }
                     }
                 }
             }
+            catch(...)
+            {
+                debug(LEV3, strprintf("generic error occurred when importing volume at \"%s\"", path).c_str(),__iim__current__function__);
+            }
         }
-        catch(...)
+
+        // 2015-02-06. Alessandro. @ADDED volume format metadata file for faster opening of a "directory format"
+        if(volume && !isFile(std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME))
         {
-            debug(LEV3, strprintf("generic error occurred when importing volume at \"%s\"", path).c_str(),__iim__current__function__);
+            std::ofstream f((std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME).c_str(), std::ofstream::out);
+            if(f.is_open())
+            {
+                f << typeid(volume).name();
+                f.close();
+            }
         }
     }
     // try all file formats

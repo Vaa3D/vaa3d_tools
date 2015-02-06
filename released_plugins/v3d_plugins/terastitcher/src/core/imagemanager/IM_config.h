@@ -102,6 +102,7 @@ namespace IconImageManager
     const std::string MDATA_BIN_FILE_NAME  = "mdata.bin";       // name of binary metadata file
     const int         MDATA_BIN_FILE_VERSION = 2;               // version of binary metadata file
     const std::string MC_MDATA_BIN_FILE_NAME = "cmap.bin";      // name of binary metadata file for multichannel volumes
+    const std::string FORMAT_MDATA_FILE_NAME = ".iim.format";   // name of format metadata file
     const std::string CHANNEL_PREFIX = "CH_";                   // prefix identifying a folder containing data of a certain channel
     const std::string TIME_FRAME_PREFIX = "T_";                 // prefix identifying a folder containing data of a certain time frame
     const int         DEF_IMG_DEPTH = 8;                        // default image depth
