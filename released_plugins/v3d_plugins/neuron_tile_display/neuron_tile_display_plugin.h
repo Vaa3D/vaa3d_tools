@@ -8,6 +8,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "neuron_tile_display_dialog.h"
 
 class neuron_tile_display : public QObject, public V3DPluginInterface2_1
 {
@@ -24,42 +25,7 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
     void dotile(V3DPluginCallback2 &callback, QWidget *parent);
-};
-
-class NeuronTileDisplayDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    NeuronTileDisplayDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
-    void enterEvent(QEvent *e);
-
-public slots:
-    void tile();
-    void tile(double dis);
-    void slot_reset();
-    void reject();
-
-protected:
-    void reset();
-    void checkwindow();
-
-public:
-//    QCheckBox *check_boundbox;
-//    QcheckBox *check_hide;
-    QDoubleSpinBox *spin_x;
-    QDoubleSpinBox *spin_y;
-    QDoubleSpinBox *spin_z;
-    QPushButton *btn_quit;
-    QPushButton *btn_tile;
-    QPushButton *btn_reset;
-
-private:
-    QList<NeuronTree> * ntList;
-    double cur_x, cur_y, cur_z;
-    int cur_num;
-    V3dR_MainWindow * v3dwin;
-    V3DPluginCallback2 * callback;
+    void doxytile(V3DPluginCallback2 &callback, QWidget *parent);
 };
 
 #endif
