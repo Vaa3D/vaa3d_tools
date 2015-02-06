@@ -56,7 +56,7 @@ void resampleimage::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	else
 	{
         v3d_msg(tr("This is a plugin to downsample and upsample images. "
-            "Developed by Zhi Zhou, based on the functions developed by Fuihui Long, 2015-02-02"));
+            "Developed by Zhi Zhou, based on the functions developed by Fuhui Long, 2015-02-02"));
 	}
 }
 
