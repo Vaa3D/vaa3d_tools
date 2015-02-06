@@ -253,9 +253,10 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
             getline (templatefile,line);
             ofs<<line<<endl;
         }
-        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f " << pt.FUNCS[0] << " -i <inimg_file> -p <channel> \\n\");\n";
+        ofs<<"\t\tprintf(\"**** Usage of " << pt.PLUGIN_NAME <<" tracing **** \\n\");\n";
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f " << pt.FUNCS[0] << " -i <inimg_file> -p <channel> <other parameters>\\n\");\n";
 
-        for(int d = 43;d< 144; d++)
+        for(int d = 43;d< 148; d++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;

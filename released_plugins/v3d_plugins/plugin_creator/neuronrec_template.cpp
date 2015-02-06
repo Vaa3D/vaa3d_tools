@@ -39,8 +39,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
-        printf("\n**** Usage of XXX tracing ****\n");
-        printf("inimg_file       Should be 8 bit image\n");
+
+        printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
@@ -111,6 +111,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return;
+        }
+        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
             return;
         }
         N = in_sz[0];
