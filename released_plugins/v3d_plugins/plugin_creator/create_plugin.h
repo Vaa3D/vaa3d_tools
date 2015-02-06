@@ -235,11 +235,12 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
         ofs<<"{"<<endl;
         ofs<<"\tif (func_name == tr(\""<<pt.FUNCS[0]<<"\"))"<<endl;
         ofs<<"\t{"<<endl;
-        for(int d = 18;d< 30; d++)
+        for(int d = 18;d< 36; d++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
-        }        ofs<<"\t}"<<endl;
+        }
+        ofs<<"\t}"<<endl;
         for(int i = 1; i < pt.FUNCS.size()-1; i++)
         {
             ofs<<"\telse if (func_name == tr(\""<<pt.FUNCS[i]<<"\"))"<<endl;
@@ -247,7 +248,14 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
             ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
             ofs<<"\t}"<<endl;
         }
-        for(int d = 31;d< 141; d++)
+        for(int d = 37;d< 43; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f " << pt.FUNCS[0] << " -i <inimg_file> -p <channel> \\n\");\n";
+
+        for(int d = 43;d< 144; d++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;

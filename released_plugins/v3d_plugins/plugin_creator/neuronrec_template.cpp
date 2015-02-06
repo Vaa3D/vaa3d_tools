@@ -24,18 +24,22 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-        PARA.inimg_file = infiles[0];
+        if(infiles.empty())
+        {
+            fprintf (stderr, "Need input image. \n");
+            return false;
+        }
+        else
+            PARA.inimg_file = infiles[0];
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
-
     else if (func_name == tr("help"))
     {
 
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("\n**** Usage of XXX tracing ****\n");
-        printf("vaa3d -x plugin_name -f function_name -i <inimg_file> -p <channel> \n");
         printf("inimg_file       Should be 8 bit image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
