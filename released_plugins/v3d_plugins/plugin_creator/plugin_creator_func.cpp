@@ -181,6 +181,7 @@ int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent)
     dialog.editor_vaa3d_path->setText(getVaa3dPath());
     dialog.editor_menu_list->setText(QString("tracing_menu"));
     dialog.editor_func_list->setText(QString("tracing_func"));
+
     if (dialog.exec()!=QDialog::Accepted) return -1;
     dialog.update();
 

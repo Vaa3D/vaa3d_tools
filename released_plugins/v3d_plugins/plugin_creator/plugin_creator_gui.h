@@ -27,7 +27,9 @@ public:
 		editor_plugin_description = new QLineEdit(tr("This is a test plugin, you can use it as a demo."));
 
 		label_plugin_date = new QLabel(tr("Plugin Date :"));
-		editor_plugin_date = new QLineEdit(tr("2012-01-01"));
+        QDate date = QDate::currentDate();
+        QString date_format = QString("%1-%2-%3").arg(date.year()).arg(date.month()).arg(date.day());
+        editor_plugin_date = new QLineEdit(date_format);
 
 		label_plugin_author = new QLabel(tr("Plugin Author :"));
 		editor_plugin_author = new QLineEdit(tr("YourName"));
