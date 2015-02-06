@@ -108,7 +108,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     else
     {
         int datatype = 0;
-        if (!simple_loadimage_wrapper, PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype)
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return;
