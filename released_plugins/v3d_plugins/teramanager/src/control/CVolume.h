@@ -311,7 +311,7 @@ class teramanager::CVolume : public QThread
         }
 
         // load data using the currently set VOI
-        uint8* loadData() throw (itm::RuntimeException);
+        itm::uint8* loadData() throw (itm::RuntimeException);
 
         friend class CViewer;
 

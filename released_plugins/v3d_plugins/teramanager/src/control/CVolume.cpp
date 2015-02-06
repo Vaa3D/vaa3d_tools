@@ -56,7 +56,7 @@ CVolume::~CVolume()
 }
 
 // load data using the currently set VOI
-uint8* CVolume::loadData() throw (itm::RuntimeException)
+itm::uint8* CVolume::loadData() throw (itm::RuntimeException)
 {
     try
     {
