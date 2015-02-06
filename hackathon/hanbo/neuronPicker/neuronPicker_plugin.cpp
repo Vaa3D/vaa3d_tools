@@ -240,9 +240,9 @@ void neuronPickerDialog::creat()
 
     //extract parameters
     spin_bgthr = new QSpinBox();
-    spin_bgthr->setRange(0,255); spin_bgthr->setValue(20);
+    spin_bgthr->setRange(0,255); spin_bgthr->setValue(10);
     spin_distance = new QSpinBox();
-    spin_distance->setRange(0,100000); spin_distance->setValue(5);
+    spin_distance->setRange(0,100000); spin_distance->setValue(11);
     spin_huedis = new QSpinBox();
     spin_huedis->setRange(0,359); spin_huedis->setValue(40);
     QLabel* label_0 = new QLabel("background threshold (0~255):");
