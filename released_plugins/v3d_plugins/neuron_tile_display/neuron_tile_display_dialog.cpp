@@ -319,7 +319,7 @@ void NeuronXYTileDialog::tile()
                 break;
         }
         double tmpRate=(xmax-xmin)/(ymax-ymin);
-        if(abs(bestRate/rate-1)>abs(tmpRate/rate-1)){
+        if(fabs(bestRate/rate-1)>fabs(tmpRate/rate-1)){
             bestRate=tmpRate;
             Nx=tmpNx;
         }
