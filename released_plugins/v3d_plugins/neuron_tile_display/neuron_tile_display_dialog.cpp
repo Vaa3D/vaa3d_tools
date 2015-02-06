@@ -186,7 +186,7 @@ NeuronXYTileDialog::NeuronXYTileDialog(V3DPluginCallback2 * cb, V3dR_MainWindow*
     QLabel* label_2 = new QLabel("Y direction steps:");
     gridLayout->addWidget(label_2,2,0,1,2);
     gridLayout->addWidget(spin_y,2,2,1,1);
-    QLabel* label_3 = new QLabel("desired X:Y ratial:");
+    QLabel* label_3 = new QLabel("desired X:Y window ratio:");
     gridLayout->addWidget(label_3,3,0,1,2);
     gridLayout->addWidget(spin_ratial,3,2,1,1);
     gridLayout->addWidget(btn_tile,4,0,1,1);
