@@ -23,6 +23,11 @@ class teramanager::PLog : public QDialog
         /* ----------- */
         QGroupBox* logPanel;
         QTextEdit *log;
+        QCheckBox *appendCheckBox;
+        QComboBox *appendOpComboBox;
+        QComboBox *appendCompComboBox;
+        QLineEdit *appendToFileLineEdit;
+        QSpinBox  *appendEverySecondsSpinBox;
         /* ----------- */
         QCheckBox *autoUpdateCheckBox;
         QPushButton* updatePushButton;
@@ -73,6 +78,7 @@ class teramanager::PLog : public QDialog
         * append new operation to log
         ***********************************************************************************/
         void appendOperation(itm::Operation* op, bool update_time_comps = true);
+        void appendOperationToFile(itm::Operation* op);
         void append(std::string text);
 
         /**********************************************************************************
@@ -104,6 +110,11 @@ class teramanager::PLog : public QDialog
         * <autoUpdateCheckBox> event handler
         ***********************************************************************************/
         void autoUpdateCheckBoxChanged(int s);
+
+        /**********************************************************************************
+        * <appendCheckBox> event handler
+        ***********************************************************************************/
+        void appendCheckBoxChanged(int s);
 
         /**********************************************************************************
         * <updatePushButton> event handler

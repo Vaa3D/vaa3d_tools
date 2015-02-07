@@ -1,5 +1,6 @@
 #include <set>
 #include <cmath>
+#include <fstream>
 #include "PLog.h"
 
 using namespace teramanager;
@@ -35,6 +36,39 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     log->setFont(font);
     log->setWordWrapMode(QTextOption::NoWrap);
 
+    appendCheckBox = new QCheckBox("Append and clear");
+    appendOpComboBox = new QComboBox();
+    appendOpComboBox->setEnabled(false);
+    appendOpComboBox->addItem("--operation--");
+    appendOpComboBox->addItem(itm::ImportOperation().name().c_str());
+    appendOpComboBox->addItem(itm::NewViewerOperation().name().c_str());
+    appendOpComboBox->addItem(itm::RestoreViewerOperation().name().c_str());
+    appendOpComboBox->addItem(itm::AnnotationOperation().name().c_str());
+    appendOpComboBox->addItem(itm::ZoominRoiOperation().name().c_str());
+    appendOpComboBox->addItem(itm::ConverterLoadBlockOperation().name().c_str());
+    appendOpComboBox->addItem(itm::ConverterWriteBlockOperation().name().c_str());
+    appendOpComboBox->addItem(itm::TiffLoadMetadata().name().c_str());
+    appendOpComboBox->addItem(itm::TiffLoadData().name().c_str());
+    appendOpComboBox->addItem(itm::TiffInitData().name().c_str());
+    appendOpComboBox->addItem(itm::TiffAppendData().name().c_str());
+    appendCompComboBox = new QComboBox();
+    appendCompComboBox->setEnabled(false);
+    appendCompComboBox->addItem("--component--");
+    appendCompComboBox->addItem(itm::comp2str(ALL_COMPS).c_str());
+    appendCompComboBox->addItem(itm::comp2str(GPU).c_str());
+    appendCompComboBox->addItem(itm::comp2str(CPU).c_str());
+    appendCompComboBox->addItem(itm::comp2str(IO).c_str());
+    appendToFileLineEdit = new QLineEdit();
+    appendToFileLineEdit->setText("[to filepath]");
+    appendToFileLineEdit->setEnabled(false);
+    appendEverySecondsSpinBox = new QSpinBox();
+    appendEverySecondsSpinBox->setEnabled(false);
+    appendEverySecondsSpinBox->setPrefix("every ");
+    appendEverySecondsSpinBox->setSuffix(" s");
+    appendEverySecondsSpinBox->setMinimum(1);
+    appendEverySecondsSpinBox->setMaximum(100);
+    appendEverySecondsSpinBox->setValue(1);
+
 
     autoUpdateCheckBox = new QCheckBox("Auto update");
     autoUpdateCheckBox->setChecked(false);
@@ -64,13 +98,22 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     #endif
 
     logPanel = new QGroupBox("Log");
-    QHBoxLayout* logPanelLayout = new QHBoxLayout();
+    QVBoxLayout* logPanelLayout = new QVBoxLayout();
     logPanelLayout->addWidget(log);
+    QHBoxLayout* appendOpLayout = new QHBoxLayout();
+    appendOpLayout->addWidget(appendCheckBox);
+    appendOpLayout->addWidget(appendOpComboBox,1);
+    appendOpLayout->addWidget(appendCompComboBox,1);
+    QHBoxLayout* appendOpLayout2 = new QHBoxLayout();
+    appendOpLayout2->addWidget(appendToFileLineEdit, 1);
+    appendOpLayout2->addWidget(appendEverySecondsSpinBox, 1);
+    logPanelLayout->addLayout(appendOpLayout);
+    logPanelLayout->addLayout(appendOpLayout2);
     logPanel->setLayout(logPanelLayout);
     #ifdef Q_OS_LINUX
     logPanel->setStyle(new QWindowsStyle());
     #endif
-    logPanel->setEnabled(false);
+    log->setEnabled(false);
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout();
     buttonsLayout->addWidget(resetButton, 1);
@@ -92,6 +135,7 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
     connect(enableIoCoreOperationsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(enableIoCoreOperationsCheckBoxChanged(int)));
     connect(autoUpdateCheckBox, SIGNAL(stateChanged(int)), this, SLOT(autoUpdateCheckBoxChanged(int)));
     connect(updatePushButton, SIGNAL(clicked()), this, SLOT(updatePushButtonClicked()));
+    connect(appendCheckBox, SIGNAL(stateChanged(int)), this, SLOT(appendCheckBoxChanged(int)));
 
 
     reset();
@@ -207,6 +251,62 @@ void PLog::appendOperation(itm::Operation *op, bool update_time_comps /* = true 
 
         this->update();
     }
+
+    // also append operation to file, if required
+    if(appendCheckBox->isChecked())
+        appendOperationToFile(op);
+
+}
+
+void PLog::appendOperationToFile(itm::Operation* op)
+{
+    // static variables
+    static int writings = 0;
+    static bool first_time = true;
+    static QElapsedTimer timer;
+    static std::vector < int > op_times;
+
+    // start a global timer the first time this function is entered
+    if(first_time)
+    {
+        timer.start();
+        first_time = false;
+    }
+
+    // append to file every 'x' seconds, where x is inputted by the user
+    if(timer.elapsed()/1000.0 >= appendEverySecondsSpinBox->value() && op_times.size())
+    {
+        // append to file
+        std::ofstream f(appendToFileLineEdit->text().toStdString().c_str(), std::fstream::app);
+        if(f.is_open())
+        {
+            for(int k=0; k < op_times.size(); k++)
+            {
+                f.precision(5);
+                f << op_times[k]/1000.0f << "\n";
+            }
+
+            // notify the successfull writing to the user
+            appendEverySecondsSpinBox->setSuffix(QString(" seconds (x") + QString::number(++writings) + ")");
+        }
+        else
+            itm::warning(itm::strprintf("Cannot open file at \"%s\" in append mode", appendToFileLineEdit->text().toStdString().c_str()).c_str(), __itm__current__function__);
+
+        // clear
+        op_times.clear();
+        for(std::map< std::string, std::vector<itm::Operation*> >::iterator it = loggedOperations.begin(); it != loggedOperations.end(); it++)
+        {
+            for(int k=0; k< it->second.size(); k++)
+                delete it->second[k];
+            it->second.clear();
+        }
+
+        // restart the timer
+        timer.restart();
+    }
+    else if(op->name().compare(appendOpComboBox->currentText().toStdString()) == 0 &&
+            op->comp == itm::str2comp(appendCompComboBox->currentText().toStdString()))
+        op_times.push_back(op->milliseconds);
 }
 
 
@@ -270,7 +370,18 @@ void PLog::autoUpdateCheckBoxChanged(int s)
     }
 
     updatePushButton->setEnabled(!autoUpdateCheckBox->isChecked());
-    logPanel->setEnabled(autoUpdateCheckBox->isChecked());
+    log->setEnabled(autoUpdateCheckBox->isChecked());
+}
+
+/**********************************************************************************
+* <appendCheckBox> event handler
+***********************************************************************************/
+void PLog::appendCheckBoxChanged(int s)
+{
+    appendToFileLineEdit->setEnabled(s == Qt::Checked);
+    appendOpComboBox->setEnabled(s == Qt::Checked);
+    appendCompComboBox->setEnabled(s == Qt::Checked);
+    appendEverySecondsSpinBox->setEnabled(s == Qt::Checked);
 }
 
 /**********************************************************************************
