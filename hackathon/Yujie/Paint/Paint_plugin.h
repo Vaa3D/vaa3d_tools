@@ -31,14 +31,13 @@ public:
 
 private:
     QString fileName;
-    QImage image;
     V3DPluginCallback2 * callback;
-    unsigned char *image1Dc_in;
-    V3DLONG sz_img[4];
-    int intype;
+
 
 private:
     void create();
+
+
 
 
 //public slots:

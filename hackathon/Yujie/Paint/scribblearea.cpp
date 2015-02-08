@@ -9,29 +9,25 @@
      scribbling = false;
      myPenWidth = 1;
      myPenColor = Qt::blue;
+
  }
 
- bool ScribbleArea::openImage(const QString &fileName)
+ bool ScribbleArea::openImage(QImage &loadimage)
  {
-     QImage loadedImage;
-     if (!loadedImage.load(fileName))
-         return false;
 
-     QSize newSize = loadedImage.size().expandedTo(size());
-     resizeImage(&loadedImage, newSize);
-     image = loadedImage;
-     modified = false;
+
+     //
+     image=loadimage;
      update();
-    return true;
 
-// simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype)
+     return true;
 
 
  }
 
- bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
- {
-     QImage visibleImage = image;
+bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
+     {
+         QImage visibleImage = image;
      resizeImage(&visibleImage, size());
 
      if (visibleImage.save(fileName, fileFormat)) {
@@ -88,16 +84,16 @@
      painter.drawImage(dirtyRect, image, dirtyRect);
  }
 
- void ScribbleArea::resizeEvent(QResizeEvent *event)
- {
-     if (width() > image.width() || height() > image.height()) {
-         int newWidth = qMax(width() + 128, image.width());
-         int newHeight = qMax(height() + 128, image.height());
-         resizeImage(&image, QSize(newWidth, newHeight));
-         update();
-     }
-     QWidget::resizeEvent(event);
- }
+// void ScribbleArea::resizeEvent(QResizeEvent *event)
+// {
+//     if (width() > image.width() || height() > image.height()) {
+//         int newWidth = qMax(width() + 128, image.width());
+//         int newHeight = qMax(height() + 128, image.height());
+//         resizeImage(&image, QSize(newWidth, newHeight));
+//         update();
+//     }
+//     QWidget::resizeEvent(event);
+// }
 
  void ScribbleArea::drawLineTo(const QPoint &endPoint)
  {

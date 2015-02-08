@@ -31,7 +31,9 @@ void paint::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidg
 {
 	if (menu_name == tr("menu1"))
 	{
-        create();
+        Paint_Dialog dialog(&callback, parent);
+        dialog.setWindowTitle("Paint");
+        dialog.exec();
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -71,9 +73,7 @@ bool paint::dofunc(const QString & func_name, const V3DPluginArgList & input, V3
 
 void paint:: create()
 {
-    Paint_Dialog dialog;
-    dialog.setWindowTitle("Paint");
-    dialog.exec();
+
 }
 
 

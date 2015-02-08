@@ -1,18 +1,20 @@
 #include "paint_dialog.h"
 #include "scribblearea.h"
 
-Paint_Dialog::Paint_Dialog(QWidget *parent) :
+Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     QDialog(parent)
-
-{   paintarea = new ScribbleArea;
+{
+    callback=cb;
+    paintarea = new ScribbleArea();
+    image1Dc_in=0;
     create();
 }
 
 void Paint_Dialog::create()
 {
+
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(paintarea,1,0,1,1);
-
     QToolBar *tool = new QToolBar;
     tool->setGeometry(0,0,200,20);
     QVBoxLayout *layout = new QVBoxLayout;
@@ -23,17 +25,34 @@ void Paint_Dialog::create()
     button_save->setText("Save");
     QToolButton *button_color = new QToolButton;
     button_color->setText("Color");
+    QToolButton *button_fetch = new QToolButton;
+    button_fetch->setText("Fetch");
+    QToolButton *button_pb = new QToolButton;
+    button_pb->setText("Pushback");
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
     button_print->setText("Print");
     QToolButton *button_clear = new QToolButton;
     button_clear->setText("Clear screen");
+    QLabel *label= new QLabel;
+    label->setText("Information of selecton:");
+    edit=new QPlainTextEdit;
+    edit->setPlainText("");
+    spin=new QSpinBox;
+    spin->setMaximum(0);
+    spin->setMinimum(0);
+    connect(spin,SIGNAL(valueChanged(int)),this,SLOT(zdisplay(int)));
+    connect(button_pb,SIGNAL(clicked()),this,SLOT(pushback()));
 
 
     tool->addWidget(button_load);
     tool->addSeparator();
+    tool->addWidget(button_fetch);
+    tool->addSeparator();
     tool->addWidget(button_save);
+    tool->addSeparator();
+    tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
@@ -45,10 +64,13 @@ void Paint_Dialog::create()
     tool->addSeparator();
 
     layout->addWidget(tool);
+    gridLayout->addWidget(label,2,0,1,1);
     gridLayout->addLayout(layout,0,0,1,1);
+    gridLayout->addWidget(edit,3,0,1,1);
+    gridLayout->addWidget(spin,0,1,1,1);
     this->setLayout(gridLayout);
 
-    this->setMinimumHeight(800);
+//    this->setMinimumHeight(800);
     this->setMinimumWidth(800);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
     connect(button_save, SIGNAL(clicked()), this, SLOT(save()));
@@ -56,6 +78,8 @@ void Paint_Dialog::create()
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
     connect(button_clear, SIGNAL(clicked()), paintarea, SLOT(clearImage()));
     connect(button_print, SIGNAL(clicked()), paintarea, SLOT(print()));
+    connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
+
 }
 
 
@@ -79,18 +103,156 @@ bool Paint_Dialog::maybeSave()
 }
 
 
-void Paint_Dialog::load()
+bool Paint_Dialog::load()
 {
-// fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
-//                                          QDir::currentPath(),
-//       QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
+                                         QDir::currentPath(),
+       QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
 
     if (maybeSave()) {
         QString fileName = QFileDialog::getOpenFileName(this,
                                     tr("Open File"), QDir::currentPath());
-         if (!fileName.isEmpty())
-             paintarea->openImage(fileName);
+
      }
+    if (!fileName.isEmpty())
+    {
+        qDebug()<<"1";
+
+        if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
+        {
+            v3d_msg("load image "+fileName+" error!");
+            return false;
+        }
+        qDebug()<<"2";
+
+        QSize newSize;
+        newSize.setWidth(sz_img[0]);
+        newSize.setHeight(sz_img[1]);
+        paintarea->setFixedSize(newSize);
+
+        spin->setMaximum(sz_img[2]-1);
+        spin->setValue(sz_img[2]/2);
+
+        return true;
+    }
+    return false;
+}
+
+void Paint_Dialog::zdisplay(int z)
+{
+    QSize newSize;
+    newSize.setWidth(sz_img[0]);
+    newSize.setHeight(sz_img[1]);
+    QImage newimage(newSize, QImage::Format_RGB16);
+    QRgb value;
+
+    z=z-2;
+    if (z<0)  z=0; //bug in the v3d main
+
+    for(int x=0; x< sz_img[0]; x++){
+        for(int y=0; y<sz_img[1]; y++){
+            int p1=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+            int p2=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]];
+            int p3=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]];
+            value=qRgb(p1,p2,p3);
+            newimage.setPixel(x,y,value);
+        }
+    }
+
+    paintarea->openImage(newimage);
+
+    QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
+            " z: " + QString::number(sz_img[2]) + "\nCurrent z: " + QString::number(spin->value());
+    edit->setPlainText(tmp);
+
+}
+
+void Paint_Dialog::fetch()
+{
+    qDebug()<<"In fetch now";
+    curwin = callback->currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback->getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+    qDebug()<< "Valid zslicenum"<< p4DImage->getValidZSliceNum();
+    qDebug()<<"Valid previouszslice:" <<p4DImage->getPreValidZSliceNum();
+
+    unsigned char* data1d = p4DImage->getRawData();
+    image1Dc_in=data1d;
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    V3DLONG N = p4DImage->getXDim();
+    sz_img[0]=N;
+    V3DLONG M = p4DImage->getYDim();
+    sz_img[1]=M;
+    V3DLONG P = p4DImage->getZDim();
+    sz_img[2]=P;
+    V3DLONG sc = p4DImage->getCDim();
+    sz_img[3]=sc;
+    qDebug()<<"N:"<<N <<"M: "<<M <<"P: "<<P;
+    QSize newSize;
+    newSize.setWidth(sz_img[0]);
+    newSize.setHeight(sz_img[1]);
+    paintarea->setFixedSize(newSize);
+
+    TriviewControl *tript=callback->getTriviewControl(curwin);
+    V3DLONG x,y,z;
+    tript->getFocusLocation(x,y,z);
+    qDebug()<<"fetch z value:"<<z;
+    spin->setMaximum(sz_img[2]);
+    spin->setValue(z);
+
+
+}
+
+void Paint_Dialog::pushback()
+{   qDebug()<<"Inpushback now";
+    unsigned char* newdata=0;
+    long size=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    //newdata=(unsigned char *) calloc(size, sizeof(unsigned char));
+    newdata=image1Dc_in;
+
+    QColor color;
+    int z=spin->value();
+    qDebug()<<"Pushback spin value:"<<z;
+    z=z-2;
+    if (z<0) z=0;
+    for(int x=0; x< sz_img[0]; x++){
+        for(int y=0; y<sz_img[1]; y++){
+            color=paintarea->image.pixel(QPoint(x,y));
+            int red=color.red();
+            int blue=color.blue();
+            int green=color.green();
+            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red; //red;
+            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green; //blue;
+            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue; //green;
+
+        }
+    }
+
+
+//    V3DLONG N = p4DImage->getXDim();
+//    V3DLONG M = p4DImage->getYDim();
+//    V3DLONG P = p4DImage->getZDim();
+//    V3DLONG sc = p4DImage->getCDim();
+
+
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData(newdata,sz_img[0],sz_img[1],sz_img[2], sz_img[3], pixeltype);
+    //v3dhandle newwin = callback->newImageWindow();
+    callback->setImage(curwin, new4DImage);
+    callback->setImageName(curwin, "Paint result");
+    callback->updateImageWindow(curwin);
 
 }
 
