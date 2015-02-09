@@ -29,6 +29,8 @@ public slots:
     void fetch();
     void pushback();
     void clearimage();
+    bool zoomin();
+    void zoomout();
 
 private:
     void create();
@@ -46,11 +48,12 @@ private:
     unsigned char *image1Dc_in;
     v3dhandle curwin;
     ImagePixelType pixeltype;
-    QImage *imagecopy;
+    QImage imagecopy;
     unsigned char *disdata;
     int previousz;
     int dataflag;
     unsigned char *data1d;
+
 
 
 };

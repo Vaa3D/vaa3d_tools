@@ -18,25 +18,37 @@ void Paint_Dialog::create()
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(paintarea,1,0,1,1);
     QToolBar *tool = new QToolBar;
-    tool->setGeometry(0,0,200,20);
+    tool->setGeometry(0,0,250,20);
+    //tool->setOrientation(Qt::Vertical );
+
     QVBoxLayout *layout = new QVBoxLayout;
     QToolButton *button_load = new QToolButton;
     button_load->setGeometry(0,0,10,20);
     button_load->setText("Load");
     QToolButton *button_save = new QToolButton;
     button_save->setText("Save");
+    button_save->setGeometry(0,0,10,20);
     QToolButton *button_color = new QToolButton;
     button_color->setText("Color");
     QToolButton *button_fetch = new QToolButton;
     button_fetch->setText("Fetch");
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
+    button_pb->setGeometry(0,0,10,20);
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
     button_print->setText("Print");
     QToolButton *button_clear = new QToolButton;
     button_clear->setText("Clear screen");
+    button_clear->setGeometry(0,0,10,20);
+    QToolButton *button_zoomin=new QToolButton;
+    button_zoomin->setText("Zoom in");
+    button_zoomin->setGeometry(0,0,10,20);
+    QToolButton *button_zoomout=new QToolButton;
+    button_zoomout->setText("Zoom out");
+    button_zoomout->setGeometry(0,0,10,20);
+
     QLabel *label= new QLabel;
     label->setText("Information of selecton:");
     edit=new QPlainTextEdit;
@@ -47,7 +59,6 @@ void Paint_Dialog::create()
     connect(spin,SIGNAL(valueChanged(int)),this,SLOT(zdisplay(int)));
     connect(button_pb,SIGNAL(clicked()),this,SLOT(pushback()));
 
-
     tool->addWidget(button_load);
     tool->addSeparator();
     tool->addWidget(button_fetch);
@@ -55,6 +66,10 @@ void Paint_Dialog::create()
     tool->addWidget(button_save);
     tool->addSeparator();
     tool->addWidget(button_pb);
+    tool->addSeparator();
+    tool->addWidget(button_zoomin);
+    tool->addSeparator();
+    tool->addWidget(button_zoomout);
     tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
@@ -81,7 +96,8 @@ void Paint_Dialog::create()
     connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
     connect(button_print, SIGNAL(clicked()), paintarea, SLOT(print()));
     connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
-
+    connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
+    connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
 }
 
 
@@ -176,6 +192,9 @@ void Paint_Dialog::zdisplay(int z)
     }
     qDebug()<<"The end of for loop in zdisplay";
 
+    //newimage.scaled(500,800,Qt::KeepAspectRatio);
+
+    //paintarea->openImage(newimage.scaled(500,800,Qt::KeepAspectRatio));
     paintarea->openImage(newimage);
 
     QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
@@ -267,8 +286,24 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
     }
     qDebug()<<"I have been copied";
     return qcopydata;
+}
 
 
+bool Paint_Dialog::zoomin()
+{
+    QSize newSize;
+    newSize.setWidth(500);
+    newSize.setHeight(800);
+    paintarea->setFixedSize(newSize);
+    //imagecopy=paintarea->image;
+    paintarea->openImage(paintarea->image.scaled(500,800,Qt::KeepAspectRatio));
+    return true;
+}
+
+void Paint_Dialog::zoomout()
+{
+    //paintarea->image=imagecopy;
+    paintarea->openImage(paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio));
 }
 
 void Paint_Dialog::savezimage(int z)
@@ -318,7 +353,8 @@ void Paint_Dialog::pushback()
         return;
     }
 
-
+    if (zoomin())
+       zoomout();
     QColor color;
     int z=spin->value();
     savezimage(z);
