@@ -73,7 +73,7 @@ void Paint_Dialog::create()
 
     this->setLayout(gridLayout);
     this->setMinimumHeight(800);
-    this->setMinimumWidth(800);
+    this->setMinimumWidth(500);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
     connect(button_save, SIGNAL(clicked()), this, SLOT(save()));
     connect(button_color, SIGNAL(clicked()), this, SLOT(penColor()));
@@ -291,23 +291,18 @@ void Paint_Dialog::savezimage(int z)
 void Paint_Dialog::pushback()
 {   qDebug()<<"Inpushback now";
 
+    curwin = callback->currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+
     QColor color;
     int z=spin->value();
     savezimage(z);
-//    qDebug()<<"Pushback spin value:"<<z;
-//    z=z-2;
-//    if (z<0) z=0;
-//    for(int x=0; x< sz_img[0]; x++){
-//        for(int y=0; y<sz_img[1]; y++){
-//            color=paintarea->image.pixel(QPoint(x,y));
-//            int red=color.red();
-//            int blue=color.blue();
-//            int green=color.green();
-//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red; //red;
-//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green; //blue;
-//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue; //green;
-//        }
-//    }
+
     for(int i=0; i<sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]; i++){
         data1d[i]=disdata[i];
     }
