@@ -14,7 +14,8 @@ Q_EXPORT_PLUGIN2(Paint, paint);
 QStringList paint::menulist() const
 {
 	return QStringList() 
-        <<tr("Paint");
+        <<tr("Paint")
+        <<tr("About");
 
 }
 
@@ -34,9 +35,10 @@ void paint::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidg
         dialog.setWindowTitle("Paint");
         dialog.exec();
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("About"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("This is a paint toolbox. "
+                "Developed by Yujie Li, 2015-02-04");
 	}
 	else
 	{

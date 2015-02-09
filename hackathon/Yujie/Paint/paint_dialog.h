@@ -34,7 +34,7 @@ private:
     void create();
     bool maybeSave();
     bool saveFile(const QByteArray &fileFormat);
-    void datacopy(unsigned char *data,long size);
+    unsigned char * datacopy(unsigned char *data,long size);
     void savezimage(int z);
 
     QString fileName;
@@ -47,8 +47,10 @@ private:
     v3dhandle curwin;
     ImagePixelType pixeltype;
     QImage *imagecopy;
-    unsigned char *qcopydata;
+    unsigned char *disdata;
     int previousz;
+    int dataflag;
+    unsigned char *data1d;
 
 
 };

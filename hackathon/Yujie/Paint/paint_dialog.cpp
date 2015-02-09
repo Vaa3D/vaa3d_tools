@@ -9,6 +9,7 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     image1Dc_in=0;
     create();
     previousz=-1;
+    int dataflag=0; //if loaded data,dataflag=0; if fetched,dataflag=1
 }
 
 void Paint_Dialog::create()
@@ -42,7 +43,7 @@ void Paint_Dialog::create()
     edit->setPlainText("");
     spin=new QSpinBox;
     spin->setMaximum(0);
-    spin->setMinimum(0);
+    spin->setMinimum(1);
     connect(spin,SIGNAL(valueChanged(int)),this,SLOT(zdisplay(int)));
     connect(button_pb,SIGNAL(clicked()),this,SLOT(pushback()));
 
@@ -63,14 +64,14 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_print);
     tool->addSeparator();
+    tool->addWidget(spin);
 
     layout->addWidget(tool);
     gridLayout->addWidget(label,2,0,1,1);
     gridLayout->addLayout(layout,0,0,1,1);
     gridLayout->addWidget(edit,3,0,1,1);
-    gridLayout->addWidget(spin,0,1,1,1);
-    this->setLayout(gridLayout);
 
+    this->setLayout(gridLayout);
     this->setMinimumHeight(800);
     this->setMinimumWidth(800);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
@@ -122,12 +123,12 @@ bool Paint_Dialog::load()
         }
         qDebug()<<"2";
 
+        disdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+
         QSize newSize;
         newSize.setWidth(sz_img[0]);
         newSize.setHeight(sz_img[1]);
         paintarea->setFixedSize(newSize);
-
-        datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
 
         spin->setMaximum(sz_img[2]-1);
         spin->setValue(sz_img[2]/2);
@@ -156,9 +157,9 @@ void Paint_Dialog::zdisplay(int z)
     //Write image data to display on the screen
     for(int x=0; x< sz_img[0]; x++){
         for(int y=0; y<sz_img[1]; y++){
-            int p1=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
-            int p2=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]];
-            int p3=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]];
+            int p1=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+            int p2=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+            int p3=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
             value=qRgb(p1,p2,p3);
             newimage.setPixel(x,y,value);
         }
@@ -178,7 +179,20 @@ void Paint_Dialog::zdisplay(int z)
 void Paint_Dialog::clearimage()
 {
     previousz=-1;
-    zdisplay(spin->value());
+    if (dataflag==1)
+    { unsigned char * tmp=disdata;
+      disdata=data1d;
+     zdisplay(spin->value());
+      disdata=tmp;
+    }
+    else
+    {
+      unsigned char * tmp1=disdata;
+      disdata=image1Dc_in;
+      zdisplay(spin->value());
+      disdata=tmp1;
+    }
+
 }
 
 
@@ -201,9 +215,7 @@ void Paint_Dialog::fetch()
     }
 
 
-    unsigned char* data1d = p4DImage->getRawData();
-    image1Dc_in=data1d;
-
+    data1d = p4DImage->getRawData();
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG N = p4DImage->getXDim();
@@ -215,15 +227,15 @@ void Paint_Dialog::fetch()
     V3DLONG sc = p4DImage->getCDim();
     sz_img[3]=sc;
 
-    qDebug()<<"N:"<<N <<"M: "<<M <<"P: "<<P;
+    dataflag=1;
+
     //save image1Dc_in data in qcopydata
-    datacopy(data1d,N*M*P*sc);
+    disdata=datacopy(data1d,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
 
     QSize newSize;
     newSize.setWidth(sz_img[0]);
     newSize.setHeight(sz_img[1]);
     paintarea->setFixedSize(newSize);
-
 
     TriviewControl *tript=callback->getTriviewControl(curwin);
     V3DLONG x,y,z;
@@ -235,20 +247,24 @@ void Paint_Dialog::fetch()
 }
 
 
-void Paint_Dialog::datacopy(unsigned char *data,long size)
+unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 {
-    qcopydata=new unsigned char [size];
+    unsigned char * qcopydata=new unsigned char [size];
     for (int i=0;i<size;i++)
-    {qcopydata[i]=data[i];
+    {
+        qcopydata[i]=data[i];
     }
     qDebug()<<"I have been copied";
+    return qcopydata;
+
 
 }
 
 void Paint_Dialog::savezimage(int z)
 {
     if (!paintarea->isModified())
-    {qDebug()<<"I have not changed";
+    {
+        qDebug()<<"I have not changed";
         return;
     }
     else
@@ -263,9 +279,9 @@ void Paint_Dialog::savezimage(int z)
                 int red=color.red();
                 int blue=color.blue();
                 int green=color.green();
-                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
-                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
-                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
+                disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
+                disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
+                disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
              }
         }
 
@@ -274,33 +290,29 @@ void Paint_Dialog::savezimage(int z)
 
 void Paint_Dialog::pushback()
 {   qDebug()<<"Inpushback now";
-    unsigned char* newdata=0;
-    long size=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-    //newdata=(unsigned char *) calloc(size, sizeof(unsigned char));
-    newdata=image1Dc_in;
 
     QColor color;
     int z=spin->value();
-    qDebug()<<"Pushback spin value:"<<z;
-    z=z-2;
-    if (z<0) z=0;
-    for(int x=0; x< sz_img[0]; x++){
-        for(int y=0; y<sz_img[1]; y++){
-            color=paintarea->image.pixel(QPoint(x,y));
-            int red=color.red();
-            int blue=color.blue();
-            int green=color.green();
-            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red; //red;
-            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green; //blue;
-            newdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue; //green;
-
-        }
+    savezimage(z);
+//    qDebug()<<"Pushback spin value:"<<z;
+//    z=z-2;
+//    if (z<0) z=0;
+//    for(int x=0; x< sz_img[0]; x++){
+//        for(int y=0; y<sz_img[1]; y++){
+//            color=paintarea->image.pixel(QPoint(x,y));
+//            int red=color.red();
+//            int blue=color.blue();
+//            int green=color.green();
+//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red; //red;
+//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green; //blue;
+//            disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue; //green;
+//        }
+//    }
+    for(int i=0; i<sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]; i++){
+        data1d[i]=disdata[i];
     }
 
-    qDebug()<<"after loop";
-    Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(newdata,sz_img[0],sz_img[1],sz_img[2], sz_img[3], pixeltype);
-    //v3dhandle newwin = callback->newImageWindow();
+
     callback->setImage(curwin, new4DImage);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
