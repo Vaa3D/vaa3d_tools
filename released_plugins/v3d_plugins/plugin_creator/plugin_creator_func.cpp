@@ -185,6 +185,12 @@ int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent)
     if (dialog.exec()!=QDialog::Accepted) return -1;
     dialog.update();
 
+    QFile v3d_interface_file(QString("%1/v3d_main/basic_c_fun/v3d_interface.h").arg(dialog.vaa3d_path.c_str()));
+    if(!v3d_interface_file.exists())
+    {
+        v3d_msg("Vaa3D whole-project path is not correct!");
+        return -1;
+    }
     PluginTemplate pt;
     pt.PLUGIN_NAME = dialog.plugin_name;
     pt.PLUGIN_CLASS = dialog.plugin_class;
