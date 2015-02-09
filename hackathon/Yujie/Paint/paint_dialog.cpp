@@ -287,14 +287,15 @@ bool Paint_Dialog::zoomin()
     newSize.setWidth(600);
     newSize.setHeight(800);
     paintarea->setFixedSize(newSize);
-    paintarea->openImage(paintarea->image.scaled(450,450,Qt::KeepAspectRatio));
+    QImage q = paintarea->image.scaled(450,450,Qt::KeepAspectRatio);
+    paintarea->openImage( q );
     return true;
 }
 
 void Paint_Dialog::zoomout()
 {
-
-    paintarea->openImage(paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio));
+    QImage q = paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio) ;
+    paintarea->openImage( q );
 }
 
 void Paint_Dialog::savezimage(int z)
