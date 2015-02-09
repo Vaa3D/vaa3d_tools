@@ -312,7 +312,7 @@ void Paint_Dialog::pushback()
         data1d[i]=disdata[i];
     }
 
-
+    Image4DSimple * new4DImage = new Image4DSimple();
     callback->setImage(curwin, new4DImage);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
