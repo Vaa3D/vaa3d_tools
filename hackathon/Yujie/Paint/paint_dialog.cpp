@@ -107,6 +107,7 @@ bool Paint_Dialog::maybeSave()
 
 bool Paint_Dialog::load()
 {
+    qDebug()<<"In load now";
     if (maybeSave())
     {fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
                                          QDir::currentPath(),
@@ -124,12 +125,13 @@ bool Paint_Dialog::load()
         qDebug()<<"2";
 
         disdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+        qDebug()<<"3";
 
         QSize newSize;
         newSize.setWidth(sz_img[0]);
         newSize.setHeight(sz_img[1]);
         paintarea->setFixedSize(newSize);
-
+        qDebug()<<"4";
         spin->setMaximum(sz_img[2]-1);
         spin->setValue(sz_img[2]/2);
         //spin change value will trigger zdisplay
@@ -154,16 +156,25 @@ void Paint_Dialog::zdisplay(int z)
     z=z-2;
     if (z<0)  z=0; //bug in the v3d main
 
+    int p2=0;
+    int p3=0;
     //Write image data to display on the screen
     for(int x=0; x< sz_img[0]; x++){
         for(int y=0; y<sz_img[1]; y++){
             int p1=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
-            int p2=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
-            int p3=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+            if (sz_img[3]>1)
+            {
+                p2=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+            }
+            if (sz_img[3]>2)
+            {
+                p3=disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+            }
             value=qRgb(p1,p2,p3);
             newimage.setPixel(x,y,value);
         }
     }
+    qDebug()<<"The end of for loop in zdisplay";
 
     paintarea->openImage(newimage);
 
@@ -270,9 +281,12 @@ void Paint_Dialog::savezimage(int z)
     else
     {
         QColor color;
-        qDebug()<<"z image is saved: "<<z;
+
         z=z-2;
         if (z<0) z=0;
+
+        //accomodate data with less than 3 channels.
+
         for(int x=0; x< sz_img[0]; x++){
             for(int y=0; y<sz_img[1]; y++){
                 color=paintarea->image.pixel(QPoint(x,y));
@@ -280,11 +294,17 @@ void Paint_Dialog::savezimage(int z)
                 int blue=color.blue();
                 int green=color.green();
                 disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
+                if (sz_img[3]>1)
+                {
                 disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
+                }
+                if (sz_img[3]>2)
+                {
                 disdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
+                }
              }
         }
-
+     qDebug()<<"z image is saved: "<<z;
     }
 }
 
