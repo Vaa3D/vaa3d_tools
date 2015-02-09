@@ -42,6 +42,7 @@
 #include "RawFmtMngr.h"
 #include "Tiff3DMngr.h"
 #include "TimeSeries.h"
+#include <typeinfo>
 
 // Giulio_CV #include <cxcore.h>
 // Giulio_CV #include <highgui.h>
