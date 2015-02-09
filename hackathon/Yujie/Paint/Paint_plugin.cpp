@@ -70,10 +70,6 @@ bool paint::dofunc(const QString & func_name, const V3DPluginArgList & input, V3
 }
 
 
-//void paint:: create()
-//{
-
-//}
 
 
 

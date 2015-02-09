@@ -106,15 +106,11 @@ bool Paint_Dialog::maybeSave()
 
 bool Paint_Dialog::load()
 {
-    fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
+    if (maybeSave())
+    {fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
                                          QDir::currentPath(),
        QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-
-    if (maybeSave()) {
-        QString fileName = QFileDialog::getOpenFileName(this,
-                                    tr("Open File"), QDir::currentPath());
-
-     }
+    }
     if (!fileName.isEmpty())
     {
         qDebug()<<"1";
@@ -203,8 +199,7 @@ void Paint_Dialog::fetch()
         QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
         return;
     }
-    qDebug()<< "Valid zslicenum"<< p4DImage->getValidZSliceNum();
-    qDebug()<<"Valid previouszslice:" <<p4DImage->getPreValidZSliceNum();
+
 
     unsigned char* data1d = p4DImage->getRawData();
     image1Dc_in=data1d;
@@ -224,7 +219,6 @@ void Paint_Dialog::fetch()
     //save image1Dc_in data in qcopydata
     datacopy(data1d,N*M*P*sc);
 
-    qDebug()<<"N:"<<N <<"M: "<<M <<"P: "<<P;
     QSize newSize;
     newSize.setWidth(sz_img[0]);
     newSize.setHeight(sz_img[1]);
@@ -303,13 +297,14 @@ void Paint_Dialog::pushback()
         }
     }
 
-
+    qDebug()<<"after loop";
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData(newdata,sz_img[0],sz_img[1],sz_img[2], sz_img[3], pixeltype);
     //v3dhandle newwin = callback->newImageWindow();
     callback->setImage(curwin, new4DImage);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
+    qDebug()<<"After updatewindow";
 
 }
 
