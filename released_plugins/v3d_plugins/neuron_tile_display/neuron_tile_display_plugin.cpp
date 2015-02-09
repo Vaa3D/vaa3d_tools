@@ -30,7 +30,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	{
         dotile(callback, parent);
 	}
-    if (menu_name == tr("neuron_tile_XY"))
+    else if (menu_name == tr("neuron_tile_XY"))
     {
         doxytile(callback, parent);
     }
