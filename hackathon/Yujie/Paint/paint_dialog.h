@@ -48,7 +48,6 @@ private:
     unsigned char *image1Dc_in;
     v3dhandle curwin;
     ImagePixelType pixeltype;
-    QImage imagecopy;
     unsigned char *disdata;
     int previousz;
     int dataflag;

@@ -87,7 +87,7 @@ void Paint_Dialog::create()
     gridLayout->addWidget(edit,3,0,1,1);
 
     this->setLayout(gridLayout);
-    this->setMinimumHeight(800);
+    this->setMinimumHeight(700);
     this->setMinimumWidth(500);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
     connect(button_save, SIGNAL(clicked()), this, SLOT(save()));
@@ -192,9 +192,6 @@ void Paint_Dialog::zdisplay(int z)
     }
     qDebug()<<"The end of for loop in zdisplay";
 
-    //newimage.scaled(500,800,Qt::KeepAspectRatio);
-
-    //paintarea->openImage(newimage.scaled(500,800,Qt::KeepAspectRatio));
     paintarea->openImage(newimage);
 
     QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
@@ -248,18 +245,13 @@ void Paint_Dialog::fetch()
     data1d = p4DImage->getRawData();
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    V3DLONG N = p4DImage->getXDim();
-    sz_img[0]=N;
-    V3DLONG M = p4DImage->getYDim();
-    sz_img[1]=M;
-    V3DLONG P = p4DImage->getZDim();
-    sz_img[2]=P;
-    V3DLONG sc = p4DImage->getCDim();
-    sz_img[3]=sc;
+    sz_img[0]=p4DImage->getXDim();
+    sz_img[1]=p4DImage->getYDim();
+    sz_img[2]=p4DImage->getZDim();
+    sz_img[3]=p4DImage->getCDim();
 
     dataflag=1;
 
-    //save image1Dc_in data in qcopydata
     disdata=datacopy(data1d,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
 
     QSize newSize;
@@ -292,17 +284,16 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 bool Paint_Dialog::zoomin()
 {
     QSize newSize;
-    newSize.setWidth(500);
+    newSize.setWidth(600);
     newSize.setHeight(800);
     paintarea->setFixedSize(newSize);
-    //imagecopy=paintarea->image;
-    paintarea->openImage(paintarea->image.scaled(500,800,Qt::KeepAspectRatio));
+    paintarea->openImage(paintarea->image.scaled(450,450,Qt::KeepAspectRatio));
     return true;
 }
 
 void Paint_Dialog::zoomout()
 {
-    //paintarea->image=imagecopy;
+
     paintarea->openImage(paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio));
 }
 
@@ -316,11 +307,10 @@ void Paint_Dialog::savezimage(int z)
     else
     {
         QColor color;
-
         z=z-2;
         if (z<0) z=0;
 
-        //accomodate data with less than 3 channels.
+        //accomodate data with fewer than 3 channels.
 
         for(int x=0; x< sz_img[0]; x++){
             for(int y=0; y<sz_img[1]; y++){
@@ -393,7 +383,6 @@ void Paint_Dialog::save()
 {
 
     saveFile("jpg");
-
 
 }
 
