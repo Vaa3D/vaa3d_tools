@@ -14,9 +14,8 @@ Q_EXPORT_PLUGIN2(Paint, paint);
 QStringList paint::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
-		<<tr("about");
+        <<tr("Paint");
+
 }
 
 QStringList paint::funclist() const
@@ -29,7 +28,7 @@ QStringList paint::funclist() const
 
 void paint::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("Paint"))
 	{
         Paint_Dialog dialog(&callback, parent);
         dialog.setWindowTitle("Paint");
@@ -71,10 +70,10 @@ bool paint::dofunc(const QString & func_name, const V3DPluginArgList & input, V3
 }
 
 
-void paint:: create()
-{
+//void paint:: create()
+//{
 
-}
+//}
 
 
 

@@ -8,6 +8,7 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     paintarea = new ScribbleArea();
     image1Dc_in=0;
     create();
+    previousz=-1;
 }
 
 void Paint_Dialog::create()
@@ -70,13 +71,13 @@ void Paint_Dialog::create()
     gridLayout->addWidget(spin,0,1,1,1);
     this->setLayout(gridLayout);
 
-//    this->setMinimumHeight(800);
+    this->setMinimumHeight(800);
     this->setMinimumWidth(800);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
     connect(button_save, SIGNAL(clicked()), this, SLOT(save()));
     connect(button_color, SIGNAL(clicked()), this, SLOT(penColor()));
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
-    connect(button_clear, SIGNAL(clicked()), paintarea, SLOT(clearImage()));
+    connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
     connect(button_print, SIGNAL(clicked()), paintarea, SLOT(print()));
     connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
 
@@ -130,9 +131,11 @@ bool Paint_Dialog::load()
         newSize.setHeight(sz_img[1]);
         paintarea->setFixedSize(newSize);
 
+        datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+
         spin->setMaximum(sz_img[2]-1);
         spin->setValue(sz_img[2]/2);
-
+        //spin change value will trigger zdisplay
         return true;
     }
     return false;
@@ -140,6 +143,11 @@ bool Paint_Dialog::load()
 
 void Paint_Dialog::zdisplay(int z)
 {
+    if (previousz>=0)
+    {
+      savezimage(previousz);
+    }
+
     QSize newSize;
     newSize.setWidth(sz_img[0]);
     newSize.setHeight(sz_img[1]);
@@ -149,6 +157,7 @@ void Paint_Dialog::zdisplay(int z)
     z=z-2;
     if (z<0)  z=0; //bug in the v3d main
 
+    //Write image data to display on the screen
     for(int x=0; x< sz_img[0]; x++){
         for(int y=0; y<sz_img[1]; y++){
             int p1=image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
@@ -163,9 +172,19 @@ void Paint_Dialog::zdisplay(int z)
 
     QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
             " z: " + QString::number(sz_img[2]) + "\nCurrent z: " + QString::number(spin->value());
+
     edit->setPlainText(tmp);
 
+    previousz=spin->value();
 }
+
+
+void Paint_Dialog::clearimage()
+{
+    previousz=-1;
+    zdisplay(spin->value());
+}
+
 
 void Paint_Dialog::fetch()
 {
@@ -189,6 +208,7 @@ void Paint_Dialog::fetch()
 
     unsigned char* data1d = p4DImage->getRawData();
     image1Dc_in=data1d;
+
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG N = p4DImage->getXDim();
@@ -199,11 +219,17 @@ void Paint_Dialog::fetch()
     sz_img[2]=P;
     V3DLONG sc = p4DImage->getCDim();
     sz_img[3]=sc;
+
+    qDebug()<<"N:"<<N <<"M: "<<M <<"P: "<<P;
+    //save image1Dc_in data in qcopydata
+    datacopy(data1d,N*M*P*sc);
+
     qDebug()<<"N:"<<N <<"M: "<<M <<"P: "<<P;
     QSize newSize;
     newSize.setWidth(sz_img[0]);
     newSize.setHeight(sz_img[1]);
     paintarea->setFixedSize(newSize);
+
 
     TriviewControl *tript=callback->getTriviewControl(curwin);
     V3DLONG x,y,z;
@@ -212,7 +238,44 @@ void Paint_Dialog::fetch()
     spin->setMaximum(sz_img[2]);
     spin->setValue(z);
 
+}
 
+
+void Paint_Dialog::datacopy(unsigned char *data,long size)
+{
+    qcopydata=new unsigned char [size];
+    for (int i=0;i<size;i++)
+    {qcopydata[i]=data[i];
+    }
+    qDebug()<<"I have been copied";
+
+}
+
+void Paint_Dialog::savezimage(int z)
+{
+    if (!paintarea->isModified())
+    {qDebug()<<"I have not changed";
+        return;
+    }
+    else
+    {
+        QColor color;
+        qDebug()<<"z image is saved: "<<z;
+        z=z-2;
+        if (z<0) z=0;
+        for(int x=0; x< sz_img[0]; x++){
+            for(int y=0; y<sz_img[1]; y++){
+                color=paintarea->image.pixel(QPoint(x,y));
+                int red=color.red();
+                int blue=color.blue();
+                int green=color.green();
+                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
+                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
+                image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
+             }
+        }
+
+    }
 }
 
 void Paint_Dialog::pushback()
@@ -239,12 +302,6 @@ void Paint_Dialog::pushback()
 
         }
     }
-
-
-//    V3DLONG N = p4DImage->getXDim();
-//    V3DLONG M = p4DImage->getYDim();
-//    V3DLONG P = p4DImage->getZDim();
-//    V3DLONG sc = p4DImage->getCDim();
 
 
     Image4DSimple * new4DImage = new Image4DSimple();

@@ -8,7 +8,7 @@
      modified = false;
      scribbling = false;
      myPenWidth = 1;
-     myPenColor = Qt::blue;
+     myPenColor = Qt::yellow;
 
  }
 
@@ -24,6 +24,7 @@
 
 
  }
+
 
 bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
      {
@@ -48,12 +49,6 @@ bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
      myPenWidth = newWidth;
  }
 
- void ScribbleArea::clearImage()
- {
-     image.fill(qRgb(255, 255, 255));
-     modified = true;
-     update();
- }
 
  void ScribbleArea::mousePressEvent(QMouseEvent *event)
  {

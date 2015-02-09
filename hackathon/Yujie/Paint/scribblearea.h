@@ -24,8 +24,8 @@
      int penWidth() const { return myPenWidth; }
      QImage image;
 
+
  public slots:
-     void clearImage();
      void print();
 
  protected:
@@ -38,12 +38,6 @@
  private:
      void drawLineTo(const QPoint &endPoint);
      void resizeImage(QImage *image, const QSize &newSize);
-     //V3DPluginCallback2 * callback;
-     //unsigned char *image1Dc_in;
-     //unsigned char *image1D_out;
-     //V3DLONG sz_img[4];
-     //int intype;
-
 
      bool modified;
      bool scribbling;

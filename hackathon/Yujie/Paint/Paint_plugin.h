@@ -8,7 +8,6 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include <QColor>
 #include <QImage>
 #include <QPoint>
 #include <QWidget>
@@ -26,22 +25,13 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
-    QLineEdit *edit_load;
-    QPushButton *btn_load;
+
 
 private:
     QString fileName;
     V3DPluginCallback2 * callback;
 
 
-private:
-    void create();
-
-
-
-
-//public slots:
-//    bool load();
 
 };
 

@@ -28,20 +28,28 @@ public slots:
     void zdisplay(int);
     void fetch();
     void pushback();
+    void clearimage();
 
 private:
     void create();
-    QString fileName;
-    V3DPluginCallback2 *callback;
     bool maybeSave();
     bool saveFile(const QByteArray &fileFormat);
+    void datacopy(unsigned char *data,long size);
+    void savezimage(int z);
+
+    QString fileName;
+    V3DPluginCallback2 *callback;
     QPlainTextEdit *edit;
     QSpinBox *spin;
-    unsigned char *image1Dc_in;
     V3DLONG sz_img[4];
     int intype;
+    unsigned char *image1Dc_in;
     v3dhandle curwin;
     ImagePixelType pixeltype;
+    QImage *imagecopy;
+    unsigned char *qcopydata;
+    int previousz;
+
 
 };
 
