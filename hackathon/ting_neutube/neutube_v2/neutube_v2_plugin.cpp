@@ -8,7 +8,14 @@
 #include "basic_surf_objs.h"
 
 #include "neutube_v2_plugin.h"
+
+#include "zqtheader.h" //Start including neutube headers
 #include "zneurontracer.h"
+#include "zstack.hxx"
+#include "zswctree.h"
+#include "zqtheader_undef.h" //neutube header end
+
+
 Q_EXPORT_PLUGIN2(neutube_v2, neutube_v2);
 
 using namespace std;
@@ -39,16 +46,6 @@ void neutube_v2::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
 	if (menu_name == tr("tracing"))
 	{
-        ZNeuronTracer tracer;
-        ZStack stack;
-        stack.load("test.tif");
-        tracer.initTraceWorkspace(&stack);
-        tracer.initConnectionTestWorkspace();
-        ZSwcTree *tree = tracer.trace(&stack, true);
-        tree->save("test.swc");
-        delete tree;
-        return;
-
         bool bmenu = true;
         input_PARA PARA;
         reconstruction_func(callback,parent,PARA,bmenu);
@@ -153,7 +150,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         in_sz[1] = M;
         in_sz[2] = P;
         in_sz[3] = sc;
-        c = PARA.channel;
 
         PARA.inimg_file = p4DImage->getFileName();
     }
@@ -179,14 +175,38 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //main neuron reconstruction code
 
-    //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
+    Stack *data1d_ch1 = Make_Stack(GREY,(int)N,(int)M,(int)P);
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
 
-    //Output
+    for(V3DLONG z = 0; z < P; z++)
+    {
+         V3DLONG offsetk = z*M*N;
+        for(V3DLONG y = 0; y < M; y++)
+        {
+            V3DLONG offsetj = y*N;
+            for(V3DLONG x = 0; x < N; x++)
+            {
+                double dataval = data1d[offsetc + offsetk + offsetj + x];
+                Set_Stack_Pixel(data1d_ch1,x,y,z,0,dataval);
+            }
+        }
+    }
+
+    ZNeuronTracer tracer;
+    ZStack stack;
+    stack.load(data1d_ch1,true);
+    tracer.initTraceWorkspace(&stack);
+    tracer.initConnectionTestWorkspace();
+    ZSwcTree *tree = tracer.trace(&stack, true);
 
     QString swc_name = PARA.inimg_file + "_Tracing.swc";
-    NeuronTree nt;
-    nt.name = "tracing method";
-    writeSWC_file(swc_name.toStdString().c_str(),nt);
+//    NeuronTree nt;
+//    nt.name = "tracing method";
+//    writeSWC_file(swc_name.toStdString().c_str(),nt);
+
+    tree->save(swc_name.toStdString().c_str());
+    delete tree;
 
     if(!bmenu)
     {
