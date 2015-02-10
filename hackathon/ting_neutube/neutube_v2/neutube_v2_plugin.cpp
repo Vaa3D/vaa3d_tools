@@ -53,8 +53,8 @@ void neutube_v2::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou , 2015-2-9"));
+        v3d_msg(tr("This is a neuron reconstruction plugin.."
+            "Developed by Ting Zhao, and imported by Zhi Zhou , 2015-2-9"));
 	}
 }
 
