@@ -101,7 +101,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         in_sz[1] = M;
         in_sz[2] = P;
         in_sz[3] = sc;
-        c = PARA.channel;
+
 
         PARA.inimg_file = p4DImage->getFileName();
     }
