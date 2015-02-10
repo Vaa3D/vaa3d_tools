@@ -1,0 +1,11 @@
+This new neutube tracing plugin can be built successfully on MAC OS X 10.9.5 and Linux CentOS 6.4. Please follow the instruction to build the plugin:
+
+1. unzip NeuTu.zip to NeuTu folder.
+
+2. Go to NeuTu/neurolabi/, and run buildlib.sh. In Linux CentOS, you may have to run "yum install python-argparse" to install python-argparse first.   
+
+3. Go to neutube_v2/
+   run qmake & make 
+
+
+note added by Zhi Zhou, 02/10/2015
