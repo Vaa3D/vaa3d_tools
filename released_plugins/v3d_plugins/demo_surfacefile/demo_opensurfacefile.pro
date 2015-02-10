@@ -10,4 +10,4 @@ SOURCES	+= demo_opensurfacefile_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(demo_opensurfacefile)
-DESTDIR	= $$VAA3DPATH/bin/plugins/demo_opensurfacefile/
+DESTDIR	= $$VAA3DPATH/bin/plugins/Vaa3D_PluginInterface_Demos/demo_opensurfacefile/
