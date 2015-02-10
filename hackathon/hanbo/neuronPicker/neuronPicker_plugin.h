@@ -21,13 +21,14 @@ class neuronPickerDialog : public QDialog
 
 public:
     neuronPickerDialog(V3DPluginCallback2 * cb);
+    ~neuronPickerDialog();
 	void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
 	void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 private:
-    QString fname_input, fname_outbase;
     V3DPluginCallback2 * callback;
 
+    QString fname_previnput;
     unsigned char *image1Dc_in;
     unsigned char *image1D_out;
     V3DLONG sz_img[4];
@@ -41,6 +42,7 @@ private:
 private:
     void creat();
     void checkButtons();
+    void initDlg();
     void updateInputWindow();
     void updateOutputWindow();
 
