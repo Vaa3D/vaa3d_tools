@@ -175,7 +175,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //main neuron reconstruction code
 
-    Stack *data1d_ch1 = Make_Stack(GREY,(int)N,(int)M,(int)P);
+    Stack *data1d_ch1 = C_Stack::make(GREY,(int)N,(int)M,(int)P);
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
 
@@ -200,11 +200,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     tracer.initConnectionTestWorkspace();
     ZSwcTree *tree = tracer.trace(&stack, true);
 
-    QString swc_name = PARA.inimg_file + "_Tracing.swc";
-//    NeuronTree nt;
-//    nt.name = "tracing method";
-//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-
+    QString swc_name = PARA.inimg_file + "_neutube_v2.swc";
     tree->save(swc_name.toStdString().c_str());
     delete tree;
 
