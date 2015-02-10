@@ -65,12 +65,12 @@ void CViewer::show()
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     PMain* pMain = PMain::getInstance();
+    QElapsedTimer timer;
+    timer.start();
 
     try
     {
         // open tri-view window (and hiding it asap)
-        QElapsedTimer timer;
-        timer.start();
         this->window = V3D_env->newImageWindow(QString(title.c_str()));
         this->triViewWidget = (XFormWidget*)window;
         triViewWidget->setWindowState(Qt::WindowMinimized);
@@ -87,10 +87,6 @@ void CViewer::show()
         if(!view3DWidget->getiDrawExternalParameter())
             QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
-        if(prev)
-            PLog::instance()->appendOperation(new NewViewerOperation(QString("Opened view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
-        else
-            PLog::instance()->appendOperation(new ImportOperation( "Opened first viewer", itm::GPU, timer.elapsed()));
 
         // install the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -122,7 +118,6 @@ void CViewer::show()
                 }
             }
 
-            timer.restart();
             if(changed_cmap)
                 curr_renderer->applyColormapToImage();
 
@@ -155,7 +150,6 @@ void CViewer::show()
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
-            PLog::instance()->appendOperation(new NewViewerOperation(QString("Syncronized views \"").append(title.c_str()).append("\" and \"").append(prev->title.c_str()).append("\"").toStdString(), itm::GPU, timer.elapsed()));
 
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
@@ -306,6 +300,11 @@ void CViewer::show()
         QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
         pMain->closeVolume();
     }
+
+    if(prev)
+        PLog::instance()->appendOperation(new NewViewerOperation(QString("Opened view ").append(title.c_str()).toStdString(), itm::GPU, timer.elapsed()));
+    else
+        PLog::instance()->appendOperation(new ImportOperation( "Opened first viewer", itm::GPU, timer.elapsed()));
 }
 
 CViewer::CViewer(V3DPluginCallback2 *_V3D_env, int _resIndex, itm::uint8 *_imgData, int _volV0, int _volV1,
@@ -817,8 +816,7 @@ void CViewer::receiveData(
                 if(prev)
                 {
                     /**/itm::debug(itm::LEV3, strprintf("title = %s: saving elapsed time to log", titleShort.c_str()).c_str(), __itm__current__function__);
-                    sprintf(message, "Successfully generated view %s", title.c_str());
-                    PLog::instance()->appendOperation(new NewViewerOperation(message, itm::ALL_COMPS, prev->newViewerTimer.elapsed()));
+                    PLog::instance()->appendOperation(new NewViewerOperation(itm::strprintf("Successfully generated view %s", title.c_str()), itm::ALL_COMPS, prev->newViewerTimer.elapsed()));
                 }
 
                 // refresh annotation toolbar
@@ -893,6 +891,8 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
     try
     {
         // set GUI to waiting state
+        QElapsedTimer timer;
+        timer.start();
         PMain& pMain = *(PMain::getInstance());
         pMain.progressBar->setEnabled(true);
         pMain.progressBar->setMinimum(0);
@@ -1037,13 +1037,11 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
         window3D->removeEventFilter(this);
         window3D->timeSlider->removeEventFilter(this);
 
-
         // PREVIEW+STREAMING mode - obtain low res data from current window to be displayed in a new window while the user waits for the new high res data
         if(CSettings::instance()->getPreviewMode())
         {
             // get low res data
-            QElapsedTimer timer;
-            timer.start();
+            timer.restart();
             int voiH0m=0, voiH1m=0, voiV0m=0, voiV1m=0,voiD0m=0, voiD1m=0, voiT0m=0, voiT1m=0;
             int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
             int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
@@ -1072,71 +1070,86 @@ CViewer::newViewer(int x, int y, int z,                            //can be eith
 
             // set the number of streaming steps
             cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
-        }
-        // DIRECT mode - just wait for image data to be loaded and THEN create the new window
-        else
-        {
-            this->next = new CViewer(V3D_env, resolution, CVolume::instance()->loadData(),
-                                             cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                             cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
 
-            // disable streaming mode: in this way, cVolume is told that no data have to be loaded
-            cVolume->setStreamingSteps(0);
-        }
-        
-        // connect new window to data producer
-        cVolume->setSource(next);
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);
-
+            // connect new window to data producer
+            cVolume->setSource(next);
+            connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);
 
 // lock updateGraphicsInProgress mutex on this thread (i.e. the GUI thread or main queue event thread)
 /**/itm::debug(itm::LEV3, strprintf("Waiting for updateGraphicsInProgress mutex").c_str(), __itm__current__function__);
 /**/ updateGraphicsInProgress.lock();
 /**/itm::debug(itm::LEV3, strprintf("Access granted from updateGraphicsInProgress mutex").c_str(), __itm__current__function__);
 
-        // update status bar message
-        pMain.statusBar->showMessage("Loading image data...");
+            // update status bar message
+            pMain.statusBar->showMessage("Loading image data...");
 
-        // load new data in a separate thread. When done, the "receiveData" method of the new window will be called
-        cVolume->start();
+            // load new data in a separate thread. When done, the "receiveData" method of the new window will be called
+            cVolume->start();
 
-        // meanwhile, show the new window with preview data
-        next->show();
+            // meanwhile, show the new window with preview data
+            next->show();
 
-        // enter "waiting for 5D data" state, if possible
-        next->setWaitingFor5D(true);
+            // enter "waiting for 5D data" state, if possible
+            next->setWaitingFor5D(true);
 
-        //if the resolution of the loaded voi is the same of the current one, this window will be closed
-        if(resolution == volResIndex)
-        {
-            /**/itm::debug(itm::LEV3, strprintf("object \"%s\" is going to be destroyed", titleShort.c_str()).c_str(), __itm__current__function__);
-
-            if(prev)
-            {
-                prev->newViewerTimer = newViewerTimer;
-                prev->next = next;
-                next->prev = prev;
-            }
-            else
-            {
-                next->prev = 0;
-                CViewer::first = next;
-            }
-
-            this->toBeClosed = true;
-            delete this;
-        }
+            //if the resolution of the loaded voi is the same of the current one, this window will be closed
+            if(resolution == volResIndex)
+                this->close();
 
 // unlock updateGraphicsInProgress mutex
 /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
 /**/ updateGraphicsInProgress.unlock();
 
+
+        }
+        // DIRECT mode - just wait for image data to be loaded and THEN create the new window
+        else
+        {
+            // set the number of streaming steps to 0
+            cVolume->setStreamingSteps(0);
+
+            // load data and instance new viewer
+            this->next = new CViewer(V3D_env, resolution, CVolume::instance()->loadData(),
+                                             cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
+                                             cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
+
+            // show new viewer
+            next->show();
+
+            // update new viewer as all data have been received
+            next->receiveData(0,itm::integer_array(),itm::integer_array(), next, true);
+
+            // if new viewer has the same resolution, this window has to be closed
+            if(resolution == volResIndex)
+                this->close();
+        }
     }
     catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::getInstance()->resetGUI();
     }
+}
+
+//safely close this viewer
+void CViewer::close()
+{
+    /**/itm::debug(itm::LEV2, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
+
+    if(prev)
+    {
+        prev->newViewerTimer = newViewerTimer;
+        prev->next = next;
+        next->prev = prev;
+    }
+    else
+    {
+        next->prev = 0;
+        CViewer::first = next;
+    }
+
+    this->toBeClosed = true;
+    delete this;
 }
 
 /**********************************************************************************

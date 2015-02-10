@@ -167,6 +167,9 @@ class teramanager::CViewer : public QWidget
         //performs all the operations needed to show 3D data (such as creating Vaa3D widgets)
         void show();
 
+        //safely close this viewer
+        void close();
+
         //GET methods
         static CViewer* getCurrent(){return current;}
         int getResIndex(){return volResIndex;}

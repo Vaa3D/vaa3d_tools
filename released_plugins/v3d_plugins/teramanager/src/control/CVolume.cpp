@@ -127,26 +127,7 @@ void CVolume::run()
         //checking for an imported volume
         if(volume)
         {
-            // DIRECT mode - data are loaded from the GUI thread, no need to load here
-            if(streamingSteps == 0)
-            {
-                // wait for GUI thread to update graphics
-                /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
-                /**/ updateGraphicsInProgress.lock();
-                /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
-
-
-                // send data
-                integer_array data_s = make_vector<int>() << voiH0        << voiV0        << voiD0        << 0                            << voiT0;
-                integer_array data_c = make_vector<int>() << voiH1-voiH0  << voiV1-voiV0  << voiD1-voiD0  << volume->getNACtiveChannels() << voiT1-voiT0+1;
-                emit sendData(0, data_s, data_c, source, true);
-                /**/itm::debug(itm::LEV3, "sendData signal emitted", __itm__current__function__);
-
-                // unlock updateGraphicsInProgress mutex
-                /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
-                /**/ updateGraphicsInProgress.unlock();
-            }
-            else if(streamingSteps == 1)
+            if(streamingSteps == 1)
             {
                 // 5D data with instant visualization of selected frame
                 if(voiT0 != voiT1 && cur_t != -1)
@@ -208,7 +189,7 @@ void CVolume::run()
             }
             else
             {
-                throw RuntimeException("Streaming has been temporarily disabled. Please contact the developer.");
+                throw RuntimeException("Streaming != 1 has been temporarily disabled. Please contact the developer.");
 //                    // precondition checks
 //                    if(!buffer)
 //                        throw RuntimeException("Buffer not initialized");
