@@ -103,7 +103,8 @@ resampleDialog::~resampleDialog()
 
 void resampleDialog::_slot_run()
 {
-     int steplength = this->spinbox_steplength->value();
+
+    int steplength = this->spinbox_steplength->value();
 
     //obtain the swc object
     list_3dviewer = m_v3d.getListAll3DViewers();
@@ -127,10 +128,21 @@ void resampleDialog::_slot_run()
         resultTree.color.b = 0;
         resultTree.color.a = 0;
 
-        mTreeList->first().copy(resultTree);
+        // open up a new 3D viewer window
 
-        m_v3d.pushObjectIn3DWindow(surface_win);
+        //open3DViewerForSingleSurfaceFile() sort of works, but complaining the file loading failure..
+        //V3dR_MainWindow * new3DWindow = m_v3d.open3DViewerForSingleSurfaceFile("test.swc");
 
+        // createEmpty3DViewer() only pops up the empty window, but the surface did not show up....
+        V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
+
+        if (new3DWindow)
+        {
+            QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(new3DWindow);
+            treeList->push_back(resultTree);
+
+            m_v3d.pushObjectIn3DWindow(new3DWindow);
+        }
     }
     else{
         v3d_msg("cannot find the 3d viewer!");
