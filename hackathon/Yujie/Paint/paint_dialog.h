@@ -27,10 +27,11 @@ public slots:
     void penWidth();
     void zdisplay(int);
     void fetch();
-    void pushback();
+    bool pushback();
     void clearimage();
-    bool zoomin();
+    void zoomin();
     void zoomout();
+    //void inserttext();
 
 private:
     void create();
@@ -45,13 +46,19 @@ private:
     QSpinBox *spin;
     V3DLONG sz_img[4];
     int intype;
-    unsigned char *image1Dc_in;
+
     v3dhandle curwin;
     ImagePixelType pixeltype;
-    unsigned char *disdata;
+    bool zoominflag;
     int previousz;
-    int dataflag;
-    unsigned char *data1d;
+    unsigned char *paint_1DC;
+    unsigned char *backupdata;
+    unsigned char *image1Dc_in;
+    unsigned char *image1D_out;
+
+
+
+
 
 
 

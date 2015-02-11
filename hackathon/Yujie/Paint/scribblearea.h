@@ -14,16 +14,17 @@
  public:
      ScribbleArea( QWidget *parent = 0);
 
-     bool openImage(QImage &loadimage);
+     bool openImage(QImage &loadImage, QImage &paintImage);
      bool saveImage(const QString &fileName, const char *fileFormat);
      void setPenColor(const QColor &newColor);
      void setPenWidth(int newWidth);
+     void paintEvent(QPaintEvent *event);
 
      bool isModified() const { return modified; }
      QColor penColor() const { return myPenColor; }
      int penWidth() const { return myPenWidth; }
      QImage image;
-
+     QImage paintImage;
 
  public slots:
      void print();
@@ -32,20 +33,23 @@
      void mousePressEvent(QMouseEvent *event);
      void mouseMoveEvent(QMouseEvent *event);
      void mouseReleaseEvent(QMouseEvent *event);
-     void paintEvent(QPaintEvent *event);
+
      //void resizeEvent(QResizeEvent *event);
 
  private:
      void drawLineTo(const QPoint &endPoint);
      void resizeImage(QImage *image, const QSize &newSize);
+     //const QPoint & getMousePos(QMouseEvent *event);
+     void cursorshape();
 
      bool modified;
      bool scribbling;
      int myPenWidth;
      QColor myPenColor;
-
+     QCursor brushCursor;
      QPoint lastPoint;
      QPlainTextEdit *edit;
+
  };
 #endif // SCRIBBLEAREA_H
 
