@@ -13,6 +13,7 @@ QStringList DemoOpenSurfaceFilePlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("open_surface_file_menu")
+                <<tr("create_3Dviewer_without_content_menu")
 		<<tr("about");
 }
 
@@ -27,11 +28,16 @@ void DemoOpenSurfaceFilePlugin::domenu(const QString &menu_name, V3DPluginCallba
 {
 	if (menu_name == tr("open_surface_file_menu"))
 	{
-        QString fileName = QFileDialog::getOpenFileName(0,
-            tr("Open Surface File"), "", tr("Vaa3D Neuron/Network Files (*.swc);; Vaa3D Pointcloud Files (*.apo);;  Vaa3D Irregular Surface Files (*.v3ds *.vaa3ds *.obj)"));
-        if (!fileName.isEmpty())
-            callback.open3DViewerForSingleSurfaceFile(fileName);
+            QString fileName = QFileDialog::getOpenFileName(0,
+                tr("Open Surface File"), "", tr("Vaa3D Neuron/Network Files (*.swc);; Vaa3D Pointcloud Files (*.apo);;  Vaa3D Irregular Surface Files (*.v3ds *.vaa3ds *.obj)"));
+            if (!fileName.isEmpty())
+                callback.open3DViewerForSingleSurfaceFile(fileName);
 	}
+        else if (menu_name == tr("create_3Dviewer_without_content_menu"))
+        {
+              callback.createEmpty3DViewer();
+              //callback.open3DViewerForSingleSurfaceFile("noname.NULL3DVIEWER");
+        }
 	else
 	{
 		v3d_msg(tr("demo for open a surface file. "
