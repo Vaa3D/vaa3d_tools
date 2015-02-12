@@ -103,22 +103,35 @@ resampleDialog::~resampleDialog()
 
 void resampleDialog::_slot_run()
 {
-
     int steplength = this->spinbox_steplength->value();
 
-    //obtain the swc object
+    //obtain the selected 3D viewer
     list_3dviewer = m_v3d.getListAll3DViewers();
     surface_win = list_3dviewer[combobox_win->currentIndex()];
 
-    //debug
-    //v3d_msg(QString("slected window # %1 ").arg(combobox_win->currentIndex()));
+    if (!surface_win){
+        v3d_msg("Please open up a SWC file from the main menu first!");
+        return;
+    }
 
-    if (surface_win){
-        QList<NeuronTree> * mTreeList;
-        mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+    //get the current displayed neurons in the selected 3d viewer
+    QList<NeuronTree> * mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
 
-        // Deal with the first neuro tree for now
-        NeuronTree myTree = mTreeList->first();
+
+    // open up a new 3D viewer window
+    V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
+    if (!new3DWindow)
+    {
+        v3d_msg(QString("Failed to open an empty window!"));
+        return;
+    }
+
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+
+
+    for (int i = 0 ; i < mTreeList->size(); i++)
+    {
+        NeuronTree myTree = mTreeList->at(i);
 
         NeuronTree resultTree = resample(myTree,double(steplength));
 
@@ -128,29 +141,18 @@ void resampleDialog::_slot_run()
         resultTree.color.b = 0;
         resultTree.color.a = 0;
 
-        // open up a new 3D viewer window
-
-        //open3DViewerForSingleSurfaceFile() sort of works, but complaining the file loading failure..
-        //V3dR_MainWindow * new3DWindow = m_v3d.open3DViewerForSingleSurfaceFile("test.swc");
-
-        // createEmpty3DViewer() only pops up the empty window, but the surface did not show up....
-        V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
-
-        if (new3DWindow)
-        {
-            QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(new3DWindow);
-            if ( treeList ){
-                treeList->push_back(resultTree);
-                m_v3d.pushObjectIn3DWindow(new3DWindow);
-            }
-            else{
-                v3d_msg("empty tree list!");
-            }
-        }
-        else{
-            v3d_msg("cannot create empty 3d viewer!");
-        }
+        new_treeList->push_back(resultTree);
     }
+
+
+    //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
+    // in XFormWidget::pushObjectIn3DWindow, because the triView is updated?
+
+    QString title = QString('Resampled_') + combobox_win->currentText();
+    new3DWindow->setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_3DViewer(new3DWindow);
+
+
 }
 
 
