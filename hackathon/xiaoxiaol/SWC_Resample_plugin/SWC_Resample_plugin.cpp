@@ -127,13 +127,20 @@ void resampleDialog::_slot_run()
     }
 
     QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    if (new_treeList)
+    {
+        v3d_msg(QString("New 3D viewer has invalid neuron tree list"));
+        return;
+    }
 
+    NeuronTree myTree;
+    NeuronTree resultTree;
 
     for (int i = 0 ; i < mTreeList->size(); i++)
     {
-        NeuronTree myTree = mTreeList->at(i);
+        myTree = mTreeList->at(i);
 
-        NeuronTree resultTree = resample(myTree,double(steplength));
+        resultTree = resample(myTree,double(steplength));
 
         // need to reset the color to zero of display with color (using the types)
         resultTree.color.r = 0;
@@ -148,9 +155,11 @@ void resampleDialog::_slot_run()
     //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
     // in XFormWidget::pushObjectIn3DWindow, because the triView is updated?
 
-    QString title = QString('Resampled_') + combobox_win->currentText();
-    new3DWindow->setWindowDataTitle(new3DWindow, title);
+    QString title = QString('Resampled SWC');
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+
     m_v3d.update_3DViewer(new3DWindow);
+    m_v3d.update_NeuronBoundingBox(new3DWindow);
 
 
 }
