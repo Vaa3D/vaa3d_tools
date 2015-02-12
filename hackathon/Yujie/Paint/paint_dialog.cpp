@@ -167,8 +167,8 @@ bool Paint_Dialog::load()
                 return false;
             }
         }
-        //backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
-        memcpy(backupdata,image1Dc_in,size_tmp);
+        backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+//        memcpy(backupdata,image1Dc_in,size_tmp);
         paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
         memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
 
@@ -336,8 +336,8 @@ void Paint_Dialog::fetch()
         }
     }
 
-    //backupdata=datacopy(image1Dc_in,size_tmp);
-    memcpy(backupdata,image1Dc_in,size_tmp);
+    backupdata=datacopy(image1Dc_in,size_tmp);
+//    memcpy(backupdata,image1Dc_in,size_tmp);
     paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
     memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
 
@@ -355,16 +355,16 @@ void Paint_Dialog::fetch()
 }
 
 
-//unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
-//{
-//    unsigned char * qcopydata=new unsigned char [size];
-//    for (int i=0;i<size;i++)
-//    {
-//        qcopydata[i]=data[i];
-//    }
-//    qDebug()<<"I have been copied";
-//    return qcopydata;
-//}
+unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
+{
+    unsigned char * qcopydata=new unsigned char [size];
+    for (int i=0;i<size;i++)
+    {
+        qcopydata[i]=data[i];
+    }
+    qDebug()<<"I have been copied";
+    return qcopydata;
+}
 
 
 void Paint_Dialog::zoomin()

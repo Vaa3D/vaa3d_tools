@@ -37,7 +37,7 @@ private:
     void create();
     bool maybeSave();
     bool saveFile(const QByteArray &fileFormat);
-    //unsigned char * datacopy(unsigned char *data,long size);
+    unsigned char * datacopy(unsigned char *data,long size);
     void savezimage(int z);
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
