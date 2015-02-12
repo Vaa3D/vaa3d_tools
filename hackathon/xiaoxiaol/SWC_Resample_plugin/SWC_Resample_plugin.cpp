@@ -1,7 +1,6 @@
 /* SWC_Resample_plugin.cpp
  * This plugin allows users to resample displayed SWCs.
  * 2015-02-05 : by Xiaoxiao Liu
- * 2015-02-11: fix several bugs to make the neuron visible. by Hanchuan Peng
  */
  
 #include "v3d_message.h"
@@ -72,9 +71,9 @@ resampleDialog :: resampleDialog(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QLabel *label_steplength = new QLabel(QObject::tr("Fixed Step Length (distance between neighboring nodes"));
 
     this->spinbox_steplength = new QSpinBox;
-    this->spinbox_steplength->setRange(1, 10);
+    this->spinbox_steplength->setRange(1, INT32_MAX);
     this->spinbox_steplength->setSingleStep(1);
-    this->spinbox_steplength->setValue(2);
+    this->spinbox_steplength->setValue(1);
 
     QPushButton *btn_Run = new QPushButton("Run");
 
@@ -104,55 +103,65 @@ resampleDialog::~resampleDialog()
 
 void resampleDialog::_slot_run()
 {
-
     int steplength = this->spinbox_steplength->value();
 
-    //obtain the swc object
+    //obtain the selected 3D viewer
     list_3dviewer = m_v3d.getListAll3DViewers();
     surface_win = list_3dviewer[combobox_win->currentIndex()];
 
-    //debug
-    //v3d_msg(QString("slected window # %1 ").arg(combobox_win->currentIndex()));
+    if (!surface_win){
+        v3d_msg("Please open up a SWC file from the main menu first!");
+        return;
+    }
 
-    if (surface_win){
-        QList<NeuronTree> * mTreeList = 0;
-        mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+    //get the current displayed neurons in the selected 3d viewer
+    QList<NeuronTree> * mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
 
-//        // Deal with the first neuro tree for now
 
-        NeuronTree resultTree;
-        resultTree = resample(mTreeList->first(),double(steplength));
+    // open up a new 3D viewer window
+    V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
+    if (!new3DWindow)
+    {
+        v3d_msg(QString("Failed to open an empty window!"));
+        return;
+    }
 
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    if (!new_treeList)
+    {
+        v3d_msg(QString("New 3D viewer has invalid neuron tree list"));
+        return;
+    }
+
+    NeuronTree myTree;
+    NeuronTree resultTree;
+
+    for (int i = 0 ; i < mTreeList->size(); i++)
+    {
+        myTree = mTreeList->at(i);
+
+        resultTree = resample(myTree,double(steplength));
+
+        // need to reset the color to zero of display with color (using the types)
         resultTree.color.r = 0;
         resultTree.color.g = 0;
         resultTree.color.b = 0;
         resultTree.color.a = 0;
 
-        // open up a new 3D viewer window
-
-        //open3DViewerForSingleSurfaceFile() sort of works, but complaining the file loading failure..
-
-        //that is not true, your path was wrong! by PHC 1502011. The following works nicely
-        //V3dR_MainWindow * new3DWindow1 = m_v3d.open3DViewerForSingleSurfaceFile("/Users/pengh/Downloads/1/2.swc");
-
-        // createEmpty3DViewer() only pops up the empty window, but the surface did not show up....
-        V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
-
-        if (new3DWindow)
-        {
-            QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(new3DWindow);
-            if ( treeList ){
-                treeList->push_back(resultTree);
-                m_v3d.update_NeuronBoundingBox(new3DWindow);
-            }
-            else{
-                v3d_msg("empty tree list!");
-            }
-        }
-        else{
-            v3d_msg("cannot create empty 3d viewer!");
-        }
+        new_treeList->push_back(resultTree);
     }
+
+
+    //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
+    // in XFormWidget::pushObjectIn3DWindow, because the triView is updated?
+
+    QString title = QString("Resampled SWC");
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+
+    m_v3d.update_3DViewer(new3DWindow);
+    m_v3d.update_NeuronBoundingBox(new3DWindow); //without this step, the neuron won't show...
+
+
 }
 
 
