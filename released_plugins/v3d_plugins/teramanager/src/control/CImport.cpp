@@ -330,25 +330,31 @@ bool CImport::hasVolumeMapToBeRegenerated(std::string vmapFilepath,
     // open volume map
     FILE* vmapFile = fopen(vmapFilepath.c_str(), "rb");
     if(!vmapFile)
+    {
+        itm::warning("volume map needs to be (re-)generated: cannot open existing vmap.bin", __itm__current__function__);
         return true;
+    }
 
     // read version
     uint16 verstr_size;
     if(!fread(&verstr_size, sizeof(uint16), 1, vmapFile))
     {
         fclose(vmapFile);
+        itm::warning("volume map needs to be (re-)generated: cannot read version from vmap.bin", __itm__current__function__);
         return true;
     }
     char ver[1024];
     if(!fread(ver, verstr_size, 1, vmapFile))
     {
         fclose(vmapFile);
+        itm::warning("volume map needs to be (re-)generated: cannot read version from vmap.bin", __itm__current__function__);
         return true;
     }
     int T = 0;
     if(!fread(&T, sizeof(int), 1, vmapFile))
     {
         fclose(vmapFile);
+        itm::warning("volume map needs to be (re-)generated: cannot read T dim from vmap.bin", __itm__current__function__);
         return true;
     }
     fclose(vmapFile);
@@ -356,16 +362,25 @@ bool CImport::hasVolumeMapToBeRegenerated(std::string vmapFilepath,
 
     // check version
     if(!CPlugin::checkPluginVersion(ver, min_required_version))
+    {
+        itm::warning(itm::strprintf("volume map needs to be (re-)generated: check version failed from vmap.bin (current = \"%s\", required = \"%s\"", ver, min_required_version.c_str()).c_str(), __itm__current__function__);
         return true;
+    }
 
     // check time size: can we load more frames?
     if(T < maxTDim &&  // we can load more frames
        T < TDim)       // there are more frames that can be loaded
+    {
+        itm::warning("volume map needs to be (re-)generated: check time size failed from vmap.bin", __itm__current__function__);
         return true;
+    }
 
     // check time size: should we load less frames?
     if(T > maxTDim)
+    {
+        itm::warning("volume map needs to be (re-)generated: mismatch between T from vmap.bin and maxTDim from GUI", __itm__current__function__);
         return true;
+    }
 
     // all checks passed: no need to regenerate volume map
     return false;

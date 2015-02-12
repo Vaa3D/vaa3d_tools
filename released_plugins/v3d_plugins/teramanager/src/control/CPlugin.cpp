@@ -144,8 +144,19 @@ bool CPlugin::checkPluginVersion(std::string version, std::string min_required_v
     int minA = tokens_A.size() > 2 ? atoi(tokens_A[2].c_str()) : 0;
     int minB = tokens_B.size() > 2 ? atoi(tokens_B[2].c_str()) : 0;
 
-    return verA >= verB && majA >= majB && minA >= minB;
-
+    if(verA < verB)
+        return false;
+    else if(verA > verB)
+        return true;
+    else    // same version
+    {
+        if(majA < majB)
+            return false;
+        else if(majA > majB)
+            return true;
+        else    // same major
+            return minA >= minB;
+    }
 }
 
 
