@@ -155,9 +155,10 @@ neuronPickerDialog::neuronPickerDialog(V3DPluginCallback2 * cb)
 
     fname_previnput="";
     image1Dc_in=0;
-    image1D_out=0;
+    image1Dc_out=0;
     image1D_h=0;
     image1D_v=0;
+    image1D_s=0;
     intype=0;
     sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
     LList.clear();
@@ -187,9 +188,9 @@ void neuronPickerDialog::reject()
         if(image1Dc_in != 0){
             delete []image1Dc_in; image1Dc_in=0;
         }
-        if(image1D_out != 0){
-            neuronPickerMain::memory_free_uchar1D(image1D_out);
-            image1D_out=0;
+        if(image1Dc_out != 0){
+            neuronPickerMain::memory_free_uchar1D(image1Dc_out);
+            image1Dc_out=0;
         }
         if(image1D_h != 0){
             neuronPickerMain::memory_free_int1D(image1D_h);
@@ -198,6 +199,10 @@ void neuronPickerDialog::reject()
         if(image1D_v != 0){
             neuronPickerMain::memory_free_uchar1D(image1D_v);
             image1D_v=0;
+        }
+        if(image1D_s != 0){
+            neuronPickerMain::memory_free_uchar1D(image1D_s);
+            image1D_s=0;
         }
     }
     finishnpdiag();
@@ -239,10 +244,10 @@ void neuronPickerDialog::creat()
     spin_fgthr->setRange(0,255); spin_fgthr->setValue(100);
     spin_sizethr = new QSpinBox();
     spin_sizethr->setRange(0,100000); spin_sizethr->setValue(100);
-    QLabel* label_a = new QLabel("foreground threshold (0~255):");
+    QLabel* label_a = new QLabel("seed intensity threshold (0~255):");
     gridLayout->addWidget(label_a,3,1,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_fgthr,3,3,1,1);
-    QLabel* label_b = new QLabel("size threshold:");
+    QLabel* label_b = new QLabel("neuron min voxel #:");
     gridLayout->addWidget(label_b,3,4,1,1,Qt::AlignRight);
     gridLayout->addWidget(spin_sizethr,3,5,1,1);
 
@@ -311,17 +316,24 @@ void neuronPickerDialog::initDlg()
     QSettings settings("V3D plugin","neuronPicker");
 
     fname_previnput=settings.value("fname_input").toString();
-    this->edit_output->setText(settings.value("fname_output").toString());
-    if(settings.contains("thr_bg"))
-        this->spin_bgthr->setValue(settings.value("thr_bg").toInt());
-    if(settings.contains("thr_hue"))
-        this->spin_huedis->setValue(settings.value("thr_hue").toInt());
-    if(settings.contains("size_mask"))
-        this->spin_distance->setValue(settings.value("size_mask").toInt());
-    if(settings.contains("thr_fg"))
-        this->spin_fgthr->setValue(settings.value("thr_fg").toInt());
-    if(settings.contains("thr_size"))
-        this->spin_sizethr->setValue(settings.value("thr_size").toInt());
+//    this->edit_output->setText(settings.value("fname_output").toString());
+//    if(settings.contains("thr_bg"))
+//        this->spin_bgthr->setValue(settings.value("thr_bg").toInt());
+//    if(settings.contains("thr_hue"))
+//        this->spin_huedis->setValue(settings.value("thr_hue").toInt());
+//    if(settings.contains("size_mask"))
+//        this->spin_distance->setValue(settings.value("size_mask").toInt());
+//    if(settings.contains("thr_fg"))
+//        this->spin_fgthr->setValue(settings.value("thr_fg").toInt());
+//    if(settings.contains("thr_size"))
+//        this->spin_sizethr->setValue(settings.value("thr_size").toInt());
+
+    this->edit_output->setText("");
+    this->spin_bgthr->setValue(10);
+    this->spin_huedis->setValue(40);
+    this->spin_distance->setValue(11);
+    this->spin_fgthr->setValue(100);
+    this->spin_sizethr->setValue(1000);
 }
 
 bool neuronPickerDialog::load()
@@ -345,9 +357,9 @@ bool neuronPickerDialog::load()
         if(image1Dc_in != 0){
             delete []image1Dc_in; image1Dc_in=0;
         }
-        if(image1D_out != 0){
-            neuronPickerMain::memory_free_uchar1D(image1D_out);
-            image1D_out=0;
+        if(image1Dc_out != 0){
+            neuronPickerMain::memory_free_uchar1D(image1Dc_out);
+            image1Dc_out=0;
         }
         if(image1D_h != 0){
             neuronPickerMain::memory_free_int1D(image1D_h);
@@ -356,6 +368,10 @@ bool neuronPickerDialog::load()
         if(image1D_v != 0){
             neuronPickerMain::memory_free_uchar1D(image1D_v);
             image1D_v=0;
+        }
+        if(image1D_s != 0){
+            neuronPickerMain::memory_free_uchar1D(image1D_s);
+            image1D_s=0;
         }
         intype=0;
         sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
@@ -400,7 +416,8 @@ bool neuronPickerDialog::load()
         }
     }
 
-    edit_load->setText(fname_input);
+    this->edit_load->setText(fname_input);
+    this->edit_output->setText(fname_input + ".extract");
 
     qDebug()<<"NeuronPicker: update visualization windows";
     updateInputWindow();
@@ -410,10 +427,11 @@ bool neuronPickerDialog::load()
     //initialize other stuffs for calculation
     qDebug()<<"NeuronPicker: initialize veriables";
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
-    image1D_out=neuronPickerMain::memory_allocate_uchar1D(size_page);
+    image1Dc_out=neuronPickerMain::memory_allocate_uchar1D(size_page*3);
     image1D_h=neuronPickerMain::memory_allocate_int1D(size_page);
     image1D_v=neuronPickerMain::memory_allocate_uchar1D(size_page);
-    neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v, sz_img, spin_bgthr->value());
+    image1D_s=neuronPickerMain::memory_allocate_uchar1D(size_page);
+    neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v,image1D_s,sz_img, spin_bgthr->value());
     preBgthr=spin_bgthr->value();
 
     fname_previnput=fname_input;
@@ -421,10 +439,10 @@ bool neuronPickerDialog::load()
 
 void neuronPickerDialog::output()
 {
-    QString fname_outbase=edit_load->text()+".extract";
+    QString fname_outbase=edit_output->text();
     QString fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Choose the output folder and prefix"),
                                                fname_outbase,
-                                               "");
+                                               "*.*");
 
     if(!fname_output.isEmpty()){
         fname_outbase=fname_output;
@@ -436,7 +454,7 @@ void neuronPickerDialog::output()
 void neuronPickerDialog::autoSeeds()
 {
     vector<V3DLONG> seeds;
-    neuronPickerMain::autoSeeds(image1D_h, image1D_v, seeds, spin_distance->value(), spin_huedis->value(), sz_img, spin_fgthr->value(), spin_sizethr->value());
+    neuronPickerMain::autoSeeds(image1D_h, image1D_v, image1D_s, seeds, spin_distance->value(), spin_huedis->value(), sz_img, spin_fgthr->value(), spin_sizethr->value());
 
     //load and update markers
     LList.clear();
@@ -498,22 +516,22 @@ void neuronPickerDialog::runall()
     }
 
     //extract by markers and save
-    neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v, sz_img, spin_bgthr->value());
+    neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v,image1D_s, sz_img, spin_bgthr->value());
     preBgthr=spin_bgthr->value();
     for(int idx_landmark=0; idx_landmark<poss_landmark.size(); idx_landmark++){
         V3DLONG pos_landmark=poss_landmark[idx_landmark];
-        memset(image1D_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+        memset(image1Dc_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
         qDebug()<<"start extracting: "<<idx_landmark;
     //    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
-        neuronPickerMain::extract(image1D_h, image1D_v, image1D_out, pos_landmark, spin_distance->value(), spin_huedis->value(), sz_img);
+        neuronPickerMain::extract_color(image1D_h, image1Dc_in,image1D_s, image1Dc_out, pos_landmark, spin_distance->value(), spin_huedis->value(), sz_img);
         V3DLONG sz_img_sub[4];
         sz_img_sub[0]=sz_img[0];
         sz_img_sub[1]=sz_img[1];
         sz_img_sub[2]=sz_img[2];
-        sz_img_sub[3]=1;
+        sz_img_sub[3]=3;
         QString fname_output=this->edit_output->text() + "_" + QString::number((int)LList.at(idx_landmark).x) + "_" +
                 QString::number((int)LList.at(idx_landmark).y) + "_" + QString::number((int)LList.at(idx_landmark).z) + ".v3dpbd";
-        if(!simple_saveimage_wrapper(*callback, qPrintable(fname_output),image1D_out,sz_img_sub,1)){
+        if(!simple_saveimage_wrapper(*callback, qPrintable(fname_output),image1Dc_out,sz_img_sub,1)){
             v3d_msg("failed to save file to " + fname_output);
             return;
         }else{
@@ -585,15 +603,15 @@ void neuronPickerDialog::extract()
         return;
     }
     if(preBgthr != spin_bgthr->value()){
-        neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v, sz_img, spin_bgthr->value());
+        neuronPickerMain::initChannels_rgb(image1Dc_in,image1D_h,image1D_v,image1D_s, sz_img, spin_bgthr->value());
         preBgthr=spin_bgthr->value();
     }
     int idx_landmark=cb_marker->currentIndex();
     V3DLONG pos_landmark=poss_landmark[idx_landmark];
-    memset(image1D_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+    memset(image1Dc_out, 0, sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
     qDebug()<<"start extracting";
 //    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
-    neuronPickerMain::extract(image1D_h, image1D_v, image1D_out, pos_landmark, spin_distance->value(), spin_huedis->value(), sz_img);
+    neuronPickerMain::extract_color(image1D_h, image1Dc_in, image1D_s,image1Dc_out, pos_landmark, spin_distance->value(), spin_huedis->value(), sz_img);
     //visualizationImage1D(image1D_tmp, sz_img[0], sz_img[1], sz_img[2], 1, *call, QString(name_currentWindow+QString("%1").arg(idx_landmark)));
     qDebug()<<"push for visualization";
     updateOutputWindow();
@@ -606,10 +624,10 @@ void neuronPickerDialog::saveFile()
     sz_img_sub[0]=sz_img[0];
     sz_img_sub[1]=sz_img[1];
     sz_img_sub[2]=sz_img[2];
-    sz_img_sub[3]=1;
+    sz_img_sub[3]=3;
     QString fname_output=this->edit_output->text() + "_" + QString::number((int)LList.at(idx_landmark).x) + "_" +
             QString::number((int)LList.at(idx_landmark).y) + "_" + QString::number((int)LList.at(idx_landmark).z) + ".v3dpbd";
-    if(!simple_saveimage_wrapper(*callback, qPrintable(fname_output),image1D_out,sz_img_sub,1)){
+    if(!simple_saveimage_wrapper(*callback, qPrintable(fname_output),image1Dc_out,sz_img_sub,1)){
         v3d_msg("failed to save file to " + fname_output);
         return;
     }else{
@@ -668,7 +686,7 @@ void neuronPickerDialog::checkButtons()
         }
         if(cb_marker->count()>0){
             btn_extract->setEnabled(true);
-            if(this->edit_output->text().isEmpty() || image1D_out==0){
+            if(this->edit_output->text().isEmpty() || image1Dc_out==0){
                 btn_save->setEnabled(false);
                 btn_next->setEnabled(false);
             }else{
@@ -765,13 +783,13 @@ void neuronPickerDialog::updateOutputWindow()
             winfound=true;
         }
     }
-    if(image1D_out != 0){ //image loaded
+    if(image1Dc_out != 0){ //image loaded
         //generate a copy and show it
         Image4DSimple image4d;
-        V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
-        unsigned char* image1D_input=neuronPickerMain::memory_allocate_uchar1D(size_page);
-        memcpy(image1D_input, image1D_out, size_page*sizeof(unsigned char));
-        image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], 1, V3D_UINT8);
+        V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2]*3;
+        unsigned char* image1Dc_input=neuronPickerMain::memory_allocate_uchar1D(size_page);
+        memcpy(image1Dc_input, image1Dc_out, size_page*sizeof(unsigned char));
+        image4d.setData(image1Dc_input, sz_img[0], sz_img[1], sz_img[2], 3, V3D_UINT8);
         LandmarkList LList_single;
         LList_single.append(LList.at(cb_marker->currentIndex()));
 
@@ -872,14 +890,13 @@ V3DLONG neuronPickerMain::xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DL
     return _z*_offset_Z+_y*_offset_Y+_x;
 }
 
-void neuronPickerMain::initChannels_rgb(unsigned char *image1Dc, int *image1D_h,unsigned char *image1D_v, V3DLONG sz_img[4], const int bg_thr)
+void neuronPickerMain::initChannels_rgb(unsigned char *image1Dc, int *image1D_h,unsigned char *image1D_v, unsigned char *image1D_s, V3DLONG sz_img[4], const int bg_thr)
 {
     memset(image1D_h, -1, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(int));
+    memset(image1D_s, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     V3DLONG page=sz_img[0]*sz_img[1]*sz_img[2];
 
     //rgb 2 hsv, obtain foreground and histogram
-    vector<V3DLONG> hhist(const_length_histogram,0);
-    double hist_scale=360/const_length_histogram;
     for(V3DLONG idx=0; idx<page; idx++){
         unsigned char V=MAX(image1Dc[idx],image1Dc[idx+page]);
         V=MAX(V,image1Dc[idx+page*2]);
@@ -889,39 +906,9 @@ void neuronPickerMain::initChannels_rgb(unsigned char *image1Dc, int *image1D_h,
             continue;
         }
         //get hue
-        image1D_h[idx]=rgb2hue(image1Dc[idx], image1Dc[idx+page], image1Dc[idx+page*2]);
-        if(image1D_h[idx]>=0){
-            //histogram of hue
-            int hbin=image1D_h[idx]/hist_scale;
-            hbin=MIN(hbin,const_length_histogram-1);
-            hhist[hbin]++;
-        }else if(image1D_h[idx]==-1){//this should not happen
-            qDebug()<<"hue is smaller than 0:"<<image1D_h[idx];
-        }
+        image1D_h[idx] = rgb2hue(image1Dc[idx], image1Dc[idx+page], image1Dc[idx+page*2]);
+        //rgb2hsv(image1Dc[idx], image1Dc[idx+page], image1Dc[idx+page*2], image1D_h[idx], image1D_s[idx], image1D_v[idx]);
     }
-
-//    //shift the histogram
-//    V3DLONG hmin_v=hhist[0];
-//    int idx_shift=0;
-//    for(int i=1; i<const_length_histogram-1; i++){
-//        if(hmin_v>(hhist[i]+hhist[i-1]+hhist[i+1])){
-//            hmin_v=hhist[i]+hhist[i-1]+hhist[i+1];
-//            idx_shift=i;
-//        }
-//    }
-
-//    //shift the hue
-//    int hue_shift=idx_shift*hist_scale;
-//    for(V3DLONG idx=0; idx<page; idx++){
-//        if(image1D_h[idx]<0){
-//            continue;
-//        }
-//        if(image1D_h[idx]>=hue_shift){
-//            image1D_h[idx]-=hue_shift;
-//        }else{
-//            image1D_h[idx]+=360-hue_shift;
-//        }
-//    }
 }
 
 void neuronPickerMain::saveSingleMarker(V3DLONG pos_landmark, QString fname, V3DLONG sz_img[4])
@@ -948,6 +935,11 @@ int neuronPickerMain::huedis(int a, int b)
     return dis;
 }
 
+unsigned char neuronPickerMain::saturationdis(unsigned char a, unsigned char b)
+{
+    return MAX(a,b)-MIN(a,b);
+}
+
 void neuronPickerMain::findMaxVal(unsigned char *image1D_v, V3DLONG len, V3DLONG & maxIdx, unsigned char & maxVal)
 {
     maxVal=0;
@@ -960,7 +952,7 @@ void neuronPickerMain::findMaxVal(unsigned char *image1D_v, V3DLONG len, V3DLONG
     }
 }
 
-void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, vector<V3DLONG>& seeds, int cubSize, int colorSpan, V3DLONG sz_img[4], int fgthr, int sizethr)
+void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, vector<V3DLONG>& seeds, int cubSize, int colorSpan, V3DLONG sz_img[4], int fgthr, int sizethr)
 {
     seeds.clear();
     multimap<V3DLONG, V3DLONG, std::greater<V3DLONG> > seedMap; //first:
@@ -986,7 +978,7 @@ void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, vecto
     while(maxVal>fgthr){
         //region grow
         memset(image1D_cur, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
-        extract(image1D_h, image1D_mask, image1D_cur, maxIdx, cubSize, colorSpan, sz_img);
+        extract(image1D_h, image1D_mask, image1D_s, image1D_cur, maxIdx, cubSize, colorSpan, sz_img);
         //get the size of the region
 //        image1D_hbk[maxIdx]=-1;
         image1D_mask[maxIdx]=0;
@@ -1017,11 +1009,11 @@ void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, vecto
 //    memory_free_int1D(image1D_hbk);
 }
 
-void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
 {
     vector<V3DLONG> seeds;
     V3DLONG delta=cubSize/2;
-    V3DLONG v_mean=0, v_count=0;
+    V3DLONG h_mean=0, v_count=0, s_mean=0;
     V3DLONG x,y,z,pos;
     V3DLONG y_offset=sz_img[0];
     V3DLONG z_offset=sz_img[0]*sz_img[1];
@@ -1038,7 +1030,8 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
                 pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
 //                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos];
                 if(image1D_h[pos]<0)    continue;
-                v_mean+=image1D_h[pos];
+                h_mean+=image1D_h[pos];
+                s_mean+=(V3DLONG)image1D_s[pos];
                 v_count++;
             }
         }
@@ -1047,7 +1040,8 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
         qDebug()<<"==========NeuronPicker: an empty region!";
         return;
     }
-    v_mean/=v_count;
+    h_mean/=v_count;
+    s_mean/=v_count;
 
     unsigned char* image1D_mask=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]);
     memset(image1D_mask, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
@@ -1059,7 +1053,8 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
                 pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
 //                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos]<<":"<<v_mean;
                 if(image1D_h[pos]<0)    continue;
-                if(huedis(image1D_h[pos],v_mean)>colorSpan) continue;
+                if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
                 image1D_out[pos]=image1D_v[pos];
                 image1D_mask[pos]=1;
                 seeds.push_back(pos);
@@ -1084,7 +1079,195 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
                     image1D_out[pos]=image1D_v[pos];
                     if(image1D_h[pos]<0)    continue;
                     if(image1D_mask[pos]>0) continue;
-                    if(huedis(image1D_h[pos],v_mean)>colorSpan) continue;
+                    if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                    if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
+                    image1D_mask[pos]=1;
+                    seeds.push_back(pos);
+                }
+            }
+        }
+        sid++;
+    }
+
+    qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
+
+    memory_free_uchar1D(image1D_mask);
+}
+
+//input is color matrix
+void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in, unsigned char *image1D_s, unsigned char *image1Dc_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+{
+    vector<V3DLONG> seeds;
+    V3DLONG delta=cubSize/2;
+    V3DLONG h_mean=0, v_count=0, s_mean=0;
+    V3DLONG x,y,z,pos;
+    V3DLONG y_offset=sz_img[0];
+    V3DLONG z_offset=sz_img[0]*sz_img[1];
+    V3DLONG page=sz_img[0]*sz_img[1]*sz_img[2];
+    vector<V3DLONG> coord;
+    coord=pos2xyz(_pos_input, y_offset, z_offset);
+    x=coord[0];
+    y=coord[1];
+    z=coord[2];
+    qDebug()<<"==========NeuronPicker: seed:"<<x<<":"<<y<<":"<<z<<":"<<delta;
+    //find the average hue in seed regions
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos];
+                if(image1D_h[pos]<0)    continue;
+                h_mean+=image1D_h[pos];
+                s_mean+=(V3DLONG)image1D_s[pos];
+                v_count++;
+            }
+        }
+    }
+    if(v_count<=0){
+        qDebug()<<"==========NeuronPicker: an empty region!";
+        return;
+    }
+    h_mean/=v_count;
+    s_mean/=v_count;
+
+    unsigned char* image1D_mask=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]);
+    memset(image1D_mask, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+
+
+    ofstream fp("test.txt"); //cojoc
+    fp<<h_mean<<endl; //cojoc
+
+    //populate the init seed regions
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos]<<":"<<v_mean;
+                if(image1D_h[pos]<0)    continue;
+                if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
+                image1Dc_out[pos]=image1Dc_in[pos];
+                image1Dc_out[pos+page]=image1Dc_in[pos+page];
+                image1Dc_out[pos+page*2]=image1Dc_in[pos+page*2];
+                image1D_mask[pos]=1;
+                seeds.push_back(pos);
+
+                fp<<image1D_h[pos]<<":"<<(int)image1Dc_in[pos]<<":"<<(int)image1Dc_in[pos+page]<<":"<<(int)image1Dc_in[pos+page*2]<<"\t"<<dx<<":"<<dy<<":"<<dz<<endl; //cojoc
+            }
+        }
+    }
+
+    qDebug()<<"==========NeuronPicker: found "<<seeds.size()<<" initial seeds";
+    //seed grow
+    V3DLONG sid=0;
+    while(sid<seeds.size()){
+        coord=pos2xyz(seeds[sid], y_offset, z_offset);
+        x=coord[0];
+        y=coord[1];
+        z=coord[2];
+        //find the average hue in seed regions
+        for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+            for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+                for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                    image1Dc_out[pos]=image1Dc_in[pos];
+                    image1Dc_out[pos+page]=image1Dc_in[pos+page];
+                    image1Dc_out[pos+page*2]=image1Dc_in[pos+page*2];
+                    if(image1D_h[pos]<0)    continue;
+                    if(image1D_mask[pos]>0) continue;
+                    if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                    if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
+                    image1D_mask[pos]=1;
+                    seeds.push_back(pos);
+
+                    fp<<image1D_h[pos]<<":"<<(int)image1Dc_in[pos]<<":"<<(int)image1Dc_in[pos+page]<<":"<<(int)image1Dc_in[pos+page*2]<<"\t"<<dx<<":"<<dy<<":"<<dz<<endl; //cojoc
+                }
+            }
+        }
+        sid++;
+    }
+
+    qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
+
+    memory_free_uchar1D(image1D_mask);
+
+    fp.close(); //cojoc
+}
+
+//this function will extract less in comparison with extract();
+void neuronPickerMain::extract_mono(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+{
+    vector<V3DLONG> seeds;
+    V3DLONG delta=cubSize/2;
+    V3DLONG h_mean=0, v_count=0, s_mean=0;
+    V3DLONG x,y,z,pos;
+    V3DLONG y_offset=sz_img[0];
+    V3DLONG z_offset=sz_img[0]*sz_img[1];
+    vector<V3DLONG> coord;
+    coord=pos2xyz(_pos_input, y_offset, z_offset);
+    x=coord[0];
+    y=coord[1];
+    z=coord[2];
+    qDebug()<<"==========NeuronPicker: seed:"<<x<<":"<<y<<":"<<z<<":"<<delta;
+    //find the average hue in seed regions
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos];
+                if(image1D_h[pos]<0)    continue;
+                h_mean+=image1D_h[pos];
+                s_mean+=(V3DLONG)image1D_s[pos];
+                v_count++;
+            }
+        }
+    }
+    if(v_count<=0){
+        qDebug()<<"==========NeuronPicker: an empty region!";
+        return;
+    }
+    h_mean/=v_count;
+    s_mean/=v_count;
+
+    unsigned char* image1D_mask=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]);
+    memset(image1D_mask, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+
+    //populate the init seed regions
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                qDebug()<<"==========NeuronPicker: "<<dx<<":"<<dy<<":"<<dz<<":"<<image1D_h[pos]<<":"<<v_mean;
+                if(image1D_h[pos]<0)    continue;
+                if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
+                image1D_out[pos]=image1D_v[pos];
+                image1D_mask[pos]=1;
+                seeds.push_back(pos);
+            }
+        }
+    }
+
+    qDebug()<<"==========NeuronPicker: found "<<seeds.size()<<" initial seeds";
+
+    //seed grow
+    V3DLONG sid=0;
+    while(sid<seeds.size()){
+        coord=pos2xyz(seeds[sid], y_offset, z_offset);
+        x=coord[0];
+        y=coord[1];
+        z=coord[2];
+        //find the average hue in seed regions
+        for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
+            for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_img[1]-1,y+delta); dy++){
+                for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_img[2]-1,z+delta); dz++){
+                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                    if(image1D_h[pos]<0)    continue;
+                    if(image1D_mask[pos]>0) continue;
+                    if(huedis(image1D_h[pos],h_mean)>colorSpan) continue;
+//                    if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
+
+                    image1D_out[pos]=image1D_v[pos];
                     image1D_mask[pos]=1;
                     seeds.push_back(pos);
                 }
@@ -1143,4 +1326,57 @@ int neuronPickerMain::rgb2hue(const unsigned char R, const unsigned char G, cons
     if(maxColor-minColor<1e-5)
         hue=-2;
     return hue;
+}
+
+void neuronPickerMain::rgb2hsv(const unsigned char R, const unsigned char G, const unsigned char B, int & h, unsigned char & s, unsigned char & v)
+{
+    float r = (float)R/255.0;
+    float g = (float)G/255.0;
+    float b = (float)B/255.0;
+    float maxColor=-1, minColor=1e6;
+    int maxChannel=-1;
+    int hue=-1;
+    if(maxColor<r){
+        maxColor=r;
+        maxChannel=0;
+    }
+    if(maxColor<g){
+        maxColor=g;
+        maxChannel=1;
+    }
+    if(maxColor<b){
+        maxColor=b;
+        maxChannel=2;
+    }
+    if(minColor>r){
+        minColor=r;
+    }
+    if(minColor>g){
+        minColor=g;
+    }
+    if(minColor>b){
+        minColor=b;
+    }
+
+    if(maxChannel==0){
+        float tmp=(g-b)/(maxColor-minColor);
+        if(tmp<0)
+            tmp=tmp+6;
+        hue=60*tmp;
+    }
+    if(maxChannel==1){
+        hue=60.0*(((b-r)/(maxColor-minColor))+2.0);
+    }
+    if(maxChannel==2){
+        hue=60.0*(((r-g)/(maxColor-minColor))+4.0);
+    }
+    if(maxColor-minColor<1e-5)
+        hue=-2;
+    h=hue;
+    v=MAX(MAX(R,G),B);
+    if(maxColor<1e-5){
+        s=0;
+    }else{
+        s=(maxColor-minColor)/maxColor*255;
+    }
 }
