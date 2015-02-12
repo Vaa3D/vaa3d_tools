@@ -139,13 +139,17 @@ void resampleDialog::_slot_run()
         if (new3DWindow)
         {
             QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(new3DWindow);
-            treeList->push_back(resultTree);
-
-            m_v3d.pushObjectIn3DWindow(new3DWindow);
+            if ( treeList ){
+                treeList->push_back(resultTree);
+                m_v3d.pushObjectIn3DWindow(new3DWindow);
+            }
+            else{
+                v3d_msg("empty tree list!");
+            }
         }
-    }
-    else{
-        v3d_msg("cannot find the 3d viewer!");
+        else{
+            v3d_msg("cannot create empty 3d viewer!");
+        }
     }
 }
 
