@@ -11,7 +11,7 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     create();
     previousz=-1;
     //int dataflag=0; //if loaded data,dataflag=0; if fetched,dataflag=1
-    bool zoominflag=false;
+    zoominflag=false;
 }
 
 void Paint_Dialog::create()
@@ -153,10 +153,24 @@ bool Paint_Dialog::load()
             v3d_msg("load image "+fileName+" error!");
             return false;
         }
-        qDebug()<<"2";
 
-
-
+        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+        if(intype!=1)
+        {
+            if (intype == 2) //V3D_UINT16;
+            {
+                Paint_Dialog::convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+            }
+            else if(intype == 4) //V3D_FLOAT32;
+            {
+                Paint_Dialog::convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+            }
+            else
+            {
+                v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+                return false;
+            }
+        }
         backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
         memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
@@ -176,9 +190,39 @@ bool Paint_Dialog::load()
     return false;
 }
 
-void Paint_Dialog::zdisplay(int z)
+void Paint_Dialog::savezimage(int z)
 {
-    //test whether the image is in zoomin mode or not
+//    if (!paintarea->isModified())
+//    {
+//        qDebug()<<"I have not changed";
+//        return;
+//    }
+//    else
+    {
+        QColor color;
+        z=z-1;
+
+        for(int x=0; x< sz_img[0]; x++){
+            for(int y=0; y<sz_img[1]; y++){
+                color=paintarea->paintImage.pixel(QPoint(x,y));
+                int red=color.red();
+                int green=color.green();
+                int blue=color.blue();
+                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
+                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
+                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
+            }
+        }
+    }
+    qDebug()<<"z image is saved: "<<z;
+
+}
+
+void Paint_Dialog::zdisplay(int z_in)
+{
+    int z=z_in-1;
+
+    //if zoomin, zoomout first and then store the image
     if (zoominflag)
     {
         qDebug()<<"I am zoomed in";
@@ -188,114 +232,105 @@ void Paint_Dialog::zdisplay(int z)
         paintarea->image=q;
         paintarea->paintImage=p;
     }
-        qDebug()<<"I am not zoom in";
-        if (previousz>=0)
-        {
-          savezimage(previousz);
-        }
+    if (previousz>=0)
+    {
+        savezimage(previousz);
+    }
 
-        QSize newSize;
-        newSize.setWidth(sz_img[0]);
-        newSize.setHeight(sz_img[1]);
+    QSize newSize;
+    newSize.setWidth(sz_img[0]);
+    newSize.setHeight(sz_img[1]);
 
+    QImage newimage(newSize, QImage::Format_RGB16);
+    QImage newimage2(newSize, QImage::Format_RGB16);
+    QRgb value,value1;
 
-        QImage newimage(newSize, QImage::Format_RGB16);
-        QImage newimage2(newSize, QImage::Format_RGB16);
-        QRgb value,value1;
-
-        z=z-1;
-        //int p3=0;
-        //int p2=0;
-        //Write image data to display on the screen
-        for(int x=0; x< sz_img[0]; x++){
-            for(int y=0; y<sz_img[1]; y++){
-
-                int p1=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
-                int p2=p1;
-                int p3=p1;
-                if (sz_img[3]>1){
-
-                    p2=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
-                }
-                if (sz_img[3]>2)
-                {
-                    p3=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
-                }
-                int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
-
-                int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
-
-                int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
-
-                value1=qRgb(p4,p5,p6);
-                newimage2.setPixel(x,y,value1);
-
-                if (p4!=0 || p5!=0 ||p6!=0)
-                {
-
-                    p1=p4;
-                    p2=p5;
-                    p3=p6;
-                }
-                value=qRgb(p1,p2,p3);
-                newimage.setPixel(x,y,value);
-
+    //Write image data to display on the screen
+    for(int x=0; x< sz_img[0]; x++){
+        for(int y=0; y<sz_img[1]; y++){
+            int p1=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+            int p2=0;
+            int p3=0;
+            if (sz_img[3]>1){
+                p2=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+            }else{
+                p2=p1;
             }
+            if (sz_img[3]>2){
+                p3=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+            }else{
+                p3=p1;
+            }
+            int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+            int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+            int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+
+            value1=qRgb(p4,p5,p6);
+            newimage2.setPixel(x,y,value1);
+
+            if (p4!=0 || p5!=0 ||p6!=0)
+            {
+                p1=p4;
+                p2=p5;
+                p3=p6;
+            }
+            value=qRgb(p1,p2,p3);
+            newimage.setPixel(x,y,value);
         }
+    }
 
+    //if in zoomin mode, needs to zoom the pic in again.
+    if (zoominflag)
+    {
+        paintarea->image=newimage;
+        paintarea->paintImage=newimage2;
+        zoomin();
+    }
 
-        if (zoominflag)
-        {
+    else
+    {
+    paintarea->openImage(newimage,newimage2);
+    }
+    QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
+        " z: " + QString::number(sz_img[2]) + "\nCurrent z: " + QString::number(spin->value());
 
-            paintarea->image=newimage;
-            paintarea->paintImage=newimage2;
-            zoomin();
-        }
+    edit->setPlainText(tmp);
 
-        else
-        {
-        paintarea->openImage(newimage,newimage2);
-        }
-        QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
-            " z: " + QString::number(sz_img[2]) + "\nCurrent z: " + QString::number(spin->value());
-
-        edit->setPlainText(tmp);
-
-        previousz=spin->value();
-  }
-
-
+    previousz=spin->value();
+}
 
 
 
 void Paint_Dialog::clearimage()
 {
-    if (pushback()){
-        QMessageBox::information(0, "", "The data has been pushed back to main window.");
-        return;
-    }
-
     previousz=-1;
 
-    int z=spin->value();
+    //in case you flip pages and then want to clear image
+    int z=spin->value()-1;
+    memset(paint_1DC+z*sz_img[0]*sz_img[1],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
+    memset(paint_1DC+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
+    memset(paint_1DC+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
 
-      for(int x=0; x< sz_img[0]; x++){
-          for(int y=0; y<sz_img[1]; y++){
-              image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+    zdisplay(z+1);
+//    for(int x=0; x< sz_img[0]; x++){
+//        for(int y=0; y<sz_img[1]; y++){
+//            image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
 
-              if (sz_img[3]>1)
-              {
-              image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=
-                      backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
-              }
-              if (sz_img[3]>2){
-              image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=
-                      backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
-              }
-          }
-      }
-      zdisplay(z);
-
+//            if (sz_img[3]>1)
+//            {
+//                image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=
+//                  backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+//            }else{
+//                image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=0;
+//            }
+//            if (sz_img[3]>2){
+//            image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=
+//                  backupdata[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+//            }else{
+//                image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=0;
+//            }
+//        }
+//    }
 }
 
 
@@ -326,10 +361,33 @@ void Paint_Dialog::fetch()
     sz_img[2]=p4DImage->getZDim();
     sz_img[3]=p4DImage->getCDim();
 
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    if(pixeltype!=1)
+    {
+        if (pixeltype == 2) //V3D_UINT16;
+        {
+            Paint_Dialog::convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+        }
+        else if(pixeltype == 4) //V3D_FLOAT32;
+        {
+            Paint_Dialog::convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+        }
+        else
+        {
+            v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+
+        }
+    }
+
     backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
     paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
     memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
-    qDebug()<<"datacopy and initialized";
+
+    //image1D_out stores the data to pushback
+//    image1D_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
+//    memset(image1D_out,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
+//    memcpy(image1D_out,backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+//    qDebug()<<"size of unsigned char"<<sizeof(unsigned char);
 
     QSize newSize;
     newSize.setWidth(sz_img[0]);
@@ -339,7 +397,6 @@ void Paint_Dialog::fetch()
     TriviewControl *tript=callback->getTriviewControl(curwin);
     V3DLONG x,y,z;
     tript->getFocusLocation(x,y,z);
-    qDebug()<<"fetch z value:"<<z;
     spin->setMaximum(sz_img[2]);
     spin->setValue(z);
 
@@ -366,8 +423,8 @@ void Paint_Dialog::zoomin()
     newSize.setHeight(800);
     paintarea->setFixedSize(newSize);
 
-    QImage q=paintarea->image.scaled(450,450,Qt::KeepAspectRatio);
-    QImage p=paintarea->paintImage.scaled(450,450,Qt::KeepAspectRatio);
+    QImage q=paintarea->image.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
+    QImage p=paintarea->paintImage.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
     paintarea->image=q;
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
@@ -389,36 +446,9 @@ void Paint_Dialog::zoomout()
     qDebug()<<"Zoomout....";
 }
 
-void Paint_Dialog::savezimage(int z)
-{
-    if (!paintarea->isModified())
-    {
-        qDebug()<<"I have not changed";
-        return;
-    }
-    else
-    {
-        QColor color;
-        z=z-1;
-
-        for(int x=0; x< sz_img[0]; x++){
-            for(int y=0; y<sz_img[1]; y++){
-                color=paintarea->paintImage.pixel(QPoint(x,y));
-                int red=color.red();
-                int green=color.green();
-                int blue=color.blue();
-                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=red;
-                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[2]*sz_img[0]*sz_img[1]]=green;
-                paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[2]*sz_img[0]*sz_img[1]]=blue;
-                }
-             }
-        }
-     qDebug()<<"z image is saved: "<<z;
-
-}
-
 bool Paint_Dialog::pushback()
-{   qDebug()<<"Inpushback now";
+{
+    qDebug()<<"Inpushback now";
 
     curwin = callback->currentImageWindow();
     if (!curwin)
@@ -429,104 +459,102 @@ bool Paint_Dialog::pushback()
 
     if (zoominflag)
     {
+        qDebug()<<"It is being zoomed out temporarily";
         QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
         QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
         paintarea->image=q;
         paintarea->paintImage=p;
      }
 
-      savezimage(spin->value());
+    savezimage(spin->value());
+
     qDebug()<<"First stop";
     qDebug()<<"sz_img[3]"<<sz_img[3];
-    if (sz_img[3]==1){
-
-        image1D_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
-        memset(image1D_out,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
-        memcpy(image1D_out, backupdata,sizeof(image1Dc_in));
-//        image1Dc_in=0;
-//        image1Dc_in=image1D_out;
-        qDebug()<<"Before loop";
-        for (int z=0;z<sz_img[2];z++) {
-           for (int x=0;x<sz_img[0];x++) {
-               for (int y=0;y<sz_img[1];y++) {
-                   int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
-
-                   int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
-
-                   int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
-
-                   if (p4!=0||p5!=0||p6!=0)
-                   {
-                       image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=p4;
-
-                       image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=p5;
-
-                       image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=p6;
-
-                   }
-
-               }
-           }
-          }
-        qDebug()<<"After loop";
-        Image4DSimple image4D;
-        qDebug()<<"Before setdata";
-        image4D.setData(image1D_out,sz_img[0],sz_img[1],sz_img[2],3,(ImagePixelType)1);
-        qDebug()<<"2";
-        v3dhandle newwindow=callback->newImageWindow();
-        qDebug()<<"3";
-        callback->setImage(newwindow, &image4D);
-        qDebug()<<"4";
-        callback->setImageName(newwindow, "Paint result");
-        callback->updateImageWindow(newwindow);
 
 
-//        callback->setImage(curwin, &image4D);
-//        callback->setImageName(curwin, "Paint result");
-//        callback->updateImageWindow(curwin);
-
-
+    unsigned char * image1Dc_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
+    memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
+    memcpy(image1Dc_out, backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+    if(sz_img[3]==1){
+        memcpy(image1Dc_out+sz_img[0]*sz_img[1]*sz_img[2], backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+        memcpy(image1Dc_out+2*sz_img[0]*sz_img[1]*sz_img[2], backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
     }
 
-    else{
+    for (int z=0;z<sz_img[2];z++) {
+        for (int x=0;x<sz_img[0];x++) {
+           for (int y=0;y<sz_img[1];y++) {
+               int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+               int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+               int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
 
-         for (int z=0;z<sz_img[2];z++) {
-            for (int x=0;x<sz_img[0];x++) {
-                for (int y=0;y<sz_img[1];y++) {
-                    int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+               if (p4!=0||p5!=0||p6!=0)
+               {
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=p4;
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=p5;
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=p6;
 
-                    int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+               }
 
-                    int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
-
-                    if (p4!=0||p5!=0||p6!=0)
-                    {
-                        image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=p4;
-
-                        if (sz_img[3]>1) {
-
-                        image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=p5;
-                        }
-                        if (sz_img[3]>2) {
-
-                        image1Dc_in[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=p6;
-                        }
-                    }
-
-                }
-            }
            }
+        }
+    }
+    qDebug()<<"after loop";
+    Image4DSimple image4D;
+
+    image4D.setData(image1Dc_out,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
+
+//        v3dhandle newwindow=callback->newImageWindow();
+
+//        callback->setImage(newwindow, &image4D);
+
+//        callback->setImageName(newwindow, "Paint result");
+//        callback->updateImageWindow(newwindow);
 
 
-    Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData(image1Dc_in,sz_img[0],sz_img[1],sz_img[2],3,pixeltype);
-    //v3dhandle newwindow=callback->newImageWindow();
-    //callback->setImage(newwindow, new4DImage);
-    callback->setImage(curwin, new4DImage);
+    callback->setImage(curwin, &image4D);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
-    qDebug()<<"After updatewindow";
-}
+
+//   if (sz_img[3]==3){
+
+//         for (int z=0;z<sz_img[2];z++) {
+//            for (int x=0;x<sz_img[0];x++) {
+//                for (int y=0;y<sz_img[1];y++) {
+//                    int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+
+//                    int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+
+//                    int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+
+//                    if (p4!=0||p5!=0||p6!=0)
+//                    {
+//                        image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=p4;
+
+//                        if (sz_img[3]>1) {
+
+//                        image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=p5;
+//                        }
+//                        if (sz_img[3]>2) {
+
+//                        image1D_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=p6;
+//                        }
+//                    }
+
+//                }
+//            }
+//           }
+
+
+//    Image4DSimple * new4DImage = new Image4DSimple();
+//    new4DImage->setData(image1D_out,sz_img[0],sz_img[1],sz_img[2],3,pixeltype);
+//    //v3dhandle newwindow=callback->newImageWindow();
+//    //callback->setImage(newwindow, new4DImage);
+//    callback->setImage(curwin, new4DImage);
+//    callback->setImageName(curwin, "Paint result");
+//    callback->updateImageWindow(curwin);
+//    qDebug()<<"After updatewindow";
+
+
     return true;
 
 }
@@ -572,4 +600,56 @@ void Paint_Dialog::penWidth()
                                             1, 50, 1, &ok);
     if (ok)
         paintarea->setPenWidth(newWidth);
+}
+
+void Paint_Dialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    unsigned short* pPre = (unsigned short*)pre1d;
+    unsigned short max_v=0, min_v = 255;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        if(max_v<pPre[i]) max_v = pPre[i];
+        if(min_v>pPre[i]) min_v = pPre[i];
+    }
+    max_v -= min_v;
+    if(max_v>0)
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+        }
+    }
+    else
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) pPre[i];
+        }
+    }
+}
+
+void Paint_Dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    float* pPre = (float*)pre1d;
+    float max_v=0, min_v = 65535;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        if(max_v<pPre[i]) max_v = pPre[i];
+        if(min_v>pPre[i]) min_v = pPre[i];
+    }
+    max_v -= min_v;
+    if(max_v>0)
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+        }
+    }
+    else
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) pPre[i];
+        }
+    }
 }
