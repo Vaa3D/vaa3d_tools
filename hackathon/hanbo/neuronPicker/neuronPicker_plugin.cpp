@@ -332,7 +332,7 @@ void neuronPickerDialog::initDlg()
     this->spin_bgthr->setValue(10);
     this->spin_huedis->setValue(40);
     this->spin_distance->setValue(11);
-    this->spin_fgthr->setValue(100);
+    this->spin_fgthr->setValue(200);
     this->spin_sizethr->setValue(1000);
 }
 
@@ -469,6 +469,9 @@ void neuronPickerDialog::autoSeeds()
         LList[i].color.r=196;
         LList[i].color.g=LList[i].color.b=0;
         cb_items.append("marker: " + QString::number(i+1));
+
+//        //for test
+//        qDebug()<<"cojoc: "<<pos[0]<<":"<<pos[1]<<":"<<poss[2]<<":"<<seeds[i]<<"\t"<<(int)image1D_v[seeds[i]];
     }
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
@@ -978,16 +981,14 @@ void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, unsig
     while(maxVal>fgthr){
         //region grow
         memset(image1D_cur, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
-        extract(image1D_h, image1D_mask, image1D_s, image1D_cur, maxIdx, cubSize, colorSpan, sz_img);
+        V3DLONG curSize = extract(image1D_h, image1D_mask, image1D_s, image1D_cur, maxIdx, cubSize, colorSpan, sz_img);
         //get the size of the region
 //        image1D_hbk[maxIdx]=-1;
         image1D_mask[maxIdx]=0;
-        V3DLONG curSize=0;
         for(V3DLONG i=0; i<sz_img[0]*sz_img[1]*sz_img[2]; i++){
             if(image1D_cur[i]>0){
                 image1D_mask[i]=0;
 //                image1D_hbk[i]=-1;
-                curSize++;
             }
         }
         if(curSize>sizethr)
@@ -1009,7 +1010,7 @@ void neuronPickerMain::autoSeeds(int *image1D_h, unsigned char *image1D_v, unsig
 //    memory_free_int1D(image1D_hbk);
 }
 
-void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+V3DLONG neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
 {
     vector<V3DLONG> seeds;
     V3DLONG delta=cubSize/2;
@@ -1038,7 +1039,7 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
     }
     if(v_count<=0){
         qDebug()<<"==========NeuronPicker: an empty region!";
-        return;
+        return 0;
     }
     h_mean/=v_count;
     s_mean/=v_count;
@@ -1092,10 +1093,11 @@ void neuronPickerMain::extract(int *image1D_h, unsigned char *image1D_v, unsigne
     qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
 
     memory_free_uchar1D(image1D_mask);
+    return seeds.size();
 }
 
 //input is color matrix
-void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in, unsigned char *image1D_s, unsigned char *image1Dc_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+V3DLONG neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in, unsigned char *image1D_s, unsigned char *image1Dc_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
 {
     vector<V3DLONG> seeds;
     V3DLONG delta=cubSize/2;
@@ -1125,17 +1127,13 @@ void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in,
     }
     if(v_count<=0){
         qDebug()<<"==========NeuronPicker: an empty region!";
-        return;
+        return 0;
     }
     h_mean/=v_count;
     s_mean/=v_count;
 
     unsigned char* image1D_mask=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]);
     memset(image1D_mask, 0, sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
-
-
-    ofstream fp("test.txt"); //cojoc
-    fp<<h_mean<<endl; //cojoc
 
     //populate the init seed regions
     for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_img[0]-1,x+delta); dx++){
@@ -1151,8 +1149,6 @@ void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in,
                 image1Dc_out[pos+page*2]=image1Dc_in[pos+page*2];
                 image1D_mask[pos]=1;
                 seeds.push_back(pos);
-
-                fp<<image1D_h[pos]<<":"<<(int)image1Dc_in[pos]<<":"<<(int)image1Dc_in[pos+page]<<":"<<(int)image1Dc_in[pos+page*2]<<"\t"<<dx<<":"<<dy<<":"<<dz<<endl; //cojoc
             }
         }
     }
@@ -1179,8 +1175,6 @@ void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in,
 //                    if(huedis(image1D_h[pos],h_mean)+saturationdis(image1D_s[pos],s_mean)>colorSpan) continue;
                     image1D_mask[pos]=1;
                     seeds.push_back(pos);
-
-                    fp<<image1D_h[pos]<<":"<<(int)image1Dc_in[pos]<<":"<<(int)image1Dc_in[pos+page]<<":"<<(int)image1Dc_in[pos+page*2]<<"\t"<<dx<<":"<<dy<<":"<<dz<<endl; //cojoc
                 }
             }
         }
@@ -1190,12 +1184,11 @@ void neuronPickerMain::extract_color(int *image1D_h, unsigned char *image1Dc_in,
     qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
 
     memory_free_uchar1D(image1D_mask);
-
-    fp.close(); //cojoc
+    return seeds.size();
 }
 
 //this function will extract less in comparison with extract();
-void neuronPickerMain::extract_mono(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
+V3DLONG neuronPickerMain::extract_mono(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG _pos_input, int cubSize, int colorSpan, V3DLONG sz_img[4])
 {
     vector<V3DLONG> seeds;
     V3DLONG delta=cubSize/2;
@@ -1224,7 +1217,7 @@ void neuronPickerMain::extract_mono(int *image1D_h, unsigned char *image1D_v, un
     }
     if(v_count<=0){
         qDebug()<<"==========NeuronPicker: an empty region!";
-        return;
+        return 0;
     }
     h_mean/=v_count;
     s_mean/=v_count;
@@ -1279,6 +1272,7 @@ void neuronPickerMain::extract_mono(int *image1D_h, unsigned char *image1D_v, un
     qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
 
     memory_free_uchar1D(image1D_mask);
+    return seeds.size();
 }
 
 int neuronPickerMain::rgb2hue(const unsigned char R, const unsigned char G, const unsigned char B)
