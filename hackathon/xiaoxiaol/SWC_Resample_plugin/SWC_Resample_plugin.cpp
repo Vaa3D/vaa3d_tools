@@ -73,7 +73,7 @@ resampleDialog :: resampleDialog(V3DPluginCallback2 &_v3d, QWidget *parent) :
     this->spinbox_steplength = new QSpinBox;
     this->spinbox_steplength->setRange(1, INT32_MAX);
     this->spinbox_steplength->setSingleStep(1);
-    this->spinbox_steplength->setValue(1);
+    this->spinbox_steplength->setValue(5);
 
     QPushButton *btn_Run = new QPushButton("Run");
 
@@ -158,7 +158,9 @@ void resampleDialog::_slot_run()
     QString title = QString("Resampled SWC");
     m_v3d.setWindowDataTitle(new3DWindow, title);
 
-    m_v3d.update_3DViewer(new3DWindow);
+    //m_v3d.update_3DViewer(new3DWindow); // this will not update the bounding box ?, and adding this will only cuase
+    //the window to delay the refreshing until user interaction
+
     m_v3d.update_NeuronBoundingBox(new3DWindow); //without this step, the neuron won't show...
 
 
