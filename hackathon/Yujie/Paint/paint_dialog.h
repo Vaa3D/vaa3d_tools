@@ -41,12 +41,14 @@ private:
     void savezimage(int z);
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+    void resetdata();
     QString fileName;
     V3DPluginCallback2 *callback;
     QPlainTextEdit *edit;
     QSpinBox *spin;
     V3DLONG sz_img[4];
     int intype;
+    int datasource; //loaded data:datasource=1; fetched data:datasource=2;
 
     v3dhandle curwin;
     ImagePixelType pixeltype;
