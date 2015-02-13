@@ -20,7 +20,7 @@ void Paint_Dialog::create()
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(paintarea,1,0,1,1);
     QToolBar *tool = new QToolBar;
-    tool->setGeometry(0,0,250,20);
+    tool->setGeometry(0,0,270,20);
     //tool->setOrientation(Qt::Vertical );
 
     QVBoxLayout *layout = new QVBoxLayout;
@@ -28,7 +28,7 @@ void Paint_Dialog::create()
     button_load->setGeometry(0,0,10,20);
     button_load->setText("Load");
     QToolButton *button_save = new QToolButton;
-    button_save->setText("Save");
+    button_save->setText("Save image");
     button_save->setGeometry(0,0,10,20);
     QToolButton *button_color = new QToolButton;
     button_color->setText("Color");
@@ -53,6 +53,9 @@ void Paint_Dialog::create()
     QToolButton *button_zoomout=new QToolButton;
     button_zoomout->setText("Zoom out");
     button_zoomout->setGeometry(0,0,10,20);
+    QToolButton *button_savefile=new QToolButton;
+    button_savefile->setText("Save File");
+    button_savefile->setGeometry(0,0,10,20);
 
     QLabel *label= new QLabel;
     label->setText("Information of selecton:");
@@ -68,8 +71,6 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_fetch);
     tool->addSeparator();
-    tool->addWidget(button_save);
-    tool->addSeparator();
     tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_zoomin);
@@ -84,9 +85,14 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_clear);
     tool->addSeparator();
+    tool->addWidget(button_save);
+    tool->addSeparator();
+    tool->addWidget(button_savefile);
+    tool->addSeparator();
     tool->addWidget(button_print);
     tool->addSeparator();
     tool->addWidget(spin);
+    tool->addSeparator();
 
     layout->addWidget(tool);
     gridLayout->addWidget(label,2,0,1,1);
@@ -97,7 +103,7 @@ void Paint_Dialog::create()
     this->setMinimumHeight(700);
     this->setMinimumWidth(500);
     connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
-    connect(button_save, SIGNAL(clicked()), this, SLOT(save()));
+    connect(button_save, SIGNAL(clicked()), this, SLOT(saveimage()));
     connect(button_color, SIGNAL(clicked()), this, SLOT(penColor()));
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
     connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
@@ -106,6 +112,7 @@ void Paint_Dialog::create()
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
     connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
+    connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 }
 
 
@@ -119,7 +126,8 @@ bool Paint_Dialog::maybeSave()
                           QMessageBox::Save | QMessageBox::Discard
                           | QMessageBox::Cancel);
         if (ret == QMessageBox::Save) {
-            return saveFile("jpg");
+
+            return saveFile();
         } else if (ret == QMessageBox::Cancel) {
             return false;
         }
@@ -153,6 +161,8 @@ bool Paint_Dialog::load()
             v3d_msg("load image "+fileName+" error!");
             return false;
         }
+
+
 
         V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
         if(intype!=1)
@@ -393,8 +403,6 @@ void Paint_Dialog::clearimage()
 
 
 
-
-
 unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 {
     unsigned char * qcopydata=new unsigned char [size];
@@ -437,6 +445,7 @@ void Paint_Dialog::zoomout()
     paintarea->paintImage=p;
     paintarea->openImage(q,p);
     zoominflag=false;
+    paintarea->setPenWidth(15);
     qDebug()<<"Zoomout....";
 }
 
@@ -497,30 +506,71 @@ void Paint_Dialog::pushback()
     callback->setImage(curwin, &image4D);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
+    delete []image1Dc_out;
+    image1Dc_out=0;
 }
 
-bool Paint_Dialog::saveFile(const QByteArray &fileFormat)
+bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
 {
+    QString initialPath = QDir::currentPath() + "/untitled" + ".v3draw";
+
+    QString fileout = QFileDialog::getSaveFileName(this, tr("Save As"),initialPath,
+                      QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+
+    //Get the combined file of raw data and paint file
+    unsigned char * image1Dc_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
+    memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
+    memcpy(image1Dc_out,backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+
+    if(sz_img[3]==1){
+        memcpy(image1Dc_out+sz_img[0]*sz_img[1]*sz_img[2],backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+        memcpy(image1Dc_out+2*sz_img[0]*sz_img[1]*sz_img[2],backupdata,sz_img[0]*sz_img[1]*sz_img[2]*sizeof(unsigned char));
+    }
+
+    for (int z=0;z<sz_img[2];z++) {
+        for (int x=0;x<sz_img[0];x++) {
+           for (int y=0;y<sz_img[1];y++) {
+               int p4=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]];
+               int p5=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]];
+               int p6=paint_1DC[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]];
+
+               if (p4!=0||p5!=0||p6!=0)
+               {
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]]=p4;
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2]]=p5;
+                   image1Dc_out[x+sz_img[0]*y+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2]]=p6;
+               }
+           }
+        }
+    }
+
+    if(!simple_saveimage_wrapper(*callback, qPrintable(fileout),image1Dc_out,sz_img,1)){
+        QMessageBox::information(0, "", "File not saved");
+        return false;
+    }else{
+        paintarea->modified=false;
+        return true;
+    }
+
+}
+
+
+bool Paint_Dialog::saveimage()
+{
+    const QByteArray &fileFormat="jpg";
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                               initialPath,
-                               tr("%1 Files (*.%2);;All Files (*)")
-                               .arg(QString(fileFormat.toUpper()))
-                               .arg(QString(fileFormat)));
+                           initialPath,
+                           tr("%1 Files (*.%2);;All Files (*)")
+                           .arg(QString(fileFormat.toUpper()))
+                           .arg(QString(fileFormat)));
     if (fileName.isEmpty()) {
-        return false;
+    return false;
     } else {
-        return paintarea->saveImage(fileName, fileFormat);
+    paintarea->modified=false;
+    return paintarea->saveImage(fileName, fileFormat);
     }
-    qDebug()<<"SaveFile";
-}
-
-
-void Paint_Dialog::save()
-{
-
-    saveFile("jpg");
 
 }
 
@@ -593,3 +643,12 @@ void Paint_Dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG ims
         }
     }
 }
+
+void Paint_Dialog::closeEvent(QCloseEvent *event)
+ {
+     if (maybeSave()) {
+         event->accept();
+     } else {
+         event->ignore();
+     }
+ }

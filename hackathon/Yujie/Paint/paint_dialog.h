@@ -22,7 +22,7 @@ signals:
 
 public slots:
     bool load();
-    void save();
+    bool saveimage();
     void penColor();
     void penWidth();
     void zdisplay(int);
@@ -31,17 +31,20 @@ public slots:
     void clearimage();
     void zoomin();
     void zoomout();
+    bool saveFile();
     //void inserttext();
 
 private:
     void create();
     bool maybeSave();
-    bool saveFile(const QByteArray &fileFormat);
+//    bool saveFile(const QByteArray &fileFormat);
     unsigned char * datacopy(unsigned char *data,long size);
     void savezimage(int z);
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
     void resetdata();
+    void closeEvent(QCloseEvent *event);
+
     QString fileName;
     V3DPluginCallback2 *callback;
     QPlainTextEdit *edit;

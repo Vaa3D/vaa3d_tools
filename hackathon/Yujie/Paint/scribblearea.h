@@ -25,6 +25,7 @@
      int penWidth() const { return myPenWidth; }
      QImage image;
      QImage paintImage;
+     bool modified;
 
  public slots:
      void print();
@@ -42,7 +43,7 @@
      //const QPoint & getMousePos(QMouseEvent *event);
      void cursorshape();
 
-     bool modified;
+
      bool scribbling;
      int myPenWidth;
      QColor myPenColor;
