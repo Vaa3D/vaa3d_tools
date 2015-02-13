@@ -12,6 +12,7 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     create();
     previousz=-1;
     zoominflag=false;
+    paint_1DC=0;
 }
 
 void Paint_Dialog::create()
@@ -152,53 +153,52 @@ bool Paint_Dialog::load()
     if (maybeSave()){
         fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
                  QDir::currentPath(),QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-    }
-    if (!fileName.isEmpty())
-    {
-        resetdata();
-        if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
+
+        if (!fileName.isEmpty())
         {
-            v3d_msg("load image "+fileName+" error!");
-            return false;
-        }
-
-
-
-        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-        if(intype!=1)
-        {
-            if (intype == 2) //V3D_UINT16;
+            resetdata();
+            if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
             {
-                Paint_Dialog::convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
-            }
-            else if(intype == 4) //V3D_FLOAT32;
-            {
-                Paint_Dialog::convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
-            }
-            else
-            {
-                v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+                v3d_msg("load image "+fileName+" error!");
                 return false;
             }
+
+            V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+            if(intype!=1)
+            {
+                if (intype == 2) //V3D_UINT16;
+                {
+                    Paint_Dialog::convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+                }
+                else if(intype == 4) //V3D_FLOAT32;
+                {
+                    Paint_Dialog::convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+                }
+                else
+                {
+                    v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+                    return false;
+                }
+            }
+
+            backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+            paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
+            memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
+            datasource=1;
+
+            QSize newSize;
+            newSize.setWidth(sz_img[0]);
+            newSize.setHeight(sz_img[1]);
+            paintarea->setFixedSize(newSize);
+            spin->setMaximum(sz_img[2]-1);
+            qDebug()<<"before spin set value";
+            spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
+            zdisplay(sz_img[2]/2);
+
+            return true;
         }
-
-        backupdata=datacopy(image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
-        paint_1DC=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
-        memset(paint_1DC,0,sz_img[0]*sz_img[1]*sz_img[2]*3*sizeof(unsigned char));
-        datasource=1;
-
-        QSize newSize;
-        newSize.setWidth(sz_img[0]);
-        newSize.setHeight(sz_img[1]);
-        paintarea->setFixedSize(newSize);
-        spin->setMaximum(sz_img[2]-1);
-        qDebug()<<"before spin set value";
-        spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
-        zdisplay(sz_img[2]/2);
-
-        return true;
-    }
     return false;
+    }
 }
 
 void Paint_Dialog::fetch()
@@ -511,9 +511,25 @@ void Paint_Dialog::pushback()
 bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
 {
     QString initialPath = QDir::currentPath() + "/untitled" + ".v3draw";
+    QFileDialog qdilog(0,tr("Save As"),initialPath,
+                QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
 
-    QString fileout = QFileDialog::getSaveFileName(this, tr("Save As"),initialPath,
-                      QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    qdilog.setAcceptMode(QFileDialog::AcceptSave);
+    QString fileout;
+
+    if(qdilog.exec()){
+        fileout=qdilog.selectedFiles().at(0);
+    }
+    else {
+        return false;
+    }
+
+    //QString fileout = QFileDialog::getSaveFileName(this, tr("Save As"),initialPath,
+                      //QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+
+    qDebug()<<"fileout"<<fileout;
+
+
 
     //Get the combined file of raw data and paint file
     unsigned char * image1Dc_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
