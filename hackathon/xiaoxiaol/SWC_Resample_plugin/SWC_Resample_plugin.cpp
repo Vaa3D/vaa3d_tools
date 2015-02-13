@@ -185,7 +185,7 @@ void resampleDialog::_slot_run()
         myTree = mTreeList->at(i);
         resultTree.copy(myTree);
 
-        proc_neuron_add_offset(&myTree, 0, 0, 100);
+        proc_neuron_add_offset(&resultTree, 0, 0, 100);
 
         // need to reset the color to zero of display with color (using the types)
         resultTree.color.r = 0;
