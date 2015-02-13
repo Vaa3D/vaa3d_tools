@@ -190,7 +190,7 @@ bool Paint_Dialog::load()
             newSize.setWidth(sz_img[0]);
             newSize.setHeight(sz_img[1]);
             paintarea->setFixedSize(newSize);
-            spin->setMaximum(sz_img[2]-1);
+            spin->setMaximum(sz_img[2]);
             qDebug()<<"before spin set value";
             spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
             zdisplay(sz_img[2]/2);
