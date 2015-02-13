@@ -37,9 +37,9 @@ void Paint_Dialog::create()
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
     button_pb->setGeometry(0,0,10,20);
-    QToolButton *button_text=new QToolButton;
-    button_text->setText("Insert text");
-    button_text->setGeometry(0,0,10,20);
+    //QToolButton *button_text=new QToolButton;
+    //button_text->setText("Insert text");
+    //button_text->setGeometry(0,0,10,20);
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
@@ -77,8 +77,8 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_zoomout);
     tool->addSeparator();
-    tool->addWidget(button_text);
-    tool->addSeparator();
+   // tool->addWidget(button_text);
+    //tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
     tool->addWidget(button_pen);
@@ -111,7 +111,7 @@ void Paint_Dialog::create()
     connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
-    connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
+    //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
     connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 }
 
@@ -506,8 +506,6 @@ void Paint_Dialog::pushback()
     callback->setImage(curwin, &image4D);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
-    delete []image1Dc_out;
-    image1Dc_out=0;
 }
 
 bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
