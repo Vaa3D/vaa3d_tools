@@ -10,6 +10,7 @@
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 
 
+
 using namespace std;
 Q_EXPORT_PLUGIN2(SWC_Resample, SWCResample);
  
@@ -107,6 +108,12 @@ void resampleDialog::_slot_run()
 
     //obtain the selected 3D viewer
     list_3dviewer = m_v3d.getListAll3DViewers();
+    if (list_3dviewer.size() < 1)
+    {
+        v3d_msg("Please open up a SWC file from the main menu first!");
+        return;
+    }
+
     surface_win = list_3dviewer[combobox_win->currentIndex()];
 
     if (!surface_win){
@@ -119,12 +126,32 @@ void resampleDialog::_slot_run()
 
 
     // open up a new 3D viewer window
-    V3dR_MainWindow * new3DWindow = m_v3d.createEmpty3DViewer();
-    if (!new3DWindow)
+    QString originalTitle = m_v3d.getImageName(surface_win).remove("3D View [").remove("]");
+    QString title = QString("Resampled ") +  originalTitle;
+
+
+    bool b_found = false;
+    V3dR_MainWindow * new3DWindow = NULL;
+    for (int j= 0; j < list_3dviewer.size(); j++)
     {
-        v3d_msg(QString("Failed to open an empty window!"));
-        return;
+        if ( m_v3d.getImageName(list_3dviewer[j]).contains(title))
+        {
+            b_found = true;
+            new3DWindow = list_3dviewer[j];
+            break;
+        }
     }
+
+    if ( ! b_found)
+    {
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        if (!new3DWindow)
+        {
+            v3d_msg(QString("Failed to open an empty window!"));
+            return;
+        }
+    }
+
 
     QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
     if (!new_treeList)
@@ -155,7 +182,6 @@ void resampleDialog::_slot_run()
     //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
     // in XFormWidget::pushObjectIn3DWindow, because the triView is updated?
 
-    QString title = QString("Resampled SWC");
     m_v3d.setWindowDataTitle(new3DWindow, title);
 
     //m_v3d.update_3DViewer(new3DWindow); // this will not update the bounding box ?, and adding this will only cuase
