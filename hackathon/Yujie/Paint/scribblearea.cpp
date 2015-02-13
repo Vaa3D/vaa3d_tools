@@ -219,7 +219,7 @@ void ScribbleArea::cursorshape()
      if (image->size() == newSize)
          return;
 
-     QImage newImage(newSize, QImage::Format_RGB32);
+     QImage newImage(newSize, QImage::Format_RGB16);
      newImage.fill(qRgb(255, 255, 255));
      QPainter painter(&newImage);
      painter.drawImage(QPoint(0, 0), *image);

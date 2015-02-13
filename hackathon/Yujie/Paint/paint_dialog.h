@@ -32,6 +32,8 @@ public slots:
     void zoomin();
     void zoomout();
     bool saveFile();
+    void dosavemenu();
+    void doopenmenu();
     //void inserttext();
 
 private:
@@ -44,6 +46,12 @@ private:
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
     void resetdata();
     void closeEvent(QCloseEvent *event);
+    QMenu *savemenu;
+    QMenu *openmenu;
+    void createsavemenu();
+
+    void createopenmenu();
+
 
     QString fileName;
     V3DPluginCallback2 *callback;

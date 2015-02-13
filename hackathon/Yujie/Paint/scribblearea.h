@@ -19,6 +19,7 @@
      void setPenColor(const QColor &newColor);
      void setPenWidth(int newWidth);
      void paintEvent(QPaintEvent *event);
+     void resizeImage(QImage *image, const QSize &newSize);
 
      bool isModified() const { return modified; }
      QColor penColor() const { return myPenColor; }
@@ -39,7 +40,7 @@
 
  private:
      void drawLineTo(const QPoint &endPoint);
-     void resizeImage(QImage *image, const QSize &newSize);
+
      //const QPoint & getMousePos(QMouseEvent *event);
      void cursorshape();
 

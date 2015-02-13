@@ -21,23 +21,24 @@ void Paint_Dialog::create()
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(paintarea,1,0,1,1);
     QToolBar *tool = new QToolBar;
-    tool->setGeometry(0,0,270,20);
+    tool->setGeometry(0,0,300,20);
     //tool->setOrientation(Qt::Vertical );
 
     QVBoxLayout *layout = new QVBoxLayout;
-    QToolButton *button_load = new QToolButton;
-    button_load->setGeometry(0,0,10,20);
-    button_load->setText("Load");
+    QToolButton *button_open = new QToolButton;
+    button_open->setGeometry(0,0,10,30);
+    button_open->setText("Open");
+
     QToolButton *button_save = new QToolButton;
-    button_save->setText("Save image");
-    button_save->setGeometry(0,0,10,20);
+    button_save->setText("Save");
+    button_save->setGeometry(0,0,10,30);
     QToolButton *button_color = new QToolButton;
     button_color->setText("Color");
-    QToolButton *button_fetch = new QToolButton;
-    button_fetch->setText("Fetch");
+//    QToolButton *button_fetch = new QToolButton;
+//    button_fetch->setText("Fetch");
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
-    button_pb->setGeometry(0,0,10,20);
+    button_pb->setGeometry(0,0,10,30);
     //QToolButton *button_text=new QToolButton;
     //button_text->setText("Insert text");
     //button_text->setGeometry(0,0,10,20);
@@ -47,16 +48,28 @@ void Paint_Dialog::create()
     button_print->setText("Print");
     QToolButton *button_clear = new QToolButton;
     button_clear->setText("Clear screen");
-    button_clear->setGeometry(0,0,10,20);
+    button_clear->setGeometry(0,0,10,30);
     QToolButton *button_zoomin=new QToolButton;
     button_zoomin->setText("Zoom in");
-    button_zoomin->setGeometry(0,0,10,20);
+    button_zoomin->setGeometry(0,0,10,30);
     QToolButton *button_zoomout=new QToolButton;
     button_zoomout->setText("Zoom out");
-    button_zoomout->setGeometry(0,0,10,20);
-    QToolButton *button_savefile=new QToolButton;
-    button_savefile->setText("Save File");
-    button_savefile->setGeometry(0,0,10,20);
+    button_zoomout->setGeometry(0,0,10,30);
+//    QToolButton *button_savefile=new QToolButton;
+//    button_savefile->setText("Save File");
+//    button_savefile->setGeometry(0,0,10,20);
+
+    savemenu=new QMenu;
+    createsavemenu();
+    button_save->setMenu(savemenu);
+    button_save->setPopupMode(QToolButton::InstantPopup);
+    connect(button_save,SIGNAL(clicked()),this,SLOT(dosavemenu()));
+
+    openmenu=new QMenu;
+    createopenmenu();
+    button_open->setMenu(openmenu);
+    button_open->setPopupMode(QToolButton::InstantPopup);
+    connect(button_open,SIGNAL(clicked()),this,SLOT(doopenmenu()));
 
     QLabel *label= new QLabel;
     label->setText("Information of selecton:");
@@ -68,15 +81,19 @@ void Paint_Dialog::create()
     connect(spin,SIGNAL(valueChanged(int)),this,SLOT(zdisplay(int)));
     connect(button_pb,SIGNAL(clicked()),this,SLOT(pushback()));
 
-    tool->addWidget(button_load);
+    tool->addWidget(button_open);
     tool->addSeparator();
-    tool->addWidget(button_fetch);
+    tool->addWidget(button_save);
     tool->addSeparator();
+//    tool->addWidget(button_fetch);
+//    tool->addSeparator();
     tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_zoomin);
     tool->addSeparator();
     tool->addWidget(button_zoomout);
+    tool->addSeparator();
+    tool->addWidget(button_clear);
     tool->addSeparator();
    // tool->addWidget(button_text);
     //tool->addSeparator();
@@ -84,11 +101,8 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_pen);
     tool->addSeparator();
-    tool->addWidget(button_clear);
-    tool->addSeparator();
-    tool->addWidget(button_save);
-    tool->addSeparator();
-    tool->addWidget(button_savefile);
+
+    //tool->addWidget(button_savefile);
     tool->addSeparator();
     tool->addWidget(button_print);
     tool->addSeparator();
@@ -103,18 +117,57 @@ void Paint_Dialog::create()
     this->setLayout(gridLayout);
     this->setMinimumHeight(700);
     this->setMinimumWidth(500);
-    connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
-    connect(button_save, SIGNAL(clicked()), this, SLOT(saveimage()));
+    //connect(button_open, SIGNAL(clicked()), this, SLOT(load()));
+    //connect(button_save, SIGNAL(clicked()), this, SLOT(saveimage()));
     connect(button_color, SIGNAL(clicked()), this, SLOT(penColor()));
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
     connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
     connect(button_print, SIGNAL(clicked()), paintarea, SLOT(print()));
-    connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
+    //connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
     //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
-    connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
+    //connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 }
+
+
+void Paint_Dialog::createsavemenu()
+{
+    QAction* Act;
+
+    Act = new QAction(tr("Save entire 3D-stack"), this);
+    connect(Act, SIGNAL(triggered()), this, SLOT(saveimage()));
+    savemenu->addAction(Act);
+
+    Act = new QAction(tr("Save only current section"), this);
+    connect(Act, SIGNAL(triggered()), this, SLOT(saveFile()));
+    savemenu->addAction(Act);
+}
+
+void Paint_Dialog::dosavemenu()
+{
+   savemenu->exec(QCursor::pos());
+}
+
+
+void Paint_Dialog::createopenmenu()
+{
+    QAction* Act;
+
+    Act = new QAction(tr("Load image files"), this);
+    connect(Act, SIGNAL(triggered()), this, SLOT(load()));
+    openmenu->addAction(Act);
+
+    Act = new QAction(tr("Fetch from 3D viewer"), this);
+    connect(Act, SIGNAL(triggered()), this, SLOT(fetch()));
+    openmenu->addAction(Act);
+}
+
+void Paint_Dialog::doopenmenu()
+{
+   openmenu->exec(QCursor::pos());
+}
+
 
 
 bool Paint_Dialog::maybeSave()
@@ -390,6 +443,10 @@ void Paint_Dialog::zdisplay(int z_in)
 
 void Paint_Dialog::clearimage()
 {
+    if (datasource!=1 && datasource!=2){
+        QMessageBox::information(0, "", "No image is loaded/fetched");
+        return;
+    }
     previousz=-1; //skip the savezimage part
 
     //in case you flip pages and then want to clear image
@@ -423,12 +480,13 @@ void Paint_Dialog::zoomin()
     }
     zoominflag=true;
     QSize newSize;
-    newSize.setWidth(600);
-    newSize.setHeight(800);
+    newSize.setWidth(sz_img[0]*2);
+    newSize.setHeight(sz_img[1]*2);
     paintarea->setFixedSize(newSize);
 
     QImage q=paintarea->image.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
     QImage p=paintarea->paintImage.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
+
     paintarea->image=q;
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
@@ -441,8 +499,11 @@ void Paint_Dialog::zoomout()
 {
     QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
     QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
+
     paintarea->image=q;
     paintarea->paintImage=p;
+    paintarea->setFixedSize(sz_img[0],sz_img[1]);
+
     paintarea->openImage(q,p);
     zoominflag=false;
     paintarea->setPenWidth(15);
@@ -506,6 +567,17 @@ void Paint_Dialog::pushback()
     callback->setImage(curwin, &image4D);
     callback->setImageName(curwin, "Paint result");
     callback->updateImageWindow(curwin);
+
+    //Set the paintarea back to the zoom in mode
+    if (zoominflag)
+    {
+        QImage m=paintarea->image.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
+        QImage n=paintarea->paintImage.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
+        paintarea->image=m;
+        paintarea->paintImage=n;
+     }
+
+
 }
 
 bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
