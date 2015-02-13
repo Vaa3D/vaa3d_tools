@@ -136,11 +136,11 @@ void Paint_Dialog::createsavemenu()
     QAction* Act;
 
     Act = new QAction(tr("Save entire 3D-stack"), this);
-    connect(Act, SIGNAL(triggered()), this, SLOT(saveimage()));
+    connect(Act, SIGNAL(triggered()), this, SLOT(saveFile()));
     savemenu->addAction(Act);
 
     Act = new QAction(tr("Save only current section"), this);
-    connect(Act, SIGNAL(triggered()), this, SLOT(saveFile()));
+    connect(Act, SIGNAL(triggered()), this, SLOT(saveimage()));
     savemenu->addAction(Act);
 }
 
