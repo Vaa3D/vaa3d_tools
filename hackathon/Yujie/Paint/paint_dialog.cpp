@@ -571,6 +571,7 @@ bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
 
 bool Paint_Dialog::saveimage()
 {
+
     const QByteArray &fileFormat="jpg";
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 

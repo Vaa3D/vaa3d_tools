@@ -31,7 +31,7 @@
 bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
      {
          QImage visibleImage = image;
-     resizeImage(&visibleImage, size());
+    // resizeImage(&visibleImage, size());
 
      if (visibleImage.save(fileName, fileFormat)) {
          modified = false;
