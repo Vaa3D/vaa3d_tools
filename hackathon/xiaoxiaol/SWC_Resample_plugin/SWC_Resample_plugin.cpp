@@ -7,7 +7,8 @@
 #include <vector>
 #include <QObject>
 #include "SWC_Resample_plugin.h"
-#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
+#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"  // this resampling implementation should be in trunk
+#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 
 
 
@@ -177,6 +178,24 @@ void resampleDialog::_slot_run()
 
         new_treeList->push_back(resultTree);
     }
+
+    //make a copy of the original tree list and shif them for visual comparision
+    for (int i = 0 ; i < mTreeList->size(); i++)
+    {
+        myTree = mTreeList->at(i);
+        resultTree.copy(myTree);
+
+        proc_neuron_add_offset(&myTree, 0, 0, 100);
+
+        // need to reset the color to zero of display with color (using the types)
+        resultTree.color.r = 0;
+        resultTree.color.g = 0;
+        resultTree.color.b = 0;
+        resultTree.color.a = 0;
+
+        new_treeList->push_back(resultTree);
+    }
+
 
 
     //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
