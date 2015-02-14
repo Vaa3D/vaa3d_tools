@@ -161,14 +161,10 @@ void resampleDialog::_slot_run()
         return;
     }
 
-    NeuronTree myTree;
-    NeuronTree resultTree;
 
     for (int i = 0 ; i < mTreeList->size(); i++)
     {
-        myTree = mTreeList->at(i);
-
-        resultTree = resample(myTree,double(steplength));
+        NeuronTree resultTree = resample( mTreeList->at(i),double(steplength));
 
         // need to reset the color to zero of display with color (using the types)
         resultTree.color.r = 0;
@@ -182,21 +178,19 @@ void resampleDialog::_slot_run()
     //make a copy of the original tree list and shif them for visual comparision
     for (int i = 0 ; i < mTreeList->size(); i++)
     {
-        myTree = mTreeList->at(i);
-        resultTree.copy(myTree);
+        NeuronTree  * resultTree = new NeuronTree();
+        resultTree->copy(mTreeList->at(i));
 
-        proc_neuron_add_offset(&resultTree, 0, 0, 100);
+        proc_neuron_add_offset(resultTree, 0, 0, 100);
 
         // need to reset the color to zero of display with color (using the types)
-        resultTree.color.r = 0;
-        resultTree.color.g = 0;
-        resultTree.color.b = 0;
-        resultTree.color.a = 0;
+        resultTree->color.r = 0;
+        resultTree->color.g = 0;
+        resultTree->color.b = 0;
+        resultTree->color.a = 0;
 
-        new_treeList->push_back(resultTree);
+        new_treeList->push_back( *resultTree);
     }
-
-
 
     //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
     // in XFormWidget::pushObjectIn3DWindow, because the triView is updated?
