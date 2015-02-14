@@ -161,7 +161,7 @@ void resampleDialog::_slot_run()
         return;
     }
 
-
+    new_treeList->clear();
     for (int i = 0 ; i < mTreeList->size(); i++)
     {
         NeuronTree resultTree = resample( mTreeList->at(i),double(steplength));
