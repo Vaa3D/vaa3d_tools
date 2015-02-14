@@ -9,11 +9,32 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <vector>
+#include "neuronpicker_func.h"
 
 using namespace std;
 
 #define NAME_INWIN "Input_Neuron_Picker"
 #define NAME_OUTWIN "Output_Neuron_Picker"
+
+class neuronPicker : public QObject, public V3DPluginInterface2_1
+{
+	Q_OBJECT
+	Q_INTERFACES(V3DPluginInterface2_1);
+
+public:
+	bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent);
+	
+
+	float getPluginVersion() const {return 1.1f;}
+
+	QStringList menulist() const;
+	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
+
+	QStringList funclist() const ;
+	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
+};
+
 
 class neuronPickerDialog : public QDialog
 {
@@ -22,23 +43,22 @@ class neuronPickerDialog : public QDialog
 public:
     neuronPickerDialog(V3DPluginCallback2 * cb);
     ~neuronPickerDialog();
-	void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
-	void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+    void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+    void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 private:
     V3DPluginCallback2 * callback;
 
+    neuronPickerMain2 pickerObj;
     QString fname_previnput;
     unsigned char *image1Dc_in;
     unsigned char *image1Dc_out;
     V3DLONG sz_img[4];
+    V3DLONG sz_out[4];
     int intype;
     LandmarkList LList;
     vector<V3DLONG> poss_landmark;
-    int* image1D_h;
-    unsigned char* image1D_v;
-    unsigned char* image1D_s;
-    int preBgthr;
+    V3DLONG pos_out;
 
 private:
     void creat();
@@ -62,60 +82,8 @@ public slots:
 public:
     QComboBox *cb_marker;
     QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output, *btn_runall, *btn_autoMarkers;
-    //QDoubleSpinBox *spin_color;
-    QSpinBox *spin_distance, *spin_bgthr, *spin_huedis, *spin_fgthr, *spin_sizethr;
+    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr;
     QLineEdit *edit_load, *edit_output;
-};
-
-class neuronPicker : public QObject, public V3DPluginInterface2_1
-{
-	Q_OBJECT
-	Q_INTERFACES(V3DPluginInterface2_1);
-
-public:
-	bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent);
-	
-
-	float getPluginVersion() const {return 1.1f;}
-
-	QStringList menulist() const;
-	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
-
-	QStringList funclist() const ;
-	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
-
-};
-
-class neuronPickerMain
-{
-public:
-    neuronPickerMain() {}
-    ~neuronPickerMain() {}
-
-    static unsigned char * memory_allocate_uchar1D(const V3DLONG i_size);
-    static void memory_free_uchar1D(unsigned char *ptr_input);
-    static int * memory_allocate_int1D(const V3DLONG i_size);
-    static void memory_free_int1D(int *ptr_input);
-
-    static vector<V3DLONG> landMarkList2poss(LandmarkList LandmarkList_input, V3DLONG _offset_Y, V3DLONG _offest_Z);
-
-    static void initChannels_rgb(unsigned char *image1Dc, int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, V3DLONG sz_img[4], const int bg_thr);
-    static V3DLONG extract_mono(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG seed, int cubSize, int colorSpan, V3DLONG sz_img[4]);
-    static V3DLONG extract(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, unsigned char *image1D_out, V3DLONG seed, int cubSize, int colorSpan, V3DLONG sz_img[4]);
-    static V3DLONG extract_color(int *image1D_h, unsigned char *image1Dc_in, unsigned char *image1D_s, unsigned char *image1Dc_out, V3DLONG seed, int cubSize, int colorSpan, V3DLONG sz_img[4]);
-    static void autoSeeds(int *image1D_h, unsigned char *image1D_v, unsigned char *image1D_s, vector<V3DLONG>& seeds, int cubSize, int colorSpan, V3DLONG sz_img[4], int fgthr, int sizethr);
-    static void saveSingleMarker(V3DLONG pos_landmark, QString fname, V3DLONG sz_img[4]);
-
-//private:
-    static int huedis(int a, int b);
-    static unsigned char saturationdis(unsigned char a, unsigned char b);
-    static void findMaxVal(unsigned char *image1D_v, V3DLONG len, V3DLONG & maxIdx, unsigned char & maxVal);
-    static V3DLONG landMark2pos(LocationSimple Landmark_input, V3DLONG _offset_Y, V3DLONG _offset_Z);
-    static vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
-    static V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
-    static void rgb2hsv(const unsigned char R, const unsigned char G, const unsigned char B, int & h, unsigned char & s, unsigned char & v);
-    static int rgb2hue(const unsigned char R, const unsigned char G, const unsigned char B);
-
 };
 
 

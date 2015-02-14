@@ -5,8 +5,11 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-HEADERS	+= neuronPicker_plugin.h
-SOURCES	+= neuronPicker_plugin.cpp
+HEADERS	+= neuronPicker_plugin.h \
+    neuronpicker_func.h \
+    neuronpicker_templates.h
+SOURCES	+= neuronPicker_plugin.cpp \
+    neuronpicker_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuronPicker)
