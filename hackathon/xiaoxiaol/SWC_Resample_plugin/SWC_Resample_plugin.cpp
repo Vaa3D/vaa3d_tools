@@ -177,19 +177,30 @@ void resampleDialog::_slot_run()
 
     //make a copy of the original tree list and shif them for visual comparision
     for (int i = 0 ; i < mTreeList->size(); i++)
-    {
-        NeuronTree  * resultTree = new NeuronTree();
-        resultTree->copy(mTreeList->at(i));
+       {
+           NeuronTree  resultTree;
+           QList <NeuronSWC> listNeuron;
+           QHash <int, int>  hashNeuron;
+           listNeuron.clear();
+           hashNeuron.clear();
 
-        proc_neuron_add_offset(resultTree, 0, 0, 100);
+           for(int j = 0; j < mTreeList->at(i).listNeuron.size(); j++)
+           {
+               listNeuron.append(mTreeList->at(i).listNeuron.at(j));
+               hashNeuron.insert(mTreeList->at(i).listNeuron.at(j).n, listNeuron.size()-1);
+           }
 
-        // need to reset the color to zero of display with color (using the types)
-        resultTree->color.r = 0;
-        resultTree->color.g = 0;
-        resultTree->color.b = 0;
-        resultTree->color.a = 0;
+           resultTree.listNeuron = listNeuron;
+           resultTree.hashNeuron = hashNeuron;
+           proc_neuron_add_offset(&resultTree, 0, 0, 100);
 
-        new_treeList->push_back( *resultTree);
+           // need to reset the color to zero of display with color (using the types)
+           resultTree.color.r = 0;
+           resultTree.color.g = 0;
+           resultTree.color.b = 0;
+           resultTree.color.a = 0;
+
+        new_treeList->push_back( resultTree);
     }
 
     //m_v3d.pushObjectIn3DWindow(new3DWindow);  this does not work
