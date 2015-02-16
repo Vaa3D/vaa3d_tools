@@ -57,10 +57,11 @@ V3DLONG neuronPickerMain2::extractSub_uchar(unsigned char*& image1D_out, V3DLONG
     y=coord[1];
     z=coord[2];
 
-    V3DLONG x_max, x_min, y_max, y_min, z_max, z_min;
-    x_max=x_min=x;
-    y_max=y_min=y;
-    z_max=z_min=z;
+    //for subspace calculation
+//    V3DLONG x_max, x_min, y_max, y_min, z_max, z_min;
+//    x_max=x_min=x;
+//    y_max=y_min=y;
+//    z_max=z_min=z;
 
     //populate the init seed regions
     for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
@@ -82,12 +83,13 @@ V3DLONG neuronPickerMain2::extractSub_uchar(unsigned char*& image1D_out, V3DLONG
                 project_all.push_back((unsigned char) project);
                 seeds.push_back(pos);
 
-                x_max=MAX(x_max,dx);
-                x_min=MIN(x_min,dx);
-                y_max=MAX(y_max,dy);
-                y_min=MIN(y_min,dy);
-                z_max=MAX(z_max,dz);
-                z_min=MIN(z_min,dz);
+//                //calculate sub-space
+//                x_max=MAX(x_max,dx);
+//                x_min=MIN(x_min,dx);
+//                y_max=MAX(y_max,dy);
+//                y_min=MIN(y_min,dy);
+//                z_max=MAX(z_max,dz);
+//                z_min=MIN(z_min,dz);
             }
         }
     }
@@ -121,12 +123,13 @@ V3DLONG neuronPickerMain2::extractSub_uchar(unsigned char*& image1D_out, V3DLONG
                     project_all.push_back((unsigned char) project);
                     seeds.push_back(pos);
 
-                    x_max=MAX(x_max,dx);
-                    x_min=MIN(x_min,dx);
-                    y_max=MAX(y_max,dy);
-                    y_min=MIN(y_min,dy);
-                    z_max=MAX(z_max,dz);
-                    z_min=MIN(z_min,dz);
+//                    //calculate sub-space
+//                    x_max=MAX(x_max,dx);
+//                    x_min=MIN(x_min,dx);
+//                    y_max=MAX(y_max,dy);
+//                    y_min=MIN(y_min,dy);
+//                    z_max=MAX(z_max,dz);
+//                    z_min=MIN(z_min,dz);
                 }
             }
         }
@@ -135,23 +138,36 @@ V3DLONG neuronPickerMain2::extractSub_uchar(unsigned char*& image1D_out, V3DLONG
 
     qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
 
-    //generate output matrix
-    sz_out[0]=x_max-x_min+2;
-    sz_out[1]=y_max-y_min+2;
-    sz_out[2]=z_max-z_min+2;
+//    //generate output matrix in sub-space
+//    sz_out[0]=x_max-x_min+2;
+//    sz_out[1]=y_max-y_min+2;
+//    sz_out[2]=z_max-z_min+2;
+//    sz_out[3]=1;
+    //generate output matrix in original space
+    sz_out[0]=sz_image[0];
+    sz_out[1]=sz_image[1];
+    sz_out[2]=sz_image[2];
     sz_out[3]=1;
+
 
     image1D_out=neuronPickerMain::memory_allocate_uchar1D(sz_out[0]*sz_out[1]*sz_out[2]);
     memset(image1D_out, 0, sz_out[0]*sz_out[1]*sz_out[2]*sizeof(unsigned char));
     for(int i=0; i<project_all.size(); i++){
-        x=x_all[i]-x_min+1;
-        y=y_all[i]-y_min+1;
-        z=z_all[i]-z_min+1;
+//        //sub-space
+//        x=x_all[i]-x_min+1;
+//        y=y_all[i]-y_min+1;
+//        z=z_all[i]-z_min+1;
+        //original space
+        x=x_all[i];
+        y=y_all[i];
+        z=z_all[i];
 
         image1D_out[neuronPickerMain::xyz2pos(x,y,z,sz_out[0],sz_out[1]*sz_out[0])]=project_all[i];
     }
-    coord=neuronPickerMain::pos2xyz(seed_ind, y_offset, z_offset);
-    pos_new=neuronPickerMain::xyz2pos(coord[0]-x_min+1,coord[1]-y_min+1,coord[2]-z_min+1,sz_out[0],sz_out[0]*sz_out[1]);
+//    //markers in subspace
+//    coord=neuronPickerMain::pos2xyz(seed_ind, y_offset, z_offset);
+//    pos_new=neuronPickerMain::xyz2pos(coord[0]-x_min+1,coord[1]-y_min+1,coord[2]-z_min+1,sz_out[0],sz_out[0]*sz_out[1]);
+    pos_new=seed_ind;
 
     return seeds.size();
 }
