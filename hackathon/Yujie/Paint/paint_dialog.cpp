@@ -33,7 +33,7 @@ void Paint_Dialog::create()
     button_save->setText("Save");
     button_save->setGeometry(0,0,10,30);
     QToolButton *button_color = new QToolButton;
-    button_color->setText("Color");
+    button_color->setText(" Color");
     QToolButton *button_help = new QToolButton;
     button_help->setText("Help");
     QToolButton *button_pb = new QToolButton;
@@ -55,7 +55,12 @@ void Paint_Dialog::create()
     QToolButton *button_zoomout=new QToolButton;
     button_zoomout->setText("Zoom out");
     button_zoomout->setGeometry(0,0,10,30);
-    //button_color->setToolButtonStyle();
+    button_color->setIcon(QIcon(":/paint.png"));
+    QSize iconsize(28,28);
+    button_color->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    //button_color->setIconSize(iconsize);
+
+
 
     savemenu=new QMenu;
     createsavemenu();
@@ -108,6 +113,7 @@ void Paint_Dialog::create()
     tool->addWidget(spin);
     tool->addSeparator();
 
+    tool->setIconSize(iconsize);
     layout->addWidget(tool);
 
 
@@ -261,6 +267,7 @@ bool Paint_Dialog::load()
             zdisplay(sz_img[2]/2);
 
             this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
+            qDebug()<<"height"<<tool->height();
 
             return true;
         }
