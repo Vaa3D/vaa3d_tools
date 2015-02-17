@@ -42,14 +42,10 @@ add_library(${PLUGIN_NAME} SHARED ${QtITK_SRCS} ${QT_MOC_SRCS})
 if(TARGET FinishedPlugins)
     add_dependencies(FinishedPlugins ${PLUGIN_NAME})
 endif()
-target_link_libraries(${PLUGIN_NAME} ${QT_LIBRARIES} )
-# CMB Nov-03-2010
-# I apologize if I am doing this wrong...
-# Several plugins yield link errors for method v3d_message without this
-# link to the V3DInterface library
-if (TARGET V3DInterface)
-  target_link_libraries(${PLUGIN_NAME} V3DInterface)
+if(TARGET PluginPrerequisites)
+    add_dependencies(${PLUGIN_NAME} PluginPrerequisites)
 endif()
+target_link_libraries(${PLUGIN_NAME}  ${V3DInterface_LIBRARY}  ${QT_LIBRARIES} )
 
 if(NOT PLUGIN_DIRECTORY_NAME)
   set(PLUGIN_DIRECTORY_NAME ${PLUGIN_NAME})
@@ -64,15 +60,21 @@ else()
 endif()
 
 # Build plugins next to V3D executable, for testing from build area before install.
-if (V3D_BUILD_BINARY_DIR)
+if (V3D_BINDARY_DIR)
     set_target_properties(${PLUGIN_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
-        LIBRARY_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
-        ARCHIVE_OUTPUT_DIRECTORY "${V3D_BUILD_BINARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}")
-    if (MSVC)
-        # hack to get around the "Debug" and "Release" directories cmake tries to add on Windows
-        set_target_properties (${PLUGIN_NAME} PROPERTIES PREFIX "../")
-    endif()
+        RUNTIME_OUTPUT_DIRECTORY "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        LIBRARY_OUTPUT_DIRECTORY_DEBUG "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}"
+        ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${V3D_BINDARY_DIR}/plugins/${PLUGIN_DIRECTORY_NAME}")
+    # if (MSVC)
+    #     # hack to get around the "Debug" and "Release" directories cmake tries to add on Windows
+    #     set_target_properties (${PLUGIN_NAME} PROPERTIES PREFIX "../")
+    # endif()
 endif()
 
 
@@ -97,6 +99,9 @@ else()
       COMPONENT Plugins
     )
 endif()
+
+# Decorate target name in Visual Studio, so plugins will be placed alphabetically together
+set_target_properties(${PLUGIN_NAME} PROPERTIES PROJECT_LABEL "Plugin -- ${PLUGIN_NAME}")
 
 endfunction(configure_v3d_plugin_common)
 

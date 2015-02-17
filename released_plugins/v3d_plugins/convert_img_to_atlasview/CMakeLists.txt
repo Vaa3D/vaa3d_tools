@@ -2,10 +2,10 @@
 set(PLUGIN_HEADERS convert_img_to_atlasview.h )
 set(PLUGIN_SOURCES 
     convert_img_to_atlasview.cpp
-    ../../../v3d_main/basic_c_fun/v3d_message.cpp
-    ../../../v3d_main/basic_c_fun/stackutil.cpp
-    ../../../v3d_main/basic_c_fun/mg_utilities.cpp
-    ../../../v3d_main/basic_c_fun/mg_image_lib.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/v3d_message.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/stackutil.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/mg_utilities.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/mg_image_lib.cpp
 )
 set(PLUGIN_DIRECTORY_NAME Convert_Image_to_AtlasViewMode)
 

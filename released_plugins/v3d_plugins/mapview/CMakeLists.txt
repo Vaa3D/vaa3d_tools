@@ -4,13 +4,26 @@ set(PLUGIN_SOURCES
     mg_image_lib11.cpp
     stackutil-11.cpp
     mapviewer.cpp
-    ../../../v3d_main/basic_c_fun/mg_utilities.cpp
-    ../../../v3d_main/basic_c_fun/v3d_message.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/mg_utilities.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/v3d_message.cpp
 )
 set(PLUGIN_DIRECTORY_NAME image_stitching/Map_View)
 
 include_directories(../istitch)
 include_directories(${TIFF_INCLUDE_DIR})
+find_path(QT4_DEMOS_INCLUDE_DIR
+   arthurwidgets.h
+   PATHS
+         ${QT_LIBRARY_DIR}/..
+         /Developer/Examples/Qt
+   /usr/lib64/qt4
+   /usr/lib/qt4
+   /usr/local/Trolltech/Qt-${QTVERSION}
+   "C:/Qt/${QTVERSION}"
+   PATH_SUFFIXES
+   demos/shared
+   Demos/shared
+    )
 include_directories(${QT4_DEMOS_INCLUDE_DIR})
 include_directories(${FFTW_INCLUDE_DIR})
 if(NOT MSVC)

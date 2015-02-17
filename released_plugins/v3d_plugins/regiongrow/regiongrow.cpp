@@ -98,34 +98,6 @@ public:
 	}
 };
 
-//function of swap
-template <class T>
-void swap (T& x, T& y)
-{
-	T tmp = x;	x = y; y = tmp;
-}
-
-//function of quickSort
-template <class T>
-void quickSort(T a[], int l, int r)
-{
-	if(l>=r) return;
-	int i = l;
-	int j = r+1;
-
-	T pivot = a[l];
-	while(true)
-	{
-		do{ i = i+1; } while(a[i]>pivot);
-		do{ j = j-1; } while(a[j]<pivot);
-		if(i >= j) break;
-		swap(a[i], a[j]);
-	}
-	a[l] = a[j];
-	a[j] = pivot;
-	quickSort(a, l, j-1);
-	quickSort(a, j+1, r);
-}
 
 //memory management
 template <class T> int newIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d, V3DLONG imgdep, V3DLONG imghei,V3DLONG imgwid)

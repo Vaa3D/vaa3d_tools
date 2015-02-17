@@ -1,12 +1,12 @@
 
 set(PLUGIN_HEADERS plugin_principalskeleton_detection.h )
 set(PLUGIN_SOURCES 
-    ../../../v3d_main/basic_c_fun/v3d_message.cpp
-    ../../../v3d_main/basic_c_fun/stackutil.cpp
-    ../../../v3d_main/basic_c_fun/mg_image_lib.cpp
-    ../../../v3d_main/basic_c_fun/mg_utilities.cpp
-    ../../../v3d_main/basic_c_fun/basic_surf_objs.cpp
-    ../../../v3d_main/worm_straighten_c/spline_cubic.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/v3d_message.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/stackutil.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/mg_image_lib.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/mg_utilities.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/basic_surf_objs.cpp
+    ${V3D_BASIC_C_FUN_SOURCE_DIR}/../worm_straighten_c/spline_cubic.cpp
     q_morphology.cpp
     q_principalskeleton_detection.cpp
     q_neurontree_segmentation.cpp
@@ -16,13 +16,12 @@ set(PLUGIN_SOURCES
 set(PLUGIN_DIRECTORY_NAME principal_skeleton_detection)
 
 include_directories(${TIFF_INCLUDE_DIR})
-set(V3DMAINDIR ../../../v3d_main)
 include_directories(${V3DMAINDIR}/jba/newmat11)
 configure_v3d_plugin(principalskeleton_detection)
 target_link_libraries(principalskeleton_detection ${TIFF_LIBRARY})
-target_link_libraries(principalskeleton_detection newmat11)
+find_library(newmat_LIBRARY newmat11 PATH ${V3D_PLUGIN_LIBRARIES_PATH} REQUIRED)
+target_link_libraries(principalskeleton_detection ${newmat_LIBRARY})
 
-# target_link_libraries(principalskeleton_detection v3dnewmat)
 
 # TEMPLATE      = lib
 # CONFIG       += plugin 

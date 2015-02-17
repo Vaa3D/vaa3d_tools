@@ -8,7 +8,7 @@
 using namespace std;
 
 #include <math.h>
-#include "../../basic_c_fun/stackutil.h"
+#include "stackutil.h"
 #include "q_morphology.h"
 #include "q_principalskeleton_detection.h"
  

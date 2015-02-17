@@ -11,17 +11,16 @@ endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(CMAKE_THREAD_PREFER_PTHREADS TRUE)
-find_package(Threads)
+find_package(Threads REQUIRED)
 if(NOT CMAKE_THREAD_LIBS_INIT)
     message("istitch plugin will not be built unless pthreads library is found")
 endif()
 
 if(TIFF_LIBRARY AND CMAKE_THREAD_LIBS_INIT AND FFTW_LIBRARY)
-
-    set(V3DMAINDIR ../../../v3d_main)
     include_directories( "${V3DMAINDIR}/basic_c_fun" )
     include_directories( "${TIFF_INCLUDE_DIR}" )
     include_directories( "${V3DMAINDIR}/common_lib/include" )
+    include_directories( ${FFTW_INCLUDE_DIR})
     
     set(PLUGIN_HEADERS istitch.h istitch_gui.h )
     set(PLUGIN_DIRECTORY_NAME image_stitching/istitch)
