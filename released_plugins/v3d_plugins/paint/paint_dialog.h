@@ -69,6 +69,9 @@ private:
     unsigned char *backupdata;
     unsigned char *image1Dc_in;
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
+
 
 };
 

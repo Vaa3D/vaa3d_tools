@@ -13,15 +13,12 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
     previousz=-1;
     zoominflag=false;
     paint_1DC=0;
+
 }
 
 void Paint_Dialog::create()
 {
-
-    //QGridLayout *gridLayout = new QGridLayout();
     QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
-
-    //gridLayout->addWidget(paintarea,1,0,1,1);
     tool = new QToolBar;
     tool->setGeometry(0,0,300,20);
 
@@ -39,9 +36,6 @@ void Paint_Dialog::create()
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
     button_pb->setGeometry(0,0,10,30);
-    //QToolButton *button_text=new QToolButton;
-    //button_text->setText("Insert text");
-    //button_text->setGeometry(0,0,10,20);
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
@@ -58,9 +52,6 @@ void Paint_Dialog::create()
     button_color->setIcon(QIcon(":/paint.png"));
     QSize iconsize(28,28);
     button_color->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    //button_color->setIconSize(iconsize);
-
-
 
     savemenu=new QMenu;
     createsavemenu();
@@ -79,9 +70,11 @@ void Paint_Dialog::create()
     edit=new QPlainTextEdit;
     edit->setPlainText("");
     edit->setMaximumHeight(100);
+    edit->setReadOnly(true);
     spin=new QSpinBox;
-    spin->setMaximum(0);
+    spin->setMaximum(1);
     spin->setMinimum(1);
+    paintarea->installEventFilter(this);
     connect(spin,SIGNAL(valueChanged(int)),this,SLOT(zdisplay(int)));
     connect(button_pb,SIGNAL(clicked()),this,SLOT(pushback()));
 
@@ -89,8 +82,6 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_save);
     tool->addSeparator();
-//    tool->addWidget(button_fetch);
-//    tool->addSeparator();
     tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_zoomin);
@@ -99,39 +90,27 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_clear);
     tool->addSeparator();
-   // tool->addWidget(button_text);
-    //tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
     tool->addWidget(button_pen);
     tool->addSeparator();
-
     tool->addWidget(button_print);
     tool->addSeparator();
     tool->addWidget(button_help);
     tool->addSeparator();
     tool->addWidget(spin);
     tool->addSeparator();
-
     tool->setIconSize(iconsize);
     layout->addWidget(tool);
-
 
     boxlayout->addLayout(layout);
     boxlayout->addWidget(paintarea);
     boxlayout->addWidget(label);
     boxlayout->addWidget(edit);
 
-//    gridLayout->addWidget(label,2,0,1,1);
-//    gridLayout->addLayout(layout,0,0,1,1);
-//    gridLayout->addWidget(edit,3,0,1,1);
-
-//    this->setLayout(gridLayout);
     this->setLayout(boxlayout);
     this->setMinimumHeight(200);
     this->setMinimumWidth(500);
-    //connect(button_open, SIGNAL(clicked()), this, SLOT(load()));
-    //connect(button_save, SIGNAL(clicked()), this, SLOT(saveimage()));
     connect(button_color, SIGNAL(clicked()), this, SLOT(penColor()));
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
     connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
@@ -139,8 +118,6 @@ void Paint_Dialog::create()
     connect(button_help, SIGNAL(clicked()), this, SLOT(help()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
-    //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
-    //connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 
 }
 
@@ -212,7 +189,6 @@ bool Paint_Dialog::maybeSave()
 }
 
 
-
 bool Paint_Dialog::load()
 {
     if (maybeSave()){
@@ -262,12 +238,10 @@ bool Paint_Dialog::load()
             newSize.setHeight(sz_img[1]);
             paintarea->setFixedSize(newSize);
             spin->setMaximum(sz_img[2]);
-            qDebug()<<"before spin set value";
+            //qDebug()<<"before spin set value";
             spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
             zdisplay(sz_img[2]/2);
-
             this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
-
             return true;
         }
     return false;
@@ -394,7 +368,6 @@ void Paint_Dialog::zdisplay(int z_in)
     //if zoomin, zoomout first and then store the image
     if (zoominflag)
     {
-        //qDebug()<<"I am zoomed in";
         QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
         QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
         paintarea->image=q;
@@ -453,7 +426,6 @@ void Paint_Dialog::zdisplay(int z_in)
         zoomin();
     }
     else {
-    //this->setMinimumHeight(sz_img[2]*4+100);
     paintarea->openImage(newimage,newimage2);
     }
     QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
@@ -462,7 +434,6 @@ void Paint_Dialog::zdisplay(int z_in)
     previousz=spin->value();
 
 }
-
 
 
 void Paint_Dialog::clearimage()
@@ -489,7 +460,6 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
     {
         qcopydata[i]=data[i];
     }
-    qDebug()<<"I have been copied";
     return qcopydata;
 }
 
@@ -513,7 +483,6 @@ void Paint_Dialog::zoomin()
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
     paintarea->openImage(q,p);
-    //qDebug()<<"Zoom in is working";
 
     this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
 }
@@ -531,7 +500,6 @@ void Paint_Dialog::zoomout()
         paintarea->openImage(q,p);
         zoominflag=false;
         paintarea->setPenWidth(15);
-        qDebug()<<"Zoomout....";
 
         this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
     }
@@ -539,8 +507,6 @@ void Paint_Dialog::zoomout()
 
 bool Paint_Dialog::pushback()
 {
-    qDebug()<<"Inpushback now";
-
     curwin = callback->currentImageWindow();
     if (!curwin)
     {
@@ -665,9 +631,26 @@ bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
 }
 
 
+bool Paint_Dialog::eventFilter(QObject *obj, QEvent *event)
+{
+        if (obj == paintarea && event->type() == QEvent::Wheel)
+        {
+            QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
+            if(wheelEvent->delta() > 0) {
+                this->spin->setValue(this->spin->value() + 1);
+
+            }
+            else
+                this->spin->setValue(this->spin->value() - 1);
+
+            return true;
+
+        }
+        return false;
+}
+
 bool Paint_Dialog::saveimage()
 {
-
     const QByteArray &fileFormat="jpg";
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
@@ -773,12 +756,12 @@ void Paint_Dialog::help()
                "<b>Save only current section</b> -- The current 2D image will be saved in jpg format."
                "Changes made on other slices will not be stored.<br>"
                "<b>Pushback</b> -- Pushback function is enabled only if the image is fetched from current Vaa3D main"
-               "window. Once the pushback button clicked, the image together with the painting will be sent back to the current"
+               "window. Once the pushback button clicked, the image together with the painting will be sent back to the current "
                "Vaa3D main window.<br>"
                "<b>Zoom in/out</b>-- Image is scaled to double the original size/back to the original size.<br>"
                "<b>Clear painting</b> -- Clear all the drawings made by users on the current 2D image.<br>"
-               "<b>Color</b> -- Change the pen color to user specified color.<br>"
-               "<b>Pen width</b> --Change the pen width to user specified width.<br>"
+               "<b>Color</b> -- Change the pen color to user-specified color.<br>"
+               "<b>Pen width</b> --Change the pen width to user-specified width.<br>"
                "<b>Print</b> -- Users can print out the current 2D image.<br>"
                "<b>Spin boxes</b>-- Scroll up and down to visualize different slices. Number reflects current"
                "  slice number.</p>"
