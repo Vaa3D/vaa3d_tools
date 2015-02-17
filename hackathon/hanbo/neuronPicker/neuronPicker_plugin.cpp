@@ -283,6 +283,7 @@ neuronPickerDialog::~neuronPickerDialog()
 
 void neuronPickerDialog::reject()
 {
+    qDebug()<<"cojoc: start quiting"<<endl;
     //release memory
     if(npdiag){
         if(image1Dc_in != 0){
@@ -294,6 +295,7 @@ void neuronPickerDialog::reject()
         }
     }
     finishnpdiag();
+    qDebug()<<"cojoc: done quiting"<<endl;
 }
 
 void neuronPickerDialog::creat()

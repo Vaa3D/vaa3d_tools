@@ -670,7 +670,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     sz_out[3]=1;
     findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
-        rsize=extractMore(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
         for(int i=0; i<x_all.size(); i++){
             x=x_all[i];
             y=y_all[i];
