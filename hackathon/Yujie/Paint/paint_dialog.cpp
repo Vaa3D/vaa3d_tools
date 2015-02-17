@@ -18,17 +18,17 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
 void Paint_Dialog::create()
 {
 
-    QGridLayout *gridLayout = new QGridLayout();
-    gridLayout->addWidget(paintarea,1,0,1,1);
-    QToolBar *tool = new QToolBar;
+    //QGridLayout *gridLayout = new QGridLayout();
+    QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
+
+    //gridLayout->addWidget(paintarea,1,0,1,1);
+    tool = new QToolBar;
     tool->setGeometry(0,0,300,20);
-    //tool->setOrientation(Qt::Vertical );
 
     QVBoxLayout *layout = new QVBoxLayout;
     QToolButton *button_open = new QToolButton;
     button_open->setGeometry(0,0,10,30);
     button_open->setText("Open");
-
     QToolButton *button_save = new QToolButton;
     button_save->setText("Save");
     button_save->setGeometry(0,0,10,30);
@@ -55,9 +55,7 @@ void Paint_Dialog::create()
     QToolButton *button_zoomout=new QToolButton;
     button_zoomout->setText("Zoom out");
     button_zoomout->setGeometry(0,0,10,30);
-//    QToolButton *button_savefile=new QToolButton;
-//    button_savefile->setText("Save File");
-//    button_savefile->setGeometry(0,0,10,20);
+    //button_color->setToolButtonStyle();
 
     savemenu=new QMenu;
     createsavemenu();
@@ -75,6 +73,7 @@ void Paint_Dialog::create()
     label->setText("Information of selecton:");
     edit=new QPlainTextEdit;
     edit->setPlainText("");
+    edit->setMaximumHeight(100);
     spin=new QSpinBox;
     spin->setMaximum(0);
     spin->setMinimum(1);
@@ -110,12 +109,20 @@ void Paint_Dialog::create()
     tool->addSeparator();
 
     layout->addWidget(tool);
-    gridLayout->addWidget(label,2,0,1,1);
-    gridLayout->addLayout(layout,0,0,1,1);
-    gridLayout->addWidget(edit,3,0,1,1);
 
-    this->setLayout(gridLayout);
-    this->setMinimumHeight(700);
+
+    boxlayout->addLayout(layout);
+    boxlayout->addWidget(paintarea);
+    boxlayout->addWidget(label);
+    boxlayout->addWidget(edit);
+
+//    gridLayout->addWidget(label,2,0,1,1);
+//    gridLayout->addLayout(layout,0,0,1,1);
+//    gridLayout->addWidget(edit,3,0,1,1);
+
+//    this->setLayout(gridLayout);
+    this->setLayout(boxlayout);
+    this->setMinimumHeight(200);
     this->setMinimumWidth(500);
     //connect(button_open, SIGNAL(clicked()), this, SLOT(load()));
     //connect(button_save, SIGNAL(clicked()), this, SLOT(saveimage()));
@@ -128,6 +135,7 @@ void Paint_Dialog::create()
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
     //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
     //connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
+
 }
 
 
@@ -252,6 +260,8 @@ bool Paint_Dialog::load()
             spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
             zdisplay(sz_img[2]/2);
 
+            this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
+
             return true;
         }
     return false;
@@ -282,6 +292,13 @@ void Paint_Dialog::fetch()
     sz_img[1]=p4DImage->getYDim();
     sz_img[2]=p4DImage->getZDim();
     sz_img[3]=p4DImage->getCDim();
+
+    if (sz_img[3]>3)
+    {
+        v3d_msg("Currently this program only supports 1-3 color channels.", 0);
+        return;
+    }
+
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
 
     image1Dc_in = p4DImage->getRawData();
@@ -321,6 +338,7 @@ void Paint_Dialog::fetch()
     spin->setValue(z);
     zdisplay(z);
 
+    this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
 }
 
 void Paint_Dialog::resetdata()
@@ -429,6 +447,7 @@ void Paint_Dialog::zdisplay(int z_in)
         zoomin();
     }
     else {
+    //this->setMinimumHeight(sz_img[2]*4+100);
     paintarea->openImage(newimage,newimage2);
     }
     QString tmp="Image Size: \nx: " + QString::number(sz_img[0]) + " y: " + QString::number(sz_img[1]) +
@@ -484,27 +503,33 @@ void Paint_Dialog::zoomin()
     QImage q=paintarea->image.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
     QImage p=paintarea->paintImage.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
 
+    //this->setMinimumHeight(sz_img[2]*6.5+100);
     paintarea->image=q;
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
     paintarea->openImage(q,p);
     //qDebug()<<"Zoom in is working";
+
+    this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
 }
 
 void Paint_Dialog::zoomout()
 {
     if (zoominflag==true){
-    QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
-    QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
+        QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
+        QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
 
-    paintarea->image=q;
-    paintarea->paintImage=p;
-    paintarea->setFixedSize(sz_img[0],sz_img[1]);
+        paintarea->image=q;
+        paintarea->paintImage=p;
+        paintarea->setFixedSize(sz_img[0],sz_img[1]);
 
-    paintarea->openImage(q,p);
-    zoominflag=false;
-    paintarea->setPenWidth(15);
-    qDebug()<<"Zoomout....";
+        //this->setMaximumHeight(sz_img[2]*3+100);
+        paintarea->openImage(q,p);
+        zoominflag=false;
+        paintarea->setPenWidth(15);
+        qDebug()<<"Zoomout....";
+
+        this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
     }
 }
 
@@ -736,21 +761,22 @@ void Paint_Dialog::closeEvent(QCloseEvent *event)
 void Paint_Dialog::help()
 {
     QMessageBox::about(this, tr("How to use Paint plug-in"),
-    tr("<p>The <b>Paint</b> plug-in is designed to help users make simple paintings on 2D images.<br>"
-               "<b>Load/Fetch</b> -- Users can choose to load from local image files or fetch from current"
+    tr("<p>The <b>Paint</b> plug-in is designed to help users do simple paintings on 2D images.<br>"
+               "<b>Load/Fetch</b> -- Users can choose to load the image from local image files or fetch from current"
                " Vaa3D main window by using 'load' or 'Fetch' button in the pop-up list of 'open' button.<br>"
-               "<b>Save entire 3D stack</b> -- The entire 3D stack file including paintings made on all the slides"
+               "<b>Save entire 3D stack</b> -- The entire 3D stack file including the user-drawn paintings on all slices"
                " will be saved.<br>"
-               "<b>Save only current section</b> -- Only the current 2D image will be saved in jpg format."
+               "<b>Save only current section</b> -- The current 2D image will be saved in jpg format."
                "Changes made on other slices will not be stored.<br>"
-               "<b>Pushback</b> -- Pushback is only enabled if the image is fetched from current Vaa3D main"
-               "window. Once clicked, the image together with the painting will be sent back to the current"
+               "<b>Pushback</b> -- Pushback function is enabled only if the image is fetched from current Vaa3D main"
+               "window. Once the pushback button clicked, the image together with the painting will be sent back to the current"
                "Vaa3D main window.<br>"
                "<b>Zoom in/out</b>-- Image is scaled to double the original size/back to the original size.<br>"
-               "<b>Clear painting</b> -- Clear all the paintings/drawings made by users on the current 2D image.<br>"
+               "<b>Clear painting</b> -- Clear all the drawings made by users on the current 2D image.<br>"
                "<b>Color</b> -- Change the pen color to user specified color.<br>"
                "<b>Pen width</b> --Change the pen width to user specified width.<br>"
                "<b>Print</b> -- Users can print out the current 2D image.<br>"
                "<b>Spin boxes</b>-- Scroll up and down to visualize different slices. Number reflects current"
-               "  slice number.</p>"));
+               "  slice number.</p>"
+               "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)</p>"));
 }

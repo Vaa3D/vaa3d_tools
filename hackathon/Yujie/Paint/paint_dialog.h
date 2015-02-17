@@ -49,6 +49,7 @@ private:
     void closeEvent(QCloseEvent *event);
     QMenu *savemenu;
     QMenu *openmenu;
+    QToolBar *tool;
     void createsavemenu();
     void createopenmenu();
 
