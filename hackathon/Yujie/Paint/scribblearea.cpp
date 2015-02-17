@@ -14,17 +14,10 @@
 
  bool ScribbleArea::openImage(QImage &loadImage, QImage &loadPaint)
  {
-
-
-     //
      image=loadImage;
      paintImage=loadPaint;
-
      update();
-
      return true;
-
-
  }
 
 
@@ -56,7 +49,8 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
  {
      if (event->button() == Qt::LeftButton) {
          lastPoint = event->pos();
-         //cursorshape();
+         //brushCursor=cursorshape();
+         //setCursor(brushCursor);
          setCursor(Qt::PointingHandCursor);
          scribbling = true;
      }
@@ -69,7 +63,7 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
 //     }
 // }
 
-void ScribbleArea::cursorshape()
+QCursor ScribbleArea::cursorshape()
 {
     unsigned char pencursor[]={
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -137,26 +131,14 @@ void ScribbleArea::cursorshape()
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-   qDebug()<<"size pencursor"<<sizeof(pencursor);
-   qDebug()<<"size pencursor"<<sizeof(penmask);
-//    QPixmap pixmap;
-//    pixmap.loadFromData(pencursor,1024);
-//    pixmap
-    QImage tmp(pencursor,32,32,QImage::Format_Indexed8);
 
-    QBitmap bm;
-    QSize size(32,32);
-    bm=QBitmap::fromImage(tmp,Qt::AutoColor);
+    QImage tmp(pencursor,32,32,QImage::Format_Mono);
+    QImage tmp1(penmask,32,32,QImage::Format_Mono);
+    QBitmap bm=QBitmap::fromImage(tmp,Qt::AutoColor);
+    QBitmap bmm=QBitmap::fromImage(tmp1,Qt::AutoColor);
 
-    QImage tmp1(penmask,32,32,QImage::Format_Indexed8);
-    QBitmap bmm;
-    bmm=QBitmap::fromImage(tmp1,Qt::AutoColor);
-//    QPixmap pixmap1;
-//    pixmap1.loadFromData(penmask,1024);
-//    pixmap.setMask();
-//    brushCursor=QCursor(pixmap,-1,-1);
     QCursor myCursor(bm,bmm);
-    brushCursor = myCursor;
+    return myCursor;
     qDebug()<<"Cursor is created";
 }
 

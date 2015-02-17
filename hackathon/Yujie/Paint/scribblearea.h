@@ -42,8 +42,7 @@
      void drawLineTo(const QPoint &endPoint);
 
      //const QPoint & getMousePos(QMouseEvent *event);
-     void cursorshape();
-
+     QCursor cursorshape();
 
      bool scribbling;
      int myPenWidth;

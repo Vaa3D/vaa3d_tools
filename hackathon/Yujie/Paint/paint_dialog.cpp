@@ -34,8 +34,8 @@ void Paint_Dialog::create()
     button_save->setGeometry(0,0,10,30);
     QToolButton *button_color = new QToolButton;
     button_color->setText("Color");
-//    QToolButton *button_fetch = new QToolButton;
-//    button_fetch->setText("Fetch");
+    QToolButton *button_help = new QToolButton;
+    button_help->setText("Help");
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
     button_pb->setGeometry(0,0,10,30);
@@ -47,7 +47,7 @@ void Paint_Dialog::create()
     QToolButton *button_print = new QToolButton;
     button_print->setText("Print");
     QToolButton *button_clear = new QToolButton;
-    button_clear->setText("Clear screen");
+    button_clear->setText("Clear painting");
     button_clear->setGeometry(0,0,10,30);
     QToolButton *button_zoomin=new QToolButton;
     button_zoomin->setText("Zoom in");
@@ -102,9 +102,9 @@ void Paint_Dialog::create()
     tool->addWidget(button_pen);
     tool->addSeparator();
 
-    //tool->addWidget(button_savefile);
-    tool->addSeparator();
     tool->addWidget(button_print);
+    tool->addSeparator();
+    tool->addWidget(button_help);
     tool->addSeparator();
     tool->addWidget(spin);
     tool->addSeparator();
@@ -123,7 +123,7 @@ void Paint_Dialog::create()
     connect(button_pen, SIGNAL(clicked()), this, SLOT(penWidth()));
     connect(button_clear, SIGNAL(clicked()), this, SLOT(clearimage()));
     connect(button_print, SIGNAL(clicked()), paintarea, SLOT(print()));
-    //connect(button_fetch, SIGNAL(clicked()), this, SLOT(fetch()));
+    connect(button_help, SIGNAL(clicked()), this, SLOT(help()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
     //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
@@ -134,7 +134,6 @@ void Paint_Dialog::create()
 void Paint_Dialog::createsavemenu()
 {
     QAction* Act;
-
     Act = new QAction(tr("Save entire 3D-stack"), this);
     connect(Act, SIGNAL(triggered()), this, SLOT(saveFile()));
     savemenu->addAction(Act);
@@ -173,33 +172,32 @@ void Paint_Dialog::doopenmenu()
 bool Paint_Dialog::maybeSave()
 {
     if (paintarea->isModified()) {
-       QMessageBox::StandardButton ret;
-       ret = QMessageBox::warning(this, tr("Paint"),
-                          tr("The image has been modified.\n"
-                             "Do you want to save your changes?"),
-                          QMessageBox::Save | QMessageBox::Discard
-                          | QMessageBox::Cancel);
-        if (ret == QMessageBox::Save) {
+       QMessageBox mybox;
+       mybox.setText("The document has been modified.");
+       mybox.setInformativeText("Do you want to save your changes?");
+       QPushButton *push_button=mybox.addButton(tr("Push back"),QMessageBox::ActionRole);
+       QPushButton *save_button = mybox.addButton(QMessageBox::Save);
+       QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
+       QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
+       mybox.setDefaultButton(QMessageBox::Save);
+       mybox.exec();
 
+        if (mybox.clickedButton() == save_button) {
             return saveFile();
-        } else if (ret == QMessageBox::Cancel) {
+        } else if (mybox.clickedButton() == cancel_button) {
             return false;
         }
-        else if (ret== QMessageBox::Discard) {
+        else if (mybox.clickedButton()== discard_button) {
             return true;
+        }
+        else if (mybox.clickedButton()==push_button) {
+            return pushback();
         }
     }
     return true;
 }
 
-//void Paint_Dialog::inserttext()
-//{
-//  QPainter *textpainter=new QPainter;
-//  QRect *rect=new QRect(0,0,100,100);
-//  QString text="Write text";
-//  textpainter->drawImage(0,0,image,QRect);
 
-//}
 
 bool Paint_Dialog::load()
 {
@@ -278,10 +276,8 @@ void Paint_Dialog::fetch()
     sz_img[1]=p4DImage->getYDim();
     sz_img[2]=p4DImage->getZDim();
     sz_img[3]=p4DImage->getCDim();
-
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
 
-    //image1Dc_in=new unsigned char [size_tmp];
     image1Dc_in = p4DImage->getRawData();
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
@@ -348,7 +344,6 @@ void Paint_Dialog::savezimage(int z)
 {
     QColor color;
     z=z-1;
-
     for(int x=0; x< sz_img[0]; x++){
         for(int y=0; y<sz_img[1]; y++){
             color=paintarea->paintImage.pixel(QPoint(x,y));
@@ -366,7 +361,6 @@ void Paint_Dialog::savezimage(int z)
 void Paint_Dialog::zdisplay(int z_in)
 {
     int z=z_in-1;
-
     //if zoomin, zoomout first and then store the image
     if (zoominflag)
     {
@@ -422,8 +416,7 @@ void Paint_Dialog::zdisplay(int z_in)
             newimage.setPixel(x,y,value);
         }
     }
-    //qDebug()<<"In zdisplay";
-    //if in zoomin mode, needs to zoom the pic in again.
+    //if in zoomin mode, needs to zoom in the image again.
     if (zoominflag){
         paintarea->image=newimage;
         paintarea->paintImage=newimage2;
@@ -448,13 +441,11 @@ void Paint_Dialog::clearimage()
         return;
     }
     previousz=-1; //skip the savezimage part
-
     //in case you flip pages and then want to clear image
     int z=spin->value()-1;
     memset(paint_1DC+z*sz_img[0]*sz_img[1],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
     memset(paint_1DC+z*sz_img[0]*sz_img[1]+sz_img[0]*sz_img[1]*sz_img[2],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
     memset(paint_1DC+z*sz_img[0]*sz_img[1]+2*sz_img[0]*sz_img[1]*sz_img[2],0,sz_img[0]*sz_img[1]*sizeof(unsigned char));
-
     zdisplay(z+1);
 }
 
@@ -492,7 +483,6 @@ void Paint_Dialog::zoomin()
     paintarea->setPenWidth(22);
     paintarea->openImage(q,p);
     //qDebug()<<"Zoom in is working";
-
 }
 
 void Paint_Dialog::zoomout()
@@ -510,7 +500,7 @@ void Paint_Dialog::zoomout()
     qDebug()<<"Zoomout....";
 }
 
-void Paint_Dialog::pushback()
+bool Paint_Dialog::pushback()
 {
     qDebug()<<"Inpushback now";
 
@@ -518,13 +508,13 @@ void Paint_Dialog::pushback()
     if (!curwin)
     {
         QMessageBox::information(0, "", "You don't have any image open in the main window.");
-        return;
+        return false;
     }
 
     if (datasource==1)
     {
         QMessageBox::information(0, "", "Cannot push back. Please load the image in Vaa3D main");
-        return;
+        return false;
     }
     if (zoominflag)
     {
@@ -576,8 +566,7 @@ void Paint_Dialog::pushback()
         paintarea->image=m;
         paintarea->paintImage=n;
      }
-
-
+    return true;
 }
 
 bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
@@ -595,13 +584,6 @@ bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
     else {
         return false;
     }
-
-    //QString fileout = QFileDialog::getSaveFileName(this, tr("Save As"),initialPath,
-                      //QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-
-    qDebug()<<"fileout"<<fileout;
-
-
 
     //Get the combined file of raw data and paint file
     unsigned char * image1Dc_out=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]*3];
@@ -672,9 +654,7 @@ void Paint_Dialog::penWidth()
 {
     bool ok;
     int newWidth = QInputDialog::getInteger(this, tr("Paint"),
-                                            tr("Select pen width:"),
-                                            paintarea->penWidth(),
-                                            1, 50, 1, &ok);
+                  tr("Select pen width:"),paintarea->penWidth(),1, 50, 1, &ok);
     if (ok)
         paintarea->setPenWidth(newWidth);
 }
@@ -739,3 +719,25 @@ void Paint_Dialog::closeEvent(QCloseEvent *event)
          event->ignore();
      }
  }
+
+void Paint_Dialog::help()
+{
+    QMessageBox::about(this, tr("How to use Paint plug-in"),
+    tr("<p>The <b>Paint</b> plug-in is designed to help users make simple paintings on 2D images.<br>"
+               "<b>Load/Fetch</b> -- Users can choose to load from local image files or fetch from current"
+               " Vaa3D main window by using 'load' or 'Fetch' button in the pop-up list of 'open' button.<br>"
+               "<b>Save entire 3D stack</b> -- The entire 3D stack file including paintings made on all the slides"
+               " will be saved.<br>"
+               "<b>Save only current section</b> -- Only the current 2D image will be saved in jpg format."
+               "Changes made on other slices will not be stored.<br>"
+               "<b>Pushback</b> -- Pushback is only enabled if the image is fetched from current Vaa3D main"
+               "window. Once clicked, the image together with the painting will be sent back to the current"
+               "Vaa3D main window.<br>"
+               "<b>Zoom in/out</b>-- Image is scaled to double the original size/back to the original size.<br>"
+               "<b>Clear painting</b> -- Clear all the paintings/drawings made by users on the current 2D image.<br>"
+               "<b>Color</b> -- Change the pen color to user specified color.<br>"
+               "<b>Pen width</b> --Change the pen width to user specified width.<br>"
+               "<b>Print</b> -- Users can print out the current 2D image.<br>"
+               "<b>Spin boxes</b>-- Scroll up and down to visualize different slices. Number reflects current"
+               "  slice number.</p>"));
+}

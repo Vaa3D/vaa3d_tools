@@ -27,13 +27,14 @@ public slots:
     void penWidth();
     void zdisplay(int);
     void fetch();
-    void pushback();
+    bool pushback();
     void clearimage();
     void zoomin();
     void zoomout();
     bool saveFile();
     void dosavemenu();
     void doopenmenu();
+    void help();
     //void inserttext();
 
 private:
@@ -49,7 +50,6 @@ private:
     QMenu *savemenu;
     QMenu *openmenu;
     void createsavemenu();
-
     void createopenmenu();
 
 
