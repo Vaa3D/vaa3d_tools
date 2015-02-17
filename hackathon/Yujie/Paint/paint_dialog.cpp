@@ -224,13 +224,13 @@ bool Paint_Dialog::load()
             resetdata();
             if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
             {
-                v3d_msg("load image "+fileName+" error!");
+                QMessageBox::information(0,"","load image "+fileName+" error!");
                 return false;
             }
 
             if (sz_img[3]>3)
             {
-                v3d_msg("Currently this program only supports 1-3 color channels.", 0);
+                QMessageBox::information(0,"","Currently this program only supports 1-3 color channels.", 0);
                 return false;
             }
 
@@ -247,7 +247,7 @@ bool Paint_Dialog::load()
                 }
                 else
                 {
-                    v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+                    QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
                     return false;
                 }
             }
@@ -267,7 +267,6 @@ bool Paint_Dialog::load()
             zdisplay(sz_img[2]/2);
 
             this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
-            qDebug()<<"height"<<tool->height();
 
             return true;
         }
@@ -302,7 +301,7 @@ void Paint_Dialog::fetch()
 
     if (sz_img[3]>3)
     {
-        v3d_msg("Currently this program only supports 1-3 color channels.", 0);
+        QMessageBox::information(0, "", "Currently this program only supports 1-3 color channels.");
         return;
     }
 
@@ -324,7 +323,7 @@ void Paint_Dialog::fetch()
         }
         else
         {
-            v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+            QMessageBox::information(0, "", "Currently this program only supports 1-3 color channels.");
         }
     }
 
@@ -498,7 +497,7 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 void Paint_Dialog::zoomin()
 {
     if (datasource!=1 && datasource!=2){
-        v3d_msg("No image available to zoom in", 0);
+       QMessageBox::information(0, "", "No image available to zoom in.");
         return;
     }
     zoominflag=true;
@@ -510,7 +509,6 @@ void Paint_Dialog::zoomin()
     QImage q=paintarea->image.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
     QImage p=paintarea->paintImage.scaled(sz_img[0]*2,sz_img[1]*2,Qt::KeepAspectRatio);
 
-    //this->setMinimumHeight(sz_img[2]*6.5+100);
     paintarea->image=q;
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
@@ -530,7 +528,6 @@ void Paint_Dialog::zoomout()
         paintarea->paintImage=p;
         paintarea->setFixedSize(sz_img[0],sz_img[1]);
 
-        //this->setMaximumHeight(sz_img[2]*3+100);
         paintarea->openImage(q,p);
         zoominflag=false;
         paintarea->setPenWidth(15);
