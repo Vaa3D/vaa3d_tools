@@ -182,10 +182,10 @@ void Paint_Dialog::doopenmenu()
 }
 
 
-
 bool Paint_Dialog::maybeSave()
 {
-    if (paintarea->isModified()) {
+    if (paintarea->isModified())
+    {
        QMessageBox mybox;
        mybox.setText("The document has been modified.");
        mybox.setInformativeText("Do you want to save your changes?");

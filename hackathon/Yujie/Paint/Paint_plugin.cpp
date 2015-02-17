@@ -10,7 +10,8 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Paint, paint);
- 
+Paint_Dialog *dialog;
+
 QStringList paint::menulist() const
 {
 	return QStringList() 
@@ -31,9 +32,10 @@ void paint::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidg
 {
     if (menu_name == tr("Paint"))
 	{
-        Paint_Dialog dialog(&callback, parent);
-        dialog.setWindowTitle("Paint");
-        dialog.exec();
+        dialog=new Paint_Dialog(&callback, parent);
+        //dialog();
+        dialog->setWindowTitle("Paint");
+        dialog->show();
 	}
     else if (menu_name == tr("About"))
 	{

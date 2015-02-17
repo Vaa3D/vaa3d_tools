@@ -20,7 +20,6 @@
      void setPenWidth(int newWidth);
      void paintEvent(QPaintEvent *event);
      void resizeImage(QImage *image, const QSize &newSize);
-
      bool isModified() const { return modified; }
      QColor penColor() const { return myPenColor; }
      int penWidth() const { return myPenWidth; }
@@ -40,8 +39,6 @@
 
  private:
      void drawLineTo(const QPoint &endPoint);
-
-     //const QPoint & getMousePos(QMouseEvent *event);
      QCursor cursorshape();
 
      bool scribbling;
