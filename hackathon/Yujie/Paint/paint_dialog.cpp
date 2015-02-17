@@ -487,6 +487,7 @@ void Paint_Dialog::zoomin()
 
 void Paint_Dialog::zoomout()
 {
+    if (zoominflag==true){
     QImage q=paintarea->image.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
     QImage p=paintarea->paintImage.scaled(sz_img[0],sz_img[1],Qt::KeepAspectRatio);
 
@@ -498,6 +499,7 @@ void Paint_Dialog::zoomout()
     zoominflag=false;
     paintarea->setPenWidth(15);
     qDebug()<<"Zoomout....";
+    }
 }
 
 bool Paint_Dialog::pushback()
@@ -508,6 +510,10 @@ bool Paint_Dialog::pushback()
     if (!curwin)
     {
         QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return false;
+    }
+    if (datasource!=1&datasource!=2) {
+        QMessageBox::information(0, "", "Cannot push back. No image is fetched");
         return false;
     }
 
@@ -566,6 +572,7 @@ bool Paint_Dialog::pushback()
         paintarea->image=m;
         paintarea->paintImage=n;
      }
+    paintarea->modified=false;
     return true;
 }
 
