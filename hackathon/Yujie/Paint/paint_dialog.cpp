@@ -214,6 +214,12 @@ bool Paint_Dialog::load()
                 return false;
             }
 
+            if (sz_img[3]>3)
+            {
+                v3d_msg("Currently this program only supports 1-3 color channels.", 0);
+                return false;
+            }
+
             V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
             if(intype!=1)
             {
