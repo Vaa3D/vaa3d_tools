@@ -33,6 +33,8 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
+private:
+    void printHelp();
 };
 
 
@@ -82,7 +84,7 @@ public slots:
 public:
     QComboBox *cb_marker;
     QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output, *btn_runall, *btn_autoMarkers;
-    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr;
+    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_sizemargin;
     QLineEdit *edit_load, *edit_output;
 };
 

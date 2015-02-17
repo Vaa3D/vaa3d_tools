@@ -42,8 +42,7 @@ QStringList neuronPicker::menulist() const
 QStringList neuronPicker::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("neuron_picker")
 		<<tr("help");
 }
 
@@ -76,21 +75,128 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    if (func_name == tr("neuron_picker"))
+    {
+        cout<<"==== color neuron picker ===="<<endl;
+        if(infiles.size()!=1 || outfiles.size()!=1)
+        {
+            qDebug("ERROR: please set input and output!");
+            printHelp();
+            return false;
+        }
+
+        //load image
+        QString fname_input = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+
+        unsigned char * image1Dc_in = 0;
+        V3DLONG sz_img[4];
+        int intype;
+        if(!simple_loadimage_wrapper(callback, fname_input.toStdString().c_str(), image1Dc_in, sz_img, intype))
+        {
+          v3d_msg("load image "+fname_input+" error!");
+          return false;
+        }
+
+        if(sz_img[3]>3){
+            sz_img[3]=3;
+            qDebug()<<"NeuronPicker: More than 3 channels were loaded. The first 3 channel will be applied for analysis.";
+        }
+
+        neuronPickerMain2 pickerObj;
+        if (intype == 1) //V3D_UINT8;
+        {
+            pickerObj.pushNewData<unsigned char>((unsigned char*)image1Dc_in, sz_img);
+        }
+        else if (intype == 2) //V3D_UINT16;
+        {
+            pickerObj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
+        }
+        else if(intype == 4) //V3D_FLOAT32;
+        {
+            pickerObj.pushNewData<float>((float*)image1Dc_in, sz_img);
+        }
+        else
+        {
+            v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
+            return false;
+        }
+
+        //get parameters
+        int cubSize=11;
+        int conviter=10;
+        int fgthr=150;
+        int bgthr=10;
+        int sizethr=1000;
+        int margin_size=15;
+
+        if(input.size()>1){
+            vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+
+            if(paras.size()>0){
+                int tmp=atoi(paras.at(0));
+                if(tmp>1)
+                    cubSize=tmp;
+                else
+                    cerr<<"error: illigal neighbor size: "<<tmp<<"; use default value "<<cubSize<<endl;
+            }
+            if(paras.size()>1){
+                int tmp=atoi(paras.at(1));
+                if(tmp>=0)
+                    conviter=tmp;
+                else
+                    cerr<<"error: illigal convolution iteration: "<<tmp<<"; use default value "<<conviter<<endl;
+            }
+            if(paras.size()>2){
+                int tmp=atoi(paras.at(2));
+                if(tmp>0)
+                    fgthr=tmp;
+                else
+                    cerr<<"error: illigal seed intensity threshold: "<<tmp<<"; use default value "<<fgthr<<endl;
+            }
+            if(paras.size()>3){
+                int tmp=atoi(paras.at(3));
+                if(tmp>=0)
+                    bgthr=tmp;
+                else
+                    cerr<<"error: illigal background intensity threshold: "<<tmp<<"; use default value "<<bgthr<<endl;
+            }
+            if(paras.size()>4){
+                int tmp=atoi(paras.at(4));
+                if(tmp>=0)
+                    sizethr=tmp;
+                else
+                    cerr<<"error: illigal neuron size threshold: "<<tmp<<"; use default value "<<sizethr<<endl;
+            }
+            if(paras.size()>5){
+                int tmp=atoi(paras.at(5));
+                if(tmp>=0)
+                    margin_size=tmp;
+                else
+                    cerr<<"error: illigal output border margin: "<<tmp<<"; use default value "<<margin_size<<endl;
+            }
+        }
+
+        qDebug()<<"NeuronPicker: searching, extracting, and saving starts.";
+
+        V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, bgthr, sizethr, margin_size);
+        qDebug()<<"NeuronPicker: Found "<<neuronNum<<" seperate nuerons in "<<fname_input;
+    }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printHelp();
 	}
 	else return false;
 
 	return true;
+}
+
+void neuronPicker::printHelp()
+{
+    cout<<"\n==== Color Neuron Picker ===="<<endl;
+    cout<<"\nUsage: v3d -x neuronPicker -f neuron_picker -i <input_raw_file> -o <output_prefix> "
+       <<"-p <neighbor cubic size (11)> <convolute iteration (10)> <seed intensity threshold (150)> <background threshold (10)> <neuron size threshold (1000)> <output margin size (15)>"<<endl;
+    cout<<"\n";
 }
 
 // func convert2UINT8
@@ -266,6 +372,8 @@ void neuronPickerDialog::creat()
     spin_distance->setRange(0,100000); spin_distance->setValue(11);
     spin_conviter = new QSpinBox();
     spin_conviter->setRange(0,100); spin_conviter->setValue(5);
+    spin_sizemargin = new QSpinBox();
+    spin_sizemargin->setRange(0,100000); spin_sizemargin->setValue(15);
     QLabel* label_0 = new QLabel("background threshold (0~255):");
     gridLayout->addWidget(label_0,6,0,1,2);
     gridLayout->addWidget(spin_bgthr,6,2,1,1);
@@ -275,6 +383,9 @@ void neuronPickerDialog::creat()
     QLabel* label_2 = new QLabel("convolute iteration (contrast factor): ");
     gridLayout->addWidget(label_2,7,0,1,2);
     gridLayout->addWidget(spin_conviter,7,2,1,1);
+    QLabel* label_3 = new QLabel("extract margin size: ");
+    gridLayout->addWidget(label_3,7,3,1,2);
+    gridLayout->addWidget(spin_sizemargin,7,5,1,1);
 
     //other
     QFrame *line_2 = new QFrame();
@@ -312,7 +423,7 @@ void neuronPickerDialog::initDlg()
 
     this->edit_output->setText("");
     this->spin_bgthr->setValue(10);
-    this->spin_conviter->setValue(6);
+    this->spin_conviter->setValue(10);
     this->spin_distance->setValue(11);
     this->spin_fgthr->setValue(150);
     this->spin_sizethr->setValue(1000);
@@ -489,7 +600,8 @@ void neuronPickerDialog::runall()
     V3DLONG success=0;
     for(int idx_landmark=0; idx_landmark<poss_landmark.size(); idx_landmark++){
         V3DLONG pos_landmark=poss_landmark[idx_landmark];
-        V3DLONG rsize=pickerObj.extractSub_uchar(image1Dc_out,sz_out, pos_out, pos_landmark, spin_conviter->value(), spin_distance->value(), spin_bgthr->value());
+        pos_out=pos_landmark;
+        V3DLONG rsize=pickerObj.extractMargin_uchar(image1Dc_out,sz_out, pos_landmark, spin_conviter->value(), spin_distance->value(), spin_bgthr->value(), spin_sizemargin->value());
 
         if(rsize>0){
             QString fname_output=this->edit_output->text() + "_" + QString::number((int)LList.at(idx_landmark).x) + "_" +
@@ -573,7 +685,8 @@ void neuronPickerDialog::extract()
 
     qDebug()<<"cojoc: "<<pos_landmark<<":"<<image1Dc_in[pos_landmark+sz_img[0]*sz_img[1]*sz_img[2]];
     qDebug()<<"start extracting";
-    V3DLONG rsize=pickerObj.extractSub_uchar(image1Dc_out,sz_out, pos_out, pos_landmark, spin_conviter->value(), spin_distance->value(), spin_bgthr->value());
+    pos_out=pos_landmark;
+    V3DLONG rsize=pickerObj.extractMargin_uchar(image1Dc_out,sz_out, pos_landmark, spin_conviter->value(), spin_distance->value(), spin_bgthr->value(), spin_sizemargin->value());
     if(rsize>0){
         qDebug()<<"NeuronPicker: push for visualization: "<<image1Dc_out<<":"<<sz_out[0]<<":"<<sz_out[1]<<":"<<sz_out[2]<<":"<<sz_out[3];
         updateOutputWindow();

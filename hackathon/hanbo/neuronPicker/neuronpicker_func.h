@@ -51,9 +51,14 @@ public:
     neuronPickerMain2();
     ~neuronPickerMain2();
 
-    V3DLONG extractSub_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG& pos_new, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     V3DLONG extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    V3DLONG extract_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    V3DLONG extractMargin_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr, int margin_size);
+    V3DLONG extractSub_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG& pos_new, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     V3DLONG autoSeeds(vector<V3DLONG>& seeds, int cubSize, int conviter, int fgthr, int bgthr, int sizethr);
+    //find, extract and save
+    V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size);
 
 private:
     vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr);
