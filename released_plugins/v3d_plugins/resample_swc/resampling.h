@@ -59,7 +59,7 @@ void resample_path(Segment * seg, double step)
 	for (V3DLONG i=0;i<seg->size();i++)
 		if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
 	*seg = seg_r;
-};
+}
 
 NeuronTree resample(NeuronTree input, double step)
 {
