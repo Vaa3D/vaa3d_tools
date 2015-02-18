@@ -61,7 +61,7 @@ public:
     V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size);
 
 private:
-    vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr);
+    vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr, int convolute_iter);
     float getProjection(vector<float> vec, vector<float> dir, int convolute_iter);
 
 private:

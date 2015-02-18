@@ -28,7 +28,7 @@ V3DLONG neuronPickerMain2::extractSub_uchar(unsigned char*& image1D_out, V3DLONG
     sz_out[3]=1;
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -173,7 +173,7 @@ V3DLONG neuronPickerMain2::extract_uchar(unsigned char*& image1D_out, V3DLONG sz
     sz_out[3]=1;
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -294,7 +294,7 @@ V3DLONG neuronPickerMain2::extractMargin_uchar(unsigned char*& image1D_out, V3DL
     sz_out[3]=1;
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -423,7 +423,7 @@ V3DLONG neuronPickerMain2::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_al
     z_all.clear();
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -518,7 +518,7 @@ V3DLONG neuronPickerMain2::extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& 
     z_all.clear();
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -688,7 +688,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
         if(rsize>sizethr){ //save if is large
             memset(mask1D,0,page_size*sizeof(unsigned char));
             memset(data1D_out,0,page_size*sizeof(unsigned char));
-            vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr);
+            vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
             //find the region
             for(int i=0; i<x_all.size(); i++){
                 x=x_all[i];
@@ -756,7 +756,7 @@ float neuronPickerMain2::getProjection(vector<float> vec, vector<float> dir, int
     return proj;
 }
 
-vector<float> neuronPickerMain2::getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr)
+vector<float> neuronPickerMain2::getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr, int convolute_iter)
 {
     vector<V3DLONG> seed_coord = neuronPickerMain::pos2xyz(seed_ind, sz_image[0], sz_image[1]*sz_image[0]);
     int delta=neighbor_size/2;
@@ -766,20 +766,36 @@ vector<float> neuronPickerMain2::getProjectionDirection(V3DLONG seed_ind, int ne
 
     int v_count=0;
     vector<float> dir(sz_image[3],0);
+    vector<float> color(sz_image[3]);
+    vector<float> color0(sz_image[3]);
+    float norm=0;
+    for(int cid=0; cid<sz_image[3]; cid++){
+        color0[cid]=data1Dc_float[seed_ind+cid*page_size];
+        norm+=color0[cid]*color0[cid];
+    }
+    norm=sqrt(norm);
+    for(int cid=0; cid<sz_image[3]; cid++){
+        color0[cid]/=norm;
+    }
     for(V3DLONG dx=MAX(seed_coord[0]-delta,0); dx<=MIN(sz_image[0]-1,seed_coord[0]+delta); dx++){
         for(V3DLONG dy=MAX(seed_coord[1]-delta,0); dy<=MIN(sz_image[1]-1,seed_coord[1]+delta); dy++){
             for(V3DLONG dz=MAX(seed_coord[2]-delta,0); dz<=MIN(sz_image[2]-1,seed_coord[2]+delta); dz++){
                 pos=neuronPickerMain::xyz2pos(dx,dy,dz,y_offset,z_offset);
-                float v=data1Dc_float[pos];
-                for(V3DLONG pid=1; pid<sz_image[3]; pid++)
-                    v=MAX(v,data1Dc_float[pos+page_size*pid]);
+
+                for(int cid=0; cid<sz_image[3]; cid++){
+                    color[cid]=data1Dc_float[pos+cid*page_size];
+                }
+
+                float v=getProjection(color, color0, convolute_iter);
+//                for(V3DLONG pid=1; pid<sz_image[3]; pid++)
+//                    v=MAX(v,data1Dc_float[pos+page_size*pid]);
 
 //                qDebug()<<"cojoc: "<<v<<":"<<bg_thr;
 
                 if(v<bg_thr)    continue;
 
-                for(V3DLONG pid=0; pid<sz_image[3]; pid++)
-                    dir[pid]+=data1Dc_float[pos+page_size*pid];
+                for(V3DLONG cid=0; cid<sz_image[3]; cid++)
+                    dir[cid]+=data1Dc_float[pos+page_size*cid]*v/255;
                 v_count++;
             }
         }
@@ -790,7 +806,7 @@ vector<float> neuronPickerMain2::getProjectionDirection(V3DLONG seed_ind, int ne
         return dir;
     }
     //normalize it
-    float norm=0;
+    norm=0;
     for(V3DLONG pid=0; pid<sz_image[3]; pid++){
         dir[pid]/=v_count;
         norm+=dir[pid]*dir[pid];
