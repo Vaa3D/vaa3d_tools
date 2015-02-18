@@ -671,15 +671,16 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
         rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+        mask1D_v[max_ind]=0;
         for(int i=0; i<x_all.size(); i++){
             x=x_all[i];
             y=y_all[i];
             z=z_all[i];
-            //find the average hue in seed regions
+            //mask all regions founded
             for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
                 for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
                     for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
-                        mask1D_v[x+y*sz_image[0]+z*sz_image[0]*sz_image[1]]=0;
+                        mask1D_v[dx+dy*sz_image[0]+dz*sz_image[0]*sz_image[1]]=0;
                     }
                 }
             }
