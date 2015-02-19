@@ -45,6 +45,7 @@ class neuronPickerDialog : public QDialog
 public:
     neuronPickerDialog(V3DPluginCallback2 * cb);
     ~neuronPickerDialog();
+    void shiftTwoBits2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 

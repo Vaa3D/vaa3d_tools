@@ -129,47 +129,55 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         int bgthr=10;
         int sizethr=1000;
         int margin_size=15;
+        float scale=1;
 
         if(input.size()>1){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 
             if(paras.size()>0){
-                int tmp=atoi(paras.at(0));
+                float tmp=atof(paras.at(0));
+                if(tmp>0)
+                    scale=tmp;
+                else
+                    cerr<<"error: illigal scale parameter: "<<tmp<<"; use default value "<<scale<<endl;
+            }
+            if(paras.size()>1){
+                int tmp=atoi(paras.at(1));
                 if(tmp>1)
                     cubSize=tmp;
                 else
                     cerr<<"error: illigal neighbor size: "<<tmp<<"; use default value "<<cubSize<<endl;
             }
-            if(paras.size()>1){
-                int tmp=atoi(paras.at(1));
+            if(paras.size()>2){
+                int tmp=atoi(paras.at(2));
                 if(tmp>=0)
                     conviter=tmp;
                 else
                     cerr<<"error: illigal convolution iteration: "<<tmp<<"; use default value "<<conviter<<endl;
             }
-            if(paras.size()>2){
-                int tmp=atoi(paras.at(2));
+            if(paras.size()>3){
+                int tmp=atoi(paras.at(3));
                 if(tmp>0)
                     fgthr=tmp;
                 else
                     cerr<<"error: illigal seed intensity threshold: "<<tmp<<"; use default value "<<fgthr<<endl;
             }
-            if(paras.size()>3){
-                int tmp=atoi(paras.at(3));
+            if(paras.size()>4){
+                int tmp=atoi(paras.at(4));
                 if(tmp>=0)
                     bgthr=tmp;
                 else
                     cerr<<"error: illigal background intensity threshold: "<<tmp<<"; use default value "<<bgthr<<endl;
             }
-            if(paras.size()>4){
-                int tmp=atoi(paras.at(4));
+            if(paras.size()>5){
+                int tmp=atoi(paras.at(5));
                 if(tmp>=0)
                     sizethr=tmp;
                 else
                     cerr<<"error: illigal neuron size threshold: "<<tmp<<"; use default value "<<sizethr<<endl;
             }
-            if(paras.size()>5){
-                int tmp=atoi(paras.at(5));
+            if(paras.size()>6){
+                int tmp=atoi(paras.at(6));
                 if(tmp>=0)
                     margin_size=tmp;
                 else
@@ -178,7 +186,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         }
 
         qDebug()<<"NeuronPicker: searching, extracting, and saving starts.";
-
+        pickerObj.innerScale=scale;
         V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, bgthr, sizethr, margin_size);
         qDebug()<<"NeuronPicker: Found "<<neuronNum<<" seperate nuerons in "<<fname_input;
     }
@@ -195,8 +203,17 @@ void neuronPicker::printHelp()
 {
     cout<<"\n==== Color Neuron Picker ===="<<endl;
     cout<<"\nUsage: v3d -x neuronPicker -f neuron_picker -i <input_raw_file> -o <output_prefix> "
-       <<"-p <neighbor cubic size (11)> <convolute iteration (10)> <seed intensity threshold (150)> <background threshold (10)> <neuron size threshold (1000)> <output margin size (15)>"<<endl;
+       <<"-p [<scale output (1)> [<neighbor cubic size (11)> [<convolute iteration (10)> [<seed intensity threshold (150)> [<background threshold (10)> [<neuron size threshold (1000)> [<output margin size (15)>]]]]]]]"<<endl;
     cout<<"\n";
+}
+
+void neuronPickerDialog::shiftTwoBits2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    unsigned short* pPre = (unsigned short*)pre1d;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        pPost[i] = (unsigned char)MIN(pPre[i]/4,255);
+    }
 }
 
 // func convert2UINT8

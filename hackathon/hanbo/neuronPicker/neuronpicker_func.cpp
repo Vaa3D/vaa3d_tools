@@ -6,6 +6,7 @@ neuronPickerMain2::neuronPickerMain2()
     mask1D=0;
     sz_image[0]=sz_image[1]=sz_image[2]=sz_image[3];
     page_size=0;
+    innerScale=1;
 }
 
 neuronPickerMain2::~neuronPickerMain2()
@@ -187,7 +188,7 @@ V3DLONG neuronPickerMain2::extract_uchar(unsigned char*& image1D_out, V3DLONG sz
     //start region grow
     vector<V3DLONG> seeds;
     vector<V3DLONG> x_all, y_all, z_all;
-    vector<unsigned char> project_all;
+    vector<float> project_all;
     V3DLONG delta=neighbor_size/2;
     V3DLONG x,y,z,pos;
     V3DLONG y_offset=sz_image[0];
@@ -219,7 +220,7 @@ V3DLONG neuronPickerMain2::extract_uchar(unsigned char*& image1D_out, V3DLONG sz
                 x_all.push_back(dx);
                 y_all.push_back(dy);
                 z_all.push_back(dz);
-                project_all.push_back((unsigned char) project);
+                project_all.push_back(project);
                 seeds.push_back(pos);
             }
         }
@@ -266,7 +267,6 @@ V3DLONG neuronPickerMain2::extract_uchar(unsigned char*& image1D_out, V3DLONG sz
     sz_out[2]=sz_image[2];
     sz_out[3]=1;
 
-
     image1D_out=neuronPickerMain::memory_allocate_uchar1D(sz_out[0]*sz_out[1]*sz_out[2]);
     memset(image1D_out, 0, sz_out[0]*sz_out[1]*sz_out[2]*sizeof(unsigned char));
     for(int i=0; i<project_all.size(); i++){
@@ -275,7 +275,7 @@ V3DLONG neuronPickerMain2::extract_uchar(unsigned char*& image1D_out, V3DLONG sz
         y=y_all[i];
         z=z_all[i];
 
-        image1D_out[neuronPickerMain::xyz2pos(x,y,z,sz_out[0],sz_out[1]*sz_out[0])]=project_all[i];
+        image1D_out[neuronPickerMain::xyz2pos(x,y,z,sz_out[0],sz_out[1]*sz_out[0])]=(unsigned char)MIN(project_all[i]*innerScale,255);
     }
 
     return seeds.size();
@@ -410,7 +410,7 @@ V3DLONG neuronPickerMain2::extractMargin_uchar(unsigned char*& image1D_out, V3DL
         }
         project=getProjection(color, dir, convolute_iter);
 
-        image1D_out[i]=project;
+        image1D_out[i]=(unsigned char)MIN(project*innerScale,255);
     }
 
     return seeds.size();
@@ -481,7 +481,6 @@ V3DLONG neuronPickerMain2::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_al
         x=coord[0];
         y=coord[1];
         z=coord[2];
-        //find the average hue in seed regions
         for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
             for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
                 for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
@@ -624,7 +623,7 @@ V3DLONG neuronPickerMain2::autoSeeds(vector<V3DLONG>& seeds, int cubSize, int co
     V3DLONG rsize;
     findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
-        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+        rsize=extractMore(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
         for(int i=0; i<x_all.size(); i++){
             mask1D_v[x_all[i]+y_all[i]*sz_image[0]+z_all[i]*sz_image[0]*sz_image[1]]=0;
         }
@@ -694,7 +693,6 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                 x=x_all[i];
                 y=y_all[i];
                 z=z_all[i];
-                //find the average hue in seed regions
                 for(V3DLONG dx=MAX(x-margin_size,0); dx<=MIN(sz_image[0]-1,x+margin_size); dx++){
                     for(V3DLONG dy=MAX(y-margin_size,0); dy<=MIN(sz_image[1]-1,y+margin_size); dy++){
                         for(V3DLONG dz=MAX(z-margin_size,0); dz<=MIN(sz_image[2]-1,z+margin_size); dz++){
@@ -712,7 +710,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                 }
                 project=getProjection(color, dir, conviter);
 
-                data1D_out[i]=project;
+                data1D_out[i]=(unsigned char)MIN(project*innerScale,255);
             }
             //save file
             qDebug()<<"NeuronPicker: outputing neuron #"<<neuronNum<<", seed intensity: "<<max_val<<", voxels:"<<x_all.size();

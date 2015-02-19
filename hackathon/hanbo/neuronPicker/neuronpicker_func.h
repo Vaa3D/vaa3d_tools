@@ -51,11 +51,17 @@ public:
     neuronPickerMain2();
     ~neuronPickerMain2();
 
+    //extract the eligiable area only
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    //extract both the eligialbe area and close neighbors
     V3DLONG extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    //extract and output extraction to uchar
     V3DLONG extract_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    //extract and output extraction to uchar with margin value
     V3DLONG extractMargin_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr, int margin_size);
+    //extract the sub area for neuron detected
     V3DLONG extractSub_uchar(unsigned char*& image1D_out, V3DLONG sz_out[4], V3DLONG& pos_new, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    //find the seeds based on extractMore
     V3DLONG autoSeeds(vector<V3DLONG>& seeds, int cubSize, int conviter, int fgthr, int bgthr, int sizethr);
     //find, extract and save
     V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size);
@@ -69,6 +75,8 @@ private:
     unsigned char * mask1D;
     V3DLONG sz_image[4];
     V3DLONG page_size;
+public:
+    float innerScale;
 
 public:
     template <class T>
@@ -92,6 +100,7 @@ public:
             data1Dc_float[i]=(float) (data1Dc_in[i]);
         }
         normalizeEachChannelTo255<float>(data1Dc_float, sz_img);
+//        shift2bitsTo255<float>(data1Dc_float, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         mask1D = neuronPickerMain::memory_allocate_uchar1D(page_size);
     }
 };

@@ -46,4 +46,13 @@ void normalizeEachChannelTo255(T * data1Dc, V3DLONG sz_img[4])
     }
 }
 
+template <class T>
+void shift2bitsTo255(T * data1Dc, V3DLONG sz)
+{
+    for(V3DLONG i=0; i<sz; i++){
+        data1Dc[i]/=4;
+        data1Dc[i]=data1Dc[i]<255?data1Dc[i]:255;
+    }
+}
+
 #endif // NEURONPICKER_TEMPLATES_H
