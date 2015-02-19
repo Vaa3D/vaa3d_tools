@@ -68,6 +68,28 @@ struct PARA_VN //VN - V3DNeuron
             //printf("%5.3f, %5.3f, %5.3f\n", float(view3d->xCut1()), float(in_sz0[0]), float(view3d_datasz0));
         }
         
+        if(landmarks.size()>0)
+        {
+            LocationSimple t;
+            for(int i = 0; i < landmarks.size(); i++)
+            {
+                t.x = landmarks[i].x;
+                t.y = landmarks[i].y;
+                t.z = landmarks[i].z;
+                if(t.x<xc0 || t.x>xc1 || t.y<yc0 || t.y>yc1 || t.z<zc0 || t.z>zc1)
+                {
+                    if(i==0)
+                    {
+                        v3d_msg("The first marker is invalid.");
+                        return false;
+                    }
+                    else
+                        landmarks.removeAt(i);
+                }
+            }
+
+
+        }
         return true;
     }
     
