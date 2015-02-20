@@ -9,6 +9,15 @@ project(v3d_extra_plugins) # those plugins are distributed in seperate repo (vaa
 find_package(Qt4 REQUIRED)
 include( ${QT_USE_FILE} )
 
+find_library(TIFF_LIBRARY
+    NAMES libv3dtiff.a v3dtiff libtiff
+    PATHS "${V3DMAINDIR}/common_lib/lib")
+if (NOT TIFF_LIBRARY)
+	find_package(TIFF REQUIRED)
+endif()
+message("show ${TIFF_INCLUDE_DIR}")
+include_directories( "${TIFF_INCLUDE_DIR}" )
+
 include(CTest)
 
 # include(CPack) # save cpack for parent directory

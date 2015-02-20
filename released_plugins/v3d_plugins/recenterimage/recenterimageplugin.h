@@ -19,7 +19,7 @@
 #include <v3d_interface.h>
 
 #if defined (_MSC_VER)  //2010-05-20, by PHC for compatability to VC compiler
-#include "../../../v3d_main/basic_c_fun/vcdiff.h"
+#include "vcdiff.h"
 #else
 #endif
 

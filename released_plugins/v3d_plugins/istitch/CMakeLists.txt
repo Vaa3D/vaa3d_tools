@@ -1,14 +1,6 @@
 
 # Tiff and Ffftw libraries are required for istitch plugin
 
-find_library(TIFF_LIBRARY
-    NAMES libv3dtiff.a v3dtiff
-    PATHS "${V3DMAINDIR}/common_lib/lib")
-find_package(TIFF)
-if(NOT TIFF_LIBRARY)
-    message("istitch plugin will not be built unless TIFF library is found")
-endif()
-
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(CMAKE_THREAD_PREFER_PTHREADS TRUE)
 find_package(Threads REQUIRED)
