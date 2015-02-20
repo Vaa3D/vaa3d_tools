@@ -62,6 +62,16 @@ void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
     }
 }
 
+void shiftTwoBits2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    unsigned short* pPre = (unsigned short*)pre1d;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        pPost[i] = (unsigned char) MIN(255,pPre[i]/4);
+//        qDebug()<<i<<":"<<pPre[i]<<":"<<(int)pPost[i];
+    }
+}
+
 QStringList image_channel_io::menulist() const
 {
 	return QStringList() 
@@ -125,34 +135,35 @@ bool image_channel_io::dofunc(const QString & func_name, const V3DPluginArgList 
             qDebug()<<"warning: there are only "<<sz_img[3]<<" channels. Will save them all.";
         }
 
-//        if (intype == 2) //V3D_UINT16;
-//        {
-//            image1Dc_out = (unsigned char *) calloc(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3], sizeof(unsigned char));
-//            convert2UINT8((unsigned short *)image1Dc_in, image1Dc_out, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
-//            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
-//                v3d_msg("failed to save file to " + fname_output);
-//                return false;
-//            }
-//            free(image1Dc_out);
-//        }
-//        else if(intype == 4) //V3D_FLOAT32;
-//        {
+        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
 
-//            image1Dc_out = (unsigned char *) calloc(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3], sizeof(unsigned char));
-//            convert2UINT8((float *)image1Dc_in, image1Dc_out, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
-//            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
-//                v3d_msg("failed to save file to " + fname_output);
-//                return false;
-//            }
-//            free(image1Dc_out);
-//        }
-//        else
-//        {
-            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_in,sz_img,intype)){
+        if (intype == 2) //V3D_UINT16;
+        {
+            image1Dc_out = new unsigned char[size_tmp];
+            shiftTwoBits2UINT8((unsigned short*)image1Dc_in, image1Dc_out, size_tmp);
+            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
                 v3d_msg("failed to save file to " + fname_output);
                 return false;
             }
-//        }
+            delete[] image1Dc_out; image1Dc_out=0;
+        }
+        else if(intype == 4) //V3D_FLOAT32;
+        {
+            image1Dc_out = new unsigned char[size_tmp];
+            convert2UINT8((float*)image1Dc_in, image1Dc_out, size_tmp);
+            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
+                v3d_msg("failed to save file to " + fname_output);
+                return false;
+            }
+            delete[] image1Dc_out; image1Dc_out=0;
+        }
+        else
+        {
+            if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_in,sz_img,1)){
+                v3d_msg("failed to save file to " + fname_output);
+                return false;
+            }
+        }
 
         delete[] image1Dc_in; image1Dc_in=0;
 	}

@@ -9,6 +9,8 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
+#define V3DLONG long
+
 class image_channel_io : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
