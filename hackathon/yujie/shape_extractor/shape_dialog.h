@@ -20,6 +20,10 @@ class shape_dialog: public QDialog
     Q_OBJECT
 public:
     explicit shape_dialog(V3DPluginCallback2 *cb);
+    int prev_bgthr;
+    int prev_distance;
+    int prev_conviter;
+    int prev_sizemargin;
 
 private:
     extract_fun shape_ext_obj;
@@ -29,25 +33,34 @@ private:
     unsigned char *image1Dc_in;
     unsigned char *image1Dc_out;
     LandmarkList LList;
+    LandmarkList LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<V3DLONG> x_all;
     vector<V3DLONG> y_all;
     vector<V3DLONG> z_all;
+    vector<V3DLONG> mass_center;
+
 
 
     QPlainTextEdit *edit;
-
+    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_sizemargin;
+    QDialog *subDialog;
 private:
 
     void create();
     void updateInputWindow();
-//    void updateOutputWindow();
+    void updateOutputWindow();
+
+
 
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+
 public slots:
     bool load();
     int loadMarkers();
     void extract();
+    void display_mass_center();
+    void dialoguefinish(int);
 };
 #endif // SHAPE_DIALOG_H

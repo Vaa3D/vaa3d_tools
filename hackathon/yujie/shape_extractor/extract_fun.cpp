@@ -17,9 +17,9 @@ extract_fun::~extract_fun()
 }
 
 
-V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,
-                     vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter,
-                     int neighbor_size, int bg_thr)
+V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+                             vector<V3DLONG> &masscenter,V3DLONG seed_ind, int convolute_iter,
+                              int neighbor_size, int bg_thr)
 {
     x_all.clear();
     y_all.clear();
@@ -40,6 +40,8 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     vector<V3DLONG> coord;
     vector<float> color(sz_image[3]);
+    masscenter.clear();
+    page_size=sz_image[0]*sz_image[1]*sz_image[2];
     memset(mask1D, 0, sz_image[0]*sz_image[1]*sz_image[2]*sizeof(unsigned char));
     float project;
 
@@ -73,6 +75,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,
 
 
     //seed grow
+    qDebug()<<"Seed starts growing";
     V3DLONG sid=0;
     while(sid<seeds.size()){
         coord=pos2xyz(seeds[sid], y_offset, z_offset);
@@ -103,7 +106,9 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,
         }
         sid++;
     }
-
+    qDebug()<<"Before masscenter calc";
+    masscenter=get_mass_center(x_all,y_all,z_all);
+    qDebug()<<"After masscenter calc";
     return seeds.size();
 }
 
@@ -173,8 +178,42 @@ vector<float> extract_fun::getProjectionDirection(V3DLONG seed_ind, int neighbor
 }
 
 
+vector<V3DLONG> extract_fun::get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
+                                             vector<V3DLONG> z_all)
+{
+        qDebug()<<"In get_mass_center now";
+        V3DLONG total_x,total_y,total_z,sum_v;
+        vector<V3DLONG> center(3,0);
+        total_x=total_y=total_z=sum_v=0;
 
+        qDebug()<<"1";
+        for (int i=0;i<x_all.size();i++)
+        {
 
+            V3DLONG pos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_image[0],sz_image[0]*sz_image[1]);
+            float v=data1Dc_float[pos];
+            for (int j=0;j<sz_image[3];j++)
+                v=MAX(v,data1Dc_float[pos+page_size*j]);
+            total_x=v*x_all[i]+total_x;
+            total_y=v*y_all[i]+total_y;
+            total_z=v*z_all[i]+total_z;
+            sum_v=sum_v+v;
+        }
+        qDebug()<<"2";
+        qDebug()<<"3"<<total_x<<total_y<<total_z;
+        qDebug()<<x_all.size();
+        if (x_all.size()>0) {
+            qDebug()<<"3";
+            qDebug()<<"3"<<center[0]<<center[1]<<center[2];
+            qDebug()<<"3"<<total_x<<total_y<<total_z;
+            center[0]=total_x/sum_v;
+            center[1]=total_y/sum_v;
+            center[2]=total_z/sum_v;
+        }
+
+        qDebug()<<"At the end of mass center calc";
+        return center;
+}
 
 unsigned char * memory_allocate_uchar1D(const V3DLONG i_size)
 {
