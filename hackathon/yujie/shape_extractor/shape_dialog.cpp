@@ -326,6 +326,10 @@ void shape_dialog::display_mass_center()
     if(LList.size()<=0) {
         v3d_msg("No markers have been chosen.");
     }
+    if(LList_new_center.size()<=0 && LList.size()>0)
+    {
+        v3d_msg("You need to find the edge first");
+    }
     else
     {
     //Append the new markers to the old marker list and show in blue
