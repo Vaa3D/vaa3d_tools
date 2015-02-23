@@ -22,6 +22,15 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+*******************
+* 2015-02-15. Giulio. @CHANGED revised all interfaces passing always width and height in this order
+* 2015-02-06. Giulio. @ADDED append operation that assumes an already open and positioned file
+* 2015-02-06. Giulio. @ADDED open operation
+*/
+
 #ifndef TIFF3D_MNGR_H
 #define TIFF3D_MNGR_H
 
@@ -43,8 +52,11 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
  * if there are no exceptions
  */
 
+char *openTiff3DFile ( char *filename, char *mode, void *&fhandle );
+/* opens the file 'filename' in mode 'mode' and returns a fhandle which is a pointer to an opaque structure */
+
 void closeTiff3DFile ( void *fhandle );
-/* closes the file associated to fhandle which is a pointer to e FILE structure */
+/* closes the file associated to fhandle which is a pointer to a FILE structure */
 
 char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype );
 /* creates a file containing an empty 3D, multi-channel image 
@@ -58,9 +70,25 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
 /* writes one slice to a file containing a 3D image
  * 
  * filename:   complete path of the file to be modified
+ * slice:      slice index to be appended
  * img:        pointer to slice (2D buffer)
  * img_width:  width of the slice
  * img_height: height of the slice
+ */
+
+char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages );
+/* writes one slice to a file containing a 3D image
+ * 
+ * fhandler:   handler of the file to be modified
+ * slice:      slice index to be appended
+ * img:        pointer to the slice (2D buffer of (img_width * img_height * spp * (bpp/8)) bytes)
+ * img_width:  width of the slice
+ * img_height: height of the slice
+ * spp:        samples per pixel (channels)
+ * bpp:        bits per pixel (pixel depth)
+ * NPages:     total number of pages of the file (when all pages have been appended)
+ *
+ * WARNING: the file is already open and it is not closed after data have been read
  */
 
 char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last );
@@ -80,7 +108,7 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
 char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int b_swap );
 /* reads a substack from a file containing a 3D image
  * 
- * input:      handler of the file to be modified
+ * fhandler:   handler of the file to be modified
  * img:        pointer to slice (3D buffer)
  * img_width:  width of the slice
  * img_height: height of the slice
@@ -88,6 +116,11 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
  * last:       index of last slice
  * b_swap:     a 0/1 value that indicates if endianness of the file is the same (0) or 
  *             is different (1) from the one of the current machine
+ *
+ * WARNING: the file is already open and it is not closed after data have been read
+ *
+ * WARNING: the value of b_swap determines if swapping has to be performed or not before returning the buffer
+ * filled with data; it is responsibility of the caller to set this parameter correctly
  *
  * PRE: img points to a buffer of img_height * img_width * (last-first+1) * bps * spp
  * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file

@@ -22,6 +22,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-01-06. Giulio.     @ADDED changed interface of saveImage_from_UINT8_to_Tiff3D to introduce optimizations to reduce opend/close in append operations 
+*/
+
 #ifndef _IIM_VIRTUAL_VOLUME_H
 #define _IIM_VIRTUAL_VOLUME_H
 
@@ -222,6 +228,10 @@ public:
     * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
     * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
     * [img_depth]               : image bitdepth to be used (8 or 16)
+	* [fhandle]                 : handle to the (open) file which image has to be appended (used only if do_open = false)
+	* [n_pages]                 : total number of slice to be appended to the file (used only if do_open = false) 
+	* [do_open]                 : if true img_path has to be used to open the file which is closed after the image has been appended
+	*                             if false the image is appended without opening the file which is left open
     **************************************************************************************************************/
 	// WARNING: current implementation could not work if the slice is not appended after the last one
 	//          in other words the multipage file should have exactly (slice-1) pages
@@ -229,7 +239,8 @@ public:
                                       iim::uint8** raw_ch, int n_chans, iim::sint64 offset,
 									  int raw_img_height, int raw_img_width,
                                       int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
-                                      const char* img_format = iim::DEF_IMG_FORMAT.c_str(), int img_depth = iim::DEF_IMG_DEPTH ) throw (iim::IOException);
+                                      const char* img_format = iim::DEF_IMG_FORMAT.c_str(), int img_depth = iim::DEF_IMG_DEPTH, 
+									  void *fhandle = 0, int n_pages = -1, bool do_open = true ) throw (iim::IOException);
 
 	/*************************************************************************************************************
 	* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order

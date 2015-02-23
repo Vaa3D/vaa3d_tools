@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-02-13. Giulio.     @CHANGED 3D ioplugin is called instead of Tiff3DMngr functions
 * 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in many methods.
@@ -455,7 +456,8 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[i]);
 
 		// 2014-09-05. Alessandro & Iannello. @MODIFIED to deal with IO plugins
-		iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->readData(slice_fullpath, WIDTH, HEIGHT, temp, first, last);
+		//iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->readData(slice_fullpath, WIDTH, HEIGHT, temp, first, last);
+		iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->readData(slice_fullpath,WIDTH,HEIGHT,BLOCK_SIZE[i],N_BYTESxCHAN,N_CHANS,temp,first,last+1);
 
 		temp +=  HEIGHT * WIDTH * (last-first+1) * N_BYTESxCHAN * N_CHANS;
 	}
@@ -493,32 +495,40 @@ iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::ex
 				STACKED_IMAGE[i] = (iom::real_t) ((iom::uint16 *)data)[i]/scale_factor; // data must be interpreted as a uint16 array
 	}
 	else { // conversion to an intensity image
-		if ( iom::CHANS == iom::ALL ) {
-			char errMsg[2000];
-			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): conversion from multi-channel to intensity images not supported.", ROW_INDEX, COL_INDEX);
-			throw iom::exception(errMsg);
-		}
-		else if ( iom::CHANS == iom::R ) {
-			offset = 0;
-		}
-		else if ( iom::CHANS == iom::G ) {
-			offset = 1;
-		}
-		else if ( iom::CHANS == iom::B ) {
-			offset = 2;
+		// test how channel are stored in the returned buffer 'data'
+		if ( iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->isChansInterleaved() ) {
+			if ( iom::CHANS == iom::ALL ) {
+				char errMsg[2000];
+				sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): conversion from multi-channel to intensity images not supported.", ROW_INDEX, COL_INDEX);
+				throw iom::exception(errMsg);
+			}
+			else if ( iom::CHANS == iom::R ) {
+				offset = 0;
+			}
+			else if ( iom::CHANS == iom::G ) {
+				offset = 1;
+			}
+			else if ( iom::CHANS == iom::B ) {
+				offset = 2;
+			}
+			else {
+				char errMsg[2000];
+				sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): wrong value for parameter iom::CHANNEL_SELECTION.", ROW_INDEX, COL_INDEX);
+				throw iom::exception(errMsg);
+			}
+			// 2014-11-04. Giulio. @FIXED
+			if ( N_BYTESxCHAN == 1 )
+				for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+					STACKED_IMAGE[i] = (iom::real_t) data[3*i + offset]/scale_factor;
+			else // N_BYTESxCHAN == 2
+				for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
+					STACKED_IMAGE[i] = (iom::real_t) ((iom::uint16 *)data)[3*i + offset]/scale_factor; // data must be interpreted as a uint16 array
 		}
 		else {
 			char errMsg[2000];
-			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): wrong value for parameter iom::CHANNEL_SELECTION.", ROW_INDEX, COL_INDEX);
+			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): channels are not interleaved in the returned buffer 'data', conversion to intensity images not supported yet.", ROW_INDEX, COL_INDEX);
 			throw iom::exception(errMsg);
 		}
-		// 2014-11-04. Giulio. @FIXED
-		if ( N_BYTESxCHAN == 1 )
-			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-				STACKED_IMAGE[i] = (iom::real_t) data[3*i + offset]/scale_factor;
-		else // N_BYTESxCHAN == 2
-			for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-				STACKED_IMAGE[i] = (iom::real_t) ((iom::uint16 *)data)[3*i + offset]/scale_factor; // data must be interpreted as a uint16 array
 	}
 
 	delete [] data;

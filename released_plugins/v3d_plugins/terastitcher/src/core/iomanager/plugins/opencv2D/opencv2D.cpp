@@ -1,3 +1,36 @@
+//------------------------------------------------------------------------------------------------
+// Copyright (c) 2012  Alessandro Bria and Giulio Iannello (University Campus Bio-Medico of Rome).  
+// All rights reserved.
+//------------------------------------------------------------------------------------------------
+
+/*******************************************************************************************************************************************************************************************
+*    LICENSE NOTICE
+********************************************************************************************************************************************************************************************
+*    By downloading/using/running/editing/changing any portion of codes in this package you agree to this license. If you do not agree to this license, do not download/use/run/edit/change
+*    this code.
+********************************************************************************************************************************************************************************************
+*    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
+*       g.iannello@unicampus.it for further details.
+*    2. You agree to appropriately cite this work in your related studies and publications.
+*
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
+*
+*    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
+*       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
+*       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
+*       limited to, procurement of substitute goods or services; loss of use, data, or profits;reasonable royalties; or business interruption) however caused  and on any theory of liabil-
+*       ity, whether in contract, strict liability, or tort  (including negligence or otherwise) arising in any way out of the use of this software,  even if advised of the possibility of
+*       such damage.
+*    4. Neither the name of University  Campus Bio-Medico of Rome, nor Alessandro Bria and Giulio Iannello, may be used to endorse or  promote products  derived from this software without
+*       specific prior written permission.
+********************************************************************************************************************************************************************************************/
+
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-01-02. Giulio.     @IMPLEMENTED new plugins interface
+*/
+
 #include <cxcore.h>
 #include <cv.h>
 #include <highgui.h>
@@ -36,6 +69,15 @@ std::string iomanager::opencv2D::desc()
 			"*                                                    *\n"
 			"******************************************************\n";
 }
+
+
+// Return if channels are interleaved (in case the image has just one channel return value is indefinite)
+bool 
+	iomanager::opencv2D::isChansInterleaved( ) 
+{
+	return true;
+}
+
 
 // read image metadata from a 2D image file
 void 
@@ -82,6 +124,153 @@ throw (iom::exception)
 }
 
 
+// Read 2D image data
+unsigned char *						// (OUTPUT) a buffer storing the 2D image
+	iomanager::opencv2D::readData(
+	std::string img_path,			// (INPUT)	image filepath
+	int & img_width,				// (INPUT/OUTPUT) image width  (in pixels)
+	int & img_height,				// (INPUT/OUTPUT) image height (in pixels)
+	int & img_bytes_x_chan,			// (INPUT/OUTPUT) number of bytes per channel
+	int & img_chans,				// (INPUT/OUTPUT) number of channels to be read
+	unsigned char *data,			// (INPUT) image data
+	const std::string & params)		// (INPUT) additional parameters <param1=val, param2=val, ...> 
+throw (iom::exception) 
+{
+	//throw iom::exception(iom::strprintf("not implemented yet"), __iom__current__function__);
+
+	if ( !data ) { // recover the metadata, allocate the buffer and set parameters
+		int _width;
+		int _height;
+		int _bytes_x_chan;
+		int _chans;
+		int b_swap;
+		void *fhandle;
+		int header_len;
+
+		iom::IOPluginFactory::getPlugin2D(iom::IMIN_PLUGIN)->readMetadata(img_path,_width,_height,_bytes_x_chan,_chans);
+
+		data = new unsigned char[_width * _height * _chans * _bytes_x_chan];
+		img_width        = _width;
+		img_height       = _height;
+		img_bytes_x_chan = _bytes_x_chan;
+		img_chans        = _chans;
+	}
+
+	// load image
+	cv::Mat image;
+	image = cv::imread(img_path, CV_LOAD_IMAGE_ANYCOLOR);                             // load individual channels
+	if(!image.data)
+		throw iom::exception(iom::strprintf("unable to open image \"%s\". Possible unsupported format or it isn't an image.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", img_path.c_str()), __iom__current__function__);
+
+	if ( image.channels() == 1 ) {
+		if(image.depth() == CV_8U)
+		{
+			unsigned char *data_ptr = data;
+			for(int i=0; i<image.rows; i++)
+			{
+				uint8* img_data = image.ptr<uint8>(i);
+				for(int j=0; j<image.cols; j++, data_ptr++)
+					*data_ptr = img_data[j];
+			}
+		}
+		else if (image.depth() == CV_16U)
+		{
+			uint16 *data_ptr = (uint16 *) data;
+			for(int i=0; i<image.rows; i++)
+			{
+				uint16* img_data = image.ptr<uint16>(i);
+				for(int j=0; j<image.cols; j++, data_ptr++)
+					*data_ptr = img_data[j];
+			}
+		}
+		else
+			throw iom::exception("unsupported image depth", __iom__current__function__);
+	}
+	else {
+		// must convert BGR to RGB
+		throw iom::exception("conversion fron BGR (OpenCV) to RGB not supported yet.", __iom__current__function__);
+	}
+	
+	return 0;
+}
+
+
+// Write 2D image data into a single (2D) image file
+void 
+	iomanager::opencv2D::writeData(
+	std::string img_path,			// (INPUT)	image filepath (it includes the file extension)
+	unsigned char *raw_img,			// (INPUT)	image data to be saved into the file
+	int img_height,					// (INPUT)	image height
+	int img_width,					// (INPUT)	image width
+	int img_bytes_x_chan,			// (INPUT)  number of bytes per channel
+	int img_chans,					// (INPUT)	number of channels
+	int y0,							// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+	int y1,							// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+	int x0,							// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+	int x1,							// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+	const std::string & params)		// (INPUT) additional parameters <param1=val, param2=val, ...> 
+throw (iom::exception)
+{
+	//throw iom::exception(iom::strprintf("not implemented yet"), __iom__current__function__);
+
+	// correct default parameters
+	y0 = (y0 < 0) ? 0: y0;
+	y1 = (y1 < 0) ? img_height : y1;
+	x0 = (x0 < 0) ? 0: x0;
+	x1 = (x1 < 0) ? img_width  : x1;
+
+	// compute ROI dimensions
+	int ROI_height = y1 - y0;
+	int ROI_width  = x1 - x0;
+
+	// precondition checks
+	if(! (y0>=0 && y1>y0 && y1<=img_height && x0>=0 && x1>x0 && x1<=img_width) )
+		throw iom::exception(iom::strprintf("invalid ROI [%d,%d](X) x [%d,%d](Y) on image %d(X) x %d(Y)", x0, x1, y0, y1, img_width, img_height), __iom__current__function__);
+	if(img_bytes_x_chan != 1 && img_bytes_x_chan != 2)
+		throw iom::exception(iom::strprintf("unsupported bitdepth %d\n", img_bytes_x_chan*8), __iom__current__function__);
+	if(img_chans != 1)
+		throw iom::exception(iom::strprintf("unsupported number of channels = %d\n. Only single-channel images are supported", img_chans), __iom__current__function__);
+
+	// copy data to OpenCV structure
+
+	cv::Mat image(ROI_height, ROI_width, img_bytes_x_chan == 1 ? CV_8U : CV_16U, cv::Scalar(0));
+
+	if ( x0 == 0 && x1 == img_width && y0 == 0 && y1 == img_height ) { // all buffer must be written
+		if(img_bytes_x_chan == 1)
+		{
+			for(int i = 0; i <ROI_height; i++)
+			{
+				uint8* img_data = image.ptr<uint8>(i);
+				for(int j = 0; j < ROI_width; j++)
+					img_data[j] = static_cast<uint8>(raw_img[(i+y0)*img_width+j+x0] * 255.0f + 0.5f);
+			}
+		}
+		else
+		{
+			for(int i = 0; i <ROI_height; i++)
+			{
+				uint16* img_data = image.ptr<uint16>(i);
+				for(int j = 0; j < ROI_width; j++)
+					img_data[j] = static_cast<uint16>(raw_img[(i+y0)*img_width+j+x0] * 65535.0f + 0.5f);
+			}
+		}
+	}
+	else {
+		throw iom::exception(iom::strprintf("ROI not supported yet", img_chans), __iom__current__function__);
+	}
+
+	// save image
+	try
+	{
+		cv::imwrite(img_path, image);
+	}
+	catch(...)
+	{
+		throw iom::exception(iom::strprintf("unable to save image at \"%s\". Unsupported format or wrong path.\n", img_path.c_str()), __iom__current__function__);
+	}
+}
+
+
 // read 3D image data from a stack of (2D) image files
 iom::real_t*						// (OUTPUT) a [0.0,1.0]-valued array storing the 3D image in channel->slice->row order
 	iomanager::opencv2D::readData(
@@ -95,6 +284,8 @@ iom::real_t*						// (OUTPUT) a [0.0,1.0]-valued array storing the 3D image in c
 	const std::string & params)		// (INPUT)	additional parameters <param1=val, param2=val, ...> 
 throw (iom::exception)
 {
+	throw iom::exception(iom::strprintf("not implemented yet"), __iom__current__function__);
+	
 	/**/iom::debug(iom::LEV3, iom::strprintf("files_size = %d, path = %s, first = %d, last = %d, is_sparse = %s, chan = %d, params = \"%s\"",
 		files_size, path ? path : "null", first, last, is_sparse ? "true" : "false", chan, params.c_str()).c_str(), __iom__current__function__);
 
@@ -219,6 +410,8 @@ void
 	const std::string & params)	// (INPUT)	additional parameters <param1=val, param2=val, ...> 
 throw (iom::exception)
 {
+	throw iom::exception(iom::strprintf("not implemented yet"), __iom__current__function__);
+	
 	/**/iom::debug(iom::LEV3, iom::strprintf("img_path = %s, img_height = %d, img_width = %d, y0 = %d, y1 = %d, x0 = %d, x1 = %d, bpp = %d, params = \"%s\"", 
 		img_path.c_str(), img_height, img_width, y0, y1, x0, x1, bpp, params.c_str()).c_str(), __iom__current__function__);
 

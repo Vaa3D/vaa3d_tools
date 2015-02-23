@@ -121,7 +121,9 @@ char *Tiff3DFmtMngr::loadMetadata ( char * filename, sint64 * &sz, int &datatype
 	sz[1] = (sint64) sz1;
 	sz[2] = (sint64) sz2;
 	sz[3] = (sint64) sz3;
+
 	return err_msg;
+	// WARNING: fhandle must be left open (see interface)
 }
 
 char *Tiff3DFmtMngr::load2SubStack ( void *fhandle, unsigned char *img, sint64 *sz, 

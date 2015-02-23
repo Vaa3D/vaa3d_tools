@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-02-13. Giulio.     @CHANGED 3D ioplugin is called instead of Tiff3DMngr functions
 * 2014-12-06. Giulio    . @ADDED par_mode parameter in method mergeTilesVaa3DRaw controlling the execution when multiple instances of the function are launched.
 * 2014-12-06. Giulio    . @ADDED createDirectoryHiererchy method.
 * 2014-11-03. Giulio.     @FIXED stop and resume facility should be inactive when in test mode
@@ -51,7 +52,7 @@
 #include "volumemanager.config.h"
 
 #include "RawFmtMngr.h"
-#include "Tiff3DMngr.h"
+//#include "Tiff3DMngr.h"
 #include "../imagemanager/IM_config.h"
 #include "../imagemanager/VirtualVolume.h"
 #include "../imagemanager/TiledVolume.h"
@@ -60,6 +61,8 @@
 #include "../iomanager/ProgressBar.h"
 
 #include "resumer.h" // GI_141029: added stop and resume facility
+
+#include "IOPluginAPI.h" // GI_150213
 
 using namespace iomanager;
 using namespace volumemanager;
@@ -620,8 +623,10 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 												  << abs_pos_z_temp.str();
 
 									// 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
+									err_rawfmt = 0; // the plugin does not return a message
 									if( strcmp(saved_img_format, "tif") == 0 || strcmp(saved_img_format, "tiff") == 0 || strcmp(saved_img_format, "TIF") == 0 || strcmp(saved_img_format, "TIFF") == 0)
-										err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),(uint32)sz[0],(uint32)sz[1],(uint32)sz[2],(uint32)sz[3],datatype);
+										//err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),(uint32)sz[0],(uint32)sz[1],(uint32)sz[2],(uint32)sz[3],datatype);
+										iom::IOPluginFactory::getPlugin3D(iom::IMOUT_PLUGIN)->create3Dimage((char *)img_path_temp.str().c_str(),(int)sz[1],(int)sz[0],(int)sz[2],datatype,(int)sz[3]);
 									else if(strcmp(saved_img_format, "v3draw") == 0 || strcmp(saved_img_format, "raw") == 0)
 										err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype);
 									else
@@ -629,15 +634,6 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 									if(err_rawfmt != 0)
 										throw iom::exception(vm::strprintf("in StackStitcher::mergeTilesVaa3DRaw(): error in initializing block file (%s)", err_rawfmt));
 								
-									//if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
-									//			( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),(uint32)sz[0],(uint32)sz[1],(uint32)sz[2],(uint32)sz[3],datatype)) != 0 ) : 
-									//			( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
-									//	char err_msg[S_STATIC_STRINGS_SIZE];
-									//	sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
-									//          throw iom::exception(err_msg);
-									//};
-									//fclose(tmp_file); // TEMP
-
 									slice_start_temp += (int)sz[2];
 								}
 								delete [] sz;

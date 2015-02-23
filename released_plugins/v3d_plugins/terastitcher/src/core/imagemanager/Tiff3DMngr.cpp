@@ -26,10 +26,12 @@
 *    CHANGELOG    *
 *******************
 *******************
+* 2015-02-06. Giulio. @ADDED append operation that assume an already open and positioned file
+* 2015-02-06. Giulio. @ADDED open operation
 * 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-* 2014-12-10 Giulio. @ADDED added management of mismatch between machine/image endian
-* 2014-12-06 Giulio. @FIXED input file should NOT be closed at the end of 'loadTiff3D2Metadata'
-* 2014-12-05 Giulio. @ADDED input file should be closed at the end of 'loadTiff3D2Metadata'
+* 2014-12-10. Giulio. @ADDED added management of mismatch between machine/image endian
+* 2014-12-06. Giulio. @FIXED input file should NOT be closed at the end of 'loadTiff3D2Metadata'
+* 2014-12-05. Giulio. @ADDED input file should be closed at the end of 'loadTiff3D2Metadata'
 */
 
 #include "Tiff3DMngr.h"
@@ -155,6 +157,32 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	return ((char *) 0);
 }
 
+char *openTiff3DFile ( char *filename, char *mode, void *&fhandle ) {
+	char *completeFilename = (char *) 0;
+	int fname_len = (int) strlen(filename);
+	char *suffix = strstr(filename,".tif");
+	while ( suffix && (fname_len - (suffix-filename) > 5) )
+		suffix = strstr(suffix+4,".tif");
+	//if ( (suffix != 0) && (fname_len - (suffix-filename) <= 5) ) { // a substring ".tif is already at the end of the filename
+	if ( suffix ) { // a substring ".tif is already at the very end of the filename
+		completeFilename = new char[fname_len+1];
+		strcpy(completeFilename,filename);
+	}
+	else {	
+		completeFilename = new char[fname_len+4+1];
+		strcpy(completeFilename,filename);
+		strcat(completeFilename,".");
+		strcat(completeFilename,TIFF3D_SUFFIX);
+	}
+
+	fhandle = TIFFOpen(completeFilename,mode);
+	if (!fhandle)
+    {
+		return ((char *) "Cannot open the file.");
+    }
+	return ((char *) 0);
+}
+
 void closeTiff3DFile ( void *fhandle ) {
 	TIFFClose((TIFF *) fhandle);
 }
@@ -185,7 +213,7 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 		return ((char *) "More than 3 channels in Tiff files.");
 
 	char *completeFilename = (char *) 0;
-	int fname_len = strlen(filename);
+	int fname_len = (int) strlen(filename);
 	char *suffix = strstr(filename,".tif");
 	while ( suffix && (fname_len - (suffix-filename) > 5) )
 		suffix = strstr(suffix+4,".tif");
@@ -288,8 +316,7 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 	return (char *) 0;
 }
 
-char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, unsigned int img_height, unsigned int img_width )
-{
+char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, unsigned int img_width, unsigned int img_height ) {
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
     #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
     TERAFLY_TIME_START(TiffAppendData)
@@ -333,6 +360,33 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
     #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
     TERAFLY_TIME_STOP(TiffAppendData, itm::IO, itm::strprintf("appended slice %d x %d to 3D tiff \"%s\"", img_width, img_height, filename))
     #endif
+
+	return (char *) 0;
+}
+
+char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages ) {
+	TIFF *output = (TIFF *) fhandler;
+
+	TIFFSetDirectory(output,slice); // WARNING: slice must be the first page after the last, otherwise the file can be corrupted
+
+	TIFFSetField(output, TIFFTAG_IMAGEWIDTH, img_width);
+	TIFFSetField(output, TIFFTAG_IMAGELENGTH, img_height);
+	TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)bpp); 
+	TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, (uint16)spp);
+	TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, img_height);
+	TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	//TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
+	TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+	TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	//TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);	
+	// We are writing single page of the multipage file 
+	TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+	TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)NPages); 
+
+	TIFFWriteEncodedStrip(output, 0, img, img_width * img_height * spp * (bpp/8));
+	//img +=  img_width * img_height;
+
+	TIFFWriteDirectory(output);
 
 	return (char *) 0;
 }
