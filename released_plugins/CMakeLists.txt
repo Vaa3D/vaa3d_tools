@@ -15,7 +15,6 @@ find_library(TIFF_LIBRARY
 if (NOT TIFF_LIBRARY)
 	find_package(TIFF REQUIRED)
 endif()
-message("show ${TIFF_INCLUDE_DIR}")
 include_directories( "${TIFF_INCLUDE_DIR}" )
 
 include(CTest)
