@@ -22,28 +22,24 @@ include(CTest)
 
 # include(CPack) # save cpack for parent directory
 
-find_path(V3D_BUILD_DIR   REQUIRED)
+find_path(V3D_BUILD_DIR  DOC "The binary dir where you CMake build the vaa3d trunk." REQUIRED)
 
-find_path(V3D_PLUGIN_LIBRARIES_PATH
-  NAMES libV3DInterface.a
-  PATHS  "${V3D_BUILD_DIR}/released_plugins/bin" REQUIRED)
-find_library(V3DInterface_LIBRARY NAMES V3DInterface  HINTS ${V3D_PLUGIN_LIBRARIES_PATH}  REQUIRED)
-
-
-
-find_path(V3D_BINARY_DIR  REQUIRED)
-if(NOT V3D_BINARY_DIR)
-  message(FATAL "The V3D_BINARY_DIR is required. This must point to the location of the v3d executable")
-endif()
+find_path(V3D_BINARY_DIR  DOC " This points to the location of the v3d executable, where the plugins subfolder is lcoated." REQUIRED)
 set(INSTALLATION_DIRECTORY ${V3D_BINARY_DIR}/plugins)
 
-find_path(V3D_BASIC_C_FUN_SOURCE_DIR v3d_interface.h)
+find_path(V3D_BASIC_C_FUN_SOURCE_DIR v3d_interface.h DOC "The trunk basic code that contains v3d_interface.h." REQUIRED)
 if( V3D_BASIC_C_FUN_SOURCE_DIR )
   set( V3D_BASIC_C_FUN_BINARY_DIR  ${PROJECT_BINARY_DIR}/Source/basic_c_fun )
 endif( V3D_BASIC_C_FUN_SOURCE_DIR )
 
-set(V3DMAINDIR  "${V3D_BASIC_C_FUN_SOURCE_DIR}/../")
+set(V3DMAINDIR  "${V3D_BASIC_C_FUN_SOURCE_DIR}/../")  # the v3d_main folder
 
+find_path(V3D_PLUGIN_LIBRARIES_PATH
+  NAMES libV3DInterface.a
+  PATHS  "${V3D_BUILD_DIR}/released_plugins/bin" 
+  DOC  "The binary dir where all the main v3d libraries are stored."
+  )
+find_library(V3DInterface_LIBRARY NAMES V3DInterface  HINTS ${V3D_PLUGIN_LIBRARIES_PATH} DOC "The v3d interface library")
 
 if(WIN32)
     message("Looking for fftw library")
