@@ -125,11 +125,13 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         //get parameters
         int cubSize=11;
         int conviter=10;
-        int fgthr=150;
+        int fgthr=100;
         int bgthr=10;
-        int sizethr=1000;
+        int sizethr=2000;
         int margin_size=15;
         float scale=1;
+        float sparsthr=0.25;
+        float touchthr=0.5;
 
         if(input.size()>1){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
@@ -183,11 +185,25 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
                 else
                     cerr<<"error: illigal output border margin: "<<tmp<<"; use default value "<<margin_size<<endl;
             }
+            if(paras.size()>7){
+                float tmp=atof(paras.at(7));
+                if(tmp>0 && tmp<1)
+                    sparsthr=tmp;
+                else
+                    cerr<<"error: illigal sparsity threshold: "<<tmp<<"; use default value "<<sparsthr<<endl;
+            }
+            if(paras.size()>8){
+                float tmp=atof(paras.at(8));
+                if(tmp>0 && tmp<1)
+                    touchthr=tmp;
+                else
+                    cerr<<"error: illigal edge touching outlier threshold: "<<tmp<<"; use default value "<<touchthr<<endl;
+            }
         }
 
         qDebug()<<"NeuronPicker: searching, extracting, and saving starts.";
         pickerObj.innerScale=scale;
-        V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, bgthr, sizethr, margin_size);
+        V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, bgthr, sizethr, margin_size, sparsthr, touchthr);
         qDebug()<<"NeuronPicker: Found "<<neuronNum<<" seperate nuerons in "<<fname_input;
     }
 	else if (func_name == tr("help"))

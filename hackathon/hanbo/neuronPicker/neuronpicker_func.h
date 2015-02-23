@@ -51,6 +51,10 @@ public:
     neuronPickerMain2();
     ~neuronPickerMain2();
 
+    //check eligiblility of the extraction
+    //1st, cannot be a dense extraction
+    //2nd, if touch a face, must be relatively (thr_touching) far away from that face
+    bool checkEligibility(vector<V3DLONG> x_all, vector<V3DLONG> y_all, vector<V3DLONG> z_all, float thr_sparse, float thr_touching, int cubeSize);
     //extract the eligiable area only
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract both the eligialbe area and close neighbors
@@ -64,7 +68,7 @@ public:
     //find the seeds based on extractMore
     V3DLONG autoSeeds(vector<V3DLONG>& seeds, int cubSize, int conviter, int fgthr, int bgthr, int sizethr);
     //find, extract and save
-    V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size);
+    V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size,  float thr_sparse, float thr_touching);
 
 private:
     vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr, int convolute_iter);

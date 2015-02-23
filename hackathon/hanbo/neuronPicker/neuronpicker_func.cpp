@@ -642,7 +642,7 @@ V3DLONG neuronPickerMain2::autoSeeds(vector<V3DLONG>& seeds, int cubSize, int co
     return seeds.size();
 }
 
-V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * callback , int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size)
+V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * callback , int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size, float sparsthr, float touchthr)
 {
     float v=0;
     unsigned char * mask1D_v=neuronPickerMain::memory_allocate_uchar1D(page_size);
@@ -667,9 +667,14 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     sz_out[1]=sz_image[1];
     sz_out[2]=sz_image[2];
     sz_out[3]=1;
+    bool eligible;
     findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
         rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+        if(rsize>sizethr)
+            eligible=checkEligibility(x_all, y_all, z_all, sparsthr, touchthr, cubSize);
+        else
+            eligible=false;
         mask1D_v[max_ind]=0;
         for(int i=0; i<x_all.size(); i++){
             x=x_all[i];
@@ -684,7 +689,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                 }
             }
         }
-        if(rsize>sizethr){ //save if is large
+        if(eligible){ //save if it is an eligible neuron
             memset(mask1D,0,page_size*sizeof(unsigned char));
             memset(data1D_out,0,page_size*sizeof(unsigned char));
             vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
@@ -732,6 +737,65 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     }
 
     return neuronNum;
+}
+
+bool neuronPickerMain2::checkEligibility(vector<V3DLONG> x_all, vector<V3DLONG> y_all, vector<V3DLONG> z_all, float thr_sparse, float thr_touching, int cubeSize)
+{
+    memset(mask1D, 0, page_size*sizeof(unsigned char));
+    V3DLONG nbox[6];
+    nbox[0]=sz_image[0];
+    nbox[1]=sz_image[1];
+    nbox[2]=sz_image[2];
+    nbox[3]=0;
+    nbox[4]=0;
+    nbox[5]=0;
+
+    for(int i=0; i<x_all.size(); i++){
+        mask1D[x_all[i]+y_all[i]*sz_image[0]+z_all[i]*sz_image[0]*sz_image[1]]=1;
+        nbox[0]=MIN(nbox[0],x_all[i]);
+        nbox[1]=MIN(nbox[1],y_all[i]);
+        nbox[2]=MIN(nbox[2],z_all[i]);
+        nbox[3]=MAX(nbox[3],x_all[i]);
+        nbox[4]=MAX(nbox[4],y_all[i]);
+        nbox[5]=MAX(nbox[5],z_all[i]);
+    }
+
+    //check boundary eligibility
+    qDebug()<<"=======NeuronPicker: Check edge touching: ";
+    if((nbox[0]<=1) && (nbox[3]<sz_image[0]*thr_touching)) return false;
+    if((nbox[1]<=1) && (nbox[4]<sz_image[1]*thr_touching)) return false;
+    if((nbox[2]<=1) && (nbox[5]<sz_image[2]*thr_touching)) return false;
+    if((nbox[3]>sz_image[0]-2) && (sz_image[0]-nbox[0]<sz_image[0]*thr_touching)) return false;
+    if((nbox[4]>sz_image[1]-2) && (sz_image[1]-nbox[1]<sz_image[1]*thr_touching)) return false;
+    if((nbox[5]>sz_image[2]-2) && (sz_image[2]-nbox[2]<sz_image[2]*thr_touching)) return false;
+
+    //calculate sparsness
+    V3DLONG x,y,z;
+    int delta=cubeSize/2;
+    double sparsity=0;
+    double neighborSize=(delta*2+1)*(delta*2+1)*(delta*2+1);
+    double fgcount=0;
+    for(int i=0; i<x_all.size(); i++){
+        x=x_all[i];
+        y=y_all[i];
+        z=z_all[i];
+        fgcount=0;
+        //mask all regions founded
+        for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
+            for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
+                for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
+                    if(mask1D[dx+dy*sz_image[0]+dz*sz_image[0]*sz_image[1]]==1)
+                        fgcount++;
+                }
+            }
+        }
+        sparsity+=fgcount/neighborSize;
+    }
+    sparsity/=(double)x_all.size();
+    qDebug()<<"=======NeuronPicker: Sparsity: "<<sparsity;
+    if(sparsity>thr_sparse)
+        return false;
+    return true;
 }
 
 float neuronPickerMain2::getProjection(vector<float> vec, vector<float> dir, int convolute_iter)
