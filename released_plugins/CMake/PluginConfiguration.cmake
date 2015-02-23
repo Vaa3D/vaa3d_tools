@@ -52,12 +52,8 @@ if(NOT PLUGIN_DIRECTORY_NAME)
 endif()
 
 # Install plugins below executable for cpack installer builds
-if(V3D_INSTALL_DIR)
-  set(PLUGIN_DESTINATION_DIR ${V3D_INSTALL_DIR}/plugins/${PLUGIN_DIRECTORY_NAME})
-else()
-  set(PLUGIN_DESTINATION_DIR ${INSTALLATION_DIRECTORY}/${PLUGIN_DIRECTORY_NAME} )
-  file(MAKE_DIRECTORY ${PLUGIN_DESTINATION_DIR})
-endif()
+set(PLUGIN_DESTINATION_DIR ${INSTALLATION_DIRECTORY}/${PLUGIN_DIRECTORY_NAME} )
+file(MAKE_DIRECTORY ${PLUGIN_DESTINATION_DIR})
 
 # Build plugins next to V3D executable, for testing from build area before install.
 if (V3D_BINARY_DIR)

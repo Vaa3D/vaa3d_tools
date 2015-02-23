@@ -24,7 +24,12 @@ include(CTest)
 find_path(V3D_BUILD_DIR  DOC "The binary dir where you CMake build the vaa3d trunk." REQUIRED)
 
 find_path(V3D_BINARY_DIR  DOC " This points to the location of the v3d executable, where the plugins subfolder is lcoated." REQUIRED)
-set(INSTALLATION_DIRECTORY ${V3D_BINARY_DIR}/plugins)
+if (WIN32)
+   # to be packed into the installer together with the trunk plugins
+   set(INSTALLATION_DIRECTORY ${V3D_BUILD_DIR}/binary_plugins)
+else()
+   set(INSTALLATION_DIRECTORY ${V3D_BINARY_DIR}/plugins)
+endif()
 
 find_path(V3D_BASIC_C_FUN_SOURCE_DIR v3d_interface.h DOC "The trunk basic code that contains v3d_interface.h." REQUIRED)
 if( V3D_BASIC_C_FUN_SOURCE_DIR )
