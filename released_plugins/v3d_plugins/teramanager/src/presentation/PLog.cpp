@@ -230,8 +230,9 @@ void PLog::appendOperation(itm::Operation *op, bool update_time_comps /* = true 
     // add operation to its group vector
     loggedOperations[op->name()].push_back(op);
 
-    if(op->milliseconds == 0)
-        printf("%s\n", op->message.c_str());
+//    if( op->name().compare(appendOpComboBox->currentText().toStdString()) == 0 &&
+//        op->comp == itm::str2comp(appendCompComboBox->currentText().toStdString()))
+//        printf("[%05d] %s\n", op->milliseconds, op->message.c_str());
 
     // update GUI
     if(autoUpdateCheckBox->isChecked())
@@ -285,7 +286,6 @@ void PLog::appendOperationToFile(itm::Operation* op)
         {
             for(int k=0; k < op_times.size(); k++)
             {
-                //f.precision(5);
                 f << op_times[k]/1000.0f << "\n";
             }
 

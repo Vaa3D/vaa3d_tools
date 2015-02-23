@@ -282,5 +282,9 @@ SOURCES += ./src/control/QUndoMarkerDeleteROI.cpp
 
 #set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
-#DESTDIR = $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/teramanager
-DESTDIR	= ../../../bin/plugins/teramanager
+win32{
+    DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/teramanager
+}
+else{
+    DESTDIR	= ../../../bin/plugins/teramanager
+}
