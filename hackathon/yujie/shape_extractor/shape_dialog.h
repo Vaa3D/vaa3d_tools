@@ -41,15 +41,13 @@ private:
     vector<V3DLONG> mass_center;
 
     QPlainTextEdit *edit;
-    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr,*spin_percent;
+    QSpinBox *spin_distance,*spin_bgthr,*spin_conviter,*spin_percent;
     QDialog *subDialog;
 private:
 
     void create();
     void updateInputWindow();
     void updateOutputWindow();
-
-
 
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);

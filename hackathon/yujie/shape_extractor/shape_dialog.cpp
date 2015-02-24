@@ -252,24 +252,7 @@ void shape_dialog::updateInputWindow()
 
 int shape_dialog::loadMarkers()
 {
-    qDebug()<<"in loadMarkers";
-//    LList.clear();
-//    QStringList cb_items;
-//    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
-//    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
-//    {
-//        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
-//        {
-//            LandmarkList LList_in = callback->getLandmark(v3dhandleList_current[i]);
-//            for(int i=0; i<LList_in.size(); i++){
-//                LList.append(LList_in.at(i));
-//                LList[i].color.r=196;
-//                LList[i].color.g=LList[i].color.b=0;
-//                cb_items.append("marker: " + QString::number(i+1));
-//            }
-//            break;
-//        }
-//    }
+
     if (LList.size()<=0)
     {
         v3d_msg("No markers were selected.");
@@ -324,10 +307,7 @@ void shape_dialog::clear_markers()
         {
             if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
             {
-
                 callback->setLandmark(v3dhandleList_current[i],LList);
-                //callback->updateImageWindow(v3dhandleList_current[i]);
-                //callback->open3DWindow(v3dhandleList_current[i]);
                 callback->pushObjectIn3DWindow(v3dhandleList_current[i]);
             }
         }
@@ -381,7 +361,6 @@ void shape_dialog::extract()
         LList_new_center.append(tmp);
 
         if(rsize>0){
-
             V3DLONG finalpos;
             for (int i=0;i<x_all.size();i++)
             {
@@ -393,13 +372,9 @@ void shape_dialog::extract()
         }
      }
 
-    if (sumrsize>0){
-    updateOutputWindow();
-    qDebug()<<"At the end of extract() now";
-    }
-
-    else{
-    v3d_msg("Nothing were found. Please change marker or adjust parameters.");}
+    if (sumrsize>0) updateOutputWindow();
+    else
+    v3d_msg("Nothing were found. Please change marker or adjust parameters.");
 }
 
 void shape_dialog::display_mass_center()
@@ -422,10 +397,8 @@ void shape_dialog::display_mass_center()
             LList[LList.size()-1].color.r=LList[LList.size()-1].color.g=0;
         }
 
-
     //Update the current window of new markers
         updateOutputWindow();
-
     }
 }
 
@@ -449,7 +422,6 @@ void shape_dialog::updateOutputWindow()
         unsigned char* image1Dc_input=memory_allocate_uchar1D(size_page);
         memcpy(image1Dc_input, image1Dc_out, size_page*sizeof(unsigned char));
         image4d.setData(image1Dc_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
-
         if(!winfound){ //open a window if none is open
             v3dhandle v3dhandle_main=callback->newImageWindow();
             callback->setImage(v3dhandle_main, &image4d);
@@ -458,7 +430,6 @@ void shape_dialog::updateOutputWindow()
             callback->updateImageWindow(v3dhandle_main);
             callback->open3DWindow(v3dhandle_main);
             callback->pushObjectIn3DWindow(v3dhandle_main);
-
         }
         else{
             //update the image
