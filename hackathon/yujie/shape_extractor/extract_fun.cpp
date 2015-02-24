@@ -18,13 +18,13 @@ extract_fun::~extract_fun()
 
 
 V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
-                             V3DLONG seed_ind, int convolute_iter,
-                              int neighbor_size, int bg_thr,double percent_thr)
+                             V3DLONG seed_ind, int convolute_iter,int bg_thr,double percent_thr)
 {
     x_all.clear();
     y_all.clear();
     z_all.clear();
 
+    int neighbor_size=2;
     //1) Collect user specified point info
     vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
     if(dir.size()<=0){

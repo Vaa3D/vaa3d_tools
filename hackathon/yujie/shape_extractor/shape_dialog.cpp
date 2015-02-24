@@ -28,14 +28,14 @@ void shape_dialog::create()
     button_load->setText("Load");
     button_load->setGeometry(0,0,10,20);
     QToolButton *button_extract=new QToolButton;
-    button_extract->setText("Find edge");
+    button_extract->setText("Region grow");
     button_extract->setGeometry(0,0,10,20);
     QToolButton *button_return=new QToolButton;
     button_return->setText("Find mass center");
     button_return->setGeometry(0,0,10,20);
-    QToolButton *button_mark=new QToolButton;
-    button_mark->setText("Show markers");
-    button_mark->setGeometry(0,0,10,20);
+//    QToolButton *button_mark=new QToolButton;
+//    button_mark->setText("Show markers");
+//    button_mark->setGeometry(0,0,10,20);
     QToolButton *button_para=new QToolButton;
     button_para->setText("Parameter setting");
     button_para->setGeometry(0,0,10,20);
@@ -53,25 +53,27 @@ void shape_dialog::create()
     QGridLayout *gridLayout=new QGridLayout;
     spin_bgthr = new QSpinBox();
     spin_bgthr->setRange(0,255); spin_bgthr->setValue(60);
-    spin_distance = new QSpinBox();
-    spin_distance->setRange(0,100000); spin_distance->setValue(3);
+//    spin_distance = new QSpinBox();
+//    spin_distance->setRange(0,100000); spin_distance->setValue(3);
     spin_conviter = new QSpinBox();
     spin_conviter->setRange(0,100); spin_conviter->setValue(1);
     spin_percent = new QSpinBox();
     spin_percent->setRange(0,100); spin_percent->setValue(70);
 
-    QLabel* label_0 = new QLabel("background threshold (0~255):");
+    QLabel* label_0 = new QLabel("Background Threshold (0~255):");
     gridLayout->addWidget(label_0,0,0,1,2);
     gridLayout->addWidget(spin_bgthr,0,3,1,1);
-    QLabel* label_1 = new QLabel("neighbor(cubic) mask size: ");
+//    QLabel* label_1 = new QLabel("neighbor(cubic) mask size: ");
+//    gridLayout->addWidget(label_1,1,0,1,2);
+//    gridLayout->addWidget(spin_distance,1,3,1,1);
+    QLabel* label_1 = new QLabel("Percent of Non-cell Pixels in Sphere: ");
     gridLayout->addWidget(label_1,1,0,1,2);
-    gridLayout->addWidget(spin_distance,1,3,1,1);
-    QLabel* label_2 = new QLabel("convolute iteration (contrast factor): ");
+    gridLayout->addWidget(spin_percent,1,3,1,1);
+
+    QLabel* label_2 = new QLabel("Convolute Iteration (contrast factor): ");
     gridLayout->addWidget(label_2,2,0,1,2);
     gridLayout->addWidget(spin_conviter,2,3,1,1);
-    QLabel* label_3 = new QLabel("percent of non-image pixels in sphere: ");
-    gridLayout->addWidget(label_3,3,0,1,2);
-    gridLayout->addWidget(spin_percent,3,3,1,1);
+
     QPushButton *button_ok=new QPushButton;
     button_ok->setText("OK");
     QPushButton *button_cancel=new QPushButton;
@@ -79,15 +81,15 @@ void shape_dialog::create()
     QHBoxLayout *hlayout=new QHBoxLayout;
     hlayout->addWidget(button_ok);
     hlayout->addWidget(button_cancel);
-    gridLayout->addLayout(hlayout,4,0,1,4);
+    gridLayout->addLayout(hlayout,3,0,1,4);
     subDialog->setLayout(gridLayout);
 
     QToolBar *tool = new QToolBar;
     tool->setGeometry(0,0,200,20);
     tool->addWidget(button_load);
     tool->addSeparator();
-    tool->addWidget(button_mark);
-    tool->addSeparator();
+//    tool->addWidget(button_mark);
+//    tool->addSeparator();
     tool->addWidget(button_extract);
     tool->addSeparator();
     tool->addWidget(button_return);
@@ -116,14 +118,14 @@ void shape_dialog::create()
     this->setFixedHeight(height+80);
 
      connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
-     connect(button_mark,SIGNAL(clicked()),this, SLOT(loadMarkers()));
+     //connect(button_mark,SIGNAL(clicked()),this, SLOT(loadMarkers()));
      connect(button_extract,SIGNAL(clicked()),this,SLOT(extract()));
      connect(button_return,SIGNAL(clicked()),this,SLOT(display_mass_center()));
      connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
      connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
      connect(button_clear,SIGNAL(clicked()),this,SLOT(clear_markers()));
      prev_bgthr=spin_bgthr->value();
-     prev_distance=spin_distance->value();
+    // prev_distance=spin_distance->value();
      prev_conviter=spin_conviter->value();
      prev_percent=spin_percent->value();
 }
@@ -135,7 +137,7 @@ void shape_dialog::dialoguefinish(int)
       {
         qDebug()<<"Accepted";
         prev_bgthr=spin_bgthr->value();
-        prev_distance=spin_distance->value();
+        //prev_distance=spin_distance->value();
         prev_conviter=spin_conviter->value();
         prev_percent=spin_percent->value();
     }
@@ -143,7 +145,7 @@ void shape_dialog::dialoguefinish(int)
     else{
         qDebug()<<"Not accepting";
        spin_bgthr->setValue(prev_bgthr);
-       spin_distance->setValue(prev_distance);
+       //spin_distance->setValue(prev_distance);
        spin_conviter->setValue(prev_conviter);
        spin_percent->setValue(prev_percent);
     }
@@ -250,26 +252,6 @@ void shape_dialog::updateInputWindow()
     }
  }
 
-int shape_dialog::loadMarkers()
-{
-
-    if (LList.size()<=0)
-    {
-        v3d_msg("No markers were selected.");
-        return 0;
-    }
-
-    for (int i=0;i<LList.size();i++)
-     {
-        //qDebug()<<"In the loop";
-        QString tmp="Marker "+ QString::number(i+1)+ ": " + QString::number(LList[i].x)+","+
-                QString::number(LList[i].y)+ "," +QString::number(LList[i].z);
-        edit->appendPlainText(tmp);
-     }
-
-    return(LList.size());
-}
-
 void shape_dialog::clear_markers()
 {
     if (LList.size()<=0){
@@ -341,12 +323,19 @@ void shape_dialog::extract()
         return;
     }
 
+    for (int i=0;i<LList.size();i++)
+     {
+        //qDebug()<<"In the loop";
+        QString tmp="Marker "+ QString::number(i+1)+ ": " + QString::number(LList[i].x)+","+
+                QString::number(LList[i].y)+ "," +QString::number(LList[i].z);
+        edit->appendPlainText(tmp);
+     }
+
     int convolute_iter=spin_conviter->value();
-    int neighbor_size=spin_distance->value();
+    //int neighbor_size=spin_distance->value();
     int bg_thr=spin_bgthr->value();
     int percent=spin_percent->value();
     double percent_thr=percent*1.0/100.0;
-    qDebug()<<"percent_thr:"<<percent_thr;
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
     image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
     memcpy(image1Dc_out,image1Dc_in, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
@@ -355,7 +344,7 @@ void shape_dialog::extract()
     for (int j=0;j<poss_landmark.size();j++){
         qDebug()<<"j:"<<j;
         V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,poss_landmark[j],
-                                       convolute_iter,neighbor_size, bg_thr,percent_thr);
+                                       convolute_iter, bg_thr,percent_thr);
         mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);

@@ -21,7 +21,7 @@ class shape_dialog: public QDialog
 public:
     explicit shape_dialog(V3DPluginCallback2 *cb);
     int prev_bgthr;
-    int prev_distance;
+    //int prev_distance;
     int prev_conviter;
     int prev_percent;
 
@@ -41,7 +41,8 @@ private:
     vector<V3DLONG> mass_center;
 
     QPlainTextEdit *edit;
-    QSpinBox *spin_distance,*spin_bgthr,*spin_conviter,*spin_percent;
+    QSpinBox *spin_bgthr,*spin_conviter,*spin_percent;
+    //QSpinBox *spin_distance,
     QDialog *subDialog;
 private:
 
@@ -54,7 +55,6 @@ private:
 
 public slots:
     bool load();
-    int loadMarkers();
     void extract();
     void display_mass_center();
     void dialoguefinish(int);
