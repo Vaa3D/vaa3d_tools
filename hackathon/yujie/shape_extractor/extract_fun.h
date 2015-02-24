@@ -40,9 +40,7 @@ public:
                      int convolute_iter,int neighbor_size, int bg_thr,double percent);
     vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
                                                  vector<V3DLONG> z_all);
-    V3DLONG extract_check(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
-                                 V3DLONG seed_ind, int convolute_iter,
-                                  int neighbor_size, int bg_thr,int rounds);
+
 private:
     float * data1Dc_float;
     unsigned char * mask1D;

@@ -40,10 +40,8 @@ private:
     vector<V3DLONG> z_all;
     vector<V3DLONG> mass_center;
 
-
-
     QPlainTextEdit *edit;
-    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_rounds,*spin_percent;
+    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr,*spin_percent;
     QDialog *subDialog;
 private:
 
@@ -62,7 +60,6 @@ public slots:
     void extract();
     void display_mass_center();
     void dialoguefinish(int);
-    void visual_oneround(int);
     void clear_markers();
 };
 #endif // SHAPE_DIALOG_H
