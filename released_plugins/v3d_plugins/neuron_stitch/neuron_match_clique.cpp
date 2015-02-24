@@ -1023,7 +1023,7 @@ void NeuronMatchDialog::creat()
     btn_test = new QPushButton("Test");
     connect(btn_test, SIGNAL(clicked()), this, SLOT(examinRun()));
     gridLayout->addWidget(btn_test,optrow+1,3,1,1);
-    btn_test->setVisible(true); //show it only for test
+    btn_test->setVisible(false); //show it only for test
     btn_run = new QPushButton("Run");
     connect(btn_run,     SIGNAL(clicked()), this, SLOT(run()));
     gridLayout->addWidget(btn_run,optrow+1,4,1,1);
