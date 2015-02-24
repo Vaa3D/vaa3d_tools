@@ -23,7 +23,7 @@ public:
     int prev_bgthr;
     int prev_distance;
     int prev_conviter;
-    int prev_sizemargin;
+    int prev_percent;
 
 private:
     extract_fun shape_ext_obj;
@@ -43,7 +43,7 @@ private:
 
 
     QPlainTextEdit *edit;
-    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_sizemargin;
+    QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_rounds,*spin_percent;
     QDialog *subDialog;
 private:
 
@@ -62,5 +62,7 @@ public slots:
     void extract();
     void display_mass_center();
     void dialoguefinish(int);
+    void visual_oneround(int);
+    void clear_markers();
 };
 #endif // SHAPE_DIALOG_H

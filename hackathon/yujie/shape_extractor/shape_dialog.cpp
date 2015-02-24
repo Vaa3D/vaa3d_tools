@@ -39,6 +39,11 @@ void shape_dialog::create()
     QToolButton *button_para=new QToolButton;
     button_para->setText("Parameter setting");
     button_para->setGeometry(0,0,10,20);
+    QToolButton *button_clear=new QToolButton;
+    button_clear->setText("Clear markers");
+    button_clear->setGeometry(0,0,10,20);
+    spin_rounds = new QSpinBox();
+    spin_rounds->setRange(0,100000); spin_rounds->setValue(0);
 
     //Build the subdialog for parameter settings
     subDialog = new QDialog;
@@ -54,9 +59,9 @@ void shape_dialog::create()
     spin_distance->setRange(0,100000); spin_distance->setValue(3);
     spin_conviter = new QSpinBox();
     spin_conviter->setRange(0,100); spin_conviter->setValue(1);
-    spin_sizemargin = new QSpinBox();
-    spin_sizemargin->setRange(0,100000); spin_sizemargin->setValue(15);
-    qDebug()<<"1";
+    spin_percent = new QSpinBox();
+    spin_percent->setRange(0,100); spin_percent->setValue(60);
+
     QLabel* label_0 = new QLabel("background threshold (0~255):");
     gridLayout->addWidget(label_0,0,0,1,2);
     gridLayout->addWidget(spin_bgthr,0,3,1,1);
@@ -66,9 +71,9 @@ void shape_dialog::create()
     QLabel* label_2 = new QLabel("convolute iteration (contrast factor): ");
     gridLayout->addWidget(label_2,2,0,1,2);
     gridLayout->addWidget(spin_conviter,2,3,1,1);
-    QLabel* label_3 = new QLabel("extract margin size: ");
+    QLabel* label_3 = new QLabel("percent of non-image pixels in sphere: ");
     gridLayout->addWidget(label_3,3,0,1,2);
-    gridLayout->addWidget(spin_sizemargin,3,3,1,1);
+    gridLayout->addWidget(spin_percent,3,3,1,1);
     QPushButton *button_ok=new QPushButton;
     button_ok->setText("OK");
     QPushButton *button_cancel=new QPushButton;
@@ -89,7 +94,11 @@ void shape_dialog::create()
     tool->addSeparator();
     tool->addWidget(button_return);
     tool->addSeparator();
+    tool->addWidget(button_clear);
+    tool->addSeparator();
     tool->addWidget(button_para);
+    tool->addSeparator();
+    tool->addWidget(spin_rounds);
     //tool->setMovable(true);
 
     QHBoxLayout *vlayout = new QHBoxLayout;
@@ -117,10 +126,12 @@ void shape_dialog::create()
      connect(button_return,SIGNAL(clicked()),this,SLOT(display_mass_center()));
      connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
      connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
+     connect(spin_rounds,SIGNAL(valueChanged(int)),this,SLOT(visual_oneround(int)));
+     connect(button_clear,SIGNAL(clicked()),this,SLOT(clear_markers()));
      prev_bgthr=spin_bgthr->value();
      prev_distance=spin_distance->value();
      prev_conviter=spin_conviter->value();
-     prev_sizemargin=spin_sizemargin->value();
+     prev_percent=spin_percent->value();
 }
 
 
@@ -128,11 +139,11 @@ void shape_dialog::dialoguefinish(int)
 {
     if (subDialog->result()==QDialog::Accepted)
       {
-        qDebug()<<"Accepting";
+        qDebug()<<"Accepted";
         prev_bgthr=spin_bgthr->value();
         prev_distance=spin_distance->value();
         prev_conviter=spin_conviter->value();
-        prev_sizemargin=spin_sizemargin->value();
+        prev_percent=spin_percent->value();
     }
 
     else{
@@ -140,7 +151,7 @@ void shape_dialog::dialoguefinish(int)
        spin_bgthr->setValue(prev_bgthr);
        spin_distance->setValue(prev_distance);
        spin_conviter->setValue(prev_conviter);
-       spin_sizemargin->setValue(prev_sizemargin);
+       spin_percent->setValue(prev_percent);
     }
 }
 
@@ -262,7 +273,6 @@ int shape_dialog::loadMarkers()
                 LList[i].color.g=LList[i].color.b=0;
                 cb_items.append("marker: " + QString::number(i+1));
             }
-
             break;
         }
     }
@@ -279,6 +289,40 @@ int shape_dialog::loadMarkers()
     return(LList.size());
 }
 
+void shape_dialog::clear_markers()
+{
+    if (LList.size()>=0)
+        LList.clear();
+    if (LList_new_center.size()>0)
+        LList_new_center.clear();
+    edit->clear();
+    bool winfound=false;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+        {
+            winfound=true;
+        }
+    }
+    if(!winfound){ //open a window if none is open
+        v3d_msg("Please reload the image");
+    }
+    else{
+        v3dhandleList_current=callback->getImageWindowList();
+        for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+        {
+            if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+            {
+
+                callback->setLandmark(v3dhandleList_current[i],LList);
+                //callback->updateImageWindow(v3dhandleList_current[i]);
+                //callback->open3DWindow(v3dhandleList_current[i]);
+                callback->pushObjectIn3DWindow(v3dhandleList_current[i]);
+            }
+        }
+    }
+}
 
 
 void shape_dialog::extract()
@@ -287,17 +331,22 @@ void shape_dialog::extract()
     int convolute_iter=spin_conviter->value();
     int neighbor_size=spin_distance->value();
     int bg_thr=spin_bgthr->value();
+    int percent=spin_percent->value();
+    double percent_thr=percent*1.0/100.0;
+    qDebug()<<"percent_thr:"<<percent_thr;
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
     image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
     memcpy(image1Dc_out,image1Dc_in, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+    //memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
 
     qDebug()<<"IN EXTRACT before looping through landmakrs";
     V3DLONG sumrsize=0;
     for (int j=0;j<poss_landmark.size();j++){
         qDebug()<<"j:"<<j;
-        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,mass_center,
-                                      poss_landmark[j], convolute_iter,neighbor_size, bg_thr);
-        LocationSimple tmp(mass_center[0],mass_center[1],mass_center[2]);
+        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,poss_landmark[j],
+                                       convolute_iter,neighbor_size, bg_thr,percent_thr);
+        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
 
         if(rsize>0){
@@ -307,7 +356,7 @@ void shape_dialog::extract()
             {
                 finalpos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_img[0],sz_img[0]*sz_img[1]);
                 for (int z=0;z<sz_img[3];z++)
-                image1Dc_out[finalpos+z*sz_img[0]*sz_img[1]*sz_img[2]]=255;
+                    image1Dc_out[finalpos+z*sz_img[0]*sz_img[1]*sz_img[2]]=255;
                 sumrsize=rsize+sumrsize;
             }
         }
@@ -315,6 +364,7 @@ void shape_dialog::extract()
 
     if (sumrsize>0){
     updateOutputWindow();
+    qDebug()<<"At the end of extract() now";
     }
 
     else{
@@ -332,12 +382,13 @@ void shape_dialog::display_mass_center()
     }
     else
     {
-    //Append the new markers to the old marker list and show in blue
-    for(int i=0; i<LList_new_center.size(); i++){
-    LList.append(LList_new_center.at(i));
-    LList[LList.size()-1].color.b=255;
-    LList[LList.size()-1].color.r=LList[LList.size()-1].color.g=0;
-    }
+        //Append the new markers to the old marker list and show in blue
+        for(int i=0; i<LList_new_center.size(); i++){
+            LList.append(LList_new_center.at(i));
+            LList[LList.size()-1].color.b=255;
+            LList[LList.size()-1].color.r=LList[LList.size()-1].color.g=0;
+        }
+
 
     //Update the current window of new markers
         updateOutputWindow();
@@ -374,6 +425,7 @@ void shape_dialog::updateOutputWindow()
             callback->updateImageWindow(v3dhandle_main);
             callback->open3DWindow(v3dhandle_main);
             callback->pushObjectIn3DWindow(v3dhandle_main);
+
         }
         else{
             //update the image
@@ -444,4 +496,47 @@ void shape_dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG ims
             pPost[i] = (unsigned char) pPre[i];
         }
     }
+}
+
+void shape_dialog::visual_oneround(int rounds)
+{
+    int convolute_iter=spin_conviter->value();
+    int neighbor_size=spin_distance->value();
+    int bg_thr=spin_bgthr->value();
+    //int rounds=spin_rounds->value();
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+    memcpy(image1Dc_out,image1Dc_in, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+    //memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+
+    qDebug()<<"IN EXTRACT before looping through landmakrs";
+    V3DLONG sumrsize=0;
+    for (int j=0;j<poss_landmark.size();j++){
+        qDebug()<<"j:"<<j;
+        V3DLONG rsize=shape_ext_obj.extract_check(x_all, y_all,z_all,poss_landmark[j],
+                                       convolute_iter,neighbor_size, bg_thr,rounds);
+        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        LList_new_center.append(tmp);
+
+        if(rsize>0){
+
+            V3DLONG finalpos;
+            for (int i=0;i<x_all.size();i++)
+            {
+                finalpos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_img[0],sz_img[0]*sz_img[1]);
+                for (int z=0;z<sz_img[3];z++)
+                    image1Dc_out[finalpos+z*sz_img[0]*sz_img[1]*sz_img[2]]=255;
+                sumrsize=rsize+sumrsize;
+            }
+        }
+     }
+
+    if (sumrsize>0){
+    updateOutputWindow();
+    qDebug()<<"At the end of extract() now";
+    }
+
+    else{
+    v3d_msg("Nothing were found. Please change marker or adjust parameters.");}
 }

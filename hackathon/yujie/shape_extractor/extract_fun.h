@@ -4,10 +4,13 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <vector>
+//#include <cmath>
+#include <math.h>
 #include "shape_extr_template.h"
 
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#define pi 3.14
 
 using namespace std;
 
@@ -33,10 +36,13 @@ public:
     float getProjection(vector<float> vec, vector<float> dir, int convolute_iter);
 
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,
-                         vector<V3DLONG>& z_all, vector<V3DLONG> &masscenter,
-                    V3DLONG seed_ind, int convolute_iter,int neighbor_size, int bg_thr);
+                         vector<V3DLONG>& z_all,V3DLONG seed_ind,
+                     int convolute_iter,int neighbor_size, int bg_thr,double percent);
     vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
                                                  vector<V3DLONG> z_all);
+    V3DLONG extract_check(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+                                 V3DLONG seed_ind, int convolute_iter,
+                                  int neighbor_size, int bg_thr,int rounds);
 private:
     float * data1Dc_float;
     unsigned char * mask1D;
