@@ -35,20 +35,20 @@ Q_EXPORT_PLUGIN2(neuronPicker, neuronPicker);
 QStringList neuronPicker::menulist() const
 {
 	return QStringList() 
-        <<tr("neuronPicker")
+        <<tr("pick_neuron_by_color")
 		<<tr("about");
 }
 
 QStringList neuronPicker::funclist() const
 {
 	return QStringList()
-        <<tr("neuron_picker")
+        <<tr("auto_seperate_neurons")
 		<<tr("help");
 }
 
 void neuronPicker::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("neuronPicker"))
+    if (menu_name == tr("pick_neuron_by_color"))
 	{
         if(npdiag){
             npdiag->show();
@@ -64,7 +64,7 @@ void neuronPicker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	else
 	{
 		v3d_msg(tr(". "
-			"Developed by Xiang Li, Hanbo Chen, 2014-12-01"));
+            "Developed by Hanbo Chen, Xiang Li, 2014-12-01"));
 	}
 }
 
@@ -75,7 +75,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("neuron_picker"))
+    if (func_name == tr("auto_seperate_neurons"))
     {
         cout<<"==== color neuron picker ===="<<endl;
         if(infiles.size()!=1 || outfiles.size()!=1)
@@ -218,7 +218,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
 void neuronPicker::printHelp()
 {
     cout<<"\n==== Color Neuron Picker ===="<<endl;
-    cout<<"\nUsage: v3d -x neuronPicker -f neuron_picker -i <input_raw_file> -o <output_prefix> "
+    cout<<"\nUsage: v3d -x dllName -f neuron_picker -i <input_raw_file> -o <output_prefix> "
        <<"-p [<scale output (1)> [<neighbor cubic size (11)> [<convolute iteration (10)> [<seed intensity threshold (150)> [<background threshold (10)> [<neuron size threshold (1000)> [<output margin size (15)>]]]]]]]"<<endl;
     cout<<"\n";
 }
