@@ -7,9 +7,11 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= neuronPicker_plugin.h \
     neuronpicker_func.h \
-    neuronpicker_templates.h
+    neuronpicker_templates.h \
+    neuron_seperator_explorer.h
 SOURCES	+= neuronPicker_plugin.cpp \
-    neuronpicker_func.cpp
+    neuronpicker_func.cpp \
+    neuron_seperator_explorer.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_color_seperator)

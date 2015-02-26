@@ -849,10 +849,6 @@ vector<float> neuronPickerMain2::getProjectionDirection(V3DLONG seed_ind, int ne
                 }
 
                 float v=getProjection(color, color0, convolute_iter);
-//                for(V3DLONG pid=1; pid<sz_image[3]; pid++)
-//                    v=MAX(v,data1Dc_float[pos+page_size*pid]);
-
-//                qDebug()<<"cojoc: "<<v<<":"<<bg_thr;
 
                 if(v<bg_thr)    continue;
 

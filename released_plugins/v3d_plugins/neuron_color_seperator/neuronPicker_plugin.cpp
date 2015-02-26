@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuronPicker_plugin.h"
+#include "neuron_seperator_explorer.h"
 #include <math.h>
 #include "string"
 #include "sstream"
@@ -21,6 +22,7 @@ using namespace std;
 #define const_max_voxelValue 255
 
 static neuronPickerDialog * npdiag = 0;
+static neuron_seperator_explorer * nediag = 0;
 void finishnpdiag()
 {
     if (npdiag)
@@ -36,6 +38,7 @@ QStringList neuronPicker::menulist() const
 {
 	return QStringList() 
         <<tr("pick_neuron_by_color")
+        <<tr("seperate_result_explorer")
 		<<tr("about");
 }
 
@@ -59,6 +62,19 @@ void neuronPicker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             npdiag->show();
             npdiag->raise();
             npdiag->activateWindow();
+        }
+    }
+    if (menu_name == tr("seperate_result_explorer"))
+    {
+        if(nediag){
+            nediag->show();
+            nediag->raise();
+            nediag->activateWindow();
+        }else{
+            nediag = new neuron_seperator_explorer(&callback, parent);
+            nediag->show();
+            nediag->raise();
+            nediag->activateWindow();
         }
     }
 	else
