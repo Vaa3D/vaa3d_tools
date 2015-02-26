@@ -33,23 +33,25 @@ void neuron_seperator_explorer::creat()
 
     QLabel* label_img = new QLabel(QObject::tr("Checking Image:"));
     gridLayout->addWidget(label_img,3,0,1,2);
-    btn_preImg = new QPushButton("Previous");
-    gridLayout->addWidget(btn_preImg,3,3,1,1);
-    btn_nextImg = new QPushButton("Next");
+    btn_preImg = new QPushButton("Previous (4)");
+    gridLayout->addWidget(btn_preImg,3,2,1,1);
+    btn_nextImg = new QPushButton("Next (+)");
     gridLayout->addWidget(btn_nextImg,3,5,1,1);
-    btn_rejectImg = new QPushButton("Is Outlier");
+    btn_rejectImg = new QPushButton("Is Outlier (5)");
     gridLayout->addWidget(btn_rejectImg,3,4,1,1);
+    btn_rerunImg = new QPushButton("Need Rerun (6)");
+    gridLayout->addWidget(btn_rerunImg,3,3,1,1);
     edit_curimg = new QLineEdit();
     edit_curimg->setText(""); edit_curimg->setReadOnly(true);
     gridLayout->addWidget(edit_curimg,4,0,1,6);
 
     QLabel* label_ext = new QLabel(QObject::tr("Checking Extraction:"));
     gridLayout->addWidget(label_ext,5,0,1,2);
-    btn_acceptExt = new QPushButton("Accept and Next");
+    btn_acceptExt = new QPushButton("Accept and Next (enter)");
     gridLayout->addWidget(btn_acceptExt,5,5,1,1);
-    btn_rejectExt = new QPushButton("Reject and Next");
+    btn_rejectExt = new QPushButton("Reject and Next (0)");
     gridLayout->addWidget(btn_rejectExt,5,4,1,1);
-    btn_preExt = new QPushButton("Previous");
+    btn_preExt = new QPushButton("Previous (1)");
     gridLayout->addWidget(btn_preExt,5,3,1,1);
     edit_curext = new QLineEdit();
     edit_curext->setText(""); edit_curext->setReadOnly(true);
@@ -62,24 +64,55 @@ void neuron_seperator_explorer::creat()
     gridLayout->addWidget(line_1,10,0,1,6);
     btn_save = new QPushButton("Save");
     gridLayout->addWidget(btn_save,11,4,1,1);
-    btn_quit = new QPushButton("Save and Quit");
+    btn_quit = new QPushButton("Quit");
     gridLayout->addWidget(btn_quit,11,5,1,1);
 
     connect(btn_loadPoj, SIGNAL(clicked()), this, SLOT(loadPoj()));
     connect(btn_acceptExt, SIGNAL(clicked()), this, SLOT(acceptExt()));
     connect(btn_rejectExt, SIGNAL(clicked()), this, SLOT(rejectExt()));
     connect(btn_rejectImg, SIGNAL(clicked()), this, SLOT(rejectImg()));
+    connect(btn_rerunImg, SIGNAL(clicked()), this, SLOT(needRerunImg()));
     connect(btn_preExt, SIGNAL(clicked()), this, SLOT(preExt()));
     connect(btn_preImg, SIGNAL(clicked()), this, SLOT(preImg()));
     connect(btn_nextImg, SIGNAL(clicked()), this, SLOT(nextImg()));
     connect(btn_save, SIGNAL(clicked()), this, SLOT(save()));
 
-//    QShortcut *shortcut_rejectExt = new QShortcut(QKeySequence(Qt::Key_4), 0);
-//    QObject::connect(shortcut_rejectExt, SIGNAL(activated()), this, SLOT(rejectExt()));
-//    QShortcut *shortcut_acceptExt = new QShortcut(QKeySequence(Qt::Key_5), 0);
-//    QObject::connect(shortcut_acceptExt, SIGNAL(activated()), this, SLOT(acceptExt()));
-//    QShortcut *shortcut_rejectImg = new QShortcut(QKeySequence(Qt::Key_6), 0);
-//    QObject::connect(shortcut_rejectImg, SIGNAL(activated()), this, SLOT(rejectImg()));
+    connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
+
+    QAction *act_rejectExt = new QAction(this);
+    act_rejectExt->setShortcut(Qt::Key_0);
+    connect(act_rejectExt, SIGNAL(triggered()), this, SLOT(rejectExt()));
+    this->addAction(act_rejectExt);
+
+    QAction *act_acceptExt = new QAction(this);
+    act_acceptExt->setShortcut(Qt::Key_Enter);
+    connect(act_acceptExt, SIGNAL(triggered()), this, SLOT(acceptExt()));
+    this->addAction(act_acceptExt);
+
+    QAction *act_preExt = new QAction(this);
+    act_preExt->setShortcut(Qt::Key_Enter);
+    connect(act_preExt, SIGNAL(triggered()), this, SLOT(preExt()));
+    this->addAction(act_preExt);
+
+    QAction *act_preImg = new QAction(this);
+    act_preImg->setShortcut(Qt::Key_4);
+    connect(act_preImg, SIGNAL(triggered()), this, SLOT(preImg()));
+    this->addAction(act_preImg);
+
+    QAction *act_rejectImg = new QAction(this);
+    act_rejectImg->setShortcut(Qt::Key_5);
+    connect(act_rejectImg, SIGNAL(triggered()), this, SLOT(rejectImg()));
+    this->addAction(act_rejectImg);
+
+    QAction *act_rerunImg = new QAction(this);
+    act_rerunImg->setShortcut(Qt::Key_6);
+    connect(act_rerunImg, SIGNAL(triggered()), this, SLOT(needRerunImg()));
+    this->addAction(act_rerunImg);
+
+    QAction *act_nextImg = new QAction(this);
+    act_nextImg->setShortcut(Qt::Key_Plus);
+    connect(act_nextImg, SIGNAL(triggered()), this, SLOT(nextImg()));
+    this->addAction(act_nextImg);
 
     setLayout(gridLayout);
 }
@@ -124,6 +157,15 @@ void neuron_seperator_explorer::rejectImg()
     updateAll();
 }
 
+void neuron_seperator_explorer::needRerunImg()
+{
+    imgs[idx_img].status = 3;
+    idx_ext=1;
+    idx_img++;
+
+    updateAll();
+}
+
 void neuron_seperator_explorer::preExt()
 {
     idx_ext--;
@@ -162,9 +204,17 @@ void neuron_seperator_explorer::save()
     if(fname_output.isEmpty()){
         return;
     }
+
+    save(fname_output);
+}
+
+void neuron_seperator_explorer::save(QString fname_output)
+{
     QString fname_acceptAno=fname_output+"_ano_accept.txt";
-    QString fname_rejectAno=fname_output+"_ano_reject.txt";
+    QString fname_rejectAno=fname_output+"_ano_accept.txt";
     QString fname_todoAno=fname_output+"_ano_todo.txt";
+    QString fname_outlierImg=fname_output+"_img_outlier.txt";
+    QString fname_rerunImg=fname_output+"_img_rerun.txt";
     QString fname_acceptExtract=fname_output+"_extract_accept.txt";
     QString fname_rejectExtract=fname_output+"_extract_reject.txt";
 
@@ -183,6 +233,16 @@ void neuron_seperator_explorer::save()
         v3d_msg("error: failed to open "+fname_todoAno);
         return;
     }
+    ofstream fp_outlierImg(fname_outlierImg.toStdString().c_str());
+    if(!fp_outlierImg.is_open()){
+        v3d_msg("error: failed to open "+fname_outlierImg);
+        return;
+    }
+    ofstream fp_rerunImg(fname_rerunImg.toStdString().c_str());
+    if(!fp_rerunImg.is_open()){
+        v3d_msg("error: failed to open "+fname_rerunImg);
+        return;
+    }
     ofstream fp_acceptExtract(fname_acceptExtract.toStdString().c_str());
     if(!fp_acceptExtract.is_open()){
         v3d_msg("error: failed to open "+fname_acceptExtract);
@@ -198,8 +258,12 @@ void neuron_seperator_explorer::save()
         if(imgs.at(i).status == 0){
             fp_todoAno<<fnames_ano.at(i).toStdString().c_str()<<endl;
             continue;
-        }else if(imgs.at(i).status == 2){
+        }else if(imgs.at(i).status > 1){
             fp_rejectAno<<fnames_ano.at(i).toStdString().c_str()<<endl;
+            if(imgs.at(i).status == 2)
+                fp_outlierImg<<imgs.at(i).fnames_extract.at(0).toStdString().c_str()<<endl;
+            else if(imgs.at(i).status == 3)
+                fp_rerunImg<<imgs.at(i).fnames_extract.at(0).toStdString().c_str()<<endl;
             continue;
         }else{
             fp_acceptAno<<fnames_ano.at(i).toStdString().c_str()<<endl;
@@ -329,7 +393,6 @@ void neuron_seperator_explorer::updateAll()
 
     //reload background image and push for visualization
     if(pre_img!=idx_img){
-        qDebug()<<"cojoc: loading original image";
         QString tmp=imgs[idx_img].fnames_extract.at(0)
                 +"("+QString::number(idx_img+1)+"/"+QString::number(imgs.size())+")";
         edit_curimg->setText(tmp);
@@ -339,12 +402,11 @@ void neuron_seperator_explorer::updateAll()
           v3d_msg("load image "+imgs[idx_img].fnames_extract.at(0)+" error!");
           return;
         }
-        qDebug()<<"cojoc: init output image";
         if(image1Dc_out!=0) delete[] image1Dc_out;
         image1Dc_out = new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]];
 
-        qDebug()<<"cojoc: push window";
         updateInputWindow();
+        save(this->anopath+"_autoSave");
 
         pre_img=idx_img;
     }
@@ -379,6 +441,9 @@ void neuron_seperator_explorer::updateAll()
         updateOutputWindow();
 
         pre_ext=idx_ext;
+    }else{
+        QString tmp="(0/0)";
+        edit_curext->setText(tmp);
     }
 
     checkButton();

@@ -27,6 +27,7 @@ public slots:
     void acceptExt();
     void rejectExt();
     void rejectImg();
+    void needRerunImg();
     void preExt();
     void preImg();
     void nextImg();
@@ -39,6 +40,7 @@ private:
     void updateAll();
     void updateOutputWindow();
     void updateInputWindow();
+    void save(QString fname);
 
 private:
     V3DPluginCallback2 * callback;
@@ -55,7 +57,7 @@ private:
 public:
     QLineEdit *edit_dir,*edit_curimg,*edit_curext;
     QPushButton *btn_acceptExt, *btn_rejectExt, *btn_rejectImg;
-    QPushButton *btn_preExt, *btn_preImg, *btn_nextImg;
+    QPushButton *btn_preExt, *btn_preImg, *btn_nextImg, *btn_rerunImg;
     QPushButton *btn_save, *btn_quit;
     QPushButton *btn_loadDir, *btn_loadPoj;
 };
