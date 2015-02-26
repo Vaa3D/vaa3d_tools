@@ -35,18 +35,24 @@ public:
     vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr);
     float getProjection(vector<float> vec, vector<float> dir, int convolute_iter);
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,V3DLONG seed_ind,
-                     int convolute_iter,int bg_thr,double percent);
+                     int convolute_iter,int bg_thr);
     vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
                                                  vector<V3DLONG> z_all);
+    //int check_nb(V3DLONG id,int bg);
+    V3DLONG extract_1(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+                                 V3DLONG seed_ind, int convolute_iter,int bg_thr,double percent_thr);
+    V3DLONG extract_2(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+                                 V3DLONG seed_ind, int convolute_iter,int bg_thr);
 
 private:
     float * data1Dc_float;
     unsigned char * mask1D;
-    V3DLONG sz_image[4];
+    //V3DLONG sz_image[4];
     V3DLONG page_size;
 
 
 public:
+    V3DLONG sz_image[4];
     template <class T>
     void pushNewData(T * data1Dc_in, V3DLONG sz_img[4])
     {

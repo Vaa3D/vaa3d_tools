@@ -23,7 +23,8 @@ public:
     int prev_bgthr;
     //int prev_distance;
     int prev_conviter;
-    int prev_percent;
+    //int prev_percent;
+
 
 private:
     extract_fun shape_ext_obj;
@@ -32,13 +33,16 @@ private:
     int intype;
     unsigned char *image1Dc_in;
     unsigned char *image1Dc_out;
-    LandmarkList LList;
+    LandmarkList LList,LList_fetch;
     LandmarkList LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<V3DLONG> x_all;
     vector<V3DLONG> y_all;
     vector<V3DLONG> z_all;
     vector<V3DLONG> mass_center;
+    int rgb[3];
+    v3dhandle curwin;
+    int datasource; //fetched datasource=2; load datasource=1;
 
     QPlainTextEdit *edit;
     QSpinBox *spin_bgthr,*spin_conviter,*spin_percent;
@@ -49,6 +53,8 @@ private:
     void create();
     void updateInputWindow();
     void updateOutputWindow();
+    void GetColorRGB(int* rgb, int idx);
+
 
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
@@ -59,5 +65,6 @@ public slots:
     void display_mass_center();
     void dialoguefinish(int);
     void clear_markers();
+    void fetch();
 };
 #endif // SHAPE_DIALOG_H

@@ -6,6 +6,7 @@ extract_fun::extract_fun()
     mask1D=0;
     sz_image[0]=sz_image[1]=sz_image[2]=sz_image[3]=0;
     page_size=0;
+
 }
 
 extract_fun::~extract_fun()
@@ -18,56 +19,61 @@ extract_fun::~extract_fun()
 
 
 V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
-                             V3DLONG seed_ind, int convolute_iter,int bg_thr,double percent_thr)
+                             V3DLONG seed_ind, int convolute_iter,int bg_thr)
 {
+    //Method1:seed grow and radius grow method
+    qDebug()<<"In extract now";
     x_all.clear();
     y_all.clear();
     z_all.clear();
 
     int neighbor_size=2;
     //1) Collect user specified point info
+
     vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
     if(dir.size()<=0){
         return 0;
     }
 
-    //vector<V3DLONG> x_tmp,y_tmp,z_tmp;
-    vector<V3DLONG> seeds,seeds_next,seeds_pre;
+    vector<V3DLONG> seeds,seeds_next,seeds_pre,seeds_all;
    // V3DLONG delta=1; //neighbor_size/2;
     V3DLONG x,y,z,pos,center_x,center_y,center_z;
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
-    vector<V3DLONG> coord;
+    vector<V3DLONG> coord,neighbor(6,0);
     vector<float> color(sz_image[3]);
     vector<V3DLONG> new_mass_center;
     page_size=sz_image[0]*sz_image[1]*sz_image[2];
     memset(mask1D, 0, page_size*sizeof(unsigned char));
-    unsigned char * seed_mask;
-    seed_mask=memory_allocate_uchar1D(page_size*sizeof(unsigned char));
-    memset(seed_mask,0,page_size*sizeof(unsigned char));
+    unsigned char * label;
+    label=memory_allocate_uchar1D(page_size*sizeof(unsigned char));
+    memset(label,0,page_size*sizeof(unsigned char));
     float project;
+    int nsum;
 
     coord=pos2xyz(seed_ind, y_offset, z_offset);
-    x=coord[0];
-    y=coord[1];
-    z=coord[2];
+    x=coord[0];y=coord[1];z=coord[2];
 
-    float total_count=1.0;
-    float fore_count=1.0;
-    int prev_size=0;
+//    float total_count=1.0;
+//    float fore_count=1.0;
+    float total_r_grow=0;
     seeds.push_back(seed_ind);
     seeds_pre.push_back(seed_ind);
+    seeds_all.push_back(seed_ind);
+    label[seed_ind]=1;
     x_all.push_back(x);
     y_all.push_back(y);
     z_all.push_back(z);
     mask1D[seed_ind]=1;
-    V3DLONG r_grow=1;
+    float r_grow=1.;
     center_x=x_all[0];
     center_y=y_all[0];
     center_z=z_all[0];
 
-    while((fore_count/total_count)>percent_thr)
+    while(seeds_pre.size()>0&&(float)seeds_pre.size()/total_r_grow>=0.1)
     {
+        seeds_pre.clear();
+        total_r_grow=0;
         qDebug()<<"New while break.";
         do
         {
@@ -87,212 +93,410 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                                  +(dz-center_z)*(dz-center_z);
                             double distance=pow(tmp,1./2.);
                             if (distance>r_grow) continue;
+                            total_r_grow++;
                             for(int cid=0; cid<sz_image[3]; cid++){
                                 color[cid]=data1Dc_float[pos+cid*page_size];
                             }
                             project=getProjection(color, dir, convolute_iter);
-                            if(project<bg_thr)  continue;
-                            x_all.push_back(dx);
-                            y_all.push_back(dy);
-                            z_all.push_back(dz);
-                            seeds_next.push_back(pos);
-                            seeds_pre.push_back(pos);
                             mask1D[pos]=1;
-                        }
+                            if(project<bg_thr) continue;
+
+                            //check whether over 4 background nbs
+                            neighbor[0]=pos-1;
+                            neighbor[1]=pos+1;
+                            neighbor[2]=pos-sz_image[0];
+                            neighbor[3]=pos+sz_image[0];
+                            neighbor[4]=pos-z_offset;
+                            neighbor[5]=pos+z_offset;
+                            nsum=0;
+                            for (int i=0;i<neighbor.size();i++)
+                            {
+                                if(mask1D[neighbor[i]]>0)
+                                    nsum+=label[neighbor[i]];
+                                else
+                                {
+                                    for(int cid=0; cid<sz_image[3]; cid++){
+                                        color[cid]=data1Dc_float[neighbor[i]+cid*page_size];
+                                    }
+                                    project=getProjection(color, dir, convolute_iter);
+                                    if(project>=bg_thr){
+                                        nsum++;
+                                    }
+                                }
+                            }
+                            if (nsum>2){
+                                x_all.push_back(dx);
+                                y_all.push_back(dy);
+                                z_all.push_back(dz);
+                                seeds_next.push_back(pos);
+                                seeds_pre.push_back(pos);
+                                seeds_all.push_back(pos);
+                                label[pos]=1;
+                            }
+
+                       }
                     }
                 }
-               sid++;
+                sid++;
              }
-            seeds=seeds_next;
-            qDebug()<<"One round";
-         }while(!seeds_next.empty());
 
-        seeds=seeds_pre;
-        //Calculate the new mass center,new radius,new seeds
+            seeds=seeds_next;
+
+        }while(!seeds_next.empty());
+
+        seeds=seeds_all;
+
+        if ((float)seeds_pre.size()/total_r_grow>0.3)
+        r_grow=r_grow+0.5;
+        else
+            r_grow=r_grow+0.3;
+
+
+        //Calculate the new mass center
         new_mass_center=get_mass_center(x_all,y_all,z_all);
         center_x=new_mass_center[0];
         center_y=new_mass_center[1];
         center_z=new_mass_center[2];
-
-        double tmp_num=(double)x_all.size()*3/(4*pi);
-        double new_r=pow(tmp_num,1./3.);
-
-        fore_count=0; total_count=0;
-
-        for(V3DLONG dx=MAX(x-new_r,0); dx<=MIN(sz_image[0]-1,x+new_r); dx++){
-            for(V3DLONG dy=MAX(y-new_r,0); dy<=MIN(sz_image[1]-1,y+new_r); dy++){
-                for(V3DLONG dz=MAX(z-new_r,0); dz<=MIN(sz_image[2]-1,z+new_r); dz++){
-
-                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
-                    //distance to new center
-                    double tmp=(dx-center_x)*(dx-center_x)+(dy-center_y)*(dy-center_y)
-                            +(dz-center_z)*(dz-center_z);
-                    double distance=pow(tmp,1./2.);
-                    if (distance>new_r) continue;
-
-                    total_count=total_count+1;
-                    for(int cid=0; cid<sz_image[3]; cid++){
-                     color[cid]=data1Dc_float[pos+cid*page_size];
-                    }
-                    project=getProjection(color, dir, convolute_iter);
-                    if(project<bg_thr)  continue;
-                    fore_count=fore_count+1;
-                }
-            }
-        }
-        //total_count=4.*pi*new_r*new_r*new_r/3.;
-        r_grow=r_grow+1;
-
-        if (x_all.size()==prev_size) {
-            qDebug()<<"Break:"<<x_all.size()<<" prev_size:"<<prev_size;
-            break;
-        }
-        else prev_size=x_all.size();
-
-        qDebug()<<"fore_count/total_count:"<<fore_count<<"/"<<total_count;
-        qDebug()<<"new_r"<<new_r<<new_r*new_r*new_r*4/3;
-        qDebug()<<"r_grow:"<<r_grow;
-
+        qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_pre.size()
+               <<":"<<(float)seeds_pre.size()/total_r_grow;
+        qDebug()<<"r_grow"<<r_grow;
     }
-   return x_all.size();
 }
 
 
-
-
-
-//    if (x_tmp.size()<=0){
-//        v3d_msg("No seeds were found");
-//        return 0;
-//    }
-
-//    //3)Calculate the new mass center,new radius,new seeds
-//    float total_count=0;
-//    float fore_count=0;
-//    new_mass_center=get_mass_center(x_tmp,y_tmp,z_tmp);
-//    double tmp_num=(double)seeds_tmp.size()*3/(4*pi);
-//    double new_r=pow(tmp_num,1./3.);
-//    qDebug()<<"seeds_tmp size and x_tmp size:"<<seeds_tmp.size()<<x_tmp.size();
-
-//    x=new_mass_center[0];
-//    y=new_mass_center[1];
-//    z=new_mass_center[2];
-
-//    //Get the new seeds
-//    for(V3DLONG dx=MAX(x-new_r,0); dx<=MIN(sz_image[0]-1,x+new_r); dx++){
-//        for(V3DLONG dy=MAX(y-new_r,0); dy<=MIN(sz_image[1]-1,y+new_r); dy++){
-//            for(V3DLONG dz=MAX(z-new_r,0); dz<=MIN(sz_image[2]-1,z+new_r); dz++){
-//                pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
-
-
-
-//                total_count=total_count+1;
-//                for(int cid=0; cid<sz_image[3]; cid++){
-//                    color[cid]=data1Dc_float[pos1+cid*page_size];
-//                }
-//                project=getProjection(color, dir, convolute_iter);
-//                if(project>bg_thr&&distance<r_grow)
-//                {
-//                    fore_count=fore_count+1;
-//                    x_all.push_back(dx);
-//                    y_all.push_back(dy);
-//                    z_all.push_back(dz);
-//                    seeds.push_back(pos1);
-//                    seed_mask[pos1]=1;
-//                }
-//            }
-//        }
-//     }
-
-//     if (seeds.size()<=0) v3d_msg("No seeds were found");
-//     if (fore_count/total_count<percent_thr){
-//         v3d_msg("Cell is not found.");
-//         return 0;}
-
-//     while(fore_count/total_count>=percent_thr){
-//        //repeat 2): grow one round
-//        x_tmp.clear();y_tmp.clear();z_tmp.clear();
-//        new_mass_center=get_mass_center(x_all,y_all,z_all);
 //        double tmp_num=(double)x_all.size()*3/(4*pi);
 //        double new_r=pow(tmp_num,1./3.);
-//        x=new_mass_center[0]; y=new_mass_center[1]; z=new_mass_center[2];
 
-////        V3DLONG sid=0;
-////        while(sid<seeds.size()){
-////            coord=pos2xyz(seeds[sid], y_offset, z_offset);
-////            x=coord[0];y=coord[1];z=coord[2];
-////            for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
-////                for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
-////                    for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
-////                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
-////                        if(mask1D[pos]>0) continue;
-////                        mask1D[pos]=1;
-////                        for(int cid=0; cid<sz_image[3]; cid++){
-////                            color[cid]=data1Dc_float[pos+cid*page_size];
-////                        }
-////                        project=getProjection(color, dir, convolute_iter);
-////                        if(project<bg_thr) continue;
-////                        x_tmp.push_back(dx);
-////                        y_tmp.push_back(dy);
-////                        z_tmp.push_back(dz);
-////                        seeds_tmp.push_back(pos);
-////                    }
-////                }
-////            }
-////            sid++;
-////        }
-////        if (x_tmp.size()<=0)
-////        {
-////            qDebug()<<"No seeds found in seeds_tmp";
-////            return 0;
-////        }
-//        //repeat 3) new center,radius,seeds
-
-//        //3)Calculate the new mass center,new radius,new seeds
-//       total_count=0;
-//       fore_count=0;
-//       new_mass_center=get_mass_center(x_tmp,y_tmp,z_tmp);
-//       tmp_num=(double)seeds_tmp.size()*3/(4*pi);
-//       new_r=pow(tmp_num,1./3.);
-//       x=new_mass_center[0]; y=new_mass_center[1]; z=new_mass_center[2];
-
-//        //Get the new seeds
+//        fore_count=0; total_count=0;
 
 //        for(V3DLONG dx=MAX(x-new_r,0); dx<=MIN(sz_image[0]-1,x+new_r); dx++){
 //            for(V3DLONG dy=MAX(y-new_r,0); dy<=MIN(sz_image[1]-1,y+new_r); dy++){
 //                for(V3DLONG dz=MAX(z-new_r,0); dz<=MIN(sz_image[2]-1,z+new_r); dz++){
-//                    pos1=xyz2pos(dx,dy,dz,y_offset,z_offset);
-//                    total_count=total_count+1;
 
+//                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                    //distance to new center
+//                    double tmp=(dx-center_x)*(dx-center_x)+(dy-center_y)*(dy-center_y)
+//                            +(dz-center_z)*(dz-center_z);
+//                    double distance=pow(tmp,1./2.);
+//                    if (distance>new_r) continue;
+
+//                    total_count=total_count+1;
 //                    for(int cid=0; cid<sz_image[3]; cid++){
-//                        color[cid]=data1Dc_float[pos1+cid*page_size];
+//                     color[cid]=data1Dc_float[pos+cid*page_size];
 //                    }
 //                    project=getProjection(color, dir, convolute_iter);
-//                    if(project>bg_thr)
-//                    {
-//                        fore_count=fore_count+1;
-//                        if (seed_mask[pos1]>0) continue;
-//                        seed_mask[pos1]=1;
-//                        x_all.push_back(dx);
-//                        y_all.push_back(dy);
-//                        z_all.push_back(dz);
-//                        seeds_next.push_back(pos1);
-//                    }
+//                    if(project<bg_thr)  continue;
+//                    fore_count=fore_count+1;
 //                }
 //            }
 //        }
-//        if (seeds_next.size()<=0)
-//        {
-//         qDebug()<<"No seeds in seeds_next";
-//         return 0;
+//        //total_count=4.*pi*new_r*new_r*new_r/3.;
+//        r_grow=r_grow+1;
+
+//        if (x_all.size()==prev_size) {
+//            break;
 //        }
-//        seeds=seeds_next;
-//        qDebug()<<"fore_count/total_count:"<<fore_count/total_count;
-//        qDebug()<<"Current size of r:"<<new_r;
+//        else prev_size=x_all.size();
+
+//        qDebug()<<"fore_count/total_count:"<<fore_count<<"/"<<total_count;
+//        qDebug()<<"new_r"<<new_r<<new_r*new_r*new_r*4/3;
+//        qDebug()<<"r_grow:"<<r_grow;
+
+//    }
+//   return x_all.size();
+//}
+
+//V3DLONG extract_fun::extract_2(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+//                             V3DLONG seed_ind, int marker,int convolute_iter,int bg_thr)
+//{
+//    //Method3:seed grow and radius grow method
+//    qDebug()<<"In extract now";
+//    x_all.clear();
+//    y_all.clear();
+//    z_all.clear();
+
+//    int neighbor_size=2;
+//    //1) Collect user specified point info
+
+//    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+//    if(dir.size()<=0){
+//        return 0;
 //    }
 
-//    return seeds.size();
+//    vector<V3DLONG> seeds,seeds_next,seeds_pre;
+//   // V3DLONG delta=1; //neighbor_size/2;
+//    V3DLONG x,y,z,pos,center_x,center_y,center_z;
+//    V3DLONG y_offset=sz_image[0];
+//    V3DLONG z_offset=sz_image[0]*sz_image[1];
+//    vector<V3DLONG> coord;
+//    vector<float> color(sz_image[3]);
+//    vector<V3DLONG> new_mass_center;
+//    page_size=sz_image[0]*sz_image[1]*sz_image[2];
+//    memset(mask1D, 0, page_size*sizeof(unsigned char));
+//    unsigned char * label;
+//    label=memory_allocate_uchar1D(page_size*sizeof(unsigned char));
+//    memset(label,0,page_size*sizeof(unsigned char));
+//    float project;
+
+//    coord=pos2xyz(seed_ind, y_offset, z_offset);
+//    x=coord[0];
+//    y=coord[1];
+//    z=coord[2];
+
+////    float total_count=1.0;
+////    float fore_count=1.0;
+////    int prev_size=0;
+//    seeds.push_back(seed_ind);
+////    seeds_pre.push_back(seed_ind);
+//    x_all.push_back(x);
+//    y_all.push_back(y);
+//    z_all.push_back(z);
+//    mask1D[seed_ind]=1;
+////    V3DLONG r_grow=1;
+////    center_x=x_all[0];
+////    center_y=y_all[0];
+////    center_z=z_all[0];
+//    int sum_count=1;
+//    while(sum_count!=0)
+//   {
+//        V3DLONG sid=0;
+//        while(sid<seeds.size())
+//        {
+//            coord=pos2xyz(seeds[sid], y_offset, z_offset);
+//            x=coord[0];y=coord[1];z=coord[2];
+//            for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+//                for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+//                    for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+//                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                        if (mask1D[pos]>0) continue;
+//                        double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
+//                             +(dz-z)*(dz-z);
+//                        double distance=pow(tmp,1./2.);
+//                        if (distance>1) continue;
+//                        for(int cid=0; cid<sz_image[3]; cid++){
+//                            color[cid]=data1Dc_float[pos+cid*page_size];
+//                        }
+//                        project=getProjection(color, dir, convolute_iter);
+//                        if(project<bg_thr)  continue;
+////                        x_all.push_back(dx);
+////                        y_all.push_back(dy);
+////                        z_all.push_back(dz);
+//                        seeds_next.push_back(pos);
+//                        //seeds_pre.push_back(pos);
+//                        mask1D[pos]=1;
+//                        label[pos]=marker;
+//                    }
+//                  }
+//                }
+//            }
+//            sid++;
+//        }
+
+
+//        sum_count=0;
+//        for (int i=0;i<seeds_next.size();i++){
+//           if (check_nb(seeds_next[i],bg_thr)>=4)
+//               label[seeds_next[i]]=0;
+//           sum_count=sum_count+label[seeds_next[i]];
+//        }
+//        seeds=seeds_next;
+//        qDebug()<<"sum_count:"<<sum_count;
+//    }
+// }
+
+//            qDebug()<<"One round";
+//         }while(!seeds_next.empty());
+
+//        seeds=seeds_pre;
+//        //Calculate the new mass center,new radius,new seeds
+//        new_mass_center=get_mass_center(x_all,y_all,z_all);
+//        center_x=new_mass_center[0];
+//        center_y=new_mass_center[1];
+//        center_z=new_mass_center[2];
+
+//        double tmp_num=(double)x_all.size()*3/(4*pi);
+//        double new_r=pow(tmp_num,1./3.);
+
+//        fore_count=0; total_count=0;
+
+//        for(V3DLONG dx=MAX(x-new_r,0); dx<=MIN(sz_image[0]-1,x+new_r); dx++){
+//            for(V3DLONG dy=MAX(y-new_r,0); dy<=MIN(sz_image[1]-1,y+new_r); dy++){
+//                for(V3DLONG dz=MAX(z-new_r,0); dz<=MIN(sz_image[2]-1,z+new_r); dz++){
+
+//                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                    //distance to new center
+//                    double tmp=(dx-center_x)*(dx-center_x)+(dy-center_y)*(dy-center_y)
+//                            +(dz-center_z)*(dz-center_z);
+//                    double distance=pow(tmp,1./2.);
+//                    if (distance>new_r) continue;
+
+//                    total_count=total_count+1;
+//                    for(int cid=0; cid<sz_image[3]; cid++){
+//                     color[cid]=data1Dc_float[pos+cid*page_size];
+//                    }
+//                    project=getProjection(color, dir, convolute_iter);
+//                    if(project<bg_thr)  continue;
+//                    fore_count=fore_count+1;
+//                }
+//            }
+//        }
+//        //total_count=4.*pi*new_r*new_r*new_r/3.;
+//        r_grow=r_grow+1;
+
+//        if (x_all.size()==prev_size) {
+//            qDebug()<<"Break:"<<x_all.size()<<" prev_size:"<<prev_size;
+//            break;
+//        }
+//        else prev_size=x_all.size();
+
+//        qDebug()<<"fore_count/total_count:"<<fore_count<<"/"<<total_count;
+//        qDebug()<<"new_r"<<new_r<<new_r*new_r*new_r*4/3;
+//        qDebug()<<"r_grow:"<<r_grow;
+
+//    }
+//   return x_all.size();
 //}
+
+V3DLONG extract_fun::extract_2(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
+                             V3DLONG seed_ind, int convolute_iter,int bg_thr)
+{
+    //Method1:seed grow and radius grow method
+    qDebug()<<"In extract now";
+    x_all.clear();
+    y_all.clear();
+    z_all.clear();
+
+    int neighbor_size=2;
+    //1) Collect user specified point info
+
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr);
+    if(dir.size()<=0){
+        return 0;
+    }
+
+    vector<V3DLONG> seeds,seeds_next,seeds_pre,seeds_all;
+   // V3DLONG delta=1; //neighbor_size/2;
+    V3DLONG x,y,z,pos,center_x,center_y,center_z;
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    vector<V3DLONG> coord,neighbor(6,0);
+    vector<float> color(sz_image[3]);
+    vector<V3DLONG> new_mass_center;
+    page_size=sz_image[0]*sz_image[1]*sz_image[2];
+    memset(mask1D, 0, page_size*sizeof(unsigned char));
+    unsigned char * label;
+    label=memory_allocate_uchar1D(page_size*sizeof(unsigned char));
+    memset(label,0,page_size*sizeof(unsigned char));
+    float project;
+    int nsum;
+
+    coord=pos2xyz(seed_ind, y_offset, z_offset);
+    x=coord[0];y=coord[1];z=coord[2];
+
+//    float total_count=1.0;
+//    float fore_count=1.0;
+    float total_r_grow=0;
+    seeds.push_back(seed_ind);
+    seeds_pre.push_back(seed_ind);
+    seeds_all.push_back(seed_ind);
+    label[seed_ind]=1;
+    x_all.push_back(x);
+    y_all.push_back(y);
+    z_all.push_back(z);
+    mask1D[seed_ind]=1;
+    //float r_grow=1.;
+    center_x=x_all[0];
+    center_y=y_all[0];
+    center_z=z_all[0];
+
+        do
+        {
+            qDebug()<<"In do while";
+            seeds_next.clear();
+            V3DLONG sid=0;
+            total_r_grow=0;
+
+            while(sid<seeds.size())
+            {
+                coord=pos2xyz(seeds[sid], y_offset, z_offset);
+                x=coord[0];y=coord[1];z=coord[2];
+                for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                    for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                        for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                            pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                            if (mask1D[pos]>0) continue;
+                            double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
+                                 +(dz-z)*(dz-z);
+                            double distance=pow(tmp,1./2.);
+                            if (distance>1) continue;
+                            total_r_grow++;
+                            for(int cid=0; cid<sz_image[3]; cid++){
+                                color[cid]=data1Dc_float[pos+cid*page_size];
+                            }
+                            project=getProjection(color, dir, convolute_iter);
+                            mask1D[pos]=1;
+                            if(project<bg_thr) continue;
+
+                            //check whether over 4 background nbs
+                            neighbor[0]=pos-1;
+                            neighbor[1]=pos+1;
+                            neighbor[2]=pos-sz_image[0];
+                            neighbor[3]=pos+sz_image[0];
+                            neighbor[4]=pos-z_offset;
+                            neighbor[5]=pos+z_offset;
+                            nsum=0;
+                            for (int i=0;i<neighbor.size();i++)
+                            {
+                                if(mask1D[neighbor[i]]>0)
+                                    nsum+=label[neighbor[i]];
+                                else
+                                {
+                                    for(int cid=0; cid<sz_image[3]; cid++){
+                                        color[cid]=data1Dc_float[neighbor[i]+cid*page_size];
+                                    }
+                                    project=getProjection(color, dir, convolute_iter);
+                                    if(project>=bg_thr){
+                                        nsum++;
+                                    }
+                                }
+                            }
+                            if (nsum>2){
+                                x_all.push_back(dx);
+                                y_all.push_back(dy);
+                                z_all.push_back(dz);
+                                seeds_next.push_back(pos);
+                                //seeds_pre.push_back(pos);
+                                //seeds_all.push_back(pos);
+                                label[pos]=1;
+                            }
+
+                       }
+                    }
+                }
+                sid++;
+             }
+
+            seeds=seeds_next;
+            qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_next.size()
+                   <<":"<<(float)seeds_next.size()/total_r_grow;
+
+        }while(seeds_next.size()>0&&((float)seeds_next.size()/total_r_grow>=0.2));
+
+        //seeds=seeds_all;
+
+        //r_grow=r_grow+0.5;
+
+//        //Calculate the new mass center
+//        new_mass_center=get_mass_center(x_all,y_all,z_all);
+//        center_x=new_mass_center[0];
+//        center_y=new_mass_center[1];
+//        center_z=new_mass_center[2];
+
+        //qDebug()<<"r_grow"<<r_grow;
+    return x_all.size();
+}
+
+
 
 float extract_fun::getProjection(vector<float> vec, vector<float> dir, int convolute_iter)
 {
@@ -318,10 +522,12 @@ vector<float> extract_fun::getProjectionDirection(V3DLONG seed_ind, int neighbor
 {
     vector<V3DLONG> seed_coord = pos2xyz(seed_ind, sz_image[0], sz_image[1]*sz_image[0]);
     int delta=neighbor_size/2;
+    qDebug()<<"delta in getprojectiondirection:"<<delta;
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     V3DLONG pos;
-
+    qDebug()<<"Before loop "<<seed_coord[0]<<" "<<seed_coord[1]<<" "<<seed_coord[2];
+    qDebug()<<"sz_img size:"<<sz_image[0]<<" "<<sz_image[1]<<" "<<sz_image[2];
     int v_count=0;
     vector<float> dir(sz_image[3],0);
     for(V3DLONG dx=MAX(seed_coord[0]-delta,0); dx<=MIN(sz_image[0]-1,seed_coord[0]+delta); dx++){
@@ -331,7 +537,7 @@ vector<float> extract_fun::getProjectionDirection(V3DLONG seed_ind, int neighbor
                 float v=data1Dc_float[pos];
                 for(V3DLONG pid=1; pid<sz_image[3]; pid++)
                     v=MAX(v,data1Dc_float[pos+page_size*pid]);
-
+                    //qDebug()<<"v:"<<v;
                 if(v<bg_thr)    continue;
 
                 for(V3DLONG pid=0; pid<sz_image[3]; pid++)
@@ -341,8 +547,9 @@ vector<float> extract_fun::getProjectionDirection(V3DLONG seed_ind, int neighbor
             }
         }
     }
+
     if(v_count==0){
-        qDebug()<<"Warning: NeuronPicker found empty seed area, please decrease the threshold or reselect an area!";
+        qDebug()<<"Warning:found empty seed area, please decrease the threshold or reselect an area!";
         dir.clear();
         return dir;
     }
@@ -371,7 +578,7 @@ vector<V3DLONG> extract_fun::get_mass_center(vector<V3DLONG> x_all, vector<V3DLO
         for (int i=0;i<x_all.size();i++)
         {
 
-            V3DLONG pos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_image[0],sz_image[0]*sz_image[1]);
+//            V3DLONG pos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_image[0],sz_image[0]*sz_image[1]);
 //            float v=data1Dc_float[pos];
 //            for (int j=0;j<sz_image[3];j++)
 //            v=MAX(v,data1Dc_float[pos+page_size*j]);

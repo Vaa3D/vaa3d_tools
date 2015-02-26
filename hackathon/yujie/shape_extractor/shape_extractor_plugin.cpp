@@ -16,7 +16,7 @@ static shape_dialog *dialog=0;
 QStringList shape_extr_plugin::menulist() const
 {
 	return QStringList() 
-        <<tr("Shape extractor")
+        <<tr("Shape_Extractor")
 		<<tr("about");
 }
 
@@ -30,10 +30,10 @@ QStringList shape_extr_plugin::funclist() const
 
 void shape_extr_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("Shape extractor"))
+    if (menu_name == tr("Shape_Extractor"))
 	{
         dialog=new shape_dialog(&callback);
-        dialog->setWindowTitle("Shape extractor");
+        dialog->setWindowTitle("Shape Extractor");
         dialog->show();
 	}
 	else if (menu_name == tr("menu2"))
