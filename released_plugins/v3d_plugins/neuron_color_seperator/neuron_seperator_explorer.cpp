@@ -90,7 +90,7 @@ void neuron_seperator_explorer::creat()
     this->addAction(act_acceptExt);
 
     QAction *act_preExt = new QAction(this);
-    act_preExt->setShortcut(Qt::Key_Enter);
+    act_preExt->setShortcut(Qt::Key_1);
     connect(act_preExt, SIGNAL(triggered()), this, SLOT(preExt()));
     this->addAction(act_preExt);
 
@@ -120,6 +120,11 @@ void neuron_seperator_explorer::creat()
 
 void neuron_seperator_explorer::acceptExt()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     this->imgs[idx_img].status_extract[idx_ext]=1;
 
     idx_ext++;
@@ -135,6 +140,11 @@ void neuron_seperator_explorer::acceptExt()
 
 void neuron_seperator_explorer::rejectExt()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     this->imgs[idx_img].status_extract[idx_ext]=2;
 
     idx_ext++;
@@ -150,6 +160,11 @@ void neuron_seperator_explorer::rejectExt()
 
 void neuron_seperator_explorer::rejectImg()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     imgs[idx_img].status = 2;
     idx_ext=1;
     idx_img++;
@@ -159,6 +174,11 @@ void neuron_seperator_explorer::rejectImg()
 
 void neuron_seperator_explorer::needRerunImg()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     imgs[idx_img].status = 3;
     idx_ext=1;
     idx_img++;
@@ -168,6 +188,11 @@ void neuron_seperator_explorer::needRerunImg()
 
 void neuron_seperator_explorer::preExt()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     idx_ext--;
     if(idx_ext<1){
         idx_img--;
@@ -179,6 +204,11 @@ void neuron_seperator_explorer::preExt()
 
 void neuron_seperator_explorer::preImg()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     idx_ext=1;
     idx_img--;
 
@@ -187,6 +217,11 @@ void neuron_seperator_explorer::preImg()
 
 void neuron_seperator_explorer::nextImg()
 {
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
     idx_ext=1;
     idx_img++;
 
