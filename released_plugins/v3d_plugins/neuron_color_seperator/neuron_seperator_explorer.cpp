@@ -47,9 +47,9 @@ void neuron_seperator_explorer::creat()
 
     QLabel* label_ext = new QLabel(QObject::tr("Checking Extraction:"));
     gridLayout->addWidget(label_ext,5,0,1,2);
-    btn_acceptExt = new QPushButton("Accept and Next (enter)");
+    btn_acceptExt = new QPushButton("Accept and Next (0)");
     gridLayout->addWidget(btn_acceptExt,5,5,1,1);
-    btn_rejectExt = new QPushButton("Reject and Next (0)");
+    btn_rejectExt = new QPushButton("Reject and Next (Enter)");
     gridLayout->addWidget(btn_rejectExt,5,4,1,1);
     btn_preExt = new QPushButton("Previous (1)");
     gridLayout->addWidget(btn_preExt,5,3,1,1);
@@ -80,12 +80,12 @@ void neuron_seperator_explorer::creat()
     connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
 
     QAction *act_rejectExt = new QAction(this);
-    act_rejectExt->setShortcut(Qt::Key_0);
+    act_rejectExt->setShortcut(Qt::Key_Enter);
     connect(act_rejectExt, SIGNAL(triggered()), this, SLOT(rejectExt()));
     this->addAction(act_rejectExt);
 
     QAction *act_acceptExt = new QAction(this);
-    act_acceptExt->setShortcut(Qt::Key_Enter);
+    act_acceptExt->setShortcut(Qt::Key_0);
     connect(act_acceptExt, SIGNAL(triggered()), this, SLOT(acceptExt()));
     this->addAction(act_acceptExt);
 
