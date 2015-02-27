@@ -22,11 +22,11 @@ QStringList neuron_stitch::menulist() const
 	return QStringList() 
         <<tr("auto_stitch_neuron_SWC")
         <<tr("live_stitch_neuron_SWC")
-        <<tr("manualy_affine_neuron_SWC")
+        <<tr("manually_affine_neuron_SWC")
         <<tr("find_border_tips_SWC_image")
         <<tr("transform_neuron_SWC_by_affine_matrix")
-        <<tr("transform_border_tips_by_affine_matrix")
-        <<tr("combine_border_tips")
+        <<tr("transform_markers_by_affine_matrix")
+        <<tr("combine_marker_files")
 		<<tr("about");
 }
 
@@ -47,7 +47,7 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         dostitch(callback, parent);
     }
-    else if (menu_name == tr("manualy_affine_neuron_SWC"))
+    else if (menu_name == tr("manually_affine_neuron_SWC"))
     {
         doadjust(callback, parent);
     }
@@ -59,11 +59,11 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         dotransform_swc(callback, parent);
     }
-    else if (menu_name == tr("transform_border_tips_by_affine_matrix"))
+    else if (menu_name == tr("transform_markers_by_affine_matrix"))
     {
         dotransform_marker(callback, parent);
     }
-    else if (menu_name == tr("combine_border_tips"))
+    else if (menu_name == tr("combine_marker_files"))
     {
         docombine_marker(callback, parent);
     }
