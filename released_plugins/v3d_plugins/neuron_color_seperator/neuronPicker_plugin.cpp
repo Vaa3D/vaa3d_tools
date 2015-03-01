@@ -64,7 +64,7 @@ void neuronPicker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             npdiag->activateWindow();
         }
     }
-    if (menu_name == tr("seperate_result_explorer"))
+    else if (menu_name == tr("seperate_result_explorer"))
     {
         if(nediag){
             nediag->show();
@@ -235,7 +235,7 @@ void neuronPicker::printHelp()
 {
     cout<<"\n==== Color Neuron Picker ===="<<endl;
     cout<<"\nUsage: v3d -x dllName -f neuron_picker -i <input_raw_file> -o <output_prefix> "
-       <<"-p [<scale output (1)> [<neighbor cubic size (11)> [<convolute iteration (10)> [<seed intensity threshold (150)> [<background threshold (10)> [<neuron size threshold (1000)> [<output margin size (15)>]]]]]]]"<<endl;
+       <<"-p [<scale output (4)> [<neighbor cubic size (11)> [<convolute iteration (10)> [<seed intensity threshold (100)> [<background threshold (10)> [<neuron size threshold (2000)> [<output margin size (15)> [<sparsity threshold (0.35)> [<face touch treshold (0.5)>]]]]]]]]]"<<endl;
     cout<<"\n";
 }
 
