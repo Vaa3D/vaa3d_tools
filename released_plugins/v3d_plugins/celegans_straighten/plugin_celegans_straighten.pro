@@ -17,7 +17,7 @@ unix {
 
 win32 {
 #	LIBS 	     += -L$$V3DMAINDIR/common_lib/winlib -llibtiff
-	LIBS         += -L$$V3DMAINDIR/common_lib/winlib -llibnewmat 
+        LIBS         += -L$$V3DMAINDIR/common_lib/winlib64 -llibnewmat
 }
 
 FORMS         = paradialog.ui
