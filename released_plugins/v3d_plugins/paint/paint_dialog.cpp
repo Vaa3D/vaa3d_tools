@@ -206,7 +206,9 @@ bool Paint_Dialog::load()
 
             if (sz_img[3]>3)
             {
-                QMessageBox::information(0,"","Currently this program only supports 1-3 color channels.", 0);
+                sz_img[3]=3;
+                QMessageBox::information(0,"","More than 3 channels were loaded."
+                                         "The first 3 channel will be applied for analysis.");
                 return false;
             }
 
@@ -275,8 +277,9 @@ void Paint_Dialog::fetch()
 
     if (sz_img[3]>3)
     {
-        QMessageBox::information(0, "", "Currently this program only supports 1-3 color channels.");
-        return;
+        sz_img[3]=3;
+        QMessageBox::information(0,"","More than 3 channels were loaded."
+                                 "The first 3 channel will be applied for analysis.");
     }
 
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
@@ -644,7 +647,6 @@ bool Paint_Dialog::eventFilter(QObject *obj, QEvent *event)
                 this->spin->setValue(this->spin->value() - 1);
 
             return true;
-
         }
         return false;
 }
