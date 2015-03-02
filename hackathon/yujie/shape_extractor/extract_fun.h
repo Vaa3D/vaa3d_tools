@@ -34,25 +34,19 @@ public:
 
     vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr);
     float getProjection(vector<float> vec, vector<float> dir, int convolute_iter);
-    V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,V3DLONG seed_ind,
-                     int convolute_iter,int bg_thr);
+    V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,unsigned char * label,V3DLONG seed_ind,
+                     int convolute_iter,int bg_thr,int marker);
     vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
                                                  vector<V3DLONG> z_all);
-    //int check_nb(V3DLONG id,int bg);
-    V3DLONG extract_1(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
-                                 V3DLONG seed_ind, int convolute_iter,int bg_thr,double percent_thr);
-    V3DLONG extract_2(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
-                                 V3DLONG seed_ind, int convolute_iter,int bg_thr);
+
 
 private:
     float * data1Dc_float;
-    unsigned char * mask1D;
-    //V3DLONG sz_image[4];
     V3DLONG page_size;
-
 
 public:
     V3DLONG sz_image[4];
+    unsigned char * mask1D;
     template <class T>
     void pushNewData(T * data1Dc_in, V3DLONG sz_img[4])
     {
@@ -74,7 +68,9 @@ public:
             data1Dc_float[i]=(float) (data1Dc_in[i]);
         }
         normalizeEachChannelTo255<float>(data1Dc_float, sz_img);
-        mask1D = memory_allocate_uchar1D(page_size);
+//        mask1D = memory_allocate_uchar1D(page_size);
+//        memset(mask1D, 0, page_size*sizeof(unsigned char));
+
     }
 };
 
