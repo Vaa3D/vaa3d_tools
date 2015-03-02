@@ -191,7 +191,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 
      printf("1. Import image. \n");
      unsigned char *p_img_input=0;
-     V3DLONG *sz_img_input=0;
+     V3DLONG sz_img_input[4];
      int datatype_input=0;
      ROIList roils_roi;
 
@@ -202,7 +202,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
                v3d_msg(QString("invalid image path!"));
                return false;
           }
-          if(!loadImage((char *)qPrintable(qs_filename_img),p_img_input,sz_img_input,datatype_input))
+          if(!simple_saveimage_wrapper(callback,(char *)qPrintable(qs_filename_img),p_img_input,sz_img_input,datatype_input))
           {
                v3d_msg(QString("open file [%1] failed!").arg(qs_filename_img));
                return false;
@@ -220,7 +220,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
           }
           Image4DSimple* image=callback.getImage(paraDlg.h_wndlist[l_imgind]);
           p_img_input=image->getRawData();
-          sz_img_input=new V3DLONG[4]();
+        //  sz_img_input=new V3DLONG[4]();
           sz_img_input[0]=image->getXDim();	sz_img_input[1]=image->getYDim();	sz_img_input[2]=image->getZDim();	sz_img_input[3]=image->getCDim();
           datatype_input=image->getDatatype();
 
@@ -247,7 +247,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 		{
 			printf("ERROR: Fail to allocate memory. Do nothing. \n");
 			if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 		if(datatype_input==1)
@@ -265,7 +265,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 				printf("ERROR: rescale_to_0_255_and_copy() return false.\n");
 				if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 				if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-				if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+                //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 				return false;
 			}
 		}
@@ -278,7 +278,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 				printf("ERROR: rescale_to_0_255_and_copy() return false.\n");
 				if(p_img_8u)								{delete []p_img_8u;			p_img_8u=0;}
 				if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-				if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+                //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 				return false;
 			}
 		}
@@ -287,7 +287,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 			v3d_msg(QString("Unknown datatype!\n"));
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
      }
@@ -310,7 +310,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
                v3d_msg(QString("Need at least 2 markers!"));
                if(p_img_8u) 								{delete []p_img_8u;				p_img_8u=0;}
                if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-               if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+               //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
                return false;
           }
           vector<double> vec_marker(3,0);
@@ -337,7 +337,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
                v3d_msg(QString("Need at least 2 markers!"));
                if(p_img_8u) 								{delete []p_img_8u;				p_img_8u=0;}
                if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-               if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+               //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
                return false;
           }
           vector<double> vec_marker(3,0);
@@ -395,7 +395,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 			printf("ERROR:Fail to allocate memory for the roi image. \n");
 			if(p_img_8u) 							{delete []p_img_8u;				p_img_8u=0;}
 			if(p_img_input && !paras.b_imgfromV3D) 	{delete []p_img_input;			p_img_input=0;}
-			if(sz_img_input) 						{delete []sz_img_input;			sz_img_input=0;}
+            //if(sz_img_input) 						{delete []sz_img_input;			sz_img_input=0;}
 			return false;
 		}
 
@@ -438,7 +438,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
      //------------------------------------------------------------------------------------------------------------------------------------
      printf("5. Straighten. \n");
      unsigned char *p_img_output=0;
-     V3DLONG *sz_img_output=0;
+     V3DLONG sz_img_output[4];
      if(!q_celegans_straighten(callback,paras,
                p_img_roi,sz_img_roi,
                vec2d_markers,
@@ -446,7 +446,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
      {
           v3d_msg(QString("q_celegans_straighten() return false!"));
           if(p_img_input && !paras.b_imgfromV3D) 		{delete []p_img_input;		p_img_input=0;}
-          if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+        //  if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
           return false;
      }
      //		if(!q_celegans_straighten_manual(callback,paras,
@@ -464,7 +464,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
 
      //------------------------------------------------------------------------------------------------------------------------------------
      printf("6. Save straightened image. \n");
-     saveImage(qPrintable(qs_filename_strimg_output),(unsigned char *)p_img_output,sz_img_output,1);
+     simple_saveimage_wrapper(callback,qPrintable(qs_filename_strimg_output),(unsigned char *)p_img_output,sz_img_output,1);
      v3d_msg(QString("Strenghtened image is saved to:\n %1").arg(qs_filename_strimg_output),0);
 
      //------------------------------------------------------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
      if(p_img_roi) 							{delete []p_img_roi;			p_img_roi=0;}
      if(p_img_8u) 							{delete []p_img_8u;				p_img_8u=0;}
      if(p_img_input && !paras.b_imgfromV3D) 	{delete []p_img_input;			p_img_input=0;}
-     if(sz_img_input) 						{delete []sz_img_input;			sz_img_input=0;}
+    // if(sz_img_input) 						{delete []sz_img_input;			sz_img_input=0;}
 
      printf(">>Program exit successful!\n");
      return true;

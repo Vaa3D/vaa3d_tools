@@ -24,7 +24,7 @@ V3DLONG floor(V3DLONG x)
 bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &paras,
 		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,V3DLONG *&sz_img_output)
+        unsigned char *&p_img_output,V3DLONG sz_img_output[4])
 {
 	//check paras
 	if(p_img_input==0)
@@ -71,7 +71,7 @@ bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &par
 bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,V3DLONG *&sz_img_output)
+        unsigned char *&p_img_output,V3DLONG sz_img_output[4])
 {
 	//check paras
 	if(p_img_input==0)
