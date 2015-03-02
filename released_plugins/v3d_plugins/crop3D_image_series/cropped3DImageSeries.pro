@@ -8,6 +8,8 @@ INCLUDEPATH     += $$VAA3DPATH/common_lib/include
 
 HEADERS	+= cropped3DImageSeries_plugin.h
 HEADERS	+= ../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h
+HEADERS	+= ../../../released_plugins/v3d_plugins/istitch/y_imglib.h
+
 
 SOURCES	+= cropped3DImageSeries_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
