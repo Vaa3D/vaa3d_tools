@@ -10,6 +10,7 @@ INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 
 HEADERS       = istitch.h 
 HEADERS      +=	istitch_gui.h
+HEADERS      +=	y_imglib.h
 HEADERS      +=	$$V3DMAINDIR/basic_c_fun/stackutil.h
 HEADERS      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.h
 HEADERS      += $$V3DMAINDIR/basic_c_fun/mg_image_lib.h
