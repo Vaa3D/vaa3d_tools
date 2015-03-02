@@ -10,7 +10,9 @@ QPixmapToolTip::QPixmapToolTip(QWidget *parent) : QWidget(parent)
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     QFont tinyFont = QApplication::font();
+    #ifdef Q_OS_LINUX
     tinyFont.setPointSize(6);
+    #endif
 
     rawData = 0;
     imageLabel = new QLabel();

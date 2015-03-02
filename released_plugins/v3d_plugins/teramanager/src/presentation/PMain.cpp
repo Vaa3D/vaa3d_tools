@@ -1852,7 +1852,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         CSettings::instance()->setVolumePathLRU(CImport::instance()->getPath());
 
         //and installing event filter on pixmap tooltip
-        QPixmapToolTip::instance()->installEventFilter(this);
+        QPixmapToolTip::instance(this)->installEventFilter(this);
 
         //updating actual time
         PLog::instance()->appendOperation(new ImportOperation( "TeraFly 3D exploration started", itm::ALL_COMPS, CImport::instance()->timerIO.elapsed()));
@@ -1904,7 +1904,8 @@ void PMain::settingsChanged(int)
     CSettings::instance()->setTraslZ(zShiftSBox->value());
     CSettings::instance()->setTraslT(tShiftSBox->value());
     CSettings::instance()->writeSettings();
-    PDialogProofreading::instance()->updateBlocks(0);
+    if(PDialogProofreading::isActive())
+        PDialogProofreading::instance()->updateBlocks(0);
 }
 
 /**********************************************************************************
@@ -2056,7 +2057,7 @@ void PMain::traslTposClicked()
     CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        int newT0 = expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
+        int newT0 = Tdim_sbox->value() == 1 ? expl->volT0+1 : expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
         int newT1 = newT0 + (Tdim_sbox->value()-1);
         if(newT1 >= CImport::instance()->getTDim())
         {
@@ -2080,7 +2081,7 @@ void PMain::traslTnegClicked()
     CViewer* expl = CViewer::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        int newT1 = expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
+        int newT1 = Tdim_sbox->value() == 1 ? expl->volT1-1 : expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
         int newT0 = newT1 - (Tdim_sbox->value()-1);
         if(newT0 < 0)
         {
@@ -2201,6 +2202,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             pixmapToolTip->move(PR_spbox->mapToGlobal(QPoint(0,0))-QPoint(0,width+10));
             PRblockSpinboxChanged(PR_spbox->value());
             pixmapToolTip->show();
+            pixmapToolTip->raise();
 
             //PR_spbox->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
             QPoint gpos = PR_spbox->mapToGlobal(QPoint(0,10));
@@ -2296,7 +2298,11 @@ void PMain::debugAction1Triggered()
 
 //    printf("PMain is: %s\n", PMain::getInstance() ? "not null" : "NULL");
 
-    QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+    //QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+
+    QList<LabelSurf> surf = this->V3D_env->getListLabelSurf_3DGlobalViewer(CViewer::current->window);
+    for(int k=0; k< surf.size(); k++)
+        printf("[%06d] = %d %d\n", k, surf[k].label, surf[k].label2);
 
 //    CAnnotations::getInstance()->prune();
 
@@ -2575,9 +2581,10 @@ void PMain::PRblockSpinboxChanged(int b)
             qPixmapToolTip->setText(strprintf("X = [%d, %d]\nY = [%d,%d]\nZ = [%d, %d]",
                                                           ROIxs_hr+1, ROIxe_hr, ROIys_hr+1, ROIye_hr, ROIzs_hr+1, ROIze_hr ).c_str());
 
+            // @FIXED by Alessandro on 2015-03-02. Causes crash on Mac. On the other hand, this is already done in the ::eventFilter.
             // display tooltip below spinbox
-            QPoint gpos = PR_spbox->mapToGlobal(QPoint(0,10));
-            QToolTip::showText(gpos, "Press Enter to load", PR_spbox);
+//            QPoint gpos = PR_spbox->mapToGlobal(QPoint(0,10));
+//            QToolTip::showText(gpos, "Press Enter to load", PR_spbox);
         }
     }
     catch(itm::RuntimeException &ex)

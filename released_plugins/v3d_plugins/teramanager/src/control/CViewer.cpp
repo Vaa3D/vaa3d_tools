@@ -761,6 +761,7 @@ void CViewer::receiveData(
             // if 5D data, update selected time frame
             if(CImport::instance()->is5D())
                 view3DWidget->setVolumeTimePoint(window3D->timeSlider->value()-volT0);
+            PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", window3D->timeSlider->value(), CImport::instance()->getTDim()-1).c_str());
 
             // PREVIEW+STREAMING mode only: update image data
             if(cVolume->getStreamingSteps() != 0)
@@ -786,7 +787,8 @@ void CViewer::receiveData(
                 PMain::getInstance()->resetGUI();
 
                 // exit from "waiting for 5D data" state, if previously set
-                this->setWaitingFor5D(false);
+                if(this->waitingFor5D)
+                    this->setWaitingFor5D(false);
 
                 // reset the cursor
                 window3D->setCursor(Qt::ArrowCursor);
@@ -2212,11 +2214,15 @@ void CViewer::Vaa3D_changeTSlider(int s, bool editingFinished /* = false */)
         // if frame is out of the displayed range
         if(s < volT0 || s > volT1)
         {
-            // enter "waiting for 5D data" state
-            setWaitingFor5D(true, true);
+            // PREVIEW+STREAMING mode only
+            if(CSettings::instance()->getPreviewMode())
+            {
+                // enter "waiting for 5D data" state
+                setWaitingFor5D(true, true);
 
-            // display message informing the user that something will happen if he/she confirms the operation
-            PMain::getInstance()->statusBar->showMessage(strprintf("Ready to jump at time frame %d/%d", s, CImport::instance()->getTDim()-1).c_str());
+                // display message informing the user that something will happen if he/she confirms the operation
+                PMain::getInstance()->statusBar->showMessage(strprintf("Ready to jump at time frame %d/%d", s, CImport::instance()->getTDim()-1).c_str());
+            }
 
             // if user operation is confirmed, then switching view
             if(editingFinished)

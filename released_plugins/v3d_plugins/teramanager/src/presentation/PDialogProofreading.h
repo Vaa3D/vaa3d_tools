@@ -48,6 +48,13 @@ class teramanager::PDialogProofreading : public QWidget
                 uniqueInstance = new PDialogProofreading(itm::PMain::getInstance());
             return uniqueInstance;
         }
+        static bool isActive(){
+            if(uniqueInstance)
+                return uniqueInstance->isVisible();
+            else
+                return false;
+        }
+
         static void uninstance();
         ~PDialogProofreading(){}
 
