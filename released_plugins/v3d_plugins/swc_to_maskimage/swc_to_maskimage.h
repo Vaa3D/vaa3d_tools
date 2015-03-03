@@ -33,7 +33,6 @@ void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent, int method_
 void mrskimage_originalimage(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
 
 void BoundNeuronCoordinates(NeuronTree & neuron,
-							bool b_subtractMinFromAllNonnegatives,
 							double & output_xmin,
 							double & output_xmax,
 							double & output_ymin,
@@ -67,6 +66,7 @@ public:
 	QLabel *labelx;
 	QLabel *labely;
 	QLabel *labelz;
+    QLabel *info;
     QSpinBox* coord_x;
 	QSpinBox* coord_y;
 	QSpinBox* coord_z;
@@ -83,7 +83,14 @@ public:
 	{
 		Image4DSimple* image = cb.getImage(cb.currentImageWindow());
 		QString imageName = cb.getImageName(cb.currentImageWindow());
+
+        info= new QLabel;
+        info->setText("The minimum dimensions of generated mask image are set as default.<br>"
+                      " Please input new size. <br>"
+                      "<b>Warning: size significantly below the default size will result in incomplete mask image<b> ");
+
 		//create a dialog
+
 		coord_x= new QSpinBox();
 		coord_y = new QSpinBox();
 		coord_z = new QSpinBox();
@@ -100,13 +107,16 @@ public:
 		labely = new QLabel(QObject::tr("Image Y dimension"));
 		labelz = new QLabel(QObject::tr("Image Z dimension"));
 
-		gridLayout->addWidget(labelx, 0,0); gridLayout->addWidget(coord_x, 0,1);
-		gridLayout->addWidget(labely, 1,0); gridLayout->addWidget(coord_y, 1,1);
-		gridLayout->addWidget(labelz, 2,0); gridLayout->addWidget(coord_z, 2,1);
+        info->setMargin(10);
+        gridLayout->addWidget(info,0,0,4,2,Qt::AlignJustify);
+        gridLayout->addWidget(labelx, 4,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_x,4,1,1,1,Qt::AlignHCenter);
+        gridLayout->addWidget(labely, 5,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_y,5,1,1,1,Qt::AlignHCenter);
+        gridLayout->addWidget(labelz, 6,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_z,6,1,1,1,Qt::AlignHCenter);
 
-		gridLayout->addWidget(cancel, 6,1); gridLayout->addWidget(ok, 6,0);
+        gridLayout->addWidget(cancel, 7,1,1,1,Qt::AlignHCenter); gridLayout->addWidget(ok, 7,0,1,1,Qt::AlignHCenter);
 		setLayout(gridLayout);
 		setWindowTitle(QString("Change parameters"));
+        //this->setFixedWidth(600);
 
 		connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
