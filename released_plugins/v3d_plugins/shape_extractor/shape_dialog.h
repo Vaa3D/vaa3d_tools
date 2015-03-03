@@ -15,14 +15,6 @@ using namespace std;
 #define NAME_INWIN "Input_Shape_Extractor"
 #define NAME_OUTWIN "Output_Shape_Extractor"
 
-NeuronTree readSWC_file(const QString& filename);
-void ComputemaskImage(NeuronTree neurons,
-                      unsigned char* pImMask, //output mask image
-                      unsigned char* ImMark,  //an indicator image to show whether or not a pixel has been visited/processed
-                      V3DLONG sx,V3DLONG sy,V3DLONG sz,int method_code);
-QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
-
-
 class shape_dialog: public QDialog
 {
     Q_OBJECT
@@ -44,10 +36,9 @@ private:
     int rgb[3];
     v3dhandle curwin;
     int datasource; //fetched datasource=2; load datasource=1;
-    NeuronTree* nt;
 
     QPlainTextEdit *edit;
-    QSpinBox *spin_bgthr,*spin_conviter,*spin_percent;
+    QSpinBox *spin_bgthr,*spin_conviter;
     QDialog *subDialog;
 
 private:
@@ -59,7 +50,6 @@ private:
     void resetdata();
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
-    void swc_to_maskimage(V3DPluginCallback2 &callback, int method_code);
 
 
 public slots:
@@ -67,9 +57,8 @@ public slots:
     void extract();
     void display_mass_center();
     void dialoguefinish(int);
-    //void clear_markers();
     void fetch();
     void display_volume();
-    void load_swc_filter();
+    void help();
 };
 #endif // SHAPE_DIALOG_H

@@ -41,8 +41,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
     vector<V3DLONG> coord,neighbor(6,0);
     vector<float> color(sz_image[3]);
     vector<V3DLONG> new_mass_center;
-    //memset(mask1D, 0, page_size*sizeof(unsigned char));
-
+    memset(mask1D, 0, page_size*sizeof(unsigned char));
     float project;
     int nsum;
 
@@ -101,7 +100,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                             mask1D[pos]=1;
                             if(project<bg_thr) continue;
 
-                            //check whether over 4 background nbs
+                            //check whether over 4 background nbs. If >4,set that pixel to bg pixel
                             neighbor[0]=pos-1;
                             neighbor[1]=pos+1;
                             neighbor[2]=pos-sz_image[0];
@@ -112,9 +111,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                             for (int i=0;i<neighbor.size();i++)
                             {
                                 if(mask1D[neighbor[i]]>0){
-                                    if (label[neighbor[i]]>0){
-                                        nsum++;
-                                    }
+                                    if (label[neighbor[i]]>0) nsum++;
                                 }
                                 else
                                 {
@@ -122,9 +119,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                                         color[cid]=data1Dc_float[neighbor[i]+cid*page_size];
                                     }
                                     project=getProjection(color, dir, convolute_iter);
-                                    if(project>=bg_thr){
-                                        nsum++;
-                                    }
+                                    if(project>=bg_thr) nsum++;
                                 }
                             }
                             if (nsum>2){
@@ -136,8 +131,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                                 seeds_all.push_back(pos);
                                 label[pos]=marker;
                             }
-
-                       }
+                        }
                     }
                 }
                 sid++;
@@ -147,7 +141,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
 
         }while(!seeds_next.empty());
 
-        seeds=seeds_all;
+        seeds=seeds_all; //after this round of r_grow finished, sets all seeds as the seeds for next r_grow
 
         if (r_grow>30)
             break;
@@ -208,7 +202,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
 //   return x_all.size();
 //}
 
-
+//Idea borrowed from neuro colorpicker
 float extract_fun::getProjection(vector<float> vec, vector<float> dir, int convolute_iter)
 {
     float dp=0, norm=0;
