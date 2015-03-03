@@ -23,7 +23,7 @@ void neuron_seperator_explorer::creat()
     //display zone
     QLabel* label_load = new QLabel(QObject::tr("Working Project:"));
     gridLayout->addWidget(label_load,1,0,1,2);
-    btn_loadPoj = new QPushButton("Load Project");
+    btn_loadPoj = new QPushButton("Load Project"); btn_loadPoj->setAutoDefault(false);
     gridLayout->addWidget(btn_loadPoj,1,5,1,1);
     btn_loadDir = new QPushButton("Load .ANO Files"); btn_loadDir->setVisible(false);
     gridLayout->addWidget(btn_loadDir,1,4,1,1);
@@ -33,13 +33,13 @@ void neuron_seperator_explorer::creat()
 
     QLabel* label_img = new QLabel(QObject::tr("Checking Image:"));
     gridLayout->addWidget(label_img,3,0,1,2);
-    btn_preImg = new QPushButton("Previous (4)");
+    btn_preImg = new QPushButton("Previous (4)"); btn_preImg->setAutoDefault(false);
     gridLayout->addWidget(btn_preImg,3,2,1,1);
-    btn_nextImg = new QPushButton("Next (+)");
+    btn_nextImg = new QPushButton("Next (+)"); btn_nextImg->setAutoDefault(false);
     gridLayout->addWidget(btn_nextImg,3,5,1,1);
-    btn_rejectImg = new QPushButton("Is Outlier (5)");
+    btn_rejectImg = new QPushButton("Is Outlier (5)"); btn_rejectImg->setAutoDefault(false);
     gridLayout->addWidget(btn_rejectImg,3,4,1,1);
-    btn_rerunImg = new QPushButton("Need Rerun (6)");
+    btn_rerunImg = new QPushButton("Need Rerun (6)"); btn_rerunImg->setAutoDefault(false);
     gridLayout->addWidget(btn_rerunImg,3,3,1,1);
     edit_curimg = new QLineEdit();
     edit_curimg->setText(""); edit_curimg->setReadOnly(true);
@@ -47,11 +47,11 @@ void neuron_seperator_explorer::creat()
 
     QLabel* label_ext = new QLabel(QObject::tr("Checking Extraction:"));
     gridLayout->addWidget(label_ext,5,0,1,2);
-    btn_acceptExt = new QPushButton("Accept and Next (0)");
+    btn_acceptExt = new QPushButton("Accept and Next (0)"); btn_acceptExt->setAutoDefault(false);
     gridLayout->addWidget(btn_acceptExt,5,5,1,1);
-    btn_rejectExt = new QPushButton("Reject and Next (Enter)");
+    btn_rejectExt = new QPushButton("Reject and Next (Enter)"); btn_rejectExt->setAutoDefault(false);
     gridLayout->addWidget(btn_rejectExt,5,4,1,1);
-    btn_preExt = new QPushButton("Previous (1)");
+    btn_preExt = new QPushButton("Previous (1)"); btn_preExt->setAutoDefault(false);
     gridLayout->addWidget(btn_preExt,5,3,1,1);
     edit_curext = new QLineEdit();
     edit_curext->setText(""); edit_curext->setReadOnly(true);
@@ -62,11 +62,11 @@ void neuron_seperator_explorer::creat()
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_1,10,0,1,6);
-    btn_screenshot = new QPushButton("ScreenShot (8)");
+    btn_screenshot = new QPushButton("ScreenShot (8)"); btn_screenshot->setAutoDefault(false);
     gridLayout->addWidget(btn_screenshot,11,3,1,1);
-    btn_save = new QPushButton("Save");
+    btn_save = new QPushButton("Save"); btn_save->setAutoDefault(false);
     gridLayout->addWidget(btn_save,11,4,1,1);
-    btn_quit = new QPushButton("Quit");
+    btn_quit = new QPushButton("Quit"); btn_quit->setAutoDefault(false);
     gridLayout->addWidget(btn_quit,11,5,1,1);
 
     connect(btn_loadPoj, SIGNAL(clicked()), this, SLOT(loadPoj()));
@@ -613,8 +613,10 @@ void neuron_seperator_explorer::checkButton()
         btn_screenshot->setEnabled(true);
         if(idx_img>=imgs.size()-1){
             btn_nextImg->setEnabled(false);
-            btn_rejectImg->setEnabled(false);
-            btn_rerunImg->setEnabled(false);
+            if(idx_img>=imgs.size()){
+                btn_rejectImg->setEnabled(false);
+                btn_rerunImg->setEnabled(false);
+            }
             if(idx_ext>=imgs.at(idx_img).fnames_extract.size()-1){
                 btn_acceptExt->setEnabled(false);
                 btn_rejectExt->setEnabled(false);
