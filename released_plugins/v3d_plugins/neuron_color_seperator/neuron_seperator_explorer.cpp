@@ -62,6 +62,8 @@ void neuron_seperator_explorer::creat()
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_1,10,0,1,6);
+    btn_screenshot = new QPushButton("ScreenShot (8)");
+    gridLayout->addWidget(btn_screenshot,11,3,1,1);
     btn_save = new QPushButton("Save");
     gridLayout->addWidget(btn_save,11,4,1,1);
     btn_quit = new QPushButton("Quit");
@@ -76,45 +78,82 @@ void neuron_seperator_explorer::creat()
     connect(btn_preImg, SIGNAL(clicked()), this, SLOT(preImg()));
     connect(btn_nextImg, SIGNAL(clicked()), this, SLOT(nextImg()));
     connect(btn_save, SIGNAL(clicked()), this, SLOT(save()));
+    connect(btn_screenshot, SIGNAL(clicked()), this, SLOT(screenShot()));
 
     connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
 
-    QAction *act_rejectExt = new QAction(this);
-    act_rejectExt->setShortcut(Qt::Key_Enter);
-    connect(act_rejectExt, SIGNAL(triggered()), this, SLOT(rejectExt()));
-    this->addAction(act_rejectExt);
+//    QAction *act_rejectExt = new QAction(this);
+//    act_rejectExt->setShortcut(Qt::Key_Enter);
+//    connect(act_rejectExt, SIGNAL(triggered()), this, SLOT(rejectExt()));
+//    this->addAction(act_rejectExt);
 
-    QAction *act_acceptExt = new QAction(this);
-    act_acceptExt->setShortcut(Qt::Key_0);
-    connect(act_acceptExt, SIGNAL(triggered()), this, SLOT(acceptExt()));
-    this->addAction(act_acceptExt);
+//    QAction *act_acceptExt = new QAction(this);
+//    act_acceptExt->setShortcut(Qt::Key_0);
+//    connect(act_acceptExt, SIGNAL(triggered()), this, SLOT(acceptExt()));
+//    this->addAction(act_acceptExt);
 
-    QAction *act_preExt = new QAction(this);
-    act_preExt->setShortcut(Qt::Key_1);
-    connect(act_preExt, SIGNAL(triggered()), this, SLOT(preExt()));
-    this->addAction(act_preExt);
+//    QAction *act_preExt = new QAction(this);
+//    act_preExt->setShortcut(Qt::Key_1);
+//    connect(act_preExt, SIGNAL(triggered()), this, SLOT(preExt()));
+//    this->addAction(act_preExt);
 
-    QAction *act_preImg = new QAction(this);
-    act_preImg->setShortcut(Qt::Key_4);
-    connect(act_preImg, SIGNAL(triggered()), this, SLOT(preImg()));
-    this->addAction(act_preImg);
+//    QAction *act_preImg = new QAction(this);
+//    act_preImg->setShortcut(Qt::Key_4);
+//    connect(act_preImg, SIGNAL(triggered()), this, SLOT(preImg()));
+//    this->addAction(act_preImg);
 
-    QAction *act_rejectImg = new QAction(this);
-    act_rejectImg->setShortcut(Qt::Key_5);
-    connect(act_rejectImg, SIGNAL(triggered()), this, SLOT(rejectImg()));
-    this->addAction(act_rejectImg);
+//    QAction *act_rejectImg = new QAction(this);
+//    act_rejectImg->setShortcut(Qt::Key_5);
+//    connect(act_rejectImg, SIGNAL(triggered()), this, SLOT(rejectImg()));
+//    this->addAction(act_rejectImg);
 
-    QAction *act_rerunImg = new QAction(this);
-    act_rerunImg->setShortcut(Qt::Key_6);
-    connect(act_rerunImg, SIGNAL(triggered()), this, SLOT(needRerunImg()));
-    this->addAction(act_rerunImg);
+//    QAction *act_rerunImg = new QAction(this);
+//    act_rerunImg->setShortcut(Qt::Key_6);
+//    connect(act_rerunImg, SIGNAL(triggered()), this, SLOT(needRerunImg()));
+//    this->addAction(act_rerunImg);
 
-    QAction *act_nextImg = new QAction(this);
-    act_nextImg->setShortcut(Qt::Key_Plus);
-    connect(act_nextImg, SIGNAL(triggered()), this, SLOT(nextImg()));
-    this->addAction(act_nextImg);
+//    QAction *act_nextImg = new QAction(this);
+//    act_nextImg->setShortcut(Qt::Key_Plus);
+//    connect(act_nextImg, SIGNAL(triggered()), this, SLOT(nextImg()));
+//    this->addAction(act_nextImg);
+
+//    QAction *act_screenshot = new QAction(this);
+//    act_screenshot->setShortcut(Qt::Key_8);
+//    connect(act_screenshot, SIGNAL(triggered()), this, SLOT(screenShot()));
+//    this->addAction(act_screenshot);
 
     setLayout(gridLayout);
+}
+
+void  neuron_seperator_explorer::keyReleaseEvent(QKeyEvent* event)
+{
+    if(event->isAutoRepeat())
+        return;
+
+    if(event->key() == Qt::Key_Enter){
+        rejectExt();
+    }
+    if(event->key() == Qt::Key_0){
+        acceptExt();
+    }
+    if(event->key() == Qt::Key_1){
+        preExt();
+    }
+    if(event->key() == Qt::Key_4){
+        preImg();
+    }
+    if(event->key() == Qt::Key_5){
+        rejectImg();
+    }
+    if(event->key() == Qt::Key_6){
+        needRerunImg();
+    }
+    if(event->key() == Qt::Key_Plus){
+        nextImg();
+    }
+    if(event->key() == Qt::Key_8){
+        screenShot();
+    }
 }
 
 
@@ -125,14 +164,18 @@ void neuron_seperator_explorer::acceptExt()
     if(idx_img<0)
         return;
 
+    if(idx_ext==0)
+        imgs[idx_img].status = 1;
+
     this->imgs[idx_img].status_extract[idx_ext]=1;
 
     idx_ext++;
     if(idx_ext>=this->imgs.at(idx_img).fnames_extract.size()){
         imgs[idx_img].status = 1;
-
-        idx_ext=1;
-        idx_img++;
+        if(idx_img<this->imgs.size()-1){
+            idx_ext=0;
+            idx_img++;
+        }
     }
 
     updateAll();
@@ -144,15 +187,18 @@ void neuron_seperator_explorer::rejectExt()
         return;
     if(idx_img<0)
         return;
+    if(idx_ext==0)
+        return;
 
     this->imgs[idx_img].status_extract[idx_ext]=2;
 
     idx_ext++;
     if(idx_ext>=this->imgs.at(idx_img).fnames_extract.size()){
         imgs[idx_img].status = 1;
-
-        idx_ext=1;
-        idx_img++;
+        if(idx_img<this->imgs.size()-1){
+            idx_ext=0;
+            idx_img++;
+        }
     }
 
     updateAll();
@@ -166,8 +212,10 @@ void neuron_seperator_explorer::rejectImg()
         return;
 
     imgs[idx_img].status = 2;
-    idx_ext=1;
-    idx_img++;
+    if(idx_img<this->imgs.size()-1){
+        idx_ext=0;
+        idx_img++;
+    }
 
     updateAll();
 }
@@ -180,8 +228,10 @@ void neuron_seperator_explorer::needRerunImg()
         return;
 
     imgs[idx_img].status = 3;
-    idx_ext=1;
-    idx_img++;
+    if(idx_img<this->imgs.size()-1){
+        idx_ext=0;
+        idx_img++;
+    }
 
     updateAll();
 }
@@ -190,13 +240,13 @@ void neuron_seperator_explorer::preExt()
 {
     if(idx_img>=this->imgs.size())
         return;
-    if(idx_img<0)
+    if(idx_img<=0 && idx_ext<=0)
         return;
 
     idx_ext--;
-    if(idx_ext<1){
+    if(idx_ext<0){
         idx_img--;
-        idx_ext=MAX(1,imgs.at(idx_img).fnames_extract.size()-1);
+        idx_ext=MAX(0,imgs.at(idx_img).fnames_extract.size()-1);
     }
 
     updateAll();
@@ -209,20 +259,22 @@ void neuron_seperator_explorer::preImg()
     if(idx_img<0)
         return;
 
-    idx_ext=1;
-    idx_img--;
+    if(idx_img>0){
+        idx_ext=0;
+        idx_img--;
+    }
 
     updateAll();
 }
 
 void neuron_seperator_explorer::nextImg()
 {
-    if(idx_img>=this->imgs.size())
+    if(idx_img>=this->imgs.size()-1)
         return;
     if(idx_img<0)
         return;
 
-    idx_ext=1;
+    idx_ext=0;
     idx_img++;
 
     updateAll();
@@ -246,7 +298,7 @@ void neuron_seperator_explorer::save()
 void neuron_seperator_explorer::save(QString fname_output)
 {
     QString fname_acceptAno=fname_output+"_ano_accept.txt";
-    QString fname_rejectAno=fname_output+"_ano_accept.txt";
+    QString fname_rejectAno=fname_output+"_ano_reject.txt";
     QString fname_todoAno=fname_output+"_ano_todo.txt";
     QString fname_outlierImg=fname_output+"_img_outlier.txt";
     QString fname_rerunImg=fname_output+"_img_rerun.txt";
@@ -319,6 +371,26 @@ void neuron_seperator_explorer::save(QString fname_output)
     fp_todoAno.close();
     fp_acceptExtract.close();
     fp_rejectExtract.close();
+    fp_outlierImg.close();
+    fp_rerunImg.close();
+}
+
+void neuron_seperator_explorer::screenShot()
+{
+    if(imgs.size()==0){
+        return;
+    }
+    QString fname=this->anopath+"_screenshot_ano"+QString::number(idx_img)+"_ext"+QString::number(idx_ext)+"_a.tif";
+    if(!simple_saveimage_wrapper(*callback, fname.toStdString().c_str(), image1Dc_in, sz_img, intype)){
+        v3d_msg("Error:failed to save screenshot to "+fname);
+        return;
+    }
+    fname=this->anopath+"_screenshot_ano"+QString::number(idx_img)+"_ext"+QString::number(idx_ext)+"_b.tif";
+    if(!simple_saveimage_wrapper(*callback, fname.toStdString().c_str(), image1Dc_out, sz_img, intype)){
+        v3d_msg("Error:failed to save screenshot to "+fname);
+        return;
+    }
+    v3d_msg("ScreenShot saved to "+fname);
 }
 
 void neuron_seperator_explorer::loadPoj()
@@ -347,7 +419,7 @@ void neuron_seperator_explorer::loadPoj()
     fnames_ano.clear();
     imgs.clear();
     idx_img=0;
-    idx_ext=1;
+    idx_ext=0;
     pre_img=-1;
     pre_ext=-1;
 
@@ -476,7 +548,40 @@ void neuron_seperator_explorer::updateAll()
         updateOutputWindow();
 
         pre_ext=idx_ext;
-    }else{
+    }else if(idx_ext==0){
+        qDebug()<<"cojoc: appending seperate image";
+        unsigned char *image1Dc_tmp=0;
+        memcpy(image1Dc_out,image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+        for(int tmp_idx=1; tmp_idx<imgs[idx_img].fnames_extract.size(); tmp_idx++){
+            QString tmp=imgs[idx_img].fnames_extract.at(tmp_idx)
+                    +"("+QString::number(tmp_idx)+"/"+QString::number(imgs.at(idx_img).fnames_extract.size()-1)+")";
+            edit_curext->setText(tmp);
+            qDebug()<<"the file to open=["<<imgs[idx_img].fnames_extract.at(tmp_idx)<<"]";
+            if(!simple_loadimage_wrapper(*callback, imgs[idx_img].fnames_extract.at(tmp_idx).toStdString().c_str(), image1Dc_tmp, sz_out, outtype))
+            {
+              v3d_msg("load image "+imgs[idx_img].fnames_extract.at(tmp_idx)+" error!");
+              return;
+            }
+            if(sz_img[0]!=sz_out[0]) continue;
+            if(sz_img[1]!=sz_out[1]) continue;
+            if(sz_img[2]!=sz_out[2]) continue;
+            if(sz_out[3]!=1) continue;
+            for(V3DLONG vid=0; vid<sz_img[0]*sz_img[1]*sz_img[2]; vid++){
+                if(image1Dc_tmp[vid]!=0){
+                    for(V3DLONG cid=0; cid<sz_img[3]; cid++){
+                        int tmp=image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]+image1Dc_tmp[vid];
+                        image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]=tmp<255?tmp:255;
+                    }
+                }
+            }
+        }
+        delete[] image1Dc_tmp;
+
+        updateOutputWindow();
+
+        pre_ext=idx_ext;
+    }
+    else{
         QString tmp="(0/0)";
         edit_curext->setText(tmp);
     }
@@ -494,6 +599,8 @@ void neuron_seperator_explorer::checkButton()
         btn_rejectExt->setEnabled(false);
         btn_rejectImg->setEnabled(false);
         btn_save->setEnabled(false);
+        btn_rerunImg->setEnabled(false);
+        btn_screenshot->setEnabled(false);
     }else{
         btn_acceptExt->setEnabled(true);
         btn_nextImg->setEnabled(true);
@@ -502,17 +609,25 @@ void neuron_seperator_explorer::checkButton()
         btn_rejectExt->setEnabled(true);
         btn_rejectImg->setEnabled(true);
         btn_save->setEnabled(true);
-        if(idx_img>=imgs.size()){
-            btn_acceptExt->setEnabled(false);
+        btn_rerunImg->setEnabled(true);
+        btn_screenshot->setEnabled(true);
+        if(idx_img>=imgs.size()-1){
             btn_nextImg->setEnabled(false);
-            btn_rejectExt->setEnabled(false);
             btn_rejectImg->setEnabled(false);
+            btn_rerunImg->setEnabled(false);
+            if(idx_ext>=imgs.at(idx_img).fnames_extract.size()-1){
+                btn_acceptExt->setEnabled(false);
+                btn_rejectExt->setEnabled(false);
+            }
         }
         if(idx_img<=0){
             btn_preImg->setEnabled(false);
-            if(idx_ext<=1){
+            if(idx_ext<=0){
                 btn_preExt->setEnabled(false);
             }
+        }
+        if(idx_ext==0){
+            btn_rejectExt->setEnabled(false);
         }
     }
 }

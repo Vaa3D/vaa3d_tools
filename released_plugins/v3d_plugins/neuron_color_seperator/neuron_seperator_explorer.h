@@ -33,6 +33,7 @@ public slots:
     void nextImg();
     void save();
     void loadPoj();
+    void screenShot();
 
 private:
     void creat();
@@ -41,6 +42,7 @@ private:
     void updateOutputWindow();
     void updateInputWindow();
     void save(QString fname);
+    void keyReleaseEvent(QKeyEvent* event);
 
 private:
     V3DPluginCallback2 * callback;
@@ -58,7 +60,7 @@ public:
     QLineEdit *edit_dir,*edit_curimg,*edit_curext;
     QPushButton *btn_acceptExt, *btn_rejectExt, *btn_rejectImg;
     QPushButton *btn_preExt, *btn_preImg, *btn_nextImg, *btn_rerunImg;
-    QPushButton *btn_save, *btn_quit;
+    QPushButton *btn_save, *btn_quit, *btn_screenshot;
     QPushButton *btn_loadDir, *btn_loadPoj;
 };
 
