@@ -11,9 +11,11 @@ INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 HEADERS      += imageblend.h
 HEADERS      += $$V3DMAINDIR/basic_c_fun/basic_4dimage.h
 HEADERS      += $$V3DMAINDIR/basic_c_fun/v3d_message.h
+HEADERS      += $$V3DMAINDIR/basic_c_fun/vcdiff.h
 
 SOURCES      += imageblend.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
+SOURCES      += $$V3DMAINDIR/basic_c_fun/vcdiff.cpp
 
 win32{
     LIBS	     += -L$$V3DMAINDIR/common_lib/winlib64 -llibfftw3f-3

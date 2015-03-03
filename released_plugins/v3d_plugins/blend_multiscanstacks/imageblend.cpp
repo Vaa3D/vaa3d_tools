@@ -28,6 +28,10 @@
 
 #include "imageblend.h"
 
+#if defined (_MSC_VER)
+#include "vcdiff.h"
+#endif
+
 using namespace std;
 
 #define EMPTY 1
