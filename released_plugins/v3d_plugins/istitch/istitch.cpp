@@ -8679,7 +8679,7 @@ int point_navigating(V3DPluginCallback2 &callback, QWidget *parent)
         return -1;
 
     // point navigating
-    PointNavigateDialog dialog(parent, vim.sz);
+    PointNavigateDialog dialog(parent, (long*)( vim.sz));
     if (dialog.exec()!=QDialog::Accepted)
         return -1;
 
