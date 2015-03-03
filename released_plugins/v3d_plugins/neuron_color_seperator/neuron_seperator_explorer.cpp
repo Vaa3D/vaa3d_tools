@@ -14,6 +14,8 @@ neuron_seperator_explorer::neuron_seperator_explorer(V3DPluginCallback2 * cb, QW
     image1Dc_in=0;
     image1Dc_out=0;
     callback = cb;
+
+    keyPressMask=false;
 }
 
 void neuron_seperator_explorer::creat()
@@ -125,9 +127,19 @@ void neuron_seperator_explorer::creat()
     setLayout(gridLayout);
 }
 
+void  neuron_seperator_explorer::keyPressEvent(QKeyEvent* event)
+{
+    if(event->isAutoRepeat())
+        return;
+
+    keyPressMask=true;
+}
+
 void  neuron_seperator_explorer::keyReleaseEvent(QKeyEvent* event)
 {
     if(event->isAutoRepeat())
+        return;
+    if(!keyPressMask)
         return;
 
     if(event->key() == Qt::Key_Enter){
@@ -154,6 +166,8 @@ void  neuron_seperator_explorer::keyReleaseEvent(QKeyEvent* event)
     if(event->key() == Qt::Key_8){
         screenShot();
     }
+
+    keyPressMask=false;
 }
 
 
@@ -175,6 +189,8 @@ void neuron_seperator_explorer::acceptExt()
         if(idx_img<this->imgs.size()-1){
             idx_ext=0;
             idx_img++;
+        }else{
+            idx_ext--;
         }
     }
 
@@ -198,6 +214,8 @@ void neuron_seperator_explorer::rejectExt()
         if(idx_img<this->imgs.size()-1){
             idx_ext=0;
             idx_img++;
+        }else{
+            idx_ext--;
         }
     }
 
@@ -554,7 +572,7 @@ void neuron_seperator_explorer::updateAll()
         memcpy(image1Dc_out,image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         for(int tmp_idx=1; tmp_idx<imgs[idx_img].fnames_extract.size(); tmp_idx++){
             QString tmp=imgs[idx_img].fnames_extract.at(tmp_idx)
-                    +"("+QString::number(tmp_idx)+"/"+QString::number(imgs.at(idx_img).fnames_extract.size()-1)+")";
+                    +"("+QString::number(idx_ext)+"/"+QString::number(imgs.at(idx_img).fnames_extract.size()-1)+")";
             edit_curext->setText(tmp);
             qDebug()<<"the file to open=["<<imgs[idx_img].fnames_extract.at(tmp_idx)<<"]";
             if(!simple_loadimage_wrapper(*callback, imgs[idx_img].fnames_extract.at(tmp_idx).toStdString().c_str(), image1Dc_tmp, sz_out, outtype))

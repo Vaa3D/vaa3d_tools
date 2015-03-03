@@ -43,6 +43,7 @@ private:
     void updateInputWindow();
     void save(QString fname);
     void keyReleaseEvent(QKeyEvent* event);
+    void keyPressEvent(QKeyEvent* event);
 
 private:
     V3DPluginCallback2 * callback;
@@ -55,6 +56,7 @@ private:
     V3DLONG sz_img[4];
     V3DLONG sz_out[4];
     int intype, outtype;
+    bool keyPressMask;
 
 public:
     QLineEdit *edit_dir,*edit_curimg,*edit_curext;
