@@ -29,7 +29,7 @@ class CropRegionNavigateDialog : public QDialog
     Q_OBJECT
 
 public:
-        CropRegionNavigateDialog(QWidget *parentWidget, long *sz)
+        CropRegionNavigateDialog(QWidget *parentWidget, V3DLONG *sz)
     {
         // create a dialog
         label_rgn = new QLabel(QObject::tr("Choose the Cropped 3D Region "));
