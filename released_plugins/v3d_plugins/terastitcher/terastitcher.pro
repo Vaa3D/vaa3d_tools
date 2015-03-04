@@ -208,7 +208,9 @@ SOURCES += ./src/presentation/QPrefixSuffixLineEdit.cpp
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
 win32{
-    DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/image_stitching/terastitcher
+  #  DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/image_stitching/terastitcher
+    DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
+
 }
 else{
     DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
