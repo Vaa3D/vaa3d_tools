@@ -535,7 +535,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	if(i_warpmode==0)
 	{
 		if(!q_imagewarp_affine(vec_tar,vec_sub,
-				p_img_sub,sz_img_sub,
+				p_img_sub, (long * )(sz_img_sub),
 				p_img_sub2tar))
 		{
 			printf("ERROR: q_imagewarp_affine return false!\n");
@@ -553,7 +553,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	if(i_warpmode==1)
 	{
 		if(!q_imagewarp_tps(vec_tar,vec_sub,
-				p_img_sub,sz_img_sub,
+				p_img_sub,(long *) (sz_img_sub),
 				p_img_sub2tar))
 		{
 			printf("ERROR: q_imagewarp_tps() return false!\n");
