@@ -54,7 +54,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgLis
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
-template <class T> void selectiveEnhancement(const T* data1d,
+template <class T> void selective_Enhancement(const T* data1d,
                                              V3DLONG *in_sz,
                                              unsigned int c,
                                              double sigma,
@@ -437,7 +437,7 @@ void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent)
         {
         case V3D_UINT8:
             callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
-            selectiveEnhancement((unsigned char *)data1d_gf, in_sz, c,sigma,(unsigned char* &)EnahancedImage);
+            selective_Enhancement((unsigned char *)data1d_gf, in_sz, c,sigma,(unsigned char* &)EnahancedImage);
             break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
         }
@@ -3676,7 +3676,7 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
     return true;
 }
 
-template <class T> void selectiveEnhancement(const T* data1d,
+template <class T> void selective_Enhancement(const T* data1d,
                                              V3DLONG *in_sz,
                                              unsigned int c,
                                              double sigma,
