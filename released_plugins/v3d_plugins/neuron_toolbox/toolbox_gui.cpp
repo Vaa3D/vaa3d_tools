@@ -314,5 +314,6 @@ bool SelectPluginDlg::freeMem()
 	if (paras) {delete paras; paras=NULL;}
 	
 	accept();
+    return true;
 }
 
