@@ -34,7 +34,11 @@
 
 #include "arthurwidgets.h"
 // multithreads
-#include <pthread.h>
+#ifdef _WIN32
+#else
+    #include <pthread.h>
+#endif
+
 // interface v3d
 #include <QtGui>
 #include <stdio.h>

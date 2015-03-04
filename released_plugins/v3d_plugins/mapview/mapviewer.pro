@@ -20,6 +20,7 @@ HEADERS      += mg_image_lib11.h
 HEADERS      += stackutil-11.h
 HEADERS      += ../istitch/y_imglib.h
 
+
 HEADERS      += mapviewer.h \
 		$$V3DMAINDIR/basic_c_fun/mg_utilities.h 
 
@@ -29,9 +30,21 @@ SOURCES       += mapviewer.cpp \
 		$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp 
 SOURCES      += ../../../v3d_main/basic_c_fun/v3d_message.cpp
 
-LIBS     += -lm -lpthread
-LIBS	    += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
-        += -L$$QTDIR/demos/shared/
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$V3DMAINDIR/common_lib/winlib64 -llibtiff
+    } else {
+    LIBS     += -L$$V3DMAINDIR/common_lib/winlib -llibtiff
+    }
+}
+
+unix {
+    LIBS     += -lm -lpthread
+    LIBS     += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
+}
+
+
+LIBS      += -L$$QTDIR/demos/shared/
 #LIBS += -framework CoreServices
 TARGET        = $$qtLibraryTarget(mapviewer)
 DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_stitching/Map_View

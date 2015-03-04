@@ -365,7 +365,7 @@ int CopyData_resamp_raw(T1 *apsInput, T2 *aspOutput,V3DLONG channel_size, V3DLON
 			}
 		}
 	}
-	
+    return 1;
 }
 template <class T1, class T2> 
 int CopyData_resamp_tc(T1 *apsInput, T2 *aspOutput,V3DLONG * sz,V3DLONG * szo,
@@ -425,7 +425,7 @@ int CopyData_resamp_tc(T1 *apsInput, T2 *aspOutput,V3DLONG * sz,V3DLONG * szo,
 			}
 		}
 	}
-	
+    return 1;
 }
 
 template <class T> 
@@ -503,7 +503,7 @@ int CopyData_tc(T *apsInput, T *aspOutput,V3DLONG * szo,
 			}
 		}
 	}
-	
+    return 1;
 }
 
 

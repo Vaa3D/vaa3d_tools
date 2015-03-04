@@ -1106,9 +1106,9 @@ int loadRaw2Stack_resamping(char * filename, unsigned char * & img, V3DLONG * & 
 	//V3DLONG tmpw = sz[0]/resampling_size;
 	V3DLONG tmpw = sz[0];
 	
-	V3DLONG tmph = ceil(sz[1]/resampling_size);
+    V3DLONG tmph = ceilf(sz[1]/resampling_size);
 	
-	V3DLONG tmpz = ceil(sz[2]/resampling_size);
+    V3DLONG tmpz = ceilf(sz[2]/resampling_size);
 	
 	printf("tw=%ld th=%ld tz=%ld\n",tmpw,tmph,tmpz);	
 	
@@ -1143,8 +1143,8 @@ int loadRaw2Stack_resamping(char * filename, unsigned char * & img, V3DLONG * & 
 				rewind(fid);
 				fseek(fid, head+(c*pgsz1 + k*pgsz2 + j*pgsz3)*unitSize, SEEK_SET);
 				ftell(fid);	
-				V3DLONG kk = ceil(k/resampling_size);
-				V3DLONG jj = ceil(j/resampling_size);
+                V3DLONG kk = ceilf(k/resampling_size);
+                V3DLONG jj = ceilf(j/resampling_size);
 				fread(img + (c*cn + kk*kn + jj*tmpw)*unitSize,unitSize,tmpw,fid);
 				//printf("kk=%ld jj=%ld\n",kk,jj);
 
@@ -1790,6 +1790,7 @@ int get_channel_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG sx, V3D
 	ftell(fid);
 	fseek (fid, (channelid * sx*sy*sz)*unitSize, SEEK_CUR);
 	ftell(fid);	
+    return 1;
 }
 int get_zslice_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid, V3DLONG sx, V3DLONG sy, V3DLONG sz,V3DLONG sc,V3DLONG unitSize)
 {
@@ -1798,6 +1799,7 @@ int get_zslice_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid, V3D
 	ftell(fid);
 	fseek (fid, (channelid * sx*sy*sz + zid *sx*sy) *unitSize, SEEK_CUR);
 	ftell(fid);	
+    return 1;
 }
 int get_c_z_y_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid,V3DLONG yid, V3DLONG sx, V3DLONG sy, V3DLONG sz,V3DLONG sc,V3DLONG unitSize)
 {
@@ -1805,7 +1807,8 @@ int get_c_z_y_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid,V3DLO
 	fseek (fid, head, SEEK_SET);
 	ftell(fid);
 	fseek (fid, (channelid * sx*sy*sz + zid *sx*sy + yid *sx) *unitSize, SEEK_CUR);
-	ftell(fid);	
+    ftell(fid);
+    return 1;
 }
 int get_c_z_y_x_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid,V3DLONG yid,V3DLONG xid, V3DLONG sx, V3DLONG sy, V3DLONG sz,V3DLONG sc,V3DLONG unitSize)
 {
@@ -1814,6 +1817,7 @@ int get_c_z_y_x_point(FILE * fid,V3DLONG head,V3DLONG channelid, V3DLONG zid,V3D
 	ftell(fid);
 	fseek (fid, (channelid * sx*sy*sz + zid *sx*sy + yid *sx + xid) *unitSize, SEEK_CUR);
 	ftell(fid);	
+    return 1;
 }
 int loadRaw2Stack(char * filename, unsigned char * & img, V3DLONG * & sz, int & datatype, int chan_id_to_load) //this is the function of 4-byte raw format.
 {
