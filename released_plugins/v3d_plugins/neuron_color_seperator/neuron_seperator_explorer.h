@@ -6,7 +6,8 @@
 #include <v3d_interface.h>
 
 #define NAME_INWIN "Neuron_Seperator_Result_Explorer_OrginalImage"
-#define NAME_OUTWIN "Neuron_Seperator_Result_Explorer_SeperateNeuron"
+#define NAME_OUTWIN "Neuron_Seperator_Result_Explorer_OverlapView"
+#define NAME_EXTWIN "Neuron_Seperator_Result_Explorer_SeperateNeuron"
 
 typedef struct{
     int status; //0: not checked; 1: checked; 2: outlier
@@ -25,6 +26,7 @@ signals:
 
 public slots:
     void acceptExt();
+    void weakAcceptExt();
     void rejectExt();
     void rejectImg();
     void needRerunImg();
@@ -41,6 +43,7 @@ private:
     void updateAll();
     void updateOutputWindow();
     void updateInputWindow();
+    void updateExtractWindow(unsigned char *image1Dc, V3DLONG size[4], int type);
     void save(QString fname);
     void keyReleaseEvent(QKeyEvent* event);
     void keyPressEvent(QKeyEvent* event);
@@ -60,7 +63,7 @@ private:
 
 public:
     QLineEdit *edit_dir,*edit_curimg,*edit_curext;
-    QPushButton *btn_acceptExt, *btn_rejectExt, *btn_rejectImg;
+    QPushButton *btn_acceptExt, *btn_rejectExt, *btn_rejectImg, *btn_weakAcceptExt;
     QPushButton *btn_preExt, *btn_preImg, *btn_nextImg, *btn_rerunImg;
     QPushButton *btn_save, *btn_quit, *btn_screenshot;
     QPushButton *btn_loadDir, *btn_loadPoj;

@@ -49,12 +49,14 @@ void neuron_seperator_explorer::creat()
 
     QLabel* label_ext = new QLabel(QObject::tr("Checking Extraction:"));
     gridLayout->addWidget(label_ext,5,0,1,2);
-    btn_acceptExt = new QPushButton("Accept and Next (0)"); btn_acceptExt->setAutoDefault(false);
+    btn_acceptExt = new QPushButton("Accept & Next (0)"); btn_acceptExt->setAutoDefault(false);
     gridLayout->addWidget(btn_acceptExt,5,5,1,1);
-    btn_rejectExt = new QPushButton("Reject and Next (Enter)"); btn_rejectExt->setAutoDefault(false);
-    gridLayout->addWidget(btn_rejectExt,5,4,1,1);
+    btn_weakAcceptExt = new QPushButton("Weak Accept & Next (.)"); btn_weakAcceptExt->setAutoDefault(false);
+    gridLayout->addWidget(btn_weakAcceptExt,5,4,1,1);
+    btn_rejectExt = new QPushButton("Reject & Next (Enter)"); btn_rejectExt->setAutoDefault(false);
+    gridLayout->addWidget(btn_rejectExt,5,3,1,1);
     btn_preExt = new QPushButton("Previous (1)"); btn_preExt->setAutoDefault(false);
-    gridLayout->addWidget(btn_preExt,5,3,1,1);
+    gridLayout->addWidget(btn_preExt,5,2,1,1);
     edit_curext = new QLineEdit();
     edit_curext->setText(""); edit_curext->setReadOnly(true);
     gridLayout->addWidget(edit_curext,6,0,1,6);
@@ -148,6 +150,9 @@ void  neuron_seperator_explorer::keyReleaseEvent(QKeyEvent* event)
     if(event->key() == Qt::Key_0){
         acceptExt();
     }
+    if(event->key() == Qt::Key_Period){
+        weakAcceptExt();
+    }
     if(event->key() == Qt::Key_1){
         preExt();
     }
@@ -182,6 +187,32 @@ void neuron_seperator_explorer::acceptExt()
         imgs[idx_img].status = 1;
 
     this->imgs[idx_img].status_extract[idx_ext]=1;
+
+    idx_ext++;
+    if(idx_ext>=this->imgs.at(idx_img).fnames_extract.size()){
+        imgs[idx_img].status = 1;
+        if(idx_img<this->imgs.size()-1){
+            idx_ext=0;
+            idx_img++;
+        }else{
+            idx_ext--;
+        }
+    }
+
+    updateAll();
+}
+
+void neuron_seperator_explorer::weakAcceptExt()
+{
+    if(idx_img>=this->imgs.size())
+        return;
+    if(idx_img<0)
+        return;
+
+    if(idx_ext==0)
+        imgs[idx_img].status = 1;
+
+    this->imgs[idx_img].status_extract[idx_ext]=3;
 
     idx_ext++;
     if(idx_ext>=this->imgs.at(idx_img).fnames_extract.size()){
@@ -321,6 +352,7 @@ void neuron_seperator_explorer::save(QString fname_output)
     QString fname_outlierImg=fname_output+"_img_outlier.txt";
     QString fname_rerunImg=fname_output+"_img_rerun.txt";
     QString fname_acceptExtract=fname_output+"_extract_accept.txt";
+    QString fname_weakAcceptExtract=fname_output+"_extract_weakAccept.txt";
     QString fname_rejectExtract=fname_output+"_extract_reject.txt";
 
     ofstream fp_acceptAno(fname_acceptAno.toStdString().c_str());
@@ -353,6 +385,11 @@ void neuron_seperator_explorer::save(QString fname_output)
         v3d_msg("error: failed to open "+fname_acceptExtract);
         return;
     }
+    ofstream fp_weakAcceptExtract(fname_weakAcceptExtract.toStdString().c_str());
+    if(!fp_weakAcceptExtract.is_open()){
+        v3d_msg("error: failed to open "+fname_weakAcceptExtract);
+        return;
+    }
     ofstream fp_rejectExtract(fname_rejectExtract.toStdString().c_str());
     if(!fp_rejectExtract.is_open()){
         v3d_msg("error: failed to open "+fname_rejectExtract);
@@ -379,6 +416,9 @@ void neuron_seperator_explorer::save(QString fname_output)
                 }
                 if(imgs.at(i).status_extract.at(j)==2){
                     fp_rejectExtract<<imgs.at(i).fnames_extract.at(j).toStdString().c_str()<<endl;
+                }
+                if(imgs.at(i).status_extract.at(j)==3){
+                    fp_weakAcceptExtract<<imgs.at(i).fnames_extract.at(j).toStdString().c_str()<<endl;
                 }
             }
         }
@@ -518,6 +558,7 @@ void neuron_seperator_explorer::updateAll()
 
     //reload background image and push for visualization
     if(pre_img!=idx_img){
+        qDebug()<<"cojoc: loading original image";
         QString tmp=imgs[idx_img].fnames_extract.at(0)
                 +"("+QString::number(idx_img+1)+"/"+QString::number(imgs.size())+")";
         edit_curimg->setText(tmp);
@@ -561,42 +602,57 @@ void neuron_seperator_explorer::updateAll()
                 }
             }
         }
-        delete[] image1Dc_tmp;
 
         updateOutputWindow();
+        updateExtractWindow(image1Dc_tmp, sz_out, outtype);
 
+        delete[] image1Dc_tmp;
         pre_ext=idx_ext;
     }else if(idx_ext==0){
         qDebug()<<"cojoc: appending seperate image";
         unsigned char *image1Dc_tmp=0;
         memcpy(image1Dc_out,image1Dc_in,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
-        for(int tmp_idx=1; tmp_idx<imgs[idx_img].fnames_extract.size(); tmp_idx++){
-            QString tmp=imgs[idx_img].fnames_extract.at(tmp_idx)
-                    +"("+QString::number(idx_ext)+"/"+QString::number(imgs.at(idx_img).fnames_extract.size()-1)+")";
-            edit_curext->setText(tmp);
-            qDebug()<<"the file to open=["<<imgs[idx_img].fnames_extract.at(tmp_idx)<<"]";
-            if(!simple_loadimage_wrapper(*callback, imgs[idx_img].fnames_extract.at(tmp_idx).toStdString().c_str(), image1Dc_tmp, sz_out, outtype))
-            {
-              v3d_msg("load image "+imgs[idx_img].fnames_extract.at(tmp_idx)+" error!");
-              return;
-            }
-            if(sz_img[0]!=sz_out[0]) continue;
-            if(sz_img[1]!=sz_out[1]) continue;
-            if(sz_img[2]!=sz_out[2]) continue;
-            if(sz_out[3]!=1) continue;
-            for(V3DLONG vid=0; vid<sz_img[0]*sz_img[1]*sz_img[2]; vid++){
-                if(image1Dc_tmp[vid]!=0){
-                    for(V3DLONG cid=0; cid<sz_img[3]; cid++){
-                        int tmp=image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]+image1Dc_tmp[vid];
-                        image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]=tmp<255?tmp:255;
+        if(this->imgs.at(idx_img).fnames_extract.size()>1){
+            for(int tmp_idx=1; tmp_idx<imgs[idx_img].fnames_extract.size(); tmp_idx++){
+                QString tmp=imgs[idx_img].fnames_extract.at(tmp_idx)
+                        +"("+QString::number(idx_ext)+"/"+QString::number(imgs.at(idx_img).fnames_extract.size()-1)+")";
+                edit_curext->setText(tmp);
+                qDebug()<<"the file to open=["<<imgs[idx_img].fnames_extract.at(tmp_idx)<<"]";
+                if(!simple_loadimage_wrapper(*callback, imgs[idx_img].fnames_extract.at(tmp_idx).toStdString().c_str(), image1Dc_tmp, sz_out, outtype))
+                {
+                  v3d_msg("load image "+imgs[idx_img].fnames_extract.at(tmp_idx)+" error!");
+                  return;
+                }
+                if(sz_img[0]!=sz_out[0]) continue;
+                if(sz_img[1]!=sz_out[1]) continue;
+                if(sz_img[2]!=sz_out[2]) continue;
+                if(sz_out[3]!=1) continue;
+                for(V3DLONG vid=0; vid<sz_img[0]*sz_img[1]*sz_img[2]; vid++){
+                    if(image1Dc_tmp[vid]!=0){
+                        for(V3DLONG cid=0; cid<sz_img[3]; cid++){
+                            int tmp=image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]+image1Dc_tmp[vid];
+                            image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]=tmp<255?tmp:255;
+                        }
                     }
                 }
             }
+        }else{
+            image1Dc_tmp=new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
+            sz_out[0]=sz_img[0];
+            sz_out[1]=sz_img[1];
+            sz_out[2]=sz_img[2];
+            sz_out[3]=1;
+            outtype=1;
+
+            QString tmp="(0/0)";
+            edit_curext->setText(tmp);
         }
-        delete[] image1Dc_tmp;
 
         updateOutputWindow();
+        memset(image1Dc_tmp, 0, sz_out[0]*sz_out[1]*sz_out[2]*sz_out[3]*outtype);
+        updateExtractWindow(image1Dc_tmp, sz_out, outtype);
 
+        delete[] image1Dc_tmp;
         pre_ext=idx_ext;
     }
     else{
@@ -611,6 +667,7 @@ void neuron_seperator_explorer::checkButton()
 {
     if(imgs.size()==0){
         btn_acceptExt->setEnabled(false);
+        btn_weakAcceptExt->setEnabled(false);
         btn_nextImg->setEnabled(false);
         btn_preExt->setEnabled(false);
         btn_preImg->setEnabled(false);
@@ -621,6 +678,7 @@ void neuron_seperator_explorer::checkButton()
         btn_screenshot->setEnabled(false);
     }else{
         btn_acceptExt->setEnabled(true);
+        btn_weakAcceptExt->setEnabled(true);
         btn_nextImg->setEnabled(true);
         btn_preExt->setEnabled(true);
         btn_preImg->setEnabled(true);
@@ -637,6 +695,7 @@ void neuron_seperator_explorer::checkButton()
             }
             if(idx_ext>=imgs.at(idx_img).fnames_extract.size()-1){
                 btn_acceptExt->setEnabled(false);
+                btn_weakAcceptExt->setEnabled(false);
                 btn_rejectExt->setEnabled(false);
             }
         }
@@ -727,6 +786,48 @@ void neuron_seperator_explorer::updateOutputWindow()
             for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
             {
                 if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
+                {
+                    if(!callback->setImage(v3dhandleList_current[i], &image4d)){
+                        v3d_msg("Failed to update input image");
+                    }
+                    callback->updateImageWindow(v3dhandleList_current[i]);
+                }
+            }
+        }
+    }
+}
+
+void neuron_seperator_explorer::updateExtractWindow(unsigned char *image1Dc, V3DLONG size[4], int type)
+{
+    //search in open windows
+    bool winfound=false;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_EXTWIN))
+        {
+            winfound=true;
+        }
+    }
+    if(image1Dc != 0){ //image loaded
+        //generate a copy and show it
+        Image4DSimple image4d;
+        image4d.setFileName(this->imgs.at(idx_img).fnames_extract.at(idx_ext).toStdString().c_str());
+        V3DLONG size_page = size[0]*size[1]*size[2]*size[3];
+        unsigned char* image1Dc_input=new unsigned char[size_page*type];
+        memcpy(image1Dc_input, image1Dc, size_page*type);
+        image4d.setData(image1Dc_input, size[0], size[1], size[2], size[3], (ImagePixelType)type);
+
+        if(!winfound){ //open a window if none is open
+            v3dhandle v3dhandle_main=callback->newImageWindow();
+            callback->setImage(v3dhandle_main, &image4d);
+            callback->setImageName(v3dhandle_main, NAME_EXTWIN);
+            callback->updateImageWindow(v3dhandle_main);
+        }else{
+            //update the image
+            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+            {
+                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_EXTWIN))
                 {
                     if(!callback->setImage(v3dhandleList_current[i], &image4d)){
                         v3d_msg("Failed to update input image");
