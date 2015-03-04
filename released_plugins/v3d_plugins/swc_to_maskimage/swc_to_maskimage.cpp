@@ -75,7 +75,7 @@ void SWC_TO_MASKIMAGElugin::domenu(const QString &menu_name, V3DPluginCallback2 
 	{
         v3d_msg("(version 1.0)<p> <b>'swc_to_maskimage'</b> converts a swc file to a mask image where the masked areas are 255 while the others are 0.<br>"
                 "<b>'swc_filter'</b> directly uses a swc file to mask an image. The swc masked area in the image are non-zeros while other areas are set to 0.<p>"
-                "The tool is developed by Yinan Wan and reimplemented by Yujie Li. Further question please contact yujie.jade@gmail.com");
+                "The tool is developed by Jingzhu Yang and reimplemented by Yujie Li. Further question please contact yujie.jade@gmail.com");
     }
 
 }
