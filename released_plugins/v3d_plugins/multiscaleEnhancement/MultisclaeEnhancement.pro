@@ -14,9 +14,14 @@ macx{
 #    CONFIG += x86_64
 }
 
-win32{
-    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
-    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+    } else {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
+    }
 }
 
 unix:!macx {
@@ -35,6 +40,8 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
 HEADERS	+= MultisclaeEnhancement_plugin.h
 HEADERS += ../neurontracing_vn2/vn_imgpreprocess.h
+HEADERS += $$V3DMAINPATH/basic_c_fun/vcdiff.h
+
 
 
 SOURCES	+= MultisclaeEnhancement_plugin.cpp
@@ -45,6 +52,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+=  ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
 SOURCES += ../neurontracing_vn2/vn_imgpreprocess.cpp
+SOURCES      += $$V3DMAINPATH/basic_c_fun/vcdiff.cpp
 
 
 SOURCES += ../neurontracing_vn2/app2/my_surf_objs.cpp
