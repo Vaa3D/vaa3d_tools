@@ -13,6 +13,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
 void BoundNeuronCoordinates(NeuronTree & neuron, double & output_xmin,double & output_xmax,
                             double & output_ymin,double & output_ymax,double & output_zmin,double & output_zmax);
 QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 class filter_dialog:public QDialog
 {
@@ -29,8 +31,7 @@ private:
     int intype;
     unsigned char *image_data;
     NeuronTree neuron;
-    void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
-    void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+
     void swc_filter_image();
 
     QGridLayout *mygridLayout;

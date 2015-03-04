@@ -18,7 +18,6 @@ using namespace std;
 static filter_dialog *dialog=0;
 
 
-
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(swc_to_maskimage, SWC_TO_MASKIMAGElugin);
@@ -51,11 +50,11 @@ bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArg
     {
         printHelp();
     }
-//    else if (func_name==tr("TOOLBOXswc_to_maskimage"))
-//    {
-//        swc_to_maskimage_toolbox(input, callback, parent);
-//        return true;
-//    }
+    else if (func_name==tr("swc_filter"))
+    {
+        swc_filter_image(callback,input,output);
+        return true;
+    }
     return false;
 }
 
@@ -76,7 +75,7 @@ void SWC_TO_MASKIMAGElugin::domenu(const QString &menu_name, V3DPluginCallback2 
 	{
         v3d_msg("(version 1.0)<p> <b>'swc_to_maskimage'</b> converts a swc file to a mask image where the masked areas are 255 while the others are 0.<br>"
                 "<b>'swc_filter'</b> directly uses a swc file to mask an image. The swc masked area in the image are non-zeros while other areas are set to 0.<p>"
-                "The tool is developed by ** and reimplemented by Yujie Li. Further question please contact yujie.jade@gmail.com");
+                "The tool is developed by Yinan Wan and reimplemented by Yujie Li. Further question please contact yujie.jade@gmail.com");
     }
 
 }
@@ -206,7 +205,7 @@ bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & in
         p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
         if (p_cur->r<=0)
         {
-            v3d_msg("You have illeagal radius values. Check your data.");
+            qDebug()<<"You have illeagal radius values. Check your data.";
             return false;
         }
      }
@@ -243,7 +242,7 @@ bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & in
      else
      {
         v3d_msg("The input image size is smaller than the default size of swc file. You might only"
-                " get part of the swc mask");
+                " get part of the swc mask",0);
         for (V3DLONG k1 = 0; k1 < sz; k1++){
             for(V3DLONG j1 = 0; j1 < sy; j1++){
                for(V3DLONG i1 = 0; i1 < sx; i1++){
@@ -261,8 +260,117 @@ bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & in
     return true;
 }
 
-//void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent)
-//{
+void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+
+    if(infiles.size() != 2) return;
+
+    QString qs_input_image(infiles[0]);
+    QString qs_input_swc(infiles[1]);
+
+    unsigned char *image_data=0;
+    V3DLONG sz_img[4];
+    int intype=0;
+
+    if (!qs_input_image.isEmpty())
+    {
+        if (!simple_loadimage_wrapper(callback, qs_input_image.toStdString().c_str(), image_data, sz_img, intype))
+        {
+            qDebug()<<"Loading error";
+            return;
+        }
+
+        if (sz_img[3]>3)
+        {
+            sz_img[3]=3;
+            v3d_msg("More than 3 channels were loaded."
+                                     "The first 3 channel will be applied for analysis.",0);
+            return;
+        }
+
+        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+        if(intype!=1)
+        {
+            if (intype == 2) //V3D_UINT16;
+            {
+                convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+            }
+            else if(intype == 4) //V3D_FLOAT32;
+            {
+                convert2UINT8((float*)image_data, image_data, size_tmp);
+            }
+            else
+            {
+                v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+                return;
+            }
+        }
+    }
+
+    NeuronTree neuron = readSWC_file(qs_input_swc);
+    NeuronSWC *p_cur=0;
+    for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+    {
+        p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+        if (p_cur->r<=0)
+        {
+            qDebug()<<"You have illeagal radius values. Check your data.";
+            return;
+        }
+     }
+    QString qs_output = outfiles.empty() ? qs_input_image + "_out.raw" : QString(outfiles[0]);
+    double x_min,x_max,y_min,y_max,z_min,z_max;
+    x_min=x_max=y_min=y_max=z_min=z_max=0;
+    V3DLONG sx,sy,sz;
+    unsigned char* pImMask = 0;
+    V3DLONG nx,ny,nz;
+    nx=sz_img[0]; ny=sz_img[1]; nz=sz_img[2];
+
+    BoundNeuronCoordinates(neuron,x_min,x_max,y_min,y_max,z_min,z_max);
+    sx=x_max;
+    sy=y_max;
+    sz=z_max;
+    V3DLONG stacksz = sx*sy*sz;
+    pImMask = new unsigned char [stacksz];
+    memset(pImMask,0,stacksz*sizeof(unsigned char));
+    ComputemaskImage(neuron, pImMask, sx, sy, sz);
+    unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
+    memcpy(image_filter,image_data,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
+
+    for (V3DLONG k1 = 0; k1 < sz; k1++){
+        for(V3DLONG j1 = 0; j1 < sy; j1++){
+            for(V3DLONG i1 = 0; i1 < sx; i1++){
+                 if ((i1>nx-1)||(j1>ny-1)||(k1>nz-1)) continue;
+                 if (pImMask[k1*sx*sy + j1*sx +i1]>0) continue;
+
+                 image_filter[k1*nx*ny + j1*nx +i1]=0;
+                 if (sz_img[3]>1){
+                 image_filter[nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
+                 }
+                 if (sz_img[3]>2){
+                 image_filter[2*nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
+                 }
+             }
+         }
+     }
+
+    if (!simple_saveimage_wrapper(callback, qPrintable(qs_output), image_filter,sz_img, V3D_UINT8))
+    {
+        v3d_msg("File saving error");
+        return;
+    }
+
+    if (pImMask!=0) {delete []pImMask; pImMask=0;}
+    if (image_filter!=0) {delete []image_filter; image_filter=0;}
+    if (image_data!=0) {delete []image_data; image_data=0;}
+
+}
+
 //	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *) (input.at(0).p);
 //	NeuronTree neuron = paras->nt;
 
@@ -363,7 +471,9 @@ bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & in
 void printHelp()
 {
 	printf("\nswc to mask image using sphere unit\n");
-	printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_to_maskimage -i <intput.swc> [-p <sz0> <sz1> <sz2>] [-o <output_image.raw>]\n");
+    printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_to_maskimage -i <input.swc> [-p <sz0> <sz1> <sz2>] [-o <output_image.raw>]\n");
+    printf("\nswc_filter -needs two input- 1) image 2) swc file \n");
+    printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_filter [-i <input.tif> <input.swc>] [-o <output_image.raw>]\n");
 }
 
 

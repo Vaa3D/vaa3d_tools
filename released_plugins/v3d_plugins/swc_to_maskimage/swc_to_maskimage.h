@@ -32,9 +32,8 @@ public:
 };
 
 void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent);
-bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-
-//void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent);
+bool swc_to_maskimage(V3DPluginCallback2 & callback,const V3DPluginArgList & input, V3DPluginArgList & output);
+void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp();
 
 
@@ -52,15 +51,14 @@ public:
 	QSpinBox* coord_y;
 	QSpinBox* coord_z;
     QDialog mydialog;
-
 	QPushButton* ok;
 	QPushButton* cancel;
 
 public:
 	SetsizeDialog(V3DPluginCallback2 &cb, QWidget *parent)
 	{
-		Image4DSimple* image = cb.getImage(cb.currentImageWindow());
-		QString imageName = cb.getImageName(cb.currentImageWindow());
+//		Image4DSimple* image = cb.getImage(cb.currentImageWindow());
+//		QString imageName = cb.getImageName(cb.currentImageWindow());
 
         info= new QLabel;
         info->setText("The minimum dimensions of generated mask image are"
@@ -96,7 +94,6 @@ public:
         gridLayout->addWidget(cancel, 7,1,1,1); gridLayout->addWidget(ok, 7,0,1,1);
 		setLayout(gridLayout);
 		setWindowTitle(QString("Change parameters"));
-        //this->setFixedWidth(600);
 
 		connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));

@@ -147,57 +147,7 @@ void filter_dialog::loadImage()
     }
 }
 
-void filter_dialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
-{
-    unsigned short* pPre = (unsigned short*)pre1d;
-    unsigned short max_v=0, min_v = 255;
-    for(V3DLONG i=0; i<imsz; i++)
-    {
-        if(max_v<pPre[i]) max_v = pPre[i];
-        if(min_v>pPre[i]) min_v = pPre[i];
-    }
-    max_v -= min_v;
-    if(max_v>0)
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
-        }
-    }
-    else
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) pPre[i];
-        }
-    }
-}
 
-void filter_dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
-{
-    float* pPre = (float*)pre1d;
-    float max_v=0, min_v = 65535;
-    for(V3DLONG i=0; i<imsz; i++)
-    {
-        if(max_v<pPre[i]) max_v = pPre[i];
-        if(min_v>pPre[i]) min_v = pPre[i];
-    }
-    max_v -= min_v;
-    if(max_v>0)
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
-        }
-    }
-    else
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) pPre[i];
-        }
-    }
-}
 
 void filter_dialog::swc_filter_image()
 {
@@ -249,7 +199,10 @@ void filter_dialog::swc_filter_image()
     callback->updateImageWindow(newwin_out);
     callback->open3DWindow(newwin);
     callback->open3DWindow(newwin_out);
+
+    if (pImMask!=0) {delete []pImMask; pImMask=0;}
 }
+
 
 
 QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons)
@@ -449,4 +402,56 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         }
     }
 
+}
+
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    unsigned short* pPre = (unsigned short*)pre1d;
+    unsigned short max_v=0, min_v = 255;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        if(max_v<pPre[i]) max_v = pPre[i];
+        if(min_v>pPre[i]) min_v = pPre[i];
+    }
+    max_v -= min_v;
+    if(max_v>0)
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+        }
+    }
+    else
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) pPre[i];
+        }
+    }
+}
+
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    float* pPre = (float*)pre1d;
+    float max_v=0, min_v = 65535;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        if(max_v<pPre[i]) max_v = pPre[i];
+        if(min_v>pPre[i]) min_v = pPre[i];
+    }
+    max_v -= min_v;
+    if(max_v>0)
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+        }
+    }
+    else
+    {
+        for(V3DLONG i=0; i<imsz; i++)
+        {
+            pPost[i] = (unsigned char) pPre[i];
+        }
+    }
 }
