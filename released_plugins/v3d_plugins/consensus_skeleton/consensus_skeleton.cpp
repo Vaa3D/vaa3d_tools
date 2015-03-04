@@ -82,11 +82,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
 	printf("(2). generating confidence graph.\n");
 	double * adjMatrix;
-	long* plist;
+	V3DLONG * plist;
 //	n_sampling = clusterCen.size();
 	try{
 		adjMatrix = new double[n_sampling*n_sampling];
-		plist = new long[n_sampling];
+		plist = new V3DLONG[n_sampling];
 		for (V3DLONG i=0;i<n_sampling*n_sampling;i++) adjMatrix[i] = 0;
 	}
 	catch (...)

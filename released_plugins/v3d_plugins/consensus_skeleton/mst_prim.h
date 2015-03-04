@@ -22,15 +22,15 @@ const int ColorRed = 3;
 class PrimMSTClass //the Prim's MST algorithm
 {
 public:
-  long nnode;
+  V3DLONG nnode;
 
   double * adjMatrix1d,  ** adjMatrix2d;
 
   int * nodeColor; //decide if a node has been visited or not
-  long * nodeParent; 
+  V3DLONG * nodeParent; 
 
-  void dosearch(long r);//r -- root node
-  int allocatememory(long nodenum);
+  void dosearch(V3DLONG r);//r -- root node
+  int allocatememory(V3DLONG nodenum);
   void delocatememory();
 
   int b_disp;
@@ -49,7 +49,7 @@ public:
   }
 };
 
-void PrimMSTClass::dosearch(long r) //r -- root node
+void PrimMSTClass::dosearch(V3DLONG r) //r -- root node
 {
 	if (nnode<=0 || !adjMatrix1d || !adjMatrix2d) {
 		printf("The input data has not been set yet!\n");
@@ -61,8 +61,8 @@ void PrimMSTClass::dosearch(long r) //r -- root node
 	r = (r<0)?0:r;
 	r = (r>nnode)?nnode-1:r;
 
-	long i,j;
-	long nleftnode;
+	V3DLONG i,j;
+	V3DLONG nleftnode;
 
 	// initialization
 
@@ -77,11 +77,11 @@ void PrimMSTClass::dosearch(long r) //r -- root node
 	// begin BFS loop
 
 	nleftnode = nnode-1;
-	long par,child;
+	V3DLONG par,child;
 	while (nleftnode>0) {
 		par = -1;
 		double max = 0;
-		long i,j;
+		V3DLONG i,j;
 		for (i=0;i<nnode;i++) {
 			if (nodeColor[i]==ColorBlack) {
 				for (j=0;j<nnode;j++) {
@@ -110,7 +110,7 @@ void PrimMSTClass::dosearch(long r) //r -- root node
 	return;
 }//%================ end of MST_dosearch()=================
 
-int PrimMSTClass::allocatememory(long nodenum) 
+int PrimMSTClass::allocatememory(V3DLONG nodenum) 
 {
 	if (nodenum>0) {
 		nnode = nodenum;
@@ -122,7 +122,7 @@ int PrimMSTClass::allocatememory(long nodenum)
 		try{
 			nodeColor = new int[nnode];
 			adjMatrix2d = new double*[nnode];
-			nodeParent = new long[nnode];
+			nodeParent = new V3DLONG[nnode];
 		}
 		catch(...){
 			b_memory = 0;
@@ -144,7 +144,7 @@ void PrimMSTClass::delocatememory()
 
 //main program
 
-void mst_prim(double* adj_matrix, long n_node, long* plist, long rootnode)
+void mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnode)
 {
 	//copy data
 
@@ -155,7 +155,7 @@ void mst_prim(double* adj_matrix, long n_node, long* plist, long rootnode)
 	pMST->allocatememory(pMST->nnode);
 
 	pMST->adjMatrix1d = adj_matrix;
-	for (long i=0;i<n_node;i++)
+	for (V3DLONG i=0;i<n_node;i++)
 		pMST->adjMatrix2d[i] = adj_matrix+i*n_node;
 
 	//begin computation
@@ -163,7 +163,7 @@ void mst_prim(double* adj_matrix, long n_node, long* plist, long rootnode)
 
 	//create the Matlab structure array
 
-	for (long i=0;i<pMST->nnode;i++) {
+	for (V3DLONG i=0;i<pMST->nnode;i++) {
 		plist[i] = pMST->nodeParent[i];
 	}
 
