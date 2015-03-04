@@ -13,11 +13,15 @@ INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
 unix {
     LIBS         += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
      }
-win32:contains(QMAKE_HOST.arch, x86_64){   
+
+
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
     LIBS         += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
-     } else{
+    } else {
     LIBS         += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
-     }
+    }
+}
 
 HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
