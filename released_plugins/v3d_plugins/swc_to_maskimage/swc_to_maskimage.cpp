@@ -30,25 +30,27 @@ QStringList SWC_TO_MASKIMAGElugin::menulist() const
 {
     return QStringList()
     <<tr("swc_to_maskimage")
-	<<tr("maskimage filter")
-	<<tr("Help");
+    <<tr("swc_filter")
+    <<tr("About");
+
 }
 QStringList SWC_TO_MASKIMAGElugin::funclist() const
 {
 	return QStringList()
 	<<tr("swc_to_maskimage")
+    <<tr("swc_filter")
     <<tr("Help");
 }
 bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-//	if (func_name==tr("swc_to_maskimage"))
-//	{
-//        swc_to_maskimage(callback, input, output);
-//	}
-//	else if (func_name==tr("help"))
-//	{
-//		printHelp();
-//	}
+    if (func_name==tr("swc_to_maskimage"))
+    {
+        swc_to_maskimage(callback, input, output);
+    }
+    else if (func_name==tr("Help"))
+    {
+        printHelp();
+    }
 //    else if (func_name==tr("TOOLBOXswc_to_maskimage"))
 //    {
 //        swc_to_maskimage_toolbox(input, callback, parent);
@@ -67,13 +69,14 @@ void SWC_TO_MASKIMAGElugin::domenu(const QString &menu_name, V3DPluginCallback2 
     else if (menu_name == tr("swc_filter"))
     {
         dialog=new filter_dialog(&callback);
-        dialog->setWindowTitle("Mask_image_filter");
+        dialog->setWindowTitle("swc_filter");
         dialog->show();
     }
-	else if (menu_name == tr("Help"))
+    else if (menu_name == tr("About"))
 	{
-        v3d_msg("(version 1.0)<br> <b>'swc_to_maskimage'</b> convert a swc file to a mask image where the masked areas are 255 while the others are 0.<br>"
-                "<b>'swc_filter'</b> directly uses a swc file to mask an image. The swc masked area in the image are non-zeros while other areas are set to 0.");
+        v3d_msg("(version 1.0)<p> <b>'swc_to_maskimage'</b> converts a swc file to a mask image where the masked areas are 255 while the others are 0.<br>"
+                "<b>'swc_filter'</b> directly uses a swc file to mask an image. The swc masked area in the image are non-zeros while other areas are set to 0.<p>"
+                "The tool is developed by ** and reimplemented by Yujie Li. Further question please contact yujie.jade@gmail.com");
     }
 
 }
@@ -170,8 +173,9 @@ void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent)
     tmp.setData(pData, nx, ny, nz, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, &tmp);
-    callback.setImageName(newwin, QString("Output_Neuron_Mask"));
+    callback.setImageName(newwin, QString("Output_swc_mask"));
     callback.updateImageWindow(newwin);
+    callback.open3DWindow(newwin);
 
 }
 
