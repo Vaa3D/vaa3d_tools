@@ -473,7 +473,7 @@ void printHelp()
 	printf("\nswc to mask image using sphere unit\n");
     printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_to_maskimage -i <input.swc> [-p <sz0> <sz1> <sz2>] [-o <output_image.raw>]\n");
     printf("\nswc_filter -needs two input- 1) image 2) swc file \n");
-    printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_filter [-i <input.tif> <input.swc>] [-o <output_image.raw>]\n");
+    printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_filter -i <input.tif> <input.swc> [-o <output_image.raw>]\n");
 }
 
 
