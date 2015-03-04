@@ -33,19 +33,19 @@ template <class T> bool downsample3dvol(T ***outdata, T *** indata, V3DLONG *szi
 	{
 		for (V3DLONG k=0;k<szout[2];k++)
 		{
-			V3DLONG k2low=V3DLONG(floor(k*dfactor[2])), k2high=V3DLONG(floor((k+1)*dfactor[2]-1));
+            V3DLONG k2low=(V3DLONG)(floor(k*dfactor[2])), k2high=(V3DLONG)(floor((k+1)*dfactor[2]-1));
 			if (k2high>szin[2]) k2high = szin[2];
 			V3DLONG kw = k2high - k2low + 1;
 			
 			for (V3DLONG j=0;j<szout[1];j++)
 			{
-				V3DLONG j2low=V3DLONG(floor(j*dfactor[1])), j2high=V3DLONG(floor((j+1)*dfactor[1]-1));
+                V3DLONG j2low=(V3DLONG)(floor(j*dfactor[1])), j2high=(V3DLONG)(floor((j+1)*dfactor[1]-1));
 				if (j2high>szin[1]) j2high = szin[1];
 				V3DLONG jw = j2high - j2low + 1;
 				
 				for (V3DLONG i=0;i<szout[0];i++)
 				{
-					V3DLONG i2low=V3DLONG(floor(i*dfactor[0])), i2high=V3DLONG(floor((i+1)*dfactor[0]-1));
+                    V3DLONG i2low=(V3DLONG)(floor(i*dfactor[0])), i2high=(V3DLONG)(floor((i+1)*dfactor[0]-1));
 					if (i2high>szin[0]) i2high = szin[0];
 					V3DLONG iw = i2high - i2low + 1;
 					
@@ -75,19 +75,19 @@ template <class T> bool downsample3dvol(T ***outdata, T *** indata, V3DLONG *szi
 	{
 		for (V3DLONG k=0;k<szout[2]; k++)
 		{
-			V3DLONG k2low=V3DLONG(floor(k*dfactor[2])), k2high=V3DLONG(floor((k+1)*dfactor[2]-1));
+            V3DLONG k2low=(V3DLONG)(floor(k*dfactor[2])), k2high=(V3DLONG)(floor((k+1)*dfactor[2]-1));
 			if (k2high>szin[2]) k2high = szin[2];
 			V3DLONG kw = k2high - k2low + 1;
 			
 			for (V3DLONG j=0;j<szout[1];j++)
 			{
-				V3DLONG j2low=V3DLONG(floor(j*dfactor[1])), j2high=V3DLONG(floor((j+1)*dfactor[1]-1));
+                V3DLONG j2low=(V3DLONG)(floor(j*dfactor[1])), j2high=(V3DLONG)(floor((j+1)*dfactor[1]-1));
 				if (j2high>szin[1]) j2high = szin[1];
 				V3DLONG jw = j2high - j2low + 1;
 				
 				for (V3DLONG i=0;i<szout[0];i++)
 				{
-					V3DLONG i2low=V3DLONG(floor(i*dfactor[0])), i2high=V3DLONG(floor((i+1)*dfactor[0]-1));
+                    V3DLONG i2low=(V3DLONG)(floor(i*dfactor[0])), i2high=(V3DLONG)(floor((i+1)*dfactor[0]-1));
 					if (i2high>szin[0]) i2high = szin[0];
 					V3DLONG iw = i2high - i2low + 1;
 					
@@ -130,7 +130,7 @@ template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, 
 		{
 			long tt1 = k*szout_01;
 			
-			V3DLONG k2low=V3DLONG(floor(k*dfactor[2])), k2high=V3DLONG(floor((k+1)*dfactor[2]-1));
+            V3DLONG k2low=(V3DLONG)(floor(k*dfactor[2])), k2high=(V3DLONG)(floor((k+1)*dfactor[2]-1));
 			if (k2high>szin[2]) k2high = szin[2];
 			V3DLONG kw = k2high - k2low + 1;
 			
@@ -138,7 +138,7 @@ template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, 
 			{
 				long tt2 = j*szout[0];
 				
-				V3DLONG j2low=V3DLONG(floor(j*dfactor[1])), j2high=V3DLONG(floor((j+1)*dfactor[1]-1));
+                V3DLONG j2low=(V3DLONG)(floor(j*dfactor[1])), j2high=(V3DLONG)(floor((j+1)*dfactor[1]-1));
 				if (j2high>szin[1]) j2high = szin[1];
 				V3DLONG jw = j2high - j2low + 1;
 				
@@ -146,7 +146,7 @@ template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, 
 				{
 					long idx_out = tt1 + tt2 + i;
 					
-					V3DLONG i2low=V3DLONG(floor(i*dfactor[0])), i2high=V3DLONG(floor((i+1)*dfactor[0]-1));
+                    V3DLONG i2low=(V3DLONG)(floor(i*dfactor[0])), i2high=(V3DLONG)(floor((i+1)*dfactor[0]-1));
 					if (i2high>szin[0]) i2high = szin[0];
 					V3DLONG iw = i2high - i2low + 1;
 					
