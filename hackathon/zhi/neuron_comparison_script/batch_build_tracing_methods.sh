@@ -46,6 +46,7 @@ svn up
 qmake
 make
 
+
 #neuTube 
 cd ../../../hackathon/zhi/neuTube_zhi/
 make clean
@@ -57,7 +58,7 @@ if [ "$(uname)" == "Darwin" ]; then
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
   sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/linux-g++
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
-    # Do something under Windows NT platform
+  echo "detected windows platform" 
 fi
 
 cd ../../../../hackathon/zhi/neuTube_zhi/
