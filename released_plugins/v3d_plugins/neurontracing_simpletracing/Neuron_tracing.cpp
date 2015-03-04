@@ -18,7 +18,11 @@
 #include <algorithm>
 #include <functional>
 #include<math.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+#else
+    #include <unistd.h>
+#endif
 
 #include "parser.h"
 #include "stackutil.h"
@@ -2104,7 +2108,7 @@ void NeuronPlugin::SearchEndPoints()
 				else
 				{
 					last = m_vdfsptEndPoint.at(m_vdfsptEndPoint.size() - 1);
-					if(sqrt(1.0*(last.m_x - k) * (last.m_x - k) + (last.m_y - j) * (last.m_y - j)
+                    if(sqrtf(1.0*(last.m_x - k) * (last.m_x - k) + (last.m_y - j) * (last.m_y - j)
 							+ (last.m_z - i) * (last.m_z - i)) > DISOFENDS)
 					{										
 						point_l.m_x = k;
@@ -2423,12 +2427,12 @@ SpacePoint_t NeuronPlugin::Rivise_point(SpacePoint_t Rpoint)
 	
 	masspoint = Center_mass(Rpoint);
 	
-	d = sqrt((masspoint.m_x-x)*(masspoint.m_x-x)+(masspoint.m_y-y)*(masspoint.m_y-y)+(masspoint.m_z-z)*(masspoint.m_z-z));
+    d = sqrtf((masspoint.m_x-x)*(masspoint.m_x-x)+(masspoint.m_y-y)*(masspoint.m_y-y)+(masspoint.m_z-z)*(masspoint.m_z-z));
 	printf("d1=%lf\n",d);
 	while (d!=0)
 	{
 		tpoint = Center_mass(masspoint);
-		d = sqrt((masspoint.m_x-tpoint.m_x)*(masspoint.m_x-tpoint.m_x)+(masspoint.m_y-tpoint.m_y)*(masspoint.m_y-tpoint.m_y)
+        d = sqrtf((masspoint.m_x-tpoint.m_x)*(masspoint.m_x-tpoint.m_x)+(masspoint.m_y-tpoint.m_y)*(masspoint.m_y-tpoint.m_y)
 				 +(masspoint.m_z-tpoint.m_z)*(masspoint.m_z-tpoint.m_z));
 		printf("d=%lf\n",d);
 		masspoint.m_x = tpoint.m_x;
@@ -4271,7 +4275,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[0];
 			y1 = y +nDy[0];
 			z1 = z +nDz[0];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255) 
 			{
 				center.m_x = x1;
@@ -4280,7 +4284,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4290,7 +4294,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[1];
 			y1 = y +nDy[1];
 			z1 = z +nDz[0];
-	        rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4299,7 +4303,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}			
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4310,7 +4314,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[2];
 			y1 = y +nDy[2];
 			z1 = z +nDz[0];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4319,7 +4323,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4330,7 +4334,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[3];
 			y1 = y +nDy[3];
 			z1 = z +nDz[0];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4339,7 +4343,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4349,7 +4353,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[4];
 			y1 = y +nDy[4];
 			z1 = z +nDz[0];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r ) 
 			{
 				center.m_x = x1;
@@ -4358,7 +4362,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				//printf("x1=%ld y1=%ld z1=%ld x=%ld y=%ld z=%ld \n",x1,y1,z1,x,y,z);
 			}
 			center.m_x = x1;
@@ -4369,7 +4373,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[5];
 			y1 = y +nDy[5];
 			z1 = z +nDz[0];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4378,7 +4382,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4388,7 +4392,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[6];
 			y1 = y +nDy[6];
 			z1 = z +nDz[0];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4398,7 +4402,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[6];
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[0];
-                rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4408,7 +4412,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[7];
 			y1 = y +nDy[7];
 			z1 = z +nDz[0];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4418,7 +4422,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4428,7 +4432,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[8];
 			y1 = y +nDy[8];
 			z1 = z +nDz[0];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4438,7 +4442,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[0];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4449,7 +4453,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[0];
 			y1 = y +nDy[0];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4458,7 +4462,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4469,7 +4473,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[1];
 			y1 = y +nDy[1];
 			z1 = z +nDz[1];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4479,7 +4483,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4490,7 +4494,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[2];
 			y1 = y +nDy[2];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4500,7 +4504,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4511,7 +4515,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[3];
 			y1 = y +nDy[3];
 			z1 = z +nDz[1];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4521,7 +4525,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4532,7 +4536,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[4];
 			y1 = y +nDy[4];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4541,7 +4545,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4552,7 +4556,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[5];
 			y1 = y +nDy[5];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4562,7 +4566,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4572,7 +4576,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[6];
 			y1 = y +nDy[6];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4583,7 +4587,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[1];
 				
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4594,7 +4598,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[7];
 			y1 = y +nDy[7];
 			z1 = z +nDz[1];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				
@@ -4605,7 +4609,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4616,7 +4620,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[8];
 			y1 = y +nDy[8];
 			z1 = z +nDz[1];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				
@@ -4626,7 +4630,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[1];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4637,7 +4641,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[0];
 			y1 = y +nDy[0];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4647,7 +4651,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4658,7 +4662,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[1];
 			y1 = y +nDy[1];
 			z1 = z +nDz[2];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4667,7 +4671,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4678,7 +4682,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[2];
 			y1 = y +nDy[2];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4688,7 +4692,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4699,7 +4703,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[3];
 			y1 = y +nDy[3];
 			z1 = z +nDz[2];
-		    rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4709,7 +4713,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4720,7 +4724,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[4];
 			y1 = y +nDy[4];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4730,7 +4734,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4740,7 +4744,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[5];
 			y1 = y +nDy[5];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4750,7 +4754,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4761,7 +4765,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[6];
 			y1 = y +nDy[6];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4772,7 +4776,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[2];
 				
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			center.m_x = x1;
@@ -4783,7 +4787,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[7];
 			y1 = y +nDy[7];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4793,7 +4797,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				
 			}
 			
@@ -4805,7 +4809,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 			x1 = x +nDx[8];
 			y1 = y +nDy[8];
 			z1 = z +nDz[2];
-			rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+            rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			while (rr < r && m_ppsMaskData[z1*m_iImgWidth*m_iImgHeight + y1*m_iImgWidth + x1]!=255)
 			{
 				center.m_x = x1;
@@ -4814,7 +4818,7 @@ SpacePoint_t NeuronPlugin::Coumpere_ball_center(SpacePoint_t points, int direct,
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[2];
-				rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 			}
 			center.m_x = x1;
 			center.m_y = y1;
@@ -4902,7 +4906,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
 				
-				//rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[0];
@@ -4924,7 +4928,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[0];
@@ -4946,7 +4950,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[0];
@@ -4968,7 +4972,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[0];
@@ -4991,7 +4995,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[0];
@@ -5014,7 +5018,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[0];
@@ -5036,7 +5040,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[6];
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[0];
@@ -5058,7 +5062,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[0];
@@ -5080,7 +5084,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[0];
@@ -5102,7 +5106,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[1];
@@ -5124,7 +5128,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[1];
@@ -5146,7 +5150,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[1];
@@ -5168,7 +5172,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[1];
@@ -5190,7 +5194,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[1];
@@ -5212,7 +5216,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[1];
@@ -5234,7 +5238,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[6];
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[1];
@@ -5256,7 +5260,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[1];
@@ -5278,7 +5282,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[1];
@@ -5300,7 +5304,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//		rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //		rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[0];
 				y1 = y1 +nDy[0];
 				z1 = z1 +nDz[2];
@@ -5322,7 +5326,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[1];
 				y1 = y1 +nDy[1];
 				z1 = z1 +nDz[2];
@@ -5344,7 +5348,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[2];
 				y1 = y1 +nDy[2];
 				z1 = z1 +nDz[2];
@@ -5366,7 +5370,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[3];
 				y1 = y1 +nDy[3];
 				z1 = z1 +nDz[2];
@@ -5388,7 +5392,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//		rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //		rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[4];
 				y1 = y1 +nDy[4];
 				z1 = z1 +nDz[2];
@@ -5410,7 +5414,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[5];
 				y1 = y1 +nDy[5];
 				z1 = z1 +nDz[2];
@@ -5432,7 +5436,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[6];
 				y1 = y1 +nDy[6];
 				z1 = z1 +nDz[2];
@@ -5453,7 +5457,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[7];
 				y1 = y1 +nDy[7];
 				z1 = z1 +nDz[2];
@@ -5474,7 +5478,7 @@ SpacePoint_t NeuronPlugin::Coumpere_Next_Point(SpacePoint_t points, int direct, 
 				if (z1 < 0 ){z=0;}
 				if (y1 < 0 ){y=0;}
 				if (x1 < 0) {x=0;}
-				//	rr = sqrt((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
+                //	rr = sqrtf((x1-x)*(x1-x) + (y1-y)*(y1-y) + (z1-z)*(z1-z));
 				x1 = x1 +nDx[8];
 				y1 = y1 +nDy[8];
 				z1 = z1 +nDz[2];
@@ -5835,7 +5839,7 @@ double NeuronPlugin::fitRadiusPercent_cast(V3DLONG **img3d, V3DLONG dim0, V3DLON
 				{
 					total_num++;
 					
-					double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    double r = sqrtf(dx*dx + dy*dy + dz*dz);
 					if (r>ir-1 && r<=ir)
 					{
 						V3DLONG i = x+dx;	if (i<0 || i>=dim0) goto end;
@@ -5906,7 +5910,7 @@ double NeuronPlugin::fitRadiusPercent(V3DLONG **img3d, V3DLONG dim0, V3DLONG dim
 				{
 					total_num++;
 					
-					double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    double r = sqrtf(dx*dx + dy*dy + dz*dz);
 					if (r>ir-1 && r<=ir)
 					{
 						V3DLONG i = x+dx;	if (i<0 || i>=dim0) goto end;
