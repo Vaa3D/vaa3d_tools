@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "v3d_interface.h"
+#include "filter_dialog.h"
+
 
 class SWC_TO_MASKIMAGElugin: public QObject, public V3DPluginInterface2_1
 {
@@ -29,30 +31,10 @@ public:
 
 };
 
-void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-void mrskimage_originalimage(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-
-void BoundNeuronCoordinates(NeuronTree & neuron,
-							double & output_xmin,
-							double & output_xmax,
-							double & output_ymin,
-							double & output_ymax,
-							double & output_zmin,
-							double & output_zmax
-);
-
-void ComputemaskImage(NeuronTree neurons,
-					  unsigned char* pImMask, //output mask image
-					  unsigned char* ImMark,  //an indicator image to show whether or not a pixel has been visited/processed
-					  V3DLONG sx,
-					  V3DLONG sy,
-					  V3DLONG sz,
-					  int method_code
-);
-
-QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
-void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent);
+void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent);
 bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+//void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent);
 void printHelp();
 
 
@@ -62,7 +44,6 @@ class SetsizeDialog : public QDialog
 
 public:
 	QGridLayout *gridLayout;
-
 	QLabel *labelx;
 	QLabel *labely;
 	QLabel *labelz;
@@ -70,13 +51,10 @@ public:
     QSpinBox* coord_x;
 	QSpinBox* coord_y;
 	QSpinBox* coord_z;
+    QDialog mydialog;
 
 	QPushButton* ok;
 	QPushButton* cancel;
-
-	V3DLONG NX;
-	V3DLONG NY;
-	V3DLONG NZ;
 
 public:
 	SetsizeDialog(V3DPluginCallback2 &cb, QWidget *parent)
@@ -85,9 +63,12 @@ public:
 		QString imageName = cb.getImageName(cb.currentImageWindow());
 
         info= new QLabel;
-        info->setText("The minimum dimensions of generated mask image are set as default.<br>"
-                      " Please input new size. <br>"
-                      "<b>Warning: size significantly below the default size will result in incomplete mask image<b> ");
+        info->setText("The minimum dimensions of generated mask image are"
+                      " set as default.Please input new size. <p>"
+                      "Warning: size significantly below the default size"
+                      " will result in incomplete mask image. ");
+        info->setWordWrap(true);
+        info->setFixedWidth(400);
 
 		//create a dialog
 
@@ -103,17 +84,16 @@ public:
 		cancel = new QPushButton("Cancel");
 		gridLayout = new QGridLayout();
 
-		labelx = new QLabel(QObject::tr("Image X dimension"));
-		labely = new QLabel(QObject::tr("Image Y dimension"));
-		labelz = new QLabel(QObject::tr("Image Z dimension"));
+        labelx = new QLabel(QObject::tr("Image X dimension:"));
+        labely = new QLabel(QObject::tr("Image Y dimension:"));
+        labelz = new QLabel(QObject::tr("Image Z dimension:"));
 
         info->setMargin(10);
-        gridLayout->addWidget(info,0,0,4,2,Qt::AlignJustify);
-        gridLayout->addWidget(labelx, 4,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_x,4,1,1,1,Qt::AlignHCenter);
-        gridLayout->addWidget(labely, 5,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_y,5,1,1,1,Qt::AlignHCenter);
-        gridLayout->addWidget(labelz, 6,0,1,1,Qt::AlignHCenter); gridLayout->addWidget(coord_z,6,1,1,1,Qt::AlignHCenter);
-
-        gridLayout->addWidget(cancel, 7,1,1,1,Qt::AlignHCenter); gridLayout->addWidget(ok, 7,0,1,1,Qt::AlignHCenter);
+        gridLayout->addWidget(info,0,0,4,2);
+        gridLayout->addWidget(labelx, 4,0,1,1); gridLayout->addWidget(coord_x,4,1,1,1);
+        gridLayout->addWidget(labely, 5,0,1,1); gridLayout->addWidget(coord_y,5,1,1,1);
+        gridLayout->addWidget(labelz, 6,0,1,1); gridLayout->addWidget(coord_z,6,1,1,1);
+        gridLayout->addWidget(cancel, 7,1,1,1); gridLayout->addWidget(ok, 7,0,1,1);
 		setLayout(gridLayout);
 		setWindowTitle(QString("Change parameters"));
         //this->setFixedWidth(600);
@@ -121,17 +101,12 @@ public:
 		connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
 
-		//slot interface
-		connect(coord_x, SIGNAL(valueChanged(int)), this, SLOT(update()));
-		connect(coord_y,SIGNAL(valueChanged(int)), this, SLOT(update()));
-		connect(coord_z,SIGNAL(valueChanged(int)), this, SLOT(update()));
 	}
 
 	~SetsizeDialog(){}
 
-	public slots:
-	void update();
 };
+
 #endif
 
 
