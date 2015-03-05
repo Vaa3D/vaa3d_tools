@@ -88,7 +88,19 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
              }
         }
 
+#if defined(Q_OS_WIN32)
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Java Executable File"),
+                "",
+                QObject::tr("Supported file (*.exe)"
+                    ));
+        if(fileOpenName.isEmpty())
+            return;
+
+        QString cmd_loci = QString("\"%1 -cp %2 loci.formats.tools.ImageConverter \"%3\" \"%4\"\"").arg(fileOpenName.toStdString().c_str()).arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+#else
         QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+#endif
         v3d_msg(cmd_loci, 0);
 
         system(qPrintable(cmd_loci));
