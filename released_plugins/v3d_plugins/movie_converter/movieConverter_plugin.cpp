@@ -350,7 +350,7 @@ void controlPanel::_slot_start()
               compress = "-vcodec rawvideo";
 
 
-          QString cmd_ffmpeg = QString("%1 -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+          QString cmd_ffmpeg = QString("\"%1\" -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
 
           v3d_msg(cmd_ffmpeg, 0);
 
