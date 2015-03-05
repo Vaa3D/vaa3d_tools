@@ -1,21 +1,17 @@
-This folder contains all source codes for the "standard" plugins of the Vaa3D project (vaa3d.org). These plugins are subject to the following conditions if you want to use them. 
+This folder contains all source codes for the "standard" plugins of the Vaa3D project (vaa3d.org). These plugins are subject to the following conditions if you want to use them.
 
-You will ***have to agree*** the following terms, *before* downloading/using/running/editing/changing any portion of codes in this package (including all plugins).
+The basic modules of Vaa3D system use a slightly revised MIT License. Note, however, modules, extensions and plugins of Vaa3D may use different licenses when such situations are specified and documented. You will have to agree the following License terms, before downloading/using/running/editing/changing any portion of codes in this Vaa3D package.
 
-Copyright (c) 2006-2014 (Hanchuan Peng and Howard Hughes Medical Institute - Janelia Farm Research Campus)
+Copyright (c) 2006-2015 (Hanchuan Peng and Howard Hughes Medical Institute - Janelia Farm Research Campus)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of the basic modules of "Vaa3D tools" and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of the basic modules of Vaa3D and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-1. You agree to cite this work and publications (Peng, et al, Nature Biotechnology, 28(4):348-353, 2010 and Peng, et al, Nature Protocols, 9(1):193-208, 2014) in all your related studies and publications.
-
-    Peng, H., Ruan, Z., Long, F., Simpson, J.H., and Myers, E.W. (2010) “V3D enables real-time 3D visualization and quantitative analysis of large-scale biological image data sets,” Nature Biotechnology, Vol. 28, No. 4, pp. 348-353.
-
-    Peng, H., Bria, A., Zhou, Z., Iannello, G., and Long, F., (2014) "Extensible visualization and analysis for multidimensional images using Vaa3D," Nature Protocols, Vol. 9, No. 1, pp.193-208.
+1. You agree to cite this work and publications (Peng, et al, Nature Biotechnology, 28(4):348-353, 2010; Peng, et al, Nature Protocols, 9(1):193-208, 2014; and Peng, et al, Nature Communications, 5(4342), doi:10.1038/ncomms5342, 2014.) in all your related studies and publications.
 
 2. Neither the name of Hanchuan Peng, nor Howard Hughes Medical Institute - Janelia Farm Research Campus may be used to endorse or promote products derived from this software without specific prior written permission.
 
 3. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-4. The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
+4. The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 5. Some Vaa3D plugins may have their own license terms and in such cases, you should comply with such terms given they are not contradictory with this license. If there are any conflicts of the license terms, this license has the ultimate governing power.
