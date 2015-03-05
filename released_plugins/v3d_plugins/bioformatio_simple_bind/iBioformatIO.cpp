@@ -78,7 +78,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         if (!QFile(lociDir).exists())
         {
              printf("loci_tools.jar is not in current directory, search v3d app path.\n");
-             lociDir = getAppPath().append("loci_tools.jar");
+             lociDir = getAppPath().append("/loci_tools.jar");
              printf(qPrintable(lociDir));
              printf("\n");
              if (!QFile(lociDir).exists())
