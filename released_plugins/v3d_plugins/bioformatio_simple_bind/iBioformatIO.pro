@@ -20,10 +20,10 @@ TARGET        = $$qtLibraryTarget(imageIO_Bioformat)
 DESTDIR       = $$V3DMAINDIR/../bin/plugins/data_IO/load_image_using_Bioformats
 
 win32 {
-        QMAKE_POST_LINK = copy loci_tools.jar $$V3DMAINDIR\\..\\bin\\plugins\\data_IO\\load_image_using_Bioformats\\.
+        QMAKE_POST_LINK = copy loci_tools.jar $$V3DMAINDIR\\..\\bin\\
 }
 else {
-        QMAKE_POST_LINK = cp loci_tools.jar $$V3DMAINDIR/../bin/plugins/data_IO/load_image_using_Bioformats/.
+        QMAKE_POST_LINK = cp loci_tools.jar $$V3DMAINDIR/../bin/
 }
 
 
