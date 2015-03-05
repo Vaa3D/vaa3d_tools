@@ -53,9 +53,9 @@ make clean
 svn up
 
 cd ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$(uname)" == "Darwin" && ! -f ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/c/lib/libneurolabi.a]; then
   sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/macx-g++42
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" && ! -f ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/c/lib/libneurolabi_debug.so]; then
   sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/linux-g++
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
   echo "detected windows platform" 
