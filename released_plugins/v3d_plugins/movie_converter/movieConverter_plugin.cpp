@@ -134,8 +134,12 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         {
             return false;
         }
-        QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/%4%d%5\' -y %6 \'%7/movie.%8\'").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
-        system(qPrintable(cmd_ffmpeg));
+#if defined(Q_OS_WIN32)
+          QString cmd_ffmpeg = QString("\"\"%1\" -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+#else
+          QString cmd_ffmpeg = QString("\"%1\" -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+#endif
+         system(qPrintable(cmd_ffmpeg));
         //-vcodec mjpeg -qscale 0
         QString movieDir = selectedFile.append(QString("/movie.%1").arg(videoType));
 
@@ -350,7 +354,11 @@ void controlPanel::_slot_start()
               compress = "-vcodec rawvideo";
 
 
+#if defined(Q_OS_WIN32)
           QString cmd_ffmpeg = QString("\"\"%1\" -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+#else
+          QString cmd_ffmpeg = QString("\"%1\" -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+#endif
 
           v3d_msg(cmd_ffmpeg, 0);
 
