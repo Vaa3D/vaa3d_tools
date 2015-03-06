@@ -15,7 +15,7 @@ INCLUDEPATH += .
 INCLUDEPATH += ../app2
 SOURCES += ../app2/my_surf_objs.cpp
 
-# cross-OS-platform, cross-Qt-version, 
+#cross-OS-platform, cross-Qt-version, 
 QT_DIR = $$dirname(QMAKE_QMAKE)/..  # cross-Qt-version
 LOCAL_DIR = ../../../../../v3d_external/v3d_main 				# unix-liked platform: macx, unix, win32-msys-mingw
 INCLUDEPATH += $$LOCAL_DIR/common_lib/include
