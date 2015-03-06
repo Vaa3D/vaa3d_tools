@@ -1,6 +1,6 @@
 #include "mean_shift_fun.h"
 
-const float windowsize=15;
+const float windowsize=10;
 
 mean_shift_fun::mean_shift_fun()
 {
@@ -30,7 +30,7 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind)
 //    center_x=x; center_y=y; center_z=z;
 
     qDebug()<<"ind:"<<ind<<"x:"<<x<<" y:"<<y<<" z:"<<z;
-    float total_x,total_y,total_z,v_color,sum_v;
+    float total_x,total_y,total_z,v_color,sum_v,v_r,v_g,v_b;
     float center_dis=1;
     vector<V3DLONG> center(3,0);
 
@@ -46,11 +46,22 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind)
                          +(dz-z)*(dz-z);
                     double distance=sqrt(tmp);
                     if (distance>windowsize) continue;
-                    v_color=data1Dc_float[pos];
+//                    v_color=data1Dc_float[pos];
+//                    for (int j=1;j<sz_image[3];j++)
+//                    v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
 
-                    for (int j=1;j<sz_image[3];j++)
-                    v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
-
+                    v_r=data1Dc_float[pos];
+                    v_color=v_r;
+                    if (sz_img[3]>1)
+                    {
+                        v_g=data1Dc_float[pos+page_size];
+                        v_color=max(v_r,v_g);
+                    }
+                    if (sz_img[3]>2)
+                    {
+                        v_b=data1Dc_float[pos+2*page_size];
+                        v_color=0.21*v_r+0.72*v_g+0.07*v_b;
+                    }
                     total_x=v_color*dx+total_x;
                     total_y=v_color*dy+total_y;
                     total_z=v_color*dz+total_z;

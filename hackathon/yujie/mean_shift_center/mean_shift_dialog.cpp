@@ -294,15 +294,13 @@ void mean_shift_dialog::mean_shift_center()
     poss_landmark.clear();
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
 
-    qDebug()<<"Before calc mean shift center";
-
     for (int j=0;j<poss_landmark.size();j++)
     {
         mass_center=mean_shift_obj.calc_mean_shift_center(poss_landmark[j]);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
     }
-    qDebug()<<"LList_new center:"<<LList_new_center.size();
+    //qDebug()<<"LList_new center:"<<LList_new_center.size();
     updateOutputWindow();
 }
 
@@ -362,7 +360,7 @@ void mean_shift_dialog::help()
     QMessageBox::about(this, tr("How to use mean_shift_center_finder"),
     tr("<p>The <b>Mean shift center finder</b> performs searches around each of the user-input markers and "
        "returns the locations of local maxima of intensity as new markers in the output window.<p>"
-       "<b>Load/Fetch</b> -- Users can choose to load the image from local image files or fetch from current"
+       "<b>Load/Fetch from 3D viewers</b> -- Users can choose to load the image from local image files or fetch from current"
        " Vaa3D main window.<br>"
        "<b>Get new centers</b> -- Return the local maxima of intensity for each marker using mean shift method."
        " The search area is a sphere with the radius of 15 pixels. <br>"
