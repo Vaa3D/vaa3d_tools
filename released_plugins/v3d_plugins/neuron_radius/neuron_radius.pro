@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../../../v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 
@@ -18,11 +18,11 @@ win32{
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
 }
 
-HEADERS	+= neuron_radius_plugin.h
-HEADERS	+= my_surf_objs.h
-HEADERS	+= marker_radius.h 
-SOURCES	+= neuron_radius_plugin.cpp
-SOURCES += my_surf_objs.cpp
+HEADERS	+= ../neurontracing_vn2/neuron_radius/neuron_radius_plugin.h
+HEADERS	+= ../neurontracing_vn2/neuron_radius/my_surf_objs.h
+HEADERS	+= ../neurontracing_vn2/neuron_radius/marker_radius.h 
+SOURCES	+= ../neurontracing_vn2/neuron_radius/neuron_radius_plugin.cpp
+SOURCES += ../neurontracing_vn2/neuron_radius/my_surf_objs.cpp
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp
@@ -32,4 +32,4 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 
 TARGET	= $$qtLibraryTarget(neuron_radius)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_radius/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/neuron_radius/
