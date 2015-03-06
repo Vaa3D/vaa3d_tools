@@ -52,9 +52,10 @@ QString getAppPath()
 	if (testPluginsDir.dirName() == "MacOS") {
 		QDir testUpperPluginsDir = testPluginsDir;
 		testUpperPluginsDir.cdUp();
-		testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
-		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
 	}
 #endif
 	
