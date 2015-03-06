@@ -167,12 +167,13 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     }
 
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment\n");
-    for (int i=0;i<LList_new_center.count(); i++)
+    for (int i=0;i<LList_new_center.size(); i++)
     {
         fprintf(fp, "%ld,%ld,%ld,%ld,%ld,%s,%s\n",
                 V3DLONG(LList_new_center.at(i).x), V3DLONG(LList_new_center.at(i).y), V3DLONG(LList_new_center.at(i).z),
                 V3DLONG(LList_new_center.at(i).radius), V3DLONG(LList_new_center.at(i).shape),
                 LList_new_center.at(i).name.c_str(), LList_new_center.at(i).comments.c_str());
+        qDebug()<<"Input one line";
     }
 
     fclose(fp_1);
