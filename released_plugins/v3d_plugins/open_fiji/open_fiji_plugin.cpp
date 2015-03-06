@@ -132,7 +132,6 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
     QString v3dAppPath = getAppPath();
 
-
     QString cmd_Fiji = QString("%1  --headless -batch  %2/brl_FijiConvert.js %3:%4").arg(imagej_binary_file.toStdString().c_str()).arg(v3dAppPath.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
     v3d_msg(cmd_Fiji, 0);
 
@@ -217,7 +216,7 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 
         // temp directory
         QString baseName = QFileInfo(m_FileName).baseName();
-        QString savefile = m_SaveDir.append("/").append(baseName).append(".v3draw");
+        QString savefile = m_SaveDir.append("/").append(baseName).append(".raw");
 
         call_open_using_imagej(true, m_FileName, savefile, callback);
     }
