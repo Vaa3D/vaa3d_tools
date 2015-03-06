@@ -29,7 +29,7 @@ QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex
 
 #elif defined (_WIN32) || defined (_WIN64)
 
-QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex_matrix_debug.dll";  //for Windows
+QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/ex_matrix.dll";  //for Windows
 
 #else
 
