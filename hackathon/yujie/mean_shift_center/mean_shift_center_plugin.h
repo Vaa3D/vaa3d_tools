@@ -8,6 +8,9 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "mean_shift_dialog.h"
+
+QList <ImageMarker> readMarker_file(const QString & filename);
 
 class mean_shift_plugin : public QObject, public V3DPluginInterface2_1
 {
@@ -22,6 +25,14 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+    void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+    void printHelp();
+    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind);
+    QList <LocationSimple> readPosFile_usingMarkerCode(const char * posFile);
+
+private:
+    V3DLONG sz_img[4];
+    unsigned char *image_data;
 };
 
 #endif

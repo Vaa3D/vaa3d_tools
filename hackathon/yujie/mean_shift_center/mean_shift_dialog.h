@@ -13,19 +13,21 @@
 #define NAME_INWIN "Input_mean_shift_center"
 #define NAME_OUTWIN "Output_mean_shift_center"
 
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+
 class mean_shift_dialog:public QDialog
 {
     Q_OBJECT
 public:
     mean_shift_dialog(V3DPluginCallback2 *cb);
     void create();
-    void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
-    void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 private:
     void resetdata();
     void updateInputWindow();
     void updateOutputWindow();
+
 
 private:
     mean_shift_fun mean_shift_obj;
@@ -38,12 +40,16 @@ private:
     LandmarkList LList,LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<V3DLONG> x_all,y_all,z_all,mass_center;
+    int prev_radius;
+    QSpinBox *spin_radius;
+    QDialog *subDialog;
 
 public slots:
     bool load();
     void fetch();
     void mean_shift_center();
     void help();
+    void dialoguefinish(int);
 };
 
 

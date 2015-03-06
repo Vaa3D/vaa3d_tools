@@ -32,9 +32,9 @@ void mean_shift_dialog::create()
     button_center->setText("Get new centers");
     button_center->setGeometry(0,0,10,20);
 
-//    QToolButton *button_save=new QToolButton;
-//    button_save->setText("Save new markers");
-//    button_save->setGeometry(0,0,10,20);
+    QToolButton *button_para=new QToolButton;
+    button_para->setText("Parameter setting");
+    button_para->setGeometry(0,0,10,20);
 
     QToolButton *button_help=new QToolButton;
     button_help->setText("Help");
@@ -52,13 +52,37 @@ void mean_shift_dialog::create()
 //    tool->addSeparator();
     tool->addWidget(button_center);
     tool->addSeparator();
-//    tool->addWidget(button_save);
-//    tool->addSeparator();
+    tool->addWidget(button_para);
+    tool->addSeparator();
     tool->addWidget(button_help);
     tool->addSeparator();
 
     QHBoxLayout *vlayout = new QHBoxLayout;
     vlayout->addWidget(tool);
+
+    //Build the subdialog for parameter settings
+    subDialog = new QDialog();
+    subDialog->setWindowTitle("Parameter setting");
+    connect(button_para, SIGNAL(clicked()), subDialog, SLOT(show()));
+    connect(subDialog,SIGNAL(finished(int)),this,SLOT(dialoguefinish(int)));
+
+    spin_radius = new QSpinBox();
+    spin_radius->setRange(0,50); spin_radius->setValue(10);
+
+    QGridLayout *gridLayout=new QGridLayout();
+    QLabel* label_0 = new QLabel("search sphere radius (0~50):");
+    gridLayout->addWidget(label_0,0,0,1,2);
+    gridLayout->addWidget(spin_radius,0,3,1,1);
+
+    QPushButton *button_ok=new QPushButton;
+    button_ok->setText("OK");
+    QPushButton *button_cancel=new QPushButton;
+    button_cancel->setText("Cancel");
+    QHBoxLayout *hlayout=new QHBoxLayout;
+    hlayout->addWidget(button_ok);
+    hlayout->addWidget(button_cancel);
+    gridLayout->addLayout(hlayout,2,0,1,4);
+    subDialog->setLayout(gridLayout);
 
     boxlayout->addLayout(vlayout);
     //boxlayout->addWidget(label);
@@ -71,6 +95,22 @@ void mean_shift_dialog::create()
     connect(button_fetch,SIGNAL(clicked()),this, SLOT(fetch()));
     connect(button_center,SIGNAL(clicked()),this,SLOT(mean_shift_center()));
     connect(button_help,SIGNAL(clicked()),this,SLOT(help()));
+    connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
+    connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
+    prev_radius=spin_radius->value();
+}
+
+void mean_shift_dialog::dialoguefinish(int)
+{
+    if (subDialog->result()==QDialog::Accepted) {
+        prev_radius=spin_radius->value();
+        qDebug()<<"accepted";
+    }
+
+    else{
+        qDebug()<<"Not accepted";
+        spin_radius->setValue(prev_radius);
+    }
 }
 
 bool mean_shift_dialog::load()
@@ -291,12 +331,13 @@ void mean_shift_dialog::mean_shift_center()
         return;
     }
 
+    int windowradius=spin_radius->value();
     poss_landmark.clear();
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
 
     for (int j=0;j<poss_landmark.size();j++)
     {
-        mass_center=mean_shift_obj.calc_mean_shift_center(poss_landmark[j]);
+        mass_center=mean_shift_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
     }
@@ -367,7 +408,7 @@ void mean_shift_dialog::help()
        "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)</p>"));
 }
 
-void mean_shift_dialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     unsigned short* pPre = (unsigned short*)pre1d;
     unsigned short max_v=0, min_v = 255;
@@ -393,7 +434,7 @@ void mean_shift_dialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPos
     }
 }
 
-void mean_shift_dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     float* pPre = (float*)pre1d;
     float max_v=0, min_v = 65535;

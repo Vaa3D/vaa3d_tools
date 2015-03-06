@@ -26,7 +26,7 @@ class mean_shift_fun
 public:
     mean_shift_fun();
     ~mean_shift_fun();
-    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind);
+    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind, int windowradius);
 
 private:
 
