@@ -58,7 +58,7 @@ QString getAppPath()
 	}
 #endif
 	
-	testPluginsDir.cdUp();
+    //testPluginsDir.cdUp();
 	v3dAppPath = testPluginsDir.absolutePath();
 	return v3dAppPath;
 }
