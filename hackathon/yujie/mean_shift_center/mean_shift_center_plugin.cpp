@@ -48,6 +48,7 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 {
     if (func_name == tr("mean_shift_center_finder"))
     {
+        qDebug()<<"Strat working";
         mean_shift_center(callback, input, output);
 	}
 	else if (func_name == tr("help"))
@@ -74,7 +75,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     }
     if (inparas.size() != 0 && inparas.size() != 1)
     {
-        qDebug()<<"ERROR: please set parameter of window radius or use the default value of 10! "
+        qDebug()<<"ERROR: please set a valid parameter of window radius or use the default value of 10! "
                <<inparas.size();
         return;
     }
@@ -154,7 +155,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     }
 
     //Write data in the file
-    QString qs_output = outfiles.empty() ? qs_input_image + "_out.raw" : QString(outfiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
 
     FILE * fp_1 = fopen(qs_output.toAscii(), "w");
     if (!fp_1)
@@ -272,7 +273,7 @@ QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char
 void mean_shift_plugin::printHelp()
 {
     printf("\nmean_shift_center_finder -needs two input files- 1) image 2) marker file   -set the search window radius in the parameter\n");
-    printf("Usage v3d -x mean_shift_center_finder -f mean_shift_center -i <input.v3draw> <input.v3draw.marker> -p<int> [-o <output_image.raw>]\n");
+    printf("Usage v3d -x mean_shift_center_finder -f mean_shift_center_finder -i <input.v3draw> <input.v3draw.marker> [-p<int>] [-o <output_image.marker>]\n");
 }
 
 QList <ImageMarker> readMarker_file(const QString & filename)
