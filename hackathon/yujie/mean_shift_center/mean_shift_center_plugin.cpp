@@ -125,14 +125,13 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     FILE * fp = fopen(qs_input_mask.toAscii(), "r");
     if (!fp)
     {
-        qDebug()<<"Control point loading error,"
-                                 "Can not open the file to load the landmark points.\n";
+        qDebug()<<"Can not open the file to load the landmark points.\n";
         return;
     }
-    else
-    {
-        fclose(fp); //since I will open the file and close it in the function below, thus close it now
-    }
+//    else
+//    {
+//        fclose(fp); //since I will open the file and close it in the function below, thus close it now
+//    }
 
     QList <LocationSimple> tmpList = readPosFile_usingMarkerCode(qs_input_mask.toAscii()); //revised on 090725 to use the unique interface
 
@@ -141,6 +140,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         v3d_msg("Did not find any valid row/record of the markers. Thus do not overwrite the current landmarks if they exist.\n",0);
         return;
     }
+    qDebug()<<"tmpList size:"<<tmpList.count();
 
     vector<V3DLONG> poss_landmark;
     poss_landmark=landMarkList2poss(tmpList, sz_img[0], sz_img[0]*sz_img[1]);
@@ -154,6 +154,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         LList_new_center.append(tmp);
     }
 
+    qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
     //Write data in the file
     QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
 
