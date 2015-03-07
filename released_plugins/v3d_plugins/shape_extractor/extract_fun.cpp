@@ -154,7 +154,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
         center_z=new_mass_center[2];
 //        qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_pre.size()
 //               <<":"<<(float)seeds_pre.size()/total_r_grow;
-//        qDebug()<<"r_grow"<<r_grow;
+        qDebug()<<"r_grow"<<r_grow;
     }
 
 }
@@ -298,7 +298,6 @@ vector<V3DLONG> extract_fun::get_mass_center(vector<V3DLONG> x_all, vector<V3DLO
         }
             sum_v=x_all.size();
         if (x_all.size()>0) {
-
             center[0]=total_x/sum_v;
             center[1]=total_y/sum_v;
             center[2]=total_z/sum_v;

@@ -4,7 +4,6 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <vector>
-//#include <cmath>
 #include <math.h>
 #include "shape_extr_template.h"
 

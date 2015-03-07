@@ -60,7 +60,7 @@ void shape_dialog::create()
     //parameters
     QGridLayout *gridLayout=new QGridLayout;
     spin_bgthr = new QSpinBox();
-    spin_bgthr->setRange(0,255); spin_bgthr->setValue(20);
+    spin_bgthr->setRange(0,255); spin_bgthr->setValue(70);
     spin_conviter = new QSpinBox();
     spin_conviter->setRange(0,100); spin_conviter->setValue(1);
 
@@ -196,6 +196,7 @@ bool shape_dialog::load()
            return false;
         }
 
+        edit->clear();
         updateInputWindow();
         return true;
     }
@@ -642,7 +643,7 @@ void shape_dialog::GetColorRGB(int* rgb, int idx)
     if(idx>=0){
     idx = idx > 0 ? idx % 128 : 128 - abs(idx % 128);
     int colorLib[128][3] = {
-            {55, 173, 188},
+            {39,16,2}, //{55, 173, 188},
             {3, 91, 61},
             {237, 195, 97},
             {175, 178, 151},
@@ -654,7 +655,7 @@ void shape_dialog::GetColorRGB(int* rgb, int idx)
             {86, 150, 90},
             {53, 67, 25},
             {38, 82, 152},
-            {39, 16, 2},
+            {55,173,188}, //{39, 16, 2},
             {197, 174, 31},
             {183, 41, 31},
             {174, 37, 15},
