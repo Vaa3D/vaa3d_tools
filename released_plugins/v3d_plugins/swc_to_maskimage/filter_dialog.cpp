@@ -254,8 +254,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
     double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
     V3DLONG pagesz = sx*sy;
 
-    qDebug()<<"neuron size:"<<neurons.listNeuron.size();
-    int count=0;
     for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
     {
         V3DLONG i,j,k;
@@ -285,7 +283,6 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 for (i = ballx0; i <= ballx1; i++){
                     V3DLONG ind = (k)*pagesz + (j)*sx + i;
                     if (pImMask[ind]>0) continue;
-                    if (ind>sx*sy*sz-1) continue;
                     double norms10 = (xs-i)*(xs-i) + (ys-j)*(ys-j) + (zs-k)*(zs-k);
                     double dt = sqrt(norms10);
                     if(dt <=rs || dt<=1) pImMask[ind] = 255;
@@ -328,7 +325,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         double zIncrement = double(dz) / (steps*2);
 
         V3DLONG idex1=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-        if (idex1>sx*sy*sz-1) continue;
+        if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
          pImMask[idex1] = 255;
 
         for (int i = 0; i <= steps; i++)
@@ -343,7 +340,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
 
             V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
             if (pImMask[idex]>0) continue;
-            if (idex>sx*sy*sz-1) continue;
+            if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
             pImMask[idex] = 255;
         }
 
@@ -399,7 +396,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                     }
                     V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
                     if (pImMask[ind1]>0) continue;
-                    if (ind1>sx*sy*sz-1) continue;
+                    if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
                     if (dist <= rr || dist<=1)
                     {
                         pImMask[ind1] = 255;
@@ -407,8 +404,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
                 }
             }
         }
-        count++;
-        qDebug()<<"count:"<<count;
+
     }
 
 }

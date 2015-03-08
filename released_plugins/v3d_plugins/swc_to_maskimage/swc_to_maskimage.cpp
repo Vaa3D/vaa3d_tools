@@ -123,12 +123,9 @@ void swc_to_maskimage(V3DPluginCallback2 &callback, QWidget *parent)
         sy=y_max;
         sz=z_max;
         V3DLONG stacksz = sx*sy*sz;
-        qDebug()<<"before pImMask";
         pImMask = new unsigned char [stacksz];
         memset(pImMask,0,stacksz*sizeof(unsigned char));
-        qDebug()<<"2";
         ComputemaskImage(neuron, pImMask, sx, sy, sz);
-        qDebug()<<"3";
 	}
 
 
