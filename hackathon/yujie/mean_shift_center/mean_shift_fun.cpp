@@ -33,45 +33,54 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
     float center_dis=1;
     vector<V3DLONG> center(3,0);
 
+    int testCount=0;
+    int testCount1=0;
+
     while (center_dis>=1)
     {
         total_x=total_y=total_z=sum_v=0;
 
-        for(V3DLONG dx=MAX(x-15,0); dx<=MIN(sz_image[0]-1,x+15); dx++){
-            for(V3DLONG dy=MAX(y-15,0); dy<=MIN(sz_image[1]-1,y+15); dy++){
-                for(V3DLONG dz=MAX(z-15,0); dz<=MIN(sz_image[2]-1,z+15); dz++){
+        testCount=testCount1=0;
+
+        for(V3DLONG dx=MAX(x-windowradius,0); dx<=MIN(sz_image[0]-1,x+windowradius); dx++){
+            for(V3DLONG dy=MAX(y-windowradius,0); dy<=MIN(sz_image[1]-1,y+windowradius); dy++){
+                for(V3DLONG dz=MAX(z-windowradius,0); dz<=MIN(sz_image[2]-1,z+windowradius); dz++){
                     pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                     double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
                          +(dz-z)*(dz-z);
                     double distance=sqrt(tmp);
                     if (distance>windowradius) continue;
-//                    v_color=data1Dc_float[pos];
-//                    for (int j=1;j<sz_image[3];j++)
-//                    v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
+                    v_color=data1Dc_float[pos];
+                    for (int j=1;j<sz_image[3];j++)
+                        v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
 
-                    v_r=data1Dc_float[pos];
-                    v_color=v_r;
-                    if (sz_image[3]>1)
-                    {
-                        v_g=data1Dc_float[pos+page_size];
-                        v_color=max(v_r,v_g);
-                    }
-                    if (sz_image[3]>2)
-                    {
-                        v_b=data1Dc_float[pos+2*page_size];
-                        v_color=0.21*v_r+0.72*v_g+0.07*v_b;
-                    }
-                    total_x=v_color*dx+total_x;
-                    total_y=v_color*dy+total_y;
-                    total_z=v_color*dz+total_z;
+//                    v_r=data1Dc_float[pos];
+//                    v_color=v_r;
+//                    if (sz_image[3]>1)
+//                    {
+//                        v_g=data1Dc_float[pos+page_size];
+//                        v_color=max(v_r,v_g);
+//                    }
+//                    if (sz_image[3]>2)
+//                    {
+//                        v_b=data1Dc_float[pos+2*page_size];
+//                        v_color=0.21*v_r+0.72*v_g+0.07*v_b;
+//                    }
+                    total_x=v_color*(float)dx+total_x;
+                    total_y=v_color*(float)dy+total_y;
+                    total_z=v_color*(float)dz+total_z;
                     sum_v=sum_v+v_color;
+
+                    testCount++;
+                    if(v_color>100)
+                        testCount1++;
                  }
              }
          }
-            qDebug()<<"v_color:"<<v_color<<":"<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v;
-            center[0]=total_x/sum_v;
-            center[1]=total_y/sum_v;
-            center[2]=total_z/sum_v;
+        qDebug()<<"v_color:"<<v_color<<":"<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+        center[0]=total_x/sum_v;
+        center[1]=total_y/sum_v;
+        center[2]=total_z/sum_v;
         float tmp_1=(center[0]-x)*(center[0]-x)+(center[1]-y)*(center[1]-y)
                     +(center[2]-z)*(center[2]-z);
         center_dis=sqrt(tmp_1);

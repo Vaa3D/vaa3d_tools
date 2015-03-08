@@ -27,7 +27,7 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
     void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
     void printHelp();
-    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind);
+    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind,int windowradius);
     QList <LocationSimple> readPosFile_usingMarkerCode(const char * posFile);
 
 private:

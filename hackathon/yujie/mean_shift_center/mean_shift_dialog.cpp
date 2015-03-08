@@ -67,7 +67,7 @@ void mean_shift_dialog::create()
     connect(subDialog,SIGNAL(finished(int)),this,SLOT(dialoguefinish(int)));
 
     spin_radius = new QSpinBox();
-    spin_radius->setRange(0,50); spin_radius->setValue(10);
+    spin_radius->setRange(0,50); spin_radius->setValue(6);
 
     QGridLayout *gridLayout=new QGridLayout();
     QLabel* label_0 = new QLabel("search sphere radius (0~50):");
@@ -310,19 +310,30 @@ void mean_shift_dialog::mean_shift_center()
     LList_new_center.clear();
 
     qDebug()<<"In meanshiftcenter now";
+    v3dhandle found_win;
+    bool winfound=false;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
         {
-            LandmarkList LList_in = callback->getLandmark(v3dhandleList_current[i]);
-            for(int i=0; i<LList_in.size(); i++){
-                LList.append(LList_in.at(i));
-                LList[i].color.r=196;
-                LList[i].color.g=LList[i].color.b=0;
-            }
+            found_win=v3dhandleList_current[i];
+            winfound=true;
             break;
         }
+    }
+
+    if (!winfound)
+    {
+        v3d_msg("No image is found. Have you fetched image?");
+        return;
+    }
+
+    LandmarkList LList_in = callback->getLandmark(found_win);
+    for(int i=0; i<LList_in.size(); i++){
+        LList.append(LList_in.at(i));
+        LList[i].color.r=196;
+        LList[i].color.g=LList[i].color.b=0;
     }
 
     if(LList.size()<=0)
@@ -337,6 +348,7 @@ void mean_shift_dialog::mean_shift_center()
 
     for (int j=0;j<poss_landmark.size();j++)
     {
+        qDebug()<<j<<":"<<windowradius;
         mass_center=mean_shift_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
@@ -350,13 +362,15 @@ void mean_shift_dialog::updateOutputWindow()
     qDebug()<<"In updateoutputwindow";
     bool winfound=false;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    v3dhandle found_win;
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
         {
             winfound=true;
+            found_win=v3dhandleList_current[i];
+            break;
         }
-        break;
     }
     if(image1Dc_in != 0){ //image loaded
         //generate a copy and show it
@@ -373,27 +387,15 @@ void mean_shift_dialog::updateOutputWindow()
             callback->setImageName(v3dhandle_main, NAME_OUTWIN);
             callback->open3DWindow(v3dhandle_main);
             callback->pushObjectIn3DWindow(v3dhandle_main);
-
+            return;
         }
         else{
             //update the image
-            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
-            {
-                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
-                {
-                    callback->setImage(v3dhandleList_current[i], &image4d);
-                    callback->setLandmark(v3dhandleList_current[i], LList_new_center);
-                    callback->setImageName(v3dhandleList_current[i], NAME_OUTWIN);
-                    callback->updateImageWindow(v3dhandleList_current[i]);
-                    //callback->pushImageIn3DWindow(v3dhandleList_current[i]);
-                    callback->open3DWindow(v3dhandleList_current[i]);
-                    callback->pushObjectIn3DWindow(v3dhandleList_current[i]);
-                }
-                break;
+            callback->setImage(found_win,&image4d);
+            callback->setLandmark(found_win,LList_new_center);
+            callback->updateImageWindow(found_win);
             }
         }
-    }
-    qDebug()<<"Finish outputwindow";
 }
 
 void mean_shift_dialog::help()
