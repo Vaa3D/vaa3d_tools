@@ -33,7 +33,7 @@ public:
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,unsigned char * label,V3DLONG seed_ind,
                      int convolute_iter,int bg_thr,int marker);
     vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all, vector<V3DLONG> z_all);
-
+    vector<V3DLONG> calc_mean_shift_center(V3DLONG ind, int windowradius);
 
 private:
 

@@ -23,9 +23,12 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+    void shape_extract(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
-//private:
 
+private:
+    V3DLONG sz_img[4];
+    unsigned char *image_data;
 };
 
 #endif

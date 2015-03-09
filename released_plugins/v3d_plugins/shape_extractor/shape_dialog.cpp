@@ -24,6 +24,7 @@ shape_dialog::shape_dialog(V3DPluginCallback2 *cb)
     LList_new_center.clear();
     create();
     datasource=0;
+    label_m=0;
 }
 
 void shape_dialog::create()
@@ -36,7 +37,7 @@ void shape_dialog::create()
     button_extract->setText("Region grow");
     button_extract->setGeometry(0,0,10,20);
     QToolButton *button_return=new QToolButton;
-    button_return->setText("Get mass center");
+    button_return->setText("Region grow with optimized markers");
     button_return->setGeometry(0,0,10,20);
     QToolButton *button_fetch=new QToolButton;
     button_fetch->setText("Fetch");
@@ -61,6 +62,8 @@ void shape_dialog::create()
     QGridLayout *gridLayout=new QGridLayout;
     spin_bgthr = new QSpinBox();
     spin_bgthr->setRange(0,255); spin_bgthr->setValue(70);
+    spin_radius = new QSpinBox();
+    spin_radius->setRange(0,50); spin_radius->setValue(10);
     spin_conviter = new QSpinBox();
     spin_conviter->setRange(0,100); spin_conviter->setValue(1);
 
@@ -69,9 +72,13 @@ void shape_dialog::create()
     gridLayout->addWidget(label_0,0,0,1,2);
     gridLayout->addWidget(spin_bgthr,0,3,1,1);
 
+    QLabel* label_1 = new QLabel("Search Window Radius (0~50):");
+    gridLayout->addWidget(label_1,1,0,1,2);
+    gridLayout->addWidget(spin_radius,1,3,1,1);
+
     QLabel* label_2 = new QLabel("Convolute Iteration (contrast factor): ");
-    gridLayout->addWidget(label_2,1,0,1,2);
-    gridLayout->addWidget(spin_conviter,1,3,1,1);
+    gridLayout->addWidget(label_2,2,0,1,2);
+    gridLayout->addWidget(spin_conviter,2,3,1,1);
 
     QPushButton *button_ok=new QPushButton;
     button_ok->setText("OK");
@@ -80,7 +87,7 @@ void shape_dialog::create()
     QHBoxLayout *hlayout=new QHBoxLayout;
     hlayout->addWidget(button_ok);
     hlayout->addWidget(button_cancel);
-    gridLayout->addLayout(hlayout,2,0,1,4);
+    gridLayout->addLayout(hlayout,3,0,1,4);
     subDialog->setLayout(gridLayout);
 
     QToolBar *tool = new QToolBar;
@@ -122,7 +129,7 @@ void shape_dialog::create()
      connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
      connect(button_fetch,SIGNAL(clicked()),this, SLOT(fetch()));
      connect(button_extract,SIGNAL(clicked()),this,SLOT(extract()));
-     connect(button_return,SIGNAL(clicked()),this,SLOT(display_mass_center()));
+     connect(button_return,SIGNAL(clicked()),this,SLOT(extract_mean_shift()));
      connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
      connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
      connect(button_help,SIGNAL(clicked()),this,SLOT(help()));
@@ -141,9 +148,7 @@ void shape_dialog::dialoguefinish(int)
       {
         //qDebug()<<"Accepted";
         prev_bgthr=spin_bgthr->value();
-        //prev_distance=spin_distance->value();
         prev_conviter=spin_conviter->value();
-        //prev_percent=spin_percent->value();
     }
 
     else{
@@ -306,14 +311,16 @@ void shape_dialog::resetdata()
 void shape_dialog::updateInputWindow()
 {
     //search in open windows
-    qDebug()<<"In updateinputwindow";
     bool winfound=false;
+    v3dhandle found_win;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
         {
             winfound=true;
+            found_win=v3dhandleList_current[i];
+            break;
         }
     }
     if(image1Dc_in != 0){ //image loaded
@@ -331,22 +338,15 @@ void shape_dialog::updateInputWindow()
             callback->setImageName(v3dhandle_main, NAME_INWIN);
             callback->updateImageWindow(v3dhandle_main);
             callback->open3DWindow(v3dhandle_main);
-        }else{
-
-            v3dhandleList_current=callback->getImageWindowList();
-            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
-            {
-                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
-                {
-                    //update the image
-                    if(!callback->setImage(v3dhandleList_current[i], &image4d)){
-                        v3d_msg("Failed to update input image");
-                    }
-                    callback->updateImageWindow(v3dhandleList_current[i]);
-                    callback->pushImageIn3DWindow(v3dhandleList_current[i]);
-                    callback->open3DWindow(v3dhandleList_current[i]);
-                }
+        }
+        else{
+            //update the image
+            if(!callback->setImage(found_win, &image4d)){
+                v3d_msg("Failed to update input image");
+                return;
             }
+            callback->updateImageWindow(found_win);
+            callback->pushImageIn3DWindow(found_win);
         }
     }
  }
@@ -354,21 +354,31 @@ void shape_dialog::updateInputWindow()
 
 void shape_dialog::extract()
 {
-
-    LList.clear();
+    bool winfound=false;
+    v3dhandle found_win;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
         {
-            LandmarkList LList_in = callback->getLandmark(v3dhandleList_current[i]);
-            for(int i=0; i<LList_in.size(); i++){
-                LList.append(LList_in.at(i));
-                LList[i].color.r=196;
-                LList[i].color.g=LList[i].color.b=0;
-            }
+            winfound=true;
+            found_win=v3dhandleList_current[i];
             break;
         }
+    }
+
+    if (!winfound)
+    {
+        v3d_msg("No image is found. Please load or fetch an image");
+        return;
+    }
+
+    LList.clear();
+    LandmarkList LList_in = callback->getLandmark(found_win);
+    for(int i=0; i<LList_in.size(); i++){
+        LList.append(LList_in.at(i));
+        LList[i].color.r=196;
+        LList[i].color.g=LList[i].color.b=0;
     }
 
     if(LList.size()<=0)
@@ -384,8 +394,7 @@ void shape_dialog::extract()
         edit->appendPlainText(tmp);
      }
 
-    qDebug()<<"Properly displayed";
-    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
     int convolute_iter=spin_conviter->value();
     int bg_thr=spin_bgthr->value();
 
@@ -405,14 +414,6 @@ void shape_dialog::extract()
     label=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
     memset(label,0,size_page*sizeof(unsigned char));
 
-//    if (shape_ext_obj.mask1D!=0)
-//    {
-//       memory_free_uchar1D(shape_ext_obj.mask1D);
-//    }
-//    shape_ext_obj.mask1D=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
-//    memset(shape_ext_obj.mask1D,0,size_page*sizeof(unsigned char));
-
-
     V3DLONG sumrsize=0;
     volume.clear();
     for (int j=0;j<poss_landmark.size();j++){
@@ -421,9 +422,9 @@ void shape_dialog::extract()
         V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label,poss_landmark[j],
                                        convolute_iter,bg_thr,j+1);
         if(rsize<=0) continue;
-        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
-        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-        LList_new_center.append(tmp);
+//        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
+//        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+//        LList_new_center.append(tmp);
 
         volume.push_back(x_all.size());
 
@@ -442,7 +443,6 @@ void shape_dialog::extract()
                 }
             sumrsize=rsize+sumrsize;
         }
-
      }
 
     qDebug()<<"sumrsize:"<<sumrsize;
@@ -451,6 +451,177 @@ void shape_dialog::extract()
     else
     v3d_msg("Nothing were found. Please change marker or adjust parameters.");
 }
+
+
+void shape_dialog::extract_mean_shift()
+{
+    bool winfound=false;
+    v3dhandle found_win;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+    {
+        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+        {
+            winfound=true;
+            found_win=v3dhandleList_current[i];
+            break;
+        }
+    }
+
+    if (!winfound)
+    {
+        v3d_msg("No image is found. Please load or fetch an image");
+        return;
+    }
+
+    LList.clear();
+    LandmarkList LList_in = callback->getLandmark(found_win);
+    for(int i=0; i<LList_in.size(); i++){
+        LList.append(LList_in.at(i));
+        LList[i].color.r=196;
+        LList[i].color.g=LList[i].color.b=0;
+    }
+
+    if(LList.size()<=0)
+    {
+        v3d_msg("No markers were selected");
+        return;
+    }
+    edit->clear();
+    for (int i=0;i<LList.size();i++)
+     {
+        QString tmp="Marker "+ QString::number(i+1)+ ": " + QString::number(LList[i].x)+","+
+                QString::number(LList[i].y)+ "," +QString::number(LList[i].z);
+        edit->appendPlainText(tmp);
+     }
+
+    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
+    int convolute_iter=spin_conviter->value();
+    int bg_thr=spin_bgthr->value();
+    int windowradius=spin_radius->value();
+
+    //_________________________Start the normal region grow
+    poss_landmark.clear();
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+
+    if (label!=0)
+    {
+       memory_free_uchar1D(label);
+    }
+    label=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
+    memset(label,0,size_page*sizeof(unsigned char));
+
+    //V3DLONG sumrsize=0;
+    for (int j=0;j<poss_landmark.size();j++){
+        qDebug()<<"j:"<<j;
+        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label,poss_landmark[j],
+                                       convolute_iter,bg_thr,j+1);
+        if(rsize<=0) continue;
+
+    }
+
+    //__________________________Using mean_shift to optimize markers
+    LList_new_center.clear();
+    for (int j=0;j<poss_landmark.size();j++)
+    {
+        mass_center=shape_ext_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        LList_new_center.append(tmp);
+    }
+
+    //Start region growing
+    poss_landmark.clear();
+    poss_landmark=landMarkList2poss(LList_new_center, sz_img[0], sz_img[0]*sz_img[1]);
+
+    if (image1Dc_out!=0) memory_free_uchar1D(image1Dc_out);
+    image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+    memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+
+    if (label_m!=0) memory_free_uchar1D(label_m);
+    label_m=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
+    memset(label_m,0,size_page*sizeof(unsigned char));
+
+    V3DLONG sumrsize=0;
+    volume.clear();
+    for (int j=0;j<poss_landmark.size();j++){
+        qDebug()<<"j:"<<j;
+
+        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label_m,poss_landmark[j],
+                                       convolute_iter,bg_thr,j+1);
+        if(rsize<=0) continue;
+        volume.push_back(x_all.size());
+    }
+
+    //________________mean_shift extraction finished
+    // comparison of label and label_m
+    //
+    for (int i=0;i<size_page;i++)
+    {
+        if (label[i]==0 && label_m[i]==0)
+            continue;
+        else if (label[i]>0 && label_m[i]>0)
+            image1Dc_out[i]=image1Dc_out[i+size_page]=image1Dc_out[i+2*size_page]=255;
+        else if (label[i]>0 && label_m[i]==0)
+        {
+            image1Dc_out[i]=196;
+            image1Dc_out[i+size_page]=image1Dc_out[i+2*size_page]=0;
+        }
+        else if (label[i]==0 && label_m[i]>0)
+        {
+            image1Dc_out[i]=image1Dc_out[i+size_page]=0;
+            image1Dc_out[i+2*size_page]=196;
+        }
+    }
+
+    for(int i=0; i<LList_new_center.size(); i++)
+        LList.append(LList_new_center.at(i));
+
+    Image4DSimple image4d;
+    unsigned char* image1Dc_input=memory_allocate_uchar1D(size_page*sz_img[3]);
+    memcpy(image1Dc_input, image1Dc_out, size_page*sz_img[3]*sizeof(unsigned char));
+    image4d.setData(image1Dc_input,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT8);
+    v3dhandle v3dhandle_main=callback->newImageWindow();
+    callback->setImage(v3dhandle_main, &image4d);
+    callback->setLandmark(v3dhandle_main, LList);
+    callback->setImageName(v3dhandle_main, NAME_OUTWIN);
+    callback->updateImageWindow(v3dhandle_main);
+    callback->open3DWindow(v3dhandle_main);
+    callback->pushObjectIn3DWindow(v3dhandle_main);
+
+//        GetColorRGB(rgb,j);
+//        V3DLONG finalpos;
+//        for (int i=0;i<x_all.size();i++)
+//        {
+//            finalpos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_img[0],sz_img[0]*sz_img[1]);
+
+//                image1Dc_out[finalpos]=rgb[0];
+//                if (sz_img[3]>1){
+//                image1Dc_out[finalpos+1*sz_img[0]*sz_img[1]*sz_img[2]]=rgb[1];
+//                }
+//                if (sz_img[3]>2){
+//                image1Dc_out[finalpos+2*sz_img[0]*sz_img[1]*sz_img[2]]=rgb[2];
+//                }
+//            sumrsize=rsize+sumrsize;
+//        }
+//     }
+
+//    qDebug()<<"sumrsize:"<<sumrsize;
+
+//    if (sumrsize>0)
+//    {
+//        LList.clear();
+//        for(int i=0; i<LList_new_center.size(); i++){
+//            LList.append(LList_new_center.at(i));
+//            LList[i].color.r=196;
+//            LList[i].color.g=LList[i].color.b=0;
+//        }
+//        updateOutputWindow();
+//    }
+//    else
+//    v3d_msg("Nothing were found. Please change marker or adjust parameters.");
+
+}
+
 
 
 void shape_dialog::display_volume()
@@ -470,54 +641,54 @@ void shape_dialog::display_volume()
     }
 }
 
-void shape_dialog::display_mass_center()
-{
-    if(LList.size()<=0) {
-        v3d_msg("No markers were selected.");
-        return;
-    }
-    if(LList_new_center.size()<=0 && LList.size()>0)
-    {
-        v3d_msg("You need to find the edge first");
-        return;
-    }
-    else
-    {
-        //Append the new markers to the old marker list and show in blue
-        for(int i=0; i<LList_new_center.size(); i++){
-            LList.append(LList_new_center.at(i));
-            LList[LList.size()-1].color.b=255;
-            LList[LList.size()-1].color.r=LList[LList.size()-1].color.g=0;
-        }
+//void shape_dialog::display_mass_center()
+//{
+//    if(LList.size()<=0) {
+//        v3d_msg("No markers were selected.");
+//        return;
+//    }
+//    if(LList_new_center.size()<=0 && LList.size()>0)
+//    {
+//        v3d_msg("You need to find the edge first");
+//        return;
+//    }
+//    else
+//    {
+//        //Append the new markers to the old marker list and show in blue
+//        for(int i=0; i<LList_new_center.size(); i++){
+//            LList.append(LList_new_center.at(i));
+//            LList[LList.size()-1].color.b=255;
+//            LList[LList.size()-1].color.r=LList[LList.size()-1].color.g=0;
+//        }
 
-    //Update the current window of new markers
-        updateOutputWindow();
-    }
-}
+//    //Update the current window of new markers
+//        updateOutputWindow();
+//    }
+//}
 
 
 void shape_dialog::updateOutputWindow()
 {
     qDebug()<<"In updateoutputwindow";
     bool winfound=false;
+    v3dhandle found_win;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
     {
         if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
         {
             winfound=true;
+            found_win=v3dhandleList_current[i];
+            break;
         }
-        break;
     }
     if(image1Dc_out != 0){ //image loaded
         //generate a copy and show it
         Image4DSimple image4d,image4d_color;
 
-        V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-        unsigned char* image1Dc_input=memory_allocate_uchar1D(size_page);
-        memcpy(image1Dc_input, image1Dc_out, size_page*sizeof(unsigned char));
-        //image4d.setData(image1Dc_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
-
+        V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
+        unsigned char* image1Dc_input=memory_allocate_uchar1D(size_page*sz_img[3]);
+        memcpy(image1Dc_input, image1Dc_out, size_page*sz_img[3]*sizeof(unsigned char));
         unsigned char* label_input=memory_allocate_uchar1D(size_page);
         memcpy(label_input, label, size_page*sizeof(unsigned char));
 
@@ -540,28 +711,20 @@ void shape_dialog::updateOutputWindow()
             callback->updateImageWindow(v3dhandle_color);
         }
         else{
-            //update the image
-            for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
-            {
-                if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_OUTWIN))
-                {
-                    callback->setImage(v3dhandleList_current[i], &image4d);
-                    callback->setLandmark(v3dhandleList_current[i], LList);
-                    callback->setImageName(v3dhandleList_current[i], NAME_OUTWIN);
-                    callback->updateImageWindow(v3dhandleList_current[i]);
-                    //callback->pushImageIn3DWindow(v3dhandleList_current[i]);
 
-                    //Open another window for the colorful image for visualization
-                    v3dhandle v3dhandle_color=callback->newImageWindow();
-                    callback->setImage(v3dhandle_color, &image4d_color);
-                    callback->setLandmark(v3dhandle_color, LList);
-                    callback->setImageName(v3dhandle_color, "Output_Shape_Extractor_color");
-                    callback->open3DWindow(v3dhandle_color);
-                    callback->pushObjectIn3DWindow(v3dhandle_color);
-                    callback->updateImageWindow(v3dhandle_color);
-                }
-                break;
-            }
+            callback->setImage(found_win, &image4d);
+            callback->setLandmark(found_win, LList);
+            callback->setImageName(found_win, NAME_OUTWIN);
+            callback->updateImageWindow(found_win);
+
+            //Open another window for the colorful image for visualization
+            v3dhandle v3dhandle_color=callback->newImageWindow();
+            callback->setImage(v3dhandle_color, &image4d_color);
+            callback->setLandmark(v3dhandle_color, LList);
+            callback->setImageName(v3dhandle_color, "Output_Shape_Extractor_color");
+            callback->open3DWindow(v3dhandle_color);
+            callback->pushObjectIn3DWindow(v3dhandle_color);
+            callback->updateImageWindow(v3dhandle_color);
         }
     }
     qDebug()<<"Finish outputwindow";

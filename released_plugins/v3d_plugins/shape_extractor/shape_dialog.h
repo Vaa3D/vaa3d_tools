@@ -29,7 +29,7 @@ private:
     V3DPluginCallback2 *callback;
     V3DLONG sz_img[4];
     int intype;
-    unsigned char *image1Dc_in,*image1Dc_out, *label;
+    unsigned char *image1Dc_in,*image1Dc_out, *label,*label_m;
     LandmarkList LList,LList_new_center;
     vector<V3DLONG> poss_landmark,volume;
     vector<V3DLONG> x_all,y_all,z_all,mass_center;
@@ -38,7 +38,7 @@ private:
     int datasource; //fetched datasource=2; load datasource=1;
 
     QPlainTextEdit *edit;
-    QSpinBox *spin_bgthr,*spin_conviter;
+    QSpinBox *spin_bgthr,*spin_conviter,*spin_radius;
     QDialog *subDialog;
 
 private:
@@ -55,10 +55,11 @@ private:
 public slots:
     bool load();
     void extract();
-    void display_mass_center();
+    //void display_mass_center();
     void dialoguefinish(int);
     void fetch();
     void display_volume();
     void help();
+    void extract_mean_shift();
 };
 #endif // SHAPE_DIALOG_H
