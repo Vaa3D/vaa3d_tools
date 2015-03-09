@@ -460,9 +460,7 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 {
     unsigned char * qcopydata=new unsigned char [size];
     for (int i=0;i<size;i++)
-    {
         qcopydata[i]=data[i];
-    }
     return qcopydata;
 }
 
@@ -488,6 +486,8 @@ void Paint_Dialog::zoomin()
     paintarea->openImage(q,p);
 
     this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
+    if (paintarea->width()>tool->width())
+    this->setFixedWidth(paintarea->width()+40);
 }
 
 void Paint_Dialog::zoomout()
@@ -505,6 +505,7 @@ void Paint_Dialog::zoomout()
         paintarea->setPenWidth(15);
 
         this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
+        this->setFixedWidth(tool->width());
     }
 }
 
