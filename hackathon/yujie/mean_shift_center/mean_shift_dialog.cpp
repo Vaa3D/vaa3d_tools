@@ -406,7 +406,7 @@ void mean_shift_dialog::help()
        "<b>Load/Fetch from 3D viewers</b> -- Users can choose to load the image from local image files or fetch from current"
        " Vaa3D main window.<br>"
        "<b>Get new centers</b> -- Return the local maxima of intensity for each marker using mean shift method."
-       " The search area is a sphere with the radius of 15 pixels. <br>"
+       " The default search area is a sphere with the radius of 10 pixels. <br>"
        "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)</p>"));
 }
 

@@ -21,17 +21,29 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
 
-    V3DLONG x,y,z,pos;//,center_x,center_y,center_z;
+    V3DLONG x,y,z,pos;
     vector<V3DLONG> coord;
+    float total_x,total_y,total_z,v_color,sum_v;
+    float center_dis=1;
+    vector<V3DLONG> center(3,0);
 
     coord=pos2xyz(ind, y_offset, z_offset);
     x=coord[0];y=coord[1];z=coord[2];
-//    center_x=x; center_y=y; center_z=z;
+
+    //find out the channel with the maximum intensity for the marker
+    v_color=data1Dc_float[ind];
+    int channel=0;
+    for (int j=1;j<sz_image[3];j++)
+    {
+        if (data1Dc_float[ind+page_size*j]>v_color)
+        {
+            v_color=data1Dc_float[ind+page_size*j];
+            channel=j;
+        }
+    }
 
     qDebug()<<"ind:"<<ind<<"x:"<<x<<" y:"<<y<<" z:"<<z;
-    float total_x,total_y,total_z,v_color,sum_v,v_r,v_g,v_b;
-    float center_dis=1;
-    vector<V3DLONG> center(3,0);
+
 
     int testCount=0;
     int testCount1=0;
@@ -50,22 +62,9 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
                          +(dz-z)*(dz-z);
                     double distance=sqrt(tmp);
                     if (distance>windowradius) continue;
-                    v_color=data1Dc_float[pos];
-                    for (int j=1;j<sz_image[3];j++)
-                        v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
-
-//                    v_r=data1Dc_float[pos];
-//                    v_color=v_r;
-//                    if (sz_image[3]>1)
-//                    {
-//                        v_g=data1Dc_float[pos+page_size];
-//                        v_color=max(v_r,v_g);
-//                    }
-//                    if (sz_image[3]>2)
-//                    {
-//                        v_b=data1Dc_float[pos+2*page_size];
-//                        v_color=0.21*v_r+0.72*v_g+0.07*v_b;
-//                    }
+                    v_color=data1Dc_float[pos+page_size*channel];
+//                    for (int j=1;j<sz_image[3];j++)
+//                        v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
                     total_x=v_color*(float)dx+total_x;
                     total_y=v_color*(float)dy+total_y;
                     total_z=v_color*(float)dz+total_z;

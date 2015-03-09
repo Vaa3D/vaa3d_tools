@@ -46,7 +46,6 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 {
     if (func_name == tr("mean_shift_center_finder"))
     {
-        qDebug()<<"Strat working";
         mean_shift_center(callback, input, output);
 	}
 	else if (func_name == tr("help"))
@@ -80,7 +79,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
 
     QString qs_input_image(infiles[0]);
-    QString qs_input_mask(infiles[1]);
+    QString qs_input_mark(infiles[1]);
     image_data=0;
     int intype=0;
     int windowradius=10;
@@ -129,9 +128,9 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     }
 
 
-    if (qs_input_mask.isEmpty())
+    if (qs_input_mark.isEmpty())
         return;
-    FILE * fp = fopen(qs_input_mask.toAscii(), "r");
+    FILE * fp = fopen(qs_input_mark.toAscii(), "r");
     if (!fp)
     {
         qDebug()<<"Can not open the file to load the landmark points.\n";
@@ -142,7 +141,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         fclose(fp); //since I will open the file and close it in the function below, thus close it now
     }
 
-    QList <LocationSimple> tmpList = readPosFile_usingMarkerCode(qs_input_mask.toAscii()); //revised on 090725 to use the unique interface
+    QList <LocationSimple> tmpList = readPosFile_usingMarkerCode(qs_input_mark.toAscii()); //revised on 090725 to use the unique interface
 
     if (tmpList.count()<=0)
     {
@@ -202,10 +201,22 @@ vector<V3DLONG> mean_shift_plugin::calc_mean_shift_center(V3DLONG ind,int window
 
     coord=pos2xyz(ind, y_offset, z_offset);
     x=coord[0];y=coord[1];z=coord[2];
-
-    float total_x,total_y,total_z,v_color,sum_v,v_r,v_g,v_b;
+    float total_x,total_y,total_z,v_color,sum_v;
     float center_dis=1;
     vector<V3DLONG> center(3,0);
+    V3DLONG page_size=sz_img[0]*sz_img[1]*sz_img[2];
+
+    //find out the channel with the maximum intensity for the marker
+    v_color=image_data[ind];
+    int channel=0;
+    for (int j=1;j<sz_img[3];j++)
+    {
+        if (image_data[ind+page_size*j]>v_color)
+        {
+            v_color=image_data[ind+page_size*j];
+            channel=j;
+        }
+    }
 
     while (center_dis>=1)
     {
@@ -219,22 +230,11 @@ vector<V3DLONG> mean_shift_plugin::calc_mean_shift_center(V3DLONG ind,int window
                          +(dz-z)*(dz-z);
                     double distance=sqrt(tmp);
                     if (distance>windowradius) continue;
-//                    v_color=data1Dc_float[pos];
-//                    for (int j=1;j<sz_image[3];j++)
-//                    v_color=MAX(v_color,data1Dc_float[pos+page_size*j]);
+                    v_color=image_data[pos+page_size*channel];
+//                    v_color=image_data[pos];
+//                    for (int j=1;j<sz_img[3];j++)
+//                    v_color=MAX(v_color,image_data[pos+sz_img[0]*sz_img[1]*sz_img[2]*j]);
 
-                    v_r=image_data[pos];
-                    v_color=v_r;
-                    if (sz_img[3]>1)
-                    {
-                        v_g=image_data[pos+sz_img[0]*sz_img[1]*sz_img[2]];
-                        v_color=max(v_r,v_g);
-                    }
-                    if (sz_img[3]>2)
-                    {
-                        v_b=image_data[pos+2*sz_img[0]*sz_img[1]*sz_img[2]];
-                        v_color=0.21*v_r+0.72*v_g+0.07*v_b;
-                    }
                     total_x=v_color*dx+total_x;
                     total_y=v_color*dy+total_y;
                     total_z=v_color*dz+total_z;
@@ -283,7 +283,7 @@ QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char
 
 void mean_shift_plugin::printHelp()
 {
-    printf("\nmean_shift_center_finder -needs two input files- 1) image 2) marker file   -set the search window radius in the parameter\n");
+    printf("\nmean_shift_center_finder -needs two input files- 1) image 2) marker file   -optional parameter:search window radius\n");
     printf("Usage v3d -x mean_shift_center_finder -f mean_shift_center_finder -i <input.v3draw> <input.v3draw.marker> [-p <int>(0-50)] [-o <output_image.marker>]\n");
 }
 
