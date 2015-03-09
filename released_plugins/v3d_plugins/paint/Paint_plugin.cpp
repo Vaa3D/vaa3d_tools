@@ -15,8 +15,8 @@ Paint_Dialog *dialog;
 QStringList paint::menulist() const
 {
 	return QStringList() 
-        <<tr("paint")
-        <<tr("about");
+        <<tr("Paint")
+        <<tr("About");
 
 }
 
@@ -30,13 +30,14 @@ QStringList paint::funclist() const
 
 void paint::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("paint"))
+    if (menu_name == tr("Paint"))
 	{
         dialog=new Paint_Dialog(&callback, parent);
+        //dialog();
         dialog->setWindowTitle("Paint");
         dialog->show();
 	}
-    else if (menu_name == tr("about"))
+    else if (menu_name == tr("About"))
 	{
         v3d_msg("This is a paint toolbox. "
                 "Developed by Yujie Li, 2015-02-04");

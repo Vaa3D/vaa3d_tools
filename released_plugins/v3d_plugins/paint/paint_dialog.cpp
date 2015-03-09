@@ -18,7 +18,11 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
 
 void Paint_Dialog::create()
 {
+
+    //QGridLayout *gridLayout = new QGridLayout();
     QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
+
+    //gridLayout->addWidget(paintarea,1,0,1,1);
     tool = new QToolBar;
     tool->setGeometry(0,0,300,20);
 
@@ -36,6 +40,9 @@ void Paint_Dialog::create()
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
     button_pb->setGeometry(0,0,10,30);
+    //QToolButton *button_text=new QToolButton;
+    //button_text->setText("Insert text");
+    //button_text->setGeometry(0,0,10,20);
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
@@ -52,6 +59,7 @@ void Paint_Dialog::create()
     button_color->setIcon(QIcon(":/paint.png"));
     QSize iconsize(28,28);
     button_color->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    //button_color->setIconSize(iconsize);
 
     savemenu=new QMenu;
     createsavemenu();
@@ -82,6 +90,8 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_save);
     tool->addSeparator();
+//    tool->addWidget(button_fetch);
+//    tool->addSeparator();
     tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_zoomin);
@@ -90,24 +100,34 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_clear);
     tool->addSeparator();
+   // tool->addWidget(button_text);
+    //tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
     tool->addWidget(button_pen);
     tool->addSeparator();
+
     tool->addWidget(button_print);
     tool->addSeparator();
     tool->addWidget(button_help);
     tool->addSeparator();
     tool->addWidget(spin);
     tool->addSeparator();
+
     tool->setIconSize(iconsize);
     layout->addWidget(tool);
+
 
     boxlayout->addLayout(layout);
     boxlayout->addWidget(paintarea);
     boxlayout->addWidget(label);
     boxlayout->addWidget(edit);
 
+//    gridLayout->addWidget(label,2,0,1,1);
+//    gridLayout->addLayout(layout,0,0,1,1);
+//    gridLayout->addWidget(edit,3,0,1,1);
+
+//    this->setLayout(gridLayout);
     this->setLayout(boxlayout);
     this->setMinimumHeight(200);
     this->setMinimumWidth(500);
@@ -118,6 +138,8 @@ void Paint_Dialog::create()
     connect(button_help, SIGNAL(clicked()), this, SLOT(help()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
+    //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
+    //connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 
 }
 
@@ -206,9 +228,7 @@ bool Paint_Dialog::load()
 
             if (sz_img[3]>3)
             {
-                sz_img[3]=3;
-                QMessageBox::information(0,"","More than 3 channels were loaded."
-                                         "The first 3 channel will be applied for analysis.");
+                QMessageBox::information(0,"","Currently this program only supports 1-3 color channels.", 0);
                 return false;
             }
 
@@ -240,10 +260,12 @@ bool Paint_Dialog::load()
             newSize.setHeight(sz_img[1]);
             paintarea->setFixedSize(newSize);
             spin->setMaximum(sz_img[2]);
-            //qDebug()<<"before spin set value";
+            qDebug()<<"before spin set value";
             spin->setValue(sz_img[2]/2);  //spin change value will trigger zdisplay
             zdisplay(sz_img[2]/2);
+
             this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
+
             return true;
         }
     return false;
@@ -277,9 +299,8 @@ void Paint_Dialog::fetch()
 
     if (sz_img[3]>3)
     {
-        sz_img[3]=3;
-        QMessageBox::information(0,"","More than 3 channels were loaded."
-                                 "The first 3 channel will be applied for analysis.");
+        QMessageBox::information(0, "", "Currently this program only supports 1-3 color channels.");
+        return;
     }
 
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
@@ -439,6 +460,7 @@ void Paint_Dialog::zdisplay(int z_in)
 }
 
 
+
 void Paint_Dialog::clearimage()
 {
     if (datasource!=1 && datasource!=2){
@@ -460,7 +482,10 @@ unsigned char * Paint_Dialog::datacopy(unsigned char *data,long size)
 {
     unsigned char * qcopydata=new unsigned char [size];
     for (int i=0;i<size;i++)
+    {
         qcopydata[i]=data[i];
+    }
+    qDebug()<<"I have been copied";
     return qcopydata;
 }
 
@@ -484,10 +509,9 @@ void Paint_Dialog::zoomin()
     paintarea->paintImage=p;
     paintarea->setPenWidth(22);
     paintarea->openImage(q,p);
+    //qDebug()<<"Zoom in is working";
 
     this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
-    if (paintarea->width()>tool->width())
-    this->setFixedWidth(paintarea->width()+40);
 }
 
 void Paint_Dialog::zoomout()
@@ -503,14 +527,16 @@ void Paint_Dialog::zoomout()
         paintarea->openImage(q,p);
         zoominflag=false;
         paintarea->setPenWidth(15);
+        qDebug()<<"Zoomout....";
 
         this->setFixedHeight(paintarea->height()+edit->height()+spin->height()+tool->height()+50);
-        this->setFixedWidth(tool->width());
     }
 }
 
 bool Paint_Dialog::pushback()
 {
+    qDebug()<<"Inpushback now";
+
     curwin = callback->currentImageWindow();
     if (!curwin)
     {
@@ -648,6 +674,7 @@ bool Paint_Dialog::eventFilter(QObject *obj, QEvent *event)
                 this->spin->setValue(this->spin->value() - 1);
 
             return true;
+
         }
         return false;
 }
@@ -759,12 +786,12 @@ void Paint_Dialog::help()
                "<b>Save only current section</b> -- The current 2D image will be saved in jpg format."
                "Changes made on other slices will not be stored.<br>"
                "<b>Pushback</b> -- Pushback function is enabled only if the image is fetched from current Vaa3D main"
-               "window. Once the pushback button clicked, the image together with the painting will be sent back to the current "
+               "window. Once the pushback button clicked, the image together with the painting will be sent back to the current"
                "Vaa3D main window.<br>"
                "<b>Zoom in/out</b>-- Image is scaled to double the original size/back to the original size.<br>"
                "<b>Clear painting</b> -- Clear all the drawings made by users on the current 2D image.<br>"
-               "<b>Color</b> -- Change the pen color to user-specified color.<br>"
-               "<b>Pen width</b> --Change the pen width to user-specified width.<br>"
+               "<b>Color</b> -- Change the pen color to user specified color.<br>"
+               "<b>Pen width</b> --Change the pen width to user specified width.<br>"
                "<b>Print</b> -- Users can print out the current 2D image.<br>"
                "<b>Spin boxes</b>-- Scroll up and down to visualize different slices. Number reflects current"
                "  slice number.</p>"

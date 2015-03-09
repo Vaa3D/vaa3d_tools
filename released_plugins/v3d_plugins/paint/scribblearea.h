@@ -13,6 +13,7 @@
 
  public:
      ScribbleArea( QWidget *parent = 0);
+
      bool openImage(QImage &loadImage, QImage &paintImage);
      bool saveImage(const QString &fileName, const char *fileFormat);
      void setPenColor(const QColor &newColor);
@@ -38,9 +39,12 @@
 
  private:
      void drawLineTo(const QPoint &endPoint);
+     QCursor cursorshape();
+
      bool scribbling;
      int myPenWidth;
      QColor myPenColor;
+     QCursor brushCursor;
      QPoint lastPoint;
      QPlainTextEdit *edit;
 
