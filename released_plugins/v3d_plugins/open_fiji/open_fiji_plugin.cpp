@@ -65,7 +65,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
     if (!f_imagej_binary_file.exists())
     {
 
-        v3d_msg("Cannot find the specified default ImageJ location.");
+//        v3d_msg("Cannot find the specified default ImageJ location. Adding path");
 #if defined(Q_OS_MAC)
          imagej_binary_file = getAppPath().append("/Fiji.app/Contents/MacOS/ImageJ-macosx");
 #elif defined(Q_OS_LINUX)
@@ -216,7 +216,7 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 
         // temp directory
         QString baseName = QFileInfo(m_FileName).baseName();
-        QString savefile = m_SaveDir.append("/").append(baseName).append(".raw");
+        QString savefile = m_SaveDir.append("/").append(baseName).append(".v3draw");
 
         call_open_using_imagej(true, m_FileName, savefile, callback);
     }

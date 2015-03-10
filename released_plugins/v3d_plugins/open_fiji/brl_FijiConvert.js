@@ -3,6 +3,7 @@
 name = getArgument(); // the single argument has to be split by a ":" into input and output files
 argarray = name.split(":"); 
 
+
 if (name=="") 
 {
 IJ.error("javascript called with no argument!");
@@ -28,16 +29,12 @@ print("input extension is "+inextension)
 if ((inextension==".v3draw") || (inextension==".raw"))
 {
 print("reading .v3draw or .raw file with raw reader");
-//raw_readerX.run("open="+inname);
-//imp=Opener(inname);
 IJ.run(imp, "raw reader", "open="+inname);     
 imp = IJ.getImage()
 }
 else 
 {
 imp = IJ.openImage(inname);
-//imp=Opener(inname);
-//imp=Opener.openUsingBioFormats(argarray[0]);
 }
 
 outextension = outname.substring(outname.lastIndexOf("."));
@@ -51,14 +48,6 @@ else
 print("output extension is " +outextension);
 }
 
-//print( "image type: " +imp.getType());
-//print("N Channels: " +imp.NChannels)
-//if ((imp.getType()==4)||(inextension==".v3draw")||(imp.NChannels>0))
-//{
-//print(" making composite for avi file");
-//IJ.run(imp, "Make Composite", "");
-//}
-
 if (outextension==".avi") 
 {  //add some code here to allow user to set compression and framerate?
 //print(" making composite for avi file");
@@ -67,7 +56,6 @@ if (outextension==".avi")
 print(" making composite for avi file");
 IJ.run(imp, "Make Composite", ""); //this generates the headless error because this plugin wants a window to show up. 
 								   // however, it doesn't seem to kill the script
-//imp = IJ.getImage();
 compression="JPEG";
 framerate="7";
 IJ.run(imp, "AVI... ", "compression=" +compression +" frame=" +framerate +" save=" +outname);
@@ -75,14 +63,14 @@ IJ.run(imp, "AVI... ", "compression=" +compression +" frame=" +framerate +" save
 else if (outextension==".v3draw") 
 {
 //raw_writer
-IJ.run(imp, "raw writer", "save="+outname);
+IJ.run(imp, "raw writerBRL", "save="+outname);
 imp.close();
 }
 else if (outextension=="")
 {
 outname=outname.concat(".v3draw");
 print("final output path name "+outname);
-IJ.run(imp, "raw writer", "save="+outname);
+IJ.run(imp, "raw writerBRL", "save="+outname);
 imp.close();
 }
 
