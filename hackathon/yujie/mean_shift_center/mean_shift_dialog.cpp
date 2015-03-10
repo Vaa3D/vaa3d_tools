@@ -4,172 +4,17 @@ mean_shift_dialog::mean_shift_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
     //create();
-    datasource=0;
+    //datasource=0;
     image1Dc_in=0;
-}
-
-
-void mean_shift_dialog::create()
-{
-    QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
-    QToolButton *button_load=new QToolButton;
-    button_load->setText("Load image");
-    button_load->setGeometry(0,0,10,20);
-
-    QToolButton *button_marker=new QToolButton;
-    button_marker->setText("Load markers");
-    button_marker->setGeometry(0,0,10,20);
-
-    QToolButton *button_fetch=new QToolButton;
-    button_fetch->setText("Fetch from 3D viewer");
-    button_fetch->setGeometry(0,0,10,20);
-
-//    QToolButton *button_push=new QToolButton;
-//    button_push->setText("Push back new markers");
-//    button_push->setGeometry(0,0,10,20);
-
-    QToolButton *button_center=new QToolButton;
-    button_center->setText("Get new centers");
-    button_center->setGeometry(0,0,10,20);
-
-    QToolButton *button_para=new QToolButton;
-    button_para->setText("Parameter setting");
-    button_para->setGeometry(0,0,10,20);
-
-    QToolButton *button_help=new QToolButton;
-    button_help->setText("Help");
-    button_help->setGeometry(0,0,10,20);
-
-    QToolBar *tool = new QToolBar;
-    tool->setGeometry(0,0,200,20);
-    tool->addWidget(button_load);
-    tool->addSeparator();
-//    tool->addWidget(button_marker);
-//    tool->addSeparator();
-    tool->addWidget(button_fetch);
-    tool->addSeparator();
-//    tool->addWidget(button_push);
-//    tool->addSeparator();
-    tool->addWidget(button_center);
-    tool->addSeparator();
-    tool->addWidget(button_para);
-    tool->addSeparator();
-    tool->addWidget(button_help);
-    tool->addSeparator();
-
-    QHBoxLayout *vlayout = new QHBoxLayout;
-    vlayout->addWidget(tool);
-
-    //Build the subdialog for parameter settings
-    subDialog = new QDialog();
-    subDialog->setWindowTitle("Parameter setting");
-    connect(button_para, SIGNAL(clicked()), subDialog, SLOT(show()));
-    connect(subDialog,SIGNAL(finished(int)),this,SLOT(dialoguefinish(int)));
-
-    spin_radius = new QSpinBox();
-    spin_radius->setRange(0,50); spin_radius->setValue(6);
-
-    QGridLayout *gridLayout=new QGridLayout();
-    QLabel* label_0 = new QLabel("search sphere radius (0~50):");
-    gridLayout->addWidget(label_0,0,0,1,2);
-    gridLayout->addWidget(spin_radius,0,3,1,1);
-
-    QPushButton *button_ok=new QPushButton;
-    button_ok->setText("OK");
-    QPushButton *button_cancel=new QPushButton;
-    button_cancel->setText("Cancel");
-    QHBoxLayout *hlayout=new QHBoxLayout;
-    hlayout->addWidget(button_ok);
-    hlayout->addWidget(button_cancel);
-    gridLayout->addLayout(hlayout,2,0,1,4);
-    subDialog->setLayout(gridLayout);
-
-    boxlayout->addLayout(vlayout);
-    //boxlayout->addWidget(label);
-    //boxlayout->addWidget(edit);
-    setLayout(boxlayout);
-    int height=tool->height();//+label->height()+edit->height();
-    this->setFixedHeight(height+80);
-
-    connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
-    connect(button_fetch,SIGNAL(clicked()),this, SLOT(fetch()));
-    connect(button_center,SIGNAL(clicked()),this,SLOT(mean_shift_center()));
-    connect(button_help,SIGNAL(clicked()),this,SLOT(help()));
-    connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
-    connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
-    prev_radius=spin_radius->value();
-}
-
-void mean_shift_dialog::dialoguefinish(int)
-{
-    if (subDialog->result()==QDialog::Accepted) {
-        prev_radius=spin_radius->value();
-        qDebug()<<"accepted";
-    }
-
-    else{
-        qDebug()<<"Not accepted";
-        spin_radius->setValue(prev_radius);
-    }
-}
-
-bool mean_shift_dialog::load()
-{
-    qDebug()<<"In load";
-    QString fileName;
-    fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
-             QDir::currentPath(),QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-
-    if (!fileName.isEmpty())
-    {
-        resetdata();
-
-        if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
-        {
-            QMessageBox::information(0,"","load image "+fileName+" error!");
-            return false;
-        }
-
-        datasource=1;
-        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-
-        if(intype==1)//V3D_UNIT8
-        {
-            mean_shift_obj.pushNewData<unsigned char>((unsigned char*)image1Dc_in, sz_img);
-        }
-
-        else if (intype == 2) //V3D_UINT16;
-        {
-            mean_shift_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
-            convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
-        }
-        else if(intype == 4) //V3D_FLOAT32;
-        {
-            mean_shift_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
-            convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
-        }
-        else
-        {
-           QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
-           return false;
-        }
-
-        updateInputWindow();
-        return true;
-    }
-    return false;
-
 }
 
 void mean_shift_dialog::fetch()
 {
-
-    v3dhandle curwin;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
     qDebug()<<"size:"<<v3dhandleList_current.size();
 
-    if (v3dhandleList_current.size()==0){
+    if (v3dhandleList_current.size()==0){ //No window opens
         v3d_msg("Please open image and select markers");
         return;
     }
@@ -186,7 +31,7 @@ void mean_shift_dialog::fetch()
         }
         curwin=v3dhandleList_current[0];
     }
-    else if (v3dhandleList_current.size()>1)
+    else if (v3dhandleList_current.size()>1) //>1 window, needs to select one
     {
         QStringList items;
         int i;
@@ -207,10 +52,9 @@ void mean_shift_dialog::fetch()
             if (!b_found)
                 items << callback->getImageName(cur_list_3dviewer[i]);
         }
-        qDebug()<<"Number of items:"<<items.size();
 
         QDialog *mydialog=new QDialog;
-        combo=new QComboBox();
+        QComboBox combo=new QComboBox;
         combo->insertItems(0,items);
         QLabel *label_win=new QLabel;
         label_win->setText("You have multiple windows open, please select one image:");
@@ -353,10 +197,11 @@ void mean_shift_dialog::fetch()
     memcpy(image1D_input, image1Dc_in, size_tmp*sizeof(unsigned char));
     image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
 
+    count_img++;
     v3dhandle v3dhandle_main=callback->newImageWindow();
     callback->setImage(v3dhandle_main, &image4d);
     callback->setLandmark(v3dhandle_main,LList_new_center);
-    callback->setImageName(v3dhandle_main, "output_"+callback->getImageName(curwin));
+    callback->setImageName(v3dhandle_main, "mean_shift_"+QString(callback->getImageName(curwin)));
     callback->updateImageWindow(v3dhandle_main);
     callback->open3DWindow(v3dhandle_main);
     callback->pushObjectIn3DWindow(v3dhandle_main);
@@ -364,6 +209,159 @@ void mean_shift_dialog::fetch()
 
     qDebug()<<"The end of fetch";
 }
+//void mean_shift_dialog::create()
+//{
+//    QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
+//    QToolButton *button_load=new QToolButton;
+//    button_load->setText("Load image");
+//    button_load->setGeometry(0,0,10,20);
+
+//    QToolButton *button_marker=new QToolButton;
+//    button_marker->setText("Load markers");
+//    button_marker->setGeometry(0,0,10,20);
+
+//    QToolButton *button_fetch=new QToolButton;
+//    button_fetch->setText("Fetch from 3D viewer");
+//    button_fetch->setGeometry(0,0,10,20);
+
+////    QToolButton *button_push=new QToolButton;
+////    button_push->setText("Push back new markers");
+////    button_push->setGeometry(0,0,10,20);
+
+//    QToolButton *button_center=new QToolButton;
+//    button_center->setText("Get new centers");
+//    button_center->setGeometry(0,0,10,20);
+
+//    QToolButton *button_para=new QToolButton;
+//    button_para->setText("Parameter setting");
+//    button_para->setGeometry(0,0,10,20);
+
+//    QToolButton *button_help=new QToolButton;
+//    button_help->setText("Help");
+//    button_help->setGeometry(0,0,10,20);
+
+//    QToolBar *tool = new QToolBar;
+//    tool->setGeometry(0,0,200,20);
+//    tool->addWidget(button_load);
+//    tool->addSeparator();
+////    tool->addWidget(button_marker);
+////    tool->addSeparator();
+//    tool->addWidget(button_fetch);
+//    tool->addSeparator();
+////    tool->addWidget(button_push);
+////    tool->addSeparator();
+//    tool->addWidget(button_center);
+//    tool->addSeparator();
+//    tool->addWidget(button_para);
+//    tool->addSeparator();
+//    tool->addWidget(button_help);
+//    tool->addSeparator();
+
+//    QHBoxLayout *vlayout = new QHBoxLayout;
+//    vlayout->addWidget(tool);
+
+//    //Build the subdialog for parameter settings
+//    subDialog = new QDialog();
+//    subDialog->setWindowTitle("Parameter setting");
+//    connect(button_para, SIGNAL(clicked()), subDialog, SLOT(show()));
+//    connect(subDialog,SIGNAL(finished(int)),this,SLOT(dialoguefinish(int)));
+
+//    spin_radius = new QSpinBox();
+//    spin_radius->setRange(0,50); spin_radius->setValue(6);
+
+//    QGridLayout *gridLayout=new QGridLayout();
+//    QLabel* label_0 = new QLabel("search sphere radius (0~50):");
+//    gridLayout->addWidget(label_0,0,0,1,2);
+//    gridLayout->addWidget(spin_radius,0,3,1,1);
+
+//    QPushButton *button_ok=new QPushButton;
+//    button_ok->setText("OK");
+//    QPushButton *button_cancel=new QPushButton;
+//    button_cancel->setText("Cancel");
+//    QHBoxLayout *hlayout=new QHBoxLayout;
+//    hlayout->addWidget(button_ok);
+//    hlayout->addWidget(button_cancel);
+//    gridLayout->addLayout(hlayout,2,0,1,4);
+//    subDialog->setLayout(gridLayout);
+
+//    boxlayout->addLayout(vlayout);
+//    //boxlayout->addWidget(label);
+//    //boxlayout->addWidget(edit);
+//    setLayout(boxlayout);
+//    int height=tool->height();//+label->height()+edit->height();
+//    this->setFixedHeight(height+80);
+
+//    connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
+//    connect(button_fetch,SIGNAL(clicked()),this, SLOT(fetch()));
+//    connect(button_center,SIGNAL(clicked()),this,SLOT(mean_shift_center()));
+//    connect(button_help,SIGNAL(clicked()),this,SLOT(help()));
+//    connect(button_ok,SIGNAL(clicked()),subDialog,SLOT(accept()));
+//    connect(button_cancel,SIGNAL(clicked()),subDialog,SLOT(reject()));
+//    prev_radius=spin_radius->value();
+//}
+
+//void mean_shift_dialog::dialoguefinish(int)
+//{
+//    if (subDialog->result()==QDialog::Accepted) {
+//        prev_radius=spin_radius->value();
+//        qDebug()<<"accepted";
+//    }
+
+//    else{
+//        qDebug()<<"Not accepted";
+//        spin_radius->setValue(prev_radius);
+//    }
+//}
+
+//bool mean_shift_dialog::load()
+//{
+//    qDebug()<<"In load";
+//    QString fileName;
+//    fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
+//             QDir::currentPath(),QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+
+//    if (!fileName.isEmpty())
+//    {
+//        resetdata();
+
+//        if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), image1Dc_in, sz_img, intype))
+//        {
+//            QMessageBox::information(0,"","load image "+fileName+" error!");
+//            return false;
+//        }
+
+//        datasource=1;
+//        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+
+//        if(intype==1)//V3D_UNIT8
+//        {
+//            mean_shift_obj.pushNewData<unsigned char>((unsigned char*)image1Dc_in, sz_img);
+//        }
+
+//        else if (intype == 2) //V3D_UINT16;
+//        {
+//            mean_shift_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
+//            convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+//        }
+//        else if(intype == 4) //V3D_FLOAT32;
+//        {
+//            mean_shift_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
+//            convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+//        }
+//        else
+//        {
+//           QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
+//           return false;
+//        }
+
+//        updateInputWindow();
+//        return true;
+//    }
+//    return false;
+
+//}
+
+
 
 void mean_shift_dialog::resetdata()
 {

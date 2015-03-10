@@ -21,12 +21,12 @@ class mean_shift_dialog:public QDialog
     Q_OBJECT
 public:
     mean_shift_dialog(V3DPluginCallback2 *cb);
-    void create();
+//    void create();
 
 private:
-    void resetdata();
-    void updateInputWindow();
-    void updateOutputWindow();
+//    void resetdata();
+//    void updateInputWindow();
+//    void updateOutputWindow();
 
 
 private:
@@ -43,7 +43,7 @@ private:
     int prev_radius;
     QSpinBox *spin_radius;
     QDialog *subDialog;
-    QComboBox *combo;
+
 
 public slots:
     bool load();
