@@ -21,7 +21,7 @@ void Paint_Dialog::create()
 
     QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
 
-    QToolBar *tool = new QToolBar;
+    tool = new QToolBar;
     tool->setGeometry(0,0,300,20);
 
     QVBoxLayout *layout = new QVBoxLayout;
@@ -55,13 +55,13 @@ void Paint_Dialog::create()
     QSize iconsize(28,28);
     button_color->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
-    QMenu *savemenu=new QMenu;
+    savemenu=new QMenu;
     createsavemenu();
     button_save->setMenu(savemenu);
     button_save->setPopupMode(QToolButton::InstantPopup);
     connect(button_save,SIGNAL(clicked()),this,SLOT(dosavemenu()));
 
-    QMenu *openmenu=new QMenu;
+    openmenu=new QMenu;
     createopenmenu();
     button_open->setMenu(openmenu);
     button_open->setPopupMode(QToolButton::InstantPopup);
