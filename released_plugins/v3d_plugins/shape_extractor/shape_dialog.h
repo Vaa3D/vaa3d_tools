@@ -20,8 +20,6 @@ class shape_dialog: public QDialog
     Q_OBJECT
 public:
     explicit shape_dialog(V3DPluginCallback2 *cb);
-    int prev_bgthr;
-    int prev_conviter;
     void core();
 
 
@@ -29,44 +27,45 @@ private:
     extract_fun shape_ext_obj;
     V3DPluginCallback2 *callback;
     V3DLONG sz_img[4];
-    int intype;
-    unsigned char *image1Dc_in,*image1Dc_out, *label,*label_m;
-    LandmarkList LList,LList_new_center,LList_in;
-    vector<V3DLONG> poss_landmark,volume;
-    vector<V3DLONG> x_all,y_all,z_all,mass_center;
+    unsigned char *image1Dc_in,*image1Dc_out, *label;//,*label_m;
+    LandmarkList LList,LList_in;
+    vector<V3DLONG> poss_landmark;//,volume;
+    vector<V3DLONG> x_all,y_all,z_all;
     int rgb[3];
     v3dhandle curwin;
-    int count_img;
-    int datasource; //fetched datasource=2; load datasource=1;
     int bg_thr;
-    //QSpinBox *para_bg;
+    QSpinBox *para_bg;
 
-    QPlainTextEdit *edit;
-    QSpinBox *spin_bgthr,*spin_conviter,*spin_radius;
-    QDialog *subDialog;
-    QLabel *label0;
+    //int datasource; //fetched datasource=2; load datasource=1;
+    //QPlainTextEdit *edit;
+    //QSpinBox *spin_bgthr,*spin_conviter,*spin_radius;
+    //QDialog *subDialog;
+    //QLabel *label0;
+    //int prev_bgthr;
+    //int prev_conviter;
 
 private:
-
-    void create();
-    void updateInputWindow();
-    void updateOutputWindow();
     void GetColorRGB(int* rgb, int idx);
-    void resetdata();
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
     void extract();
 
+    //void create();
+    //void updateInputWindow();
+    //void updateOutputWindow();
+   // void resetdata();
+
+
 
 public slots:
-    bool load();
+    //bool load();
 
     //void display_mass_center();
-    void dialoguefinish(int);
-    void fetch();
-    void display_volume();
-    void help();
-    void extract_mean_shift();
-    void extract_mean_shift_comparison();
+    //void dialoguefinish(int);
+//    void fetch();
+//    void display_volume();
+    //void help();
+    //void extract_mean_shift();
+    //void extract_mean_shift_comparison();
 };
 #endif // SHAPE_DIALOG_H
