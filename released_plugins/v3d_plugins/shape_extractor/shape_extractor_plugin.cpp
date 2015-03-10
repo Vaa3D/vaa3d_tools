@@ -33,8 +33,8 @@ void shape_extr_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     if (menu_name == tr("shape_extractor"))
 	{
         dialog=new shape_dialog(&callback);
-        dialog->setWindowTitle("shape extractor");
-        dialog->show();
+        //dialog->setWindowTitle("shape extractor");
+        dialog->core();
 	}
 
 	else

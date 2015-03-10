@@ -22,9 +22,184 @@ shape_dialog::shape_dialog(V3DPluginCallback2 *cb)
     sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
     LList.clear();
     LList_new_center.clear();
-    create();
-    datasource=0;
-    label_m=0;
+//    create();
+//    datasource=0;
+//    label_m=0;
+}
+
+
+void shape_dialog::core()
+{
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
+    qDebug()<<"size:"<<v3dhandleList_current.size();
+
+    if (v3dhandleList_current.size()==0){
+        v3d_msg("Please open image and select markers");
+        return;
+    }
+    else if (v3dhandleList_current.size()==1)
+    {
+        //get markers and check markers
+        qDebug()<<"Only 1 window open";
+        LList_in.clear();
+        LList_in = callback->getLandmark(v3dhandleList_current[0]);
+        if (LList_in.size()==0)
+        {
+            v3d_msg("Please load markers");
+            return;
+        }
+        curwin=v3dhandleList_current[0];
+    }
+    else if (v3dhandleList_current.size()>1)
+    {
+        QStringList items;
+        int i;
+        for (i=0; i<v3dhandleList_current.size(); i++)
+            items << callback->getImageName(v3dhandleList_current[i]);
+
+        for (i=0; i<cur_list_3dviewer.count(); i++)
+        {
+            QString curname = callback->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
+            bool b_found=false;
+            for (int j=0; j<v3dhandleList_current.size(); j++)
+                if (curname==callback->getImageName(v3dhandleList_current[j]))
+                {
+                    b_found=true;
+                    break;
+                }
+
+            if (!b_found)
+                items << callback->getImageName(cur_list_3dviewer[i]);
+        }
+        qDebug()<<"Number of items:"<<items.size();
+
+        QDialog *mydialog=new QDialog;
+        QComboBox *combo=new QComboBox();
+        combo->insertItems(0,items);
+        QLabel *label_win=new QLabel;
+        label_win->setText("You have multiple windows open, please select one image:");
+        QGridLayout *layout= new QGridLayout;
+        layout->addWidget(label_win,0,0,1,1);
+        layout->addWidget(combo,1,0,4,1);
+        QPushButton *button_d_ok=new QPushButton;
+        button_d_ok->setText("Ok");
+        button_d_ok->setFixedWidth(100);
+        QPushButton *button_d_cancel=new QPushButton;
+        button_d_cancel->setText("Cancel");
+        button_d_cancel->setFixedWidth(100);
+        QHBoxLayout *box=new QHBoxLayout;
+        box->addWidget(button_d_ok,Qt::AlignCenter);
+        box->addWidget(button_d_cancel,Qt::AlignCenter);
+        layout->addLayout(box,5,0,1,1);
+        connect(button_d_ok,SIGNAL(clicked()),mydialog,SLOT(accept()));
+        connect(button_d_cancel,SIGNAL(clicked()),mydialog,SLOT(reject()));
+        mydialog->setLayout(layout);
+        mydialog->exec();
+        if (mydialog->result()==QDialog::Accepted)
+        {
+            int tmp=combo->currentIndex();
+            curwin=v3dhandleList_current[tmp];
+        }
+        else
+        {
+            v3d_msg("You have not selected a window");
+            return;
+        }
+        //get markers and check markers
+        LList_in.clear();
+        LList_in = callback->getLandmark(curwin);
+        if (LList_in.size()==0)
+        {
+            v3d_msg("Please load markers");
+            return;
+        }
+    }
+
+    //Get the image info
+    Image4DSimple* p4DImage = callback->getImage(curwin);
+    if (!p4DImage){
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+        //resetdata();
+    sz_img[0]=p4DImage->getXDim();
+    sz_img[1]=p4DImage->getYDim();
+    sz_img[2]=p4DImage->getZDim();
+    sz_img[3]=p4DImage->getCDim();
+
+    if (sz_img[3]>3){
+        sz_img[3]=3;
+        QMessageBox::information(0,"","More than 3 channels were loaded."
+                                 "The first 3 channel will be applied for analysis.");
+    }
+
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    image1Dc_in = p4DImage->getRawData();
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    if(pixeltype==1)//V3D_UNIT8
+    {
+        shape_ext_obj.pushNewData<unsigned char>((unsigned char*)image1Dc_in, sz_img);
+    }
+
+    else if (pixeltype == 2) //V3D_UINT16;
+    {
+        shape_ext_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
+        convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+    }
+    else if(pixeltype == 4) //V3D_FLOAT32;
+    {
+        shape_ext_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
+        convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+    }
+    else
+    {
+       QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
+       return;
+    }
+
+    bg_thr=70;
+    //set parameter
+    QDialog *mydialog_para=new QDialog;
+    QLabel *label_info=new QLabel;
+    label_info->setText("Please set background threshold");
+    QLabel *label_bg=new QLabel;
+    label_bg->setText("Background threshold:");
+    QGridLayout *layout2=new QGridLayout;
+    QSpinBox *para_bg=new QSpinBox;
+    para_bg->setRange(0,255);
+    para_bg->setValue(70);
+    layout2->addWidget(label_info,0,0,1,2);
+    layout2->addWidget(label_bg,1,0,1,1);
+    layout2->addWidget(para_bg,1,1,1,1);
+    QPushButton *button_p_ok=new QPushButton;
+    button_p_ok->setText("Ok");
+    button_p_ok->setFixedWidth(100);
+    QPushButton *button_p_cancel=new QPushButton;
+    button_p_cancel->setText("Cancel");
+    button_p_cancel->setFixedWidth(100);
+    layout2->addWidget(button_p_ok,2,0,1,1);
+    layout2->addWidget(button_p_cancel,2,1,1,1);
+    connect(button_p_ok,SIGNAL(clicked()),mydialog_para,SLOT(accept()));
+    connect(button_p_cancel,SIGNAL(clicked()),mydialog_para,SLOT(reject()));
+
+    mydialog_para->setLayout(layout2);
+    mydialog_para->exec();
+    if (mydialog_para->result()==QDialog::Accepted)
+    {
+        bg_thr=para_bg->value();
+    }
+
+    //copy the landmarks in LList
+    for(int i=0; i<LList_in.size(); i++){
+        LList.append(LList_in.at(i));
+        LList[i].color.r=196;
+        LList[i].color.g=LList[i].color.b=0;
+    }
+    extract();
+
+   //start region grow
 }
 
 void shape_dialog::create()
@@ -110,21 +285,26 @@ void shape_dialog::create()
     QHBoxLayout *vlayout = new QHBoxLayout;
     vlayout->addWidget(tool);
 
+    label0= new QLabel();
+    label0->setText("Filename:");
+    label0->setMaximumHeight(30);
+
     QLabel *label= new QLabel;
     label->setText("Selected markers:");
-    label->setMaximumHeight(50);
+    label->setMaximumHeight(30);
 
     edit=new QPlainTextEdit();
     edit->setPlainText("");
     edit->setReadOnly(true);
-    edit->setFixedHeight(100);
+    edit->setMinimumHeight(30);
 
     boxlayout->addLayout(vlayout);
+    boxlayout->addWidget(label0);
     boxlayout->addWidget(label);
     boxlayout->addWidget(edit);
     setLayout(boxlayout);
-    int height=tool->height()+label->height()+edit->height();
-    this->setFixedHeight(height+80);
+//    int height=tool->height()+label->height()+edit->height();
+//    this->setFixedHeight(height+80);
 
      connect(button_load, SIGNAL(clicked()), this, SLOT(load()));
      connect(button_fetch,SIGNAL(clicked()),this, SLOT(fetch()));
@@ -202,6 +382,7 @@ bool shape_dialog::load()
         }
 
         edit->clear();
+        label0->setText(QString("File:")+fileName);
         updateInputWindow();
         return true;
     }
@@ -234,6 +415,7 @@ void shape_dialog::fetch()
         }
     }
     Image4DSimple* p4DImage = callback->getImage(curwin);
+    QString filename=callback->getImageName(curwin);
     if (!p4DImage){
         QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
         return;
@@ -283,6 +465,9 @@ void shape_dialog::fetch()
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
     callback->updateImageWindow(curwin);
+
+    v3d_msg("You have successfully fetched the image.");
+    label0->setText(QString("File:")+filename);
 }
 
 void shape_dialog::resetdata()
@@ -354,6 +539,127 @@ void shape_dialog::updateInputWindow()
 
 void shape_dialog::extract()
 {
+//    bool winfound=false;
+//    v3dhandle found_win;
+//    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+//    for (V3DLONG i=0;i<v3dhandleList_current.size();i++)
+//    {
+//        if(callback->getImageName(v3dhandleList_current[i]).contains(NAME_INWIN))
+//        {
+//            winfound=true;
+//            found_win=v3dhandleList_current[i];
+//            break;
+//        }
+//    }
+
+//    if (!winfound)
+//    {
+//        v3d_msg("No image is found. Please load or fetch an image");
+//        return;
+//    }
+
+//    LList.clear();
+//    LandmarkList LList_in = callback->getLandmark(found_win);
+//    for(int i=0; i<LList_in.size(); i++){
+//        LList.append(LList_in.at(i));
+//        LList[i].color.r=196;
+//        LList[i].color.g=LList[i].color.b=0;
+//    }
+
+//    if(LList.size()<=0)
+//    {
+//        v3d_msg("No markers were selected");
+//        return;
+//    }
+//    edit->clear();
+//    for (int i=0;i<LList.size();i++)
+//     {
+//        QString tmp="Marker "+ QString::number(i+1)+ ": " + QString::number(LList[i].x)+","+
+//                QString::number(LList[i].y)+ "," +QString::number(LList[i].z);
+//        edit->appendPlainText(tmp);
+//     }
+
+
+//    int convolute_iter=spin_conviter->value();
+//    int bg_thr=spin_bgthr->value();
+    int convolute_iter=1;
+    V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
+    poss_landmark.clear();
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    if (image1Dc_out!=0)
+    {
+        memory_free_uchar1D(image1Dc_out);
+    }
+    image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
+    memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
+
+    if (label!=0)
+    {
+       memory_free_uchar1D(label);
+    }
+    label=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
+    memset(label,0,size_page*sizeof(unsigned char));
+
+    V3DLONG sumrsize=0;
+    //volume.clear();
+    for (int j=0;j<poss_landmark.size();j++){
+        qDebug()<<"j:"<<j;
+
+        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label,poss_landmark[j],
+                                       convolute_iter,bg_thr,j+1);
+        if(rsize<=0) continue;
+//        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
+//        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+//        LList_new_center.append(tmp);
+
+//        volume.push_back(x_all.size());
+
+        GetColorRGB(rgb,j);
+        V3DLONG finalpos;
+        for (int i=0;i<x_all.size();i++)
+        {
+            finalpos=xyz2pos(x_all[i],y_all[i],z_all[i],sz_img[0],sz_img[0]*sz_img[1]);
+
+                image1Dc_out[finalpos]=rgb[0];
+                if (sz_img[3]>1){
+                image1Dc_out[finalpos+1*sz_img[0]*sz_img[1]*sz_img[2]]=rgb[1];
+                }
+                if (sz_img[3]>2){
+                image1Dc_out[finalpos+2*sz_img[0]*sz_img[1]*sz_img[2]]=rgb[2];
+                }
+            sumrsize=rsize+sumrsize;
+        }
+     }
+
+    qDebug()<<"sumrsize:"<<sumrsize;
+
+    if (sumrsize>0)
+    {
+        //updateOutputWindow();
+        Image4DSimple image4d,image4d_color;
+
+        unsigned char* image1Dc_input=memory_allocate_uchar1D(size_page*sz_img[3]);
+        memcpy(image1Dc_input, image1Dc_out, size_page*sz_img[3]*sizeof(unsigned char));
+        unsigned char* label_input=memory_allocate_uchar1D(size_page);
+        memcpy(label_input, label, size_page*sizeof(unsigned char));
+
+        image4d.setData(label_input, sz_img[0], sz_img[1], sz_img[2], 1, V3D_UINT8);
+        image4d_color.setData(image1Dc_input,sz_img[0], sz_img[1], sz_img[2],sz_img[3],V3D_UINT8);
+
+        v3dhandle v3dhandle_main=callback->newImageWindow();
+        callback->setImage(v3dhandle_main, &image4d_color);
+        callback->setLandmark(v3dhandle_main, LList);
+        callback->setImageName(v3dhandle_main, "Output_"+QString(callback->getImageName(curwin)));
+        callback->updateImageWindow(v3dhandle_main);
+        callback->open3DWindow(v3dhandle_main);
+        callback->pushObjectIn3DWindow(v3dhandle_main);
+    }
+    else
+    v3d_msg("Nothing were found. Please change marker or adjust parameters.");
+}
+
+void shape_dialog::extract_mean_shift()
+{
     bool winfound=false;
     v3dhandle found_win;
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
@@ -397,20 +703,30 @@ void shape_dialog::extract()
     V3DLONG size_page = sz_img[0]*sz_img[1]*sz_img[2];
     int convolute_iter=spin_conviter->value();
     int bg_thr=spin_bgthr->value();
+    int windowradius=spin_radius->value();
 
     poss_landmark.clear();
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
-    if (image1Dc_out!=0)
+
+    //__________________________Using mean_shift to optimize markers
+
+    LList_new_center.clear();
+    for (int j=0;j<poss_landmark.size();j++)
     {
-        memory_free_uchar1D(image1Dc_out);
+        mass_center=shape_ext_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        LList_new_center.append(tmp);
     }
+
+    //Start region growing
+    poss_landmark.clear();
+    poss_landmark=landMarkList2poss(LList_new_center, sz_img[0], sz_img[0]*sz_img[1]);
+
+    if (image1Dc_out!=0) memory_free_uchar1D(image1Dc_out);
     image1Dc_out=memory_allocate_uchar1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
     memset(image1Dc_out,0,sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]*sizeof(unsigned char));
 
-    if (label!=0)
-    {
-       memory_free_uchar1D(label);
-    }
+    if (label!=0) memory_free_uchar1D(label);
     label=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
     memset(label,0,size_page*sizeof(unsigned char));
 
@@ -419,13 +735,9 @@ void shape_dialog::extract()
     for (int j=0;j<poss_landmark.size();j++){
         qDebug()<<"j:"<<j;
 
-        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label,poss_landmark[j],
+        V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label_m,poss_landmark[j],
                                        convolute_iter,bg_thr,j+1);
         if(rsize<=0) continue;
-//        mass_center=shape_ext_obj.get_mass_center(x_all,y_all,z_all);
-//        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-//        LList_new_center.append(tmp);
-
         volume.push_back(x_all.size());
 
         GetColorRGB(rgb,j);
@@ -443,17 +755,28 @@ void shape_dialog::extract()
                 }
             sumrsize=rsize+sumrsize;
         }
-     }
 
     qDebug()<<"sumrsize:"<<sumrsize;
+    }
+    if (sumrsize>0)
+    {
+        LList.clear();
+        for(int i=0; i<LList_new_center.size(); i++){
+            LList.append(LList_new_center.at(i));
+            LList[i].color.r=196;
+            LList[i].color.g=LList[i].color.b=0;
+        }
+        updateOutputWindow();
 
-    if (sumrsize>0) updateOutputWindow();
+
+    }
     else
     v3d_msg("Nothing were found. Please change marker or adjust parameters.");
+
 }
 
 
-void shape_dialog::extract_mean_shift()
+void shape_dialog::extract_mean_shift_comparison()
 {
     bool winfound=false;
     v3dhandle found_win;

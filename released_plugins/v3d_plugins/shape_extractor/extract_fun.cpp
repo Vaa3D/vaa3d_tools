@@ -21,7 +21,8 @@ extract_fun::~extract_fun()
 V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,unsigned char * label,
                              V3DLONG seed_ind, int convolute_iter,int bg_thr,int marker)
 {
-    qDebug()<<"In extract now";
+    qDebug()<<"In extract now"<<bg_thr;
+    qDebug()<<"sz_img:"<<sz_image[0]<<":"<<sz_image[1]<<":"<<sz_image[2]<<":"<<sz_image[3];
     x_all.clear();
     y_all.clear();
     z_all.clear();
@@ -149,8 +150,8 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
         center_x=new_mass_center[0];
         center_y=new_mass_center[1];
         center_z=new_mass_center[2];
-        qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_pre.size()
-               <<":"<<(float)seeds_pre.size()/total_r_grow;
+//        qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_pre.size()
+//               <<":"<<(float)seeds_pre.size()/total_r_grow;
         qDebug()<<"r_grow"<<r_grow;
     }
 
