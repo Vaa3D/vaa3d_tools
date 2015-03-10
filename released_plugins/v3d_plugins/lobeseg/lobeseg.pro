@@ -43,5 +43,5 @@ SOURCES += $$V3DMAINFOLER/worm_straighten_c/mst_prim_c.cpp
 SOURCES += $$V3DMAINFOLER/worm_straighten_c/bfs_1root.cpp
 
 TARGET	= $$qtLibraryTarget(lobe_seg)
-DESTDIR	= $$V3DMAINFOLER/../bin/plugins/image_segmentation/lobeseger
+DESTDIR	= $$V3DMAINFOLER/../bin/plugins/image_segmentation/lobe_seger
  
