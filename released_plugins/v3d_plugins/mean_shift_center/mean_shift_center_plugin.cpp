@@ -31,7 +31,7 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     if (menu_name == tr("mean_shift_center_finder"))
 	{
         dialog=new mean_shift_dialog(&callback);
-        dialog->fetch();
+        dialog->core();
 	}
 	else
 	{
@@ -126,7 +126,6 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         }
     }
 
-
     if (qs_input_mark.isEmpty())
         return;
     FILE * fp = fopen(qs_input_mark.toAscii(), "r");
@@ -137,7 +136,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     }
     else
     {
-        fclose(fp); //since I will open the file and close it in the function below, thus close it now
+        fclose(fp);
     }
 
     QList <LocationSimple> tmpList = readPosFile_usingMarkerCode(qs_input_mark.toAscii()); //revised on 090725 to use the unique interface
@@ -156,7 +155,8 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
     for (int j=0;j<poss_landmark.size();j++)
     {
-        mass_center=calc_mean_shift_center(poss_landmark[j],windowradius);
+        mass_center=dialog->mean_shift_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
+                //calc_mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
     }
@@ -189,70 +189,6 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
 }
 
-vector<V3DLONG> mean_shift_plugin::calc_mean_shift_center(V3DLONG ind,int windowradius)
-{
-
-    V3DLONG y_offset=sz_img[0];
-    V3DLONG z_offset=sz_img[0]*sz_img[1];
-
-    V3DLONG x,y,z,pos;
-    vector<V3DLONG> coord;
-
-    coord=pos2xyz(ind, y_offset, z_offset);
-    x=coord[0];y=coord[1];z=coord[2];
-    float total_x,total_y,total_z,v_color,sum_v;
-    float center_dis=1;
-    vector<V3DLONG> center(3,0);
-    V3DLONG page_size=sz_img[0]*sz_img[1]*sz_img[2];
-
-    //find out the channel with the maximum intensity for the marker
-    v_color=image_data[ind];
-    int channel=0;
-    for (int j=1;j<sz_img[3];j++)
-    {
-        if (image_data[ind+page_size*j]>v_color)
-        {
-            v_color=image_data[ind+page_size*j];
-            channel=j;
-        }
-    }
-
-    while (center_dis>=1)
-    {
-        total_x=total_y=total_z=sum_v=0;
-
-        for(V3DLONG dx=MAX(x-windowradius,0); dx<=MIN(sz_img[0]-1,x+windowradius); dx++){
-            for(V3DLONG dy=MAX(y-windowradius,0); dy<=MIN(sz_img[1]-1,y+windowradius); dy++){
-                for(V3DLONG dz=MAX(z-windowradius,0); dz<=MIN(sz_img[2]-1,z+windowradius); dz++){
-                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
-                    double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
-                         +(dz-z)*(dz-z);
-                    double distance=sqrt(tmp);
-                    if (distance>windowradius) continue;
-                    v_color=image_data[pos+page_size*channel];
-//                    v_color=image_data[pos];
-//                    for (int j=1;j<sz_img[3];j++)
-//                    v_color=MAX(v_color,image_data[pos+sz_img[0]*sz_img[1]*sz_img[2]*j]);
-
-                    total_x=v_color*dx+total_x;
-                    total_y=v_color*dy+total_y;
-                    total_z=v_color*dz+total_z;
-                    sum_v=sum_v+v_color;
-                 }
-             }
-         }
-            qDebug()<<"v_color:"<<v_color<<":"<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v;
-            center[0]=total_x/sum_v;
-            center[1]=total_y/sum_v;
-            center[2]=total_z/sum_v;
-        float tmp_1=(center[0]-x)*(center[0]-x)+(center[1]-y)*(center[1]-y)
-                    +(center[2]-z)*(center[2]-z);
-        center_dis=sqrt(tmp_1);
-        qDebug()<<"center distance:"<<center_dis<<":"<<center[0]<<":"<<center[1]<<":"<<center[2];
-        x=center[0]; y=center[1]; z=center[2];
-    }
-    return center;
-}
 
 QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char * posFile) //last update 090725
 {
@@ -286,7 +222,7 @@ void mean_shift_plugin::printHelp()
     printf("Usage v3d -x mean_shift_center_finder -f mean_shift_center_finder -i <input.v3draw> <input.v3draw.marker> [-p <int>(0-50)] [-o <output_image.marker>]\n");
 }
 
-QList <ImageMarker> readMarker_file(const QString & filename)
+QList <ImageMarker> mean_shift_plugin::readMarker_file(const QString & filename)
 {
     QList <ImageMarker> tmp_list;
 

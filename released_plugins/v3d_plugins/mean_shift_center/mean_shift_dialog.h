@@ -21,36 +21,38 @@ class mean_shift_dialog:public QDialog
     Q_OBJECT
 public:
     mean_shift_dialog(V3DPluginCallback2 *cb);
-    void create();
-
-private:
-    void resetdata();
-    void updateInputWindow();
-    void updateOutputWindow();
-
-
-private:
     mean_shift_fun mean_shift_obj;
+    void core();
+    //void create();
+
+private:
+//    void resetdata();
+//    void updateInputWindow();
+//    void updateOutputWindow();
+
+
+private:
+
     V3DPluginCallback2 *callback;
-    V3DLONG sz_img[4];
-    int intype;
-    unsigned char *image1Dc_in;
     v3dhandle curwin;
-    int datasource; //fetched datasource=2; load datasource=1;
+    V3DLONG sz_img[4];
+    unsigned char *image1Dc_in;
     LandmarkList LList,LList_in,LList_new_center;
-    vector<V3DLONG> poss_landmark;
-    vector<V3DLONG> x_all,y_all,z_all,mass_center;
-    int prev_radius;
-    QSpinBox *spin_radius;
-    QDialog *subDialog;
-    QComboBox *combo;
+    vector<V3DLONG> poss_landmark,mass_center;
+
+    //int intype;
+    //int datasource; //fetched datasource=2; load datasource=1;
+    //int prev_radius;
+    //QSpinBox *spin_radius;
+    //QDialog *subDialog;
+    //QComboBox *combo;
 
 public slots:
-    bool load();
-    void fetch();
-    void mean_shift_center();
-    void help();
-    void dialoguefinish(int);
+    //bool load();
+    //void fetch();
+    //void mean_shift_center();
+    //void help();
+    //void dialoguefinish(int);
 };
 
 
