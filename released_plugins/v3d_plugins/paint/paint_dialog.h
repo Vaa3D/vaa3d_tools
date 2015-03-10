@@ -35,7 +35,6 @@ public slots:
     void dosavemenu();
     void doopenmenu();
     void help();
-    //void inserttext();
 
 private:
     void create();
@@ -46,12 +45,10 @@ private:
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
     void resetdata();
     void closeEvent(QCloseEvent *event);
-    QMenu *savemenu;
-    QMenu *openmenu;
+    QMenu *savemenu,*openmenu;
     QToolBar *tool;
     void createsavemenu();
     void createopenmenu();
-
 
     QString fileName;
     V3DPluginCallback2 *callback;
@@ -62,12 +59,9 @@ private:
     int datasource; //loaded data:datasource=1; fetched data:datasource=2;
 
     v3dhandle curwin;
-    ImagePixelType pixeltype;
     bool zoominflag;
     int previousz;
-    unsigned char *paint_1DC;
-    unsigned char *backupdata;
-    unsigned char *image1Dc_in;
+    unsigned char *paint_1DC,*backupdata,*image1Dc_in;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

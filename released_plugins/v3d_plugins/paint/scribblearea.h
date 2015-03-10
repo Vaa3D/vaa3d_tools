@@ -39,12 +39,10 @@
 
  private:
      void drawLineTo(const QPoint &endPoint);
-     QCursor cursorshape();
 
      bool scribbling;
      int myPenWidth;
      QColor myPenColor;
-     QCursor brushCursor;
      QPoint lastPoint;
      QPlainTextEdit *edit;
 

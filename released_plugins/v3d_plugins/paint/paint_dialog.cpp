@@ -19,11 +19,9 @@ Paint_Dialog::Paint_Dialog(V3DPluginCallback2 *cb, QWidget *parent) :
 void Paint_Dialog::create()
 {
 
-    //QGridLayout *gridLayout = new QGridLayout();
     QBoxLayout *boxlayout=new QBoxLayout(QBoxLayout::TopToBottom);
 
-    //gridLayout->addWidget(paintarea,1,0,1,1);
-    tool = new QToolBar;
+    QToolBar *tool = new QToolBar;
     tool->setGeometry(0,0,300,20);
 
     QVBoxLayout *layout = new QVBoxLayout;
@@ -40,9 +38,6 @@ void Paint_Dialog::create()
     QToolButton *button_pb = new QToolButton;
     button_pb->setText("Pushback");
     button_pb->setGeometry(0,0,10,30);
-    //QToolButton *button_text=new QToolButton;
-    //button_text->setText("Insert text");
-    //button_text->setGeometry(0,0,10,20);
     QToolButton *button_pen = new QToolButton;
     button_pen->setText("Pen Width");
     QToolButton *button_print = new QToolButton;
@@ -59,15 +54,14 @@ void Paint_Dialog::create()
     button_color->setIcon(QIcon(":/paint.png"));
     QSize iconsize(28,28);
     button_color->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    //button_color->setIconSize(iconsize);
 
-    savemenu=new QMenu;
+    QMenu *savemenu=new QMenu;
     createsavemenu();
     button_save->setMenu(savemenu);
     button_save->setPopupMode(QToolButton::InstantPopup);
     connect(button_save,SIGNAL(clicked()),this,SLOT(dosavemenu()));
 
-    openmenu=new QMenu;
+    QMenu *openmenu=new QMenu;
     createopenmenu();
     button_open->setMenu(openmenu);
     button_open->setPopupMode(QToolButton::InstantPopup);
@@ -90,8 +84,6 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_save);
     tool->addSeparator();
-//    tool->addWidget(button_fetch);
-//    tool->addSeparator();
     tool->addWidget(button_pb);
     tool->addSeparator();
     tool->addWidget(button_zoomin);
@@ -100,13 +92,10 @@ void Paint_Dialog::create()
     tool->addSeparator();
     tool->addWidget(button_clear);
     tool->addSeparator();
-   // tool->addWidget(button_text);
-    //tool->addSeparator();
     tool->addWidget(button_color);
     tool->addSeparator();
     tool->addWidget(button_pen);
     tool->addSeparator();
-
     tool->addWidget(button_print);
     tool->addSeparator();
     tool->addWidget(button_help);
@@ -117,17 +106,11 @@ void Paint_Dialog::create()
     tool->setIconSize(iconsize);
     layout->addWidget(tool);
 
-
     boxlayout->addLayout(layout);
     boxlayout->addWidget(paintarea);
     boxlayout->addWidget(label);
     boxlayout->addWidget(edit);
 
-//    gridLayout->addWidget(label,2,0,1,1);
-//    gridLayout->addLayout(layout,0,0,1,1);
-//    gridLayout->addWidget(edit,3,0,1,1);
-
-//    this->setLayout(gridLayout);
     this->setLayout(boxlayout);
     this->setMinimumHeight(200);
     this->setMinimumWidth(500);
@@ -138,8 +121,6 @@ void Paint_Dialog::create()
     connect(button_help, SIGNAL(clicked()), this, SLOT(help()));
     connect(button_zoomin,SIGNAL(clicked()),this, SLOT(zoomin()));
     connect(button_zoomout,SIGNAL(clicked()),this,SLOT(zoomout()));
-    //connect(button_text,SIGNAL(clicked()),this,SLOT(inserttext()));
-    //connect(button_savefile,SIGNAL(clicked()),this,SLOT(saveFile()));
 
 }
 
@@ -458,7 +439,6 @@ void Paint_Dialog::zdisplay(int z_in)
     previousz=spin->value();
 
 }
-
 
 
 void Paint_Dialog::clearimage()
@@ -793,7 +773,7 @@ void Paint_Dialog::help()
                "<b>Color</b> -- Change the pen color to user specified color.<br>"
                "<b>Pen width</b> --Change the pen width to user specified width.<br>"
                "<b>Print</b> -- Users can print out the current 2D image.<br>"
-               "<b>Spin boxes</b>-- Scroll up and down to visualize different slices. Number reflects current"
+               "<b>Spin box</b>-- Scroll up and down to visualize different slices. Number reflects current"
                "  slice number.</p>"
                "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)</p>"));
 }
