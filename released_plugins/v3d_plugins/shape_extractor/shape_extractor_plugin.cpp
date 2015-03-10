@@ -39,8 +39,12 @@ void shape_extr_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
 	else
 	{
-		v3d_msg(tr("A tool to extract cell shapes. "
-			"Developed by Yujie Li, 2015-2-17"));
+        QMessageBox::about(0, "shape_extractor",
+        "<p>The <b>Shape Extractor</b> is a tool to extract the shape of individual cells user defined.<p>"
+                   "<p><b>Input:</b>  an image file and markers.<br><b>Optional parameter:</b>  background "
+                   "threshold (0-255).<br><b>Output:</b>  cell shapes pinpointed by the markers.<p>"
+                   "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)</p>");
+
 	}
 }
 
