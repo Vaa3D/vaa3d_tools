@@ -36,6 +36,7 @@ private:
     vector<V3DLONG> x_all,y_all,z_all,mass_center;
     int rgb[3];
     v3dhandle curwin;
+    int count_img;
     int datasource; //fetched datasource=2; load datasource=1;
     int bg_thr;
     //QSpinBox *para_bg;

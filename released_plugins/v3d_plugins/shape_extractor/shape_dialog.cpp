@@ -22,8 +22,9 @@ shape_dialog::shape_dialog(V3DPluginCallback2 *cb)
     sz_img[0]=sz_img[1]=sz_img[2]=sz_img[3]=0;
     LList.clear();
     LList_new_center.clear();
+    count_img=0;
 //    create();
-//    datasource=0;
+    datasource=0;
 //    label_m=0;
 }
 
@@ -646,10 +647,11 @@ void shape_dialog::extract()
         image4d.setData(label_input, sz_img[0], sz_img[1], sz_img[2], 1, V3D_UINT8);
         image4d_color.setData(image1Dc_input,sz_img[0], sz_img[1], sz_img[2],sz_img[3],V3D_UINT8);
 
+        count_img++;
         v3dhandle v3dhandle_main=callback->newImageWindow();
         callback->setImage(v3dhandle_main, &image4d_color);
         callback->setLandmark(v3dhandle_main, LList);
-        callback->setImageName(v3dhandle_main, "Output_"+QString(callback->getImageName(curwin)));
+        callback->setImageName(v3dhandle_main, "extractor_"+QString(callback->getImageName(curwin)));
         callback->updateImageWindow(v3dhandle_main);
         callback->open3DWindow(v3dhandle_main);
         callback->pushObjectIn3DWindow(v3dhandle_main);
