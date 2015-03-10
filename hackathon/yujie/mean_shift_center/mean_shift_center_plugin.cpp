@@ -31,8 +31,7 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     if (menu_name == tr("mean_shift_center_finder"))
 	{
         dialog=new mean_shift_dialog(&callback);
-        dialog->setWindowTitle("mean_shift_center_finder");
-        dialog->show();
+        dialog->fetch();
 	}
 	else
 	{

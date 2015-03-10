@@ -3,7 +3,7 @@
 mean_shift_dialog::mean_shift_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
-    create();
+    //create();
     datasource=0;
     image1Dc_in=0;
 }
@@ -163,37 +163,101 @@ bool mean_shift_dialog::load()
 
 void mean_shift_dialog::fetch()
 {
-    qDebug()<<"IN fetch";
-    curwin = callback->currentImageWindow();
-    if (!curwin){
-        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+
+    v3dhandle curwin;
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
+    qDebug()<<"size:"<<v3dhandleList_current.size();
+
+    if (v3dhandleList_current.size()==0){
+        v3d_msg("Please open image and select markers");
         return;
     }
-    if(datasource==1)
+    else if (v3dhandleList_current.size()==1)
     {
-        if (callback->getImageName(curwin).contains(NAME_INWIN)||
-                callback->getImageName(curwin).contains(NAME_OUTWIN)){
-        v3d_msg("You have loaded the image.");
-        return;
+        //get markers and check markers
+        qDebug()<<"Only 1 window open";
+        LList_in.clear();
+        LList_in = callback->getLandmark(v3dhandleList_current[0]);
+        if (LList_in.size()==0)
+        {
+            v3d_msg("Please load markers");
+            return;
+        }
+        curwin=v3dhandleList_current[0];
+    }
+    else if (v3dhandleList_current.size()>1)
+    {
+        QStringList items;
+        int i;
+        for (i=0; i<v3dhandleList_current.size(); i++)
+            items << callback->getImageName(v3dhandleList_current[i]);
+
+        for (i=0; i<cur_list_3dviewer.count(); i++)
+        {
+            QString curname = callback->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
+            bool b_found=false;
+            for (int j=0; j<v3dhandleList_current.size(); j++)
+                if (curname==callback->getImageName(v3dhandleList_current[j]))
+                {
+                    b_found=true;
+                    break;
+                }
+
+            if (!b_found)
+                items << callback->getImageName(cur_list_3dviewer[i]);
+        }
+        qDebug()<<"Number of items:"<<items.size();
+
+        QDialog *mydialog=new QDialog;
+        combo=new QComboBox();
+        combo->insertItems(0,items);
+        QLabel *label_win=new QLabel;
+        label_win->setText("You have multiple windows open, please select one image:");
+        QGridLayout *layout= new QGridLayout;
+        layout->addWidget(label_win,0,0,1,1);
+        layout->addWidget(combo,1,0,4,1);
+        QPushButton *button_d_ok=new QPushButton;
+        button_d_ok->setText("Ok");
+        button_d_ok->setFixedWidth(100);
+        QPushButton *button_d_cancel=new QPushButton;
+        button_d_cancel->setText("Cancel");
+        button_d_cancel->setFixedWidth(100);
+        QHBoxLayout *box=new QHBoxLayout;
+        box->addWidget(button_d_ok,Qt::AlignCenter);
+        box->addWidget(button_d_cancel,Qt::AlignCenter);
+        layout->addLayout(box,5,0,1,1);
+        connect(button_d_ok,SIGNAL(clicked()),mydialog,SLOT(accept()));
+        connect(button_d_cancel,SIGNAL(clicked()),mydialog,SLOT(reject()));
+        mydialog->setLayout(layout);
+        mydialog->exec();
+        if (mydialog->result()==QDialog::Accepted)
+        {
+            int tmp=combo->currentIndex();
+            curwin=v3dhandleList_current[tmp];
+        }
+        else
+        {
+            v3d_msg("You have not selected a window");
+            return;
+        }
+        //get markers and check markers
+        LList_in.clear();
+        LList_in = callback->getLandmark(curwin);
+        if (LList_in.size()==0)
+        {
+            v3d_msg("Please load markers");
+            return;
         }
     }
-    if (datasource==2)
-    {
-        if (callback->getImageName(curwin).contains(NAME_INWIN)||
-                   callback->getImageName(curwin).contains(NAME_OUTWIN)){
-        v3d_msg("You have fetched the image.");
-        return;
-        }
-    }
+
+    //Get the image info
     Image4DSimple* p4DImage = callback->getImage(curwin);
     if (!p4DImage){
         QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
         return;
     }
-
-    resetdata();
-
-    datasource=2;
+        //resetdata();
     sz_img[0]=p4DImage->getXDim();
     sz_img[1]=p4DImage->getYDim();
     sz_img[2]=p4DImage->getZDim();
@@ -230,11 +294,75 @@ void mean_shift_dialog::fetch()
        return;
     }
 
-    callback->close3DWindow(curwin);
-    callback->setImageName(curwin, NAME_INWIN);
-    callback->open3DWindow(curwin);
-    callback->pushObjectIn3DWindow(curwin);
-    callback->updateImageWindow(curwin);
+    int windowradius=15;
+    //set parameter
+    QDialog *mydialog_para=new QDialog;
+    QLabel *label_info=new QLabel;
+    label_info->setText("Please set the search window radius");
+    QLabel *label_radius=new QLabel;
+    label_radius->setText("Search window radius:");
+    QGridLayout *layout2=new QGridLayout;
+    QSpinBox *para_radius=new QSpinBox;
+    para_radius->setRange(1,30);
+    para_radius->setValue(15);
+    layout2->addWidget(label_info,0,0,1,2);
+    layout2->addWidget(label_radius,1,0,1,1);
+    layout2->addWidget(para_radius,1,1,1,1);
+    QPushButton *button_p_ok=new QPushButton;
+    button_p_ok->setText("Ok");
+    button_p_ok->setFixedWidth(100);
+    QPushButton *button_p_cancel=new QPushButton;
+    button_p_cancel->setText("Cancel");
+    button_p_cancel->setFixedWidth(100);
+    layout2->addWidget(button_p_ok,2,0,1,1);
+    layout2->addWidget(button_p_cancel,2,1,1,1);
+    connect(button_p_ok,SIGNAL(clicked()),mydialog_para,SLOT(accept()));
+    connect(button_p_cancel,SIGNAL(clicked()),mydialog_para,SLOT(reject()));
+
+    mydialog_para->setLayout(layout2);
+    mydialog_para->exec();
+    if (mydialog_para->result()==QDialog::Accepted)
+    {
+        windowradius=para_radius->value();
+    }
+
+    //copy the landmarks in LList
+    for(int i=0; i<LList_in.size(); i++){
+        LList.append(LList_in.at(i));
+        LList[i].color.r=196;
+        LList[i].color.g=LList[i].color.b=0;
+    }
+
+    //start mean-shift
+    poss_landmark.clear();
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    for (int j=0;j<poss_landmark.size();j++)
+    {
+        qDebug()<<"_______j:____________"<<j;
+        mass_center=mean_shift_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        LList_new_center.append(tmp);
+    }
+    //visualize
+
+//    callback->setLandmark(curwin, LList_new_center);
+//    callback->updateImageWindow(curwin);
+//    callback->pushObjectIn3DWindow(curwin);
+    Image4DSimple image4d;
+    unsigned char* image1D_input=memory_allocate_uchar1D(size_tmp);
+    memcpy(image1D_input, image1Dc_in, size_tmp*sizeof(unsigned char));
+    image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
+
+    v3dhandle v3dhandle_main=callback->newImageWindow();
+    callback->setImage(v3dhandle_main, &image4d);
+    callback->setLandmark(v3dhandle_main,LList_new_center);
+    callback->setImageName(v3dhandle_main, "output_"+callback->getImageName(curwin));
+    callback->updateImageWindow(v3dhandle_main);
+    callback->open3DWindow(v3dhandle_main);
+    callback->pushObjectIn3DWindow(v3dhandle_main);
+
+
+    qDebug()<<"The end of fetch";
 }
 
 void mean_shift_dialog::resetdata()

@@ -37,12 +37,13 @@ private:
     unsigned char *image1Dc_in;
     v3dhandle curwin;
     int datasource; //fetched datasource=2; load datasource=1;
-    LandmarkList LList,LList_new_center;
+    LandmarkList LList,LList_in,LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<V3DLONG> x_all,y_all,z_all,mass_center;
     int prev_radius;
     QSpinBox *spin_radius;
     QDialog *subDialog;
+    QComboBox *combo;
 
 public slots:
     bool load();
