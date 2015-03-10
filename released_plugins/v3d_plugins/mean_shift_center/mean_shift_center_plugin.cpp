@@ -35,9 +35,11 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 	}
 	else
 	{
-        v3d_msg(tr("<p>The <b>Mean shift center finder</b> performs searches around each of the user-input markers and "
-                   "returns the location of local maxima of intensity as the new marker in the output window.<p>"
-			"Developed by Yujie Li, 2015-3-4"));
+        QMessageBox::about(0,"Mean_shift_center_finder","The <b>Mean shift center finder</b> performs searches around each of the user-input markers and "
+                   "returns the location of local maxima of intensity as the new marker in the output window.<p><b>Input:</b> "
+                   " an image file and markers.<br><b>Optional parameter:</b>  search window radius (2-30).<br><b>Output:</b>  "
+                   "Markers optimized by mean_shift.<p>"
+             "For further questions, please contact Yujie Li at yujie.jade@gmail.com)<p>");
 	}
 }
 

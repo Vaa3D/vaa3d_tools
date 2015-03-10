@@ -139,12 +139,12 @@ void mean_shift_dialog::core()
     //set parameter
     QDialog *mydialog_para=new QDialog;
     QLabel *label_info=new QLabel;
-    label_info->setText("Please set the search window radius");
+    label_info->setText("Please set the search window radius (2-30)");
     QLabel *label_radius=new QLabel;
     label_radius->setText("Search window radius:");
     QGridLayout *layout2=new QGridLayout;
     QSpinBox *para_radius=new QSpinBox;
-    para_radius->setRange(1,30);
+    para_radius->setRange(2,30);
     para_radius->setValue(15);
     layout2->addWidget(label_info,0,0,1,2);
     layout2->addWidget(label_radius,1,0,1,1);
