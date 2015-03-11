@@ -22,7 +22,6 @@ public:
     explicit shape_dialog(V3DPluginCallback2 *cb);
     void core();
 
-
 private:
     extract_fun shape_ext_obj;
     V3DPluginCallback2 *callback;
@@ -36,36 +35,11 @@ private:
     int bg_thr;
     QSpinBox *para_bg;
 
-    //int datasource; //fetched datasource=2; load datasource=1;
-    //QPlainTextEdit *edit;
-    //QSpinBox *spin_bgthr,*spin_conviter,*spin_radius;
-    //QDialog *subDialog;
-    //QLabel *label0;
-    //int prev_bgthr;
-    //int prev_conviter;
-
 private:
     void GetColorRGB(int* rgb, int idx);
     void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
     void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
     void extract();
 
-    //void create();
-    //void updateInputWindow();
-    //void updateOutputWindow();
-   // void resetdata();
-
-
-
-public slots:
-    //bool load();
-
-    //void display_mass_center();
-    //void dialoguefinish(int);
-//    void fetch();
-//    void display_volume();
-    //void help();
-    //void extract_mean_shift();
-    //void extract_mean_shift_comparison();
 };
 #endif // SHAPE_DIALOG_H
