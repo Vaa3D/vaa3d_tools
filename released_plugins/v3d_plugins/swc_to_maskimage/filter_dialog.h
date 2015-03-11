@@ -23,7 +23,7 @@ class filter_dialog:public QDialog
 public:
     filter_dialog(V3DPluginCallback2 *cb);
     V3DPluginCallback2 *callback;
-
+    void swc_filter_image();
 
 private:
     void create();
@@ -31,9 +31,6 @@ private:
     int intype;
     unsigned char *image_data;
     NeuronTree neuron;
-
-    void swc_filter_image();
-
     QGridLayout *mygridLayout;
     QLineEdit *edit_load,*edit_swc;
 

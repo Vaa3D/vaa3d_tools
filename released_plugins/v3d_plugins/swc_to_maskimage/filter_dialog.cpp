@@ -66,7 +66,6 @@ void filter_dialog::dialoguefinish(int)
     }
 
     else{
-        v3d_msg("No files are loaded");
         //reset image_data and neuron
         if (image_data!=0){
             delete [] image_data;
@@ -162,25 +161,29 @@ void filter_dialog::swc_filter_image()
     sx=x_max;
     sy=y_max;
     sz=z_max;
+
     V3DLONG stacksz = sx*sy*sz;
     pImMask = new unsigned char [stacksz];
     memset(pImMask,0,stacksz*sizeof(unsigned char));
     ComputemaskImage(neuron, pImMask, sx, sy, sz);
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
-    memcpy(image_filter,image_data,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
+    memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
+
 
     for (V3DLONG k1 = 0; k1 < sz; k1++){
         for(V3DLONG j1 = 0; j1 < sy; j1++){
             for(V3DLONG i1 = 0; i1 < sx; i1++){
                  if ((i1>nx-1)||(j1>ny-1)||(k1>nz-1)) continue;
-                 if (pImMask[k1*sx*sy + j1*sx +i1]>0) continue;
 
-                 image_filter[k1*nx*ny + j1*nx +i1]=0;
-                 if (sz_img[3]>1){
-                 image_filter[nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
-                 }
-                 if (sz_img[3]>2){
-                 image_filter[2*nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
+                 if (pImMask[k1*sx*sy + j1*sx +i1]>0)
+                 {
+                     image_filter[k1*nx*ny + j1*nx +i1]=image_data[k1*nx*ny + j1*nx +i1];
+                     if (sz_img[3]>1){
+                     image_filter[nx*ny*nz+k1*nx*ny + j1*nx +i1]=image_data[nx*ny*nz+k1*nx*ny + j1*nx +i1];
+                     }
+                     if (sz_img[3]>2){
+                     image_filter[2*nx*ny*nz+k1*nx*ny + j1*nx +i1]=image_data[2*nx*ny*nz+k1*nx*ny + j1*nx +i1];
+                     }
                  }
 
              }

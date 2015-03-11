@@ -326,6 +326,8 @@ void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & inp
         }
      }
     QString qs_output = outfiles.empty() ? qs_input_image + "_out.raw" : QString(outfiles[0]);
+
+
     double x_min,x_max,y_min,y_max,z_min,z_max;
     x_min=x_max=y_min=y_max=z_min=z_max=0;
     V3DLONG sx,sy,sz;
@@ -342,21 +344,24 @@ void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & inp
     memset(pImMask,0,stacksz*sizeof(unsigned char));
     ComputemaskImage(neuron, pImMask, sx, sy, sz);
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
-    memcpy(image_filter,image_data,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
+    memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
 
     for (V3DLONG k1 = 0; k1 < sz; k1++){
         for(V3DLONG j1 = 0; j1 < sy; j1++){
             for(V3DLONG i1 = 0; i1 < sx; i1++){
                  if ((i1>nx-1)||(j1>ny-1)||(k1>nz-1)) continue;
-                 if (pImMask[k1*sx*sy + j1*sx +i1]>0) continue;
 
-                 image_filter[k1*nx*ny + j1*nx +i1]=0;
-                 if (sz_img[3]>1){
-                 image_filter[nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
+                 if (pImMask[k1*sx*sy + j1*sx +i1]>0)
+                 {
+                     image_filter[k1*nx*ny + j1*nx +i1]=image_data[k1*nx*ny + j1*nx +i1];
+                     if (sz_img[3]>1){
+                     image_filter[nx*ny*nz+k1*nx*ny + j1*nx +i1]=image_data[nx*ny*nz+k1*nx*ny + j1*nx +i1];
+                     }
+                     if (sz_img[3]>2){
+                     image_filter[2*nx*ny*nz+k1*nx*ny + j1*nx +i1]=image_data[2*nx*ny*nz+k1*nx*ny + j1*nx +i1];
+                     }
                  }
-                 if (sz_img[3]>2){
-                 image_filter[2*nx*ny*nz+k1*nx*ny + j1*nx +i1]=0;
-                 }
+
              }
          }
      }
@@ -373,102 +378,6 @@ void swc_filter_image(V3DPluginCallback2 & callback,const V3DPluginArgList & inp
 
 }
 
-//	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *) (input.at(0).p);
-//	NeuronTree neuron = paras->nt;
-
-//	double x_min,x_max,y_min,y_max,z_min,z_max;
-//	x_min=x_max=y_min=y_max=z_min=z_max=0;
-//	V3DLONG sx,sy,sz;
-//	unsigned char* pImMask = 0;
-//	unsigned char* ImMark = 0;
-
-//	BoundNeuronCoordinates(neuron,
-//			x_min,
-//			x_max,
-//			y_min,
-//			y_max,
-//			z_min,
-//			z_max);
-
-//    sx=x_max;
-//    sy=y_max;
-//    sz=z_max;
-
-//	V3DLONG stacksz = sx*sy*sz;
-//    pImMask = new unsigned char [stacksz];
-//    ImMark = new unsigned char [stacksz];
-//	for (V3DLONG i=0; i<stacksz; i++)
-//		pImMask[i] = ImMark[i] = 0;
-
-//    ComputemaskImage(neuron, pImMask, sx, sy, sz);
-
-
-//	// compute coordinate region
-//	Image4DSimple tmp;
-//	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want set the image size?"), QMessageBox::Yes, QMessageBox::No))
-//    {
-//		SetsizeDialog dialog(callback, parent);
-//		dialog.coord_x->setValue(sx);
-//		dialog.coord_y->setValue(sy);
-//		dialog.coord_z->setValue(sz);
-//        if (dialog.exec()!=QDialog::Accepted){
-//            nx=sx;ny=sy;nz=sz;
-//            return;
-//        }
-//		else
-//		{
-//			nx = dialog.coord_x->text().toLong();
-//			ny = dialog.coord_y->text().toLong();
-//			nz = dialog.coord_z->text().toLong();
-//			//printf("nx=%d ny=%d nz=%d\n ",nx,ny,nz);
-//		}
-//     }
-//     else{
-//        nx=sx;ny=sy;nz=sz;
-//     }
-
-//    unsigned char *pData = new unsigned char[nx*ny*nz];
-//    for (V3DLONG ii=0; ii<nx*ny*nz; ii++)
-//        pData[ii] = 0;
-
-//    if(nx>=sx && ny>=sy && nz>=sz)
-//     {
-//         for (V3DLONG k1 = 0; k1 < sz; k1++)
-//         {
-//             for(V3DLONG j1 = 0; j1 < sy; j1++)
-//             {
-//                for(V3DLONG i1 = 0; i1 < sx; i1++)
-//                {
-//                    pData[k1 * nx*ny + j1*nx + i1] = pImMask[k1*sx*sy + j1*sx +i1];
-
-//                }
-//            }
-//        }
-
-//     }
-
-//     else
-//     {
-//        v3d_msg("The input image size is smaller than the default size of swc file. You might only"
-//                " get part of the swc mask");
-//        //tmp.setData(pImMask, nx, ny, nz, 1, V3D_UINT8);
-//        for (V3DLONG k1 = 0; k1 < sz; k1++){
-//            for(V3DLONG j1 = 0; j1 < sy; j1++){
-//               for(V3DLONG i1 = 0; i1 < sx; i1++){
-//                   if ((i1>nx)||(j1>ny)||(k1>nz)) continue;
-//                   pData[k1 * nx*ny + j1*nx + i1] = pImMask[k1*sx*sy + j1*sx +i1];
-
-//               }
-//           }
-//       }
-
-//     }
-//    tmp.setData(pData, nx, ny, nz, 1, V3D_UINT8);
-//	v3dhandle newwin = callback.newImageWindow();
-//	callback.setImage(newwin, &tmp);
-//	callback.setImageName(newwin, QString("Neuron_Mask_%1.tif").arg(neuron.file));
-//	callback.updateImageWindow(newwin);
-//}
 
 void printHelp()
 {
