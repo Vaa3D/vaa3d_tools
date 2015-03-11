@@ -19,10 +19,16 @@ SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_utilities.cpp
 SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += ../APP2_large_scale/readrawfile_func.cpp
 
+win32{
+    LIBS         += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff
+    LIBS	 += -L$$VAA3DPATH/common_lib/winlib64 -llibfftw3f-3
+}
 
-LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
-LIBS         += -lpthread
-LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+unix{
+    LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
+    LIBS         += -lpthread
+    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+}
 
 TARGET	= $$qtLibraryTarget(neurontracing_mip)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/TReMap/
