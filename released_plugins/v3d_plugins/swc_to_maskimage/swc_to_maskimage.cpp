@@ -20,7 +20,7 @@ static filter_dialog *dialog=0;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(swc_to_maskimage, SWC_TO_MASKIMAGElugin);
+Q_EXPORT_PLUGIN2(swc_to_maskimage_sphere, SWC_TO_MASKIMAGElugin);
 
 
 //plugin funcs
