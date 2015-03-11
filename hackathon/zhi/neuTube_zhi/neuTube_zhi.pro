@@ -113,5 +113,5 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_error.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_fimage_lib.c
 
 
-TARGET	= $$qtLibraryTarget(neuTube_zhi)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neuTube_zhi/
+TARGET	= $$qtLibraryTarget(neuTube)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neuTube/
