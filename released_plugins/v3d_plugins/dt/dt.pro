@@ -16,5 +16,5 @@ SOURCES += my_surf_objs.cpp
 
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
-TARGET        = $$qtLibraryTarget(dt)
+TARGET        = $$qtLibraryTarget(fast_dt)
 DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_filters/Fast_Distance_Transform
