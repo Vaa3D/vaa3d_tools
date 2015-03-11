@@ -23,13 +23,7 @@ public:
     mean_shift_dialog(V3DPluginCallback2 *cb);
     mean_shift_fun mean_shift_obj;
     void core();
-    //void create();
-
-private:
-//    void resetdata();
-//    void updateInputWindow();
-//    void updateOutputWindow();
-
+    void create_sphere();
 
 private:
 
@@ -38,21 +32,9 @@ private:
     V3DLONG sz_img[4];
     unsigned char *image1Dc_in;
     LandmarkList LList,LList_in,LList_new_center;
-    vector<V3DLONG> poss_landmark,mass_center;
+    vector<V3DLONG> poss_landmark;
+    vector<float> mass_center;
 
-    //int intype;
-    //int datasource; //fetched datasource=2; load datasource=1;
-    //int prev_radius;
-    //QSpinBox *spin_radius;
-    //QDialog *subDialog;
-    //QComboBox *combo;
-
-public slots:
-    //bool load();
-    //void fetch();
-    //void mean_shift_center();
-    //void help();
-    //void dialoguefinish(int);
 };
 
 

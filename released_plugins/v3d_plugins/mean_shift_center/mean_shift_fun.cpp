@@ -14,20 +14,21 @@ mean_shift_fun::~mean_shift_fun()
         memory_free_float1D(data1Dc_float);
 }
 
-vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowradius)
+vector<float> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowradius)
 {
     //qDebug()<<"In mean_shift_fun now";
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
 
-    V3DLONG x,y,z,pos;
+    V3DLONG pos;
     vector<V3DLONG> coord;
-    float total_x,total_y,total_z,v_color,sum_v,v_prev;
+
+    float total_x,total_y,total_z,v_color,sum_v,v_prev,x,y,z;
     float center_dis=1;
-    vector<V3DLONG> center(3,0);
+    vector<float> center_float(3,0);
 
     coord=pos2xyz(ind, y_offset, z_offset);
-    x=coord[0];y=coord[1];z=coord[2];
+    x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
 
     //find out the channel with the maximum intensity for the marker
     v_prev=data1Dc_float[ind];
@@ -44,15 +45,15 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
     int testCount=0;
     int testCount1=0;
 
-    while (center_dis>=1)
+    while (center_dis>=0.5)
     {
         total_x=total_y=total_z=sum_v=0;
 
         testCount=testCount1=0;
 
-        for(V3DLONG dx=MAX(x-windowradius,0); dx<=MIN(sz_image[0]-1,x+windowradius); dx++){
-            for(V3DLONG dy=MAX(y-windowradius,0); dy<=MIN(sz_image[1]-1,y+windowradius); dy++){
-                for(V3DLONG dz=MAX(z-windowradius,0); dz<=MIN(sz_image[2]-1,z+windowradius); dz++){
+        for(V3DLONG dx=MAX(x+0.5-windowradius,0); dx<=MIN(sz_image[0]-1,x+0.5+windowradius); dx++){
+            for(V3DLONG dy=MAX(y+0.5-windowradius,0); dy<=MIN(sz_image[1]-1,y+0.5+windowradius); dy++){
+                for(V3DLONG dz=MAX(z+0.5-windowradius,0); dz<=MIN(sz_image[2]-1,z+0.5+windowradius); dz++){
                     pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                     double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
                          +(dz-z)*(dz-z);
@@ -73,12 +74,15 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
          }
         qDebug()<<"windowradius:"<<windowradius;
         qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
-        center[0]=total_x/sum_v;
-        center[1]=total_y/sum_v;
-        center[2]=total_z/sum_v;
+        center_float[0]=total_x/sum_v;
+        center_float[1]=total_y/sum_v;
+        center_float[2]=total_z/sum_v;
 
-        V3DLONG prev_ind=xyz2pos(x,y,z,y_offset,z_offset);
-        V3DLONG tmp_ind=xyz2pos(center[0],center[1],center[2],y_offset,z_offset);
+        qDebug()<<"center_float:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];
+
+        V3DLONG prev_ind=xyz2pos((int)(x+0.5),(int)(y+0.5),(int)(z+0.5),y_offset,z_offset);
+        V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
+                y_offset,z_offset);
 
         qDebug()<<"new I:"<<data1Dc_float[tmp_ind+channel*page_size]<<" prev I:" <<data1Dc_float[prev_ind+channel*page_size];
         if (data1Dc_float[tmp_ind+channel*page_size]<data1Dc_float[prev_ind+channel*page_size] && windowradius>2)
@@ -88,14 +92,14 @@ vector<V3DLONG> mean_shift_fun::calc_mean_shift_center(V3DLONG ind, int windowra
             center_dis=1;
             continue;
         }
-        float tmp_1=(center[0]-x)*(center[0]-x)+(center[1]-y)*(center[1]-y)
-                    +(center[2]-z)*(center[2]-z);
+        float tmp_1=(center_float[0]-x)*(center_float[0]-x)+(center_float[1]-y)*(center_float[1]-y)
+                    +(center_float[2]-z)*(center_float[2]-z);
         center_dis=sqrt(tmp_1);
 
-        qDebug()<<"center distance:"<<center_dis<<":"<<center[0]<<":"<<center[1]<<":"<<center[2];
-        x=center[0]; y=center[1]; z=center[2];
+        qDebug()<<"center distance:"<<center_dis;
+        x=center_float[0]; y=center_float[1]; z=center_float[2];
     }
-    return center;
+    return center_float;
 }
 
 unsigned char * memory_allocate_uchar1D(const V3DLONG i_size)

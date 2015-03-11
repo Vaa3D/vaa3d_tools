@@ -32,6 +32,8 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 	{
         dialog=new mean_shift_dialog(&callback);
         dialog->core();
+        //dialog->create_sphere();
+
 	}
 	else
 	{
@@ -153,7 +155,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     vector<V3DLONG> poss_landmark;
     poss_landmark=landMarkList2poss(tmpList, sz_img[0], sz_img[0]*sz_img[1]);
     QList <LocationSimple> LList_new_center;
-    vector<V3DLONG> mass_center;
+    vector<float> mass_center;
 
     for (int j=0;j<poss_landmark.size();j++)
     {
