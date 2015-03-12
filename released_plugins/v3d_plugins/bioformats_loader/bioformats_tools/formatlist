@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# formatlist: a script for listing supported formats in Bio-Formats
+
+# Required JARs: loci_tools.jar or bioformats_package.jar
+
+BF_DIR=`dirname "$0"`
+
+BF_PROG=loci.formats.tools.PrintFormatTable "$BF_DIR/bf.sh" "$@"
