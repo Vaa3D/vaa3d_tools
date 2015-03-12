@@ -15,7 +15,8 @@ TARGET	= $$qtLibraryTarget(bioformats_loader)
 DESTDIR	= $$V3DMAINPATH/../bin/plugins/data_IO/convert_and_load_with_Bioformats
 
 win32 {
-        QMAKE_POST_LINK = copy bioformats_tools ..\..\..\v3d_external\bin\
+        QMAKE_POST_LINK = copy bioformats_tools $$V3DMAINDIR\\..\\bin\\
+        QMAKE_CLEAN += -r $$V3DMAINDIR\\..\\bin\\v3d_external/bin/bioformats_tools
 }
 else {    #  copy my version of the Bioformats Tools package into the bin directory and then delete the .svn stuff
         QMAKE_POST_LINK = cp -r bioformats_tools $$V3DMAINPATH/../../v3d_external/bin/

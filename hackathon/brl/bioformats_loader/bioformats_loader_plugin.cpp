@@ -108,7 +108,12 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
     QString v3dAppPath = getAppPath();
 
-    QString cmd_bfconvert = QString("%1 %2 %3").arg(bfconvert.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
+#if defined(Q_OS_WIN32)
+        QString cmd_bfconvert = QString("\"\"%1\" \"%2\" \"%3\"\"").arg(bfconvert.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
+#else
+        QString cmd_bfconvert = QString("\"%1\" \"%2\" \"%3\"").arg(bfconvert.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
+#endif
+
 
     v3d_msg(cmd_bfconvert, 0);
     system(qPrintable(cmd_bfconvert));
