@@ -71,9 +71,9 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 #elif defined(Q_OS_LINUX)
         bfconvert = getAppPath().append("/bioformats_tools/bfconvert");
 #elif defined(Q_OS_WIN32)
-        bfconvert = getAppPath().append("\bioformats_tools\bfconvert");
+        bfconvert = getAppPath().append("\\bioformats_tools\\bfconvert");
 #elif defined(Q_OS_WIN64)
-        bfconvert = getAppPath().append("\bioformats_tools\bfconvert");
+        bfconvert = getAppPath().append("\\bioformats_tools\\bfconvert");
 #else
         v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
         return;
@@ -81,6 +81,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
         f_bioformats.setFileName(bfconvert);
     }
+    v3d_msg(bfconvert);
 
     if (!f_bioformats.exists())
     {
