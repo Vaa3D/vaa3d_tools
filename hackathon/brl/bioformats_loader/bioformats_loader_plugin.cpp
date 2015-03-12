@@ -81,7 +81,6 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
         f_bioformats.setFileName(bfconvert);
     }
-    v3d_msg(bfconvert);
 
     if (!f_bioformats.exists())
     {
