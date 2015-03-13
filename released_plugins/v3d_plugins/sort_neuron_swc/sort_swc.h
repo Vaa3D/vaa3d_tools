@@ -56,14 +56,16 @@ QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons)
 
 void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, int* numbered, int *group)
 {
-	numbered[node] = *group;
-	neworder[*id] = node;
-	(*id)++;
-	for (V3DLONG v=0;v<siz;v++)
-		if (!numbered[v] && matrix[v][node])
-		{
-			DFS(matrix, neworder, v, id, siz,numbered,group);
-		}
+    if (!numbered[node]){
+        numbered[node] = *group;
+        neworder[*id] = node;
+        (*id)++;
+        for (V3DLONG v=0;v<siz;v++)
+            if (!numbered[v] && matrix[v][node])
+            {
+                DFS(matrix, neworder, v, id, siz,numbered,group);
+            }
+    }
 };
 
 double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
@@ -256,6 +258,8 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
                         S.type = neurons.at(oripos).type;
                         result.append(S);
                         cnt++;
+
+                        break; //added by CHB to avoid problem caused by loops in swc, 20150313
 				}
 			}
 		}
