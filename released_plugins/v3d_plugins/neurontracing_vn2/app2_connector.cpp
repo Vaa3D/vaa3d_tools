@@ -181,7 +181,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         
         if (p.b_256cube)
         {
-            if (in_sz[0]<=256 && in_sz[2]<=256 && in_sz[2]<=256)
+            if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
             {
                 dfactor_z = dfactor_xy = 1;
             }
