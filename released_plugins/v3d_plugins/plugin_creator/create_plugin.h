@@ -256,11 +256,19 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
         ofs<<"\t\tprintf(\"**** Usage of " << pt.PLUGIN_NAME <<" tracing **** \\n\");\n";
         ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f " << pt.FUNCS[0] << " -i <inimg_file> -p <channel> <other parameters>\\n\");\n";
 
-        for(int d = 43;d< 148; d++)
+        for(int d = 43;d< 134; d++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
+        ofs<<"\tQString swc_name = PARA.inimg_file + \"_" << pt.PLUGIN_NAME <<".swc\";\n";
+        ofs<<"\tnt.name = \"" << pt.PLUGIN_NAME <<"\";\n";
+        for(int d = 134;d< 145; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
         templatefile.close();
 
     }

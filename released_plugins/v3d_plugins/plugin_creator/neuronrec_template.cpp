@@ -130,10 +130,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
 
     //Output
-
-    QString swc_name = PARA.inimg_file + "_Tracing.swc";
     NeuronTree nt;
-    nt.name = "tracing method";
     writeSWC_file(swc_name.toStdString().c_str(),nt);
 
     if(!bmenu)
