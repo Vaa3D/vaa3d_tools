@@ -21,12 +21,24 @@ V3DLONG landMark2pos(LocationSimple Landmark_input, V3DLONG _offset_Y, V3DLONG _
 vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
 V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
 
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+
+vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
+
+bool load_data(V3DPluginCallback2 *cb,unsigned char * &image1Dc_in,LandmarkList &LList,
+               ImagePixelType &pixeltype,V3DLONG sz_img[4],v3dhandle &curwin);
+
 class mean_shift_fun
 {
 public:
     mean_shift_fun();
     ~mean_shift_fun();
-    vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius);
+    vector<float> mean_shift_center(V3DLONG ind, int windowradius);
+    vector<float> mean_shift_with_constraint(V3DLONG ind, int windowradius);
+    vector<float> ray_shoot_center(V3DLONG ind, int bg_thr);
+    vector<float> gradient_transform(float *&outimg1d,V3DLONG ind,
+                        int bg_thr, int cnn_type,int z_thickness,int halfwindowsize, int search_radius);
 
 private:
 
@@ -43,10 +55,6 @@ public:
         if(data1Dc_float!=0){
             memory_free_float1D(data1Dc_float);
         }
-//        if(mask1D!=0){
-//            memory_free_uchar1D(mask1D);
-//        }
-
         sz_image[0]=sz_img[0];
         sz_image[1]=sz_img[1];
         sz_image[2]=sz_img[2];
@@ -55,11 +63,9 @@ public:
 
         data1Dc_float = memory_allocate_float1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         for(V3DLONG i=0; i<page_size*sz_img[3]; i++){
-            data1Dc_float[i]=(float) (data1Dc_in[i]);
+            data1Dc_float[i] = (float)(data1Dc_in[i]);
         }
         normalizeEachChannelTo255<float>(data1Dc_float, sz_img);
-//        mask1D = memory_allocate_uchar1D(page_size);
-//        memset(mask1D, 0, page_size*sizeof(unsigned char));
 
     }
 };

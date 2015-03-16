@@ -7,15 +7,21 @@
 #include <vector>
 #include "mean_shift_center_plugin.h"
 #include "mean_shift_dialog.h"
+#include "ray_shoot_dialog.h"
+#include "gradient_transform_dialog.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(mean_shift_center,mean_shift_plugin );
-static mean_shift_dialog *dialog=0;
+//static mean_shift_dialog *dialog=0;
+//static ray_shoot_dialog *r_dialog=0;
 
 QStringList mean_shift_plugin::menulist() const
 {
 	return QStringList() 
-        <<tr("mean_shift_center_finder")
+        <<tr("mean_shift")
+        <<tr("mean_shift_with constraints")
+        <<tr("ray_shoot")
+        <<tr("gradient_distance_transform + mean_shift_with_constraints")
 		<<tr("about");
 }
 
@@ -28,20 +34,38 @@ QStringList mean_shift_plugin::funclist() const
 
 void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("mean_shift_center_finder"))
+    if (menu_name == tr("mean_shift"))
 	{
-        dialog=new mean_shift_dialog(&callback);
+        mean_shift_dialog *dialog=new mean_shift_dialog(&callback,0);
         dialog->core();
         //dialog->create_sphere();
-
 	}
-	else
+    else if (menu_name == tr("mean_shift_with_constraints"))
+    {
+        mean_shift_dialog *dialog=new mean_shift_dialog(&callback,2); //methodcode=2 mean_shift with constraints
+        dialog->core();
+        //dialog->create_sphere();
+    }
+    else if (menu_name==tr("ray_shoot"))
 	{
-        QMessageBox::about(0,"Mean_shift_center_finder","The <b>Mean shift center finder</b> performs searches around each of the user-input markers and "
-                   "returns the location of local maxima of intensity as the new marker in the output window.<p><b>Input:</b> "
-                   " an image file and markers.<br><b>Optional parameter:</b>  search window radius (2-30).<br><b>Output:</b>  "
-                   "Markers optimized by mean_shift.<p>"
-             "For further questions, please contact Yujie Li at yujie.jade@gmail.com)<p>");
+        ray_shoot_dialog *r_dialog=new ray_shoot_dialog(&callback);
+        r_dialog->core();
+    }
+    else if (menu_name==tr("gradient_distance_transform + mean_shift_with_constraints"))
+    {
+        gradient_transform_dialog *g_dialog=new gradient_transform_dialog(&callback);
+        g_dialog->core();
+    }
+
+    else{
+    QMessageBox::about(0,"center_finder","The <b>center finder</b> provides several ways to find the center of mass.<p>"
+                       "<b>mean_shift </b>calculates the mean in a sphere around each of the user-input markers and shifts mean till the center converges.<br>"
+                   "<b>mean_shift_with_constraint</b> adds two conditions to mean_shift. 1) The new center can only move to a location of "
+                   "higher intensity. 2) If the new mean is smaller than the previous mean, search window radius will decrease by one. <br>"
+                   "<b>ray shoot</b> casts 48 rays toward different angles from each of the marker to find the cell edge and then the geometric center.<br> "
+                   "<b>gradient_distance_transform + mean_shift_with_constraints</b> first performs gradient distance transform in a cube around "
+                   "each of the marker and then conducts mean shift with constraint on the area."
+             "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)<p>");
 	}
 }
 
@@ -63,6 +87,7 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 
 void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
+    mean_shift_fun fun_obj;
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
@@ -129,6 +154,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
             }
         }
     }
+    fun_obj.pushNewData(image_data,sz_img);
 
     if (qs_input_mark.isEmpty())
         return;
@@ -159,7 +185,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
     for (int j=0;j<poss_landmark.size();j++)
     {
-        mass_center=dialog->mean_shift_obj.calc_mean_shift_center(poss_landmark[j],windowradius);
+        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
                 //calc_mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
@@ -172,8 +198,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     FILE * fp_1 = fopen(qs_output.toAscii(), "w");
     if (!fp_1)
     {
-        qDebug()<<"Control point saving error,"
-                                 "can not open the file to save the landmark points.\n";
+        qDebug()<<"can not open the file to save the landmark points.\n";
         return;
     }
 
