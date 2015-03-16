@@ -49,6 +49,7 @@ void getCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ>& 
 void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction);
 void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction, float segThr); //this one will not consider small segmentsbool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
 
+double getMatchPairs_XYZList_energy(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle);
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle);
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, QList<int> * MatchMarkers, double span, double cos_angle);
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, QList<int> * MatchMarkers, double span);

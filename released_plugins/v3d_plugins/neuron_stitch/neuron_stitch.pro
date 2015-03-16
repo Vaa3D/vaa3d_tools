@@ -19,7 +19,8 @@ SOURCES	+= neuron_stitch_plugin.cpp \
     neuron_stitch_func.cpp \
     marker_match_dialog.cpp \
     neuron_match_clique.cpp \
-    neuron_tipspicker_dialog.cpp
+    neuron_tipspicker_dialog.cpp \
+    performance_timer.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 

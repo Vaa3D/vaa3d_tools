@@ -1489,31 +1489,31 @@ void getTopCliques(const NeuronTree& nt, const QList<int>& list, const QList<XYZ
         int i=iter->second.idx[0];
         int j=iter->second.idx[1];
         int k=iter->second.idx[2];
-        center.x+=(coord[i].x+coord[j].x+coord[k].x)/3;
-        center.y+=(coord[i].y+coord[j].y+coord[k].y)/3;
-        center.z+=(coord[i].z+coord[j].z+coord[k].z)/3;
+        center.x=(coord[i].x+coord[j].x+coord[k].x)/3;
+        center.y=(coord[i].y+coord[j].y+coord[k].y)/3;
+        center.z=(coord[i].z+coord[j].z+coord[k].z)/3;
         for(int p=0; p<3; p++){
             int m=iter->second.idx[p];
             if(stackDir == 0){//x plane
                 double py=coord[m].y-center.y;
                 double pz=coord[m].z-center.z;
                 double plen=sqrt(pz*pz+py*py);
-                iter->second.dir[p].y=py/plen*dir[m].y-pz/plen*dir[m].z;
-                iter->second.dir[p].z=pz/plen*dir[m].y+py/plen*dir[m].z;
+                iter->second.dir[p].y=py/plen*dir[m].y+pz/plen*dir[m].z;
+                iter->second.dir[p].z=pz/plen*dir[m].y-py/plen*dir[m].z;
                 iter->second.dir[p].x=dir[m].x;
             }else if(stackDir == 1){//y plane
                 double px=coord[m].x-center.x;
                 double pz=coord[m].z-center.z;
                 double plen=sqrt(pz*pz+px*px);
-                iter->second.dir[p].z=pz/plen*dir[m].z-px/plen*dir[m].x;
-                iter->second.dir[p].x=px/plen*dir[m].z+pz/plen*dir[m].x;
+                iter->second.dir[p].z=pz/plen*dir[m].z+px/plen*dir[m].x;
+                iter->second.dir[p].x=px/plen*dir[m].z-pz/plen*dir[m].x;
                 iter->second.dir[p].y=dir[m].y;
             }else if(stackDir ==2){//z plane
                 double px=coord[m].x-center.x;
                 double py=coord[m].y-center.y;
                 double plen=sqrt(px*px+py*py);
-                iter->second.dir[p].x=px/plen*dir[m].x-py/plen*dir[m].y;
-                iter->second.dir[p].y=py/plen*dir[m].x+px/plen*dir[m].y;
+                iter->second.dir[p].x=px/plen*dir[m].x+py/plen*dir[m].y;
+                iter->second.dir[p].y=py/plen*dir[m].x-px/plen*dir[m].y;
                 iter->second.dir[p].z=dir[m].z;
             }else{ //to-do: taken clique plan as reference plan for calculation
                 iter->second.dir[p].x=0;
@@ -1664,6 +1664,70 @@ bool minus_XYZList(QList<XYZ>& a, QList<XYZ>& b, QList<XYZ>& out)
         }
     }
     return true;
+}
+
+double getMatchPairs_XYZList_energy(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle)
+{
+    double thr = span*span;
+    QMap<double, QList<int> > MatchPoints;
+    QMap<double, double > MatchAng;
+    double angAll=0;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    for(int i=0; i<c0.size(); i++){
+        for(int j=0; j<c1.size(); j++){
+            double dis = NTDIS(c0.at(i),c1.at(j));
+            if(dis>thr) continue;
+            double ang = NTDOT(c0_dir.at(i),c1_dir.at(j));
+            if(ang<cos_angle) continue;
+            QList<int> tmp = QList<int>()<<i<<j;
+            dis/=(ang+1);
+            MatchPoints.insertMulti(dis, tmp);
+            MatchAng.insertMulti(dis, ang);
+        }
+    }
+
+    //this is to avoid loop in matched point
+    QList<int> cctmp;
+    int ccmax=0;
+    int c0_size=c0.size();
+    for(int i=0; i<c0_conncomponent.size(); i++){
+        ccmax=ccmax>c0_conncomponent.at(i)?ccmax:c0_conncomponent.at(i);
+        cctmp.append(c0_conncomponent.at(i));
+    }
+    ccmax+=10;
+    for(int i=0; i<c1_conncomponent.size(); i++){
+        cctmp.append(c1_conncomponent.at(i)+ccmax);
+    }
+
+    QVector<int> mask0(c0.size(),0);
+    QVector<int> mask1(c1.size(),0);
+    QMap<double, double >::Iterator iter_a = MatchAng.begin();
+    for(QMap<double, QList<int> >::Iterator iter = MatchPoints.begin(); iter!=MatchPoints.end(); iter++){
+        int a = iter.value().at(0);
+        int b = iter.value().at(1);
+        if(mask0[a]+mask1[b]>0)
+            continue;
+        if(cctmp[b+c0_size]==cctmp[a])
+            continue;
+
+        mask0[a]++;
+        mask1[b]++;
+
+        int tmpccid=cctmp.at(b+c0_size);
+        int idx=cctmp.indexOf(tmpccid);
+        while(idx>=0){
+            cctmp[idx]=cctmp.at(a);
+            idx=cctmp.indexOf(tmpccid);
+        }
+
+        MatchMarkers[0].append(a);
+        MatchMarkers[1].append(b);
+        angAll+=iter_a.value()+1;
+        iter_a++;
+    }
+    return angAll;
 }
 
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle)
@@ -1952,7 +2016,7 @@ double compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double
     }
     //qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
     //step 2
-    for(double ang=mang-10; ang<mang+10; ang++){
+    for(double ang=mang-10; ang<=mang+10; ang++){
         rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
@@ -1962,7 +2026,7 @@ double compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double
     }
     //qDebug()<<"rotation 1: "<<mang<<":"<<mdis;
     //step 3
-    for(double ang=mang-1; ang<mang+1; ang+=0.1){
+    for(double ang=mang-1; ang<=mang+1; ang+=0.1){
         rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
@@ -1972,7 +2036,16 @@ double compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double
     }
     //qDebug()<<"rotation 2: "<<mang<<":"<<mdis;
     //step 4
-    for(double ang=mang-0.1; ang<mang+0.1; ang+=0.01){
+    for(double ang=mang-0.1; ang<=mang+0.1; ang+=0.01){
+        rotate_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    //step 5
+    for(double ang=mang-0.01; ang<=mang+0.01; ang+=0.001){
         rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){

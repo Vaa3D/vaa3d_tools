@@ -2,14 +2,18 @@
  * This plugin is for link neuron segments across stacks.
  * 2014-10-07 : by Hanbo Chen
  */
- 
+
 #include "v3d_message.h"
 #include <vector>
 #include "neuron_stitch_plugin.h"
 #include "neuron_stitch_func.h"
 #include "neuron_tipspicker_dialog.h"
+#include "neuron_match_clique.h"
+#include "neuron_geometry_dialog.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
+#include <fstream>
+#include "performance_timer.h"
 
 using namespace std;
 
@@ -34,6 +38,7 @@ QStringList neuron_stitch::funclist() const
 {
 	return QStringList()
         <<tr("neuron_stitch_auto")
+      //  <<tr("tmp_test")
 		<<tr("help");
 }
 
@@ -219,6 +224,10 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
         matchfunc.output_parameter(fname_output+"_param.txt");
 
         cout<<("matching finished")<<endl;
+    }
+    else if (func_name == tr("tmp_test"))
+    {
+        doperformancetest(input, output, callback);
     }
 	else if (func_name == tr("help"))
 	{
@@ -548,4 +557,338 @@ void neuron_stitch::docombine_marker(V3DPluginCallback2 &callback, QWidget *pare
         v3d_msg("fail to write the output marker file.");
         return;
     }
+}
+
+//temporary function for paper writting purpose
+void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    cout<<"==== neuron stack auto stitcher ===="<<endl;
+    if(infiles.size()!=2 || outfiles.size()!=1)
+    {
+        qDebug("ERROR: please set input and output!");
+        printHelp();
+        return;
+    }
+
+    //load neurons
+    QString fname_nt0 = ((vector<char*> *)(input.at(0).p))->at(0);
+    QString fname_nt1 = ((vector<char*> *)(input.at(0).p))->at(1);
+    QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+    NeuronTree* nt0 = new NeuronTree();
+    if (fname_nt0.toUpper().endsWith(".SWC") || fname_nt0.toUpper().endsWith(".ESWC")){
+        *nt0 = readSWC_file(fname_nt0);
+    }
+    if(nt0->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt0;
+        return;
+    }
+    NeuronTree* nt1 = new NeuronTree();
+    if (fname_nt1.toUpper().endsWith(".SWC") || fname_nt1.toUpper().endsWith(".ESWC")){
+        *nt1 = readSWC_file(fname_nt1);
+    }
+    if(nt1->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt1;
+        return;
+    }
+
+    double _spanCand = 30;
+    int _direction = 2;
+    double _angThr_match = cos(70.0/180.0*M_PI); //50 degree
+    double _cmatchThr = 100;
+    double _pmatchThr = 100;
+    double _zscale = 2;
+    double _segmentThr = 0;
+    double _gapThr = 0;
+    int _spineLengthThr = 0;
+    double _spineAngThr = -1;
+    double _spineRadiusThr = 0;
+    int _maxClique3Num = 6400;
+
+    vector<double> walltimes;
+    vector<double> cputimes;
+    vector<int> num_TP, num_FP, num_FN, num_truth, num_bp0, num_bp1, num_tri0, num_tri1, num_trimatch;
+    vector<int> tri_number;
+    vector<double> pmatchThr,pmatchAng,tmatchThr;
+
+    //triangle number
+    for(int i=0; i<10; i++){
+        int tri=100*pow(2.0,i);
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        NeuronTree nt0_run;
+        backupNeuron(*nt0, nt0_run);
+        NeuronTree nt1_run;
+        backupNeuron(*nt1, nt1_run);
+        neuron_match_clique matchfunc(&nt0_run,&nt1_run);
+
+        //parameters
+        matchfunc.direction=_direction;
+        matchfunc.zscale=_zscale;
+        matchfunc.angThr_match=_angThr_match;
+        matchfunc.pmatchThr = _pmatchThr;
+        matchfunc.spanCand = _spanCand;
+        matchfunc.cmatchThr = _cmatchThr;
+        matchfunc.segmentThr = _segmentThr;
+        matchfunc.gapThr = _gapThr;
+        matchfunc.spineLengthThr = _spineLengthThr;
+        matchfunc.spineAngThr = _spineAngThr;
+        matchfunc.spineRadiusThr = _spineRadiusThr;
+
+        matchfunc.maxClique3Num = tri;
+
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //point match distance
+    for(double param=20; param<=300; param+=20){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        NeuronTree nt0_run;
+        backupNeuron(*nt0, nt0_run);
+        NeuronTree nt1_run;
+        backupNeuron(*nt1, nt1_run);
+        neuron_match_clique matchfunc(&nt0_run,&nt1_run);
+
+        //parameters
+        matchfunc.direction=_direction;
+        matchfunc.zscale=_zscale;
+        matchfunc.angThr_match=_angThr_match;
+        matchfunc.spanCand = _spanCand;
+        matchfunc.cmatchThr = _cmatchThr;
+        matchfunc.segmentThr = _segmentThr;
+        matchfunc.maxClique3Num = _maxClique3Num;
+        matchfunc.gapThr = _gapThr;
+        matchfunc.spineLengthThr = _spineLengthThr;
+        matchfunc.spineAngThr = _spineAngThr;
+        matchfunc.spineRadiusThr = _spineRadiusThr;
+
+        matchfunc.pmatchThr = param;
+
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //point match angular threshold
+    for(double param=10; param<181; param+=10){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        NeuronTree nt0_run;
+        backupNeuron(*nt0, nt0_run);
+        NeuronTree nt1_run;
+        backupNeuron(*nt1, nt1_run);
+        neuron_match_clique matchfunc(&nt0_run,&nt1_run);
+
+        //parameters
+        matchfunc.direction=_direction;
+        matchfunc.zscale=_zscale;
+        matchfunc.pmatchThr = _pmatchThr;
+        matchfunc.spanCand = _spanCand;
+        matchfunc.cmatchThr = _cmatchThr;
+        matchfunc.segmentThr = _segmentThr;
+        matchfunc.maxClique3Num = _maxClique3Num;
+        matchfunc.gapThr = _gapThr;
+        matchfunc.spineLengthThr = _spineLengthThr;
+        matchfunc.spineAngThr = _spineAngThr;
+        matchfunc.spineRadiusThr = _spineRadiusThr;
+
+        matchfunc.angThr_match=cos(param/180*M_PI);
+
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //triangle match distance
+    for(double param=20; param<=300; param+=20){
+        //test triangle number and running time
+        //init matching function
+        int tmpnum[9];
+        NeuronTree nt0_run;
+        backupNeuron(*nt0, nt0_run);
+        NeuronTree nt1_run;
+        backupNeuron(*nt1, nt1_run);
+        neuron_match_clique matchfunc(&nt0_run,&nt1_run);
+
+        //parameters
+        matchfunc.direction=_direction;
+        matchfunc.zscale=_zscale;
+        matchfunc.angThr_match=_angThr_match;
+        matchfunc.pmatchThr = _pmatchThr;
+        matchfunc.spanCand = _spanCand;
+        matchfunc.segmentThr = _segmentThr;
+        matchfunc.maxClique3Num = _maxClique3Num;
+        matchfunc.gapThr = _gapThr;
+        matchfunc.spineLengthThr = _spineLengthThr;
+        matchfunc.spineAngThr = _spineAngThr;
+        matchfunc.spineRadiusThr = _spineRadiusThr;
+
+        matchfunc.cmatchThr = param;
+
+        tri_number.push_back(matchfunc.maxClique3Num);
+        pmatchThr.push_back(matchfunc.pmatchThr);
+        pmatchAng.push_back(matchfunc.angThr_match);
+        tmatchThr.push_back(matchfunc.cmatchThr);
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        matchfunc.examineMatchingResult(tmpnum);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
+                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        walltimes.push_back(wall1-wall0);
+        cputimes.push_back(cpu1-cpu0);
+        num_TP.push_back(tmpnum[0]);
+        num_FP.push_back(tmpnum[1]);
+        num_FN.push_back(tmpnum[2]);
+        num_truth.push_back(tmpnum[3]);
+        num_bp0.push_back(tmpnum[4]);
+        num_bp1.push_back(tmpnum[5]);
+        num_tri0.push_back(tmpnum[6]);
+        num_tri1.push_back(tmpnum[7]);
+        num_trimatch.push_back(tmpnum[8]);
+    }
+
+    //output
+    QString fname_out=fname_output+"_testlog.txt";
+    ofstream fp;
+    fp.open(fname_out.toStdString().c_str());
+    for(int i=0; i<walltimes.size(); i++){
+        fp<<tri_number[i]<<"\t";
+        fp<<pmatchThr[i]<<"\t";
+        fp<<pmatchAng[i]<<"\t";
+        fp<<tmatchThr[i]<<"\t";
+        fp<<walltimes[i]<<"\t";
+        fp<<cputimes[i]<<"\t";
+        fp<<num_TP[i]<<"\t";
+        fp<<num_FP[i]<<"\t";
+        fp<<num_FN[i]<<"\t";
+        fp<<num_truth[i]<<"\t";
+        fp<<num_bp0[i]<<"\t";
+        fp<<num_bp1[i]<<"\t";
+        fp<<num_tri0[i]<<"\t";
+        fp<<num_tri1[i]<<"\t";
+        fp<<num_trimatch[i]<<endl;
+    }
+    fp.close();
+
+    neuron_match_clique matchfunc(nt0,nt1);
+    matchfunc.direction=_direction;
+    matchfunc.zscale=_zscale;
+    matchfunc.angThr_match=_angThr_match;
+    matchfunc.pmatchThr = _pmatchThr;
+    matchfunc.spanCand = _spanCand;
+    matchfunc.cmatchThr = _cmatchThr;
+    matchfunc.segmentThr = _segmentThr;
+    matchfunc.maxClique3Num = _maxClique3Num;
+    matchfunc.gapThr = _gapThr;
+    matchfunc.spineLengthThr = _spineLengthThr;
+    matchfunc.spineAngThr = _spineAngThr;
+    matchfunc.spineRadiusThr = _spineRadiusThr;
+    matchfunc.output_parameter(fname_output+"_param.txt");
+
+    qDebug()<<"testing finished";
 }

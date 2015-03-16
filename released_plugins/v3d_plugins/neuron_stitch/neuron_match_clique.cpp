@@ -1539,6 +1539,7 @@ void neuron_match_clique::globalmatch()
     candmatch1.clear();
     pmatch0.clear();
     pmatch1.clear();
+    double bestEnergy = 0;
 
     if(candID0.size()==0 || candID1.size()==0){
         return;
@@ -1679,7 +1680,6 @@ void neuron_match_clique::globalmatch()
             return;
 
         //search for best unconflict groups of matched points
-        double bestEnergy = -1;
         double better_shift_x=0,better_shift_y=0,better_shift_z=0,better_angle=0,better_cent_x=0,better_cent_y=0,better_cent_z=0;
 
         multimap<int, QVector<int> , std::greater<int> >::iterator iter_conflict=rankedCliqueMatch.begin();
@@ -1746,11 +1746,12 @@ void neuron_match_clique::globalmatch()
     //                reachConflict = 2; //reached and new one has been identified
     //            }
     //        }
-            //cout<<"matched points: "<<trial<<":";
+//            cout<<"matched points: "<<trial<<":";
 
             //perform affine transform
+            //double tmpEnergy=-1;
             while(1){
-                //cout<<":"<<tmpmatch0.size();
+//                cout<<":"<<tmpmatch0.size();
 
                 double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
                 if(direction==0) tmp_shift_x=-1;
@@ -1771,7 +1772,9 @@ void neuron_match_clique::globalmatch()
                 tmpMatchMarkers[0]=QList<int>();
                 tmpMatchMarkers[1]=QList<int>();
                 getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                //double tmpE = getMatchPairs_XYZList_energy(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
                 if(tmpMatchMarkers[0].size()>tmpmatch0.size()){
+                //if(tmpE>tmpEnergy){
                     tmpmatch0=tmpMatchMarkers[0];
                     tmpmatch1=tmpMatchMarkers[1];
                     better_shift_x=tmp_shift_x;
@@ -1781,14 +1784,17 @@ void neuron_match_clique::globalmatch()
                     better_cent_x=tmp_cent_x;
                     better_cent_y=tmp_cent_y;
                     better_cent_z=tmp_cent_z;
+                    //tmpEnergy=tmpE;
                 }else{
                     break;
                 }
             }
-            //cout<<endl;
+//            cout<<endl;
 
             if(tmpmatch0.size()>bestEnergy){
+            //if(tmpEnergy>bestEnergy){
                 bestEnergy = tmpmatch0.size();
+                //bestEnergy = tmpEnergy;
                 candmatch0 = tmpmatch0;
                 candmatch1 = tmpmatch1;
 //                shift_x = better_shift_x;
@@ -1807,7 +1813,7 @@ void neuron_match_clique::globalmatch()
         pmatch0.append(candID0.at(candmatch0.at(i)));
         pmatch1.append(candID1.at(candmatch1.at(i)));
     }
-    qDebug()<<"global match: "<<pmatch0.size()<<" matched points found";
+    qDebug()<<"global match: "<<pmatch0.size()<<" matched points found; energy: "<<bestEnergy;
     if(pmatch0.size()>0){
         //affine based on matched points
         affine_nt1();
@@ -2135,6 +2141,20 @@ void neuron_match_clique::output_candMatchScore(QString fname)
         return;
     }
     QTextStream myfile(&file);
+//    {//cojoc: for test
+//        myfile<<"0\t";
+//        for(int j=0; j<candID1.size(); j++){
+//            myfile<<candID1.at(j)<<"\t";
+//        }
+//        myfile<<endl;
+//        for(int i=0; i<candID0.size(); i++){
+//            myfile<<candID0.at(i)<<"\t";
+//            for(int j=0; j<candID1.size(); j++){
+//                myfile<<CANDMS_ENTRY(i,j)<<"\t";
+//            }
+//            myfile<<endl;
+//        }
+//    }
     myfile<<"0\t";
     for(int j=0; j<candmatch0.size(); j++){
         myfile<<j*2+2<<"\t";
