@@ -903,7 +903,7 @@ void myplugin_proc(unsigned char* img1d)
     printf("over\n");
 
 }
-bool proc(V3DPluginCallback2 &callback,QWidget* parent)
+int proc(V3DPluginCallback2 &callback,QWidget* parent)
 {
 
     v3dhandle curwin = callback.currentImageWindow();
@@ -911,7 +911,7 @@ bool proc(V3DPluginCallback2 &callback,QWidget* parent)
     if(!curwin)
     {
             QMessageBox::information(0, title, QObject::tr("No image is open."));
-            return false;
+            return -1;
     }
     Image4DSimple *p4d = callback.getImage(curwin);
 
@@ -927,8 +927,6 @@ bool proc(V3DPluginCallback2 &callback,QWidget* parent)
     fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
 
     myplugin_proc(img1d);
-
-    return true;
 }
 
 
