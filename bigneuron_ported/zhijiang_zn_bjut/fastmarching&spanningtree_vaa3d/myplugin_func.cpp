@@ -6,7 +6,7 @@
 #include "node.h"
 #include "tree.h"
 #include "graph.h"
-#include "../APP2_ported/heap.h"
+#include "../../APP2_ported/heap.h"
 #include "v3d_message.h"
 #include "stackutil.h"
 #include "tree.h"

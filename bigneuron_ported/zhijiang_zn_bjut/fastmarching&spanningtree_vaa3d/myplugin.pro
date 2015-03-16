@@ -5,7 +5,7 @@ CONFIG  += qt plugin warn_off
 #CONFIG += x86_64
 
 #set the Vaa3D main path
-V3DMAINPATH     =  ../Vaa3D
+V3DMAINPATH     =  ../../../../v3d_external/
 
 #include necessary paths
 INCLUDEPATH     += $$V3DMAINPATH/v3d_main/basic_c_fun
@@ -17,7 +17,7 @@ HEADERS += \
     myplugin_func.h \
     myplugin_plugin.h \
     global.h \
-    ../APP2_ported/heap.h \
+    ../../APP2_ported/heap.h \
     tree.h \
     graph.h \
     node.h
