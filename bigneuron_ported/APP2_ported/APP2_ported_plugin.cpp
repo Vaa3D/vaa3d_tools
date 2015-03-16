@@ -210,7 +210,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     in_sz[3] = 1;
     double dfactor_xy = 1, dfactor_z = 1;
 
-    if (in_sz[0]<=256 && in_sz[2]<=256 && in_sz[2]<=256)
+    if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
     {
         dfactor_z = dfactor_xy = 1;
     }
