@@ -2209,9 +2209,10 @@ void neuron_match_clique::output_matchedMarkers_orgspace(QString fname_0, QStrin
     for(int i=0; i<pmatch0.size(); i++){
         int a=pmatch0.at(i);
         int aa=candmatch0.at(i);
-        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx++<<","
+        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx<<","
              <<"0 "<<candID0.at(aa)<<" -1 "
              <<canddir0[aa].x<<" "<<canddir0[aa].y<<" "<<canddir0[aa].z<<", 255, 0, 0"<<endl;
+        idx++;
     }
     file.close();
 
@@ -2226,9 +2227,10 @@ void neuron_match_clique::output_matchedMarkers_orgspace(QString fname_0, QStrin
     for(int i=0; i<pmatch0.size(); i++){
         int b=pmatch1.at(i);
         int bb=candmatch1.at(i);
-        myfile1<<nt1_org->listNeuron[b].x<<","<<nt1_org->listNeuron[b].y<<","<<nt1_org->listNeuron[b].z<<",0,1, "<<idx++<<","
+        myfile1<<nt1_org->listNeuron[b].x<<","<<nt1_org->listNeuron[b].y<<","<<nt1_org->listNeuron[b].z<<",0,1, "<<idx<<","
              <<"1 "<<candID1.at(bb)<<" -1 "
              <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
+        idx++;
     }
     file1.close();
 }
@@ -2246,14 +2248,16 @@ void neuron_match_clique::output_markers_candspace(QString fname)
     //matched candidates first
     for(int i=0; i<candmatch0.size(); i++){
         int a=candmatch0.at(i);
-        myfile<<candcoord0[a].x<<","<<candcoord0[a].y<<","<<candcoord0[a].z<<",0,1, "<<idx++<<","
-             <<"0 "<<candID0.at(a)<<" "<<idx<<" "
+        myfile<<candcoord0[a].x<<","<<candcoord0[a].y<<","<<candcoord0[a].z<<",0,1, "<<idx<<","
+             <<"0 "<<candID0.at(a)<<" "<<idx+1<<" "
              <<canddir0[a].x<<" "<<canddir0[a].y<<" "<<canddir0[a].z<<", 255, 0, 0"<<endl;
+        idx++;
 
         int b=candmatch1.at(i);
-        myfile<<candcoord1[b].x<<","<<candcoord1[b].y<<","<<candcoord1[b].z<<",0,1, "<<idx++<<","
+        myfile<<candcoord1[b].x<<","<<candcoord1[b].y<<","<<candcoord1[b].z<<",0,1, "<<idx<<","
              <<"1 "<<candID1.at(b)<<" "<<idx-1<<" "
              <<canddir1[b].x<<" "<<canddir1[b].y<<" "<<canddir1[b].z<<", 0, 255, 0"<<endl;
+        idx++;
     }
     //then unmatched
     for(int i=0; i<candID0.size(); i++){
@@ -2285,15 +2289,17 @@ void neuron_match_clique::output_markers_orgspace(QString fname)
     for(int i=0; i<pmatch0.size(); i++){
         int a=pmatch0.at(i);
         int aa=candmatch0.at(i);
-        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx++<<","
-             <<"0 "<<candID0.at(aa)<<" "<<idx<<" "
+        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx<<","
+             <<"0 "<<candID0.at(aa)<<" "<<idx+1<<" "
              <<canddir0[aa].x<<" "<<canddir0[aa].y<<" "<<canddir0[aa].z<<", 255, 0, 0"<<endl;
+        idx++;
 
         int b=pmatch1.at(i);
         int bb=candmatch1.at(i);
-        myfile<<nt1_org->listNeuron[b].x<<","<<nt1_org->listNeuron[b].y<<","<<nt1_org->listNeuron[b].z<<",0,1, "<<idx++<<","
+        myfile<<nt1_org->listNeuron[b].x<<","<<nt1_org->listNeuron[b].y<<","<<nt1_org->listNeuron[b].z<<",0,1, "<<idx<<","
              <<"1 "<<candID1.at(bb)<<" "<<idx-1<<" "
              <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
+        idx++;
     }
     //then unmatched
     for(int i=0; i<candID0.size(); i++){
@@ -2325,15 +2331,17 @@ void neuron_match_clique::output_markers_affinespace(QString fname)
     for(int i=0; i<pmatch0.size(); i++){
         int a=pmatch0.at(i);
         int aa=candmatch0.at(i);
-        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx++<<","
-             <<"0 "<<candID0.at(aa)<<" "<<idx<<" "
+        myfile<<nt0_org->listNeuron[a].x<<","<<nt0_org->listNeuron[a].y<<","<<nt0_org->listNeuron[a].z<<",0,1, "<<idx<<","
+             <<"0 "<<candID0.at(aa)<<" "<<idx+1<<" "
              <<canddir0[aa].x<<" "<<canddir0[aa].y<<" "<<canddir0[aa].z<<", 255, 0, 0"<<endl;
+        idx++;
 
         int b=pmatch1.at(i);
         int bb=candmatch1.at(i);
-        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx++<<","
+        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx<<","
              <<"1 "<<candID1.at(bb)<<" "<<idx-1<<" "
              <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
+        idx++;
     }
     //then unmatched
     for(int i=0; i<candID0.size(); i++){
@@ -2365,15 +2373,17 @@ void neuron_match_clique::output_markers_stitchspace(QString fname)
     for(int i=0; i<pmatch0.size(); i++){
         int a=pmatch0.at(i);
         int aa=candmatch0.at(i);
-        myfile<<nt0_stitch->listNeuron[a].x<<","<<nt0_stitch->listNeuron[a].y<<","<<nt0_stitch->listNeuron[a].z<<",0,1, "<<idx++<<","
-             <<"0 "<<candID0.at(aa)<<" "<<idx<<" "
+        myfile<<nt0_stitch->listNeuron[a].x<<","<<nt0_stitch->listNeuron[a].y<<","<<nt0_stitch->listNeuron[a].z<<",0,1, "<<idx<<","
+             <<"0 "<<candID0.at(aa)<<" "<<idx+1<<" "
              <<canddir0[aa].x<<" "<<canddir0[aa].y<<" "<<canddir0[aa].z<<", 255, 0, 0"<<endl;
+        idx++;
 
         int b=pmatch1.at(i);
         int bb=candmatch1.at(i);
-        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx++<<","
+        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx<<","
              <<"1 "<<candID1.at(bb)<<" "<<idx-1<<" "
              <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
+        idx++;
     }
     //then unmatched
     for(int i=0; i<candID0.size(); i++){
