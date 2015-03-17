@@ -16,9 +16,9 @@ QStringList PluginCreatorPlugin::menulist() const
 	return QStringList()
 		<<tr("create plugin")
         <<tr("create plugin for neuron reconstruction")
-		<<tr("produce simplest plugin")
-		<<tr("domenu usage demo")
-		<<tr("load image and swc demo")
+//		<<tr("produce simplest plugin")
+//		<<tr("domenu usage demo")
+//		<<tr("load image and swc demo")
 		<<tr("about");
 }
 
