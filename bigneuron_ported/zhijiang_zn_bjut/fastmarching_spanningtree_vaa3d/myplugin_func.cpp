@@ -796,7 +796,7 @@ void myplugin_proc(unsigned char* img1d)
     findNode(img1d,nodeMap);
     printf("findNode over\n");
     updateTime();
-    printSWC(nodeMap,fileName + "_findNode.swc");
+//    printSWC(nodeMap,fileName + "_findNode.swc");
     //todo 将点集合编织成图
     printf("initPath begin\n");
     initPath(nodeMap);
@@ -808,13 +808,13 @@ void myplugin_proc(unsigned char* img1d)
     calculateRadius(nodeMap);
     printf("calculateRadius over\n",nodeMap.size());
     updateTime();
-    printSWC(nodeMap,fileName + "_calculateRadius.swc");
+//    printSWC(nodeMap,fileName + "_calculateRadius.swc");
     //todo 删除多余点
     printf("prundNodeByRadius begin\n");
     prundNodeByRadius(nodeMap);
     printf("prundNodeByRadius over %d\n",nodeMap.size());
     updateTime();
-    printSWC(nodeMap,fileName + "_prundByRadius.swc");
+//    printSWC(nodeMap,fileName + "_prundByRadius.swc");
     //todo 计算边权值
     printf("calculateWeight begin\n");
     calculateWeight(nodeMap);
@@ -827,7 +827,7 @@ void myplugin_proc(unsigned char* img1d)
     mst(nodeMap,rootList,treeMap);
     printf("mst over %d %d\n",rootList.size(),treeMap.size());
     updateTime();
-    printSWC(treeMap,fileName + "_init.swc");
+//    printSWC(treeMap,fileName + "_init.swc");
     QMap<V3DLONG,Graph<Tree<Node*>*>*> rootMap;//存放树连通关系的图
     //todo 计算树间权值
     printf("calculateTreeWeight begin\n");
@@ -895,11 +895,11 @@ void myplugin_proc(unsigned char* img1d)
     Tree<Node*>* root = treeMap[1];
     treeMap.clear();
     reCreateTree(root,treeMap);
-    printSWC(treeMap,fileName + "_beforeSmooth.swc");
+//    printSWC(treeMap,fileName + "_beforeSmooth.swc");
     //todo 做平滑
     smooth(root,treeMap);
     //todo 输出swc
-    printSWC(treeMap,fileName + "_finish.swc");
+    printSWC(treeMap,fileName + "_fastmarching_spanningtree.swc");
     printf("over\n");
 
 }
@@ -924,7 +924,7 @@ bool proc(V3DPluginCallback2 &callback,QWidget* parent)
     bresh = 0;
     coverRate = 1;
     fileName = p4d->getFileName();
-//    fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
+ //   fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
 
     myplugin_proc(img1d);
 
