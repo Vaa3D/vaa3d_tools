@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <stdlib.h>
 #include <map>
 #include "myplugin_func.h"
@@ -924,7 +924,7 @@ bool proc(V3DPluginCallback2 &callback,QWidget* parent)
     bresh = 0;
     coverRate = 1;
     fileName = p4d->getFileName();
-    fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
+//    fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
 
     myplugin_proc(img1d);
 
