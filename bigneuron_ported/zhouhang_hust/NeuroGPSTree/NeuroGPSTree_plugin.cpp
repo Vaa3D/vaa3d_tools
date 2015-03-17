@@ -158,7 +158,7 @@ bool NeuroGPSTreePlugin::SaveSeperateTree(const QString &filename, const QString
     if (curFile.trimmed().isEmpty()) //then open a file dialog to choose file
     {
         curFile = QFileDialog::getSaveFileName(0,
-                                               "Select a SWC file to save the neuronal or relational data... ",
+                                               "Select a SWC file to ssave the neuronal or relational data... ",
                                                ".swc",
                                                QObject::tr("Neuron structure file (*.swc);;(*.*)"
                                                            ));
@@ -204,11 +204,11 @@ bool NeuroGPSTreePlugin::SaveSeperateTree(const QString &filename, const QString
             //One curve
             VectorVec5d &localCurve = localTree[j];
             fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
-                   Y - localCurve[0](1), localCurve[0](2),1.0);
+                   localCurve[0](1), localCurve[0](2),1.0);
             ++globalIndex;
             for(size_t k = 1; k < localCurve.size();++k){
                 fprintf(fp,"%d %d %lf %lf %lf %lf %d\n", globalIndex, typeList[i], localCurve[k](0),
-                        Y - localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
+                        localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
                         ++globalIndex;
             }
         }

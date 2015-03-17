@@ -2,10 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /home/zhi/work/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
-INCLUDEPATH	+= /home/zhi/MyProject/eigen3.2.2
+INCLUDEPATH	+= ./eigen3.2.2
 LIBS            += -lpthread  -lgomp
 
 
