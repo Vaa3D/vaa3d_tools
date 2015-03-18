@@ -6,8 +6,8 @@
 
 template<typename T> class Volume;
 //typedef Volume<unsigned short> CVolume;
-typedef std::shared_ptr<Volume<unsigned short>> SVolumePointer;
-typedef std::shared_ptr<const Volume<unsigned short>> CSVolumePointer;
+typedef std::shared_ptr<Volume<unsigned short> > SVolumePointer;
+typedef std::shared_ptr<const Volume<unsigned short> > CSVolumePointer;
 class Tree;
 class BridgeBreaker;
 typedef std::shared_ptr<BridgeBreaker> NGBridgeBreaker;

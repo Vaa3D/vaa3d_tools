@@ -2,9 +2,9 @@
 #include "../ngtypes/volume.h"
 #ifdef _WIN32
 #include <ctime>
+#include <omp.h>
 #else
 #include <sys/time.h>
-#include <omp.h>
 #endif
 
 BinaryFilter::BinaryFilter()
@@ -120,9 +120,11 @@ bool BinaryFilter::Binary()
 #endif
 
     ///---------------------------------20 filters--------------------------///
-    omp_set_num_threads(threadNum);
+   // omp_set_num_threads(threadNum);
+#ifdef _WIN32
 #pragma omp parallel
 #pragma omp for  private( i, j, num,k,l,tmp_value)
+#endif
     for (ij = 0 ; ij < f ; ++ij){			//all frame
         double *m1 = new double[wh];
         double *sum = new double[ w - 2*radius ];

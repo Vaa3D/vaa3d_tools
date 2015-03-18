@@ -1,15 +1,23 @@
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
+mac{
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+}
+
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH	+= ./eigen3.2.2
-LIBS            += -lpthread  -lgomp
+LIBS            += -lpthread  #-lgomp
 
+#QMAKE_CXXFLAGS  += -std=c++11
 
-QMAKE_CXXFLAGS  += -std=c++0x -fopenmp
+unix:!macx {
+    QMAKE_CXXFLAGS  += -fopenmp
+    LIBS            += -lgomp
+}
 
 HEADERS	+= NeuroGPSTree_plugin.h \
     Function/binaryfilter.h \

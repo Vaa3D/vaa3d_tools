@@ -744,7 +744,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
     //MatXi breakPathGraph;
 
     //std::vector<int> allSoma012Level;
-	std::vector<std::vector<int>> allSoma012Level;
+    std::vector<std::vector<int> > allSoma012Level;
 	std::vector<std::vector<int> > allSoma012LevelList;
 
 	//for(int kk = 0; kk < somaNum; ++kk){
@@ -3268,8 +3268,8 @@ void NeuroTreeCluster::ClusterCutTree( const std::vector<int> &cutTree, const Ve
     }
 }
 
-void NeuroTreeCluster::CollectCutTreePiece( const std::vector<std::vector<int>>& clustreInCutTree, const std::vector<VectorVec5d>& newDendList,
-    std::vector<std::vector<int>>& availableTreeInClustre)
+void NeuroTreeCluster::CollectCutTreePiece( const std::vector<std::vector<int> >& clustreInCutTree, const std::vector<VectorVec5d>& newDendList,
+    std::vector<std::vector<int> >& availableTreeInClustre)
 {
     for (size_t i = 0; i < clustreInCutTree.size(); ++i) {
         const std::vector<int>& currentClustre = clustreInCutTree[i];
@@ -3453,7 +3453,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
     }
 }
 
-void NeuroTreeCluster::BreakPathListConnect(std::vector<std::list<int>> &pathList, int curveID)
+void NeuroTreeCluster::BreakPathListConnect(std::vector<std::list<int> > &pathList, int curveID)
 {
     std::list<int> &connectID = pathList[curveID];
     for(auto it = connectID.begin(); it != connectID.end(); ++it){
@@ -3528,11 +3528,11 @@ void NeuroTreeCluster::SearchTreeFromSomaModify(std::vector<std::list<int> > &ra
 }
 
 void NeuroTreeCluster::SearchAndBreakTreeModify(const VectorVec2i &aSomaConnectSet,
-                              std::vector<std::list<int>> &pathGraph,
+                              std::vector<std::list<int> > &pathGraph,
                               VectorVec2i &resultSet)
 {
     resultSet.clear();
-    std::vector<std::list<int>> &pathGraphCopy = pathGraph;
+    std::vector<std::list<int> > &pathGraphCopy = pathGraph;
     std::vector<int> somaID;
     for(std::vector<int>::size_type i = 0; i < aSomaConnectSet.size(); ++i){
         somaID.push_back(aSomaConnectSet[i](1));
@@ -3554,7 +3554,7 @@ void NeuroTreeCluster::SearchAndBreakTreeModify(const VectorVec2i &aSomaConnectS
     }
 }
 
-void NeuroTreeCluster::CheckUniqueCurveInTreeModify(const std::vector<std::list<int>> &breakPathGraph,
+void NeuroTreeCluster::CheckUniqueCurveInTreeModify(const std::vector<std::list<int> > &breakPathGraph,
     const std::vector<int> &somaID,
     const std::vector<int> &somaGrowSet,
     std::vector<std::list<int> >& pathList,

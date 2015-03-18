@@ -57,7 +57,7 @@ private:
 
     void ClusterTreeToMultiSomaInOneCluster(const VectorMat2i& conInfoInClustre, const std::vector<int>& dendIDInClustre,
                                             const int rawDendNum,
-                                            std::vector<VectorVec2i>& somaConnectSet, MatXi& pathGraph, std::vector<std::vector<int>> &allAssignedDendIDSet,
+                                            std::vector<VectorVec2i>& somaConnectSet, MatXi& pathGraph, std::vector<std::vector<int> > &allAssignedDendIDSet,
                                             MatXi& compressPathGraph, std::vector<int>& unAssignedList);
 
     void BuildPathMatrix(const VectorMat2i& conInfoInClustre, const std::vector<int>& dendIDInClustre, MatXi &pathGraph);
@@ -75,13 +75,13 @@ private:
 
     //------------------Bridge is the curve with 2 curves at head and tail--------------//
     void FindBridge(const VectorMat2i& dendSomaInfo, const std::vector<int>& currentDendCurveClustre, const std::vector<int>& unAssignedList,
-                    const std::vector<std::vector<int>> &allAssignedDendIDSet,
+                    const std::vector<std::vector<int> > &allAssignedDendIDSet,
                     MatXi& pathGraph1, VectorVec3i& possibleConInfo);
 
     void AttributeUnassignedToPossibleTree(const std::vector<int> &unassignedDendID, const std::vector<int>& aSomaTree, int &connectFlag);
 
     void FindPossibleConnect(const int conjDendID, const std::vector<int>& currentDendCurveClustre, const std::vector<int>& unAssignedList,
-                             const std::vector<std::vector<int>> &allAssignedDendIDSet, const std::vector<int>& idexss,
+                             const std::vector<std::vector<int> > &allAssignedDendIDSet, const std::vector<int>& idexss,
                              int &possibleConInfo);
 
     void MapDendWithHeadTailToCompressMat(const std::vector<int>& currentUnassignNet,const std::vector<int>& currentUnassignNetConInfo,
@@ -180,8 +180,8 @@ private:
 
     //----------------collect the cut tree------------------//
     void RecoverCutTree(const std::vector<int>&, const std::vector<int>&, std::vector<int>&);
-    void ClusterCutTree(const std::vector<int>&, const VectorMat2i&, std::vector<std::vector<int>>&);
-    void CollectCutTreePiece( const std::vector<std::vector<int>>& clustreInCutTree, const std::vector<VectorVec5d>& newDendList ,std::vector<std::vector<int>>& availableTreeInClustre);
+    void ClusterCutTree(const std::vector<int>&, const VectorMat2i&, std::vector<std::vector<int> >&);
+    void CollectCutTreePiece( const std::vector<std::vector<int> >& clustreInCutTree, const std::vector<VectorVec5d>& newDendList ,std::vector<std::vector<int> >& availableTreeInClustre);
 
     //rebuild ClusterTreeToMultiSomaInOneCluster with adjacency list-------------//
     void ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &conInfoInClustre, const std::vector<int> &dendIDInClustre, 
@@ -190,12 +190,12 @@ private:
 
     //use old BuildPathMatrix function
 
-    void BreakPathListConnect(std::vector<std::list<int>> &pathList, int curveID);
+    void BreakPathListConnect(std::vector<std::list<int> > &pathList, int curveID);
 
     void SearchTreeFromSomaModify(std::vector<std::list<int> > &rawPathGraph, const int somaID,
         const int threv, std::vector<int>& somaGrowCurveSet);
 
-    void CheckUniqueCurveInTreeModify(const std::vector<std::list<int>> &breakPathGraph,
+    void CheckUniqueCurveInTreeModify(const std::vector<std::list<int> > &breakPathGraph,
         const std::vector<int> &somaID,
         const std::vector<int> &somaGrowSet,
         std::vector<std::list<int> >& pathList,
@@ -206,7 +206,7 @@ private:
         const int threv, bool& hasSoma);
 
     void SearchAndBreakTreeModify(const VectorVec2i &aSomaConnectSet,
-        std::vector<std::list<int>> &pathGraph,
+        std::vector<std::list<int> > &pathGraph,
         VectorVec2i &resultSet);
 
 };

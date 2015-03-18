@@ -1,8 +1,9 @@
-#include <omp.h>
+//
 #include <algorithm>
 #include <numeric>
 #ifdef _WIN32
 #include <ctime>
+#include <omp.h>
 #else
 #include <sys/time.h>
 #endif
@@ -15,8 +16,13 @@
 #include "../contourutil.h"
 #include "./traceutil.h"
 
-
 const double EXPO = 0.0001;
+
+struct LessPair2{
+    bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+        return lhs.second < rhs.second;
+    }
+};
 
 BridgeBreaker::BridgeBreaker()
 {
@@ -116,7 +122,9 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
     newDendConInfo = rawDendConInfo;
     int tmpCurConnectIndex = 0;
     int ddst = 0;
+#ifdef _WIN32
 #pragma omp parallel for
+#endif
     for(int i = 0; i < nxx; ++i){
 		printf("cal %d\n",i);
         const Mat2i& currentDendConInfo = rawDendConInfo[i];
@@ -154,10 +162,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                 connectFlag = 0.5 * Vec2d( TraceUtil::sign(std::abs<double>(double(conjHeadDendConInfo(0,0) ) )),
                                           TraceUtil::sign(std::abs<double>(double(conjHeadDendConInfo(0,1)))) );
                 JudgeHeadTailForDendCurve(initHeadRadWet, initTailRadWet, connectFlag, headConjHeadTailFlag);
-#pragma omp critical
-				{
-					printf("1\n");
-				}
+
             }
 
             if(currentDendConInfo(0,1) > 0){
@@ -170,10 +175,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                 connectFlag = 0.5 * Vec2d(TraceUtil::sign(std::abs<double>(double(conjTailDendConInfo(0,0) ) )),
                                           TraceUtil::sign(std::abs<double>(double(conjTailDendConInfo(0,1)))) );
                 JudgeHeadTailForDendCurve(initHeadRadWet, initTailRadWet, connectFlag, tailConjHeadTailFlag);
-				#pragma omp critical
-				{
-					printf("2\n");
-				}
+
             }
 
             if( headTailFlag == 0 && currentDendConInfo(0,0) > 0 && currentDendConInfo(0,1) > 0){
@@ -215,10 +217,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                     deletedDendId.push_back(Vec4d(double(i), currentDendCurve[back](0), currentDendCurve[back](1), currentDendCurve[back](2)));
                 }
 
-				#pragma omp critical
-				{
-					printf("3\n");
-				}
+
             }
 
             //if connect to curve'middle part instead of soma, save head connection and delete tail connection
@@ -234,10 +233,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                     int back = currentDendCurve.size() - 1;
                     deletedDendId.push_back(Vec4d(double(i), currentDendCurve[back](0), currentDendCurve[back](1), currentDendCurve[back](2)));
                 }
-				#pragma omp critical
-				{
-					printf("4\n");
-				}
+
             }
 
             //headTailFlag== -1
@@ -249,10 +245,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                     ++tmpCurConnectIndex;
                     deletedDendId.push_back(Vec4d(double(i), currentDendCurve[0](0), currentDendCurve[0](1), currentDendCurve[0](2)));
                 }
-				#pragma omp critical
-				{
-					printf("5\n");
-				}
+
             }
 
             newDendConInfo[i] = tmpDendConInfo;
@@ -287,10 +280,6 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
                 deletedDendId.push_back(Vec4d(double(i), currentDendCurve[0](0), currentDendCurve[0](1), currentDendCurve[0](2)));
             }
             newDendConInfo[i] = tmpDendConInfo;
-			#pragma omp critical
-				{
-					printf("6\n");
-				}
         }
 //#ifdef _WIN32
 //    clock_t end = clock();
@@ -1297,9 +1286,11 @@ void BridgeBreaker::CalcOrthoBasis(const Vec3d &vec1, Vec3d &vec2, Vec3d &vec3)
     tmp.push_back(std::pair<int, double>(1, std::abs(vec1(1))));
     tmp.push_back(std::pair<int, double>(2, std::abs(vec1(2))));
     /*[idxv,idexx]=sort(abs(vec1))*/
-    std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-        return lhs.second < rhs.second;
-    });
+
+    //std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+    //    return lhs.second < rhs.second;
+    //});
+    std::sort(tmp.begin(), tmp.end(), LessPair2());
     double cdd = (tmp[0].second * tmp[0].second + tmp[1].second * tmp[1].second) / tmp[2].second;
     vec2(tmp[2].first) = - (double)TraceUtil::sign(vec1[tmp[2].first]) * cdd;
 

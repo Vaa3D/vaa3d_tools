@@ -62,8 +62,8 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by ZhouHang, 2015-3-16"));
+        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+            "Developed by ZhouHang, 2015-3-16"));
 	}
 }
 
@@ -97,7 +97,9 @@ bool NeuroGPSTreePlugin::dofunc(const QString & func_name, const V3DPluginArgLis
             PARA.zRes_ = (paras.size() >= k+1) ? atoi(paras[k]) : 2;  ++k;
             PARA.binaryThreshold = (paras.size() >= k+1) ? atoi(paras[k]) : 6;  ++k;
             PARA.swcfile = (paras.size() >= k+1) ? std::string(paras[k]) : std::string("NULL");  ++k;
+#ifdef _WIN32
             PARA.threadNum = (paras.size() >= k+1) ? atoi(paras[k]) : omp_get_max_threads();  ++k;
+#endif
             reconstruction_func(callback,parent,PARA,bmenu);
         }
 	}
