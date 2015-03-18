@@ -12,12 +12,12 @@
 //hessian=|Ixy Iyy Iyz|
 //        |Ixz Iyz Izz|
 //eigenvalue: eigval3>eigval2>eigval1
-bool q_eigenvectors3D(double *p_Ixx,double *p_Ixy,double *p_Ixz,double *p_Iyy,double *p_Iyz,double *p_Izz,
+bool q_eigenvectors3D(float *p_Ixx,float *p_Ixy,float *p_Ixz,float *p_Iyy,float *p_Iyz,float *p_Izz,
 					  long sz_img[4],
-					  double *&p_eigval3,double *&p_eigval2,double *&p_eigval1,
-					  double *&p_eigvec3x,double *&p_eigvec3y,double *&p_eigvec3z,
-					  double *&p_eigvec2x,double *&p_eigvec2y,double *&p_eigvec2z,
-					  double *&p_eigvec1x,double *&p_eigvec1y,double *&p_eigvec1z)
+					  float *&p_eigval3,float *&p_eigval2,float *&p_eigval1,
+					  float *&p_eigvec3x,float *&p_eigvec3y,float *&p_eigvec3z,
+					  float *&p_eigvec2x,float *&p_eigvec2y,float *&p_eigvec2z,
+					  float *&p_eigvec1x,float *&p_eigvec1y,float *&p_eigvec1z)
 {
 	if(sz_img[0]<=0 || sz_img[1]<=0 || sz_img[2]<=0 || sz_img[3]<=0)
 	{
@@ -56,10 +56,10 @@ bool q_eigenvectors3D(double *p_Ixx,double *p_Ixy,double *p_Ixz,double *p_Iyy,do
 
 	//allocate memory
 	long l_npixels=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-	p_eigval3=new(std::nothrow) double[l_npixels]();	p_eigval2=new(std::nothrow) double[l_npixels](); p_eigval1=new(std::nothrow) double[l_npixels]();
-	p_eigvec3x=new(std::nothrow) double[l_npixels]();	p_eigvec3y=new(std::nothrow) double[l_npixels]();p_eigvec3z=new(std::nothrow) double[l_npixels]();
-	p_eigvec2x=new(std::nothrow) double[l_npixels]();	p_eigvec2y=new(std::nothrow) double[l_npixels]();p_eigvec2z=new(std::nothrow) double[l_npixels]();
-	p_eigvec1x=new(std::nothrow) double[l_npixels]();	p_eigvec1y=new(std::nothrow) double[l_npixels]();p_eigvec1z=new(std::nothrow) double[l_npixels]();
+	p_eigval3=new(std::nothrow) float[l_npixels]();	p_eigval2=new(std::nothrow) float[l_npixels](); p_eigval1=new(std::nothrow) float[l_npixels]();
+	p_eigvec3x=new(std::nothrow) float[l_npixels]();	p_eigvec3y=new(std::nothrow) float[l_npixels]();p_eigvec3z=new(std::nothrow) float[l_npixels]();
+	p_eigvec2x=new(std::nothrow) float[l_npixels]();	p_eigvec2y=new(std::nothrow) float[l_npixels]();p_eigvec2z=new(std::nothrow) float[l_npixels]();
+	p_eigvec1x=new(std::nothrow) float[l_npixels]();	p_eigvec1y=new(std::nothrow) float[l_npixels]();p_eigvec1z=new(std::nothrow) float[l_npixels]();
 	if(!p_eigval3 ||!p_eigval2 ||!p_eigval3 ||
 	   !p_eigvec3x ||!p_eigvec3y ||!p_eigvec3z ||
 	   !p_eigvec2x ||!p_eigvec2y ||!p_eigvec2z ||
@@ -93,13 +93,13 @@ bool q_eigenvectors3D(double *p_Ixx,double *p_Ixy,double *p_Ixz,double *p_Iyy,do
 		Mat[2][0]=(double)p_Ixz[i]; Mat[2][1]=(double)p_Iyz[i]; Mat[2][2]=(double)p_Izz[i];
 		eigen_decomposition(Mat, eigvec, eigval);
 
-		p_eigval3[i]=(double)eigval[2]; 
-		p_eigval2[i]=(double)eigval[1]; 
-		p_eigval1[i]=(double)eigval[0];
+		p_eigval3[i]=(float)eigval[2]; 
+		p_eigval2[i]=(float)eigval[1]; 
+		p_eigval1[i]=(float)eigval[0];
 
-		p_eigvec3x[i]=(double)eigvec[0][2]; p_eigvec3y[i]=(double)eigvec[1][2]; p_eigvec3z[i]=(double)eigvec[2][2];
-		p_eigvec2x[i]=(double)eigvec[0][1]; p_eigvec2y[i]=(double)eigvec[1][1]; p_eigvec2z[i]=(double)eigvec[2][1];
-		p_eigvec1x[i]=(double)eigvec[0][0]; p_eigvec1y[i]=(double)eigvec[1][0]; p_eigvec1z[i]=(double)eigvec[2][0];
+		p_eigvec3x[i]=(float)eigvec[0][2]; p_eigvec3y[i]=(float)eigvec[1][2]; p_eigvec3z[i]=(float)eigvec[2][2];
+		p_eigvec2x[i]=(float)eigvec[0][1]; p_eigvec2y[i]=(float)eigvec[1][1]; p_eigvec2z[i]=(float)eigvec[2][1];
+		p_eigvec1x[i]=(float)eigvec[0][0]; p_eigvec1y[i]=(float)eigvec[1][0]; p_eigvec1z[i]=(float)eigvec[2][0];
 	}
 
 	return true;

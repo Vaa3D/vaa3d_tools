@@ -7,6 +7,6 @@
 
 #include "v3d_basicdatatype.h"
 
-bool q_AnisoDiff3D(const double *p_img64f_input,const V3DLONG sz_img_input[4],double *&p_img64f_output);
+bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],float *&p_img32f_output);
 
 #endif /* Q_ANISODIFF_H_ */

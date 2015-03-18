@@ -149,54 +149,54 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 	//-----------------------------------------------------------------------------------------
 	long l_npixels=sz_img_input[0]*sz_img_input[1]*sz_img_input[2]*sz_img_input[3];
 
-	//convert image data type to double
-	printf("1. Convert image datatype from uint8 to 64f and rescale to [0~255]. \n");
-	double *p_img64f=0;
+	//convert image data type to float
+	printf("1. Convert image datatype from uint8 to 32f and rescale to [0~255]. \n");
+	float *p_img32f=0;
 	{
-		p_img64f=new(std::nothrow) double[l_npixels]();
-		if(!p_img64f)
+		p_img32f=new(std::nothrow) float[l_npixels]();
+		if(!p_img32f)
 		{
-			printf("ERROR: Fail to allocate memory for p_img64f!\n");
+			printf("ERROR: Fail to allocate memory for p_img32f!\n");
 			if(p_img_input) 			{delete []p_img_input;		p_img_input=0;}
 			return false;
 		}
 
 		//find the maximal intensity value
-		double d_maxintensity_input=0.0;
+		float d_maxintensity_input=0.0;
 		for(long i=0;i<l_npixels;i++)
 			if(p_img_input[i]>d_maxintensity_input)
 				d_maxintensity_input=p_img_input[i];
 		//convert and rescale
 		for(long i=0;i<l_npixels;i++)
-			p_img64f[i]=p_img_input[i]/d_maxintensity_input*255.0;
+			p_img32f[i]=p_img_input[i]/d_maxintensity_input*255.0;
 		printf(">>d_maxintensity=%.2f\n",d_maxintensity_input);
 	}
 
 	//do anisotropic diffusion
 	printf("2. Do anisotropic diffusion... \n");
-	double *p_img64f_output=0;
-	if(!q_AnisoDiff3D(p_img64f,sz_img_input,p_img64f_output))
+	float *p_img32f_output=0;
+	if(!q_AnisoDiff3D(p_img32f,sz_img_input,p_img32f_output))
 	{
 		printf("ERROR: q_AnisoDiff3D() return false!\n");
-		if(p_img64f) 			{delete []p_img64f;				p_img64f=0;}
-		if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
+		if(p_img32f) 			{delete []p_img32f;				p_img32f=0;}
+		if(p_img32f_output) 	{delete []p_img32f_output;		p_img32f_output=0;}
 		return false;
 	}
-	if(p_img64f) 			{delete []p_img64f;				p_img64f=0;}
+	if(p_img32f) 			{delete []p_img32f;				p_img32f=0;}
 
-	//convert image data type from double to uint8
+	//convert image data type from float to uint8
 	unsigned char *p_img8u_output=0;
 	p_img8u_output=new(std::nothrow) unsigned char[l_npixels]();
 	if(!p_img8u_output)
 	{
 		printf("ERROR: Fail to allocate memory for p_img8u_output!\n");
-		if(p_img64f) 			{delete []p_img64f;				p_img64f=0;}
-		if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
+		if(p_img32f) 			{delete []p_img32f;				p_img32f=0;}
+		if(p_img32f_output) 	{delete []p_img32f_output;		p_img32f_output=0;}
 		return false;
 	}
 	for(long i=0;i<l_npixels;i++)
-		p_img8u_output[i]=(unsigned char)(p_img64f_output[i]);
-	if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
+		p_img8u_output[i]=(unsigned char)(p_img32f_output[i]);
+	if(p_img32f_output) 	{delete []p_img32f_output;		p_img32f_output=0;}
 
 	if(bmenu)
 	{
@@ -216,8 +216,8 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 	}
 
 	//free memory
-	if(p_img64f) 			{delete []p_img64f;				p_img64f=0;}
-	if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
+	if(p_img32f) 			{delete []p_img32f;				p_img32f=0;}
+	if(p_img32f_output) 	{delete []p_img32f_output;		p_img32f_output=0;}
 	//if(p_img8u_output) 		{delete []p_img8u_output;		p_img8u_output=0;}
 
 	printf(">>Program complete success!\n");

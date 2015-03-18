@@ -15,23 +15,23 @@
 #define absd(a) ((a)>(-a)?(a):(-a))
 
 //sizeI=[ncol,nrow,ndep]
-void gradient3Dx_double(const double *I,const int *sizeI,double *&Ix)
+void gradient3Dx_float(const float *I,const int *sizeI,float *&Ix)
 {
     int x,y,z;
     int xp, xn, yp, yn;
     int i;
     int indexn, indexc, indexp;
-    double *Irow, *Islices;
+    float *Irow, *Islices;
     int nSlice;
     int offsetz,offset_slice;
     int slice_select=0, slice_select_p1=0, slice_select_p2=0;
     
-    const double smoothfilter[3]={0.187500,0.625000,0.187500};
-    const double derivafilter[3]={-0.5,0,0.5};
+    const float smoothfilter[3]={0.187500,0.625000,0.187500};
+    const float derivafilter[3]={-0.5,0,0.5};
     
     nSlice=sizeI[0]*sizeI[1];							//pixel num per slice
-    Islices=(double *)malloc(4*nSlice*sizeof(double));
-    Irow=(double *)malloc(sizeI[0]*sizeof(double));
+    Islices=(float *)malloc(4*nSlice*sizeof(float));
+    Irow=(float *)malloc(sizeI[0]*sizeof(float));
     
     for(z=0; z<sizeI[2]; z++)
     {
@@ -100,23 +100,23 @@ void gradient3Dx_double(const double *I,const int *sizeI,double *&Ix)
     free(Islices);
 }
 
-void gradient3Dy_double(const double *I,const int *sizeI,double *&Iy)
+void gradient3Dy_float(const float *I,const int *sizeI,float *&Iy)
 {
     int x,y,z;
     int xp, xn, yp, yn;
     int i;
     int indexn, indexc, indexp;
-    double *Irow, *Islices;
+    float *Irow, *Islices;
     int nSlice;
     int offsetz,offset_slice;
     int slice_select=0, slice_select_p1=0, slice_select_p2=0;
     
-    const double smoothfilter[3]={0.187500,0.625000,0.187500};
-    const double derivafilter[3]={-0.5,0,0.5};
+    const float smoothfilter[3]={0.187500,0.625000,0.187500};
+    const float derivafilter[3]={-0.5,0,0.5};
     
     nSlice=sizeI[0]*sizeI[1];
-    Islices=(double *)malloc(4*nSlice*sizeof(double));
-    Irow=(double *)malloc(sizeI[0]*sizeof(double));
+    Islices=(float *)malloc(4*nSlice*sizeof(float));
+    Irow=(float *)malloc(sizeI[0]*sizeof(float));
     
     for(z=0; z<sizeI[2]; z++)
     {
@@ -184,23 +184,23 @@ void gradient3Dy_double(const double *I,const int *sizeI,double *&Iy)
     free(Islices);
 }
 
-void gradient3Dz_double(const double *I,const int *sizeI,double *&Iz)
+void gradient3Dz_float(const float *I,const int *sizeI,float *&Iz)
 {
     int x,y,z;
     int xp, xn, yp, yn;
     int i;
     int indexn, indexc, indexp;
-    double *Irow, *Islices;
+    float *Irow, *Islices;
     int nSlice;
     int offsetz,offset_slice;
     int slice_select=0, slice_select_p1=0, slice_select_p2=0;
     
-    const double smoothfilter[3]={0.187500,0.625000,0.187500};
-    const double derivafilter[3]={-0.5,0,0.5};
+    const float smoothfilter[3]={0.187500,0.625000,0.187500};
+    const float derivafilter[3]={-0.5,0,0.5};
     
     nSlice=sizeI[0]*sizeI[1];
-    Islices=(double *)malloc(4*nSlice*sizeof(double));
-    Irow=(double *)malloc(sizeI[0]*sizeof(double));
+    Islices=(float *)malloc(4*nSlice*sizeof(float));
+    Irow=(float *)malloc(sizeI[0]*sizeof(float));
     
     for(z=0; z<sizeI[2]; z++)
     {
@@ -269,10 +269,10 @@ void gradient3Dz_double(const double *I,const int *sizeI,double *&Iz)
     free(Islices);
 }
 
-bool q_derivatives_3D(const double *p_img64f,const long sz_img[4],const char xyz,double *&p_img64f_output)
+bool q_derivatives_3D(const float *p_img32f,const long sz_img[4],const char xyz,float *&p_img32f_output)
 {
 	//check paras
-	if(p_img64f==0)
+	if(p_img32f==0)
 	{
 		printf("ERROR: Invalid input image pointer!\n");
 		return false;
@@ -292,16 +292,16 @@ bool q_derivatives_3D(const double *p_img64f,const long sz_img[4],const char xyz
 		printf("ERROR: Para xyz should be x, y or z!\n");
 		return false;
 	}
-	if(p_img64f_output)
+	if(p_img32f_output)
 	{
 		printf("WARNNING: Output image pointer is not NULL, original data will be cleared!\n");
-		if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
+		if(p_img32f_output) 	{delete []p_img32f_output;		p_img32f_output=0;}
 	}
 
 	//allocate memory
 	long l_npixels=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-	p_img64f_output=new(std::nothrow) double[l_npixels]();
-	if(!p_img64f_output)
+	p_img32f_output=new(std::nothrow) float[l_npixels]();
+	if(!p_img32f_output)
 	{
 		printf("ERROR: Fail to allocate memory for output image!\n");
 		return false;
@@ -315,13 +315,13 @@ bool q_derivatives_3D(const double *p_img64f,const long sz_img[4],const char xyz
     switch (xyz)
     {
      case 'x': case 'X':
-         gradient3Dx_double(p_img64f, dimsI, p_img64f_output);
+         gradient3Dx_float(p_img32f, dimsI, p_img32f_output);
        break;
      case 'y': case 'Y':
-         gradient3Dy_double(p_img64f, dimsI, p_img64f_output);
+         gradient3Dy_float(p_img32f, dimsI, p_img32f_output);
        break;
      case 'z': case 'Z':
-         gradient3Dz_double(p_img64f, dimsI, p_img64f_output);
+         gradient3Dz_float(p_img32f, dimsI, p_img32f_output);
        break;
      default:
        printf("\n  option not defined");
