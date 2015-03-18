@@ -18,8 +18,15 @@ using namespace std;
 
 Q_EXPORT_PLUGIN2(anisodiff, AnisoDiffPlugin);
 
+struct input_PARA
+{
+	QString inimg_file;
+	V3DLONG channel;
+};
+
+
 void printHelp();
-bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu);
+bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 
 QStringList AnisoDiffPlugin::menulist() const
 {
@@ -41,7 +48,8 @@ void AnisoDiffPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 		cout<<"============== Welcome to anisodiff function ================="<<endl;
 
 		bool bmenu = true;
-    	if(!anisodiff_func(callback,parent,bmenu))
+		input_PARA PARA;
+    	if(!anisodiff_func(callback,parent,PARA,bmenu))
     	{
     		v3d_msg(tr("ERROR: anisodiff_func() return false!"));
     		return;
@@ -59,24 +67,33 @@ bool AnisoDiffPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 	{
 		cout<<"============== Welcome to anisodiff function ================="<<endl;
 
-	 //  	//do diffusion
-		//if(!anisodiff_func())
-		//{
-		//	v3d_msg(tr("ERROR: anisodiff_func() return false!"));
-		//	return false;
-		//}
-		return true;
+		bool bmenu = false;
+		input_PARA PARA;
+
+		vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+		vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+
+		if(infiles.empty())
+		{
+			fprintf (stderr, "Need input image. \n");
+			return false;
+		}
+		else
+			PARA.inimg_file = infiles[0];
+
+		anisodiff_func(callback,parent,PARA,bmenu);
 	}
 	else
 	{
 		printHelp();
 	}
+
+	return true;
 }
 
-bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
+bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
 	unsigned char* p_img_input = 0;
-	V3DLONG N,M,P,sc,c;
 	V3DLONG sz_img_input[4];
 	if(bmenu)
 	{
@@ -110,7 +127,23 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
 	}
 	else
 	{
-		;//todo
+		int datatype = 0;
+		if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), p_img_input, sz_img_input, datatype))
+		{
+			fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+			return false;
+		}
+		if(PARA.channel < 1 || PARA.channel > sz_img_input[3])
+		{
+			fprintf (stderr, "Invalid channel number. \n");
+			return false;
+		}
+
+		if(datatype !=1)
+		{
+			fprintf (stderr, "Please convert the image to be UINT8 and try again!\n");
+			return false;
+		}
 	}
 
 	//-----------------------------------------------------------------------------------------
@@ -165,13 +198,22 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
 		p_img8u_output[i]=(unsigned char)(p_img64f_output[i]);
 	if(p_img64f_output) 	{delete []p_img64f_output;		p_img64f_output=0;}
 
-	//push result image back to v3d
-	v3dhandle newwin=callback.newImageWindow("output");
-	Image4DSimple img4D_output;
-	img4D_output.setData(p_img8u_output,sz_img_input[0],sz_img_input[1],sz_img_input[2],1,V3D_UINT8);
-	callback.setImage(newwin,&img4D_output);
-	callback.updateImageWindow(newwin);
-	callback.open3DWindow(newwin);
+	if(bmenu)
+	{
+		//push result image back to v3d
+		v3dhandle newwin=callback.newImageWindow("output");
+		Image4DSimple img4D_output;
+		img4D_output.setData(p_img8u_output,sz_img_input[0],sz_img_input[1],sz_img_input[2],1,V3D_UINT8);
+		callback.setImage(newwin,&img4D_output);
+		callback.updateImageWindow(newwin);
+		callback.open3DWindow(newwin);
+	}
+	else
+	{
+		QString str_outimg_filename = PARA.inimg_file + "_anisodiff.raw";
+		saveImage(qPrintable(str_outimg_filename),p_img8u_output,sz_img_input,1);
+		if(p_img8u_output) 		{delete []p_img8u_output;		p_img8u_output=0;}
+	}
 
 	//free memory
 	if(p_img64f) 			{delete []p_img64f;				p_img64f=0;}
@@ -185,6 +227,11 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
 
 void printHelp()
 {
-	printf("\nUsage: v3d -x <anisodiff> -f anisodiff -i <input_image> -o <output_image> \n");
+	printf("**** Usage of anisodiff  **** \n");
+	printf("\nUsage: v3d -x <anisodiff> -f anisodiff -i <inimg_file> \n");
+	printf("inimg_file       The input image path (input image need to be uint8 single channel)\n");
+
+	printf("outimg_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+	printf("***************************** \n");
 	return;
 }
