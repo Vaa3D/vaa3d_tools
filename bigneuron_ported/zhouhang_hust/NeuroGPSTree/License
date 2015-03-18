@@ -2,13 +2,13 @@ This folder contains source codes for the NeuroGPSTree plugins of the Vaa3D proj
 
 The NeuroGPSTree plugin of Vaa3D system use a slightly revised MIT License. Note, however, the eigen library of NeuroGPSTree  use MPL2 licenses when such situations are specified and documented. You will have to agree the following License terms, before downloading/using/running/editing/changing any portion of codes in this package.
 
-Copyright (c) 2013-2015 (Zhou Hang, Shaoqun Zeng and Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology-Wuhan National Laboratory for Optoelectronics, Wuhan 430074 China)
+Copyright (c) 2013-2015 (Zhou Hang, Tingwei Quan & Shaoqun Zeng*(sqzeng@mail.hust.edu.cn), Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology-Wuhan National Laboratory for Optoelectronics, Wuhan 430074 China)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of the NeuroGPSTree plugin of Vaa3D and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-1. You agree to cite this work and publications () in all your related studies and publications.
+1. You agree to cite this work and publications (Quan et al. NeuroGPS-Tree: Automatic reconstruction of large-scale neuronal population with dense neurites (Under submitting). (Please google the title and using the normal citing form if this paper is published )) in all your related studies and publications.
 
-2. Neither the name of Shaoqun Zeng, nor Howard Hughes Medical Institute - Janelia Farm Research Campus may be used to endorse or promote products derived from this software without specific prior written permission.
+2. All the endorsing or promoting products derived from this software should have a specific prior written permission from Shaoqun Zeng (sqzeng@mail.hust.edu.cn).
 
 3. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
