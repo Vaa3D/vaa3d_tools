@@ -172,59 +172,47 @@ bool NeuroGPSTreePlugin::SaveSeperateTree(const QString &filename, const QString
             return false;
     }
 
-    curFile = curFile.section('.', 0, -2);
-
-
-
-    //
     std::shared_ptr<SeperateTree> tmpSeperateTree =
             std::dynamic_pointer_cast<SeperateTree>(seperateTree);
     std::vector<std::vector<VectorVec5d> >& writeTree = tmpSeperateTree->GetTree();
     const std::vector<int> &typeList = tmpSeperateTree->GetTypeList();
-    char line[256];
+
+    //write
+    FILE * fp = fopen((curFile ).toLatin1(), "wt");
+    if (!fp)
+    {
+#ifndef DISABLE_V3D_MSG
+        v3d_msg("Could not open the file to save the neuron.");
+#endif
+        return false;
+    }
+
+    if (!infostring.isEmpty())
+    {
+        for (int j=0;j<infostring.size();j++)
+            fprintf(fp, "#%s\n", qPrintable(infostring.at(j).trimmed()));
+    }
+
+    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
+    int globalIndex = 1;
     for(size_t i = 0; i < writeTree.size();++i){
-        sprintf(line, "%05d", i + 1);
-        FILE * fp = fopen((curFile + QString(line) + QString("_Trace.swc")).toLatin1(), "wt");
-        if (!fp)
-        {
-    #ifndef DISABLE_V3D_MSG
-            v3d_msg("Could not open the file to save the neuron.");
-    #endif
-            return false;
-        }
-
-        if (!infostring.isEmpty())
-        {
-            for (int j=0;j<infostring.size();j++)
-                fprintf(fp, "#%s\n", qPrintable(infostring.at(j).trimmed()));
-        }
-
-        fprintf(fp, "##n,type,x,y,z,radius,parent\n");
         std::vector<VectorVec5d> &localTree = writeTree[i];
-        int globalIndex = 1;
         for(size_t j = 0; j < localTree.size();++j){
             //One curve
             VectorVec5d &localCurve = localTree[j];
-            fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
+            //fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
+                   //localCurve[0](1), localCurve[0](2),1.0);
+            fprintf(fp,"%d 2 %lf %lf %lf %lf -1\n", globalIndex, localCurve[0](0),
                    localCurve[0](1), localCurve[0](2),1.0);
             ++globalIndex;
             for(size_t k = 1; k < localCurve.size();++k){
-                fprintf(fp,"%d %d %lf %lf %lf %lf %d\n", globalIndex, typeList[i], localCurve[k](0),
+                fprintf(fp,"%d 2 %lf %lf %lf %lf %d\n", globalIndex, localCurve[k](0),
                         localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
                         ++globalIndex;
             }
-        }
-        fclose(fp);
+        } 
     }
-
-//	NeuronSWC * p_pt=0;
-//	for (int i=0;i<nt.listNeuron.size(); i++)
-//	{
-//		p_pt = (NeuronSWC *)(&(nt.listNeuron.at(i)));
-//		fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-//				p_pt->n, p_pt->type, p_pt->x, p_pt->y, p_pt->z, p_pt->r, p_pt->pn);
-//	}
-
+    fclose(fp);
 
 #ifndef DISABLE_V3D_MSG
     v3d_msg(QString("done with saving file: ")+filename, false);
@@ -305,53 +293,54 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
         M = im_sz[1];
         P = im_sz[2];
         sc = im_sz[3];
-        X = N;
-        Y = M;
-        Z = P;
-        printf("%d %d %d\n", N, M, P);
 
-        if(sc != 1){
-            QMessageBox::information(0, "", "Only support 8bit image.");
-            return;
-        }
-
-        //convert vaa3d image to neurogps image
-        printf("prepare to convert vaa3d img to neurogps image.\n");
-        if(!ConvertVaa3dImg2NGImg(data1d, N, M, P, PARA.xRes_, PARA.yRes_,
-                                  PARA.zRes_, OrigImage)){
-            printf("cannot convert vaa3d img to neurogps image.\n");
-            if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
-            return;
-        }
-        if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
-
-        printf("convert vaa3d img to neurogps image.\n");
-
-        //read soma file
-        if(PARA.swcfile == std::string("NULL")){
-            soma = std::shared_ptr<Soma>(new Soma());
-
-        } else{
-            soma = std::shared_ptr<Soma>(new Soma());
-            NeuronTree vswc = readSWC_file(PARA.swcfile.c_str());
-            soma = std::shared_ptr<Soma>(new Soma());
-            std::shared_ptr<Soma> tmpSoma = std::dynamic_pointer_cast<Soma>(soma);
-            QList <NeuronSWC> &listNeuron = vswc.listNeuron;
-            for(int i = 0; i < listNeuron.size(); ++i){
-                NeuronSWC &item = listNeuron[i];
-                tmpSoma->push_back(Cell(i, item.x, item.y, item.z, 1));
-            }
-        }
-        printf("soma file has been read.\n");
-        //binary
-        AutoBinaryImage();
-        //trace
-        AutoTrace();
     }
 
     //main neuron reconstruction code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
+    X = N;
+    Y = M;
+    Z = P;
+    //printf("%d %d %d\n", N, M, P);
+
+    if(sc != 1){
+        QMessageBox::information(0, "", "Only support single channel image.");
+        return;
+    }
+
+    //convert vaa3d image to neurogps image
+    printf("prepare to convert vaa3d img to neurogps image.\n");
+    if(!ConvertVaa3dImg2NGImg(data1d, N, M, P, PARA.xRes_, PARA.yRes_,
+                              PARA.zRes_, OrigImage)){
+        printf("cannot convert vaa3d img to neurogps image.\n");
+        if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
+        return;
+    }
+    if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
+
+    printf("convert vaa3d img to neurogps image.\n");
+
+    //read soma file
+    if(PARA.swcfile == std::string("NULL")){
+        soma = std::shared_ptr<Soma>(new Soma());
+
+    } else{
+        soma = std::shared_ptr<Soma>(new Soma());
+        NeuronTree vswc = readSWC_file(PARA.swcfile.c_str());
+        soma = std::shared_ptr<Soma>(new Soma());
+        std::shared_ptr<Soma> tmpSoma = std::dynamic_pointer_cast<Soma>(soma);
+        QList <NeuronSWC> &listNeuron = vswc.listNeuron;
+        for(int i = 0; i < listNeuron.size(); ++i){
+            NeuronSWC &item = listNeuron[i];
+            tmpSoma->push_back(Cell(i, item.x, item.y, item.z, 1));
+        }
+    }
+    printf("soma file has been read.\n");
+    //binary
+    AutoBinaryImage();
+    //trace
+    AutoTrace();
 
     //Output
 
@@ -360,7 +349,10 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
     //nt.name = "tracing method";
     //writeSWC_file(swc_name.toStdString().c_str(),nt);
     //save swc
-    if(!SaveSeperateTree(swc_name, QStringList())){
+    if(!SaveSeperateTree(swc_name, QStringList()
+                         << tr("compute parameter:")
+                         << tr("xRes:%1 yRes:%2 zRes:%3").arg(N).arg(M).arg(P)
+                         << tr("binaryTreshold:%1").arg(PARA.binaryThreshold))){
         printf("cannot save trees.\n");
         return;
     }

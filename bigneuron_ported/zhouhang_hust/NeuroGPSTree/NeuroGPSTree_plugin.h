@@ -53,6 +53,7 @@ private:
         double binaryThreshold;
         std::string swcfile;
         int threadNum;//TODO:for openmp accelerate
+        input_PARA():channel(1),xRes_(1),yRes_(1),zRes_(1),binaryThreshold(6),swcfile(""),threadNum(1){}
     };
 
 protected:

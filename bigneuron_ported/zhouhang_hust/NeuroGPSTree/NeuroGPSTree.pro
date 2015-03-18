@@ -12,7 +12,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH	+= ./eigen3.2.2
 LIBS            += -lpthread  #-lgomp
 
-#QMAKE_CXXFLAGS  += -std=c++11
+QMAKE_CXXFLAGS  += -std=c++11
 
 unix:!macx {
     QMAKE_CXXFLAGS  += -fopenmp

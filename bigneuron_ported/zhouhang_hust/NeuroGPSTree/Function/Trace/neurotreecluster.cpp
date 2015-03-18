@@ -102,7 +102,7 @@ bool NeuroTreeCluster::Update()
 //#pragma omp parallel for
     for(int final = 0; final < int(dendCurvesCluster.size());
         ++final){
-        printf("%d\n", int(final));
+        //printf("%d\n", int(final));
 
         //TODO:TEST
         const std::vector<int> &currentDendCurveClustre = dendCurvesCluster[final];
@@ -115,7 +115,7 @@ bool NeuroTreeCluster::Update()
         //----------------save trees without soma------------//
         if(singleCellLabel.empty()) {
             //continue;
-            printf("   cell = 0\n");
+            //printf("   cell = 0\n");
             if(currentDendCurveClustre.size() < 3 ){
                 int num=0;
                 for(size_t kk = 0; kk < currentDendCurveClustre.size();++kk){
@@ -133,7 +133,7 @@ bool NeuroTreeCluster::Update()
         }
         if(singleCellLabel.size() == 1){
             //continue;
-            printf("   cell = 1\n");
+            //printf("   cell = 1\n");
             #pragma omp critical
             {
                 availableTreeInClustre.push_back(currentDendCurveClustre);
@@ -141,12 +141,12 @@ bool NeuroTreeCluster::Update()
             }
         } else if(singleCellLabel.size() > 1){
 			//----------test------------//
-			printf("currentDendCurveClustre :%d\n", int(currentDendCurveClustre.size()));
+            //printf("currentDendCurveClustre :%d\n", int(currentDendCurveClustre.size()));
 			//availableTreeInClustre.push_back(currentDendCurveClustre);
             //typeList.push_back(2);
             //continue;
 			//-----------end test---------------//
-            printf("   cell = %d\n", int(singleCellLabel.size()));
+            //printf("   cell = %d\n", int(singleCellLabel.size()));
             VectorMat2i dendSomaInfo;
             for(VectorMat2i::size_type i = 0 ; i < currentDendCurveClustre.size(); ++i){
                 dendSomaInfo.push_back(newDendConInfo[currentDendCurveClustre[i] - 1]);
@@ -217,7 +217,7 @@ bool NeuroTreeCluster::Update()
                 somaConnectSet,
                 allAssignedDendIDSet, compressPathGraph,
                 unAssignedList);
-			printf("ClusterTreeToMultiSomaInOneClusterModify complete.\n");
+            //printf("ClusterTreeToMultiSomaInOneClusterModify complete.\n");
 
             /*for (int k = 0; k < allAssignedDendIDSet.size(); ++k) {
                 std::vector<int> tmpa=allAssignedDendIDSet[k];
@@ -237,11 +237,11 @@ bool NeuroTreeCluster::Update()
 
             //Test part, skip unAssignedList and allAssignedDendIDSet 2014-4-1
         //    FILE* fp = fopen("/home/zhouhang/TIFF/unAssignedList.txt", "r");
-        //    int nima;
+        //    int breakpoint;
         //    while(!feof(fp)){
-        //        fscanf(fp, "%d\n", &nima);
-        //        --nima;
-        //        unAssignedList.push_back(nima);
+        //        fscanf(fp, "%d\n", &breakpoint);
+        //        --breakpoint;
+        //        unAssignedList.push_back(breakpoint);
         //    }
         //    fclose(fp);
         //    fp = fopen("/home/zhouhang/TIFF/allAssignedDendIDSet.txt", "r");
@@ -254,9 +254,9 @@ bool NeuroTreeCluster::Update()
         //            allAssignedDendIDSet[allAssignedDendIDSet.size() - 1].swap(tmpNima);
         //            continue;
         //        }
-        //        sscanf(line, "%d", &nima);
-        //        --nima;
-        //        tmpNima.push_back(nima);
+        //        sscanf(line, "%d", &breakpoint);
+        //        --breakpoint;
+        //        tmpNima.push_back(breakpoint);
         //    }
         //    fclose(fp);
             //test read end
@@ -265,7 +265,7 @@ bool NeuroTreeCluster::Update()
             FindBridge(newDendConInfo,currentDendCurveClustre,unAssignedList,allAssignedDendIDSet,
                        pathGraph1, possibleConInfo);//warning matlab 1 and C++ 0
 
-            printf("FindBridge\n");
+            //printf("FindBridge\n");
             int pathGraph1XLen = pathGraph1.rows();
             int pathGraph1YLen = pathGraph1.cols();
             MatXi pathGraph2;
@@ -376,7 +376,7 @@ bool NeuroTreeCluster::Update()
                     unassignedNetSomaConInfo[i].swap(idexx);
                 }
             }
-			printf("step2\n");
+            //printf("step2\n");
 
             //Residual_parts  partition
             const VectorVec3i& somaIDListWithHeadTail =  possibleConInfo;
@@ -450,7 +450,7 @@ bool NeuroTreeCluster::Update()
                     //printf("it is OK 1 == currentUnassignNetConInfo\n");
                 }
             }
-            printf("step3\n");
+            //printf("step3\n");
 
             int nxx = allAssignedDendIDSet.size();
             std::vector<std::vector<int> > somaTreeInClustre;
@@ -483,12 +483,12 @@ bool NeuroTreeCluster::Update()
 #pragma omp critical
                 {
                     availableTreeInClustre.push_back(resultTreeInClustre);
-                    printf("resultTreeInClustre size : %d \n", int(resultTreeInClustre.size()));
+                    //printf("resultTreeInClustre size : %d \n", int(resultTreeInClustre.size()));
                     typeList.push_back(2);
                     int oldSz = int(availableTreeInClustre.size());
                     std::vector<int> cutTree;
                     RecoverCutTree(currentSomaTree, resultTreeInClustre, cutTree);
-                    printf("cutTree size : %d \n", int(cutTree.size()));
+                    //printf("cutTree size : %d \n", int(cutTree.size()));
                     std::vector<std::vector<int> > clustreInCutTree;
                     ClusterCutTree(cutTree, newDendConInfo, clustreInCutTree);
                     CollectCutTreePiece(clustreInCutTree,newDendList, availableTreeInClustre);
@@ -846,9 +846,9 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
         CheckUniqueCurveInTree(breakPathGraph, somaID, somaGrowSet, assignedDendIDSet);
 #pragma omp critical
 		{
-			printf("%d UniqueCurveInTree\n",int(assignedDendIDSet.size()));
+            //printf("%d UniqueCurveInTree\n",int(assignedDendIDSet.size()));
 			++process;
-			printf("%d of %d complete.\n",process, somaNum);
+            //printf("%d of %d complete.\n",process, somaNum);
 			for(std::vector<int>::size_type j = 0; j < assignedDendIDSet.size(); ++j){
 				isAssignedList[assignedDendIDSet[j]] = 1;
 			}
@@ -857,7 +857,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
 			allAssignedDendIDSet[i] = assignedDendIDSet;
 		}
     }//for somaNum
-    //printf("nima2\n");
+    //printf("breakpoint2\n");
 
     for(std::vector<int>::size_type i = 0; i < somaID.size(); ++i){
         isAssignedList[somaID[i]] = 1;
@@ -890,7 +890,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
             }
         }
     }
-    //printf("nima3\n");
+    //printf("breakpoint3\n");
 
     for(std::vector<int>::size_type i = 0; i < unAssignedList.size(); ++i){
         std::vector<int> idll;
@@ -910,7 +910,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
             }
         }
     }
-    //printf("nima4\n");
+    //printf("breakpoint4\n");
 
     for(int i = 0; i < nk; ++i){
         for(int j = i + 1; j < nk; ++j){
@@ -920,7 +920,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneClusterModify(const VectorMat2
             }
         }
     }
-    //printf("nima5\n");
+    //printf("breakpoint5\n");
 }
 
 void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &conInfoInClustre,
@@ -964,7 +964,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
         somaConnectSet[somaConnectSet.size() - 1].swap(aas);
     }
 
-    //printf("nima1\n");
+    //printf("breakpoint1\n");
 
     allAssignedDendIDSet.clear();
     std::vector<int> isAssignedList;
@@ -994,7 +994,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
         allAssignedDendIDSet.push_back(std::vector<int>());
         allAssignedDendIDSet[allAssignedDendIDSet.size() - 1].swap(assignedDendIDSet);
     }//for somaNum
-    //printf("nima2\n");
+    //printf("breakpoint2\n");
 
     for(std::vector<int>::size_type i = 0; i < somaID.size(); ++i){
         isAssignedList[somaID[i]] = 1;
@@ -1029,7 +1029,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
             }
         }
     }
-    //printf("nima3\n");
+    //printf("breakpoint3\n");
 
     for(std::vector<int>::size_type i = 0; i < unAssignedList.size(); ++i){
         std::vector<int> idll;
@@ -1049,7 +1049,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
             }
         }
     }
-    //printf("nima4\n");
+    //printf("breakpoint4\n");
 
     for(int i = 0; i < nk; ++i){
         for(int j = i + 1; j < nk; ++j){
@@ -1059,7 +1059,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
             }
         }
     }
-    //printf("nima5\n");
+    //printf("breakpoint5\n");
 }
 
 void NeuroTreeCluster::BuildPathMatrix(const VectorMat2i &conInfoInClustre,
@@ -1143,7 +1143,7 @@ void NeuroTreeCluster::SearchLargeTreeFromSoma(const MatXi &rawPathGraph, const 
                     std::vector<int> testID;
                     for(size_t k = 0; k < somaConnectSet.back().size();++k){
                         //if(somaConnectSet.back()[k](1) == 447){
-                            //printf("nima\n");
+                            //printf("breakpoint\n");
                         //}
                         testID.push_back(somaConnectSet.back()[k](1));
                     }
@@ -1573,7 +1573,7 @@ void NeuroTreeCluster::MapDendWithHeadTailToCompressMat(const std::vector<int> &
 					validDendIDListWithHeadTailCopy[j](0) = k + 1;
 			}
 			if(validDendIDListWithHeadTailCopy[j](0) == 0){
-				printf("hello1\n");
+                //printf("hello1\n");
 			}
 		}
 		for(std::vector<int>::size_type j = 0; j < idexxss.size();++j){
@@ -1582,7 +1582,7 @@ void NeuroTreeCluster::MapDendWithHeadTailToCompressMat(const std::vector<int> &
 					validDendIDListWithHeadTailCopy[j](1) = k + 1;
 			}
 			if(validDendIDListWithHeadTailCopy[j](1) == 0){
-				printf("hello2\n");
+                //printf("hello2\n");
 			}
 		}
 		for(std::vector<int>::size_type j = 0; j < idexxss.size();++j){
@@ -1591,7 +1591,7 @@ void NeuroTreeCluster::MapDendWithHeadTailToCompressMat(const std::vector<int> &
 				validDendIDListWithHeadTailCopy[j](2) = k + 1;
 			}
 			if(validDendIDListWithHeadTailCopy[j](2) == 0){
-					printf("hello3\n");
+                    //printf("hello3\n");
 			}
         }
   //      std::vector<int> LJJ;
@@ -3377,7 +3377,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
 		{
 			//printf("%d UniqueCurveInTree\n",int(assignedDendIDSet1.size()));
 			++process;
-            printf("%d of %d complete.\n",process, somaNum);
+            //printf("%d of %d complete.\n",process, somaNum);
             for(std::vector<int>::size_type j = 0; j < assignedDendIDSet1.size(); ++j){
                 isAssignedList[assignedDendIDSet1[j]] = 1;
             }
@@ -3387,7 +3387,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
         //clock_t onceEnd = clock();
         //printf("CheckUniqueCurveInTree once : %d\n", onceEnd - onceBeg);
     }//for somaNum
-    //printf("nima2\n");
+    //printf("breakpoint2\n");
     //clock_t allEnd = clock();
     //printf("CheckUniqueCurveInTree all : %d\n", allEnd - allBeg);
 
@@ -3422,7 +3422,7 @@ void NeuroTreeCluster::ClusterTreeToMultiSomaInOneCluster(const VectorMat2i &con
             }
         }
     }
-    //printf("nima3\n");
+    //printf("breakpoint3\n");
 
     for(std::vector<int>::size_type i = 0; i < unAssignedList.size(); ++i){
         std::vector<int> idll;
