@@ -16,6 +16,12 @@ bool q_eigenvectors3D(float *p_Ixx,float *p_Ixy,float *p_Ixz,float *p_Iyy,float 
 					  float *&p_eigvec3x,float *&p_eigvec3y,float *&p_eigvec3z,
 					  float *&p_eigvec2x,float *&p_eigvec2y,float *&p_eigvec2z,
 					  float *&p_eigvec1x,float *&p_eigvec1y,float *&p_eigvec1z);
+bool q_eigenvectors3D(float *p_Ixx,float *p_Ixy,float *p_Ixz,float *p_Iyy,float *p_Iyz,float *p_Izz,
+					  long sz_img[4],unsigned char *p_mask,
+					  float *&p_eigval3,float *&p_eigval2,float *&p_eigval1,
+					  float *&p_eigvec3x,float *&p_eigvec3y,float *&p_eigvec3z,
+					  float *&p_eigvec2x,float *&p_eigvec2y,float *&p_eigvec2z,
+					  float *&p_eigvec1x,float *&p_eigvec1y,float *&p_eigvec1z);
 
 
 //consider to add mask image to save time - todo

@@ -31,8 +31,8 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 QStringList AnisoDiffPlugin::menulist() const
 {
 	return QStringList() 
-        <<tr("anisodiff_menu")
-		<<tr("about");
+        <<tr("anisodiff_menu(general)")
+		<<tr("about anisodiff_menu");
 }
 QStringList AnisoDiffPlugin::funclist() const
 {
@@ -42,10 +42,10 @@ QStringList AnisoDiffPlugin::funclist() const
 }
 void AnisoDiffPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("anisodiff_menu"))
+    if (menu_name == tr("anisodiff_menu(general)"))
 	{
     	//do diffusion
-		cout<<"============== Welcome to anisodiff function ================="<<endl;
+		cout<<"============== Welcome to anisodiff ================="<<endl;
 
 		bool bmenu = true;
 		input_PARA PARA;
@@ -58,7 +58,7 @@ void AnisoDiffPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	else
 	{
 		v3d_msg(tr("3D anisotropic diffusion for neuron reconstruction. "
-			"Developed by Lei Qu, 2015-03-16"));
+			"Developed by Lei Qu, 2015-03-16 during Bigneuron Beijing hackathon"));
 	}
 }
 bool AnisoDiffPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

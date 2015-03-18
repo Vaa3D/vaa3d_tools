@@ -51,6 +51,10 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 	for(long i=0;i<l_npixels;i++)
 		p_img32f_output[i]=p_img32f_input[i];
 
+	//generate mask image
+	unsigned char *p_img8u_mask=0;
+	p_img8u_mask=new(std::nothrow) unsigned char[l_npixels]();
+
 	//do diffusion
 	clock_t iterstart;
 	for(unsigned int iter=0;iter<15;iter++)
@@ -70,7 +74,6 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 				if(p_img32f_output) 		{delete []p_img32f_output;	p_img32f_output=0;}
 				return false;
 			}
-
 			float d_foregound_thresh=2.0;
 			for(long i=0;i<l_npixels;i++)
 				if(p_img32f_output[i]>d_foregound_thresh)
@@ -88,6 +91,27 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 				if(p_img32f_gradz) 			{delete []p_img32f_gradz;	p_img32f_gradz=0;}
 				return false;
 			}
+			//obtain the mask image in the 1th iteration
+			if(iter==0)
+			{
+				float *p_img32f_tmp_s=0;
+				int szkernel=2*5+1;
+				q_imgaussian3D(p_img32f_tmp,sz_img,100,szkernel,p_img32f_tmp_s);
+				for(long i=0;i<l_npixels;i++)
+					if(p_img32f_tmp_s[i]>0.01)
+						p_img8u_mask[i]=255;
+					else
+						p_img8u_mask[i]=0;
+				if(p_img32f_tmp_s) 			{delete []p_img32f_tmp_s;	p_img32f_tmp_s=0;}
+				//{
+				//	unsigned char *p_img_tmp=new(std::nothrow) unsigned char[l_npixels]();
+				//	for(long i=0;i<l_npixels;i++)
+				//		p_img_tmp[i]=(unsigned int)(p_img8u_mask[i]);
+				//	saveImage("d:/SVN/Vaa3D_source_code/v3d_external/released_plugins/v3d_plugins/anisodiffusion_littlequick/mask.raw",p_img_tmp,sz_img_input,1);
+				//	delete []p_img_tmp;
+				//}
+			}
+
 			//free memory
 			if(p_img32f_tmp) 			{delete []p_img32f_tmp;		p_img32f_tmp=0;}
 		}
@@ -134,7 +158,7 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 		//Smooth the structure tensors, for better neuron direction estimation
 		float *p_img32f_Ixx_smooth=0,*p_img32f_Iyy_smooth=0,*p_img32f_Izz_smooth=0;
 		float *p_img32f_Ixy_smooth=0,*p_img32f_Ixz_smooth=0,*p_img32f_Iyz_smooth=0;
-		float sigma=3,szkernel=sigma*4;
+		float sigma=10,szkernel=11;
 		if(!q_imgaussian3D(p_img32f_Ixx,sz_img,sigma,szkernel,p_img32f_Ixx_smooth))
 		{
 			printf("ERROR: q_imgaussian3D() return false!\n");
@@ -255,9 +279,16 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 		float *p_img32f_eigvec3x=0,*p_img32f_eigvec3y=0,*p_img32f_eigvec3z=0;
 		float *p_img32f_eigvec2x=0,*p_img32f_eigvec2y=0,*p_img32f_eigvec2z=0;
 		float *p_img32f_eigvec1x=0,*p_img32f_eigvec1y=0,*p_img32f_eigvec1z=0;
-		if(!q_eigenvectors3D(p_img32f_Ixx_smooth,p_img32f_Ixy_smooth,p_img32f_Ixz_smooth,
+		//if(!q_eigenvectors3D(p_img32f_Ixx_smooth,p_img32f_Ixy_smooth,p_img32f_Ixz_smooth,
+		//					 p_img32f_Iyy_smooth,p_img32f_Iyz_smooth,p_img32f_Izz_smooth,
+		//					 sz_img,
+		//					 p_img32f_eigval3,p_img32f_eigval2,p_img32f_eigval1,
+		//					 p_img32f_eigvec3x,p_img32f_eigvec3y,p_img32f_eigvec3z,
+		//					 p_img32f_eigvec2x,p_img32f_eigvec2y,p_img32f_eigvec2z,
+		//					 p_img32f_eigvec1x,p_img32f_eigvec1y,p_img32f_eigvec1z))
+		 if(!q_eigenvectors3D(p_img32f_Ixx_smooth,p_img32f_Ixy_smooth,p_img32f_Ixz_smooth,
 							 p_img32f_Iyy_smooth,p_img32f_Iyz_smooth,p_img32f_Izz_smooth,
-							 sz_img,
+							 sz_img,p_img8u_mask,
 							 p_img32f_eigval3,p_img32f_eigval2,p_img32f_eigval1,
 							 p_img32f_eigvec3x,p_img32f_eigvec3y,p_img32f_eigvec3z,
 							 p_img32f_eigvec2x,p_img32f_eigvec2y,p_img32f_eigvec2z,
@@ -456,6 +487,6 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 	//	delete []p_img_tmp;
 	//}
 
-
+	if(p_img8u_mask) 			{delete []p_img8u_mask;		p_img8u_mask=0;}
 	return true;
 }
