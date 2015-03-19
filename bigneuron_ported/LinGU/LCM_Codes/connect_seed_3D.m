@@ -64,7 +64,7 @@ max_prob = max(prob_img(:)) + 1;
 
 linkage = iteratively_link_frag(est_K);
 
-if(linkage{1}.p1 == [0 0 0])
+if(sum(linkage{1}.p1 == [0 0 0]'))
     
     costs = [];
     

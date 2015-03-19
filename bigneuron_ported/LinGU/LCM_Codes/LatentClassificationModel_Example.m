@@ -9,17 +9,17 @@
 
 clear;
 
-addpath('../3rd Party/OOF/');
+addpath('../3rd_Party/OOF/');
 
-addpath(genpath('../3rd Party/KernelBoost-v0.1/'));
+addpath(genpath('../3rd_Party/KernelBoost-v0.1/'));
 
-addpath(genpath('../3rd Party/latentTree/'));
+addpath(genpath('../3rd_Party/latentTree/'));
 
-addpath(genpath('../3rd Party/Dollar toolbox/'));
+addpath(genpath('../3rd_Party/Dollar_toolbox/'));
 
-addpath(genpath('../3rd Party/Skeleton3D/'));
+addpath(genpath('../3rd_Party/Skeleton3D/'));
 
-addpath(genpath('../3rd Party/vaa3d_matlab_io/'));
+addpath(genpath('../3rd_Party/vaa3d_matlab_io/'));
 
 
 % first of all, collect the necessary data (OPF in Diadiem) for training the LCM
