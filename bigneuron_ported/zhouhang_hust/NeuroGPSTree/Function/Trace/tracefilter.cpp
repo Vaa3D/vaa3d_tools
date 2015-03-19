@@ -26,6 +26,15 @@
 
 const double EXPO = 0.000001;
 
+//#define __HUST_ORIGINAL_2015__
+#ifndef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+//to disablethis part, simply define a MACRO variable __HUST_ORIGINAL_2015__
+//note, I haven't fixed the original crashing possibility of these origianl code as they did not check if pointers would be valid!
+
+#endif
+
+//
+
 TraceFilter::TraceFilter()
 {
     identifyName = std::string("TraceFilter");
@@ -352,12 +361,27 @@ void TraceFilter::SelectSeedForTrace(const Volume<NGCHAR> &binImg, const Volume<
         }
     }//for
 
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
     std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), [](const Vec4d& lhs, const Vec4d& rhs){//Node_v_x_y_z_DES
         if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
         else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
         else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
         return lhs(2) < rhs(2);
     });
+#else
+
+    struct neurongfp_tmp
+    {
+        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+        {
+            if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
+            else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+            return lhs(2) < rhs(2);
+        }
+    } NGPS_OBJ;
+    std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), NGPS_OBJ);
+#endif
 
     //traceSeed.resize(tmpTraceSeed.size());
     size_t numLimit = std::min<size_t>(tmpTraceSeed.size(), 250000);
@@ -447,10 +471,23 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
         /*异常处理*/
         if (backwardNodeSet.size() < 2) firDir =  - initVec;
         else{
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
             VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
                                                              [](const Vec4d& lhs, const Vec4d& rhs){
-                return lhs(3) < rhs(3);
+                return ;
             });//Node_4TH_MAX
+#else
+
+            struct neurongfp_tmp
+            {
+                bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+                {
+                    return lhs(3) < rhs(3);
+                }
+            } NGPS_OBJ;
+
+            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(), NGPS_OBJ);//Node_4TH_MAX
+#endif
             Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
             firDir = maxVec.normalized();//x10 =
         }
@@ -485,9 +522,21 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
         /*异常处理*/
         if (forwardNodeSet.size() < 2) secDir = initVec;
         else{
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
             VectorVec4d::iterator maxItem = max_element(forwardNodeSet.begin(), forwardNodeSet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
                 return lhs(3) < rhs(3);
             });//Node_4TH_MAX
+#else
+            struct neurongfp_tmp
+            {
+                bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+                {
+                    return lhs(3) < rhs(3);
+                }
+            } NGPS_OBJ;
+
+            VectorVec4d::iterator maxItem = max_element(forwardNodeSet.begin(), forwardNodeSet.end(), NGPS_OBJ);//Node_4TH_MAX
+#endif
             Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
             secDir = maxVec.normalized();
         }
@@ -557,12 +606,27 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
     if (!rayArea.empty()){
         /*清除冗余rayArea*/
         //sort from x-y-z-v
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
         std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
             if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
             else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
             else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
             return lhs(3) < rhs(3);
         });//Node_v_x_y_z_MAX
+#else
+        struct neurongfp_tmp
+        {
+            bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+            {
+                if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+                else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+                else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+                return lhs(3) < rhs(3);
+            }
+        } NGPS_OBJ;
+
+        std::sort(rayArea.begin(), rayArea.end(), NGPS_OBJ);
+#endif
         rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
         Vec3d tmp;
         for (VectorVec4d::size_type i = 0; i < rayArea.size(); ++i){
@@ -830,12 +894,28 @@ void TraceFilter::CalcInitDirectionOnTraceSeed(const Volume<unsigned short> &ori
     backValue /= (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1);
 
     /*排序,依次是强度，x,y,z*/
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
     VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
         if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
         else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
         else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
         return lhs(2) < rhs(2);
     });//Node_v_x_y_z_MAX
+#else
+    struct neurongfp_tmp
+    {
+        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+        {
+            if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
+            else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+            return lhs(2) < rhs(2);
+        }
+    } NGPS_OBJ;
+
+    VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), NGPS_OBJ);
+#endif
+
     //maxRay << (*maxItem)(0), (*maxItem)(1), (*maxItem)(2), (*maxItem)(3);
     Vec3d maxTransItem((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//L11(1:3)'
 
@@ -1672,12 +1752,29 @@ void TraceFilter::ReconstructShapeForTrace(const Vec3d &intialPoint, const Volum
     //innerSomaPts.swap(VectorVec3d(innerSomaPts));
     /*去除重复*/
     //lambda function
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+
     std::sort(innerSomaPts.begin(), innerSomaPts.end(), [](const Vec3d& lhs, const Vec3d &rhs){
         if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
         else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
         else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
         return false;
     });
+#else
+    struct neurongfp_tmp
+    {
+        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+        {
+            if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+            else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+            else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+            return false;
+        }
+    } NGPS_OBJ;
+    std::sort(innerSomaPts.begin(), innerSomaPts.end(), NGPS_OBJ);
+#endif
+
     innerSomaPts.erase(std::unique(innerSomaPts.begin(), innerSomaPts.end()), innerSomaPts.end());
     //2014-4-19
     VectorVec3d tmpInnder;
@@ -2044,9 +2141,24 @@ void TraceFilter::CalcOrthoBasis(const Vec3d &vec1, Vec3d &vec2, Vec3d &vec3)
     tmp.push_back(std::pair<int, double>(1, std::abs(vec1(1))));
     tmp.push_back(std::pair<int, double>(2, std::abs(vec1(2))));
     /*[idxv,idexx]=sort(abs(vec1))*/
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+
     std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
         return lhs.second < rhs.second;
     });
+#else
+    struct neurongfp_tmp
+    {
+        bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
+        {
+            return  lhs.second < rhs.second;
+        }
+    } NGPS_OBJ;
+
+    std::sort(tmp.begin(), tmp.end(), NGPS_OBJ);
+#endif
+
     double cdd = (tmp[0].second * tmp[0].second + tmp[1].second * tmp[1].second) / tmp[2].second;
     vec2(tmp[2].first) = - (double)TraceUtil::sign(vec1[tmp[2].first]) * cdd;
 
@@ -2505,9 +2617,25 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+
             std::sort(conNodeDistList.begin(), conNodeDistList.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
                 return lhs.second < rhs.second;
             });
+#else
+
+            struct neurongfp_tmp
+            {
+                bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
+                {
+                    return lhs.second < rhs.second;
+                }
+            } NGPS_OBJ;
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(),NGPS_OBJ);
+
+#endif
+
             //Change:2014-3-21-10-32
             int isShortestExist = std::min(1, (int)nxx);//1 or 0
             std::vector<int> shortestNodeId;
@@ -2602,9 +2730,23 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
             std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
                 return lhs.second < rhs.second;
             });
+#else
+
+            struct neurongfp_tmp
+            {
+                bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
+                {
+                    return lhs.second < rhs.second;
+                }
+            } NGPS_OBJ;
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(), NGPS_OBJ);
+
+#endif
             //Change:5->1
             int isShortestExist = std::min(1, int(nxx));
             std::vector<int> shortestNodeId;
@@ -2717,12 +2859,29 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             }
         }
     }
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
     std::sort(innerSomaPt.begin(), innerSomaPt.end(), [](const Vec3d& lhs, const Vec3d &rhs){
         if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
         else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
         else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
         return false;
     });
+#else
+
+            struct neurongfp_tmp1
+            {
+                bool operator() (const Vec3d& lhs, const Vec3d &rhs){
+                    if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+                    else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+                    else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+                    return false;
+                }
+            } NGPS_OBJ1;
+            std::sort(innerSomaPt.begin(), innerSomaPt.end(), NGPS_OBJ1);
+
+#endif
+
     innerSomaPt.erase(std::unique(innerSomaPt.begin(), innerSomaPt.end()),
                       innerSomaPt.end());
 
@@ -2752,12 +2911,28 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             medianContourPtSet.push_back(Vec3d(xx,yy,zz));
         }
     }
+
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
     std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), [](const Vec3d& lhs, const Vec3d &rhs){
         if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
         else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
         else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
         return false;
     });
+#else
+
+            struct neurongfp_tmp2
+            {
+                bool operator() (const Vec3d& lhs, const Vec3d &rhs){
+                    if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+                    else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+                    else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+                    return false;
+                }
+            } NGPS_OBJ2;
+            std::sort(medianContourPtSet.begin(), medianContourPtSet.end(),  NGPS_OBJ2);
+
+#endif
     medianContourPtSet.erase(std::unique(medianContourPtSet.begin(),
                                             medianContourPtSet.end()),
                       medianContourPtSet.end());
@@ -3155,10 +3330,24 @@ void TraceFilter::PushNodeUseRayBurst(const Vec3d &curveNode, const Volume<unsig
             }
         }
 
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+
         Vec4d tmpNode1 = *(max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
                                        [](const Vec4d& lhs, const Vec4d& rhs){
                                     return lhs(3) < rhs(3);
                                     }));
+#else
+
+            struct neurongfp_tmp
+            {
+                bool operator() (const Vec4d& lhs, const Vec4d& rhs){
+                    return lhs(3) < rhs(3);
+                    }
+            } NGPS_OBJ;
+            Vec4d tmpNode1 = *(max_element(forwardNodeSet.begin(), forwardNodeSet.end(), NGPS_OBJ));
+
+#endif
+
         Vec3d tmpx10(tmpNode1(0), tmpNode1(1), tmpNode1(2));
         x10 = tmpx10.normalized();
     }
@@ -3434,12 +3623,28 @@ void TraceFilter::RayBurstShape(const Vec3d &initSoma, const SVolume &v, VectorV
         }
     }
 
+#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
+
     std::sort(rayNode.begin(), rayNode.end(), [](const Vec3d& lhs, const Vec3d &rhs){
         if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
         else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
         else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
         return false;
     });
+#else
+    struct neurongfp_tmp
+    {
+        bool operator() (const Vec3d& lhs, const Vec3d &rhs){
+            if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+            else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+            else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+            return false;
+        }
+    } NGPS_OBJ;
+    std::sort(rayNode.begin(), rayNode.end(),  NGPS_OBJ);
+
+#endif
+
     rayNode.erase(std::unique(rayNode.begin(), rayNode.end()), rayNode.end());
 
     int nxxp = rayNode.size();
