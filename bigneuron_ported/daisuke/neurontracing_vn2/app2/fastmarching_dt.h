@@ -200,6 +200,12 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 
 template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, int sz1, int sz2, int cnn_type = 3, int bkg_thresh = 0)
 {
+#ifdef NEB_DEBUG
+  clock_t tm[3];
+  printf("-----start fastmarching(sz0=%d, sz1=%d, sz2=%d)-----\n", sz0, sz1, sz2);
+  tm[0] = clock();
+#endif
+
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 	
 	long tol_sz = sz0 * sz1 * sz2;
@@ -235,7 +241,12 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 		long i = -1, j = -1, k = -1;
 		for(long ind = 0; ind < tol_sz; ind++)
 		{
-			i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
+			i++; 
+			if(i%sz0 == 0)
+			{
+			  i=0; j++; 
+			  if(j%sz1==0){j=0; k++;}
+			}
 			if(state[ind] == ALIVE)
 			{
 				for(int kk = 0; kk <= 0; kk++)
@@ -297,6 +308,10 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 	cout<<"bkg_count = "<<bkg_count<<" ("<<bkg_count/(double)tol_sz<<")"<<endl;
 	cout<<"bdr_count = "<<bdr_count<<" ("<<bdr_count/(double)tol_sz<<")"<<endl;
 	cout<<"elems.size() = "<<elems.size()<<endl;
+
+#ifdef NEB_DEBUG
+	tm[1] = clock();
+#endif
 	// loop
 	int time_counter = bkg_count;
 	double process1 = 0;
@@ -364,6 +379,14 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 	
 	assert(elems.empty());
 	if(state) {delete [] state; state = 0;}
+
+#ifdef NEB_DEBUG
+	tm[2] = clock();
+	printf("*  time(tm[%d] - tm[%d]) = %f\n", 0, 1, ((double) tm[1]-tm[0])/CLOCKS_PER_SEC);
+	printf("*  time(tm[%d] - tm[%d]) = %f\n", 1, 2, ((double) tm[2]-tm[1])/CLOCKS_PER_SEC);
+#endif
+
+
 	return true;
 }
 

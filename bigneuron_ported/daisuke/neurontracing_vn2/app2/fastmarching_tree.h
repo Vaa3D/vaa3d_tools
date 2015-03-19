@@ -253,7 +253,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
 
     float * phi = 0;
     long * parent = 0;
-	char * state = 0;
+    char * state = 0;
     try
     {
         phi = new float[tol_sz];

@@ -22,8 +22,8 @@ QString versionStr = "v2.620";
 QStringList NTApp2Plugin::menulist() const
 {
     return QStringList()
-    << tr("Vaa3D-Neuron2-APP2") //tr("APP2 - all path pruning v2")
-    << tr("Vaa3D-Neuron2-APP1") //tr("APP1 - all path pruning v1")
+    << tr("Vaa3D-Neuron2-APP2-Tuned") //tr("APP2 - all path pruning v2")
+      //<< tr("Vaa3D-Neuron2-APP1") //tr("APP1 - all path pruning v1")
     << tr("about and help");
 }
 
@@ -33,7 +33,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     {
         v3d_msg(versionStr.prepend("Vaa3D-Neuron2 ").append(". Developed by Hanchuan Peng Lab. 2012 @ Janelia/Allen\n\n** How to use **\n\nJust open your neuron image, then click the menu items. You can also use the Vaa3D do-func command line interface to script this plugin for batched neuron reconstruction."));
     }
-    else if(menu_name == "Vaa3D-Neuron2-APP2" || 
+    else if(menu_name == "Vaa3D-Neuron2-APP2-Tuned" || 
             menu_name == "Vaa3D-Neuron2-APP1" )
     {
         if(callback.getImageWindowList().empty())

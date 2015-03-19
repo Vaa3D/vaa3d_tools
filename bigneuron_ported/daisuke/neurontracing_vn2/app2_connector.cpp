@@ -13,6 +13,10 @@
 
 #include "volimg_proc.h"
 
+#ifdef MY_FASTMARCHING
+#include "my_fastmarching.h"
+#endif
+
 bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<string> & infostring)
 {
     if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
@@ -48,10 +52,25 @@ bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<str
     return true;
 }
 
+#ifdef NEB_DEBUG
+#ifndef SET_CLOCK
+//#define SET_CLOCK tm[clock_id] = clock(); printf("[ timer %d ]\n", clock_id++); if(clock_id==4) return(true);
+//#define SET_CLOCK tm[clock_id] = clock(); printf("[ timer %d ]\n", clock_id++);
+#define SET_CLOCK  clock_gettime(CLOCK_MONOTONIC, &(ts[clock_id])); printf("[ timer %d - %d ]\n", area_id, clock_id++);
+#endif
+#endif
+
 bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
     bool b_menu = true;
     
+#ifdef NEB_DEBUG
+    //clock_t tm[10];
+    struct timespec ts[10];
+    int clock_id=0, area_id=1;
+    SET_CLOCK
+#endif
+
     if (!p.p4dImage || !p.p4dImage->valid())
     {
         if (p.inimg_file.isEmpty())
@@ -181,7 +200,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         
         if (p.b_256cube)
         {
-            if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
+            if (in_sz[0]<=256 && in_sz[2]<=256 && in_sz[2]<=256)
             {
                 dfactor_z = dfactor_xy = 1;
             }
@@ -281,19 +300,30 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     //add a timer by PHC 121005
     QElapsedTimer timer2;
     timer2.start();
-    
+
+#ifdef NEB_DEBUG
+    SET_CLOCK ;
+#endif
+
     if(inmarkers.empty())
     {
         cout<<"Start detecting cellbody"<<endl;
         switch(datatype)
         {
             case V3D_UINT8:
+#ifdef MY_FASTMARCHING
+                my_fastmarching_dt_XY(indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
+#else
                 fastmarching_dt_XY(indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
+#endif
                 break;
             case V3D_UINT16:  //this is no longer needed, as the data type has been converted above
                 fastmarching_dt_XY((short int*)indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
                 break;
         }
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
         
         V3DLONG sz0 = in_sz[0];
         V3DLONG sz1 = in_sz[1];
@@ -315,7 +345,11 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         inmarkers.push_back(max_marker);
     }
     
+
     cout<<"======================================="<<endl;
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
     cout<<"Construct the neuron tree"<<endl;
     if(inmarkers.empty())
     {
@@ -326,6 +360,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         cout<<"only one input marker"<<endl;
         if(p.is_gsdt)
         {
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
             if(phi == 0)
             {
                 cout<<"processing fastmarching distance transformation ..."<<endl;
@@ -345,14 +382,31 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             
             cout<<endl<<"constructing fastmarching tree ..."<<endl;
             fastmarching_tree(inmarkers[0], phi, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
         }
-        else
+        else // not use gsdt
         {
+
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
+
             switch(datatype)
             {
                 case V3D_UINT8:
                     v3d_msg("8bit", 0);
+#ifdef DELETE_PHI
+		    if(phi){delete [] phi; phi = 0; printf("* delete phi before end\n"); }
+#endif
+#ifdef MY_FASTMARCHING
+                    my_fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, phi);
+#else // MY_FASTMARCHING
                     fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+#endif
+
                     break;
                 case V3D_UINT16: //this is no longer needed, as the data type has been converted above
                     v3d_msg("16bit", 0);
@@ -362,9 +416,14 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                     v3d_msg("Unsupported data type");
                     break;
             }
+
+#ifdef NEB_DEBUG
+    SET_CLOCK ;
+#endif
+
         }
     }
-    else
+    else // it has many marker. this time, I forget this part. by miyamoto
     {
         vector<MyMarker> target; target.insert(target.end(), inmarkers.begin()+1, inmarkers.end());
         if(p.is_gsdt)
@@ -399,6 +458,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
     }
     cout<<"======================================="<<endl;
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
 
     //save a copy of the ini tree
     cout<<"Save the initial unprunned tree"<<endl;
@@ -442,6 +504,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     }
 
 
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
     cout<<"Pruning neuron tree"<<endl;
 
     vector<MyMarker*> outswc;
@@ -464,6 +529,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
     }
     
+#ifdef NEB_DEBUG
+    SET_CLOCK
+#endif
     qint64 etime2 = timer2.elapsed();
     qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
     
@@ -624,9 +692,19 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     {
         if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
     }
+
+#ifdef NEB_DEBUG
+    SET_CLOCK ;
+    printf("*************************************\n");
+    for(int i; i<clock_id-1; i++){
+      printf("* time(ts[%d - %d] - tm[%d - %d]) = %3.2f\n", area_id, i, area_id, i+1, (ts[i+1].tv_sec - ts[i].tv_sec) + 0.000000001*(ts[i+1].tv_nsec - ts[i].tv_nsec));
+    }
+    printf("*************************************\n");
+#endif
     
     return true;
 }
+
 
 
 bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)

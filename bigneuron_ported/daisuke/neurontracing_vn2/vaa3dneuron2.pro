@@ -1,8 +1,7 @@
-
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../v3d_external/v3d_main
 INCLUDEPATH     += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app2
@@ -55,5 +54,5 @@ SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \
     #$$V3DMAINPATH/neuron_editing/neuron_xforms.cpp \
 
 TARGET	= $$qtLibraryTarget(vn2)
-DESTDIR = $$V3DMAINPATH/../bin/plugins/neuron_tracing/Vaa3D_Neuron2
+DESTDIR = $$V3DMAINPATH/../bin/plugins/neuron_tracing/Vaa3D_Neuron2_Tuned
 
