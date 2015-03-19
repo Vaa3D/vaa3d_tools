@@ -12,7 +12,7 @@
 #include "graph.h"
 
 
-bool proc(V3DPluginCallback2 &callback,QWidget* parent);//窗口模式下的插件入口
+bool proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG *in_sz,QString imagename);//窗口模式下的插件入口
 template<class T>
 void mst(QMap<V3DLONG,Graph<T>*> map,QList<Tree<T>*> &rootList,QMap<V3DLONG,Tree<T>*> &treeMap);//最小生成树
 void findNode(unsigned char* img1d, QMap<V3DLONG,Graph<Node*>*> &nodeMap);//获取前景色点

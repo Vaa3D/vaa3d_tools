@@ -171,15 +171,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     //main neuron reconstruction code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
-    if (!proc(callback, parent))
+    if (!proc(callback, parent,data1d,in_sz,PARA.inimg_file))
         return;
 
     //Output
 
-    QString swc_name = PARA.inimg_file + "_Tracing.swc";
-    NeuronTree nt;
-    nt.name = "tracing method";
-    writeSWC_file(swc_name.toStdString().c_str(),nt);
+      QString swc_name = PARA.inimg_file + "_fastmarching_spanningtree.swc";
+//    NeuronTree nt;
+//    nt.name = "tracing method";
+//    writeSWC_file(swc_name.toStdString().c_str(),nt);
 
     if(!bmenu)
     {
