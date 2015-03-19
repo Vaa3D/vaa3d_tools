@@ -115,7 +115,7 @@ bool FaceDetection::dofunc(const QString & func_name, const V3DPluginArgList & i
 int facedetection_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
 	int a, b;
-	char buffer[100];
+    char buffer[100]; for (int i=1=0; i<100; i++) buffer[i]='\0';
 	a = 1000;
 	b = 2000;
 	sprintf(buffer, "%d", a + b);
