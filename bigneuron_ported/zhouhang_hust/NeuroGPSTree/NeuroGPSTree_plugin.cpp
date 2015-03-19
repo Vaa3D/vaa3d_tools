@@ -24,8 +24,7 @@ QStringList NeuroGPSTreePlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("tracing_menu")
-          << tr("help")
-		<<tr("about");
+        << tr("help");
 }
 
 QStringList NeuroGPSTreePlugin::funclist() const
@@ -41,24 +40,12 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	{
         bool bmenu = true;
         //input_PARA PARA;//set as global varient
-
-//        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
-//        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
-//        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
-//        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
-//        P.inimg_file = infiles[0];
-//        int k=0;
-//         //try to use as much as the default value in the PARA_APP2 constructor as possible
-//        P.mip_plane = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-//        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-//        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
-//        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
-//        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
-//        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
-//        P.length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 5; k++;
+        PARA.xRes_ = 1;
+        PARA.yRes_ = 1;
+        PARA.zRes_ = 2;
+        PARA.binaryThreshold = 6;
+        PARA.swcfile = "NULL";
         reconstruction_func(callback,parent,PARA,bmenu);
-        v3d_msg(tr("domenu"));
-
 	}
 	else
 	{
@@ -70,7 +57,6 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 bool NeuroGPSTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     //where is the construct function ?
-    if(!OrigImage) OrigImage = std::shared_ptr<SVolume>(new SVolume());
     //if(!OrigImage) OrigImage = std::shared_ptr<SVolume>(new OrigImage());
     //v3d_msg(tr("dofunc"));
 	if (func_name == tr("tracing_func"))
@@ -225,6 +211,8 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG im_sz[4];
+    if(!OrigImage) OrigImage = std::shared_ptr<SVolume>(new SVolume());
+
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -314,10 +302,17 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
     if(!ConvertVaa3dImg2NGImg(data1d, N, M, P, PARA.xRes_, PARA.yRes_,
                               PARA.zRes_, OrigImage)){
         printf("cannot convert vaa3d img to neurogps image.\n");
-        if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
+        if(!bmenu)
+        {
+            if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
+        }
         return;
     }
-    if(data1d) {delete []data1d; data1d = 0;}//avoid memory leak
+
+    if(!bmenu)
+    {
+        if(data1d) {delete []data1d; data1d = 0;}
+    }
 
     printf("convert vaa3d img to neurogps image.\n");
 
@@ -344,7 +339,7 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
 
     //Output
 
-    QString swc_name = PARA.inimg_file + "_Tracing.swc";
+    QString swc_name = PARA.inimg_file + "_NeuroGPSTree.swc";
     //NeuronTree nt;
     //nt.name = "tracing method";
     //writeSWC_file(swc_name.toStdString().c_str(),nt);
@@ -355,11 +350,6 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
                          << tr("binaryTreshold:%1").arg(PARA.binaryThreshold))){
         printf("cannot save trees.\n");
         return;
-    }
-
-    if(!bmenu)
-    {
-        if(data1d) {delete []data1d; data1d = 0;}
     }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
