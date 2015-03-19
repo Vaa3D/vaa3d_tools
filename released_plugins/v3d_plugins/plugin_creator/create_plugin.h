@@ -86,7 +86,7 @@ void create_plugin_neuronrec_pro(PluginTemplate & pt)
     ofs<<""<<endl;
 
     ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
-    ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/"<<pt.PLUGIN_NAME<<"/"<<endl;
+    ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/bigneuronhackathon/"<<pt.PLUGIN_NAME<<"/"<<endl;
     ofs.close();
 }
 void create_plugin_cpp(PluginTemplate & pt)
