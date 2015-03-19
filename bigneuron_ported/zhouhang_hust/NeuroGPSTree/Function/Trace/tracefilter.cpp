@@ -474,7 +474,7 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
 #ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
             VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
                                                              [](const Vec4d& lhs, const Vec4d& rhs){
-                return ;
+                return lhs(3) < rhs(3);
             });//Node_4TH_MAX
 #else
 
@@ -1764,7 +1764,7 @@ void TraceFilter::ReconstructShapeForTrace(const Vec3d &intialPoint, const Volum
 #else
     struct neurongfp_tmp
     {
-        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
+        bool operator() (const Vec3d& lhs, const Vec3d &rhs)
         {
             if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
             else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
