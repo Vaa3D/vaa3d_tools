@@ -15,7 +15,7 @@ LIBS            += -lpthread  #-lgomp
 #QMAKE_CXXFLAGS  += -std=c++11
 
 unix:!macx {
-    QMAKE_CXXFLAGS  += -fopenmp
+    QMAKE_CXXFLAGS  += -std=c++11 -fopenmp
     LIBS            += -lgomp
 }
 

@@ -39,12 +39,27 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	if (menu_name == tr("tracing_menu"))
 	{
         bool bmenu = true;
+        bool ok;
+        QString paraStr = QInputDialog::getText(parent, tr("Input trace parameter"),
+                                                tr("Please Input x resolution, y resolution, z resolution and binaryThreshold"),
+                                                QLineEdit::Normal,tr("1 1 2 6"),&ok);
+        if(!ok) return;
+        QStringList listStr = paraStr.split(' ');
+        PARA.xRes_ = listStr[0].toDouble();
+        PARA.yRes_ = listStr[1].toDouble();
+        PARA.zRes_ = listStr[2].toDouble();
+        PARA.binaryThreshold = listStr[3].toDouble();
+        paraStr = QInputDialog::getText(parent, tr("Input soma position file"),
+                                                tr("Please Input soma position file path"),
+                                                QLineEdit::Normal,tr("NULL"), &ok);
+        if(!ok) return;
+        PARA.swcfile = paraStr.toStdString();
         //input_PARA PARA;//set as global varient
-        PARA.xRes_ = 1;
-        PARA.yRes_ = 1;
-        PARA.zRes_ = 2;
-        PARA.binaryThreshold = 6;
-        PARA.swcfile = "NULL";
+        //PARA.xRes_ = 1;
+        //PARA.yRes_ = 1;
+        //PARA.zRes_ = 2;
+        //PARA.binaryThreshold = 6;
+        //PARA.swcfile = "NULL";
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
 	else
@@ -163,42 +178,84 @@ bool NeuroGPSTreePlugin::SaveSeperateTree(const QString &filename, const QString
     std::vector<std::vector<VectorVec5d> >& writeTree = tmpSeperateTree->GetTree();
     const std::vector<int> &typeList = tmpSeperateTree->GetTypeList();
 
-    //write
-    FILE * fp = fopen((curFile ).toLatin1(), "wt");
-    if (!fp)
-    {
+    if(PARA.swcfile == "NULL"){
+        //write
+        FILE * fp = fopen((curFile ).toLatin1(), "wt");
+        if (!fp)
+        {
 #ifndef DISABLE_V3D_MSG
-        v3d_msg("Could not open the file to save the neuron.");
+            v3d_msg("Could not open the file to save the neuron.");
 #endif
-        return false;
-    }
+            return false;
+        }
 
-    if (!infostring.isEmpty())
-    {
-        for (int j=0;j<infostring.size();j++)
-            fprintf(fp, "#%s\n", qPrintable(infostring.at(j).trimmed()));
-    }
+        if (!infostring.isEmpty())
+        {
+            for (int j=0;j<infostring.size();j++)
+                fprintf(fp, "#%s\n", qPrintable(infostring.at(j).trimmed()));
+        }
 
-    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-    int globalIndex = 1;
-    for(size_t i = 0; i < writeTree.size();++i){
-        std::vector<VectorVec5d> &localTree = writeTree[i];
-        for(size_t j = 0; j < localTree.size();++j){
-            //One curve
-            VectorVec5d &localCurve = localTree[j];
-            //fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
-                   //localCurve[0](1), localCurve[0](2),1.0);
-            fprintf(fp,"%d 2 %lf %lf %lf %lf -1\n", globalIndex, localCurve[0](0),
-                   localCurve[0](1), localCurve[0](2),1.0);
-            ++globalIndex;
-            for(size_t k = 1; k < localCurve.size();++k){
-                fprintf(fp,"%d 2 %lf %lf %lf %lf %d\n", globalIndex, localCurve[k](0),
-                        localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
-                        ++globalIndex;
+        fprintf(fp, "##n,type,x,y,z,radius,parent\n");
+        int globalIndex = 1;
+        for(size_t i = 0; i < writeTree.size();++i){
+            std::vector<VectorVec5d> &localTree = writeTree[i];
+            for(size_t j = 0; j < localTree.size();++j){
+                //One curve
+                VectorVec5d &localCurve = localTree[j];
+                //fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
+                //localCurve[0](1), localCurve[0](2),1.0);
+                fprintf(fp,"%d 2 %lf %lf %lf %lf -1\n", globalIndex, localCurve[0](0),
+                        localCurve[0](1), localCurve[0](2),1.0);
+                ++globalIndex;
+                for(size_t k = 1; k < localCurve.size();++k){
+                    fprintf(fp,"%d 2 %lf %lf %lf %lf %d\n", globalIndex, localCurve[k](0),
+                            localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
+                            ++globalIndex;
+                }
             }
-        } 
+        }
+        fclose(fp);
+    }else{
+        char line[256];
+        for(size_t i = 0; i < writeTree.size();++i){
+            sprintf(line, "%05d.", i + 1);
+            FILE * fp = fopen((curFile.section('.',0,-2) +
+                               QString(line) + curFile.section('.', -1) ).toLatin1(), "wt");
+            if (!fp)
+            {
+    #ifndef DISABLE_V3D_MSG
+                v3d_msg("Could not open the file to save the neuron.");
+    #endif
+                return false;
+            }
+
+            if (!infostring.isEmpty())
+            {
+                for (int j=0;j<infostring.size();j++)
+                    fprintf(fp, "#%s\n", qPrintable(infostring.at(j).trimmed()));
+            }
+
+            fprintf(fp, "##n,type,x,y,z,radius,parent\n");
+            std::vector<VectorVec5d> &localTree = writeTree[i];
+            int globalIndex = 1;
+            for(size_t j = 0; j < localTree.size();++j){
+                //One curve
+
+                VectorVec5d &localCurve = localTree[j];
+                //fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i],localCurve[0](0),
+                //localCurve[0](1), localCurve[0](2),1.0);
+                fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex,typeList[i], localCurve[0](0),
+                        localCurve[0](1), localCurve[0](2),1.0);
+                ++globalIndex;
+                for(size_t k = 1; k < localCurve.size();++k){
+                    fprintf(fp,"%d %d %lf %lf %lf %lf %d\n", globalIndex,typeList[i], localCurve[k](0),
+                            localCurve[k](1), localCurve[k](2),1.0, globalIndex - 1);
+                            ++globalIndex;
+                }
+            }
+            fclose(fp);
+        }
     }
-    fclose(fp);
 
 #ifndef DISABLE_V3D_MSG
     v3d_msg(QString("done with saving file: ")+filename, false);
@@ -328,7 +385,7 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
         QList <NeuronSWC> &listNeuron = vswc.listNeuron;
         for(int i = 0; i < listNeuron.size(); ++i){
             NeuronSWC &item = listNeuron[i];
-            tmpSoma->push_back(Cell(i, item.x, item.y, item.z, 1));
+            tmpSoma->push_back(Cell(i, item.x, Y - item.y, item.z / PARA.zRes_, 1));
         }
     }
     printf("soma file has been read.\n");
@@ -372,6 +429,7 @@ void NeuroGPSTreePlugin::AutoBinaryImage()
 
 void NeuroGPSTreePlugin::AutoTrace()
 {
+    printf("begin tracing.\n");
     NGTraceFilter traceFilter = TraceFilter::New();
     traceFilter->SetInput(OrigImage);
     traceFilter->SetInputBack(BackImage);
