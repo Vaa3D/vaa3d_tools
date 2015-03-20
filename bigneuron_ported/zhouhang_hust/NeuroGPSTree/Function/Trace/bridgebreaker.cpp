@@ -126,7 +126,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
 #pragma omp parallel for
 #endif
     for(int i = 0; i < nxx; ++i){
-		printf("cal %d\n",i);
+        //printf("cal %d\n",i);
         const Mat2i& currentDendConInfo = rawDendConInfo[i];
         Mat2i tmpDendConInfo;
 //#ifdef _WIN32
