@@ -9,6 +9,8 @@ public:
     double y;
     double z;
     double r;
+    double cover;
+    int type;
 public:
     Node(double x,double y,double z)
     {
@@ -16,6 +18,8 @@ public:
         this->y = y;
         this->z = z;
         this->r = 0;
+        this->type = 0;
+        this->cover = 0;
     }
 };
 

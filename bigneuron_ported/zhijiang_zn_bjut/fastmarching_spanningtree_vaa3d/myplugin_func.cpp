@@ -12,10 +12,34 @@
 #include "tree.h"
 #include "graph.h"
 #include <v3d_interface.h>
-
+#include <sstream>
 
 const QString title="MyPlugin";
 
+void printSeg2SWC(std::vector<Tree<Node*>*> list,string fileName)
+{
+    FILE* swc = fopen(fileName.data(),"wt");
+
+    fprintf(swc, "#name\n");
+    fprintf(swc, "#comment\n");
+    fprintf(swc,"##timecost:%d\n",totalTimeCost);
+    fprintf(swc, "##n,type,x,y,z,radius,parent\n");
+
+    for(int i = 0; i < list.size(); i++)
+    {
+        Tree<Node*>* node = list.at(i);
+        fprintf(swc,"%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
+                node->num,
+                (int)(node->node->r + 0.5),
+                node->node->x,
+                node->node->y,
+                node->node->z,
+                node->node->r - 0.5,
+                node->parent);
+    }
+    fclose(swc);
+    return;
+}
 
 void printSWC(QMap<V3DLONG,Tree<Node*>*> treeMap,string fileName)
 {
@@ -31,7 +55,7 @@ void printSWC(QMap<V3DLONG,Tree<Node*>*> treeMap,string fileName)
         Tree<Node*>* node = iter.value();
         fprintf(swc,"%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
                 node->num,
-                (int)(node->node->r + 0.5),
+                node->node->type,
                 node->node->x,
                 node->node->y,
                 node->node->z,
@@ -55,7 +79,7 @@ void printSWC(QMap<V3DLONG,Graph<Node*>*> treeMap,string fileName)
         Graph<Node*>* node = iter.value();
         fprintf(swc,"%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
                 ++i,
-                (int)(node->node->r + 0.5),
+                node->node->type,
                 node->node->x,
                 node->node->y,
                 node->node->z,
@@ -83,9 +107,9 @@ void mst(QMap<V3DLONG,Graph<T>*> map,QList<Tree<T>*> &rootList,QMap<V3DLONG,Tree
         //todo 这里图有可能是非连通图。接下来应该把每个连通子图都生成一个最小生成树。然后再想办法把他们连接起来
         if(heap.empty())
         {
-	    isBreak = true;
-	    typedef typename QMap<V3DLONG,Graph<T>* >::iterator iterator;
-	    iterator iter =  map.begin();
+        isBreak = true;
+        typedef typename QMap<V3DLONG,Graph<T>* >::iterator iterator;
+        iterator iter =  map.begin();
             for( ; iter != map.end(); iter++)
             {
                 if(visitNodeMap.contains(iter.key())) continue;
@@ -101,7 +125,7 @@ void mst(QMap<V3DLONG,Graph<T>*> map,QList<Tree<T>*> &rootList,QMap<V3DLONG,Tree
                      * 接下来遍历根节点的边，将其边添加进堆中
                      * 这里不可能出现某条边所连接的点已经被访问的情况
                     */
-		    QMap<V3DLONG,Path*>::iterator pathIter = root->connect.begin();
+            QMap<V3DLONG,Path*>::iterator pathIter = root->connect.begin();
                     for(; pathIter != root->connect.end(); pathIter++)
                     {
                         int id = pathList.size();
@@ -137,7 +161,7 @@ void mst(QMap<V3DLONG,Graph<T>*> map,QList<Tree<T>*> &rootList,QMap<V3DLONG,Tree
                                 ,parent_ind
                                 ,treeMap[parent_ind]);
         treeMap[new_ind] = child;
-	QMap<V3DLONG,Path*>::iterator pathIter = map[new_ind]->connect.begin();
+    QMap<V3DLONG,Path*>::iterator pathIter = map[new_ind]->connect.begin();
         for(; pathIter != map[new_ind]->connect.end(); pathIter++)
         {
             int id = pathList.size();
@@ -171,13 +195,13 @@ void initPath(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
         Graph<Node*>* graphNode = iter.value();
         V3DLONG src = iter.key();
         V3DLONG i,j,k;
-	for(i = graphNode->node->x - 1; i <= graphNode->node->x + 1; i++)
+    for(i = graphNode->node->x - 1; i <= graphNode->node->x + 1; i++)
         {
             if(i < 0 || i >= sz_x) continue;
-	    for(j = graphNode->node->y - 1; j <= graphNode->node->y + 1; j++)
+        for(j = graphNode->node->y - 1; j <= graphNode->node->y + 1; j++)
             {
                 if(j < 0 || j >= sz_y) continue;
-		for(k = graphNode->node->z - 1; k <= graphNode->node->z + 1; k++)
+        for(k = graphNode->node->z - 1; k <= graphNode->node->z + 1; k++)
                 {
                     if(k < 0 || k >= sz_z) continue;
                     V3DLONG dst = GET_IND(i,j,k);
@@ -228,6 +252,7 @@ void calculateRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
         V3DLONG x = GET_X(min_ind);
         V3DLONG y = GET_Y(min_ind);
         V3DLONG z = GET_Z(min_ind);
+
         for(V3DLONG i = x - 1; i <= x + 1; i++)
         {
             if(i < 0 || i >= sz_x) continue;
@@ -322,14 +347,186 @@ void calculateRadius_old(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
     }
 }
 /**
+ * @brief deleteNode
+ * @param child 待删除的点
+ * @param node 继承所有连接的点
+ */
+void deleteNode(Graph<Node*>* child,Graph<Node*>* node,QMap<V3DLONG,Graph<Node*>*> &nodeMap)
+{
+    V3DLONG child_ind = GET_IND(child->node->x,child->node->y,child->node->z);
+    V3DLONG node_ind = GET_IND(node->node->x,node->node->y,node->node->z);
+    for(QMap<V3DLONG,Path*>::iterator iter = child->connect.begin(); iter != child->connect.end(); iter++)
+    {
+        V3DLONG dst = iter.key();
+        if(!nodeMap.contains(dst))
+        {
+            continue;
+        }
+        Path* deletePath = nodeMap[dst]->connect[child_ind];
+        delete deletePath;
+        nodeMap[dst]->connect.remove(child_ind);
+        if(dst != node_ind)
+        {
+            node->connect[dst] = new Path(node_ind,dst,0);
+            nodeMap[dst]->connect[node_ind] = new Path(node_ind,dst,0);
+        }
+    }
+   // qDeleteAll(child->connect);
+    delete child;
+    nodeMap.remove(child_ind);
+}
+
+void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
+{
+    BasicHeap<HeapElem> heap;
+    V3DLONG root_ind = 0;
+    double max_r = -1;
+    for(QMap<V3DLONG,Graph<Node*>*>::iterator iter = nodeMap.begin(); iter != nodeMap.end(); iter++)
+    {
+        Graph<Node*>* node = iter.value();
+        HeapElem* elem = new HeapElem(iter.key(),300 - node->node->r);
+        heap.insert(elem);
+ /*       if(node->node->r > max_r)
+        {
+            max_r = node->node->r;
+            root_ind = iter.key();
+        }*/
+    }
+    /*
+     * 此处只删除完全包含于圆内的点
+     */
+    while(!heap.empty())
+    {
+
+        HeapElem* elem = heap.delete_min();
+        Graph<Node*>* node = nodeMap[elem->img_ind];
+        if(!nodeMap.contains(elem->img_ind))
+        {
+            delete elem;
+            continue;
+        }
+        if(!node)
+        {
+            nodeMap.remove(elem->img_ind);
+            delete elem;
+            continue;
+        }
+        for(V3DLONG i = node->node->x - node->node->r; i <= node->node->x + node->node->r && i < sz_x; i++)
+        {
+            if(i < 0 || i >= sz_x) continue;
+            for(V3DLONG j = node->node->y - node->node->r; j <= node->node->y + node->node->r && j < sz_y; j++)
+            {
+                if(j < 0 || j >= sz_y) continue;
+                for(V3DLONG k = node->node->z - node->node->r; k <= node->node->z + node->node->r && k < sz_z; k++)
+                {
+                    if(k < 0 || k >= sz_z) continue;
+                    V3DLONG child_ind = GET_IND(i,j,k);
+                    if(elem->img_ind == child_ind) continue;
+                    if(nodeMap.contains(child_ind))
+                    {
+                        Graph<Node*>* child = nodeMap[child_ind];
+                        float dist = DISTANCE(child_ind,elem->img_ind);
+                        if(dist > node->node->r) continue;
+                        //这是删除完全的内嵌点，可以毫不犹豫的直接删除
+                        if(node->node->r >= child->node->r + dist)
+                        {
+                            deleteNode(child,node,nodeMap);
+                        }
+                    }
+                }
+            }
+        }
+        delete elem;
+    }
+/*
+    HeapElem* root_elem = new HeapElem(root_ind,300 - nodeMap[root_ind]->node->r);
+    heap.insert(root_elem);
+    QMap<V3DLONG,V3DLONG> rmList;
+    QMap<V3DLONG,bool> visitMap;
+    visitMap[root_ind] == true;
+    while(!heap.empty())
+    {
+        HeapElem* min_elem = heap.delete_min();
+        V3DLONG min_ind = min_elem->img_ind;
+        Graph<Node*>* node = nodeMap[min_ind];
+        if(!node)
+        {
+            nodeMap.remove(min_ind);
+            delete min_elem;
+            continue;
+        }
+        double node_r = node->node->r;
+
+
+        for(V3DLONG i = node->node->x - node->node->r; i <= node->node->x + node->node->r && i < sz_x; i++)
+        {
+            if(i < 0 || i >= sz_x) continue;
+            for(V3DLONG j = node->node->y - node->node->r; j <= node->node->y + node->node->r && j < sz_y; j++)
+            {
+                if(j < 0 || j >= sz_y) continue;
+                for(V3DLONG k = node->node->z - node->node->r; k <= node->node->z + node->node->r && k < sz_z; k++)
+                {
+                    if(k < 0 || k >= sz_z) continue;
+                    V3DLONG child_ind = GET_IND(i,j,k);
+                    if(min_ind == child_ind) continue;
+                    if(nodeMap.contains(child_ind))
+                    {
+                        Graph<Node*>* child = nodeMap[child_ind];
+                        float dist = DISTANCE(child_ind,min_ind);
+                        if(dist > node_r) continue;
+                        if(node->node->r >= child->node->r + dist)
+                        {
+                            deleteNode(child,node,nodeMap);
+                        }
+                    }
+                }
+            }
+        }
+        while(1)
+        {
+            int oldCount,curCount;
+            oldCount = node->connect.size();
+            for(QMap<V3DLONG,Path*>::iterator iter = node->connect.begin();iter != node->connect.end(); iter++)
+            {
+                V3DLONG dst = iter.key();
+                if(visitMap.contains(dst)) continue;
+                else visitMap[dst] = true;
+                double distance = DISTANCE(dst,min_ind);
+                Graph<Node*>* dst_node = nodeMap[dst];
+                double dst_r = dst_node->node->r;
+                if((distance / (dst_r + node_r)) < 1 && dst_r / node_r < 0.6)
+                {
+                    rmList[dst] = min_ind;
+                }
+                else
+                {
+                    HeapElem* elem = new HeapElem(dst,300 - dst_r);
+                    heap.insert(elem);
+                }
+            }
+            for(QMap<V3DLONG,V3DLONG>::iterator iter = rmList.begin();iter != rmList.end(); iter++)
+            {
+                Graph<Node*>* child = nodeMap[iter.key()];
+                Graph<Node*>* node = nodeMap[iter.value()];
+                deleteNode(child,node,nodeMap);
+            }
+            rmList.clear();
+            curCount = node->connect.size();
+            if(oldCount == curCount) break;
+        }
+        delete min_elem;
+    }*/
+}
+/**
  * 目前这个方法消耗了整个方案中最多的时间，考虑看看有没有其他更快的方法
  * @brief prundNodeByRadius 根据半径删除不必要的节点
  * @param nodeMap
  */
-void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
+void prundNodeByRadius_old(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
 {
     //构造最小堆，按半径升序处理
     BasicHeap<HeapElem> heap;
+
     QMap<V3DLONG,QMap<V3DLONG,bool> > centerListMap;//每个点的中心点队列
     QMap<V3DLONG,QMap<V3DLONG,bool> > seedSubNodeList;//每个点的所属点队列
     for(QMap<V3DLONG,Graph<Node*>*>::iterator iter = nodeMap.begin(); iter != nodeMap.end(); iter++)
@@ -369,21 +566,7 @@ void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
         double total = 0;
         double repeat = 0;
         bool isPrund = false;
-        //在这之前，可以先判断其周围是否有能完全包含他的节点，若有则可以直接跳过覆盖率判断
-/*
-        Graph<Node*>* node = nodeMap[min_ind];
-        for(QMap<V3DLONG,Path*>::iterator iter = node->connect.begin(); iter != node->connect.end(); iter++)
-        {
-            Path* path = iter.value();
-            V3DLONG dst_ind = path->getDst(min_ind);
-            Graph<Node*>* otherNode = nodeMap[dst_ind];
-            if(otherNode->node->r > node->node->r + 1)
-            {
-                isPrund = true;
-                break;
-            }
-        }
-*/
+
         //判断覆盖率
         if(!isPrund)
         {
@@ -392,6 +575,7 @@ void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
                 total++;
                 repeat += centerListMap[iter.key()].size() > 1 ? 1 : 0;
             }
+            nodeMap[min_ind]->node->cover = repeat / total;
             if(repeat / total >= coverRate)
             {
                 isPrund = true;
@@ -458,7 +642,7 @@ void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
         ((QMap<V3DLONG,bool>)iter.value()).clear();
     centerListMap.clear();
 }
-void calculateWeight(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
+void calculateWeight(QMap<V3DLONG,Graph<Node*>*> &nodeMap,QMap<V3DLONG,Node*> nodeMapCopy)
 {
     for(QMap<V3DLONG,Graph<Node*>*>::iterator iter = nodeMap.begin(); iter != nodeMap.end(); iter++)
     {
@@ -508,7 +692,8 @@ void calculateWeight(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
                         {
                             if(k < begin_z || k > end_z) continue;
                             V3DLONG ind = GET_IND(i,j,k);
-                            double w = (nodeMap.contains(ind) ? 0 : 1024) + min_elem->value + 1;
+                            double w = min_elem->value
+                                    + (nodeMapCopy[ind] && nodeMapCopy[ind]->r > 0 ? 1 / nodeMapCopy[ind]->r : 1024);
                             if(elemMap.contains(ind))
                             {
                                 if(elemMap[ind]->value > w)
@@ -752,40 +937,109 @@ bool smooth_curve_and_radius(std::vector<Tree<Node*>*> & mCoord, int winsize)
     }
     return true;
 }
+//删除短小的seg
+void prundSeg(Tree<Node*>* root,QMap<V3DLONG,Tree<Node*>*> &treeMap)
+{
+    QMap<V3DLONG,QMap<V3DLONG,bool> > leafMap;//叶子集合
+    findLeaf(root,leafMap,root->num);
+    QMap<V3DLONG,bool> leafs = leafMap[root->num];
+    for(QMap<V3DLONG,bool>::iterator iter = leafs.begin(); iter != leafs.end(); iter++)
+    {
+        Tree<Node*>* node = treeMap[iter.key()];
+        int count = 0;
+        double cover = 0;
+        double sumW = 0;
+        while(node->child.size() <= 1)
+        {
+            count++;
+            double w = node->node->r * node->node->r;
+            cover += node->node->cover * w;
+            sumW += w;
+            node = treeMap[node->parent];
+        }
+        cover /= sumW;
+        if(count <= 5 && cover >= 0.8)
+        {
+            node = treeMap[iter.key()];
+            while(node->child.size() <= 1)
+            {
+                treeMap.remove(node->num);
+                int parent = node->parent;
+                delete node;
+                node = treeMap[node->parent];
+            }
+        }
+        else
+        {
+            node = treeMap[iter.key()];
+            while(node->child.size() <= 1)
+            {
+                node = treeMap[node->parent];
+            }
+        }
+
+    }
+}
 //转换成seg的数据格式，然后调用app2的平滑算法
 void smooth(Tree<Node*>* root,QMap<V3DLONG,Tree<Node*>*> &treeMap)
 {
     QMap<V3DLONG,QMap<V3DLONG,bool> > leafMap;//叶子集合
     findLeaf(root,leafMap,root->num);
     QMap<V3DLONG,bool> leafs = leafMap[root->num];
-    QMap<V3DLONG,std::vector<Tree<Node*>*> > segList;
+    QMap<int,std::vector<Tree<Node*>*> > segListMap;
     BasicHeap<HeapElem> heap;
     for(QMap<V3DLONG,bool>::iterator iter = leafs.begin(); iter != leafs.end(); iter++)
     {
-        V3DLONG ind = iter.key();
-        Tree<Node*>* node = treeMap[ind];
-        while(node->parent > 0)
+        Tree<Node*>* node = treeMap[iter.key()];
+        V3DLONG ind = node->num;
+        do
         {
-            segList[ind].push_back(node);
+            segListMap[ind].push_back(node);
+            if(node->parent < 0) break;
             node = treeMap[node->parent];
         }
-        HeapElem* elem = new HeapElem(ind,1000 - segList[ind].size());
+        while(1);
+        HeapElem* elem = new HeapElem(ind,300 - segListMap[ind].size());
         heap.insert(elem);
     }
-    QMap<V3DLONG,bool> isVisit;
+    QMap<V3DLONG,bool> visitMap;
+    int type = 2;
     while(!heap.empty())
     {
-        HeapElem* elem = heap.delete_min();
-        V3DLONG ind = elem->img_ind;
-        for(int i = segList[ind].size() - 1; i >= 0; i--)
+        HeapElem* min_elem = heap.delete_min();
+        V3DLONG min_ind = min_elem->img_ind;
+        int breakPoint = 0;
+        for(int i = 0; i < segListMap[min_ind].size(); i++)
         {
-            V3DLONG num = segList[ind].at(i)->num;
-            if(isVisit.contains(num)) segList[ind].pop_back();
-            else isVisit[i] = true;
+            Tree<Node*>* node = segListMap[min_ind].at(i);
+            if(!visitMap.contains(node->num))
+            {
+                visitMap[node->num] = true;
+                node->node->type = type;
+            }
+            else
+            {
+                breakPoint = i;
+                break;
+            }
         }
-        smooth_curve_and_radius(segList[ind],5);
+        for(int i = segListMap[min_ind].size() - 1; i >= breakPoint; i--)
+        {
+            segListMap[min_ind].pop_back();
+        }
+        smooth_curve_and_radius(segListMap[min_ind],5);
+        type++;
     }
 }
+void copyNode(QMap<V3DLONG,Graph<Node*>*> nodeMap,QMap<V3DLONG,Node*> nodeMapCopy)
+{
+    for(QMap<V3DLONG,Graph<Node*>*>::iterator iter = nodeMap.begin(); iter != nodeMap.end(); iter++)
+    {
+        Graph<Node*>* node = iter.value();
+        nodeMapCopy[iter.key()] = node->node;
+    }
+}
+
 void myplugin_proc(unsigned char* img1d)
 {
     printf("begin\n");
@@ -797,7 +1051,6 @@ void myplugin_proc(unsigned char* img1d)
     findNode(img1d,nodeMap);
     printf("findNode over\n");
     updateTime();
-//    printSWC(nodeMap,fileName + "_findNode.swc");
     //todo 将点集合编织成图
     printf("initPath begin\n");
     initPath(nodeMap);
@@ -807,18 +1060,19 @@ void myplugin_proc(unsigned char* img1d)
     printf("calculateRadius begin\n");
     //calculateRadius_old(nodeMap)  //原来的计算半径方法，相比较而言慢很多
     calculateRadius(nodeMap);
+    QMap<V3DLONG,Node*> nodeMapCopy;
+    copyNode(nodeMap,nodeMapCopy);
     printf("calculateRadius over\n",nodeMap.size());
     updateTime();
-//    printSWC(nodeMap,fileName + "_calculateRadius.swc");
     //todo 删除多余点
     printf("prundNodeByRadius begin\n");
     prundNodeByRadius(nodeMap);
+    prundNodeByRadius_old(nodeMap);
     printf("prundNodeByRadius over %d\n",nodeMap.size());
     updateTime();
-//    printSWC(nodeMap,fileName + "_prundByRadius.swc");
     //todo 计算边权值
     printf("calculateWeight begin\n");
-    calculateWeight(nodeMap);
+    calculateWeight(nodeMap,nodeMapCopy);
     printf("calculateWeight over\n");
     updateTime();
     //todo 生成每个连通域的最小生成树
@@ -828,7 +1082,6 @@ void myplugin_proc(unsigned char* img1d)
     mst(nodeMap,rootList,treeMap);
     printf("mst over %d %d\n",rootList.size(),treeMap.size());
     updateTime();
-//    printSWC(treeMap,fileName + "_init.swc");
     QMap<V3DLONG,Graph<Tree<Node*>*>*> rootMap;//存放树连通关系的图
     //todo 计算树间权值
     printf("calculateTreeWeight begin\n");
@@ -896,29 +1149,42 @@ void myplugin_proc(unsigned char* img1d)
     Tree<Node*>* root = treeMap[1];
     treeMap.clear();
     reCreateTree(root,treeMap);
-//    printSWC(treeMap,fileName + "_beforeSmooth.swc");
     //todo 做平滑
     smooth(root,treeMap);
+    prundSeg(root,treeMap);
     //todo 输出swc
     printSWC(treeMap,fileName + "_fastmarching_spanningtree.swc");
     printf("over\n");
+//    qDeleteAll(nodeMapCopy);
+//    qDeleteAll(treeMap);
+//    qDeleteAll(nodeMap);
+//    qDeleteAll(rootMap);
 
 }
-bool proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG *in_sz, QString imagename)
+int proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG* in_sz,QString inimg_file)
 {
-    sz_x = in_sz[0];
-    sz_y = in_sz[1];
-    sz_z = in_sz[2];
+
+    v3dhandle curwin = callback.currentImageWindow();
+
+    if(!curwin)
+    {
+            QMessageBox::information(0, title, QObject::tr("No image is open."));
+            return -1;
+    }
+    Image4DSimple *p4d = callback.getImage(curwin);
+
+    unsigned char* img1d = p4d->getRawDataAtChannel(0);
+    sz_x = p4d->getXDim();
+    sz_y = p4d->getYDim();
+    sz_z = p4d->getZDim();
     sz_xy = sz_x * sz_y;
     sz_total = sz_xy * sz_z;
     bresh = 0;
     coverRate = 1;
-    fileName = imagename.toStdString();
- //   fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
+    fileName = p4d->getFileName();
+//    fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
 
-    myplugin_proc(data1d);
-
-    return true;
+    myplugin_proc(img1d);
 }
 
 
