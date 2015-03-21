@@ -57,7 +57,7 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 
 	//do diffusion
 	clock_t iterstart;
-	for(unsigned int iter=0;iter<15;iter++)
+	for(unsigned int iter=0;iter<20;iter++)
 	{
 		iterstart=clock();
 

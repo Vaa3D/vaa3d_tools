@@ -32,7 +32,7 @@ QStringList AnisoDiffPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("anisodiff_menu(general)")
-		<<tr("about anisodiff_menu");
+		<<tr("about");
 }
 QStringList AnisoDiffPlugin::funclist() const
 {

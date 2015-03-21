@@ -44,5 +44,5 @@ SOURCES      += plugin_anisodiff_littlequick.cpp
 
 
 TARGET	= $$qtLibraryTarget(anisodiff_littlequick)
-#DESTDIR	= ../../v3d/plugins/anisodiff/
-DESTDIR	= ../../../bin/plugins/anisodiff/
+#DESTDIR	= ../../v3d/plugins/anisodiff/anisodiff_littlequick/
+DESTDIR	= ../../../bin/plugins/anisodiff/anisodiff_littlequick/
