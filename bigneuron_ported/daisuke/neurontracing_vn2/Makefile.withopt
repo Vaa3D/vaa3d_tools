@@ -7,8 +7,8 @@
 #############################################################################
 
 # -DDELETE_PHI
-MYFLAGS     = -DNEB_DEBUG -DMY_FASTMARCHING -DREUSE_PHI -DUSE_OPENMP -fopenmp
-MYLDFLAGS   = -fopenmp
+MYFLAGS     = -DNEB_DEBUG -DMY_FASTMARCHING -DREUSE_PHI
+#MYLDFLAGS   = -fopenmp
 #MYFLAGS     = -DNEB_DEBUG -DUSE_OPENMP -fopenmp
 #MYFLAGS     = -DNEB_DEBUG
 CC            = gcc

@@ -89,7 +89,7 @@ template<class T> bool my_fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0,
 #pragma omp parallel for
 #endif
     for(long k=0; k<sz2; k++){
-      long nth = omp_get_thread_num();
+      //long nth = omp_get_thread_num();
       for(long j=0; j<sz1; j++){
 	for(long i=0; i<sz0; i++){
 	  long ind = k*sz1sz0 + j*sz0 + i;
@@ -282,15 +282,13 @@ typedef struct _parent{
 template<class T> bool my_fastmarching_tree(MyMarker root
 					    , T * inimg1d
 					    , vector<MyMarker*> &outtree
-					    , long sz0
+                                            , float * &phi
+                        , long sz0
 					    , long sz1
 					    , long sz2
 					    , int cnn_type = 3
 					    , double bkg_thresh = 20
 					    , bool is_break_accept = false
-#ifdef REUSE_PHI
-					    , float * &phi = 0
-#endif
 					    )
 {
   enum{ALIVE = -1, TRIAL = 0, FAR = 1};
@@ -303,7 +301,9 @@ template<class T> bool my_fastmarching_tree(MyMarker root
   //float * phi = 0;
   //long * parent = 0;
   char * state = 0;
-  
+
+  printf("-----start my fastmarching tree(sz0=%d, sz1=%d, sz2=%d)-----\n", sz0, sz1, sz2);
+
 #ifdef NEB_DEBUG
   struct timespec ts[10];
   int clock_id=0, area_id=3;

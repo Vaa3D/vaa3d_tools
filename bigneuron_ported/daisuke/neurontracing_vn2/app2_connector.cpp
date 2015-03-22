@@ -402,7 +402,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 		    if(phi){delete [] phi; phi = 0; printf("* delete phi before end\n"); }
 #endif
 #ifdef MY_FASTMARCHING
-                    my_fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept, phi);
+                    my_fastmarching_tree(inmarkers[0], indata1d, outtree, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
 #else // MY_FASTMARCHING
                     fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
 #endif
