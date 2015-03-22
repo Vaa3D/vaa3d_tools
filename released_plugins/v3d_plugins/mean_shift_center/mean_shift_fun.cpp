@@ -1,7 +1,5 @@
 #include "mean_shift_fun.h"
 #include "fastmarching_dt.h"
-#include <QtGui>
-#include <QObject>
 
 mean_shift_fun::mean_shift_fun()
 {
@@ -19,21 +17,23 @@ mean_shift_fun::~mean_shift_fun()
 vector<float> mean_shift_fun::mean_shift_center(V3DLONG ind, int windowradius)
 {
     int methodcode=0; //if methodcode is 2,there are constrains.
-    return calc_mean_shift_center(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    vector<float> center=calc_mean_shift_center(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    return center;
 }
 
 vector<float> mean_shift_fun::mean_shift_with_constraint(V3DLONG ind, int windowradius)
 {
     int methodcode=2; //if methodcode is 2,there are constrains.
-    return calc_mean_shift_center(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    vector<float> center=calc_mean_shift_center(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    return center;
 }
 
-vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr)
+vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
 {
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
 
-    V3DLONG pos;
+    V3DLONG pos,pos_prev;
     vector<V3DLONG> coord;
     float dir_vec[48][3]={{0.6667,0.6667,0.3333},{0.2852,0.6886,0.6667},{0.6886,0.2852,0.6667},
                         {0.2826,0.2826,0.9167},{-0.6667,0.6667,0.3333},{-0.6886,0.2852,0.6667},
@@ -53,15 +53,23 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr)
                         {0.6886,-0.2852,-0.6667},{0.2852,-0.6886,-0.6667},{0.6667,-0.6667,-0.3333}};
 
     int dir_vec_size=48;
-    float bound[48][3];
+
     vector<float> center_float(3,0);
-
-    float v_prev,v_new,x,y,z,x_new,y_new,z_new,sum_x,sum_y,sum_z,x_prev,y_prev,z_prev;
+    vector<float> intensity_vec;
+    float v_prev,v_new,x,y,z,x_new,y_new,z_new,sum_x,sum_y,sum_z,x_prev,y_prev,z_prev,dx_sum,dy_sum,dz_sum;
     float center_dis=1;
-
+    float bound[48][3];
     coord=pos2xyz(ind, y_offset, z_offset);
     x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
     qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z;
+
+    dx_sum=dy_sum=dz_sum=0;
+    for (int k=0;k<dir_vec_size;k++)
+    {
+        dx_sum=dx_sum+ABS(dir_vec[k][0]);
+        dy_sum=dy_sum+ABS(dir_vec[k][1]);
+        dz_sum=dz_sum+ABS(dir_vec[k][2]);
+    }
 
     //find out the channel with the maximum intensity for the marker
     v_prev=data1Dc_float[ind];
@@ -74,59 +82,126 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr)
             channel=j;
         }
     }
+    QString myfile="record.txt";
+    FILE * fp1 = fopen(myfile.toLatin1(), "a");
+    fprintf(fp1, "j=: %ld\n",j);
+    fprintf(fp1,"##dir_vect,x,y,z,intensity\n");
 
     float converge_dis=0.5;
     while (center_dis>converge_dis)
     {
         sum_x=sum_y=sum_z=0;
+
         for (int i=0;i<dir_vec_size;i++)
         {
+            //qDebug()<<"new round";
+            intensity_vec.clear();
+            intensity_vec.push_back(v_prev);
             float dx=dir_vec[i][0];
             float dy=dir_vec[i][1];
             float dz=dir_vec[i][2];
-            //qDebug()<<"dx,dy,dz:"<<dx<<":"<<dy<<":"<<dz;
+            qDebug()<<"dx,dy,dz:"<<dx<<":"<<dy<<":"<<dz;
+            pos_prev=ind;
             x_prev=x;
             y_prev=y;
             z_prev=z;
             v_new=v_prev;
-            int count=0;
-            while (v_new>bg_thr&&count<15)
+
+            while (v_new>bg_thr)
             {
                 x_new=x_prev+dx;
                 if (x_new<0 || x_new>sz_image[0]-1)
                 {
                     y_new=y_prev+dy;
                     z_new=z_prev+dz;
+                    qDebug()<<"x touches edge";
                     break;
                 }
                 y_new=y_prev+dy;
                 if (y_new<0 || y_new>sz_image[1]-1)
                 {
                     z_new=z_prev+dz;
+                    qDebug()<<"y touches edge";
                     break;
                 }
                 z_new=z_prev+dz;
                 if (z_new<0 || z_new>sz_image[2]-1)
+                {
+                    qDebug()<<"z touches edge";
                     break;
+                }
                 pos=xyz2pos(x_new+0.5,y_new+0.5,z_new+0.5,y_offset,z_offset); //float to int
                 v_new=data1Dc_float[pos+channel*page_size];
                 x_prev=x_new;
                 y_prev=y_new;
                 z_prev=z_new;
-                count++;
+                if (pos==pos_prev) continue;
+                pos_prev=pos;
+                intensity_vec.push_back(v_new);
+                qDebug()<<"dir i:"<<i<<" x,y,z:"<<x_prev<<":"<<y_prev<<":"<<":"<<z_prev<<":"<<"intensity:"<<v_new;
+
+                fprintf(fp1,"%1d %5.3f %5.3f %5.3f %4.1f \n",i,x_prev,y_prev,z_prev,v_new);
             }
-            bound[i][0]=x_new-dx;
-            bound[i][1]=y_new-dy;
-            bound[i][2]=z_new-dz;
-            //qDebug()<<"Out of loop";
-            sum_x=sum_x+x_new-dx;
-            sum_y=sum_y+y_new-dy;
-            sum_z=sum_z+z_new-dz;
+            qDebug()<<"intensity_vec size:"<<intensity_vec.size();
+            fprintf(fp1,"___________intensity_vec_size: %1d\n",intensity_vec.size());
+            if (intensity_vec.size()>4)
+            {
+                int id;
+                bool reverse=false;
+                for (id=2;id<intensity_vec.size()-2;id++)
+                {
+                    if ((intensity_vec[id]<intensity_vec[id-1])&&(intensity_vec[id]<=intensity_vec[id-2]-9)
+                      &&intensity_vec[id]<intensity_vec[id+1]&&intensity_vec[id]<=intensity_vec[id+2]-9)
+                    {
+                        qDebug()<<"reversed order: "<<id;
+                        bound[i][0]=x+id*dx;
+                        bound[i][1]=y+id*dy;
+                        bound[i][2]=z+id*dz;
+                        sum_x=sum_x+ABS(dx)*bound[i][0];
+                        sum_y=sum_y+ABS(dy)*bound[i][1];
+                        sum_z=sum_z+ABS(dz)*bound[i][2];
+                        reverse=true;
+                        fprintf(fp1,"reverse order %1d\n",id);
+                        break;
+
+                    }
+                }
+                if (!reverse)
+                {
+                    bound[i][0]=x_new-dx;
+                    bound[i][1]=y_new-dy;
+                    bound[i][2]=z_new-dz;
+                    sum_x=sum_x+ABS(dx)*(x_new-dx);
+                    sum_y=sum_y+ABS(dy)*(y_new-dy);
+                    sum_z=sum_z+ABS(dz)*(z_new-dz);
+                }
+
+            }
+            else
+            {
+                bound[i][0]=x_new-dx;
+                bound[i][1]=y_new-dy;
+                bound[i][2]=z_new-dz;
+                //qDebug()<<"Out of loop";
+                sum_x=sum_x+ABS(dx)*(x_new-dx);
+                sum_y=sum_y+ABS(dy)*(y_new-dy);
+                sum_z=sum_z+ABS(dz)*(z_new-dz);
+            }
+
         }
         //qDebug()<<"bounds:"<<bound[0][0]<<":"<<bound[0][1]<<":"<<bound[0][2];
-        center_float[0]=(float)sum_x/dir_vec_size;
-        center_float[1]=(float)sum_y/dir_vec_size;
-        center_float[2]=(float)sum_z/dir_vec_size;
+        qDebug()<<"dx_sum,y,z:"<<dx_sum<<":"<<dy_sum<<":"<<dz_sum;
+        qDebug()<<"sum_x,y,z:"<<sum_x<<":"<<sum_y<<":"<<sum_z;
+        if (sum_x<1e-5||sum_y<1e-5||sum_z<1e-5) //a very dark marker.
+        {
+            center_float[0]=x;
+            center_float[1]=y;
+            center_float[2]=z;
+            return center_float;
+        }
+        center_float[0]=(float)sum_x/dx_sum;
+        center_float[1]=(float)sum_y/dy_sum;
+        center_float[2]=(float)sum_z/dz_sum;
 
 
         float tmp_dis=(center_float[0]-x)*(center_float[0]-x)+(center_float[1]-y)*(center_float[1]-y)
@@ -135,34 +210,38 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr)
 
         qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];;
         qDebug()<<"center distance:"<<center_dis;
+
+        fprintf(fp1,"center distance: %5.3f\n",center_dis);
         x=center_float[0]; y=center_float[1]; z=center_float[2];
         V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
                 y_offset,z_offset);
         v_prev=data1Dc_float[tmp_ind+channel*page_size];
 
     }
-    return center_float;
-//    QString curFile = "result.swc";
-//    FILE * fp = fopen(curFile.toLatin1(), "wt");
-//    if (!fp)
-//    {
-//        v3d_msg("Could not open the file to save the neuron.");
-//    }
+    fclose(fp1);
+    //return center_float;
+    QString curFile = "result.swc";
+    qDebug()<<"writing file";
+    FILE * fp = fopen(curFile.toLatin1(), "a");
+    if (!fp)
+    {
+        v3d_msg("Could not open the file to save the neuron.");
+    }
 
 //    fprintf(fp, "#name %s\n", qPrintable(QString("no name")));
 //    fprintf(fp, "#comment %s\n", qPrintable(QString("no comment")));
 //    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-//    fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-//            1, 1, x, y, z, 1, -1);
+    fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
+            1+j*49, 1, x, y, z, 1, -1);
 
-//    for (int j=0;j<dir_vec_size; j++)
-//    {
-//        fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-//                j+2, 1, bound[j][0], bound[j][1], bound[j][2], 1, 1);
-//    }
+    for (int m=0+j*49;m<j*49+dir_vec_size; m++)
+    {
+        fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
+                m+2, 1, bound[m-j*49][0], bound[m-j*49][1], bound[m-j*49][2], 1, 1+j*49);
+    }
 
-//    fclose(fp);
-//    return center_float;
+    fclose(fp);
+    return center_float;
 }
 
 
@@ -258,6 +337,7 @@ vector<float> mean_shift_fun::gradient_transform(float *&outimg1d,V3DLONG ind,
 vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,
                                      V3DLONG sz_image[],int methodcode)
 {
+    qDebug()<<"methodcode:"<<methodcode;
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
@@ -314,8 +394,8 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
                  }
              }
          }
-        //qDebug()<<"windowradius:"<<windowradius;
-        //qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+        qDebug()<<"windowradius:"<<windowradius;
+        qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
 
         center_float[0]=total_x/sum_v;
         center_float[1]=total_y/sum_v;
@@ -326,11 +406,11 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
         V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
                 y_offset,z_offset);
 
-        if (methodcode=2)
+        if (methodcode==2)
         {
             if (data1Dc_float[tmp_ind+channel*page_size]<data1Dc_float[prev_ind+channel*page_size]&& windowradius>=2) // && windowradius>2)
             {
-            //qDebug()<<"window too large";
+            qDebug()<<methodcode<<" window too large"<<windowradius;
             windowradius--;
             center_dis=1;
             continue;
@@ -341,11 +421,10 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
                     +(center_float[2]-z)*(center_float[2]-z);
         center_dis=sqrt(tmp_1);
 
-        //qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
-        //qDebug()<<"center distance:"<<center_dis;
+        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
+        qDebug()<<"center distance:"<<center_dis;
         x=center_float[0]; y=center_float[1]; z=center_float[2];
     }
-
 
     return center_float;
 }

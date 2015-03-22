@@ -2,13 +2,16 @@
 #define MEAN_SHIFT_FUN_H
 
 #include <QtGui>
-#include <v3d_interface.h>
 #include <vector>
 #include <math.h>
 #include "mean_shift_extr_template.h"
+#include "basic_surf_objs.h"
 
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#ifndef ABS
+#define ABS(x) ((x) > 0 ? (x) : (-(x)))
+#endif
 
 using namespace std;
 
@@ -36,7 +39,7 @@ public:
     ~mean_shift_fun();
     vector<float> mean_shift_center(V3DLONG ind, int windowradius);
     vector<float> mean_shift_with_constraint(V3DLONG ind, int windowradius);
-    vector<float> ray_shoot_center(V3DLONG ind, int bg_thr);
+    vector<float> ray_shoot_center(V3DLONG ind, int bg_thr, int j);
     vector<float> gradient_transform(float *&outimg1d,V3DLONG ind,
                         int bg_thr, int cnn_type,int z_thickness,int halfwindowsize, int search_radius);
 

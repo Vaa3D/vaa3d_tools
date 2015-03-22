@@ -9,10 +9,13 @@ mean_shift_dialog::mean_shift_dialog(V3DPluginCallback2 *cb,int method)
     methodcode=method;
 }
 
-void mean_shift_dialog::core()
+LandmarkList mean_shift_dialog::core()
 {
+    //create an empty list
+    LandmarkList emptylist = LandmarkList();
+
     if (!load_data(callback,image1Dc_in,LList,pixeltype,sz_img,curwin))
-        return;
+        return emptylist;
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
 
     if(pixeltype==1)//V3D_UNIT8
@@ -33,7 +36,7 @@ void mean_shift_dialog::core()
     else
     {
        QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
-       return;
+       return(emptylist);
     }
 
     //set parameter
@@ -65,6 +68,8 @@ void mean_shift_dialog::core()
     mydialog_para->exec();
     if (mydialog_para->result()==QDialog::Accepted)
         windowradius=para_radius->value();
+    else
+        return(emptylist);
 
     //start mean-shift
     poss_landmark.clear();
@@ -79,6 +84,8 @@ void mean_shift_dialog::core()
         mass_center=mean_shift_obj.mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
+//        if(fp)
+//        fprintf(fp,"%1d %5.1f %5.1f %5.1f\n",j+1,mass_center[0],mass_center[1],mass_center[2]);
     }
     //visualize
     Image4DSimple image4d;
@@ -90,10 +97,14 @@ void mean_shift_dialog::core()
     v3dhandle v3dhandle_main=callback->newImageWindow();
     callback->setImage(v3dhandle_main, &image4d);
     callback->setLandmark(v3dhandle_main,LList_new_center);
-    callback->setImageName(v3dhandle_main, "mean_shift_"+callback->getImageName(curwin));
+    if (methodcode==2)
+        callback->setImageName(v3dhandle_main, "mean_shift_constraints_"+callback->getImageName(curwin));
+    else
+        callback->setImageName(v3dhandle_main, "mean_shift_"+callback->getImageName(curwin));
     callback->updateImageWindow(v3dhandle_main);
     callback->open3DWindow(v3dhandle_main);
     callback->pushObjectIn3DWindow(v3dhandle_main);
+    return LList_new_center;
 
 }
 

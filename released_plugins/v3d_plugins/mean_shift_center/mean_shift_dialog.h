@@ -1,13 +1,6 @@
 #ifndef MEAN_SHIFT_DIALOG_H
 #define MEAN_SHIFT_DIALOG_H
 
-#include <QtGui>
-//#include <QDialog>
-//#include <QToolBar>
-//#include <QVBoxLayout>
-//#include <QToolButton>
-#include <v3d_interface.h>
-#include "basic_surf_objs.h"
 #include "mean_shift_fun.h"
 
 
@@ -17,11 +10,10 @@ class mean_shift_dialog:public QDialog
 public:
     mean_shift_dialog(V3DPluginCallback2 *cb,int method);
     mean_shift_fun mean_shift_obj;
-    void core();
+    LandmarkList core();
     //void create_sphere();
 
 private:
-
     V3DPluginCallback2 *callback;
     v3dhandle curwin;
     V3DLONG sz_img[4];

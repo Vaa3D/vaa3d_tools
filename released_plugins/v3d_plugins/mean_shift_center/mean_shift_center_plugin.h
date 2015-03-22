@@ -6,10 +6,9 @@
 #ifndef __MEAN_SHIFT_CENTER_PLUGIN_H__
 #define __MEAN_SHIFT_CENTER_PLUGIN_H__
 
-#include <QtGui>
-#include <v3d_interface.h>
 #include "mean_shift_dialog.h"
-
+#include "ray_shoot_dialog.h"
+#include "gradient_transform_dialog.h"
 
 
 class mean_shift_plugin : public QObject, public V3DPluginInterface2_1
@@ -24,6 +23,7 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
     void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+    void all_method_comp(V3DPluginCallback2 *callback);
 
     QList <LocationSimple> readPosFile_usingMarkerCode(const char * posFile);
     QList <ImageMarker> readMarker_file(const QString & filename);
