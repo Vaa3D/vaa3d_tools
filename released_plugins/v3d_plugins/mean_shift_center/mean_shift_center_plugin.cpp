@@ -280,7 +280,7 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         //mean_shift_constraints
         mass_center=mean_shift_obj.mean_shift_with_constraint(poss_landmark[j],ms_windowradius);
         LocationSimple tmp1(mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
-        tmp1.color.r=0; tmp1.color.g=85; tmp1.color.b=255;
+        tmp1.color.r=0; tmp1.color.g=170; tmp1.color.b=255;
         tmp1.name="ms_c";
         LList_final.append(tmp1);
         fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
@@ -288,11 +288,11 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         //ray shoot
         mass_center=mean_shift_obj.ray_shoot_center(poss_landmark[j],rs_bg_thr,j);
         LocationSimple tmp2 (mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
-        tmp2.color.r=85; tmp2.color.g=255; tmp2.color.b=0;
+        tmp2.color.r=0; tmp2.color.g=170; tmp2.color.b=127;
         tmp2.name="ray";
         LList_final.append(tmp2);
         fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
-                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ray","",85,255,0);
+                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ray","",0,170,127);
         //gradient
         float *outimg1d=0;
         mass_center=mean_shift_obj.gradient_transform(outimg1d,poss_landmark[j],gt_bg_thr,connectiontype,

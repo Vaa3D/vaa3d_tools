@@ -83,7 +83,7 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
         }
     }
     QString myfile="record.txt";
-    FILE * fp1 = fopen(myfile.toLatin1(), "a");
+    FILE * fp1 = fopen(myfile.toLatin1(), "wt");
     fprintf(fp1, "j=: %ld\n",j);
     fprintf(fp1,"##dir_vect,x,y,z,intensity\n");
 
@@ -138,11 +138,11 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                 if (pos==pos_prev) continue;
                 pos_prev=pos;
                 intensity_vec.push_back(v_new);
-                qDebug()<<"dir i:"<<i<<" x,y,z:"<<x_prev<<":"<<y_prev<<":"<<":"<<z_prev<<":"<<"intensity:"<<v_new;
+                //qDebug()<<"dir i:"<<i<<" x,y,z:"<<x_prev<<":"<<y_prev<<":"<<":"<<z_prev<<":"<<"intensity:"<<v_new;
 
                 fprintf(fp1,"%1d %5.3f %5.3f %5.3f %4.1f \n",i,x_prev,y_prev,z_prev,v_new);
             }
-            qDebug()<<"intensity_vec size:"<<intensity_vec.size();
+            //qDebug()<<"intensity_vec size:"<<intensity_vec.size();
             fprintf(fp1,"___________intensity_vec_size: %1d\n",intensity_vec.size());
             if (intensity_vec.size()>4)
             {
@@ -190,10 +190,12 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
 
         }
         //qDebug()<<"bounds:"<<bound[0][0]<<":"<<bound[0][1]<<":"<<bound[0][2];
-        qDebug()<<"dx_sum,y,z:"<<dx_sum<<":"<<dy_sum<<":"<<dz_sum;
-        qDebug()<<"sum_x,y,z:"<<sum_x<<":"<<sum_y<<":"<<sum_z;
+//        qDebug()<<"dx_sum,y,z:"<<dx_sum<<":"<<dy_sum<<":"<<dz_sum;
+//        qDebug()<<"sum_x,y,z:"<<sum_x<<":"<<sum_y<<":"<<sum_z;
         if (sum_x<1e-5||sum_y<1e-5||sum_z<1e-5) //a very dark marker.
         {
+            v3d_msg("marker "+QString::number(j+1)+ " is below background threshold. Ray shoot will not move"
+                      "the location");
             center_float[0]=x;
             center_float[1]=y;
             center_float[2]=z;
@@ -274,17 +276,17 @@ vector<float> mean_shift_fun::gradient_transform(float *&outimg1d,V3DLONG ind,
 
     int sz0,sz1,sz2,x_start,y_start,z_start;
 
-    if (x<halfwindowsize) sz0=x+halfwindowsize;
+    if (x<halfwindowsize) sz0=x+halfwindowsize+1;
     else if (x+halfwindowsize>sz_image[0]) sz0=sz_image[0]-x+halfwindowsize;
-    else sz0=2*halfwindowsize;
+    else sz0=2*halfwindowsize+1;
 
-    if (y<halfwindowsize) sz1=y+halfwindowsize;
+    if (y<halfwindowsize) sz1=y+halfwindowsize+1;
     else if (y+halfwindowsize>sz_image[1]) sz1=sz_image[1]-y+halfwindowsize;
-    else sz1=2*halfwindowsize;
+    else sz1=2*halfwindowsize+1;
 
-    if (z<halfwindowsize) sz2=z+halfwindowsize;
+    if (z<halfwindowsize) sz2=z+halfwindowsize+1;
     else if (z+halfwindowsize>sz_image[2]) sz2=sz_image[2]-z+halfwindowsize;
-    else sz2=2*halfwindowsize;
+    else sz2=2*halfwindowsize+1;
 
 //    qDebug()<<"halfsize:"<<halfwindowsize<<" x,y,z:"<<x<<":"<<y<<":"<<z;
 //    qDebug()<<"sz0,sz1,sz2:"<<sz0<<":"<<sz1<<":"<<sz2;
@@ -295,49 +297,67 @@ vector<float> mean_shift_fun::gradient_transform(float *&outimg1d,V3DLONG ind,
     x_start=MAX(0,x-halfwindowsize);
     y_start=MAX(0,y-halfwindowsize);
     z_start=MAX(0,z-halfwindowsize);
-    for (V3DLONG dx=x_start;dx<MIN(sz_image[0]-1,x+halfwindowsize);dx++){
-        for (V3DLONG dy=y_start;dy<MIN(sz_image[1]-1,y+halfwindowsize);dy++){
-            for (V3DLONG dz=z_start;dz<MIN(sz_image[2]-1,z+halfwindowsize);dz++){
+    for (V3DLONG dx=x_start;dx<MIN(sz_image[0],x+halfwindowsize+1);dx++){
+        for (V3DLONG dy=y_start;dy<MIN(sz_image[1],y+halfwindowsize+1);dy++){
+            for (V3DLONG dz=z_start;dz<MIN(sz_image[2],z+halfwindowsize+1);dz++){
                 pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                 pos1=xyz2pos(dx-x_start,dy-y_start,dz-z_start,sz0,sz0*sz1);
                 image_trun[pos1]=data1Dc_float[pos+channel*page_size];
             }
         }
     }
+
     //put into image_trun gradient distance transform
     float *phi=0;
     fastmarching_dt(image_trun, phi,sz0, sz1, sz2, cnn_type, bg_thr, z_thickness);
+
     float min_val = phi[0], max_val = phi[0];
 
-    outimg1d = new float[sz0*sz1*sz2];
-    for(V3DLONG i = 0; i < sz0*sz1*sz2; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+    float *outimg1d_tmp = new float[sz0*sz1*sz2*sizeof(float)];
+    outimg1d=new float[sz_image[0]*sz_image[1]*sz_image[2]*sizeof(float)];
+
+    for(V3DLONG i = 0; i < sz0*sz1*sz2; i++)
+    {
+        if(phi[i] == INF) continue;
+        min_val = MIN(min_val, phi[i]);
+        max_val = MAX(max_val, phi[i]);
+    }
     cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
     max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
 
     for(V3DLONG i = 0; i < sz0*sz1*sz2; i++)
     {
-        if(phi[i] == INF) outimg1d[i] = 0;
-        else if(phi[i] ==0) outimg1d[i] = 0;
+        if(phi[i] == INF) outimg1d_tmp[i] = 0;
+        else if(phi[i] ==0) outimg1d_tmp[i] = 0;
         else
         {
-            outimg1d[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
-            outimg1d[i] = MAX(outimg1d[i], 1);
+            outimg1d_tmp[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
+            outimg1d_tmp[i] = MAX(outimg1d_tmp[i], 1);
         }
     }
 
+    memset(outimg1d,0,sz_image[0]*sz_image[1]*sz_image[2]*sizeof(float));
+    for (int k=0;k<sz0;k++){
+        for (int j=0;j<sz1;j++){
+            for (int l=0;l<sz2;l++){
+                outimg1d[k+x_start+(j+y_start)*y_offset+(l+z_start)*z_offset]=outimg1d_tmp[k+j*sz0+l*sz0*sz1];
+            }
+        }
+    }
     V3DLONG sz[4]={sz0,sz1,sz2,1};
     V3DLONG ind_tr=xyz2pos(x-x_start,y-y_start,z-z_start,sz0,sz0*sz1);
-    center_float_tmp=calc_mean_shift_center(ind_tr,search_radius,outimg1d,sz,2);
+    center_float_tmp=calc_mean_shift_center(ind_tr,search_radius,outimg1d_tmp,sz,2);
     center_float[0]=center_float_tmp[0]+x_start;
     center_float[1]=center_float_tmp[1]+y_start;
     center_float[2]=center_float_tmp[2]+z_start;
+    //qDebug()<<"center_float:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];
     return center_float;
 }
 
 vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,
                                      V3DLONG sz_image[],int methodcode)
 {
-    qDebug()<<"methodcode:"<<methodcode;
+    //qDebug()<<"methodcode:"<<methodcode;
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
@@ -351,6 +371,7 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
 
     coord=pos2xyz(ind, y_offset, z_offset);
     x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
+    //qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z<<"ind:"<<ind;
 
     //find out the channel with the maximum intensity for the marker
     v_prev=data1Dc_float[ind];
@@ -363,7 +384,7 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
             channel=j;
         }
     }
-
+    //qDebug()<<"v_Prev:"<<v_prev;
     int testCount=0;
     int testCount1=0;
 
@@ -401,6 +422,15 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
         center_float[1]=total_y/sum_v;
         center_float[2]=total_z/sum_v;
 
+        if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
+        {
+
+            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move");
+            center_float[0]=x;
+            center_float[1]=y;
+            center_float[2]=z;
+            return center_float;
+        }
 
         V3DLONG prev_ind=xyz2pos((int)(x+0.5),(int)(y+0.5),(int)(z+0.5),y_offset,z_offset);
         V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
