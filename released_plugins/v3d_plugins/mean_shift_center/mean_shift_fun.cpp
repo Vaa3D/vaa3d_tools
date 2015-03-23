@@ -82,10 +82,10 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
             channel=j;
         }
     }
-    QString myfile="record.txt";
-    FILE * fp1 = fopen(myfile.toLatin1(), "wt");
-    fprintf(fp1, "j=: %ld\n",j);
-    fprintf(fp1,"##dir_vect,x,y,z,intensity\n");
+//    QString myfile="record.txt";
+//    FILE * fp1 = fopen(myfile.toLatin1(), "wt");
+//    fprintf(fp1, "j=: %ld\n",j);
+//    fprintf(fp1,"##dir_vect,x,y,z,intensity\n");
 
     float converge_dis=0.5;
     while (center_dis>converge_dis)
@@ -100,7 +100,7 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
             float dx=dir_vec[i][0];
             float dy=dir_vec[i][1];
             float dz=dir_vec[i][2];
-            qDebug()<<"dx,dy,dz:"<<dx<<":"<<dy<<":"<<dz;
+            //qDebug()<<"dx,dy,dz:"<<dx<<":"<<dy<<":"<<dz;
             pos_prev=ind;
             x_prev=x;
             y_prev=y;
@@ -140,10 +140,10 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                 intensity_vec.push_back(v_new);
                 //qDebug()<<"dir i:"<<i<<" x,y,z:"<<x_prev<<":"<<y_prev<<":"<<":"<<z_prev<<":"<<"intensity:"<<v_new;
 
-                fprintf(fp1,"%1d %5.3f %5.3f %5.3f %4.1f \n",i,x_prev,y_prev,z_prev,v_new);
+                //fprintf(fp1,"%1d %5.3f %5.3f %5.3f %4.1f \n",i,x_prev,y_prev,z_prev,v_new);
             }
             //qDebug()<<"intensity_vec size:"<<intensity_vec.size();
-            fprintf(fp1,"___________intensity_vec_size: %1d\n",intensity_vec.size());
+            //fprintf(fp1,"___________intensity_vec_size: %1d\n",intensity_vec.size());
             if (intensity_vec.size()>4)
             {
                 int id;
@@ -161,7 +161,7 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                         sum_y=sum_y+ABS(dy)*bound[i][1];
                         sum_z=sum_z+ABS(dz)*bound[i][2];
                         reverse=true;
-                        fprintf(fp1,"reverse order %1d\n",id);
+                        //fprintf(fp1,"reverse order %1d\n",id);
                         break;
 
                     }
@@ -213,36 +213,36 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
         qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];;
         qDebug()<<"center distance:"<<center_dis;
 
-        fprintf(fp1,"center distance: %5.3f\n",center_dis);
+        //fprintf(fp1,"center distance: %5.3f\n",center_dis);
         x=center_float[0]; y=center_float[1]; z=center_float[2];
         V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
                 y_offset,z_offset);
         v_prev=data1Dc_float[tmp_ind+channel*page_size];
 
     }
-    fclose(fp1);
+    //fclose(fp1);
     //return center_float;
-    QString curFile = "result.swc";
-    qDebug()<<"writing file";
-    FILE * fp = fopen(curFile.toLatin1(), "a");
-    if (!fp)
-    {
-        v3d_msg("Could not open the file to save the neuron.");
-    }
+//    QString curFile = "result.swc";
+//    qDebug()<<"writing file";
+//    FILE * fp = fopen(curFile.toLatin1(), "a");
+//    if (!fp)
+//    {
+//        v3d_msg("Could not open the file to save the neuron.");
+//    }
 
 //    fprintf(fp, "#name %s\n", qPrintable(QString("no name")));
 //    fprintf(fp, "#comment %s\n", qPrintable(QString("no comment")));
 //    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-    fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-            1+j*49, 1, x, y, z, 1, -1);
+//    fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
+//            1+j*49, 1, x, y, z, 1, -1);
 
-    for (int m=0+j*49;m<j*49+dir_vec_size; m++)
-    {
-        fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-                m+2, 1, bound[m-j*49][0], bound[m-j*49][1], bound[m-j*49][2], 1, 1+j*49);
-    }
+//    for (int m=0+j*49;m<j*49+dir_vec_size; m++)
+//    {
+//        fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
+//                m+2, 1, bound[m-j*49][0], bound[m-j*49][1], bound[m-j*49][2], 1, 1+j*49);
+//    }
 
-    fclose(fp);
+//    fclose(fp);
     return center_float;
 }
 
