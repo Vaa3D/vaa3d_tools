@@ -3,6 +3,7 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external
+#VAA3DPATH = ../Vaa3D
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 
@@ -25,3 +26,4 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(fastmarching_spanningtree)
 DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/fastmarching_spanningtree/
+#DESTDIR = C:/Users/Administrator/Desktop/vaa3d_win7_32bit_v2.707/plugins/myplugin/myplugin/

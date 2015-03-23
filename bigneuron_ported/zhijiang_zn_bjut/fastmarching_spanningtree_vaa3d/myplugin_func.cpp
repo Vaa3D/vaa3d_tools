@@ -958,7 +958,7 @@ void prundSeg(Tree<Node*>* root,QMap<V3DLONG,Tree<Node*>*> &treeMap)
             node = treeMap[node->parent];
         }
         cover /= sumW;
-        if(count <= 5 && cover >= 0.8)
+        if(count <= 5 && cover >= 0.6)
         {
             node = treeMap[iter.key()];
             while(node->child.size() <= 1)
@@ -1039,7 +1039,29 @@ void copyNode(QMap<V3DLONG,Graph<Node*>*> nodeMap,QMap<V3DLONG,Node*> nodeMapCop
         nodeMapCopy[iter.key()] = node->node;
     }
 }
-
+void prundNodeBySingle(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
+{
+    for(QMap<V3DLONG,Graph<Node*>*>::iterator iter = nodeMap.begin(); iter != nodeMap.end(); iter++)
+    {
+        Graph<Node*>* node = iter.value();
+        if(node->connect.size() == 0 || (node->node->r <= 1 && node->connect.size() < 2))
+        {
+            for(QMap<V3DLONG,Path*>::iterator iter1 = node->connect.begin(); iter1 != node->connect.end(); iter1++)
+            {
+                V3DLONG dst = iter1.key();
+                if(!nodeMap.contains(dst))
+                {
+                    continue;
+                }
+                Path* deletePath = nodeMap[dst]->connect[iter.key()];
+                delete deletePath;
+                nodeMap[dst]->connect.remove(iter.key());
+            }
+            delete node;
+            nodeMap.remove(iter.key());
+        }
+    }
+}
 void myplugin_proc(unsigned char* img1d)
 {
     printf("begin\n");
@@ -1068,6 +1090,7 @@ void myplugin_proc(unsigned char* img1d)
     printf("prundNodeByRadius begin\n");
     prundNodeByRadius(nodeMap);
     prundNodeByRadius_old(nodeMap);
+    prundNodeBySingle(nodeMap);
     printf("prundNodeByRadius over %d\n",nodeMap.size());
     updateTime();
     //todo 计算边权值
