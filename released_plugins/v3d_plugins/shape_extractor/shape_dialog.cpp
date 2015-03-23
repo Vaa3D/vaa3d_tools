@@ -212,7 +212,7 @@ void shape_dialog::extract()
     {
        memory_free_uchar1D(label);
     }
-    label=memory_allocate_uchar1D(size_page*sizeof(unsigned char));
+    label=memory_allocate_uchar1D(size_page);
     memset(label,0,size_page*sizeof(unsigned char));
 
     V3DLONG sumrsize=0;

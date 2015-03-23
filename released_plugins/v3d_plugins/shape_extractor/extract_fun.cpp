@@ -201,7 +201,6 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
 //   return x_all.size();
 //}
 
-
 //Idea borrowed from neuro colorpicker
 float extract_fun::getProjection(vector<float> vec, vector<float> dir, int convolute_iter)
 {

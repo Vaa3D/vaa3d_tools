@@ -24,7 +24,6 @@ QStringList shape_extr_plugin::funclist() const
 {
 	return QStringList()
         <<tr("shape_extractor")
-        //<<tr("shape_extractor_with_mean_shifted_markers")
 		<<tr("help");
 }
 
