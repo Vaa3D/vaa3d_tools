@@ -26,7 +26,11 @@ QStringList mean_shift_plugin::menulist() const
 QStringList mean_shift_plugin::funclist() const
 {
 	return QStringList()
-        <<tr("mean_shift_center_finder")
+        <<tr("mean_shift")
+        <<tr("mean_shift_with_constraints")
+        <<tr("ray_shoot")
+        <<tr("gradient_distance_transform + mean_shift_with_constraints")
+        <<tr("all_method_comparison")
 		<<tr("help");
 }
 
@@ -57,28 +61,6 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     else if (menu_name==tr("all_method_comparison"))
     {
         all_method_comp(&callback);
-//        QString myfile="comparision.marker";
-//        FILE * fp_open = fopen(myfile.toLatin1(), "w");
-//        fprintf(fp_open,"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b\n");
-//        LandmarkList LList_m;
-
-//        //method 1:mean_shift
-//        mean_shift_dialog *dialog=new mean_shift_dialog(&callback,0);
-//        LList_m=dialog->core();
-//        for(int i=0; i<LList_m.size(); i++){
-//            fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",LList_m.at(i).x,
-//                    LList_m.at(i).y,LList_m.at(i).z,0,1,"ms","",196,0,0);
-//        }
-//        //method 2: mean_shift_constraints
-//        mean_shift_dialog *dialog1=new mean_shift_dialog(&callback,2); //methodcode=2 mean_shift with constraints
-//        LList_m.clear();
-//        LList_m=dialog1->core();
-//        for(int i=0; i<LList_m.size(); i++){
-//            fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",LList_m.at(i).x,
-//                    LList_m.at(i).y,LList_m.at(i).z,0,1,"ms_contr","",0,196,0);
-//        }
-//        fclose(fp_open);
-
     }
     else{
     QMessageBox::about(0,"center_finder","The <b>center finder</b> provides several ways to find the center of mass.<p>"
@@ -94,10 +76,26 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
 bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    if (func_name == tr("mean_shift_center_finder"))
+    if (func_name == tr("mean_shift"))
     {
-        mean_shift_center(callback, input, output);
+        mean_shift_center(callback, input, output,0);
 	}
+    else if (func_name==tr("mean_shift_with_constraints"))
+    {
+        mean_shift_center(callback,input,output,2);
+    }
+    else if (func_name==tr("ray_shoot"))
+    {
+        ray_shoot(callback,input,output);
+    }
+    else if (func_name==tr("gradient_distance_transform + mean_shift_with_constraints"))
+    {
+        gradient(callback,input,output);
+    }
+    else if(func_name==tr("all_method_comparison"))
+    {
+
+    }
 	else if (func_name == tr("help"))
 	{
         printHelp();
@@ -105,6 +103,12 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 	else return false;
 
 	return true;
+}
+
+void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                             V3DPluginArgList & output)
+{
+
 }
 
 void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
@@ -315,45 +319,17 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
     v3d_msg("Computation complete. Markers loaded");
 }
 
-void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+void mean_shift_plugin::load_image_marker(V3DPluginCallback2 & callback,const V3DPluginArgList & input,
+                        unsigned char * & image_data,LandmarkList &LList,int &intype,V3DLONG sz_img[4])
 {
-    mean_shift_fun fun_obj;
-    vector<char*> infiles, inparas, outfiles;
-    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
-    if ((infiles.size()!=2))
-    {
-        qDebug()<<"ERROR: please set input and output! "<<infiles.size()<<":"<<outfiles.size();
-        return;
-    }
-    if (inparas.size() != 0 && inparas.size() != 1)
-    {
-        qDebug()<<"ERROR: please give the parameter of window radius (0-50) or use the default value of 10! "
-               <<inparas.size();
-        return;
-    }
-
+    vector<char*> infiles = *((vector<char*> *)input.at(0).p);;
 
     QString qs_input_image(infiles[0]);
     QString qs_input_mark(infiles[1]);
-    image_data=0;
-    int intype=0;
-    int windowradius=10;
-
-    if (inparas.size()==1)
-    {
-        int tmp=atoi(inparas.at(0));
-        if (tmp>0 && tmp<=50)
-        windowradius=tmp;
-        else
-            v3d_msg("The parameter of window radius is not valid, the program will use default value of 10",0);
-    }
 
     if (!qs_input_image.isEmpty())
     {
-        if (!simple_loadimage_wrapper(callback, qs_input_image.toStdString().c_str(), image_data, sz_img, intype))
+        if (!simple_loadimage_wrapper(callback, qs_input_image.toStdString().c_str(), image_data, sz_img,intype))
         {
             qDebug()<<"Loading error";
             return;
@@ -365,26 +341,28 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
                                      " The first 3 channel will be applied for analysis.",0);
             return;
         }
-
-        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-        if(intype!=1)
-        {
-            if (intype == 2) //V3D_UINT16;
-            {
-                convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
-            }
-            else if(intype == 4) //V3D_FLOAT32;
-            {
-                convert2UINT8((float*)image_data, image_data, size_tmp);
-            }
-            else
-            {
-                v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
-                return;
-            }
-        }
     }
-    fun_obj.pushNewData(image_data,sz_img);
+//        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+//        if(intype==1)
+//        {
+//            fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
+//        }
+//        else if (intype == 2) //V3D_UINT16;
+//        {
+//            fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
+//            convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+//        }
+//        else if(intype == 4) //V3D_FLOAT32;
+//        {
+//            fun_obj.pushNewData<float>((float*)image1Dc_data, sz_img);
+//            convert2UINT8((float*)image_data, image_data, size_tmp);
+//        }
+//        else
+//        {
+//            v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+//            return;
+//        }
+
 
     if (qs_input_mark.isEmpty())
         return;
@@ -399,36 +377,327 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         fclose(fp);
     }
 
-    QList <LocationSimple> tmpList = readPosFile_usingMarkerCode(qs_input_mark.toAscii()); //revised on 090725 to use the unique interface
+    LList = readPosFile_usingMarkerCode(qs_input_mark.toAscii());
 
-    if (tmpList.count()<=0)
+    if (LList.count()<=0)
     {
-        v3d_msg("Did not find any valid row/record of the markers. Thus do not overwrite the current landmarks if they exist.\n",0);
+        v3d_msg("Did not find any valid markers\n",0);
         return;
     }
-    qDebug()<<"tmpList size:"<<tmpList.count();
+    qDebug()<<"LList size:"<<LList.count();
+}
+
+void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                 V3DPluginArgList & output)
+{
+    mean_shift_fun fun_obj;
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if ((infiles.size()!=2))
+    {
+        qDebug()<<"ERROR: please provide image and marker file! "<<infiles.size();
+        return;
+    }
+    if (inparas.size()<0)
+    {
+        qDebug()<<"ERROR:parameter size needs to be >0";
+        return;
+    }
+
+    //load image and markers
+    image_data=0;
+    LList.clear();
+    load_image_marker(callback,input,image_data,LList,intype,sz_img);
+
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    if(intype==1)
+    {
+      fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
+    }
+    else if (intype == 2) //V3D_UINT16;
+    {
+      fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
+      convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+    }
+    else if(intype == 4) //V3D_FLOAT32;
+    {
+      fun_obj.pushNewData<float>((float*)image_data, sz_img);
+      convert2UINT8((float*)image_data, image_data, size_tmp);
+    }
+    else
+    {
+      v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+      return;
+    }
+
+    //check parameter
+    if (inparas.size()>5)
+    {
+        qDebug()<<"You have entered:"<<inparas.size()<< "parameters. The first five will be used\n";
+    }
+
+    qDebug()<<"checking parameters...";
+    int min_dim=MIN(sz_img[0],sz_img[1]);
+    if (sz_img[2]<min_dim) min_dim=sz_img[2];
+
+    int bg_thr=70;
+    int connectiontype=2;
+    int z_thickness=1;
+    int transform_half_window=MIN(40,min_dim/2);
+    int search_window_radius=15;
+
+    if (inparas.size()==0)
+        qDebug()<<"Default parameters will be used";
+    if (inparas.size()>=1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp>=0 && tmp<=255)
+        {
+            bg_thr=tmp;
+            qDebug()<<"background threshold is set to: "<<tmp;
+         }
+        else
+            qDebug()<<"parameter 'bg_thr' is not valid. Default value "<<bg_thr<<" will be used.";
+    }
+    if (inparas.size()>=2)
+    {
+        int tmp=atoi(inparas.at(1));
+        if (tmp>=1 && tmp<=3)
+        {
+            connectiontype=tmp;
+            qDebug()<<"connection type is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'connection type' is not valid. Default value "<<connectiontype<<" will be used.";
+    }
+    if (inparas.size()>=3)
+    {
+        int tmp=atoi(inparas.at(2));
+        if (tmp>=1 && tmp<=10)
+        {
+            z_thickness=tmp;
+            qDebug()<<"z_thickness is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'z_thickness' is not valid. Default value "<<z_thickness<<" will be used.";
+    }
+    if (inparas.size()>=4)
+    {
+        int tmp=atoi(inparas.at(3));
+        if (tmp>=10 && tmp<=min_dim)
+        {
+            transform_half_window=tmp;
+            qDebug()<<"parameter 'gradient distance transform halfwindow' is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'gradient distance transform halfwindowe' is not valid. Default value "<<transform_half_window<<" will be used.";
+    }
+
+    if (inparas.size()>=5)
+    {
+        int tmp=atoi(inparas.at(4));
+        if (tmp >=2 && tmp<=30)
+        {
+            search_window_radius=tmp;
+            qDebug()<<"mean shift search window radius' is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'mean shift search window radius' is not valid. Default value "<<search_window_radius<<" will be used.";
+    }
 
     vector<V3DLONG> poss_landmark;
-    poss_landmark=landMarkList2poss(tmpList, sz_img[0], sz_img[0]*sz_img[1]);
-    QList <LocationSimple> LList_new_center;
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    LList_new_center.clear();
+    vector<float> mass_center;
+    float *outimg1d=0;
+
+    for (int j=0;j<poss_landmark.size();j++)
+    {
+        mass_center=fun_obj.gradient_transform(outimg1d,poss_landmark[j],bg_thr,connectiontype,
+                                                z_thickness,transform_half_window,search_window_radius);
+        LocationSimple tmp(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
+        LList_new_center.append(tmp);
+    }
+    if (outimg1d!=0) {delete outimg1d;outimg1d=0;}
+
+    qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
+    //Write data in the file
+    QString qs_input_image(infiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    write_marker(qs_output);
+    if (image_data!=0) {delete []image_data; image_data=0;}
+}
+
+void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                  V3DPluginArgList & output)
+{
+    mean_shift_fun fun_obj;
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if ((infiles.size()!=2))
+    {
+        qDebug()<<"ERROR: please provide image and marker file! "<<infiles.size();
+        return;
+    }
+    if (inparas.size() != 0 && inparas.size() != 1)
+    {
+        qDebug()<<"ERROR: please set background threshold (0-255) or leave it blank"
+                  " and the program will use the default value of 70!  :" <<inparas.size();
+        return;
+    }
+
+    //check parameter
+    int bg_thr=70;
+    if (inparas.size()==1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp>=0 && tmp<=255)
+        bg_thr=tmp;
+        else
+            v3d_msg("The parameter of window radius is not valid, the program will use default value of 15",0);
+    }
+
+    //load image and markers
+    image_data=0;
+    LList.clear();
+    load_image_marker(callback,input,image_data,LList,intype,sz_img);
+
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    if(intype==1)
+    {
+        fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
+    }
+    else if (intype == 2) //V3D_UINT16;
+    {
+        fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
+        convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+    }
+    else if(intype == 4) //V3D_FLOAT32;
+    {
+        fun_obj.pushNewData<float>((float*)image_data, sz_img);
+        convert2UINT8((float*)image_data, image_data, size_tmp);
+    }
+    else
+    {
+        v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+        return;
+    }
+
+    vector<V3DLONG> poss_landmark;
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    LList_new_center.clear();
     vector<float> mass_center;
 
     for (int j=0;j<poss_landmark.size();j++)
     {
-        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
-                //calc_mean_shift_center(poss_landmark[j],windowradius);
+        mass_center=fun_obj.ray_shoot_center(poss_landmark[j],bg_thr,j);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         LList_new_center.append(tmp);
     }
 
     qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
     //Write data in the file
+    QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    write_marker(qs_output);
+    if (image_data!=0) {delete []image_data; image_data=0;}
+}
 
+void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                          V3DPluginArgList & output,int methodcode)
+{
+    //Input,output check
+    mean_shift_fun fun_obj;
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if ((infiles.size()!=2))
+    {
+        qDebug()<<"ERROR: please provide image and marker file! "<<infiles.size();
+        return;
+    }
+    if (inparas.size() != 0 && inparas.size() != 1)
+    {
+        qDebug()<<"ERROR: please set the parameter of window radius (2-30) or leave it blank"
+                  " and the program will use the default value of 15!  :" <<inparas.size();
+        return;
+    }
+
+    //check parameter
+    int windowradius=15;
+    if (inparas.size()==1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp>1 && tmp<=30)
+        windowradius=tmp;
+        else
+            v3d_msg("The parameter of window radius is not valid, the program will use default value of 15",0);
+    }
+
+    //load image and markers
+    image_data=0;
+    LList.clear();
+    load_image_marker(callback,input,image_data,LList,intype,sz_img);
+
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    if(intype==1)
+    {
+        fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
+    }
+    else if (intype == 2) //V3D_UINT16;
+    {
+        fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
+        convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+    }
+    else if(intype == 4) //V3D_FLOAT32;
+    {
+        fun_obj.pushNewData<float>((float*)image_data, sz_img);
+        convert2UINT8((float*)image_data, image_data, size_tmp);
+    }
+    else
+    {
+        v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+        return;
+    }
+
+    vector<V3DLONG> poss_landmark;
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    LList_new_center.clear();
+    vector<float> mass_center;
+
+    for (int j=0;j<poss_landmark.size();j++)
+    {
+        if (methodcode==2)
+        mass_center=fun_obj.mean_shift_with_constraint(poss_landmark[j],windowradius);
+        else
+        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        LList_new_center.append(tmp);
+    }
+
+    qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
+    //Write data in the file
+    QString qs_input_image(infiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    write_marker(qs_output);
+    if (image_data!=0) {delete []image_data; image_data=0;}
+
+}
+
+void mean_shift_plugin::write_marker(QString qs_output)
+{
     FILE * fp_1 = fopen(qs_output.toAscii(), "w");
     if (!fp_1)
     {
-        qDebug()<<"can not open the file to save the landmark points.\n";
+        qDebug()<<"cannot open the file to save the landmark points.\n";
         return;
     }
 
@@ -439,15 +708,10 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
                 V3DLONG(LList_new_center.at(i).x), V3DLONG(LList_new_center.at(i).y), V3DLONG(LList_new_center.at(i).z),
                 V3DLONG(LList_new_center.at(i).radius), V3DLONG(LList_new_center.at(i).shape),
                 LList_new_center.at(i).name.c_str(), LList_new_center.at(i).comments.c_str());
-        qDebug()<<"Input one line";
     }
 
     fclose(fp_1);
-
-    if (image_data!=0) {delete []image_data; image_data=0;}
-
 }
-
 
 QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char * posFile) //last update 090725
 {
@@ -477,8 +741,17 @@ QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char
 
 void mean_shift_plugin::printHelp()
 {
-    printf("\nmean_shift_center_finder -needs two input files- 1) image 2) marker file   -optional parameter:search window radius\n");
-    printf("Usage v3d -x mean_shift_center_finder -f mean_shift_center_finder -i <input.v3draw> <input.v3draw.marker> [-p <int>(0-50)] [-o <output_image.marker>]\n");
+    printf("\nmean_shift_center_finder -needs two input files- 1) image 2) marker file   -optional parameters\n");
+    printf("Usage v3d -x mean_shift_center_finder -f mean_shift -i <input.v3draw> <input.v3draw.marker> "
+           "[-p <int search_window_radius>(2-30,default 15)] [-o <output_image.marker>]\n");
+    printf("Usage v3d -x mean_shift_center_finder -f mean_shift_with_constraints -i <input.v3draw> <input.v3draw.marker> "
+           "[-p <int search_window_radius>(2-30,default 15)] [-o <output_image.marker>]\n");
+    printf("Usage v3d -x mean_shift_center_finder -f ray_shoot -i <input.v3draw> <input.v3draw.marker> "
+           "[-p <int background_thresh>(0-255,default 70)] [-o <output_image.marker>]\n");
+    printf("Usage v3d -x mean_shift_center_finder -f gradient_distance_transform + mean_shift_with_constraints -i <input.v3draw> <input.v3draw.marker> "
+           "[-p <int background thresh>(0-255,default 70) <int connection_type(1-3,default 2) "
+           "[<int z_thickness>(1-10,default 1) <int gradient_distance_transform_half_window>(10-half min dim,default 40) "
+           "[<int mean_shift_search_window_radius>(2-30,default 15)]] [-o <output_image.marker>]\n");
 }
 
 QList <ImageMarker> mean_shift_plugin::readMarker_file(const QString & filename)

@@ -22,9 +22,16 @@ public:
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
-    void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+    void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int methodcode);
     void all_method_comp(V3DPluginCallback2 *callback);
+    void ray_shoot(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                      V3DPluginArgList & output);
+    void gradient(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                     V3DPluginArgList & output);
 
+    void load_image_marker(V3DPluginCallback2 & callback,const V3DPluginArgList & input,
+                  unsigned char * & image1Dc_data,LandmarkList &LList,int &intype,V3DLONG sz_img[4]);
+    void write_marker(QString qs_output);
     QList <LocationSimple> readPosFile_usingMarkerCode(const char * posFile);
     QList <ImageMarker> readMarker_file(const QString & filename);
     void printHelp();
@@ -32,6 +39,8 @@ public:
 private:
     V3DLONG sz_img[4];
     unsigned char *image_data;
+    int intype;
+    LandmarkList LList,LList_new_center;
 };
 
 #endif

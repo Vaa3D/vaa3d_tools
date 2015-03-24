@@ -59,10 +59,10 @@ void gradient_transform_dialog::core()
     label_cnn->setText("Connection type (1-3):");
     QSpinBox *para_cnn=new QSpinBox;
     para_cnn->setRange(1,3);
-    para_cnn->setValue(1);
+    para_cnn->setValue(2);
 
     QLabel *label_z=new QLabel;
-    label_z->setText("z_thickness:");
+    label_z->setText("z_thickness (1-10):");
     QSpinBox *para_z=new QSpinBox;
     para_z->setRange(1,10);
     para_z->setValue(1);
@@ -71,7 +71,9 @@ void gradient_transform_dialog::core()
     label_tran_win->setText("Gradient distance transform half window size:");
     QSpinBox *para_tran_win=new QSpinBox;
     para_tran_win->setRange(10,min_dim/2);
+    if (min_dim/2>40)
     para_tran_win->setValue(40);
+    else para_tran_win->setValue(min_dim/2);
 
     QLabel *label_search_r=new QLabel;
     label_search_r->setText("Mean shift search window radius (2-30):");
@@ -127,6 +129,7 @@ void gradient_transform_dialog::core()
         LocationSimple tmp(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
         LList_new_center.append(tmp);
     }
+    if (outimg1d!=0) {delete outimg1d;outimg1d=0;}
 
     //visualize
     //V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
