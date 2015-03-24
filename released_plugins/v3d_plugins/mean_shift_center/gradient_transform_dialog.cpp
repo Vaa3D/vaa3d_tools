@@ -122,10 +122,8 @@ void gradient_transform_dialog::core()
     for (int j=0;j<poss_landmark.size();j++)
     {
         qDebug()<<"_______j:____________"<<j;
-        float * tmp=(float *)outimg1d;
-        mass_center=mean_shift_obj.gradient_transform(tmp,poss_landmark[j],bg_thr,connectiontype,
+        mass_center=mean_shift_obj.gradient_transform(outimg1d,poss_landmark[j],bg_thr,connectiontype,
                                                 z_thickness,transform_half_window,search_window_radius);
-        outimg1d=(unsigned char*) tmp;
         LocationSimple tmp(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
         LList_new_center.append(tmp);
     }
