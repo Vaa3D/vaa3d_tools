@@ -45,4 +45,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 #specify target name and directory
 TARGET  = $$qtLibraryTarget(meanshift)
-DESTDIR = $$V3DMAINPATH/../bin/plugins/bigneuronhackathon/bjut_meanshift/
+DESTDIR = $$V3DMAINPATH/../bin/plugins/bigneuronhackathon/BJUT_meanshift/
