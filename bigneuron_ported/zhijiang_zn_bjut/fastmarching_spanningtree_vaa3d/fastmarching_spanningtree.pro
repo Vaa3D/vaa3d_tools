@@ -25,5 +25,5 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(fastmarching_spanningtree)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/fastmarching_spanningtree/
+DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/BJUT_fastmarching_spanningtree/
 #DESTDIR = C:/Users/Administrator/Desktop/vaa3d_win7_32bit_v2.707/plugins/myplugin/myplugin/
