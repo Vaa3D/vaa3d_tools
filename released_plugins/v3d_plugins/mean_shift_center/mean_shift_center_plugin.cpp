@@ -53,7 +53,7 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         ray_shoot_dialog *r_dialog=new ray_shoot_dialog(&callback);
         r_dialog->core();
     }
-    else if (menu_name==tr("gradient_distance_transform + mean_shift_with_constraints"))
+    else if (menu_name==tr("gradient_distance_transform"))
     {
         gradient_transform_dialog *g_dialog=new gradient_transform_dialog(&callback);
         g_dialog->core();
@@ -88,7 +88,7 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
     {
         ray_shoot(callback,input,output);
     }
-    else if (func_name==tr("gradient_distance_transform + mean_shift_with_constraints"))
+    else if (func_name==tr("gradient_distance_transform"))
     {
         gradient(callback,input,output);
     }
@@ -936,9 +936,9 @@ void mean_shift_plugin::printHelp()
            "[-p <int search_window_radius>(2-30,default 15)] [-o <output_image.marker>]\n");
     printf("Usage v3d -x mean_shift_center_finder -f ray_shoot -i <input.v3draw> <input.v3draw.marker> "
            "[-p <int background_thresh>(0-255,default 70)] [-o <output_image.marker>]\n");
-    printf("Usage v3d -x mean_shift_center_finder -f gradient_distance_transform + mean_shift_with_constraints -i <input.v3draw> <input.v3draw.marker> "
+    printf("Usage v3d -x mean_shift_center_finder -f gradient_distance_transform -i <input.v3draw> <input.v3draw.marker> "
            "[-p <int background thresh>(0-255,default 70) <int connection_type(1-3,default 2) "
-           "[<int z_thickness>(1-10,default 1) <int gradient_distance_transform_half_window>(10-half min dim,default 40) "
+           "[<int z_thickness>(1-10,default 1) <int gradient_distance_transform_half_window>(10-half of min dim,default 40) "
            "[<int mean_shift_search_window_radius>(2-30,default 15)]] [-o <output_image.marker>]\n");
 }
 
