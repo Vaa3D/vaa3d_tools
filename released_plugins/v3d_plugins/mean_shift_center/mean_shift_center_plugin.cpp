@@ -888,14 +888,13 @@ void mean_shift_plugin::write_marker(QString qs_output)
         return;
     }
 
-    fprintf(fp_1, "#x, y, z, radius, shape, name, comment\n");
+    fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
     {
-        fprintf(fp_1, "%lf,%lf,%lf,%ld,%ld,%s,%s\n",
-                LList_new_center.at(i).x, LList_new_center.at(i).y, LList_new_center.at(i).z,
-                V3DLONG(LList_new_center.at(i).radius), V3DLONG(LList_new_center.at(i).shape),
-                LList_new_center.at(i).name.c_str(), LList_new_center.at(i).comments.c_str());
+        LocationSimple tmp=LList_new_center.at(i);
+        fprintf(fp_1, "%lf,%lf,%lf,%ld,%ld,%s,%s,%d,%d,%d\n",
+        tmp.x, tmp.y, tmp.z,tmp.radius,tmp.shape,tmp.name,"",tmp.color.r,tmp.color.g,tmp.color.b);
     }
 
     fclose(fp_1);
