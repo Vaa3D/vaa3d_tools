@@ -36,7 +36,7 @@ public:
 
     void load_image_marker(V3DPluginCallback2 & callback,const V3DPluginArgList & input,
                   unsigned char * & image1Dc_data,LandmarkList &LList,int &intype,V3DLONG sz_img[4]);
-    void write_marker(QString qs_output);
+    //void write_marker(QString qs_output);
     QList <LocationSimple> readPosFile_usingMarkerCode(const char * posFile);
     QList <ImageMarker> readMarker_file(const QString & filename);
     void printHelp();

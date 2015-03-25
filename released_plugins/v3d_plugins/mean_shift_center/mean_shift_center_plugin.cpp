@@ -275,8 +275,31 @@ void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, cons
 //                mass_center[1]+1,mass_center[2]+1,0,1,"gradient","",255,255,0);
     }
     QString qs_input_image(infiles[0]);
-    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
-    write_marker(qs_output);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_all_method_out.marker" : QString(outfiles[0]);
+    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    if (!fp_1)
+    {
+        qDebug()<<"cannot open the file to save the landmark points.\n";
+        return;
+    }
+
+    fprintf(fp_1,"parameters: \n");
+    fprintf(fp_1,"background threshold: %d\n",bg_thr);
+    fprintf(fp_1,"connection type: %d\n",connectiontype);
+    fprintf(fp_1,"z_thickness: %d\n",z_thickness);
+    fprintf(fp_1,"gradient transform half window size: %d\n",transform_half_window);
+    fprintf(fp_1,"mean shift search window radius: %d\n",search_window_radius);
+    fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
+
+    for (int i=0;i<LList_new_center.size(); i++)
+    {
+        LocationSimple tmp=LList_new_center.at(i);
+        fprintf(fp_1, "%.lf,%.lf,%.lf,%.1f,1,",tmp.x,tmp.y,tmp.z,tmp.radius);
+        fprintf(fp_1, "%s, ",tmp.name.c_str());
+        fprintf(fp_1, " ,%d,%d,%d\n",tmp.color.r,tmp.color.g,tmp.color.b);
+    }
+
+    fclose(fp_1);
     if (image_data!=0) {delete []image_data; image_data=0;}
 }
 
@@ -679,7 +702,29 @@ void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginA
     //Write data in the file
     QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_gt_out.marker" : QString(outfiles[0]);
-    write_marker(qs_output);
+    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    if (!fp_1)
+    {
+        qDebug()<<"cannot open the file to save the landmark points.\n";
+        return;
+    }
+    fprintf(fp_1,"parameters: \n");
+    fprintf(fp_1,"background threshold: %d\n",bg_thr);
+    fprintf(fp_1,"connection type: %d\n",connectiontype);
+    fprintf(fp_1,"z_thickness: %d\n",z_thickness);
+    fprintf(fp_1,"gradient transform half window size: %d\n",transform_half_window);
+    fprintf(fp_1,"mean shift search window radius: %d\n",search_window_radius);
+    fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
+
+    for (int i=0;i<LList_new_center.size(); i++)
+    {
+        LocationSimple tmp=LList_new_center.at(i);
+        fprintf(fp_1, "%.lf,%.lf,%.lf,%.1f,1,",tmp.x,tmp.y,tmp.z,tmp.radius);
+        fprintf(fp_1, "%s, ",tmp.name.c_str());
+        fprintf(fp_1, " ,%d,%d,%d\n",tmp.color.r,tmp.color.g,tmp.color.b);
+    }
+
+    fclose(fp_1);
     if (image_data!=0) {delete []image_data; image_data=0;}
 }
 
@@ -766,7 +811,25 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
     //Write data in the file
     QString qs_input_image(infiles[0]);
     QString qs_output = outfiles.empty() ? qs_input_image + "_rs_out.marker" : QString(outfiles[0]);
-    write_marker(qs_output);
+    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+    if (!fp_1)
+    {
+        qDebug()<<"cannot open the file to save the landmark points.\n";
+        return;
+    }
+    fprintf(fp_1,"parameters: \n");
+    fprintf(fp_1,"background threshold: %d\n",bg_thr);
+    fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
+
+    for (int i=0;i<LList_new_center.size(); i++)
+    {
+        LocationSimple tmp=LList_new_center.at(i);
+        fprintf(fp_1, "%.lf,%.lf,%.lf,%.1f,1,",tmp.x,tmp.y,tmp.z,tmp.radius);
+        fprintf(fp_1, "%s, ",tmp.name.c_str());
+        fprintf(fp_1, " ,%d,%d,%d\n",tmp.color.r,tmp.color.g,tmp.color.b);
+    }
+
+    fclose(fp_1);
     if (image_data!=0) {delete []image_data; image_data=0;}
 }
 
@@ -874,20 +937,14 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         qs_output = outfiles.empty() ? qs_input_image + "_ms_c_out.marker" : QString(outfiles[0]);
     else
         qs_output = outfiles.empty() ? qs_input_image + "_ms_out.marker" : QString(outfiles[0]);
-    write_marker(qs_output);
-    if (image_data!=0) {delete []image_data; image_data=0;}
-
-}
-
-void mean_shift_plugin::write_marker(QString qs_output)
-{
     FILE * fp_1 = fopen(qs_output.toAscii(), "w");
     if (!fp_1)
     {
         qDebug()<<"cannot open the file to save the landmark points.\n";
         return;
     }
-
+    fprintf(fp_1,"parameters: \n");
+    fprintf(fp_1,"mean shift search window radius: %d\n",windowradius);
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
@@ -899,7 +956,31 @@ void mean_shift_plugin::write_marker(QString qs_output)
     }
 
     fclose(fp_1);
+    if (image_data!=0) {delete []image_data; image_data=0;}
+
 }
+
+//void mean_shift_plugin::write_marker(QString qs_output)
+//{
+//    FILE * fp_1 = fopen(qs_output.toAscii(), "w");
+//    if (!fp_1)
+//    {
+//        qDebug()<<"cannot open the file to save the landmark points.\n";
+//        return;
+//    }
+
+//    fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
+
+//    for (int i=0;i<LList_new_center.size(); i++)
+//    {
+//        LocationSimple tmp=LList_new_center.at(i);
+//        fprintf(fp_1, "%.lf,%.lf,%.lf,%.1f,1,",tmp.x,tmp.y,tmp.z,tmp.radius);
+//        fprintf(fp_1, "%s, ",tmp.name.c_str());
+//        fprintf(fp_1, " ,%d,%d,%d\n",tmp.color.r,tmp.color.g,tmp.color.b);
+//    }
+
+//    fclose(fp_1);
+//}
 
 QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char * posFile) //last update 090725
 {
