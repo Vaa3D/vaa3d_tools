@@ -6,7 +6,8 @@ TEMPLATE	= lib
 CONFIG		+= qt plugin warn_off
 #CONFIG		+= x86_64
 
-V3DMAINPATH   = ../../../v3d_main
+SRCFOLDER = ../src/
+V3DMAINPATH   = $$SRCFOLDER/../../../../v3d_main
 
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun
@@ -23,26 +24,26 @@ HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS	     += $$V3DMAINPATH/basic_c_fun/stackutil.h
 HEADERS      += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS      += $$V3DMAINPATH/basic_c_fun/mg_utilities.h
-HEADERS      += q_AnisoDiff3D.h
-HEADERS      += q_derivatives3D.h
-HEADERS      += EigenDecomposition3.h
-HEADERS      += q_EigenVectors3D.h
-HEADERS      += q_imgaussian3D.h
-HEADERS      += plugin_anisodiff_littlequick.h
+HEADERS      += $$SRCFOLDER/q_AnisoDiff3D.h
+HEADERS      += $$SRCFOLDER/q_derivatives3D.h
+HEADERS      += $$SRCFOLDER/EigenDecomposition3.h
+HEADERS      += $$SRCFOLDER/q_EigenVectors3D.h
+HEADERS      += $$SRCFOLDER/q_imgaussian3D.h
+HEADERS      += $$SRCFOLDER/plugin_anisodiff_littlequick.h
 
 SOURCES      += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES      += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES      += $$V3DMAINPATH//basic_c_fun/basic_surf_objs.cpp
 SOURCES      += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES      += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
-SOURCES      += q_AnisoDiff3D.cpp
-SOURCES      += q_derivatives3D.cpp
-SOURCES      += EigenDecomposition3.cpp
-SOURCES      += q_EigenVectors3D.cpp
-SOURCES      += q_imgaussian3D.cpp
-SOURCES      += plugin_anisodiff_littlequick.cpp
+SOURCES      += $$SRCFOLDER/q_AnisoDiff3D.cpp
+SOURCES      += $$SRCFOLDER/q_derivatives3D.cpp
+SOURCES      += $$SRCFOLDER/EigenDecomposition3.cpp
+SOURCES      += $$SRCFOLDER/q_EigenVectors3D.cpp
+SOURCES      += $$SRCFOLDER/q_imgaussian3D.cpp
+SOURCES      += $$SRCFOLDER/plugin_anisodiff_littlequick.cpp
 
 
 TARGET	= $$qtLibraryTarget(anisodiff_littlequick)
 #DESTDIR	= ../../v3d/plugins/anisodiff/anisodiff_littlequick/
-DESTDIR	= ../../../bin/plugins/anisodiff/anisodiff_littlequick/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/anisodiff/anisodiff_littlequick/
