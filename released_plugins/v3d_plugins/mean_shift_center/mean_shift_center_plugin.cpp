@@ -18,7 +18,7 @@ QStringList mean_shift_plugin::menulist() const
         <<tr("mean_shift")
         <<tr("mean_shift_with_constraints")
         <<tr("ray_shoot")
-        <<tr("gradient_distance_transform + mean_shift_with_constraints")
+        <<tr("gradient_distance_transform")
         <<tr("all_method_comparison")
 		<<tr("about");
 }
@@ -29,7 +29,7 @@ QStringList mean_shift_plugin::funclist() const
         <<tr("mean_shift")
         <<tr("mean_shift_with_constraints")
         <<tr("ray_shoot")
-        <<tr("gradient_distance_transform + mean_shift_with_constraints")
+        <<tr("gradient_distance_transform")
         <<tr("all_method_comparison")
 		<<tr("help");
 }
