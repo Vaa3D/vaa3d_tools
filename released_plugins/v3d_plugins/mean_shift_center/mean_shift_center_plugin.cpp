@@ -283,12 +283,12 @@ void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, cons
         return;
     }
 
-    fprintf(fp_1,"parameters: \n");
-    fprintf(fp_1,"background threshold: %d\n",bg_thr);
-    fprintf(fp_1,"connection type: %d\n",connectiontype);
-    fprintf(fp_1,"z_thickness: %d\n",z_thickness);
-    fprintf(fp_1,"gradient transform half window size: %d\n",transform_half_window);
-    fprintf(fp_1,"mean shift search window radius: %d\n",search_window_radius);
+    fprintf(fp_1,"#parameters: \n");
+    fprintf(fp_1,"#background threshold: %d\n",bg_thr);
+    fprintf(fp_1,"#connection type: %d\n",connectiontype);
+    fprintf(fp_1,"#z_thickness: %d\n",z_thickness);
+    fprintf(fp_1,"#gradient transform half window size: %d\n",transform_half_window);
+    fprintf(fp_1,"#mean shift search window radius: %d\n",search_window_radius);
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
@@ -708,12 +708,12 @@ void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginA
         qDebug()<<"cannot open the file to save the landmark points.\n";
         return;
     }
-    fprintf(fp_1,"parameters: \n");
-    fprintf(fp_1,"background threshold: %d\n",bg_thr);
-    fprintf(fp_1,"connection type: %d\n",connectiontype);
-    fprintf(fp_1,"z_thickness: %d\n",z_thickness);
-    fprintf(fp_1,"gradient transform half window size: %d\n",transform_half_window);
-    fprintf(fp_1,"mean shift search window radius: %d\n",search_window_radius);
+    fprintf(fp_1,"#parameters: \n");
+    fprintf(fp_1,"#background threshold: %d\n",bg_thr);
+    fprintf(fp_1,"#connection type: %d\n",connectiontype);
+    fprintf(fp_1,"#z_thickness: %d\n",z_thickness);
+    fprintf(fp_1,"#gradient transform half window size: %d\n",transform_half_window);
+    fprintf(fp_1,"#mean shift search window radius: %d\n",search_window_radius);
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
@@ -817,8 +817,8 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
         qDebug()<<"cannot open the file to save the landmark points.\n";
         return;
     }
-    fprintf(fp_1,"parameters: \n");
-    fprintf(fp_1,"background threshold: %d\n",bg_thr);
+    fprintf(fp_1,"#parameters: \n");
+    fprintf(fp_1,"#background threshold: %d\n",bg_thr);
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
@@ -943,8 +943,8 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
         qDebug()<<"cannot open the file to save the landmark points.\n";
         return;
     }
-    fprintf(fp_1,"parameters: \n");
-    fprintf(fp_1,"mean shift search window radius: %d\n",windowradius);
+    fprintf(fp_1,"#parameters: \n");
+    fprintf(fp_1,"#mean shift search window radius: %d\n",windowradius);
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment,color_r,color_g,color_b\n");
 
     for (int i=0;i<LList_new_center.size(); i++)
