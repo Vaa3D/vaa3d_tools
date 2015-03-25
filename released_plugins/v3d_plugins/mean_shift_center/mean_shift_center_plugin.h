@@ -21,6 +21,8 @@ public:
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
+
+    //do func functions
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
     void mean_shift_center(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int methodcode);
     void all_method_comp(V3DPluginCallback2 *callback);
@@ -28,6 +30,9 @@ public:
                                       V3DPluginArgList & output);
     void gradient(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
                                      V3DPluginArgList & output);
+
+    void all_method_comp_func(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
+                                                 V3DPluginArgList & output);
 
     void load_image_marker(V3DPluginCallback2 & callback,const V3DPluginArgList & input,
                   unsigned char * & image1Dc_data,LandmarkList &LList,int &intype,V3DLONG sz_img[4]);

@@ -94,7 +94,7 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
     }
     else if(func_name==tr("all_method_comparison"))
     {
-
+        all_method_comp_func(callback,input,output);
     }
 	else if (func_name == tr("help"))
 	{
@@ -108,7 +108,176 @@ bool mean_shift_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, const V3DPluginArgList & input,
                                              V3DPluginArgList & output)
 {
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
+    if ((infiles.size()!=2))
+    {
+        qDebug()<<"ERROR: please provide image and marker file! "<<infiles.size();
+        return;
+    }
+    if (inparas.size()<0)
+    {
+        qDebug()<<"ERROR:parameter size needs to be >0";
+        return;
+    }
+
+    //load image and markers
+    image_data=0;
+    LList.clear();
+    load_image_marker(callback,input,image_data,LList,intype,sz_img);
+    mean_shift_fun fun_obj;
+    V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+    if(intype==1)
+    {
+      fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
+    }
+    else if (intype == 2) //V3D_UINT16;
+    {
+      fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
+      convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+    }
+    else if(intype == 4) //V3D_FLOAT32;
+    {
+      fun_obj.pushNewData<float>((float*)image_data, sz_img);
+      convert2UINT8((float*)image_data, image_data, size_tmp);
+    }
+    else
+    {
+      v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
+      return;
+    }
+
+    //check parameter
+    if (inparas.size()>5)
+    {
+        qDebug()<<"You have entered:"<<inparas.size()<< "parameters. The first five will be used\n";
+    }
+
+    qDebug()<<"checking parameters...";
+    int min_dim=MIN(sz_img[0],sz_img[1]);
+    if (sz_img[2]<min_dim) min_dim=sz_img[2];
+
+    int bg_thr=70;
+    int connectiontype=2;
+    int z_thickness=1;
+    int transform_half_window=MIN(40,min_dim/2);
+    int search_window_radius=15;
+
+    if (inparas.size()==0)
+        qDebug()<<"Default parameters will be used";
+    if (inparas.size()>=1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp>=0 && tmp<=255)
+        {
+            bg_thr=tmp;
+            qDebug()<<"background threshold is set to: "<<tmp;
+         }
+        else
+            qDebug()<<"parameter 'bg_thr' is not valid. Default value "<<bg_thr<<" will be used.";
+    }
+    if (inparas.size()>=2)
+    {
+        int tmp=atoi(inparas.at(1));
+        if (tmp>=1 && tmp<=3)
+        {
+            connectiontype=tmp;
+            qDebug()<<"connection type is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'connection type' is not valid. Default value "<<connectiontype<<" will be used.";
+    }
+    if (inparas.size()>=3)
+    {
+        int tmp=atoi(inparas.at(2));
+        if (tmp>=1 && tmp<=10)
+        {
+            z_thickness=tmp;
+            qDebug()<<"z_thickness is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'z_thickness' is not valid. Default value "<<z_thickness<<" will be used.";
+    }
+    if (inparas.size()>=4)
+    {
+        int tmp=atoi(inparas.at(3));
+        if (tmp>=10 && tmp<=min_dim)
+        {
+            transform_half_window=tmp;
+            qDebug()<<"parameter 'gradient distance transform halfwindow' is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'gradient distance transform halfwindowe' is not valid. Default value "<<transform_half_window<<" will be used.";
+    }
+
+    if (inparas.size()>=5)
+    {
+        int tmp=atoi(inparas.at(4));
+        if (tmp >=2 && tmp<=30)
+        {
+            search_window_radius=tmp;
+            qDebug()<<"mean shift search window radius' is set to: "<<tmp;
+        }
+        else
+            qDebug()<<"parameter 'mean shift search window radius' is not valid. Default value "<<search_window_radius<<" will be used.";
+    }
+
+    vector<V3DLONG> poss_landmark;
+    poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
+    LList_new_center.clear();
+    vector<float> mass_center;
+
+    for (int j=0;j<poss_landmark.size();j++)
+    {
+        //original landmark
+        LList[j].name="ori";
+        LList[j].color.r=255; LList[j].color.g=LList[j].color.b=0;
+        LList_new_center.append(LList.at(j));
+
+        //mean_shift
+        mass_center=fun_obj.mean_shift_center(poss_landmark[j],search_window_radius);
+        LocationSimple tmp(mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
+        tmp.color.r=170; tmp.color.g=0; tmp.color.b=255;
+        tmp.name="ms";
+        LList_new_center.append(tmp);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
+//                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ms","",170,0,255);
+
+        //mean_shift_constraints
+        mass_center=fun_obj.mean_shift_with_constraint(poss_landmark[j],search_window_radius);
+        LocationSimple tmp1(mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
+        tmp1.color.r=0; tmp1.color.g=170; tmp1.color.b=255;
+        tmp1.name="ms_c";
+        LList_new_center.append(tmp1);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
+//                mass_center[1]+1,mass_center[2]+1,0,1,"ms_c","",0,170,255);
+        //ray shoot
+        mass_center=fun_obj.ray_shoot_center(poss_landmark[j],bg_thr,j);
+        LocationSimple tmp2 (mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
+        tmp2.color.r=0; tmp2.color.g=170; tmp2.color.b=127;
+        tmp2.name="ray";
+        LList_new_center.append(tmp2);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
+//                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ray","",0,170,127);
+        //gradient
+        float *outimg1d=0;
+        mass_center=fun_obj.gradient_transform(outimg1d,poss_landmark[j],bg_thr,connectiontype,
+                                          z_thickness,transform_half_window,search_window_radius);
+        LocationSimple tmp3(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
+        tmp3.color.r=255; tmp3.color.g=255; tmp3.color.b=0;
+        tmp3.name="gradient";
+        LList_new_center.append(tmp3);
+        if (outimg1d!=0) {delete outimg1d;outimg1d=0;}
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
+//                mass_center[1]+1,mass_center[2]+1,0,1,"gradient","",255,255,0);
+    }
+    QString qs_input_image(infiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    write_marker(qs_output);
+    if (image_data!=0) {delete []image_data; image_data=0;}
 }
 
 void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
@@ -259,10 +428,9 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         return;
     poss_landmark.clear();
     poss_landmark=landMarkList2poss(LList, sz_img[0], sz_img[0]*sz_img[1]);
-
-    QString myfile="comparision.marker";
-    FILE * fp_open = fopen(myfile.toLatin1(), "w");
-    fprintf(fp_open,"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b\n");
+//    QString myfile="comparision.marker";
+//    FILE * fp_open = fopen(myfile.toLatin1(), "w");
+//    fprintf(fp_open,"##x,y,z,radius,shape,name,comment, color_r,color_g,color_b\n");
 
 
     for (int j=0;j<poss_landmark.size();j++)
@@ -278,8 +446,8 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         tmp.color.r=170; tmp.color.g=0; tmp.color.b=255;
         tmp.name="ms";
         LList_final.append(tmp);
-        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
-                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ms","",170,0,255);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
+//                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ms","",170,0,255);
 
         //mean_shift_constraints
         mass_center=mean_shift_obj.mean_shift_with_constraint(poss_landmark[j],ms_windowradius);
@@ -287,16 +455,16 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         tmp1.color.r=0; tmp1.color.g=170; tmp1.color.b=255;
         tmp1.name="ms_c";
         LList_final.append(tmp1);
-        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
-                mass_center[1]+1,mass_center[2]+1,0,1,"ms_c","",0,170,255);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
+//                mass_center[1]+1,mass_center[2]+1,0,1,"ms_c","",0,170,255);
         //ray shoot
         mass_center=mean_shift_obj.ray_shoot_center(poss_landmark[j],rs_bg_thr,j);
         LocationSimple tmp2 (mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
         tmp2.color.r=0; tmp2.color.g=170; tmp2.color.b=127;
         tmp2.name="ray";
         LList_final.append(tmp2);
-        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
-                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ray","",0,170,127);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1.0,
+//                mass_center[1]+1.0,mass_center[2]+1.0,0,1,"ray","",0,170,127);
         //gradient
         float *outimg1d=0;
         mass_center=mean_shift_obj.gradient_transform(outimg1d,poss_landmark[j],gt_bg_thr,connectiontype,
@@ -306,12 +474,12 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
         tmp3.name="gradient";
         LList_final.append(tmp3);
 
-        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
-                mass_center[1]+1,mass_center[2]+1,0,1,"gradient","",255,255,0);
+//        fprintf(fp_open,"%5.3f,%5.3f,%5.3f,%1d,%1d,%s,%s,%d,%d,%d\n",mass_center[0]+1,
+//                mass_center[1]+1,mass_center[2]+1,0,1,"gradient","",255,255,0);
 
     }
 
-    fclose(fp_open);
+    //fclose(fp_open);
     callback->setLandmark(curwin,LList_final);
     callback->updateImageWindow(curwin);
     //callback->open3DWindow(curwin);
@@ -558,7 +726,10 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
     {
         int tmp=atoi(inparas.at(0));
         if (tmp>=0 && tmp<=255)
-        bg_thr=tmp;
+        {
+            bg_thr=tmp;
+            qDebug()<<"background threshold is set to: "<<tmp;
+        }
         else
             v3d_msg("The parameter of window radius is not valid, the program will use default value of 15",0);
     }
@@ -637,7 +808,11 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     {
         int tmp=atoi(inparas.at(0));
         if (tmp>1 && tmp<=30)
-        windowradius=tmp;
+        {
+            windowradius=tmp;
+            qDebug()<<"mean shift search window radius' is set to: "<<tmp;
+        }
+
         else
             v3d_msg("The parameter of window radius is not valid, the program will use default value of 15",0);
     }
