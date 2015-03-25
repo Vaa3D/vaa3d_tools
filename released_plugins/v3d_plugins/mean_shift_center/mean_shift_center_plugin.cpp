@@ -862,8 +862,6 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
             tmp.name="ms";
             LList_new_center.append(tmp);
         }
-
-
     }
 
     qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
@@ -881,6 +879,7 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
 void mean_shift_plugin::write_marker(QString qs_output)
 {
+    qDebug()<<"writing marker";
     FILE * fp_1 = fopen(qs_output.toAscii(), "w");
     if (!fp_1)
     {
@@ -894,10 +893,11 @@ void mean_shift_plugin::write_marker(QString qs_output)
     {
         LocationSimple tmp=LList_new_center.at(i);
         fprintf(fp_1, "%lf,%lf,%lf,%ld,%ld,%s,%s,%d,%d,%d\n",
-        tmp.x, tmp.y, tmp.z,tmp.radius,tmp.shape,tmp.name,"",tmp.color.r,tmp.color.g,tmp.color.b);
+        tmp.x, tmp.y, tmp.z,tmp.radius,1,tmp.name,"",tmp.color.r,tmp.color.g,tmp.color.b);
     }
 
     fclose(fp_1);
+    qDebug()<<"marker finished";
 }
 
 QList <LocationSimple> mean_shift_plugin::readPosFile_usingMarkerCode(const char * posFile) //last update 090725
