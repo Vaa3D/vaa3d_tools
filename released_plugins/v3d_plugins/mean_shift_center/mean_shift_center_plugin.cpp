@@ -64,10 +64,10 @@ void mean_shift_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     }
     else{
     QMessageBox::about(0,"center_finder","The <b>center finder</b> provides several ways to find the center of mass.<p>"
-                       "<b>mean_shift </b>calculates the mean in a sphere around each of the user-input markers and shifts mean till the center converges.<br>"
+                       "<b>mean_shift </b>calculates the mean in a sphere around each of the user-input markers and shifts mean till the center converges.<p>"
                    "<b>mean_shift_with_constraint</b> adds two conditions to mean_shift. 1) The new center can only move to a location of "
-                   "higher intensity. 2) If the new mean is smaller than the previous mean, search window radius will decrease by one. <br>"
-                   "<b>ray shoot</b> casts 48 rays toward different angles from each of the marker to find the cell edge and then the geometric center.<br> "
+                   "higher intensity. 2) If the new mean is smaller than the previous mean, search window radius will decrease by one. <p>"
+                   "<b>ray shoot</b> casts 48 rays toward different angles from each of the marker to find the cell edge and then the geometric center.<p> "
                    "<b>gradient_distance_transform + mean_shift_with_constraints</b> first performs gradient distance transform in a cube around "
                    "each of the marker and then conducts mean shift with constraint on the area."
              "<p>For further questions, please contact Yujie Li at yujie.jade@gmail.com)<p>");
@@ -510,30 +510,7 @@ void mean_shift_plugin::load_image_marker(V3DPluginCallback2 & callback,const V3
             return;
         }
     }
-//        V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-//        if(intype==1)
-//        {
-//            fun_obj.pushNewData<unsigned char>((unsigned char*)image_data, sz_img);
-//        }
-//        else if (intype == 2) //V3D_UINT16;
-//        {
-//            fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
-//            convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
-//        }
-//        else if(intype == 4) //V3D_FLOAT32;
-//        {
-//            fun_obj.pushNewData<float>((float*)image1Dc_data, sz_img);
-//            convert2UINT8((float*)image_data, image_data, size_tmp);
-//        }
-//        else
-//        {
-//            v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.",0);
-//            return;
-//        }
-
-
-    if (qs_input_mark.isEmpty())
-        return;
+    if (qs_input_mark.isEmpty())  return;
     FILE * fp = fopen(qs_input_mark.toAscii(), "r");
     if (!fp)
     {
@@ -684,17 +661,24 @@ void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginA
 
     for (int j=0;j<poss_landmark.size();j++)
     {
+        //original landmark
+        LList[j].name="ori";
+        LList[j].color.r=255; LList[j].color.g=LList[j].color.b=0;
+        LList_new_center.append(LList.at(j));
+
         mass_center=fun_obj.gradient_transform(outimg1d,poss_landmark[j],bg_thr,connectiontype,
                                                 z_thickness,transform_half_window,search_window_radius);
-        LocationSimple tmp(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
-        LList_new_center.append(tmp);
+        LocationSimple tmp3(mass_center[0]+1.5,mass_center[1]+1.5,mass_center[2]+1.5);
+        tmp3.color.r=255; tmp3.color.g=255; tmp3.color.b=0;
+        tmp3.name="gradient";
+        LList_new_center.append(tmp3);
     }
     if (outimg1d!=0) {delete outimg1d;outimg1d=0;}
 
     qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
     //Write data in the file
     QString qs_input_image(infiles[0]);
-    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_gt_out.marker" : QString(outfiles[0]);
     write_marker(qs_output);
     if (image_data!=0) {delete []image_data; image_data=0;}
 }
@@ -767,15 +751,21 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
 
     for (int j=0;j<poss_landmark.size();j++)
     {
+        LList[j].name="ori";
+        LList[j].color.r=255; LList[j].color.g=LList[j].color.b=0;
+        LList_new_center.append(LList.at(j));
+
         mass_center=fun_obj.ray_shoot_center(poss_landmark[j],bg_thr,j);
-        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-        LList_new_center.append(tmp);
+        LocationSimple tmp2 (mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
+        tmp2.color.r=0; tmp2.color.g=170; tmp2.color.b=127;
+        tmp2.name="ray";
+        LList_new_center.append(tmp2);
     }
 
     qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
     //Write data in the file
     QString qs_input_image(infiles[0]);
-    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    QString qs_output = outfiles.empty() ? qs_input_image + "_rs_out.marker" : QString(outfiles[0]);
     write_marker(qs_output);
     if (image_data!=0) {delete []image_data; image_data=0;}
 }
@@ -850,18 +840,40 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
 
     for (int j=0;j<poss_landmark.size();j++)
     {
+        //append the original marker in LList_new_center
+        LList[j].name="ori";
+        LList[j].color.r=255; LList[j].color.g=LList[j].color.b=0;
+        LList_new_center.append(LList.at(j));
+
         if (methodcode==2)
-        mass_center=fun_obj.mean_shift_with_constraint(poss_landmark[j],windowradius);
+        {
+            mass_center=fun_obj.mean_shift_with_constraint(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1.0,mass_center[1]+1.0,mass_center[2]+1.0);
+            tmp.color.r=0; tmp.color.g=170; tmp.color.b=255;
+            tmp.name="ms_c";
+            LList_new_center.append(tmp);
+        }
+
         else
-        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
-        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-        LList_new_center.append(tmp);
+        {
+            mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            tmp.color.r=170; tmp.color.g=0; tmp.color.b=255;
+            tmp.name="ms";
+            LList_new_center.append(tmp);
+        }
+
+
     }
 
     qDebug()<<"LList_new_center_size:"<<LList_new_center.size();
     //Write data in the file
     QString qs_input_image(infiles[0]);
-    QString qs_output = outfiles.empty() ? qs_input_image + "_out.marker" : QString(outfiles[0]);
+    QString qs_output;
+    if (methodcode==2)
+        qs_output = outfiles.empty() ? qs_input_image + "_ms_c_out.marker" : QString(outfiles[0]);
+    else
+        qs_output = outfiles.empty() ? qs_input_image + "_ms_out.marker" : QString(outfiles[0]);
     write_marker(qs_output);
     if (image_data!=0) {delete []image_data; image_data=0;}
 
@@ -877,10 +889,11 @@ void mean_shift_plugin::write_marker(QString qs_output)
     }
 
     fprintf(fp_1, "#x, y, z, radius, shape, name, comment\n");
+
     for (int i=0;i<LList_new_center.size(); i++)
     {
-        fprintf(fp_1, "%ld,%ld,%ld,%ld,%ld,%s,%s\n",
-                V3DLONG(LList_new_center.at(i).x), V3DLONG(LList_new_center.at(i).y), V3DLONG(LList_new_center.at(i).z),
+        fprintf(fp_1, "%lf,%lf,%lf,%ld,%ld,%s,%s\n",
+                LList_new_center.at(i).x, LList_new_center.at(i).y, LList_new_center.at(i).z,
                 V3DLONG(LList_new_center.at(i).radius), V3DLONG(LList_new_center.at(i).shape),
                 LList_new_center.at(i).name.c_str(), LList_new_center.at(i).comments.c_str());
     }
