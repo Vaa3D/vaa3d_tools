@@ -301,6 +301,7 @@ void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, cons
 
     fclose(fp_1);
     if (image_data!=0) {delete []image_data; image_data=0;}
+    qDebug()<<"computation complete. Marker file generated.";
 }
 
 void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)

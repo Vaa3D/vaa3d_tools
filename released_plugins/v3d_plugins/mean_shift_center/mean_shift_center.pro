@@ -11,9 +11,9 @@ HEADERS	+= \
     mean_shift_extr_template.h \
     ray_shoot_dialog.h \
     ../gsdt/main/heap.h \
-    ../gsdt/main/fastmarching_dt.h \
     mean_shift_fun.h \
-    gradient_transform_dialog.h
+    gradient_transform_dialog.h \
+    fastmarching_dt.h
 
 SOURCES	+= \
     mean_shift_dialog.cpp \

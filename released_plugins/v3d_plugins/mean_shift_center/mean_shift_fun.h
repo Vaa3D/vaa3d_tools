@@ -6,6 +6,7 @@
 #include <math.h>
 #include "mean_shift_extr_template.h"
 #include "basic_surf_objs.h"
+#include "fastmarching_dt.h"
 
 #define MAX(a,b) ((a)>(b)?(a):(b))
 #define MIN(a,b) ((a)<(b)?(a):(b))

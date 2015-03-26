@@ -1,5 +1,4 @@
 #include "mean_shift_fun.h"
-#include "fastmarching_dt.h"
 
 mean_shift_fun::mean_shift_fun()
 {
@@ -61,7 +60,7 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
     float bound[48][3];
     coord=pos2xyz(ind, y_offset, z_offset);
     x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
-    qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z;
+    //qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z;
 
     dx_sum=dy_sum=dz_sum=0;
     for (int k=0;k<dir_vec_size;k++)
@@ -114,20 +113,20 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                 {
                     y_new=y_prev+dy;
                     z_new=z_prev+dz;
-                    qDebug()<<"x touches edge";
+                    //qDebug()<<"x touches edge";
                     break;
                 }
                 y_new=y_prev+dy;
                 if (y_new<0 || y_new>sz_image[1]-1)
                 {
                     z_new=z_prev+dz;
-                    qDebug()<<"y touches edge";
+                    //qDebug()<<"y touches edge";
                     break;
                 }
                 z_new=z_prev+dz;
                 if (z_new<0 || z_new>sz_image[2]-1)
                 {
-                    qDebug()<<"z touches edge";
+                    //qDebug()<<"z touches edge";
                     break;
                 }
                 pos=xyz2pos(x_new+0.5,y_new+0.5,z_new+0.5,y_offset,z_offset); //float to int
@@ -153,7 +152,7 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                     if ((intensity_vec[id]<intensity_vec[id-1])&&(intensity_vec[id]<=intensity_vec[id-2]-9)
                       &&intensity_vec[id]<intensity_vec[id+1]&&intensity_vec[id]<=intensity_vec[id+2]-9)
                     {
-                        qDebug()<<"reversed order: "<<id;
+                        //qDebug()<<"reversed order: "<<id;
                         bound[i][0]=x+id*dx;
                         bound[i][1]=y+id*dy;
                         bound[i][2]=z+id*dz;
@@ -210,8 +209,8 @@ vector<float> mean_shift_fun::ray_shoot_center(V3DLONG ind,int bg_thr,int j)
                     +(center_float[2]-z)*(center_float[2]-z);
         center_dis=sqrt(tmp_dis);
 
-        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];;
-        qDebug()<<"center distance:"<<center_dis;
+        //qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];;
+        //qDebug()<<"center distance:"<<center_dis;
 
         //fprintf(fp1,"center distance: %5.3f\n",center_dis);
         x=center_float[0]; y=center_float[1]; z=center_float[2];
@@ -322,7 +321,7 @@ vector<float> mean_shift_fun::gradient_transform(float *&outimg1d,V3DLONG ind,
         min_val = MIN(min_val, phi[i]);
         max_val = MAX(max_val, phi[i]);
     }
-    cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
+    //cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
     max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
 
     for(V3DLONG i = 0; i < sz0*sz1*sz2; i++)
@@ -415,8 +414,8 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
                  }
              }
          }
-        qDebug()<<"windowradius:"<<windowradius;
-        qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+        //qDebug()<<"windowradius:"<<windowradius;
+        //qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
 
         center_float[0]=total_x/sum_v;
         center_float[1]=total_y/sum_v;
@@ -425,7 +424,7 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
         if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
         {
 
-            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move");
+            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move",0);
             center_float[0]=x;
             center_float[1]=y;
             center_float[2]=z;
@@ -440,7 +439,7 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
         {
             if (data1Dc_float[tmp_ind+channel*page_size]<data1Dc_float[prev_ind+channel*page_size]&& windowradius>=2) // && windowradius>2)
             {
-            qDebug()<<methodcode<<" window too large"<<windowradius;
+            //qDebug()<<methodcode<<" window too large"<<windowradius;
             windowradius--;
             center_dis=1;
             continue;
@@ -451,8 +450,8 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
                     +(center_float[2]-z)*(center_float[2]-z);
         center_dis=sqrt(tmp_1);
 
-        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
-        qDebug()<<"center distance:"<<center_dis;
+        //qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
+        //qDebug()<<"center distance:"<<center_dis;
         x=center_float[0]; y=center_float[1]; z=center_float[2];
     }
 
