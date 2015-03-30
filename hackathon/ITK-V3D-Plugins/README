@@ -6,7 +6,16 @@ This is an Open Source project, distributed under the Apache 2.0 License.
 
 For details, please see the LICENSE file.
 
-<following by by Hanchuan Peng, 2010-06-01>
+******************************************************
+CMake is required  to build all the V3D-ITK plugins.
+
+You can run the build.sh script to build ITK and V3d-ITK plugins at once, or you could
+try do the builds separately by yourself following the steps listed below.
+
+There might be issues when you compile your own versions of ITK. Make sure you use
+the proper CXX_FLAGs for example "-stdlib=libstdc++"  to be compatible with Vaa3D.
+
+******************************************************
 When run ccmake, should use this folder as the source root. That is, make
 a folder outside this folder, say "build", enter it, and run the command
 

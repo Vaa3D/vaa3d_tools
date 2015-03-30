@@ -18,23 +18,6 @@ endfunction(configure_v3d_plugin)
 
 
 
-#
-#  Function equivalent to CONFIGURE_V3D_PLUGIN but for
-#  plugins whose .h is trivial and can be generated
-#  via C macros.
-#
-function(CONFIGURE_V3D_PLUGIN_SIMPLE PLUGIN_NAME)
-
-include_directories( ${CMAKE_SOURCE_DIR} )
-
-set(QtITK_SRCS ${PLUGIN_NAME}.cxx )
-
-configure_v3d_plugin_common(${PLUGIN_NAME})
-
-endfunction(CONFIGURE_V3D_PLUGIN_SIMPLE)
-
-
-
 
 function(configure_v3d_plugin_common PLUGIN_NAME)
 
@@ -45,14 +28,7 @@ endif()
 if(TARGET PluginPrerequisites)
     add_dependencies(${PLUGIN_NAME} PluginPrerequisites)
 endif()
-target_link_libraries(${PLUGIN_NAME} ${QT_LIBRARIES} )
-# CMB Nov-03-2010
-# I apologize if I am doing this wrong...
-# Several plugins yield link errors for method v3d_message without this
-# link to the V3DInterface library
-if (TARGET V3DInterface)
-  target_link_libraries(${PLUGIN_NAME} V3DInterface)
-endif()
+target_link_libraries(${PLUGIN_NAME} V3DITKCommon)
 
 if(NOT PLUGIN_DIRECTORY_NAME)
   set(PLUGIN_DIRECTORY_NAME ${PLUGIN_NAME})
