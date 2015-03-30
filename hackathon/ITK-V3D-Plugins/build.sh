@@ -13,8 +13,7 @@ V3D_SOURCE_DIR_FILE=V3D_Source_dir.tmp
 V3D_BINARY_DIR=
 V3D_BASIC_C_FUN_SOURCE_DIR=
 PLUGINS_BUILD_DIR=plugins_build
-ITK_SOURCE_DIR=InsightToolkit-4.1.0
-ITK_SOURCE_GZ=InsightToolkit-4.1.0.tar.gz
+ITK_SOURCE_DIR=ITK
 ITK_PLUGINS_DIR=
 
 SYSTEM_NAME=`uname`
@@ -28,8 +27,15 @@ read build_ITK
 build_itk_library()
 {
 	if [ ! -d $ITK_SOURCE_DIR ];then
-		tar zxvf $ITK_SOURCE_GZ
+     echo "git clone git://itk.org/ITK.git"
+     git clone git://itk.org/ITK.git
 	fi
+  if [[ $? -ne 0 ]];then
+     git checkout v4.7.0
+  else
+    echo "Error running git checkout for ITK. Please check your ITK git repo: ITK"
+  fi
+
 	if [ -d $ITK_BUILD_DIR ]; then
 		rm -rf $ITK_BUILD_DIR
 	fi
@@ -37,7 +43,7 @@ build_itk_library()
 	ITK_DIR=`pwd`
 	echo $ITK_DIR
 	if [ $SYSTEM_NAME = 'Darwin' ]; then
-		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-fPIC -O3" -DCMAKE_C_FLAGS_RELEASE="-fPIC -O3" ../$ITK_SOURCE_DIR
+		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-fPIC -O3 -stdlib=libstdc++" -DCMAKE_C_FLAGS_RELEASE="-fPIC -O3" ../$ITK_SOURCE_DIR
 	elif [ $SYSTEM_NAME = 'Linux' -a $SYSTEM_TYPE = 'x86_64' ]; then
 		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-fPIC -O3" -DCMAKE_C_FLAGS_RELEASE="-fPIC -O3" ../$ITK_SOURCE_DIR
 	else
