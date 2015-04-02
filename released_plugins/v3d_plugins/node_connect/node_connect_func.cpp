@@ -96,7 +96,6 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
             pt->childNum = 0;
             tree.push_back(pt);
         }
-        //v3d_msg("beebeep");
 
         Point* parent_info;
         Point* child_info;
@@ -108,7 +107,6 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
         bool parent_val = false;
 
 
-        //bool child_val = false;
         //v3d_msg(QString("tmp_list.size() = %2").arg(tmp_list.size()));
 
         for (V3DLONG j=0; j<tmp_list.size(); j+=2) //iterates through every other marker
@@ -205,24 +203,6 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
             parent_val = false; //resets so that parent_info can be assigned something new
 
         }
-
-        /*
-        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
-        {
-                NeuronSWC s_old = nt.listNeuron[i];
-                Point* pt_old = new Point;
-                pt_old->n = s_old.n;
-                pt_old->x = s_old.x;
-                pt_old->y = s_old.y;
-                pt_old->z = s_old.z;
-                pt_old->r = s_old.r;
-                pt_old ->type = s_old.type;
-                pt_old->p = s_old.parent;
-                pt_old->childNum = 0;
-                new_result.listNeuron.push_back(pt_old);
-        }*/
-
-
 
         for (V3DLONG i=0;i<tree_add.size();i++) // NEED THIS FOR LOOP EVENTUALLY
             {
