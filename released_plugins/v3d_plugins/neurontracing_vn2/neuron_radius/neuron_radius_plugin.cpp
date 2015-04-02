@@ -155,6 +155,64 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		if(inimg1d){delete [] inimg1d; inimg1d = 0;}
 		if(in_sz){delete [] in_sz; in_sz = 0;}
 	}
+
+    if (func_name == tr("neuron_radius_2D"))
+    {
+        if(infiles.size() != 2 && infiles.size() != 3)
+        {
+            cerr<<"Invalid input"<<endl;
+            return false;
+        }
+        string inimg_file = infiles[0];
+        string inswc_file = infiles[1];
+        string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
+
+        double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : 40;
+        bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
+
+        cout<<"inimg_file = "<<inimg_file<<endl;
+        cout<<"inswc_file = "<<inswc_file<<endl;
+        cout<<"outswc_file = "<<outswc_file<<endl;
+        cout<<"bkg_thresh = "<<bkg_thresh<<endl;
+
+        cout<<"is2d = "<< (int)is_2d <<endl;
+
+        unsigned char * inimg1d = 0;
+        V3DLONG * in_sz = 0;
+        int datatype;
+        if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
+        vector<MyMarker*> inswc = readSWC_file(inswc_file);
+        vector<double> z_location;
+
+        vector<MyMarker*> tempswc;
+        for(V3DLONG i = 0; i <inswc.size(); i++)
+        {
+            z_location.push_back(inswc[i]->z);
+            inswc[i]->z = 0;
+            tempswc.push_back(inswc[i]);
+        }
+
+        if(inswc.empty()) return false;
+        for(int i = 0; i < tempswc.size(); i++)
+        {
+            MyMarker * marker = tempswc[i];
+            if(is_2d)
+                marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh);
+            else
+                marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh);
+
+            //printf("2d=%5.3f  \t 3d=%5.3f\n", markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh),
+            //       markerRadius(inimg1d, in_sz, *marker, bkg_thresh));
+
+            tempswc[i]->z = z_location[i];
+        }
+        saveSWC_file(outswc_file, tempswc);
+        cout<<"The output swc is saved to "<<outswc_file<<endl;
+        for(int i = 0; i < inswc.size(); i++) delete inswc[i];
+        if(inimg1d){delete [] inimg1d; inimg1d = 0;}
+        if(in_sz){delete [] in_sz; in_sz = 0;}
+    }
 	else //if (func_name == tr("help"))
 	{
 		cout<<"v3d -x <plugin_dll> -f neuron_radius -i <inimg_file> <inswc_file> -p <threshold> [<is2d>]"

@@ -112,7 +112,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         printf("inmarker_file    If no input marker file, please set this para to NULL and it will detect soma automatically. \n"
                "                 When the file is set, then the first marker is used as root/soma.\n");
         printf("channel          Data channel for tracing. Start from 0 (default 0).\n");
-        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+        printf("bkg_thresh       Default 10 (is specified as AUTO then auto-thresolding)\n");
 
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
         printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 3D estimation.)\n");
@@ -129,7 +129,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         printf("inmarker_file    If no input marker file, please set this para to NULL and it will detect soma automatically. \n"
                "                 When the file is set, then the first marker is used as root/soma.\n");
         printf("channel          Data channel for tracing. Start from 0 (default 0).\n");
-        printf("bkg_thresh       Default -1 (-1 is for auto-thresholding, otherwise the threshold specified by a user will be used.\n");
+        printf("bkg_thresh       Default AUTO (AUTO is for auto-thresholding), otherwise the threshold specified by a user will be used.\n");
         
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
         printf("outswc_file      If not be specified, will be named automatically based on the input image file name.\n");

@@ -651,7 +651,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     if(!outfiles.empty()) outswc_file = outfiles[0];
     //try to use as much as the default value in the PARA_APP2 constructor as possible
     channel = (paras.size() >= k+1) ? atoi(paras[k]) : channel;  k++;//0;
-    bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : bkg_thresh; k++;// 30;
+    bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : bkg_thresh; if(bkg_thresh == atoi("AUTO")) bkg_thresh = -1;k++;// 30;
     b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : b_256cube; k++;// true
     b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : b_RadiusFrom2D; k++;// true
     is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : is_gsdt; k++;// true
