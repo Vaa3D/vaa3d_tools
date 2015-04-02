@@ -68,6 +68,7 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
     //QList<ImageMarker> tmp_list;
     //NeuronTree result = nt;
     NeuronTree new_result;
+    new_result=nt;
 
 
 
@@ -79,6 +80,7 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
     else //run the major part of the plugin
     {
         Tree tree;
+        Tree tree_add;
 
         for (V3DLONG i=0;i<nt.listNeuron.size();i++) //gets swc file input
         {
@@ -199,15 +201,34 @@ int connect_swc(V3DPluginCallback2 &callback, QList<ImageMarker> tmp_list)
             //v3d_msg(QString("parent: %1, %2, %3,      %4").arg(child_info->x).arg(child_info->y).arg(child_info->z).arg(child_info->p));
             //v3d_msg(QString("parent: %1, %2, %3,      %4").arg(newpoint->x).arg(newpoint->y).arg(newpoint->z).arg(parent_info->p));
 
-            tree.push_back(newpoint);
+            tree_add.push_back(newpoint);
             parent_val = false; //resets so that parent_info can be assigned something new
 
         }
-        for (V3DLONG i=0;i<tree.size();i++) // NEED THIS FOR LOOP EVENTUALLY
+
+        /*
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+                NeuronSWC s_old = nt.listNeuron[i];
+                Point* pt_old = new Point;
+                pt_old->n = s_old.n;
+                pt_old->x = s_old.x;
+                pt_old->y = s_old.y;
+                pt_old->z = s_old.z;
+                pt_old->r = s_old.r;
+                pt_old ->type = s_old.type;
+                pt_old->p = s_old.parent;
+                pt_old->childNum = 0;
+                new_result.listNeuron.push_back(pt_old);
+        }*/
+
+
+
+        for (V3DLONG i=0;i<tree_add.size();i++) // NEED THIS FOR LOOP EVENTUALLY
             {
 
                 NeuronSWC s_new;
-                Point* p3 = tree[i];
+                Point* p3 = tree_add[i];
                 s_new.n = p3->n; //i+1;
                 s_new.pn = p3->p;
                 //if (p3->p==NULL) s_new.pn = -1;
