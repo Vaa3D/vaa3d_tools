@@ -14,6 +14,7 @@
 #include "performance_timer.h"
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
+#define _TESTFLAG 1
 
 int COLOR_ACTIVE0=4;
 int COLOR_ACTIVE1=5;
@@ -81,14 +82,14 @@ void NeuronMatchOnlyDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
     gridLayout->addWidget(label_5,11,3,1,2);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    QLabel* label_6 = new QLabel("fragment filter (0=keep all): ");
     gridLayout->addWidget(label_6,12,0,1,2);
     gridLayout->addWidget(spin_segthr,12,2,1,1);
     QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
     gridLayout->addWidget(label_61,12,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_maxcnum,12,5,1,1);
     gridLayout->addWidget(check_spine,13,0,1,2);
-    QLabel* label_7 = new QLabel("point #:");
+    QLabel* label_7 = new QLabel("segment point #:");
     gridLayout->addWidget(label_7,14,0,1,1,Qt::AlignRight);
     gridLayout->addWidget(spin_spineLen,14,1,1,1);
     QLabel* label_8 = new QLabel("turning angle:");
@@ -294,11 +295,11 @@ void NeuronLiveMatchDialog::creat()
     QLabel* label_62 = new QLabel("small gap filter (gap size): ");
     groupLayout->addWidget(label_62,13,3,1,2,Qt::AlignRight);
     groupLayout->addWidget(spin_gapthr,13,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    QLabel* label_6 = new QLabel("fragment filter (0=keep all): ");
     groupLayout->addWidget(label_6,14,0,1,2,Qt::AlignRight);
     groupLayout->addWidget(spin_segthr,14,2,1,1);
     groupLayout->addWidget(check_spine,15,0,1,2);
-    QLabel* label_7 = new QLabel("point #:");
+    QLabel* label_7 = new QLabel("segment point #:");
     groupLayout->addWidget(label_7,16,0,1,1,Qt::AlignRight);
     groupLayout->addWidget(spin_spineLen,16,1,1,1);
     QLabel* label_8 = new QLabel("turning angle:");
@@ -457,10 +458,10 @@ void NeuronLiveMatchDialog::match()
     //init clique and candidate
     if(group_marker->isChecked()){ //search for border tips
         mList->clear(); //clean up
-        matchfunc->init(); //to-do update gap threshold part
+        matchfunc->init();
     }else{//use exsiting marker as border tips for match
-        matchfunc->initNeuronComponents();
         matchfunc->init(mList);
+        //matchfunc->initNeuronComponents();
     }
 
     //global match
@@ -517,9 +518,9 @@ void NeuronLiveMatchDialog::updatematchlist()
         mmatch1.append(mm1[i]);
 
         //check loop or sititched
-        if(ntList->at(0).listNeuron.at(pmatch0.last()).x==ntList->at(1).listNeuron.at(pmatch1.last()).x &&
-                ntList->at(0).listNeuron.at(pmatch0.last()).y==ntList->at(1).listNeuron.at(pmatch1.last()).y &&
-                ntList->at(0).listNeuron.at(pmatch0.last()).z==ntList->at(1).listNeuron.at(pmatch1.last()).z)
+        if(fabs(ntList->at(0).listNeuron.at(pmatch0.last()).x-ntList->at(1).listNeuron.at(pmatch1.last()).x)<1 &&
+                fabs(ntList->at(0).listNeuron.at(pmatch0.last()).y-ntList->at(1).listNeuron.at(pmatch1.last()).y)<1 &&
+                fabs(ntList->at(0).listNeuron.at(pmatch0.last()).z-ntList->at(1).listNeuron.at(pmatch1.last()).z)<1)
             stitchmask.append(1);
         else if(matchfunc->checkloop(pmatch0.last(), pmatch1.last()))
             stitchmask.append(-1); //cannot stitch
@@ -550,23 +551,23 @@ void NeuronLiveMatchDialog::highlight_pair()
         int info[4];
         LocationSimple * SP = 0;
 
+        //update location of all markers
+        for(int i=0; i<mList->size(); i++){
+            //update location
+            SP=(LocationSimple*)&(mList->at(i));
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(info[0]).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(info[0]).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(info[0]).listNeuron.at(info[1]).z;
+        }
+
         //reset cur_pair
         if(cur_pair>=0 && cur_pair<mmatch0.size()){
             SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
             SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
-            //update location
-            get_marker_info(*SP, info);
-            SP->x = ntList->at(0).listNeuron.at(info[1]).x;
-            SP->y = ntList->at(0).listNeuron.at(info[1]).y;
-            SP->z = ntList->at(0).listNeuron.at(info[1]).z;
 
             SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
             SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
-            //update location
-            get_marker_info(*SP, info);
-            SP->x = ntList->at(1).listNeuron.at(info[1]).x;
-            SP->y = ntList->at(1).listNeuron.at(info[1]).y;
-            SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
             if(stitchmask.at(cur_pair)>0){
                 matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
@@ -582,24 +583,14 @@ void NeuronLiveMatchDialog::highlight_pair()
         //highlight new pair
         SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
         SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
-        //update location
-        get_marker_info(*SP, info);
-        SP->x = ntList->at(0).listNeuron.at(info[1]).x;
-        SP->y = ntList->at(0).listNeuron.at(info[1]).y;
-        SP->z = ntList->at(0).listNeuron.at(info[1]).z;
 
         SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
         SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
-        //update location
-        get_marker_info(*SP, info);
-        SP->x = ntList->at(1).listNeuron.at(info[1]).x;
-        SP->y = ntList->at(1).listNeuron.at(info[1]).y;
-        SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
-        if(stitchmask.at(cur_pair)<=0){
+        //if(stitchmask.at(cur_pair)<=0){
             matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ACTIVE1);
             matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ACTIVE0);
-        }
+        //}
 
         updateview();
     }
@@ -616,11 +607,11 @@ void NeuronLiveMatchDialog::change_pair(int idx)
 
 void NeuronLiveMatchDialog::manualadd()
 {
+    int info[4];
+    LocationSimple * SP = 0;
+
     //recolor corrent one
     if(cb_pair->count()>0){
-        int info[4];
-        LocationSimple * SP = 0;
-
         //reset cur_pair
         if(cur_pair>=0 && cur_pair<mmatch0.size()){
             SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
@@ -657,6 +648,25 @@ void NeuronLiveMatchDialog::manualadd()
     dialog.exec();
 
     updatematchlist();
+
+    //recolor markers
+    for(int i=0; i<mList->size(); i++){
+        SP=(LocationSimple*)&(mList->at(i));
+        get_marker_info(*SP, info);
+        if(info[0]==0){
+            if(info[2]>=0){
+                SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+            }else{
+                SP->color.r = 128; SP->color.g = 0; SP->color.b = 128;
+            }
+        }else{
+            if(info[2]>=0){
+                SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+            }else{
+                SP->color.r = 0; SP->color.g = 128; SP->color.b = 128;
+            }
+        }
+    }
 
     if(cb_pair->count()>0)
         cb_pair->setCurrentIndex(cb_pair->count()-1);
@@ -992,7 +1002,7 @@ void NeuronMatchDialog::creat()
     QLabel* label_5 = new QLabel("Max distance to match triangles: ");
     gridLayout->addWidget(label_5,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
-    QLabel* label_6 = new QLabel("small segment filter (0=keep all): ");
+    QLabel* label_6 = new QLabel("fragment filter (0=keep all): ");
     gridLayout->addWidget(label_6,12,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_segthr,12,2,1,1);
     QLabel* label_61 = new QLabel("Max number of triangles (smaller, faster): ");
@@ -1002,7 +1012,7 @@ void NeuronMatchDialog::creat()
     gridLayout->addWidget(label_62,13,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_gapthr,13,2,1,1);
     gridLayout->addWidget(check_spine,14,0,1,2);
-    QLabel* label_7 = new QLabel("point #:");
+    QLabel* label_7 = new QLabel("segment point #:");
     gridLayout->addWidget(label_7,15,0,1,1,Qt::AlignRight);
     gridLayout->addWidget(spin_spineLen,15,1,1,1);
     QLabel* label_8 = new QLabel("turning angle:");
@@ -1682,6 +1692,13 @@ void neuron_match_clique::globalmatch()
         //search for best unconflict groups of matched points
         double better_shift_x=0,better_shift_y=0,better_shift_z=0,better_angle=0,better_cent_x=0,better_cent_y=0,better_cent_z=0;
 
+        //edgeMask[i][j]==1 if cand0[i] and cand1[j] has been paired as initial
+        vector<vector<int> > edgeMask;
+        edgeMask.resize(candID0.size());
+        for(int tmpi=0; tmpi<candID0.size(); tmpi++){
+            edgeMask[tmpi].resize(candID1.size(), 0);
+        }
+
         multimap<int, QVector<int> , std::greater<int> >::iterator iter_conflict=rankedCliqueMatch.begin();
         //try 10 times, accept best one if no better one can be found with current trial
         for(int trial=0; trial<candID0.size()+candID1.size(); trial++){
@@ -1697,61 +1714,27 @@ void neuron_match_clique::globalmatch()
             tmpmatch1.append(cliqueList1.at(c1).idx[1]);
             tmpmatch1.append(cliqueList1.at(c1).idx[2]);
             iter_conflict++;
-    //This method will push inconflict matching point based on clique match as much as possible first.
-    //Marked this method because it will be unstable and cause error result
-    //        int reachConflict = 0; //not reached
-    //        for(multimap<int, QVector<int> , std::greater<int> >::iterator iter_cpair=rankedCliqueMatch.begin(); iter_cpair != rankedCliqueMatch.end(); iter_cpair++){
-    //            if(iter_cpair == iter_conflict){
-    //                reachConflict = 1; //reached, but no new confliction so far
-    //                continue;
-    //            }
-    //            c0=iter_cpair->second.at(0);
-    //            c1=iter_cpair->second.at(1);
-    //            //check confliction
-    //            bool conflict = false;
-    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
-    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[0])) != cliqueList1.at(c1).idx[0])
-    //                    conflict = true;
-    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[0])){
-    //                conflict = true;
-    //            }
-    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
-    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[1])) != cliqueList1.at(c1).idx[1])
-    //                    conflict = true;
-    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[1])){
-    //                conflict = true;
-    //            }
-    //            if(!conflict && tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
-    //                if(tmpmatch1.at(tmpmatch0.indexOf(cliqueList0.at(c0).idx[2])) != cliqueList1.at(c1).idx[2])
-    //                    conflict = true;
-    //            }else if(!conflict && tmpmatch1.contains(cliqueList1.at(c1).idx[2])){
-    //                conflict = true;
-    //            }
-    //            if(!conflict){
-    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[0])){
-    //                    tmpmatch0.append(cliqueList0.at(c0).idx[0]);
-    //                    tmpmatch1.append(cliqueList1.at(c1).idx[0]);
-    //                }
-    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[1])){
-    //                    tmpmatch0.append(cliqueList0.at(c0).idx[1]);
-    //                    tmpmatch1.append(cliqueList1.at(c1).idx[1]);
-    //                }
-    //                if(!tmpmatch0.contains(cliqueList0.at(c0).idx[2])){
-    //                    tmpmatch0.append(cliqueList0.at(c0).idx[2]);
-    //                    tmpmatch1.append(cliqueList1.at(c1).idx[2]);
-    //                }
-    //            }
-    //            if(conflict && reachConflict == 1){
-    //                iter_conflict = iter_cpair;
-    //                reachConflict = 2; //reached and new one has been identified
-    //            }
-    //        }
-//            cout<<"matched points: "<<trial<<":";
+
+            //check if any pair of the edges has been used as initial
+            if((edgeMask[tmpmatch0.at(0)][tmpmatch1.at(0)] +
+                    edgeMask[tmpmatch0.at(1)][tmpmatch1.at(1)] +
+                    edgeMask[tmpmatch0.at(2)][tmpmatch1.at(2)]) > 1){
+                trial--;
+                continue;
+            }
+            edgeMask[tmpmatch0.at(0)][tmpmatch1.at(0)]=1;
+            edgeMask[tmpmatch0.at(1)][tmpmatch1.at(1)]=1;
+            edgeMask[tmpmatch0.at(2)][tmpmatch1.at(2)]=1;
+
+            if(_TESTFLAG)
+                cout<<"matched points: "<<trial<<": nt0:"<<tmpmatch0.at(0)<<":"<<tmpmatch0.at(1)<<":"<<tmpmatch0.at(2)<<";"
+                   <<"nt1:"<<tmpmatch1.at(0)<<":"<<tmpmatch1.at(1)<<":"<<tmpmatch1.at(2)<<"; match:";
 
             //perform affine transform
             //double tmpEnergy=-1;
             while(1){
-//                cout<<":"<<tmpmatch0.size();
+                if(_TESTFLAG)
+                    cout<<":"<<tmpmatch0.size();
 
                 double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
                 if(direction==0) tmp_shift_x=-1;
@@ -1789,7 +1772,8 @@ void neuron_match_clique::globalmatch()
                     break;
                 }
             }
-//            cout<<endl;
+            if(_TESTFLAG)
+                cout<<endl;
 
             if(tmpmatch0.size()>bestEnergy){
             //if(tmpEnergy>bestEnergy){
@@ -1851,6 +1835,7 @@ void neuron_match_clique::init()
     qDebug()<<"search candidates";
     initNeuronAndCandidate(*nt0,ng0,neuronType0,candID0,candcoord0,canddir0,canddircoord0,components0,candcomponents0,parent0,1);
     initNeuronAndCandidate(*nt1,ng1,neuronType1,candID1,candcoord1,canddir1,canddircoord1,components1,candcomponents1,parent1,-1);
+
     //adjust component id of nt1
     int ccmax=0;
     for(int i=0; i<components0.size(); i++){
@@ -1908,6 +1893,8 @@ void neuron_match_clique::init(LandmarkList* mList)
         shift_z=quickMoveNeuron(nt0, candID0, nt1, candID1, direction);
 
     midplane=getNeuronTreeMidplane((*nt0), (*nt1), direction);
+
+    this->initNeuronComponents();
 
     //update candidates
     qDebug()<<"search candidates";
@@ -2080,6 +2067,10 @@ void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
         S0.color.r = 255; S0.color.g = 0; S0.color.b = 0;
         S0.name = QString::number(idx++).toStdString();
         QString c0 = "0 "+QString::number(candID0.at(aa))+" "+QString::number(idx);
+
+        if(_TESTFLAG) //for test
+            c0 = c0 + " " + QString::number(neuronType0.at(candID0.at(aa))) + " " + QString::number(aa);
+
         S0.comments = c0.toStdString();
         mList->append(S0);
 
@@ -2091,6 +2082,10 @@ void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
         S1.color.r = 0; S1.color.g = 255; S1.color.b = 0;
         S1.name = QString::number(idx++).toStdString();
         QString c1 = "1 "+QString::number(candID1.at(bb))+" "+QString::number(idx-2);
+
+        if(_TESTFLAG) //for test
+            c1 = c1 + " " + QString::number(neuronType1.at(candID1.at(bb))) + " " + QString::number(bb);
+
         S1.comments = c1.toStdString();
         mList->append(S1);
     }
@@ -2102,6 +2097,10 @@ void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
                 nt0_stitch->listNeuron[candID0.at(i)].z);
         S.name = QString::number(idx++).toStdString();
         QString ctmp = "0 "+QString::number(candID0.at(i))+" -1 ";
+
+        if(_TESTFLAG) //for test
+            ctmp = ctmp + " " + QString::number(neuronType0.at(candID0.at(i))) + " " + QString::number(i);
+
         S.comments = ctmp.toStdString();
         S.color.r = 128; S.color.g = 0; S.color.b = 128;
         mList->append(S);
@@ -2113,6 +2112,10 @@ void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
                 nt1_stitch->listNeuron[candID1.at(i)].z);
         S.name = QString::number(idx++).toStdString();
         QString ctmp = "1 "+QString::number(candID1.at(i))+" -1";
+
+        if(_TESTFLAG) //for test
+            ctmp = ctmp + " " + QString::number(neuronType1.at(candID1.at(i))) + " " + QString::number(i);
+
         S.comments = ctmp.toStdString();
         S.color.r = 0; S.color.g = 128; S.color.b = 128;
         mList->append(S);
@@ -2886,13 +2889,13 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
     QVector<V3DLONG> componentLength;
     V3DLONG curid=0;
     for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
-        if(nt.listNeuron.at(i).pn<0){
+        int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn, -1);
+        if(pid<0){
             connNum[i]--; //root that only have 1 clide will also be a dead end
             components.append(curid); curid++;
             pList.append(-1);
         }
         else{
-            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
             childNum[pid]++;
             connNum[pid]++;
             sectionLength[i]=sqrt(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(pid)));
@@ -2900,10 +2903,6 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, const HBNeuronG
             pList.append(pid);
         }
     }
-
-    //for test
-    qDebug()<<"init Nueron type";
-
     //neuron type
     initNeuronType(nt,ng,neuronType);
 
@@ -3143,6 +3142,8 @@ void neuron_match_clique::initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QL
 //all types ended with '6' can be used for matching across sections
 int neuron_match_clique::initNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neuronType)
 {
+    if(_TESTFLAG) //for test
+        qDebug()<<"Init neuron type: spineLen:"<<spineLengthThr<<"; spineAng:"<<spineAngThr<<"; spineRadius:"<<spineRadiusThr;
     return getNeuronType(nt, ng, neuronType, spineLengthThr, spineAngThr, spineRadiusThr);
 }
 
@@ -3152,6 +3153,7 @@ void neuron_match_clique::initNeuronComponents()
     //initNeuronComponents(*nt1, components1, parent1);
     initNeuron(*nt0, ng0, neuronType0, components0, parent0);
     initNeuron(*nt1, ng1, neuronType1, components1, parent1);
+
     //adjust component id of nt1
     int ccmax=0;
     for(int i=0; i<components0.size(); i++){
@@ -3265,5 +3267,37 @@ void neuron_match_clique::examineMatchingResult(int num[9])
         if(record[i]>0){
             num[0]++;
         }
+    }
+}
+
+void neuron_match_clique::examineMatchingResult(double num[11], NeuronTree* nt_truth)
+{
+    int tmpnum[9];
+    examineMatchingResult(tmpnum);
+
+    for(int i=0; i<9; i++){
+        num[i]=tmpnum[i];
+    }
+
+    //calculate distance to truth
+    if(nt_truth->listNeuron.size() == nt1_a->listNeuron.size()){
+        num[9]=0;
+        num[10]=0;
+        for(int i=0; i<nt_truth->listNeuron.size(); i++){
+            double tmpd=0;
+            double tmps=(nt_truth->listNeuron.at(i).x-nt1_a->listNeuron.at(i).x);
+            tmpd+=tmps*tmps;
+            tmps=(nt_truth->listNeuron.at(i).y-nt1_a->listNeuron.at(i).y);
+            tmpd+=tmps*tmps;
+            num[10]+=sqrt(tmpd);
+            tmps=(nt_truth->listNeuron.at(i).z-nt1_a->listNeuron.at(i).z)*zscale;
+            tmpd+=tmps*tmps;
+            num[9]+=sqrt(tmpd);
+        }
+        num[9]/=nt_truth->listNeuron.size();
+        num[10]/=nt_truth->listNeuron.size();
+    }else{
+        num[9]=-1;
+        num[10]=-1;
     }
 }

@@ -16,12 +16,13 @@ public:
 
 private:
     void creat();
-    void checkwindow();
+    //void checkwindow();
     void link_new_marker_neuron();
     void relink_marker_neuron();
     void updatemarker();
     void checkStatus();
     void output_markers(QString fname);
+    void locate_tip();
 
 signals:
     
@@ -50,7 +51,7 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_searchspan, *spin_segthr, *spin_gapthr, *spin_angthr;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
-    QCheckBox *check_spine;
+    QCheckBox *check_spine, *check_syncTriView;
     QGroupBox *group_marker, *group_check;
 
     QPushButton *btn_search, *btn_reset, *btn_update, *btn_accept, *btn_reject, *btn_skip;

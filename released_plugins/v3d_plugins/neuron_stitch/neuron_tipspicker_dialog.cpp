@@ -9,6 +9,45 @@
 #include "neuron_tipspicker_dialog.h"
 
 
+#define checkwindow() \
+    if (!callback){ \
+        this->hide(); \
+        return; \
+    } \
+    bool isclosed = true; \
+    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers(); \
+    for (V3DLONG i=0;i<allWindowList.size();i++) \
+    { \
+        if(allWindowList.at(i)==v3dwin){ \
+            isclosed = false; \
+            break; \
+        } \
+    } \
+    if(isclosed){ \
+        this->hide(); \
+        return; \
+    }
+
+void neuron_tipspicker_dialog::checkStatus()
+{
+    if(cb_tips->count()>mList->size()){
+        v3d_msg("The number of markers does not match, please click Update or Reload button.");
+        cb_tips->setEnabled(false);
+        btn_accept->setEnabled(false);
+        btn_skip->setEnabled(false);
+        btn_reject->setEnabled(false);
+    }else if(cb_tips->count()>0){
+        cb_tips->setEnabled(true);
+        btn_accept->setEnabled(true);
+        btn_skip->setEnabled(true);
+        btn_reject->setEnabled(true);
+    }else{
+        btn_accept->setEnabled(false);
+        btn_skip->setEnabled(false);
+        btn_reject->setEnabled(false);
+    }
+}
+
 neuron_tipspicker_dialog::neuron_tipspicker_dialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
 {
     if(!inwin)
@@ -113,6 +152,7 @@ void neuron_tipspicker_dialog::creat()
     btn_accept = new QPushButton("Accept"); btn_accept->setAutoDefault(false);
     btn_skip = new QPushButton("Skip"); btn_skip->setAutoDefault(false);
     btn_reject = new QPushButton("Reject"); btn_reject->setAutoDefault(false);
+    check_syncTriView = new QCheckBox("Sync Triview"); check_syncTriView->setChecked(true);
 
     connect(btn_reset, SIGNAL(clicked()), this, SLOT(reset_tip()));
     connect(btn_update, SIGNAL(clicked()), this, SLOT(update_tip()));
@@ -124,10 +164,11 @@ void neuron_tipspicker_dialog::creat()
     QGridLayout* checkLayout = new QGridLayout();
     checkLayout->addWidget(btn_reset,1,0,1,1);
     checkLayout->addWidget(btn_update,1,1,1,1);
-    checkLayout->addWidget(cb_tips,1,2,1,1);
-    checkLayout->addWidget(btn_accept,1,3,1,1);
-    checkLayout->addWidget(btn_skip,1,4,1,1);
-    checkLayout->addWidget(btn_reject,1,5,1,1);
+    checkLayout->addWidget(check_syncTriView,1,2,1,1);
+    checkLayout->addWidget(cb_tips,2,0,1,1);
+    checkLayout->addWidget(btn_accept,2,1,1,1);
+    checkLayout->addWidget(btn_skip,2,2,1,1);
+    checkLayout->addWidget(btn_reject,2,3,1,1);
     group_check->setLayout(checkLayout);
     gridLayout->addWidget(group_check, 2,0,1,6);
 
@@ -260,6 +301,37 @@ void neuron_tipspicker_dialog::update_tip()
     updatemarker();
 }
 
+void neuron_tipspicker_dialog::locate_tip()
+{
+    checkwindow();
+    checkStatus();
+
+    if(!check_syncTriView->isChecked())
+        return;
+    if(cb_tips->count()==0)
+        return;
+    if(!v3dwin)
+        return;
+
+    int mid=cb_tips->currentIndex();
+//        TriviewControl * p_control = callback->getTriviewControl(v3dwin);
+//        qDebug()<<"cojoc:"<<p_control;
+//        if(p_control){
+//            p_control->setFocusLocation((long)mList->at(mid).x,(long)mList->at(mid).y,(long)mList->at(mid).z);
+//        }
+
+    v3dhandleList list_triwin = callback->getImageWindowList();
+    for(V3DLONG i=0; i<list_triwin.size(); i++){
+        //for test
+        qDebug()<<"cojoc1:"<<callback->getImageName(list_triwin.at(i));
+        qDebug()<<"cojoc2:"<<callback->getImageName(v3dwin);
+        if(callback->getImageName(v3dwin).contains(callback->getImageName(list_triwin.at(i)))){
+            TriviewControl * p_control = callback->getTriviewControl(list_triwin.at(i));
+            p_control->setFocusLocation((long)mList->at(mid).x,(long)mList->at(mid).y,(long)mList->at(mid).z);
+        }
+    }
+}
+
 void neuron_tipspicker_dialog::accept_tip()
 {
     checkwindow();
@@ -356,52 +428,6 @@ void neuron_tipspicker_dialog::save()
     }
 }
 
-void neuron_tipspicker_dialog::checkwindow()
-{
-    //check if current window is closed
-    if (!callback){
-        this->hide();
-        return;
-    }
-
-    bool isclosed = true;
-    //search to see if the window is still open
-    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        if(allWindowList.at(i)==v3dwin){
-            isclosed = false;
-            break;
-        }
-    }
-
-    //close the window
-    if(isclosed){
-        this->hide();
-        return;
-    }
-}
-
-void neuron_tipspicker_dialog::checkStatus()
-{
-    if(cb_tips->count()>mList->size()){
-        v3d_msg("The number of markers does not match, please click Update or Reload button.");
-        cb_tips->setEnabled(false);
-        btn_accept->setEnabled(false);
-        btn_skip->setEnabled(false);
-        btn_reject->setEnabled(false);
-    }else if(cb_tips->count()>0){
-        cb_tips->setEnabled(true);
-        btn_accept->setEnabled(true);
-        btn_skip->setEnabled(true);
-        btn_reject->setEnabled(true);
-    }else{
-        btn_accept->setEnabled(false);
-        btn_skip->setEnabled(false);
-        btn_reject->setEnabled(false);
-    }
-}
-
 void neuron_tipspicker_dialog::output_markers(QString fname)
 {
     QFile file(fname);
@@ -494,4 +520,6 @@ void neuron_tipspicker_dialog::updatemarker()
     if(v3dcontrol){
         v3dcontrol->updateLandmark();
     }
+
+    locate_tip();
 }

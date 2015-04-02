@@ -334,10 +334,6 @@ int getNeuronType(const NeuronTree& nt, const HBNeuronGraph& ng, QList<int>& neu
         //check the branch type (a.have only one none spine connection (end); b. have two (path); c. have more than two (fork))
         int count=0;
         V3DLONG idx = iter.key();
-
-        //for test
-        qDebug()<<"init neuron type: matchable "<<idx;
-
         for(int i=0; i<ng.at(idx).size(); i++){
             if(neuronType.at(ng.at(idx).at(i))!=21 && neuronType.at(ng.at(idx).at(i))!=61){
                 count++;
@@ -551,6 +547,10 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             next.append(ng0.at(id).at(0)); //add its only neighbor to the next round
                             record.append(ng0.at(id).at(0));
                         }
+//                        else{ //stop when reach the dead end
+//                            cur.clear;
+//                            break;
+//                        }
                     }else if(neuronType0.at(id)==2){ //path point
                         for(int j=0; j<ng0.at(id).size(); j++){
                             if(!record.contains(ng0.at(id).at(j))){
@@ -581,9 +581,12 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             V3DLONG tmpid=spinequeue.dequeue();
                             for(int j=0; j<ng0.at(tmpid).size(); j++){
                                 if(!record.contains(ng0.at(tmpid).at(j))){
-                                    spinequeue.append(ng0.at(tmpid).at(j));
-                                    cur.append(ng0.at(tmpid).at(j));
-                                    record.append(ng0.at(tmpid).at(j));
+                                    if(neuronType0.at(ng0.at(tmpid).at(j))%10==1)
+                                    {
+                                        spinequeue.append(ng0.at(tmpid).at(j));
+                                        cur.append(ng0.at(tmpid).at(j));
+                                        record.append(ng0.at(tmpid).at(j));
+                                    }
                                 }
                             }
                         }
@@ -622,6 +625,10 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             next.append(ng1.at(id).at(0)); //add its only neighbor to the next round
                             record.append(ng1.at(id).at(0));
                         }
+//                        else{ //stop when reach the dead end
+//                            cur.clear;
+//                            continue;
+//                        }
                     }else if(neuronType1.at(id)==2){ //path point
                         for(int j=0; j<ng1.at(id).size(); j++){
                             if(!record.contains(ng1.at(id).at(j))){
@@ -652,9 +659,12 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             V3DLONG tmpid=spinequeue.dequeue();
                             for(int j=0; j<ng1.at(tmpid).size(); j++){
                                 if(!record.contains(ng1.at(tmpid).at(j))){
-                                    spinequeue.append(ng1.at(tmpid).at(j));
-                                    cur.append(ng1.at(tmpid).at(j));
-                                    record.append(ng1.at(tmpid).at(j));
+                                    if(neuronType1.at(ng1.at(tmpid).at(j))%10==1)
+                                    {
+                                        spinequeue.append(ng1.at(tmpid).at(j));
+                                        cur.append(ng1.at(tmpid).at(j));
+                                        record.append(ng1.at(tmpid).at(j));
+                                    }
                                 }
                             }
                         }

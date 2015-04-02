@@ -568,16 +568,17 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
     cout<<"==== neuron stack auto stitcher ===="<<endl;
-    if(infiles.size()!=2 || outfiles.size()!=1)
+    if(infiles.size()!=2 || outfiles.size()!=1 || inparas.size()!=1)
     {
         qDebug("ERROR: please set input and output!");
-        printHelp();
+        qDebug()<<"v3d -x neuron_stitch -f tmp_test -i nt_lower.swc nt_upper.swc -p nt_upper_truth.swc -o output";
         return;
     }
 
     //load neurons
     QString fname_nt0 = ((vector<char*> *)(input.at(0).p))->at(0);
     QString fname_nt1 = ((vector<char*> *)(input.at(0).p))->at(1);
+    QString fname_nt1_truth = ((vector<char*> *)(input.at(1).p))->at(0);
     QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
     NeuronTree* nt0 = new NeuronTree();
     if (fname_nt0.toUpper().endsWith(".SWC") || fname_nt0.toUpper().endsWith(".ESWC")){
@@ -595,8 +596,16 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         qDebug()<<"failed to read SWC file: "<<fname_nt1;
         return;
     }
+    NeuronTree* nt1_truth = new NeuronTree();
+    if (fname_nt1_truth.toUpper().endsWith(".SWC") || fname_nt1_truth.toUpper().endsWith(".ESWC")){
+        *nt1_truth = readSWC_file(fname_nt1_truth);
+    }
+    if(nt1_truth->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt1_truth;
+        return;
+    }
 
-    double _spanCand = 30;
+    double _spanCand = 40;
     int _direction = 2;
     double _angThr_match = cos(70.0/180.0*M_PI); //50 degree
     double _cmatchThr = 100;
@@ -614,13 +623,14 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
     vector<int> num_TP, num_FP, num_FN, num_truth, num_bp0, num_bp1, num_tri0, num_tri1, num_trimatch;
     vector<int> tri_number;
     vector<double> pmatchThr,pmatchAng,tmatchThr;
+    vector<double> distance, xydistance;
 
     //triangle number
     for(int i=0; i<10; i++){
         int tri=100*pow(2.0,i);
         //test triangle number and running time
         //init matching function
-        int tmpnum[9];
+        double tmpnum[11];
         NeuronTree nt0_run;
         backupNeuron(*nt0, nt0_run);
         NeuronTree nt1_run;
@@ -658,28 +668,30 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         double wall1 = get_wall_time();
         double cpu1  = get_cpu_time();
 
-        matchfunc.examineMatchingResult(tmpnum);
+        matchfunc.examineMatchingResult(tmpnum, nt1_truth);
 
-        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
-                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<(int)tmpnum[0]<<":"<<(int)tmpnum[1]<<":"<<(int)tmpnum[2]<<":"<<(int)tmpnum[3]<<":"<<(int)tmpnum[4]<<":"<<(int)tmpnum[5]<<":"
+               <<(int)tmpnum[6]<<":"<<(int)tmpnum[7]<<":"<<(int)tmpnum[8]<<":"<<tmpnum[9]<<":"<<tmpnum[10];
         walltimes.push_back(wall1-wall0);
         cputimes.push_back(cpu1-cpu0);
-        num_TP.push_back(tmpnum[0]);
-        num_FP.push_back(tmpnum[1]);
-        num_FN.push_back(tmpnum[2]);
-        num_truth.push_back(tmpnum[3]);
-        num_bp0.push_back(tmpnum[4]);
-        num_bp1.push_back(tmpnum[5]);
-        num_tri0.push_back(tmpnum[6]);
-        num_tri1.push_back(tmpnum[7]);
-        num_trimatch.push_back(tmpnum[8]);
+        num_TP.push_back((int)tmpnum[0]);
+        num_FP.push_back((int)tmpnum[1]);
+        num_FN.push_back((int)tmpnum[2]);
+        num_truth.push_back((int)tmpnum[3]);
+        num_bp0.push_back((int)tmpnum[4]);
+        num_bp1.push_back((int)tmpnum[5]);
+        num_tri0.push_back((int)tmpnum[6]);
+        num_tri1.push_back((int)tmpnum[7]);
+        num_trimatch.push_back((int)tmpnum[8]);
+        distance.push_back(tmpnum[9]);
+        xydistance.push_back(tmpnum[10]);
     }
 
     //point match distance
     for(double param=20; param<=300; param+=20){
         //test triangle number and running time
         //init matching function
-        int tmpnum[9];
+        double tmpnum[11];
         NeuronTree nt0_run;
         backupNeuron(*nt0, nt0_run);
         NeuronTree nt1_run;
@@ -717,28 +729,30 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         double wall1 = get_wall_time();
         double cpu1  = get_cpu_time();
 
-        matchfunc.examineMatchingResult(tmpnum);
+        matchfunc.examineMatchingResult(tmpnum, nt1_truth);
 
-        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
-                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<(int)tmpnum[0]<<":"<<(int)tmpnum[1]<<":"<<(int)tmpnum[2]<<":"<<(int)tmpnum[3]<<":"<<(int)tmpnum[4]<<":"<<(int)tmpnum[5]<<":"
+               <<(int)tmpnum[6]<<":"<<(int)tmpnum[7]<<":"<<(int)tmpnum[8]<<":"<<tmpnum[9]<<":"<<tmpnum[10];
         walltimes.push_back(wall1-wall0);
         cputimes.push_back(cpu1-cpu0);
-        num_TP.push_back(tmpnum[0]);
-        num_FP.push_back(tmpnum[1]);
-        num_FN.push_back(tmpnum[2]);
-        num_truth.push_back(tmpnum[3]);
-        num_bp0.push_back(tmpnum[4]);
-        num_bp1.push_back(tmpnum[5]);
-        num_tri0.push_back(tmpnum[6]);
-        num_tri1.push_back(tmpnum[7]);
-        num_trimatch.push_back(tmpnum[8]);
+        num_TP.push_back((int)tmpnum[0]);
+        num_FP.push_back((int)tmpnum[1]);
+        num_FN.push_back((int)tmpnum[2]);
+        num_truth.push_back((int)tmpnum[3]);
+        num_bp0.push_back((int)tmpnum[4]);
+        num_bp1.push_back((int)tmpnum[5]);
+        num_tri0.push_back((int)tmpnum[6]);
+        num_tri1.push_back((int)tmpnum[7]);
+        num_trimatch.push_back((int)tmpnum[8]);
+        distance.push_back(tmpnum[9]);
+        xydistance.push_back(tmpnum[10]);
     }
 
     //point match angular threshold
     for(double param=10; param<181; param+=10){
         //test triangle number and running time
         //init matching function
-        int tmpnum[9];
+        double tmpnum[11];
         NeuronTree nt0_run;
         backupNeuron(*nt0, nt0_run);
         NeuronTree nt1_run;
@@ -776,28 +790,30 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         double wall1 = get_wall_time();
         double cpu1  = get_cpu_time();
 
-        matchfunc.examineMatchingResult(tmpnum);
+        matchfunc.examineMatchingResult(tmpnum, nt1_truth);
 
-        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
-                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<(int)tmpnum[0]<<":"<<(int)tmpnum[1]<<":"<<(int)tmpnum[2]<<":"<<(int)tmpnum[3]<<":"<<(int)tmpnum[4]<<":"<<(int)tmpnum[5]<<":"
+               <<(int)tmpnum[6]<<":"<<(int)tmpnum[7]<<":"<<(int)tmpnum[8]<<":"<<tmpnum[9]<<":"<<tmpnum[10];
         walltimes.push_back(wall1-wall0);
         cputimes.push_back(cpu1-cpu0);
-        num_TP.push_back(tmpnum[0]);
-        num_FP.push_back(tmpnum[1]);
-        num_FN.push_back(tmpnum[2]);
-        num_truth.push_back(tmpnum[3]);
-        num_bp0.push_back(tmpnum[4]);
-        num_bp1.push_back(tmpnum[5]);
-        num_tri0.push_back(tmpnum[6]);
-        num_tri1.push_back(tmpnum[7]);
-        num_trimatch.push_back(tmpnum[8]);
+        num_TP.push_back((int)tmpnum[0]);
+        num_FP.push_back((int)tmpnum[1]);
+        num_FN.push_back((int)tmpnum[2]);
+        num_truth.push_back((int)tmpnum[3]);
+        num_bp0.push_back((int)tmpnum[4]);
+        num_bp1.push_back((int)tmpnum[5]);
+        num_tri0.push_back((int)tmpnum[6]);
+        num_tri1.push_back((int)tmpnum[7]);
+        num_trimatch.push_back((int)tmpnum[8]);
+        distance.push_back(tmpnum[9]);
+        xydistance.push_back(tmpnum[10]);
     }
 
     //triangle match distance
     for(double param=20; param<=300; param+=20){
         //test triangle number and running time
         //init matching function
-        int tmpnum[9];
+        double tmpnum[11];
         NeuronTree nt0_run;
         backupNeuron(*nt0, nt0_run);
         NeuronTree nt1_run;
@@ -835,21 +851,23 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         double wall1 = get_wall_time();
         double cpu1  = get_cpu_time();
 
-        matchfunc.examineMatchingResult(tmpnum);
+        matchfunc.examineMatchingResult(tmpnum, nt1_truth);
 
-        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<tmpnum[0]<<":"<<tmpnum[1]<<":"<<tmpnum[2]<<":"<<tmpnum[3]<<":"<<tmpnum[4]<<":"<<tmpnum[5]<<":"
-                  <<tmpnum[6]<<":"<<tmpnum[7]<<":"<<tmpnum[8];
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<(int)tmpnum[0]<<":"<<(int)tmpnum[1]<<":"<<(int)tmpnum[2]<<":"<<(int)tmpnum[3]<<":"<<(int)tmpnum[4]<<":"<<(int)tmpnum[5]<<":"
+               <<(int)tmpnum[6]<<":"<<(int)tmpnum[7]<<":"<<(int)tmpnum[8]<<":"<<tmpnum[9]<<":"<<tmpnum[10];
         walltimes.push_back(wall1-wall0);
         cputimes.push_back(cpu1-cpu0);
-        num_TP.push_back(tmpnum[0]);
-        num_FP.push_back(tmpnum[1]);
-        num_FN.push_back(tmpnum[2]);
-        num_truth.push_back(tmpnum[3]);
-        num_bp0.push_back(tmpnum[4]);
-        num_bp1.push_back(tmpnum[5]);
-        num_tri0.push_back(tmpnum[6]);
-        num_tri1.push_back(tmpnum[7]);
-        num_trimatch.push_back(tmpnum[8]);
+        num_TP.push_back((int)tmpnum[0]);
+        num_FP.push_back((int)tmpnum[1]);
+        num_FN.push_back((int)tmpnum[2]);
+        num_truth.push_back((int)tmpnum[3]);
+        num_bp0.push_back((int)tmpnum[4]);
+        num_bp1.push_back((int)tmpnum[5]);
+        num_tri0.push_back((int)tmpnum[6]);
+        num_tri1.push_back((int)tmpnum[7]);
+        num_trimatch.push_back((int)tmpnum[8]);
+        distance.push_back(tmpnum[9]);
+        xydistance.push_back(tmpnum[10]);
     }
 
     //output
@@ -871,7 +889,9 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
         fp<<num_bp1[i]<<"\t";
         fp<<num_tri0[i]<<"\t";
         fp<<num_tri1[i]<<"\t";
-        fp<<num_trimatch[i]<<endl;
+        fp<<num_trimatch[i]<<"\t";
+        fp<<distance[i]<<"\t";
+        fp<<xydistance[i]<<endl;
     }
     fp.close();
 

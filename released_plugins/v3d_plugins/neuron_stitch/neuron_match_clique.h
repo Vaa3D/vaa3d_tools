@@ -94,7 +94,10 @@ public:
     V3DLONG search_tip1(V3DLONG point1); //find the id of closest tips point, if there is none, return -1
 
     //for testing purpose
-    //for testing data, the border tips with the same type should be matched
+    //for testing data, the border tips with the same type should be matched ground truth
+    void examineMatchingResult(double num[11], NeuronTree* nt_truth); //num[0]: TP; num[1]:FP; num[2]:FN; num[3]:total number of border tips should be matched
+                                            //num[4]/num[5]: border tips number of nt0/1; num[6]/num[7]: triangle number of nt0/1
+                                            //num[8]: matched triangle numbers; num[9]: average distance to truth
     void examineMatchingResult(int num[9]); //num[0]: TP; num[1]:FP; num[2]:FN; num[3]:total number of border tips should be matched
                                             //num[4]/num[5]: border tips number of nt0/1; num[6]/num[7]: triangle number of nt0/1
                                             //num[8]: matched triangle numbers
