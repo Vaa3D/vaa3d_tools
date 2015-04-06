@@ -1187,27 +1187,18 @@ void myplugin_proc(unsigned char* img1d)
 int proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG* in_sz,QString inimg_file)
 {
 
-    v3dhandle curwin = callback.currentImageWindow();
+    sz_x = in_sz[0];
+    sz_y = in_sz[1];
+    sz_z = in_sz[2];
 
-    if(!curwin)
-    {
-            QMessageBox::information(0, title, QObject::tr("No image is open."));
-            return -1;
-    }
-    Image4DSimple *p4d = callback.getImage(curwin);
-
-    unsigned char* img1d = p4d->getRawDataAtChannel(0);
-    sz_x = p4d->getXDim();
-    sz_y = p4d->getYDim();
-    sz_z = p4d->getZDim();
     sz_xy = sz_x * sz_y;
     sz_total = sz_xy * sz_z;
     bresh = 0;
     coverRate = 1;
-    fileName = p4d->getFileName();
-//    fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.size());
+    fileName = inimg_file.toStdString();
 
-    myplugin_proc(img1d);
+    myplugin_proc(data1d);
+    return 1;
 }
 
 
