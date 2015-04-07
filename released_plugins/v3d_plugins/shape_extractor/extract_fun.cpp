@@ -100,8 +100,8 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                             if(project<bg_thr) continue;
 
                             //check whether over 4 background nbs. If >4,set that pixel to bg pixel
-                            if(pos-1>=0&&pos+1<=page_size&&pos-sz_image[0]>=0&&pos+sz_image[0]<=page_size
-                                    &&pos-z_offset>=0&&pos+z_offset<=page_size)
+                            if(pos-1>=0&&pos+1<page_size&&pos-sz_image[0]>=0&&pos+sz_image[0]<page_size
+                                    &&pos-z_offset>=0&&pos+z_offset<page_size)
                             {
                                 neighbor[0]=pos-1;
                                 neighbor[1]=pos+1;
