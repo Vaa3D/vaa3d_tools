@@ -21,8 +21,8 @@ extract_fun::~extract_fun()
 V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,unsigned char * label,
                              V3DLONG seed_ind, int convolute_iter,int bg_thr,int marker)
 {
-    qDebug()<<"In extract now"<<bg_thr;
-    qDebug()<<"sz_img:"<<sz_image[0]<<":"<<sz_image[1]<<":"<<sz_image[2]<<":"<<sz_image[3];
+    //qDebug()<<"In extract now"<<bg_thr;
+    //qDebug()<<"sz_img:"<<sz_image[0]<<":"<<sz_image[1]<<":"<<sz_image[2]<<":"<<sz_image[3];
     x_all.clear();
     y_all.clear();
     z_all.clear();
@@ -100,36 +100,41 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                             if(project<bg_thr) continue;
 
                             //check whether over 4 background nbs. If >4,set that pixel to bg pixel
-                            neighbor[0]=pos-1;
-                            neighbor[1]=pos+1;
-                            neighbor[2]=pos-sz_image[0];
-                            neighbor[3]=pos+sz_image[0];
-                            neighbor[4]=pos-z_offset;
-                            neighbor[5]=pos+z_offset;
-                            nsum=0;
-                            for (int i=0;i<neighbor.size();i++)
+                            if(pos-1>=0&&pos+1<=page_size&&pos-sz_image[0]>=0&&pos+sz_image[0]<=page_size
+                                    &&pos-z_offset>=0&&pos+z_offset<=page_size)
                             {
-                                if(mask1D[neighbor[i]]>0){
-                                    if (label[neighbor[i]]>0) nsum++;
-                                }
-                                else
+                                neighbor[0]=pos-1;
+                                neighbor[1]=pos+1;
+                                neighbor[2]=pos-sz_image[0];
+                                neighbor[3]=pos+sz_image[0];
+                                neighbor[4]=pos-z_offset;
+                                neighbor[5]=pos+z_offset;
+                                nsum=0;
+                                for (int i=0;i<neighbor.size();i++)
                                 {
-                                    for(int cid=0; cid<sz_image[3]; cid++){
-                                        color[cid]=data1Dc_float[neighbor[i]+cid*page_size];
+                                    if(mask1D[neighbor[i]]>0){
+                                        if (label[neighbor[i]]>0) nsum++;
                                     }
-                                    project=getProjection(color, dir, convolute_iter);
-                                    if(project>=bg_thr) nsum++;
+                                    else
+                                    {
+                                        for(int cid=0; cid<sz_image[3]; cid++){
+                                            color[cid]=data1Dc_float[neighbor[i]+cid*page_size];
+                                        }
+                                        project=getProjection(color, dir, convolute_iter);
+                                        if(project>=bg_thr) nsum++;
+                                    }
                                 }
+                                if (nsum<=2) continue;
                             }
-                            if (nsum>2){
-                                x_all.push_back(dx);
-                                y_all.push_back(dy);
-                                z_all.push_back(dz);
-                                seeds_next.push_back(pos);
-                                seeds_pre.push_back(pos);
-                                seeds_all.push_back(pos);
-                                label[pos]=marker;
-                            }
+
+                            x_all.push_back(dx);
+                            y_all.push_back(dy);
+                            z_all.push_back(dz);
+                            seeds_next.push_back(pos);
+                            seeds_pre.push_back(pos);
+                            seeds_all.push_back(pos);
+                            label[pos]=marker;
+
                         }
                     }
                 }
@@ -142,7 +147,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
 
         seeds=seeds_all; //after this round of r_grow finished, sets all seeds as the seeds for next r_grow
 
-        if (r_grow>30)
+        if (r_grow>20)
             break;
         else    r_grow=r_grow+0.5;
 
@@ -153,7 +158,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
         center_z=new_mass_center[2];
 //        qDebug()<<"total_r_grow:"<<total_r_grow<<"sum_count"<<seeds_pre.size()
 //               <<":"<<(float)seeds_pre.size()/total_r_grow;
-        qDebug()<<"r_grow"<<r_grow;
+//        qDebug()<<"r_grow"<<r_grow;
     }
 
 }
