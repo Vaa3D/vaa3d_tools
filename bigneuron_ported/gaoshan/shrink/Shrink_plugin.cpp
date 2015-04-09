@@ -319,9 +319,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //Output
 
-    QString swc_name = PARA.inimg_file + "_Tracing.swc";
+    QString swc_name = PARA.inimg_file + "_Shrink.swc";
 //    NeuronTree nt;
-    before_pruning.name = "tracing method";
+    before_pruning.name = "Shrink tracing";
     writeSWC_file(swc_name.toStdString().c_str(),before_pruning);
 
     if(!bmenu)
