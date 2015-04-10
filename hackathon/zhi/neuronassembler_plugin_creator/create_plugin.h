@@ -551,7 +551,10 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
                 }
                 else
                 {
-                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    if(pt.PARA_TYPE.at(d) == "int")
+                        ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    else
+                        ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QDoubleSpinBox();"<<endl;
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box->setValue("<<pt.PARA_VALUE.at(d)<<");"<<endl;
                     ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+4 <<",0);"<<endl;
                     ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+4<<",1,1,5);\n"<<endl;
@@ -621,7 +624,10 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
                 }
                 else
                 {
-                    ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    if(pt.PARA_TYPE.at(i) == "int")
+                        ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    else
+                        ofs<<"\t\tQDoubleSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
                     ofs<<"\t\t"<<pt.PARA_TYPE.at(i)<<" "<<pt.PARA_NAME.at(i)<<";"<<endl;
                 }
             }
@@ -648,7 +654,11 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
                 }
                 else
                 {
-                    ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    if(pt.PARA_TYPE.at(d) == "int")
+                        ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QSpinBox();"<<endl;
+                    else
+                        ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box = new QDoubleSpinBox();"<<endl;
+
                     ofs<<"\t\t\t"<<pt.PARA_NAME.at(d)<<"_box->setValue("<<pt.PARA_VALUE.at(d)<<");"<<endl;
                     ofs<<"\t\t\tlayout->addWidget(new QLabel(QObject::tr(\""<<pt.PARA_NAME.at(d)<<":\"))," << d+2 <<",0);"<<endl;
                     ofs<<"\t\t\tlayout->addWidget("<<pt.PARA_NAME.at(d)<<"_box,"<<d+2<<",1,1,5);\n"<<endl;
@@ -718,7 +728,10 @@ void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
                 }
                 else
                 {
-                    ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    if(pt.PARA_TYPE.at(i) == "int")
+                        ofs<<"\t\tQSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
+                    else
+                        ofs<<"\t\tQDoubleSpinBox *"<<pt.PARA_NAME.at(i)<<"_box;"<<endl;
                     ofs<<"\t\t"<<pt.PARA_TYPE.at(i)<<" "<<pt.PARA_NAME.at(i)<<";"<<endl;
                 }
             }

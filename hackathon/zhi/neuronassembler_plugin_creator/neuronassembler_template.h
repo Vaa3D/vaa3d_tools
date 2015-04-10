@@ -14,7 +14,7 @@ class NeuronAssemblerDialog_raw : public QDialog
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
-            marker_filepath = new QLineEdit();
+            marker_filepath = new QLineEdit("NULL");
             openmarkerFile = new QPushButton(QObject::tr("..."));
             image_checker = new QCheckBox();
             image_checker->setChecked(false);
