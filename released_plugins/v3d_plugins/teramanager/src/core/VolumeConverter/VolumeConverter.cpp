@@ -25,6 +25,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-14. Alessandro. @FIXED misleading usage of 'VirtualVolume::instance' w/o format argument in 'setSrcVolume'
+* 2015-04-14. Alessandro. @FIXED bug-crash when the volume has not been imported correctly in setSrcVolume.
 * 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
 * 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
 */
@@ -94,7 +96,13 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
         volume = new TimeSeries(_root_dir, _fmt);
     else
         //volume = VirtualVolume::instance(_root_dir, _fmt, vertical, horizontal, depth, 1.0f, 1.0f, 1.0f);
-        volume = VirtualVolume::instance(_root_dir);
+        //volume = VirtualVolume::instance_format(_root_dir);
+        // 2015-04-14. Alessandro. @FIXED misleading usage of 'VirtualVolume::instance' w/o format argument in 'setSrcVolume'
+        volume = VirtualVolume::instance_format(_root_dir, _fmt);
+
+    // 2015-04-14 Alessandro. @FIXED bug-crash when the volume has not been imported correctly in setSrcVolume.
+    if(!volume)
+        throw iim::IOException(iim::strprintf("in VolumeConverter::setSrcVolume(): unable to recognize the volume format of \"%s\"", _root_dir));
 
 	//channels = (volume->getDIM_C()>1) ? 3 : 1; // only 1 or 3 channels supported
 	channels = volume->getDIM_C();

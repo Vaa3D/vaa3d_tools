@@ -13,7 +13,7 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     // create toolbar
     toolBar = new QToolBar("ToolBar", this);
     toolBar->setOrientation(Qt::Vertical);
-    toolBar->setIconSize(QSize(40,40));
+    toolBar->setIconSize(QSize(35,35));
 
     // add already existing buttons from the main GUI
     toolBar->addAction(PMain::getInstance()->loadAnnotationsAction);
@@ -47,6 +47,13 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     buttonMarkerCreate->setToolTip("1-right-click to define a marker");
     connect(buttonMarkerCreate, SIGNAL(toggled(bool)), this, SLOT(buttonMarkerCreateChecked(bool)));
     toolBar->insertWidget(0, buttonMarkerCreate);
+    /**/
+    buttonMarkerCreate2 = new QToolButton();
+    buttonMarkerCreate2->setIcon(QIcon(":/icons/marker_add_2.png"));
+    buttonMarkerCreate2->setCheckable(true);
+    buttonMarkerCreate2->setToolTip("2-right-clicks to define a marker");
+    connect(buttonMarkerCreate2, SIGNAL(toggled(bool)), this, SLOT(buttonMarkerCreate2Checked(bool)));
+    toolBar->insertWidget(0, buttonMarkerCreate2);
     /**/
     buttonMarkerDelete = new QToolButton();
     buttonMarkerDelete->setIcon(QIcon(":/icons/marker_delete.png"));
@@ -113,7 +120,9 @@ void PAnoToolBar::buttonMarkerCreateChecked(bool checked)
 
     if(checked)
     {
-        // uncheck other buttons but the current one
+        // uncheck other buttons but the current one      
+        if(buttonMarkerCreate2->isChecked())
+            buttonMarkerCreate2->setChecked(false);
         if(buttonMarkerDelete->isChecked())
             buttonMarkerDelete->setChecked(false);
         if(buttonMarkerRoiDelete->isChecked())
@@ -145,6 +154,48 @@ void PAnoToolBar::buttonMarkerCreateChecked(bool checked)
     }
 }
 
+void PAnoToolBar::buttonMarkerCreate2Checked(bool checked)
+{
+     /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
+
+    CViewer* expl = CViewer::getCurrent();
+
+    if(checked)
+    {
+        // uncheck other buttons but the current one
+        if(buttonMarkerCreate->isChecked())
+            buttonMarkerCreate->setChecked(false);
+        if(buttonMarkerDelete->isChecked())
+            buttonMarkerDelete->setChecked(false);
+        if(buttonMarkerRoiDelete->isChecked())
+            buttonMarkerRoiDelete->setChecked(false);
+
+
+        // change cursor
+        QPixmap cur_img(":/icons/cursor_marker_add_2.png");
+        cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        setCursor(QCursor(cur_img, 0, 0));
+        CViewer::setCursor(QCursor(cur_img, 0, 0), true);
+
+        // switch to Vaa3D's 2-right-clicks marker create mode
+        if(expl)
+        {
+            expl->view3DWidget->getRenderer()->selectMode = Renderer::smMarkerCreate2;
+            static_cast<Renderer_gl1*>(expl->view3DWidget->getRenderer())->b_addthismarker = true;
+        }
+    }
+    else
+    {
+        // set default cursor
+        setCursor(Qt::ArrowCursor);
+        CViewer::setCursor(Qt::ArrowCursor, true);
+
+        // end marker create mode
+        if(expl)
+            expl->view3DWidget->getRenderer()->endSelectMode();
+    }
+}
+
 
 void PAnoToolBar::buttonMarkerDeleteChecked(bool checked)
 {
@@ -155,6 +206,8 @@ void PAnoToolBar::buttonMarkerDeleteChecked(bool checked)
     if(checked)
     {
         // uncheck other buttons but the current one
+        if(buttonMarkerCreate2->isChecked())
+            buttonMarkerCreate2->setChecked(false);
         if(buttonMarkerCreate->isChecked())
             buttonMarkerCreate->setChecked(false);
         if(buttonMarkerRoiDelete->isChecked())
@@ -205,6 +258,8 @@ void PAnoToolBar::buttonMarkerRoiDeleteChecked(bool checked)
 //        QMessageBox::information(this, "Warning", "Not yet implemented. But stay tuned!");
 //        buttonMarkerRoiDelete->setChecked(false);
         // uncheck other buttons but the current one
+        if(buttonMarkerCreate2->isChecked())
+            buttonMarkerCreate2->setChecked(false);
         if(buttonMarkerCreate->isChecked())
             buttonMarkerCreate->setChecked(false);
         if(buttonMarkerDelete->isChecked())
@@ -338,6 +393,8 @@ void PAnoToolBar::releaseTools()
 
     if(buttonMarkerCreate->isChecked())
         buttonMarkerCreate->setChecked(false);
+    if(buttonMarkerCreate2->isChecked())
+        buttonMarkerCreate2->setChecked(false);
     if(buttonMarkerDelete->isChecked())
         buttonMarkerDelete->setChecked(false);
     if(buttonMarkerRoiDelete->isChecked())
@@ -353,6 +410,8 @@ void PAnoToolBar::refreshTools()
 
     if(buttonMarkerCreate->isChecked())
         buttonMarkerCreateChecked(true);
+    if(buttonMarkerCreate2->isChecked())
+        buttonMarkerCreate2Checked(true);
     if(buttonMarkerDelete->isChecked())
         buttonMarkerDeleteChecked(true);
     if(buttonMarkerRoiDelete->isChecked())
@@ -370,6 +429,7 @@ void PAnoToolBar::alignToLeft(QWidget* widget)
     int new_x = widget->mapToGlobal(QPoint(0,0)).x();
     int new_y = widget->mapToGlobal(QPoint(0,0)).y();
     move(new_x, new_y);
+    setFixedHeight(widget->height());
     update();
 }
 

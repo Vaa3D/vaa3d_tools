@@ -1012,7 +1012,7 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
 
 void CAnnotations::clearLandmarks(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     QElapsedTimer timer;
     timer.start();

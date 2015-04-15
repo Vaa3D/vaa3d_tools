@@ -538,6 +538,11 @@ bool CViewer::eventFilter(QObject *object, QEvent *event)
                 createMarkerAt(mouseEvt->x(), mouseEvt->y());
                 return true;
             }
+            else if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerCreate2->isChecked())
+            {
+                createMarker2At(mouseEvt->x(), mouseEvt->y());
+                return true;
+            }
             else if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
             {
                 scribbling = true;
@@ -559,6 +564,7 @@ bool CViewer::eventFilter(QObject *object, QEvent *event)
                     QMessageBox::information(0, "This feature has been disabled", "This feature has been disabled by the developers of TeraFly.\n\n"
                                              "Please use the TeraFly's annotation toolbar to perform this action.");
                     PAnoToolBar::instance()->buttonMarkerCreateChecked(false);
+                    PAnoToolBar::instance()->buttonMarkerCreate2Checked(false);
                 }
 
 
@@ -1439,17 +1445,24 @@ void CViewer::storeAnnotations() throw (RuntimeException)
     QList<LocationSimple> markers = triViewWidget->getImageData()->listLandmarks;
     if(!markers.empty())
     {       
+        // 2015-04-15. Alessandro. @FIXED: excluding hidden markers is no more needed (and no more correct) since the
+        // load/store annotation VOIs are now the same (see fix of 2014-11-17).
         // @fixed by Alessandro on 2014-07-21: excluding hidden markers from store operation
         timer.start();
-        QList<LocationSimple>::iterator it = markers.begin();
-        while (it != markers.end())
-        {
-            if (is_outside((*it).x, (*it).y, (*it).z))
-                it = markers.erase(it);
-            else
-                ++it;
-        }
-        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: exclude hidden landmarks, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
+//        QList<LocationSimple>::iterator it = markers.begin();
+//        while (it != markers.end())
+//        {
+//            if (is_outside((*it).x, (*it).y, (*it).z))
+//            {
+//                #ifdef terafly_enable_debug_annotations
+//                itm::debug(itm::LEV3, strprintf("(%.0f, %.0f, %.0f) excluded from store operation because it is a hidden marker", it->x, it->y, it->z).c_str(), 0, true);
+//                #endif
+//                it = markers.erase(it);
+//            }
+//            else
+//                ++it;
+//        }
+//        PLog::instance()->appendOperation(new AnnotationOperation(QString("store annotations: exclude hidden landmarks, view ").append(title.c_str()).toStdString(), itm::CPU, timer.elapsed()));
 
         //converting local coordinates into global coordinates
         timer.restart();
@@ -1564,6 +1577,34 @@ void CViewer::createMarkerAt(int x, int y) throw (itm::RuntimeException)
 
     //update visible markers
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
+}
+
+void CViewer::createMarker2At(int x, int y) throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, point = (%x, %y)", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
+    view3DWidget->getRenderer()->hitPen(x, y);
+
+    static bool every_two_clicks_flag = true;
+    every_two_clicks_flag = !every_two_clicks_flag;
+    if(every_two_clicks_flag)
+    {
+        QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(window);
+        undoStack.beginMacro("create marker");
+        undoStack.push(new QUndoMarkerCreate(this, vaa3dMarkers.back()));
+        undoStack.endMacro();
+        PAnoToolBar::instance()->buttonUndo->setEnabled(true);
+
+        // all markers have the same color when they are created
+        vaa3dMarkers.back().color = CImageUtils::vaa3D_color(0,0,255);
+        V3D_env->setLandmark(window, vaa3dMarkers);
+        V3D_env->pushObjectIn3DWindow(window);
+
+        //update visible markers
+        PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
+
+        // start another operation
+        PAnoToolBar::instance()->buttonMarkerCreate2Checked(true);
+    }
 }
 
 void CViewer::deleteMarkerAt(int x, int y, QList<LocationSimple>* deletedMarkers /* = 0 */) throw (itm::RuntimeException)
@@ -2321,7 +2362,7 @@ void CViewer::alignToLeft(QWidget* widget)
 {
     /**/itm::debug(itm::LEV3, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
-    int widget_new_x = window3D->x() + window3D->width() + 3;
+    int widget_new_x = window3D->x() + window3D->width() -30;
     int widget_new_y = window3D->y();
     int widget_new_height = window3D->height();
 

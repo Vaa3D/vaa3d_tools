@@ -12,6 +12,7 @@ class teramanager::PAnoToolBar : public QWidget
 
         QToolBar* toolBar;                      //tool bar with buttons
         QToolButton *buttonMarkerCreate;        //button1
+        QToolButton *buttonMarkerCreate2;       //button1
         QToolButton *buttonMarkerDelete;        //button2
         QToolButton *buttonMarkerRoiDelete;     //button3
         QToolButton *buttonMarkerRoiView;       //button4
@@ -100,6 +101,7 @@ class teramanager::PAnoToolBar : public QWidget
     public slots:
 
         void buttonMarkerCreateChecked(bool checked);
+        void buttonMarkerCreate2Checked(bool checked);
         void buttonMarkerDeleteChecked(bool checked);
         void buttonMarkerRoiDeleteChecked(bool checked);
         void buttonMarkerRoiViewChecked(bool checked);

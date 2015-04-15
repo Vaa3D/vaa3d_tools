@@ -143,7 +143,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     V3D_env = callback;
     parentWidget = parent;
     annotationsPathLRU = "";
-    marginLeft = 75;
+    marginLeft = 65;
 
     //creating fonts
     QFont tinyFont = QApplication::font();
@@ -591,27 +591,27 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     Vdim_sbox->setAlignment(Qt::AlignCenter);
     Vdim_sbox->setMaximum(1000);
     Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
-    Vdim_sbox->setSuffix(" (Y)");
+    Vdim_sbox->setSuffix("(y)");
     Vdim_sbox->setFont(tinyFont);
     Vdim_sbox->installEventFilter(this);
     Hdim_sbox = new QSpinBox();
     Hdim_sbox->setAlignment(Qt::AlignCenter);
     Hdim_sbox->setMaximum(1000);
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
-    Hdim_sbox->setSuffix(" (X)");
+    Hdim_sbox->setSuffix("(x)");
     Hdim_sbox->installEventFilter(this);
     Ddim_sbox = new QSpinBox();
     Ddim_sbox->setAlignment(Qt::AlignCenter);
     Ddim_sbox->setMaximum(1000);
     Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
-    Ddim_sbox->setSuffix(" (Z)");
+    Ddim_sbox->setSuffix("(z)");
     Ddim_sbox->installEventFilter(this);
     Tdim_sbox = new QSpinBox();
     Tdim_sbox->setAlignment(Qt::AlignCenter);
     Tdim_sbox->setMaximum(1000);
     Tdim_sbox->setMinimum(1);
     Tdim_sbox->setValue(CSettings::instance()->getVOIdimT());
-    Tdim_sbox->setSuffix(" (t)");
+    Tdim_sbox->setSuffix("(t)");
     Tdim_sbox->installEventFilter(this);
     resolution_cbox = new QComboBox();
     resolution_cbox->installEventFilter(this);
@@ -1111,7 +1111,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
     //
-    setFixedWidth(400);
+    setFixedWidth(380);
 
     // register this as event filter
     installEventFilter(this);
@@ -1229,7 +1229,7 @@ void PMain::reset()
     frameCoord->setPalette(globalCoord_panel->palette());
 
     //reset PR panel widgets
-    PR_button->setIcon(QIcon(":/icons/start.png"));
+    //PR_button->setIcon(QIcon(":/icons/start.png"));
     PR_button->setText("Start");
     PR_spbox->setSuffix(" of 0");
     PR_spbox->setMaximum(0);
@@ -2298,11 +2298,9 @@ void PMain::debugAction1Triggered()
 
 //    printf("PMain is: %s\n", PMain::getInstance() ? "not null" : "NULL");
 
-    //QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+    QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
 
-    QList<LabelSurf> surf = this->V3D_env->getListLabelSurf_3DGlobalViewer(CViewer::current->window);
-    for(int k=0; k< surf.size(); k++)
-        printf("[%06d] = %d %d\n", k, surf[k].label, surf[k].label2);
+
 
 //    CAnnotations::getInstance()->prune();
 

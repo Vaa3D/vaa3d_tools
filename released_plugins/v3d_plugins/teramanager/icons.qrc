@@ -18,10 +18,12 @@
         <file>icons/start.png</file>
         <file>icons/stop.png</file>
         <file>icons/marker_add.png</file>
+        <file>icons/marker_add_2.png</file>
         <file>icons/marker_delete.png</file>
         <file>icons/marker_delete_roi.png</file>
         <file>icons/marker_roi_view.png</file>
         <file>icons/cursor_marker_add.png</file>
+        <file>icons/cursor_marker_add_2.png</file>
         <file>icons/cursor_marker_delete.png</file>
         <file>icons/cursor_marker_delete_roi.png</file>
         <file>icons/toolbar.png</file>

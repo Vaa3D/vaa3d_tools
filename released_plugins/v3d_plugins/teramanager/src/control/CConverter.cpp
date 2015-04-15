@@ -75,7 +75,11 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
     {
         inVolPath = pConverter->inPathField->text().toStdString();
         inVolFormat = pConverter->inFormatCBox->currentText().toStdString();
-        fileMode = !VirtualVolume::isHierarchical(inVolFormat) && !pConverter->timeSeriesCheckBox->isChecked();
+        try
+        {
+            fileMode = !VirtualVolume::isHierarchical(inVolFormat) && !pConverter->timeSeriesCheckBox->isChecked();
+        }
+        catch( iim::IOException& exception)  {throw RuntimeException(exception.what());}
         time_series = pConverter->timeSeriesCheckBox->isChecked();
     }
     else
