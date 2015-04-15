@@ -25,6 +25,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-15. Alessandro. @ADDED definition for default constructor.
+* 2015-04-14. Alessandro. @FIXED detection of volume format from .iim.format file
 * 2015-02-15. Giulio.     @CHANGED revised all calls to Tiff3DMngr routines passing always width and height in this order
 * 2015-02-14. Giulio.     @CHANGED method saveImage now converts from real to uint8 and calls the new interface of the plugin
 * 2015-02-13. Giulio.     @CHANGED method saveImage_from_UINT8_to_Tiff3D now call a 3D pluging to save a slice (only when do_open is true)
@@ -58,6 +60,20 @@
 
 using namespace iim;
 
+// 2015-04-15. Alessandro. @ADDED definition for default constructor.
+VirtualVolume::VirtualVolume(void)
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+    root_dir = 0;
+    VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0.0f;
+    DIM_V = DIM_H = DIM_D = DIM_C = 0;
+    BYTESxCHAN = 0;
+    active = 0;
+    n_active = 0;
+    t0 = t1 = 0;
+    DIM_T = 1;
+}
 
 /*************************************************************************************************************
 * Save image method. <> parameters are mandatory, while [] are optional.
@@ -881,6 +897,45 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 	}
 }
 
+// 2014-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
+VirtualVolume* VirtualVolume::instance_format(const char* path, std::string format) throw (iim::IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("path = \"%s\", format = \"%s\"", path, format.c_str()).c_str(), __iim__current__function__);
+
+    VirtualVolume* volume = 0;
+
+    // directory formats
+    if(isDirectory(path))
+    {
+        if(format.compare(TILED_MC_FORMAT) == 0)
+            volume = new TiledMCVolume(path);
+        else if(format.compare(STACKED_FORMAT) == 0)
+            volume = new StackedVolume(path);
+        else if((format.compare(TILED_FORMAT) == 0) || (format.compare(TILED_TIF3D_FORMAT) == 0))
+            volume = new TiledVolume(path);
+        else if(format.compare(SIMPLE_RAW_FORMAT) == 0)
+            volume = new SimpleVolumeRaw(path);
+        else if(format.compare(SIMPLE_FORMAT) == 0)
+            volume = new SimpleVolume(path);
+        else if(format.compare(TIME_SERIES) == 0)
+            volume = new TimeSeries(path);
+        else
+            throw IOException(strprintf("in VirtualVolume::instance(): Unsupported format \"%s\" for path \"%s\" which is a directory", format.c_str(), path), __iim__current__function__);
+    }
+    // file formats
+    else if(isFile(path))
+    {
+        if(format.compare(RAW_FORMAT) == 0)
+            volume = new RawVolume(path);
+        else
+            throw IOException(strprintf("in VirtualVolume::instance(): Unsupported format \"%s\" for path \"%s\" which is a file", format.c_str(), path), __iim__current__function__);
+    }
+    else
+        throw IOException(strprintf("in VirtualVolume::instance(): path = \"%s\" does not exist", path), __iim__current__function__);
+
+    return volume;
+}
+
 // tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise returns 0)
 // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
 VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
@@ -903,20 +958,22 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                 {
                     std::getline(f,format);
                     f.close();
-                    printf("\n\nformat = %s, filename = %s\n\n", format.c_str(), (std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME).c_str());
 
-                    if(format.compare(typeid(TiledMCVolume).name()) == 0)
+                    // 2015-04-14. Alessandro. @FIXED detection of volume format from .iim.format file
+                    if(format.compare((TiledMCVolume().getPrintableFormat())) == 0)
                         volume = new TiledMCVolume(path);
-                    else if(format.compare(typeid(StackedVolume).name()) == 0)
+                    else if(format.compare((StackedVolume().getPrintableFormat())) == 0)
                         volume = new StackedVolume(path);
-                    else if(format.compare(typeid(TiledVolume).name()) == 0)
+                    else if(format.compare((TiledVolume().getPrintableFormat())) == 0)
                         volume = new TiledVolume(path);
-                    else if(format.compare(typeid(SimpleVolume).name()) == 0)
+                    else if(format.compare((SimpleVolume().getPrintableFormat())) == 0)
                         volume = new SimpleVolume(path);
-                    else if(format.compare(typeid(SimpleVolumeRaw).name()) == 0)
+                    else if(format.compare((SimpleVolumeRaw().getPrintableFormat())) == 0)
                         volume = new SimpleVolumeRaw(path);
-                    else if(format.compare(typeid(TimeSeries).name()) == 0)
+                    else if(format.compare((TimeSeries().getPrintableFormat())) == 0)
                         volume = new TimeSeries(path);
+                    else
+                        iim::warning(iim::strprintf("Cannot recognize format \"%s\"", format.c_str()).c_str(), __iim__current__function__);
                 }
             }
             catch(IOException &ex)
@@ -930,7 +987,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
             try
             {
                 volume = new TiledMCVolume(path);
-                format = typeid(TiledMCVolume).name();
             }
             catch(IOException &ex)
             {
@@ -938,7 +994,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                 try
                 {
                     volume = new StackedVolume(path);
-                    format = typeid(StackedVolume).name();
                 }
                 catch(IOException &ex)
                 {
@@ -946,7 +1001,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                     try
                     {
                         volume = new TiledVolume(path);
-                        format = typeid(TiledVolume).name();
                     }
                     catch(IOException &ex)
                     {
@@ -954,7 +1008,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                         try
                         {
                             volume = new SimpleVolume(path);
-                            format = typeid(SimpleVolume).name();
                         }
                         catch(IOException &ex)
                         {
@@ -962,7 +1015,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                             try
                             {
                                 volume = new SimpleVolumeRaw(path);
-                                format = typeid(SimpleVolumeRaw).name();
                             }
                             catch(IOException &ex)
                             {
@@ -970,7 +1022,6 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                                 try
                                 {
                                     volume = new TimeSeries(path);
-                                    format = typeid(TimeSeries).name();
                                 }
                                 catch(IOException &ex)
                                 {
@@ -987,13 +1038,14 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
             }
         }
 
+        // 2015-04-14. Alessandro. @FIXED detection of volume format from .iim.format file
         // 2015-02-06. Alessandro. @ADDED volume format metadata file for faster opening of a "directory format"
         if(volume && !isFile(std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME))
         {
             std::ofstream f((std::string(path) + "/" + iim::FORMAT_MDATA_FILE_NAME).c_str(), std::ofstream::out);
             if(f.is_open())
             {
-                f << typeid(volume).name();
+                f << volume->getPrintableFormat();
                 f.close();
             }
         }
@@ -1099,7 +1151,11 @@ bool VirtualVolume::isHierarchical(std::string format) throw (iim::IOException)
 
     if(format.compare(TILED_FORMAT) == 0)
         return true;
+    if(format.compare(TILED_TIF3D_FORMAT) == 0)
+        return true;
     else if(format.compare(TILED_MC_FORMAT) == 0)
+        return true;
+    else if(format.compare(TILED_MC_TIF3D_FORMAT) == 0)
         return true;
     else if(format.compare(STACKED_FORMAT) == 0)
         return true;
@@ -1116,6 +1172,6 @@ bool VirtualVolume::isHierarchical(std::string format) throw (iim::IOException)
     else if(format.compare(TIF3D_FORMAT) == 0)
         return false;
     else
-        throw IOException(strprintf("Unsupported format %s", format.c_str()), __iim__current__function__);
+        throw IOException(strprintf("Unsupported format \"%s\"", format.c_str()), __iim__current__function__);
 
 }

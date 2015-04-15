@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-15. Alessandro. @ADDED definition for default constructor.
 * 2014-11-27 Giulio. @FIXED   eliminated part of the dipendences from OpenCV and restored the corresponding code
 * 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
@@ -53,6 +54,16 @@
 using namespace std;
 using namespace iim;
 
+// 2015-04-15. Alessandro. @ADDED definition for default constructor.
+StackedVolume::StackedVolume(void) : VirtualVolume()
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+    N_ROWS = N_COLS = 0;
+    reference_system.first = reference_system.second = reference_system.third = iim::axis_invalid;
+    VXL_1 = VXL_2 = VXL_3 = 0.0f;
+    STACKS = 0;
+}
 
 StackedVolume::StackedVolume(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
@@ -67,7 +78,7 @@ StackedVolume::StackedVolume(const char* _root_dir)  throw (IOException)
 	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
-	STACKS = NULL;
+    STACKS = 0;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 	VXL_1 = VXL_2 = VXL_3 = 0;
 
@@ -101,7 +112,7 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
 	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
-	STACKS = NULL;
+    STACKS = 0;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 	VXL_1 = VXL_2 = VXL_3 = 0;
 

@@ -47,7 +47,7 @@ class TiledVolume : public iim::VirtualVolume
 		iim::VirtualFmtMngr *fmtMngr;
 
 		//***OBJECT PRIVATE METHODS****
-		TiledVolume(void);
+        TiledVolume(void);
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
         void init();
@@ -152,6 +152,8 @@ class TiledVolume : public iim::VirtualVolume
 		 * reused by the caller and the operation returns a null pointer
 		 */
          iim::uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
+
+         friend class iim::VirtualVolume;
 
 };
 

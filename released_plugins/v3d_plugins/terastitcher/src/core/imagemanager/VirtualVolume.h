@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2014-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
 * 2015-01-06. Giulio.     @ADDED changed interface of saveImage_from_UINT8_to_Tiff3D to introduce optimizations to reduce opend/close in append operations 
 */
 
@@ -53,6 +54,8 @@ protected:
 
     int    DIM_T;					// number of time frames         (@ADDED by Alessandro on 2014-02-20)
     int t0, t1;                     // active frames are in [t0, t1] (@ADDED by Alessandro on 2014-02-20)
+
+    VirtualVolume(void);
 
 public:
 	//CONSTRUCTORS-DECONSTRUCTOR
@@ -266,6 +269,9 @@ public:
     // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
     static VirtualVolume* instance(const char* path) throw (iim::IOException);
 
+    // 2014-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
+    static VirtualVolume* instance_format(const char* path, std::string format) throw (iim::IOException);
+
     // returns the imported volume if succeeds (otherwise returns 0)
     // WARNING: no assumption is made on metadata files, which are possibly (re-)generated using the additional informations provided.
     static VirtualVolume* instance(const char* path, std::string format,
@@ -282,7 +288,8 @@ public:
         catch(iim::IOException &ex){/**/iim::debug(iim::LEV3, iim::strprintf("error = %s", ex.what()).c_str(), __iim__current__function__);}
         catch(...){}
         bool result = vol != 0;
-        delete vol;
+        if(vol)
+            delete vol;
         return result;
     }
 

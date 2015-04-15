@@ -37,10 +37,12 @@ class SimpleVolume : public iim::VirtualVolume
         iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
         iim::Stack ***STACKS;			//2-D array of <Stack*>
 
-        void init ( );
+        void init ( ) throw (iim::IOException);
 
         // iannello returns the number of channels of images composing the volume
         void initChannels ( ) throw (iim::IOException);
+
+        SimpleVolume(void);
 
     public:
 
@@ -63,6 +65,8 @@ class SimpleVolume : public iim::VirtualVolume
 
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
                                                    int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
+
+        friend class iim::VirtualVolume;
 };
 
 # endif // _SIMPLE_VOLUME

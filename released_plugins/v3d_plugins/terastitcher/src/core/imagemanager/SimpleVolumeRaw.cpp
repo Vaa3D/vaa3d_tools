@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-15. Alessandro. @ADDED definition for default constructor.
 * 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
 
@@ -44,6 +45,14 @@
 using namespace std;
 using namespace iim;
 
+// 2015-04-15. Alessandro. @ADDED definition for default constructor.
+SimpleVolumeRaw::SimpleVolumeRaw(void) : VirtualVolume()
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+    N_ROWS = N_COLS = 0;
+    STACKS = 0;
+}
 
 SimpleVolumeRaw::SimpleVolumeRaw(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir, 1.0f, 1.0f, 1.0f)

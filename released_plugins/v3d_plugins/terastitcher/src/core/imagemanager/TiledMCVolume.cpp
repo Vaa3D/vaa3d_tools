@@ -22,6 +22,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-04-15. Alessandro. @ADDED definition for default constructor.
+* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
+*/
+
+
 #include <iostream>
 #include <string>
 #include "TiledMCVolume.h"
@@ -43,6 +51,17 @@
 using namespace std;
 using namespace iim;
 
+// 2015-04-15. Alessandro. @ADDED definition for default constructor.
+TiledMCVolume::TiledMCVolume(void) : VirtualVolume()
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+    N_ROWS = N_COLS = 0;
+    reference_system.first = reference_system.second = reference_system.third = iim::axis_invalid;
+    VXL_1 = VXL_2 = VXL_3 = 0.0f;
+    CHDIRNAMES = 0;
+    vol_ch = 0;
+}
 
 TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED

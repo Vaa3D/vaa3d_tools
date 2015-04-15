@@ -54,7 +54,7 @@ class iim::StackedVolume : public iim::VirtualVolume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
-		StackedVolume(void);
+        StackedVolume(void);
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
         void init();
@@ -130,6 +130,8 @@ class iim::StackedVolume : public iim::VirtualVolume
 
 		//releases allocated memory of stacks
 		void releaseStacks(int first_file=-1, int last_file=-1);
+
+        friend class iim::VirtualVolume;
 
 };
 
