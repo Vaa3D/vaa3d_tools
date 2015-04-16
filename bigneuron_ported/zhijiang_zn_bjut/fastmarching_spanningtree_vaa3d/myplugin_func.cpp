@@ -1057,7 +1057,7 @@ void prundNodeBySingle(QMap<V3DLONG,Graph<Node*>*> &nodeMap)
                 delete deletePath;
                 nodeMap[dst]->connect.remove(iter.key());
             }
-            delete node;
+            if(!node) delete node;
             nodeMap.remove(iter.key());
         }
     }
