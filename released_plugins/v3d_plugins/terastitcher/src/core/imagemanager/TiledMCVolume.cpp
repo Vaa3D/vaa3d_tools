@@ -26,9 +26,9 @@
 *    CHANGELOG    *
 *******************
 * 2015-04-15. Alessandro. @ADDED definition for default constructor.
-* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
+* 2015-04-06. Giulio.       @CHANGED Modified prunt method: printing stacks information is now off by default
+* 2015-02-28. Giulio.     @FIXED removed deallocation of data member 'active' in the destructor because it is performed by the desctructor of the base class iim::VirtualVolume
 */
-
 
 #include <iostream>
 #include <string>
@@ -55,7 +55,7 @@ using namespace iim;
 TiledMCVolume::TiledMCVolume(void) : VirtualVolume()
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
-
+    
     N_ROWS = N_COLS = 0;
     reference_system.first = reference_system.second = reference_system.third = iim::axis_invalid;
     VXL_1 = VXL_2 = VXL_3 = 0.0f;
@@ -68,14 +68,10 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s", _root_dir).c_str(), __iim__current__function__);
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
-
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
+	//DIM_V = DIM_H = DIM_D = 0;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 	N_ROWS = N_COLS = 0;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-	VXL_1 = VXL_2 = VXL_3 = 0;
 	vol_ch = (TiledVolume **)0;
 	active = (uint32 *)0;
 	n_active = 0;
@@ -103,14 +99,10 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
     /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f",
                                         _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3).c_str(), __iim__current__function__);
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
-
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
+	//DIM_V = DIM_H = DIM_D = 0;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 	N_ROWS = N_COLS = 0;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-	VXL_1 = VXL_2 = VXL_3 = 0;
 	vol_ch = (TiledVolume **)0;
 	active = (uint32 *)0;
 	n_active = 0;
@@ -152,8 +144,6 @@ TiledMCVolume::~TiledMCVolume(void)
 			delete vol_ch[c];
 		delete[] vol_ch;
 	}
-	if ( active )
-		delete[] active;
 }
 
 
@@ -247,7 +237,7 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 //            char errMsg[STATIC_STRINGS_SIZE];
 //            sprintf(errMsg, "in TiledMCVolume::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
-//            throw MyException(errMsg);
+//            throw iim::IOException(errMsg);
 
         fclose(file);
         file = fopen(metadata_filepath, "rb");
@@ -432,7 +422,7 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 	fclose(file);
 }
 
-void TiledMCVolume::init()
+void TiledMCVolume::init() throw (IOException)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
@@ -623,19 +613,22 @@ void TiledMCVolume::initChannels ( ) throw (IOException)
 }
 
 //PRINT method
-void TiledMCVolume::print()
+void TiledMCVolume::print( bool print_stacks )
 {
-	printf("*** Begin printing StakedVolume object...\n\n");
+	printf("*** Begin printing TiledMCVolume object...\n\n");
 	printf("\tDirectory:\t%s\n", root_dir);
-	printf("\tDimensions:\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
-	printf("\tVoxels:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
-	printf("\tOrigin:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
-	printf("\tStacks matrix:\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
-	//printf("\t |\n");
-	//for(int row=0; row<N_ROWS; row++)
-	//	for(int col=0; col<N_COLS; col++)
-	//		BLOCKS[row][col]->print();
-	printf("\n*** END printing StakedVolume object...\n\n");
+	printf("\tDimensions:\t\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
+	printf("\tVoxels:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
+	printf("\tOrigin:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
+	printf("\tChannels:\t\t%d\n", DIM_C);
+	printf("\tBytes per channel:\t%d\n", BYTESxCHAN);
+	printf("\tReference system:\tref1=%d, ref2=%d, ref3=%d\n",reference_system.first,reference_system.second,reference_system.third);
+	printf("\tChannels:\n");
+	for ( int c=0; c<DIM_C; c++ ) {
+		printf("\t\tChannel: %d\n",c);
+		vol_ch[c]->print(print_stacks);
+	}
+	printf("\n*** END printing TiledMCVolume object...\n\n");
 }
 
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
@@ -747,7 +740,7 @@ void TiledMCVolume::mirror(axis mrr_axis)
 //	{
 //		char msg[1000];
 //		sprintf(msg,"in TiledMCVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
-//		throw MyException(msg);
+//		throw iim::IOException(msg);
 //	}
 //
 //	Stack*** new_STACK_2D_ARRAY;
@@ -840,7 +833,7 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
 	//if( this->BYTESxCHAN != 1 ) {
 	//	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"TiledMCVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-	//	throw MyException(err_msg);
+	//	throw iim::IOException(err_msg);
 	//}
 
     //if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH)  ) {

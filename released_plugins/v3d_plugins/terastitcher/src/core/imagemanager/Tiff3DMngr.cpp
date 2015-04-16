@@ -26,12 +26,13 @@
 *    CHANGELOG    *
 *******************
 *******************
-* 2015-02-06. Giulio. @ADDED append operation that assume an already open and positioned file
-* 2015-02-06. Giulio. @ADDED open operation
+* 2015-03-03. Giulio.     @FIXED RGB photometric interprettion has to be set when there is more than one channel 
+* 2015-02-06. Giulio.     @ADDED append operation that assume an already open and positioned file
+* 2015-02-06. Giulio.     @ADDED open operation
 * 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-* 2014-12-10. Giulio. @ADDED added management of mismatch between machine/image endian
-* 2014-12-06. Giulio. @FIXED input file should NOT be closed at the end of 'loadTiff3D2Metadata'
-* 2014-12-05. Giulio. @ADDED input file should be closed at the end of 'loadTiff3D2Metadata'
+* 2014-12-10. Giulio.     @ADDED added management of mismatch between machine/image endian
+* 2014-12-06. Giulio.     @FIXED input file should NOT be closed at the end of 'loadTiff3D2Metadata'
+* 2014-12-05. Giulio.     @ADDED input file should be closed at the end of 'loadTiff3D2Metadata'
 */
 
 #include "Tiff3DMngr.h"
@@ -89,7 +90,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	input=TIFFOpen(filename,"r");
 	if (!input)
     {
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
 		return ((char *) "Cannot open the file.");
     }
 
@@ -97,7 +98,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	if (!check)
 	{
 		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
 		return ((char *) "Image width of undefined.");
 	}		
     
@@ -105,7 +106,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	if (!check)
 	{
 		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
 		return ((char *) "Image length of undefined.");
 	}		
     
@@ -113,7 +114,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	if (!check)
 	{
 		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
 		return ((char *) "Undefined bits per sample.");
 	}
 
@@ -121,7 +122,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
 	if (!check)
 	{
 		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
 		return ((char *) "Undefined samples per pixel.");
 	}
 
@@ -276,7 +277,10 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 		return ((char *) "Cannot set the planarconfig tag.");
     }
 
-	check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	if ( spp == 1 )
+		check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	else // spp == 3
+		check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);	
 	if (!check) {
 		return ((char *) "Cannot set the photometric tag.");
     }
@@ -403,7 +407,7 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
 	input=TIFFOpen(filename,"r");
 	if (!input)
     {
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
+		//throw iim::IOException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
 		return ((char *) "Cannot open the file.");
     }
     

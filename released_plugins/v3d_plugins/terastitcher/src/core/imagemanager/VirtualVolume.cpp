@@ -25,8 +25,11 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-15. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
 * 2015-04-15. Alessandro. @ADDED definition for default constructor.
 * 2015-04-14. Alessandro. @FIXED detection of volume format from .iim.format file
+* 2015-03-21. Giulio.     @FIXED bug in saveImage when tiles have to be saved (the management of offsets over the buffer was wrong)
+* 2015-03-03. Giulio.     @FIXED a 2D plugin has to be used in saveImage_from_UINT8 
 * 2015-02-15. Giulio.     @CHANGED revised all calls to Tiff3DMngr routines passing always width and height in this order
 * 2015-02-14. Giulio.     @CHANGED method saveImage now converts from real to uint8 and calls the new interface of the plugin
 * 2015-02-13. Giulio.     @CHANGED method saveImage_from_UINT8_to_Tiff3D now call a 3D pluging to save a slice (only when do_open is true)
@@ -64,7 +67,7 @@ using namespace iim;
 VirtualVolume::VirtualVolume(void)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
-
+    
     root_dir = 0;
     VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0.0f;
     DIM_V = DIM_H = DIM_D = DIM_C = 0;
@@ -129,20 +132,20 @@ void VirtualVolume::saveImage(std::string img_path, real32* raw_img, int raw_img
 
 	if(img_depth == 8)
 	{
-		for(int i = 0; i <img_height; i++)
+		for(int i = 0, ii = start_height; i <img_height; i++, ii++)
 		{
 			uint8* img_data = buffer + i*img_width;
-			for(int j = 0; j < img_width; j++)
-				img_data[j] = static_cast<uint8>(raw_img[i*img_width+j] * 255.0f + 0.5f);
+			for(int j = 0, jj = start_width; j < img_width; j++, jj++)
+				img_data[j] = static_cast<uint8>(raw_img[ii*raw_img_width+jj] * 255.0f + 0.5f);
 		}
 	}
 	else // img_depth == 16
 	{
-		for(int i = 0; i <img_height; i++)
+		for(int i = 0, ii = start_height; i <img_height; i++, ii++)
 		{
 			uint16* img_data = ((uint16 *)buffer) + i*img_width; // the cast to uint16* guarantees the right offset
-			for(int j = 0; j < img_width; j++)
-				img_data[j] = static_cast<uint16>(raw_img[i*img_width+j] * 65535.0f + 0.5f);
+			for(int j = 0, jj = start_width; j < img_width; j++, jj++)
+				img_data[j] = static_cast<uint16>(raw_img[ii*raw_img_width+jj] * 65535.0f + 0.5f);
 		}
 	}
 
@@ -155,13 +158,13 @@ void VirtualVolume::saveImage(std::string img_path, real32* raw_img, int raw_img
 		//iomanager::IOPluginFactory::getPlugin2D(iomanager::IMOUT_PLUGIN)->writeData(
 		//	img_filepath, raw_img, img_height, img_width, 1, start_height, end_height, start_width, end_width, img_depth);
 		iomanager::IOPluginFactory::getPlugin2D(iomanager::IMOUT_PLUGIN)->writeData(
-			img_filepath, buffer, img_height, img_width, img_depth/8, 1, start_height, end_height+1, start_width, end_width+1); // ROI limits specify right-open intervals  
+			img_filepath, buffer, img_height, img_width, img_depth/8, 1, 0, img_height, 0, img_width); // ROI limits specify right-open intervals  
 	}
 	catch (iom::exception & ex)
 	{
 		if ( strstr(ex.what(),"2D I/O plugin") ) // this method has be called to save the middle slice for test purposes, even though output plugin is not a 2D plugin
 			iomanager::IOPluginFactory::getPlugin2D("tiff2D")->writeData(
-				img_filepath, buffer, img_height, img_width, img_depth/8, 1, start_height, end_height+1, start_width, end_width+1); // ROI limits specify right-open intervals
+				img_filepath, buffer, img_height, img_width, img_depth/8, 1, 0, img_height, 0, img_width); // ROI limits specify right-open intervals
 		else
 			throw iom::exception(iom::strprintf(ex.what()), __iom__current__function__);
 	}
@@ -247,8 +250,8 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
         sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channels images\n",img_depth);
         throw IOException(buffer);
     }
-	if ( nchannels >1 && !(iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->isChansInterleaved()) ) {
-		throw iom::exception("the 3D plugin do not store channels in interleaved mode: more than one channel not supported yet.");
+	if ( nchannels >1 && !(iom::IOPluginFactory::getPlugin2D(iom::IMOUT_PLUGIN)->isChansInterleaved()) ) {
+		throw iom::exception("the plugin do not store channels in interleaved mode: more than one channel not supported yet.");
 	}
 
     //converting raw data into tif image data
@@ -499,12 +502,12 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
  //if(img_depth != 8 && img_depth != 16 && n_chans == 1)
  //   {
  //       sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for greyscale images\n",img_depth);
- //       throw MyException(buffer);
+ //       throw iim::IOException(buffer);
  //   }
  //   if(img_depth != 8 && n_chans > 1)
  //   {
  //       sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channel images\n",img_depth);
- //       throw MyException(buffer);
+ //       throw iim::IOException(buffer);
  //   }
 
 	if(img_depth != 8 && img_depth != 16 && n_chans == 1)
@@ -595,7 +598,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_p
         throw IOException(buffer);
 	}
 
-	if ( n_chans >1 && !(iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->isChansInterleaved()) ) {
+	if ( n_chans >1 && !(iom::IOPluginFactory::getPlugin3D(iom::IMOUT_PLUGIN)->isChansInterleaved()) ) {
 		throw iom::exception("the 3D plugin do not store channels in interleaved mode: more than one channel not supported yet.");
 	}
 
@@ -901,9 +904,9 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 VirtualVolume* VirtualVolume::instance_format(const char* path, std::string format) throw (iim::IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("path = \"%s\", format = \"%s\"", path, format.c_str()).c_str(), __iim__current__function__);
-
+    
     VirtualVolume* volume = 0;
-
+    
     // directory formats
     if(isDirectory(path))
     {
@@ -932,7 +935,7 @@ VirtualVolume* VirtualVolume::instance_format(const char* path, std::string form
     }
     else
         throw IOException(strprintf("in VirtualVolume::instance(): path = \"%s\" does not exist", path), __iim__current__function__);
-
+    
     return volume;
 }
 
@@ -958,7 +961,7 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                 {
                     std::getline(f,format);
                     f.close();
-
+                    
                     // 2015-04-14. Alessandro. @FIXED detection of volume format from .iim.format file
                     if(format.compare((TiledMCVolume().getPrintableFormat())) == 0)
                         volume = new TiledMCVolume(path);
@@ -1151,11 +1154,7 @@ bool VirtualVolume::isHierarchical(std::string format) throw (iim::IOException)
 
     if(format.compare(TILED_FORMAT) == 0)
         return true;
-    if(format.compare(TILED_TIF3D_FORMAT) == 0)
-        return true;
     else if(format.compare(TILED_MC_FORMAT) == 0)
-        return true;
-    else if(format.compare(TILED_MC_TIF3D_FORMAT) == 0)
         return true;
     else if(format.compare(STACKED_FORMAT) == 0)
         return true;
@@ -1172,6 +1171,6 @@ bool VirtualVolume::isHierarchical(std::string format) throw (iim::IOException)
     else if(format.compare(TIF3D_FORMAT) == 0)
         return false;
     else
-        throw IOException(strprintf("Unsupported format \"%s\"", format.c_str()), __iim__current__function__);
+        throw IOException(strprintf("Unsupported format %s", format.c_str()), __iim__current__function__);
 
 }

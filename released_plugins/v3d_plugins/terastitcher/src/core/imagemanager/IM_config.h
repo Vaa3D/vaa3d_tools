@@ -22,6 +22,13 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-17. Giulio.     @CHANGED includes of standard header files (stdlib.h and stdio.h) moved outside the directive #ifdef _WIN32 
+* 2015-02-18. Giulio.     @ADDED Identifier for unstitched volume
+*/
+
 
 #ifndef _IM_CONFIG_H
 #define _IM_CONFIG_H
@@ -33,6 +40,8 @@
 #include <limits>
 #include <cstring>
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <ctime>
@@ -40,9 +49,7 @@
 #else
 #include <time.h>
 #include <sys/types.h>
-#include <stdlib.h>
 #include <errno.h>
-#include <stdio.h>
 #endif
 
 #ifdef max
@@ -63,7 +70,7 @@ namespace IconImageManager
 {
 
     /*******************
-    *    INTEFRACES    *
+    *    INTERFACES    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
 	class imProgressBar;
@@ -119,6 +126,7 @@ namespace IconImageManager
     const std::string TIF3D_FORMAT          = "TIFF multipage (series)";   // unique ID for multipage TIFF format (nontiled)
     const std::string TILED_TIF3D_FORMAT    = "TIFF multipage (tiled, RGB)";// unique ID for multipage TIFF format (tiled)
     const std::string TILED_MC_TIF3D_FORMAT = "TIFF multipage (tiled, 4D)";// unique ID for multipage TIFF format (nontiled, 4D)
+    const std::string UNST_TIF3D_FORMAT     = "TIFF multipage (unstitched, RGB)";// unique ID for multipage TIFF format (nontiled, 4D)
     const std::string TIME_SERIES           = "Time series";               // unique ID for the TimeSeries class
 
     const double      PI = 3.14159265;                          // pi

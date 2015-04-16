@@ -22,6 +22,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+2015-04-06. Giulio.       @CHANGED Modified prunt method: printing stacks information is now off by default
+*/
+
 #ifndef _IIM_STACKED_VOLUME_H
 #define _IIM_STACKED_VOLUME_H
 
@@ -54,10 +60,10 @@ class iim::StackedVolume : public iim::VirtualVolume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
-        StackedVolume(void);
+		StackedVolume(void);
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
-        void init();
+        void init() throw (iim::IOException);
 
 		//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 		void rotate(int theta);
@@ -108,7 +114,7 @@ class iim::StackedVolume : public iim::VirtualVolume
 
 
 		//PRINT method
-		void print();
+		void print( bool print_stacks = false );
 
 		//saving-loading methods to/from metadata binary file
         void save(char* metadata_filepath) throw (iim::IOException);
@@ -130,7 +136,7 @@ class iim::StackedVolume : public iim::VirtualVolume
 
 		//releases allocated memory of stacks
 		void releaseStacks(int first_file=-1, int last_file=-1);
-
+    
         friend class iim::VirtualVolume;
 
 };

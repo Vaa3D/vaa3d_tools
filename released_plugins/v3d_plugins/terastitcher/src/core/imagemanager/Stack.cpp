@@ -25,9 +25,8 @@
 /******************
 *    CHANGELOG    *
 *******************
-******************* /
 * 2015-04-14 Alessandro. @FIXED folder image scan: Only .tif/.TIF/.tiff/.TIFF files have to be included in the image list.
-* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commented. It can be found searching comments containing 'Giulio_CV'
+* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
 
 #include "Stack.h"
@@ -256,29 +255,28 @@ void Stack::init() throw (IOException)
         throw IOException(errMsg);
 	}
 
-	//scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
+    //scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
     // 2015-04-14 Alessandro. @FIXED folder image scan: Only .tif/.TIF/.tiff/.TIFF files have to be included in the image list.
-	while ((entry_lev3=readdir(cur_dir_lev3)))
-	{
-		tmp = entry_lev3->d_name;
+    while ((entry_lev3=readdir(cur_dir_lev3)))
+    {
+        tmp = entry_lev3->d_name;
         if(tmp.compare(".") != 0 && tmp.compare("..") != 0 &&
-                (tmp.find(".tif") != string::npos || tmp.find(".TIF") != string::npos) )
-			entries_lev3.push_back(tmp);
-	}
-	entries_lev3.sort();
-	DEPTH = (int)entries_lev3.size();
-
-	//----- Alessandro added on August 12, 2013
+           (tmp.find(".tif") != string::npos || tmp.find(".TIF") != string::npos) )
+            entries_lev3.push_back(tmp);
+    }
+    entries_lev3.sort();
+    DEPTH = (int)entries_lev3.size();
+    
+    //----- Alessandro added on August 12, 2013
     //----- Bug fixed: exceeding the maximum number of directories opened at the same time
     closedir(cur_dir_lev3);
-
+    
     for(entry_k = entries_lev3.begin(); entry_k != entries_lev3.end(); entry_k++)
-        /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d, found \"%s\"", ROW_INDEX, COL_INDEX, entry_k->c_str()).c_str(), __iim__current__function__);
-
-	//checking if current stack is not empty
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d, found \"%s\"", ROW_INDEX, COL_INDEX, entry_k->c_str()).c_str(), __iim__current__function__);
+    
+    //checking if current stack is not empty
     if(DEPTH == 0)
         throw IOException(iim::strprintf("in Stack::init(): cannot find .tif/.TIF/.tiff/.TIFF files within folder \"%s\"", abs_path));
-
 
 	//converting filenames_list (STL list of C-strings) into FILENAMES (1-D array of C-strings)
 	FILENAMES = new char*[DEPTH];

@@ -25,7 +25,9 @@
 /******************
 *    CHANGELOG    *
 *******************
-* 2014-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
+* 2015-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
+* 2015-02-28. Giulio.     @FIXED added deallocation of data member 'active' in the destructor
+* 2015-02-18. Giulio.     @CHANGED modified defalut values of parameters of loadSubvolume methods
 * 2015-01-06. Giulio.     @ADDED changed interface of saveImage_from_UINT8_to_Tiff3D to introduce optimizations to reduce opend/close in append operations 
 */
 
@@ -55,10 +57,9 @@ protected:
     int    DIM_T;					// number of time frames         (@ADDED by Alessandro on 2014-02-20)
     int t0, t1;                     // active frames are in [t0, t1] (@ADDED by Alessandro on 2014-02-20)
 
-    VirtualVolume(void);
-
 public:
 	//CONSTRUCTORS-DECONSTRUCTOR
+    VirtualVolume();
     VirtualVolume(const char* _root_dir, float VXL_1=0, float VXL_2=0, float VXL_3=0) throw (iim::IOException)
     {
 
@@ -85,12 +86,14 @@ public:
 	virtual ~VirtualVolume() { 
 		if(root_dir)
 			delete[] root_dir;
+		if(active)
+			delete []active;
 	}    
 
     virtual void initChannels ( ) throw (iim::IOException) = 0;
 
     //loads given subvolume in a 1-D array of iim::real32 while releasing stacks slices memory when they are no longer needed
-    virtual iim::real32 *loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int D0, int D1)  throw (iim::IOException) = 0;
+    virtual iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException) = 0;
 
     //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
     virtual iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
@@ -172,6 +175,9 @@ public:
     * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
     * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
     * [img_depth]               : image bitdepth to be used (8 or 16)
+	*
+	* WARNING: this method is intended to be used to save one slice into a file using a 2D format (i.e. a 2D plugin)
+	* use saveImage_from_UINT8_to_Tiff3D to append one slice to a file storing images in 3D format
     **************************************************************************************************************/
     static void saveImage_from_UINT8 (std::string img_path, 
                                       iim::uint8* raw_ch1, iim::uint8* raw_ch2, iim::uint8* raw_ch3,
@@ -269,15 +275,15 @@ public:
     // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
     static VirtualVolume* instance(const char* path) throw (iim::IOException);
 
-    // 2014-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
-    static VirtualVolume* instance_format(const char* path, std::string format) throw (iim::IOException);
-
     // returns the imported volume if succeeds (otherwise returns 0)
     // WARNING: no assumption is made on metadata files, which are possibly (re-)generated using the additional informations provided.
     static VirtualVolume* instance(const char* path, std::string format,
                                    iim::axis AXS_1 = iim::axis_invalid, iim::axis AXS_2 = iim::axis_invalid, iim::axis AXS_3 = iim::axis_invalid,
                                    float VXL_1=0.0f, float VXL_2=0.0f, float VXL_3=0.0f) throw (iim::IOException);
 
+    // 2015-04-14. Alessandro. @ADDED 'instance_format' method with inputs = {path, format}.
+    static VirtualVolume* instance_format(const char* path, std::string format) throw (iim::IOException);
+    
     // checks whether the volume stored in "path" can be imported directly (i.e., w/o additional metadata provided by the user)
     static bool isDirectlyImportable(const char* path)
     {
@@ -288,8 +294,7 @@ public:
         catch(iim::IOException &ex){/**/iim::debug(iim::LEV3, iim::strprintf("error = %s", ex.what()).c_str(), __iim__current__function__);}
         catch(...){}
         bool result = vol != 0;
-        if(vol)
-            delete vol;
+        delete vol;
         return result;
     }
 

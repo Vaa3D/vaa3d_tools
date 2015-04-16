@@ -22,6 +22,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+2015-04-06. Giulio.       @CHANGED Modified prunt method: printing stacks information is now off by default
+*/
+
 #ifndef _TILED_MC_VOLUME_H
 #define _TILED_MC_VOLUME_H
 
@@ -46,10 +52,10 @@ class TiledMCVolume : public iim::VirtualVolume
 //		int           n_active;             // @MOVED to "VirtualVolume" by Alessandro on 2014-02-20
 
 		//***OBJECT PRIVATE METHODS****
-        TiledMCVolume(void);
+		TiledMCVolume(void);
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
-        void init();
+        void init() throw (iim::IOException);
 
 		//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 		void rotate(int theta);
@@ -84,7 +90,7 @@ class TiledMCVolume : public iim::VirtualVolume
 
 
 		//PRINT method
-		void print();
+		void print(  bool print_stacks = false );
 
 		//saving-loading methods to/from metadata binary file
         void save(char* metadata_filepath) throw (iim::IOException);
@@ -143,7 +149,7 @@ class TiledMCVolume : public iim::VirtualVolume
 		 * reused by the caller and the operation returns a null pointer
 		 */
          iim::uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
-
+    
          friend class iim::VirtualVolume;
 
 };

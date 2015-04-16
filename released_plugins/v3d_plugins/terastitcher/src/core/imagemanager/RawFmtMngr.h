@@ -22,6 +22,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-17. Giulio.     @CHANGED definition of V3DLONG in Windows context using the standard type int64_t defined in stdint.h
+*/
+
 /*
  * This file is a modified version of code extracted from the files stackutil.cpp and
  * stackutil-11.cpp of the V3D project. See the following licence notice for more details.
@@ -106,7 +112,8 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #if defined(WIN32) || (defined(_MSC_VER) && defined(_WIN64))
 //#if defined(_MSC_VER) && defined(_WIN64) //correct?
 
-#define V3DLONG long long
+#include <stdint.h>
+#define V3DLONG int64_t //long long
 #define fseek _fseeki64
 #define ftell _ftelli64
 

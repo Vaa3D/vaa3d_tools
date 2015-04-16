@@ -2,6 +2,8 @@
 
 # add used modules to include path 
 include_directories (${TeraStitcher_SOURCE_DIR}/iomanager)
+include_directories (${TeraStitcher_SOURCE_DIR}/volumemanager)
+include_directories (${TeraStitcher_SOURCE_DIR}/tinyxml)
 
 # add 3rd party modules to include path
 include_directories (${CMAKE_SOURCE_DIR}/3rdparty/zlib)

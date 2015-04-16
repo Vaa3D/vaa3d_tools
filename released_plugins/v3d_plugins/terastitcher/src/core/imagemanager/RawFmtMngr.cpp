@@ -22,6 +22,11 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+*/
+
 /*
  * This file is a modified version of code extracted from the files stackutil.cpp and
  * stackutil-11.cpp of the V3D project. See the following licence notice for more details.
@@ -184,7 +189,7 @@ char checkMachineEndian()
 {
     char e='N'; //for unknown endianness
 
-    V3DLONG int a=0x44332211;
+    V3DLONG a=0x44332211; // eliminated 'int'
     unsigned char * p = (unsigned char *)&a;
     if ((*p==0x11) && (*(p+1)==0x22) && (*(p+2)==0x33) && (*(p+3)==0x44))
         e = 'L';

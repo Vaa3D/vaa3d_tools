@@ -42,12 +42,11 @@ class SimpleVolume : public iim::VirtualVolume
         // iannello returns the number of channels of images composing the volume
         void initChannels ( ) throw (iim::IOException);
 
-        SimpleVolume(void);
-
     public:
 
         SimpleVolume(const char* _root_dir)  throw (iim::IOException);
 
+        SimpleVolume(void);
         ~SimpleVolume(void);
 
         // returns a unique ID that identifies the volume format
@@ -65,7 +64,7 @@ class SimpleVolume : public iim::VirtualVolume
 
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
                                                    int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
-
+    
         friend class iim::VirtualVolume;
 };
 

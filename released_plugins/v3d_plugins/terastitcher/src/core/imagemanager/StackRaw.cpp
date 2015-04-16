@@ -249,24 +249,23 @@ void StackRaw::init()
 		sprintf(errMsg, "in StackRaw::init(): can't open directory \"%s\"", abs_path);
         throw IOException(errMsg);
 	}
-
     // 2015-04-14 Alessandro. @FIXED folder image scan: Only .raw/.RAW/.v3draw/.V3DRAW files have to be included in the image list.
-	//scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
-	while ((entry_lev3=readdir(cur_dir_lev3)))
-	{
-		tmp = entry_lev3->d_name;
+    //scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
+    while ((entry_lev3=readdir(cur_dir_lev3)))
+    {
+        tmp = entry_lev3->d_name;
         if(tmp.compare(".") != 0 && tmp.compare("..") != 0 &&
            (tmp.find(".raw") != string::npos || tmp.find(".RAW") != string::npos) || tmp.find(".v3draw") != string::npos || tmp.find(".V3DRAW") != string::npos)
-			entries_lev3.push_back(tmp);
-	}
-	entries_lev3.sort();
-	DEPTH = (int)entries_lev3.size();
-
+            entries_lev3.push_back(tmp);
+    }
+    entries_lev3.sort();
+    DEPTH = (int)entries_lev3.size();
+    
     //----- Alessandro added on August 12, 2013
     //----- Bug fixed: exceeding the maximum number of directories opened at the same time
     closedir(cur_dir_lev3);
-
-	//checking if current stack is not empty
+    
+    //checking if current stack is not empty
     if(DEPTH == 0)
         throw IOException(iim::strprintf("in StackRaw::init(): cannot find .raw/.RAW/.v3draw/.V3DRAW files within folder \"%s\"", abs_path));
 

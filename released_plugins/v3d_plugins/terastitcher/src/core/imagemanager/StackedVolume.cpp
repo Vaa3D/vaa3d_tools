@@ -26,8 +26,13 @@
 *    CHANGELOG    *
 *******************
 * 2015-04-15. Alessandro. @ADDED definition for default constructor.
-* 2014-11-27 Giulio. @FIXED   eliminated part of the dipendences from OpenCV and restored the corresponding code
-* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
+* 2015-04-06. Giulio.       @CHANGED Modified prunt method: printing stacks information is now off by default
+* 2015-03-03. Giulio.     @ADDED check that ioplugin interleaves channels in loadSubvolume_to_UINT8.
+* 2015-03-03. Giulio.     @CHANGED the order of how RGB images are copied in the subvol buffer in loadSubvolume_to_UINT8.
+* 2015-03-03. Giulio.     @ADDED selection of IO plugin in the constructors if not provided.
+* 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+* 2014-11-27 Giulio.      @FIXED   eliminated part of the dipendences from OpenCV and restored the corresponding code
+* 2014-11-22 Giulio.      @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
 
 #include <iostream>
@@ -58,7 +63,7 @@ using namespace iim;
 StackedVolume::StackedVolume(void) : VirtualVolume()
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
-
+    
     N_ROWS = N_COLS = 0;
     reference_system.first = reference_system.second = reference_system.third = iim::axis_invalid;
     VXL_1 = VXL_2 = VXL_3 = 0.0f;
@@ -72,15 +77,17 @@ StackedVolume::StackedVolume(const char* _root_dir)  throw (IOException)
 
 	//throw IOException("in StackedVolume::StackedVolume(...): disabled to remove dependence from openCV"); // Giulio_CV
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMIN_PLUGIN = "tiff2D";
+	}
 
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
-	N_ROWS = N_COLS = 0;
-    STACKS = 0;
-	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+	//DIM_V = DIM_H = DIM_D = 0;
 	VXL_1 = VXL_2 = VXL_3 = 0;
+	N_ROWS = N_COLS = 0;
+	STACKS = NULL;
+	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
     char mdata_filepath[STATIC_STRINGS_SIZE];
@@ -106,15 +113,17 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
 
 	//throw IOException("in StackedVolume::StackedVolume(...): disabled to remove dependence from openCV"); // Giulio_CV
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMIN_PLUGIN = "tiff2D";
+	}
 
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
-	N_ROWS = N_COLS = 0;
-    STACKS = 0;
-	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+	//DIM_V = DIM_H = DIM_D = 0;
 	VXL_1 = VXL_2 = VXL_3 = 0;
+	N_ROWS = N_COLS = 0;
+	STACKS = NULL;
+	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
     char mdata_filepath[STATIC_STRINGS_SIZE];
@@ -208,6 +217,12 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("metadata_filepath = \"%s\"", metadata_filepath).c_str(), __iim__current__function__);
 
+	// 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+	// Currently, this class does not use the IO plugins, but directly calls functions in Tiff3DMngr.cpp.
+	// This should be changed if a different policy will be used in the future.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+		iom::IMIN_PLUGIN = "tiff2D";
+
 	//LOCAL VARIABLES
 	FILE *file;
 	int i,j;
@@ -233,7 +248,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
 //            char errMsg[STATIC_STRINGS_SIZE];
 //            sprintf(errMsg, "in StackedVolume::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
-//            throw MyException(errMsg);
+//            throw iim::IOException(errMsg);
 
         fclose(file);
         file = fopen(metadata_filepath, "rb");
@@ -402,9 +417,15 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
 	fclose(file);
 }
 
-void StackedVolume::init()
+void StackedVolume::init() throw (IOException)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+	// 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+	// Currently, this class does not use the IO plugins, but directly calls functions in Tiff3DMngr.cpp.
+	// This should be changed if a different policy will be used in the future.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+		iom::IMIN_PLUGIN = "tiff2D";
 
 	/************************* 1) LOADING STRUCTURE *************************    
 	*************************************************************************/
@@ -603,7 +624,7 @@ void StackedVolume::initChannels ( ) throw (IOException)
     // Giulio_CVIplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  // 2014-10-03. Alessandro. @FIXED: eliminated CV_LOAD_IMAGE_ANYDEPTH flag since we want 16 bit images to be automatically converted to 8 bit.
 	try
 	{
-		iomanager::IOPluginFactory::getPlugin2D("tiff2D")->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
+		iomanager::IOPluginFactory::getPlugin2D(iom::IMIN_PLUGIN)->readMetadata(slice_fullpath, img_width, img_height,	BYTESxCHAN, DIM_C, params);
 	}
 	catch (iom::exception & ex)
 	{
@@ -640,18 +661,23 @@ void StackedVolume::initChannels ( ) throw (IOException)
 }
 
 //PRINT method
-void StackedVolume::print()
+void StackedVolume::print( bool print_stacks )
 {
 	printf("*** Begin printing StakedVolume object...\n\n");
 	printf("\tDirectory:\t%s\n", root_dir);
-	printf("\tDimensions:\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
-	printf("\tVoxels:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
-	printf("\tOrigin:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
-	printf("\tStacks matrix:\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
-	printf("\t |\n");
-	for(int row=0; row<N_ROWS; row++)
-		for(int col=0; col<N_COLS; col++)
-			STACKS[row][col]->print();
+	printf("\tDimensions:\t\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
+	printf("\tVoxels:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
+	printf("\tOrigin:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
+	printf("\tChannels:\t\t%d\n", DIM_C);
+	printf("\tBytes per channel:\t%d\n", BYTESxCHAN);
+	printf("\tReference system:\tref1=%d, ref2=%d, ref3=%d\n",reference_system.first,reference_system.second,reference_system.third);
+	printf("\tStacks matrix:\t\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
+	if	( print_stacks ) {
+		printf("\t |\n");
+		for(int row=0; row<N_ROWS; row++)
+			for(int col=0; col<N_COLS; col++)
+				STACKS[row][col]->print();
+	}
 	printf("\n*** END printing StakedVolume object...\n\n");
 }
 
@@ -961,7 +987,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
 	//if( this->BYTESxCHAN != 1 ) {
     //	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"StackedVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-	//	throw MyException(err_msg);
+	//	throw iim::IOException(err_msg);
 	//}
 
     //if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH) ) {
@@ -1049,8 +1075,13 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                     {
                         first_time = false;
                         sbv_channels = DIM_C; // Giulio_CV slice->nChannels;
-                        if(sbv_channels != 1 && sbv_channels != 3)
+
+						if(sbv_channels != 1 && sbv_channels != 3)
                             throw IOException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+
+						if ( sbv_channels >1 && !(iom::IOPluginFactory::getPlugin2D(iom::IMIN_PLUGIN)->isChansInterleaved()) ) {
+							throw iom::exception("the plugin do not store channels in interleaved mode: more than one channel not supported yet.");
+						}
 
                         try
                         {
@@ -1098,9 +1129,15 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                             uint8* slice_row = slice + (i+ABS_V_offset)*slice_step;
                             for(int j1 = jstart, j2 = jstart*3; j1 < jend; j1++, j2+=3)
                             {
-                                subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
+								// next code assumes that channels are inteleaved as R-G-B
+                                subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
                                 subvol[offset2 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 1];
-                                subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
+                                subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
+
+								// next code assumes that channels are inteleaved as B-G-R
+                                //subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
+                                //subvol[offset2 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 1];
+                                //subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
                             }
                         }
                     }

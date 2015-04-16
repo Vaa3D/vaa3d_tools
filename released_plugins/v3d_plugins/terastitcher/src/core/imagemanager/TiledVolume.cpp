@@ -25,8 +25,13 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-04-15. Alessandro. @FIXED bad/missing exception handling in loadSubvolume_to_UINT8.
 * 2015-04-15. Alessandro. @ADDED definition for default constructor.
-* 2014-11-22 Giulio. @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
+* 2015-04-06. Giulio.     @CHANGED Modified prunt method: printing stacks information is now off by default
+* 2015-03-03. Giulio.     @ADDED check that ioplugin interleaves channels in loadSubvolume_to_UINT8.
+* 2015-03-03. Giulio.     @ADDED selection of IO plugin in the constructors if not provided.
+* 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+* 2014-11-22 Giulio.      @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
 
 #include <iostream>
@@ -36,6 +41,7 @@
 #include "VirtualFmtMngr.h"
 #include "Tiff3DMngr.h"
 #include "RawFmtMngr.h"
+#include "iomanager.config.h"
 
 #ifdef _WIN32
 #include "dirent_win.h"
@@ -51,6 +57,8 @@
 #include <fstream>
 #include "ProgressBar.h"
 
+#include "IOPluginAPI.h" // 2015-03-03. Giulio.
+
 using namespace std;
 using namespace iim;
 
@@ -58,7 +66,7 @@ using namespace iim;
 TiledVolume::TiledVolume(void) : VirtualVolume()
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
-
+    
     N_ROWS = N_COLS = 0;
     BLOCKS = 0;
     reference_system.first = reference_system.second = reference_system.third = iim::axis_invalid;
@@ -71,15 +79,17 @@ TiledVolume::TiledVolume(const char* _root_dir)  throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s", _root_dir).c_str(), __iim__current__function__);
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMIN_PLUGIN = "tiff3D";
+	}
 
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
+	//DIM_V = DIM_H = DIM_D = 0;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 	N_ROWS = N_COLS = 0;
 	BLOCKS = NULL;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	ffmt = "";
 	fmtMngr = 0;
@@ -106,15 +116,17 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
     /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f",
                                         _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3).c_str(), __iim__current__function__);
 
-	// iannello this->root_dir = new char[strlen(_root_dir)+1];
-	// iannello strcpy(this->root_dir,_root_dir);
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMIN_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMIN_PLUGIN = "tiff3D";
+	}
 
-	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
-	DIM_V = DIM_H = DIM_D = 0;
+	//DIM_V = DIM_H = DIM_D = 0;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 	N_ROWS = N_COLS = 0;
 	BLOCKS = NULL;
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	ffmt = "";
 	fmtMngr = 0;
@@ -243,7 +255,7 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
 //            char errMsg[STATIC_STRINGS_SIZE];
 //            sprintf(errMsg, "in Block::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
-//            throw MyException(errMsg);
+//            throw iim::IOException(errMsg);
 
         fclose(file);
         file = fopen(metadata_filepath, "rb");
@@ -394,9 +406,16 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
 	// get the file format of the blocks
 	ffmt = BLOCKS[0][0]->getFMT();
 	if ( ffmt == "Tiff3D" )
+	{
+		// 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+		if(iom::IMIN_PLUGIN.compare("empty") == 0)
+			iom::IMIN_PLUGIN = "tiff3D";
 		fmtMngr = new Tiff3DFmtMngr();
+	}
 	else if ( ffmt == "Vaa3DRaw" )
+	{
 		fmtMngr = new Vaa3DRawFmtMngr();
+	}
 	else {
         char msg[STATIC_STRINGS_SIZE];
         sprintf(msg,"in TiledVolume::unBinarizeFrom(...): Unknown file format \"%s\"", ffmt.c_str());
@@ -406,7 +425,7 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
 	fclose(file);
 }
 
-void TiledVolume::init()
+void TiledVolume::init() throw (IOException)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
@@ -499,7 +518,12 @@ void TiledVolume::init()
 	// get the file format of the blocks
 	ffmt = BLOCKS[0][0]->getFMT();
 	if ( ffmt == "Tiff3D" )
+	{
+		// 2015-02-27. Alessandro. @ADDED automated selection of IO plugin if not provided.
+		if(iom::IMIN_PLUGIN.compare("empty") == 0)
+			iom::IMIN_PLUGIN = "tiff3D";
 		fmtMngr = new Tiff3DFmtMngr();
+	}
 	else if ( ffmt == "Vaa3DRaw" )
 		fmtMngr = new Vaa3DRawFmtMngr();
 	else {
@@ -622,19 +646,24 @@ void TiledVolume::initChannels ( ) throw (IOException)
 }
 
 //PRINT method
-void TiledVolume::print()
+void TiledVolume::print( bool print_stacks )
 {
-	printf("*** Begin printing StakedVolume object...\n\n");
+	printf("*** Begin printing TiledVolume object...\n\n");
 	printf("\tDirectory:\t%s\n", root_dir);
-	printf("\tDimensions:\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
-	printf("\tVoxels:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
-	printf("\tOrigin:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
-	printf("\tStacks matrix:\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
-	printf("\t |\n");
-	for(int row=0; row<N_ROWS; row++)
-		for(int col=0; col<N_COLS; col++)
-			BLOCKS[row][col]->print();
-	printf("\n*** END printing StakedVolume object...\n\n");
+	printf("\tDimensions:\t\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
+	printf("\tVoxels:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
+	printf("\tOrigin:\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
+	printf("\tChannels:\t\t%d\n", DIM_C);
+	printf("\tBytes per channel:\t%d\n", BYTESxCHAN);
+	printf("\tReference system:\tref1=%d, ref2=%d, ref3=%d\n",reference_system.first,reference_system.second,reference_system.third);
+	printf("\tStacks matrix:\t\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
+	if ( print_stacks ) {
+		printf("\t |\n");
+		for(int row=0; row<N_ROWS; row++)
+			for(int col=0; col<N_COLS; col++)
+				BLOCKS[row][col]->print();
+	}
+	printf("\n*** END printing TiledVolume object...\n\n");
 }
 
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
@@ -949,7 +978,7 @@ iim::uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, i
 	//if( this->BYTESxCHAN != 1 ) {
     //	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-	//	throw MyException(err_msg);
+	//	throw iim::IOException(err_msg);
 	//}
 
     //if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH) ) {
@@ -1021,11 +1050,23 @@ iim::uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, i
 							sbv_channels = this->DIM_C;
 							sbv_bytes_chan = this->BYTESxCHAN;
 
+                            // 2015-04-15. Alessandro. @FIXED bad/missing exception handling in loadSubvolume_to_UINT8.
+                            try
+                            {
+                                if ( sbv_channels >1 && !(iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->isChansInterleaved()) ) {
+                                    throw iim::IOException("the plugin do not store channels in interleaved mode: more than one channel not supported yet.");
+                                }
+                            }
+                            catch(iom::exception &ex)
+                            {
+                                throw iim::IOException(ex.what());
+                            }
+
 							try
 					        {
 								subvol = new iim::uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
 					            //if ( !subvol )
-								//	throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");
+								//	throw iim::IOException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");
 					        }
                             catch(...){throw IOException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
 					    }
@@ -1134,7 +1175,7 @@ iim::uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, i
 		//else {
         //	char err_msg[STATIC_STRINGS_SIZE];
 		//	sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: unknown machine endianess (%c)", endianCodeMachine);
-		//	throw MyException(err_msg);
+		//	throw iim::IOException(err_msg);
 		//}
 
 		//// look for maximum values in each channel and rescale each channel separately
