@@ -40,12 +40,12 @@ void MeanShiftPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
         else if (menu_name == tr("about"))
         {
                 v3d_msg(tr("This is a demo plugin to perform binary thresholding on the current image.\n"
-                        "Developed by Yinan Wan, 2012-02-10"));
+                        "Developed by John Wan, 2012-02-10"));
         }
         else
         {
                 v3d_msg(tr("This is a demo plugin to perform binary thresholding on the current image.\n"
-                        "Developed by Yinan Wan, 2012-02-10"));
+                        "Developed by John Wan, 2012-02-10"));
         }
 }
 

@@ -28,21 +28,22 @@ using namespace std;
 #define ABS(a) (a) > 0 ? (a) : -(a)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
-int *flag;//ÓÃÓÚ±ê¼ÇÃ¿¸öÏñËØµãÊÇ·ñ±»MeanShift¹ı£»
+int *flag;//ï¾“ï¾ƒï¾“ï¾šï½±ãƒ»ï¾‡ï¾ƒï½¿ï½¸î“¶î…†ï¾˜ï½µé£œï¾‡ï½·î„¬ï½»MeanShiftï½¹ï£±ï½£ï½»
 
-QMap<int,QList<Node*> > Map_finalnode_list;//¼üÖµÊÇÖÖ×ÓµãµÄÀà±ğ£¬QListÊÇ¶ÔÓ¦ÖÖ×ÓµãÀà±ğµÄ½ÚµãÁĞ
-QMap<int,Node*> Map_rootnode;//intÊÇ½ÚµãµÄ±àºÅ£¬Ò²ÊÇÀà±ğµÄ±àºÅ
-QMultiMap<int,Node*> Map_allnodes;//¸øÍ¼ÏñÖĞµÄÃ¿Ò»¸öÏñËØµã¶¼·ÖÅämark
-QMap<int,QList<Node*> > finalclass_node;//×îÖÕµãÓëÏñËØ·ÖÀà½á¹û
+QMap<int,QList<Node*> > Map_finalnode_list;//ï½¼ãƒ»ï½µï¾Šï¾‡ï¾–ï¾–ï¾—ï¾“ï½µç¾ï¾„ï¾€ç‰¾î¢ï½¬QListï¾Šï¾‡ï½¶ï¾”ï¾“ï½¦ï¾–ï¾–ï¾—ï¾“ï½µç¿…ç‰¾î´ï¾„ï½½ï¾šï½µç¿†ï¾
+QMap<int,Node*> Map_rootnode;//intï¾Šï¾‡ï½½ï¾šï½µç¾ï¾„ï½±çŠ²ï¾…ï½£ï½¬ï¾’ï½²ï¾Šï¾‡ï¾€ç‰¾î´ï¾„ï½±çŠ²ï¾…
+QMap<int,Node> Map_rootnode_n;
+QMultiMap<int,Node*> Map_allnodes;//ï½¸î™¬ï½¼ï¾î…‘ï¾ï½µï¾„ï¾ƒï½¿ï¾’ï½»ï½¸î“¶î…†ï¾˜ï½µç¾ï½¼ï½·ï¾–ï¾…èˆ‚ark
+QMap<int,QList<Node*> > finalclass_node;//ï¾—é‘ï¾•ï½µè€¨ãƒ»î…†ï¾˜ï½·ï¾–ï¾€ç‹„ç›ªãƒ»
 QList<QList<NeuronSWC> > result_tree_part;
 QList<NeuronSWC> result_final_tree;
 
 QMap<V3DLONG,int> Map_finalnode; 
-QMap<V3DLONG,int> Map_nodes;//¼üÖµ´ú±í¶şÎ¬×ø±ê£¬int±íÊ¾mark£¬±£´æµÄÊÇËùÓĞµãµÄ·ÖÀà
-QMap<V3DLONG,V3DLONG> Map_allnode;//ºÍMap_allnodesµÄ×÷ÓÃÒ»Ñù£¬¶¼ÊÇ¸øËùÓĞµÄµã½øĞĞ·ÖÀà£¬²»Í¬µÄÊÇ±£´æµÄÊÇ²»¶¯µãµÄ¶şÎ¬×ø±ê
+QMap<V3DLONG,int> Map_nodes;//ï½¼ãƒ»ï½µï½´ï¨‘æ˜®ï£²ï¾ï½¬ï¾—î™å‡œï½¬intï½±æ¡„ï½¾markï½£ï½¬ï½±ï½£ï½´è±¬ï¾„ï¾Šï¾‡ï¾‹îœ®ï¾ï½µç¾ï¾„ï½·ï¾–ï¾€ãƒ»
+QMap<V3DLONG,V3DLONG> Map_allnode;//ï½ºï¾Map_allnodesï½µï¾„ï¾—î–¶ï¾ƒï¾’ï½»ï¾‘î›¾ï½¬ï½¶ï½¼ï¾Šï¾‡ï½¸î™ªîœ®ï¾ï½µï¾„ï½µç¾¶î™¯ï¾ï½·ï¾–ï¾€çˆ›ï½¬ï½²ï½»ï¾ï½¬ï½µï¾„ï¾Šï¾‡ï½±ï½£ï½´è±¬ï¾„ï¾Šï¾‡ï½²ï½»ï½¶ï½¯ï½µç¾ï¾„ï½¶ï£²ï¾ï½¬ï¾—î™ãƒ»
 QList <NeuronSWC> result_list;
-vector<QList<Node*> > v_List;//ÓÃÓÚ±£´æÃ¿¸öÏñËØµãÕÒµ½µÄÂ·¾¶
-QMap<V3DLONG,QList<Node*> > root_class;//¸ù½Úµã¶şÎ¬×ø±ê¶ÔÓ¦ºÍ¸ù½ÚµãÀà±ğÏàÍ¬µÄµã
+vector<QList<Node*> > v_List;//ï¾“ï¾ƒï¾“ï¾šï½±ï½£ï½´è²ªï½¿ï½¸î“¶î…†ï¾˜ï½µè€»ï¾’ï½µï½½ï½µï¾„ï¾‚ï½·ï½¾ï½¶
+QMap<V3DLONG,QList<Node*> > root_class;//ï½¸îœ˜ï¾šï½µç¾ï£²ï¾ï½¬ï¾—î™ãƒ»ï¾”ï¾“ï½¦ï½ºï¾ï½¸îœ˜ï¾šï½µç¿…ç‰¾î‚çŒ©ï½¬ï½µï¾„ï½µãƒ»
 
 
 
@@ -52,6 +53,10 @@ Node getnode(Node *node)
 	result.x=node->x;
 	result.y=node->y;
 	result.z=node->z;
+	result.r=node->r;
+	result.class_mark=node->class_mark;
+	result.number=node->number;
+	result.parent=node->parent;
 	return result;
 
 
@@ -76,14 +81,14 @@ bool contain(QList<Node> *queue,V3DLONG x,V3DLONG y,V3DLONG z)
 }
 void enlarge_radiusof_single_node_xy(unsigned char * &img1d,Node * &node,V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z)
 {
-	//»ùÓÚxyÆ½Ãæ4ÁìÓòµÄ°ë¾¶Ôö³¤
+	//ï½»îœ®ï¾šxyï¾†ï½½ï¾ƒãƒ»ï¾ãƒ»î‡¬ï¾„ï½°ãƒ»ï½¶ï¾”î“šï½¤
 
-	//»ùÓÚxyÆ½Ãæ4ÁìÓòµÄ°ë¾¶Ôö³¤
+	//ï½»îœ®ï¾šxyï¾†ï½½ï¾ƒãƒ»ï¾ãƒ»î‡¬ï¾„ï½°ãƒ»ï½¶ï¾”î“šï½¤
 	//queue=new QQueue<Node*>();
 	QList<Node> *list_node=new QList<Node>();
 	int allnodes=0;
 	int back_nodes=0;
-	int max=0;//ÕÒ×î´ó°ë¾¶
+	int max=0;//ï¾•ï¾’ï¾—é‹—îŠ£ãƒ»ï½¶
 	double threshold=30;
 
 	//queue->enqueue(node);
@@ -92,7 +97,7 @@ void enlarge_radiusof_single_node_xy(unsigned char * &img1d,Node * &node,V3DLONG
 	list_node->append(getnode(node));
 	
 
-	while(1)//»ùÓÚ¸ù½ÚµãÒÔ1Îª²½³¤£¬Ò»ÖÜÒ»ÖÜÍùÍâÀ©£¬°Ñ·¶Î§ÄÚµÄµã¶¼¼Óµ½¶ÓÁĞÀïÃæ
+	while(1)//ï½»îœ®ï¾šï½¸îœ˜ï¾šï½µè€¡ï¾”1ï¾ï½ªï½²ï½½ï½³ï½¤ï½£ï½¬ï¾’ï½»ï¾–ï¾œï¾’ï½»ï¾–ï¾œï¾îœ¨ç°‘ï½©ï½£ï½¬ï½°ï¾‘ï½·ï½¶ï¾ï½§ï¾„ï¾šï½µï¾„ï½µç¾ï½¼ï½¼ï¾“ï½µï½½ï½¶ï¾“ï¾ï¾ï¾€ãƒ»ãƒ»
 	{
 		
 		//Node* head=queue->head();
@@ -109,7 +114,7 @@ void enlarge_radiusof_single_node_xy(unsigned char * &img1d,Node * &node,V3DLONG
 		Node *left_queue=left;
 		Node *right_queue=right;*/
 		
-		//if(!queue->contains(up_queue))//¶ÓÁĞÀïÃæÃ»ÓĞ°üÀ¨¸Ã½Úµã
+		//if(!queue->contains(up_queue))//ï½¶ï¾“ï¾ï¾ï¾€ãƒ»è²ªï½»ï¾“ï¾ï½°ãƒ»ï½¨ï½¸ï¾ƒï½½ï¾šï½µãƒ»
 		if(!contain(list_node,up_queue->x,up_queue->y,up_queue->z)) 
 		//if(!queue->contains(GET_IND(up->x,up->y,up->z)))
 		{
@@ -215,7 +220,7 @@ void enlarge_radiusof_single_node_xy(unsigned char * &img1d,Node * &node,V3DLONG
 			
 			break;
 		}else{
-		//³ö¶Ó
+		//ï½³î“ï¾“
 			//queue->pop_front();
 			list_node->pop_front();
 			//list.detach();
@@ -304,7 +309,8 @@ void printSWCByQList_Neuron(QList <NeuronSWC> result_list,char* path)
 		for(int j=0;j< result_list.size();j++)
 		{
 			NeuronSWC temp2= result_list.at(j);
-			fprintf(fp, "%ld %d %f %f %f %f %ld\n",
+			//printf(" %lf \n",temp2.r);
+			fprintf(fp, "%ld %d %f %f %f %lf %ld\n",
 				temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
 
 		}
@@ -392,7 +398,7 @@ void printSwcByMap(QMap<int,Node*> nodeMap,char* path)
 
 void printSWCByMultiMap(QMultiMap<int,int> multimap,char *filename)
 {
-	FILE * fp = fopen(filename, "a");//×·¼Ó
+	FILE * fp = fopen(filename, "a");//ï¾—ï½·ï½¼ï¾“
 	if (!fp) return;
 	V3DLONG number=0;
 	int front=0;
@@ -428,7 +434,7 @@ void printSWCByMultiMap(QMultiMap<int,int> multimap,char *filename)
 
 void printSWCByMap_ListInt(QMap<int,QList<int> >  List,char * filename)
 {
-	FILE * fp = fopen(filename, "a");//×·¼Ó
+	FILE * fp = fopen(filename, "a");//ï¾—ï½·ï½¼ï¾“
 	if (!fp) return;
 	V3DLONG number=0;
 
@@ -459,8 +465,8 @@ void printSWCByMap_ListInt(QMap<int,QList<int> >  List,char * filename)
 }
 
 void printSWCByMap_List(QMap<int,QList<Node*> >  List,char * filename)
-{//Õâ¸öº¯ÊıÊÇ½«QMap<V3DLONG,QList<Node*>>ÀàĞÍĞ´µ½SWCÎÄ¼şÖĞ
-	FILE * fp = fopen(filename, "a");//×·¼Ó
+{//ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï¾Šï¾‡ï½½ï½«QMap<V3DLONG,QList<Node*>>ï¾€çï¾ï¾ï½´ï½µï½½SWCï¾ï¾„ï½¼ï£²ï¾–ï¾
+	FILE * fp = fopen(filename, "a");//ï¾—ï½·ï½¼ï¾“
 	if (!fp) return;
 	V3DLONG number=0;
 
@@ -506,9 +512,9 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	V3DLONG r=10;
 	V3DLONG count=0;
 	int times=100;
-	int num_mark=1;//ÓÃÓÚÔÚ³õÊ¼»¯µÄÊ±ºò¶ÔÖÖ×Óµã½øĞĞ·ÖÀà±êºÅ
+	int num_mark=1;//ï¾“ï¾ƒï¾“ï¾šï¾”ï¾šï½³îµï½¼ï½»ï½¯ï½µï¾„ï¾Šï½±ï½ºî‡­ï¾”ï¾–ï¾–ï¾—ï¾“ï½µç¾¶î™¯ï¾ï½·ï¾–ï¾€ç‰¾ãƒ»ï¾…
 	
-	printf("### Initializing...  ###\n");//20150315£¬Ò»¿ªÊ¼¾Í¶ÔÕû·ùÍ¼Ïñ½øĞĞ³õÊ¼»¯²Ù×÷£¬Ñ°ÕÒ²»¶¯µãÊÇÃ»ÓĞ±ØÒªµÄ£¬¿ÉÒÔÒ»±ßÑ°ÕÒÖÕÖ¹µã£¬Ò»±ß¸ø¾­¹ıµÄ½Úµã½øĞĞ±ê¼Ç£¬ÒÔºóÔÙ×öĞŞ¸Ä
+	printf("### finding rootnode  ###\n");//20150315ï½£ï½¬ï¾’ï½»ï½¿ï½ªï¾Šï½¼ï½¾ï¾ï½¶ï¾”ï¾•ï¨¦îœ¨ï½¼ï¾î„¸î™¯ï¾ï½³îµï½¼ï½»ï½¯ï½²ï¾™ï¾—î–†ï½¬ï¾‘ï½°ï¾•ï¾’ï½²ï½»ï½¶ï½¯ï½µé£œï¾‡ï¾ƒï½»ï¾“ï¾ï½±ï¾˜ï¾’ï½ªï½µï¾„ï½£ï½¬ï½¿ï¾‰ï¾’ï¾”ï¾’ï½»ï½±ï¾Ÿï¾‘ï½°ï¾•ï¾’ï¾–ï¾•ï¾–ï½¹ï½µç½ï½¬ï¾’ï½»ï½±ï¾Ÿï½¸î™ï½­ï½¹ï£±ï½µï¾„ï½½ï¾šï½µç¾¶î™¯ï¾ï½±ãƒ»ï¾‡ï½£ï½¬ï¾’ï¾”ï½ºî‹‡ï¾™ï¾—î“·ï¾ï½¸ï¾„
 	
 
 	for(V3DLONG ii=0;ii<sz_x;ii++)
@@ -517,23 +523,25 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			for(V3DLONG kk=0;kk<sz_z;kk++)
 			{
-				V3DLONG ind=GET_IND(ii,jj,kk);//´ÓÈıÎ¬×ø±ê×ª»»³É¶şÎ¬×ø±ê£¬Í¨¹ı¶şÎ¬×ø±ê»ñµÃÏñËØÇ¿¶È
+				V3DLONG ind=GET_IND(ii,jj,kk);//ï½´ï¾“ï¾ˆï£±ï¾ï½¬ï¾—î™ãƒ»ï½ªï½»ï½»ï½³ï¾‰ï½¶ï£²ï¾ï½¬ï¾—î™å‡œï½¬ï¾ï½¨ï½¹ï£±ï½¶ï£²ï¾ï½¬ï¾—î™ãƒ»î„°ï¾ƒï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆ
 				
-				if(img1d[ind]==0)//ÏñËØÇ¿¶ÈÎª0µÄ×ø±êµã²»Óè¿¼ÂÇ£¬Ö»¶Ô¾ßÓĞÏñËØÇ¿¶ÈµÄµã½øĞĞmeanshift
+				/*if(img1d[ind]==0)//ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï¾ï½ª0ï½µï¾„ï¾—î™ãƒ»ç¾‡ï½»ï¾“éœ‘ï½¼ï¾‚ï¾‡ï½£ï½¬ï¾–ï½»ï½¶ï¾”ï½¾ï¾Ÿï¾“ï¾ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½µï¾„ï½µç¾¶î™¯ï¾meanshift
+					continue;*/
+				if(img1d[ind]<30)//ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½³ï½¬ï½¹ï£±ï¾„ï½³ï¾’ï½»è€™ï¾–ï½µï½µï¾„ï¾—î™ãƒ»ç¾‡ï½»ï¾“éœ‘ï½¼ï¾‚ï¾‡ï½£ï½¬ï¾–ï½»ï½¶ï¾”ï½¾ï¾Ÿï¾“ï¾ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½µï¾„ï½µç¾¶î™¯ï¾meanshift
 					continue;
-				/*	if(img1d[ind]<30)//ÏñËØÇ¿¶È³¬¹ıÄ³Ò»ãĞÖµµÄ×ø±êµã²»Óè¿¼ÂÇ£¬Ö»¶Ô¾ßÓĞÏñËØÇ¿¶ÈµÄµã½øĞĞmeanshift
-				continue;*/
-				if(!found_final(img1d,ii,jj,kk,sz_x, sz_y, sz_z, r))//Ã»ÓĞ¶¯
+				if(!found_final(img1d,ii,jj,kk,sz_x, sz_y, sz_z, r))//ï¾ƒï½»ï¾“ï¾ï½¶ï½¯
 				{
 					Node* final=new Node(ii,jj,kk);
 					
 					final->class_mark=num_mark;
-					final->parent=-1;//¸ù½Úµã±ê¼ÇÎª-1
-					final->number=0;//Ã¿¸ö¸ù½ÚµãµÄĞòºÅ±ê¼ÇÎª0
-					Map_finalnode.insert(ind,num_mark);//¸ø¸ù½Úµã·ÖÅäÀà±ğ±êºÅ,indÊÇ¶şÎ¬×ø±ê,num_markÊÇ±êºÅ
-					enlarge_radiusof_single_node_xy(img1d,final,sz_x, sz_y, sz_z);//¼ÆËã¸ù½ÚµãµÄ°ë¾¶
-					Map_rootnode.insert(num_mark,final);//¸ø¸ù½Úµã·ÖÅäÀà±ğ±êºÅ£¬num_markÊÇÀà±ğ£¬final¶ÔÓ¦ÏàÓ¦µÄ½Úµã
+					final->parent=-1;//ï½¸îœ˜ï¾šï½µç¾ˆãƒ»ï¾‡ï¾ï½ª-1
+					final->number=0;//ï¾ƒï½¿ï½¸î“Ÿîœ˜ï¾šï½µç¾ï¾„ï¾î‡±ï¾…ï½±ãƒ»ï¾‡ï¾ï½ª0
+					Map_finalnode.insert(ind,num_mark);//ï½¸î™—îœ˜ï¾šï½µç¾šï¾–ï¾…èç‰¾î°ãƒ»ï¾…,indï¾Šï¾‡ï½¶ï£²ï¾ï½¬ï¾—î™ãƒ»num_markï¾Šï¾‡ï½±ãƒ»ï¾…
+					enlarge_radiusof_single_node_xy(img1d,final,sz_x, sz_y, sz_z);//ï½¼ï¾†ï¾‹ç¾£îœ˜ï¾šï½µç¾ï¾„ï½°ãƒ»ï½¶
+					Map_rootnode.insert(num_mark,final);//ï½¸î™—îœ˜ï¾šï½µç¾šï¾–ï¾…èç‰¾î°ãƒ»ï¾…ï½£ï½¬num_markï¾Šï¾‡ï¾€ç‰¾î¢ï½¬finalï½¶ï¾”ï¾“ï½¦ï¾ç—ï½¦ï½µï¾„ï½½ï¾šï½µãƒ»
+					//Map_rootnode_n.insert(num_mark,getnode(final));
 					num_mark++;
+					//delete final;
 
 				}
 
@@ -541,51 +549,54 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		}
 	}
 
-	printf("###   initializing finished   ###\n");
-	printf("###  start meanshift   ###\n");
+	printf("###  rootnode found   ###\n");
+	printf("###  cluster nodes using meanshift and connect subtrees by spanning tree   ###\n");
 	for(V3DLONG i=0;i<sz_x;i++)
 	{
 		for(V3DLONG j=0;j<sz_y;j++)
 		{
 			for(V3DLONG k=0;k<sz_z;k++)
 			{
-				V3DLONG ind=GET_IND(i,j,k);//´ÓÈıÎ¬×ø±ê×ª»»³É¶şÎ¬×ø±ê£¬Í¨¹ı¶şÎ¬×ø±ê»ñµÃÏñËØÇ¿¶È
-				if(img1d[ind]==0)//ÏñËØÇ¿¶ÈÎª0µÄ×ø±êµã²»Óè¿¼ÂÇ£¬Ö»¶Ô¾ßÓĞÏñËØÇ¿¶ÈµÄµã½øĞĞmeanshift
-					continue;
-				/*if(img1d[ind]<30)//ÏñËØÇ¿¶È³¬¹ıÄ³Ò»ãĞÖµµÄ×ø±êµã²»Óè¿¼ÂÇ£¬Ö»¶Ô¾ßÓĞÏñËØÇ¿¶ÈµÄµã½øĞĞmeanshift
-				continue;*/
+				V3DLONG ind=GET_IND(i,j,k);//ï½´ï¾“ï¾ˆï£±ï¾ï½¬ï¾—î™ãƒ»ï½ªï½»ï½»ï½³ï¾‰ï½¶ï£²ï¾ï½¬ï¾—î™å‡œï½¬ï¾ï½¨ï½¹ï£±ï½¶ï£²ï¾ï½¬ï¾—î™ãƒ»î„°ï¾ƒï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆ
+				/*if(img1d[ind]==0)//ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï¾ï½ª0ï½µï¾„ï¾—î™ãƒ»ç¾‡ï½»ï¾“éœ‘ï½¼ï¾‚ï¾‡ï½£ï½¬ï¾–ï½»ï½¶ï¾”ï½¾ï¾Ÿï¾“ï¾ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½µï¾„ï½µç¾¶î™¯ï¾meanshift
+					continue;*/
+				if(img1d[ind]<30)//ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½³ï½¬ï½¹ï£±ï¾„ï½³ï¾’ï½»è€™ï¾–ï½µï½µï¾„ï¾—î™ãƒ»ç¾‡ï½»ï¾“éœ‘ï½¼ï¾‚ï¾‡ï½£ï½¬ï¾–ï½»ï½¶ï¾”ï½¾ï¾Ÿï¾“ï¾ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½µï¾„ï½µç¾¶î™¯ï¾meanshift
+				continue;
 				if(flag[ind]==1)
 
 				{
 					
-					continue;//±»´¦Àí¹ıµÄÏñËØµã²»ÔÙ±»´¦Àí
+					continue;//ï½±ï½»ï½´ï½¦ï¾€æ™¥ï£±ï½µï¾„ï¾î…†ï¾˜ï½µç¾‡ï½»ï¾”ï¾™ï½±ï½»ï½´ï½¦ï¾€ãƒ»
 
 				}
-				meanshift_vn4(img1d,i,j,k,sz_x,sz_y,sz_z,r,times);//Í¨¹ıÕâ¸öº¯Êı£¬ËùÓĞµÄ½Úµã¶¼±»·ÖÃÅ±ğÀàµÄ·Åµ½ÁËMap_finalnode_list<int,QList<Node*>>ÖĞ
+				//printf("111111111111111111111111111111111\n");
+				meanshift_vn4(img1d,i,j,k,sz_x,sz_y,sz_z,r,times);//ï¾ï½¨ï½¹ï£±ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï½£ï½¬ï¾‹îœ®ï¾ï½µï¾„ï½½ï¾šï½µç¾ï½¼ï½±ï½»ï½·ï¾–ï¾ƒï¾…ï½±î¿çŠ’ï¾„ï½·ï¾…ï½µï½½ï¾ï¾‹Map_finalnode_list<int,QList<Node*>>ï¾–ï¾
 			}
 
 		}
 
 	}
+	
 
-	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);//Õâ¸öº¯ÊıµÄÊä³ö½á¹ûÊÇÒ»¸öĞÂµÄMap_rootnode,±ÈÖ®Ç°µÄ¸ù½ÚµãÊıÉÙ£¬²¢ÇÒÈÎÒâ¸ù½ÚµãÖ®¼ä²»»áÖØºÏ
-
-	construct_tree(finalclass_node, sz_x, sz_y, sz_z);//µÃµ½ÁËËùÓĞµÄ×ÓÉú³ÉÊ÷
-	printSWCByQList_Neuron(result_list,"D:\\result\\meanshift_result.swc");
+	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);//ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï½µï¾„ï¾Šèî“¤ç›ªéˆ¹ï¾‡ï¾’ï½»ï½¸î“·ï¾‚ï½µï¾„Map_rootnode,ï½±ï¾ˆï¾–ï½®ï¾‡ï½°ï½µï¾„ï½¸îœ˜ï¾šï½µé£œï£±ï¾‰ï¾™ï½£ï½¬ï½²ï½¢ï¾‡ï¾’ï¾ˆï¾ï¾’ç¯‹îœ˜ï¾šï½µèŠï½®ï½¼èŒ£ï½»ï½»ç¶ï¾˜ï½ºï¾
+	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
+	construct_tree(finalclass_node, sz_x, sz_y, sz_z);//ï½µï¾ƒï½µï½½ï¾ï¾‹ï¾‹îœ®ï¾ï½µï¾„ï¾—ï¾“ï¾‰åµ­ï¾‰ï¾Šãƒ»
+	
+	printSWCByQList_Neuron(result_list,"C:\\Vaa3D\\meanshift_result.swc");
 	//writeSWC_file("D:\\result\\meanshift_result_tree_part.swc",result_final_tree);
 	delete []flag;
 }
 
 
 
-void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)//Õâ¸öº¯ÊıÓ¦¸ÃÖªµÀÄÄĞ©¸ù½Úµã±»ºÏ²¢µ½ÁËÄÄĞ©¸ù½ÚµãÉÏ
-{//¸øÃ¿Ò»¸ö¸ù½Úµã¶¼¸ãÒ»¸öcovering list,Õâ¸öcovering list°üº¬ÁËÕâ¸ö¸ù½Úµã¶¼¸²¸ÇÁËÄÄĞ©ÆäËû½Úµã
+void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)//ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï¾“ï½¦ï½¸ï¾ƒï¾–ï½ªï½µï¾€ï¾„ï¾„ï¾ï½©ï½¸îœ˜ï¾šï½µç¾ˆï½»ï½ºï¾ï½²ï½¢ï½µï½½ï¾ï¾‹ï¾„ï¾„ï¾ï½©ï½¸îœ˜ï¾šï½µç¿¹ï¾
+{//ï½¸î™¢ï½¿ï¾’ï½»ï½¸î“Ÿîœ˜ï¾šï½µç¾ï½¼ï½¸è€¡ï½»ï½¸î’‹overing list,ï¾•ç¯‹î’‹overing listï½°ãƒ»ï½¬ï¾ï¾‹ï¾•ç¯‹î“Ÿîœ˜ï¾šï½µç¾ï½¼ï½¸ï½²ï½¸ï¾‡ï¾ï¾‹ï¾„ï¾„ï¾ï½©ï¾†è¢é‡­ï¾šï½µãƒ»
 	
-	QMultiMap<double, int> r_root;//double´ú±í
-	QMap<int,Node*> root;//ÓÃÀ´Ìæ´úrootnodes½øĞĞ²Ù×÷
-	QMultiMap<int,int> parent_root;//ÓÃÓÚ¸øÃ¿¸ö¸ù½ÚµãºÍ°üº¬ËüµÄ¸ù½Úµã½¨Á¢¹ØÏµ£¬µÚ1¸öV3DLONG°üº¬µÚ2¸ö
+	QMultiMap<double, int> r_root;//doubleï½´ï¨‘ãƒ»
+	QMap<int,Node*> root;//ï¾“ï¾ƒï¾€ï½´ï¾Œè±¢ä¾”ootnodesï½½î™¯ï¾ï½²ï¾™ï¾—ãƒ»
+	QMultiMap<int,int> parent_root;//ï¾“ï¾ƒï¾“ï¾šï½¸î™¢ï½¿ï½¸î“Ÿîœ˜ï¾šï½µç¾²ï¾ï½°ãƒ»ï½¬ï¾‹ãƒ»ï¾„ï½¸îœ˜ï¾šï½µç¾¶ï½¨ï¾ï½¢ï½¹ï¾˜ï¾ï½µï½£ï½¬ï½µï¾š1ï½¸î‘¾3DLONGï½°ãƒ»ï½¬ï½µï¾š2ï½¸ãƒ»
 
-	//ÒòÎªÒ»¸ö¸ù½ÚµãÓĞ¿ÉÄÜ±»¶à¸ö½ÚµãËù¸²¸Ç
+	//ï¾’îˆ…ï½ªï¾’ï½»ï½¸î“Ÿîœ˜ï¾šï½µè€¨ï¾ï½¿ï¾‰ï¾„ï¾œï½±ï½»ï½¶çŠ§î“¤ï¾šï½µè€†îœ“ï½²ï½¸ï¾‡
 	QMap<int,int> evidence2;
 	printf("rootnodes:::%d\n",rootnodes.size());
 	for(QMap<int,Node*>::iterator iter =rootnodes.begin(); iter != rootnodes.end(); iter++)
@@ -594,38 +605,38 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 		int key=iter.key();
 		r_root.insert(elem->r,key);
 		evidence2.insert(key,0);
-		parent_root.insert(key,key);//Ã¿Ò»¸ö¸ù½Úµã¶¼Òª¹éÀàµ½×Ô¼ºµÄÀà±ğÉÏ
+		parent_root.insert(key,key);//ï¾ƒï½¿ï¾’ï½»ï½¸î“Ÿîœ˜ï¾šï½µç¾ï½¼ï¾’ï½ªï½¹é¯ŠçŠ’ï½½ï¾—ï¾”ï½¼ï½ºï½µï¾„ï¾€ç‰¾î‚ˆï¾
 
 		for(QMap<int,Node*>::iterator iter1 =rootnodes.begin(); iter1 != rootnodes.end(); iter1++)
 		{
 			Node* elem1=iter1.value();
 			int key1=iter1.key();
 			if((elem1->x==elem->x)&&(elem1->y==elem->y)&&(elem1->z==elem->z))
-				continue;//×Ô¼º²»ºÍ×Ô¼ºÏà±È
+				continue;//ï¾—ï¾”ï½¼ï½ºï½²ï½»ï½ºï¾ï¾—ï¾”ï½¼ï½ºï¾ç‰¾ï¾ˆ
 			double dis=(double)sqrt((double)(elem->x-elem1->x)*(elem->x-elem1->x)+(double)(elem->y-elem1->y)*(elem->y-elem1->y)+(double)(elem->z-elem1->z)*(elem->z-elem1->z));
 
-			if(dis/(elem->r+elem1->r)<1.5)
-			{//µ±Ç°½ÚµãÒÑ¾­±»Ç°ÃæµÄ½ÚµãËù°üº¬£¬Ôòµ±Ç°½Úµã²»Ó¦¸Ã°üº¬Ç°ÃæµÄ½Úµã
-				parent_root.insert(key,key1);//parent_rootÀïÃæÓ¦¸ÃÊÇ°üº¬ÁËËùÓĞµÄ¸ù½Úµã£¬¸úMap_rootnodeÒ»Ñù
+			if(dis/(elem->r+elem1->r)<1.1)
+			{//ï½µï½±ï¾‡ï½°ï½½ï¾šï½µè€¡ï¾‘ï½¾ï½­ï½±ï½»ï¾‡ï½°ï¾ƒè±¬ï¾„ï½½ï¾šï½µè€†îœ‹ãƒ»ï½¬ï½£ï½¬ï¾”î‡¬ï½±ï¾‡ï½°ï½½ï¾šï½µç¾‡ï½»ï¾“ï½¦ï½¸ï¾ƒï½°ãƒ»ï½¬ï¾‡ï½°ï¾ƒè±¬ï¾„ï½½ï¾šï½µãƒ»
+				parent_root.insert(key,key1);//parent_rootï¾€ãƒ»è´Šï½¦ï½¸ï¾ƒï¾Šï¾‡ï½°ãƒ»ï½¬ï¾ï¾‹ï¾‹îœ®ï¾ï½µï¾„ï½¸îœ˜ï¾šï½µç½ï½¬ï½¸â…£ap_rootnodeï¾’ï½»ï¾‘ãƒ»
 				//parent_root_versus.insert(key1,key);
 			}
 		}
 
 		if(!parent_root.contains(key))
 		{
-			parent_root.insert(key,key);//ÓĞ¿ÉÄÜÄ³Ğ©¸ù½ÚµãµÄ°ë¾¶·¶Î§ÄÚ²»°üº¬ÈÎºÎ¸ù½Úµã£¬ÔòÖ»°üº¬×Ô¼º
+			parent_root.insert(key,key);//ï¾“ï¾ï½¿ï¾‰ï¾„ï¾œï¾„ï½³ï¾ï½©ï½¸îœ˜ï¾šï½µç¾ï¾„ï½°ãƒ»ï½¶ï½·ï½¶ï¾ï½§ï¾„ï¾šï½²ï½»ï½°ãƒ»ï½¬ï¾ˆï¾ï½ºï¾ï½¸îœ˜ï¾šï½µç½ï½¬ï¾”îˆï½»ï½°ãƒ»ï½¬ï¾—ï¾”ï½¼ï½º
 
 		}
 	}
 
-    QMap<int,QList<int> > Map_finallist_new;//ÖØĞÂÅÅÁĞµÄ¸ù½ÚµãÒÔ¼°ÏÂÊôµÄÏñËØµã
-	//ÔÚÕâÀïĞèÒª½¨Ò»¸öÈı¼¶Ë÷Òı£¬°ÑËùÓĞµÄµã¶¼¹éÀàµ½ºÏ²¢µÄÖÕÖ¹µãÉÏ
+    QMap<int,QList<int> > Map_finallist_new;//ï¾–ï¾˜ï¾ï¾‚ï¾…ï¾…ï¾ï¾ï½µï¾„ï½¸îœ˜ï¾šï½µè€¡ï¾”ï½¼ï½°ï¾ï¾‚ï¾Šî¤ï¾„ï¾î…†ï¾˜ï½µãƒ»
+	//ï¾”ï¾šï¾•ç°‘ãƒ»é¨ï½ªï½½ï½¨ï¾’ï½»ï½¸î“¯ï£±ï½¼ï½¶ï¾‹î–µï£±ï½£ï½¬ï½°ï¾‘ï¾‹îœ®ï¾ï½µï¾„ï½µç¾ï½¼ï½¹é¯ŠçŠ’ï½½ï½ºï¾ï½²ï½¢ï½µï¾„ï¾–ï¾•ï¾–ï½¹ï½µç¿¹ï¾
 	printf("parent_root:::%d\n",parent_root.size());
 	printf("r_root:::%d\n",r_root.size());
 
-	//Ó¦¸ÃĞ´Ò»¸öÑ­»·£¬°´°ë¾¶´Ó´óµ½Ğ¡ÅÅ£¬É¸Ñ¡³ö×îÖÕµÄ¸ù½Úµã
+	//ï¾“ï½¦ï½¸ï¾ƒï¾ï½´ï¾’ï½»ï½¸î“¸ï½­ï½»ï½·ï½£ï½¬ï½°ï½´ï½°ãƒ»ï½¶ï½´ï¾“ï½´îŠ¨ï½½ï¾ï½¡ï¾…ï¾…ï½£ï½¬ï¾‰ï½¸ï¾‘ï½¡ï½³î“¾é‘ï¾•ï½µï¾„ï½¸îœ˜ï¾šï½µãƒ»
 	for(QMultiMap<double,int>::iterator iter3=r_root.end();iter3!=r_root.begin();iter3--)
-	{//ÕâÀïÓĞÒ»¸öÎÊÌâ£¬¾ÍÊÇr_rootÃ»ÓĞ¼ÆËã£¬²»¹ıÒ»¸öµãÓ¦¸ÃÓ°Ïì²»´ó£¬ÒÔºó½â¾ö
+	{//ï¾•ç°‘ãƒ»ï¾ï¾’ï½»ï½¸î“µï¾Šï¾Œç­Œï½¬ï½¾ï¾ï¾Šï¾‡r_rootï¾ƒï½»ï¾“ï¾ï½¼ï¾†ï¾‹ç½ï½¬ï½²ï½»ï½¹ï£±ï¾’ï½»ï½¸î“œè€¨ï½¦ï½¸ï¾ƒï¾“ï½°ï¾ãƒ»ï½»ï½´îŠ–ï½¬ï¾’ï¾”ï½ºîŠ°ç¯ãƒ»
 		int times=0;
 		int root_key=iter3.value();
 		if(iter3==r_root.end())
@@ -634,10 +645,11 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 			continue;
 
 		}
+		
 		if(evidence2[root_key]==1)
 		{
 
-			continue;//ËµÃ÷ÒÑ¾­±»±»ÈË°üº¬½øÈ¥ÁË£¬²»ÔÙ×÷Îª×îÖÕµÄ¸ù½Úµã
+			continue;//ï¾‹ï½µï¾ƒî–µï¾‘ï½¾ï½­ï½±ï½»ï½±ï½»ï¾ˆï¾‹ï½°ãƒ»ï½¬ï½½î™§ï½¥ï¾ï¾‹ï½£ï½¬ï½²ï½»ï¾”ï¾™ï¾—î–±ï½ªï¾—é‘ï¾•ï½µï¾„ï½¸îœ˜ï¾šï½µãƒ»
 
 		}else
 		{
@@ -646,19 +658,20 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 			QMultiMap<int,int>::iterator end=parent_root.upperBound(root_key);
 			while(begin!=end)
 			{
-
+				//printf("begin:::%d\n",begin.value());
 				Map_finallist_new[root_key].append(begin.value());
 				evidence2[begin.value()]=1;
 				begin++;
 				times++;//for testing
 			}
-			//printf("times:::%d\n",times);
+			//printf("times:::%d\n",Map_finallist_new[root_key].size());
 		}
 
 	}
+	
 
 
-	//20150311,¸ù¾İMap_finallist_new¶ÔËùÓĞÏñËØµã½øĞĞ¹éÀà£¬Map_finallist_newÓ¦¸ÃÒÑ¾­½¨Á¢ºÃÁËÒ»¼¶µ½2¼¶µÄË÷Òı
+	//20150311,ï½¸îœ™ï¾Map_finallist_newï½¶ï¾”ï¾‹îœ®ï¾ï¾î…†ï¾˜ï½µç¾¶î™¯ï¾ï½¹é¯Šçˆ›ï½¬Map_finallist_newï¾“ï½¦ï½¸ï¾ƒï¾’ï¾‘ï½¾ï½­ï½½ï½¨ï¾ï½¢ï½ºï¾ƒï¾ï¾‹ï¾’ï½»ï½¼ï½¶ï½µï½½2ï½¼ï½¶ï½µï¾„ï¾‹î–µï£±
     for(QMap<int,QList<int> >::iterator iter3 =Map_finallist_new.begin(); iter3!=Map_finallist_new.end(); iter3++)
 	{
 		int first_index=iter3.key();
@@ -670,7 +683,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 			for(int j=0;j<Map_finalnode_list[second_index].size();j++)
 			{
 				Node* elem3=Map_finalnode_list[second_index].at(j);
-				if(Map_nodes[GET_IND(elem3->x,elem3->y,elem3->z)]!=-1)//¿´¿´finalclass_node[first_index]ÏÂÃæÊÇ²»ÊÇÒÑ¾­°üº¬ÁË½«Òª°üº¬µÄµã
+				if(Map_nodes[GET_IND(elem3->x,elem3->y,elem3->z)]!=-1)//ï½¿ï½´ï½¿ï½´finalclass_node[first_index]ï¾ï¾‚ï¾ƒè³ï¾‡ï½²ï½»ï¾Šï¾‡ï¾’ï¾‘ï½¾ï½­ï½°ãƒ»ï½¬ï¾ï¾‹ï½½ï½«ï¾’ï½ªï½°ãƒ»ï½¬ï½µï¾„ï½µãƒ»
 				{
 					finalclass_node[first_index].append(Map_finalnode_list[second_index].at(j));
 				}
@@ -678,8 +691,9 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 			}
 		}
 	}
+
 	
-	printSwcByMap(root,"D:\\result\\finalroot.swc");
+	printSwcByMap(root,"C:\\Vaa3D\\finalroot.swc");//2015.04.15ä¸ºä»€ä¹ˆè¿™é‡Œä¼šå‡ºç°å¾ˆå¤šé‡å¤çš„ç‚¹
 
 
 }
@@ -693,7 +707,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				continue;
 
 			QList<Node*> seed=iter.value();
-			//¶ÔÃ¿¸öÀà±ğµÄÏñËØµã°´ÕÕ°ë¾¶´óĞ¡½øĞĞÉ¾³ı£¬¼´¼õÉÙÃ¿¿ÃÊ÷µãµÄÊıÁ¿	
+			//ï½¶ï¾”ï¾ƒï½¿ï½¸î“§ç‰¾î´ï¾„ï¾î…†ï¾˜ï½µç¾ƒï½´ï¾•ï¾•ï½°ãƒ»ï½¶ï½´î‹ƒï½¡ï½½î™¯ï¾ï¾‰ï½¾ï½³ï£±ï½£ï½¬ï½¼ï½´ï½¼î´ï¾™ï¾ƒï½¿ï½¿ï¾ƒï¾Šî–˜ç¾ï¾„ï¾Šï£±ï¾ï½¿	
 			QList<Node*> seeds=trim_nodes(seed, sz_x, sz_y, sz_z);
 			
 			V3DLONG marknum = seeds.size();
@@ -713,15 +727,15 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				z1 = seeds.at(i)->z;
 				for (int j=0;j<marknum;j++)
 				{
-					//ÕâÖÖËãÈ¨ÖµµÄ·½·¨ÓĞÎÊÌâ£¬½ö½ö¿¼ÂÇ¾àÀëºÍÏñËØµÄ»°ÓÖ¾õµÃ²»¹»ºÃ£¬¿ÉÒÔ¿¼ÂÇ½á¹¹ÕÅÁ¿
+					//ï¾•ç±”ï¾–ï¾‹ç¿³ï½¨ï¾–ï½µï½µï¾„ï½·ï½½ï½·ï½¨ï¾“ï¾ï¾ï¾Šï¾Œç­Œï½¬ï½½î“¤î“¦ï½¼ï¾‚ï¾‡ï½¾ç‹¢ãƒ»ï¾ï¾î…†ï¾˜ï½µï¾„ï½»ï½°ï¾“ï¾–ï½¾î ï¾ƒï½²ï½»ï½¹ï½»ï½ºï¾ƒï½£ï½¬ï½¿ï¾‰ï¾’ï¾”ï½¿ï½¼ï¾‚ï¾‡ï½½ç›ªï½¹ï¾•ï¾…ï¾ï½¿
 					markEdge[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
 					//fprintf(debug_fp,"markEdge[i][j]:%lf\n",markEdge[i][j]);
 				}
-			}//Õâ¸öÊÇ¼ÆËãÖÖ×ÓµãÖ®¼äµÄ¾àÀë£¬Ó¦¸ÃÊÇÔÚ¹¹Ôì±ß£¬¼´¼ÆËã±ßµÄ³¤¶È
+			}//ï¾•ç¯‹î“±ï¾‡ï½¼ï¾†ï¾‹èŠï¾–ï¾—ï¾“ï½µèŠï½®ï½¼èŠï¾„ï½¾ç‹¢ãƒ»ï½¬ï¾“ï½¦ï½¸ï¾ƒï¾Šï¾‡ï¾”ï¾šï½¹ï½¹ï¾”ãƒ»ï¾Ÿï½£ï½¬ï½¼ï½´ï½¼ï¾†ï¾‹ç¾ˆï¾Ÿï½µï¾„ï½³ï½¤ï½¶ï¾ˆ
 
 			//NeutronTree structure
 			NeuronTree marker_MST;
-			QList <NeuronSWC> listNeuron;//NeuronSWCÓ¦¸ÃÊÇ½ÚµãµÄÒâË¼£¬¶à¸ö½Úµã¹¹³ÉÒ»¿ÃÊ÷
+			QList <NeuronSWC> listNeuron;//NeuronSWCï¾“ï½¦ï½¸ï¾ƒï¾Šï¾‡ï½½ï¾šï½µç¾ï¾„ï¾’ç°ï½¼ï½£ï½¬ï½¶çŠ§î“¤ï¾šï½µç¾¯ï½¹ï½³ï¾‰ï¾’ï½»ï½¿ï¾ƒï¾Šãƒ»
 			QHash <int, int>  hashNeuron;
 			listNeuron.clear();
 			hashNeuron.clear();
@@ -744,7 +758,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				pi[i] = 0;
 			pi[0] = 1;
 			int indexi,indexj;
-			for(int loop = 0; loop<marknum;loop++)//Õâ¸öÑ­»·Ã²ËÆÔÚÕÒ×î¶ÌÂ·¾¶£¬ÏÈ´ÓµÚ1¸öµã¿ªÊ¼£¬ÕÒÀëËû×î½üµÄÒ»¸öµã£¬È»ºó´ÓÕâ¸öµã¿ªÊ¼£¬ÕÒ×î½üµã£¬ÒÔ´ËÀàÍÆ¡£Õâ¸öÓ¦¸ÃÊÇ×îĞ¡Éú³ÉÊ÷µÄÊµÏÖ´úÂë
+			for(int loop = 0; loop<marknum;loop++)//ï¾•ç¯‹î“¸ï½­ï½»ï½·ï¾ƒï½²ï¾‹ï¾†ï¾”ï¾šï¾•ï¾’ï¾—é‹ï¾Œï¾‚ï½·ï½¾ï½¶ï½£ï½¬ï¾ï¾ˆï½´ï¾“ï½µï¾š1ï½¸î“œè­±ï½ªï¾Šï½¼ï½£ï½¬ï¾•ï¾’ï¾€ãƒ»éŒ¥é‹»ãƒ»ï¾„ï¾’ï½»ï½¸î“œç½ï½¬ï¾ˆï½»ï½ºîŠ§ï¾“ï¾•ç¯‹î“œè­±ï½ªï¾Šï½¼ï½£ï½¬ï¾•ï¾’ï¾—é‹»ãƒ»ç½ï½¬ï¾’ï¾”ï½´ï¾‹ï¾€çŒ©ï¾†ï½¡ï½£ï¾•ç¯‹î“ºï½¦ï½¸ï¾ƒï¾Šï¾‡ï¾—éš¯ï½¡ï¾‰åµ­ï¾‰ï¾Šî–˜ï¾„ï¾Šï½µï¾ï¾–ï½´æƒ²ãƒ»
 			{
 				double min = 100000000;
 				for(int i = 0; i<marknum; i++)
@@ -757,13 +771,13 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 							{
 								min = markEdge[i][j];
 								indexi = i;
-								indexj = j;//ÕâÁ½¸öÖµÓ¦¸Ã±íÊ¾¾àÀë×î¶ÌµÄ¶îÁ½¸öµã
+								indexj = j;//ï¾•ç°”ï½½ï½¸î“½ï½µï¾“ï½¦ï½¸ï¾ƒï½±æ¡„ï½¾ï½¾ç‹¢ãƒ»é‹ï¾Œï½µï¾„ï½¶éŒï½½ï½¸î“œãƒ»
 							}
 						}
 					}
 
 				}
-				if(indexi>=0)//ÔÚÕâ¸öifÓï¾äÖĞ¾ÍĞÎ³ÉÁËÒ»¿ÃÊ÷£¬½ÚµãµÄ¸¸½ÚµãÊÇÀëËû¾àÀë×î½üµÄ½Úµã£¬Ò²ÊÇÔÚËûÖ®Ç°¼ÆËãµÄÒ»¸ö½Úµã
+				if(indexi>=0)//ï¾”ï¾šï¾•ç¯‹î’‘fï¾“ãƒ»è‘·ï¾ï½¾ï¾ï¾ï¾ï½³ï¾‰ï¾ï¾‹ï¾’ï½»ï½¿ï¾ƒï¾Šî–†ï½¬ï½½ï¾šï½µç¾ï¾„ï½¸ï½¸ï½½ï¾šï½µé£œï¾‡ï¾€ãƒ»é‡®ç‹¢ãƒ»é‹»ãƒ»ï¾„ï½½ï¾šï½µç½ï½¬ï¾’ï½²ï¾Šï¾‡ï¾”ï¾šï¾‹é‹“ï½®ï¾‡ï½°ï½¼ï¾†ï¾‹ç¾ï¾„ï¾’ï½»ï½¸î“¤ï¾šï½µãƒ»
 				{
 					S.n 	= indexj+1;
 					S.type 	= 7;
@@ -790,11 +804,11 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 
 			QList<NeuronSWC> marker_MST_sorted;
 			marker_MST_sorted.clear();
-			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))//Õâ¸öÅÅĞòÓ¦¸ÃÊÇ²»»áÓ°Ïì¸¸½ÚµãÓë×Ó½ÚµãÖ®¼äµÄ¹ØÏµ£¬Ó¦¸ÃÖ»ÊÇ½«ÕâĞ©½Úµã°´ÕÕÒ»¶¨µÄË³ĞòĞ´µ½SWCÎÄ¼şÖĞ
+			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))//ï¾•ç¯‹î“¬ï¾…ï¾îˆŠï½¦ï½¸ï¾ƒï¾Šï¾‡ï½²ï½»ï½»ç ï½°ï¾ãƒ»ï½¸ï½½ï¾šï½µè€¨ãƒ»ï¾“ï½½ï¾šï½µèŠï½®ï½¼èŠï¾„ï½¹ï¾˜ï¾ï½µï½£ï½¬ï¾“ï½¦ï½¸ï¾ƒï¾–ï½»ï¾Šï¾‡ï½½ï½«ï¾•ç°Ÿï½©ï½½ï¾šï½µç¾ƒï½´ï¾•ï¾•ï¾’ï½»ï½¶ï½¨ï½µï¾„ï¾‹ï½³ï¾îˆ‡ï½´ï½µï½½SWCï¾ï¾„ï½¼ï£²ï¾–ï¾
 			{
 			}
 
-			prepare_write(marker_MST_sorted);//Õâ¸öº¯ÊıÊÇ½«Ã¿Ò»¿Ã×îĞ¡Éú³ÉÊ÷·Åµ½result_listÀïÃæ£¬È»ºó½«Æä´òÓ¡
+			prepare_write(marker_MST_sorted);//ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï¾Šï¾‡ï½½ï½«ï¾ƒï½¿ï¾’ï½»ï½¿ï¾ƒï¾—éš¯ï½¡ï¾‰åµ­ï¾‰ï¾Šî–šï¾…ï½µï½½result_listï¾€ãƒ»è­½ï½¬ï¾ˆï½»ï½ºîŠ°ï½«ï¾†è‡îˆŠï½¡
 
 			if(markEdge) {delete []markEdge, markEdge = 0;}
 			delete [] pi;
@@ -805,7 +819,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 }
 
 QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
-{//Õâ¸öº¯Êı¸úÉÏÃæÓÃµ½µÄÉ¾ÖÕÖ¹µãµÄ·½·¨Ò»ÖÂ
+{//ï¾•ç¯‹î“¡ï½¯ï¾Šï£±ï½¸æµï¾ï¾ƒè´Šï¾ƒï½µï½½ï½µï¾„ï¾‰ï½¾ï¾–ï¾•ï¾–ï½¹ï½µç¾ï¾„ï½·ï½½ï½·ï½¨ï¾’ï½»ï¾–ï¾‚
 	QList<Node*> result_seeds;
 	QMultiMap<double,Node*> seed_radius;
 	QMultiMap<V3DLONG,V3DLONG> parent_node;
@@ -830,7 +844,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 			double dis=(double)sqrt((double)(elem->x-elem1->x)*(elem->x-elem1->x)+(double)(elem->y-elem1->y)*(elem->y-elem1->y)+(double)(elem->z-elem1->z)*(elem->z-elem1->z));
 			if(dis/(elem->r+elem1->r)<1.2)
 			{
-				parent_node.insert(key,key1);//parent_rootÀïÃæÓ¦¸ÃÊÇ°üº¬ÁËËùÓĞµÄ¸ù½Úµã£¬¸úMap_rootnodeÒ»Ñù
+				parent_node.insert(key,key1);//parent_rootï¾€ãƒ»è´Šï½¦ï½¸ï¾ƒï¾Šï¾‡ï½°ãƒ»ï½¬ï¾ï¾‹ï¾‹îœ®ï¾ï½µï¾„ï½¸îœ˜ï¾šï½µç½ï½¬ï½¸â…£ap_rootnodeï¾’ï½»ï¾‘ãƒ»
 
 			}
 		}
@@ -838,7 +852,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 	}
 
 	for(QMultiMap<double,Node*>::iterator iter=seed_radius.end();iter!=seed_radius.begin();iter--)
-	{//´Ó°ë¾¶´óµÄ¿ªÊ¼É¾½Úµã
+	{//ï½´ï¾“ï½°ãƒ»ï½¶ï½´îŠ¨ï¾„ï½¿ï½ªï¾Šï½¼ï¾‰ï½¾ï½½ï¾šï½µãƒ»
 		if(iter==seed_radius.end())
 			continue;
 		Node* temp=iter.value();
@@ -851,7 +865,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 			//printf("times:::%d\n",times);
 			while((begin!=end))
 			{
-				flag[begin.value()]=1;//ËµÃ÷ÔÚ±»°ë¾¶´óµÄµã°üÎ§£¬¾Í²»ÓÃÔÙ³öÏÖÔÚÍ¼ÀïÃæ
+				flag[begin.value()]=1;//ï¾‹ï½µï¾ƒî–·ï¾šï½±ï½»ï½°ãƒ»ï½¶ï½´îŠ¨ï¾„ï½µç¾ƒãƒ»ï½§ï½£ï½¬ï½¾ï¾ï½²ï½»ï¾“ï¾ƒï¾”ï¾™ï½³î“¶ï¾–ï¾”ï¾šï¾ï½¼ï¾€ãƒ»ãƒ»
 				begin++;
 
 			}
@@ -865,7 +879,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 }
 void prepare_write(QList<NeuronSWC> marker_MST_sorted)
 {
-	//ÖØĞÂĞ´Ò»¸ö½á¹¹£¬°ÑËùÓĞµã¶¼¼Ó½øÈ¥
+	//ï¾–ï¾˜ï¾ï¾‚ï¾ï½´ï¾’ï½»ï½¸î“¤ç›ªï½¹ï½£ï½¬ï½°ï¾‘ï¾‹îœ®ï¾ï½µç¾ï½¼ï½¼ï¾“ï½½î™§ï½¥
 	V3DLONG n_temp=0;
 	V3DLONG n_parent=0;
 	QList<NeuronSWC> temp_marker_sorted;
@@ -903,10 +917,10 @@ void prepare_write(QList<NeuronSWC> marker_MST_sorted)
 }
 
 
-double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3DLONG z,double inte_nd,double inte_cen,V3DLONG r)//MeanShiftËã·¨ÖĞ¼ÆËãµãÓëÔ­µãÖ®¼äµÄÈ¨Öµ£¬ÀëÔ­µãÔ½½üµÄÈ¨ÖµÔ½´ó£¬ÏñËØºÍÔ­µãÔ½½üµÄÈ¨ÖµÔ½´ó
+double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3DLONG z,double inte_nd,double inte_cen,V3DLONG r)//MeanShiftï¾‹ç¾šï½¨ï¾–ï¾ï½¼ï¾†ï¾‹ç¾è€¨ãƒ»ï½­ï½µèŠï½®ï½¼èŠï¾„ï¾ˆï½¨ï¾–ï½µï½£ï½¬ï¾€ãƒ»ï½­ï½µè€¿ï½½ï½½ãƒ»ï¾„ï¾ˆï½¨ï¾–ï½µï¾”ï½½ï½´îŠ–ï½¬ï¾î…†ï¾˜ï½ºï¾ï¾”ï½­ï½µè€¿ï½½ï½½ãƒ»ï¾„ï¾ˆï½¨ï¾–ï½µï¾”ï½½ï½´ãƒ»
 {
 	//double r=100;
-	double I=255;//ÏñËØ×î´óÖµ
+	double I=255;//ï¾î…†ï¾˜ï¾—é‹—î‹‰ï½µ
 	double weight=0;
 	double distance=(curi-x)/r*(curi-x)/r+(curj-y)/r*(curj-y)/r+(curk-z)/r*(curk-z)/r;
 	double inten_sim=(inte_nd-inte_cen)/I*(inte_nd-inte_cen)/I;
@@ -921,7 +935,7 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 {
 	double intensity=img1d[GET_IND(x,y,z)];
 	double sum1_z=0,sum2_z=0,sum1_y=0,sum2_y=0,sum1_x=0,sum2_x=0,w=0;
-	//¶¨Òå·¶Î§£¬ÒÔ°ë¾¶ÎªrµÄÁ¢·½ÇøÓò½øĞĞÒÆ¶¯
+	//ï½¶ï½¨ï¾’èŸ¾ï½¶ï¾ï½§ï½£ï½¬ï¾’ï¾”ï½°ãƒ»ï½¶ï¾ï½ªrï½µï¾„ï¾ï½¢ï½·ï½½ï¾‡î™²î‡´î™¯ï¾ï¾’ï¾†ï½¶ï½¯
 	V3DLONG xe=x-r;if(xe<0) xe=0;
 	V3DLONG xb=x+r+1;if(xb>sz_x) xb=sz_x;
 	V3DLONG ye=y-r;if(ye<0) ye=0;
@@ -933,23 +947,23 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 		for(V3DLONG j=ye;j<yb;j++)
 		{
 			for(V3DLONG k=ze;k<zb;k++)
-			{//Ô²ĞÄµãĞèÒª¸úÕâ¸öÇøÓòÖĞµÄÃ¿¸öµã¶¼¼ÆËãÈ¨Öµ
+			{//ï¾”ï½²ï¾ï¾„ï½µè€™é¨ï½ªï½¸æ™¥ç¯‹î“®î™²îˆï¾ï½µï¾„ï¾ƒï½¿ï½¸î“œç¾ï½¼ï½¼ï¾†ï¾‹ç¿³ï½¨ï¾–ï½µ
 
-				if(GET_IND(i,j,k)==GET_IND(x,y,z)) continue;//Ô²ĞÄµã²»¼ÆËã
-				if(img1d[GET_IND(i,j,k)]==0) continue;//ÏñËØÎª0µÄµã²»¼ÆËã
+				if(GET_IND(i,j,k)==GET_IND(x,y,z)) continue;//ï¾”ï½²ï¾ï¾„ï½µç¾‡ï½»ï½¼ï¾†ï¾‹ãƒ»
+				if(img1d[GET_IND(i,j,k)]==0) continue;//ï¾î…†ï¾˜ï¾ï½ª0ï½µï¾„ï½µç¾‡ï½»ï½¼ï¾†ï¾‹ãƒ»
 				double cur_intensity=img1d[GET_IND(i,j,k)];
-				w=cal_weight(i,j,k,x,y,z,cur_intensity,intensity,r);//¼ÆËãÇøÓòÖĞÃ¿¸öµãºÍÔ²ĞÄµÄÈ¨ÖØ£¬Ö÷ÒªÊÇ»ùÓÚÏñËØÇ¿¶ÈºÍ¾àÀë
+				w=cal_weight(i,j,k,x,y,z,cur_intensity,intensity,r);//ï½¼ï¾†ï¾‹ç¿©î™²îˆï¾ï¾ƒï½¿ï½¸î“œç¾²ï¾ï¾”ï½²ï¾ï¾„ï½µï¾„ï¾ˆï½¨ï¾–ï¾˜ï½£ï½¬ï¾–î–µï½ªï¾Šï¾‡ï½»îœ®ï¾šï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½ºï¾ï½¾ç‹¢ãƒ»
 
-				double core_z=cal_core(k,z,r);//¼ÆËãºËº¯Êı£¬z×ø±ê
-				sum1_z+=core_z*w*k;//¼ÆËãZÖá×ø±ê£¬ÀÛ¼Óºó×÷ÎªMeanShiftÖ÷Òª¼ÆËã¹«Ê½µÄ·Ö×Ó
-				sum2_z+=core_z*w;//ÀÛ¼Óºó×÷ÎªMeanShiftÖ÷Òª¼ÆËã¹«Ê½µÄ·ÖÄ¸
+				double core_z=cal_core(k,z,r);//ï½¼ï¾†ï¾‹ç¾²ï¾‹ï½ºï½¯ï¾Šï£±ï½£ï½¬zï¾—î™ãƒ»
+				sum1_z+=core_z*w*k;//ï½¼ï¾†ï¾‹ç¶®ï¾–ç¹î™å‡œï½¬ï¾€ï¾›ï½¼ï¾“ï½ºî‹Šî–±ï½ªMeanShiftï¾–î–µï½ªï½¼ï¾†ï¾‹ç¾¯ï½«ï¾Šï½½ï½µï¾„ï½·ï¾–ï¾—ï¾“
+				sum2_z+=core_z*w;//ï¾€ï¾›ï½¼ï¾“ï½ºî‹Šî–±ï½ªMeanShiftï¾–î–µï½ªï½¼ï¾†ï¾‹ç¾¯ï½«ï¾Šï½½ï½µï¾„ï½·ï¾–ï¾„ï½¸
 				//printf("%ld  %ld  %lf \n",k,cur_center->z,core_z);
 
-				double core_y=cal_core(j,y,r);//yÖá
+				double core_y=cal_core(j,y,r);//yï¾–ãƒ»
 				sum1_y+=core_y*w*j;
 				sum2_y+=core_y*w;
 
-				double core_x=cal_core(i,x,r);//xÖá
+				double core_x=cal_core(i,x,r);//xï¾–ãƒ»
 				sum1_x+=core_x*w*i;
 				sum2_x+=core_x*w;
 				//printf("%ld   %ld  %ld  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf\n",i,j,k,w,core_x,core_y,core_z,sum1_x,sum2_x,sum1_y,sum2_y,sum1_z,sum2_z);
@@ -963,11 +977,11 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 	V3DLONG next_z=(sum1_z/sum2_z)+0.5;
 	if((next_x==x)&&(next_y==y)&&(next_z==z))
 	{
-		return false;//Ã»ÓĞ¶¯
+		return false;//ï¾ƒï½»ï¾“ï¾ï½¶ï½¯
 
 	}else
 	{
-		return true;//ÓĞÒÆ¶¯
+		return true;//ï¾“ï¾ï¾’ï¾†ï½¶ï½¯
 
 	}
 
@@ -975,18 +989,20 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 }
 
 void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration)
-{//ºÍvn3Ïà±È£¬ÕûÀíÁËvn3Ïà¹ØµÄÂß¼­
+{//ï½ºï¾vn3ï¾ç‰¾ï¾ˆï½£ï½¬ï¾•é‡¥æš¿ï¾‹vn3ï¾çŠ¹ï¾˜ï½µï¾„ï¾‚ï¾Ÿï½¼ï½­
 	int iter=0;
 	int same_times=0;
-	int situation=0;//ÓÃÓÚ¹Û²ìÕÒµ½µÄ×îÖÕµãÊôÓÚÄÄÖÖÀàĞÍ
+	int situation=0;//ï¾“ï¾ƒï¾“ï¾šï½¹ï¾›ï½²ãƒ»ï¾’ï½µï½½ï½µï¾„ï¾—é‘ï¾•ï½µé£œî‚ï¾šï¾„ï¾„ï¾–ï¾–ï¾€çï¾
 
 	QList<Node*> nodeList;
-	nodeList.clear();//Ã¿´Î¶¼clear
-	Node *cur_center=new Node(x,y,z);//µ±Ç°Ô²µÄÖĞĞÄµã£¬¼ÇÂ¼Ô²ÖĞĞÄµãµÄÈıÎ¬×ø±ê
-	double intensity=img1d[GET_IND(x,y,z)];//Í¨¹ıÔ²ÖĞĞÄµÄÈıÎ¬×ø±ê¼ÆËãËüµÄĞÅºÅÇ¿¶È
+	nodeList.clear();//ï¾ƒï½¿ï½´ï¾ï½¶ï½¼clear
+	Node *cur_center=new Node(x,y,z);//ï½µï½±ï¾‡ï½°ï¾”ï½²ï½µï¾„ï¾–ï¾ï¾ï¾„ï½µç½ï½¬ï½¼ï¾‡ï¾‚ï½¼ï¾”ï½²ï¾–ï¾ï¾ï¾„ï½µç¾ï¾„ï¾ˆï£±ï¾ï½¬ï¾—î™ãƒ»
+	double intensity=img1d[GET_IND(x,y,z)];//ï¾ï½¨ï½¹ï£±ï¾”ï½²ï¾–ï¾ï¾ï¾„ï½µï¾„ï¾ˆï£±ï¾ï½¬ï¾—î™ãƒ»ï¾†ï¾‹è€†ãƒ»ï¾„ï¾ï¾…ï½ºï¾…ï¾‡ï½¿ï½¶ï¾ˆ
 	//cur_center->intensity=intensity;
+	//printf("intensity::%f\n",intensity);
+	nodeList.append(cur_center);
 
-	while(1)
+	while(1)//é—®é¢˜å‡ºåœ¨whileå¾ªç¯ä¸Š
 	{
 		if(iter==iteration)
 		{
@@ -995,7 +1011,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 		}else
 		{
 			double sum1_z=0,sum2_z=0,sum1_y=0,sum2_y=0,sum1_x=0,sum2_x=0,w=0;
-			//¶¨Òå·¶Î§£¬ÒÔ°ë¾¶ÎªrµÄÁ¢·½ÇøÓò½øĞĞÒÆ¶¯
+			//ï½¶ï½¨ï¾’èŸ¾ï½¶ï¾ï½§ï½£ï½¬ï¾’ï¾”ï½°ãƒ»ï½¶ï¾ï½ªrï½µï¾„ï¾ï½¢ï½·ï½½ï¾‡î™²î‡´î™¯ï¾ï¾’ï¾†ï½¶ï½¯
 			V3DLONG xe=cur_center->x-r;if(xe<0) xe=0;
 			V3DLONG xb=cur_center->x+r+1;if(xb>sz_x) xb=sz_x;
 			V3DLONG ye=cur_center->y-r;if(ye<0) ye=0;
@@ -1007,23 +1023,23 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				for(V3DLONG j=ye;j<yb;j++)
 				{
 					for(V3DLONG k=ze;k<zb;k++)
-					{//Ô²ĞÄµãĞèÒª¸úÕâ¸öÇøÓòÖĞµÄÃ¿¸öµã¶¼¼ÆËãÈ¨Öµ
+					{//ï¾”ï½²ï¾ï¾„ï½µè€™é¨ï½ªï½¸æ™¥ç¯‹î“®î™²îˆï¾ï½µï¾„ï¾ƒï½¿ï½¸î“œç¾ï½¼ï½¼ï¾†ï¾‹ç¿³ï½¨ï¾–ï½µ
 
-						if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;//Ô²ĞÄµã²»¼ÆËã
-						if(img1d[GET_IND(i,j,k)]==0) continue;//ÏñËØÎª0µÄµã²»¼ÆËã
+						if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;//ï¾”ï½²ï¾ï¾„ï½µç¾‡ï½»ï½¼ï¾†ï¾‹ãƒ»
+						if(img1d[GET_IND(i,j,k)]==0) continue;//ï¾î…†ï¾˜ï¾ï½ª0ï½µï¾„ï½µç¾‡ï½»ï½¼ï¾†ï¾‹ãƒ»
 						double cur_intensity=img1d[GET_IND(i,j,k)];
-						w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);//¼ÆËãÇøÓòÖĞÃ¿¸öµãºÍÔ²ĞÄµÄÈ¨ÖØ£¬Ö÷ÒªÊÇ»ùÓÚÏñËØÇ¿¶ÈºÍ¾àÀë
+						w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);//ï½¼ï¾†ï¾‹ç¿©î™²îˆï¾ï¾ƒï½¿ï½¸î“œç¾²ï¾ï¾”ï½²ï¾ï¾„ï½µï¾„ï¾ˆï½¨ï¾–ï¾˜ï½£ï½¬ï¾–î–µï½ªï¾Šï¾‡ï½»îœ®ï¾šï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆï½ºï¾ï½¾ç‹¢ãƒ»
 
-						double core_z=cal_core(k,cur_center->z,r);//¼ÆËãºËº¯Êı£¬z×ø±ê
-						sum1_z+=core_z*w*k;//¼ÆËãZÖá×ø±ê£¬ÀÛ¼Óºó×÷ÎªMeanShiftÖ÷Òª¼ÆËã¹«Ê½µÄ·Ö×Ó
-						sum2_z+=core_z*w;//ÀÛ¼Óºó×÷ÎªMeanShiftÖ÷Òª¼ÆËã¹«Ê½µÄ·ÖÄ¸
+						double core_z=cal_core(k,cur_center->z,r);//ï½¼ï¾†ï¾‹ç¾²ï¾‹ï½ºï½¯ï¾Šï£±ï½£ï½¬zï¾—î™ãƒ»
+						sum1_z+=core_z*w*k;//ï½¼ï¾†ï¾‹ç¶®ï¾–ç¹î™å‡œï½¬ï¾€ï¾›ï½¼ï¾“ï½ºî‹Šî–±ï½ªMeanShiftï¾–î–µï½ªï½¼ï¾†ï¾‹ç¾¯ï½«ï¾Šï½½ï½µï¾„ï½·ï¾–ï¾—ï¾“
+						sum2_z+=core_z*w;//ï¾€ï¾›ï½¼ï¾“ï½ºî‹Šî–±ï½ªMeanShiftï¾–î–µï½ªï½¼ï¾†ï¾‹ç¾¯ï½«ï¾Šï½½ï½µï¾„ï½·ï¾–ï¾„ï½¸
 						//printf("%ld  %ld  %lf \n",k,cur_center->z,core_z);
 
-						double core_y=cal_core(j,cur_center->y,r);//yÖá
+						double core_y=cal_core(j,cur_center->y,r);//yï¾–ãƒ»
 						sum1_y+=core_y*w*j;
 						sum2_y+=core_y*w;
 
-						double core_x=cal_core(i,cur_center->x,r);//xÖá
+						double core_x=cal_core(i,cur_center->x,r);//xï¾–ãƒ»
 						sum1_x+=core_x*w*i;
 						sum2_x+=core_x*w;
 						//printf("%ld   %ld  %ld  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf\n",i,j,k,w,core_x,core_y,core_z,sum1_x,sum2_x,sum1_y,sum2_y,sum1_z,sum2_z);
@@ -1031,64 +1047,78 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 					}
 				}
 			}
-			V3DLONG temp_x=cur_center->x;//3¸ötemp·ÅÖÃÇ°Ò»¸öÔ²ĞÄµãx\y\z×ø±ê
+			
+			V3DLONG temp_x=cur_center->x;//3ï½¸î’œempï½·ï¾…ï¾–ï¾ƒï¾‡ï½°ï¾’ï½»ï½¸î“»ï½²ï¾ï¾„ï½µç¹†\y\zï¾—î™
 			V3DLONG temp_y=cur_center->y;
 			V3DLONG temp_z=cur_center->z;
-			flag[GET_IND(temp_x,temp_y,temp_z)]=1;//¶ÔÉÏÒ»¸öÔ²ĞÄµã±ê¼ÇÎª1£¬±íÊ¾¸ÃµãÒÑ¾­±»´¦Àí¹ı
+			Node *pre_center=cur_center;
+			flag[GET_IND(temp_x,temp_y,temp_z)]=1;//ï½¶ï¾”ï¾‰ï¾ï¾’ï½»ï½¸î“»ï½²ï¾ï¾„ï½µç¾ˆãƒ»ï¾‡ï¾ï½ª1ï½£ï½¬ï½±æ¡„ï½¾ï½¸ï¾ƒï½µè€¡ï¾‘ï½¾ï½­ï½±ï½»ï½´ï½¦ï¾€æ™¥ï£±
+			//printf("%lf   %lf   %lf\n",sum2_x,sum2_y,sum2_z);
+			if ((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))//ä¸º0çš„è¯è¡¨ç¤ºæ²¡æœ‰ç§»åŠ¨
+			{
+				cur_center->x=temp_x;//ï½°ï¾‘ï¾ï¾‚ï½µï¾„ï¾ï¾‚ï¾’ï½»ï½¸î“»ï½²ï¾ï¾„ï½µç¾£ï½³ï½¸î™¶î–±ï½ªï½µï½±ï¾‡ï½°ï¾”ï½²ï¾ï¾„
+				cur_center->y=temp_y;
+				cur_center->z=temp_z;
+				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];//ï½¸ãƒ»ï¾‚ï½µï½±ï¾‡ï½°ï¾”ï½²ï¾ï¾„ï½µï¾„ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆ
 
-			V3DLONG next_x=(sum1_x/sum2_x)+0.5;
-			V3DLONG next_y=(sum1_y/sum2_y)+0.5;
-			V3DLONG next_z=(sum1_z/sum2_z)+0.5;
-			cur_center->x=next_x;//°ÑĞÂµÄÏÂÒ»¸öÔ²ĞÄµã¸³¸ø×÷Îªµ±Ç°Ô²ĞÄ
-			cur_center->y=next_y;
-			cur_center->z=next_z;
-			intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];//¸üĞÂµ±Ç°Ô²ĞÄµÄÏñËØÇ¿¶È
+			}else
+			{
+				V3DLONG next_x=(sum1_x/sum2_x)+0.5;
+				V3DLONG next_y=(sum1_y/sum2_y)+0.5;
+				V3DLONG next_z=(sum1_z/sum2_z)+0.5;
+				cur_center->x=next_x;//ï½°ï¾‘ï¾ï¾‚ï½µï¾„ï¾ï¾‚ï¾’ï½»ï½¸î“»ï½²ï¾ï¾„ï½µç¾£ï½³ï½¸î™¶î–±ï½ªï½µï½±ï¾‡ï½°ï¾”ï½²ï¾ï¾„
+				cur_center->y=next_y;
+				cur_center->z=next_z;
+				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];//ï½¸ãƒ»ï¾‚ï½µï½±ï¾‡ï½°ï¾”ï½²ï¾ï¾„ï½µï¾„ï¾î…†ï¾˜ï¾‡ï½¿ï½¶ï¾ˆ
 
-
-			//·½Ê½2
-			Node *pre_center=new Node(temp_x,temp_y,temp_z);
-			if(!nodeList.contains(pre_center))//ÅĞ¶ÏÉÏÒ»¸öÔ²ĞÄÊÇ·ñÔÚListÀïÃæ£¬Èç¹ûÔÚµÄ»°ËµÃ÷µ±Ç°½ÚµãºÍÇ°Ò»½ÚµãÏàÍ¬£¬Ç°Ò»½Úµã²¢Î´ÒÆ¶¯
-			{	//¼ÆËãµãµÄ°ë¾¶
-				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);//¼ÆËãÃ¿Ò»¸öµãµÄ°ë¾¶£¬¿ÉÄÜ»á¶Ô¸ù½Úµã½øĞĞÖØ¸´¼ÆËã
+			}
+			//ï½·ï½½ï¾Šï½½2
+			//Node *pre_center=new Node(temp_x,temp_y,temp_z);
+			
+			if(!nodeList.contains(pre_center))//ï¾…ï¾ï½¶ï¾ï¾‰ï¾ï¾’ï½»ï½¸î“»ï½²ï¾ï¾„ï¾Šï¾‡ï½·î…ï¾šListï¾€ãƒ»è­½ï½¬ï¾ˆéƒ¢é‹•ï¾šï½µï¾„ï½»ï½°ï¾‹ï½µï¾ƒî–˜ï½±ï¾‡ï½°ï½½ï¾šï½µç¾²ï¾ï¾‡ï½°ï¾’ï½»ï½½ï¾šï½µè€˜çŒ©ï½¬ï½£ï½¬ï¾‡ï½°ï¾’ï½»ï½½ï¾šï½µç¾‡ï½¢ï¾ï½´ï¾’ï¾†ï½¶ï½¯
+			{	//ï½¼ï¾†ï¾‹ç¾ç¾ï¾„ï½°ãƒ»ï½¶
+				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);//ï½¼ï¾†ï¾‹ç¿•ï½¿ï¾’ï½»ï½¸î“œç¾ï¾„ï½°ãƒ»ï½¶ï½£ï½¬ï½¿ï¾‰ï¾„ï¾œï½»ç›¡ï¾”ï½¸îœ˜ï¾šï½µç¾¶î™¯ï¾ï¾–ï¾˜ï½¸ï½´ï½¼ï¾†ï¾‹ãƒ»
 				//printf("%lf\n",pre_center->r);
 				nodeList.append(pre_center);
 			}	
+			//delete pre_center;
 
 			if(flag[GET_IND(cur_center->x,cur_center->y,cur_center->z)]==1)
-			{//¼ÆËã³öÀ´µÄµ±Ç°ÖĞĞÄµãÒÑ¾­±»¼ÆËã¹ı£¬Ìø³öwhileÑ­»·£¬²»ÔÙ½øĞĞ¼ÆËã
-				//±»¼ÆËã¹ıËµÃ÷ÒÔÇ°¾Í±»¼ÆËã¹ıÒ»´Î£¬ÔÙ¼ÆËãµÄ»°»¹ÊÇ»á±»ÒÆ¶¯µ½ÖÕµã£¬ÔÙ×öÎŞÒâÒå
+			{//ï½¼ï¾†ï¾‹ç¾Œî“§ï½´ï½µï¾„ï½µï½±ï¾‡ï½°ï¾–ï¾ï¾ï¾„ï½µè€¡ï¾‘ï½¾ï½­ï½±ï½»ï½¼ï¾†ï¾‹ç¾¯ï£±ï½£ï½¬ï¾Œî™’î’Ÿhileï¾‘ï½­ï½»ï½·ï½£ï½¬ï½²ï½»ï¾”ï¾™ï½½î™¯ï¾ï½¼ï¾†ï¾‹ãƒ»
+				//ï½±ï½»ï½¼ï¾†ï¾‹ç¾¯ï£±ï¾‹ï½µï¾ƒî–µï¾”ï¾‡ï½°ï½¾ï¾ï½±ï½»ï½¼ï¾†ï¾‹ç¾¯ï£±ï¾’ï½»ï½´ï¾ï½£ï½¬ï¾”ï¾™ï½¼ï¾†ï¾‹ç¾ï¾„ï½»ï½°ï½»ï½¹ï¾Šï¾‡ï½»ç›‚ï½»ï¾’ï¾†ï½¶ï½¯ï½µï½½ï¾–ï¾•ï½µç½ï½¬ï¾”ï¾™ï¾—î“µï¾ï¾’ç°«ãƒ»
 				break;
 			}
 
-			iter++;//±£ÏÕ´ëÊ©£¬µü´ú100´Îºó£¬²»ÔÙµü´ú
+			iter++;//ï½±ï½£ï¾ï¾•ï½´ãƒ»ï½©ï½£ï½¬ï½µãƒ»ãƒ»00ï½´ï¾ï½ºîŠ–ï½¬ï½²ï½»ï¾”ï¾™ï½µãƒ»ãƒ»
 
 		}
+		//printf("11111111111111111111111111111111111\n"); 
 	}
-
-	bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);//ÓÃÓÚÅĞ¶Ï¸ÃµãÊÇ·ñÄÜÒÆ¶¯£¬Ò²±íÊ¾Õâ¸öµãÊÇ¸ù½Úµã»¹ÊÇÂ·¾¶ÉÏµÄµã
+//printf("22222222222222222222222222222222222\n");
+	bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);//ï¾“ï¾ƒï¾“ï¾šï¾…ï¾ï½¶ï¾ï½¸ï¾ƒï½µé£œï¾‡ï½·î„¿ï¾œï¾’ï¾†ï½¶ï½¯ï½£ï½¬ï¾’ï½²ï½±æ¡„ï½¾ï¾•ç¯‹î“œé£œï¾‡ï½¸îœ˜ï¾šï½µç¾¹ï½¹ï¾Šï¾‡ï¾‚ï½·ï½¾ï½¶ï¾‰ï¾ï½µï¾„ï½µãƒ»
 	V3DLONG ind2=GET_IND(cur_center->x,cur_center->y,cur_center->z);
 
 	double temp_dis=1000000;
 
-	{//ÕÒµ½ÁËĞÂµÄ¸ÅÂÊÃÜ¶È×î´óµÄµã
-		//situation=1;//ÓÃÓÚ±ê¼ÇÕÒµ½µÄ×îÖÕµãÊôÓÚÄÄÖÖÇé¿ö
+	{//ï¾•ï¾’ï½µï½½ï¾ï¾‹ï¾ï¾‚ï½µï¾„ï½¸ï¾…ï¾‚ï¾Šï¾ƒï¾œï½¶ï¾ˆï¾—é‹—îŠ¨ï¾„ï½µãƒ»
+		//situation=1;//ï¾“ï¾ƒï¾“ï¾šï½±ãƒ»ï¾‡ï¾•ï¾’ï½µï½½ï½µï¾„ï¾—é‘ï¾•ï½µé£œî‚ï¾šï¾„ï¾„ï¾–ï¾–ï¾‡é¯€ãƒ»
 		int mark=0;
-		if(Map_finalnode.contains(ind2))//20150311,Èç¹ûÔÚMap_finalnodeÀïÃæ£¬ËµÃ÷²»ÄÜ±»ÒÆ¶¯ÁË£¬ÊÇÖÕµã
-		{//Èç¹ûMap_finalnodeÀïÃæ°üÀ¨Õâ¸ö¸ù½Úµã£¬Ôò½«Õâ¸öList·Åµ½ÏàÓ¦µÄMap_finalnode_ListÖĞ
+		if(Map_finalnode.contains(ind2))//20150311,ï¾ˆéƒ¢é‹•ï¾šMap_finalnodeï¾€ãƒ»è­½ï½¬ï¾‹ï½µï¾ƒî–•ï½»ï¾„ï¾œï½±ï½»ï¾’ï¾†ï½¶ï½¯ï¾ï¾‹ï½£ï½¬ï¾Šï¾‡ï¾–ï¾•ï½µãƒ»
+		{//ï¾ˆéƒ¢æ¿µap_finalnodeï¾€ãƒ»è±Œãƒ»ï½¨ï¾•ç¯‹î“Ÿîœ˜ï¾šï½µç½ï½¬ï¾”î‡´ï½«ï¾•ç¯‹î‘´istï½·ï¾…ï½µï½½ï¾ç—ï½¦ï½µï¾„Map_finalnode_Listï¾–ï¾
 			for(int iii=0;iii<nodeList.size();iii++)
 			{
 				V3DLONG node_x=nodeList.at(iii)->x;
 				V3DLONG node_y=nodeList.at(iii)->y;
 				V3DLONG node_z=nodeList.at(iii)->z;
-				Map_nodes[GET_IND(node_x,node_y,node_z)]=Map_finalnode[ind2];//¶ÔnodeListÀïÃæµÄ½Úµã¸³ÓèÏàÓ¦¸ù½ÚµãµÄ±ê¼Ç
+				Map_nodes[GET_IND(node_x,node_y,node_z)]=Map_finalnode[ind2];//ï½¶ï¾”nodeListï¾€ãƒ»è±¬ï¾„ï½½ï¾šï½µç¾£ï½³ï¾“é ç—ï½¦ï½¸îœ˜ï¾šï½µç¾ï¾„ï½±ãƒ»ï¾‡
 				Map_allnodes.insert(Map_finalnode[ind2],nodeList.at(iii));
 				Map_finalnode_list[Map_finalnode[ind2]].append(nodeList.at(iii));
 
 			}
 
-		}else if(Map_nodes.contains(GET_IND(cur_center->x,cur_center->y,cur_center->z)))//ÖÕµãÄÜÒÆ¶¯£¬²¢ÇÒ±»´¦Àí¹ı
+		}else if(Map_nodes.contains(GET_IND(cur_center->x,cur_center->y,cur_center->z)))//ï¾–ï¾•ï½µç¿”ï¾œï¾’ï¾†ï½¶ï½¯ï½£ï½¬ï½²ï½¢ï¾‡ï¾’ï½±ï½»ï½´ï½¦ï¾€æ™¥ï£±
 		{
-			//ÓĞÕâ¸öµãµÄ×ø±ê£¬ÕÒµ½Õâ¸öµãµÄmark,¸ønodeList¸³Öµ
+			//ï¾“ï¾ï¾•ç¯‹î“œç¾ï¾„ï¾—î™å‡œï½¬ï¾•ï¾’ï½µï½½ï¾•ç¯‹î“œç¾ï¾„mark,ï½¸î˜odeListï½¸ï½³ï¾–ï½µ
 			situation=2;
 			int mark3=Map_nodes[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
 
@@ -1097,7 +1127,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				V3DLONG node_x2=nodeList.at(iii)->x;
 				V3DLONG node_y2=nodeList.at(iii)->y;
 				V3DLONG node_z2=nodeList.at(iii)->z;
-				Map_nodes[GET_IND(node_x2,node_y2,node_z2)]=mark3;//¶ÔnodeListÀïÃæµÄ½Úµã¸³ÓèÏàÓ¦¸ù½ÚµãµÄ±ê¼Ç
+				Map_nodes[GET_IND(node_x2,node_y2,node_z2)]=mark3;//ï½¶ï¾”nodeListï¾€ãƒ»è±¬ï¾„ï½½ï¾šï½µç¾£ï½³ï¾“é ç—ï½¦ï½¸îœ˜ï¾šï½µç¾ï¾„ï½±ãƒ»ï¾‡
 				Map_allnodes.insert(mark3,nodeList.at(iii));
 				Map_finalnode_list[mark3].append(nodeList.at(iii));
 
@@ -1109,7 +1139,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			int new_mark=Map_rootnode.size()+1;
 			cur_center->class_mark=new_mark;
 
-			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);//¼ÆËã¸ù½ÚµãµÄ°ë¾¶
+			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);//ï½¼ï¾†ï¾‹ç¾£îœ˜ï¾šï½µç¾ï¾„ï½°ãƒ»ï½¶
 			
 			Map_rootnode.insert(new_mark,cur_center);
 
@@ -1119,7 +1149,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				V3DLONG node_y1=nodeList.at(iii)->y;
 				V3DLONG node_z1=nodeList.at(iii)->z;
 
-				Map_nodes[GET_IND(node_x1,node_y1,node_z1)]=new_mark;//¶ÔnodeListÀïÃæµÄ½Úµã¸³ÓèÏàÓ¦¸ù½ÚµãµÄ±ê¼Ç
+				Map_nodes[GET_IND(node_x1,node_y1,node_z1)]=new_mark;//ï½¶ï¾”nodeListï¾€ãƒ»è±¬ï¾„ï½½ï¾šï½µç¾£ï½³ï¾“é ç—ï½¦ï½¸îœ˜ï¾šï½µç¾ï¾„ï½±ãƒ»ï¾‡
 				Map_allnodes.insert(new_mark,nodeList.at(iii));
 				Map_finalnode_list[new_mark].append(nodeList.at(iii));
 
@@ -1127,6 +1157,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 		}
 
 	}
+	//delete cur_center;//2015.04.15ï¼Œä¸ºä»€ä¹ˆåˆ é™¤è¿™ä¸ªç¨‹åºèƒ½è·‘å®Œï¼Œä½†å‡ºæ¥çš„ç»“æœä¼šå’Œä¸åˆ é™¤æ—¶ä¸ä¸€æ ·ï¼Ÿä¸åˆ é™¤æ—¶ç»“æœä¸æ­£ç¡®ï¼Œä¼šå‡ºç°é•¿çº¿æ¡
 
 }
 
