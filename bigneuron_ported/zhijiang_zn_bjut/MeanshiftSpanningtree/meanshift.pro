@@ -45,4 +45,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 #specify target name and directory
 TARGET  = $$qtLibraryTarget(meanshift)
-DESTDIR = C:/Vaa3D/vaa3d_win7_32bit_v2.707/plugins/BJUT_meanshift/
+DESTDIR = $$V3DMAINPATH/../bin/plugins/BJUT_meanshift/

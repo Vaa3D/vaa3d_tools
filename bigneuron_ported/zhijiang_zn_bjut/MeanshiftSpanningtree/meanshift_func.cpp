@@ -582,7 +582,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
 	construct_tree(finalclass_node, sz_x, sz_y, sz_z);
 	
-	printSWCByQList_Neuron(result_list,"C:\\Vaa3D\\meanshift_result.swc");
+	printSWCByQList_Neuron(result_list,"D:\\result\\meanshift_result.swc");
 	//writeSWC_file("D:\\result\\meanshift_result_tree_part.swc",result_final_tree);
 	delete []flag;
 }
@@ -691,7 +691,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	}
 
 	
-	printSwcByMap(root,"C:\\Vaa3D\\finalroot.swc");//2015.04.15为什么这里会出现很多重复的点
+	printSwcByMap(root,"D:\\result\\finalroot.swc");//2015.04.15为什么这里会出现很多重复的点
 
 
 }
@@ -852,7 +852,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 	for(QMultiMap<double,Node*>::iterator iter=seed_radius.end();iter!=seed_radius.begin();iter--)
 	{
 		if(iter==seed_radius.end())
-			continue;
+			continue; 
 		Node* temp=iter.value();
 		V3DLONG key2=GET_IND(temp->x,temp->y,temp->z);
 		if(flag[GET_IND(temp->x,temp->y,temp->z)]==0)
