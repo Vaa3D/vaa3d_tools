@@ -369,12 +369,20 @@ class iomanager::IOPluginFactory
 		// plugin instantiation
 		static IOPlugin2D* getPlugin2D(std::string id) throw (iom::exception)
 		{ 
+            // 2015-04-15. Alessandro. @FIXED (temporary) tiff2D/tiff3D mismatch
+            if(id.compare("tiff3D") == 0)
+                id = "tiff2D";
+
 			if(instance()->registry2D.find(id) == instance()->registry2D.end())
 				throw iom::exception(iom::strprintf("Cannot find 2D I/O plugin \"%s\" or it is not a 2D I/O plugin", id.c_str()).c_str());
 			return (instance()->registry2D[id])(); 
 		}
 		static IOPlugin3D* getPlugin3D(std::string id) throw (iom::exception)
 		{ 
+            // 2015-04-15. Alessandro. @FIXED (temporary) tiff2D/tiff3D mismatch
+            if(id.compare("tiff2D") == 0)
+                id = "tiff3D";
+
 			if(instance()->registry3D.find(id) == instance()->registry3D.end())
 				throw iom::exception(iom::strprintf("Cannot find 3D I/O plugin \"%s\" or it is not a 3D I/O plugin", id.c_str()).c_str());
 			return (instance()->registry3D[id])(); 
