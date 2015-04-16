@@ -81,19 +81,13 @@ bool contain(QList<Node> *queue,V3DLONG x,V3DLONG y,V3DLONG z)
 }
 void enlarge_radiusof_single_node_xy(unsigned char * &img1d,Node * &node,V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z)
 {
-	//ｻﾚxyﾆｽﾃ・ﾁ・ﾄｰ・ｶﾔ､
 
-	//ｻﾚxyﾆｽﾃ・ﾁ・ﾄｰ・ｶﾔ､
-	//queue=new QQueue<Node*>();
 	QList<Node> *list_node=new QList<Node>();
 	int allnodes=0;
 	int back_nodes=0;
 	int max=0;//ﾕﾒﾗ鋗・ｶ
 	double threshold=30;
 
-	//queue->enqueue(node);
-	//queue->append(node);
-	//list.append(GET_IND(node->x,node->y,node->z));
 	list_node->append(getnode(node));
 	
 
@@ -441,16 +435,13 @@ void printSWCByMap_ListInt(QMap<int,QList<int> >  List,char * filename)
 	fprintf(fp, "#name\n");
 	fprintf(fp, "#comment\n");
 	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-	//printf("11111111111111111111111111111111111111111111111\n");
 
     for(QMap<int,QList<int> >::iterator iter2 =List.begin(); iter2 != List.end();  iter2++)
 	{
 		QList<int> List2=iter2.value();
-		//printf("size:::%d\n",List2.size());
 		for(int i=0;i<List2.size();i++)
 		{
 			int elem = List2.at(i);
-			//printf("elem:::%d\n",elem);
 			fprintf(fp, "%ld %d %ld %ld %ld %5.3f %ld\n",
 				number, 1,  Map_rootnode[elem]->x,  Map_rootnode[elem]->y,  Map_rootnode[elem]->z, Map_rootnode[elem]->r, -1);
 			number++;
@@ -465,8 +456,8 @@ void printSWCByMap_ListInt(QMap<int,QList<int> >  List,char * filename)
 }
 
 void printSWCByMap_List(QMap<int,QList<Node*> >  List,char * filename)
-{//ﾕ篋ｯﾊﾊﾇｽｫQMap<V3DLONG,QList<Node*>>ﾀ獎ﾍﾐｴｵｽSWCﾎﾄｼﾖﾐ
-	FILE * fp = fopen(filename, "a");//ﾗｷｼﾓ
+{
+	FILE * fp = fopen(filename, "a");
 	if (!fp) return;
 	V3DLONG number=0;
 
@@ -475,7 +466,7 @@ void printSWCByMap_List(QMap<int,QList<Node*> >  List,char * filename)
 	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
 
 
-    for(QMap<int,QList<Node*> >::iterator iter2 =List.begin(); iter2 != List.end();  iter2++)
+    for(QMap<int,QList<Node*> >::iterator iter2 =List.begin(); iter2 != List.end();iter2++)
 	{
 		QList<Node*> List2=iter2.value();
 		for(int i=0;i<List2.size();i++)
@@ -576,6 +567,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		}
 
 	}
+	//printSWCByMap_List(Map_finalnode_list,"D:\\result\\compare.swc");
 	
 
 	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
@@ -615,7 +607,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 				continue;
 			double dis=(double)sqrt((double)(elem->x-elem1->x)*(elem->x-elem1->x)+(double)(elem->y-elem1->y)*(elem->y-elem1->y)+(double)(elem->z-elem1->z)*(elem->z-elem1->z));
 
-			if(dis/(elem->r+elem1->r)<1.1)
+			if(dis/(elem->r+elem1->r)<1.5)
 			{
 				parent_root.insert(key,key1);
 				
@@ -1057,6 +1049,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				cur_center->y=temp_y;
 				cur_center->z=temp_z;
 				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
+				enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
 
 			}else
 			{
@@ -1074,8 +1067,9 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			
 			if(!nodeList.contains(pre_center))
 			{	
-				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);
+				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);//20150416,did not get here,why?
 				//printf("%lf\n",pre_center->r);
+				printf("%lf\n",pre_center->r);
 				nodeList.append(pre_center);
 			}	
 			//delete pre_center;
@@ -1135,6 +1129,8 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			cur_center->class_mark=new_mark;
 
 			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
+			if(cur_center->r==0)
+			printf("%lf\n",cur_center->r);
 			
 			Map_rootnode.insert(new_mark,cur_center);
 
@@ -1152,6 +1148,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 		}
 
 	}
+	
 	//delete cur_center;//2015.04.15，为什么删除这个程序能跑完，但出来的结果会和不删除时不一样？不删除时结果不正确，会出现长线条
 
 }
