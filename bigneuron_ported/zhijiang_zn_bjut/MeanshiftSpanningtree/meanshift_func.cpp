@@ -1,4 +1,4 @@
-/* example_func.cpp
+﻿/* example_func.cpp
 * This file contains the functions used in plugin domenu and dufunc, you can use it as a demo.
 * 2012-02-13 : by Yinan Wan
 */
@@ -28,22 +28,22 @@ using namespace std;
 #define ABS(a) (a) > 0 ? (a) : -(a)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
-int *flag;//ﾓﾃﾓﾚｱ・ﾇﾃｿｸﾘｵ飜ﾇｷｻMeanShiftｹ｣ｻ
+int *flag;
 
-QMap<int,QList<Node*> > Map_finalnode_list;//ｼ・ｵﾊﾇﾖﾖﾗﾓｵ羞ﾄﾀ牾ｬQListﾊﾇｶﾔﾓｦﾖﾖﾗﾓｵ翅牾ﾄｽﾚｵ翆ﾐ
-QMap<int,Node*> Map_rootnode;//intﾊﾇｽﾚｵ羞ﾄｱ犲ﾅ｣ｬﾒｲﾊﾇﾀ牾ﾄｱ犲ﾅ
+QMap<int,QList<Node*> > Map_finalnode_list;
+QMap<int,Node*> Map_rootnode;
 QMap<int,Node> Map_rootnode_n;
-QMultiMap<int,Node*> Map_allnodes;//ｸｼﾏﾐｵﾄﾃｿﾒｻｸﾘｵ羝ｼｷﾖﾅ舂ark
-QMap<int,QList<Node*> > finalclass_node;//ﾗ靑ﾕｵ耨・ﾘｷﾖﾀ狄盪・
+QMultiMap<int,Node*> Map_allnodes;
+QMap<int,QList<Node*> > finalclass_node;
 QList<QList<NeuronSWC> > result_tree_part;
 QList<NeuronSWC> result_final_tree;
 
 QMap<V3DLONG,int> Map_finalnode; 
-QMap<V3DLONG,int> Map_nodes;//ｼ・ｵｴ﨑昮ﾎｬﾗ凜ｬintｱ桄ｾmark｣ｬｱ｣ｴ豬ﾄﾊﾇﾋﾐｵ羞ﾄｷﾖﾀ・
-QMap<V3DLONG,V3DLONG> Map_allnode;//ｺﾍMap_allnodesｵﾄﾗﾃﾒｻﾑｬｶｼﾊﾇｸﾐｵﾄｵ羶ﾐｷﾖﾀ爛ｬｲｻﾍｬｵﾄﾊﾇｱ｣ｴ豬ﾄﾊﾇｲｻｶｯｵ羞ﾄｶﾎｬﾗ・
+QMap<V3DLONG,int> Map_nodes;
+QMap<V3DLONG,V3DLONG> Map_allnode;
 QList <NeuronSWC> result_list;
-vector<QList<Node*> > v_List;//ﾓﾃﾓﾚｱ｣ｴ貪ｿｸﾘｵ耻ﾒｵｽｵﾄﾂｷｾｶ
-QMap<V3DLONG,QList<Node*> > root_class;//ｸﾚｵ羝ﾎｬﾗ・ﾔﾓｦｺﾍｸﾚｵ翅牾猩ｬｵﾄｵ・
+vector<QList<Node*> > v_List;
+QMap<V3DLONG,QList<Node*> > root_class;
 
 
 
@@ -512,9 +512,9 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	V3DLONG r=10;
 	V3DLONG count=0;
 	int times=100;
-	int num_mark=1;//ﾓﾃﾓﾚﾔﾚｳｼｻｯｵﾄﾊｱｺﾔﾖﾖﾗﾓｵ羶ﾐｷﾖﾀ牾・ﾅ
+	int num_mark=1;
 	
-	printf("### finding rootnode  ###\n");//20150315｣ｬﾒｻｿｪﾊｼｾﾍｶﾔﾕ都ｼﾏﾐｳｼｻｯｲﾙﾗｬﾑｰﾕﾒｲｻｶｯｵ飜ﾇﾃｻﾓﾐｱﾘﾒｪｵﾄ｣ｬｿﾉﾒﾔﾒｻｱﾟﾑｰﾕﾒﾖﾕﾖｹｵ罐ｬﾒｻｱﾟｸｭｹｵﾄｽﾚｵ羶ﾐｱ・ﾇ｣ｬﾒﾔｺﾙﾗﾞｸﾄ
+	printf("### finding rootnode  ###\n");
 	
 
 	for(V3DLONG ii=0;ii<sz_x;ii++)
@@ -523,22 +523,22 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			for(V3DLONG kk=0;kk<sz_z;kk++)
 			{
-				V3DLONG ind=GET_IND(ii,jj,kk);//ｴﾓﾈﾎｬﾗ・ｪｻｻｳﾉｶﾎｬﾗ凜ｬﾍｨｹｶﾎｬﾗ・ﾃﾏﾘﾇｿｶﾈ
+				V3DLONG ind=GET_IND(ii,jj,kk);
 				
-				/*if(img1d[ind]==0)//ﾏﾘﾇｿｶﾈﾎｪ0ｵﾄﾗ・羇ｻﾓ霑ｼﾂﾇ｣ｬﾖｻｶﾔｾﾟﾓﾐﾏﾘﾇｿｶﾈｵﾄｵ羶ﾐmeanshift
+				/*if(img1d[ind]==0)
 					continue;*/
-				if(img1d[ind]<30)//ﾏﾘﾇｿｶﾈｳｬｹﾄｳﾒｻ耙ﾖｵｵﾄﾗ・羇ｻﾓ霑ｼﾂﾇ｣ｬﾖｻｶﾔｾﾟﾓﾐﾏﾘﾇｿｶﾈｵﾄｵ羶ﾐmeanshift
+				if(img1d[ind]<30)
 					continue;
-				if(!found_final(img1d,ii,jj,kk,sz_x, sz_y, sz_z, r))//ﾃｻﾓﾐｶｯ
+				if(!found_final(img1d,ii,jj,kk,sz_x, sz_y, sz_z, r))
 				{
 					Node* final=new Node(ii,jj,kk);
 					
 					final->class_mark=num_mark;
-					final->parent=-1;//ｸﾚｵ羈・ﾇﾎｪ-1
-					final->number=0;//ﾃｿｸﾚｵ羞ﾄﾐﾅｱ・ﾇﾎｪ0
-					Map_finalnode.insert(ind,num_mark);//ｸﾚｵ羚ﾖﾅ菎牾・ﾅ,indﾊﾇｶﾎｬﾗ・num_markﾊﾇｱ・ﾅ
-					enlarge_radiusof_single_node_xy(img1d,final,sz_x, sz_y, sz_z);//ｼﾆﾋ羣ﾚｵ羞ﾄｰ・ｶ
-					Map_rootnode.insert(num_mark,final);//ｸﾚｵ羚ﾖﾅ菎牾・ﾅ｣ｬnum_markﾊﾇﾀ牾ｬfinalｶﾔﾓｦﾏ獗ｦｵﾄｽﾚｵ・
+					final->parent=-1;
+					final->number=0;
+					Map_finalnode.insert(ind,num_mark);
+					enlarge_radiusof_single_node_xy(img1d,final,sz_x, sz_y, sz_z);
+					Map_rootnode.insert(num_mark,final);
 					//Map_rootnode_n.insert(num_mark,getnode(final));
 					num_mark++;
 					//delete final;
@@ -557,20 +557,20 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			for(V3DLONG k=0;k<sz_z;k++)
 			{
-				V3DLONG ind=GET_IND(i,j,k);//ｴﾓﾈﾎｬﾗ・ｪｻｻｳﾉｶﾎｬﾗ凜ｬﾍｨｹｶﾎｬﾗ・ﾃﾏﾘﾇｿｶﾈ
-				/*if(img1d[ind]==0)//ﾏﾘﾇｿｶﾈﾎｪ0ｵﾄﾗ・羇ｻﾓ霑ｼﾂﾇ｣ｬﾖｻｶﾔｾﾟﾓﾐﾏﾘﾇｿｶﾈｵﾄｵ羶ﾐmeanshift
+				V3DLONG ind=GET_IND(i,j,k);
+				/*if(img1d[ind]==0)
 					continue;*/
-				if(img1d[ind]<30)//ﾏﾘﾇｿｶﾈｳｬｹﾄｳﾒｻ耙ﾖｵｵﾄﾗ・羇ｻﾓ霑ｼﾂﾇ｣ｬﾖｻｶﾔｾﾟﾓﾐﾏﾘﾇｿｶﾈｵﾄｵ羶ﾐmeanshift
+				if(img1d[ind]<30)
 				continue;
 				if(flag[ind]==1)
 
 				{
 					
-					continue;//ｱｻｴｦﾀ晥ｵﾄﾏﾘｵ羇ｻﾔﾙｱｻｴｦﾀ・
+					continue;
 
 				}
 				//printf("111111111111111111111111111111111\n");
-				meanshift_vn4(img1d,i,j,k,sz_x,sz_y,sz_z,r,times);//ﾍｨｹﾕ篋ｯﾊ｣ｬﾋﾐｵﾄｽﾚｵ羝ｼｱｻｷﾖﾃﾅｱ犒ﾄｷﾅｵｽﾁﾋMap_finalnode_list<int,QList<Node*>>ﾖﾐ
+				meanshift_vn4(img1d,i,j,k,sz_x,sz_y,sz_z,r,times);
 			}
 
 		}
@@ -578,9 +578,9 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 	
 
-	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);//ﾕ篋ｯﾊｵﾄﾊ莎盪鈹ﾇﾒｻｸﾂｵﾄMap_rootnode,ｱﾈﾖｮﾇｰｵﾄｸﾚｵ飜ﾉﾙ｣ｬｲ｢ﾇﾒﾈﾎﾒ篋ﾚｵ聊ｮｼ茣ｻｻ瞶ﾘｺﾏ
+	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
 	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	construct_tree(finalclass_node, sz_x, sz_y, sz_z);//ｵﾃｵｽﾁﾋﾋﾐｵﾄﾗﾓﾉ嵭ﾉﾊ・
+	construct_tree(finalclass_node, sz_x, sz_y, sz_z);
 	
 	printSWCByQList_Neuron(result_list,"C:\\Vaa3D\\meanshift_result.swc");
 	//writeSWC_file("D:\\result\\meanshift_result_tree_part.swc",result_final_tree);
@@ -589,14 +589,14 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)//ﾕ篋ｯﾊﾓｦｸﾃﾖｪｵﾀﾄﾄﾐｩｸﾚｵ羈ｻｺﾏｲ｢ｵｽﾁﾋﾄﾄﾐｩｸﾚｵ翹ﾏ
-{//ｸｿﾒｻｸﾚｵ羝ｼｸ耡ｻｸovering list,ﾕ篋overing listｰ・ｬﾁﾋﾕ篋ﾚｵ羝ｼｸｲｸﾇﾁﾋﾄﾄﾐｩﾆ萢釭ﾚｵ・
+void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
 	
-	QMultiMap<double, int> r_root;//doubleｴ﨑・
-	QMap<int,Node*> root;//ﾓﾃﾀｴﾌ豢侔ootnodesｽﾐｲﾙﾗ・
-	QMultiMap<int,int> parent_root;//ﾓﾃﾓﾚｸｿｸﾚｵ羲ﾍｰ・ｬﾋ・ﾄｸﾚｵ羶ｨﾁ｢ｹﾘﾏｵ｣ｬｵﾚ1ｸ3DLONGｰ・ｬｵﾚ2ｸ・
+	QMultiMap<double, int> r_root;
+	QMap<int,Node*> root;
+	QMultiMap<int,int> parent_root;
 
-	//ﾒｪﾒｻｸﾚｵ耨ﾐｿﾉﾄﾜｱｻｶ犧ﾚｵ耆ｲｸﾇ
+	
 	QMap<int,int> evidence2;
 	printf("rootnodes:::%d\n",rootnodes.size());
 	for(QMap<int,Node*>::iterator iter =rootnodes.begin(); iter != rootnodes.end(); iter++)
@@ -605,38 +605,37 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 		int key=iter.key();
 		r_root.insert(elem->r,key);
 		evidence2.insert(key,0);
-		parent_root.insert(key,key);//ﾃｿﾒｻｸﾚｵ羝ｼﾒｪｹ鯊犒ｽﾗﾔｼｺｵﾄﾀ牾ﾏ
+		parent_root.insert(key,key);
 
 		for(QMap<int,Node*>::iterator iter1 =rootnodes.begin(); iter1 != rootnodes.end(); iter1++)
 		{
 			Node* elem1=iter1.value();
 			int key1=iter1.key();
 			if((elem1->x==elem->x)&&(elem1->y==elem->y)&&(elem1->z==elem->z))
-				continue;//ﾗﾔｼｺｲｻｺﾍﾗﾔｼｺﾏ牾ﾈ
+				continue;
 			double dis=(double)sqrt((double)(elem->x-elem1->x)*(elem->x-elem1->x)+(double)(elem->y-elem1->y)*(elem->y-elem1->y)+(double)(elem->z-elem1->z)*(elem->z-elem1->z));
 
 			if(dis/(elem->r+elem1->r)<1.1)
-			{//ｵｱﾇｰｽﾚｵ耡ﾑｾｭｱｻﾇｰﾃ豬ﾄｽﾚｵ耆・ｬ｣ｬﾔｱﾇｰｽﾚｵ羇ｻﾓｦｸﾃｰ・ｬﾇｰﾃ豬ﾄｽﾚｵ・
-				parent_root.insert(key,key1);//parent_rootﾀ・贊ｦｸﾃﾊﾇｰ・ｬﾁﾋﾋﾐｵﾄｸﾚｵ罐ｬｸⅣap_rootnodeﾒｻﾑ・
-				//parent_root_versus.insert(key1,key);
+			{
+				parent_root.insert(key,key1);
+				
 			}
 		}
 
 		if(!parent_root.contains(key))
 		{
-			parent_root.insert(key,key);//ﾓﾐｿﾉﾄﾜﾄｳﾐｩｸﾚｵ羞ﾄｰ・ｶｷｶﾎｧﾄﾚｲｻｰ・ｬﾈﾎｺﾎｸﾚｵ罐ｬﾔｻｰ・ｬﾗﾔｼｺ
+			parent_root.insert(key,key);
 
 		}
 	}
 
-    QMap<int,QList<int> > Map_finallist_new;//ﾖﾘﾐﾂﾅﾅﾁﾐｵﾄｸﾚｵ耡ﾔｼｰﾏﾂﾊﾄﾏﾘｵ・
-	//ﾔﾚﾕ簑・靨ｪｽｨﾒｻｸｼｶﾋ｣ｬｰﾑﾋﾐｵﾄｵ羝ｼｹ鯊犒ｽｺﾏｲ｢ｵﾄﾖﾕﾖｹｵ翹ﾏ
+    QMap<int,QList<int> > Map_finallist_new;
+	
 	printf("parent_root:::%d\n",parent_root.size());
 	printf("r_root:::%d\n",r_root.size());
 
-	//ﾓｦｸﾃﾐｴﾒｻｸｭｻｷ｣ｬｰｴｰ・ｶｴﾓｴｽﾐ｡ﾅﾅ｣ｬﾉｸﾑ｡ｳ靑ﾕｵﾄｸﾚｵ・
 	for(QMultiMap<double,int>::iterator iter3=r_root.end();iter3!=r_root.begin();iter3--)
-	{//ﾕ簑・ﾐﾒｻｸﾊﾌ筌ｬｾﾍﾊﾇr_rootﾃｻﾓﾐｼﾆﾋ罐ｬｲｻｹﾒｻｸ耨ｦｸﾃﾓｰﾏ・ｻｴｬﾒﾔｺ篝・
+	{
 		int times=0;
 		int root_key=iter3.value();
 		if(iter3==r_root.end())
@@ -649,7 +648,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 		if(evidence2[root_key]==1)
 		{
 
-			continue;//ﾋｵﾃﾑｾｭｱｻｱｻﾈﾋｰ・ｬｽ･ﾁﾋ｣ｬｲｻﾔﾙﾗｪﾗ靑ﾕｵﾄｸﾚｵ・
+			continue;
 
 		}else
 		{
@@ -671,7 +670,6 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	
 
 
-	//20150311,ｸﾝMap_finallist_newｶﾔﾋﾐﾏﾘｵ羶ﾐｹ鯊爛ｬMap_finallist_newﾓｦｸﾃﾒﾑｾｭｽｨﾁ｢ｺﾃﾁﾋﾒｻｼｶｵｽ2ｼｶｵﾄﾋ
     for(QMap<int,QList<int> >::iterator iter3 =Map_finallist_new.begin(); iter3!=Map_finallist_new.end(); iter3++)
 	{
 		int first_index=iter3.key();
@@ -683,7 +681,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 			for(int j=0;j<Map_finalnode_list[second_index].size();j++)
 			{
 				Node* elem3=Map_finalnode_list[second_index].at(j);
-				if(Map_nodes[GET_IND(elem3->x,elem3->y,elem3->z)]!=-1)//ｿｴｿｴfinalclass_node[first_index]ﾏﾂﾃ賁ﾇｲｻﾊﾇﾒﾑｾｭｰ・ｬﾁﾋｽｫﾒｪｰ・ｬｵﾄｵ・
+				if(Map_nodes[GET_IND(elem3->x,elem3->y,elem3->z)]!=-1)
 				{
 					finalclass_node[first_index].append(Map_finalnode_list[second_index].at(j));
 				}
@@ -707,7 +705,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				continue;
 
 			QList<Node*> seed=iter.value();
-			//ｶﾔﾃｿｸ牾ﾄﾏﾘｵ羃ｴﾕﾕｰ・ｶｴ｡ｽﾐﾉｾｳ｣ｬｼｴｼﾙﾃｿｿﾃﾊ羞ﾄﾊﾁｿ	
+				
 			QList<Node*> seeds=trim_nodes(seed, sz_x, sz_y, sz_z);
 			
 			V3DLONG marknum = seeds.size();
@@ -727,15 +725,15 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				z1 = seeds.at(i)->z;
 				for (int j=0;j<marknum;j++)
 				{
-					//ﾕ籔ﾖﾋ翳ｨﾖｵｵﾄｷｽｷｨﾓﾐﾎﾊﾌ筌ｬｽｼﾂﾇｾ狢・ﾍﾏﾘｵﾄｻｰﾓﾖｾﾃｲｻｹｻｺﾃ｣ｬｿﾉﾒﾔｿｼﾂﾇｽ盪ｹﾕﾅﾁｿ
+			
 					markEdge[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
 					//fprintf(debug_fp,"markEdge[i][j]:%lf\n",markEdge[i][j]);
 				}
-			}//ﾕ篋ﾇｼﾆﾋ聊ﾖﾗﾓｵ聊ｮｼ莊ﾄｾ狢・ｬﾓｦｸﾃﾊﾇﾔﾚｹｹﾔ・ﾟ｣ｬｼｴｼﾆﾋ羈ﾟｵﾄｳ､ｶﾈ
+			}
 
 			//NeutronTree structure
 			NeuronTree marker_MST;
-			QList <NeuronSWC> listNeuron;//NeuronSWCﾓｦｸﾃﾊﾇｽﾚｵ羞ﾄﾒ簍ｼ｣ｬｶ犧ﾚｵ羯ｹｳﾉﾒｻｿﾃﾊ・
+			QList <NeuronSWC> listNeuron;
 			QHash <int, int>  hashNeuron;
 			listNeuron.clear();
 			hashNeuron.clear();
@@ -758,7 +756,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 				pi[i] = 0;
 			pi[0] = 1;
 			int indexi,indexj;
-			for(int loop = 0; loop<marknum;loop++)//ﾕ篋ｭｻｷﾃｲﾋﾆﾔﾚﾕﾒﾗ鋐ﾌﾂｷｾｶ｣ｬﾏﾈｴﾓｵﾚ1ｸ譱ｪﾊｼ｣ｬﾕﾒﾀ・錥鋻・ﾄﾒｻｸ罐ｬﾈｻｺﾓﾕ篋譱ｪﾊｼ｣ｬﾕﾒﾗ鋻・罐ｬﾒﾔｴﾋﾀ猩ﾆ｡｣ﾕ篋ｦｸﾃﾊﾇﾗ隯｡ﾉ嵭ﾉﾊﾄﾊｵﾏﾖｴ惲・
+			for(int loop = 0; loop<marknum;loop++)
 			{
 				double min = 100000000;
 				for(int i = 0; i<marknum; i++)
@@ -771,13 +769,13 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 							{
 								min = markEdge[i][j];
 								indexi = i;
-								indexj = j;//ﾕ簔ｽｸｵﾓｦｸﾃｱ桄ｾｾ狢・鋐ﾌｵﾄｶ錝ｽｸ・
+								indexj = j;
 							}
 						}
 					}
 
 				}
-				if(indexi>=0)//ﾔﾚﾕ篋fﾓ・葷ﾐｾﾍﾐﾎｳﾉﾁﾋﾒｻｿﾃﾊｬｽﾚｵ羞ﾄｸｸｽﾚｵ飜ﾇﾀ・釮狢・鋻・ﾄｽﾚｵ罐ｬﾒｲﾊﾇﾔﾚﾋ鋓ｮﾇｰｼﾆﾋ羞ﾄﾒｻｸﾚｵ・
+				if(indexi>=0)
 				{
 					S.n 	= indexj+1;
 					S.type 	= 7;
@@ -804,11 +802,11 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 
 			QList<NeuronSWC> marker_MST_sorted;
 			marker_MST_sorted.clear();
-			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))//ﾕ篋ﾅﾐｦｸﾃﾊﾇｲｻｻ瞠ｰﾏ・ｸｽﾚｵ耨・ﾓｽﾚｵ聊ｮｼ莊ﾄｹﾘﾏｵ｣ｬﾓｦｸﾃﾖｻﾊﾇｽｫﾕ簟ｩｽﾚｵ羃ｴﾕﾕﾒｻｶｨｵﾄﾋｳﾐｴｵｽSWCﾎﾄｼﾖﾐ
+			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
 			{
 			}
 
-			prepare_write(marker_MST_sorted);//ﾕ篋ｯﾊﾊﾇｽｫﾃｿﾒｻｿﾃﾗ隯｡ﾉ嵭ﾉﾊﾅｵｽresult_listﾀ・譽ｬﾈｻｺｫﾆ莇｡
+			prepare_write(marker_MST_sorted);
 
 			if(markEdge) {delete []markEdge, markEdge = 0;}
 			delete [] pi;
@@ -819,7 +817,7 @@ void construct_tree(QMap<int,QList<Node*> > finalclass_node,V3DLONG sz_x,V3DLONG
 }
 
 QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
-{//ﾕ篋ｯﾊｸ揵ﾏﾃ贊ﾃｵｽｵﾄﾉｾﾖﾕﾖｹｵ羞ﾄｷｽｷｨﾒｻﾖﾂ
+{
 	QList<Node*> result_seeds;
 	QMultiMap<double,Node*> seed_radius;
 	QMultiMap<V3DLONG,V3DLONG> parent_node;
@@ -844,7 +842,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 			double dis=(double)sqrt((double)(elem->x-elem1->x)*(elem->x-elem1->x)+(double)(elem->y-elem1->y)*(elem->y-elem1->y)+(double)(elem->z-elem1->z)*(elem->z-elem1->z));
 			if(dis/(elem->r+elem1->r)<1.2)
 			{
-				parent_node.insert(key,key1);//parent_rootﾀ・贊ｦｸﾃﾊﾇｰ・ｬﾁﾋﾋﾐｵﾄｸﾚｵ罐ｬｸⅣap_rootnodeﾒｻﾑ・
+				parent_node.insert(key,key1);
 
 			}
 		}
@@ -852,7 +850,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 	}
 
 	for(QMultiMap<double,Node*>::iterator iter=seed_radius.end();iter!=seed_radius.begin();iter--)
-	{//ｴﾓｰ・ｶｴﾄｿｪﾊｼﾉｾｽﾚｵ・
+	{
 		if(iter==seed_radius.end())
 			continue;
 		Node* temp=iter.value();
@@ -865,7 +863,7 @@ QList<Node*> trim_nodes(QList<Node*> seed,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z
 			//printf("times:::%d\n",times);
 			while((begin!=end))
 			{
-				flag[begin.value()]=1;//ﾋｵﾃﾚｱｻｰ・ｶｴﾄｵ羃・ｧ｣ｬｾﾍｲｻﾓﾃﾔﾙｳﾖﾔﾚﾍｼﾀ・・
+				flag[begin.value()]=1;
 				begin++;
 
 			}
@@ -920,7 +918,7 @@ void prepare_write(QList<NeuronSWC> marker_MST_sorted)
 double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3DLONG z,double inte_nd,double inte_cen,V3DLONG r)//MeanShiftﾋ羚ｨﾖﾐｼﾆﾋ羞耨・ｭｵ聊ｮｼ莊ﾄﾈｨﾖｵ｣ｬﾀ・ｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴｬﾏﾘｺﾍﾔｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴ・
 {
 	//double r=100;
-	double I=255;//ﾏﾘﾗ鋗ｵ
+	double I=255;
 	double weight=0;
 	double distance=(curi-x)/r*(curi-x)/r+(curj-y)/r*(curj-y)/r+(curk-z)/r*(curk-z)/r;
 	double inten_sim=(inte_nd-inte_cen)/I*(inte_nd-inte_cen)/I;
@@ -935,7 +933,7 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 {
 	double intensity=img1d[GET_IND(x,y,z)];
 	double sum1_z=0,sum2_z=0,sum1_y=0,sum2_y=0,sum1_x=0,sum2_x=0,w=0;
-	//ｶｨﾒ蟾ｶﾎｧ｣ｬﾒﾔｰ・ｶﾎｪrｵﾄﾁ｢ｷｽﾇﾐﾒﾆｶｯ
+	
 	V3DLONG xe=x-r;if(xe<0) xe=0;
 	V3DLONG xb=x+r+1;if(xb>sz_x) xb=sz_x;
 	V3DLONG ye=y-r;if(ye<0) ye=0;
@@ -947,23 +945,23 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 		for(V3DLONG j=ye;j<yb;j++)
 		{
 			for(V3DLONG k=ze;k<zb;k++)
-			{//ﾔｲﾐﾄｵ耙靨ｪｸ晥篋ﾐｵﾄﾃｿｸ羝ｼｼﾆﾋ翳ｨﾖｵ
+			{
 
-				if(GET_IND(i,j,k)==GET_IND(x,y,z)) continue;//ﾔｲﾐﾄｵ羇ｻｼﾆﾋ・
-				if(img1d[GET_IND(i,j,k)]==0) continue;//ﾏﾘﾎｪ0ｵﾄｵ羇ｻｼﾆﾋ・
+				if(GET_IND(i,j,k)==GET_IND(x,y,z)) continue;
+				if(img1d[GET_IND(i,j,k)]==0) continue;
 				double cur_intensity=img1d[GET_IND(i,j,k)];
-				w=cal_weight(i,j,k,x,y,z,cur_intensity,intensity,r);//ｼﾆﾋ翩ﾐﾃｿｸ羲ﾍﾔｲﾐﾄｵﾄﾈｨﾖﾘ｣ｬﾖｪﾊﾇｻﾚﾏﾘﾇｿｶﾈｺﾍｾ狢・
+				w=cal_weight(i,j,k,x,y,z,cur_intensity,intensity,r);
 
-				double core_z=cal_core(k,z,r);//ｼﾆﾋ羲ﾋｺｯﾊ｣ｬzﾗ・
-				sum1_z+=core_z*w*k;//ｼﾆﾋ綮ﾖ瞹凜ｬﾀﾛｼﾓｺｪMeanShiftﾖｪｼﾆﾋ羯ｫﾊｽｵﾄｷﾖﾗﾓ
-				sum2_z+=core_z*w;//ﾀﾛｼﾓｺｪMeanShiftﾖｪｼﾆﾋ羯ｫﾊｽｵﾄｷﾖﾄｸ
+				double core_z=cal_core(k,z,r);
+				sum1_z+=core_z*w*k;
+				sum2_z+=core_z*w;
 				//printf("%ld  %ld  %lf \n",k,cur_center->z,core_z);
 
-				double core_y=cal_core(j,y,r);//yﾖ・
+				double core_y=cal_core(j,y,r);
 				sum1_y+=core_y*w*j;
 				sum2_y+=core_y*w;
 
-				double core_x=cal_core(i,x,r);//xﾖ・
+				double core_x=cal_core(i,x,r);
 				sum1_x+=core_x*w*i;
 				sum2_x+=core_x*w;
 				//printf("%ld   %ld  %ld  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf\n",i,j,k,w,core_x,core_y,core_z,sum1_x,sum2_x,sum1_y,sum2_y,sum1_z,sum2_z);
@@ -977,11 +975,11 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 	V3DLONG next_z=(sum1_z/sum2_z)+0.5;
 	if((next_x==x)&&(next_y==y)&&(next_z==z))
 	{
-		return false;//ﾃｻﾓﾐｶｯ
+		return false;
 
 	}else
 	{
-		return true;//ﾓﾐﾒﾆｶｯ
+		return true;
 
 	}
 
@@ -989,15 +987,15 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 }
 
 void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration)
-{//ｺﾍvn3ﾏ牾ﾈ｣ｬﾕ釥暿ﾋvn3ﾏ犹ﾘｵﾄﾂﾟｼｭ
+{
 	int iter=0;
 	int same_times=0;
-	int situation=0;//ﾓﾃﾓﾚｹﾛｲ・ﾒｵｽｵﾄﾗ靑ﾕｵ飜ﾚﾄﾄﾖﾖﾀ獎ﾍ
+	int situation=0;
 
 	QList<Node*> nodeList;
-	nodeList.clear();//ﾃｿｴﾎｶｼclear
-	Node *cur_center=new Node(x,y,z);//ｵｱﾇｰﾔｲｵﾄﾖﾐﾐﾄｵ罐ｬｼﾇﾂｼﾔｲﾖﾐﾐﾄｵ羞ﾄﾈﾎｬﾗ・
-	double intensity=img1d[GET_IND(x,y,z)];//ﾍｨｹﾔｲﾖﾐﾐﾄｵﾄﾈﾎｬﾗ・ﾆﾋ耆・ﾄﾐﾅｺﾅﾇｿｶﾈ
+	nodeList.clear();
+	Node *cur_center=new Node(x,y,z);
+	double intensity=img1d[GET_IND(x,y,z)];
 	//cur_center->intensity=intensity;
 	//printf("intensity::%f\n",intensity);
 	nodeList.append(cur_center);
@@ -1011,7 +1009,6 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 		}else
 		{
 			double sum1_z=0,sum2_z=0,sum1_y=0,sum2_y=0,sum1_x=0,sum2_x=0,w=0;
-			//ｶｨﾒ蟾ｶﾎｧ｣ｬﾒﾔｰ・ｶﾎｪrｵﾄﾁ｢ｷｽﾇﾐﾒﾆｶｯ
 			V3DLONG xe=cur_center->x-r;if(xe<0) xe=0;
 			V3DLONG xb=cur_center->x+r+1;if(xb>sz_x) xb=sz_x;
 			V3DLONG ye=cur_center->y-r;if(ye<0) ye=0;
@@ -1023,23 +1020,23 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				for(V3DLONG j=ye;j<yb;j++)
 				{
 					for(V3DLONG k=ze;k<zb;k++)
-					{//ﾔｲﾐﾄｵ耙靨ｪｸ晥篋ﾐｵﾄﾃｿｸ羝ｼｼﾆﾋ翳ｨﾖｵ
+					{
 
-						if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;//ﾔｲﾐﾄｵ羇ｻｼﾆﾋ・
-						if(img1d[GET_IND(i,j,k)]==0) continue;//ﾏﾘﾎｪ0ｵﾄｵ羇ｻｼﾆﾋ・
+						if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;
+						if(img1d[GET_IND(i,j,k)]==0) continue;
 						double cur_intensity=img1d[GET_IND(i,j,k)];
-						w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);//ｼﾆﾋ翩ﾐﾃｿｸ羲ﾍﾔｲﾐﾄｵﾄﾈｨﾖﾘ｣ｬﾖｪﾊﾇｻﾚﾏﾘﾇｿｶﾈｺﾍｾ狢・
+						w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);
 
-						double core_z=cal_core(k,cur_center->z,r);//ｼﾆﾋ羲ﾋｺｯﾊ｣ｬzﾗ・
-						sum1_z+=core_z*w*k;//ｼﾆﾋ綮ﾖ瞹凜ｬﾀﾛｼﾓｺｪMeanShiftﾖｪｼﾆﾋ羯ｫﾊｽｵﾄｷﾖﾗﾓ
-						sum2_z+=core_z*w;//ﾀﾛｼﾓｺｪMeanShiftﾖｪｼﾆﾋ羯ｫﾊｽｵﾄｷﾖﾄｸ
+						double core_z=cal_core(k,cur_center->z,r);
+						sum1_z+=core_z*w*k;
+						sum2_z+=core_z*w;
 						//printf("%ld  %ld  %lf \n",k,cur_center->z,core_z);
 
-						double core_y=cal_core(j,cur_center->y,r);//yﾖ・
+						double core_y=cal_core(j,cur_center->y,r);
 						sum1_y+=core_y*w*j;
 						sum2_y+=core_y*w;
 
-						double core_x=cal_core(i,cur_center->x,r);//xﾖ・
+						double core_x=cal_core(i,cur_center->x,r);
 						sum1_x+=core_x*w*i;
 						sum2_x+=core_x*w;
 						//printf("%ld   %ld  %ld  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf\n",i,j,k,w,core_x,core_y,core_z,sum1_x,sum2_x,sum1_y,sum2_y,sum1_z,sum2_z);
@@ -1048,77 +1045,75 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				}
 			}
 			
-			V3DLONG temp_x=cur_center->x;//3ｸempｷﾅﾖﾃﾇｰﾒｻｸｲﾐﾄｵ繆\y\zﾗ
+			V3DLONG temp_x=cur_center->x;
 			V3DLONG temp_y=cur_center->y;
 			V3DLONG temp_z=cur_center->z;
 			Node *pre_center=cur_center;
-			flag[GET_IND(temp_x,temp_y,temp_z)]=1;//ｶﾔﾉﾏﾒｻｸｲﾐﾄｵ羈・ﾇﾎｪ1｣ｬｱ桄ｾｸﾃｵ耡ﾑｾｭｱｻｴｦﾀ晥
+			flag[GET_IND(temp_x,temp_y,temp_z)]=1;
 			//printf("%lf   %lf   %lf\n",sum2_x,sum2_y,sum2_z);
 			if ((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))//为0的话表示没有移动
 			{
-				cur_center->x=temp_x;//ｰﾑﾐﾂｵﾄﾏﾂﾒｻｸｲﾐﾄｵ羣ｳｸｪｵｱﾇｰﾔｲﾐﾄ
+				cur_center->x=temp_x;
 				cur_center->y=temp_y;
 				cur_center->z=temp_z;
-				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];//ｸ・ﾂｵｱﾇｰﾔｲﾐﾄｵﾄﾏﾘﾇｿｶﾈ
+				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
 
 			}else
 			{
 				V3DLONG next_x=(sum1_x/sum2_x)+0.5;
 				V3DLONG next_y=(sum1_y/sum2_y)+0.5;
 				V3DLONG next_z=(sum1_z/sum2_z)+0.5;
-				cur_center->x=next_x;//ｰﾑﾐﾂｵﾄﾏﾂﾒｻｸｲﾐﾄｵ羣ｳｸｪｵｱﾇｰﾔｲﾐﾄ
+				cur_center->x=next_x;
 				cur_center->y=next_y;
 				cur_center->z=next_z;
-				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];//ｸ・ﾂｵｱﾇｰﾔｲﾐﾄｵﾄﾏﾘﾇｿｶﾈ
+				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
 
 			}
-			//ｷｽﾊｽ2
+		
 			//Node *pre_center=new Node(temp_x,temp_y,temp_z);
 			
-			if(!nodeList.contains(pre_center))//ﾅﾐｶﾏﾉﾏﾒｻｸｲﾐﾄﾊﾇｷﾚListﾀ・譽ｬﾈ郢鋕ﾚｵﾄｻｰﾋｵﾃｱﾇｰｽﾚｵ羲ﾍﾇｰﾒｻｽﾚｵ耘猩ｬ｣ｬﾇｰﾒｻｽﾚｵ羇｢ﾎｴﾒﾆｶｯ
-			{	//ｼﾆﾋ羞羞ﾄｰ・ｶ
-				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);//ｼﾆﾋ翕ｿﾒｻｸ羞ﾄｰ・ｶ｣ｬｿﾉﾄﾜｻ盡ﾔｸﾚｵ羶ﾐﾖﾘｸｴｼﾆﾋ・
+			if(!nodeList.contains(pre_center))
+			{	
+				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);
 				//printf("%lf\n",pre_center->r);
 				nodeList.append(pre_center);
 			}	
 			//delete pre_center;
 
 			if(flag[GET_IND(cur_center->x,cur_center->y,cur_center->z)]==1)
-			{//ｼﾆﾋ羌ｴｵﾄｵｱﾇｰﾖﾐﾐﾄｵ耡ﾑｾｭｱｻｼﾆﾋ羯｣ｬﾌhileﾑｭｻｷ｣ｬｲｻﾔﾙｽﾐｼﾆﾋ・
-				//ｱｻｼﾆﾋ羯ﾋｵﾃﾔﾇｰｾﾍｱｻｼﾆﾋ羯ﾒｻｴﾎ｣ｬﾔﾙｼﾆﾋ羞ﾄｻｰｻｹﾊﾇｻ盂ｻﾒﾆｶｯｵｽﾖﾕｵ罐ｬﾔﾙﾗﾞﾒ簫・
+			{
 				break;
 			}
 
-			iter++;//ｱ｣ﾏﾕｴ・ｩ｣ｬｵ・・00ｴﾎｺｬｲｻﾔﾙｵ・・
+			iter++;
 
 		}
 		//printf("11111111111111111111111111111111111\n"); 
 	}
 //printf("22222222222222222222222222222222222\n");
-	bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);//ﾓﾃﾓﾚﾅﾐｶﾏｸﾃｵ飜ﾇｷﾜﾒﾆｶｯ｣ｬﾒｲｱ桄ｾﾕ篋飜ﾇｸﾚｵ羹ｹﾊﾇﾂｷｾｶﾉﾏｵﾄｵ・
+	bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);
 	V3DLONG ind2=GET_IND(cur_center->x,cur_center->y,cur_center->z);
 
 	double temp_dis=1000000;
 
-	{//ﾕﾒｵｽﾁﾋﾐﾂｵﾄｸﾅﾂﾊﾃﾜｶﾈﾗ鋗ﾄｵ・
-		//situation=1;//ﾓﾃﾓﾚｱ・ﾇﾕﾒｵｽｵﾄﾗ靑ﾕｵ飜ﾚﾄﾄﾖﾖﾇ鯀・
+	{
 		int mark=0;
-		if(Map_finalnode.contains(ind2))//20150311,ﾈ郢鋕ﾚMap_finalnodeﾀ・譽ｬﾋｵﾃｻﾄﾜｱｻﾒﾆｶｯﾁﾋ｣ｬﾊﾇﾖﾕｵ・
-		{//ﾈ郢濵ap_finalnodeﾀ・豌・ｨﾕ篋ﾚｵ罐ｬﾔｫﾕ篋istｷﾅｵｽﾏ獗ｦｵﾄMap_finalnode_Listﾖﾐ
+		if(Map_finalnode.contains(ind2))
+		{
 			for(int iii=0;iii<nodeList.size();iii++)
 			{
 				V3DLONG node_x=nodeList.at(iii)->x;
 				V3DLONG node_y=nodeList.at(iii)->y;
 				V3DLONG node_z=nodeList.at(iii)->z;
-				Map_nodes[GET_IND(node_x,node_y,node_z)]=Map_finalnode[ind2];//ｶﾔnodeListﾀ・豬ﾄｽﾚｵ羣ｳﾓ靠獗ｦｸﾚｵ羞ﾄｱ・ﾇ
+				Map_nodes[GET_IND(node_x,node_y,node_z)]=Map_finalnode[ind2];
 				Map_allnodes.insert(Map_finalnode[ind2],nodeList.at(iii));
 				Map_finalnode_list[Map_finalnode[ind2]].append(nodeList.at(iii));
 
 			}
 
-		}else if(Map_nodes.contains(GET_IND(cur_center->x,cur_center->y,cur_center->z)))//ﾖﾕｵ翔ﾜﾒﾆｶｯ｣ｬｲ｢ﾇﾒｱｻｴｦﾀ晥
+		}else if(Map_nodes.contains(GET_IND(cur_center->x,cur_center->y,cur_center->z)))
 		{
-			//ﾓﾐﾕ篋羞ﾄﾗ凜ｬﾕﾒｵｽﾕ篋羞ﾄmark,ｸodeListｸｳﾖｵ
+	
 			situation=2;
 			int mark3=Map_nodes[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
 
@@ -1127,7 +1122,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				V3DLONG node_x2=nodeList.at(iii)->x;
 				V3DLONG node_y2=nodeList.at(iii)->y;
 				V3DLONG node_z2=nodeList.at(iii)->z;
-				Map_nodes[GET_IND(node_x2,node_y2,node_z2)]=mark3;//ｶﾔnodeListﾀ・豬ﾄｽﾚｵ羣ｳﾓ靠獗ｦｸﾚｵ羞ﾄｱ・ﾇ
+				Map_nodes[GET_IND(node_x2,node_y2,node_z2)]=mark3;
 				Map_allnodes.insert(mark3,nodeList.at(iii));
 				Map_finalnode_list[mark3].append(nodeList.at(iii));
 
@@ -1139,7 +1134,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			int new_mark=Map_rootnode.size()+1;
 			cur_center->class_mark=new_mark;
 
-			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);//ｼﾆﾋ羣ﾚｵ羞ﾄｰ・ｶ
+			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
 			
 			Map_rootnode.insert(new_mark,cur_center);
 
@@ -1149,7 +1144,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 				V3DLONG node_y1=nodeList.at(iii)->y;
 				V3DLONG node_z1=nodeList.at(iii)->z;
 
-				Map_nodes[GET_IND(node_x1,node_y1,node_z1)]=new_mark;//ｶﾔnodeListﾀ・豬ﾄｽﾚｵ羣ｳﾓ靠獗ｦｸﾚｵ羞ﾄｱ・ﾇ
+				Map_nodes[GET_IND(node_x1,node_y1,node_z1)]=new_mark;
 				Map_allnodes.insert(new_mark,nodeList.at(iii));
 				Map_finalnode_list[new_mark].append(nodeList.at(iii));
 
