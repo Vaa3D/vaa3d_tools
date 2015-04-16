@@ -27,6 +27,11 @@
 *******************
 * 2015-04-14. Alessandro. @FIXED misleading usage of 'VirtualVolume::instance' w/o format argument in 'setSrcVolume'
 * 2015-04-14. Alessandro. @FIXED bug-crash when the volume has not been imported correctly in setSrcVolume.
+* 2015-03-03. Giulio.     @ADDED selection of IO plugin if not provided (2D or 3D according to the method).
+* 2015-02-12. Giulio.     @ADDED the same optimizations also in multi-channels (MC) methods
+* 2015-02-12. Giulio.     #ADDED check on the number of slice in the buffer if multiple resolutions are requested
+* 2015-02-10. Giulio.     @ADDED completed optimizations to reduce opend/close in append operations (only in generateTilesVaa3DRaw)
+* 2015-01-06. Giulio.     @ADDED optimizations to reduce opend/close in append operations (only in generateTilesVaa3DRaw)
 * 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
 * 2014-11-10. Giulio.     @CHANGED allowed saving 2dseries with a depth of 16 bit (generateTiles)
 */
@@ -34,6 +39,7 @@
 #include "VolumeConverter.h"
 #include "../imagemanager/IM_config.h"
 #include "../imagemanager/ProgressBar.h"
+#include "iomanager.config.h"
 #include <math.h>
 #include <string>
 
@@ -99,7 +105,7 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
         //volume = VirtualVolume::instance_format(_root_dir);
         // 2015-04-14. Alessandro. @FIXED misleading usage of 'VirtualVolume::instance' w/o format argument in 'setSrcVolume'
         volume = VirtualVolume::instance_format(_root_dir, _fmt);
-
+    
     // 2015-04-14 Alessandro. @FIXED bug-crash when the volume has not been imported correctly in setSrcVolume.
     if(!volume)
         throw iim::IOException(iim::strprintf("in VolumeConverter::setSrcVolume(): unable to recognize the volume format of \"%s\"", _root_dir));
@@ -212,6 +218,12 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
        imProgressBar::getInstance()->start("Multiresolution tile generation");
        imProgressBar::getInstance()->update(0,"Initializing...");
        imProgressBar::getInstance()->show();
+	}
+
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMOUT_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMOUT_PLUGIN = "tiff2D";
 	}
 
 	//computing dimensions of volume to be stitched
@@ -590,7 +602,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	 *
 	 *      n_slices_pred + z_buffer
 	 */
-	sint64 n_slices_pred;       
+	sint64 n_slices_pred;  
 
 	if ( volume == 0 ) {
 		char err_msg[STATIC_STRINGS_SIZE];
@@ -605,6 +617,12 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                    imProgressBar::getInstance()->start("Multiresolution tile generation");
                    imProgressBar::getInstance()->update(0,"Initializing...");
                    imProgressBar::getInstance()->show();
+	}
+
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMOUT_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMOUT_PLUGIN = "tiff3D";
 	}
 
 	//computing dimensions of volume to be stitched
@@ -696,8 +714,28 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
             }
 	}
 
+	/* The following check verifies that the numeber of slices in the buffer is not higher than the numbero of slices in a block file
+	 * (excluding the last blck in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
+	 * and H is the total number of slices at resolution i (i.e. floor(depth/2^i)), the actual minumum number of slices B in a block 
+	 * file at that resolution as computed by the above code is:
+	 *
+	 *                                                B = floor( H / ceil( H/D ) )
+	 * Now, assuming that at resolution i there is more than one block, it is H > D and hence:
+	 *
+	 *                                                  D >= B >= floor(D/2)
+	 * since it is:
+	 *
+	 *                               1/ceil(H/D) = 1/(H/D + alpha) = D/(H + alpha * D) > D/(2 * H)
+	 * where alpha<1.
+	 */ 
+
 	//ALLOCATING  the MEMORY SPACE for image buffer
     z_max_res = powInt(2,resolutions_size-1);
+	if ( z_max_res > block_depth/2 ) {
+		char err_msg[STATIC_STRINGS_SIZE];
+		sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
+		throw IOException(err_msg);
+	}
 	z_ratio=depth/z_max_res;
 
 	//allocated even if not used
@@ -728,7 +766,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	{
 		//if ( z > (this->D1/2) ) {
 		//	closeResumer(fhandle);
-		//	throw MyException("interruption for test");
+		//	throw IOExcpetion("interruption for test");
 		//}
 
         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
@@ -931,30 +969,59 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                         #endif
 
 						//saving HERE
-                        for(int buffer_z=0; buffer_z<z_size/(powInt(2,i)); buffer_z++)
-						{
-							int slice_ind; 
- 							std::stringstream img_path;
- 							std::stringstream abs_pos_z_next;
-							img_path << H_DIR_path.str() << "/" 
-										<< this->getMultiresABS_V_string(i,start_height) << "_" 
-										<< this->getMultiresABS_H_string(i,start_width) << "_";
 
+						// 2015-02-10. Giulio. @CHANGED changed how img_path is constructed
+ 						std::stringstream partial_img_path;
+						partial_img_path << H_DIR_path.str() << "/" 
+									<< this->getMultiresABS_V_string(i,start_height) << "_" 
+									<< this->getMultiresABS_H_string(i,start_width) << "_";
+
+						int slice_ind = (int)(n_slices_pred - slice_start[i]); 
+
+ 						std::stringstream img_path;
+						img_path << partial_img_path.str() << abs_pos_z.str();
+
+						/* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
+						 * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations, 
+						 * all slices of a group to be appended to the same block file are appended leaving the file open and positioned at 
+						 * end of the file.
+						 * The number of pages of block files of interest can be easily computed as:
+						 *
+						 *    number of slice of current block = stacks_depth[i][0][0][stack_block[i]] 
+						 *    number of slice of next block    = stacks_depth[i][0][0][stack_block[i]+1] 
+						 */
+
+						void *fhandle = 0;
+						int  n_pages_block = stacks_depth[i][0][0][stack_block[i]]; // number of pages of current block
+						bool block_changed = false;                                 // true if block is changed executing the next for cycle
+						// fhandle = open file corresponding to current block 
+						if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+							openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle);
+
+						// WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
+                        for(int buffer_z=0; buffer_z<z_size/(powInt(2,i)); buffer_z++, slice_ind++)
+						{
 							// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
-							if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+							if ( ((z - this->D0) / powInt(2,i) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
+ 								std::stringstream abs_pos_z_next;
 								abs_pos_z_next.width(6);
 								abs_pos_z_next.fill('0');
 								abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
                                         (powInt(2,i)*(slice_end[i]+1)) * volume->getVXL_D());
-								img_path << abs_pos_z_next.str();
-								slice_ind = (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
-							}
-							else {
-								img_path << abs_pos_z.str(); 
-								slice_ind = (int)(n_slices_pred - slice_start[i]) + buffer_z;
-							}
+								img_path.str("");
+								img_path << partial_img_path.str() << abs_pos_z_next.str();
 
+								slice_ind = 0; // 2015-02-10. Giulio. @CHANGED (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
 
+								// close(fhandle) i.e. file corresponding to current block 
+								if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+									closeTiff3DFile(fhandle);
+								// fhandle = open file corresponding to next block
+								if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+									openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle);
+								n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
+								block_changed = true;
+							}
 
 							if ( internal_rep == REAL_INTERNAL_REP )
 								VirtualVolume::saveImage_to_Vaa3DRaw(
@@ -975,7 +1042,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 										buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 										(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 										start_height,end_height,start_width,end_width, 
-										saved_img_format, saved_img_depth);
+										saved_img_format, saved_img_depth,fhandle,n_pages_block,false);
 								}
 								else { // can be only Vaa3DRaw
 									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
@@ -989,6 +1056,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 										saved_img_format, saved_img_depth);
 								}
                         }
+
+						// close(fhandle) i.e. currently opened file
+						if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+							closeTiff3DFile(fhandle);
+
 						start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 
                         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
@@ -1144,7 +1216,7 @@ int VolumeConverter::getMultiresABS_D(int res)
 void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions, 
 				int block_height, int block_width, int block_depth, int method, 
 				bool show_progress_bar, const char* saved_img_format, 
-				int saved_img_depth, std::string frame_dir )	throw (MyException)
+				int saved_img_depth, std::string frame_dir )	throw (IOExcpetion)
 {
     printf("in VolumeConverter::generateTilesVaa3DRawMC(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
@@ -1159,7 +1231,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
-		throw MyException(err_msg);
+		throw IOExcpetion(err_msg);
 	}
 
 	//LOCAL VARIABLES
@@ -1210,7 +1282,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	if ( volume == 0 ) {
 		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: undefined source volume");
-		throw MyException(err_msg);
+		throw IOExcpetion(err_msg);
 	}
 
 	//initializing the progress bar
@@ -1220,6 +1292,12 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
                    imProgressBar::getInstance()->start("Multiresolution tile generation");
                    imProgressBar::getInstance()->update(0,"Initializing...");
                    imProgressBar::getInstance()->show();
+	}
+
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMOUT_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMOUT_PLUGIN = "tiff3D";
 	}
 
 	//computing dimensions of volume to be stitched
@@ -1241,7 +1319,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     { 
         char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", S_MIN_SLICE_DIM);
-        throw MyException(err_msg);
+        throw IOExcpetion(err_msg);
     }
 
 	if(resolutions == NULL)
@@ -1258,9 +1336,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	//computing tiles dimensions at each resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++)
 	{
-		n_stacks_V[res_i] = (int) ceil ( (height/POW_INT(2,res_i)) / (float) block_height );
-		n_stacks_H[res_i] = (int) ceil ( (width/POW_INT(2,res_i))  / (float) block_width  );
-		n_stacks_D[res_i] = (int) ceil ( (depth/POW_INT(2,res_i))  / (float) block_depth  );
+		n_stacks_V[res_i] = (int) ceil ( (height/powInt(2,res_i)) / (float) block_height );
+		n_stacks_H[res_i] = (int) ceil ( (width/powInt(2,res_i))  / (float) block_width  );
+		n_stacks_D[res_i] = (int) ceil ( (depth/powInt(2,res_i))  / (float) block_depth  );
 		stacks_height[res_i] = new int **[n_stacks_V[res_i]];
 		stacks_width[res_i]  = new int **[n_stacks_V[res_i]]; 
 		stacks_depth[res_i]  = new int **[n_stacks_V[res_i]]; 
@@ -1277,11 +1355,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				for(int stack_sli = 0; stack_sli < n_stacks_D[res_i]; stack_sli++)
 				{
 					stacks_height[res_i][stack_row][stack_col][stack_sli] = 
-						((int)(height/POW_INT(2,res_i))) / n_stacks_V[res_i] + (stack_row < ((int)(height/POW_INT(2,res_i))) % n_stacks_V[res_i] ? 1:0);
+						((int)(height/powInt(2,res_i))) / n_stacks_V[res_i] + (stack_row < ((int)(height/POW_INT(2,res_i))) % n_stacks_V[res_i] ? 1:0);
 					stacks_width[res_i][stack_row][stack_col][stack_sli] = 
-						((int)(width/POW_INT(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/POW_INT(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
+						((int)(width/powInt(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/POW_INT(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
 					stacks_depth[res_i][stack_row][stack_col][stack_sli] = 
-						((int)(depth/POW_INT(2,res_i)))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/POW_INT(2,res_i)))  % n_stacks_D[res_i] ? 1:0);
+						((int)(depth/powInt(2,res_i)))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/POW_INT(2,res_i)))  % n_stacks_D[res_i] ? 1:0);
 				}
 			}
 		}
@@ -1316,7 +1394,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		{
 			char err_msg[S_MAX_MULTIRES];
 			sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", chans_dir[c].c_str());
-			throw MyException(err_msg);
+			throw IOExcpetion(err_msg);
 		}
 		for(int res_i=0; res_i< resolutions_size; res_i++) {
 			//creating volume directory iff current resolution is selected and test mode is disabled
@@ -1329,14 +1407,34 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				{
 					char err_msg[S_MAX_MULTIRES];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
-					throw MyException(err_msg);
+					throw IOExcpetion(err_msg);
 				}
 			}
 		}
 	}
 
-	//ALLOCATING  the MEMORY SPACE for image buffer
-	z_max_res = POW_INT(2,resolutions_size-1);
+	/* The following check verifies that the numeber of slices in the buffer is not higher than the numbero of slices in a block file
+	 * (excluding the last blck in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
+	 * and H is the total number of slices at resolution i (i.e. floor(depth/2^i)), the actual minumum number of slices B in a block 
+	 * file at that resolution as computed by the above code is:
+	 *
+	 *                                                B = floor( H / ceil( H/D ) )
+	 * Now, assuming that at resolution i there is more than one block, it is H > D and hence:
+	 *
+	 *                                                  D >= B >= floor(D/2)
+	 * since it is:
+	 *
+	 *                               1/ceil(H/D) = 1/(H/D + alpha) = D/(H + alpha * D) > D/(2 * H)
+	 * where alpha<1.
+	 */ 
+
+		//ALLOCATING  the MEMORY SPACE for image buffer
+	z_max_res = powInt(2,resolutions_size-1);
+	if ( z_max_res > block_depth/2 ) {
+		char err_msg[STATIC_STRINGS_SIZE];
+		sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
+		throw IOException(err_msg);
+	}
 	z_ratio=depth/z_max_res;
 
 	//allocated even if not used
@@ -1363,7 +1461,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			if ( org_channels != channels ) {
 				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
-				throw MyException(err_msg);
+				throw IOExcpetion(err_msg);
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
@@ -1452,7 +1550,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						{
                             char err_msg[STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
-							throw MyException(err_msg);
+							throw IOExcpetion(err_msg);
 						}
 
 						for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
@@ -1467,7 +1565,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								{
                                     char err_msg[STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
-									throw MyException(err_msg);
+									throw IOExcpetion(err_msg);
 								}
 								else { // the directory has been created for the first time
 									   // initialize block files
@@ -1489,13 +1587,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										else {
                                             char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
-											throw MyException(err_msg);
+											throw IOExcpetion(err_msg);
 										}
 									}
 									else {
                                         char err_msg[STATIC_STRINGS_SIZE];
 										sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
-										throw MyException(err_msg);
+										throw IOExcpetion(err_msg);
 									}
 
 									int slice_start_temp = 0;
@@ -1520,7 +1618,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 												( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
 											char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: error in initializing block file - %s", err_rawfmt);
-											throw MyException(err_msg);
+											throw IOExcpetion(err_msg);
 										};
 
 										slice_start_temp += (int)sz[2];
@@ -1530,27 +1628,59 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							}
 
 							//saving HERE
-							for(int buffer_z=0; buffer_z<z_size/(POW_INT(2,i)); buffer_z++) 
-							{
-								int slice_ind; 
- 								std::stringstream img_path;
- 								std::stringstream abs_pos_z_next;
-								img_path << H_DIR_path.str() << "/" 
-											<< this->getMultiresABS_V_string(i,start_height) << "_" 
-											<< this->getMultiresABS_H_string(i,start_width) << "_";
 
+							// 2015-02-10. Giulio. @CHANGED changed how img_path is constructed
+ 							std::stringstream partial_img_path;
+							partial_img_path << H_DIR_path.str() << "/" 
+										<< this->getMultiresABS_V_string(i,start_height) << "_" 
+										<< this->getMultiresABS_H_string(i,start_width) << "_";
+
+							int slice_ind = (int)(n_slices_pred - slice_start[i]); 
+
+ 							std::stringstream img_path;
+							img_path << partial_img_path.str() << abs_pos_z.str();
+
+							/* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
+							 * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations, 
+							 * all slices of a group to be appended to the same block file are appended leaving the file open and positioned at 
+							 * end of the file.
+							 * The number of pages of block files of interest can be easily computed as:
+							 *
+							 *    number of slice of current block = stacks_depth[i][0][0][stack_block[i]] 
+							 *    number of slice of next block    = stacks_depth[i][0][0][stack_block[i]+1] 
+							 */
+
+							void *fhandle = 0;
+							int  n_pages_block = stacks_depth[i][0][0][stack_block[i]]; // number of pages of current block
+							bool block_changed = false;                                 // true if block is changed executing the next for cycle
+							// fhandle = open file corresponding to current block 
+							if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+								openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle);
+
+							// WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
+							for(int buffer_z=0; buffer_z<z_size/(POW_INT(2,i)); buffer_z++, slice_ind++) 
+							{
 								// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
-								if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+								if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
+ 									std::stringstream abs_pos_z_next;
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
-											(POW_INT(2,i)*(slice_end[i]+1)) * volume->getVXL_D());
-									img_path << abs_pos_z_next.str();
-									slice_ind = (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
-								}
-								else {
-									img_path << abs_pos_z.str(); 
-									slice_ind = (int)(n_slices_pred - slice_start[i]) + buffer_z;
+											(powInt(2,i)*(slice_end[i]+1)) * volume->getVXL_D());
+									img_path.str("");
+									img_path << partial_img_path.str() << abs_pos_z_next.str();
+
+									slice_ind = 0; // 2015-02-10. Giulio. @CHANGED (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
+
+									// close(fhandle) i.e. file corresponding to current block 
+									if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+										closeTiff3DFile(fhandle);
+									// fhandle = open file corresponding to next block
+									if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+										openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle);
+									openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle);
+									n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
+									block_changed = true;
 								}
 
 								if ( internal_rep == REAL_INTERNAL_REP )
@@ -1572,7 +1702,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 
-											saved_img_format, saved_img_depth);
+											saved_img_format, saved_img_depth,fhandle,n_pages_block,false);
 									}
 									else { // can be only Vaa3DRaw
 										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
@@ -1587,6 +1717,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 									}
 								}
 							}
+
+							// close(fhandle) i.e. currently opened file
+							if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+								closeTiff3DFile(fhandle);
+
 							start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 						}
 						start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
@@ -1749,6 +1884,12 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
        imProgressBar::getInstance()->show();
 	}
 
+	// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+	if(iom::IMOUT_PLUGIN.compare("empty") == 0)
+	{
+		iom::IMOUT_PLUGIN = "tiff3D";
+	}
+
 	//computing dimensions of volume to be stitched
 	//this->computeVolumeDims(exclude_nonstitchable_stacks, _ROW_START, _ROW_END, _COL_START, _COL_END, _D0, _D1);
 	width = this->H1-this->H0;
@@ -1869,8 +2010,28 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		}
 	}
 
+	/* The following check verifies that the numeber of slices in the buffer is not higher than the numbero of slices in a block file
+	 * (excluding the last blck in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
+	 * and H is the total number of slices at resolution i (i.e. floor(depth/2^i)), the actual minumum number of slices B in a block 
+	 * file at that resolution as computed by the above code is:
+	 *
+	 *                                                B = floor( H / ceil( H/D ) )
+	 * Now, assuming that at resolution i there is more than one block, it is H > D and hence:
+	 *
+	 *                                                  D >= B >= floor(D/2)
+	 * since it is:
+	 *
+	 *                               1/ceil(H/D) = 1/(H/D + alpha) = D/(H + alpha * D) > D/(2 * H)
+	 * where alpha<1.
+	 */ 
+
 	//ALLOCATING  the MEMORY SPACE for image buffer
     z_max_res = powInt(2,resolutions_size-1);
+	if ( z_max_res > block_depth/2 ) {
+		char err_msg[STATIC_STRINGS_SIZE];
+		sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
+		throw IOException(err_msg);
+	}
 	z_ratio=depth/z_max_res;
 
 	//allocated even if not used
@@ -2064,27 +2225,58 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							}
 
 							//saving HERE
-                            for(int buffer_z=0; buffer_z<z_size/(powInt(2,i)); buffer_z++)
+
+							// 2015-02-10. Giulio. @CHANGED changed how img_path is constructed
+ 							std::stringstream partial_img_path;
+							partial_img_path << H_DIR_path.str() << "/" 
+										<< this->getMultiresABS_V_string(i,start_height) << "_" 
+										<< this->getMultiresABS_H_string(i,start_width) << "_";
+
+							int slice_ind = (int)(n_slices_pred - slice_start[i]); 
+
+ 							std::stringstream img_path;
+							img_path << partial_img_path.str() << abs_pos_z.str();
+
+							/* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
+							 * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations, 
+							 * all slices of a group to be appended to the same block file are appended leaving the file open and positioned at 
+							 * end of the file.
+							 * The number of pages of block files of interest can be easily computed as:
+							 *
+							 *    number of slice of current block = stacks_depth[i][0][0][stack_block[i]] 
+							 *    number of slice of next block    = stacks_depth[i][0][0][stack_block[i]+1] 
+							 */
+
+							void *fhandle = 0;
+							int  n_pages_block = stacks_depth[i][0][0][stack_block[i]]; // number of pages of current block
+							bool block_changed = false;                                 // true if block is changed executing the next for cycle
+							// fhandle = open file corresponding to current block 
+							if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+								openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle);
+
+							// WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
+							for(int buffer_z=0; buffer_z<z_size/(powInt(2,i)); buffer_z++, slice_ind++)
 							{
-								int slice_ind; 
- 								std::stringstream img_path;
- 								std::stringstream abs_pos_z_next;
-								img_path << H_DIR_path.str() << "/" 
-											<< this->getMultiresABS_V_string(i,start_height) << "_" 
-											<< this->getMultiresABS_H_string(i,start_width) << "_";
- 
 								// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
 								if ( ((z - this->D0)  /powInt(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
+ 									std::stringstream abs_pos_z_next;
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
                                             (powInt(2,i)*(slice_end[i]+1)) * volume->getVXL_D());
-									img_path << abs_pos_z_next.str();
-									slice_ind = (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
-								}
-								else {
-									img_path << abs_pos_z.str(); 
-									slice_ind = (int)(n_slices_pred - slice_start[i]) + buffer_z;
+									img_path.str("");
+									img_path << partial_img_path.str() << abs_pos_z_next.str();
+
+									slice_ind = 0; // 2015-02-10. Giulio. @CHANGED (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
+
+									// close(fhandle) i.e. file corresponding to current block 
+									if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+										closeTiff3DFile(fhandle);
+									// fhandle = open file corresponding to next block
+									if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+										openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle);
+									n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
+									block_changed = true;
 								}
 
 								if ( internal_rep == REAL_INTERNAL_REP )
@@ -2106,7 +2298,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 
-											saved_img_format, saved_img_depth);
+											saved_img_format, saved_img_depth,fhandle,n_pages_block,false);
 									}
 									else { // can be only Vaa3DRaw
 										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
@@ -2121,6 +2313,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 									}
 								}
 							}
+
+							// close(fhandle) i.e. currently opened file
+							if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+								closeTiff3DFile(fhandle);
+
 							start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 						}
 						start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS

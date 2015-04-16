@@ -25,7 +25,8 @@
 #ifndef RESUMER_H
 #define RESUMER_H
 
-#include "../imagemanager/IM_config.h"
+//#include "../ImageManager/IM_config.h"
+#include "IM_config.h"
 
 #include <stdio.h>
 
