@@ -304,15 +304,6 @@ void CImport::run()
 
         }
 
-        // 2015-04-15. Alessandro. @FIXED (temporary) incorrect selection of plugin.
-        if(!volumes.empty())
-        {
-            if(dynamic_cast<TiledVolume*>(volumes[0]))
-                iom::IMIN_PLUGIN = "tiff3D";
-            else if(dynamic_cast<StackedVolume*>(volumes[0]))
-                iom::IMIN_PLUGIN = "tiff2D";
-        }
-
         //everything went OK
         emit sendOperationOutcome(0, timerIO.elapsed());
 
