@@ -518,8 +518,8 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 				
 				/*if(img1d[ind]==0)
 					continue;*/
-				if(img1d[ind]<30)
-					continue;
+				if((double)img1d[ind]<30)
+					continue;//take the node whose intensity more than 30 and cannot shift anymore as rootnode
 				if(!found_final(img1d,ii,jj,kk,sz_x, sz_y, sz_z, r))
 				{
 					Node* final=new Node(ii,jj,kk);
@@ -530,6 +530,8 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 					Map_finalnode.insert(ind,num_mark);
 					enlarge_radiusof_single_node_xy(img1d,final,sz_x, sz_y, sz_z);
 					Map_rootnode.insert(num_mark,final);
+					if((double)img1d[GET_IND(ii,jj,kk)]==0)
+					printf("%lf\n",(double)img1d[GET_IND(ii,jj,kk)]);
 					//Map_rootnode_n.insert(num_mark,getnode(final));
 					num_mark++;
 					//delete final;
@@ -539,8 +541,11 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 			}
 		}
 	}
+	printSwcByMap(Map_rootnode,"D:\\result\\final.swc");
 
 	printf("###  rootnode found   ###\n");
+	//在这里将找到的root打印出来
+
 	printf("###  cluster nodes using meanshift and connect subtrees by spanning tree   ###\n");
 	for(V3DLONG i=0;i<sz_x;i++)
 	{
@@ -549,12 +554,12 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 			for(V3DLONG k=0;k<sz_z;k++)
 			{
 				V3DLONG ind=GET_IND(i,j,k);
-				/*if(img1d[ind]==0)
-					continue;*/
+				/*if((double)img1d[ind]<1)
+					continue;
+				*/
 				if(img1d[ind]<30)
-				continue;
+					continue;//try to cluster every node whose intensity is more than 0,but if the intensity is less than 30, we regard it as noise node;
 				if(flag[ind]==1)
-
 				{
 					
 					continue;
@@ -592,7 +597,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	QMap<int,int> evidence2;
 	printf("rootnodes:::%d\n",rootnodes.size());
 	for(QMap<int,Node*>::iterator iter =rootnodes.begin(); iter != rootnodes.end(); iter++)
-	{
+	{//check which root include which roots
 		Node* elem=iter.value();
 		int key=iter.key();
 		r_root.insert(elem->r,key);
@@ -638,7 +643,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 		}
 		
 		if(evidence2[root_key]==1)
-		{
+		{// it means the root was already included by others and need not to cluster the nodes for it 
 
 			continue;
 
@@ -663,7 +668,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 
 
     for(QMap<int,QList<int> >::iterator iter3 =Map_finallist_new.begin(); iter3!=Map_finallist_new.end(); iter3++)
-	{
+	{//cluster the nodes for every roots
 		int first_index=iter3.key();
 
 		for(int i=0;i<Map_finallist_new[first_index].size();i++)
@@ -683,7 +688,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	}
 
 	
-	printSwcByMap(root,"D:\\result\\finalroot.swc");//2015.04.15为什么这里会出现很多重复的点
+	printSwcByMap(root,"D:\\result\\finalroot.swc");//
 
 
 }
@@ -914,12 +919,12 @@ double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3
 	double weight=0;
 	double distance=(curi-x)/r*(curi-x)/r+(curj-y)/r*(curj-y)/r+(curk-z)/r*(curk-z)/r;
 	double inten_sim=(inte_nd-inte_cen)/I*(inte_nd-inte_cen)/I;
-	weight=exp(-1.0*sqrt(2*inten_sim+distance));
+	weight=exp(-1.0*sqrt(2*inten_sim+distance))+0.000001;
 	//printf("%lf  %lf  %lf \n",distance,inten_sim,weight);
 	return weight;
 }
 
-#define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))
+#define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))+0.000001;
 
 bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r)
 {
@@ -941,6 +946,7 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 
 				if(GET_IND(i,j,k)==GET_IND(x,y,z)) continue;
 				if(img1d[GET_IND(i,j,k)]==0) continue;
+				//if(img1d[GET_IND(i,j,k)]<30) continue;//it is unnecessary to set a threshold here, because this function mainly deal with deciding whether the node is root.
 				double cur_intensity=img1d[GET_IND(i,j,k)];
 				w=cal_weight(i,j,k,x,y,z,cur_intensity,intensity,r);
 
@@ -960,6 +966,12 @@ bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz
 
 			}
 		}
+	}
+
+	if((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))
+	{
+		return false;
+
 	}
 
 	V3DLONG next_x=(sum1_x/sum2_x)+0.5;
@@ -988,11 +1000,10 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 	nodeList.clear();
 	Node *cur_center=new Node(x,y,z);
 	double intensity=img1d[GET_IND(x,y,z)];
-	//cur_center->intensity=intensity;
-	//printf("intensity::%f\n",intensity);
-	nodeList.append(cur_center);
+	//if(intensity<30)// regard the node whose intensity is less than 30 as noise
+		nodeList.append(cur_center);
 
-	while(1)//问题出在while循环上
+	while(1)
 	{
 		if(iter==iteration)
 		{
@@ -1015,7 +1026,8 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 					{
 
 						if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;
-						if(img1d[GET_IND(i,j,k)]==0) continue;
+						if((double)img1d[GET_IND(i,j,k)]==0) continue;
+						//if((double)img1d[GET_IND(i,j,k)]<30) continue;
 						double cur_intensity=img1d[GET_IND(i,j,k)];
 						w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);
 
@@ -1043,17 +1055,17 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			Node *pre_center=cur_center;
 			flag[GET_IND(temp_x,temp_y,temp_z)]=1;
 			//printf("%lf   %lf   %lf\n",sum2_x,sum2_y,sum2_z);
-			if ((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))//为0的话表示没有移动
+			if ((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))//avoiding the program crash.
 			{
 				cur_center->x=temp_x;
 				cur_center->y=temp_y;
 				cur_center->z=temp_z;
 				intensity=img1d[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
-				enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
+				//enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
 
 			}else
 			{
-				V3DLONG next_x=(sum1_x/sum2_x)+0.5;
+				V3DLONG next_x=(sum1_x/sum2_x)+0.5;//may shift to the node whose intensity equals zero, and may shfit to the node which was not included in the roots found in the first step
 				V3DLONG next_y=(sum1_y/sum2_y)+0.5;
 				V3DLONG next_z=(sum1_z/sum2_z)+0.5;
 				cur_center->x=next_x;
@@ -1064,36 +1076,37 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			}
 		
 			//Node *pre_center=new Node(temp_x,temp_y,temp_z);
+			enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);
 			
-			if(!nodeList.contains(pre_center))
+			if(!nodeList.contains(pre_center)&&(intensity>=30))
 			{	
-				enlarge_radiusof_single_node_xy(img1d,pre_center,sz_x,sz_y,sz_z);//20150416,did not get here,why?
+				
 				//printf("%lf\n",pre_center->r);
-				printf("%lf\n",pre_center->r);
 				nodeList.append(pre_center);
 			}	
-			//delete pre_center;
 
-			if(flag[GET_IND(cur_center->x,cur_center->y,cur_center->z)]==1)
+		/*	if(flag[GET_IND(cur_center->x,cur_center->y,cur_center->z)]==1)
 			{
 				break;
-			}
+			}*/
+
+			if(GET_IND(cur_center->x,cur_center->y,cur_center->z)==GET_IND(pre_center->x,pre_center->y,pre_center->z))
+				break;
 
 			iter++;
 
 		}
-		//printf("11111111111111111111111111111111111\n"); 
 	}
-//printf("22222222222222222222222222222222222\n");
-	bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);
-	V3DLONG ind2=GET_IND(cur_center->x,cur_center->y,cur_center->z);
+	//bool f=found_final(img1d,cur_center->x,cur_center->y,cur_center->z,sz_x,sz_y,sz_z,r);
+	V3DLONG ind2=GET_IND(cur_center->x,cur_center->y,cur_center->z);//here,we take the cur_center as a final root due to it cannot shift in the region
 
 	double temp_dis=1000000;
 
-	{
 		int mark=0;
 		if(Map_finalnode.contains(ind2))
 		{
+			//printf("1111111111111111111111\n");
+			
 			for(int iii=0;iii<nodeList.size();iii++)
 			{
 				V3DLONG node_x=nodeList.at(iii)->x;
@@ -1107,7 +1120,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 
 		}else if(Map_nodes.contains(GET_IND(cur_center->x,cur_center->y,cur_center->z)))
 		{
-	
+			//printf("2222222222222222222222222\n");
 			situation=2;
 			int mark3=Map_nodes[GET_IND(cur_center->x,cur_center->y,cur_center->z)];
 
@@ -1124,13 +1137,18 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 
 		}
 		else
-		{
+		{//not figure out why the roots found in the first step did not include ind2?20150417
+			//maybe because the first step did not find all roots, if we find all of them, we need to change code, slove it later
+			//printf("33333333333333333333333333333\n");
 			int new_mark=Map_rootnode.size()+1;
 			cur_center->class_mark=new_mark;
 
-			enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
+			//enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
 			if(cur_center->r==0)
 			printf("%lf\n",cur_center->r);
+
+			//printf("%lf\n",(double)img1d[ind2]);
+				
 			
 			Map_rootnode.insert(new_mark,cur_center);
 
@@ -1147,7 +1165,7 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 			}
 		}
 
-	}
+	
 	
 	//delete cur_center;//2015.04.15，为什么删除这个程序能跑完，但出来的结果会和不删除时不一样？不删除时结果不正确，会出现长线条
 
