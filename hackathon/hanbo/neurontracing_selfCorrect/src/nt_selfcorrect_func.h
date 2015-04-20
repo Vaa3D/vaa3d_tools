@@ -29,6 +29,7 @@ typedef struct Parameters{
 
     int correct_sizeThr;
     int correct_neighborNumber;
+    int correct_falseAllow;
 }ParamStruct;
 
 class nt_selfcorrect_func

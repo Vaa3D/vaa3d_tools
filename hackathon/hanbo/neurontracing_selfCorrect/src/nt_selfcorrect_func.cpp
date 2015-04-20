@@ -521,6 +521,7 @@ bool nt_selfcorrect_func::correctExisting()
     int test_id=0; //for test
 
     //try to reconnect components
+    map<MyMarker *, MyMarker *> extraConn;
     for(V3DLONG cid0=0; cid0<components.size(); cid0++){
         qDebug()<<"fragment: "<<cid0;
         V3DLONG ccid=-1; //the id of component it can be connected
@@ -537,13 +538,16 @@ bool nt_selfcorrect_func::correctExisting()
             //if(tmp_linkage.size()>=linkage.size()) //no need to check if it is longer than current one
             //    continue;
             //examin the new path
-            V3DLONG bg_count=0;
+            V3DLONG bg_count=0,bg_count_tmp=0;
             for(V3DLONG i = 0; i<tmp_linkage.size(); i++){
                 double tmp_label=predictWindow((V3DLONG) tmp_linkage[i]->x,(V3DLONG) tmp_linkage[i]->y,(V3DLONG) tmp_linkage[i]->z);
                 tmp_linkage[i]->type=tmp_label;
                 if(tmp_label==VAL_BG){
-                    bg_count++;
-                    //break;
+                    bg_count_tmp++;
+                }
+                if(tmp_label==VAL_FG && bg_count_tmp>0){
+                    bg_count=MAX(bg_count,bg_count_tmp);
+                    bg_count_tmp==0;
                 }
             }
 
@@ -551,7 +555,7 @@ bool nt_selfcorrect_func::correctExisting()
             QString fname_tmp="test_" + QString::number(test_id++) + ".swc";
             saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
 
-            if(bg_count==0){
+            if(bg_count<=param.correct_falseAllow){
                 ccid=cid1;
                 linkage.clear();
                 for(V3DLONG i = 0; i<tmp_linkage.size(); i++){
@@ -561,14 +565,88 @@ bool nt_selfcorrect_func::correctExisting()
         }
         if(ccid!=-1){
             qDebug()<<"merge with component "<<ccid<<"; path size: "<<linkage.size();
-            for(V3DLONG nid=0; nid<components[ccid].size(); nid++){
-                components[cid0].push_back(components[ccid][nid]);
+            //replace the first and last marker in linkage
+            MyMarker * p_mm_head = linkage[0];
+            double mindis=MAX_DOUBLE;
+            MyMarker * p_mm_tmp;
+            for(V3DLONG nid=0; nid<components[cid0].size(); nid++){
+                double tmpdis=0;
+                tmpdis+=(components[cid0][nid]->x-p_mm_head->x)*(components[cid0][nid]->x-p_mm_head->x);
+                tmpdis+=(components[cid0][nid]->y-p_mm_head->y)*(components[cid0][nid]->y-p_mm_head->y);
+                tmpdis+=(components[cid0][nid]->z-p_mm_head->z)*(components[cid0][nid]->z-p_mm_head->z);
+                if(tmpdis<mindis){
+                    mindis=tmpdis;
+                    p_mm_tmp=components[cid0][nid];
+                }
             }
+            linkage[0]=p_mm_tmp;
+            linkage[1]->parent=linkage[0];
+            MyMarker * p_mm_tail = linkage.back();
+            mindis=MAX_DOUBLE;
+            for(V3DLONG nid=0; nid<components[ccid].size(); nid++){
+                double tmpdis=0;
+                tmpdis+=(components[ccid][nid]->x-p_mm_tail->x)*(components[ccid][nid]->x-p_mm_tail->x);
+                tmpdis+=(components[ccid][nid]->y-p_mm_tail->y)*(components[ccid][nid]->y-p_mm_tail->y);
+                tmpdis+=(components[ccid][nid]->z-p_mm_tail->z)*(components[ccid][nid]->z-p_mm_tail->z);
+                if(tmpdis<mindis){
+                    mindis=tmpdis;
+                    p_mm_tmp=components[cid0][nid];
+                }
+            }
+            extraConn[p_mm_tail->parent]=p_mm_tmp;
+            linkage.pop_back();
+            //push them in
             for(V3DLONG nid=0; nid<linkage.size(); nid++){
                 components[cid0].push_back(linkage[nid]);
             }
+            for(V3DLONG nid=0; nid<components[ccid].size(); nid++){
+                components[cid0].push_back(components[ccid][nid]);
+            }
             components.erase(components.begin()+ccid);
             cid0--;
+        }
+    }
+
+    //reconstruct neuron tree
+    //construct a graph first
+    map<MyMarker *, set<MyMarker *> > neuronGraph;
+    for(V3DLONG cid = 0; cid<components.size(); cid++){
+        for(V3DLONG nid = 0; nid<components[cid].size(); nid++){
+            MyMarker * p_mm1=components[cid][nid];
+            MyMarker * p_mm2=p_mm1->parent;
+            if(p_mm2!=0){
+                neuronGraph[p_mm1].insert(p_mm2);
+                neuronGraph[p_mm2].insert(p_mm1);
+            }
+        }
+    }
+    for(map<MyMarker *, MyMarker *>::iterator iter_extra=extraConn.begin(); iter_extra!=extraConn.end(); iter_extra++){
+        neuronGraph[iter_extra->first].insert(iter_extra->second);
+        neuronGraph[iter_extra->second].insert(iter_extra->first);
+    }
+    //reconstruct tree
+    ntmarkers.clear();
+    map<MyMarker *, int> mm_mask;
+    for(map<MyMarker *, set<MyMarker *> >::iterator mapiter = neuronGraph.begin(); mapiter!=neuronGraph.end(); mapiter++){
+        if(mm_mask[mapiter->first]==0){
+            mapiter->first->parent = 0;
+            mm_mask[mapiter->first]=1;
+            ntmarkers.push_back(mapiter->first);
+            vector<MyMarker *> mm_stack;
+            mm_stack.push_back(mapiter->first);
+            for(V3DLONG sid=0; sid<mm_stack.size(); sid++){
+                MyMarker * p_mm_parent = mm_stack[sid];
+                for(set<MyMarker *>::iterator setiter=neuronGraph[p_mm_parent].begin();
+                    setiter!=neuronGraph[p_mm_parent].end(); setiter++){
+                    if(mm_mask[*setiter]==0){
+                        MyMarker * p_mm_child = *setiter;
+                        mm_mask[p_mm_child]=1;
+                        ntmarkers.push_back(p_mm_child);
+                        p_mm_child->parent = p_mm_parent;
+                        mm_stack.push_back(p_mm_child);
+                    }
+                }
+            }
         }
     }
 
@@ -625,6 +703,7 @@ void nt_selfcorrect_func::initParameter()
 
     param.correct_neighborNumber=5;
     param.correct_sizeThr=2;
+    param.correct_falseAllow=2;
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
