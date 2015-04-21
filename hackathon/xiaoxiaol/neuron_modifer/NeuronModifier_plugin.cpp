@@ -31,7 +31,7 @@ void NeuronModifer::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
         if (menu_name == tr("about"))
 	{
-		v3d_msg(tr("This plugin modifies neuron morphology in terms of  basic neuron descriptors.. "
+                v3d_msg(tr("COMMAND LINE MODE ONLY: This plugin modifies neuron morphology in terms of  basic neuron descriptors.. "
 			"Developed by Xiaoxiao Liu, 2015-4-20"));
 	}
 }
