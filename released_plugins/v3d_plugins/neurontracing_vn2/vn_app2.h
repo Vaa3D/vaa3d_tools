@@ -17,6 +17,7 @@ struct PARA_APP2: public PARA_VN
     double SR_ratio;
     int  b_256cube;
     bool b_RadiusFrom2D; //how to estimate radius of each reconstruction node, from 2D plane (for anisotropic case) or 3D (for isotropic case)
+    int b_resample;
     
     QString inimg_file, inmarker_file, outswc_file;
     
@@ -32,6 +33,7 @@ struct PARA_APP2: public PARA_VN
         SR_ratio = 3.0/9.0;
         b_256cube = 1; //whether or not preprocessing to downsample to a 256xYxZ cube UINT8 for tracing
         b_RadiusFrom2D = true;
+        b_resample = 1;
 
         inimg_file = "";
         inmarker_file = "";

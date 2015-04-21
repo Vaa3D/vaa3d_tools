@@ -577,7 +577,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
             QString full_plugin_name_resample = "resample_swc";
             QString func_name_resample = "resample_swc";
-            callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
+            if(p.b_resample)
+                callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
 
             arg.type = "random";std::vector<char*> arg_input_sort;
             arg_input_sort.push_back(fileName_string);
@@ -657,6 +658,8 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : is_gsdt; k++;// true
     is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : is_break_accept; k++;// true
     length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : length_thresh; k++;// 1.0;
+    b_resample = (paras.size() >= k+1) ? atoi(paras[k]) : b_resample; k++;// 1.0;
+
     //cnn_type = 2; // default connection type 2
     //SR_ratio = 3.0/9.0;
     //is_coverage_prune = true;

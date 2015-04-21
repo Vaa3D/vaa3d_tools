@@ -107,7 +107,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
     {
         v3d_msg(versionStr.prepend("\nVaa3D-Neuron2 APP2/APP1  "), 0);
         printf("\n**** Usage of APP2 ****\n");
-        printf("vaa3d -x plugin_name -f app2 -i <inimg_file> -o <outswc_file> -p [<inmarker_file> [<channel> [<bkg_thresh> [<b_256cube> [<b_RadiusFrom2D> [<is_gsdt> [<is_gap> [<length_thresh>]]]]]]]]\n");
+        printf("vaa3d -x plugin_name -f app2 -i <inimg_file> -o <outswc_file> -p [<inmarker_file> [<channel> [<bkg_thresh> [<b_256cube> [<b_RadiusFrom2D> [<is_gsdt> [<is_gap> [<length_thresh> [is_resample]]]]]]]]]\n");
         printf("inimg_file       Should be 8/16/32bit image\n");
         printf("inmarker_file    If no input marker file, please set this para to NULL and it will detect soma automatically. \n"
                "                 When the file is set, then the first marker is used as root/soma.\n");
@@ -115,11 +115,13 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         printf("bkg_thresh       Default 10 (is specified as AUTO then auto-thresolding)\n");
 
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
-        printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 3D estimation.)\n");
+        printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 2D estimation.)\n");
         printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
         printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
         
         printf("length_thresh    Default 5\n");
+        printf("is_resample      If allow resample (1 for yes and 0 for no. Default 1.)\n");
+
         //printf("SR_ratio         signal/reduntancy threshold, default 1/3\n");
         printf("outswc_file      If not be specified, will be named automatically based on the input image file name.\n");
         
