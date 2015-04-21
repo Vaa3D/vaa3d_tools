@@ -11,12 +11,9 @@ int main(int argc, char ** argv)
         return 0;
     }
     nt_selfcorrect_func func;
-    func.loadData(argv[1],argv[2]);
-    func.calculateScore();
-    func.getTrainingSample();
-    func.performTraining();
-    func.predictExisting();
-    func.correctExisting();
-    func.saveData(argv[3]);
+    if(argc == 4)
+        func.correct_tracing(argv[1],argv[2],argv[3]);
+    else if(argc==3)
+        func.smart_tracing(argv[1],argv[2]);
     return 0;
 }

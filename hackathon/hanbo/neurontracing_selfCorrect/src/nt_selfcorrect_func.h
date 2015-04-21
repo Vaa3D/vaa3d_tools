@@ -30,15 +30,23 @@ typedef struct Parameters{
     int correct_sizeThr;
     int correct_neighborNumber;
     int correct_falseAllow;
+
+    double radius_bgthr;
 }ParamStruct;
 
 class nt_selfcorrect_func
 {
 public:
     nt_selfcorrect_func();
+    void correct_tracing(QString fname_img, QString fname_swc, QString fname_output);
+    void smart_tracing(QString fname_img, QString fname_output);
+
+private:
     bool loadData(QString fname_img, QString fname_swc);
+    bool loadImageData(QString fname_img);
     bool saveData(QString fname_output);
-    bool calculateScore();
+    bool tracing_score_sampling();
+    bool calculateScore_topology();
     bool getTrainingSample();
     bool performTraining();
     bool predictExisting();
@@ -48,6 +56,7 @@ public:
 private:
     void saveParameter(QString fname_param);
     void initParameter();
+    double getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2);
     double predictWindow(V3DLONG x, V3DLONG y, V3DLONG z);
     bool getWindowWavelet(V3DLONG x, V3DLONG y, V3DLONG z, vector<float>& wave);
     //ppp_inImage is dim*dim*dim size 3D image, dim%2==0, ppp_inImage[z][y][x]
@@ -58,6 +67,8 @@ private:
     long sub2ind(V3DLONG x, V3DLONG y, V3DLONG z);
 
 private:
+    int taskID;
+
 //input datas
     unsigned char * p_img1D;
     unsigned char *** ppp_img3D; //ppp_img3d[z][y][x]

@@ -4,6 +4,7 @@
 TEMPLATE = app
 CONFIG += debug_and_release
 CONFIG += debug warn_off
+V3DTOOLPATH = ../../..
 V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
@@ -74,3 +75,7 @@ HEADERS += hang/my_surf_objs.h
 
 SOURCES += hang/simple_c.cpp
 SOURCES += hang/my_surf_objs.cpp
+
+#===============Radius Estimation===================================
+INCLUDEPATH += $$V3DTOOLPATH/released_plugins/v3d_plugins/neurontracing_vn2/neuron_radius
+HEADERS += $$V3DTOOLPATH/released_plugins/v3d_plugins/neurontracing_vn2/neuron_radius/marker_radius.h

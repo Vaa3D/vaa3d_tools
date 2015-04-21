@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include "hang/topology_analysis.h"
 #include "mrmr/mrmr.h"
+#include "marker_radius.h"
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
+
+#define FLAG_TEST 1
 
 nt_selfcorrect_func::nt_selfcorrect_func()
 {
@@ -16,10 +19,43 @@ nt_selfcorrect_func::nt_selfcorrect_func()
     featureNum = 0;
     svmModel = 0;
     svmNode = 0;
+    taskID = 0;
     initParameter();
 }
 
+void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, QString fname_output)
+{
+    taskID = 1;
+    loadData(fname_img, fname_swc);
+    calculateScore_topology();
+    getTrainingSample();
+    performTraining();
+    predictExisting();
+    correctExisting();
+    saveData(fname_output);
+}
+
+void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output)
+{
+    taskID = 2;
+    loadImageData(fname_img);
+    tracing_score_sampling();
+    performTraining();
+    predictExisting();
+    correctExisting();
+    saveData(fname_output);
+}
+
 bool nt_selfcorrect_func::loadData(QString fname_img, QString fname_swc)
+{
+    //load image
+    loadImageData(fname_img);
+
+    //load neuron tree
+    ntmarkers = readSWC_file(fname_swc.toStdString());
+}
+
+bool nt_selfcorrect_func::loadImageData(QString fname_img)
 {
     char* cstr;
     string fname = fname_img.toStdString();
@@ -43,9 +79,6 @@ bool nt_selfcorrect_func::loadData(QString fname_img, QString fname_swc)
             ppp_img3D[z][y]=p_img1D+y*sz_img[0]+z*sz_img[0]*sz_img[1];
         }
     }
-
-    //load neuron tree
-    ntmarkers = readSWC_file(fname_swc.toStdString());
 }
 
 bool nt_selfcorrect_func::saveData(QString fname_output){
@@ -56,7 +89,11 @@ bool nt_selfcorrect_func::saveData(QString fname_output){
     return true;
 }
 
-bool nt_selfcorrect_func::calculateScore()
+bool nt_selfcorrect_func::tracing_score_sampling(){
+
+}
+
+bool nt_selfcorrect_func::calculateScore_topology()
 {
     if(type_img==1)
         topology_analysis3(p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
@@ -76,7 +113,7 @@ bool nt_selfcorrect_func::calculateScore()
         MyMarker * marker = ntmarkers[i];
         marker->type = score_map[marker] * 10 +19;
     }
-    string fname_tmp = "neuronTree_score.swc";
+    string fname_tmp = "test_scored.swc";
     saveSWC_file(fname_tmp, ntmarkers);
 }
 
@@ -213,7 +250,12 @@ bool nt_selfcorrect_func::getTrainingSample()
         }
     }
 
-    //get the trainging samples based on mask
+    //get the trainging samples based on mask and update radius_bgthr if necessary
+    bool b_radiusbg_update = false;
+    if(param.radius_bgthr<0){
+        b_radiusbg_update = true;
+        param.radius_bgthr = MAX_DOUBLE;
+    }
     V3DLONG sampleNum=MIN(positiveCount,param.sample_maxNumber);
     sampleNum=MIN(negativeCount,sampleNum);
     double positiveSampleRate=(double)positiveCount/(double)sampleNum;
@@ -227,6 +269,10 @@ bool nt_selfcorrect_func::getTrainingSample()
                 positiveLine+=positiveSampleRate;
                 train_positive_idx.push_back(idx);
                 p_mask1D[idx]=4;
+
+                if(b_radiusbg_update){
+                    param.radius_bgthr = MIN(param.radius_bgthr,p_img1D[idx]);
+                }
             }
         }
         if(p_mask1D[idx]==3){//negative
@@ -240,9 +286,11 @@ bool nt_selfcorrect_func::getTrainingSample()
     }
 
     //for test
-    char fname_tmp[1000];
-    sprintf(fname_tmp,"test.raw");
-    saveImage(fname_tmp,p_mask1D, sz_img, 1);
+    if(FLAG_TEST){
+        char fname_tmp[1000];
+        sprintf(fname_tmp,"test_class.raw");
+        saveImage(fname_tmp,p_mask1D, sz_img, 1);
+    }
 
     qDebug()<<"positive: "<<positiveCount<<"; negative:"<<negativeCount;
 }
@@ -309,16 +357,18 @@ bool nt_selfcorrect_func::performTraining()
     }
 
     //for test
-    ofstream fp("test_trainingFeatures.txt");
-    for(V3DLONG i=0; i<sampleNum*(featureNum+1); i++){
-        fp<<train_data[i];
-        if((i+1)%(featureNum+1)==0){
-            fp<<endl;
-        }else{
-            fp<<"\t";
+    if(FLAG_TEST){
+        ofstream fp("test_trainingFeatures.txt");
+        for(V3DLONG i=0; i<sampleNum*(featureNum+1); i++){
+            fp<<train_data[i];
+            if((i+1)%(featureNum+1)==0){
+                fp<<endl;
+            }else{
+                fp<<"\t";
+            }
         }
+        fp.close();
     }
-    fp.close();
 
     //perform mRMR
     qDebug()<<"mRMR feature selection: "<<param.mrmr_feaNum;
@@ -359,13 +409,16 @@ bool nt_selfcorrect_func::performTraining()
     long xid=0;
 
     //for test
-    ofstream fpsvm("test_svmTrainingFeatures.txt");
+    ofstream fpsvm;
+    if(FLAG_TEST)
+        fpsvm.open("test_svmTrainingFeatures.txt");
 
     for(long sid=0; sid<sampleNum; sid++){
         long page=pageSize*sid;
         svmProb.y[sid] = train_data[page];
         //for test
-        fpsvm<<train_data[page];
+        if(FLAG_TEST)
+            fpsvm<<train_data[page];
 
         svmProb.x[sid] = x_space+xid;
         for(long fid=0; fid<selFeature.size(); fid++){
@@ -373,12 +426,14 @@ bool nt_selfcorrect_func::performTraining()
             x_space[xid].value = train_data[page+1+selFeature[fid]];
 
             //for test
-            fpsvm<<"\t"<<x_space[xid].value;
+            if(FLAG_TEST)
+                fpsvm<<"\t"<<x_space[xid].value;
 
             ++xid;
         }
         //for test
-        fpsvm<<endl;
+        if(FLAG_TEST)
+            fpsvm<<endl;
 
         x_space[xid].index = -1;
         xid++;
@@ -433,7 +488,7 @@ bool nt_selfcorrect_func::predictExisting()
 bool nt_selfcorrect_func::correctExisting()
 {
     qDebug()<<"trying to correct reconstructions";
-    //identify components first
+    //break the bg nodes
     vector<vector<MyMarker*> > components;
     for(V3DLONG i=0; i<ntmarkers.size(); i++){
         if(ntmarkers[i]->type==VAL_BG){ //break with parent if it is wrong
@@ -447,6 +502,11 @@ bool nt_selfcorrect_func::correctExisting()
             ntmarkers[i]->parent=0;
         }
     }
+    //for test
+    if(FLAG_TEST)
+        saveSWC_file("test_break.swc",ntmarkers);
+
+    //identify components first
     map<MyMarker*, bool> visitMask;
     map<MyMarker*, V3DLONG> compId;
     V3DLONG tmp_id=0;
@@ -524,9 +584,24 @@ bool nt_selfcorrect_func::correctExisting()
     map<MyMarker *, MyMarker *> extraConn;
     for(V3DLONG cid0=0; cid0<components.size(); cid0++){
         qDebug()<<"fragment: "<<cid0;
+        //find the top nearest neighbors
+        multimap<double, V3DLONG> disSort;
+        if(param.correct_neighborNumber>=components.size()-1){ //total number of neibor is less than maximum neibor allowed
+            for(V3DLONG cid1=cid0+1; cid1<components.size(); cid1++){
+                disSort.insert(pair<double, V3DLONG>((double)cid1,cid1));
+            }
+        }else{
+            for(V3DLONG cid1=0; cid1<components.size(); cid1++){
+                if(cid1==cid0) continue;
+                double dis=getMarkersDistance(components[cid0],components[cid1]);
+                disSort.insert(pair<double, V3DLONG>(dis,cid1));
+            }
+        }
         V3DLONG ccid=-1; //the id of component it can be connected
         vector<MyMarker*> linkage; //markers linking two components
-        for(V3DLONG cid1=cid0+1; cid1<components.size(); cid1++){
+        multimap<double, V3DLONG>::iterator iter=disSort.begin();
+        for(int tmpid=0; tmpid<param.correct_neighborNumber && iter!=disSort.end(); tmpid++, iter++){
+            V3DLONG cid1 = iter->second;
             //find new path via fast matching
             vector<MyMarker*> tmp_linkage;
             if(type_img==1)
@@ -552,8 +627,10 @@ bool nt_selfcorrect_func::correctExisting()
             }
 
             //for test
-            QString fname_tmp="test_" + QString::number(test_id++) + ".swc";
-            saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
+            if(FLAG_TEST){
+                QString fname_tmp="test_" + QString::number(test_id++) + ".swc";
+                saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
+            }
 
             if(bg_count<=param.correct_falseAllow){
                 ccid=cid1;
@@ -569,25 +646,26 @@ bool nt_selfcorrect_func::correctExisting()
             MyMarker * p_mm_head = linkage[0];
             double mindis=MAX_DOUBLE;
             MyMarker * p_mm_tmp;
-            for(V3DLONG nid=0; nid<components[cid0].size(); nid++){
-                double tmpdis=0;
-                tmpdis+=(components[cid0][nid]->x-p_mm_head->x)*(components[cid0][nid]->x-p_mm_head->x);
-                tmpdis+=(components[cid0][nid]->y-p_mm_head->y)*(components[cid0][nid]->y-p_mm_head->y);
-                tmpdis+=(components[cid0][nid]->z-p_mm_head->z)*(components[cid0][nid]->z-p_mm_head->z);
-                if(tmpdis<mindis){
-                    mindis=tmpdis;
-                    p_mm_tmp=components[cid0][nid];
-                }
-            }
-            linkage[0]=p_mm_tmp;
-            linkage[1]->parent=linkage[0];
-            MyMarker * p_mm_tail = linkage.back();
-            mindis=MAX_DOUBLE;
             for(V3DLONG nid=0; nid<components[ccid].size(); nid++){
                 double tmpdis=0;
-                tmpdis+=(components[ccid][nid]->x-p_mm_tail->x)*(components[ccid][nid]->x-p_mm_tail->x);
-                tmpdis+=(components[ccid][nid]->y-p_mm_tail->y)*(components[ccid][nid]->y-p_mm_tail->y);
-                tmpdis+=(components[ccid][nid]->z-p_mm_tail->z)*(components[ccid][nid]->z-p_mm_tail->z);
+                tmpdis+=(components[ccid][nid]->x-p_mm_head->x)*(components[ccid][nid]->x-p_mm_head->x);
+                tmpdis+=(components[ccid][nid]->y-p_mm_head->y)*(components[ccid][nid]->y-p_mm_head->y);
+                tmpdis+=(components[ccid][nid]->z-p_mm_head->z)*(components[ccid][nid]->z-p_mm_head->z);
+                if(tmpdis<mindis){
+                    mindis=tmpdis;
+                    p_mm_tmp=components[ccid][nid];
+                }
+            }
+            linkage.erase(linkage.begin());
+            linkage[0]->parent=p_mm_tmp;
+
+            MyMarker * p_mm_tail = linkage.back();
+            mindis=MAX_DOUBLE;
+            for(V3DLONG nid=0; nid<components[cid0].size(); nid++){
+                double tmpdis=0;
+                tmpdis+=(components[cid0][nid]->x-p_mm_tail->x)*(components[cid0][nid]->x-p_mm_tail->x);
+                tmpdis+=(components[cid0][nid]->y-p_mm_tail->y)*(components[cid0][nid]->y-p_mm_tail->y);
+                tmpdis+=(components[cid0][nid]->z-p_mm_tail->z)*(components[cid0][nid]->z-p_mm_tail->z);
                 if(tmpdis<mindis){
                     mindis=tmpdis;
                     p_mm_tmp=components[cid0][nid];
@@ -595,6 +673,12 @@ bool nt_selfcorrect_func::correctExisting()
             }
             extraConn[p_mm_tail->parent]=p_mm_tmp;
             linkage.pop_back();
+
+            //update the radius for the new path
+            for(V3DLONG nid=0; nid<linkage.size(); nid++){
+                linkage[nid]->radius=markerRadius(p_img1D, sz_img, *linkage[nid], param.radius_bgthr,2);
+            }
+
             //push them in
             for(V3DLONG nid=0; nid<linkage.size(); nid++){
                 components[cid0].push_back(linkage[nid]);
@@ -704,6 +788,8 @@ void nt_selfcorrect_func::initParameter()
     param.correct_neighborNumber=5;
     param.correct_sizeThr=2;
     param.correct_falseAllow=2;
+
+    param.radius_bgthr=-1;
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
@@ -714,6 +800,20 @@ void nt_selfcorrect_func::loadParameter(QString fname_param)
 void nt_selfcorrect_func::saveParameter(QString fname_param)
 {
 
+}
+
+double nt_selfcorrect_func::getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2)
+{
+    double minDis=MAX_DOUBLE;
+    for(V3DLONG i=0; i<m1.size(); i++){
+        for(V3DLONG j=0; j<m2.size(); j++){
+            double dis=(m1[i]->x-m2[j]->x)*(m1[i]->x-m2[j]->x);
+            dis+=(m1[i]->y-m2[j]->y)*(m1[i]->y-m2[j]->y);
+            dis+=(m1[i]->z-m2[j]->z)*(m1[i]->z-m2[j]->z);
+            minDis=MIN(minDis,dis);
+        }
+    }
+    return minDis;
 }
 
 double nt_selfcorrect_func::predictWindow(V3DLONG x, V3DLONG y, V3DLONG z)
@@ -739,8 +839,13 @@ bool nt_selfcorrect_func::getWindowWavelet(V3DLONG x, V3DLONG y, V3DLONG z, vect
 {
     bool b_firstRun = false;
     if(x<0||x>=sz_img[0]||y<0||y>=sz_img[1]||z<0||z>=sz_img[2]){
-        qDebug()<<"error: window center of wavelet is out of boundary";
-        return 0;
+        qDebug()<<"warning: targeting point "<<x<<":"<<y<<":"<<z<<":"<<" is out of image boundary.";
+//        if(x<0) x=0;
+//        if(x>=sz_img[0]) x=sz_img[0]-1;
+//        if(y<0) y=0;
+//        if(y>=sz_img[1]) y=sz_img[1]-1;
+//        if(z<0) z=0;
+//        if(z>=sz_img[2]) z=sz_img[2]-1;
     }
     int level=param.wavelet_level;
 
