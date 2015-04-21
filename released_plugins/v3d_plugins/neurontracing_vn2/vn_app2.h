@@ -72,6 +72,8 @@ struct PARA_APP2: public PARA_VN
             b256_checker->setChecked(b_256cube);
             QCheckBox * b_radius2Dchecker = new QCheckBox();
             b_radius2Dchecker->setChecked(b_RadiusFrom2D);
+            QCheckBox * bresample_Checker = new QCheckBox();
+            bresample_Checker->setChecked(b_resample);
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -87,6 +89,8 @@ struct PARA_APP2: public PARA_VN
             hbox1->addWidget(iswb_checker);
             hbox1->addWidget(new QLabel("radius from 2D?"));
             hbox1->addWidget(b_radius2Dchecker);
+            hbox1->addWidget(new QLabel("auto-resample SWC"));
+            hbox1->addWidget(bresample_Checker);
 
             layout->addLayout(hbox1,2,0,1,6);
             
@@ -124,6 +128,7 @@ struct PARA_APP2: public PARA_VN
             is_break_accept = iswb_checker->isChecked();
             b_256cube = b256_checker->isChecked();
             b_RadiusFrom2D = b_radius2Dchecker->isChecked();
+            b_resample = bresample_Checker->isChecked();
             
             if (dialog) {delete dialog; dialog=0;}
         }
