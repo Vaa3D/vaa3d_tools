@@ -20,12 +20,18 @@ nt_selfcorrect_func::nt_selfcorrect_func()
     svmModel = 0;
     svmNode = 0;
     taskID = 0;
+    fname_inimg = "";
+    fname_tmpout = "";
+    fname_outswc = "";
     initParameter();
 }
 
 void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, QString fname_output)
 {
     taskID = 1;
+
+    fname_tmpout=fname_output+"_tmp";
+
     loadData(fname_img, fname_swc);
     calculateScore_topology();
     getTrainingSample();
@@ -35,9 +41,14 @@ void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, 
     saveData(fname_output);
 }
 
-void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output)
+void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb)
 {
     taskID = 2;
+    callback=cb;
+
+    fname_tmpout=fname_output+"_tmp";
+    fname_outswc=fname_output+".swc";
+
     loadImageData(fname_img);
     tracing_score_sampling();
     performTraining();
@@ -53,6 +64,8 @@ bool nt_selfcorrect_func::loadData(QString fname_img, QString fname_swc)
 
     //load neuron tree
     ntmarkers = readSWC_file(fname_swc.toStdString());
+
+    return true;
 }
 
 bool nt_selfcorrect_func::loadImageData(QString fname_img)
@@ -89,10 +102,6 @@ bool nt_selfcorrect_func::saveData(QString fname_output){
     return true;
 }
 
-bool nt_selfcorrect_func::tracing_score_sampling(){
-
-}
-
 bool nt_selfcorrect_func::calculateScore_topology()
 {
     if(type_img==1)
@@ -113,8 +122,13 @@ bool nt_selfcorrect_func::calculateScore_topology()
         MyMarker * marker = ntmarkers[i];
         marker->type = score_map[marker] * 10 +19;
     }
-    string fname_tmp = "test_scored.swc";
-    saveSWC_file(fname_tmp, ntmarkers);
+    //for test
+    if(FLAG_TEST){
+        QString fname_tmp = fname_tmpout+"_scored.swc";
+        saveSWC_file(fname_tmp.toStdString(), ntmarkers);
+    }
+
+    return true;
 }
 
 bool nt_selfcorrect_func::getTrainingSample()
@@ -288,11 +302,13 @@ bool nt_selfcorrect_func::getTrainingSample()
     //for test
     if(FLAG_TEST){
         char fname_tmp[1000];
-        sprintf(fname_tmp,"test_class.raw");
+        sprintf(fname_tmp,"%s_class.raw",fname_tmpout.toStdString().c_str());
         saveImage(fname_tmp,p_mask1D, sz_img, 1);
     }
 
     qDebug()<<"positive: "<<positiveCount<<"; negative:"<<negativeCount;
+
+    return true;
 }
 
 bool nt_selfcorrect_func::performTraining()
@@ -358,7 +374,8 @@ bool nt_selfcorrect_func::performTraining()
 
     //for test
     if(FLAG_TEST){
-        ofstream fp("test_trainingFeatures.txt");
+        QString string_tmp=fname_tmpout+"_trainingFeatures.txt";
+        ofstream fp(string_tmp.toStdString().c_str());
         for(V3DLONG i=0; i<sampleNum*(featureNum+1); i++){
             fp<<train_data[i];
             if((i+1)%(featureNum+1)==0){
@@ -410,8 +427,10 @@ bool nt_selfcorrect_func::performTraining()
 
     //for test
     ofstream fpsvm;
-    if(FLAG_TEST)
-        fpsvm.open("test_svmTrainingFeatures.txt");
+    if(FLAG_TEST){
+        QString string_tmp=fname_tmpout+"_svmFeatures.txt";
+        fpsvm.open(string_tmp.toStdString().c_str());
+    }
 
     for(long sid=0; sid<sampleNum; sid++){
         long page=pageSize*sid;
@@ -503,8 +522,10 @@ bool nt_selfcorrect_func::correctExisting()
         }
     }
     //for test
-    if(FLAG_TEST)
-        saveSWC_file("test_break.swc",ntmarkers);
+    if(FLAG_TEST){
+        QString string_tmp=fname_tmpout+"_break.swc";
+        saveSWC_file(string_tmp.toStdString(),ntmarkers);
+    }
 
     //identify components first
     map<MyMarker*, bool> visitMask;
@@ -628,7 +649,7 @@ bool nt_selfcorrect_func::correctExisting()
 
             //for test
             if(FLAG_TEST){
-                QString fname_tmp="test_" + QString::number(test_id++) + ".swc";
+                QString fname_tmp= fname_tmpout + "_linkage_" + QString::number(test_id++) + ".swc";
                 saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
             }
 
@@ -734,6 +755,8 @@ bool nt_selfcorrect_func::correctExisting()
         }
     }
 
+    return true;
+
     //    //predict the whole image
     //    unsigned char * p_imgPredict=new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]];
     //    memset(p_imgPredict,0,sz_img[0]*sz_img[1]*sz_img[2]);
@@ -752,6 +775,22 @@ bool nt_selfcorrect_func::correctExisting()
     //    char fname_pred[100];
     //    sprintf(fname_pred,"test_predict.raw");
     //    saveImage(fname_pred, p_imgPredict, sz_img, 1);
+}
+
+bool nt_selfcorrect_func::tracing_score_sampling(){
+    //perform tracing
+    for(int i=0; i<param.app2_bgThrs.size(); i++){
+        double thr=param.app2_bgThrs[i];
+        QString fname_app2;
+        if(FLAG_TEST){
+            fname_app2=fname_tmpout+"_app2_"+QString::number(thr)+".swc";
+        }else{
+            fname_app2=fname_outswc;
+        }
+        vector<MyMarker*> tmp_nt=nt_selfcorrect_func::app2Tracing(fname_app2,thr);
+    }
+
+    return true;
 }
 
 void nt_selfcorrect_func::initParameter()
@@ -790,6 +829,11 @@ void nt_selfcorrect_func::initParameter()
     param.correct_falseAllow=2;
 
     param.radius_bgthr=-1;
+
+    param.app2_bgThrs.clear();
+    param.app2_bgThrs.push_back(-1);
+    param.app2_bgThrs.push_back(10);
+    param.app2_bgThrs.push_back(20);
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
@@ -800,6 +844,58 @@ void nt_selfcorrect_func::loadParameter(QString fname_param)
 void nt_selfcorrect_func::saveParameter(QString fname_param)
 {
 
+}
+
+vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double bgThr)
+{
+    QString full_plugin_name = "Vaa3D_Neuron2";
+    QString func_name = "app2";
+    char bgThr_cstr[1000];
+    if(bgThr<0)
+        sprintf(bgThr_cstr,"AUTO");
+    else
+        sprintf(bgThr_cstr,"%f",bgThr);
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    std::vector<char*> arg_input;
+    char* fileName_cstr =  new char[fname_inimg.length() + 1];
+    strcpy(fileName_cstr, fname_inimg.toStdString().c_str());
+    arg_input.push_back(fileName_cstr);
+    arg.type = "random";
+    arg.p = (void *) & arg_input;
+    input<< arg;
+
+    std::vector<char*> arg_output;
+    char* char_swcout =  new char[fname_inimg.length() + 1];
+    strcpy(char_swcout, fname_output.toStdString().c_str());
+    arg_output.push_back(char_swcout);
+    arg.type = "random";
+    arg.p = (void *) & arg_output;
+    output<< arg;
+
+    vector<char*> arg_para;
+    arg_para.push_back("NULL");
+    arg_para.push_back("0");
+    arg_para.push_back(bgThr_cstr);
+    arg_para.push_back("1");
+    arg_para.push_back("1");
+    arg_para.push_back("1");
+    arg_para.push_back("1");
+    arg_para.push_back("5");
+    arg_para.push_back("0");
+    arg.p = (void *) & arg_para;
+    arg.type = "random";
+    input << arg;
+
+    if(!callback->callPluginFunc(full_plugin_name,func_name,input,output)){
+         qDebug()<<"Error: can not find the tracing plugin: "<<full_plugin_name;
+         exit(0);
+    }
+
+    return readSWC_file(fname_output.toStdString());
 }
 
 double nt_selfcorrect_func::getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2)

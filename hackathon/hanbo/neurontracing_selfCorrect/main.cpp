@@ -13,7 +13,5 @@ int main(int argc, char ** argv)
     nt_selfcorrect_func func;
     if(argc == 4)
         func.correct_tracing(argv[1],argv[2],argv[3]);
-    else if(argc==3)
-        func.smart_tracing(argv[1],argv[2]);
     return 0;
 }

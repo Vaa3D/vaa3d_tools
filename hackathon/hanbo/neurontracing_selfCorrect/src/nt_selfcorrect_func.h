@@ -5,6 +5,7 @@
 #include "hang/my_surf_objs.h"
 #include "v3d_basicdatatype.h"
 #include "svm/svm.h"
+#include "v3d_interface.h"
 
 #define VAL_FG 3
 #define VAL_BG 2
@@ -32,6 +33,8 @@ typedef struct Parameters{
     int correct_falseAllow;
 
     double radius_bgthr;
+
+    vector<double> app2_bgThrs;
 }ParamStruct;
 
 class nt_selfcorrect_func
@@ -39,7 +42,7 @@ class nt_selfcorrect_func
 public:
     nt_selfcorrect_func();
     void correct_tracing(QString fname_img, QString fname_swc, QString fname_output);
-    void smart_tracing(QString fname_img, QString fname_output);
+    void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* callback);
 
 private:
     bool loadData(QString fname_img, QString fname_swc);
@@ -56,6 +59,7 @@ private:
 private:
     void saveParameter(QString fname_param);
     void initParameter();
+    vector<MyMarker *> app2Tracing(QString fname_output, double bgThr);
     double getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2);
     double predictWindow(V3DLONG x, V3DLONG y, V3DLONG z);
     bool getWindowWavelet(V3DLONG x, V3DLONG y, V3DLONG z, vector<float>& wave);
@@ -70,11 +74,15 @@ private:
     int taskID;
 
 //input datas
+    V3DPluginCallback2* callback;
     unsigned char * p_img1D;
     unsigned char *** ppp_img3D; //ppp_img3d[z][y][x]
     V3DLONG * sz_img;
     int type_img;
     vector<MyMarker*> ntmarkers;
+    QString fname_tmpout;
+    QString fname_inimg;
+    QString fname_outswc;
 
 //scored data
     map<MyMarker*, double> score_map;

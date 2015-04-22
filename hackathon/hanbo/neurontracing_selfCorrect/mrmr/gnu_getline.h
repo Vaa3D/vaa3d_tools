@@ -34,6 +34,14 @@
 #  endif
 # endif
 
+#ifndef ssize_t
+#if defined(_WIN64)
+#define ssize_t __int64
+#else
+#define ssize_t long;
+#endif
+#endif
+
 ssize_t gnu_getline (char **lineptr, size_t *n, FILE *stream);
 ssize_t gnu_getdelim (char **lineptr, size_t *n, int delim, FILE *stream);
 
