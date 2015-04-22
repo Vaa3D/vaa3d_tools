@@ -48,7 +48,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
-#SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 #===============mRMR================================================
 HEADERS += mrmr/gnu_getline.h \
