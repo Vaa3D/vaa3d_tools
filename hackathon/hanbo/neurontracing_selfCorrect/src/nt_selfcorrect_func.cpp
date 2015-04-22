@@ -48,9 +48,12 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
 
     fname_tmpout=fname_output+"_tmp";
     fname_outswc=fname_output+".swc";
+    fname_inimg=fname_img;
 
     loadImageData(fname_img);
-    tracing_score_sampling();
+    tracing();
+    calculateScore_topology();
+    getTrainingSample();
     performTraining();
     predictExisting();
     correctExisting();
@@ -92,11 +95,14 @@ bool nt_selfcorrect_func::loadImageData(QString fname_img)
             ppp_img3D[z][y]=p_img1D+y*sz_img[0]+z*sz_img[0]*sz_img[1];
         }
     }
+
+    fname_inimg=fname_img;
+    return true;
 }
 
 bool nt_selfcorrect_func::saveData(QString fname_output){
     QString fname_out;
-    fname_out=fname_output+"_predict.swc";
+    fname_out=fname_output+".swc";
     saveSWC_file(fname_out.toStdString(), ntmarkers);
 
     return true;
@@ -647,11 +653,11 @@ bool nt_selfcorrect_func::correctExisting()
                 }
             }
 
-            //for test
-            if(FLAG_TEST){
-                QString fname_tmp= fname_tmpout + "_linkage_" + QString::number(test_id++) + ".swc";
-                saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
-            }
+//            //for test
+//            if(FLAG_TEST){
+//                QString fname_tmp= fname_tmpout + "_linkage_" + QString::number(test_id++) + ".swc";
+//                saveSWC_file(fname_tmp.toStdString(), tmp_linkage);
+//            }
 
             if(bg_count<=param.correct_falseAllow){
                 ccid=cid1;
@@ -777,18 +783,43 @@ bool nt_selfcorrect_func::correctExisting()
     //    saveImage(fname_pred, p_imgPredict, sz_img, 1);
 }
 
-bool nt_selfcorrect_func::tracing_score_sampling(){
+bool nt_selfcorrect_func::tracing(){
     //perform tracing
+    vector<MyMarker*> allTrace;
     for(int i=0; i<param.app2_bgThrs.size(); i++){
         double thr=param.app2_bgThrs[i];
         QString fname_app2;
         if(FLAG_TEST){
-            fname_app2=fname_tmpout+"_app2_"+QString::number(thr)+".swc";
+            if(thr<0)
+                fname_app2=fname_tmpout+"_app2_auto.swc";
+            else
+                fname_app2=fname_tmpout+"_app2_"+QString::number(thr)+".swc";
         }else{
             fname_app2=fname_outswc;
         }
         vector<MyMarker*> tmp_nt=nt_selfcorrect_func::app2Tracing(fname_app2,thr);
+        for(int j=0; j<tmp_nt.size(); j++){
+            tmp_nt[j]->x=(int)tmp_nt[j]->x;
+            tmp_nt[j]->y=(int)tmp_nt[j]->y;
+            tmp_nt[j]->z=(int)tmp_nt[j]->z;
+            allTrace.push_back(tmp_nt[j]);
+        }
     }
+
+    QString fname_alltrace;
+    if(FLAG_TEST)
+        fname_alltrace = fname_tmpout+"_app2_all.swc";
+    else
+        fname_alltrace = fname_outswc;
+    saveSWC_file(fname_alltrace.toStdString(), allTrace);
+
+    allTrace.clear();
+    QString fname_sortedtrace;
+    if(FLAG_TEST)
+        fname_sortedtrace = fname_tmpout+"_app2_sorted.swc";
+    else
+        fname_sortedtrace = fname_outswc;
+    ntmarkers=sortTracing(fname_alltrace,fname_sortedtrace);
 
     return true;
 }
@@ -834,6 +865,12 @@ void nt_selfcorrect_func::initParameter()
     param.app2_bgThrs.push_back(-1);
     param.app2_bgThrs.push_back(10);
     param.app2_bgThrs.push_back(20);
+    param.app2_channel = 0;
+    param.app2_b256 = false;
+    param.app2_2dradius = true;
+    param.app2_gap = false;
+    param.app2_gsdt = true;
+    param.app2_lenThr = 5;
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
@@ -846,15 +883,48 @@ void nt_selfcorrect_func::saveParameter(QString fname_param)
 
 }
 
+vector<MyMarker *> nt_selfcorrect_func::sortTracing(QString fname_input, QString fname_output)
+{
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    arg.type = "random";
+    std::vector<char*> arg_input;
+    char* fileName_string =  new char[fname_input.length() + 1];
+    strcpy(fileName_string, fname_input.toStdString().c_str());
+    arg_input.push_back(fileName_string);
+    arg.p = (void *) & arg_input;
+    input<< arg;
+    arg.type = "random";
+    std::vector<char*> arg_para;
+    arg_para.push_back("0");
+    arg.p = (void *) & arg_para;
+    input << arg;
+    arg.type = "random";
+    std::vector<char*> arg_output;
+    char* fileName_outswc =  new char[fname_output.length() + 1];
+    strcpy(fileName_outswc, fname_output.toStdString().c_str());
+    arg_output.push_back(fileName_outswc);
+    arg.p = (void *) & arg_output;
+    output<< arg;
+
+    QString full_plugin_name_sort = "sort_neuron_swc";
+    QString func_name_sort = "sort_swc";
+
+    //for test
+    qDebug()<<fileName_string;
+    qDebug()<<fileName_outswc;
+
+    callback->callPluginFunc(full_plugin_name_sort,func_name_sort, input,output);
+
+    return readSWC_file(fname_output.toStdString());
+}
+
 vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double bgThr)
 {
     QString full_plugin_name = "Vaa3D_Neuron2";
     QString func_name = "app2";
-    char bgThr_cstr[1000];
-    if(bgThr<0)
-        sprintf(bgThr_cstr,"AUTO");
-    else
-        sprintf(bgThr_cstr,"%f",bgThr);
 
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -869,7 +939,7 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
     input<< arg;
 
     std::vector<char*> arg_output;
-    char* char_swcout =  new char[fname_inimg.length() + 1];
+    char* char_swcout =  new char[fname_output.length() + 1];
     strcpy(char_swcout, fname_output.toStdString().c_str());
     arg_output.push_back(char_swcout);
     arg.type = "random";
@@ -878,20 +948,24 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
 
     vector<char*> arg_para;
     arg_para.push_back("NULL");
-    arg_para.push_back("0");
+    char ap_channel[100]; sprintf(ap_channel,"%d",param.app2_channel);
+    arg_para.push_back(ap_channel);
+    char bgThr_cstr[1000];
+    bgThr<0 ? sprintf(bgThr_cstr,"AUTO") : sprintf(bgThr_cstr,"%f",bgThr);
     arg_para.push_back(bgThr_cstr);
-    arg_para.push_back("1");
-    arg_para.push_back("1");
-    arg_para.push_back("1");
-    arg_para.push_back("1");
-    arg_para.push_back("5");
-    arg_para.push_back("0");
+    param.app2_b256 ? arg_para.push_back("1") : arg_para.push_back("0");
+    param.app2_2dradius ? arg_para.push_back("1") : arg_para.push_back("0");
+    param.app2_gsdt ? arg_para.push_back("1") : arg_para.push_back("0");
+    param.app2_gap ?  arg_para.push_back("1") : arg_para.push_back("0");
+    char ap_lenThr[100]; sprintf(ap_channel,"%f",param.app2_lenThr);
+    arg_para.push_back(ap_lenThr);
+    arg_para.push_back("0"); //no resample swc
     arg.p = (void *) & arg_para;
     arg.type = "random";
-    input << arg;
+    input<< arg;
 
     if(!callback->callPluginFunc(full_plugin_name,func_name,input,output)){
-         qDebug()<<"Error: can not find the tracing plugin: "<<full_plugin_name;
+         qDebug()<<"Error: failed to call the tracing plugin: "<<full_plugin_name;
          exit(0);
     }
 

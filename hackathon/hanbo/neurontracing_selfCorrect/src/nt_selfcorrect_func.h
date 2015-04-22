@@ -35,6 +35,12 @@ typedef struct Parameters{
     double radius_bgthr;
 
     vector<double> app2_bgThrs;
+    int app2_channel;
+    bool app2_b256;
+    bool app2_gsdt;
+    bool app2_gap;
+    bool app2_2dradius;
+    double app2_lenThr;
 }ParamStruct;
 
 class nt_selfcorrect_func
@@ -42,13 +48,13 @@ class nt_selfcorrect_func
 public:
     nt_selfcorrect_func();
     void correct_tracing(QString fname_img, QString fname_swc, QString fname_output);
-    void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* callback);
+    void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
 
 private:
     bool loadData(QString fname_img, QString fname_swc);
     bool loadImageData(QString fname_img);
     bool saveData(QString fname_output);
-    bool tracing_score_sampling();
+    bool tracing();
     bool calculateScore_topology();
     bool getTrainingSample();
     bool performTraining();
@@ -59,6 +65,7 @@ private:
 private:
     void saveParameter(QString fname_param);
     void initParameter();
+    vector<MyMarker *> sortTracing(QString fname_input, QString fname_output);
     vector<MyMarker *> app2Tracing(QString fname_output, double bgThr);
     double getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2);
     double predictWindow(V3DLONG x, V3DLONG y, V3DLONG z);

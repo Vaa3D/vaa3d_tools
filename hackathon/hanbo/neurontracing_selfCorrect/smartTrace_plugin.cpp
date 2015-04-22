@@ -32,6 +32,7 @@ QStringList smartTrace_plugin::funclist() const
 {
 	return QStringList()
 		<<tr("tracing_func")
+       <<tr("smartTrace")
 		<<tr("help");
 }
 
@@ -95,7 +96,7 @@ bool smartTrace_plugin::dofunc(const QString & func_name, const V3DPluginArgList
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
 
         nt_selfcorrect_func tracefunc;
-        tracefunc.smart_tracing(PARA.inimg_file,"result",&callback);
+        tracefunc.smart_tracing(PARA.inimg_file,PARA.inimg_file+"_smartTracing",&callback);
     }
     else if (func_name == tr("help"))
     {
@@ -105,6 +106,10 @@ bool smartTrace_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 
 		printf("**** Usage of smartTrace tracing **** \n");
 		printf("vaa3d -x smartTrace -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("inimg_file       The input image\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+
+        printf("\n\nvaa3d -x smartTrace -f smartTrace -i <inimg_file> -p <channel> <other parameters>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
