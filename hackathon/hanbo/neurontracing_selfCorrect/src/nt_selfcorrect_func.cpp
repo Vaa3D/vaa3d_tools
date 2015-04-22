@@ -957,7 +957,7 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
     param.app2_2dradius ? arg_para.push_back("1") : arg_para.push_back("0");
     param.app2_gsdt ? arg_para.push_back("1") : arg_para.push_back("0");
     param.app2_gap ?  arg_para.push_back("1") : arg_para.push_back("0");
-    char ap_lenThr[100]; sprintf(ap_channel,"%f",param.app2_lenThr);
+    char ap_lenThr[100]; sprintf(ap_lenThr,"%d",param.app2_lenThr);
     arg_para.push_back(ap_lenThr);
     arg_para.push_back("0"); //no resample swc
     arg.p = (void *) & arg_para;
