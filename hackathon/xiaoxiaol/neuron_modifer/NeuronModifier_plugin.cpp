@@ -67,8 +67,13 @@ bool NeuronModifer::dofunc(const QString & func_name, const V3DPluginArgList & i
                         r_scale = atof(paras.at(0));
                         x_scale = atof(paras.at(1));
                         y_scale = atof(paras.at(2));
-                        z_scale = atof(paras.at(3));
+                        z_scale = atoi(paras.at(3));
                         prune_level = atof(paras.at(4));
+                        std::cout<<"radius scale:"<< r_scale << std::endl;
+                        std::cout<<"x scale:"<< x_scale << std::endl;
+                        std::cout<<"y scale:"<< y_scale << std::endl;
+                        std::cout<<"z scale:"<< z_scale << std::endl;
+                        std::cout<<"prune level:"<< prune_level << std::endl;
 
                     }
                     else
@@ -103,7 +108,7 @@ bool NeuronModifer::dofunc(const QString & func_name, const V3DPluginArgList & i
                     // scale radius, xyz
                     for(V3DLONG i = 0; i < list.size();i++)
                     {
-                        if (std_seg_layer[i] < prune_level) // prune all branches with bigger order
+                        if (std_seg_layer[i] > prune_level) // prune all branches with bigger order
                         {
                             S.n =  nt.listNeuron.at(i).n;
                             S.x = x_scale *  nt.listNeuron.at(i).x;
