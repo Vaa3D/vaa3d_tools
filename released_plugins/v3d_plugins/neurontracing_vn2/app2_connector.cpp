@@ -249,7 +249,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         else
             p.bkg_thresh = 0;
         
-        tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
     }
 
     
