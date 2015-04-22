@@ -870,7 +870,7 @@ void nt_selfcorrect_func::initParameter()
     param.app2_2dradius = true;
     param.app2_gap = false;
     param.app2_gsdt = true;
-    param.app2_lenThr = 5;
+    param.app2_lenThr = 5.0;
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
@@ -953,12 +953,17 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
     char bgThr_cstr[1000];
     bgThr<0 ? sprintf(bgThr_cstr,"AUTO") : sprintf(bgThr_cstr,"%f",bgThr);
     arg_para.push_back(bgThr_cstr);
-    param.app2_b256 ? arg_para.push_back("1") : arg_para.push_back("0");
-    param.app2_2dradius ? arg_para.push_back("1") : arg_para.push_back("0");
-    param.app2_gsdt ? arg_para.push_back("1") : arg_para.push_back("0");
-    param.app2_gap ?  arg_para.push_back("1") : arg_para.push_back("0");
-    char ap_lenThr[100]; sprintf(ap_lenThr,"%d",param.app2_lenThr);
+    if(param.app2_b256) arg_para.push_back("1"); else arg_para.push_back("0");
+    if(param.app2_2dradius) arg_para.push_back("1"); else arg_para.push_back("0");
+    if(param.app2_gsdt) arg_para.push_back("1"); else arg_para.push_back("0");
+    if(param.app2_gap)  arg_para.push_back("1"); else arg_para.push_back("0");
+    char ap_lenThr[100]; sprintf(ap_lenThr,"%f",param.app2_lenThr);
     arg_para.push_back(ap_lenThr);
+//    arg_para.push_back("0");
+//    arg_para.push_back("1");
+//    arg_para.push_back("1");
+//    arg_para.push_back("0");
+//    arg_para.push_back("5");
     arg_para.push_back("0"); //no resample swc
     arg.p = (void *) & arg_para;
     arg.type = "random";
