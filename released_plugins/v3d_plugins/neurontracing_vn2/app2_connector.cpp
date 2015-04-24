@@ -77,6 +77,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             file_inmarkers = readMarker_file(string(qPrintable(p.inmarker_file)));
 
         LocationSimple t;
+
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
             t.x = file_inmarkers[i].x;
@@ -97,6 +98,14 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
     }
     
+
+    if(p.landmarks.size() < 2 && p.b_intensity ==1)
+    {
+       v3d_msg("You have to select at least two markers if using high intensity background option.",b_menu);
+       return false;
+    }
+
+
     int i;
     list<string>::iterator it;
     
@@ -115,13 +124,15 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     tmpstr =  qPrintable( qtstr.setNum(p.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_resample).prepend("#b_resample = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.b_intensity).prepend("#b_intensity = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc0).prepend("#xc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc1).prepend("#xc1 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.yc0).prepend("#yc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.yc1).prepend("#yc1 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.zc0).prepend("#zc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.zc1).prepend("#zc1 = ") ); infostring.push_back(tmpstr);
-    
+
+
     v3d_msg("start to preprocessing.\n", 0);
     
     QElapsedTimer timer1;
@@ -157,7 +168,27 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
     V3DLONG in_sz[4] = {p4dImageNew->getXDim(), p4dImageNew->getYDim(), p4dImageNew->getZDim(), 1};
     int datatype = p.p4dImage->getDatatype();
-    
+
+
+    int marker_thresh = INF;
+    if(p.b_intensity)
+    {
+        for(int d = 1; d < p.landmarks.size(); d++)
+        {
+            int marker_x = p.landmarks[d].x - p.xc0;
+            int marker_y = p.landmarks[d].y - p.yc0;
+            int marker_z = p.landmarks[d].z - p.zc0;
+
+            if(indata1d[marker_z*in_sz[0]*in_sz[1] + marker_y*in_sz[0] + marker_x] < marker_thresh)
+            {
+                marker_thresh = indata1d[marker_z*in_sz[0]*in_sz[1] + marker_y*in_sz[0] + marker_x];
+            }
+        }
+        p.bkg_thresh = (marker_thresh - 10 > p.bkg_thresh) ? marker_thresh - 10 : p.bkg_thresh;
+    }
+
+
+
     double dfactor_xy = 1, dfactor_z = 1;
     if(datatype != V3D_UINT8 || in_sz[0]>256 || in_sz[1]>256 || in_sz[2]>256)// && datatype != V3D_UINT16)
     {
@@ -237,6 +268,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     
     //QString outtmpfile = QString(p.p4dImage->getFileName()) + "_extract_tmp000.raw";
     //p4dImageNew->saveImage(qPrintable(outtmpfile));  v3d_msg(QString("save immediate input image to ") + outtmpfile, 0);
+
     
     if (p.bkg_thresh < 0)
     {
@@ -252,7 +284,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
     }
 
-    
     float * phi = 0;
     vector<MyMarker> inmarkers;
     for(i = 0; i < p.landmarks.size(); i++)
@@ -660,6 +691,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : is_break_accept; k++;// true
     length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : length_thresh; k++;// 1.0;
     b_resample = (paras.size() >= k+1) ? atoi(paras[k]) : b_resample; k++;// 1.0;
+    b_intensity = (paras.size() >= k+1) ? atoi(paras[k]) : b_intensity; k++;// 0.0;
 
     //cnn_type = 2; // default connection type 2
     //SR_ratio = 3.0/9.0;

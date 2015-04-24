@@ -18,6 +18,8 @@ struct PARA_APP2: public PARA_VN
     int  b_256cube;
     bool b_RadiusFrom2D; //how to estimate radius of each reconstruction node, from 2D plane (for anisotropic case) or 3D (for isotropic case)
     int b_resample;
+    int b_intensity;
+
     
     QString inimg_file, inmarker_file, outswc_file;
     
@@ -34,6 +36,7 @@ struct PARA_APP2: public PARA_VN
         b_256cube = 1; //whether or not preprocessing to downsample to a 256xYxZ cube UINT8 for tracing
         b_RadiusFrom2D = true;
         b_resample = 1;
+        b_intensity = 0;
 
         inimg_file = "";
         inmarker_file = "";
@@ -74,6 +77,8 @@ struct PARA_APP2: public PARA_VN
             b_radius2Dchecker->setChecked(b_RadiusFrom2D);
             QCheckBox * bresample_Checker = new QCheckBox();
             bresample_Checker->setChecked(b_resample);
+            QCheckBox * b_intensity_Checker = new QCheckBox();
+            b_intensity_Checker->setChecked(b_intensity);
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -89,26 +94,32 @@ struct PARA_APP2: public PARA_VN
             hbox1->addWidget(iswb_checker);
             hbox1->addWidget(new QLabel("radius from 2D?"));
             hbox1->addWidget(b_radius2Dchecker);
-            hbox1->addWidget(new QLabel("auto-resample SWC"));
-            hbox1->addWidget(bresample_Checker);
+
+            QHBoxLayout * hbox2 = new QHBoxLayout();
+            hbox2->addWidget(new QLabel("auto-resample SWC"));
+            hbox2->addWidget(bresample_Checker);
+            hbox2->addWidget(new QLabel("high intensity background"));
+            hbox2->addWidget(b_intensity_Checker);
 
             layout->addLayout(hbox1,2,0,1,6);
+            layout->addLayout(hbox2,3,0,1,6);
+
             
-            layout->addWidget(new QLabel("cnn_type"),3,0);
-            layout->addWidget(cnntype_spinbox, 3,1,1,5);
-            layout->addWidget(new QLabel("length_thresh"),4,0);
-            layout->addWidget(lenthresh_editor, 4,1,1,5);
-            layout->addWidget(new QLabel("SR_ratio"),5,0);
-            layout->addWidget(srratio_editor, 5,1,1,5);
+            layout->addWidget(new QLabel("cnn_type"),4,0);
+            layout->addWidget(cnntype_spinbox, 4,1,1,5);
+            layout->addWidget(new QLabel("length_thresh"),5,0);
+            layout->addWidget(lenthresh_editor, 5,1,1,5);
+            layout->addWidget(new QLabel("SR_ratio"),6,0);
+            layout->addWidget(srratio_editor, 6,1,1,5);
             
-            QHBoxLayout * hbox2 = new QHBoxLayout();
+            QHBoxLayout * hbox3 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
             QPushButton * cancel = new QPushButton("cancel");
-            hbox2->addWidget(cancel);
-            hbox2->addWidget(ok);
+            hbox3->addWidget(cancel);
+            hbox3->addWidget(ok);
             
-            layout->addLayout(hbox2,6,0,1,6);
+            layout->addLayout(hbox3,7,0,1,6);
             dialog->setLayout(layout);
             QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
             QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
@@ -129,6 +140,8 @@ struct PARA_APP2: public PARA_VN
             b_256cube = b256_checker->isChecked();
             b_RadiusFrom2D = b_radius2Dchecker->isChecked();
             b_resample = bresample_Checker->isChecked();
+            b_intensity = b_intensity_Checker->isChecked();
+
             
             if (dialog) {delete dialog; dialog=0;}
         }
