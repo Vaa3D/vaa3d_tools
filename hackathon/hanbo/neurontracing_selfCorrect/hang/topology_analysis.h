@@ -525,6 +525,199 @@ if(par_marker) {\
 	//tmp_swc.insert(tmp_swc.end(), target_seeds.begin(), target_seeds.end());\
 	//tmp_swc.insert(tmp_swc.end(), right_seeds.begin(), right_seeds.end());\
 
+//mask the image by inswc, fast marching from inswc[0] to inswc[end] to generate outswc
+template<class T> bool perturb_linker(const vector<MyMarker *> &inswc, T * inimg1d, vector<MyMarker *> &outswc, double radiusFactor, int sz0, int sz1, int sz2, T * in_masked_img1d = 0, int cnn_type = 2)
+{
+    if(inswc.size()<2)
+        return false;
+    T* masked_img1d = in_masked_img1d;
+    if(!masked_img1d){
+        masked_img1d = new T[sz0*sz1*sz2];
+        memcpy(masked_img1d, inimg1d, sz0*sz1*sz2*sizeof(T));
+    }
+
+    //mask the image
+    double STEP=0.4;
+    for(int nid=0; nid<inswc.size()-1; nid++){
+        MyMarker* current = inswc.at(nid);
+        MyMarker* parent = current->parent;
+        if(parent<=0){
+            continue; //continue if it has no parent
+        }
+
+        double xf,yf,zf,rf;
+        int xi,yi,zi,ri;
+        double xv=parent->x-current->x;
+        double yv=parent->y-current->y;
+        double zv=parent->z-current->z;
+        double rv=parent->radius-current->radius;
+        double len=sqrt(xv*xv+yv*yv+zv*zv);
+
+        for(double lenAccu=0; lenAccu<len; lenAccu+=STEP){
+            xf=current->x+xv*lenAccu/len;
+            yf=current->y+yv*lenAccu/len;
+            zf=current->z+zv*lenAccu/len;
+            rf=(current->radius+rv*lenAccu/len)*radiusFactor;
+            ri=rf+0.5;
+            for(int dx=-ri; dx<=ri; dx++){
+                for(int dy=-ri; dy<=ri; dy++){
+                    for(int dz=-ri; dz<=ri; dz++){
+                        if(dx*dx+dy*dy+dz*dz>rf*rf){
+                            continue;
+                        }
+                        xi=xf+dx;
+                        yi=yf+dy;
+                        zi=zf+dz;
+                        if(xi<0 || xi>=sz0)
+                            continue;
+                        if(yi<0 || zi>=sz1)
+                            continue;
+                        if(zi<0 || zi>=sz2)
+                            continue;
+                        masked_img1d[xi+yi*sz0+zi*sz0*sz1]=0;
+                    }
+                }
+            }
+        }
+    }
+    bool result=fastmarching_linker(*(inswc.front()),*(inswc.back()),masked_img1d,outswc,sz0,sz1,sz2,cnn_type);
+
+//    //for test
+//    V3DLONG sz[4]={1};
+//    sz[0]=sz0; sz[1]=sz1; sz[2]=sz2; sz[3]=1;
+//    char tmp_fname[1000];
+//    sprintf(tmp_fname,"test_63_masked.raw");
+//    saveImage(tmp_fname, (unsigned char *)masked_img1d, sz, 1);
+//    sprintf(tmp_fname,"test_63_linkage.swc");
+//    saveSWC_file(tmp_fname,outswc);
+
+    if(in_masked_img1d){
+        memcpy(masked_img1d, inimg1d, sz0*sz1*sz2*sizeof(T));
+    }else{
+        delete [] masked_img1d;
+    }
+    return result;
+}
+
+//link inseg[0] to inseg[end] by a straight line
+template<class T> bool direct_linker(const vector<MyMarker *> &inswc, vector<MyMarker *> &outswc)
+{
+    if(inswc.size()<2)
+        return false;
+    double STEP = 1;
+    MyMarker * start = *(inswc.begin());
+    MyMarker * end = *(inswc.back());
+
+    double xf,yf,zf,rf;
+    int xi,yi,zi,ri;
+    double xv=end->x-start->x;
+    double yv=end->y-start->y;
+    double zv=end->z-start->z;
+    double len=sqrt(xv*xv+yv*yv+zv*zv);
+    outswc.clear();
+    for(double dis=0; dis<len; dis+=STEP){
+        MyMarker * newmark = new MyMarker(start->x+xv*dis/len,start->y+yv*dis/len,start->z+zv*dis/len);
+        if(outswc.size()>0){
+            newmark->parent = (*outswc.back());
+        }
+        outswc.push_back(newmark);
+    }
+
+    MyMarker * newend = new MyMarker(start->x,start->y,start->z);
+    if(outswc.size()>0){
+        newend->parent = (*outswc.back());
+    }
+    outswc.push_back(newend);
+
+    return true;
+}
+
+//inswc should be a ordered segment that inswc[i]->parent=inswc[i+1]
+//intensity[i]=img(inswc(i));
+//length=sum(distance(i,i+1))
+//intensity_accu=sum((intensity[i]+intensity[i+1])/2*distance(i,i+1))
+template<class T> bool get_linker_intensScore(const vector<MyMarker *> &inswc, T * inimg1d, vector<double> &intensity, double &length, double &intensity_accu, int sz0, int sz1, int sz2)
+{
+    length=0;
+    intensity_accu=0;
+    MyMarker* cur = 0;
+    intensity.resize(inswc.size(),0);
+
+    if(inswc.size()<1) return false;
+
+    int x,y,z;
+    for(int i=0; i<inswc.size(); i++){
+        cur = inswc[i];
+        x = inswc[i]->x;
+        y = inswc[i]->y;
+        z = inswc[i]->z;
+        if(x>=0 && x<sz0 && y>=0 && y<sz1 && z>=0 && z<sz2){
+            intensity[i] = inimg1d[x+y*sz0+z*sz0*sz1];
+        }
+    }
+    if(inswc.size()<2){
+        qDebug()<<"WARNING: single node trace";
+        intensity_accu=intensity[0];
+    }else{
+        if(inswc.at(0)->parent==inswc.at(1)){
+            for(int i=0; i<inswc.size()-1; i++){
+                cur = inswc[i];
+                MyMarker* parent = cur->parent;
+                if(parent==0){ //should not happen
+                    qDebug()<<"WARNING: unexpected things happened. Check the data!";
+                    continue;
+                }
+                double dis=(cur->x-parent->x)*(cur->x-parent->x);
+                dis+=(cur->y-parent->y)*(cur->y-parent->y);
+                dis+=(cur->z-parent->z)*(cur->z-parent->z);
+                dis=sqrt(dis);
+                length+=dis;
+                intensity_accu+=dis*(intensity[i]+intensity[i+1])/2;
+            }
+        }else if(inswc.at(1)->parent==inswc.at(0)){
+            for(int i=1; i<inswc.size(); i++){
+                cur = inswc[i];
+                MyMarker* parent = cur->parent;
+                if(parent==0){ //should not happen
+                    qDebug()<<"WARNING: unexpected things happened. Check the data!";
+                    continue;
+                }
+                double dis=(cur->x-parent->x)*(cur->x-parent->x);
+                dis+=(cur->y-parent->y)*(cur->y-parent->y);
+                dis+=(cur->z-parent->z)*(cur->z-parent->z);
+                dis=sqrt(dis);
+                length+=dis;
+                intensity_accu+=dis*(intensity[i]+intensity[i-1])/2;
+            }
+        }else{
+            qDebug()<<"WARNING: linker is not sorted";
+            return false;
+        }
+    }
+    return true;
+}
+
+//inswc should be a ordered segment that inswc[i]->parent=inswc[i+1]
+//intensity[i]=img(inswc(i));
+//length=sum(distance(i,i+1))
+//intensity_accu=sum((intensity[i]+intensity[i+1])/2*distance(i,i+1))
+template<class T> vector<double> intensScore_between_linkers(const vector<MyMarker*> &orgswc, const vector<MyMarker*> &newswc, T * inimg1d, int sz0, int sz1, int sz2)
+{
+    vector<double> scores;
+    double orgLen, orgAccu, newLen, newAccu, newMean;
+    get_linker_intensScore(newswc, inimg1d, scores, newLen, newAccu, sz0, sz1, sz2);
+    newMean = newAccu/(newLen+1e-16);
+    //for test
+    cout<<"\t new swc score: "<<newswc.size()<<" : "<<newAccu<<" : "<<newLen;
+    get_linker_intensScore(orgswc, inimg1d, scores, orgLen, orgAccu, sz0, sz1, sz2);
+    //for test
+    cout<<";\torig swc score: "<<orgswc.size()<<" : "<<orgAccu<<" : "<<orgLen;
+    for(int i=0; i<scores.size(); i++){
+        scores[i]=newMean/scores[i];
+    }
+    return scores;
+}
+
 template<class T> bool topology_analysis0_old(T * inimg1d, vector<MyMarker*> & inmarkers, int sz0, int sz1, int sz2, int cnn_type = 2.0)
 {
 	vector<NeuronSegment*> neuron_segs = swc_to_neuron_segment(inmarkers);
@@ -717,6 +910,11 @@ template<class T> bool topology_analysis0(T * inimg1d, vector<MyMarker*> & inmar
 	return true;
 }
 
+// algorithm flow
+// 1. swc to neuron segment
+// 2. for each segment, find shortest path from start to end by fast marching
+// 3. calculate the overlap rate
+// 4. rescale the rate for output
 template<class T> bool topology_analysis1(T * inimg1d, vector<MyMarker*> & inmarkers, int sz0, int sz1, int sz2, int cnn_type = 2.0, int line_compare_method = 1, double line_compare_thresh = 2.0)
 {
 	vector<NeuronSegment*> neuron_segs = swc_to_neuron_segment(inmarkers);
@@ -871,7 +1069,10 @@ template<class T> bool topology_analysis2(T * inimg1d, vector<MyMarker*> & inmar
 	if(tmpimg1d){delete [] tmpimg1d; tmpimg1d = 0;}
 }
 
-//measure the hausdorff distance between original section and martching section
+// algorithm flow
+// 1. swc to neuron segment
+// 2. for each segment, find shortest path from start to end by fast marching
+// 3. calculate the hausdorff distance between pathes
 template<class T> bool topology_analysis3(T * inimg1d, vector<MyMarker*> & inmarkers, map<MyMarker*, double> & score_map, int sz0, int sz1, int sz2, int cnn_type = 2.0)
 {
     vector<NeuronSegment*> neuron_segs = swc_to_neuron_segment(inmarkers);
@@ -887,10 +1088,8 @@ template<class T> bool topology_analysis3(T * inimg1d, vector<MyMarker*> & inmar
         MyMarker * tar_marker = (seg->last()->parent == 0) ? seg->last() : seg->last()->parent;
         double score = 0;
         if(sub_marker != tar_marker){
-            float * phi = 0;
             vector<MyMarker*>  linker;
             fastmarching_linker(*sub_marker, *tar_marker, inimg1d, linker, sz0, sz1, sz2, cnn_type);
-            if(phi){delete [] phi; phi = 0;}
             vector<MyMarker*> orig_linker = seg->markers; if(seg->last()->parent) orig_linker.push_back(seg->last()->parent);
             score = distance_between_lines2(orig_linker, linker);
         }
@@ -900,11 +1099,49 @@ template<class T> bool topology_analysis3(T * inimg1d, vector<MyMarker*> & inmar
     return true;
 }
 
+
+// algorithm flow
+// 1. swc to neuron segment
+// 2. for each segment, find shortest path from start to end by fast marching after perturbation
+// 3. calculate the intensity score by comparing original segment and new segment
+template<class T> bool topology_analysis_perturb_intense(T * inimg1d, vector<MyMarker*> & inmarkers, map<MyMarker*, double> & score_map, double radius_factor, int sz0, int sz1, int sz2, int cnn_type = 2.0)
+{
+    vector<NeuronSegment*> neuron_segs = swc_to_neuron_segment(inmarkers);
+    int n = neuron_segs.size(); cout<<"segment number = "<<n<<endl;
+
+    T * tmp_img1d = new T [sz0*sz1*sz2];
+    memcpy(tmp_img1d,inimg1d,sz0*sz1*sz2*sizeof(T));
+
+    score_map.clear();
+    for(int m = 0; m < inmarkers.size(); m++) score_map[inmarkers[m]] = 0.0;
+    for(int i = 0; i < n; i++)
+    {
+        cout<<" segment "<<i<<": ";
+        vector<double> score;
+        NeuronSegment * seg = neuron_segs[i];
+        MyMarker * sub_marker = seg->first();
+        MyMarker * tar_marker = (seg->last()->parent == 0) ? seg->last() : seg->last()->parent;
+        if(sub_marker != tar_marker){
+            vector<MyMarker*> orig_linker = seg->markers; if(seg->last()->parent) orig_linker.push_back(seg->last()->parent);
+            vector<MyMarker*> new_linker;
+            perturb_linker(orig_linker, inimg1d, new_linker, radius_factor, sz0, sz1, sz2, tmp_img1d, cnn_type);
+            score = intensScore_between_linkers(orig_linker, new_linker, inimg1d, sz0, sz1, sz2);
+
+            cout<<";\tscore sample = "<<score[0]<<" : "<<score.back()<<endl;
+            for(int m = 0; m < seg->markers.size(); m++) score_map[seg->markers[m]] = score[m];
+        }else{
+            cout<<"single node segment"<<endl;
+            score_map[sub_marker] = 1;
+        }
+    }
+    return true;
+}
+
 template<class T> bool topology_analysis(int method, T * inimg1d, vector<MyMarker*> & inmarkers, int sz0, int sz1, int sz2, int cnn_type = 2.0, int line_compare_method = 1, double line_compare_thresh = 2.0)
 {
 	if(method == 0) return topology_analysis0(inimg1d, inmarkers, sz0, sz1, sz2, cnn_type, line_compare_method, line_compare_thresh);
 	if(method == 1) return topology_analysis1(inimg1d, inmarkers, sz0, sz1, sz2, cnn_type, line_compare_method, line_compare_thresh);
-	if(method == 2) return topology_analysis2(inimg1d, inmarkers, sz0, sz1, sz2, cnn_type);
+    if(method == 2) return topology_analysis2(inimg1d, inmarkers, sz0, sz1, sz2, cnn_type);
 }
 
 #undef COMPUTE_LENGTH_AND_SIGNAL

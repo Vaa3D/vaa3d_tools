@@ -41,6 +41,8 @@ typedef struct Parameters{
     bool app2_gap;
     bool app2_2dradius;
     double app2_lenThr;
+
+    int grow_neighbor;
 }ParamStruct;
 
 class nt_selfcorrect_func
@@ -48,13 +50,17 @@ class nt_selfcorrect_func
 public:
     nt_selfcorrect_func();
     void correct_tracing(QString fname_img, QString fname_swc, QString fname_output);
+    void tracing_correct(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
     void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
 
 private:
     bool loadData(QString fname_img, QString fname_swc);
     bool loadImageData(QString fname_img);
     bool saveData(QString fname_output);
-    bool tracing();
+    bool initTracing();
+    bool simpleTracing();
+    bool smartTracing_regionstart();
+    bool smartTracing_seedstart();
     bool calculateScore_topology();
     bool getTrainingSample();
     bool performTraining();
@@ -66,7 +72,7 @@ private:
     void saveParameter(QString fname_param);
     void initParameter();
     vector<MyMarker *> sortTracing(QString fname_input, QString fname_output);
-    vector<MyMarker *> app2Tracing(QString fname_output, double bgThr);
+    vector<MyMarker *> app2Tracing(QString fname_img, QString fname_output, double bgThr);
     double getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2);
     double predictWindow(V3DLONG x, V3DLONG y, V3DLONG z);
     bool getWindowWavelet(V3DLONG x, V3DLONG y, V3DLONG z, vector<float>& wave);

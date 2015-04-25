@@ -41,7 +41,7 @@ void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, 
     saveData(fname_output);
 }
 
-void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb)
+void nt_selfcorrect_func::tracing_correct(QString fname_img, QString fname_output, V3DPluginCallback2* cb)
 {
     taskID = 2;
     callback=cb;
@@ -51,13 +51,32 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     fname_inimg=fname_img;
 
     loadImageData(fname_img);
-    tracing();
+    initTracing();
     calculateScore_topology();
     getTrainingSample();
     performTraining();
     predictExisting();
     correctExisting();
     saveData(fname_output);
+}
+
+void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb)
+{
+    taskID = 3;
+    callback=cb;
+
+    fname_tmpout=fname_output+"_tmp";
+    fname_outswc=fname_output+".swc";
+    fname_inimg=fname_img;
+
+    loadImageData(fname_img);
+    simpleTracing();
+    calculateScore_topology();
+    getTrainingSample();
+    performTraining();
+    //smartTracing_regionstart();
+    smartTracing_seedstart();
+    //saveData(fname_output);
 }
 
 bool nt_selfcorrect_func::loadData(QString fname_img, QString fname_swc)
@@ -110,12 +129,18 @@ bool nt_selfcorrect_func::saveData(QString fname_output){
 
 bool nt_selfcorrect_func::calculateScore_topology()
 {
+//    if(type_img==1)
+//        topology_analysis3(p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
+//    else if(type_img==2)
+//        topology_analysis3((unsigned short *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
+//    else if(type_img==4)
+//        topology_analysis3((float *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
     if(type_img==1)
-        topology_analysis3(p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense(p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
     else if(type_img==2)
-        topology_analysis3((unsigned short *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense((unsigned short *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
     else if(type_img==4)
-        topology_analysis3((float *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense((float *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
 
     //for test
 //    double max_score=0, min_score=MAX_DOUBLE;
@@ -124,12 +149,12 @@ bool nt_selfcorrect_func::calculateScore_topology()
 //        max_score = MAX(max_score, score_map[marker]);
 //        min_score = MIN(min_score, score_map[marker]);
 //    }
-    for(V3DLONG i = 0; i<ntmarkers.size(); i++){
-        MyMarker * marker = ntmarkers[i];
-        marker->type = score_map[marker] * 10 +19;
-    }
     //for test
     if(FLAG_TEST){
+        for(V3DLONG i = 0; i<ntmarkers.size(); i++){
+            MyMarker * marker = ntmarkers[i];
+            marker->type = score_map[marker] * 20 +19;
+        }
         QString fname_tmp = fname_tmpout+"_scored.swc";
         saveSWC_file(fname_tmp.toStdString(), ntmarkers);
     }
@@ -783,7 +808,7 @@ bool nt_selfcorrect_func::correctExisting()
     //    saveImage(fname_pred, p_imgPredict, sz_img, 1);
 }
 
-bool nt_selfcorrect_func::tracing(){
+bool nt_selfcorrect_func::initTracing(){
     //perform tracing
     vector<MyMarker*> allTrace;
     for(int i=0; i<param.app2_bgThrs.size(); i++){
@@ -797,7 +822,7 @@ bool nt_selfcorrect_func::tracing(){
         }else{
             fname_app2=fname_outswc;
         }
-        vector<MyMarker*> tmp_nt=nt_selfcorrect_func::app2Tracing(fname_app2,thr);
+        vector<MyMarker*> tmp_nt=nt_selfcorrect_func::app2Tracing(fname_inimg,fname_app2,thr);
         for(int j=0; j<tmp_nt.size(); j++){
             tmp_nt[j]->x=(int)tmp_nt[j]->x;
             tmp_nt[j]->y=(int)tmp_nt[j]->y;
@@ -824,9 +849,258 @@ bool nt_selfcorrect_func::tracing(){
     return true;
 }
 
+bool nt_selfcorrect_func::simpleTracing(){
+    double thr=param.app2_bgThrs[0];
+    QString fname_app2;
+    if(FLAG_TEST){
+        if(thr<0)
+            fname_app2=fname_tmpout+"_app2_auto.swc";
+        else
+            fname_app2=fname_tmpout+"_app2_"+QString::number(thr)+".swc";
+    }else{
+        fname_app2=fname_outswc;
+    }
+    ntmarkers=nt_selfcorrect_func::app2Tracing(fname_inimg,fname_app2,thr);
+    return true;
+}
+
+bool nt_selfcorrect_func::smartTracing_regionstart(){
+    double STEP=0.4;
+
+    //init memory
+    unsigned char * p_label = new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
+    memset(p_label,0,sz_img[0]*sz_img[1]*sz_img[2]);
+
+    //start from reliable regions
+    //mask the training area defined by radius and radiusFactor
+    for(V3DLONG nid=0; nid<ntmarkers.size(); nid++){
+        MyMarker* current = ntmarkers.at(nid);
+        MyMarker* parent = current->parent;
+        if(parent<=0){
+            continue; //continue if it has not parent
+        }
+        if(score_map[current]>param.sample_scoreThr || score_map[parent]>param.sample_scoreThr){
+            continue; //continue if the tracing is not trustworthy
+        }
+        double xf,yf,zf,rf;
+        V3DLONG xi,yi,zi,ri;
+        double xv=parent->x-current->x;
+        double yv=parent->y-current->y;
+        double zv=parent->z-current->z;
+        double rv=parent->radius-current->radius;
+        double len=sqrt(xv*xv+yv*yv+zv*zv);
+
+        for(double lenAccu=0; lenAccu<len; lenAccu+=STEP){
+            xf=current->x+xv*lenAccu/len;
+            yf=current->y+yv*lenAccu/len;
+            zf=current->z+zv*lenAccu/len;
+
+            //positive sample
+            rf=(current->radius+rv*lenAccu/len)*param.sample_radiusFactor_positive;
+            ri=rf+0.5;
+            for(int dx=-ri; dx<=ri; dx++){
+                for(int dy=-ri; dy<=ri; dy++){
+                    for(int dz=-ri; dz<=ri; dz++){
+                        if(dx*dx+dy*dy+dz*dz>rf*rf){
+                            continue;
+                        }
+                        xi=xf+dx;
+                        yi=yf+dy;
+                        zi=zf+dz;
+                        if(xi<0 || xi>=sz_img[0])
+                            continue;
+                        if(yi<0 || zi>=sz_img[1])
+                            continue;
+                        if(zi<0 || zi>=sz_img[2])
+                            continue;
+                        p_label[xi+yi*sz_img[0]+zi*sz_img[0]*sz_img[1]]=VAL_FG;
+                    }
+                }
+            }
+        }
+    }
+
+    //find the region on boundary as seeds
+    //vector<vector<V3DLONG> > seeds;
+    unsigned char * seeds_mask = new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
+    memset(seeds_mask,0,sz_img[0]*sz_img[1]*sz_img[2]);
+    V3DLONG count_noneseeds=0, count_seeds=0;
+    V3DLONG x,y,z;
+    for(V3DLONG x=0; x<sz_img[0]; x++){
+        for(V3DLONG y=0; y<sz_img[1]; y++){
+            for(V3DLONG z=0; z<sz_img[2]; z++){
+                if(p_label[x+y*sz_img[0]+z*sz_img[0]*sz_img[1]]!=VAL_FG)
+                    continue;
+                bool is_seed = false;
+                for(V3DLONG xx=x-1; xx<=x+1; xx++){
+                    if(xx<0||xx>=sz_img[0]) continue;
+                    for(V3DLONG yy=y-1; yy<=y+1; yy++){
+                        if(yy<0||yy>=sz_img[1]) continue;
+                        for(V3DLONG zz=z-1; zz<=z+1; zz++){
+                            if(zz<0||zz>=sz_img[2]) continue;
+                            if(p_label[xx+yy*sz_img[0]+zz*sz_img[0]*sz_img[1]]!=VAL_FG)
+                                is_seed = true;
+                            if(is_seed) break;
+                        }
+                        if(is_seed) break;
+                    }
+                    if(is_seed) break;
+                }
+                if(is_seed){
+                    //vector<V3DLONG> tmp; tmp.push_back(x); tmp.push_back(y); tmp.push_back(z);
+                    //seeds.push_back(tmp);
+                    seeds_mask[x+y*sz_img[0]+z*sz_img[0]*sz_img[1]]=1; //seeds need to be checked
+                    count_seeds++;
+                }else{
+                    seeds_mask[x+y*sz_img[0]+z*sz_img[0]*sz_img[1]]=2; //fully growed already
+                    count_noneseeds++;
+                }
+            }
+        }
+    }
+    qDebug()<<"found "<<count_seeds<<" seeds to start / "<<count_noneseeds;
+
+    //growing by seeds
+//    for(V3DLONG sid=0; sid<seeds.size(); sid++){
+//        x=seeds[sid][0];
+//        y=seeds[sid][1];
+//        z=seeds[sid][2];
+    V3DLONG count_newseed=count_seeds;
+    while(count_newseed!=0){
+        count_newseed=0;
+        for(V3DLONG sid=0;sid<sz_img[0]*sz_img[1]*sz_img[2];sid++){
+            if(seeds_mask[sid]!=1)
+                continue;
+            ind2sub(x,y,z,sid);
+            seeds_mask[sid]=3; //seeds already checked
+            for(int dx=-param.grow_neighbor; dx<=param.grow_neighbor; dx++){
+                V3DLONG xx=x+dx; if(xx<0||xx>=sz_img[0]) continue;
+                for(int dy=-param.grow_neighbor; dy<=param.grow_neighbor; dy++){
+                    V3DLONG yy=y+dy; if(yy<0||yy>=sz_img[1]) continue;
+                    for(int dz=-param.grow_neighbor; dz<=param.grow_neighbor; dz++){
+                        V3DLONG zz=z+dz; if(zz<0||zz>=sz_img[2]) continue;
+                        V3DLONG ind=sub2ind(xx,yy,zz);
+                        if(p_label[ind]!=0){
+                            continue;
+                        }
+                        double label=predictWindow(xx,yy,zz);
+                        if(label==VAL_FG){
+                            p_label[ind]=VAL_FG;
+                            seeds_mask[ind]=1;
+                            count_newseed++;
+                            count_seeds++;
+                        }else{
+                            p_label[ind]=VAL_BG;
+                        }
+                    }
+                }
+            }
+
+            cout<<"\r"<<count_seeds<<":"<<count_newseed<<":"<<sid;
+        }
+
+        //cout<<"\r"<<count_seeds<<":"<<count_newseed;
+    }
+    delete [] seeds_mask; seeds_mask=0;
+
+    if(FLAG_TEST){
+        char fname_tmp[1000];
+        sprintf(fname_tmp,"%s_predicted.raw",fname_tmpout.toStdString().c_str());
+        saveImage(fname_tmp, p_label, sz_img, 1);
+    }
+    for(V3DLONG ind=0; ind<sz_img[0]*sz_img[1]*sz_img[2]; ind++){
+        if(p_label[ind]!=VAL_FG)
+            p_label[ind]=0;
+        else{
+            p_label[ind]=255;
+        }
+    }
+    QString fname_img = fname_tmpout+"_foreground.raw";
+    saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
+    ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+}
+
+bool nt_selfcorrect_func::smartTracing_seedstart(){
+    //init memory
+    unsigned char * p_label = new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
+    memset(p_label,0,sz_img[0]*sz_img[1]*sz_img[2]);
+
+    //start from the node with biggest radius
+    double max_r=0;
+    V3DLONG x=0, y=0, z=0;
+    for(int i=0; i<ntmarkers.size(); i++){
+        if(max_r<ntmarkers[i]->radius){
+            max_r=ntmarkers[i]->radius;
+            x=ntmarkers[i]->x;
+            y=ntmarkers[i]->y;
+            z=ntmarkers[i]->z;
+        }
+    }
+    //for test
+    qDebug()<<"smartTracing: starting from "<<x<<":"<<y<<":"<<z;
+
+    //growing from center
+    //vector<vector<V3DLONG> > seeds;
+    //vector<V3DLONG> start; start.push_back(x); start.push_back(y); start.push_back(z);
+    //seeds.push_back(start);
+    unsigned char * seeds_mask = new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
+    memset(seeds_mask,0,sz_img[0]*sz_img[1]*sz_img[2]);
+    seeds_mask[sub2ind(x,y,z)]=1;
+    V3DLONG count_seeds = 1, count_newseeds = 1;
+    while(count_newseeds != 0){
+        count_newseeds = 0;
+        for(V3DLONG sid=0; sid<sz_img[0]*sz_img[1]*sz_img[2]; sid++){
+            if(seeds_mask[sid]!=1)
+                continue;
+            ind2sub(x,y,z,sid);
+            seeds_mask[sid]=3; //seeds already checked
+            for(int dx=-param.grow_neighbor; dx<=param.grow_neighbor; dx++){
+                V3DLONG xx=x+dx; if(xx<0||xx>=sz_img[0]) continue;
+                for(int dy=-param.grow_neighbor; dy<=param.grow_neighbor; dy++){
+                    V3DLONG yy=y+dy; if(yy<0||yy>=sz_img[1]) continue;
+                    for(int dz=-param.grow_neighbor; dz<=param.grow_neighbor; dz++){
+                        V3DLONG zz=z+dz; if(zz<0||zz>=sz_img[2]) continue;
+                        V3DLONG ind=sub2ind(xx,yy,zz);
+                        if(p_label[ind]!=0){
+                            continue;
+                        }
+                        double label=predictWindow(xx,yy,zz);
+                        if(label==VAL_FG){
+                            p_label[ind]=VAL_FG;
+                            seeds_mask[ind]=1;
+                            count_newseeds++;
+                            count_seeds++;
+                        }else{
+                            p_label[ind]=VAL_BG;
+                        }
+                    }
+                }
+            }
+            cout<<"\r"<<count_seeds<<":"<<count_newseeds<<":"<<sid;
+        }
+    }
+    cout<<endl;
+
+    if(FLAG_TEST){
+        char fname_tmp[1000];
+        sprintf(fname_tmp,"%s_predicted.raw",fname_tmpout.toStdString().c_str());
+        saveImage(fname_tmp, p_label, sz_img, 1);
+    }
+    for(V3DLONG ind=0; ind<sz_img[0]*sz_img[1]*sz_img[2]; ind++){
+        if(p_label[ind]!=VAL_FG)
+            p_label[ind]=0;
+        else{
+            p_label[ind]=255;
+        }
+    }
+    QString fname_img = fname_tmpout+"_foreground.raw";
+    saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
+    ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+}
+
 void nt_selfcorrect_func::initParameter()
 {
-    param.sample_scoreThr=2;
+    param.sample_scoreThr=0.5;
     param.sample_radiusFactor_inter=3;
     param.sample_radiusFactor_positive=1;
     param.sample_radiusFactor_negative=4;
@@ -871,6 +1145,8 @@ void nt_selfcorrect_func::initParameter()
     param.app2_gap = false;
     param.app2_gsdt = true;
     param.app2_lenThr = 5.0;
+
+    param.grow_neighbor = 1;
 }
 
 void nt_selfcorrect_func::loadParameter(QString fname_param)
@@ -921,7 +1197,7 @@ vector<MyMarker *> nt_selfcorrect_func::sortTracing(QString fname_input, QString
     return readSWC_file(fname_output.toStdString());
 }
 
-vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double bgThr)
+vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_img, QString fname_output, double bgThr)
 {
     QString full_plugin_name = "Vaa3D_Neuron2";
     QString func_name = "app2";
@@ -931,8 +1207,8 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
     V3DPluginArgList output;
 
     std::vector<char*> arg_input;
-    char* fileName_cstr =  new char[fname_inimg.length() + 1];
-    strcpy(fileName_cstr, fname_inimg.toStdString().c_str());
+    char* fileName_cstr =  new char[fname_img.length() + 1];
+    strcpy(fileName_cstr, fname_img.toStdString().c_str());
     arg_input.push_back(fileName_cstr);
     arg.type = "random";
     arg.p = (void *) & arg_input;
@@ -959,11 +1235,6 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_output, double
     if(param.app2_gap)  arg_para.push_back("1"); else arg_para.push_back("0");
     char ap_lenThr[100]; sprintf(ap_lenThr,"%f",param.app2_lenThr);
     arg_para.push_back(ap_lenThr);
-//    arg_para.push_back("0");
-//    arg_para.push_back("1");
-//    arg_para.push_back("1");
-//    arg_para.push_back("0");
-//    arg_para.push_back("5");
     arg_para.push_back("0"); //no resample swc
     arg.p = (void *) & arg_para;
     arg.type = "random";
