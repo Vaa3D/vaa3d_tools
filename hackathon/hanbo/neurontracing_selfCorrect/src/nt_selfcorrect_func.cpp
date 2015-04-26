@@ -136,11 +136,11 @@ bool nt_selfcorrect_func::calculateScore_topology()
 //    else if(type_img==4)
 //        topology_analysis3((float *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
     if(type_img==1)
-        topology_analysis_perturb_intense(p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense(p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
     else if(type_img==2)
-        topology_analysis_perturb_intense((unsigned short *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense((unsigned short *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
     else if(type_img==4)
-        topology_analysis_perturb_intense((float *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2]);
+        topology_analysis_perturb_intense((float *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
 
     //for test
 //    double max_score=0, min_score=MAX_DOUBLE;
@@ -153,7 +153,8 @@ bool nt_selfcorrect_func::calculateScore_topology()
     if(FLAG_TEST){
         for(V3DLONG i = 0; i<ntmarkers.size(); i++){
             MyMarker * marker = ntmarkers[i];
-            marker->type = score_map[marker] * 20 +19;
+            double tmp = score_map[marker] * 120 +19;
+            marker->type = tmp > 255 ? 255 : tmp;
         }
         QString fname_tmp = fname_tmpout+"_scored.swc";
         saveSWC_file(fname_tmp.toStdString(), ntmarkers);

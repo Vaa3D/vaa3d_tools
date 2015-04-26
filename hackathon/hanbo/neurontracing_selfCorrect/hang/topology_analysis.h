@@ -701,10 +701,10 @@ template<class T> bool get_linker_intensScore(const vector<MyMarker *> &inswc, T
 //intensity[i]=img(inswc(i));
 //length=sum(distance(i,i+1))
 //intensity_accu=sum((intensity[i]+intensity[i+1])/2*distance(i,i+1))
-template<class T> vector<double> intensScore_between_linkers(const vector<MyMarker*> &orgswc, const vector<MyMarker*> &newswc, T * inimg1d, int sz0, int sz1, int sz2)
+template<class T> vector<double> intensScore_between_linkers(const vector<MyMarker*> &orgswc, const vector<MyMarker*> &newswc, T * inimg1d, int sz0, int sz1, int sz2, int scoreType=0)
 {
     vector<double> scores;
-    double orgLen, orgAccu, newLen, newAccu, newMean;
+    double orgLen, orgAccu, newLen, newAccu, newMean, orgMean;
     get_linker_intensScore(newswc, inimg1d, scores, newLen, newAccu, sz0, sz1, sz2);
     newMean = newAccu/(newLen+1e-16);
     //for test
@@ -712,8 +712,13 @@ template<class T> vector<double> intensScore_between_linkers(const vector<MyMark
     get_linker_intensScore(orgswc, inimg1d, scores, orgLen, orgAccu, sz0, sz1, sz2);
     //for test
     cout<<";\torig swc score: "<<orgswc.size()<<" : "<<orgAccu<<" : "<<orgLen;
+    orgMean=orgAccu/(orgLen+1e-16);
     for(int i=0; i<scores.size(); i++){
-        scores[i]=newMean/scores[i];
+        if(scoreType==1){
+            scores[i]=newMean/orgMean;
+        }else{
+            scores[i]=newMean/scores[i];
+        }
     }
     return scores;
 }
@@ -1104,7 +1109,8 @@ template<class T> bool topology_analysis3(T * inimg1d, vector<MyMarker*> & inmar
 // 1. swc to neuron segment
 // 2. for each segment, find shortest path from start to end by fast marching after perturbation
 // 3. calculate the intensity score by comparing original segment and new segment
-template<class T> bool topology_analysis_perturb_intense(T * inimg1d, vector<MyMarker*> & inmarkers, map<MyMarker*, double> & score_map, double radius_factor, int sz0, int sz1, int sz2, int cnn_type = 2.0)
+// score type: 0:scored by node; 1:scored by segment
+template<class T> bool topology_analysis_perturb_intense(T * inimg1d, vector<MyMarker*> & inmarkers, map<MyMarker*, double> & score_map, double radius_factor, int sz0, int sz1, int sz2, int scoreType = 0, int cnn_type = 2.0)
 {
     vector<NeuronSegment*> neuron_segs = swc_to_neuron_segment(inmarkers);
     int n = neuron_segs.size(); cout<<"segment number = "<<n<<endl;
@@ -1125,7 +1131,7 @@ template<class T> bool topology_analysis_perturb_intense(T * inimg1d, vector<MyM
             vector<MyMarker*> orig_linker = seg->markers; if(seg->last()->parent) orig_linker.push_back(seg->last()->parent);
             vector<MyMarker*> new_linker;
             perturb_linker(orig_linker, inimg1d, new_linker, radius_factor, sz0, sz1, sz2, tmp_img1d, cnn_type);
-            score = intensScore_between_linkers(orig_linker, new_linker, inimg1d, sz0, sz1, sz2);
+            score = intensScore_between_linkers(orig_linker, new_linker, inimg1d, sz0, sz1, sz2, scoreType);
 
             cout<<";\tscore sample = "<<score[0]<<" : "<<score.back()<<endl;
             for(int m = 0; m < seg->markers.size(); m++) score_map[seg->markers[m]] = score[m];
