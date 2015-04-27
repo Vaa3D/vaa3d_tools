@@ -74,8 +74,8 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     calculateScore_topology();
     getTrainingSample();
     performTraining();
-    //smartTracing_regionstart();
-    smartTracing_seedstart();
+    smartTracing_regionstart();
+    //smartTracing_seedstart();
     //saveData(fname_output);
 }
 
@@ -136,11 +136,11 @@ bool nt_selfcorrect_func::calculateScore_topology()
 //    else if(type_img==4)
 //        topology_analysis3((float *)p_img1D, ntmarkers, score_map, sz_img[0], sz_img[1], sz_img[2]);
     if(type_img==1)
-        topology_analysis_perturb_intense(p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
+        topology_analysis_perturb_intense(p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], param.sample_scoreType);
     else if(type_img==2)
-        topology_analysis_perturb_intense((unsigned short *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
+        topology_analysis_perturb_intense((unsigned short *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], param.sample_scoreType);
     else if(type_img==4)
-        topology_analysis_perturb_intense((float *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], 1);
+        topology_analysis_perturb_intense((float *)p_img1D, ntmarkers, score_map, param.sample_radiusFactor_inter, sz_img[0], sz_img[1], sz_img[2], param.sample_scoreType);
 
     //for test
 //    double max_score=0, min_score=MAX_DOUBLE;
@@ -1102,8 +1102,9 @@ bool nt_selfcorrect_func::smartTracing_seedstart(){
 void nt_selfcorrect_func::initParameter()
 {
     param.sample_scoreThr=0.5;
+    param.sample_scoreType=1;
     param.sample_radiusFactor_inter=3;
-    param.sample_radiusFactor_positive=1;
+    param.sample_radiusFactor_positive=0.7;
     param.sample_radiusFactor_negative=4;
     param.sample_maxNumber=10000;
 

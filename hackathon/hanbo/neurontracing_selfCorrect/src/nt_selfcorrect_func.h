@@ -12,6 +12,7 @@
 
 typedef struct Parameters{
     float sample_scoreThr;
+    float sample_scoreType;
     float sample_radiusFactor_positive;
     float sample_radiusFactor_inter;
     float sample_radiusFactor_negative;

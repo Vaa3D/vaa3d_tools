@@ -606,7 +606,7 @@ template<class T> bool direct_linker(const vector<MyMarker *> &inswc, vector<MyM
         return false;
     double STEP = 1;
     MyMarker * start = *(inswc.begin());
-    MyMarker * end = *(inswc.back());
+    MyMarker * end = inswc.back();
 
     double xf,yf,zf,rf;
     int xi,yi,zi,ri;
@@ -618,14 +618,14 @@ template<class T> bool direct_linker(const vector<MyMarker *> &inswc, vector<MyM
     for(double dis=0; dis<len; dis+=STEP){
         MyMarker * newmark = new MyMarker(start->x+xv*dis/len,start->y+yv*dis/len,start->z+zv*dis/len);
         if(outswc.size()>0){
-            newmark->parent = (*outswc.back());
+            newmark->parent = outswc.back();
         }
         outswc.push_back(newmark);
     }
 
     MyMarker * newend = new MyMarker(start->x,start->y,start->z);
     if(outswc.size()>0){
-        newend->parent = (*outswc.back());
+        newend->parent = outswc.back();
     }
     outswc.push_back(newend);
 
