@@ -1,5 +1,5 @@
 #!/bin/bash
-#THis is a shell progrem to batch build tracing methods plugins, including APP1, APP2, MOST, neuTube, snake,simpletracing, TreMap, MST, and NeuroGPSTree.
+#THis is a shell progrem to batch build tracing methods plugins, including APP1, APP2, MOST, neuTube, snake,simpletracing, TreMap, MST,NeuroGPSTree, and fastmarching_spanningtree.
 
 #APP1 and APP2 
 cd ../../../released_plugins/v3d_plugins/neurontracing_vn2/
@@ -56,6 +56,12 @@ svn up
 qmake
 make
 
+#fastmarching_spanningtree 
+cd ../../../bigneuron_ported/zhijiang_zn_bjut/fastmarching_spanningtree_vaa3d/
+make clean
+svn up
+qmake
+make
 
 #neuTube 
 cd ../../../hackathon/zhi/neuTube_zhi/

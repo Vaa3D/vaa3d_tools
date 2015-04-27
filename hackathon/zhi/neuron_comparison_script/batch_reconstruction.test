@@ -79,6 +79,8 @@ $1 -x SimpleTracing -f dfs -i $2 -o $2_Rollerball.swc
 mv  "$2_Rollerball.swc" $3
 $1 -x NeuroGPSTree -f tracing_func -i $2 -p 1 1 1 10
 mv  "$2_NeuroGPSTree.swc" $3
+$1 -x fastmarching_spanningtree -f tracing_func -i $2
+mv  "$2_fastmarching_spanningtree.swc" $3
 
 $1 -x linker_file_generator -f linker -i $3 -o linkerfile.ano -p 1
 
