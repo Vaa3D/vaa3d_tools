@@ -24,7 +24,7 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-bool doLoadAndSave(char* fname_open, char* fname_save);
+bool doASC2SWC(QString fname_open, QString fname_save);
 void printHelp();
 #endif
 

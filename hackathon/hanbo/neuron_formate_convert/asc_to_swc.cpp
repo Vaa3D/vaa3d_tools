@@ -11,25 +11,22 @@ bool lookFor(char * string, ifstream* in) {
         *in >> c;
     }
     if (memcmp(string, c, strlen(string)) == 0) {
-        cerr<<"c............... :"<<c<<"  String........: "<<string<<"\n";
         return true;
     } else
         return false;
 }
 
-asc_to_swc::asc_to_swc(char* fname_asc, char* fname_swc)
+void asc_to_swc::readASC_file(NeuronTree &nt, char* fname_asc)
 {
-    name=fname_asc;
+    fname_asc;
 
-    nt.name = fname_swc;
+    nt.name = fname_asc;
     nt.comment = "From .ASC file: ";
     nt.comment += fname_asc;
-    this->OpenNeuroL();
-
-    writeSWC_file(fname_swc, nt);
+    OpenNeuroL(nt, fname_asc);
 }
 
-void asc_to_swc::add(int id, int type, double x, double y, double z, double radius, int pid)
+void asc_to_swc::add(NeuronTree &nt, int id, int type, double x, double y, double z, double radius, int pid)
 {
     NeuronSWC tmpswc;
     tmpswc.x = x; tmpswc.y = y; tmpswc.z = z;
@@ -40,7 +37,7 @@ void asc_to_swc::add(int id, int type, double x, double y, double z, double radi
     nt.listNeuron.push_back(tmpswc);
 }
 
-int asc_to_swc::NeurolAdd(int id, int type) {
+int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
 
     int biforc[1000];
     biforc[0] = -1;
@@ -156,8 +153,7 @@ int asc_to_swc::NeurolAdd(int id, int type) {
             *in >> y;
             *in >> z;
             *in >> d;
-            //cout<<x<<' '<<y<<' '<<z<<' '<<d<<"\n";
-            add(id, type, x, y, z, d, pid);
+            add(nt, id, type, x, y, z, d, pid);
             pid = id;
         }
         //go to end line
@@ -168,11 +164,10 @@ int asc_to_swc::NeurolAdd(int id, int type) {
         }
 
     }
-    //cout<<"markctr:"<<markctr<<"\n";
     return id;
 }
 
-double * asc_to_swc::getValues(double * ret) {
+double * asc_to_swc::getValues(ifstream * in, double * ret) {
     char c = 'y';
     double xSum = 0, ySum = 0, zSum = 0, rSum = 0, xSq = 0, ySq = 0, zSq = 0,
             x, y, z, r;
@@ -198,7 +193,6 @@ double * asc_to_swc::getValues(double * ret) {
                 *in >> y;
                 *in >> z;
                 *in >> r;
-                //cout<<x<<" "<<y<<" "<<z<<" "<<r<<endl;
                 xSum += x;
                 ySum += y;
                 zSum += z;
@@ -243,8 +237,8 @@ double * asc_to_swc::getValues(double * ret) {
 
 }
 
-void asc_to_swc::OpenNeuroL() {
-    in = new ifstream(name, ios::in | ios::binary);
+void asc_to_swc::OpenNeuroL(NeuronTree &nt, char* name) {
+    ifstream * in = new ifstream(name, ios::in | ios::binary);
 
     int cellBody_cnt = 0;
     char buffer [33];
@@ -263,15 +257,11 @@ void asc_to_swc::OpenNeuroL() {
     int id = 1; int pid = -1;
     while (!in->fail()) {
         if (lookFor("(CellBody)", in)) {
-            cerr << "CellBody tag for cell body.." << endl;
-            getValues(ret);
+            getValues(in, ret);
         }
 
         if((ret[0]!=-999999999) && (ret[1]!=-999999999)){
-
-            cerr<<"adding soma.."<<":"<<id<<" 1 "<<ret[0]<<" "<<ret[1]<<" "<<ret[2]<<" "<<ret[3]<<" "<<pid<<"\n";
-
-            add(id,1,ret[0],ret[1],ret[2],ret[3],pid);
+            add(nt, id,1,ret[0],ret[1],ret[2],ret[3],pid);
             pid = id;id = id+1;
             cellBody_cnt++;
         }
@@ -286,15 +276,13 @@ void asc_to_swc::OpenNeuroL() {
 
     while (!in->fail()) {
         if (lookFor("(Closed)", in)) {
-            cerr << "Closed tag for cell body.." << endl;
-            getValues(ret);
+            getValues(in, ret);
         }
 
         //adding the centroid point of each contour to the coverted file
         //insert soma. modified the code because soma insertion is failing hence checking on the ret[] array to add soma sri 07/22/2010
         if((ret[0]!=-999999999) && (ret[1]!=-999999999)){
-            cerr<<"adding soma.."<<":"<<id<<" 1 "<<ret[0]<<" "<<ret[1]<<" "<<ret[2]<<" "<<ret[3]<<" "<<pid<<"\n";
-            add(id,1,ret[0],ret[1],ret[2],ret[3],pid);
+            add(nt, id,1,ret[0],ret[1],ret[2],ret[3],pid);
             pid = id;id = id+1;
             cellBody_cnt++;
         }
@@ -329,7 +317,7 @@ void asc_to_swc::OpenNeuroL() {
     while (in->peek() != -1) {
         dendctr++;
         lookFor("(Dendrite)", in);
-        id = NeurolAdd(id, 3);
+        id = NeurolAdd(nt, in, id, 3);
     }
 
     if (in->fail())
@@ -342,10 +330,9 @@ void asc_to_swc::OpenNeuroL() {
             break;
         }
         if (lookFor("(Axon)", in)) {
-            id = NeurolAdd(id, 2);
+            id = NeurolAdd(nt, in, id, 2);
         }
     }
-    cerr<<"axonctr:"<<axonctr<<"\n";
 
     if (in->fail())
         in->clear();
@@ -355,7 +342,7 @@ void asc_to_swc::OpenNeuroL() {
         apictr++;
 
         lookFor("(Apical)", in);
-        id = NeurolAdd(id, 4);
+        id = NeurolAdd(nt, in, id, 4);
     }
 
     in->close();

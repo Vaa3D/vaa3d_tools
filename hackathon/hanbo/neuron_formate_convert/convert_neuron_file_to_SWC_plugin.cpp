@@ -14,22 +14,48 @@ Q_EXPORT_PLUGIN2(convert_neuron_file_to_SWC, neuronConverter);
 QStringList neuronConverter::menulist() const
 {
 	return QStringList() 
-		<<tr("convert_to_swc")
+        <<tr("asc_to_swc")
 		<<tr("about");
 }
 
 QStringList neuronConverter::funclist() const
 {
 	return QStringList()
-		<<tr("convert_to_swc")
+        <<tr("asc_to_swc")
 		<<tr("help");
 }
 
 void neuronConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("convert_to_swc"))
+    if (menu_name == tr("asc_to_swc"))
 	{
-		v3d_msg("To be implemented.");
+        QString fname_asc;
+        QString fname_swc;
+
+        QSettings settings("V3D plugin","neuronTypeConverter");
+        if(settings.contains("fname_asc"))
+            fname_asc = settings.value("fname_asc").toString();
+//        if(settings.contains("fname_swc"))
+//            fname_swc = settings.value("fname_swc").toString();
+
+        fname_asc = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input neurolucida asc file "),
+                                                   fname_asc,
+                                                   QObject::tr("Neurolucida file (*.asc);;All(*)"));
+
+        if(fname_asc.isEmpty())
+            return;
+
+        if(fname_swc.isEmpty())
+            fname_swc=fname_asc+".swc";
+        fname_swc = QFileDialog::getSaveFileName(0, QObject::tr("Choose the output swc file "),
+                                                   fname_swc,
+                                                   QObject::tr("SWC file (*.swc);;All(*)"));
+        if(fname_swc.isEmpty())
+            return;
+
+        doASC2SWC(fname_asc, fname_swc);
+
+        settings.setValue("fname_asc",fname_asc);
 	}
 	else
 	{
@@ -45,7 +71,7 @@ bool neuronConverter::dofunc(const QString & func_name, const V3DPluginArgList &
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("convert_to_swc"))
+    if (func_name == tr("asc_to_swc"))
 	{
         vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
         vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
@@ -71,7 +97,7 @@ bool neuronConverter::dofunc(const QString & func_name, const V3DPluginArgList &
         char * fname_in = paras[0];
         char * fname_out = outfiles[0];
 
-        doLoadAndSave(fname_in, fname_out);
+        doASC2SWC(fname_in, fname_out);
     }
 	else if (func_name == tr("help"))
 	{
@@ -82,17 +108,18 @@ bool neuronConverter::dofunc(const QString & func_name, const V3DPluginArgList &
 	return true;
 }
 
-bool doLoadAndSave(char* fname_open, char* fname_save)
+bool doASC2SWC(QString fname_open, QString fname_save)
 {
-//    qDebug()<<"loading the file";
-//    Neuron neuronfunc(fname_open);
-//    qDebug()<<"saving the file";
-//    neuronfunc.printSWC(fname_save);
-    asc_to_swc asc2swc(fname_open, fname_save);
+    NeuronTree nt;
+    char fname_asc[1000];
+    sprintf(fname_asc,"%s",fname_open.toStdString().c_str());
+    asc_to_swc::readASC_file(nt, fname_asc);
+    writeSWC_file(fname_save, nt);
 
+    return true;
 }
 
 void printHelp()
 {
-    qDebug()<<"vaa3d -x libname -f convert_to_swc -i input_neuron_file -o output.swc";
+    qDebug()<<"vaa3d -x libname -f asc_to_swc -p input.asc -o output.swc";
 }
