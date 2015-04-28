@@ -83,6 +83,7 @@ LandmarkList mean_shift_dialog::core()
         else
         mass_center=mean_shift_obj.mean_shift_center(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        if (!LList.at(j).name.empty()) tmp.name=LList.at(j).name;
         LList_new_center.append(tmp);
 //        if(fp)
 //        fprintf(fp,"%1d %5.1f %5.1f %5.1f\n",j+1,mass_center[0],mass_center[1],mass_center[2]);
