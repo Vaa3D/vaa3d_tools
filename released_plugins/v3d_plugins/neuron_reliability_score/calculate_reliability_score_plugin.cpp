@@ -203,11 +203,11 @@ void neuronScoreDialog::initDlg()
 {
     QSettings settings("V3D plugin","neuronReliablilityScore");
 
-    if(settings.contains("fname_img"));
+    if(settings.contains("fname_img"))
         this->edit_img->setText(settings.value("fname_img").toString());
-    if(settings.contains("fname_swc"));
+    if(settings.contains("fname_swc"))
         this->edit_swc->setText(settings.value("fname_swc").toString());
-    if(settings.contains("fname_output"));
+    if(settings.contains("fname_output"))
         this->edit_output->setText(settings.value("fname_output").toString());
     if(settings.contains("scoreType"))
         this->cb_scoreType->setCurrentIndex(settings.value("scoreType").toInt());
