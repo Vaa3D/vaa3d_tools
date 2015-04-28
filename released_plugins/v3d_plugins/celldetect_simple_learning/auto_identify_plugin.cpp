@@ -847,11 +847,14 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 
     int SWCcount;
     NeuronTree mTree;
-    if (mTreeList->isEmpty()) { SWCcount = 0; }
-    else
+    if(mTreeList)
     {
-        mTree = mTreeList->first();
-        SWCcount = mTree.listNeuron.count();
+        if (mTreeList->isEmpty()) { SWCcount = 0; }
+        else
+        {
+                mTree = mTreeList->first();
+                SWCcount = mTree.listNeuron.count();
+        }
     }
 
     //input test data type
