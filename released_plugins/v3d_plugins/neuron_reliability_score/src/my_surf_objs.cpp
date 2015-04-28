@@ -15,7 +15,7 @@ using namespace std;
 vector<MyMarker> readMarker_file(string marker_file)
 {
 	vector<MyMarker> markers; markers.reserve(1000);
-	ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return markers;}
+    ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file.c_str()<<endl; return markers;}
 	set<MyMarker> marker_set;
 	int count = 0;
 	while(ifs.good())
@@ -47,7 +47,7 @@ vector<MyMarker> readMarker_file(string marker_file)
 
 bool readMarker_file(string marker_file, vector<MyMarker*> &markers)
 {
-	ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return false;}
+    ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file.c_str()<<endl; return false;}
 	set<MyMarker> marker_set; // to check the duplicated marker
 	while(ifs.good())
 	{
@@ -76,7 +76,7 @@ bool readMarker_file(string marker_file, vector<MyMarker*> &markers)
 
 bool saveMarker_file(string marker_file, vector<MyMarker> & out_markers)
 {
-	cout<<"save "<<out_markers.size()<<" markers to file "<<marker_file<<endl;
+    cout<<"save "<<out_markers.size()<<" markers to file "<<marker_file.c_str()<<endl;
 	ofstream ofs(marker_file.c_str()); 
 	
 	if(ofs.fail())
@@ -95,7 +95,7 @@ bool saveMarker_file(string marker_file, vector<MyMarker> & out_markers)
 
 bool saveMarker_file(string marker_file, vector<MyMarker*> & out_markers)
 {
-	cout<<"save "<<out_markers.size()<<" markers to file "<<marker_file<<endl;
+    cout<<"save "<<out_markers.size()<<" markers to file "<<marker_file.c_str()<<endl;
 	ofstream ofs(marker_file.c_str()); 
 	
 	if(ofs.fail())
@@ -120,7 +120,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 
 	if(ifs.fail()) 
 	{
-		cout<<"open swc file : "<< swc_file <<" error"<<endl;
+        cout<<"open swc file : "<< swc_file.c_str() <<" error"<<endl;
 		return swc;
 	}
 
@@ -164,7 +164,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 
 bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers)
 {
-	cout<<"marker num = "<<out_markers.size()<<", save swc file to "<<swc_file<<endl;
+    cout<<"marker num = "<<out_markers.size()<<", save swc file to "<<swc_file.c_str()<<endl;
 	map<MyMarker*, int> ind;	
 	ofstream ofs(swc_file.c_str()); 
 	
@@ -173,7 +173,7 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers)
 		cout<<"open swc file error"<<endl; 
 		return false;
 	}
-	ofs<<"#name "<<swc_file<<endl;
+    ofs<<"#name "<<swc_file.c_str()<<endl;
 	ofs<<"#comment "<<endl;
 	ofs<<"##n,type,x,y,z,radius,parent"<<endl;
 	for(int i = 0; i < out_markers.size(); i++) ind[out_markers[i]] = i+1;

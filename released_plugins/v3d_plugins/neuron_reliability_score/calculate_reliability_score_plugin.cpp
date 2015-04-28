@@ -29,7 +29,17 @@ void neuronScore::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 {
 	if (menu_name == tr("calculate_score"))
 	{
-		v3d_msg("To be implemented.");
+        neuronScoreDialog myDlg(callback, parent);
+        myDlg.exec();
+        if(myDlg.isaccept){
+            QString fname_img=myDlg.edit_img->text();
+            QString fname_swc=myDlg.edit_swc->text();
+            QString fname_output=myDlg.edit_output->text();
+            int type=myDlg.cb_scoreType->currentIndex();
+            float radiusFactor=myDlg.spin_radiusRate->value();
+            doCalculateScore(callback, fname_img,fname_swc,fname_output,type,radiusFactor,1);
+            v3d_msg("Done! files saved to "+fname_output+"_score.txt");
+        }
 	}
 	else
 	{
@@ -87,7 +97,7 @@ bool neuronScore::dofunc(const QString & func_name, const V3DPluginArgList & inp
 void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString fname_swc, QString fname_output, int score_type=1, float radius_factor=2, bool is_gui=0)
 {
     //load image
-    unsigned char * p_img1d;
+    unsigned char * p_img1d = 0;
     int type_img;
     V3DLONG sz_img[4];
     if(!simple_loadimage_wrapper(callback, fname_img.toStdString().c_str(), p_img1d, sz_img, type_img)){
@@ -170,3 +180,180 @@ void printHelp()
     qDebug()<<"score type (default 1): 0: node wise comparison; 1: segment wise comparison.";
     qDebug()<<"radius factor (RF) (default 2): the area around the reconstruction within distance RF*radius will be masked before searching for alternation pathways.";
 }
+
+neuronScoreDialog::neuronScoreDialog(V3DPluginCallback2 &cb, QWidget *pt)
+{
+    callback=&cb;
+    parent=pt;
+
+    isaccept=0;
+    creat();
+    initDlg();
+    checkButtons();
+}
+
+neuronScoreDialog::~neuronScoreDialog()
+{
+    QSettings settings("V3D plugin","neuronReliablilityScore");
+
+    settings.setValue("fname_img",edit_img->text());
+    settings.setValue("fname_swc",edit_swc->text());
+    settings.setValue("fname_output",edit_output->text());
+    settings.setValue("scoreType",cb_scoreType->currentIndex());
+    settings.setValue("radiusFactor",spin_radiusRate->value());
+}
+
+void neuronScoreDialog::initDlg()
+{
+    QSettings settings("V3D plugin","neuronReliablilityScore");
+
+    if(settings.contains("fname_img"));
+        this->edit_img->setText(settings.value("fname_img").toString());
+    if(settings.contains("fname_swc"));
+        this->edit_swc->setText(settings.value("fname_swc").toString());
+    if(settings.contains("fname_output"));
+        this->edit_output->setText(settings.value("fname_output").toString());
+    if(settings.contains("scoreType"))
+        this->cb_scoreType->setCurrentIndex(settings.value("scoreType").toInt());
+    if(settings.contains("radiusFactor"))
+        this->spin_radiusRate->setValue(settings.value("radiusFactor").toInt());
+}
+void neuronScoreDialog::creat()
+{
+    QGridLayout *gridLayout = new QGridLayout();
+
+    //I/O zone
+    QLabel* label_load = new QLabel(QObject::tr("Input Image:"));
+    gridLayout->addWidget(label_load,0,0,1,1);
+    edit_img = new QLineEdit();
+    edit_img->setText("");
+    gridLayout->addWidget(edit_img,0,1,1,4);
+    btn_img = new QPushButton("...");
+    gridLayout->addWidget(btn_img,0,5,1,1);
+
+    QLabel* label_swc = new QLabel(QObject::tr("Input SWC File:"));
+    gridLayout->addWidget(label_swc,1,0,1,1);
+    edit_swc = new QLineEdit();
+    edit_swc->setText("");
+    gridLayout->addWidget(edit_swc,1,1,1,4);
+    btn_swc = new QPushButton("...");
+    gridLayout->addWidget(btn_swc,1,5,1,1);
+
+    QLabel* label_output = new QLabel(QObject::tr("Output Prefix:"));
+    gridLayout->addWidget(label_output,2,0,1,1);
+    edit_output = new QLineEdit();
+    edit_output->setText("");
+    gridLayout->addWidget(edit_output,2,1,1,4);
+    btn_output = new QPushButton("...");
+    gridLayout->addWidget(btn_output,2,5,1,1);
+
+    connect(btn_img, SIGNAL(clicked()), this, SLOT(set_img()));
+    connect(btn_swc, SIGNAL(clicked()), this, SLOT(set_swc()));
+    connect(btn_output, SIGNAL(clicked()), this, SLOT(set_output()));
+
+    //parameter zone
+    QFrame *line_0 = new QFrame();
+    line_0->setFrameShape(QFrame::HLine);
+    line_0->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_0,3,0,1,6);
+    spin_radiusRate = new QDoubleSpinBox();
+    spin_radiusRate->setRange(0,10000); spin_radiusRate->setValue(2);
+    QLabel* label_a = new QLabel("scale radius:");
+    gridLayout->addWidget(label_a,4,0,1,2,Qt::AlignRight);
+    gridLayout->addWidget(spin_radiusRate,4,2,1,1);
+    cb_scoreType = new QComboBox();
+    cb_scoreType->addItem("node wise measurement");
+    cb_scoreType->addItem("segment wise measurement");
+    gridLayout->addWidget(cb_scoreType,4,3,1,3);
+    cb_scoreType->setCurrentIndex(1);
+
+    //button zone
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_1,7,0,1,6);
+    btn_quit = new QPushButton("Cancel");
+    gridLayout->addWidget(btn_quit,8,4,1,1);
+    btn_ok = new QPushButton("OK");
+    gridLayout->addWidget(btn_ok,8,5,1,1);
+
+    connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(btn_ok, SIGNAL(clicked()), this, SLOT(accept()));
+
+    setLayout(gridLayout);
+}
+
+
+void neuronScoreDialog::checkButtons()
+{
+    if(edit_img->text().isEmpty() ||
+            edit_swc->text().isEmpty() ||
+            edit_output->text().isEmpty()){
+        btn_ok->setEnabled(false);
+    }else{
+        btn_ok->setEnabled(true);
+    }
+}
+
+void neuronScoreDialog::accept()
+{
+    isaccept = 1;
+
+    QDialog::accept();
+}
+
+void neuronScoreDialog::set_img()
+{
+    QString fname_input;
+    if(this->edit_img->text().isEmpty()){
+        fname_input="";
+    }else{
+        fname_input=this->edit_img->text();
+    }
+    fname_input = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
+                                               fname_input,
+                                               QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    if(fname_input.isEmpty()){
+        return;
+    }else{
+        this->edit_img->setText(fname_input);
+    }
+
+    checkButtons();
+}
+
+void neuronScoreDialog::set_swc()
+{
+    QString fname_input;
+    if(this->edit_swc->text().isEmpty()){
+        fname_input="";
+    }else{
+        fname_input=this->edit_swc->text();
+    }
+    fname_input = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input reconstruction "),
+                                               fname_input,
+                                               QObject::tr("reconstruction (*.swc);;All(*)"));
+    if(fname_input.isEmpty()){
+        return;
+    }else{
+        this->edit_swc->setText(fname_input);
+        if(this->edit_output->text().isEmpty())
+            this->edit_output->setText(fname_input);
+    }
+
+    checkButtons();
+}
+
+void neuronScoreDialog::set_output()
+{
+    QString fname_output=edit_output->text();
+    fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Choose the output folder and prefix"),
+                                               fname_output,
+                                               "*.*");
+    if(!fname_output.isEmpty()){
+        edit_output->setText(fname_output);
+    }
+    checkButtons();
+}
+
+
