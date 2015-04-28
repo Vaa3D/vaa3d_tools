@@ -1184,7 +1184,7 @@ void myplugin_proc(unsigned char* img1d)
 //    qDeleteAll(rootMap);
 
 }
-int proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG* in_sz,QString inimg_file)
+bool proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG* in_sz,QString inimg_file)
 {
 
     sz_x = in_sz[0];
