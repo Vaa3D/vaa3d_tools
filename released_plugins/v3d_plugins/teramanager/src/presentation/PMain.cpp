@@ -2564,6 +2564,30 @@ void PMain::PRblockSpinboxChanged(int b)
             int ROIzs_hr = CVolume::scaleDCoord(ROIzS,          blocks_res, CImport::instance()->getResolutions()-1);
             int ROIze_hr = CVolume::scaleDCoord(ROIzS+ROIzDim,  blocks_res, CImport::instance()->getResolutions()-1);
 
+            // count number of annotations
+            int ROI_ano_count = 0;
+            if(CAnnotations::getInstance()->getOctree())
+                ROI_ano_count = CAnnotations::getInstance()->getOctree()->count(interval_t(ROIys_hr,ROIye_hr), interval_t(ROIxs_hr, ROIxe_hr), interval_t(ROIzs_hr,ROIze_hr));
+
+            // count number of annotations in neighborhood
+            int ROI_ano_perc_count = 0;
+            interval_t x_range_perc(ROIxs_hr, ROIxe_hr);
+            interval_t y_range_perc(ROIys_hr, ROIye_hr);
+            interval_t z_range_perc(ROIzs_hr, ROIze_hr);
+            int vmPerc = markersShowROIMarginSpinBox->value();
+            int vmX = (x_range_perc.end - x_range_perc.start)*(vmPerc/100.0f)/2;
+            int vmY = (y_range_perc.end - y_range_perc.start)*(vmPerc/100.0f)/2;
+            int vmZ = (z_range_perc.end - z_range_perc.start)*(vmPerc/100.0f)/2;
+            x_range_perc.start  = std::max(0, x_range_perc.start - vmX);
+            x_range_perc.end   += vmX;
+            y_range_perc.start  = std::max(0, y_range_perc.start - vmY);
+            y_range_perc.end   += vmY;
+            z_range_perc.start  = std::max(0, z_range_perc.start - vmZ);
+            z_range_perc.end   += vmZ;
+            if(CAnnotations::getInstance()->getOctree())
+                ROI_ano_perc_count = CAnnotations::getInstance()->getOctree()->count(y_range_perc, x_range_perc, z_range_perc);
+
+
             // compute z-mip of the selected block on the lowest resolution image
             uint8 *mip = CViewer::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true, 240);
             QImage qmip(mip, ROIxe_lr-ROIxs_lr, ROIye_lr-ROIys_lr, QImage::Format_ARGB32);
@@ -2576,8 +2600,9 @@ void PMain::PRblockSpinboxChanged(int b)
             if(qPixmapToolTip->raw())
                 delete[] qPixmapToolTip->raw();     // delete previously displayed mip
             qPixmapToolTip->setImage(qmip, mip);
-            qPixmapToolTip->setText(strprintf("X = [%d, %d]\nY = [%d,%d]\nZ = [%d, %d]",
-                                                          ROIxs_hr+1, ROIxe_hr, ROIys_hr+1, ROIye_hr, ROIzs_hr+1, ROIze_hr ).c_str());
+            qPixmapToolTip->setText(strprintf("X = [%d, %d]\nY = [%d,%d]\nZ = [%d, %d]\nano points = %d\nano points within %d%% margin = %d",
+                                                          ROIxs_hr+1, ROIxe_hr, ROIys_hr+1, ROIye_hr, ROIzs_hr+1, ROIze_hr, ROI_ano_count,
+                                              markersShowROIMarginSpinBox->value(), ROI_ano_perc_count ).c_str());
 
             // @FIXED by Alessandro on 2015-03-02. Causes crash on Mac. On the other hand, this is already done in the ::eventFilter.
             // display tooltip below spinbox

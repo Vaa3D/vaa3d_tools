@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraFly version 1.1.12
+April 28th, 2015
+--------------------------------------------------------------------------------------------
+- New: added "ano points" and "ano points within perc% margin" info in the QuickPreview.
+- Fix: fixed icon for "2-right click to define a marker" annotation tool.
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraFly version 1.1.11
 April 15th, 2015
 --------------------------------------------------------------------------------------------
