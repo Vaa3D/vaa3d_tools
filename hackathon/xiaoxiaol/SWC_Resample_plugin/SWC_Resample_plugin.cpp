@@ -73,7 +73,7 @@ resampleDialog :: resampleDialog(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QLabel *label_steplength = new QLabel(QObject::tr("Fixed Step Length (distance between neighboring nodes"));
 
     this->spinbox_steplength = new QSpinBox;
-    this->spinbox_steplength->setRange(1, INT32_MAX);
+    this->spinbox_steplength->setRange(1, 1024);
     this->spinbox_steplength->setSingleStep(1);
     this->spinbox_steplength->setValue(5);
 
