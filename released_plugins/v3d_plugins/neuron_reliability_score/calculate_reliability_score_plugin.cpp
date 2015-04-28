@@ -167,11 +167,7 @@ void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString f
     QString fname_outswc = fname_output+"_scored.swc";
     saveSWC_file(fname_outswc.toStdString(), neuronTree);
 
-    if(is_gui){
-        v3d_msg("Done!");
-    }else{
-        qDebug()<<"Done!";
-    }
+    qDebug()<<"Done!";
 }
 
 void printHelp()
