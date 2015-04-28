@@ -46,4 +46,4 @@ SOURCES      += $$SRCFOLDER/plugin_anisodiff_littlequick.cpp
 
 TARGET	= $$qtLibraryTarget(anisodiff_littlequick)
 #DESTDIR	= ../../v3d/plugins/anisodiff/anisodiff_littlequick/
-DESTDIR	= $$V3DMAINPATH/../bin/plugins/anisodiff/anisodiff_littlequick/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_filters/anisotropic_filter/anisodiff_littlequick/
