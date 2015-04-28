@@ -20,6 +20,6 @@ cd ..\..\..\
 cd qul\anisodiffusion\littlequick\
 nmake clean
 nmake -f Makefile.Release
-make
+
 
 
