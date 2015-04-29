@@ -296,7 +296,7 @@ void neuron_connector_dialog::creat()
     QLabel* label_6 = new QLabel("type of distance measurment: ");
     gridLayout->addWidget(label_6,12,0,1,4);
     gridLayout->addWidget(cb_distanceType,12,4,1,3);
-    QLabel* label_7 = new QLabel("rules for connected fragment type: ");
+    QLabel* label_7 = new QLabel("rules of connected fragment type: ");
     gridLayout->addWidget(label_7,13,0,1,4);
     gridLayout->addWidget(cb_matchType,13,4,1,3);
 
