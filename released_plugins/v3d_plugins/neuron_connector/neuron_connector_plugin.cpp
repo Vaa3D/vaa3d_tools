@@ -76,7 +76,8 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //get parameters
         double angthr=60, disthr=10, xscale=1, yscale=1, zscale=1;
-        bool b_matchtype = true, b_minusradius = true;
+        int matchtype = 1;
+        bool b_minusradius = true;
         if(input.size() >= 2){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
             if(paras.size()>0){
@@ -111,7 +112,10 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
             }
             if(paras.size()>5){
                 int tmp=atoi(paras.at(5));
-                b_matchtype=tmp;
+                if(tmp>-1 && tmp<3)
+                    matchtype=tmp;
+                else
+                    cerr<<"error: unknow match type: "<<tmp<<"; use default type: "<<matchtype;
             }
             if(paras.size()>6){
                 int tmp=atoi(paras.at(6));
@@ -119,7 +123,8 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
             }
         }
         cout<<"angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
-        if(b_matchtype) cout<<"Only branch with the same type will be matched (except type 1:soma)"<<endl;
+        if(matchtype==1) cout<<"Only branch with the same type will be matched"<<endl;
+        if(matchtype==2) cout<<"Topology constrain will be applied for connections."<<endl;
         cout<<"Distance between "; b_minusradius ? cout<<"skeleton" : cout<<"surface"; cout<<" will be calculate to match"<<endl;
         if(angthr>0.00001) cout<<"Will first search for connections between tips with angle smaller than "<< angthr << " degree within disthr. Then will search for tip to segment connections."<<endl;
         if(disthr<0){
@@ -129,7 +134,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //do connect
         QList<NeuronSWC> newNeuron;
-        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr, true, true);
+        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr, matchtype, b_minusradius);
 
         qDebug()<<"output result: "<<fname_output;
         //output result
@@ -149,11 +154,13 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 void printHelp()
 {
     cout<<"\nUsage: v3d -x neuron_connector -f connect_neuron_SWC -i <input.swc> -o <output.swc> "
-          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1> <matchtype=true> <surfacedis=true>"<<endl;
+          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1> <matchtype=1> <surfacedis=true>"<<endl;
     cout<<"angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection."<<endl;
     cout<<"distance threshold: Maximum Euclidean distance to generate new connections. Set to ALL to connect everything."<<endl;
     cout<<"scale: e.g. when zscale=2, the z coordinate will be multiplied by 2 before computing."<<endl;
-    cout<<"matchtype: when set to true, only branch with the same type will be matched (except type 1:soma)."<<endl;
+    cout<<"matchtype: \t0: no constrain;"<<endl;
+    cout<<"\t\t1: only branch with the same type will be connected."<<endl;
+    cout<<"\t\t2: only branch with the same type will be connected except soma (type 1). And only one connection between axon (2) and soma (1) can be made."<<endl;
     cout<<"surfacedis: when set to true, the radius will be deducted when computing distance."<<endl;
     cout<<"\n";
 }
@@ -183,8 +190,7 @@ neuron_connector_dialog::~neuron_connector_dialog()
     settings.setValue("yscale",this->spin_yscale->value());
     settings.setValue("zscale",this->spin_zscale->value());
     settings.setValue("distype",this->cb_distanceType->currentIndex());
-    int matchtype = this->check_typematch->isChecked() ? 1 : 0;
-    settings.setValue("matchtype",matchtype);
+    settings.setValue("matchtype",this->cb_matchType->currentIndex());
 }
 
 void neuron_connector_dialog::initDlg()
@@ -208,7 +214,7 @@ void neuron_connector_dialog::initDlg()
     if(settings.contains("distype"))
         this->cb_distanceType->setCurrentIndex(settings.value("distype").toInt());
     if(settings.contains("matchtype"))
-        this->check_typematch->setChecked(settings.value("matchtype").toInt());
+        this->cb_matchType->setCurrentIndex(settings.value("matchtype").toInt());
 }
 
 bool neuron_connector_dialog::checkbtn()
@@ -262,8 +268,11 @@ void neuron_connector_dialog::creat()
     spin_ang->setRange(0,180); spin_ang->setValue(60);
     spin_dis = new QDoubleSpinBox();
     spin_dis->setRange(-1,100000); spin_dis->setValue(10);
-    check_typematch = new QCheckBox("match branch by type");
-    check_typematch->setChecked(true);
+    cb_matchType = new QComboBox();
+    cb_matchType->addItem("no type rule");
+    cb_matchType->addItem("must be the same type");
+    cb_matchType->addItem("topology constrain");
+    cb_matchType->setCurrentIndex(2);
     cb_distanceType = new QComboBox();
     cb_distanceType->addItem("between surface (suggested)");
     cb_distanceType->addItem("between skeleton");
@@ -287,7 +296,9 @@ void neuron_connector_dialog::creat()
     QLabel* label_6 = new QLabel("type of distance measurment: ");
     gridLayout->addWidget(label_6,12,0,1,4);
     gridLayout->addWidget(cb_distanceType,12,4,1,3);
-    gridLayout->addWidget(check_typematch,13,0,1,7);
+    QLabel* label_7 = new QLabel("rules for connected fragment type: ");
+    gridLayout->addWidget(label_7,13,0,1,4);
+    gridLayout->addWidget(cb_matchType,13,4,1,3);
 
     //operation zone
     QFrame *line_2 = new QFrame();
@@ -306,9 +317,10 @@ void neuron_connector_dialog::creat()
     line_3->setFrameShape(QFrame::HLine);
     line_3->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_3,20,0,1,7);
-    QString info=">> angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection. If distance threshold is -1, there is no preference to tip-tip match.\n";
+    QString info=">> This plugin will connect fragments in SWC file to construct tree by adding new connects.\n";
+    info+=">> angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection. If distance threshold is -1, there is no preference to tip-tip match.\n";
     info+=">> scale: the coordinate will be multiplied by scale before computing.\n";
-    info+=">> match by type: when selected, only branch with the same type will be matched (except type 1:soma).\n";
+    info+=">> topology constrain for connection rule: except soma (1), only fragments with the same type will be matched. And only 1 connection between axon and soma\n";
     text_info = new QTextEdit;
     text_info->setText(info);
     text_info->setReadOnly(true);
@@ -368,7 +380,7 @@ void neuron_connector_dialog::run()
     double zscale=spin_zscale->value();
     double angThr=cos((180-spin_ang->value())/180*M_PI);
     double disThr=spin_dis->value();
-    bool matchtype=check_typematch->isChecked();
+    int matchtype=cb_matchType->currentIndex();
     int distancetype=cb_distanceType->currentIndex();
     bool surfdis=(distancetype==0);
 
@@ -402,10 +414,11 @@ void neuron_connector_dialog::addinfo(QString info)
     textcursor.insertText(info);
 }
 
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, bool b_typematch, bool b_minusradius)
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchType, bool b_minusradius)
 {
     newNeuron.clear();
     bool b_connectall = false;
+    bool b_somaaxon = false;
     if(disThr<0){
         disThr=MAX_DOUBLE;
         b_connectall=true;
@@ -440,6 +453,14 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
             connNum[pid]++;
             components.append(-1);
             pList.append(pid);
+
+            //check if there is connection between soma and axon already
+            if(!b_somaaxon){
+                if(nt->listNeuron.at(i).type==2 && nt->listNeuron.at(pid).type==1)
+                    b_somaaxon = true;
+                if(nt->listNeuron.at(i).type==1 && nt->listNeuron.at(pid).type==2)
+                    b_somaaxon = true;
+            }
         }
     }
     qDebug()<<"components searching";
@@ -510,9 +531,15 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
             V3DLONG mvid=-1, mtid=-1;
             V3DLONG id=components.indexOf(cid);
             while(id>=0){
-                if(b_typematch){
+                if(matchType==1){ //must be the same type to connect
+                    if(nt->listNeuron.at(id).type!=nt->listNeuron.at(tidx).type){
+                        id=components.indexOf(cid, id+1);
+                        continue;
+                    }
+                }
+                if(matchType==2){ //must be the same type except soma
                     if(nt->listNeuron.at(id).type!=nt->listNeuron.at(tidx).type &&
-                            nt->listNeuron.at(id).type != 1){
+                            nt->listNeuron.at(id).type!=1 && nt->listNeuron.at(tidx).type!=1){
                         id=components.indexOf(cid, id+1);
                         continue;
                     }
@@ -571,6 +598,14 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
     for(multimap<double, QVector<V3DLONG> >::iterator iter=connMap.begin(); iter!=connMap.end(); iter++){
         if(components.at(iter->second.at(0))==components.at(iter->second.at(1))) //already connected
             continue;
+        if(matchType==2){ //check soma axon connection
+            if(nt->listNeuron.at(iter->second.at(0)).type * nt->listNeuron.at(iter->second.at(1)).type == 2){ //is soma axon connection
+                if(b_somaaxon) //already has soma axon connection
+                    continue;
+                else
+                    b_somaaxon=true;
+            }
+        }
         if(connectPairs.contains(iter->second.at(0))){
             connectPairs[iter->second.at(0)].append(iter->second.at(1));
         }else{
@@ -659,7 +694,7 @@ bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
     QTextStream myfile(&file);
-    myfile<<"# generated by Vaa3D Plugin resample_swc"<<endl;
+    myfile<<"# generated by Vaa3D Plugin neuron_connector"<<endl;
     myfile<<"# id,type,x,y,z,r,pid"<<endl;
     for (V3DLONG i=0;i<lN.size();i++)
         myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
