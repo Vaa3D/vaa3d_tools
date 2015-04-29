@@ -135,6 +135,10 @@ void Paint_Dialog::createsavemenu()
     Act = new QAction(tr("Save only current section"), this);
     connect(Act, SIGNAL(triggered()), this, SLOT(saveimage()));
     savemenu->addAction(Act);
+
+    Act = new QAction(tr("Save only paint"), this);
+    connect(Act, SIGNAL(triggered()), this, SLOT(save_label()));
+    savemenu->addAction(Act);
 }
 
 void Paint_Dialog::dosavemenu()
@@ -487,7 +491,7 @@ void Paint_Dialog::zoomin()
 
     paintarea->image=q;
     paintarea->paintImage=p;
-    paintarea->setPenWidth(22);
+    paintarea->setPenWidth(newWidth);
     paintarea->openImage(q,p);
     //qDebug()<<"Zoom in is working";
 
@@ -633,7 +637,8 @@ bool Paint_Dialog::saveFile()//const QByteArray &fileFormat)
     if(!simple_saveimage_wrapper(*callback, qPrintable(fileout),image1Dc_out,sz_img,1)){
         QMessageBox::information(0, "", "File not saved");
         return false;
-    }else{
+    }
+    else{
         paintarea->modified=false;
         return true;
     }
@@ -657,6 +662,31 @@ bool Paint_Dialog::eventFilter(QObject *obj, QEvent *event)
 
         }
         return false;
+}
+bool Paint_Dialog::save_label()
+{
+    QString initialPath = QDir::currentPath() + "/untitled" + ".v3draw";
+    QFileDialog qdilog(0,tr("Save As"),initialPath,
+                QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+
+    qdilog.setAcceptMode(QFileDialog::AcceptSave);
+    QString fileout;
+
+    if(qdilog.exec()){
+        fileout=qdilog.selectedFiles().at(0);
+    }
+    else {
+        return false;
+    }
+
+    if(!simple_saveimage_wrapper(*callback, qPrintable(fileout),paint_1DC,sz_img,1)){
+        QMessageBox::information(0, "", "File not saved");
+        return false;
+    }
+    else{
+        paintarea->modified=false;
+        return true;
+    }
 }
 
 bool Paint_Dialog::saveimage()
@@ -688,7 +718,7 @@ void Paint_Dialog::penColor()
 void Paint_Dialog::penWidth()
 {
     bool ok;
-    int newWidth = QInputDialog::getInteger(this, tr("Paint"),
+    newWidth = QInputDialog::getInteger(this, tr("Paint"),
                   tr("Select pen width:"),paintarea->penWidth(),1, 50, 1, &ok);
     if (ok)
         paintarea->setPenWidth(newWidth);

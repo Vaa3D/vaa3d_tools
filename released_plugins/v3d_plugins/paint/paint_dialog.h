@@ -35,6 +35,7 @@ public slots:
     void dosavemenu();
     void doopenmenu();
     void help();
+    bool save_label();
 
 private:
     void create();
@@ -57,7 +58,7 @@ private:
     V3DLONG sz_img[4];
     int intype;
     int datasource; //loaded data:datasource=1; fetched data:datasource=2;
-
+    int newWidth;
     v3dhandle curwin;
     bool zoominflag;
     int previousz;
