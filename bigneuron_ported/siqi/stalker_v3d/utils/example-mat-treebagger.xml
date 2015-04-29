@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<opencv_storage>
+   <opencv_ml_rtrees>
+      <format>3</format>
+      <is_classifier>1</is_classifier>
+      <var_all>0</var_all>
+      <ord_var_count>0</ord_var_count>
+      <var_count>0</var_count>
+      <traning_params>
+         <use_surrogates>0</use_surrogates>
+         <max_categories>0</max_categories>
+         <regression_accuracy>0</regression_accuracy>
+         <max_depth>0</max_depth>
+         <min_sample_count>0</min_sample_count>
+         <cross_validation_folds>0</cross_validation_folds>
+         <nactive_vars>0</nactive_vars>
+      </traning_params>
+      <global_var_idx>0</global_var_idx>
+      <var_idx>0 1</var_idx>
+      <var_type>0 0 1</var_type>
+      <cat_ofs>0 0 0 0</cat_ofs>
+      <class_labels>1 2</class_labels>
+      <missing_subst>0. 0. 0.</missing_subst>
+      <oob_error>0.</oob_error>
+      <ntrees>1</ntrees>
+   </opencv_ml_rtrees>
+</opencv_storage>

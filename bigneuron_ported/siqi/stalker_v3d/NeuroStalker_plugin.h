@@ -9,6 +9,8 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
+
+
 class NeuroStalker : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT

@@ -15,6 +15,8 @@
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
 using namespace std;
+using namespace cv;
+using namespace cv::ml;
 
 struct input_PARA
 {
@@ -169,8 +171,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         c = PARA.channel;
     }
 
+
     //main neuron reconstruction code
-    
+
     // 0. Load the learning model originally in *.mat format 
 
     // 1. Auto-Seeding to initialise the neural stalkers
