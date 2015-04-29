@@ -9,8 +9,11 @@
 #include "neuron_connector_plugin.h"
 #include <iostream>
 
-#define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#ifndef MAX_DOUBLE
+#define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
+#endif
 
 using namespace std;
 
@@ -73,21 +76,26 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //get parameters
         double angthr=60, disthr=10, xscale=1, yscale=1, zscale=1;
+        bool b_matchtype = true, b_minusradius = true;
         if(input.size() >= 2){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
             if(paras.size()>0){
                 double tmp=atof(paras.at(0));
-                if(tmp>0 && tmp<180)
+                if(tmp>=0 && tmp<180)
                     angthr=tmp;
                 else
                     cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value "<<angthr<<endl;
             }
             if(paras.size()>1){
-                double tmp=atof(paras.at(1));
-                if(tmp>=0)
-                    disthr=tmp;
-                else
-                    cerr<<"error: wrong distance threshold value: "<<tmp<<"; use default value "<<disthr<<endl;
+                if(strcmp(paras.at(1),"ALL")==0){
+                    disthr=-1;
+                }else{
+                    double tmp=atof(paras.at(1));
+                    if(tmp>=0)
+                        disthr=tmp;
+                    else
+                        cerr<<"error: wrong distance threshold value: "<<tmp<<"; use default value "<<disthr<<endl;
+                }
             }
             if(paras.size()>2){
                 double tmp=atof(paras.at(2));
@@ -101,12 +109,27 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
                 double tmp=atof(paras.at(4));
                 yscale = tmp;
             }
+            if(paras.size()>5){
+                int tmp=atoi(paras.at(5));
+                b_matchtype=tmp;
+            }
+            if(paras.size()>6){
+                int tmp=atoi(paras.at(6));
+                b_minusradius = tmp;
+            }
         }
         cout<<"angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
+        if(b_matchtype) cout<<"Only branch with the same type will be matched (except type 1:soma)"<<endl;
+        cout<<"Distance between "; b_minusradius ? cout<<"skeleton" : cout<<"surface"; cout<<" will be calculate to match"<<endl;
+        if(angthr>0.00001) cout<<"Will first search for connections between tips with angle smaller than "<< angthr << " degree within disthr. Then will search for tip to segment connections."<<endl;
+        if(disthr<0){
+            cout<<"All the fragments will be connected"<<endl;
+        }
+        angthr=cos((180-angthr)/180*M_PI);
 
         //do connect
         QList<NeuronSWC> newNeuron;
-        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr);
+        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr, true, true);
 
         qDebug()<<"output result: "<<fname_output;
         //output result
@@ -126,7 +149,12 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 void printHelp()
 {
     cout<<"\nUsage: v3d -x neuron_connector -f connect_neuron_SWC -i <input.swc> -o <output.swc> "
-          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1>"<<endl;
+          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1> <matchtype=true> <surfacedis=true>"<<endl;
+    cout<<"angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection."<<endl;
+    cout<<"distance threshold: Maximum Euclidean distance to generate new connections. Set to ALL to connect everything."<<endl;
+    cout<<"scale: e.g. when zscale=2, the z coordinate will be multiplied by 2 before computing."<<endl;
+    cout<<"matchtype: when set to true, only branch with the same type will be matched (except type 1:soma)."<<endl;
+    cout<<"surfacedis: when set to true, the radius will be deducted when computing distance."<<endl;
     cout<<"\n";
 }
 
@@ -139,6 +167,59 @@ void neuron_connector_swc::doconnect(V3DPluginCallback2 &callback, QWidget *pare
 neuron_connector_dialog::neuron_connector_dialog()
 {
     creat();
+    initDlg();
+    checkbtn();
+}
+
+neuron_connector_dialog::~neuron_connector_dialog()
+{
+    QSettings settings("V3D plugin","neuronConnector");
+
+    settings.setValue("fname_swc",edit_load0->text());
+    settings.setValue("fname_output",edit_load1->text());
+    settings.setValue("disthr",this->spin_dis->value());
+    settings.setValue("angthr",this->spin_ang->value());
+    settings.setValue("xscale",this->spin_xscale->value());
+    settings.setValue("yscale",this->spin_yscale->value());
+    settings.setValue("zscale",this->spin_zscale->value());
+    settings.setValue("distype",this->cb_distanceType->currentIndex());
+    int matchtype = this->check_typematch->isChecked() ? 1 : 0;
+    settings.setValue("matchtype",matchtype);
+}
+
+void neuron_connector_dialog::initDlg()
+{
+    QSettings settings("V3D plugin","neuronConnector");
+
+    if(settings.contains("fname_swc"))
+        this->edit_load0->setText(settings.value("fname_swc").toString());
+    if(settings.contains("fname_output"))
+        this->edit_load1->setText(settings.value("fname_output").toString());
+    if(settings.contains("disthr"))
+        this->spin_dis->setValue(settings.value("disthr").toDouble());
+    if(settings.contains("angthr"))
+        this->spin_ang->setValue(settings.value("angthr").toDouble());
+    if(settings.contains("xscale"))
+        this->spin_xscale->setValue(settings.value("xscale").toDouble());
+    if(settings.contains("yscale"))
+        this->spin_yscale->setValue(settings.value("yscale").toDouble());
+    if(settings.contains("zscale"))
+        this->spin_zscale->setValue(settings.value("zscale").toDouble());
+    if(settings.contains("distype"))
+        this->cb_distanceType->setCurrentIndex(settings.value("distype").toInt());
+    if(settings.contains("matchtype"))
+        this->check_typematch->setChecked(settings.value("matchtype").toInt());
+}
+
+bool neuron_connector_dialog::checkbtn()
+{
+    if(this->edit_load0->text().isEmpty() || this->edit_load1->text().isEmpty()){
+        btn_run->setEnabled(false);
+        return false;
+    }else{
+        btn_run->setEnabled(true);
+        return true;
+    }
 }
 
 void neuron_connector_dialog::creat()
@@ -149,7 +230,7 @@ void neuron_connector_dialog::creat()
     label_load0 = new QLabel(QObject::tr("Input SWC file:"));
     gridLayout->addWidget(label_load0,0,0,1,7);
     edit_load0 = new QLineEdit();
-    edit_load0->setText(fname_input); edit_load0->setReadOnly(true);
+    edit_load0->setReadOnly(true);
     gridLayout->addWidget(edit_load0,1,0,1,6);
     btn_load0 = new QPushButton("...");
     gridLayout->addWidget(btn_load0,1,6,1,1);
@@ -157,7 +238,7 @@ void neuron_connector_dialog::creat()
     label_load1 = new QLabel(QObject::tr("Output SWC file:"));
     gridLayout->addWidget(label_load1,2,0,1,7);
     edit_load1 = new QLineEdit();
-    edit_load1->setText(fname_output); edit_load1->setReadOnly(true);
+    edit_load1->setReadOnly(false);
     gridLayout->addWidget(edit_load1,3,0,1,6);
     btn_load1 = new QPushButton("...");
     gridLayout->addWidget(btn_load1,3,6,1,1);
@@ -180,7 +261,12 @@ void neuron_connector_dialog::creat()
     spin_ang = new QDoubleSpinBox();
     spin_ang->setRange(0,180); spin_ang->setValue(60);
     spin_dis = new QDoubleSpinBox();
-    spin_dis->setRange(0,100000); spin_dis->setValue(10);
+    spin_dis->setRange(-1,100000); spin_dis->setValue(10);
+    check_typematch = new QCheckBox("match branch by type");
+    check_typematch->setChecked(true);
+    cb_distanceType = new QComboBox();
+    cb_distanceType->addItem("between surface (suggested)");
+    cb_distanceType->addItem("between skeleton");
     QLabel* label_0 = new QLabel("sacles: ");
     gridLayout->addWidget(label_0,9,0,1,1);
     QLabel* label_1 = new QLabel("X: ");
@@ -192,12 +278,16 @@ void neuron_connector_dialog::creat()
     QLabel* label_3 = new QLabel("Z: ");
     gridLayout->addWidget(label_3,9,5,1,1);
     gridLayout->addWidget(spin_zscale,9,6,1,1);
-    QLabel* label_4 = new QLabel("distance threshold: ");
+    QLabel* label_4 = new QLabel("maximum connection distance (-1=connect all): ");
     gridLayout->addWidget(label_4,10,0,1,6);
     gridLayout->addWidget(spin_dis,10,6,1,1);
     QLabel* label_5 = new QLabel("tip-tip match angular threshold: ");
     gridLayout->addWidget(label_5,11,0,1,6);
     gridLayout->addWidget(spin_ang,11,6,1,1);
+    QLabel* label_6 = new QLabel("type of distance measurment: ");
+    gridLayout->addWidget(label_6,12,0,1,4);
+    gridLayout->addWidget(cb_distanceType,12,4,1,3);
+    gridLayout->addWidget(check_typematch,13,0,1,7);
 
     //operation zone
     QFrame *line_2 = new QFrame();
@@ -211,90 +301,115 @@ void neuron_connector_dialog::creat()
     connect(btn_quit,     SIGNAL(clicked()), this, SLOT(reject()));
     gridLayout->addWidget(btn_quit,16,6,1,1);
 
+    //operation zone
+    QFrame *line_3 = new QFrame();
+    line_3->setFrameShape(QFrame::HLine);
+    line_3->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_3,20,0,1,7);
+    QString info=">> angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection. If distance threshold is -1, there is no preference to tip-tip match.\n";
+    info+=">> scale: the coordinate will be multiplied by scale before computing.\n";
+    info+=">> match by type: when selected, only branch with the same type will be matched (except type 1:soma).\n";
+    text_info = new QTextEdit;
+    text_info->setText(info);
+    text_info->setReadOnly(true);
+    gridLayout->addWidget(text_info,21,0,1,7);
+
     setLayout(gridLayout);
 }
 
 bool neuron_connector_dialog::load0()
 {
-    QString fileOpenName;
+    QString fileOpenName = this->edit_load0->text();
     fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-            "",
+            fileOpenName,
             QObject::tr("Supported file (*.swc *.eswc)"
                 ";;Neuron structure	(*.swc)"
                 ";;Extended neuron structure (*.eswc)"
                 ));
-    if(fileOpenName.isEmpty())
-        return false;
-    nt = new NeuronTree();
-    if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
-    {
-        *nt = readSWC_file(fileOpenName);
-    }
-    if(nt->listNeuron.size()<=0){
-        v3d_msg("failed to read SWC file: "+fileOpenName);
-        btn_run->setEnabled(false);
-        return false;
-    }
-    fname_input = fileOpenName;
-    edit_load0->setText(fname_input);
-
-    if(fname_input.length() * fname_output.length() != 0){
-        btn_run->setEnabled(true);
-        edit_load1->setText(fname_output);
+    if(!fileOpenName.isEmpty()){
+        edit_load0->setText(fileOpenName);
+        this->edit_load1->setText(fileOpenName+"_connected.swc");
     }
 
+    checkbtn();
     return true;
 }
 
 bool neuron_connector_dialog::load1()
 {
-    QString fileOpenName;
+    QString fileOpenName = this->edit_load1->text();
     fileOpenName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-                                                fname_input+"_connected.swc",
+                                                fileOpenName,
             QObject::tr("Supported file (*.swc *.eswc)"
                 ";;Neuron structure	(*.swc)"
                 ";;Extended neuron structure (*.eswc)"
                 ));
-    if(fileOpenName.isEmpty()){
-        btn_run->setEnabled(false);
-        return false;
+    if(!fileOpenName.isEmpty()){
+        edit_load1->setText(fileOpenName);
     }
 
-    fname_output = fileOpenName;
-    edit_load1->setText(fname_output);
-
-    if(fname_input.length() * fname_output.length() != 0){
-        btn_run->setEnabled(true);
-    }
-
+    checkbtn();
     return true;
 }
 
 void neuron_connector_dialog::run()
 {
+    if(!checkbtn()){
+        addinfo(">> please specify input and output\n");
+        return;
+    }
+
     qDebug()<<"load and initialize";
+    NeuronTree* nt;
+
     //load parameters
     double xscale=spin_xscale->value();
     double yscale=spin_yscale->value();
     double zscale=spin_zscale->value();
     double angThr=cos((180-spin_ang->value())/180*M_PI);
-    double disThr=spin_dis->value()*spin_dis->value();
+    double disThr=spin_dis->value();
+    bool matchtype=check_typematch->isChecked();
+    int distancetype=cb_distanceType->currentIndex();
+    bool surfdis=(distancetype==0);
 
-    QList<NeuronSWC> newNeuron;
-    connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr);
-
-    qDebug()<<"output result";
-    //output result
-    if(!export_list2file(newNeuron, fname_output)){
-        v3d_msg("Cannot open file " + fname_output + " for writing!");
+    //load neuron
+    nt = new NeuronTree();
+    QString fileOpenName = this->edit_load0->text();
+    if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+    {
+        *nt = readSWC_file(fileOpenName);
     }
+    if(nt->listNeuron.size()<=0){
+        addinfo(">> failed to read SWC file: "+fileOpenName + "\n");
+    }else{
+        QList<NeuronSWC> newNeuron;
+        connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr, matchtype, surfdis);
 
-    this->accept();
+        qDebug()<<"output result";
+        if(!export_list2file(newNeuron, this->edit_load1->text())){
+            addinfo(">> failed to save to: "+this->edit_load1->text() + "\n");
+        }else{
+            addinfo(">> save: "+this->edit_load1->text() + "\n");
+        }
+    }
+    //this->accept();
 }
 
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr)
+void neuron_connector_dialog::addinfo(QString info)
+{
+    QTextCursor textcursor = this->text_info->textCursor();
+    textcursor.movePosition(QTextCursor::Start);
+    textcursor.insertText(info);
+}
+
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, bool b_typematch, bool b_minusradius)
 {
     newNeuron.clear();
+    bool b_connectall = false;
+    if(disThr<0){
+        disThr=MAX_DOUBLE;
+        b_connectall=true;
+    }
     //rescale neurons
     QList<XYZ> scaledXYZ;
     for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
@@ -395,36 +510,57 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
             V3DLONG mvid=-1, mtid=-1;
             V3DLONG id=components.indexOf(cid);
             while(id>=0){
+                if(b_typematch){
+                    if(nt->listNeuron.at(id).type!=nt->listNeuron.at(tidx).type &&
+                            nt->listNeuron.at(id).type != 1){
+                        id=components.indexOf(cid, id+1);
+                        continue;
+                    }
+                }
                 double dis=NTDIS(scaledXYZ.at(tidx),scaledXYZ.at(id));
+                if(b_minusradius){
+                    dis-=nt->listNeuron.at(id).radius;
+                    dis-=nt->listNeuron.at(tidx).radius;
+                }
                 if(dis<mvdis){
                     mvdis=dis;
                     mvid=id;
                 }
-                if(dis<mtdis){
-                    if(connNum.at(id)<1){//tips
-                        V3DLONG tmpid=cand.indexOf(id);
-                        if(tmpid<0){//should not happen, just in case
-                            qDebug()<<"unexpected error: cannot locate dead end in candidate list, please check code."<<tid<<":"<<cid<<":"<<id;
-                            id=components.indexOf(cid, id+1);
-                            continue;
-                        }
-                        if(NTDOT(canddir.at(tid),canddir.at(tmpid))<angThr){
-                            mtdis=dis;
-                            mtid=id;
+                if(!b_connectall){
+                    if(dis<mtdis){
+                        if(connNum.at(id)<1){//tips
+                            V3DLONG tmpid=cand.indexOf(id);
+                            if(tmpid<0){//should not happen, just in case
+                                qDebug()<<"unexpected error: cannot locate dead end in candidate list, please check code."<<tid<<":"<<cid<<":"<<id;
+                                id=components.indexOf(cid, id+1);
+                                continue;
+                            }
+                            if(NTDOT(canddir.at(tid),canddir.at(tmpid))<angThr){
+                                mtdis=dis;
+                                mtid=id;
+                            }
                         }
                     }
                 }
                 id=components.indexOf(cid, id+1);
             }
-            if(mvid>=0){
-                QVector<V3DLONG> tmp;
-                tmp.append(tidx); tmp.append(mvid);
-                connMap.insert(pair<double, QVector<V3DLONG> >(mvdis+disThr,tmp));
-            }
-            if(mtid>=0){
-                QVector<V3DLONG> tmp;
-                tmp.append(tidx); tmp.append(mtid);
-                connMap.insert(pair<double, QVector<V3DLONG> >(mtdis,tmp));
+            if(b_connectall){
+                if(mvid>=0){
+                    QVector<V3DLONG> tmp;
+                    tmp.append(tidx); tmp.append(mvid);
+                    connMap.insert(pair<double, QVector<V3DLONG> >(mvdis,tmp));
+                }
+            }else{
+                if(mvid>=0){
+                    QVector<V3DLONG> tmp;
+                    tmp.append(tidx); tmp.append(mvid);
+                    connMap.insert(pair<double, QVector<V3DLONG> >(mvdis+disThr,tmp));
+                }
+                if(mtid>=0){
+                    QVector<V3DLONG> tmp;
+                    tmp.append(tidx); tmp.append(mtid);
+                    connMap.insert(pair<double, QVector<V3DLONG> >(mtdis,tmp));
+                }
             }
         }
     }

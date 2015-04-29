@@ -16,16 +16,17 @@ class neuron_connector_dialog : public QDialog
 
 public:
     neuron_connector_dialog();
+    ~neuron_connector_dialog();
+private:
     void creat();
+    void initDlg();
+    bool checkbtn();
+    void addinfo(QString info);
 
 public slots:
     bool load0();
     bool load1();
     void run();
-
-private:
-    QString fname_input, fname_output;
-    NeuronTree* nt;
 
 public:
     QGridLayout *gridLayout;
@@ -34,6 +35,9 @@ public:
     QLineEdit *edit_load0, *edit_load1;
     QDoubleSpinBox *spin_zscale, *spin_xscale, *spin_yscale, *spin_ang, *spin_dis;
     QPushButton *btn_quit, *btn_run;
+    QCheckBox *check_typematch;
+    QComboBox *cb_distanceType;
+    QTextEdit* text_info;
 };
 
 
@@ -56,7 +60,7 @@ public:
 };
 
 void printHelp();
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr);
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, bool typematch, bool minusradius);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif
