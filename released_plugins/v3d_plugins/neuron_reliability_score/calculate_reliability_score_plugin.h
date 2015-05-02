@@ -54,7 +54,7 @@ public:
     QDoubleSpinBox *spin_radiusRate;
     QComboBox *cb_scoreType;
     QPushButton *btn_quit, *btn_ok;
-
+    QTextEdit *edit_info;
 };
 
 void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString fname_swc, QString fname_output, int score_type, float radius_factor, bool is_gui);

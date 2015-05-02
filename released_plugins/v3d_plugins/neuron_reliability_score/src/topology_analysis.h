@@ -30,6 +30,9 @@ struct NeuronSegment
 		if(child) childs.push_back(child);
 		return true;
 	}
+
+    double length;
+    double diameter;
 };
 
 // make sure that there is no redundent marker in inswc
@@ -77,6 +80,73 @@ vector<NeuronSegment*> swc_to_neuron_segment(vector<MyMarker*> & inswc)
 		}
 	}
 	return neuron_segs;
+}
+
+//Hanbo Chen, 4/30/2015
+//the segments are straight lines
+//there could be overlap between segments, the times each MyMarker was used is stored in MyMarker.type
+//the topology relationship between segments were not saved
+vector<NeuronSegment*> swc_to_straight_segment(vector<MyMarker*> & inswc, double straightRatio)
+{
+    vector<NeuronSegment*> neuron_segs;
+
+    map<MyMarker*, int> swc_map; for(int i = 0; i < inswc.size(); i++) swc_map[inswc[i]] = i;
+    vector<int> swc_count(inswc.size(),0);
+    vector<int> child_num(inswc.size(),0);
+    for(int i = 0; i < inswc.size(); i++) if(inswc[i]->parent) child_num[swc_map[inswc[i]->parent]]++;
+    vector<MyMarker*> swc_seeds;
+    for(int i = 0; i < inswc.size(); i++) if(child_num[i]<1) swc_seeds.push_back(inswc[i]);
+    for(int i = 0; i < swc_seeds.size(); i++){
+        MyMarker *cur=swc_seeds[i];
+        MyMarker *par=swc_seeds[i]->parent;
+        if(swc_count[swc_map[cur]]>0)//already visited
+            continue;
+        swc_count[swc_map[cur]]++;
+        if(!par)//no parent
+            continue;
+        MyMarker min, max;
+        min.x= MIN(cur->x,par->x);
+        min.y = MIN(cur->y,par->y);
+        min.z = MIN(cur->z,par->z);
+        max.x = MAX(cur->x,par->x);
+        max.y = MAX(cur->y,par->y);
+        max.z = MAX(cur->z,par->z);
+        double length = NTDIS((*cur),(*par));
+        double diameter = NTDIS(min,max);
+        NeuronSegment * cur_seg = new NeuronSegment;
+        neuron_segs.push_back(cur_seg);
+        cur_seg->markers.push_back(cur);
+        while(diameter/length >= straightRatio){
+            cur=par;
+            cur_seg->markers.push_back(cur);
+            cur_seg->length=length;
+            cur_seg->diameter=diameter;
+            swc_count[swc_map[cur]]++;
+            par=cur->parent;
+            if(!par)
+                break;
+            min.x = MIN(min.x,par->x);
+            min.y = MIN(min.y,par->y);
+            min.z = MIN(min.z,par->z);
+            max.x = MAX(max.x,par->x);
+            max.y = MAX(max.y,par->y);
+            max.z = MAX(max.z,par->z);
+            length += NTDIS((*cur),(*par));
+            diameter = NTDIS(min,max);
+        }
+        if(par && swc_count[swc_map[par]]==0)
+            swc_seeds.push_back(par);
+
+        //for test
+        qDebug()<<i<<":"<<cur_seg->markers.size()<<":"<<length<<":"<<diameter<<":"<<straightRatio;
+    }
+
+
+    for(int i = 0; i < inswc.size(); i++){
+        inswc[i]->type = swc_count[i];
+    }
+
+    return neuron_segs;
 }
 
 vector<NeuronSegment*> leaf_neuron_segments(vector<NeuronSegment*> & neuron_segs)
@@ -1140,6 +1210,45 @@ template<class T> bool topology_analysis_perturb_intense(T * inimg1d, vector<MyM
             score_map[sub_marker] = 1;
         }
     }
+    return true;
+}
+
+// algorithm flow
+// 1. swc to straight neuron segment
+// 2. for each segment, find shortest path from start to end by fast marching after perturbation
+// 3. calculate the intensity score by comparing original segment and new segment
+// score type: 0:scored by node; 1:scored by segment
+template<class T> bool path_analysis_perturb_intense(T * inimg1d, vector<MyMarker*> & inmarkers, map<MyMarker*, double> & score_map, double radius_factor, int sz0, int sz1, int sz2, double straight_ratio = 0.7, int scoreType = 0, int cnn_type = 2.0)
+{
+    vector<NeuronSegment*> neuron_segs = swc_to_straight_segment(inmarkers, straight_ratio);
+    int n = neuron_segs.size(); cout<<"segment number = "<<n<<endl;
+
+    T * tmp_img1d = new T [sz0*sz1*sz2];
+    memcpy(tmp_img1d,inimg1d,sz0*sz1*sz2*sizeof(T));
+
+    score_map.clear();
+    for(int m = 0; m < inmarkers.size(); m++) score_map[inmarkers[m]] = 0.0;
+    for(int i = 0; i < n; i++)
+    {
+        cout<<" segment "<<i<<"; ratio: "<<neuron_segs[i]->length<<":"<<neuron_segs[i]->diameter;
+        vector<double> score;
+        NeuronSegment * seg = neuron_segs[i];
+        MyMarker * sub_marker = seg->first();
+        MyMarker * tar_marker = (seg->last()->parent == 0) ? seg->last() : seg->last()->parent;
+        if(sub_marker != tar_marker){
+            vector<MyMarker*> orig_linker = seg->markers; if(seg->last()->parent) orig_linker.push_back(seg->last()->parent);
+            vector<MyMarker*> new_linker;
+            perturb_linker(orig_linker, inimg1d, new_linker, radius_factor, sz0, sz1, sz2, tmp_img1d, cnn_type);
+            score = intensScore_between_linkers(orig_linker, new_linker, inimg1d, sz0, sz1, sz2, scoreType);
+
+            cout<<";\tscore sample = "<<score[0]<<" : "<<score.back()<<endl;
+            for(int m = 0; m < seg->markers.size(); m++) score_map[seg->markers[m]] += score[m]/seg->markers[m]->type;
+        }else{
+            cout<<"single node segment"<<endl;
+            score_map[sub_marker] = 1;
+        }
+    }
+
     return true;
 }
 

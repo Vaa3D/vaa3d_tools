@@ -42,6 +42,10 @@
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
+#ifndef NTDIS
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+#endif
+
 #ifndef MAXVALUE
 #define MAXVALUE(T) (T)((1ll<<(sizeof(T)*8 -1)) - 1)
 #endif

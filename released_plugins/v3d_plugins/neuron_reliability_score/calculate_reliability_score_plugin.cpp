@@ -129,20 +129,36 @@ void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString f
 
     //calcluate
     map<MyMarker*, double> score_map;
-    if(type_img==1)
-        topology_analysis_perturb_intense(p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
-    else if(type_img==2)
-        topology_analysis_perturb_intense((unsigned short *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
-    else if(type_img==4)
-        topology_analysis_perturb_intense((float *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
-    else{
-        if(is_gui){
-            v3d_msg("ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32.");
-        }else{
-            qDebug()<<"ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32";
+    if(score_type <2) //topology segment
+        if(type_img==1)
+            topology_analysis_perturb_intense(p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
+        else if(type_img==2)
+            topology_analysis_perturb_intense((unsigned short *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
+        else if(type_img==4)
+            topology_analysis_perturb_intense((float *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], score_type);
+        else{
+            if(is_gui){
+                v3d_msg("ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32.");
+            }else{
+                qDebug()<<"ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32";
+            }
+            exit(1);
         }
-        exit(1);
-    }
+    else
+        if(type_img==1)
+            path_analysis_perturb_intense(p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], 0.9, score_type-2);
+        else if(type_img==2)
+            path_analysis_perturb_intense((unsigned short *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], 0.9, score_type-2);
+        else if(type_img==4)
+            path_analysis_perturb_intense((float *)p_img1d, neuronTree, score_map, radius_factor, sz_img[0], sz_img[1], sz_img[2], 0.9, score_type-2);
+        else{
+            if(is_gui){
+                v3d_msg("ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32.");
+            }else{
+                qDebug()<<"ERROR: image formate not supported. Only support: UINT8, UINT16, and FLOAT32";
+            }
+            exit(1);
+        }
 
     //output
     QString fname_outscore = fname_output + "_score.txt";
@@ -173,7 +189,8 @@ void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString f
 void printHelp()
 {
     qDebug()<<"vaa3d -x libname -f calculate_score -i <input_image> <input_swc> -o <output> -p [<score type> [<radius_factor>]]";
-    qDebug()<<"score type (default 1): 0: node wise comparison; 1: segment wise comparison.";
+    qDebug()<<"score type (default 1): 0/1 segment between brach node. 0: node wise comparison; 1: segment wise comparison.";
+    qDebug()<<"\t\t2/3 straight line segment. 2: node wise comparison; 3: segment wise comparison.";
     qDebug()<<"radius factor (RF) (default 2): the area around the reconstruction within distance RF*radius will be masked before searching for alternation pathways.";
 }
 
@@ -258,8 +275,10 @@ void neuronScoreDialog::creat()
     gridLayout->addWidget(label_a,4,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_radiusRate,4,2,1,1);
     cb_scoreType = new QComboBox();
-    cb_scoreType->addItem("node wise measurement");
-    cb_scoreType->addItem("segment wise measurement");
+    cb_scoreType->addItem("topology segment, node wise");
+    cb_scoreType->addItem("topology segment, segment wise");
+    cb_scoreType->addItem("straight line, node wise");
+    cb_scoreType->addItem("straight line, segment wise");
     gridLayout->addWidget(cb_scoreType,4,3,1,3);
     cb_scoreType->setCurrentIndex(1);
 
@@ -275,6 +294,20 @@ void neuronScoreDialog::creat()
 
     connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
     connect(btn_ok, SIGNAL(clicked()), this, SLOT(accept()));
+
+    //info zone
+    QFrame *line_2 = new QFrame();
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_2,10,0,1,6);
+    edit_info = new QTextEdit();
+    edit_info->insertPlainText("The scores are calculated as follows:\n");
+    edit_info->insertPlainText("1) Find the segments in reconstructions;\n");
+    edit_info->insertPlainText("2) For each segment, mask the image by radius*radius_factor and redo the tracing using fast martching;\n");
+    edit_info->insertPlainText("3) The average intensity along original segment (x) and the new segment (y) will be calculated;\n");
+    edit_info->insertPlainText("4) For segment wise comparison, the score will be y/x. For node wise comparison, the score will be y/node_intensity.\n");
+
+    gridLayout->addWidget(edit_info,11,0,1,6);
 
     setLayout(gridLayout);
 }
