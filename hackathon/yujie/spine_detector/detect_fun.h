@@ -48,16 +48,16 @@ public:
     double skel_node_radius(V3DLONG ind);
     vector<MyMarker> bubbles();
     vector<float> ray_shoot_feature(NeuronSWC p, NeuronSWC p0, LandmarkList &tmplist);
-    vector<long long> distance_to_skel(vector<MyMarker> bubbles, NeuronTree &neuron, vector<int> &neuron_idx, LandmarkList &far_points);
+    vector<V3DLONG> distance_to_skel(vector<MyMarker> bubbles, NeuronTree &neuron, vector<int> &neuron_idx, LandmarkList &far_points);
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
                                  V3DLONG seed_ind,float r_start,float stop_p);
     V3DLONG extract_nonoverlap(unsigned char *skel_mask,long *label,
                            vector<V3DLONG>& x_all,vector<V3DLONG>& y_all,vector<V3DLONG>& z_all,
                                            V3DLONG seed_ind,float stop_p,int marker);
     V3DLONG extract_nonsphere(unsigned char *all);
-    vector<long long> bubbles_no_gsdt(unsigned char *seperate);
+    vector<V3DLONG> bubbles_no_gsdt(unsigned char *seperate);
     float calc_spread_width(vector<V3DLONG> array);
-    vector<long long> spine_grow(float *bound_box, unsigned short *label,
+    vector<V3DLONG> spine_grow(float *bound_box, unsigned short *label,
          V3DLONG ind, int max_spine_width, int spine_id, int max_pixel, int min_pixel);
 
 private:

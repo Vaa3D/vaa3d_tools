@@ -333,7 +333,8 @@ void spine_detector_dialog::cell_segment()
 
     vector<int> neuron_idx;
     LandmarkList far_points;
-    vector<V3DLONG> far_points_ind=detect_obj.distance_to_skel(bubbles,neuron,neuron_idx,far_points);
+    vector<V3DLONG> far_points_ind;
+    far_points_ind=detect_obj.distance_to_skel(bubbles,neuron,neuron_idx,far_points);
     qDebug()<<"far points size:"<<far_points.size();
 //    unsigned char *image1Dc_out=new unsigned char[z_offset*sz_img[2]*3];
 //    memset(image1Dc_out,0,z_offset*sz_img[2]*3*sizeof(unsigned char));
