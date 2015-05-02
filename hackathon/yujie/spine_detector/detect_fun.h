@@ -7,6 +7,7 @@
 #include "spine_extr_template.h"
 #include "basic_surf_objs.h"
 #include "fastmarching_dt.h"
+#include "v3d_basicdatatype.h"
 
 #define pi 3.1416
 #ifndef ABS
@@ -31,8 +32,8 @@ vector<vector<float> > get_dir_vec(NeuronSWC p, NeuronSWC p0);
 vector<float> normalize_vec(vector<float> m);
 void writer_swc(vector<vector<float> > new_dir_vec, QString filename, NeuronSWC p0);
 void GetColorRGB(int* rgb, int idx);
-vector<long long> get_mass_center(vector<long long> x_all, vector<long long> y_all,
-                                             vector<long long> z_all);
+vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
+                                             vector<V3DLONG> z_all);
 
 class detect_fun
 {
