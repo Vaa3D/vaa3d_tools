@@ -9,6 +9,9 @@
 % http://hdl.handle.net/1926/1292
 % and the Fiji/ImageJ plugin by Ignacio Arganda-Carreras
 % http://fiji.sc/wiki/index.php/Skeletonize3D
+%[2] Kerschnitzki, Kollmannsberger et al.,
+%"Architecture of the osteocyte network correlates with bone material quality."
+%Journal of Bone and Mineral Research, 28(8):1837-1845, 2013.
 
 function skel = Skeleton3D(img,spare)
 
