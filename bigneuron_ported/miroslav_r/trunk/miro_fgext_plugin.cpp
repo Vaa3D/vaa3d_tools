@@ -79,8 +79,10 @@ bool FgExt::dofunc(const QString & func_name, const V3DPluginArgList & input, V3
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
 
-		printf("**** Usage of miro_fgext tracing **** \n");
-		printf("vaa3d -x miro_fgext -f fgext_func -i <inimg_file> -p <channel> <other parameters>\n");
+
+
+        printf("**** Usage of miro_fgext plugin **** \n");
+        printf("vaa3d -x miro_fgext -f fgext_func -i <inimg_file> -p <channel> <other parameters>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'miro_fgext_plugin.h'
 **
-** Created: Mon May 4 18:49:34 2015
+** Created: Mon May 4 19:19:54 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!
