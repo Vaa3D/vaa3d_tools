@@ -1,0 +1,3 @@
+LIBRARY findprocess.mexw64
+EXPORTS mexFunction        
+

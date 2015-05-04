@@ -1,0 +1,36 @@
+function obj = Binarize(obj)
+if (obj.state.display.ch1==1) && isfield(obj.data,'filteredArray') && size(obj.data.filteredArray,2)>0
+    if obj.state.display.keepingtermediates
+      obj.data.binaryArray=obj.data.filteredArray>obj.state.display.lowpixelch1;
+    else
+      obj.data.filteredArray=obj.data.filteredArray>obj.state.display.lowpixelch1;
+      obj.data.binaryArray=obj.data.filteredArray;  
+
+
+    total=size(obj.data.imageArray,3);
+    counter=0;
+    obj.data.medianArray=[];
+    obj.data.binaryArry=[];
+%     if ~isfield(obj.data,'imagemedian') || (obj.data.imagemedian<=0)
+%         image=double(obj.data.imageArray(:));
+%         obj.data.imagemedian=median(image);
+%         obj.data.imagestd=std([image(image<obj.data.imagemedian)]);%2*obj.data.imagemedian-image(image<obj.data.imagemedian)]);    
+%     end
+%     image=double(obj.data.imageArray(:));
+%     obj.data.imagemedian=median(image);
+%        
+     threshold=;
+%    threshold=obj.data.imagemedian*1.5;%+obj.parameters.threedma.binarizethreshold);%+obj.data.s*obj.parameters.threedma.binarizethreshold;
+  obj.data.binaryArray = obj.data.filteredArray>threshold;
+  
+  % get rid small elements
+  
+  obj.data.binaryArray=bwareaopen(obj.data.binaryArray,100000);
+  
+  %se = strel('disk',7);
+  %obj.data.binaryArray = imopen(imclose(obj.data.binaryArray,se),se);
+  
+  
+    obj.data.binaryArray=uint8(obj.data.binaryArray);
+    close(w);
+end;

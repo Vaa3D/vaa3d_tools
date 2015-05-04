@@ -1,0 +1,1 @@
+This function is a replication of spineanalysisimageGUI because of the name inconsistencies

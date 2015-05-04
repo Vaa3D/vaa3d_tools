@@ -1,0 +1,51 @@
+Application notes:
+Matlab version:
+Please use Matlab 2014a 32bit version
+
+
+How to trace a series of images
+
+in matlab:
+
+1 Type SeriesAnalysisAxon
+
+2 go to menu item file->open images
+
+Pick a list of image files or spi files
+
+
+2.1 If they are tif files, go to analyze analyze
+
+2.2 close the application
+
+2.3 go to 1 again and this time select the spi files that are generated.
+
+
+3 click on the first file in the list on the main panel, press next pair
+
+4 Analyze and edit the two images, the most important is to place markers on each axon for alignment.
+
+5 Enter an axon number in each panel and press Align on the main panel to see the alignment is satisfactory. Do it for axons present in each image.
+
+6 click on second file in the list on the main panel, press next pair
+
+7 iterate step 4-6 until done
+
+8 click on the last file in the list, press next pair
+
+9 press seriestrace bouton
+
+10 Select a database file to write to, to create a new database file, click cancel
+You can save the analysis results of related experiments to the same database file
+
+11 Enter the distance tolerance for boutons to be considered the same.
+
+12 Are you happy with the alignment. If you press no, you can reenter the distance tolerance and exclude dendrite ranges
+
+13 If you said no, do you want to exclude dendrite range from the analysis, this can happen if there is a badly imaged area
+
+14 When you are happy with the alignment, Do you want to save to database? Normally yes
+
+15 your analysis resutls are now saved,
+   Across day intensity data is also left on the clipboard which you can copy to the excel datasheet.
+ you can also copy the summary figures to excel datasheet.

@@ -1,0 +1,122 @@
+function [voxel, voxelmax, maxint, dx, dy] = shiftDendriteMax(voxel,obj)
+
+% fix the neurite so it coincides with the maximal intensity in the perpendicular plane
+
+maxx=size(obj.data.imageArray,2);
+maxy=size(obj.data.imageArray,1);
+maxz=size(obj.data.imageArray,3);
+
+arraysize=size(voxel,2);
+voxel(1,:)=smooth(voxel(1,:),7)';
+voxel(2,:)=smooth(voxel(2,:),7)';
+voxel(3,:)=smooth(voxel(3,:),7)';
+
+% fix the neurite so it coincides with the maximal intensity in the perpendicular plane
+
+%calculate the instantaneous slope in X-Y plane use neighborhood of 5 pixels to each side
+sizeofaxon=size(voxel,2);
+
+%calculate the normal direction of the axon based on 3 pixels on
+%each side
+
+neighborhood=3;
+if (sizeofaxon>neighborhood)
+    dy=([voxel(1,1)*ones(1,neighborhood) voxel(1,1:sizeofaxon-neighborhood)]-[voxel(1,neighborhood+1:sizeofaxon) voxel(1,sizeofaxon)*ones(1,neighborhood)]);
+    dx=([voxel(2,1)*ones(1,neighborhood) voxel(2,1:sizeofaxon-neighborhood)]-[voxel(2,neighborhood+1:sizeofaxon) voxel(2,sizeofaxon)*ones(1,neighborhood)]);
+else
+    dx=ones(1,sizeofaxon)*(voxel(1,1:sizeofaxon)-voxel(1,1));
+    dy=ones(1,sizeofaxon)*(voxel(2,1:sizeofaxon)-voxel(2,1));
+end
+dr=sqrt(dx.*dx+dy.*dy);
+%change length of 0 to 1 to avoid division by zero
+dr(find(dr==0))=1;
+%normalize to unit vector length
+dx=dx./dr;
+dy=dy./dr;
+
+plane=[];
+line=[];
+neighborhood=10;
+height=5;
+inds=[];
+zs=[];
+for j=-height:height   %three focal section up and three plane down
+    plane=[];
+    for k=1:neighborhood*2-1  %crosssection; neighborhood pixels away on each side
+        crossdx=-(k-neighborhood).*dy;
+        crossdy=(k-neighborhood).*dx;
+        x=round(min(max(voxel(2,:)-1+crossdx,0),maxx-1));
+        y=round(min(max(voxel(1,:)-1+crossdy,0),maxy-1));
+        z=round(min(max(voxel(3,:)-1+j,0),maxz-1));
+        plane=[plane; obj.data.imageArray(y+x*maxy+z*maxy*maxx+1)];
+    end
+    [maxinplane,ind]=max(plane);
+    line=[line; maxinplane]; %obj.data.filteredArray(y+x*maxy+z*maxy*maxx+1)];
+    inds=[inds; ind];
+    zs=[zs; z];
+end
+
+if (height>2)
+    %local minima
+    difference=sign(diff(double(line)));
+    difference(difference==0)=1;
+    extrema=(difference(1:2*height-1,:).*difference(2:2*height,:))==-1;
+    extrema=[ones(1,size(line,2)); extrema; ones(1,size(line,2))];
+    extremaleft=extrema(1:height+1,:).*([1:height height+1]'*ones(1,size(line,2)));
+    extremaright=extrema(height+2:height*2+1,:).*([(height+2):(height*2+1)]'*ones(1,size(line,2)));
+    extremaright(extremaright==0)=height*3;
+    extremapos=[max(extremaleft,[],1);min(extremaright,[],1)]; %needs revision
+    line=line';
+    extremavalue=line((extremapos-1)*size(line,1)+[1:size(line,1); 1:size(line,1)]);
+    line=line';
+    [val,index]=max(extremavalue,[],1); %needs revision
+    extremapos=extremapos';
+    indz=extremapos((index-1)*size(line,2)+(1:size(line,2)));
+else
+    %global minima
+    if height==0
+        indz=ones(size(line,2),1);    
+    else
+        [val,indz]=max(line,[],1);
+    end    
+end
+inds=inds';
+ind=inds((indz-1)*size(line,2)+(1:size(line,2)));
+%       [maxint,ind]=max(plane);
+indx=-(ind-neighborhood).*dy;
+indy=(ind-neighborhood).*dx;
+indz=indz-height-1;
+voxel(2,:)=round(min(max(voxel(2,:)+indx,1),maxx));
+voxel(1,:)=round(min(max(voxel(1,:)+indy,1),maxy));
+voxel(3,:)=round(min(max(voxel(3,:)+indz,1),maxz));
+% 
+voxelmax=voxel;
+if (sizeofaxon>7)
+    % smoothing again to futher suppress jumps
+    voxel(1,:)=medfilt1(voxel(1,:),14);
+    voxel(2,:)=medfilt1(voxel(2,:),14);
+    voxel(3,:)=medfilt1(voxel(3,:),14);
+    voxel(1,:)=smooth(voxel(1,:),14)';
+    voxel(2,:)=smooth(voxel(2,:),14)';
+    voxel(3,:)=smooth(voxel(3,:),14)';
+end
+voxel(2,:)=min(max(voxel(2,:),1),maxx);
+voxel(1,:)=min(max(voxel(1,:),1),maxy);
+voxel(3,:)=min(max(voxel(3,:),1),maxz);
+maxint=val;
+
+%calculate the normal direction of the axon based on 3 pixels
+neighborhood=3;
+if (sizeofaxon>neighborhood)
+    dy=([voxel(1,1)*ones(1,neighborhood) voxel(1,1:sizeofaxon-neighborhood)]-[voxel(1,neighborhood+1:sizeofaxon) voxel(1,sizeofaxon)*ones(1,neighborhood)]);
+    dx=([voxel(2,1)*ones(1,neighborhood) voxel(2,1:sizeofaxon-neighborhood)]-[voxel(2,neighborhood+1:sizeofaxon) voxel(2,sizeofaxon)*ones(1,neighborhood)]);
+else
+    dx=ones(1,sizeofaxon)*(voxel(1,1:sizeofaxon)-voxel(1,1));
+    dy=ones(1,sizeofaxon)*(voxel(2,1:sizeofaxon)-voxel(2,1));
+end
+dr=sqrt(dx.*dx+dy.*dy);
+%change length of 0 to 1 to avoid division by zero
+dr(find(dr==0))=1;
+%normalize to unit vector length
+dx=dx./dr;
+dy=dy./dr;

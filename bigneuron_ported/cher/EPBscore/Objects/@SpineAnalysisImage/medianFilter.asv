@@ -1,0 +1,384 @@
+function obj = MedianFilter(obj)
+
+% box filter
+   
+% gaussian filter
+%     n=50;
+%     s=30;
+%     x=-1/2:1/(n-1):1/2;
+%     [Y,X]=meshgrid(x,x);
+%     f=single(exp(-(X.^2+Y.^2)/(2*s^2)));
+%     f=f/sum(f(:));
+
+%f=uint16(ones(50,50));
+if (obj.state.display.ch1==1) & isfield(obj.data.ch(1),'imageArray')
+    ch=1;
+    if (obj.state.GUI==1)
+        w = waitbar(0,'Filtering of Tif', 'Name', 'GaussianFiltering XY');
+    end
+
+    obj.data.ch(ch).gaussianArray=zeros([size(obj.data.ch(ch).imageArray) 1],'uint16');
+    for i=1:size(obj.data.ch(ch).imageArray,3)
+       obj.data.ch(ch).gaussianArray(:,:,i,1)=imgaussian(obj.data.ch(ch).imageArray(:,:,i),[15 15],[51 51],0);
+       if (obj.state.GUI==1)
+          waitbar(i/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(i) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+       end
+    end
+    obj.data.ch(ch).mediangaussian=median(obj.data.ch(ch).gaussianArray(:));    
+    if (obj.state.GUI==1)
+        close(w);
+    end
+
+    if (obj.state.GUI==1)
+        w = waitbar(0,'Filtering of Tif', 'Name', 'MedianFiltering XY');
+    end
+    
+    obj.data.ch(ch).filteredArray=zeros(size(obj.data.ch(ch).imageArray,'uint16');
+     for i=1:size(obj.data.ch(ch).imageArray,3)
+         obj.data.ch(ch).filteredArray(:,:,i)=medfilt2(obj.data.ch(ch).imageArray(:,:,i),[obj.parameters.threedma.medianneighborhood obj.parameters.threedma.medianneighborhood]);
+        if (obj.state.GUI==1)
+            waitbar(i/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(i) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+        end
+     end
+    obj.data.ch(ch).imagemedian=mode(single(obj.data.ch(ch).filteredArray(:)));
+    
+         if (obj.state.GUI==1)
+        close(w);
+    end
+
+  
+    
+    if 0 % obsolete method
+        for z=1:1
+
+        obj.data.ch(ch).filteredArray=int16([]);
+     for i=1:size(obj.data.ch(ch).imageArray,3)
+                
+        IM=int16(obj.data.ch(ch).imageArray(:,:,i));
+        IM=medfilt2(IM,[obj.parameters.threedma.medianneighborhood obj.parameters.threedma.medianneighborhood]);
+%         M=IM;
+%         pu=prctile(M(:),[85]);
+%         m=median(M(:));
+%         M(M>pu)=m;
+%         B=int16(fastrunmean(M,[51 51],'mean'));
+%         F=IM-B+30;
+%         % replace original to save memory space?
+%         if ~obj.state.display.keepintermediates 
+%             obj.data.ch(ch).imageArray(:,:,i)=F;
+%         else
+%             obj.data.ch(ch).filteredArray(:,:,i)=F;
+%         
+%         end
+     %obj.data.ch(ch).filteredArray=fastrunmean(obj.data.ch(ch).filteredArray,[5 5 5],'mean');
+
+    %obj.data.ch(ch).filteredArray=smooth3(single(obj.data.ch(ch).imageArray),'box',[5 5 3]);
+
+        if (obj.state.GUI==1)
+            waitbar(i/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(i) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+        end
+
+     end
+        if ~obj.state.display.keepintermediates
+        obj.data.ch(ch).filteredArray=obj.data.ch(ch).imageArray;
+        obj.data.ch(ch).imageArray=[];
+        end
+        end
+
+    end
+
+    
+   
+   
+    if (obj.state.GUI==1)
+        close(w);
+    end
+    obj.data.ch(ch).imagestd=5;
+    obj.state.display.lowpixelch1=40;
+   
+end
+
+if (obj.state.display.ch2==1) && isfield(obj.data.ch(2),'imageArray')
+    ch=2;
+    if (obj.state.GUI==1)
+        w = waitbar(0,'Filtering of Tif', 'Name', 'MedianFiltering XY');
+    end
+
+    obj.data.ch(ch).filteredArray=int16([]);
+    obj.data.ch(ch).imagemedian=median(obj.data.ch(ch).imageArray(:));
+    for i=1:size(obj.data.ch(ch).imageArray,3)
+        %            M=single(obj.data.ch(ch).imageArray(:,:,i));
+        IM=int16(obj.data.ch(ch).imageArray(:,:,i));
+        IM=medfilt2(IM,[obj.parameters.threedma.medianneighborhood obj.parameters.threedma.medianneighborhood]);
+        M=IM;
+        pu=prctile(M(:),[85]);
+        m=median(M(:));
+        M(M>pu)=m;
+        B=int16(fastrunmean(M,[51 51],'mean'));
+         F=IM-B+30;
+        % replace original to save memory space?
+        if ~obj.state.display.keepintermediates
+            obj.data.ch(ch).imageArray(:,:,i)=F;
+        else
+            obj.data.ch(ch).filteredArray(:,:,i)=F;
+        end
+        if (obj.state.GUI==1)
+            waitbar(i/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(i) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+        end
+        
+        % do box filtering in the other dimension
+       
+
+    end
+    obj.data.ch(ch).filteredArray=fastrunmean(obj.data.ch(ch).filteredArray,[5 5 5],'mean');
+    obj.data.ch(ch).gaussianArray=smooth3(obj.data.ch(ch).imageArray,'gaussian',[7 7 3],2);
+
+    obj.data.ch(ch).imagemedian=mode(obj.data.ch(ch).gaussianArray(:));
+   
+    if ~obj.state.display.keepintermediates
+        obj.data.ch(ch).filteredArray=obj.data.ch(ch).imageArray;
+        obj.data.ch(ch).imageArray=[];
+    end
+    if (obj.state.GUI==1)
+        close(w);
+    end
+    obj.data.ch(ch).imagestd=5;
+    obj.state.display.lowpixelch2=40;
+    updateGUIByGlobal('self.state.display.lowpixelch2');
+end
+%
+%     image=double(obj.data.ch(ch).imageArray(:));
+%     obj.data.ch(ch).imagemedian=median(image);
+%     obj.data.ch(ch).imagestd=std([image(image<obj.data.ch(ch).imagemedian);2*obj.data.ch(ch).imagemedian-image(image<obj.data.ch(ch).imagemedian)]);
+%     imedian=obj.data.ch(ch).imagemedian;
+%
+%
+%
+%     for i = 1:size(obj.data.ch(ch).imageArray,3)
+%         if (obj.state.GUI==1)
+%             waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%         end
+%         counter=counter+1;
+%         neigh=obj.parameters.threedma.medianneighborhood;
+%         obj.data.ch(ch).medianArray(:,:,i)=double(medfilt2(obj.data.ch(ch).imageArray(:,:,i),[neigh neigh]));
+%     end
+%
+%
+%     if (obj.state.GUI==1)
+%         close(w);
+%         w = waitbar(0.1,'Filtering of Tif', 'Name', 'MedianFiltering XZ');
+%     end
+%
+%     % filter in the other two directions
+%
+%     obj.data.ch(ch).medianArray=shiftdim(obj.data.ch(ch).medianArray,1);
+%     size(obj.data.ch(ch).imageArray,3)=size(obj.data.ch(ch).medianArray,3);
+%     counter=0;
+%     for i = 1:size(obj.data.ch(ch).imageArray,3)
+%         if (obj.state.GUI==1)
+%             waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%         end
+%         counter=counter+1;
+%         neigh=obj.parameters.threedma.medianneighborhood;
+%         obj.data.ch(ch).medianArray(:,:,i)=double(medfilt2(obj.data.ch(ch).medianArray(:,:,i),[neigh 3]));
+%     end
+%
+%     if (obj.state.GUI==1)
+%         close(w);
+%         w = waitbar(0.1,'Filtering of Tif', 'Name', 'MedianFiltering YZ');
+%     end
+%
+%     obj.data.ch(ch).medianArray=shiftdim(obj.data.ch(ch).medianArray,1);
+%     size(obj.data.ch(ch).imageArray,3)=size(obj.data.ch(ch).medianArray,3);
+%     counter=0;
+%     for i = 1:size(obj.data.ch(ch).imageArray,3)
+%         if (obj.state.GUI==1)
+%             waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame ' num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%         end
+%         counter=counter+1;
+%         neigh=obj.parameters.threedma.medianneighborhood;
+%         obj.data.ch(ch).medianArray(:,:,i)=double(medfilt2(obj.data.ch(ch).medianArray(:,:,i),[3 neigh]));
+%     end
+%
+%     obj.data.ch(ch).medianArray=shiftdim(obj.data.ch(ch).medianArray,1);
+%
+%     %         if (obj.state.GUI==1)
+%     %             close(w); w = waitbar(0.1,'Filtering of Tif', 'Name',
+%     %             'Correcting by local intensity');
+%     %         end obj.data.ch(ch).medianArray=obj.data.ch(ch).medianArray+10;
+%     %         obj.data.ch(ch).medianArray(obj.data.ch(ch).medianArray<11)=0;
+%
+%     %     figure; medianArray=collapse(obj.data.ch(ch).medianArray,'XY');
+%     %     imedian=median(medianArray(:)); subplot(3,3,1);
+%     %     imagesc(medianArray,[40 200]); background=medianArray;
+%     %     ind=medianArray>=2.5*imedian;
+%     %     background(ind)=deal(2.5*imedian);
+%     %     %background=imfilter(background,h);
+%     %     redbackground=imresize(background,[size(background,1)/4
+%     %     size(background,2)/4],'bilinear');
+%     %     redbackground=medfilt2(redbackground,[floor(50/4)
+%     %     floor(50/4)]);
+%     %     redbackground(redbackground==0)=deal(mean(redbackground(:)));
+%     %     background=imresize(redbackground,size(background),'bilinear'
+%     %     ); subplot(3,3,2); imagesc(background,[20 60]); ind=ind |
+%     %     (medianArray<1.2*imedian); subplot(3,3,3); imagesc(ind);
+%     %     backmean=mean(background(~ind));
+%     %     middle=medianArray*backmean./background;
+%     %     middle(ind)=deal(medianArray(ind)); subplot(3,3,4);
+%     %     imagesc(middle-medianArray); subplot(3,3,5);
+%     %     imagesc(middle>medianArray); subplot(3,3,6);
+%     %     imagesc(middle<medianArray); subplot(3,3,7);
+%     %     imagesc(middle,[40 200]); subplot(3,3,8);
+%     %     choice=middle(~ind); m=median(choice);
+%     %     s=std([(m-choice(choice<m));(choice(choice<m)-m)]);
+%     %     imagesc(middle>m*1.2); subplot(3,3,9); hist(middle(:),400);
+%     %
+%     %     figure; subplot(2,1,1); hist(medianArray(:),500);
+%     %     subplot(2,1,2); hist(medianArray(:),500);
+%     %
+%     %     figure; subplot(3,1,1); hist(medianArray(:),400);
+%     %     subplot(3,1,2); hist(middle(~ind),200); subplot(3,1,3);
+%     %     hist(medianArray(~ind),200);
+%     %
+%
+%
+%
+%     % Correct by local median intensity for the intermediate values
+%
+%     %         size(obj.data.ch(ch).imageArray,3)=size(obj.data.ch(ch).medianArray,3); counter=0; h=ones(30,30)/900;
+%     %         pixels=[]; try
+%     %             for i = 1:size(obj.data.ch(ch).imageArray,3)
+%     %                 if (obj.state.GUI==1)
+%     %                     waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame '
+%     %                     num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%     %                 end counter=counter+1; %        tophatFiltered =
+%     %                 imtophat( obj.data.ch(ch).medianArray(:,:,i),se);
+%     %                 %contrastAdjusted = imadjust(tophatFiltered); %
+%     %                 obj.data.ch(ch).medianArray(:,:,i)=tophatFiltered;%contrastAdjus
+%     %                 ted; medianArray=obj.data.ch(ch).medianArray(:,:,i);
+%     %                 background=medianArray; ind=medianArray>=2.5*imedian;
+%     %                 background(ind)=deal(2.5*imedian);
+%     %                 %background=imfilter(background,h);
+%     %                 redbackground=imresize(background,[size(background,1)/4
+%     %                 size(background,2)/4],'bilinear');
+%     %                 redbackground=medfilt2(redbackground,[floor(50/4)
+%     %                 floor(50/4)]);
+%     %                 redbackground(redbackground==0)=deal(mean(redbackground(:
+%     %                 )));
+%     %                 background=imresize(redbackground,size(background),'bilin
+%     %                 ear'); ind=ind | (medianArray<1.2*imedian);
+%     %                 backmean=mean(background(~ind));
+%     %                 background(background==0)=backmean;
+%     %                 middle=medianArray*backmean./background;
+%     %                 middle(ind)=deal(medianArray(ind)); pixels=[pixels;
+%     %                 middle(~ind)]; obj.data.ch(ch).filteredArray(:,:,i)=middle;
+%     %             end
+%     %         catch
+%     %             i
+%     %         end
+%     %
+%     %         %figure; %hist(pixels,200); m=median(pixels);
+%     %         s=std([(m-pixels(pixels<m));(pixels(pixels<m)-m)]);
+%     %
+%     %         obj.data.ch(ch).m=m; obj.data.ch(ch).s=s;
+%
+%
+%     %         if (obj.state.GUI==1)
+%     %             close(w); w = waitbar(0.1,'Filtering of Tif', 'Name', 'median
+%     %             Filtering XZ');
+%     %         end
+%     %
+%     %         % filter in the other two directions
+%     %
+%     %         obj.data.ch(ch).filteredArray=shiftdim(obj.data.ch(ch).filteredArray,1);
+%     %         size(obj.data.ch(ch).imageArray,3)=size(obj.data.ch(ch).filteredArray,3); counter=0; for i = 1:size(obj.data.ch(ch).imageArray,3)
+%     %             if (obj.state.GUI==1)
+%     %                 waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame '
+%     %                 num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%     %             end counter=counter+1;
+%     %             neigh=obj.parameters.threedma.medianneighborhood;
+%     %             obj.data.ch(ch).filteredArray(:,:,i)=double(medfilt2(obj.data.ch(ch).filter
+%     %             edArray(:,:,i),[neigh 3]));
+%     %         end
+%     %
+%     %         if (obj.state.GUI==1)
+%     %             close(w); w = waitbar(0.1,'Filtering of Tif', 'Name', 'median
+%     %             Filtering YZ');
+%     %         end
+%     %
+%     %         obj.data.ch(ch).filteredArray=shiftdim(obj.data.ch(ch).filteredArray,1);
+%     %         size(obj.data.ch(ch).imageArray,3)=size(obj.data.ch(ch).filteredArray,3); counter=0; for i = 1:size(obj.data.ch(ch).imageArray,3)
+%     %             if (obj.state.GUI==1)
+%     %                 waitbar(counter/size(obj.data.ch(ch).imageArray,3),w,['Filtering frame '
+%     %                 num2str(counter) ' of ' num2str(size(obj.data.ch(ch).imageArray,3))]);
+%     %             end counter=counter+1;
+%     %             neigh=obj.parameters.threedma.medianneighborhood;
+%     %             obj.data.ch(ch).filteredArray(:,:,i)=double(medfilt2(obj.data.ch(ch).filter
+%     %             edArray(:,:,i),[3 neigh]));
+%     %         end
+%     %
+%     %         obj.data.ch(ch).filteredArray=shiftdim(obj.data.ch(ch).filteredArray,1);
+%
+%
+%
+%
+%     % back ground subtraction
+%
+%     %obj.data.ch(ch).filteredArray=(obj.data.ch(ch).filteredArray-obj.data.ch(ch).imagefilte
+%     %red);
+%     %obj.data.ch(ch).filteredArray=obj.data.ch(ch).filteredArray.*(obj.data.ch(ch).filteredA
+%     %rray>0);
+%
+%     if (obj.state.GUI==1)
+%         close(w);
+%     end
+%     %    obj.data.ch(ch).medianArray=[];
+%     %uint16(obj.data.ch(ch).medianArray);
+%     obj.data.ch(ch).gaussianArray=uint16(obj.data.ch(ch).medianArray);
+%
+%     % Anisotropic Diffusion
+%
+%     imgo=obj.data.ch(ch).gaussianArray;
+%     %         img=zeros(ceil(size(imgo,1)/4),ceil(size(imgo,2)/4),size(imgo,3));
+%     %         for i=1:size(imgo,3)
+%     %             img(:,:,i)=subsampling(imgo(:,:,i),4);
+%     %         end
+%     %
+%     img=imgo;
+%     sx=5; sy=5; sz=5;
+%     [Nx,Ny,Nz]=size(img);
+%     u_out=double(zeros(size(img))); v_out=double(zeros(size(img))); w_out=double(zeros(size(img)));
+%     for xc=sx+1:Nx-sx
+%         xc
+%         for yc=sy+1:Ny-sy
+%             for zc=sz+1:Nz-sz
+%                 box=double(img(xc-sx:xc+sx,yc-sy:yc+sy,zc-sz:zc+sz));
+%                 a=moments_3D(box);
+%                 u_out(xc,yc,zc)=a(1);
+%                 v_out(xc,yc,zc)=a(2);
+%                 w_out(xc,yc,zc)=a(3);
+%             end
+%         end
+%     end
+%     u_out=u_out/max(max(max(u_out)));
+%     v_out=v_out/max(max(max(v_out)));
+%     w_out=w_out/max(max(max(w_out)));
+%
+%     J=double(img);
+%     J=diffusion_3D(J,100,1,u_out,v_out,w_out,0.1);
+%
+%     %         J1=zeros(size(imgo,1),size(imgo,2),size(imgo,3));
+%     %
+%     %         for i=1:size(imgo,3)
+%     %             J1(:,:,i)=imresize(J(:,:,i),4,'bilinear');
+%     %         end
+%     J1=J;
+%     obj.data.ch(ch).filteredArray=J1;
+%
+%
+%
+%
+% end
+% %obj.data.ch(ch).filteredArray=obj.data.ch(ch).imageArray;
+%
+%
+% obj.state.refiltered=1;

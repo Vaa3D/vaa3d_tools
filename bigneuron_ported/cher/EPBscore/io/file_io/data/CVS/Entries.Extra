@@ -1,0 +1,13 @@
+/WS_FTP.LOG////*////
+/arrayToTiff.m////*////
+/checkFileBeforeSave.m////*////
+/doesFileExist.m////*////
+/opentif.m////*////
+/saveHeaderStructureAs.m////*////
+/savingInfoIsOK.m////*////
+/setSavePath.m////*////
+/updateHeaderString.m////*////
+/valueFromHeaderString.m////*////
+/writeData.m////*////
+/writeMaxData.m////*////
+/zeroPadNum2Str.m////*////

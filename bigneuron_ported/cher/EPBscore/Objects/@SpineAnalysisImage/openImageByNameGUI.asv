@@ -1,0 +1,83 @@
+function obj=openImageByNameGUI(obj,filename,redfilename)
+% get the name of the image
+[path,name,ext] = fileparts(filename);
+imageArray=[];
+try
+   if exist('redfilename','var')
+        obj=openImageByName(obj,filename,redfilename);
+    else
+        obj=openImageByName(obj,filename);
+    end
+    
+    
+catch
+    display('Could not open image');
+    return;
+end
+
+% close all windows
+if (isfield(obj.gh.projectionGUI,'Figure'))
+    close(obj.gh.projectionGUI.Figure)
+end
+obj.gh.projectionGUI=[];    
+if (isfield(obj.gh.imageGUI,'Figure'))
+    close(obj.gh.imageGUI.Figure)
+end
+obj.gh.imageGUI=[];    
+if (isfield(obj.gh.parametersGUI,'Figure'))
+    close(obj.gh.parametersGUI.Figure)
+end
+obj.gh.parametersGUI=[];   
+
+% reset the values to initial state
+global self;
+global ogh;
+self=[];
+self.ID=obj.ID;
+ogh=obj.gh;
+initGUIs('standardspineanalysisimage.ini');
+% initialize the graphical handles correctly
+for field=fieldnames(ogh)'
+    self.gh.(field{1})=ogh.(field{1});
+end
+self.parameters=obj.parameters;
+
+self.state.rawImagePath=obj.state.rawImagePath;
+self.state.rawImageName=obj.state.rawImageName;
+self.data.imageArray=obj.data.imageArray;
+
+if exist('redfilename','var')
+ self.data.imagedualArray=obj.data.imagedualArray;
+end
+
+
+% Set Image related properties
+self.state.ROI.maxz=obj.state.ROI.maxz;
+self.state.ROI.minz=obj.state.ROI.minz;
+self.state.display.currentz=obj.state.display.currentz;
+self.state.display.lowpixel=obj.state.display.lowpixel;
+%self.state.display.highpixel=obj.state.display.highpixel;
+self.state.display.highpixel=300;
+self.state.display.lowpixeldual=0;
+self.state.display.highpixeldual=300;
+self.state.display.dualchannel=obj.state.display.dualchannel;
+
+updateGUIbyGlobal('self.state.ROI.minz');
+updateGUIbyGlobal('self.state.ROI.maxz');
+updateGUIbyGlobal('self.state.display.currentz');
+zslider=getGuiOfGlobal('self.state.display.currentz');
+zslider=eval(zslider{1});
+set(zslider,'Min',self.state.ROI.minz,'Max',self.state.ROI.maxz,'SliderStep',[1/(self.state.ROI.maxz-self.state.ROI.minz) 1/(self.state.ROI.maxz-self.state.ROI.minz)]);
+updateGUIbyGlobal('self.state.display.lowpixel');
+updateGUIbyGlobal('self.state.display.highpixel');
+updateGUIbyGlobal('self.state.display.lowpixeldual');
+updateGUIbyGlobal('self.state.display.highpixeldual');
+updateGUIbyGlobal('self.state.display.dualchannel');
+self.state.display.colormap=colormap(makeColorMap('gray', 8));
+set(self.gh.mainGUI.Figure,'name',[name '-' path '\' name]);
+
+self.state.display.showprojection=1;
+updateGUIbyglobal('self.state.display.showprojection');
+obj=set(obj,'struct',self);             % generic object assigning part
+ogh=[];
+self=[];

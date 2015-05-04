@@ -1,0 +1,8 @@
+﻿Build started 21/04/2015 15:30:20.
+     1>Project "C:\Users\Cher\Google Drive\Imperial\Project\EPBscore\NewVersion\3dma2014\3dma.vcxproj" on node 2 (Build target(s)).
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(376,5): error MSB8031: Building an MFC project for a non-Unicode character set is deprecated. You must change the project property to Unicode or download an additional library. See http://go.microsoft.com/fwlink/p/?LinkId=286820 for more information.
+     1>Done Building Project "C:\Users\Cher\Google Drive\Imperial\Project\EPBscore\NewVersion\3dma2014\3dma.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.44

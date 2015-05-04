@@ -1,0 +1,196 @@
+function obj=loadImageByNameGUI(obj,filepath)
+[path,name,ext] = fileparts(filepath);
+global self;
+self=[];
+try
+    try
+        load('-mat',[path '\' name ext]);
+        self.gh=[];
+        self.state.ROI.minz=1;
+        self.state.ROI.maxz=size(self.data.ch(1).imageArray,3);
+        self.state.Path=path;
+        self.state.Name=name;
+    catch
+        filename=name;
+        if strcmp(name(end-4:end),'_auto')
+            name=name(1:end-5);
+            status='auto';
+        else
+            if strcmp(name(end-6:end),'_edited')
+                name=name(1:end-7);
+                status='edited';
+            else
+                status='edited';
+            end
+        end
+
+
+        warning off MATLAB:MKDIR:DirectoryExists;
+        mkdir(path, [name 'ziptemp']);
+        h = waitbar(0,'Unzipping Spi File...', 'Name', 'Unzipping Spi File', 'Pointer', 'watch');
+        waitbar(0,h, ['Unzipping Spi File...']);       
+        unzip([path '\' filename ext],[ path '\' name 'ziptemp']);
+        waitbar(1,h, 'Done');
+        close(h);
+
+        cd (path);
+
+
+        datfile=dir([path '\' name 'ziptemp\*.dat']);
+        load('-mat',[path '\' name 'ziptemp\' datfile(1).name]);
+
+        %delete([path '\' filename ext],[ path '\' name 'ziptemp']);
+        % kludge for now
+
+        if ~isfield(obj.data,'marks')
+            obj.data.marks=[];
+        end
+
+
+        % end
+
+
+        tiffile=dir([path '\' name 'ziptemp\*.tif']);
+        try
+            self.data.ch(1).imageArray=opentif([path '\' name 'ziptemp\' tiffile(1).name]);  % get the image
+        catch
+            disp('warning: no rawImage found');
+        end
+        tiffile=dir([path '\' name 'ziptemp\*fil.tif']);
+        try
+            self.data.ch(1).filteredArray=opentif([path '\' name 'ziptemp\' tiffile(1).name]);  % get the filtered image
+        catch
+            disp('warning: no filterImage found');
+        end
+        tiffile=dir([path '\' name 'ziptemp\*gauss.tif']);
+        try
+            self.data.ch(1).gaussianArray=opentif([path '\' name 'ziptemp\' tiffile(1).name]);  % get the gaussian filtered image
+        catch
+            %        disp('warning: no gaussImage found');
+        end
+
+        tiffile=dir([path '\' name 'ziptemp\*dual.tif']);
+        try
+            self.data.ch(2).imageArray=opentif([path '\' name 'ziptemp\' tiffile(1).name]);  % get the dual image
+        catch
+            %        disp('warning: no gaussImage found');
+        end
+
+        tiffile=dir([path '\' name 'ziptemp\*fildual.tif']);
+        try
+            self.data.ch(2).filteredArray=opentif([path '\' name 'ziptemp\' tiffile(1).name]);  % get the  filtered dual image
+        catch
+            %        disp('warning: no gaussImage found');
+        end
+        self.state.ROI.minz=1;
+        self.state.ROI.maxz=size(self.data.ch(1).imageArray,3);
+        self.state.Path=path;
+        self.state.Name=name;
+        %self.state.display.highpixel=300;
+        self.state.refiltered=0;
+    %     if ~isfield(self.state.display,'dualchannel')
+    %         self.state.display.dualchannel=0;
+    %     end
+    
+    %     if isfield(self.data,'filteredArray') && length(self.data.filteredArray) && isfield(self.data,'m') && self.data.m && self.data.s
+    %         threshold=self.data.m+self.data.s*self.parameters.threedma.binarizethreshold;
+    %         for i = 1:size(self.data.filteredArray,3);
+    %             self.data.binaryArray(:,:,i) = self.data.filteredArray(:,:,i)>threshold;
+    %         end
+    %         self.data.binaryArray=uint8(self.data.binaryArray);
+    %     end
+    
+    end
+
+
+
+    %     if ~isempty(obj.data.binaryArray)   % needs work!
+    %         arraytotiff(obj.data.binaryArray,[obj.state.rawImagePath '\ziptemp\' obj.state.rawImageName 'bin.tif'],'');
+    %         self.data.binaryArray=[];
+    %     end
+    %     if ~isempty(obj.data.burnArray)
+    %         arraytotiff(obj.data.burnArray,[obj.state.rawImagePath '\ziptemp\' obj.state.rawImageName 'burn.tif'],'');
+    %         self.data.burnArray=[];
+    %     end
+
+    %     try
+    %         rmdir([path '\' name 'ziptemp'],'s');
+    %     catch
+    %         disp('Could not delete temporary files');
+    %         disp(lasterr);
+    %     end
+
+    % protect self
+    try
+        self.state.display.ch1;
+    catch
+        self.state.display.ch1=1;
+        self.state.display.lowpixelch1=0;
+        self.state.display.highpixelch1=300;
+        self.state.display.ch2=0;
+        self.state.display.lowpixelch2=0;
+        self.state.display.highpixelch2=300;
+    end
+    
+    
+    
+    selftemp=self;
+
+    % Initialize the application appropriately.
+
+    % reset the values to initial state
+    global self;
+    global ogh;
+    self=[];
+    self.ID=obj.ID;
+    ogh=obj.gh;
+    initGUIs('standardspineanalysisimage.ini');
+    % initialize the graphical handles correctly
+    for field=fieldnames(ogh)'
+        self.gh.(field{1})=ogh.(field{1});
+    end
+
+    selftemp.state.display.globalGUIPairs= self.state.display.globalGUIPairs;
+
+    % close all windows
+    if (isfield(obj.gh,'projectionGUI') && isfield(obj.gh.projectionGUI,'Figure'))
+        close(obj.gh.projectionGUI.Figure)
+    end
+    obj.gh.projectionGUI=[];
+    if (isfield(obj.gh,'imageGUI') && isfield(obj.gh.imageGUI,'Figure'))
+        close(obj.gh.imageGUI.Figure)
+    end
+    obj.gh.imageGUI=[];
+    if (isfield(obj.gh,'parametersGUI') && isfield(obj.gh.parametersGUI,'Figure'))
+        close(obj.gh.parametersGUI.Figure)
+    end
+    obj.gh.parametersGUI=[];
+    if (isfield(obj.gh,'profileGUI') && isfield(obj.gh.profileGUI,'Figure'))
+        close(obj.gh.profileGUI.Figure)
+    end
+    obj.gh.profileGUI=[];
+
+    % reset the values to initial state
+
+    self=selftemp;
+    global ogh;
+    self.ID=obj.ID;
+    ogh=obj.gh;
+    % initialize the graphical handles correctly
+    for field=fieldnames(ogh)'
+        self.gh.(field{1})=ogh.(field{1});
+    end
+    set(self.gh.mainGUI.Figure,'name',[name '-' path '\' name]);
+    for field=fieldnames(self)'
+        eval(['obj.' field{1} '= self.' field{1}]);
+    end
+    %obj=set(obj,'struct',self);    % generic object assigning part
+    updateGUIbyglobalAll('self.state.display');
+    zslider=getGuiOfGlobal('self.state.display.currentz');
+    zslider=eval(zslider{1});
+    set(zslider,'Min',self.state.ROI.minz,'Max',self.state.ROI.maxz,'SliderStep',[1/(self.state.ROI.maxz-self.state.ROI.minz) 1/(self.state.ROI.maxz-self.state.ROI.minz)]);
+catch
+    disp('Could not open data');
+    disp(lasterr);
+    return;
+end

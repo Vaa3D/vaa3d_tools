@@ -1,0 +1,75 @@
+create database axons;
+
+GRANT ALL ON axons.* TO 'song'@'localhost' IDENTIFIED BY 'amanda';
+GRANT ALL ON axons.* TO 'song'@'%' IDENTIFIED BY 'amanda';
+
+use axons;
+create table axon (ID MEDIUMINT NOT NULL AUTO_INCREMENT, animalID MEDIUMINT, Other blob, Type tinyint, KEY (ID));
+create table animal (ID MEDIUMINT NOT NULL AUTO_INCREMENT, Name varchar(10), Description varchar(256), Other blob,KEY (ID));
+create table image (
+	ID MEDIUMINT NOT NULL AUTO_INCREMENT, 
+	ImageName VARCHAR(50), 
+	Other blob,
+	DateTime DATETIME,
+	KEY (ID),
+	KEY (ImageName)
+);
+
+create table segment (
+	ID MEDIUMINT NOT NULL AUTO_INCREMENT, 
+	SeriesID MEDIUMINT,
+	Session	 tinyint,
+	Date  DATE,
+	ImageName VARCHAR(50),
+	AxonID	MEDIUMINT,
+	AnimalID MEDIUMINT,
+	Position VARCHAR(1),
+	ExperimentType VARCHAR(10),
+	Type	VARCHAR(5),
+	Length	float,
+	BackboneIntensity float,
+	Distance blob,
+	Intensity blob, 
+	Coordinates blob,
+	Other blob,
+	DateTime DateTime,
+	KEY (ID)
+);
+
+create table series (
+	ID MEDIUMINT NOT NULL AUTO_INCREMENT, 
+	AxonID MEDIUMINT,
+	AnimalID MEDIUMINT,
+	Type tinyint,
+	ExperimentType VARCHAR(20),
+	DateTime Datetime,
+	Comments VARCHAR(256),	
+	Exclusion blob,
+	Other blob,
+	KEY (ID)
+);
+
+create table bouton (
+	ID MEDIUMINT NOT NULL AUTO_INCREMENT, 
+	SegmentID MEDIUMINT,
+	Position tinyint,
+	DistanceIndex mediumint,
+	AlignedDistance float,
+	Length float,
+        ClusterID mediumint,
+	Type     tinyint,                          
+        Intensity float,
+        NormalizedIntensity float,
+	Other blob,
+	DateTime Datetime,
+	KEY (ID),
+        KEY (ClusterID)
+);
+
+create table boutoncluster (
+	ID MEDIUMINT NOT NULL AUTO_INCREMENT,
+	SeriesID MEDIUMINT,
+	AlignedDistance float,
+	Datetime Datetime,
+	KEY (ID)
+);

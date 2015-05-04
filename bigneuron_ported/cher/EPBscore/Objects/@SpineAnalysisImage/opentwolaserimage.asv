@@ -1,0 +1,13 @@
+function obj=opentwolaserimage(obj)
+% get the name of the image
+[fname, pname] = uigetfile({'*.tif'}, 'Choose image to load');
+if obj.state.display.dualimage
+    [redname, p]= uigetfile({'*.tif'}, 'Choose Red Channel image to load');
+    if (redname & fname)
+        obj=openImageByNameGUI(obj,[pname fname],[p redname]);
+    end
+else
+    if (fname)
+        obj=openImageByNameGUI(obj,[pname fname]);
+    end 
+end
