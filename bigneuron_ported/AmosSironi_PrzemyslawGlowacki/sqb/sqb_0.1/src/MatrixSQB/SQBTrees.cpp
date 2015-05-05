@@ -1,4 +1,6 @@
-#include "mex.h"
+//#include "mex.h"
+
+#include "/Applications/MATLAB_R2014b.app/extern/include/mex.h"
 
 // This file is part of SQBlib, a gradient boosting/boosted trees implementation.
 //
@@ -22,7 +24,7 @@
 #define qDebug(...) mexPrintf (__VA_ARGS__)
 #define qFatal(...) do{ mexPrintf (__VA_ARGS__); mexErrMsgTxt("See above"); } while(0)
 
-#include <SQB/Matlab/matlab_utils.hxx>
+#include "../sqb_0.1/include/SQB/Matlab/matlab_utils.hxx"
 
 #define SHOW_TIMINGS 0
 
@@ -30,12 +32,16 @@
     #define SHOW_TIMINGS 0
 #endif
 
-#include <SQB/Core/RegTree.h>
-#include <SQB/Core/Utils.h>
+//#include <SQB/Core/RegTree.h>
+#include "..//sqb_0.1/include/SQB/Core/RegTree.h"
+//#include <SQB/Core/Utils.h>
+#include "..//sqb_0.1/include/SQB/Core/Utils.h"
 
-#include <SQB/Core/Booster.h>
+//#include <SQB/Core/Booster.h>
+#include "..//sqb_0.1/include/SQB/Core/Booster.h"
 
-#include <SQB/Core/LineSearch.h>
+//#include <SQB/Core/LineSearch.h>
+#inclued "..//sqb_0.1/include/SQB/Core/LineSearch.h"
 
 #include "vaa3d_link.h"
 
@@ -315,9 +321,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #endif
 }
 
-bool sqb_entrance(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+bool sqb_entrance(int nlhs, void **plhs, int nrhs,  void  **prhs)
 {
-    mexFunction(nlhs, plhs, nrhs, prhs);
+    mexFunction(nlhs, (mxArray **)plhs, nrhs, (const mxArray **)prhs);
     return true;
 }
 
