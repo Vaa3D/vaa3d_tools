@@ -34,20 +34,20 @@ int main () {
 
 
     //std::cout << weights << std::endl;
-    std::cout << weights.rows() << std::endl; //25 ( rows of W = number of sep filters )
-    std::cout << weights.cols() << std::endl;//30 ( cols of W = number of original filters )
+   // std::cout << weights.rows() << std::endl; //25 ( rows of W = number of sep filters )
+   // std::cout << weights.cols() << std::endl;//30 ( cols of W = number of original filters )
 
     //std::cout << sep_filters << std::endl;
-    std::cout << sep_filters.rows() << std::endl; //75 ( rows of S = actual sep filters stored as a column )
-    std::cout << sep_filters.cols() << std::endl;//25 ( cols of S = number of separable filters )
+   // std::cout << sep_filters.rows() << std::endl; //75 ( rows of S = actual sep filters stored as a column )
+   // std::cout << sep_filters.cols() << std::endl;//25 ( cols of S = number of separable filters )
 
 
     //load itk image
 
     const char *input_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2.nrrd";
     typedef float ImageScalarType;
-    typedef itk::Image< ImageScalarType, 3 >         ImageType;
-    typedef itk::ImageFileReader<ImageType> ReaderType;
+    typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
+    typedef itk::ImageFileReader<ITKImageType> ReaderType;
 
   ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(input_image_file);
@@ -58,8 +58,9 @@ int main () {
    // typedef itk::Image<ImageScalarType, 3>   ITKImageType;
 
 
-    ImageType::Pointer kernelX = ImageType::New();
-
+    ITKImageType::Pointer kernelX = ITKImageType::New();
+    ITKImageType::Pointer kernelY = ITKImageType::New();
+ITKImageType::Pointer kernelZ = ITKImageType::New();
 
     const int kernel_size = (int)(sep_filters.rows()/3);
 
@@ -67,21 +68,58 @@ int main () {
 
 
 //    VectorType kernel_x_eig = sep_filters.row(1).segment(1,(int)(sep_filters.rows()/3));
-    VectorTypeDouble kernel_x_eig = sep_filters.row(1).segment(1,kernel_size);
+    VectorTypeDouble kernel_eig = sep_filters.col(1);
+    VectorTypeDouble kernel_x_eig;
+    VectorTypeDouble kernel_y_eig;
+    VectorTypeDouble kernel_z_eig;
 
-    std::cout << kernel_x_eig << std::endl;
+    std::cout << kernel_eig << std::endl;
 
 
-//    typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
+    kernel_x_eig = kernel_eig.head(kernel_size);
+    kernel_y_eig = kernel_eig.segment(kernel_size,kernel_size);
+    kernel_z_eig = kernel_eig.tail(kernel_size);
+
+ std::cout << kernel_x_eig << std::endl;
+ std::cout << kernel_x_eig.size() << std::endl;
+ std::cout << kernel_y_eig.size() << std::endl;
+ std::cout << kernel_z_eig.size() << std::endl;
+
+    typedef itk::ConvolutionImageFilter< ITKImageType, ITKImageType, ITKImageType >  ConvolutionType;
+ prepare1DKernel<ITKImageType, VectorTypeDouble>( kernelX, 0, kernel_x_eig );
+ prepare1DKernel<ITKImageType, VectorTypeDouble>( kernelY, 1, kernel_y_eig );
+ prepare1DKernel<ITKImageType, VectorTypeDouble>( kernelZ, 2, kernel_z_eig );
+
+
+ ConvolutionType::Pointer convX, convY, convZ;
+
+ convX = ConvolutionType::New();
+ convX->SetInput( reader->GetOutput() );
+ convX->SetKernelImage(kernelX);
+ convX->SetOutputRegionModeToSame();
+
+ convY = ConvolutionType::New();
+ convY->SetInput( convX->GetOutput() );
+ convY->SetKernelImage(kernelY);
+ convY->SetOutputRegionModeToSame();
+
+ convZ = ConvolutionType::New();
+ convZ->SetInput( convY->GetOutput() );
+ convZ->SetKernelImage(kernelZ);
+ convZ->SetOutputRegionModeToSame();
+
+ convZ->Update();
+
+ //out->loadItkImage( convZ->GetOutput() );
 
 
     //save image
     const char *output_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved.nrrd";
 
-    typedef  itk::ImageFileWriter< ImageType  > WriterType;
+    typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
       WriterType::Pointer writer = WriterType::New();
       writer->SetFileName(output_image_file);
-      writer->SetInput(reader->GetOutput());
+      writer->SetInput(convZ->GetOutput());
       writer->Update();
 
 
@@ -154,7 +192,7 @@ MatrixXd readMatrix(const char *filename)
 // helper for itk separable filter
 // dir is [0,1,2]
 template<typename ImageType, typename VectorType>
-static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned dir, const VectorTypeDouble &origVec )
+static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned dir, const VectorType &origVec )
 {
 typename ImageType::IndexType start;
 start.Fill(0);
