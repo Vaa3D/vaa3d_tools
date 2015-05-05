@@ -44,7 +44,7 @@ available_tags=" CXX"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host dhcp-172-17-41-227.wrd.wireless.private.cam.ac.uk:
+# Libtool was configured on host dhcp-172-17-40-43.wrd.wireless.private.cam.ac.uk:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -88,13 +88,13 @@ with_gcc=yes
 EGREP="grep -E"
 
 # The linker used to build libraries.
-LD="/usr/llvm-gcc-4.2/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
+LD="/usr/bin/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/opt/local/bin/nm"
+NM="/usr/bin/nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -313,7 +313,7 @@ variables_saved_for_relink="PATH   GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
 link_all_deplibs=yes
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin11/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/x86_64/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/x86_64/ /usr/lib/../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/../i686-apple-darwin11/lib/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../x86_64/ /usr/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/x86_64/ /lib/i686-apple-darwin11/4.2.1/ /lib/ /usr/lib/i686-apple-darwin11/4.2.1/ /usr/lib/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/ /usr/lib/../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/ /usr/lib/../i686-apple-darwin11/lib/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../ /usr/lib/i686-apple-darwin11/4.2.1/ /usr/lib/  /lib /usr/lib /usr/local/lib"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
@@ -6766,7 +6766,7 @@ build_old_libs=`case $build_libtool_libs in yes) $echo no;; *) $echo yes;; esac`
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host dhcp-172-17-41-227.wrd.wireless.private.cam.ac.uk:
+# Libtool was configured on host dhcp-172-17-40-43.wrd.wireless.private.cam.ac.uk:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -6810,13 +6810,13 @@ with_gcc=yes
 EGREP="grep -E"
 
 # The linker used to build libraries.
-LD="/usr/llvm-gcc-4.2/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
+LD="/usr/bin/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/opt/local/bin/nm"
+NM="/usr/bin/nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -7035,7 +7035,7 @@ variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PAT
 link_all_deplibs=yes
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin10/4.2.1/../../../ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin11/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/x86_64/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/x86_64/ /usr/lib/../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/../i686-apple-darwin11/lib/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../i686-apple-darwin11/4.2.1/x86_64/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../x86_64/ /usr/lib/i686-apple-darwin11/4.2.1/x86_64/ /usr/lib/x86_64/ /lib/i686-apple-darwin11/4.2.1/ /lib/ /usr/lib/i686-apple-darwin11/4.2.1/ /usr/lib/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/ /usr/lib/gcc/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../../i686-apple-darwin11/lib/ /usr/lib/../i686-apple-darwin11/lib/i686-apple-darwin11/4.2.1/ /usr/lib/../i686-apple-darwin11/lib/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../i686-apple-darwin11/4.2.1/ /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/../../../ /usr/lib/i686-apple-darwin11/4.2.1/ /usr/lib/  /lib /usr/lib /usr/local/lib"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
