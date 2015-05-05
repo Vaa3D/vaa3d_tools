@@ -1,0 +1,31 @@
+
+How To Install
+==============
+
+checkout thirdparty libraries as well
+ git clone --recursive https://polmonso@bitbucket.org/polmonso/superannotator.git
+
+Compile 
+
+How To Use
+==========
+
+superannotator
+--------------
+
+plugins
+-------
+
+### Graph Cuts
+
+The Graph Cuts plugin uses the overlay 1, with class 1 as seeds and class 2 as sinks. The output will be saved in overlay 4. You can save each overlay through the menu or vy selecting it in the Layers menu.
+
+To switch between classes (aka labels) use the keyboard numbers. 
+
+There's a video of the process here: https://documents.epfl.ch/groups/c/cv/cvlab-unit/public/plugins/superannotator2_hd.avi
+
+Notice the change of class at the bottom righthand side corner which is performed using the keyboard numbers.
+
+To transfer the overlay 4 to the overlay 2 press Control + T
+
+To Hide/show overlay n use Control + n

@@ -1,0 +1,7 @@
+*~
+build/*
+build
+CMakeFiles
+*.mexa64
+*.mex
+

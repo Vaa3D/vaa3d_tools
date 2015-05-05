@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/icons/animated">
+        <file>waitIcon.gif</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>sphereOff.png</file>
+        <file>cubeOff.png</file>
+        <file>sphere.png</file>
+        <file>cube.png</file>
+        <file>circle.png</file>
+        <file>square.png</file>
+    </qresource>
+</RCC>

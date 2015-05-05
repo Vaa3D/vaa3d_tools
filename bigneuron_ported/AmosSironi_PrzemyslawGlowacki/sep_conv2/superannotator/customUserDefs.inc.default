@@ -1,0 +1,2 @@
+ITKPATH = /home/pol/code/ITK3
+DESTDIR = /home/pol/code/mito/superannotator/bin

@@ -1,0 +1,13 @@
+.gitignore
+Makefile
+bin/
+settings.ini
+TestPlugin-build*
+TestPlugin.pro.user
+plugins/*-build-desktop*
+*.pro.user
+customUserDefs.inc
+*~
+*.o
+moc_*.cpp
+ui_*.h

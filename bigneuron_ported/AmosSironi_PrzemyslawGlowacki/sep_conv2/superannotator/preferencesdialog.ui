@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PreferencesDialog</class>
+ <widget class="QDialog" name="PreferencesDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1042</width>
+    <height>151</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Preferences</string>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>930</x>
+     <y>20</y>
+     <width>81</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>65</y>
+     <width>181</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Path to Fiji executable:</string>
+   </property>
+   <property name="buddy">
+    <cstring>lineEdit</cstring>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>60</y>
+     <width>191</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="butBrowseFijiPath">
+   <property name="geometry">
+    <rect>
+     <x>560</x>
+     <y>60</y>
+     <width>101</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Browse...</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>30</y>
+     <width>301</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Max voxels for supervoxel computation:</string>
+   </property>
+   <property name="buddy">
+    <cstring>lineEdit</cstring>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinMaxVox">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>25</y>
+     <width>191</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="suffix">
+    <string> millons</string>
+   </property>
+   <property name="minimum">
+    <number>8</number>
+   </property>
+   <property name="maximum">
+    <number>200</number>
+   </property>
+   <property name="singleStep">
+    <number>2</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="labelMaxVox">
+   <property name="geometry">
+    <rect>
+     <x>562</x>
+     <y>30</y>
+     <width>301</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>(approx. max X G of RAM needed)</string>
+   </property>
+   <property name="buddy">
+    <cstring>lineEdit</cstring>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinSliceJump">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>100</y>
+     <width>57</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="value">
+    <number>10</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>100</y>
+     <width>181</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Slice jump shortcut step [W,S]</string>
+   </property>
+   <property name="buddy">
+    <cstring>lineEdit</cstring>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>PreferencesDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>930</x>
+     <y>90</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>PreferencesDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>930</x>
+     <y>90</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

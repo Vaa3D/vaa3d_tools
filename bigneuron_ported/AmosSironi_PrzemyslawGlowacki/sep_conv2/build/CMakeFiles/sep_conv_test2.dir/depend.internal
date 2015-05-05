@@ -4,10 +4,17 @@
 CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkArray.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkArray.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkArray2D.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkArray2D.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkBarrier.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkCommand.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConceptChecking.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConditionVariable.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConnectedComponentAlgorithm.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstNeighborhoodIterator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstNeighborhoodIterator.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstShapedNeighborhoodIterator.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstShapedNeighborhoodIterator.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstSliceIterator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstantBoundaryCondition.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkConstantBoundaryCondition.hxx
@@ -15,6 +22,7 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkCovariantVector.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkCovariantVector.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkCreateObjectFunction.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkCrossHelper.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkDataObject.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkDataObjectIterator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkDefaultConvertPixelTraits.h
@@ -52,6 +60,8 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageIteratorWithIndex.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageKernelOperator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageKernelOperator.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageLinearConstIteratorWithIndex.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageLinearConstIteratorWithIndex.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageRegion.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageRegion.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkImageRegionConstIterator.h
@@ -119,6 +129,9 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkObjectFactory.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkObjectFactoryBase.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkOffset.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkOptimizerParameters.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkOptimizerParameters.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkOptimizerParametersHelper.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkOutputDataObjectIterator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkPixelTraits.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkPoint.h
@@ -133,6 +146,8 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkRealTimeInterval.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkRealTimeStamp.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkRegion.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkShapedNeighborhoodIterator.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkShapedNeighborhoodIterator.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkSimpleDataObjectDecorator.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkSimpleDataObjectDecorator.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkSimpleFastMutexLock.h
@@ -147,6 +162,8 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkSymmetricSecondRankTensor.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkThreadSupport.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkTimeStamp.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkUnaryFunctorImageFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkUnaryFunctorImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkVariableLengthVector.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkVariableLengthVector.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkVector.h
@@ -159,6 +176,13 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkWindows.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkZeroFluxNeumannBoundaryCondition.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Common/include/itkZeroFluxNeumannBoundaryCondition.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkAffineTransform.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkAffineTransform.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkMatrixOffsetTransformBase.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkMatrixOffsetTransformBase.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkTransform.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkTransform.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Core/Transform/include/itkTransformBase.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/Convolution/include/itkConvolutionImageFilter.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/Convolution/include/itkConvolutionImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/Convolution/include/itkConvolutionImageFilterBase.h
@@ -176,10 +200,36 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageGrid/include/itkPadImageFilter.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageGrid/include/itkPadImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageIntensity/include/itkDivideImageFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageIntensity/include/itkMaskImageFilter.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageIntensity/include/itkNormalizeToConstantImageFilter.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageIntensity/include/itkNormalizeToConstantImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageStatistics/include/itkStatisticsImageFilter.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/ImageStatistics/include/itkStatisticsImageFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkBinaryImageToLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkBinaryImageToLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkGeometryUtilities.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkInPlaceLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkInPlaceLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelImageToLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelImageToLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelImageToShapeLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelImageToShapeLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMap.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMap.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMapToLabelImageFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelMapToLabelImageFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelObject.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelObject.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelObjectLine.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelObjectLine.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkLabelObjectLineComparator.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkShapeLabelMapFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkShapeLabelMapFilter.hxx
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/LabelMap/include/itkShapeLabelObject.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/Thresholding/include/itkBinaryThresholdImageFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Filtering/Thresholding/include/itkBinaryThresholdImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkConvertPixelBuffer.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkConvertPixelBuffer.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkImageFileReader.h
@@ -189,9 +239,13 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkImageIOBase.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkImageIOFactory.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/IO/ImageBase/include/itkImageIORegion.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Segmentation/ConnectedComponents/include/itkConnectedComponentImageFilter.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/Segmentation/ConnectedComponents/include/itkConnectedComponentImageFilter.hxx
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/algo/vnl_determinant.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/algo/vnl_matrix_inverse.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/algo/vnl_real_eigensystem.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/algo/vnl_svd.h
+ /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/algo/vnl_symmetric_eigensystem.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/dll.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/vnl_c_vector.h
  /cvlabdata1/home/asironi/ITK-Standbox/ITK/Modules/ThirdParty/VNL/src/vxl/core/vnl/vnl_diag_matrix.h
@@ -525,4 +579,6 @@ CMakeFiles/sep_conv_test2.dir/sep_conv_test2.cpp.o
  /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/include/Eigen/src/misc/Kernel.h
  /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/include/Eigen/src/misc/Solve.h
  /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/sep_conv_test2.cpp
+ /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/superannotator/Matrix3D.h
+ /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/superannotator/ShapeStatistics.h
  ITKIOFactoryRegistration/itkImageIOFactoryRegisterManager.h
