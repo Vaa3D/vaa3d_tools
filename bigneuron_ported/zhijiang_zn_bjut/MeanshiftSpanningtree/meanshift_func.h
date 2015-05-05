@@ -8,7 +8,7 @@
 
 #include <v3d_interface.h>
 #include "node.h"
-int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent);
+int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz,QString &image_name,bool bmenu);
 void meanshift_vn5(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 Node getnode(Node *node);
 

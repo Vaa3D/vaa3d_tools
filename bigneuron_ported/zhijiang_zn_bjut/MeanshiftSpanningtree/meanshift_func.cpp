@@ -488,19 +488,11 @@ void printSWCByMap_List(QMap<int,QList<Node*> >  List,char * filename)
 }
 
 
-int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
+int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu)
 {
-	v3dhandle curwin = callback.currentImageWindow();
-	if(!curwin)
-	{
-		//QMessageBox::information(0, title, QObject::tr("No image is open."));
-		return -1;
-	}
-        Image4DSimple *p4d = callback.getImage(curwin);
-	V3DLONG sz_x = p4d->getXDim();
-	V3DLONG sz_y = p4d->getYDim();
-	V3DLONG sz_z = p4d->getZDim();
-	unsigned char* img1d = p4d->getRawDataAtChannel(1);
+        V3DLONG sz_x = in_sz[0];
+        V3DLONG sz_y = in_sz[1];
+        V3DLONG sz_z = in_sz[2];
 	flag=new int [sz_x*sz_y*sz_z];
 
 	V3DLONG r=10;
@@ -582,7 +574,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
 	construct_tree(finalclass_node, sz_x, sz_y, sz_z);
 	
-        QString outswc_file = callback.getImageName(curwin) + "_meanshift.swc";
+        QString outswc_file = image_name + "_meanshift.swc";
         printSWCByQList_Neuron(result_list,outswc_file.toStdString().c_str());
 
         V3DPluginArgItem arg;
@@ -602,7 +594,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 
         vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
         saveSWC_file(outswc_file.toStdString(), temp_out_swc);
-        v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()));
+        v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()),bmenu);
         delete []flag;
 }
 

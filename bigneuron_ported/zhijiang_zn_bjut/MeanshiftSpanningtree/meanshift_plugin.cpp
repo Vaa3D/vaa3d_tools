@@ -4,9 +4,11 @@
  */
  
 #include "v3d_message.h"
+#include <vector>
 
 #include "meanshift_plugin.h"
 #include "meanshift_func.h"
+
 
 // 1- Export the plugin class to a target, the first item in the bracket should match the TARGET parameter in the .pro file
 Q_EXPORT_PLUGIN2(meanshift, MeanShiftPlugin);
@@ -35,7 +37,23 @@ void MeanShiftPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 {
         if (menu_name == tr("meanshift"))
         {
-                meanshift_plugin_vn4(callback,parent);
+            bool bmenu = true;
+
+            v3dhandle curwin = callback.currentImageWindow();
+            if(!curwin)
+            {
+                v3d_msg("No image is open.");
+                return;
+            }
+
+            V3DLONG in_sz[4];
+            Image4DSimple *p4d = callback.getImage(curwin);
+            unsigned char* img1d = p4d->getRawDataAtChannel(1);
+            QString image_name = callback.getImageName(curwin);
+            in_sz[0] = p4d->getXDim();
+            in_sz[1] = p4d->getYDim();
+            in_sz[2] = p4d->getZDim();
+            meanshift_plugin_vn4(callback,parent,img1d, in_sz,image_name,bmenu);
         }
         else if (menu_name == tr("about"))
         {
@@ -51,7 +69,29 @@ bool MeanShiftPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 {
         if (func_name == tr("meanshift"))
         {
-                meanshift_plugin(input, output);
+            bool bmenu = false;
+            std::vector<char*> * pinfiles = (input.size() >= 1) ? (std::vector<char*> *) input[0].p : 0;
+            std::vector<char*> * pparas = (input.size() >= 2) ? (std::vector<char*> *) input[1].p : 0;
+            std::vector<char*> infiles = (pinfiles != 0) ? * pinfiles : std::vector<char*>();
+            std::vector<char*> paras = (pparas != 0) ? * pparas : std::vector<char*>();
+            QString image_name;
+            if(infiles.empty())
+            {
+                fprintf (stderr, "Need input image. \n");
+                return false;
+            }
+            else
+                image_name = infiles[0];
+
+            unsigned char* data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype = 0;
+            if (!simple_loadimage_wrapper(callback,image_name.toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                v3d_msg("Error happens in reading the subject file [%s]. Exit.",0);
+                return false;
+            }
+            meanshift_plugin_vn4(callback,parent,data1d,in_sz,image_name,bmenu);
         }
         else if (func_name == tr("help"))
         {
