@@ -17,6 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with SQBlib.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
 #define qDebug(...) mexPrintf (__VA_ARGS__)
 #define qFatal(...) do{ mexPrintf (__VA_ARGS__); mexErrMsgTxt("See above"); } while(0)
 
@@ -34,6 +36,8 @@
 #include <SQB/Core/Booster.h>
 
 #include <SQB/Core/LineSearch.h>
+
+#include "vaa3d_link.h"
 
 typedef SQB::TreeBoosterWeightsType  WeightsType;
 typedef float   FeatsType;
@@ -310,3 +314,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexFunctionTest(nlhs, plhs, nrhs, prhs);
 #endif
 }
+
+bool sqb_entrance(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    mexFunction(nlhs, plhs, nrhs, prhs);
+    return true;
+}
+
