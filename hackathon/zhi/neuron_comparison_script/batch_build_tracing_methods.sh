@@ -63,6 +63,13 @@ svn up
 qmake
 make
 
+#meanshift 
+cd ../../../bigneuron_ported/zhijiang_zn_bjut/MeanshiftSpanningtree/
+make clean
+svn up
+qmake
+make
+
 #neuTube 
 cd ../../../hackathon/zhi/neuTube_zhi/
 make clean
