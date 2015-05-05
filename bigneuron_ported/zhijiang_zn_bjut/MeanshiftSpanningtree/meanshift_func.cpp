@@ -1,4 +1,4 @@
-﻿/* example_func.cpp
+/* example_func.cpp
 * This file contains the functions used in plugin domenu and dufunc, you can use it as a demo.
 * 2012-02-13 : by Yinan Wan
 */
@@ -10,6 +10,8 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/heap.h"
 #include "../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+
 #include <vector>
 #include <iostream>
  
@@ -287,7 +289,7 @@ void printSWCByQList_QList(QList<QList <NeuronSWC> > result_list,char* path)
 	return;
 }
 
-void printSWCByQList_Neuron(QList <NeuronSWC> result_list,char* path)
+void printSWCByQList_Neuron(QList <NeuronSWC> result_list,const char* path)
 {
 	V3DLONG number=0;
 	FILE * fp = fopen(path, "a");
@@ -303,6 +305,7 @@ void printSWCByQList_Neuron(QList <NeuronSWC> result_list,char* path)
 		for(int j=0;j< result_list.size();j++)
 		{
 			NeuronSWC temp2= result_list.at(j);
+                    if (j == 0); temp2.parent = -1;
 			//printf(" %lf \n",temp2.r);
 			fprintf(fp, "%ld %d %f %f %f %lf %ld\n",
 				temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
@@ -493,7 +496,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 		//QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return -1;
 	}
-	Image4DSimple *p4d = callback.getImage(curwin);
+        Image4DSimple *p4d = callback.getImage(curwin);
 	V3DLONG sz_x = p4d->getXDim();
 	V3DLONG sz_y = p4d->getYDim();
 	V3DLONG sz_z = p4d->getZDim();
@@ -541,7 +544,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 			}
 		}
 	}
-	printSwcByMap(Map_rootnode,"D:\\result\\final.swc");
+       //printSwcByMap(Map_rootnode,"D:\\result\\final.swc");
 
 	printf("###  rootnode found   ###\n");
 	//在这里将找到的root打印出来
@@ -579,9 +582,28 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent)
 	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
 	construct_tree(finalclass_node, sz_x, sz_y, sz_z);
 	
-	printSWCByQList_Neuron(result_list,"D:\\result\\meanshift_result.swc");
-	//writeSWC_file("D:\\result\\meanshift_result_tree_part.swc",result_final_tree);
-	delete []flag;
+        QString outswc_file = callback.getImageName(curwin) + "_meanshift.swc";
+        printSWCByQList_Neuron(result_list,outswc_file.toStdString().c_str());
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_sort;
+        V3DPluginArgList output;
+
+        arg.type = "random";std::vector<char*> arg_input_sort;
+        std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input_sort.push_back(fileName_string);
+        arg.p = (void *) & arg_input_sort; input_sort<< arg;
+        arg.type = "random";std::vector<char*> arg_sort_para; arg.p = (void *) & arg_sort_para; input_sort << arg;
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+        QString full_plugin_name_sort = "sort_neuron_swc";
+        QString func_name_sort = "sort_swc";
+        callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
+
+        vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
+        saveSWC_file(outswc_file.toStdString(), temp_out_swc);
+        v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()));
+        delete []flag;
 }
 
 
@@ -688,7 +710,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	}
 
 	
-	printSwcByMap(root,"D:\\result\\finalroot.swc");//
+     //printSwcByMap(root,"D:\\result\\finalroot.swc");
 
 
 }
