@@ -10,6 +10,10 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkConvolutionImageFilter.h"
+#include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
+
+
+#include <omp.h>
 
 using namespace std;
 using namespace Eigen;
@@ -18,9 +22,10 @@ using namespace Eigen;
 
 typedef Eigen::VectorXf VectorTypeFloat;
 typedef Eigen::VectorXd VectorTypeDouble;
+typedef Eigen::MatrixXd MatrixTypeDouble;
+typedef Eigen::MatrixXf MatrixTypeFloat;
 
-
-MatrixXd readMatrix(const char *filename);
+MatrixTypeDouble readMatrix(const char *filename);
 
 template<typename ImageType, typename VectorType>
 static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned dir, const VectorType &origVec );
@@ -29,9 +34,18 @@ static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned
 template<typename ImageType, typename VectorType>
 static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out);
 
+//template<typename ImageType, typename VectorType>
+//static void itkImage2EigenVector( typename ImageType::Pointer &input_img, VectorType &out_vector,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+
+template<typename ImageType, typename VectorType>
+VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+
+
 
 int main () {
 
+
+    ////load filters
     const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
     const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
 
@@ -48,7 +62,7 @@ int main () {
    // std::cout << sep_filters.cols() << std::endl;//25 ( cols of S = number of separable filters )
 
 
-    //load itk image
+    ////load itk image
 
     const char *input_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2.nrrd";
     typedef float ImageScalarType;
@@ -63,7 +77,13 @@ int main () {
   //  typedef float ImageScalarType;
    // typedef itk::Image<ImageScalarType, 3>   ITKImageType;
 
+     ITKImageType::Pointer input_image = reader->GetOutput();
+     input_image->Update();
+   //   ITKImageType::RegionType region = input_image->GetLargestPossibleRegion();
+      ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
 
+
+    ////convolve image
     ITKImageType::Pointer kernelX = ITKImageType::New();
     ITKImageType::Pointer kernelY = ITKImageType::New();
 ITKImageType::Pointer kernelZ = ITKImageType::New();
@@ -71,13 +91,7 @@ ITKImageType::Pointer kernelZ = ITKImageType::New();
     const int kernel_size = (int)(sep_filters.rows()/3);
 
    // std::cout << kernel_size << std::endl;
-
-
-
-
-   // for(unsigned int i_filter = 0; i_filter<sep_filters.cols() ;i_filter++)
-  //  {
-        //    VectorType kernel_x_eig = sep_filters.row(1).segment(1,(int)(sep_filters.rows()/3));
+      //    VectorType kernel_x_eig = sep_filters.row(1).segment(1,(int)(sep_filters.rows()/3));
             VectorTypeDouble kernel_eig = sep_filters.col(1);
             VectorTypeDouble kernel_x_eig;
             VectorTypeDouble kernel_y_eig;
@@ -121,9 +135,10 @@ ITKImageType::Pointer kernelZ = ITKImageType::New();
         convZ->Update();
 
  //out->loadItkImage( convZ->GetOutput() );
-
-
-    //save image
+bool save_image_0 =0;
+if(save_image_0)
+{
+    ////save image
     const char *output_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved.nrrd";
 
     typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
@@ -131,36 +146,92 @@ ITKImageType::Pointer kernelZ = ITKImageType::New();
       writer->SetFileName(output_image_file);
       writer->SetInput(convZ->GetOutput());
       writer->Update();
-    for(unsigned int i_filter = 0; i_filter<sep_filters.cols() ;i_filter++)
+}
+
+//const unsigned int n_sep_features =3;
+      const unsigned int n_sep_features = sep_filters.cols();
+      const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
+      //number of random smaples used for training
+      const unsigned int n_samples_per_image = 10;
+
+
+
+
+      ////convolve with filter bank
+     std::cout << "convolving with separable filters" << std::endl;
+    MatrixTypeFloat sep_features_all(n_samples_per_image,n_sep_features);
+
+//std::cout << "n filter "<<n_sep_features << std::endl;
+//std::cout << "n pixels "<<n_pixels << std::endl;
+//std::cout << "n rows "<< size_image[0] << std::endl;
+//std::cout << "n cols "<< size_image[1] << std::endl;
+//std::cout << "n sli "<< size_image[2] << std::endl;
+
+
+
+bool convolve_image = 1;
+if(convolve_image){
+
+    //#pragma omp parallel for
+    for(unsigned int i_filter = 0; i_filter<n_sep_features ;i_filter++)
     {
+        std::cout << "filter"<<i_filter << std::endl;
         const VectorTypeDouble kernel_eig = sep_filters.col(i_filter);
 
+     //   std::cout << "loaded filter" << std::endl;
 
         Matrix3D<float> out_matrix;
 
         ITKImageType::Pointer in_img = reader->GetOutput();
         wholeConvolveSepFilter<ITKImageType, VectorTypeDouble >( in_img, kernel_eig, out_matrix);
 
+    //    std::cout << "convolved image" << std::endl;
+
+        char buffer_out_name [500];
+        //char *output_image_file_i_filter;
+        const int temp_int =sprintf(buffer_out_name,"/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved_%i.nrrd",i_filter);
+
+    //    std::cout << buffer_out_name << std::endl;
+     //   out_matrix.save(buffer_out_name);
+
+
+        // store result in coumns of a matrix
+        ITKImageType::Pointer convolved_img= out_matrix.asItkImage();
+        VectorTypeFloat temp_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(convolved_img,n_samples_per_image,n_pixels);
+
+     //    std::cout << "copied vector" << std::endl;
+
+       // std::cout << sep_features_all.col(i_filter).size()<< std::endl;
+       // std::cout << temp_vector.size()<< std::endl;
+
+       //  std::cout << "temp v"<< temp_vector << std::endl;
+
+        sep_features_all.col(i_filter) = temp_vector;
+
     }//end for i_filter
 
-  /*VectorType myvector;
 
-  // set some values:
-  for (int i=1; i<10; ++i) myvector.push_back(1.0);   // 1 1 1 1 1 1 1 1 1
+    std::cout << sep_features_all << std::endl;
 
-  std::reverse(myvector.begin(),myvector.end());    // 1 1 1 1 1 1 1 1 1
 
-  // print out content:
-  std::cout << "myvector contains:";
-  for (std::vector<int>::iterator it=myvector.begin(); it!=myvector.end(); ++it)
-    std::cout << ' ' << *it;
-  std::cout << '\n';
+    //multiply with weight to get original filters convolution
+    const unsigned int n_nonsep_features = weights.cols();
+    const unsigned int scale_factor = 1; // used for multiscale appraoch if rescale filers to compute features
+    MatrixTypeFloat nonsep_features_all(n_samples_per_image,n_nonsep_features);
 
-*/
+    nonsep_features_all = sep_features_all*weights.cast<float>() ;
+   // nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+
+
+    std::cout << nonsep_features_all << std::endl;
+
+}
+
+
   return 0;
 }
 
-MatrixXd readMatrix(const char *filename)
+MatrixTypeDouble readMatrix(const char *filename)
     {
     int cols = 0, rows = 0;
     double buff[MAXBUFSIZE];
@@ -192,7 +263,7 @@ MatrixXd readMatrix(const char *filename)
     rows--;
 
     // Populate matrix with numbers.
-    MatrixXd result(rows,cols);
+    MatrixTypeDouble result(rows,cols);
     for (int i = 0; i < rows; i++)
         for (int j = 0; j < cols; j++)
             result(i,j) = buff[ cols*i+j ];
@@ -298,9 +369,87 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, cons
 
     convZ->Update();
 
+   // std::cout << "convolving image" << std::endl;
+
+
     out.loadItkImage( convZ->GetOutput() );
 
 }
+
+
+
+template<typename ImageType, typename VectorType>
+VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int  tot_n_pixels){
+
+
+    VectorType out_vector;
+    out_vector.setZero(n_rand_samples);
+
+    if(tot_n_pixels < n_rand_samples){
+
+        //error
+        printf ("Error: Tot number of pixels in image (%i) must be smaller to number or samples (%i)\n",tot_n_pixels,n_rand_samples);
+    }
+
+    itk::ImageRandomNonRepeatingConstIteratorWithIndex<ImageType> imageIterator(input_img, input_img->GetLargestPossibleRegion());
+      imageIterator.SetNumberOfSamples(n_rand_samples);
+
+    imageIterator.GoToBegin();
+    unsigned int i_pixel =0;
+      while(!imageIterator.IsAtEnd())
+        {
+        std::cout << imageIterator.Get() << std::endl;
+
+        out_vector(i_pixel) = imageIterator.Get() ;
+
+        ++imageIterator;
+        ++i_pixel;
+        }
+
+      return out_vector;
+
+
+}
+
+
+
+
+/*
+template<typename ImageType, typename VectorType>
+static void itkImage2EigenVector( typename ImageType::Pointer &input_img, VectorType &out_vector,const unsigned int n_rand_samples,const unsigned int  tot_n_pixels){
+
+    if(out_vector.rows() != n_rand_samples){
+
+        //error
+        printf ("Error: Lenght of Vector (%i) must be equal to number or samples (%i)\n",out_vector.rows(),n_rand_samples);
+        return;
+    }
+    if(tot_n_pixels < n_rand_samples){
+
+        //error
+        printf ("Error: Tot number of pixels in image (%i) must be smaller to number or samples (%i)\n",tot_n_pixels,n_rand_samples);
+        return;
+    }
+
+    itk::ImageRandomNonRepeatingConstIteratorWithIndex<ImageType> imageIterator(input_img, input_img->GetLargestPossibleRegion());
+      imageIterator.SetNumberOfSamples(n_rand_samples);
+
+    imageIterator.GoToBegin();
+    unsigned int i_pixel =0;
+      while(!imageIterator.IsAtEnd())
+        {
+        std::cout << imageIterator.Get() << std::endl;
+
+        out_vector(i_pixel) = imageIterator.Get() ;
+
+        ++imageIterator;
+        ++i_pixel;
+        }
+
+
+
+}
+
 
 /*
 
