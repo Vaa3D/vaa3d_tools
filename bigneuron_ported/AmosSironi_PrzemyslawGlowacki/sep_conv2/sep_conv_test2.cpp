@@ -4,7 +4,7 @@
 #include <fstream>
 #include <string>
 #include "include/Eigen/Dense"
-#include "superannotator/Matrix3D.h"
+#include "include/Matrix3D.h"
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
@@ -33,7 +33,14 @@ static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned
 
 
 template<typename ImageType, typename VectorType>
-static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out);
+static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, Matrix3D<float> &out);
+
+template<typename ImageType, typename VectorType>
+static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z, Matrix3D<float> &out);
+
+template<typename ImageType, typename VectorType>
+static void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out);
+
 
 //template<typename ImageType, typename VectorType>
 //static void itkImage2EigenVector( typename ImageType::Pointer &input_img, VectorType &out_vector,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
@@ -199,7 +206,7 @@ if(convolve_image){
         Matrix3D<float> out_matrix;
 
         ITKImageType::Pointer in_img = rescaleFilter->GetOutput();
-        wholeConvolveSepFilter<ITKImageType, VectorTypeDouble >( in_img, kernel_eig, out_matrix);
+        wholeConvolveSepFilterSplitVec<ITKImageType, VectorTypeDouble >( in_img, kernel_eig, out_matrix);
 
     //    std::cout << "convolved image" << std::endl;
 
@@ -346,21 +353,94 @@ imageIterator.Set( vec.coeff(i) );
 }
 
 
+template<typename ImageType, typename VectorType>
+static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, Matrix3D<float> &out){
+
+
+    typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
+    typename ConvolutionType::Pointer convX, convY, convZ;
+
+    convX = ConvolutionType::New();
+    convX->SetInput( input_img );
+    convX->SetKernelImage(kernelX);
+    convX->SetOutputRegionModeToSame();
+
+    convY = ConvolutionType::New();
+    convY->SetInput( convX->GetOutput() );
+    convY->SetKernelImage(kernelY);
+    convY->SetOutputRegionModeToSame();
+
+    convZ = ConvolutionType::New();
+    convZ->SetInput( convY->GetOutput() );
+    convZ->SetKernelImage(kernelZ);
+    convZ->SetOutputRegionModeToSame();
+
+   convZ->Update();
+
+   out.loadItkImage( convZ->GetOutput() );
+
+
+
+}
 
 
 template<typename ImageType, typename VectorType>
-static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out){
+static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z, Matrix3D<float> &out)
+{
+
+
+      typename ImageType::Pointer kernelX = ImageType::New();
+      typename ImageType::Pointer kernelY = ImageType::New();
+      typename ImageType::Pointer kernelZ = ImageType::New();
+
+     prepare1DKernel< ImageType,  VectorType>( kernelX, 0, kernel_eig_x );
+     prepare1DKernel< ImageType, VectorType>( kernelY, 1, kernel_eig_y );
+     prepare1DKernel< ImageType, VectorType>( kernelZ, 2, kernel_eig_z );
+
+     wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernelX,kernelY,kernelZ,out);
+
+/*
+     typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
+     typename ConvolutionType::Pointer convX, convY, convZ;
+
+     convX = ConvolutionType::New();
+     convX->SetInput( input_img );
+     convX->SetKernelImage(kernelX);
+     convX->SetOutputRegionModeToSame();
+
+     convY = ConvolutionType::New();
+     convY->SetInput( convX->GetOutput() );
+     convY->SetKernelImage(kernelY);
+     convY->SetOutputRegionModeToSame();
+
+     convZ = ConvolutionType::New();
+     convZ->SetInput( convY->GetOutput() );
+     convZ->SetKernelImage(kernelZ);
+     convZ->SetOutputRegionModeToSame();
+
+    convZ->Update();
+
+    out.loadItkImage( convZ->GetOutput() );
+*/
+}
+
+
+template<typename ImageType, typename VectorType>
+static void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out){
+
+
+  //  typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
 
     //    VectorType kernel_x_eig = sep_filters.row(1).segment(1,(int)(sep_filters.rows()/3));
         //VectorType kernel_eig = sep_filters.col(i_filter);
-         VectorType kernel_x_eig;
-         VectorType kernel_y_eig;
-         VectorType kernel_z_eig;
+          VectorType kernel_eig_x;
+          VectorType kernel_eig_y;
+          VectorType kernel_eig_z;
 
 
-        typename ImageType::Pointer kernelX = ImageType::New();
-        typename ImageType::Pointer kernelY = ImageType::New();
-        typename ImageType::Pointer kernelZ = ImageType::New();
+      //  typename ImageType::Pointer kernelX = ImageType::New();
+      //  typename ImageType::Pointer kernelY = ImageType::New();
+      //  typename ImageType::Pointer kernelZ = ImageType::New();
 
       //  std::cout << kernel_eig << std::endl;
 
@@ -368,20 +448,20 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, cons
          const int kernel_size = (int)(kernel_eig.rows()/3);
 
 
-        kernel_x_eig = kernel_eig.head(kernel_size);
-        kernel_y_eig = kernel_eig.segment(kernel_size,kernel_size);
-        kernel_z_eig = kernel_eig.tail(kernel_size);
+        kernel_eig_x = kernel_eig.head(kernel_size);
+        kernel_eig_y = kernel_eig.segment(kernel_size,kernel_size);
+        kernel_eig_z = kernel_eig.tail(kernel_size);
+
+        wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernel_eig_x,kernel_eig_y,kernel_eig_z,out);
 
      //std::cout << kernel_x_eig << std::endl;
      //std::cout << kernel_x_eig.size() << std::endl;
      //std::cout << kernel_y_eig.size() << std::endl;
      //std::cout << kernel_z_eig.size() << std::endl;
 
-        typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
-     prepare1DKernel< ImageType,  VectorType>( kernelX, 0, kernel_x_eig );
-     prepare1DKernel< ImageType, VectorType>( kernelY, 1, kernel_y_eig );
-     prepare1DKernel< ImageType, VectorType>( kernelZ, 2, kernel_z_eig );
 
+
+     /*
 
      typename ConvolutionType::Pointer convX, convY, convZ;
 
@@ -406,6 +486,8 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, cons
 
 
     out.loadItkImage( convZ->GetOutput() );
+
+    */
 
 }
 
