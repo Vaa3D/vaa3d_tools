@@ -68,6 +68,7 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
+        /*
         ////Amos
         if (func_name == tr("test")) // apply already trained classifier to an image and save results
 	{
@@ -91,7 +92,7 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 
             //convolve image with separable filters
                 MatrixXf all_features =
-
+*/
 		v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("func2"))
