@@ -514,7 +514,7 @@ void spine_detector_dialog::distance_measure()
         }
     }
 
-    unsigned char *visual_data=new unsigned char [size_page*sz_img[3]];
+    unsigned char *visual_data=new unsigned char [size_page*3];
     memcpy(visual_data,image1Dc_in,size_page);  
     qDebug()<<"bound_box finished:"<<sz_img[3];
     //adaptive_thres(neuron_id,bound_box);
@@ -588,7 +588,7 @@ void spine_detector_dialog::distance_measure()
 //    }
     multimap<float,V3DLONG>::reverse_iterator it = order_map.rbegin();
     V3DLONG spine_id=2;
-    vector<V3DLONG> temp_vec;
+
 //    QString fname="all.marker";
 //    FILE *fp1=fopen(fname.toAscii(),"wt");
 //    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
@@ -597,6 +597,7 @@ void spine_detector_dialog::distance_measure()
         V3DLONG tmp=it->second;
         if (label[tmp]>=2) {qDebug()<<"seed used"; it++; continue;}
         coord=pos2xyz(tmp,y_offset,z_offset);
+        vector<V3DLONG> temp_vec;
         temp_vec=detect_obj.spine_grow(bound_box,label,tmp,40,spine_id,3000,30);
         qDebug()<<"spine_id:"<<spine_id<<":"<<bound_box[tmp];
         //spine_id++;
@@ -630,14 +631,11 @@ void spine_detector_dialog::distance_measure()
     if (label!=0) {delete[] label; label=0;}
     if (bound_box!=0) {delete[] bound_box; bound_box=0;}
     //memcpy(visual_data+2*size_page,image1Dc_in,size_page);
-    for (int j=0;j<label_marker;j++)
-    {
-        for (V3DLONG i=0;i<size_page;i++)
-        {
-            if (new_label[i]>0)
-                visual_data[i+2*size_page]=image1Dc_in[i];
 
-        }
+    for (V3DLONG i=0;i<size_page;i++)
+    {
+        if (new_label[i]>0)
+            visual_data[i+2*size_page]=image1Dc_in[i];
     }
 
       //filename="test.v3draw";
@@ -651,7 +649,7 @@ void spine_detector_dialog::distance_measure()
     v3dhandle main=callback->newImageWindow("test");
     callback->setImage(main,&image4d);
     callback->updateImageWindow(main);
-    //callback->open3DWindow(main);
+    callback->open3DWindow(main);
 
 }
 

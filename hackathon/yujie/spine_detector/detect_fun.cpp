@@ -137,7 +137,7 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
         //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
         if (spread_width>max_spine_width)
         {
-            qDebug()<<"width breakout"<<spread_width;
+            qDebug()<<"width breakout_spine_grow"<<spread_width;
             //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
             break;
         }
@@ -1649,11 +1649,9 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
     V3DLONG neighbor[6];
     float ave,nsum;
     int count_ng;
-
     QString fname="region.marker";
     FILE *fp1=fopen(fname.toAscii(),"wt");
     fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
-
     QString outfile="spine_analysis.csv";
     FILE *fp2=fopen(outfile.toAscii(),"wt");
     fprintf(fp2,"##id,volume,neck_length,head_width,head_length,ave_nb\n");
@@ -1662,11 +1660,13 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
     float sum_x,sum_y,sum_z,new_center_x,new_center_y,new_center_z;
 
     multimap<float, V3DLONG>::reverse_iterator it = order_map.rbegin();
+    //qDebug()<<"before loop";
     while(it!= order_map.rend())
     {
+//        qDebug()<<"in loop";
         V3DLONG tmp_id=it->second;
-        bool over_max_pixel=false;
         if (label[tmp_id]<=1) {it++;continue;}
+        bool over_max_pixel=false;
         //qDebug()<<"tmp_id:"<<tmp_id;
         vector<V3DLONG> temp_i,temp_j,tmp_curr_layer,cluster,tmp_cluster;
         float spine_width,spread_width;
@@ -1674,10 +1674,10 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
         memset(mask1D,0,page_size);
         temp_i.push_back(tmp_id);
         distance_diff=0;
-        prev_diff=1;
+        prev_diff=0;
         cluster.push_back(tmp_id);
         mask1D[tmp_id]=1;
-        bool seed_run_out_flag=false;
+//        bool seed_run_out_flag=false;
         coord=pos2xyz(tmp_id,y_offset,z_offset);
         center_x=coord[0];
         center_y=coord[1];
@@ -1709,19 +1709,19 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
                            for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
                                V3DLONG pos1=xyz2pos(dx,dy,dz,y_offset,z_offset);
                                if (mask1D[pos1]>0) continue;
-                               if (label[pos1]>1 && outimg1d_tmp[pos1]>=floor)
+                               if (label[pos1]>1 && data1Dc_float[pos1]>=floor)
                                {
                                    temp_j.push_back(pos1);
                                    mask1D[pos1]=1;
-                                   if (floor<0&&outimg1d_tmp[pos1]>temp_floor)
-                                       temp_floor=outimg1d_tmp[pos1];
+                                   if (floor<0&&data1Dc_float[pos1]>temp_floor)
+                                       temp_floor=data1Dc_float[pos1];
                                }
                            }
                        }
                    }
                }
                if (temp_j.size()<=0) break;
-               if (floor<0) {floor=temp_floor;} //qDebug()<<"floor:"<<floor;}
+               if (floor<0) {floor=temp_floor; qDebug()<<"floor:"<<floor;}
                temp_i.clear();
                for (int k=0;k<temp_j.size();k++)
                {
@@ -1738,13 +1738,13 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
                //qDebug()<<"temp_j size:"<<temp_j.size();
             }
             //calculate center
-            if (tmp_curr_layer.size()<=0) {seed_run_out_flag=true; break;}
+            if (tmp_curr_layer.size()<=0) break;
             if (over_max_pixel) {break;}
             spread_width=calc_spread_width(tmp_curr_layer);
             //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
             if (spread_width>max_spine_width)
             {
-                qDebug()<<"width breakout"<<spread_width;
+                qDebug()<<"width breakout_connect_comp"<<spread_width<<":"<<tmp_id;
                 //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
                 break;
             }
@@ -1773,12 +1773,13 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
             center_y=new_center_y;
             center_z=new_center_z;
             if (prev_diff>0&&distance_diff>10*prev_diff)
-                {qDebug()<<"sudden increase:"<<prev_diff<<":"<<distance_diff;break;}
+                {qDebug()<<"sudden increase:"<<prev_diff<<":"<<distance_diff<<":"<<tmp_id;
+                break;}
             prev_diff=distance_diff;
             //qDebug()<<"distance_diff:"<<distance_diff<<" center:"<<center_x
 //                   <<":"<<center_y<<":"<<center_z;
         }
-        if (cluster.size()<=min_pixel) {it++; continue;}
+        if (cluster.size()<=min_pixel) {it++; qDebug()<<"not enough pixels"; continue;}
         //check group's average ng number
         count_ng=0; nsum=0;
         for (int j=0;j<cluster.size();j++)
@@ -1806,7 +1807,7 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
         else ave=0;
         //qDebug()<<"label:"<<label_marker<<"group size:"<<cluster.size()<<" ave:"<<ave;
 
-        if (ave<=3) {it++; continue;}
+        if (ave<=3) {it++; qDebug()<<"ave<3:"<<ave;continue;}
         else if (ave>3)
         {
             coord=pos2xyz(cluster[10],y_offset,z_offset);
