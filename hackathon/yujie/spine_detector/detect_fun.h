@@ -15,7 +15,7 @@
 #endif
 
 using namespace std;
-
+struct spine_profile {int volume; float neck_length; float head_width;float head_length;};
 unsigned char * memory_allocate_uchar1D(const V3DLONG i_size);
 void memory_free_uchar1D(unsigned char *ptr_input);
 float * memory_allocate_float1D(const V3DLONG i_size);
@@ -58,8 +58,11 @@ public:
     V3DLONG extract_nonsphere(unsigned char *all);
     vector<V3DLONG> bubbles_no_gsdt(unsigned char *seperate);
     float calc_spread_width(vector<V3DLONG> array);
-    vector<V3DLONG> spine_grow(float *bound_box, unsigned short *label,
+    vector<V3DLONG> spine_grow(float *bound_box, unsigned char *label,
          V3DLONG ind, int max_spine_width, int spine_id, int max_pixel, int min_pixel);
+    void connect_comp(unsigned char *label, unsigned short * new_label, int &label_marker, float *bound_box, int max_pixel, int min_pixel, int max_spine_width);
+    spine_profile spine_analysis(vector<float> array_width, vector<V3DLONG> cluster,
+                                    float *bound_box);
 
 private:
     V3DLONG page_size;

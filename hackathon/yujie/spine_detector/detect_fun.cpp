@@ -1,6 +1,5 @@
 #include "detect_fun.h"
 
-
 detect_fun::detect_fun()
 {
     data1Dc_float=0;
@@ -18,12 +17,12 @@ detect_fun::~detect_fun()
         memory_free_uchar1D(mask1D);
 }
 
-vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3DLONG ind,
+vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3DLONG ind,
                         int max_spine_width,int spine_id,int max_pixel,int min_pixel)
 {
     //qDebug()<<"in spine_grow";
-    QString filename=QString::number(spine_id-1)+".txt";
-    FILE *fp=fopen(filename.toAscii(),"wt");
+//    QString filename=QString::number(spine_id-1)+".txt";
+//    FILE *fp=fopen(filename.toAscii(),"wt");
 
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
@@ -35,18 +34,19 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3
     //tmp_curr_layer.push_back(ind);
     float temp_floor=bound_box[ind];
     //qDebug()<<"temp floor:"<<bound_box[ind];
-    fprintf(fp,"temp floor: %.2f\n",temp_floor);
+    //fprintf(fp,"temp floor: %.2f\n",temp_floor);
     map<V3DLONG,bool> temp_label;
     //temp_label[ind]=true;
 
-   //label=0 not visited; label>=2 indicates cluster_id
+   //label=0 not visited; label==2 indicates fg
     float floor=-1;
     float cluster_spread_width=-1;
     cluster_spread_width=-1;
     float spread_width=0;
     float spread_ratio;
     bool over_max_pixel=false;
-    float nsum=0;
+    float nsum=0; int count_ng;
+    float ave;
     vector<V3DLONG> neighbor(6,0);
     while (1)
     {
@@ -103,9 +103,9 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3
                }
            }
            //qDebug()<<"temp_j size:"<<temp_j.size();
-           fprintf(fp,"temp_curr_layer size: %d\n",temp_j.size());
-           if (floor<0) {floor=temp_floor;
-               fprintf(fp,"floor: %.2f\n",floor);}
+           //fprintf(fp,"temp_curr_layer size: %d\n",temp_j.size());
+           if (floor<0) {floor=temp_floor;}
+               //fprintf(fp,"floor: %.2f\n",floor);}
            //qDebug()<<"floor:"<<floor;
            temp_i.clear();
            //if for the first round
@@ -117,7 +117,7 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3
            {
                over_max_pixel=true;
                qDebug()<<"over_max_pixel break:"<<tmp_curr_layer.size()<<":"<<max_pixel;
-               fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
+               //fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
                break;
            }
            //qDebug()<<"tmp_curr_layer size:"<<tmp_curr_layer.size();
@@ -128,17 +128,17 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3
         if (tmp_curr_layer.size()<=0)
         {
             qDebug()<<"seeds run out";
-            fprintf(fp,"seeds run out\n");
+            //fprintf(fp,"seeds run out\n");
             break;
         }
         if (over_max_pixel) {break;}
         //current layer analysis: spread width
         spread_width=calc_spread_width(tmp_curr_layer);
-        fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
+        //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
         if (spread_width>max_spine_width)
         {
             qDebug()<<"width breakout"<<spread_width;
-            fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
+            //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
             break;
         }
 
@@ -147,72 +147,72 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3
             tmp_cluster.push_back(tmp_curr_layer[k]);
         }
 
-        //check the cluster spread ratio after adding the curr layer
-        if (cluster_spread_width==-1){ //first time to calc cluster_spread_width
-            cluster_spread_width=spread_width;
-            spread_ratio=1;
-            spread_width_array.push_back(spread_width);
-            fprintf(fp,"first layer\n");
-        }
-        else
-        {
-            cluster_spread_width=calc_spread_width(tmp_cluster);
-            fprintf(fp,"2+ layer cluster spread width: %.2f\n",cluster_spread_width);
-            spread_width_array.push_back(cluster_spread_width);
-            float sum=0.;
-            for (int kk=0;kk<spread_width_array.size();kk++)
-            {
-                sum+=spread_width_array[kk];
-            }
-            if (sum==0) {qDebug()<<"sum==0,will crash"; break;}
-            spread_ratio=cluster_spread_width*spread_width_array.size()/sum;
-            fprintf(fp,"spread ratio: %.2f\n",spread_ratio);
-        }
+//        //check the cluster spread ratio after adding the curr layer
+//        if (cluster_spread_width==-1){ //first time to calc cluster_spread_width
+//            cluster_spread_width=spread_width;
+//            spread_ratio=1;
+//            spread_width_array.push_back(spread_width);
+//            //fprintf(fp,"first layer\n");
+//        }
+//        else
+//        {
+//            cluster_spread_width=calc_spread_width(tmp_cluster);
+//            //fprintf(fp,"2+ layer cluster spread width: %.2f\n",cluster_spread_width);
+//            spread_width_array.push_back(cluster_spread_width);
+//            float sum=0.;
+//            for (int kk=0;kk<spread_width_array.size();kk++)
+//            {
+//                sum+=spread_width_array[kk];
+//            }
+//            if (sum==0) {qDebug()<<"sum==0,will crash"; break;}
+//            spread_ratio=cluster_spread_width*spread_width_array.size()/sum;
+//            //fprintf(fp,"spread ratio: %.2f\n",spread_ratio);
+//        }
 
-        if (spread_ratio>=1.5 && spread_width>15)
-        {
-            qDebug()<<"ratio break"<<spread_ratio<<"cluster_width:"
-                   <<cluster_spread_width<<" current spread_width:"<<spread_width;
-            fprintf(fp,"ratio break: %.2f\n",spread_ratio);
-            break; //tmp_curr layer cannot be added
-        }
-        fprintf(fp,"push to cluster\n");
-        for (int k=0;k<tmp_curr_layer.size();k++)
-        {
-            cluster.push_back(tmp_curr_layer[k]);
-        }
+//        if (spread_ratio>1.8 && tmp_cluster.size()>=100)
+//        {
+//            qDebug()<<"ratio break"<<spread_ratio<<"cluster_width:"
+//                   <<cluster_spread_width<<" current spread_width:"<<spread_width;
+//            //fprintf(fp,"ratio break: %.2f\n",spread_ratio);
+//            break; //tmp_curr layer cannot be added
+//        }
+//        //fprintf(fp,"push to cluster\n");
+//        for (int k=0;k<tmp_curr_layer.size();k++)
+//        {
+//            cluster.push_back(tmp_curr_layer[k]);
+//        }
 
         temp_i.clear();
         temp_i=tmp_curr_layer;
     }
-    fprintf(fp,"cluster build finished,check aspect ratio and size\n");
+    //fprintf(fp,"cluster build finished,check aspect ratio and size\n");
     //compute aspect ratio
-    if (!spread_width_array.empty())
+//    if (!spread_width_array.empty())
+//    {
+//        float aspect_ratio=bound_box[ind]/spread_width_array.back();
+//        //fprintf(fp,"aspect ratio: %.2f\n",aspect_ratio);
+//        if (aspect_ratio<0.2)
+//        {
+//            qDebug()<<"aspect ratio breakout"<<aspect_ratio;
+//            //fprintf(fp,"aspect ratio breakout, reject cluster\n");
+//            cluster.clear();
+//            //fprintf(fp,"cluster size: %d\n",cluster.size());
+//            //fclose(fp);
+//            return cluster;
+//        }
+//    }
+    if (tmp_cluster.size()>=min_pixel)
     {
-        float aspect_ratio=bound_box[ind]/spread_width_array.back();
-        fprintf(fp,"aspect ratio: %.2f\n",aspect_ratio);
-        if (aspect_ratio<0.25)
+        //fprintf(fp,"cluster size: %d\n",cluster.size());
+        for (int j=0;j<tmp_cluster.size();j++)
         {
-            qDebug()<<"aspect ratio breakout"<<aspect_ratio;
-            fprintf(fp,"aspect ratio breakout, reject cluster\n");
-            cluster.clear();
-            fprintf(fp,"cluster size: %d\n",cluster.size());
-            fclose(fp);
-            return cluster;
+            //if(label[cluster[j]]==0)
+                label[tmp_cluster[j]]=2;
         }
     }
-    if (cluster.size()>=min_pixel)
-    {
-        fprintf(fp,"cluster size: %d\n",cluster.size());
-        for (int j=0;j<cluster.size();j++)
-        {
-            if(label[cluster[j]]<=1)
-                label[cluster[j]]=spine_id;
-        }
-    }
-    else {cluster.clear(); fprintf(fp,"cluster too small, reject cluster\n");}
-    fclose(fp);
-    return cluster;
+    else {tmp_cluster.clear();}//fprintf(fp,"cluster too small, reject cluster\n");}
+    //fclose(fp);
+    return tmp_cluster;
 }
 
 float detect_fun::calc_spread_width(vector<V3DLONG> array)
@@ -240,8 +240,8 @@ float detect_fun::calc_spread_width(vector<V3DLONG> array)
     float tmp=(x_max-x_min)*(x_max-x_min)+(y_max-y_min)*(y_max-y_min)+
             (z_max-z_min)*(z_max-z_min);
     float dis_tmp=sqrt(tmp);
-    qDebug()<<"spread width:"<<x_max<<":"<<x_min<<":"<<y_max<<":"<<y_min<<":"
-           <<z_max<<":"<<z_min<<":"<<dis_tmp;
+//    qDebug()<<"spread width:"<<x_max<<":"<<x_min<<":"<<y_max<<":"<<y_min<<":"
+//           <<z_max<<":"<<z_min<<":"<<dis_tmp;
     return dis_tmp;
 }
 
@@ -1594,6 +1594,269 @@ V3DLONG detect_fun::extract_nonoverlap(unsigned char *skel_mask,long *label,
     return x_all.size();
 }
 
+void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,int &label_marker,
+                              float *bound_box,int max_pixel, int min_pixel,int max_spine_width)
+{
+    memset(mask1D,0,page_size*sizeof(unsigned char));
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+
+    //run a gsdt
+    unsigned char *gsdt_image=new unsigned char[page_size];
+    memset(gsdt_image,0,page_size);
+
+    for (V3DLONG i=0;i<page_size;i++)
+    {
+        if (label[i]>1) //label==1 skeleton
+        {
+            gsdt_image[i]=(unsigned char)data1Dc_float[i];
+        }
+    }
+    //generate gsdt
+    multimap<float, V3DLONG> order_map;
+    float *phi=0;
+    fastmarching_dt(gsdt_image,phi,sz_image[0],sz_image[1],sz_image[2],3);
+    float min_val = phi[0], max_val = phi[0];
+    float *outimg1d_tmp = new float[page_size*sizeof(float)];
+    for(V3DLONG i = 0; i < page_size; i++)
+    {
+        if(phi[i] == INF) continue;
+        min_val = MIN(min_val, phi[i]);
+        max_val = MAX(max_val, phi[i]);
+    }
+    cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
+    max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
+    for(V3DLONG i = 0; i < page_size; i++)
+    {
+        if(phi[i] == INF) outimg1d_tmp[i] = 0;
+        else if(phi[i] ==0) outimg1d_tmp[i] = 0;
+        else
+        {
+            outimg1d_tmp[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
+            outimg1d_tmp[i] = MAX(outimg1d_tmp[i], 1);
+            order_map.insert(pair<float, V3DLONG> (outimg1d_tmp[i],i));
+        }
+    }
+    if (phi!=0) {delete phi; phi=0;}
+    if (gsdt_image!=0) {delete gsdt_image; gsdt_image=0;}
+    qDebug()<<"order_map size:"<<order_map.size();
+
+//    V3DLONG sz[4]={sz_image[0],sz_image[1],sz_image[2],1};
+//    simple_saveimage_wrapper(callback,test_fname.toAscii(),(unsigned char*)new_label,sz,2);
+
+    V3DLONG x,y,z,pos;
+    vector<V3DLONG> coord(3,0);
+    V3DLONG neighbor[6];
+    float ave,nsum;
+    int count_ng;
+
+    QString fname="region.marker";
+    FILE *fp1=fopen(fname.toAscii(),"wt");
+    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+
+    QString outfile="spine_analysis.csv";
+    FILE *fp2=fopen(outfile.toAscii(),"wt");
+    fprintf(fp2,"##id,volume,neck_length,head_width,head_length,ave_nb\n");
+
+    float distance_diff,floor,prev_diff,temp_floor,center_x,center_y,center_z;
+    float sum_x,sum_y,sum_z,new_center_x,new_center_y,new_center_z;
+
+    multimap<float, V3DLONG>::reverse_iterator it = order_map.rbegin();
+    while(it!= order_map.rend())
+    {
+        V3DLONG tmp_id=it->second;
+        bool over_max_pixel=false;
+        if (label[tmp_id]<=1) {it++;continue;}
+        //qDebug()<<"tmp_id:"<<tmp_id;
+        vector<V3DLONG> temp_i,temp_j,tmp_curr_layer,cluster,tmp_cluster;
+        float spine_width,spread_width;
+        vector<float> spine_width_array;
+        memset(mask1D,0,page_size);
+        temp_i.push_back(tmp_id);
+        distance_diff=0;
+        prev_diff=1;
+        cluster.push_back(tmp_id);
+        mask1D[tmp_id]=1;
+        bool seed_run_out_flag=false;
+        coord=pos2xyz(tmp_id,y_offset,z_offset);
+        center_x=coord[0];
+        center_y=coord[1];
+        center_z=coord[2];
+
+        while(distance_diff<1)
+        {
+            //qDebug()<<"tmp_curr_layer size added to cluster:"<<tmp_curr_layer.size();
+            floor=-1; temp_floor=-1;
+            if (tmp_curr_layer.size()>0)
+            {
+                cluster=tmp_cluster;
+                spine_width=calc_spread_width(tmp_curr_layer);
+                spine_width_array.push_back(spine_width);
+                tmp_curr_layer.clear();
+            }
+
+            while (temp_i.size()>0)
+            {
+               temp_j.clear();
+                //look at 26 neighbors of ind
+               for (int k=0;k<temp_i.size();k++)
+               {
+                   pos=temp_i[k];
+                   coord=pos2xyz(pos,y_offset,z_offset);
+                   x=coord[0]; y=coord[1]; z=coord[2];
+                   for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                       for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                           for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                               V3DLONG pos1=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                               if (mask1D[pos1]>0) continue;
+                               if (label[pos1]>1 && outimg1d_tmp[pos1]>=floor)
+                               {
+                                   temp_j.push_back(pos1);
+                                   mask1D[pos1]=1;
+                                   if (floor<0&&outimg1d_tmp[pos1]>temp_floor)
+                                       temp_floor=outimg1d_tmp[pos1];
+                               }
+                           }
+                       }
+                   }
+               }
+               if (temp_j.size()<=0) break;
+               if (floor<0) {floor=temp_floor;} //qDebug()<<"floor:"<<floor;}
+               temp_i.clear();
+               for (int k=0;k<temp_j.size();k++)
+               {
+                   tmp_curr_layer.push_back(temp_j[k]);
+               }
+               if (tmp_curr_layer.size()>max_pixel)
+               {
+                   over_max_pixel=true;
+                   qDebug()<<"over_max_pixel break:"<<tmp_curr_layer.size()<<":"<<max_pixel;
+                   //fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
+                   break;
+               }
+               temp_i=temp_j;
+               //qDebug()<<"temp_j size:"<<temp_j.size();
+            }
+            //calculate center
+            if (tmp_curr_layer.size()<=0) {seed_run_out_flag=true; break;}
+            if (over_max_pixel) {break;}
+            spread_width=calc_spread_width(tmp_curr_layer);
+            //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
+            if (spread_width>max_spine_width)
+            {
+                qDebug()<<"width breakout"<<spread_width;
+                //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
+                break;
+            }
+            for (int k=0;k<tmp_curr_layer.size();k++)
+            {
+                tmp_cluster.push_back(tmp_curr_layer[k]);
+            }
+            sum_x=sum_y=sum_z=0;
+            for (int k=0;k<tmp_cluster.size();k++)
+            {
+                coord=pos2xyz(tmp_cluster[k],y_offset,z_offset);
+                sum_x=sum_x+coord[0];
+                sum_y=sum_y+coord[1];
+                sum_z=sum_z+coord[2];
+            }
+            new_center_x=sum_x/tmp_cluster.size();
+            new_center_y=sum_y/tmp_cluster.size();
+            new_center_z=sum_z/tmp_cluster.size();
+            float tmp_diff=(new_center_x-center_x)*(new_center_x-center_x)+
+                    (new_center_y-center_y)*(new_center_y-center_y)
+                    +(new_center_z-center_z)*(new_center_z-center_z);
+            distance_diff=sqrt(tmp_diff);
+            temp_i.clear();
+            temp_i=tmp_curr_layer;
+            center_x=new_center_x;
+            center_y=new_center_y;
+            center_z=new_center_z;
+            if (prev_diff>0&&distance_diff>10*prev_diff)
+                {qDebug()<<"sudden increase:"<<prev_diff<<":"<<distance_diff;break;}
+            prev_diff=distance_diff;
+            //qDebug()<<"distance_diff:"<<distance_diff<<" center:"<<center_x
+//                   <<":"<<center_y<<":"<<center_z;
+        }
+        if (cluster.size()<=min_pixel) {it++; continue;}
+        //check group's average ng number
+        count_ng=0; nsum=0;
+        for (int j=0;j<cluster.size();j++)
+        {
+            if(cluster[j]-1>=0&&cluster[j]+1<page_size&&cluster[j]-sz_image[0]>=0&&
+                    cluster[j]+sz_image[0]<page_size
+                    &&cluster[j]-z_offset>=0&&cluster[j]+z_offset<page_size)
+            {
+                count_ng++;
+                neighbor[0]=cluster[j]-1;
+                neighbor[1]=cluster[j]+1;
+                neighbor[2]=cluster[j]-sz_image[0];
+                neighbor[3]=cluster[j]+sz_image[0];
+                neighbor[4]=cluster[j]-z_offset;
+                neighbor[5]=cluster[j]+z_offset;
+                for (int k=0;k<6;k++)
+                {
+                    if(label[neighbor[k]]>1)
+                        nsum++;
+                }
+            }
+        }
+        if (count_ng>0)
+            ave=nsum/count_ng;
+        else ave=0;
+        //qDebug()<<"label:"<<label_marker<<"group size:"<<cluster.size()<<" ave:"<<ave;
+
+        if (ave<=3) {it++; continue;}
+        else if (ave>3)
+        {
+            coord=pos2xyz(cluster[10],y_offset,z_offset);
+            fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
+            for (int j=0;j<cluster.size();j++)
+            {
+                label[cluster[j]]=0;
+                new_label[cluster[j]]=label_marker;
+            }
+            spine_profile tmp;
+            tmp=spine_analysis(spine_width_array,cluster,bound_box);
+            fprintf(fp2,"%d,%d,%.1f,%.1f,%.1f,%.1f\n",label_marker,tmp.volume,tmp.neck_length
+                    ,tmp.head_width,tmp.head_length,ave);
+            label_marker++;
+            qDebug()<<"label updated:"<<label_marker<<" cluster size:"<<cluster.size();
+        }
+        it++;
+    }
+    label_marker--;
+    fclose(fp1);
+    fclose(fp2);
+}
+
+
+spine_profile detect_fun::spine_analysis(vector<float> array_width, vector<V3DLONG> cluster,
+                                float *bound_box)
+{
+    float min_dis=bound_box[cluster[0]]; float max_dis=bound_box[cluster[0]];
+    for (int i=1;i<cluster.size();i++)
+    {
+        if (bound_box[cluster[i]]>max_dis)
+            max_dis=bound_box[cluster[i]];
+        if (bound_box[cluster[i]]<min_dis)
+            min_dis=bound_box[cluster[i]];
+    }
+    float max_head_width=array_width[0];
+    for (int i=1;i<array_width.size();i++)
+    {
+        qDebug()<<"width array:"<<array_width.size()<<array_width[0]<<array_width[i];
+        if (array_width[i]>max_head_width)
+            max_head_width=array_width[i];
+    }
+    spine_profile tmp;
+    tmp.head_width=max_head_width;
+    tmp.head_length=max_dis-min_dis;
+    tmp.neck_length=min_dis;
+    tmp.volume=cluster.size();
+    return tmp;
+}
+
 V3DLONG detect_fun::extract_nonsphere(unsigned char * all)
 
 {
@@ -1615,7 +1878,6 @@ V3DLONG detect_fun::extract_nonsphere(unsigned char * all)
     seeds.push_back(seed_ind);
     all[seed_ind]=1;
 
-    int nsum;
     V3DLONG sid=0;
     while(sid<seeds.size())
     {

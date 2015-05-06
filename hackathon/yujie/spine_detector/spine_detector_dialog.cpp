@@ -460,7 +460,7 @@ void spine_detector_dialog::preprosessing()
 
 void spine_detector_dialog::distance_measure()
 {
-    qDebug()<<"in distance_measure";
+    //qDebug()<<"in distance_measure";
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
     V3DLONG y_offset=sz_img[0];
     V3DLONG z_offset=sz_img[0]*sz_img[1];
@@ -518,11 +518,11 @@ void spine_detector_dialog::distance_measure()
     memcpy(visual_data,image1Dc_in,size_page);  
     qDebug()<<"bound_box finished:"<<sz_img[3];
     //adaptive_thres(neuron_id,bound_box);
-    for (V3DLONG i=0;i<size_page;i++)
-    {
-        if (bound_box[i]>=0)
-            visual_data[i+size_page]=255;
-    }
+//    for (V3DLONG i=0;i<size_page;i++)
+//    {
+//        if (bound_box[i]>=0)
+//            visual_data[i+size_page]=255;
+//    }
 
     //search each bound_box==-2 points for extremes
     //1)farthest dis among 26 nbs
@@ -531,7 +531,7 @@ void spine_detector_dialog::distance_measure()
     multimap<float,V3DLONG> order_map;
     for (V3DLONG i=0;i<size_page;i++)
     {
-        if (bound_box[i]<=2) continue;
+        if (bound_box[i]<=3) continue;
         int count_3nb=0; int count_5nb=0;
         coord=pos2xyz(i,y_offset,z_offset);
         V3DLONG x=coord[0]; V3DLONG y=coord[1]; V3DLONG z=coord[2];
@@ -552,7 +552,12 @@ void spine_detector_dialog::distance_measure()
                 }
             }
         }
-        if (count_3nb==count_5nb||count_3nb==0) continue;
+        if (count_3nb==count_5nb||count_3nb<=4)
+        {
+            bound_box[i]=-1;
+            neuron_id[i]=-1;
+            continue;
+        }
         //build map starting from the farthest distance
         order_map.insert(pair<float,V3DLONG>(bound_box[i],i));
     break1: {}
@@ -574,36 +579,34 @@ void spine_detector_dialog::distance_measure()
 //    }
 //    qDebug()<<"count0_2:"<<count0_2<<":"<<count2_5<<":"<<count5_10<<":"
 //           <<count10;
-    unsigned short *label=new unsigned short[size_page];
-    memset(label,0,size_page*sizeof(unsigned short));
-    for (V3DLONG i=0;i<size_page;i++)
-    {
-        if (bound_box[i]==0)
-            label[i]=1;
-    }
+    unsigned char *label=new unsigned char[size_page];
+    memset(label,0,size_page);
+//    for (V3DLONG i=0;i<size_page;i++)
+//    {
+//        if (bound_box[i]==0)
+//            label[i]=1;
+//    }
     multimap<float,V3DLONG>::reverse_iterator it = order_map.rbegin();
     V3DLONG spine_id=2;
     vector<V3DLONG> temp_vec;
-    QString fname="all.marker";
-    FILE *fp1=fopen(fname.toAscii(),"wt");
-    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
-
+//    QString fname="all.marker";
+//    FILE *fp1=fopen(fname.toAscii(),"wt");
+//    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
     while(it!= order_map.rend())
     {
-//    for (int i=0;i<1000;i++)
-//    {
-        qDebug()<<"spine_id:"<<spine_id;
         V3DLONG tmp=it->second;
-        if (label[tmp]>1) {qDebug()<<"seed used"; it++; continue;}
+        if (label[tmp]>=2) {qDebug()<<"seed used"; it++; continue;}
         coord=pos2xyz(tmp,y_offset,z_offset);
-        temp_vec=detect_obj.spine_grow(bound_box,label,tmp,35,spine_id,3000,60);
-        spine_id++;
-        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
+        temp_vec=detect_obj.spine_grow(bound_box,label,tmp,40,spine_id,3000,30);
+        qDebug()<<"spine_id:"<<spine_id<<":"<<bound_box[tmp];
+        //spine_id++;
+        //fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
         for (V3DLONG i=0;i<temp_vec.size();i++)
-            visual_data[temp_vec[i]+2*size_page]=255;
+            visual_data[temp_vec[i]+1*size_page]=255;
         it++;
     }
-    fclose(fp1);
+
+    //fclose(fp1);
 
 //    QString filename="2.marker";
 //    QList<ImageMarker> LList=readMarker_file(filename);
@@ -618,20 +621,37 @@ void spine_detector_dialog::distance_measure()
 //          visual_data[temp_vec[i]+2*size_page]=255;
 //      it++;
 //    }
-    QString test_fname="label.v3draw";
-    V3DLONG sz[4]={sz_img[0],sz_img[1],sz_img[2],1};
-    simple_saveimage_wrapper(*callback,test_fname.toAscii(),(unsigned char*)label,sz,2);
-    if (bound_box!=0) {delete[] bound_box; bound_box=0;}
+
+    if (neuron_id!=0) {delete[] neuron_id; neuron_id=0;}
+    unsigned short *new_label=new unsigned short[size_page];
+    memset(new_label,0,size_page*sizeof(unsigned short));
+    int label_marker=1;
+    detect_obj.connect_comp(label,new_label,label_marker,bound_box,2000,30,40);
     if (label!=0) {delete[] label; label=0;}
+    if (bound_box!=0) {delete[] bound_box; bound_box=0;}
+    //memcpy(visual_data+2*size_page,image1Dc_in,size_page);
+    for (int j=0;j<label_marker;j++)
+    {
+        for (V3DLONG i=0;i<size_page;i++)
+        {
+            if (new_label[i]>0)
+                visual_data[i+2*size_page]=image1Dc_in[i];
+
+        }
+    }
+
       //filename="test.v3draw";
       //simple_saveimage_wrapper(*callback,filename.toAscii(),visual_data,sz_img,1);
+    QString test_fname="newlabel.v3draw";
+    V3DLONG sz[4]={sz_img[0],sz_img[1],sz_img[2],1};
+    simple_saveimage_wrapper(*callback,test_fname.toAscii(),(unsigned char*)new_label,sz,2);
     Image4DSimple image4d;
     image4d.setData(visual_data,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
-    //image4d.setData(boundary,sz_img[0],sz_img[1],sz_img[2],1,V3D_UINT8);
+    //image4d.setData((unsigned char*)new_label,sz_img[0],sz_img[1],sz_img[2],1,V3D_UINT16);
     v3dhandle main=callback->newImageWindow("test");
     callback->setImage(main,&image4d);
     callback->updateImageWindow(main);
-    callback->open3DWindow(main);
+    //callback->open3DWindow(main);
 
 }
 
