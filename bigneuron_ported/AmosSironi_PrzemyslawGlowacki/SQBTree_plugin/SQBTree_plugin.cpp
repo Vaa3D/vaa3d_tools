@@ -9,6 +9,15 @@
 
 #include "../sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
+////Amos
+#include "sep_conv.h"
+//using namespace Eigen;
+//typedef Eigen::VectorXf VectorTypeFloat;
+//typedef Eigen::VectorXd VectorTypeDouble;
+//typedef Eigen::MatrixXd MatrixTypeDouble;
+//typedef Eigen::MatrixXf MatrixTypeFloat;
+
+
 using namespace std;
 Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
  
@@ -59,8 +68,30 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+        ////Amos
+        if (func_name == tr("test")) // apply already trained classifier to an image and save results
 	{
+
+            //read input image file
+                Matrix3D<float> in_matrix;
+                //bool load( const std::string &fName )
+                bool loaded_image = in_matrix.load(infiles);
+                if(!loaded_image){
+                    //error
+                    v3d_msg('ERROR: image %s not found\n',infiles);
+                    return 0;
+                }
+
+            //read sep filters and weights
+                 const char *sep_filters_file = inparas[0];
+                 const char *weight_file = inparas[1];
+
+                 MatrixXd weights = readMatrix(weight_file);
+                 MatrixXd sep_filters = readMatrix(sep_filters_file);
+
+            //convolve image with separable filters
+                MatrixXf all_features =
+
 		v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("func2"))

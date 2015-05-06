@@ -11,7 +11,7 @@
 #include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"
 
-#include <omp.h>
+//#include <omp.h>
 
 using namespace std;
 using namespace Eigen;
@@ -54,6 +54,8 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
 template<typename ImageType, typename VectorType>
 typename ImageType::Pointer eigenVector2itkImage(const VectorType &input_vector, const typename ImageType::SizeType &size_image);
 
+template<typename ImageType, typename MatrixType>
+MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix );
 
 
 ////functions definitions
