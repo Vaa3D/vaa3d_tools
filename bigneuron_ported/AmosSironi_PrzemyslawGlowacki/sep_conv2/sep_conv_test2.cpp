@@ -11,6 +11,7 @@
 #include "itkImageFileWriter.h"
 #include "itkConvolutionImageFilter.h"
 #include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
+#include "itkRescaleIntensityImageFilter.h"
 
 
 #include <omp.h>
@@ -39,6 +40,10 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, cons
 
 template<typename ImageType, typename VectorType>
 VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+
+template<typename ImageType, typename VectorType>
+typename ImageType::Pointer eigenVector2itkImage(const VectorType &input_vector, const typename ImageType::SizeType &size_image);
+
 
 
 
@@ -69,6 +74,8 @@ int main () {
     typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
     typedef itk::ImageFileReader<ITKImageType> ReaderType;
 
+    typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
+
   ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(input_image_file);
 
@@ -83,10 +90,19 @@ int main () {
       ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
 
 
+
+      ////rescale in [0 1]
+       typedef itk::RescaleIntensityImageFilter< ITKImageType, ITKImageType > RescaleFilterType;
+      RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+      rescaleFilter->SetInput(reader->GetOutput());
+      rescaleFilter->SetOutputMinimum(0.0);
+      rescaleFilter->SetOutputMaximum(1.0);
+
+
     ////convolve image
     ITKImageType::Pointer kernelX = ITKImageType::New();
     ITKImageType::Pointer kernelY = ITKImageType::New();
-ITKImageType::Pointer kernelZ = ITKImageType::New();
+    ITKImageType::Pointer kernelZ = ITKImageType::New();
 
     const int kernel_size = (int)(sep_filters.rows()/3);
 
@@ -118,7 +134,7 @@ ITKImageType::Pointer kernelZ = ITKImageType::New();
          ConvolutionType::Pointer convX, convY, convZ;
 
          convX = ConvolutionType::New();
-         convX->SetInput( reader->GetOutput() );
+         convX->SetInput( rescaleFilter->GetOutput() );
          convX->SetKernelImage(kernelX);
          convX->SetOutputRegionModeToSame();
 
@@ -141,7 +157,7 @@ if(save_image_0)
     ////save image
     const char *output_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved.nrrd";
 
-    typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
+   // typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
       WriterType::Pointer writer = WriterType::New();
       writer->SetFileName(output_image_file);
       writer->SetInput(convZ->GetOutput());
@@ -152,8 +168,8 @@ if(save_image_0)
       const unsigned int n_sep_features = sep_filters.cols();
       const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
       //number of random smaples used for training
-      const unsigned int n_samples_per_image = 10;
-
+     // const unsigned int n_samples_per_image = 10;
+ const unsigned int n_samples_per_image = n_pixels;
 
 
 
@@ -182,7 +198,7 @@ if(convolve_image){
 
         Matrix3D<float> out_matrix;
 
-        ITKImageType::Pointer in_img = reader->GetOutput();
+        ITKImageType::Pointer in_img = rescaleFilter->GetOutput();
         wholeConvolveSepFilter<ITKImageType, VectorTypeDouble >( in_img, kernel_eig, out_matrix);
 
     //    std::cout << "convolved image" << std::endl;
@@ -192,7 +208,7 @@ if(convolve_image){
         const int temp_int =sprintf(buffer_out_name,"/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved_%i.nrrd",i_filter);
 
     //    std::cout << buffer_out_name << std::endl;
-     //   out_matrix.save(buffer_out_name);
+        out_matrix.save(buffer_out_name);
 
 
         // store result in coumns of a matrix
@@ -211,19 +227,39 @@ if(convolve_image){
     }//end for i_filter
 
 
-    std::cout << sep_features_all << std::endl;
+  //  std::cout << sep_features_all << std::endl;
+
+    std::cout << "min sep: " << sep_features_all.minCoeff() << std::endl;
+    std::cout << "max sep: "<<sep_features_all.maxCoeff()   << std::endl;
 
 
     //multiply with weight to get original filters convolution
     const unsigned int n_nonsep_features = weights.cols();
-    const unsigned int scale_factor = 1; // used for multiscale appraoch if rescale filers to compute features
+    const float scale_factor = 1.0; // used for multiscale appraoch if rescale filers to compute features
     MatrixTypeFloat nonsep_features_all(n_samples_per_image,n_nonsep_features);
 
     nonsep_features_all = sep_features_all*weights.cast<float>() ;
-   // nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+    nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+
+   std::cout << "min all: " << nonsep_features_all.minCoeff() << std::endl;
+   std::cout << "max all: "<<nonsep_features_all.maxCoeff()   << std::endl;
+
+    //std::cout << nonsep_features_all << std::endl;
+   VectorTypeFloat convolved_vector = nonsep_features_all.col(0);
+
+   std::cout << "min first col: " << convolved_vector.minCoeff() << std::endl;
+   std::cout << "max first col: "<<convolved_vector.maxCoeff()   << std::endl;
+
+   ITKImageType::Pointer convolved_img_orig = eigenVector2itkImage<ITKImageType,VectorTypeFloat>(convolved_vector,size_image);
 
 
-    std::cout << nonsep_features_all << std::endl;
+   WriterType::Pointer writer = WriterType::New();
+   const char *output_conv_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved_orig.nrrd";
+
+   writer->SetFileName(output_conv_file);
+   writer->SetInput(convolved_img_orig);
+   writer->Update();
+
 
 }
 
@@ -270,9 +306,6 @@ MatrixTypeDouble readMatrix(const char *filename)
 
     return result;
     };
-
-
-
 
 
 
@@ -389,28 +422,107 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
 
         //error
         printf ("Error: Tot number of pixels in image (%i) must be smaller to number or samples (%i)\n",tot_n_pixels,n_rand_samples);
+        return out_vector;
+    }
+    else if(tot_n_pixels > n_rand_samples)
+    {
+
+
+        itk::ImageRandomNonRepeatingConstIteratorWithIndex<ImageType> imageIterator(input_img, input_img->GetLargestPossibleRegion());
+        imageIterator.SetNumberOfSamples(n_rand_samples);
+        imageIterator.GoToBegin();
+        unsigned int i_pixel =0;
+          while(!imageIterator.IsAtEnd())
+            {
+          //  std::cout << imageIterator.Get() << std::endl;
+
+            out_vector(i_pixel) = imageIterator.Get() ;
+
+            ++imageIterator;
+            ++i_pixel;
+            }
+
+          return out_vector;
+    }
+    else // take all pixels
+    {
+         itk::ImageRegionIterator<ImageType> imageIterator(input_img,input_img->GetLargestPossibleRegion());
+         imageIterator.GoToBegin();
+         unsigned int i_pixel =0;
+           while(!imageIterator.IsAtEnd())
+             {
+           //  std::cout << imageIterator.Get() << std::endl;
+
+             out_vector(i_pixel) = imageIterator.Get() ;
+
+             ++imageIterator;
+             ++i_pixel;
+             }
+
+           return out_vector;
     }
 
-    itk::ImageRandomNonRepeatingConstIteratorWithIndex<ImageType> imageIterator(input_img, input_img->GetLargestPossibleRegion());
-      imageIterator.SetNumberOfSamples(n_rand_samples);
 
-    imageIterator.GoToBegin();
-    unsigned int i_pixel =0;
-      while(!imageIterator.IsAtEnd())
+
+
+
+}
+
+
+
+template<typename ImageType, typename VectorType>
+typename ImageType::Pointer eigenVector2itkImage(const VectorType &input_vector, const typename ImageType::SizeType &size_image){
+
+
+
+//ImageType::Pointer image = ImageType::New();
+
+typename ImageType::RegionType region;
+ typename ImageType::IndexType start;
+  start[0] = 0;
+  start[1] = 0;
+  start[2] = 0;
+
+//  ImageType::SizeType size_image;
+//  size[0] = 200;
+//  size[1] = 300;
+ // size[2] = 300;
+
+  region.SetSize(size_image);
+  region.SetIndex(start);
+
+ typename ImageType::Pointer image = ImageType::New();
+  image->SetRegions(region);
+  image->Allocate();
+
+
+
+  //check dimensions
+  if (size_image[0]*size_image[1]*size_image[2] != input_vector.rows()){
+       printf ("Error: Tot number of pixels in vector (%i) don't match size of image' (%i, %i, %i)\n",input_vector.rows(),size_image[0],size_image[1],size_image[2]);
+       return image;
+  }
+
+
+    itk::ImageRegionIterator<ImageType> imageIterator(image,image->GetLargestPossibleRegion());
+
+    unsigned int i_pixel = 0;
+    while(!imageIterator.IsAtEnd())
         {
-        std::cout << imageIterator.Get() << std::endl;
+        // Get the value of the current pixel
+        //unsigned char val = imageIterator.Get();
+        //std::cout << (int)val << std::endl;
 
-        out_vector(i_pixel) = imageIterator.Get() ;
+        // Set the current pixel to white
+        imageIterator.Set(input_vector(i_pixel));
 
         ++imageIterator;
         ++i_pixel;
         }
 
-      return out_vector;
-
+    return image;
 
 }
-
 
 
 
