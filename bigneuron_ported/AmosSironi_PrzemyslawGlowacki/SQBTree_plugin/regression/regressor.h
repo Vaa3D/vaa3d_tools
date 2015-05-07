@@ -24,7 +24,7 @@
 using namespace std;
 using namespace Eigen;
 
-#define MAXBUFSIZE  ((int) 1e6)
+//#define MAXBUFSIZE  ((int) 1e6)
 
 typedef Eigen::VectorXf VectorTypeFloat;
 typedef Eigen::VectorXd VectorTypeDouble;
@@ -67,84 +67,3 @@ static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned 
 //static void SQBTreesPredict(int model, MatrixXf &feats, const unsigned int maxIters);
 ////gResponseArrayType SQBTreesPredict(const libconfig::Setting &model, MatrixXf &feats);
 
-
-// TODO: pass options
-static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters){
-
-
-    TreeBoosterType TB;
-
-    // we will use a random sampler
-    SQB::TreeBoosterNaiveResampler< TreeBoosterType::ResamplerBaseObjectType::WeightsArrayType,
-                                    TreeBoosterType::ResamplerBaseObjectType::LabelsArrayType >  resampler;
-
-    TB.setResamplerObject( &resampler );
-
-
-    TB.printOptionsSummary();
-//    TB.learn( TreeBoosterType::SampleListType(input_feats),
-//            TreeBoosterType::FeatureListType(input_feats),
-//            TreeBoosterType::FeatureValueObjectType(input_feats),
-//            TreeBoosterType::ClassifierResponseValueObjectType(labels),
-//            maxIters );
-//    TB.printOptionsSummary();
-
-
-
-   // TB.saveToLibconfig(base);
-
-
-}
-
-
-/*
-
-
-//static void SQBTreesPredict(int model, MatrixXf &feats, const unsigned int maxIters){
-
-gResponseArrayType SQBTreesPredict(const libconfig::Setting &model, MatrixXf &feats){
-
-
-    TreeBoosterType TB;
-
-    // load model
-    //TB.loadFromMatlab( mModel );
-    TB.loadFromLibconfig(model);
-
-
-    unsigned maxIters = TB.numWeakLearners();
-    /*
-    if (nrhs >= 3)
-    {
-        MatlabInputMatrix<unsigned int> pMaxIters( mMaxIters, 1, 1, "maxiters" );
-        unsigned inputMaxIters = pMaxIters.data()[0];
-
-        if (inputMaxIters <= 0)
-            mexErrMsgTxt("maxIters must be higher than zero.");
-
-        if (inputMaxIters > maxIters)
-            mexPrintf("-- WARNING: maxIters is greater than the number of weaklearners used!\n");
-        else
-        {
-            maxIters = inputMaxIters;
-            mexPrintf("Limiting number of weak learners to %d\n", (int)maxIters);
-        }
-    }
-    //
-
-    // for now just copy the values
-   // gFeatArrayType feats = Eigen::Map< const gFeatArrayType >( pFeats.data(), pFeats.rows(), pFeats.cols() );
-
-    TreeBoosterType::ResponseArrayType newScores;
-    TB.predict( TreeBoosterType::SampleListType(input_feats),
-                TreeBoosterType::FeatureValueObjectType(input_feats),
-                newScores,
-                maxIters );
-
-    return newScores;
-   // MatlabOutputMatrix<double>   outMatrix( &plhs[0], feats.rows(), 1 );
-   // for (unsigned i=0; i < feats.rows(); i++)
-   //     outMatrix.data()[i] = newScores.coeff(i);
-
-}
-*/
