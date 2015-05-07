@@ -10,6 +10,8 @@
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
+#include <fstream>
+#include <iostream>
 
 #include "reset_xyz_resolution.h"
 
@@ -216,7 +218,22 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int fl
 					image->setRezX(xr);
 					image->setRezY(yr);
 					image->setRezZ(zr);
-				}
+
+                    QString fileDefaultName = callback.getImageName(curwin) + "_rez.txt";
+                    QString fileName = QFileDialog::getSaveFileName(parent, "Save Resolution File",fileDefaultName,
+                                                                    QObject::tr("Text File (*.txt)"
+                                                                                ));
+                    ofstream myfile;
+
+                    myfile.open(fileName.toStdString().c_str(), ios::in);
+                    myfile.open (fileName.toStdString().c_str(),ios::out | ios::app );
+                    myfile << "#Image Name \n";
+                    myfile << callback.getImageName(curwin).toStdString()  << " \n";
+                    myfile << "# resolution (XYZ)  " << "\n";
+                    myfile << xr << " ," << yr << " ," << zr << " \n";
+
+                    myfile.close();
+                }
 			}
 		}
     }
