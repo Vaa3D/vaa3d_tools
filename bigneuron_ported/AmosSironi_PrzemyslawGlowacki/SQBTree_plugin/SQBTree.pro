@@ -6,7 +6,7 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 #INCLUDEPATH	+= mex_related/
-INCLUDEPATH	+= /Applications/MATLAB_R2013a.app/extern/include
+#INCLUDEPATH	+= /Applications/MATLAB_R2013a.app/extern/include
 INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/include
 INCLUDEPATH += liblbfgs-1.10/include
 #INCLUDEPATH	+= ../sqb_0.1/include/SQB/Core
