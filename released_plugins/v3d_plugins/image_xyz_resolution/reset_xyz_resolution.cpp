@@ -183,7 +183,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int fl
 
     Image4DSimple* image = callback.getImage(curwin);
 
-	if (image)
+    if (!image)
 	{
 		QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
