@@ -18,7 +18,6 @@
 using namespace std;
 
 
-
 QString getVaa3dPath()
 {
     QDir testPluginsDir = QDir(qApp->applicationDirPath());
@@ -73,9 +72,8 @@ const QString title = QObject::tr("Plugin Creator Plugin");
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	GuidingDialog dialog(parent);
-    dialog.editor_vaa3d_path->setText(getVaa3dPath());
 	if (dialog.exec()!=QDialog::Accepted) return -1;
-	dialog.update();
+    dialog.update();
 
 	PluginTemplate pt;
 	pt.PLUGIN_NAME = dialog.plugin_name;
@@ -178,7 +176,7 @@ int create_demo2(V3DPluginCallback2 &callback, QWidget *parent)
 int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent)
 {
     GuidingDialog dialog(parent);
-    dialog.editor_vaa3d_path->setText(getVaa3dPath());
+   // dialog.editor_vaa3d_path->setText(getVaa3dPath());
     dialog.editor_menu_list->setText(QString("tracing_menu"));
     dialog.editor_func_list->setText(QString("tracing_func"));
 

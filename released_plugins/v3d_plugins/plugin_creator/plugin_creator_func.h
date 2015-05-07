@@ -16,6 +16,7 @@ int create_demo2(V3DPluginCallback2 &callback, QWidget *parent);
 void produce_demo1(string dir, string vaa3d_path);
 void produce_demo2(string dir, string vaa3d_path, string plugin_name, string menu_name, string func_name);
 
+QString getVaa3dPath();
 
 #endif
 

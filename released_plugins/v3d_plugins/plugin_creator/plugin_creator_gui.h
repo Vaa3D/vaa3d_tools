@@ -4,6 +4,7 @@
 #include <string>
 #include <QtGui>
 #include "v3d_message.h"
+#include "plugin_creator_func.h"
 
 using namespace std;
 
@@ -36,6 +37,7 @@ public:
 
 		label_vaa3d_path = new QLabel(tr("Vaa3D whole-project path :"));
 		editor_vaa3d_path = new QLineEdit(tr(""));
+        editor_vaa3d_path->setText(getVaa3dPath());
 		button_vaa3d_path = new QPushButton(tr("..."));
 
         label_menu_list = new QLabel(tr("Menu List : "));
@@ -118,12 +120,16 @@ public slots:
 			editor = editor_save_folder;
 			title = "Save to Directory";
 		}
+        QString current_path = editor->text();
 
-		QString dir = QFileDialog::getExistingDirectory(this, title,
+        QString dir = QFileDialog::getExistingDirectory(this, title,
                                                  "~/",
                                                  QFileDialog::ShowDirsOnly
                                                  | QFileDialog::DontResolveSymlinks);
-		editor->setText(dir);
+        if(dir.isEmpty())
+            editor->setText(current_path);
+        else
+            editor->setText(dir);
 	}
 
 	void update()
@@ -133,7 +139,8 @@ public slots:
             v3d_msg("Please select the correct path!");
             return QDialog::reject();
         }
-		plugin_name =  editor_plugin_name->text().toStdString();
+
+        plugin_name =  editor_plugin_name->text().toStdString();
 		plugin_class =  editor_plugin_class->text().toStdString();
 		win_title =  editor_win_title->text().toStdString();
 		plugin_desp =  editor_plugin_description->text().toStdString();
@@ -194,6 +201,7 @@ public:
 	QPushButton * cancel;
 
 	QGridLayout * gridLayout;
+
 };
 
 #endif
