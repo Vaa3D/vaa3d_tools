@@ -2,6 +2,16 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
+
+mac{
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+    ITKLIBPATH = ITKlibs_MAC
+}
+else{
+    ITKLIBPATH = ITKlibs_Linux
+    SOURCES = ITK_include/itkLightProcessObject.cxx
+}
+
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
@@ -11,6 +21,10 @@ INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/include
 INCLUDEPATH += liblbfgs-1.10/include
 #INCLUDEPATH	+= ../sqb_0.1/include/SQB/Core
 INCLUDEPATH += $$_PRO_FILE_PWD_/libconfig-1.4.9/lib
+INCLUDEPATH     += ITK_include
+
+LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
+LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
 LIBS += -L"$$_PRO_FILE_PWD_/liblbfgs-1.10/lib"
 LIBS += -llbfgs
