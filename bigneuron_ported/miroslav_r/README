@@ -1,0 +1,3 @@
+# example terminal call
+vaa3d -x NeurAuto -f neurauto_func -i ~/bigbrain/testim.tif -p 1 5
+
