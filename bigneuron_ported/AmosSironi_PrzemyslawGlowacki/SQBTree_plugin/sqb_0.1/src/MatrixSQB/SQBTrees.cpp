@@ -1,6 +1,4 @@
-//#include "mex.h"
-
-#include "/Applications/MATLAB_R2014b.app/extern/include/mex.h"
+#include "mex.h"
 
 // This file is part of SQBlib, a gradient boosting/boosted trees implementation.
 //
@@ -24,7 +22,7 @@
 #define qDebug(...) mexPrintf (__VA_ARGS__)
 #define qFatal(...) do{ mexPrintf (__VA_ARGS__); mexErrMsgTxt("See above"); } while(0)
 
-#include "../sqb_0.1/include/SQB/Matlab/matlab_utils.hxx"
+#include "sqb_0.1/include/SQB/Matlab/matlab_utils.hxx"
 
 #define SHOW_TIMINGS 0
 
@@ -33,15 +31,15 @@
 #endif
 
 //#include <SQB/Core/RegTree.h>
-#include "..//sqb_0.1/include/SQB/Core/RegTree.h"
+#include "sqb_0.1/include/SQB/Core/RegTree.h"
 //#include <SQB/Core/Utils.h>
-#include "..//sqb_0.1/include/SQB/Core/Utils.h"
+#include "sqb_0.1/include/SQB/Core/Utils.h"
 
 //#include <SQB/Core/Booster.h>
-#include "..//sqb_0.1/include/SQB/Core/Booster.h"
+#include "sqb_0.1/include/SQB/Core/Booster.h"
 
 //#include <SQB/Core/LineSearch.h>
-#inclued "..//sqb_0.1/include/SQB/Core/LineSearch.h"
+#include "sqb_0.1/include/SQB/Core/LineSearch.h"
 
 #include "vaa3d_link.h"
 

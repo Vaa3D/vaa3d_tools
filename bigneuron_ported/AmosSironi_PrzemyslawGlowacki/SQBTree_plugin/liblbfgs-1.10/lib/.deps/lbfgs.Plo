@@ -1,11 +1,10 @@
-lbfgs.lo lbfgs.o: lbfgs.c ../config.h /usr/include/stdint.h \
-  /usr/include/stdio.h /usr/include/sys/cdefs.h \
-  /usr/include/sys/_symbol_aliasing.h \
-  /usr/include/sys/_posix_availability.h /usr/include/Availability.h \
-  /usr/include/AvailabilityInternal.h /usr/include/_types.h \
-  /usr/include/sys/_types.h /usr/include/machine/_types.h \
+lbfgs.lo lbfgs.o: lbfgs.c ../config.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdint.h \
+  /usr/include/stdio.h /usr/include/_types.h /usr/include/sys/_types.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/_types.h \
   /usr/include/i386/_types.h /usr/include/secure/_stdio.h \
   /usr/include/secure/_common.h /usr/include/stdlib.h \
+  /usr/include/Availability.h /usr/include/AvailabilityInternal.h \
   /usr/include/sys/wait.h /usr/include/sys/signal.h \
   /usr/include/sys/appleapiopts.h /usr/include/machine/signal.h \
   /usr/include/i386/signal.h /usr/include/i386/_structs.h \
@@ -18,32 +17,24 @@ lbfgs.lo lbfgs.o: lbfgs.c ../config.h /usr/include/stdint.h \
   /usr/include/i386/_types.h /usr/include/math.h \
   /usr/include/architecture/i386/math.h ../include/lbfgs.h \
   arithmetic_sse_double.h /usr/include/memory.h /usr/include/string.h \
-  /usr/include/strings.h /usr/include/secure/_string.h \
-  /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/emmintrin.h \
-  /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/xmmintrin.h \
-  /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/mmintrin.h \
-  /usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/mm_malloc.h \
+  /usr/include/secure/_string.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/emmintrin.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/xmmintrin.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/mmintrin.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/mm_malloc.h \
   /usr/include/errno.h /usr/include/sys/errno.h
 
 ../config.h:
 
-/usr/include/stdint.h:
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdint.h:
 
 /usr/include/stdio.h:
-
-/usr/include/sys/cdefs.h:
-
-/usr/include/sys/_symbol_aliasing.h:
-
-/usr/include/sys/_posix_availability.h:
-
-/usr/include/Availability.h:
-
-/usr/include/AvailabilityInternal.h:
 
 /usr/include/_types.h:
 
 /usr/include/sys/_types.h:
+
+/usr/include/sys/cdefs.h:
 
 /usr/include/machine/_types.h:
 
@@ -54,6 +45,10 @@ lbfgs.lo lbfgs.o: lbfgs.c ../config.h /usr/include/stdint.h \
 /usr/include/secure/_common.h:
 
 /usr/include/stdlib.h:
+
+/usr/include/Availability.h:
+
+/usr/include/AvailabilityInternal.h:
 
 /usr/include/sys/wait.h:
 
@@ -105,17 +100,15 @@ arithmetic_sse_double.h:
 
 /usr/include/string.h:
 
-/usr/include/strings.h:
-
 /usr/include/secure/_string.h:
 
-/usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/emmintrin.h:
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/emmintrin.h:
 
-/usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/xmmintrin.h:
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/xmmintrin.h:
 
-/usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/mmintrin.h:
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/mmintrin.h:
 
-/usr/local/Cellar/apple-gcc42/4.2.1-5666.3/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/mm_malloc.h:
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/mm_malloc.h:
 
 /usr/include/errno.h:
 

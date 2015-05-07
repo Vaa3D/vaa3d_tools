@@ -7,7 +7,7 @@
 #include <vector>
 #include "SQBTree_plugin.h"
 
-#include "../sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
 ////Amos
 #include "sep_conv.h"
@@ -20,12 +20,12 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
- 
 
-void callSQBTree_mex(int nlhs, void *plhs[], int nrhs, void *prhs[])
-{
-   sqb_entrance( nlhs, plhs,  nrhs, prhs);
-}
+
+//void callSQBTree_mex(int nlhs, void *plhs[], int nrhs, void *prhs[])
+//{
+//   sqb_entrance( nlhs, plhs,  nrhs, prhs);
+//}
 
 
 QStringList SQBTreePlugin::menulist() const

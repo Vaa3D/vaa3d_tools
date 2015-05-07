@@ -273,6 +273,32 @@ void mexFunctionTrain(TreeBoosterType &TB/*int nlhs, mxArray *plhs[], int nrhs, 
       TB.printOptionsSummary();
     }
 
+    libconfig::Config cfg;
+    libconfig::Setting &root = cfg.getRoot();
+    root.add(libconfig::Setting::TypeList);
+//    root.add("tree", libconfig::Setting::TypeList);
+
+    TB.saveToLibconfig(root);
+
+    static const char *output_file =
+        "/Users/cvlab/Work/Vaa3d_stuff/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/"
+        "AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/zzznewconfig_hahahahahahahaha.cfg";
+
+    // Write out the new configuration.
+    try
+    {
+      cfg.writeFile(output_file);
+      std::cerr << "New configuration successfully written to: " << output_file
+           << std::endl;
+
+    }
+    catch(const libconfig::FileIOException &fioex)
+    {
+      std::cerr << "I/O error while writing file: " << output_file << std::endl;
+      //return(EXIT_FAILURE);
+    }
+
+
 //    plhs[0] = TB.saveToMatlab();
 
 //#undef mFeats

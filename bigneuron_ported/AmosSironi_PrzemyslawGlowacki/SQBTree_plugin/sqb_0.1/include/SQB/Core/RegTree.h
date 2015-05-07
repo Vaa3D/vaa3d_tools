@@ -26,6 +26,8 @@
 
 #include <SQB/Core/Utils.h>
 
+#include <libconfig.h++>
+
 namespace SQB
 {
     // FeatureIndexList specialized for a matrix/array (Eigen)
@@ -432,12 +434,12 @@ namespace SQB
                 child.add("leftNodeIdx", libconfig::Setting::TypeInt64) = (long int) mNodes[i].leftNodeIdx;
                 child.add("rightNodeIdx", libconfig::Setting::TypeInt64) = (long int) mNodes[i].rightNodeIdx;
                 
-                #ifndef KERNELBOOST_SOURCE
-                    libconfig::Setting &featureIdxGroup = child.add("featureIdx", libconfig::Setting::TypeGroup);
-                    mNodes[i].featureIdx.saveToLibconfig(featureIdxGroup);
-                #else
+//                #ifndef KERNELBOOST_SOURCE
+//                    libconfig::Setting &featureIdxGroup = child.add("featureIdx", libconfig::Setting::TypeGroup);
+//                    mNodes[i].featureIdx.saveToLibconfig(featureIdxGroup);
+//                #else
                     child.add("featureIdx", libconfig::Setting::TypeInt64) = (long int) mNodes[i].featureIdx;
-                #endif
+//                #endif
                 
                 child.add("used", libconfig::Setting::TypeBoolean) = mNodes[i].used;
             }
