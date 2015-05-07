@@ -40,6 +40,7 @@ typedef Eigen::MatrixXf gFeatArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
 
+
 typedef SQB::MatrixFeatureIndexList<gFeatArrayType>          MatrixFeatureIndexListType;
 typedef SQB::MatrixSampleIndexList<gFeatArrayType>           MatrixSampleIndexListType;
 typedef SQB::MatrixFeatureValueObject<gFeatArrayType>        MatrixFeatureValueObjectType;
@@ -81,12 +82,12 @@ static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned 
 
 
     TB.printOptionsSummary();
-    TB.learn( TreeBoosterType::SampleListType(input_feats),
-            TreeBoosterType::FeatureListType(input_feats),
-            TreeBoosterType::FeatureValueObjectType(input_feats),
-            TreeBoosterType::ClassifierResponseValueObjectType(labels),
-            maxIters );
-    TB.printOptionsSummary();
+//    TB.learn( TreeBoosterType::SampleListType(input_feats),
+//            TreeBoosterType::FeatureListType(input_feats),
+//            TreeBoosterType::FeatureValueObjectType(input_feats),
+//            TreeBoosterType::ClassifierResponseValueObjectType(labels),
+//            maxIters );
+//    TB.printOptionsSummary();
 
 
 
