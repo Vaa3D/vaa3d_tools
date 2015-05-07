@@ -1,6 +1,9 @@
 #ifndef _SQB_TREE_BOSTER_H
 #define _SQB_TREE_BOSTER_H
 
+#define myQDebug(...) printf (__VA_ARGS__)
+#define myQFatal(...) do{ printf (__VA_ARGS__); exit(1); } while(0)
+
 // This file is part of SQBlib, a gradient boosting/boosted trees implementation.
 //
 // Copyright (C) 2012 Carlos Becker, http://sites.google.com/site/carlosbecker
@@ -293,7 +296,7 @@ namespace SQB
         void cropWeakLearnersTo( unsigned max )
         {
             if ( max > mWeakLearners.size() )
-                qFatal("Wanted to crop %d when there are only %d weak learners.", (int)max, (int) mWeakLearners.size() );
+                myQFatal("Wanted to crop %d when there are only %d weak learners.", (int)max, (int) mWeakLearners.size() );
 
             const int toCrop = (int) mWeakLearners.size() - (int) max;
 
@@ -382,7 +385,7 @@ namespace SQB
                 for (unsigned i=0; i < N; i++)
                     if (std::isnan(R.coeff(i)) || std::isnan(W.coeff(i))) {
                         std::cout << "NaN at ExpYF = " << expYF.coeff(i) << std::endl;
-                        qFatal("error");
+                        myQFatal("error");
                     }
 
 
@@ -421,7 +424,7 @@ namespace SQB
             #endif
 
                 if(mVerboseOutput)
-                    qDebug("Max/Min score: %f / %f\n", score.maxCoeff(), score.minCoeff());
+                    myQDebug("Max/Min score: %f / %f\n", score.maxCoeff(), score.minCoeff());
 
                 // line search
             #if SHOW_TIMINGS
@@ -446,7 +449,7 @@ namespace SQB
                 // shrinkage
                 alpha = mShrinkageFactor * alpha;
 				if(mVerboseOutput)
-					qDebug("Alpha %f\n", alpha);
+          myQDebug("Alpha %f\n", alpha);
 
                 mWeakLearners.back().alpha = alpha;
 
@@ -469,7 +472,7 @@ namespace SQB
                         break;
                 }
 
-                qDebug("Iter %d / New loss: %f\n", iter, curLoss);
+                myQDebug("Iter %d / New loss: %f\n", iter, curLoss);
 
                 // compute misclassif error
                 double miscErr = 0;
@@ -480,9 +483,9 @@ namespace SQB
 
                 if(mVerboseOutput)
                 {
-                    qDebug("Misclassif. error: %f\n", miscErr);
+                    myQDebug("Misclassif. error: %f\n", miscErr);
                     if (TimerRT::implemented())
-                        qDebug("---> Total WL took: %f\n", theTimer.elapsed() );
+                        myQDebug("---> Total WL took: %f\n", theTimer.elapsed() );
                 }
     #ifdef MEX
                 if (drawnowTimer.elapsed() > 2.00)

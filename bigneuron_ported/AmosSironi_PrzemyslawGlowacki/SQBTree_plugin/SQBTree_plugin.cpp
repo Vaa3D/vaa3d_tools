@@ -3,6 +3,9 @@
  * 2015-5-5 : by HP
  */
  
+#define myQDebug(...) printf (__VA_ARGS__)
+#define myQFatal(...) do{ printf (__VA_ARGS__); exit(1); } while(0)
+
 #include "v3d_message.h"
 #include <vector>
 #include "SQBTree_plugin.h"

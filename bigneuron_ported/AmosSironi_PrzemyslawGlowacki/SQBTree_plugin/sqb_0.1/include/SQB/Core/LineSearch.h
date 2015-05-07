@@ -1,6 +1,9 @@
 #ifndef _SQB_LINESEARCH_H
 #define _SQB_LINESEARCH_H
 
+#define myQDebug(...) printf (__VA_ARGS__)
+#define myQFatal(...) do{ printf (__VA_ARGS__); exit(1); } while(0)
+
 // This file is part of SQBlib, a gradient boosting/boosted trees implementation.
 //
 // Copyright (C) 2012 Carlos Becker, http://sites.google.com/site/carlosbecker
@@ -105,7 +108,7 @@ namespace SQB
 
             }
             else
-                qFatal("LineSearch: FATAL: Wrong loss type!");
+                myQFatal("LineSearch: FATAL: Wrong loss type!");
 
             return fx;
         }

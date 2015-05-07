@@ -23,8 +23,8 @@
 
 //#define qDebug(...) mexPrintf (__VA_ARGS__)
 //#define qFatal(...) do{ mexPrintf (__VA_ARGS__); mexErrMsgTxt("See above"); } while(0)
-#define qDebug(...) printf (__VA_ARGS__)
-#define qFatal(...) do{ printf (__VA_ARGS__); exit(1); } while(0)
+//#define myQDebug(...) printf (__VA_ARGS__)
+//#define myQFatal(...) do{ printf (__VA_ARGS__); exit(1); } while(0)
 
 //#include <SQB/Matlab/matlab_utils.hxx>
 

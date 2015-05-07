@@ -37,16 +37,18 @@ HEADERS	+= SQBTree_plugin.h
 HEADERS += sqb_0.1/src/MatrixSQB/vaa3d_link.h
 
 
+SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
+SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp
+
 SOURCES	+= SQBTree_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 #QMAKE_CXXFLAGS += -DMEX
 QMAKE_CXXFLAGS += -DLIBCONFIGXX_VER_REVISION
 #SOURCES += sqb_0.1/src/MatrixSQB/SQBTrees.cpp
-SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
-SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp
 
 
 #TARGET	= $$qtLibraryTarget(SQBTree)
-TARGET	= sqb_tree
+TARGET	= $$qtLibraryTarget(SQBTree)
+#TARGET	= sqb_tree
 DESTDIR	= $$VAA3DPATH/bin/plugins/SQBTree/
