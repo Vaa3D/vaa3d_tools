@@ -421,10 +421,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     // save kernels (todo: check how to save float[] images)
-    in_sz[0]=LL; in_sz[1]=LL; in_sz[2]=1; in_sz[2]=1;
-    datatype = 4;
-    unsigned char * k_temp = new unsigned char[LL*LL];
-    for (int ki = 0; ki < Ndir*nr_sigmas; ++ki) {
+    if (false) {
+
+        in_sz[0]=LL; in_sz[1]=LL; in_sz[2]=1; in_sz[2]=1;
+        datatype = 4;
+        unsigned char * k_temp = new unsigned char[LL*LL];
+        for (int ki = 0; ki < Ndir*nr_sigmas; ++ki) {
         QString suffix = QString ("_kernel%1.tif").arg(ki);
         fg_path1 = PARA.inimg_file + suffix;
         printf("\nsaving kernels:\t %s", fg_path1.toStdString().c_str());
@@ -440,11 +442,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             return;
         }
         printf("\tdone saving kernels.\n");
+        }
+
+        delete k_temp;
+        printf("done.\n");
+
     }
-    delete k_temp;
-
-    printf("done.\n");
-
     ////////////////////////////////
     // filtering at selected locs
     ////////////////////////////////
@@ -526,7 +529,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         img_zncc[zz*(W*H)+yy*W+xx] = (i2zncc[loci]>=0)? i2zncc[loci]*255 : 0;
 
     }
-//    QString suffix = QString ("_zncc.tif").arg(ki);
     fg_path1 = PARA.inimg_file + "_zncc.tif";
     datatype = 1; // uint8
     in_sz[0] = W; in_sz[1] = H; in_sz[2] = L; in_sz[3] = sc;
@@ -595,17 +597,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         int get_idx = idesc[pidx];
 //        v3d_msg(QString("%1").arg(i2xyz[get_idx][0]));
         int xloc = i2xyz[get_idx][0];
-//        v3d_msg(QString("%1").arg(xloc));
         int yloc = i2xyz[get_idx][1];
         int zloc = i2xyz[get_idx][2];
-
-//        v3d_msg("doneaaa reading it!", 0);
 
         if (i2zncc[pidx]<zncc_th) break;
         else {
 
             // it is higher then add the location (if the map allows) and fill the map nbhood
-//            v3d_msg("test",0);
 //            v3d_msg(QString("%1").arg(map[zloc*(W*H)+yloc*W+xloc]), 0);
 
             if (map[zloc*(W*H)+yloc*W+xloc]==false) {
@@ -620,7 +618,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //                printf("%d\t%d\t%d\t%d\n", pidx+1, xloc, yloc, zloc);
 //                float* ptr = locs_xyz.back();
 //                printf("\t\t\t\t%d \t %f \t %f \t %f \n", locs_xyz.size(), ptr[0], ptr[1], ptr[2]);
-//                printf("list has %d \n", locs_xyz.size());
 
                 for (int xx = xloc-nhd; xx <= xloc+nhd; ++xx) {
                     for (int yy = yloc-nhd; yy <= yloc+nhd; ++yy) {
@@ -643,43 +640,64 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         NeuronSWC nn;
         nn.r = 1;
         nn.nodeinseg_id = ni+1;
-        nn.type = 6;
+        nn.type = 5;
         nn.n = ni+1;
         nn.x = locs_xyz.at(ni)[0];
         nn.y = locs_xyz.at(ni)[1];
-
-        // this tweak for visualization
-//        float temp = nn.x;
-//        nn.x = nn.y;
-//        nn.y = temp;
-
         nn.z = locs_xyz.at(ni)[2];
         nn.parent = -1;
         nt_locs.listNeuron.append(nn);
-
-        printf("%d\t%.1f\t%.1f\t%.1f\n", ni+1, nn.x, nn.y, nn.z);
+//        printf("%d\t%.1f\t%.1f\t%.1f\n", ni+1, nn.x, nn.y, nn.z);
     }
+
     QString swc_name = PARA.inimg_file + "_locs.swc";
-    nt_locs.name = "Landmarks only";
+    nt_locs.name = "LandmarkLocs";
     writeSWC_file(swc_name.toStdString().c_str(),nt_locs);
 
+    /////// output 'reconstruction' - idiotic connecting between closest neighbours
+    // connect the pairs, browse the nodes and make connections between closest pairs
+    NeuronTree nt_rec;
+    for (int n1 = 0; n1 < locs_xyz.size(); ++n1) {
+        for (int n2 = n1+1; n2 < locs_xyz.size(); ++n2) {
+            // if the neighbourhood is close enough - add the segment in between
+
+            float x1 = locs_xyz.at(n1)[0];
+            float y1 = locs_xyz.at(n1)[1];
+            float z1 = locs_xyz.at(n1)[2];
+
+            float x2 = locs_xyz.at(n2)[0];
+            float y2 = locs_xyz.at(n2)[1];
+            float z2 = locs_xyz.at(n2)[2];
+
+            float d = sqrt(pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2));
+
+            if (d<=2*diam) { // 2*nhd
+
+                // connect those by exporting the reconstruction segment
+                NeuronSWC nn;
+                nn.r = 1;
+                nn.nodeinseg_id = n1+1;
+                nn.type = 2;
+                nn.n = n1+1;
+                nn.x = locs_xyz.at(n1)[0];
+                nn.y = locs_xyz.at(n1)[1];
+                nn.z = locs_xyz.at(n1)[2];
+                nn.parent = n2+1;
+                nt_rec.listNeuron.append(nn);
+
+            }
+        }
+    }
+    swc_name = PARA.inimg_file + "_NeurAuto.swc";
+    nt_rec.name = "NeurAuto";
+    writeSWC_file(swc_name.toStdString().c_str(),nt_rec);
+
+    printf("\n\tDONE.\n");
+
+    if(!bmenu) {if(inimg) {delete []inimg; inimg = 0;}}
     delete img_zncc, idesc;
     delete fg;
     delete i2xyz, xyz2i, i2zncc, i2sigma, i2vx, i2vy;
-
-    /////// output 'reconstruction'
-//    NeuronTree nt;
-//    swc_name = PARA.inimg_file + "_NeurAuto.swc";
-//    nt.name = "NeurAuto";
-//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-
-    printf("\nDONE.\n");
-
-    if(!bmenu)
-    {
-        if(inimg) {delete []inimg; inimg = 0;}
-    }
-
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
