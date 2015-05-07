@@ -1,3 +1,6 @@
+#ifndef _SEP_CONV_H
+#define _SEP_CONV_H
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -391,3 +394,4 @@ MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, co
         return nonsep_features_all;
 }
 
+#endif
