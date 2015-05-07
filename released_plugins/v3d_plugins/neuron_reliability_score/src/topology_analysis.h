@@ -718,9 +718,9 @@ template<class T> bool get_linker_intensScore(const vector<MyMarker *> &inswc, T
     int x,y,z;
     for(int i=0; i<inswc.size(); i++){
         cur = inswc[i];
-        x = inswc[i]->x;
-        y = inswc[i]->y;
-        z = inswc[i]->z;
+        x = inswc[i]->x+0.5;
+        y = inswc[i]->y+0.5;
+        z = inswc[i]->z+0.5;
         if(x>=0 && x<sz0 && y>=0 && y<sz1 && z>=0 && z<sz2){
             intensity[i] = inimg1d[x+y*sz0+z*sz0*sz1];
         }
@@ -764,6 +764,11 @@ template<class T> bool get_linker_intensScore(const vector<MyMarker *> &inswc, T
             return false;
         }
     }
+
+    if(length==0){
+        intensity_accu=intensity[0];
+    }
+
     return true;
 }
 
@@ -785,9 +790,15 @@ template<class T> vector<double> intensScore_between_linkers(const vector<MyMark
     orgMean=orgAccu/(orgLen+1e-16);
     for(int i=0; i<scores.size(); i++){
         if(scoreType==1){
-            scores[i]=newMean/orgMean;
+            if(orgMean<1e-16 && newMean<1e-16)
+                scores[i]=1;
+            else
+                scores[i]=newMean/(orgMean+1e-16);
         }else{
-            scores[i]=newMean/scores[i];
+            if(scores[i]<1e-16 && newMean<1e-16)
+                scores[i]=1;
+            else
+                scores[i]=newMean/(scores[i]+1e-16);
         }
     }
     return scores;
