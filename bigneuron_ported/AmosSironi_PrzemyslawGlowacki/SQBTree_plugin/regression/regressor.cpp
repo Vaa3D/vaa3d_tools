@@ -35,8 +35,8 @@ typedef Eigen::MatrixXf MatrixTypeFloat;
 typedef SQB::TreeBoosterWeightsType  WeightsType;
 typedef float   FeatsType;
 
-//typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayType;
-typedef Eigen::MatrixXf gFeatArrayType;
+typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayType;
+//typedef Eigen::MatrixXf gFeatArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
 
@@ -65,13 +65,16 @@ static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned 
     TB.setResamplerObject( &resampler );
 
 
+    gFeatArrayType input_feats_b = input_feats;
+    gResponseArrayType labels_b = labels;
+
     TB.printOptionsSummary();
-//    TB.learn( TreeBoosterType::SampleListType(input_feats),
-//            TreeBoosterType::FeatureListType(input_feats),
-//            TreeBoosterType::FeatureValueObjectType(input_feats),
-//            TreeBoosterType::ClassifierResponseValueObjectType(labels),
-//            maxIters );
-//    TB.printOptionsSummary();
+    TB.learn( TreeBoosterType::SampleListType(input_feats),
+            TreeBoosterType::FeatureListType(input_feats),
+            TreeBoosterType::FeatureValueObjectType(input_feats),
+            TreeBoosterType::ClassifierResponseValueObjectType(labels),
+            maxIters );
+    TB.printOptionsSummary();
 
 
 

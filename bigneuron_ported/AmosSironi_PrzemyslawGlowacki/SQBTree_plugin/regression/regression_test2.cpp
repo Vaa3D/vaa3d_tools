@@ -72,6 +72,11 @@ void testConvolve(){
       MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(rescaled_img,sep_filters_float,weights_float, scale_factor);
 
 
+      MatrixXf labels(nonsep_features_all.cols(),1);
+
+      const unsigned int maxIters = 10;
+      SQBTreesTrain(nonsep_features_all,labels,maxIters);
+
 
       for(unsigned int i_filter = 0; i_filter<1 ;i_filter++)
       {
