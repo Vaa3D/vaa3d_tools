@@ -53,7 +53,7 @@ typedef SQB::TreeBooster<
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
 // TODO: pass options
-static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters){
+ void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters){
 
 
     TreeBoosterType TB;
@@ -64,7 +64,7 @@ static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned 
 
     TB.setResamplerObject( &resampler );
 
-
+/*
     gFeatArrayType input_feats_b = input_feats;
     gResponseArrayType labels_b = labels;
 
@@ -76,8 +76,7 @@ static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned 
             maxIters );
     TB.printOptionsSummary();
 
-
-
+*/
    // TB.saveToLibconfig(base);
 
 

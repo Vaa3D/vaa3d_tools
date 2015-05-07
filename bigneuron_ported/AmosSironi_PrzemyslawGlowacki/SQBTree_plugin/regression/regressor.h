@@ -1,3 +1,6 @@
+#ifndef _REGRESSOR_H
+#define _REGRESSOR_H
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -60,10 +63,11 @@ typedef SQB::TreeBooster<
 
 //[model] = SQBTreesTrain( feats, labels, maxIters, options )
 //static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters,libconfig::Setting &base);
-static void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters);
+ void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters);
 
 
 // [score] = SQBTreesPredict( model, feats, [maxIters] )
 //static void SQBTreesPredict(int model, MatrixXf &feats, const unsigned int maxIters);
 ////gResponseArrayType SQBTreesPredict(const libconfig::Setting &model, MatrixXf &feats);
 
+#endif

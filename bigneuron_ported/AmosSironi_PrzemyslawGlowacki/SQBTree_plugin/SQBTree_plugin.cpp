@@ -12,7 +12,6 @@
 
 #include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-////Amos
 #include "regression/sep_conv.h"
 #include "regression/regression_test2.h"
 //using namespace Eigen;
@@ -75,7 +74,7 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         if (func_name == tr("test")) // apply already trained classifier to an image and save results
 	{
 
-            testConvolve();
+           testConvolve();
 
 		v3d_msg("To be implemented.");
 	}
@@ -85,7 +84,7 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented jewfwefjewfjiopew.");
 	}
 	else return false;
 

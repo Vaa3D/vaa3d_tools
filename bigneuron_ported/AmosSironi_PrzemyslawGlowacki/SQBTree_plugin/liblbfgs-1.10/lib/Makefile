@@ -93,13 +93,13 @@ AUTOMAKE = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -msse2 -DUSE_SSE -O3 -ffast-math  -Wall -fPIC
+CFLAGS = -fPIC -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
 CPP = gcc -E
-CPPFLAGS = -fPIC 
+CPPFLAGS = -fPIC
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -fPIC
+CXXFLAGS = -fPIC -g -O2
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -110,13 +110,13 @@ ECHO_T =
 EGREP = grep -E
 EXEEXT = 
 F77 = f95
-FFLAGS = -g -O2 -fPIC
+FFLAGS = -fPIC -g -O2
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/include
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
-LDFLAGS = 
+LDFLAGS = -fPIC
 LIBOBJS = 
 LIBS = -lm 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -201,7 +201,7 @@ liblbfgs_la_LDFLAGS = \
 	-no-undefined \
 	-release 1.10
 
-AM_CFLAGS = -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
+AM_CFLAGS = -fPIC -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
 all: all-am
 
 .SUFFIXES:

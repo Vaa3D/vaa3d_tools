@@ -1,3 +1,5 @@
+//#ifndef _TEST_CONV_H
+//#define _TEST_CONV_H
 
 
 #include <iostream>
@@ -21,7 +23,7 @@
 using namespace std;
 using namespace Eigen;
 
-#define MAXBUFSIZE  ((int) 1e6)
+//#define MAXBUFSIZE  ((int) 1e6)
 
 typedef Eigen::VectorXf VectorTypeFloat;
 typedef Eigen::VectorXd VectorTypeDouble;
@@ -31,6 +33,8 @@ typedef Eigen::MatrixXf MatrixTypeFloat;
 
 void testConvolve(){
 
+std::cout << "STEP 1 !" << std::endl;
+
 
     ////load filters
     const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
@@ -38,6 +42,8 @@ void testConvolve(){
 
     MatrixXd weights = readMatrix(weight_file);
     MatrixXd sep_filters = readMatrix(sep_filters_file);
+
+    std::cout << "Loaded weights ! max :" << weights.maxCoeff() <<std::endl;
 
 
     ////load itk image
@@ -55,6 +61,7 @@ void testConvolve(){
      ITKImageType::Pointer input_image = reader->GetOutput();
      input_image->Update();
       ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
+      std::cout << "laoded image " <<std::endl;
 
 
       ////rescale in [0 1]
@@ -63,6 +70,11 @@ void testConvolve(){
       rescaleFilter->SetInput(reader->GetOutput());
       rescaleFilter->SetOutputMinimum(0.0);
       rescaleFilter->SetOutputMaximum(1.0);
+
+      std::cout << "rescaled image " <<std::endl;
+
+
+      /*
 
     const float scale_factor =1;
     MatrixXf sep_filters_float = sep_filters.cast<float>();
@@ -74,8 +86,8 @@ void testConvolve(){
 
       MatrixXf labels(nonsep_features_all.cols(),1);
 
-      const unsigned int maxIters = 10;
-      SQBTreesTrain(nonsep_features_all,labels,maxIters);
+ //     const unsigned int maxIters = 10;
+//      SQBTreesTrain(nonsep_features_all,labels,maxIters);
 
 
       for(unsigned int i_filter = 0; i_filter<1 ;i_filter++)
@@ -97,4 +109,9 @@ void testConvolve(){
           writer->SetInput(convolved_img_orig);
           writer->Update();
       }
+
+      */
+
 }
+
+//#endif
