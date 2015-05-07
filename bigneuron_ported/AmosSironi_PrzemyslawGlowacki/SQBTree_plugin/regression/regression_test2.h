@@ -1,1 +1,1 @@
-static void testConvolve();
+void testConvolve();

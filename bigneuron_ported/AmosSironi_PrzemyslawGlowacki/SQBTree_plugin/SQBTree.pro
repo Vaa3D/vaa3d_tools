@@ -21,7 +21,8 @@ INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/include
 INCLUDEPATH += liblbfgs-1.10/include
 #INCLUDEPATH	+= ../sqb_0.1/include/SQB/Core
 INCLUDEPATH += $$_PRO_FILE_PWD_/libconfig-1.4.9/lib
-INCLUDEPATH     += ITK_include
+INCLUDEPATH += ITK_include
+INCLUDEPATH += $$_PRO_FILE_PWD_/regression
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
@@ -42,7 +43,8 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 #QMAKE_CXXFLAGS += -DMEX
 QMAKE_CXXFLAGS += -DLIBCONFIGXX_VER_REVISION
 #SOURCES += sqb_0.1/src/MatrixSQB/SQBTrees.cpp
-SOURCES += sqb_0.1/src/MatrixSQB/sqb_trees.cpp
+SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
+SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp
 
 
 #TARGET	= $$qtLibraryTarget(SQBTree)

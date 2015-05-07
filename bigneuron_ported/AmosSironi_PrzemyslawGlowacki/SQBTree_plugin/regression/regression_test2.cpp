@@ -29,7 +29,7 @@ typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
 
-static void testConvolve(){
+void testConvolve(){
 
 
     ////load filters
