@@ -18,8 +18,8 @@
 // You should have received a copy of the GNU General Public License
 // along with SQBlib.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <SQB/Core/RegTree.h>
-#include <SQB/Core/Utils.h>
+#include </cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/sqb_0.1/include/SQB/Core/RegTree.h>
+#include </cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/sqb_0.1/include/SQB/Core/Utils.h>
 
 namespace SQB
 {

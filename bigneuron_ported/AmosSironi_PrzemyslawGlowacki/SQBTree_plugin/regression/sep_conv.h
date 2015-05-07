@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include "sqb_0.1/include/Eigen/Dense"
-#include "include/superannotator_sel/Matrix3D.h"
+#include "superannotator_sel/Matrix3D.h"
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
@@ -54,8 +54,15 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
 template<typename ImageType, typename VectorType>
 typename ImageType::Pointer eigenVector2itkImage(const VectorType &input_vector, const typename ImageType::SizeType &size_image);
 
-template<typename ImageType, typename MatrixType>
-MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix );
+//convolve image with bank of sep filters
+//TODO: VectorType and MatrixType should be compatible !!!
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix);
+
+//convolve image with bank of sep filters and combine them to obtain  convolutions with oringal filters
+//TODO: VectorType and MatrixType should be compatible !!!
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix,const float scale_factor );
 
 
 ////functions definitions
@@ -312,5 +319,75 @@ typename ImageType::RegionType region;
 
 }
 
+//TODO: VectorType and MatrixType should be compatible !!!
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix){
 
+
+    const unsigned int n_sep_features = sep_filters_matrix.cols();
+
+    typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
+    const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
+
+    MatrixType sep_features_all(n_pixels,n_sep_features);
+
+    //#pragma omp parallel for
+    for(unsigned int i_filter = 0; i_filter<n_sep_features ;i_filter++)
+    {
+        std::cout << "convolving sep filter "<<i_filter << std::endl;
+        const VectorType kernel_eig = sep_filters_matrix.col(i_filter);
+
+        Matrix3D<float> out_matrix;
+
+        wholeConvolveSepFilterSplitVec<ImageType, VectorType >( input_img, kernel_eig, out_matrix);
+
+        /*
+        char buffer_out_name [500];
+        //char *output_image_file_i_filter;
+        const int temp_int =sprintf(buffer_out_name,"/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved_%i.nrrd",i_filter);
+
+    //    std::cout << buffer_out_name << std::endl;
+        out_matrix.save(buffer_out_name);
+*/
+
+        // store result in coumns of a matrix
+        typename ImageType::Pointer convolved_img= out_matrix.asItkImage();
+//        VectorTypeFloat temp_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(convolved_img,n_samples_per_image,n_pixels);
+        VectorType temp_vector = itkImage2EigenVector<ImageType,VectorType>(convolved_img,n_pixels,n_pixels);
+
+        sep_features_all.col(i_filter) = temp_vector;
+
+    }//end for i_filter
+
+
+
+    return sep_features_all;
+}
+
+//TODO: VectorType and MatrixType should be compatible !!!
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor){
+
+        typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
+        const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
+        const unsigned int n_nonsep_features = weight_matrix.cols();
+
+
+        MatrixType sep_features_all = convolveSepFilterBank<ImageType,MatrixType,VectorType>(input_img,sep_filters_matrix);
+
+
+
+        //multiply with weight to get original filters convolution
+        //const float scale_factor = 1.0; // used for multiscale appraoch if rescale filers to compute features
+        MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
+
+
+
+        nonsep_features_all = sep_features_all*weight_matrix;
+        nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+
+
+
+        return nonsep_features_all;
+}
 
