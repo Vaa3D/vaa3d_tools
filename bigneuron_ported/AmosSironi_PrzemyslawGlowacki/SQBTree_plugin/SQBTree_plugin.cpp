@@ -42,9 +42,9 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 //void Imcreate(typename ImageType::PixelType *data1d);
 
 template<typename ImageType>
-typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz);
+typename ImageType::Pointer Imcreate(unsigned char *data1d,const long int *in_sz);
 //void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg);
-void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg);
+void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites);
 
 QStringList SQBTreePlugin::menulist() const
 {
@@ -162,7 +162,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      in_sz[3] = inimg->getCDim();
 
 
-     cout<<"size image"<< in_sz << endl;
+     cout<<"size image"<< in_sz[0] <<in_sz[1] <<in_sz[2] <<in_sz[3] << endl;
 
    //  switch (inimg->getDatatype())
     // {
@@ -188,14 +188,21 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 //                   return false;
 //     }
 
+     cout<<"calling conv3D"<<endl;
 
-    convolveV3D((float *)inimg->getRawData(), in_sz, outimg);
+ //   convolveV3D((float *)inimg->getRawData(), in_sz, outimg);
+     unsigned int c = 1;
+     unsigned int unit_bites = inimg->getUnitBytes();
+ convolveV3D((unsigned char *)inimg->getRawDataAtChannel(c), in_sz, outimg,unit_bites);
 
 
+ cout<<"saving image"<<endl;
      // save image
      Image4DSimple outimg1;
      outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
 
+
+     cout<<outimg_file<<endl;
      callback.saveImage(&outimg1, outimg_file);
 
      if(inimg) {delete inimg; inimg =0;}
@@ -206,7 +213,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
 //template<typename ImageType>
 //void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg){
-void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg){
+void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites){
 
 //template <class T> void convolveV3D(T* data1d,
 //                     V3DLONG *in_sz,
@@ -225,15 +232,36 @@ void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg){
         outimg = 0;
     }
 
-    typedef float ImageScalarType;
+    typedef unsigned char ImageScalarType;
     typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
-    typedef itk::Image<float, 3> ImageType;
+    //typedef itk::Image<unsigned char, 3> ImageType;
    ITKImageType::Pointer I  =  ITKImageType::New();
+
+   cout<<"creating itk like img"<<endl;
+
+
+
    I =Imcreate<ITKImageType>(data1d,in_sz);
 
 
        ITKImageType::SizeType size_image = I->GetLargestPossibleRegion().GetSize();
        std::cout << "size image " <<size_image <<std::endl;
+
+
+
+       //unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+
+
+        std::cout << "unit_bites " <<unit_bites <<std::endl;
+       V3DLONG tb = in_sz[0]*in_sz[1]*in_sz[2]*unit_bites;
+       float *pImage = new float [tb];
+
+
+V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+       for(V3DLONG i=0; i<pagesz; i++)
+            pImage[i] = data1d[i];
+
+       outimg = pImage;
 
 
     /*
@@ -266,7 +294,7 @@ void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg){
     outimg = pImage;
 
 */
-    return;
+   // return;
 }
 
 
@@ -275,7 +303,7 @@ void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg){
 
 template<typename ImageType>
 //void Imcreate(ImageType::PixelType *data1d){
-typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz){
+typename ImageType::Pointer Imcreate(unsigned char *data1d,const long int *in_sz){
 //typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d,const long int *in_sz){
 
     //typedef itk::Image<signed int, 3> ImageType;
@@ -283,21 +311,71 @@ typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz){
    unsigned int  SM = in_sz[1];
    unsigned int  SZ = in_sz[2];
 
-    typename ImageType::Pointer I  = ImageType::New();
+   // typename ImageType::Pointer I  = ImageType::New();
     typename ImageType::SizeType size;
     size[0] = SN;
     size[1] = SM;
     size[2] = SZ;
 
-    typename ImageType::IndexType idx;
-    idx.Fill(0);
-    typename ImageType::RegionType region;
-    region.SetSize( size );
-    region.SetIndex( idx );
+    cout<<"size    "<<size <<endl;
 
-    I->SetRegions(region);
-    I->Allocate();
-    I->FillBuffer(0);
+
+    typename ImageType::RegionType region;
+   typename  ImageType::IndexType start;
+     start[0] = 0;
+     start[1] = 0;
+     start[2] = 0;
+
+
+     region.SetSize(size);
+     region.SetIndex(start);
+
+     typename ImageType::Pointer I = ImageType::New();
+     I->SetRegions(region);
+     I->Allocate();
+
+
+
+//    typename ImageType::IndexType idx;
+//    idx.Fill(0);
+//    typename ImageType::RegionType region;
+//    region.SetSize( size );
+//    region.SetIndex( idx );
+
+//    I->SetRegions(region);
+//    I->Allocate();
+//    I->FillBuffer(0);
+
+//    I->Update();
+
+    cout<<"allocating image  " <<endl;
+
+
+  //  ImageType::RegionType region;
+  // / region.SetSize(regionSize);
+  //  region.SetIndex(regionIndex);
+
+
+//    itk::ImageRegionIterator<ImageType> imageIterator(I,region);
+//    unsigned int idx_lin= 0;
+//    while(!imageIterator.IsAtEnd())
+//        {
+//            // Get the value of the current pixel
+//            //unsigned char val = imageIterator.Get();
+//            //std::cout << (int)val << std::endl;
+
+//            // Set the current pixel to white
+//            unsigned char PixelVaule =  data1d[idx_lin];
+//            if(PixelVaule == NULL){
+//                cout<< "NULL POINTER !: " <<idx_lin  << endl;
+//            }
+//            // PixelVaule = 0.0;
+//            imageIterator.Set(PixelVaule);
+
+//            ++imageIterator;
+//            ++idx_lin;
+//        }
+
 
     for(int iz = 0; iz < SZ; iz++)
       {
@@ -308,16 +386,23 @@ typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz){
               for(int ix = 0; ix < SN; ix++)
               {
 
-                  float PixelVaule =  data1d[offsetk + offsetj + ix];
+//  //                cout<< offsetk + offsetj + ix ;
+
+                  unsigned char PixelVaule =  data1d[offsetk + offsetj + ix];
                   itk::Index<3> indexX;
                   indexX[0] = ix;
                   indexX[1] = iy;
                   indexX[2] = iz;
+//cout<< ": " << indexX <<endl;
                   I->SetPixel(indexX, PixelVaule);
               }
           }
 
       }
+
+
+    cout<<"allocated image  "<<size <<endl;
+
     return I;
 
 }
