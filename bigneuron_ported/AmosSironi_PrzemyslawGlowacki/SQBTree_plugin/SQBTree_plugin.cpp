@@ -91,6 +91,8 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         //const char *input_filename = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2.tif";
         //   testConvolve(input_filename);
 
+
+
             return testTubularityImage(callback, input, output);
 
 
@@ -148,7 +150,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
         return false;
     }
 
-
+    cout<<"Loaded image"<<endl;
 
     //input
      float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
