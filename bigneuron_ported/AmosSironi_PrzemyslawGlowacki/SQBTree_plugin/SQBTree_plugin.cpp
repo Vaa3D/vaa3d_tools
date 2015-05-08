@@ -32,14 +32,19 @@ Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 
 
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-template<typename ImageType>
-typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d, const long int  *in_sz);
+//template<typename ImageType>
+//typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d, const long int  *in_sz);
+
 //template <class T> void convolveV3D(T* data1d,
 //                     V3DLONG *in_sz,
 //                     float* &outimg);
-template<typename ImageType>
-void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg);
+//template<typename ImageType>
+//void Imcreate(typename ImageType::PixelType *data1d);
 
+template<typename ImageType>
+typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz);
+//void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg);
+void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg);
 
 QStringList SQBTreePlugin::menulist() const
 {
@@ -165,21 +170,21 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      //          return false;
     // }
 
-     typedef itk::Image<unsigned char, 3> ImageTypeUINT8;
-     typedef itk::Image<float, 3> ImageTypeFloat;
-     switch (inimg->getDatatype())
-     {
-           case V3D_UINT8: convolveV3D<ImageTypeUINT8>(inimg->getRawData(), in_sz, outimg); break;
-          // case V3D_UINT16: typedef itk::Image<V3D_UINT16, 3> ImageType;; break;
-           case V3D_FLOAT32: convolveV3D<ImageTypeFloat>((float *)inimg->getRawData(), in_sz, outimg);  break;
-     default:
-                   v3d_msg("Invalid datatype in convolveV3D.", 0);
-                   if (inimg) {delete inimg; inimg=0;}
-                   return false;
-     }
+   //  typedef itk::Image<unsigned char, 3> ImageTypeUINT8;
+//     typedef itk::Image<float, 3> ImageTypeFloat;
+//     switch (inimg->getDatatype())
+//     {
+//           case V3D_UINT8: convolveV3D<ImageTypeUINT8>(inimg->getRawData(), in_sz, outimg); break;
+//          // case V3D_UINT16: typedef itk::Image<V3D_UINT16, 3> ImageType;; break;
+//           case V3D_FLOAT32: convolveV3D<ImageTypeFloat>((float *)inimg->getRawData(), in_sz, outimg);  break;
+//     default:
+//                   v3d_msg("Invalid datatype in convolveV3D.", 0);
+//                   if (inimg) {delete inimg; inimg=0;}
+//                   return false;
+//     }
 
 
-
+    convolveV3D((float *)inimg->getRawData(), in_sz, outimg);
 
 
      // save image
@@ -194,8 +199,10 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 }
 
 
-template<typename ImageType>
-void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg){
+//template<typename ImageType>
+//void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg){
+void convolveV3D(float *data1d,V3DLONG *in_sz,float* &outimg){
+
 //template <class T> void convolveV3D(T* data1d,
 //                     V3DLONG *in_sz,
 //                     float* &outimg)
@@ -213,10 +220,16 @@ void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &ou
         outimg = 0;
     }
 
-
+    typedef float ImageScalarType;
+    typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
     typedef itk::Image<float, 3> ImageType;
-   ImageType::Pointer I  =  ImageType::New();
-    I = Imcreate<ImageType>(data1d, in_sz);
+   ITKImageType::Pointer I  =  ITKImageType::New();
+   I =Imcreate<ITKImageType>(data1d,in_sz);
+
+
+       ITKImageType::SizeType size_image = I->GetLargestPossibleRegion().GetSize();
+       std::cout << "size image " <<size_image <<std::endl;
+
 
     /*
 
@@ -252,14 +265,20 @@ void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &ou
 }
 
 
+
+
+
 template<typename ImageType>
-typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d,const long int *in_sz){
+//void Imcreate(ImageType::PixelType *data1d){
+typename ImageType::Pointer Imcreate(float *data1d,const long int *in_sz){
+//typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d,const long int *in_sz){
+
     //typedef itk::Image<signed int, 3> ImageType;
     unsigned int SN = in_sz[0];
    unsigned int  SM = in_sz[1];
    unsigned int  SZ = in_sz[2];
 
-    typename ImageType::Pointer I  = typename ImageType::New();
+    typename ImageType::Pointer I  = ImageType::New();
     typename ImageType::SizeType size;
     size[0] = SN;
     size[1] = SM;
@@ -284,7 +303,7 @@ typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d,const
               for(int ix = 0; ix < SN; ix++)
               {
 
-                  typename ImageType::PixelType PixelVaule =  data1d[offsetk + offsetj + ix];
+                  float PixelVaule =  data1d[offsetk + offsetj + ix];
                   itk::Index<3> indexX;
                   indexX[0] = ix;
                   indexX[1] = iy;
