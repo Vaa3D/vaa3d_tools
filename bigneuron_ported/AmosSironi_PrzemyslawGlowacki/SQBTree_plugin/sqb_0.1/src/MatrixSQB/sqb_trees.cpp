@@ -391,7 +391,7 @@ void mexFunctionTest(TreeBoosterType &TB) //int nlhs, mxArray *plhs[], int nrhs,
 }
 
 //int main(int argc, char *argv[]) {
-void mockTrainAndTest() {
+int mockTrainAndTest() {
   printf("Wooow!\n");
 
 //  TreeBoosterType TB;
