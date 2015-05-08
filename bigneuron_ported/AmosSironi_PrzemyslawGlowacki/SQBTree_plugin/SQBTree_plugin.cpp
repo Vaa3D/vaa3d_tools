@@ -161,6 +161,9 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      in_sz[2] = inimg->getZDim();
      in_sz[3] = inimg->getCDim();
 
+
+     cout<<"size image"<< in_sz << endl;
+
    //  switch (inimg->getDatatype())
     // {
     //      case V3D_UINT8: convolveV3D(inimg->getRawData(), in_sz, outimg); break;
