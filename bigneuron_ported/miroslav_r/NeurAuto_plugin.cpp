@@ -8,6 +8,8 @@
 #include <vector>
 #include "basic_surf_objs.h"
 #include "toolbox.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "NeurAuto_plugin.h"
 Q_EXPORT_PLUGIN2(NeurAuto, TestPlugin);
@@ -17,9 +19,10 @@ using namespace std;
 struct input_PARA
 {
     QString inimg_file;
-    V3DLONG channel;
+    V3DLONG channel;  // always take 1 channel
     int     diam;
-
+    int     perc;       // 1-20
+    float   znccTh;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -46,29 +49,32 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         input_PARA PARA;
 
         //input throught menu
-        bool ok1, ok2;
-        long channel = 1;
-        int  diam      = 8;
+        bool ok1, ok2, ok3;
+        long    channel    = 1;
+        int     diam       = 10;
+        int     perc       = 15;
+        float   znccTh     = 0.6;
 
-        PARA.channel = QInputDialog::getInteger(parent, "Channel ", "Enter channel:", 1, 1, channel, 1, &ok1);
+        PARA.channel = 1;//QInputDialog::getInteger(parent, "Channel ", "Enter channel:", 1, 1, channel, 1, &ok1);
 
-        if(ok1)
-        {
-            PARA.diam = QInputDialog::getInteger(parent, "Neuron diameter ", "Neurite diameter in pix:", diam, 4, diam, 1, &ok2);
+        PARA.diam = QInputDialog::getInteger(parent, "Scale (D) ", "6-12[pix]:", diam, 6, 12, 1, &ok1);
+        if(ok1) {
+            PARA.perc = QInputDialog::getInteger(parent, "Percentile ", "[1-20]:", perc, 1, 20, 1, &ok2);
         }
         else
             return;
 
-//        if(ok2)
-//        {
-//            Wz = QInputDialog::getInteger(parent, "Window Z", "Enter radius (window size is 2*radius+1):", 1, 1, P, 1, &ok3);
-//        }
-//        else
-//            return;
+        if(ok2) {
+            PARA.znccTh = QInputDialog::getDouble(parent, "Correlation", "[0-1]:", znccTh, 0.4, 1.0, 2, &ok3);
+        }
+        else
+            return;
 
         printf("-------------------------------\n");
         printf("channel = %d\n", PARA.channel);
-        printf("diam = %d\n", PARA.diam);
+        printf("scale\t= %d\n", PARA.diam);
+        printf("perc\t= %d\n", PARA.perc);
+        printf("znccTh\t= %.2f\n", PARA.znccTh);
         printf("-------------------------------\n");
 
         reconstruction_func(callback,parent,PARA,bmenu);
@@ -76,8 +82,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2015-5-5"));
+        v3d_msg(tr("Neuron reconstruction - Cambridge hackathon "
+            "Developed by Miroslav, 2015-5-5"));
 	}
 }
 
@@ -93,43 +99,61 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-        if(infiles.empty())
-        {
+        if(infiles.empty()) {
             fprintf (stderr, "Need input image. \n");
             return false;
         }
         else
             PARA.inimg_file = infiles[0];
 
-        int k=0;
-        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        PARA.diam = (paras.size() >= k+1) ? atoi(paras[k]) : 4;  k++;
+        int     diam       = 10;
+        int     perc       = 15;
+        float   znccTh     = 0.7;
 
+        int k=0;
+        PARA.channel = 1;//(paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.diam = (paras.size() >= k+1)   ? atoi(paras[k]) : diam;  k++;
+        PARA.perc = (paras.size() >= k+1)   ? atoi(paras[k]) : perc;  k++;
+//        printf("%d \t %d\n", paras.size(), k);
+//        printf("%s\n", paras.at(k));
+//        char * aa = new char[4];
+//        aa[0] = paras.at(k)[0];
+//        aa[1] = paras.at(k)[1];
+//        aa[2] = paras.at(k)[2];
+//        aa[3] = paras.at(k)[3];
+//        printf("%s\n", aa);
+//        printf("??? %f,  %f \n", strtod(aa, NULL), atof(aa));
+//        v3d_msg(QString("%1").arg( strtod(aa, NULL)   ));
+
+        // TODO hardcoded - something is wrong with conversions
+        PARA.znccTh = znccTh ; // (paras.size() >= k+1) ? atof(aa) : znccTh; k++; //atof(paras[k])
         printf("-------------------------------\n");
-        printf("channel = %d\n", PARA.channel);
-        printf("diam = %d\n", PARA.diam);
+        printf("channel\t= %d\n",   PARA.channel);
+        printf("diam\t= %d\n",      PARA.diam);
+        printf("perc\t= %d\n",      PARA.perc);
+        printf("znccTh\t= %.2f\n",  PARA.znccTh);
         printf("-------------------------------\n");
 
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
     {
-
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 		printf("**** Usage of NeurAuto tracing **** \n");
-		printf("vaa3d -x NeurAuto -f neurauto_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x NeurAuto -f neurauto_func -i <inimg_file> -p diam perc ?? \n");
         printf("inimg_file       The input image\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
-
+//        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("diam          Scale (pix).\n");
+        printf("perc          Percentile (for extracting foreground).\n");
+        printf("??znccTh        Correlation threshold (couldn't get atof() output).\n");
+//        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 	}
 	else return false;
 
 	return true;
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
-{
+void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu) {
     unsigned char* inimg = 0; // image is loaded into 1d array
     V3DLONG W,H,L,sc,ch;
     V3DLONG in_sz[4];
@@ -218,9 +242,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 for (int yy = y-diam; yy <= y+diam; ++yy)
                 {
                     if(cnt >= (2*diam+1)*(2*diam+1))
-//                        printf("=bug! exceed nbhood alloc %d \tdiam = %d \n", cnt, (2*diam+1)*(2*diam+1));
-//                    if(z*(W*H)+yy*W+xx >= size)
-//                        printf("=bug! exceed inimg alloc\n");
                     nbhood[cnt] = inimg[z*(W*H)+yy*W+xx];
                     cnt++;
                 }
@@ -261,7 +282,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     // exclude those that were zero criteria (reduced) when calculating percentile threshold
-    unsigned char th = quantile(scr_sel, count, 13, 20);
+    unsigned char th = quantile(scr_sel, count, PARA.perc, 20);
 
     unsigned char * fg;
     fg = new unsigned char [size];
@@ -273,7 +294,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (inimg[i]>th) {fg[i] = 255; cnt_fg++;} // perhaps dilatate??
         else fg[i] = 0;
     }
-    printf("--->%3.6f \t locs kept\n", ((float)cnt_fg/(float)size)*100.0);
+    printf("---> %3.6f \t locs kept\n", ((float)cnt_fg/(float)size)*100.0);
 
     // delete unnecessary ones
     delete scr;
@@ -281,12 +302,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     delete nbhood;
 
     // store mapping i2xyz and xyz2i
-//      example
 //      int** ary = new int*[sizeY];
 //      for(int i = 0; i < sizeY; ++i)
 //        ary[i] = new int[sizeX];
-
-    printf("\n\nwill be %d \n\n", cnt_fg);
 
     int ** i2xyz = new int*[cnt_fg];
     for(int i = 0; i < cnt_fg; ++i)
@@ -323,13 +341,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //    memcpy(im_fg->getRawData(), fg, size);
 //    im_fg->saveImage(fg_path2);
 
-    printf("\nsaving:\t %s", fg_path1.toStdString().c_str());
-    if (!simple_saveimage_wrapper(callback,fg_path1.toStdString().c_str(), fg, in_sz, datatype))
-    {
-        fprintf (stderr, "Error happens in saving the subject file [%s]. Exit. \n",fg_path1.toStdString().c_str());
-        return;
+    if(!bmenu){
+        printf("\nsaving:\t %s", fg_path1.toStdString().c_str());
+        if (!simple_saveimage_wrapper(callback,fg_path1.toStdString().c_str(), fg, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in saving the subject file [%s]. Exit. \n",fg_path1.toStdString().c_str());
+            return;
+        }
+        printf("\tdone saving.\n");
     }
-    printf("\tdone saving.\n");
+
 
     // zncc outputs
     float * i2zncc     = new float[cnt_fg];
@@ -344,7 +365,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     int L2 = (int) floor(ceil(diam/2.0) + .5);  // radius/samplingStep
     int LL = 2 * L2 + 1;
 
-    printf("LL=%d,\t diam=%d,\tL2=%d \n", LL, diam, L2);
+//    printf("LL=%d,\t diam=%d,\tL2=%d \n", LL, diam, L2);
 
     // sigmas define
     float sigma_min = 1.0;
@@ -352,16 +373,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     float arcRes = 1.0;
     int nr_sigmas = 0;
     for (float sg = sigma_min; sg <= .4*L2; sg+=sigma_step) nr_sigmas++;
-    printf("%d sigmas...\n", nr_sigmas);
+//    printf("%d sigmas...\n", nr_sigmas);
     float * sigmas = new float[nr_sigmas];
     nr_sigmas = 0;
     for (float sg = sigma_min; sg <= .4*L2; sg+=sigma_step) sigmas[nr_sigmas++] = sg;
 
     // form Ndir theta (Ndir directions)
-    int Ndir 	= (int) floor(ceil(((3.14*(diam/2.0))/arcRes)) +.5);
+    int Ndir;//  	= (int) floor(ceil(((3.14*(diam/2.0))/arcRes)) +.5);
     // perhaps better manually define Ndir (covers half of the circle)
-    Ndir = 10;
-    printf("%d directions...\n", Ndir);
+    Ndir = 10; // cover pi
+//    printf("%d directions...\n", Ndir);
 
     float ** kernels        = new float*[Ndir*nr_sigmas];
     for(int i = 0; i < Ndir*nr_sigmas; ++i)
@@ -452,6 +473,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // filtering at selected locs
     ////////////////////////////////
     float * vals = new float[LL*LL];
+
     for (int loci = 0; loci < cnt_fg; ++loci) {
 
         int at_x = i2xyz[loci][0];
@@ -485,7 +507,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
             vals_avg = 0;
             for (int pidx = 0; pidx < LL*LL; pidx++) {
-//                vals[cnt] = (vals[cnt]-vals_min)/(vals_max-vals_min);
                 vals_avg += vals[pidx];
             }
             vals_avg /= (float)(LL*LL);
@@ -513,70 +534,62 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
         }
 
-//        printf("%d", loci);
-
     } // go through fg. locs
 
     // save as an image (convert to unsigned char first)
     unsigned char * img_zncc = new unsigned char[size];
     for (int loci = 0; loci < cnt_fg; ++loci) {
-
-        //
         int xx = i2xyz[loci][0];
         int yy = i2xyz[loci][1];
         int zz = i2xyz[loci][2];
-        //
         img_zncc[zz*(W*H)+yy*W+xx] = (i2zncc[loci]>=0)? i2zncc[loci]*255 : 0;
-
     }
+
     fg_path1 = PARA.inimg_file + "_zncc.tif";
     datatype = 1; // uint8
     in_sz[0] = W; in_sz[1] = H; in_sz[2] = L; in_sz[3] = sc;
     printf("\nsaving:\t %s", fg_path1.toStdString().c_str());
-    if (!simple_saveimage_wrapper(callback,fg_path1.toStdString().c_str(), img_zncc, in_sz, datatype))
-    {
+    if (!simple_saveimage_wrapper(callback,fg_path1.toStdString().c_str(), img_zncc, in_sz, datatype)) {
         fprintf (stderr, "Error happens in saving the subject file [%s]. Exit. \n",fg_path1.toStdString().c_str());
         return;
     }
     printf("\tdone saving %s.\n", fg_path1.toStdString().c_str());
 
-    /////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+    if (false) {
     printf("\n---experimental---\n");
     float * aa = new float[4]; aa[0] = 2; aa[1] = 6; aa[2] = 4; aa[3] = 8;
     int * ai = new int[4];
 
-    printf("\nVAL (before) = \t");
-    for (int i = 0; i < 4; ++i) {printf("%.1f\t", aa[i]);}
-
-    printf("\nIDX (before) = \t");
-    for (int i = 0; i < 4; ++i) {printf("%d\t", ai[i]);} // ai[i] = i;
+    printf("\nVAL (before) = \t");for (int i = 0; i < 4; ++i) {printf("%.1f\t", aa[i]);}
+    printf("\nIDX (before) = \t");for (int i = 0; i < 4; ++i) {printf("%d\t", ai[i]);} // ai[i] = i;
 
     descending(aa, 4, ai);
 
-    printf("\nVAL (after) = \t");
-    for (int i = 0; i < 4; ++i) {printf("%.1f\t", aa[i]);}
-
-    printf("\nIDX (after) = \t");
-    for (int i = 0; i < 4; ++i) {printf("%d\t", ai[i]);}
+    printf("\nVAL (after) = \t"); for (int i = 0; i < 4; ++i) {printf("%.1f\t", aa[i]);}
+    printf("\nIDX (after) = \t"); for (int i = 0; i < 4; ++i) {printf("%d\t", ai[i]);}
 
     printf("\n---experimental---\n");
-    /////////////////////////////////////////////
-
-    float zncc_th = 0.8;
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////
 
     // get locs with high zncc
     int * idesc = new int[cnt_fg];
     descending(i2zncc, cnt_fg, idesc);
 
-    // map
-    bool * map = new bool[size];
-    for (int ii = 0; ii < size; ++ii) {
-        map[ii] = false;
-    }
+//    // map
+//    bool * map = new bool[size];
+//    for (int ii = 0; ii < size; ++ii) {
+//        map[ii] = false;
+//    }
 
-    int nhd = floor(ceil(diam/4.0)+0.5); // roughly radius
-    nhd = (nhd<1)? 1 : nhd;
-    printf("\nnhd = %d\n", nhd);
+    int * tagmap = new int[size];
+    for (int ii = 0; ii < size; ++ii) {tagmap[ii] = -1;}
+
+//    int nhd = floor(ceil(diam/4.0)+0.5); // roughly radius
+//    nhd = 1; //(nhd<1)? 1 : nhd;
+//    int nhd2 = 2*nhd;
+//    printf("\nnhd = %d\n", nhd);
 
     ///// example of usage of std::vector
 //    float arr[4];
@@ -589,108 +602,223 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //    float* ptr = vec.front();
 //    for (int i = 0; i < 3; i++)
 //        printf("%g\n", ptr[i]);
+    //        v3d_msg(QString("%1").arg(i2xyz[get_idx][0]));
 
-    std::vector<float*> locs_xyz = std::vector<float*>();
 
-    for (int pidx = 0; pidx < cnt_fg; ++pidx) { //
+    NeuronTree nt_locs;
+    NeuronTree nt_rec;  // output 'reconstruction' - idiotic connecting between overlapping neighbours
+
+    std::vector<float*> locs_xyzr = std::vector<float*>();
+
+    for (int pidx = 0; pidx < cnt_fg; ++pidx) {
 
         int get_idx = idesc[pidx];
-//        v3d_msg(QString("%1").arg(i2xyz[get_idx][0]));
-        int xloc = i2xyz[get_idx][0];
-        int yloc = i2xyz[get_idx][1];
-        int zloc = i2xyz[get_idx][2];
+        int     xloc    = i2xyz[get_idx][0];
+        int     yloc    = i2xyz[get_idx][1];
+        int     zloc    = i2xyz[get_idx][2];
+        float   rloc    = i2sigma[get_idx];
+        rloc = (rloc<1)? 1 : rloc;
 
-        if (i2zncc[pidx]<zncc_th) break;
+        if (i2zncc[pidx]<PARA.znccTh) break;
         else {
 
             // it is higher then add the location (if the map allows) and fill the map nbhood
 //            v3d_msg(QString("%1").arg(map[zloc*(W*H)+yloc*W+xloc]), 0);
+//            if (map[zloc*(W*H)+yloc*W+xloc]==false) {
+            if (tagmap[zloc*(W*H)+yloc*W+xloc]==-1) { // can add another guidepoint
+                float * xyzr = new float[4];
+                xyzr[0] = xloc;
+                xyzr[1] = yloc;
+                xyzr[2] = zloc;
+                xyzr[3] = rloc;
 
-            if (map[zloc*(W*H)+yloc*W+xloc]==false) {
+                locs_xyzr.push_back(xyzr); // add the node here
 
-                float * loc_xyz = new float[3];
-                loc_xyz[0] = xloc;
-                loc_xyz[1] = yloc;
-                loc_xyz[2] = zloc;
+                /////
+                NeuronSWC nn;
+                nn.nodeinseg_id = locs_xyzr.size();
+                nn.type = 6;
+                nn.n = locs_xyzr.size();
+                nn.x = xyzr[0];
+                nn.y = xyzr[1];
+                nn.z = xyzr[2];
+                nn.r = xyzr[3];
+                nn.parent = -1;
+                nt_locs.listNeuron.append(nn);
+                nt_rec.listNeuron.append(nn);
 
-                locs_xyz.push_back(loc_xyz);
-//                locs_xyz.insert(loc_xyz);
 //                printf("%d\t%d\t%d\t%d\n", pidx+1, xloc, yloc, zloc);
-//                float* ptr = locs_xyz.back();
 //                printf("\t\t\t\t%d \t %f \t %f \t %f \n", locs_xyz.size(), ptr[0], ptr[1], ptr[2]);
+                int nhd = 2*ceil(rloc);//floor(rloc+0.5);
 
                 for (int xx = xloc-nhd; xx <= xloc+nhd; ++xx) {
                     for (int yy = yloc-nhd; yy <= yloc+nhd; ++yy) {
                         for (int zz = zloc-nhd; zz <= zloc+nhd; ++zz) {
                             if (xx>=0 && xx<W && yy>=0 && yy<H && zz>=0 && zz<L) {
-                                map[zz*(W*H)+yy*W+xx] = true;
+//                                map[zz*(W*H)+yy*W+xx] = true;
+                                if(tagmap[zz*(W*H)+yy*W+xx]==-1){ //
+                                    tagmap[zz*(W*H)+yy*W+xx] = locs_xyzr.size();
+                                }
+                                else if (tagmap[zz*(W*H)+yy*W+xx]>=1) {
+                                    // add link
+                                    NeuronSWC nl;
+                                    nl.nodeinseg_id = locs_xyzr.size();
+                                    nl.type = 2;
+                                    nl.n = locs_xyzr.size();
+                                    nl.x = xyzr[0];
+                                    nl.y = xyzr[1];
+                                    nl.z = xyzr[2];
+                                    nl.r = xyzr[3];
+                                    nl.parent = tagmap[zz*(W*H)+yy*W+xx];
+                                    nt_rec.listNeuron.append(nl);
+                                }
+                                else {
+                                    printf("###");
+                                }
+
                             }
                         }
                     }
                 }
-            }
-        }
+
+
+
+            } // adding new guidepoint
+
+
+
+
+        }// loc had higher corr than threshold
+
     } // go through locs
 
-    printf("list has %d x,y,z locations\n", locs_xyz.size());
+    printf("%d nodes\n", locs_xyzr.size());
 
-    //////////// export them as swc file independent points
-    NeuronTree nt_locs;
-    for (int ni = 0; ni < locs_xyz.size(); ++ni) {
-        NeuronSWC nn;
-        nn.r = 1;
-        nn.nodeinseg_id = ni+1;
-        nn.type = 5;
-        nn.n = ni+1;
-        nn.x = locs_xyz.at(ni)[0];
-        nn.y = locs_xyz.at(ni)[1];
-        nn.z = locs_xyz.at(ni)[2];
-        nn.parent = -1;
-        nt_locs.listNeuron.append(nn);
-//        printf("%d\t%.1f\t%.1f\t%.1f\n", ni+1, nn.x, nn.y, nn.z);
+    // tracing - once all the guidepoints are checked and those overlapping connected
+    int limit = 3*diam;
+    int     curr_limit = 0, curr_tag;
+    int     curr_x, curr_y, curr_z, curr_r;
+    int     next_x, next_y, next_z, next_r;
+
+    int dx[9+8+9] = {-1,-1,-1,  0, 0, 0,   1, 1, 1, -1,-1,-1,   0, 0,   1, 1, 1, -1,-1,-1,  0, 0, 0,  1, 1, 1};
+    int dy[9+8+9] = {-1, 0, 1, -1, 0, 1,  -1, 0, 1, -1, 0, 1,  -1, 1,  -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1};
+    int dz[9+8+9] = {-1,-1,-1, -1,-1,-1,  -1,-1,-1,  0, 0, 0,   0, 0,   0, 0, 0,  1, 1, 1,  1, 1, 1,  1, 1, 1};
+
+    // 9
+    // (-1,-1,-1), (-1, 0,-1), (-1, 1,-1)
+    // ( 0,-1,-1), ( 0, 0,-1), ( 0, 1,-1)
+    // ( 1,-1,-1), ( 1, 0,-1), ( 1, 1,-1)
+    // 8
+    // (-1,-1, 0), (-1, 0, 0), (-1, 1, 0)
+    // ( 0,-1, 0),           , ( 0, 1, 0)
+    // ( 1,-1, 0), ( 1, 0, 0), ( 1, 1, 0)
+    // 9
+    // (-1,-1, 1), (-1, 0, 1), (-1, 1, 1)
+    // ( 0,-1, 1), ( 0, 0, 1), ( 0, 1, 1)
+    // ( 1,-1, 1), ( 1, 0, 1), ( 1, 1, 1)
+
+    for (int nidx = 0; nidx < locs_xyzr.size(); ++nidx) {
+
+        curr_limit = 0;
+        curr_tag = nidx+1;
+
+        curr_x = floor(locs_xyzr.at(nidx)[0]+.5);
+        curr_y = floor(locs_xyzr.at(nidx)[1]+.5);
+        curr_z = floor(locs_xyzr.at(nidx)[2]+.5);
+        curr_r = floor(locs_xyzr.at(nidx)[3]+.5);
+
+        next_x = curr_x;
+        next_y = curr_y;
+        next_z = curr_z;
+        next_r = curr_r;
+
+        while (curr_limit<limit) {
+
+            curr_x = next_x;
+            curr_y = next_y;
+            curr_z = next_z;
+            curr_r = next_r;
+
+            int x0 = curr_x;
+            int y0 = curr_y;
+            int z0 = curr_z;
+
+            unsigned char loc_max = 0;
+            bool found = false;
+            for (int iii = 0; iii < (9+8+9); ++iii) {
+
+                int x1 = x0 + dx[iii];
+                int y1 = y0 + dy[iii];
+                int z1 = z0 + dz[iii];
+
+                if (inimg[z1*(W*H)+y1*W+x1]>loc_max) {
+
+                    found = true;
+
+                    next_x = x1;
+                    next_y = y1;
+                    next_z = z1;
+                }
+
+            }
+
+            if (!found) break; // while loop exit without going further
+
+            if (tagmap[next_z*(W*H)+next_y*W+next_x]==curr_tag || tagmap[next_z*(W*H)+next_y*W+next_x]==-1) {
+            }
+            else {
+
+                int reached = tagmap[next_z*(W*H)+next_y*W+next_x];
+
+                printf("%d ---> %d in %d\n", curr_tag, reached, curr_limit);
+
+                // add link and stop going further
+                //
+                // add link
+                NeuronSWC nl;
+                nl.nodeinseg_id = curr_tag;
+                nl.type = 2;
+                nl.n = curr_tag;
+                nl.x = curr_x;// xyzr[0];
+                nl.y = curr_y;// xyzr[1];
+                nl.z = curr_z;// xyzr[2];
+                nl.r = curr_r;// xyzr[3];
+                nl.parent = reached;//tagmap[zz*(W*H)+yy*W+xx];
+                nt_rec.listNeuron.append(nl);
+
+                break; // stop while loop
+            }
+
+            curr_limit++;
+
+        }
+
     }
 
     QString swc_name = PARA.inimg_file + "_locs.swc";
     nt_locs.name = "LandmarkLocs";
     writeSWC_file(swc_name.toStdString().c_str(),nt_locs);
 
-    /////// output 'reconstruction' - idiotic connecting between closest neighbours
-    // connect the pairs, browse the nodes and make connections between closest pairs
-    NeuronTree nt_rec;
-    for (int n1 = 0; n1 < locs_xyz.size(); ++n1) {
-        for (int n2 = n1+1; n2 < locs_xyz.size(); ++n2) {
-            // if the neighbourhood is close enough - add the segment in between
-
-            float x1 = locs_xyz.at(n1)[0];
-            float y1 = locs_xyz.at(n1)[1];
-            float z1 = locs_xyz.at(n1)[2];
-
-            float x2 = locs_xyz.at(n2)[0];
-            float y2 = locs_xyz.at(n2)[1];
-            float z2 = locs_xyz.at(n2)[2];
-
-            float d = sqrt(pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2));
-
-            if (d<=2*diam) { // 2*nhd
-
-                // connect those by exporting the reconstruction segment
-                NeuronSWC nn;
-                nn.r = 1;
-                nn.nodeinseg_id = n1+1;
-                nn.type = 2;
-                nn.n = n1+1;
-                nn.x = locs_xyz.at(n1)[0];
-                nn.y = locs_xyz.at(n1)[1];
-                nn.z = locs_xyz.at(n1)[2];
-                nn.parent = n2+1;
-                nt_rec.listNeuron.append(nn);
-
-            }
-        }
-    }
     swc_name = PARA.inimg_file + "_NeurAuto.swc";
     nt_rec.name = "NeurAuto";
     writeSWC_file(swc_name.toStdString().c_str(),nt_rec);
+
+//    for (int n1 = 0; n1 < locs_xyzr.size(); ++n1) {
+//        for (int n2 = n1+1; n2 < locs_xyzr.size(); ++n2) {
+//            // if the neighbourhood is close enough - add the segment in between
+//            float x1 = locs_xyzr.at(n1)[0];
+//            float y1 = locs_xyzr.at(n1)[1];
+//            float z1 = locs_xyzr.at(n1)[2];
+//            float x2 = locs_xyzr.at(n2)[0];
+//            float y2 = locs_xyzr.at(n2)[1];
+//            float z2 = locs_xyzr.at(n2)[2];
+
+//            float d = sqrt(pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2));
+//            if (d<=2*diam) { // 2*nhd
+//                // connect those by exporting the reconstruction segment
+//            }
+//        }
+//    }
 
     printf("\n\tDONE.\n");
 
