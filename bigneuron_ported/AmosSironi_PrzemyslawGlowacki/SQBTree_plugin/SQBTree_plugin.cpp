@@ -31,6 +31,13 @@ Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 //}
 
 
+bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+template<typename ImageType>
+ImageType Imcreate(unsigned char *datald, int *in_sz);
+template <class T> void convolveV3D(T* data1d,
+                     V3DLONG *in_sz,
+                     float* &outimg);
+
 QStringList SQBTreePlugin::menulist() const
 {
 	return QStringList() 
@@ -107,7 +114,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      if (input.size()>=2)
      {
           vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) classifier_filename = atoi(paras.at(0));
+      //    if(paras.size() >= 1) classifier_filename = atoi(paras.at(0));
        //   if(paras.size() >= 2) Wy = atoi(paras.at(1));
        //   if(paras.size() >= 3) Wz = atoi(paras.at(2));
        //   if(paras.size() >= 4) c = atoi(paras.at(3));
@@ -184,8 +191,10 @@ template <class T> void convolveV3D(T* data1d,
         outimg = 0;
     }
 
-    typename ImageType I;
-    I = Imcreate(datald, in_sz);
+
+//    typedef itk::Image<float, 3> ImageType;
+//    ImageType I;
+//    I = Imcreate(datald, in_sz);
 
     /*
 
@@ -222,14 +231,13 @@ template <class T> void convolveV3D(T* data1d,
 
 
 template<typename ImageType>
-typename ImageType Imcreate(unsigned char *datald, int *in_sz){
-{
+ImageType Imcreate(unsigned char *datald, int *in_sz){
     //typedef itk::Image<signed int, 3> ImageType;
-    SN = in_sz[0];
-    SM = in_sz[1];
-    SZ = in_sz[2];
+    unsigned int SN = in_sz[0];
+   unsigned int  SM = in_sz[1];
+   unsigned int  SZ = in_sz[2];
 
-    typename ImageType I  = typename ImageType::New();
+     ImageType I  = typename ImageType::New();
     typename ImageType::SizeType size;
     size[0] = SN;
     size[1] = SM;
