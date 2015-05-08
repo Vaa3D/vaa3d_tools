@@ -82,24 +82,24 @@ HEADERS = $(liblbfgsinclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run aclocal-1.9
+ACLOCAL = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run aclocal-1.9
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run tar
+AMTAR = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoconf
-AUTOHEADER = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoheader
-AUTOMAKE = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run automake-1.9
+AUTOCONF = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoconf
+AUTOHEADER = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoheader
+AUTOMAKE = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run automake-1.9
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -fPIC -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
+CFLAGS = -msse2 -DUSE_SSE -O3 -ffast-math  -Wall -fPIC
 CPP = gcc -E
-CPPFLAGS = -fPIC
+CPPFLAGS = -fPIC 
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -fPIC -g -O2
+CXXFLAGS = -g -O2 -fPIC
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -110,13 +110,13 @@ ECHO_T =
 EGREP = grep -E
 EXEEXT = 
 F77 = f95
-FFLAGS = -fPIC -g -O2
+FFLAGS = -g -O2 -fPIC
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/include
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
-LDFLAGS = -fPIC
+LDFLAGS = -fPIC 
 LIBOBJS = 
 LIBS = -lm 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -125,7 +125,7 @@ LTLIBOBJS =
 MAINT = #
 MAINTAINER_MODE_FALSE = 
 MAINTAINER_MODE_TRUE = #
-MAKEINFO = ${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run makeinfo
+MAKEINFO = ${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run makeinfo
 OBJEXT = o
 PACKAGE = liblbfgs
 PACKAGE_BUGREPORT = 
@@ -169,7 +169,7 @@ host_os = linux-gnu
 host_vendor = unknown
 includedir = ${prefix}/include
 infodir = ${prefix}/info
-install_sh = /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/install-sh
+install_sh = /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
@@ -201,7 +201,7 @@ liblbfgs_la_LDFLAGS = \
 	-no-undefined \
 	-release 1.10
 
-AM_CFLAGS = -fPIC -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
+AM_CFLAGS = -msse2 -DUSE_SSE -O3 -ffast-math  -Wall
 all: all-am
 
 .SUFFIXES:

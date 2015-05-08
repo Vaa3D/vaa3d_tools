@@ -490,12 +490,12 @@ s,@INSTALL_DATA@,${INSTALL} -m 644,;t t
 s,@CYGPATH_W@,echo,;t t
 s,@PACKAGE@,liblbfgs,;t t
 s,@VERSION@,1.10,;t t
-s,@ACLOCAL@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run aclocal-1.9,;t t
-s,@AUTOCONF@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoconf,;t t
-s,@AUTOMAKE@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run automake-1.9,;t t
-s,@AUTOHEADER@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoheader,;t t
-s,@MAKEINFO@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run makeinfo,;t t
-s,@install_sh@,/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/install-sh,;t t
+s,@ACLOCAL@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run aclocal-1.9,;t t
+s,@AUTOCONF@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoconf,;t t
+s,@AUTOMAKE@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run automake-1.9,;t t
+s,@AUTOHEADER@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run autoheader,;t t
+s,@MAKEINFO@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run makeinfo,;t t
+s,@install_sh@,/cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/install-sh,;t t
 s,@STRIP@,strip,;t t
 s,@ac_ct_STRIP@,strip,;t t
 s,@INSTALL_STRIP_PROGRAM@,${SHELL} $(install_sh) -c -s,;t t
@@ -503,7 +503,7 @@ s,@mkdir_p@,mkdir -p --,;t t
 s,@AWK@,gawk,;t t
 s,@SET_MAKE@,,;t t
 s,@am__leading_dot@,.,;t t
-s,@AMTAR@,${SHELL} /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run tar,;t t
+s,@AMTAR@,${SHELL} /cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/liblbfgs-1.10/missing --run tar,;t t
 s,@am__tar@,${AMTAR} chof - "$$tardir",;t t
 s,@am__untar@,${AMTAR} xf -,;t t
 s,@MAINTAINER_MODE_TRUE@,#,;t t

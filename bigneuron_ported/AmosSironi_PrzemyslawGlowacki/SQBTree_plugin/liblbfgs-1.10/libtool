@@ -44,7 +44,7 @@ available_tags=" CXX F77"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host iccvlabsrv24:
+# Libtool was configured on host iccvlabsrv25:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/bash"
@@ -6769,7 +6769,7 @@ build_old_libs=`case $build_libtool_libs in yes) $echo no;; *) $echo yes;; esac`
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host iccvlabsrv24:
+# Libtool was configured on host iccvlabsrv25:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/bash"
@@ -7065,7 +7065,7 @@ include_expsyms=""
 
 # ### BEGIN LIBTOOL TAG CONFIG: F77
 
-# Libtool was configured on host iccvlabsrv24:
+# Libtool was configured on host iccvlabsrv25:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/bash"

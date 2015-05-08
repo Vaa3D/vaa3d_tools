@@ -390,14 +390,20 @@ void mexFunctionTest(TreeBoosterType &TB) //int nlhs, mxArray *plhs[], int nrhs,
 //#endif
 }
 
-int main(int argc, char *argv[]) {
+//int main(int argc, char *argv[]) {
+void mockTrainAndTest() {
   printf("Wooow!\n");
 
-  TreeBoosterType TB;
+//  TreeBoosterType TB;
 
-  mexFunctionTrain(TB);
+//  mexFunctionTrain(TB);
 
-  mexFunctionTest(TB);
+//  mexFunctionTest(TB);
+
+
+
+
+
 
 //  MEX_PATH = '../build';
 
