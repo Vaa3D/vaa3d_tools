@@ -69,8 +69,8 @@ bool APP2_ported::dofunc(const QString & func_name, const V3DPluginArgList & inp
         bool bmenu = false;
         input_PARA PARA;
 
-        vector<char*> * pinfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
-        vector<char*> * pparas = (output.size() >= 2) ? (vector<char*> *) output[1].p : 0;
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
