@@ -31,9 +31,9 @@ typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
 
-void testConvolve(){
+void testConvolve(const char *filename){
 
-std::cout << "STEP 1 !" << std::endl;
+//std::cout << "STEP 1 !" << std::endl;
 
 
     ////load filters
@@ -48,7 +48,9 @@ std::cout << "STEP 1 !" << std::endl;
 
     ////load itk image
 
-    const char *input_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2.nrrd";
+//    const char *input_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2.nrrd";
+    const char *input_image_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2.tif";
+
     typedef float ImageScalarType;
     typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
     typedef itk::ImageFileReader<ITKImageType> ReaderType;
@@ -58,12 +60,42 @@ std::cout << "STEP 1 !" << std::endl;
   ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(input_image_file);
 
-     ITKImageType::Pointer input_image = reader->GetOutput();
-     input_image->Update();
-      ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
-      std::cout << "laoded image " <<std::endl;
 
 
+
+
+
+
+//    try{
+//    reader->Update();
+//    }catch( itk::ExceptionObject & err )
+//    {
+//        std::cerr << "ExceptionObject caught !" << std::endl;
+//        std::cerr << err << std::endl;
+//    }
+//    //  reader->Update(); // here is the error !
+
+//        const char *output_file ="/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_resaved.tif";
+
+//    WriterType::Pointer writer = WriterType::New();
+//    writer->SetFileName(output_file);
+//    writer->SetInput(reader->GetOutput());
+
+//    try{
+//    writer->Update();
+//    }catch( itk::ExceptionObject & err )
+//    {
+//        std::cerr << "ExceptionObject caught !" << std::endl;
+//        std::cerr << err << std::endl;
+//    }
+ //    ITKImageType::Pointer input_image = reader->GetOutput();
+
+
+
+  //    ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
+  //    std::cout << "size image " <<size_image <<std::endl;
+
+/*
       ////rescale in [0 1]
        typedef itk::RescaleIntensityImageFilter< ITKImageType, ITKImageType > RescaleFilterType;
       RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
@@ -74,13 +106,22 @@ std::cout << "STEP 1 !" << std::endl;
       std::cout << "rescaled image " <<std::endl;
 
 
-      /*
 
     const float scale_factor =1;
     MatrixXf sep_filters_float = sep_filters.cast<float>();
     MatrixXf weights_float = weights.cast<float>();
     ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
     rescaleFilter->Update();
+
+
+
+    ITKImageType::SizeType size_image = input_image->GetLargestPossibleRegion().GetSize();
+    std::cout << "size image " <<size_image <<std::endl;
+
+
+
+    /*
+
       MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(rescaled_img,sep_filters_float,weights_float, scale_factor);
 
 

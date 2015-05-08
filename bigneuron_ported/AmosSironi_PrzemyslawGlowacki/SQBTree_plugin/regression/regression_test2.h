@@ -2,7 +2,7 @@
 #define _REGRESSION_TEST_H
 
 
- void testConvolve();
+ void testConvolve(const char *filename);
 
 
 
