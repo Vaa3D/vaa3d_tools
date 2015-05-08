@@ -2,6 +2,8 @@
  * Institute: Medical Image Research Center, National Taiwan University of Science & Technology
  * Web: http://www-o.ntust.edu.tw/~cweiwang/
  * License: This plugin uses the same license as Vaa3D.
+ * This method is called "Ensemble neuron tracer", which combines multiple segmentation results by three methods adapted from APP2[citation 1].
+ * Citation 1:  Hang Xiao, Hanchuan Peng, APP2: automatic tracing of 3D neuron morphology based on hierarchical pruning of a gray-weighted image distance-tree. Bioinformatics 29(11): 1448-1454 (2013)
  */
  
 #include "v3d_message.h"
