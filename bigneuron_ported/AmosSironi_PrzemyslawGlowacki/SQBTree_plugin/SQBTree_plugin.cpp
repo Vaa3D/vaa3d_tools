@@ -116,15 +116,15 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    cout<<"Wx = "<<Wx<<endl;
-     cout<<"Wy = "<<Wy<<endl;
-    cout<<"Wz = "<<Wz<<endl;
-     cout<<"c = "<<c<<endl;
-     cout<<"sigma = "<<sigma<<endl;
+//    cout<<"Wx = "<<Wx<<endl;
+//     cout<<"Wy = "<<Wy<<endl;
+//    cout<<"Wz = "<<Wz<<endl;
+//     cout<<"c = "<<c<<endl;
+//     cout<<"sigma = "<<sigma<<endl;
+//
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
-     double sigma_s2 = 0.5/(sigma*sigma);
 
     Image4DSimple *inimg = callback.loadImage(inimg_file);
     if (!inimg || !inimg->valid())
@@ -133,11 +133,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
         return false;
     }
 
-     if(c > inimg->getCDim())// check the input channel number range
-     {
-          v3d_msg("The input channel number is out of real channel range.\n", 0 );
-          return false;
-     }
+
 
     //input
      float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
@@ -150,11 +146,11 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
      switch (inimg->getDatatype())
      {
-          case V3D_UINT8: gaussian_filter(inimg->getRawData(), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case V3D_UINT16: gaussian_filter((unsigned short int*)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case V3D_FLOAT32: gaussian_filter((float *)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case V3D_UINT8: convolveV3D(inimg->getRawData(), in_sz, outimg); break;
+          case V3D_UINT16: convolveV3D((unsigned short int*)(inimg->getRawData()), in_sz, outimg); break;
+          case V3D_FLOAT32: convolveV3D((float *)(inimg->getRawData()), in_sz, outimg); break;
           default:
-               v3d_msg("Invalid datatype in Gaussian fileter.", 0);
+               v3d_msg("Invalid datatype in convolveV3D.", 0);
                if (inimg) {delete inimg; inimg=0;}
                return false;
      }
@@ -169,6 +165,111 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
      return true;
 }
+
+
+template <class T> void convolveV3D(T* data1d,
+                     V3DLONG *in_sz,
+                     float* &outimg)
+{
+    if (!data1d || !in_sz || in_sz[0]<=0 || in_sz[1]<=0 || in_sz[2]<=0 || in_sz[3]<=0 || outimg)
+    {
+        v3d_msg("Invalid parameters to gaussian_filter().", 0);
+        return;
+    }
+
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
+
+    typename ImageType I;
+    I = Imcreate(datald, in_sz);
+
+    /*
+
+     V3DLONG N = in_sz[0];
+     V3DLONG M = in_sz[1];
+     V3DLONG P = in_sz[2];
+     V3DLONG sc = in_sz[3];
+     V3DLONG pagesz = N*M*P;
+
+     //filtering
+     V3DLONG offset_init = (c-1)*pagesz;
+
+     //declare temporary pointer
+     float *pImage = new float [pagesz];
+     if (!pImage)
+     {
+          printf("Fail to allocate memory.\n");
+          return;
+     }
+     else
+     {
+          for(V3DLONG i=0; i<pagesz; i++)
+               pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
+     }
+
+
+
+
+    outimg = pImage;
+
+*/
+    return;
+}
+
+
+template<typename ImageType>
+typename ImageType Imcreate(unsigned char *datald, int *in_sz){
+{
+    //typedef itk::Image<signed int, 3> ImageType;
+    SN = in_sz[0];
+    SM = in_sz[1];
+    SZ = in_sz[2];
+
+    typename ImageType I  = typename ImageType::New();
+    typename ImageType::SizeType size;
+    size[0] = SN;
+    size[1] = SM;
+    size[2] = SZ;
+
+    typename ImageType::IndexType idx;
+    idx.Fill(0);
+    typename ImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex( idx );
+
+    I->SetRegions(region);
+    I->Allocate();
+    I->FillBuffer(0);
+
+    for(int iz = 0; iz < SZ; iz++)
+      {
+          int offsetk = iz*SM*SN;
+          for(int iy = 0; iy < SM; iy++)
+          {
+              int offsetj = iy*SN;
+              for(int ix = 0; ix < SN; ix++)
+              {
+
+                  typename ImageType::PixelType PixelVaule =  datald[offsetk + offsetj + ix];
+                  itk::Index<3> indexX;
+                  indexX[0] = ix;
+                  indexX[1] = iy;
+                  indexX[2] = iz;
+                  I->SetPixel(indexX, PixelVaule);
+              }
+          }
+
+      }
+    return I;
+
+}
+
+
+
 
 
 
