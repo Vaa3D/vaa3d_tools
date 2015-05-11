@@ -21,5 +21,5 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += my_surf_objs.cpp
 
 
-TARGET	= $$qtLibraryTarget(APP2_ported)
+TARGET	= $$qtLibraryTarget(CWlab_method1_version1)
 DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuron_ported/CWlab_method1_version1/
