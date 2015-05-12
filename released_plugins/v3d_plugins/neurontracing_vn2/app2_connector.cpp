@@ -79,10 +79,10 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         LocationSimple t;
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
-            t.x = file_inmarkers[i].x-1;
-            t.y = file_inmarkers[i].y-1;
-            t.z = file_inmarkers[i].z-1;
-            if(t.x<p.xc0 || t.x>p.xc1 || t.y<p.yc0 || t.y>p.yc1 || t.z<p.zc0 || t.z>p.zc1)
+            t.x = file_inmarkers[i].x;
+            t.y = file_inmarkers[i].y;
+            t.z = file_inmarkers[i].z;
+            if(t.x<p.xc0+1 || t.x>p.xc1+1 || t.y<p.yc0+1 || t.y>p.yc1+1 || t.z<p.zc0+1 || t.z>p.zc1+1)
             {
                 if(i==0)
                 {
@@ -288,9 +288,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     vector<MyMarker> inmarkers;
     for(i = 0; i < p.landmarks.size(); i++)
     {
-        double x = p.landmarks[i].x - p.xc0;
-        double y = p.landmarks[i].y - p.yc0;
-        double z = p.landmarks[i].z - p.zc0;
+        double x = p.landmarks[i].x - p.xc0 -1;
+        double y = p.landmarks[i].y - p.yc0 -1;
+        double z = p.landmarks[i].z - p.zc0 -1;
         
         //add scaling by PHC 121127
         x /= dfactor_xy;

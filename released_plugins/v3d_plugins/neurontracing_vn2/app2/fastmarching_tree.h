@@ -294,6 +294,7 @@ template<class T> bool fastmarching_tree(MyMarker root,
 	long rootz = root.z + 0.5;
 
 	long root_ind = rootz*sz01 + rooty*sz0 + rootx;
+
 	state[root_ind] = ALIVE; 
 	phi[root_ind] = 0.0;
 

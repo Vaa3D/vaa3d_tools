@@ -73,11 +73,11 @@ struct PARA_VN //VN - V3DNeuron
             LocationSimple t;
             for(int i = 0; i < landmarks.size(); i++)
             {
-                t.x = landmarks[i].x-1;
-                t.y = landmarks[i].y-1;
-                t.z = landmarks[i].z-1;
+                t.x = landmarks[i].x;
+                t.y = landmarks[i].y;
+                t.z = landmarks[i].z;
 
-                if(t.x<xc0 || t.x>xc1 || t.y<yc0 || t.y>yc1 || t.z<zc0 || t.z>zc1)
+                if(t.x<xc0+1 || t.x>xc1+1 || t.y<yc0+1 || t.y>yc1+1 || t.z<zc0+1 || t.z>zc1+1)
                 {
 
 
