@@ -9,6 +9,8 @@
 #include "v3d_message.h"
 #include <vector>
 #include "SQBTree_plugin.h"
+#include "sqb_trees.h"
+
 
 #include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
@@ -100,7 +102,8 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	}
 	else if (func_name == tr("func2"))
 	{
-		v3d_msg("To be implemented.");
+    mockTrainAndTest();
+    v3d_msg("Hahahahahahahahahahahaha!.");
 	}
 	else if (func_name == tr("help"))
 	{

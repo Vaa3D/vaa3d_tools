@@ -28,6 +28,9 @@
 
 //#include <SQB/Matlab/matlab_utils.hxx>
 
+#ifndef __SQB_TREES_H__
+#define __SQB_TREES_H__
+
 #define SHOW_TIMINGS 0
 
 #ifndef SHOW_TIMINGS
@@ -270,19 +273,41 @@ void mexFunctionTrain(TreeBoosterType &TB/*int nlhs, mxArray *plhs[], int nrhs, 
                 TreeBoosterType::FeatureValueObjectType(feats),
                 TreeBoosterType::ClassifierResponseValueObjectType(labels),
                 maxIters );
+      std::cout << "Hu!" << std::endl << std::flush;
       TB.printOptionsSummary();
     }
 
+//    libconfig::Config cfg;
+//    libconfig::Setting &root = cfg.getRoot();
+
+//    // Add some settings to the configuration.
+//    libconfig::Setting &address = root.add("regressor", libconfig::Setting::TypeList);
+
     libconfig::Config cfg;
     libconfig::Setting &root = cfg.getRoot();
-    root.add(libconfig::Setting::TypeList);
-//    root.add("tree", libconfig::Setting::TypeList);
 
-    TB.saveToLibconfig(root);
+//    // Add some settings to the configuration.
+//    libconfig::Setting &address = root.add("address", libconfig::Setting::TypeGroup);
+
+//    address.add("street", libconfig::Setting::TypeString) = "1 Woz Way";
+//    address.add("city", libconfig::Setting::TypeString) = "San Jose";
+//    address.add("state", libconfig::Setting::TypeString) = "CA";
+//    address.add("zip", libconfig::Setting::TypeInt) = 95110;
+
+//    libconfig::Setting &array = root.add("array", libconfig::Setting::TypeArray);
+
+//    for(int i = 0; i < 10; ++i)
+//      array.add(libconfig::Setting::TypeInt) = 10 * i;
+
+
+//    root.add(libconfig::Setting::TypeList);
+    libconfig::Setting &regressor = root.add("regressor", libconfig::Setting::TypeList);
+
+    TB.saveToLibconfig(regressor);
 
     static const char *output_file =
-        "/Users/cvlab/Work/Vaa3d_stuff/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/bigneuron_ported/"
-        "AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/zzznewconfig_hahahahahahahaha.cfg";
+        "/cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/"
+          "bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/aaaaaaaa.cfg";
 
     // Write out the new configuration.
     try
@@ -333,7 +358,36 @@ void mexFunctionTest(TreeBoosterType &TB) //int nlhs, mxArray *plhs[], int nrhs,
 //    TreeBoosterType TB;
 
 //    // load model
-//    TB.loadFromMatlab( mModel );
+
+
+    static const char *input_file =
+      "/cvlabdata1/home/pglowack/Work/Vaa3D-BuiltWithDefaultScripts/vaa3d_tools/"
+        "bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/aaaaaaaa.cfg";
+
+    libconfig::Config cfg;
+
+    // Read the file. If there is an error, report it and exit.
+    try
+    {
+      cfg.readFile(input_file);
+    }
+    catch(const libconfig::FileIOException &fioex)
+    {
+      std::cerr << "I/O error while reading file." << std::endl;
+//      return(EXIT_FAILURE);
+    }
+    catch(const libconfig::ParseException &pex)
+    {
+      std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                << " - " << pex.getError() << std::endl;
+//      return(EXIT_FAILURE);
+    }
+
+    libconfig::Setting &root = cfg.getRoot();
+
+    libconfig::Setting &regressor = root["regressor"];
+
+    TB.loadFromLibconfig(regressor);
 
     unsigned maxIters = TB.numWeakLearners();
 //    if (nrhs >= 3)
@@ -394,11 +448,13 @@ void mexFunctionTest(TreeBoosterType &TB) //int nlhs, mxArray *plhs[], int nrhs,
 int mockTrainAndTest() {
   printf("Wooow!\n");
 
-//  TreeBoosterType TB;
+  TreeBoosterType TB;
 
-//  mexFunctionTrain(TB);
+  mexFunctionTrain(TB);
 
-//  mexFunctionTest(TB);
+  TreeBoosterType TB2;
+
+  mexFunctionTest(TB2);
 
 
 
@@ -442,3 +498,5 @@ int mockTrainAndTest() {
 
   return 0;
 }
+
+#endif
