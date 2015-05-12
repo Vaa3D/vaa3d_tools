@@ -77,12 +77,11 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             file_inmarkers = readMarker_file(string(qPrintable(p.inmarker_file)));
 
         LocationSimple t;
-
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
-            t.x = file_inmarkers[i].x;
-            t.y = file_inmarkers[i].y;
-            t.z = file_inmarkers[i].z;
+            t.x = file_inmarkers[i].x-1;
+            t.y = file_inmarkers[i].y-1;
+            t.z = file_inmarkers[i].z-1;
             if(t.x<p.xc0 || t.x>p.xc1 || t.y<p.yc0 || t.y>p.yc1 || t.z<p.zc0 || t.z>p.zc1)
             {
                 if(i==0)
@@ -97,6 +96,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             p.landmarks.push_back(t);
         }
     }
+
     
 
     if(p.landmarks.size() < 2 && p.b_intensity ==1)
