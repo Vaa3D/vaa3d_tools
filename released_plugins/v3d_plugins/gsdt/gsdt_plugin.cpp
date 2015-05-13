@@ -44,7 +44,7 @@ bool GrayScaleDistanceTransformationPlugin::dofunc(const QString & func_name, co
 {
 	if (func_name == tr("gsdt"))
 	{
-		return gsdt(input, output);
+        return gsdt(input, output,callback);
 	}
 	else if(func_name == tr("help"))
 	{

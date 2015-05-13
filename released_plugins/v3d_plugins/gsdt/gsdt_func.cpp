@@ -25,7 +25,7 @@ bool gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return -1;
-	}
+    }
 	v3dhandle curwin = callback.currentImageWindow();
 	Image4DSimple * p4DImage = callback.getImage(curwin);
     if (!p4DImage || !p4DImage->valid())
@@ -114,7 +114,7 @@ bool gsdt(V3DPluginCallback2 &callback, QWidget *parent)
     return true;
 }
 
-bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
 	cout<<"Welcome to gsdt!"<<endl;
 	if(input.size() != 2 || output.size() != 1) return false;
@@ -133,23 +133,37 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"channel = "<<channel<<endl;
 	cout<<"z_thickness = "<<z_thickness<<endl;
 
-	unsigned char * inimg1d = 0,  * outimg1d = 0;
+    unsigned char * inimg1d = 0,  * outimg1d = 0;
     float * phi = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG  in_sz[4];
 	int datatype;
-	if(!loadImage(inimg_file, inimg1d, in_sz, datatype, channel)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
+    if(!simple_loadimage_wrapper(callback,inimg_file, inimg1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
+    if(in_sz[3] < channel+1)
+    {
+        cerr<<"invalid channel number!"<<endl;
+        delete [] inimg1d; inimg1d = 0;
+        return false;
+    }
+
+    V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char * inimg1d_ch1 = 0;
+    try {inimg1d_ch1 = new unsigned char [pagesz];}
+    catch(...)  {v3d_msg("cannot allocate memory for inimg1d_ch1.",0); return false;}
+    for(V3DLONG i = 0; i<pagesz; i++)
+        inimg1d_ch1[i] = inimg1d[channel*pagesz+i];
+    delete [] inimg1d; inimg1d = 0;
 
      if(datatype == 1)
      {
-          if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+          if(!fastmarching_dt(inimg1d_ch1, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
      }
      else if(datatype == 2)
      {
-          if(!fastmarching_dt((unsigned short int*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+          if(!fastmarching_dt((unsigned short int*)inimg1d_ch1, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
      }
      else if(datatype == 4)
      {
-          if(!fastmarching_dt((float*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+          if(!fastmarching_dt((float*)inimg1d_ch1, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
      }
 	float min_val = phi[0], max_val = phi[0];
     V3DLONG tol_sz = in_sz[0] * in_sz[1] * in_sz[2];
@@ -168,10 +182,10 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 		}
 	}
      in_sz[3]=1;
-	saveImage(outimg_file, outimg1d, in_sz, 1);
+    simple_saveimage_wrapper(callback,outimg_file, outimg1d, in_sz, 1);
 
 	delete [] phi; phi = 0;
-	delete [] inimg1d; inimg1d = 0;
+    delete [] inimg1d_ch1; inimg1d_ch1 = 0;
 	delete [] outimg1d; outimg1d = 0;
 	return true;
 }
