@@ -1683,9 +1683,9 @@ bool q_points_save2markerfile(
 
 //save the input larval image with head and butt straighten area mask overlaid
 bool q_saveimg_strmask_overlaid(
-		const unsigned char *p_inputimg,const V3DLONG sz_inputimg[4],
+        const unsigned char *p_inputimg, V3DLONG sz_inputimg[4],
 		const vector< vector< vector<Coord2D64F_SL> > > vecvecvec_index_ori2str_branches,
-		const char *filename_outputimg)
+        const char *filename_outputimg,V3DPluginCallback2 &callback)
 {
 	//check parameters
 	if(!p_inputimg)
@@ -1749,8 +1749,8 @@ bool q_saveimg_strmask_overlaid(
 					}
 				}
 
-	//save central line overlaid image to file
-	if(!saveImage(filename_outputimg,(unsigned char *)p_outputimg,sz_inputimg,1))
+    //save central line overlaid image to file
+    if(!simple_saveimage_wrapper(callback,filename_outputimg,(unsigned char *)p_outputimg,sz_inputimg,1))
 	{
 		printf("ERROR: q_saveimg_strmask_overlaid: write image to [%s] fall!\n",filename_outputimg);
 		if(p_outputimg)		{delete []p_outputimg;	p_outputimg=0;}

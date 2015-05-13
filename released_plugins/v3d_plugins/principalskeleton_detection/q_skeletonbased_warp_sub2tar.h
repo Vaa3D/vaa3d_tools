@@ -17,6 +17,8 @@ using namespace std;
 #include "../basic_c_fun/basic_surf_objs.h"
 #include "../worm_straighten_c/spline_cubic.h"
 #include "../worm_straighten_c/bdb_minus.h"
+#include <v3d_interface.h>
+
 
 struct PSWParas
 {
@@ -192,7 +194,7 @@ bool q_points_save2markerfile(
 bool q_saveimg_strmask_overlaid(
 		const unsigned char *p_inputimg,const V3DLONG sz_inputimg[4],
 		const vector< vector< vector<Coord2D64F_SL> > > vecvecvec_index_ori2str_branches,
-		const char *filename_outputimg);
+        const char *filename_outputimg,V3DPluginCallback2 &callback);
 
 //first: compute the df_sub2tar based on the input df_tar2sub (note: we did not interpolate the df_sub2tar due to lazy)
 //then : warp central line of subject image to target use df_sub2tar (note: not all subpos can find df in df_sub2tar, we only keep the valid one)
