@@ -15,13 +15,6 @@ HEADERS      += NeuronEnhancementFilter.h
 HEADERS      += $$V3DMAINDIR/neuron_editing/neuron_format_converter.h
 HEADERS      += $$V3DMAINDIR/neuron_editing/v_neuronswc.h
 
-HEADERS      +=	$$V3DMAINDIR/basic_c_fun/stackutil.h
-HEADERS      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.h
-HEADERS      += $$V3DMAINDIR/basic_c_fun/mg_image_lib.h
-
-SOURCES      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
-SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp
-SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
 SOURCES      += NeuronSegmentation.cpp
 SOURCES      += NeuronEnhancementFilter.cpp
 

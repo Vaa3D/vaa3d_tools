@@ -100,27 +100,27 @@ bool NeuronPlugin::dofunc(const QString & func_name, const V3DPluginArgList & in
 {
 	if (func_name==tr("tracing"))
 	{
-		Tracing_DistanceField_entry_func(input,output);
+        Tracing_DistanceField_entry_func(input,output,callback);
 		return true;
 	}
 	else if (func_name==tr("segment"))
 	{
-		Neuron_segment_entry_func(input,output, true);
+        Neuron_segment_entry_func(input,output, callback,true);
 		return true;
 	}
 	else if (func_name==tr("enhance"))
 	{
-		Neuron_segment_entry_func(input,output, false);
+        Neuron_segment_entry_func(input,output, callback,false);
 		return true;
 	}
 	else if (func_name==tr("ray_shooting"))
 	{
-		Tracing_Ray_SWC(input,output);
+        Tracing_Ray_SWC(input,output,callback);
 		return true;
 	}
 	else if (func_name==tr("dfs"))
 	{
-		Tracing_Ball_SWC(input,output);
+        Tracing_Ball_SWC(input,output,callback);
 		return true;
 	}
 	else if (func_name==tr("help"))
@@ -231,7 +231,7 @@ bool do_seg(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, boo
     return true;
 }
 
-void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_binarization)
+void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback &callback,bool b_binarization)
 {
     if (input.size()<=0 || output.size()<=0)
         return;
@@ -243,8 +243,8 @@ void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList 
 	cout<<"infile : "<<infile<<endl;
     cout<<"outfile : "<<outfile<<endl;
 	
-	unsigned char * inimg1d = 0; V3DLONG * in_sz = 0; int datatype;
-	loadImage(infile, inimg1d, in_sz, datatype);
+    unsigned char * inimg1d = 0; V3DLONG in_sz[4]; int datatype;
+    simple_loadimage_wrapper(callback,infile, inimg1d, in_sz, datatype);
     
 	V3DLONG channel_sz = in_sz[0]*in_sz[1]*in_sz[2];
     V3DLONG outsz[4];
@@ -289,13 +289,12 @@ void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList 
 	
     //save mask file
     for (i=0;i<3;i++) outsz[i]=in_sz[i]; outsz[3]=1;	
-	saveImage(outfile, m_OutImgData, outsz, 1);
+    simple_saveimage_wrapper(callback,outfile, m_OutImgData, outsz, 1);
     
     //clear memory
 Label_exit_Neuron_segment_entry_func:
     if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;} //fix this memory leak on 2012-01-28. by PHC
     if (inimg1d) {delete []inimg1d; inimg1d=0;}
-    if (in_sz) {delete []in_sz; in_sz=0;} //do not forget
 }
 
 void Neuron_segment_entry_func(V3DPluginCallback &callback, QWidget *parent)///segment
@@ -1110,7 +1109,7 @@ void NeuronPlugin::Dilation3D(unsigned char *apsInput, unsigned char *aspOutput,
 }
 
 
-bool NeuronPlugin::Tracing_Ray_SWC(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool NeuronPlugin::Tracing_Ray_SWC(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback)
 {
     cout<<"Welcome to Ray_shooting Tracing"<<endl;
 	//if(input.size() != 2 || output.size() != 1) return false;
@@ -1134,15 +1133,15 @@ bool NeuronPlugin::Tracing_Ray_SWC(const V3DPluginArgList & input, V3DPluginArgL
     char * outswcfile = (*(vector<char*> *)(output.at(0).p)).at(0);
 
 	unsigned char * inimg1d = 0;
-	V3DLONG * sz = 0;
+    V3DLONG sz[4];
 	int datatype;
-    if(!loadImage(inimgfile, inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
+    if(!simple_loadimage_wrapper(callback,inimgfile, inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
     NeuronTree nt= NeuronTracing_Ray_SWC(inimg1d, sz[0], sz[1], sz[2]);
     if(!writeSWC_file(outswcfile, nt)){cerr<<"unable to write swc"<<endl; return false;}
 	return true;
 }
 
-bool NeuronPlugin::Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool NeuronPlugin::Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback)
 {
 	cout<<"Welcome to Neurontracing_jinzhu1"<<endl;
 	//if(input.size() != 2 || output.size() != 1) return false;
@@ -1166,15 +1165,15 @@ bool NeuronPlugin::Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArg
     char * outswcfile = (*(vector<char*> *)(output.at(0).p)).at(0);
 
     unsigned char * inimg1d = 0;
-    V3DLONG * sz = 0;
+    V3DLONG sz[4];
     int datatype;
-    if(!loadImage(inimgfile, inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
+    if(!simple_loadimage_wrapper(callback,inimgfile, inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
     NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2]);
     if(!writeSWC_file(outswcfile, nt)){cerr<<"unable to write swc"<<endl; return false;}
 	return true;
 }
 
-bool NeuronPlugin::Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool NeuronPlugin::Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback)
 {
 	cout<<"Welcome to Neurontracing_jinzhu1"<<endl;
 	//if(input.size() != 2 || output.size() != 1) return false;
@@ -1194,9 +1193,9 @@ bool NeuronPlugin::Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList &
 	cout<<"parser : -inimg "<<inimgfile<<" -inmarker "<<inmarkerfile<<" -outswc "<<outswcfile<<endl;
 	if(parser.error()) {parser.print_error(); return false;}
 	unsigned char * inimg1d = 0;
-	V3DLONG * sz = 0;
+    V3DLONG sz[4];
 	int datatype;
-	if(!loadImage((char*)inimgfile.c_str(), inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
+    if(!simple_loadimage_wrapper(callback,(char*)inimgfile.c_str(), inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
 	QList<ImageMarker> markerlist = readMarker_file(QString(inmarkerfile.c_str()));
 	ImageMarker first_marker = markerlist.at(0);
     NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2]);
@@ -1223,7 +1222,7 @@ void NeuronPlugin::Set_Seed(SpacePoint_t seed)
 }
 
 
-bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback)
 {
 	cout<<"Now invoke SimpeTracing..."<<endl;
 	
@@ -1233,12 +1232,12 @@ bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & inp
 	
 	unsigned char * inimg1d = 0;
 	
-	V3DLONG * sz = 0;
+    V3DLONG sz[4];
 	int datatype;
 	
 	V3DLONG ch_tracing=0; 	//here need to add the channel info later, noted by PHC, 2012-01-25
 	
-	if(!loadImage(inimgfile, inimg1d, sz, datatype))
+    if(!simple_loadimage_wrapper(callback,inimgfile, inimg1d, sz, datatype))
 	{
 		cerr<<"unable to load image ["<< inimgfile << "]"<<endl;
 		return false;
@@ -1260,7 +1259,6 @@ bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & inp
 			return false;
 	} 
 	
-	if (sz) {delete []sz; sz=0;} //not delete sz[] maybe a bug of many Vaa3D code, by PHC, 2012-02-06
     nt.name = "Simple_Tracing";
 	if (!writeSWC_file(QString(outswcfile), nt))
 	{

@@ -138,17 +138,17 @@ public:
 	void GetOrgPoint(short *apsInput, V3DLONG iImgLayer, V3DLONG iImgHei, V3DLONG iImgWid, V3DLONG cnt, SpacePoint_t &pt);
 
 	//entry point functions
-	bool Tracing_DistanceField_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output);
+    bool Tracing_DistanceField_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback);
 	void Tracing_DistanceField_entry_func(V3DPluginCallback &callback, QWidget *parent);
 	template <class T> NeuronTree NeuronTracing_Distance_SWC(T *apsInput, 
                                                              V3DLONG sx, V3DLONG sy, V3DLONG sz, V3DLONG sc, 
                                                              V3DLONG ch_tracing, V3DLONG mx ,V3DLONG my, V3DLONG mz);
 	
-	bool Tracing_Ray_SWC(const V3DPluginArgList & input, V3DPluginArgList & output);
+    bool Tracing_Ray_SWC(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback);
 	
-	bool Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArgList & output);
+    bool Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback);
 	
-	bool Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList & output);
+    bool Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback &callback);
 	
 	void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, int* numbered, int* group);
 	
@@ -293,7 +293,7 @@ public:
 //interface to the neuron foreground extraction
 bool do_seg(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, bool b_binarization);
 void Neuron_segment_entry_func(V3DPluginCallback &callback, QWidget *parent);
-void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_binarization);
+void Neuron_segment_entry_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback &callback, bool b_binarization);
 
 
 
