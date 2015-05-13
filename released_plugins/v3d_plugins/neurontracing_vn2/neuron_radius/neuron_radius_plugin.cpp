@@ -72,9 +72,9 @@ void SWCRadiusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
         if (dialog) {delete dialog; dialog=0;}
 		
 		unsigned char * inimg1d = 0; 
-		V3DLONG * in_sz = 0;
+        V3DLONG  in_sz[4];
 		int datatype;
-		if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype))
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype))
 		{
 			QMessageBox::information(0,"","Invalid Image!");
 			return;
@@ -93,7 +93,6 @@ void SWCRadiusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 		QMessageBox::information(0,"", string("neuron radius is calculated successfully. \n\nThe output swc is saved to " +outswc_file).c_str());
 		for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 		if(inimg1d){delete [] inimg1d; inimg1d = 0;}
-		if(in_sz){delete [] in_sz; in_sz = 0;}
 	}
 	else
 	{
@@ -132,9 +131,9 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout<<"is2d = "<< (int)is_2d <<endl;
 
 		unsigned char * inimg1d = 0; 
-		V3DLONG * in_sz = 0;
+        V3DLONG in_sz[4];
 		int datatype;
-		if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
 		vector<MyMarker*> inswc = readSWC_file(inswc_file);
 		if(inswc.empty()) return false;
 		for(int i = 0; i < inswc.size(); i++)
@@ -153,7 +152,6 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout<<"The output swc is saved to "<<outswc_file<<endl;
 		for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 		if(inimg1d){delete [] inimg1d; inimg1d = 0;}
-		if(in_sz){delete [] in_sz; in_sz = 0;}
 	}
 
     if (func_name == tr("neuron_radius_2D"))
@@ -179,9 +177,9 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         cout<<"is2d = "<< (int)is_2d <<endl;
 
         unsigned char * inimg1d = 0;
-        V3DLONG * in_sz = 0;
+        V3DLONG in_sz[4] = 0;
         int datatype;
-        if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
+        if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
         vector<MyMarker*> inswc = readSWC_file(inswc_file);
         vector<double> z_location;
 
@@ -211,7 +209,6 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         cout<<"The output swc is saved to "<<outswc_file<<endl;
         for(int i = 0; i < inswc.size(); i++) delete inswc[i];
         if(inimg1d){delete [] inimg1d; inimg1d = 0;}
-        if(in_sz){delete [] in_sz; in_sz = 0;}
     }
 	else //if (func_name == tr("help"))
 	{
