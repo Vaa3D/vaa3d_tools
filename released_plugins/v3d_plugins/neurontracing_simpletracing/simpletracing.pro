@@ -18,17 +18,9 @@ HEADERS      += $$V3DMAINDIR/neuron_editing/v_neuronswc.h
 SOURCES      += NeuronSegmentation.cpp
 SOURCES      += NeuronEnhancementFilter.cpp
 
-win32 {
-    contains(QMAKE_HOST.arch, x86_64) {
-    LIBS     += -L$$V3DMAINDIR/common_lib/winlib64 -llibtiff
-    } else {
-    LIBS     += -L$$V3DMAINDIR/common_lib/winlib -llibtiff
-    }
-}
 
 unix {
     LIBS     += -lm -lpthread
-    LIBS     += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 }
 
 SOURCES      += $$V3DMAINDIR/basic_c_fun/basic_surf_objs.cpp
