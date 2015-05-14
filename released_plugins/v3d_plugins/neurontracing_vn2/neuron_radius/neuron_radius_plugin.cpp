@@ -177,7 +177,7 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         cout<<"is2d = "<< (int)is_2d <<endl;
 
         unsigned char * inimg1d = 0;
-        V3DLONG in_sz[4] = 0;
+        V3DLONG in_sz[4];
         int datatype;
         if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
         vector<MyMarker*> inswc = readSWC_file(inswc_file);
