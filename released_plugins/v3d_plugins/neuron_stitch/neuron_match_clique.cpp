@@ -14,7 +14,26 @@
 #include "performance_timer.h"
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
-#define _TESTFLAG 1
+#define _TESTFLAG 0
+
+#define _checkwindow() \
+    if (!callback){ \
+        this->hide(); \
+        return; \
+    }\
+    bool isclosed = true;\
+    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers(); \
+    for (V3DLONG i=0;i<allWindowList.size();i++) \
+    {\
+        if(allWindowList.at(i)==v3dwin){\
+            isclosed = false;\
+            break;\
+        }\
+    }\
+    if(isclosed){\
+        this->hide();\
+        return;\
+    }
 
 int COLOR_ACTIVE0=4;
 int COLOR_ACTIVE1=5;
@@ -371,33 +390,12 @@ void NeuronLiveMatchDialog::spineCheck(int c)
 
 void NeuronLiveMatchDialog::checkwindow()
 {
-    //check if current window is closed
-    if (!callback){
-        this->hide();
-        return;
-    }
-
-    bool isclosed = true;
-    //search to see if the window is still open
-    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        if(allWindowList.at(i)==v3dwin){
-            isclosed = false;
-            break;
-        }
-    }
-
-    //close the window
-    if(isclosed){
-        this->hide();
-        return;
-    }
+    _checkwindow();
 }
 
 void NeuronLiveMatchDialog::updateview()
 {
-    checkwindow();
+    _checkwindow();
 
     if(v3dwin){
         callback->update_3DViewer(v3dwin);
@@ -410,7 +408,7 @@ void NeuronLiveMatchDialog::updateview()
 
 void NeuronLiveMatchDialog::match()
 {
-    checkwindow();
+    _checkwindow();
 
     //retrive backup
     if(!group_marker->isChecked()){
@@ -598,7 +596,7 @@ void NeuronLiveMatchDialog::highlight_pair()
 
 void NeuronLiveMatchDialog::change_pair(int idx)
 {
-    checkwindow();
+    _checkwindow();
 
     highlight_pair();
 
@@ -799,7 +797,7 @@ void NeuronLiveMatchDialog::update_marker_to_neuron()
 
 void NeuronLiveMatchDialog::skip()
 {
-    checkwindow();
+    _checkwindow();
     if(cb_pair->currentIndex() < cb_pair->count()-1)
         cb_pair->setCurrentIndex(cb_pair->currentIndex()+1);
     else{
@@ -810,7 +808,7 @@ void NeuronLiveMatchDialog::skip()
 
 void NeuronLiveMatchDialog::stitch()
 {
-    checkwindow();
+    _checkwindow();
 
     int idx=cb_pair->currentIndex();
     if(matchfunc->stitch(pmatch0.at(idx),pmatch1.at(idx))){
@@ -835,7 +833,7 @@ void NeuronLiveMatchDialog::stitch()
 
 void NeuronLiveMatchDialog::stitchall()
 {
-    checkwindow();
+    _checkwindow();
 
     for(int idx=0; idx<stitchmask.size(); idx++){
         if(stitchmask[idx] != 0)
@@ -880,7 +878,7 @@ void NeuronLiveMatchDialog::stitchall()
 
 void NeuronLiveMatchDialog::output()
 {
-    checkwindow();
+    _checkwindow();
 
     QString fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Select outputs folder and prefix"),
                                                         QObject::tr(""),

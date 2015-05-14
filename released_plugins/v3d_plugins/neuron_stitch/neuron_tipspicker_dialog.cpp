@@ -72,7 +72,6 @@ neuron_tipspicker_dialog::neuron_tipspicker_dialog(V3DPluginCallback2 * cb, V3dR
 
     curIdx=0;
     checkStatus();
-    updatemarker();
 }
 
 void neuron_tipspicker_dialog::creat()
@@ -152,7 +151,9 @@ void neuron_tipspicker_dialog::creat()
     btn_accept = new QPushButton("Accept"); btn_accept->setAutoDefault(false);
     btn_skip = new QPushButton("Skip"); btn_skip->setAutoDefault(false);
     btn_reject = new QPushButton("Reject"); btn_reject->setAutoDefault(false);
-    check_syncTriView = new QCheckBox("Sync Triview"); check_syncTriView->setChecked(true);
+    check_syncTriView = new QCheckBox("Sync View"); check_syncTriView->setChecked(true);
+    spin_roisize = new QSpinBox();
+    spin_roisize->setRange(0,100000); spin_roisize->setValue(50);
 
     connect(btn_reset, SIGNAL(clicked()), this, SLOT(reset_tip()));
     connect(btn_update, SIGNAL(clicked()), this, SLOT(update_tip()));
@@ -165,6 +166,9 @@ void neuron_tipspicker_dialog::creat()
     checkLayout->addWidget(btn_reset,1,0,1,1);
     checkLayout->addWidget(btn_update,1,1,1,1);
     checkLayout->addWidget(check_syncTriView,1,2,1,1);
+    QLabel* label_10 = new QLabel("View Size");
+    checkLayout->addWidget(label_10,1,3,1,1,Qt::AlignRight);
+    checkLayout->addWidget(spin_roisize,1,4,1,1);
     checkLayout->addWidget(cb_tips,2,0,1,1);
     checkLayout->addWidget(btn_accept,2,1,1,1);
     checkLayout->addWidget(btn_skip,2,2,1,1);
@@ -226,7 +230,6 @@ void neuron_tipspicker_dialog::search()
         mList->append(S0);
     }
 
-    updatemarker();
     update_tip();
 }
 
@@ -270,6 +273,10 @@ void neuron_tipspicker_dialog::reset_tip()
 
     curIdx=0;
     checkStatus();
+
+    //for test
+    qDebug()<<"===========UPDATE MARKER============ reset tip";
+
     updatemarker();
 }
 
@@ -298,7 +305,6 @@ void neuron_tipspicker_dialog::update_tip()
     if(curIdx>=cb_tips->count())
         curIdx=0;
     checkStatus();
-    updatemarker();
 }
 
 void neuron_tipspicker_dialog::locate_tip()
@@ -314,22 +320,105 @@ void neuron_tipspicker_dialog::locate_tip()
         return;
 
     int mid=cb_tips->currentIndex();
-//        TriviewControl * p_control = callback->getTriviewControl(v3dwin);
-//        qDebug()<<"cojoc:"<<p_control;
-//        if(p_control){
-//            p_control->setFocusLocation((long)mList->at(mid).x,(long)mList->at(mid).y,(long)mList->at(mid).z);
-//        }
 
     v3dhandleList list_triwin = callback->getImageWindowList();
     for(V3DLONG i=0; i<list_triwin.size(); i++){
-        //for test
-        qDebug()<<"cojoc1:"<<callback->getImageName(list_triwin.at(i));
-        qDebug()<<"cojoc2:"<<callback->getImageName(v3dwin);
+//        //for test
+//        qDebug()<<"cojoc1:"<<callback->getImageName(list_triwin.at(i));
+//        qDebug()<<"cojoc2:"<<callback->getImageName(v3dwin);
         if(callback->getImageName(v3dwin).contains(callback->getImageName(list_triwin.at(i)))){
             TriviewControl * p_control = callback->getTriviewControl(list_triwin.at(i));
             p_control->setFocusLocation((long)mList->at(mid).x,(long)mList->at(mid).y,(long)mList->at(mid).z);
         }
     }
+}
+
+void neuron_tipspicker_dialog::roi_tip()
+{
+    checkwindow();
+    checkStatus();
+
+    int roiWinSize=spin_roisize->value();
+
+    if(!check_syncTriView->isChecked())
+        return;
+    if(cb_tips->count()==0)
+        return;
+    if(!v3dwin)
+        return;
+
+    int mid=cb_tips->currentIndex();
+
+    v3dhandleList list_triwin = callback->getImageWindowList();
+    for(V3DLONG i=0; i<list_triwin.size(); i++){
+        if(callback->getImageName(v3dwin).contains(callback->getImageName(list_triwin.at(i)))){
+            //reset ROI
+            ROIList pRoiList=callback->getROI(list_triwin.at(i));
+            for(int j=0;j<3;j++){
+                pRoiList[j].clear();
+            }
+            pRoiList[0] << QPoint((long)mList->at(mid).x-roiWinSize,(long)mList->at(mid).y-roiWinSize);
+            pRoiList[0] << QPoint((long)mList->at(mid).x+roiWinSize,(long)mList->at(mid).y-roiWinSize);
+            pRoiList[0] << QPoint((long)mList->at(mid).x+roiWinSize,(long)mList->at(mid).y+roiWinSize);
+            pRoiList[0] << QPoint((long)mList->at(mid).x-roiWinSize,(long)mList->at(mid).y+roiWinSize);
+            pRoiList[1] << QPoint((long)mList->at(mid).z-roiWinSize,(long)mList->at(mid).y-roiWinSize);
+            pRoiList[1] << QPoint((long)mList->at(mid).z+roiWinSize,(long)mList->at(mid).y-roiWinSize);
+            pRoiList[1] << QPoint((long)mList->at(mid).z+roiWinSize,(long)mList->at(mid).y+roiWinSize);
+            pRoiList[1] << QPoint((long)mList->at(mid).z-roiWinSize,(long)mList->at(mid).y+roiWinSize);
+            pRoiList[2] << QPoint((long)mList->at(mid).x-roiWinSize,(long)mList->at(mid).z-roiWinSize);
+            pRoiList[2] << QPoint((long)mList->at(mid).x+roiWinSize,(long)mList->at(mid).z-roiWinSize);
+            pRoiList[2] << QPoint((long)mList->at(mid).x+roiWinSize,(long)mList->at(mid).z+roiWinSize);
+            pRoiList[2] << QPoint((long)mList->at(mid).x-roiWinSize,(long)mList->at(mid).z+roiWinSize);
+
+
+
+            if(callback->setROI(list_triwin.at(i),pRoiList)){
+                callback->updateImageWindow(list_triwin.at(i));
+            }else{
+                qDebug()<<"error: failed to set ROI";
+                return;
+            }
+            callback->closeROI3DWindow(list_triwin.at(i));
+            callback->openROI3DWindow(list_triwin.at(i));
+
+            QString fname_roiwin="Local 3D View [" + callback->getImageName(list_triwin.at(i)) +"]";
+            V3dR_MainWindow * mainwin_roi = 0;
+            qDebug()<<"===========ROI============= searching: "<<fname_roiwin;
+            QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
+            for(int j=0; j<tmpwinlist.size(); j++){
+                qDebug()<<"===========ROI============= "<<callback->getImageName(tmpwinlist[j]);
+                if(callback->getImageName(tmpwinlist[j]).contains(fname_roiwin)){
+                    mainwin_roi = tmpwinlist[j];
+                    break;
+                }
+            }
+            if(!mainwin_roi){
+                qDebug()<<"===========ROI============= failed open ROI window";
+                return;
+            }
+
+            qDebug()<<"===========ROI============= update ROI window with triview";
+            View3DControl * v3dlocalcontrol = callback->getLocalView3DControl(list_triwin.at(i));
+            v3dlocalcontrol->updateLandmark();
+
+            QList <NeuronTree> * p_nttmp = callback->getHandleNeuronTrees_Any3DViewer(mainwin_roi);
+            if(p_nttmp->size()!=ntList->size()){
+                qDebug()<<"===========ROI============= copy neuron tree to 3Dview";
+                p_nttmp->clear();
+                for(int j=0; j<ntList->size(); j++){
+                    p_nttmp->push_back((*ntList)[j]);
+                }
+                qDebug()<<"===========ROI============= copied neuron tree: "<<p_nttmp->size();
+
+                callback->update_NeuronBoundingBox(mainwin_roi);
+            }
+            callback->update_3DViewer(mainwin_roi);
+
+            break;
+        }
+    }
+
+    qDebug()<<"===========ROI============= done";
 }
 
 void neuron_tipspicker_dialog::accept_tip()
@@ -345,10 +434,13 @@ void neuron_tipspicker_dialog::accept_tip()
     update_marker_info(mList->at(i),info,color);
     cb_tips->setItemText(i, "Marker: " + QString::number(i+1) + " accepted");
 
-    updatemarker();
-
     if(i+1<cb_tips->count()){
         cb_tips->setCurrentIndex(i+1);
+    }else{
+        //for test
+        qDebug()<<"===========UPDATE MARKER============ accept tip";
+
+        updatemarker();
     }
 }
 
@@ -365,10 +457,13 @@ void neuron_tipspicker_dialog::reject_tip()
     update_marker_info(mList->at(i),info,color);
     cb_tips->setItemText(i, "Marker: " + QString::number(i+1) + " rejected");
 
-    updatemarker();
-
     if(i+1<cb_tips->count()){
         cb_tips->setCurrentIndex(i+1);
+    }else{
+        //for test
+        qDebug()<<"===========UPDATE MARKER============ reject tip";
+
+        updatemarker();
     }
 }
 
@@ -410,6 +505,9 @@ void neuron_tipspicker_dialog::change_tip(int c)
         update_marker_info(mList->at(i),info,color);
         curIdx=i;
     }
+
+    //for test
+    qDebug()<<"===========UPDATE MARKER============ change tip";
 
     updatemarker();
 }
@@ -522,4 +620,5 @@ void neuron_tipspicker_dialog::updatemarker()
     }
 
     locate_tip();
+    roi_tip();
 }

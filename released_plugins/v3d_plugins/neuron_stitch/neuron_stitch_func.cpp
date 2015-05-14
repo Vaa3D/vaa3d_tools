@@ -523,6 +523,7 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
     QList<V3DLONG> record;
     V3DLONG id = pid0;
     QVector<QVector<V3DLONG> > idList0;
+    bool b_spineStart = false;
     if(ng0.at(id).size()<=0){
         QVector<V3DLONG> tmp;
         tmp.append(id);
@@ -531,12 +532,17 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
         QVector<V3DLONG> prev, next;
         prev.append(id);
         record.append(id);
+        if(neuronType0.at(id)==61 || neuronType0.at(id)==21){
+            b_spineStart=true;
+        }
         while(prev.size()>0){
             QVector<V3DLONG> cur;
             next.clear();
             for(int i=0; i<prev.size(); i++){
                 id=prev.at(i);
                 if(neuronType0.at(id)%10==5){ //fork
+                    continue;
+                }else if(neuronType0.at(id)==51 && b_spineStart){ //start from spine, reach the root
                     continue;
                 }else{
                     //push it to current round point
@@ -547,10 +553,6 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             next.append(ng0.at(id).at(0)); //add its only neighbor to the next round
                             record.append(ng0.at(id).at(0));
                         }
-//                        else{ //stop when reach the dead end
-//                            cur.clear;
-//                            break;
-//                        }
                     }else if(neuronType0.at(id)==2){ //path point
                         for(int j=0; j<ng0.at(id).size(); j++){
                             if(!record.contains(ng0.at(id).at(j))){
@@ -562,17 +564,27 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                         QQueue<V3DLONG> spinequeue;
                         for(int j=0; j<ng0.at(id).size(); j++){
                             if(!record.contains(ng0.at(id).at(j))){ //the point is not touched yet
-                                if(neuronType0.at(ng0.at(id).at(j))==61){ //spine end
-                                    cur.append(ng0.at(id).at(j));
-                                    record.append(ng0.at(id).at(j));
-                                }else if(neuronType0.at(ng0.at(id).at(j))==21 || //spine path
-                                         neuronType0.at(ng0.at(id).at(j))==51){ //spine fork
-                                    cur.append(ng0.at(id).at(j));
-                                    record.append(ng0.at(id).at(j));
-                                    spinequeue.append(ng0.at(id).at(j));
-                                }else{ //leave it for next round
+                                if(b_spineStart){
                                     next.append(ng0.at(id).at(j));
                                     record.append(ng0.at(id).at(j));
+                                    if(neuronType0.at(ng0.at(id).at(j))!=61 &&
+                                            neuronType0.at(ng0.at(id).at(j))!=21 &&
+                                            neuronType0.at(ng0.at(id).at(j))!=51){ //spine end
+                                        b_spineStart=false;
+                                    }
+                                }else{
+                                    if(neuronType0.at(ng0.at(id).at(j))==61){ //spine end
+                                        cur.append(ng0.at(id).at(j));
+                                        record.append(ng0.at(id).at(j));
+                                    }else if(neuronType0.at(ng0.at(id).at(j))==21 || //spine path
+                                             neuronType0.at(ng0.at(id).at(j))==51){ //spine fork
+                                        cur.append(ng0.at(id).at(j));
+                                        record.append(ng0.at(id).at(j));
+                                        spinequeue.append(ng0.at(id).at(j));
+                                    }else{ //leave it for next round
+                                        next.append(ng0.at(id).at(j));
+                                        record.append(ng0.at(id).at(j));
+                                    }
                                 }
                             }
                         }
@@ -609,12 +621,17 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
         QVector<V3DLONG> prev, next;
         prev.append(id);
         record.append(id);
+        if(neuronType1.at(id)==61 || neuronType1.at(id)==21){
+            b_spineStart=true;
+        }
         while(prev.size()>0){
             QVector<V3DLONG> cur;
             next.clear();
             for(int i=0; i<prev.size(); i++){
                 id=prev.at(i);
                 if(neuronType1.at(id)%10==5){ //fork
+                    continue;
+                }else if(neuronType1.at(id)==51 && b_spineStart){ //start from spine, reach the root
                     continue;
                 }else{
                     //push it to current round point
@@ -625,10 +642,6 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                             next.append(ng1.at(id).at(0)); //add its only neighbor to the next round
                             record.append(ng1.at(id).at(0));
                         }
-//                        else{ //stop when reach the dead end
-//                            cur.clear;
-//                            continue;
-//                        }
                     }else if(neuronType1.at(id)==2){ //path point
                         for(int j=0; j<ng1.at(id).size(); j++){
                             if(!record.contains(ng1.at(id).at(j))){
@@ -640,17 +653,27 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const HBNeuronGraph & 
                         QQueue<V3DLONG> spinequeue;
                         for(int j=0; j<ng1.at(id).size(); j++){
                             if(!record.contains(ng1.at(id).at(j))){ //the point is not touched yet
-                                if(neuronType0.at(ng1.at(id).at(j))==61){ //spine end
-                                    cur.append(ng1.at(id).at(j));
-                                    record.append(ng1.at(id).at(j));
-                                }else if(neuronType0.at(ng1.at(id).at(j))==21 || //spine path
-                                         neuronType0.at(ng1.at(id).at(j))==51){ //spine fork
-                                    cur.append(ng1.at(id).at(j));
-                                    record.append(ng1.at(id).at(j));
-                                    spinequeue.append(ng1.at(id).at(j));
-                                }else{ //leave it for next round
+                                if(b_spineStart){
                                     next.append(ng1.at(id).at(j));
                                     record.append(ng1.at(id).at(j));
+                                    if(neuronType1.at(ng1.at(id).at(j))!=61 &&
+                                            neuronType1.at(ng1.at(id).at(j))!=21 &&
+                                            neuronType1.at(ng1.at(id).at(j))!=51){ //spine end
+                                        b_spineStart=false;
+                                    }
+                                }else{
+                                    if(neuronType0.at(ng1.at(id).at(j))==61){ //spine end
+                                        cur.append(ng1.at(id).at(j));
+                                        record.append(ng1.at(id).at(j));
+                                    }else if(neuronType0.at(ng1.at(id).at(j))==21 || //spine path
+                                             neuronType0.at(ng1.at(id).at(j))==51){ //spine fork
+                                        cur.append(ng1.at(id).at(j));
+                                        record.append(ng1.at(id).at(j));
+                                        spinequeue.append(ng1.at(id).at(j));
+                                    }else{ //leave it for next round
+                                        next.append(ng1.at(id).at(j));
+                                        record.append(ng1.at(id).at(j));
+                                    }
                                 }
                             }
                         }

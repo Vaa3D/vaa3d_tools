@@ -16,6 +16,26 @@
 #define MY_PI 3.141592635
 #define MY_MATCH_DIS 100 //this is squared distance, when real distance is smaller than sqrt(DIS), the point will be matched
 #define MY_NT_DEBUG 1
+
+#define _checkwindow() \
+    bool isclosed = true;\
+    if (!callback){\
+        this->hide();\
+        return;\
+    }\
+    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();\
+    for (V3DLONG i=0;i<allWindowList.size();i++)\
+    {\
+        if(allWindowList.at(i)==v3dwin){\
+            isclosed = false;\
+            break;\
+        }\
+    }\
+    if(isclosed){\
+        this->hide();\
+        return;\
+    }
+
 using namespace std;
 
 NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
@@ -89,27 +109,7 @@ NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWin
 
 void NeuronGeometryDialog::enterEvent(QEvent *e)
 {
-    bool isclosed = true;
-    //check if current window is closed
-    if (!callback)
-        return;
-
-    //search to see if the window is still open
-    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        if(allWindowList.at(i)==v3dwin){
-            isclosed = false;
-            break;
-        }
-    }
-
-    //close the window
-    if(isclosed){
-        this->hide();
-        QDialog::enterEvent(e);
-        return;
-    }
+    _checkwindow();
 
     //update marker link when there is new markers
     if(!run_status){
@@ -321,6 +321,8 @@ void NeuronGeometryDialog::create()
 
 void NeuronGeometryDialog::change_ant(int idx)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -358,6 +360,8 @@ void NeuronGeometryDialog::change_ant(int idx)
 
 void NeuronGeometryDialog::save_affine_mat()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -382,6 +386,8 @@ void NeuronGeometryDialog::save_affine_mat()
 
 void NeuronGeometryDialog::reject()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -409,6 +415,8 @@ void NeuronGeometryDialog::reject()
 
 void NeuronGeometryDialog::accept()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -433,6 +441,8 @@ void NeuronGeometryDialog::accept()
 
 void NeuronGeometryDialog::change_stackdir(int dir)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -503,6 +513,8 @@ void NeuronGeometryDialog::change_stackdir(int dir)
 //visualization tools
 void NeuronGeometryDialog::update_boundingbox()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -518,6 +530,8 @@ void NeuronGeometryDialog::update_boundingbox()
 
 void NeuronGeometryDialog::hide_branch(double s)
 {
+    _checkwindow()
+
     if(!checkBox_hide->isChecked()){
         return;
     }
@@ -603,6 +617,8 @@ void NeuronGeometryDialog::show_branch()
 
 void NeuronGeometryDialog::hide_branch_check(int c)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -621,6 +637,8 @@ void NeuronGeometryDialog::hide_branch_check(int c)
 
 void NeuronGeometryDialog::highlight_boundpoint(double s)
 {
+    _checkwindow()
+
     if(!checkBox_highlight_boundpoint->isChecked()){
         return;
     }
@@ -661,6 +679,8 @@ void NeuronGeometryDialog::highlight_boundpoint(double s)
 
 void NeuronGeometryDialog::highlight_matchpoint(double s)
 {
+    _checkwindow()
+
     if(!checkBox_highlight_matchpoint->isChecked()){
         return;
     }
@@ -749,6 +769,8 @@ void NeuronGeometryDialog::highlight_points(bool force)
 
 void NeuronGeometryDialog::highlight_matchpoint_check(int c)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -763,6 +785,8 @@ void NeuronGeometryDialog::highlight_matchpoint_check(int c)
 
 void NeuronGeometryDialog::highlight_boundpoint_check(int c)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -777,6 +801,8 @@ void NeuronGeometryDialog::highlight_boundpoint_check(int c)
 
 void NeuronGeometryDialog::change_neurontype()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -802,6 +828,8 @@ void NeuronGeometryDialog::change_neurontype()
 //marker tools
 void NeuronGeometryDialog::link_markers()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -821,6 +849,8 @@ void NeuronGeometryDialog::link_markers()
 
 void NeuronGeometryDialog::link_marker_neuron_force()
 {
+    _checkwindow()
+
     if(mList->size()<=0){
 //        v3d_msg("Cannot find markers. Please define some markers first");
 //        qDebug("Cannot find markers. Please define some markers first");
@@ -1012,6 +1042,8 @@ void NeuronGeometryDialog::update_markers_delete()
 
 void NeuronGeometryDialog::update_markers()
 {
+    _checkwindow()
+
     if(mList->size()<=0){
         return;
     }
@@ -1052,6 +1084,8 @@ void NeuronGeometryDialog::update_markers()
 
 void NeuronGeometryDialog::affine_markers()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1151,6 +1185,8 @@ void NeuronGeometryDialog::affine_markers()
 
 void NeuronGeometryDialog::auto_affine()
 {
+    _checkwindow()
+
     this->setEnabled(false);
     bool instatus = run_status;
     run_status = true;
@@ -1349,6 +1385,8 @@ void NeuronGeometryDialog::auto_affine()
 //geometry changing tools
 void NeuronGeometryDialog::reset()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1400,6 +1438,8 @@ void NeuronGeometryDialog::reset()
 
 void NeuronGeometryDialog::quickmove()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1494,6 +1534,8 @@ double NORMALIZE_ROTATION_Angle( double angle )
 
 void NeuronGeometryDialog::shift_x(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1517,6 +1559,8 @@ void NeuronGeometryDialog::shift_x(double s)
 
 void NeuronGeometryDialog::shift_y(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1539,6 +1583,8 @@ void NeuronGeometryDialog::shift_y(double s)
 
 void NeuronGeometryDialog::shift_z(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1561,6 +1607,8 @@ void NeuronGeometryDialog::shift_z(double s)
 
 void NeuronGeometryDialog::scale_x(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1583,6 +1631,8 @@ void NeuronGeometryDialog::scale_x(double s)
 
 void NeuronGeometryDialog::scale_y(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1605,6 +1655,8 @@ void NeuronGeometryDialog::scale_y(double s)
 
 void NeuronGeometryDialog::scale_z(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1627,6 +1679,8 @@ void NeuronGeometryDialog::scale_z(double s)
 
 void NeuronGeometryDialog::gscale_x(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1654,6 +1708,8 @@ void NeuronGeometryDialog::gscale_x(double s)
 
 void NeuronGeometryDialog::gscale_y(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1681,6 +1737,8 @@ void NeuronGeometryDialog::gscale_y(double s)
 
 void NeuronGeometryDialog::gscale_z(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1708,6 +1766,8 @@ void NeuronGeometryDialog::gscale_z(double s)
 
 void NeuronGeometryDialog::scale_r(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1723,6 +1783,8 @@ void NeuronGeometryDialog::scale_r(double s)
 
 void NeuronGeometryDialog::rotate_around_x_dial(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1735,6 +1797,8 @@ void NeuronGeometryDialog::rotate_around_x_dial(int v)
 
 void NeuronGeometryDialog::rotate_around_y_dial(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1747,6 +1811,8 @@ void NeuronGeometryDialog::rotate_around_y_dial(int v)
 
 void NeuronGeometryDialog::rotate_around_z_dial(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1759,6 +1825,8 @@ void NeuronGeometryDialog::rotate_around_z_dial(int v)
 
 void NeuronGeometryDialog::rotate_around_x_spin(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1785,6 +1853,8 @@ void NeuronGeometryDialog::rotate_around_x_spin(double s)
 
 void NeuronGeometryDialog::rotate_around_y_spin(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1811,6 +1881,8 @@ void NeuronGeometryDialog::rotate_around_y_spin(double s)
 
 void NeuronGeometryDialog::rotate_around_z_spin(double s)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1837,6 +1909,8 @@ void NeuronGeometryDialog::rotate_around_z_spin(double s)
 
 void NeuronGeometryDialog::refresh_rcent()
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1851,6 +1925,8 @@ void NeuronGeometryDialog::refresh_rcent()
 
 void NeuronGeometryDialog::flip_x(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1869,6 +1945,8 @@ void NeuronGeometryDialog::flip_x(int v)
 
 void NeuronGeometryDialog::flip_y(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 
@@ -1887,6 +1965,8 @@ void NeuronGeometryDialog::flip_y(int v)
 
 void NeuronGeometryDialog::flip_z(int v)
 {
+    _checkwindow()
+
     bool instatus = run_status;
     run_status = true;
 

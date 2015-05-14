@@ -23,6 +23,7 @@ private:
     void checkStatus();
     void output_markers(QString fname);
     void locate_tip();
+    void roi_tip();
 
 signals:
     
@@ -49,7 +50,7 @@ public:
     QGridLayout *gridLayout;
     QComboBox *cb_dir,*cb_tips, *cb_side;
     QDoubleSpinBox *spin_zscale, *spin_searchspan, *spin_segthr, *spin_gapthr, *spin_angthr;
-    QSpinBox *spin_spineLen;
+    QSpinBox *spin_spineLen, *spin_roisize;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
     QCheckBox *check_spine, *check_syncTriView;
     QGroupBox *group_marker, *group_check;
