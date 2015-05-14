@@ -12,7 +12,7 @@
 
 typedef struct Parameters{
     float sample_scoreThr;
-    float sample_scoreType;
+    int sample_scoreType;
     float sample_radiusFactor_positive;
     float sample_radiusFactor_inter;
     float sample_radiusFactor_negative;
@@ -50,7 +50,7 @@ class nt_selfcorrect_func
 {
 public:
     nt_selfcorrect_func();
-    void correct_tracing(QString fname_img, QString fname_swc, QString fname_output);
+    void correct_tracing(QString fname_img, QString fname_swc, QString fname_score, QString fname_output, V3DPluginCallback2* cb);
     void tracing_correct(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
     void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
 
@@ -68,6 +68,7 @@ private:
     bool predictExisting();
     bool correctExisting();
     void loadParameter(QString fname_param);
+    bool loadScore_topology(QString fname_score);
 
 private:
     void saveParameter(QString fname_param);

@@ -7,7 +7,7 @@
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
-#define FLAG_TEST 1
+#define FLAG_TEST 0
 
 nt_selfcorrect_func::nt_selfcorrect_func()
 {
@@ -26,19 +26,26 @@ nt_selfcorrect_func::nt_selfcorrect_func()
     initParameter();
 }
 
-void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, QString fname_output)
+void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, QString fname_score, QString fname_output, V3DPluginCallback2* cb)
 {
     taskID = 1;
+    callback=cb;
 
     fname_tmpout=fname_output+"_tmp";
+    fname_outswc=fname_output+".swc";
+    fname_inimg=fname_img;
 
     loadData(fname_img, fname_swc);
-    calculateScore_topology();
+//    calculateScore_topology();
+    if(!loadScore_topology(fname_score)){
+        return;
+    }
     getTrainingSample();
     performTraining();
-    predictExisting();
-    correctExisting();
-    saveData(fname_output);
+    smartTracing_seedstart();
+//    predictExisting();
+//    correctExisting();
+//    saveData(fname_output);
 }
 
 void nt_selfcorrect_func::tracing_correct(QString fname_img, QString fname_output, V3DPluginCallback2* cb)
@@ -74,8 +81,8 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     calculateScore_topology();
     getTrainingSample();
     performTraining();
-    smartTracing_regionstart();
-    //smartTracing_seedstart();
+    //smartTracing_regionstart();
+    smartTracing_seedstart();
     //saveData(fname_output);
 }
 
@@ -124,6 +131,38 @@ bool nt_selfcorrect_func::saveData(QString fname_output){
     fname_out=fname_output+".swc";
     saveSWC_file(fname_out.toStdString(), ntmarkers);
 
+    return true;
+}
+
+bool nt_selfcorrect_func::loadScore_topology(QString fname_score)
+{
+    ifstream fp(fname_score.toStdString().c_str());
+    if(!fp.is_open()){
+        qDebug()<<"ERROR: failed in reading score file "<<fname_score;
+        return false;
+    }
+    int id_tmp;
+    float score_tmp;
+    int i=0;
+    score_map.clear();
+    while(!fp.eof()){
+        id_tmp=score_tmp=-1;
+        fp>>id_tmp>>score_tmp;
+        if(id_tmp>=0 && score_tmp>=0){
+            if(i>=ntmarkers.size()){
+                qDebug()<<"ERROR: the score file and swc file does not match! More score than neuron nodes";
+                return false;
+            }
+            score_map[ntmarkers[i]]=score_tmp;
+        }else{
+            break;
+        }
+        i++;
+    }
+    if(score_map.size() != ntmarkers.size()){
+        qDebug()<<"ERROR: the score file and swc file does not match! "<<i<<":"<<score_map.size()<<":"<<ntmarkers.size();
+        return false;
+    }
     return true;
 }
 
@@ -1091,11 +1130,12 @@ bool nt_selfcorrect_func::smartTracing_seedstart(){
         if(p_label[ind]!=VAL_FG)
             p_label[ind]=0;
         else{
-            p_label[ind]=255;
+            p_label[ind]=p_img1D[ind]>2?p_img1D[ind]:2;
         }
     }
     QString fname_img = fname_tmpout+"_foreground.raw";
     saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
+    qDebug()<<"smartTracing: Done prediction. Calculate final tracing.";
     ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
 }
 
@@ -1103,9 +1143,9 @@ void nt_selfcorrect_func::initParameter()
 {
     param.sample_scoreThr=0.5;
     param.sample_scoreType=1;
-    param.sample_radiusFactor_inter=3;
+    param.sample_radiusFactor_inter=2;
     param.sample_radiusFactor_positive=0.7;
-    param.sample_radiusFactor_negative=4;
+    param.sample_radiusFactor_negative=3;
     param.sample_maxNumber=10000;
 
     param.wavelet_level=3;
