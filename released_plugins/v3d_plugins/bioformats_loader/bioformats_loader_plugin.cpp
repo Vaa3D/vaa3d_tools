@@ -122,7 +122,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
     if (!QFile(savefile).exists())
     {
-        v3d_msg("It seems there is some difficulty to generate the intermediate file. You may need to choose a diofferent folder to try again.\n"); //need change later
+        v3d_msg("It seems there is some difficulty to generate the intermediate file. You may need to choose a different folder to try again.\n"); //need change later
         return;
     }
 
@@ -190,12 +190,24 @@ void bioformats_loader::domenu(const QString &menu_name, V3DPluginCallback2 &cal
                                                         QDir::currentPath(),
                                                         QFileDialog::ShowDirsOnly
                                                         | QFileDialog::DontResolveSymlinks);
+#if defined(Q_OS_MAC)
+        //detect if there is a Qt redundant folder bug, if yes, then make a correction
+        // This fix is done by PHC, 2015May14. This should work in most cases. However
+        //if a user choose a strange tmp folder with the name "/abc/abc/abc" then this fix
+        //will wrongly go to the parent folder "abc/abc".
+        QDir tmp1(m_SaveDir);
+        QString tmp2 = tmp1.dirName();
+        if (m_SaveDir.endsWith(tmp2+'/'+tmp2))
+        {
+            m_SaveDir = m_SaveDir.left(m_SaveDir.size() - tmp2.size() - 1);
+        }
+#endif
 
-        printf("filename [%s]\n",m_FileName.toStdString().c_str());
-        printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
+        v3d_msg(QString("input file name = [%1]\n").arg(m_FileName), 0);
+        v3d_msg(QString("intermediate folder name = [%1]\n").arg(m_SaveDir), 0);
 
         // temp directory
-        QString baseName = QFileInfo(m_FileName).baseName();
+        QString baseName = QFileInfo(m_FileName).completeBaseName();
         QString savefile = m_SaveDir.append("/").append(baseName).append(".v3draw");
 
         call_open_using_imagej(true, m_FileName, savefile, callback);
