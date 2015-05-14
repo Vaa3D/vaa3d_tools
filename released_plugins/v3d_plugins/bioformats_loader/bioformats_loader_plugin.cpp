@@ -120,7 +120,11 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
     }
 
 
-    if (!QFile(savefile).exists()) v3d_msg("File conversion failed.\n"); //need change later
+    if (!QFile(savefile).exists())
+    {
+        v3d_msg("It seems there is some difficulty to generate the intermediate file. You may need to choose a diofferent folder to try again.\n"); //need change later
+        return;
+    }
 
     if (ismenu) { // display image if it's being called from the menu. otherwise don't!
         // load
@@ -182,15 +186,13 @@ void bioformats_loader::domenu(const QString &menu_name, V3DPluginCallback2 &cal
              return;
         }
         // target directory for v3draw file
-        QFileDialog d;
-         d.setWindowTitle(tr("Select Save Directory:"));
-         d.setFileMode(QFileDialog::Directory);
-         d.exec();
+        QString m_SaveDir = QFileDialog::getExistingDirectory(parent, tr("Select a folder to save the intermediate file"),
+                                                        QDir::currentPath(),
+                                                        QFileDialog::ShowDirsOnly
+                                                        | QFileDialog::DontResolveSymlinks);
 
-              QString m_SaveDir=(d.selectedFiles())[0]; // on some machines, selecting a save directory seems to double up a single directory.
-            //print some output to the commandline for informational purposes
-          printf("filename [%s]\n",m_FileName.toStdString().c_str());
-          printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
+        printf("filename [%s]\n",m_FileName.toStdString().c_str());
+        printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
 
         // temp directory
         QString baseName = QFileInfo(m_FileName).baseName();
