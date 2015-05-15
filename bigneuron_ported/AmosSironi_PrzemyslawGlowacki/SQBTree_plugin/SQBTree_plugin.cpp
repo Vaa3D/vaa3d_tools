@@ -267,7 +267,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      // save image
      Image4DSimple outimg1;
    //  outimg1.setData((unsigned char *)inimg->getRawDataAtChannel(c), in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
-     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
+     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
 
 
   //   cout<<outimg_file<<endl;
@@ -325,7 +325,7 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
        V3DLONG P = in_sz[2];
        V3DLONG sc = in_sz[3];
         V3DLONG pagesz = N*M*P;
-       unsigned char *data1d_after_itk = new unsigned char [pagesz];
+       float *data1d_after_itk = new float [pagesz];
 
        for(int iz = 0; iz < in_sz[2]; iz++)
          {
@@ -343,7 +343,7 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
                      indexX[2] = iz;
                      unsigned char PixelVaule =  I->GetPixel(indexX);//data1d[offsetk + offsetj + ix];
 
-                     data1d_after_itk[offsetk + offsetj + ix] = PixelVaule;
+                     data1d_after_itk[offsetk + offsetj + ix] = (float)PixelVaule;
 
    //cout<< ": " << indexX <<endl;
                      //I->SetPixel(indexX, PixelVaule);
@@ -377,7 +377,7 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
             pImage[i] = data1d[i];
 */
 
-       outimg = (float *)data1d_after_itk;
+       outimg = data1d_after_itk;
 
 
     /*
