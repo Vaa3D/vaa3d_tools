@@ -48,3 +48,4 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_
 #specify target name and directory
 TARGET  = $$qtLibraryTarget(meanshift)
 DESTDIR = $$V3DMAINPATH/../bin/plugins/bigneuronhackathon/BJUT_meanshift/
+

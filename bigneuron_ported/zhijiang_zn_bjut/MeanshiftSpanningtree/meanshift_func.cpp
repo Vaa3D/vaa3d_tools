@@ -1,4 +1,4 @@
-/* example_func.cpp
+﻿/* example_func.cpp
 * This file contains the functions used in plugin domenu and dufunc, you can use it as a demo.
 * 2012-02-13 : by Yinan Wan
 */
@@ -30,6 +30,39 @@ using namespace std;
 #define ABS(a) (a) > 0 ? (a) : -(a)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
+static struct adj_node{
+	long i,j,k; double dist;
+}node_table[26]={
+	{-1,1,1,sqrt(3.0)},
+	{0,1,1,sqrt(2.0)},
+	{1,1,1,sqrt(3.0)},
+	{-1,0,1,sqrt(2.0)},
+	{0,0,1,1},
+	{1,0,1,sqrt(2.0)},
+	{-1,-1,1,sqrt(3.0)},
+	{0,-1,1,sqrt(2.0)},
+	{1,-1,1,sqrt(3.0)},
+
+	{-1,1,0,sqrt(2.0)},
+	{0,1,0,1},
+	{1,1,0,sqrt(2.0)},
+	{-1,0,0,1},
+	{1,0,0,1},
+	{-1,-1,0,sqrt(2.0)},
+	{0,-1,0,1},
+	{1,-1,0,sqrt(2.0)},
+
+	{-1,1,-1,sqrt(3.0)},
+	{0,1,-1,sqrt(2.0)},
+	{1,1,-1,sqrt(3.0)},
+	{-1,0,-1,sqrt(2.0)},
+	{0,0,-1,1},
+	{1,0,-1,sqrt(2.)},
+	{-1,-1,-1,sqrt(3.0)},
+	{0,-1,-1,sqrt(2.0)},
+	{1,-1,-1,sqrt(3.0)}
+};
+
 int *flag;
 
 QMap<int,QList<Node*> > Map_finalnode_list;
@@ -39,6 +72,7 @@ QMultiMap<int,Node*> Map_allnodes;
 QMap<int,QList<Node*> > finalclass_node;
 QList<QList<NeuronSWC> > result_tree_part;
 QList<NeuronSWC> result_final_tree;
+QMap<int,Node*> root;
 
 QMap<V3DLONG,int> Map_finalnode; 
 QMap<V3DLONG,int> Map_nodes;
@@ -289,6 +323,7 @@ void printSWCByQList_QList(QList<QList <NeuronSWC> > result_list,char* path)
 	return;
 }
 
+
 void printSWCByQList_Neuron(QList <NeuronSWC> result_list,const char* path)
 {
 	V3DLONG number=0;
@@ -305,7 +340,7 @@ void printSWCByQList_Neuron(QList <NeuronSWC> result_list,const char* path)
 		for(int j=0;j< result_list.size();j++)
 		{
 			NeuronSWC temp2= result_list.at(j);
-                    if (j == 0); temp2.parent = -1;
+                    //if (j == 0); temp2.parent = -1;
 			//printf(" %lf \n",temp2.r);
 			fprintf(fp, "%ld %d %f %f %f %lf %ld\n",
 				temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
@@ -431,7 +466,7 @@ void printSWCByMultiMap(QMultiMap<int,int> multimap,char *filename)
 
 void printSWCByMap_ListInt(QMap<int,QList<int> >  List,char * filename)
 {
-	FILE * fp = fopen(filename, "a");//ﾗｷｼﾓ
+	FILE * fp = fopen(filename, "a");
 	if (!fp) return;
 	V3DLONG number=0;
 
@@ -486,14 +521,1345 @@ void printSWCByMap_List(QMap<int,QList<Node*> >  List,char * filename)
 
 	return;
 }
+double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3DLONG z,double inte_nd,double inte_cen,V3DLONG r)//MeanShiftﾋ羚ｨﾖﾐｼﾆﾋ羞耨・ｭｵ聊ｮｼ莊ﾄﾈｨﾖｵ｣ｬﾀ・ｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴｬﾏﾘｺﾍﾔｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴ・
+{
+	//double r=100;
+	double I=255;
+	double weight=0;
+	double distance=(curi-x)/r*(curi-x)/r+(curj-y)/r*(curj-y)/r+(curk-z)/r*(curk-z)/r;
+	double inten_sim=(inte_nd-inte_cen)/I*(inte_nd-inte_cen)/I;
+	weight=exp(-1.0*sqrt(2*inten_sim+distance))+0.000001;
+	//printf("%lf  %lf  %lf \n",distance,inten_sim,weight);
+	return weight;
+}
 
+#define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))+0.000001;
+Node* found_direction(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r)
+{//shift the original node, found the final node, calculate their slope, shift only once
+
+	Node *cur_center=new Node(x,y,z);
+	double intensity=img1d[GET_IND(x,y,z)];
+	//if(intensity<30)// regard the node whose intensity is less than 30 as noise
+	//nodeList.append(cur_center);
+
+	double sum1_z=0,sum2_z=0,sum1_y=0,sum2_y=0,sum1_x=0,sum2_x=0,w=0;
+	V3DLONG xe=cur_center->x-r;if(xe<0) xe=0;
+	V3DLONG xb=cur_center->x+r+1;if(xb>sz_x) xb=sz_x;
+	V3DLONG ye=cur_center->y-r;if(ye<0) ye=0;
+	V3DLONG yb=cur_center->y+r+1;if(yb>sz_y) yb=sz_y;
+	V3DLONG ze=cur_center->z-r;if(ze<0) ze=0;
+	V3DLONG zb=cur_center->z+r+1;if(zb>sz_z) zb=sz_z;
+	for(V3DLONG i=xe;i<xb;i++) 
+	{
+		for(V3DLONG j=ye;j<yb;j++)
+		{
+			for(V3DLONG k=ze;k<zb;k++)
+			{
+
+				if(GET_IND(i,j,k)==GET_IND(cur_center->x,cur_center->y,cur_center->z)) continue;
+				if((double)img1d[GET_IND(i,j,k)]==0) continue;
+
+				double cur_intensity=img1d[GET_IND(i,j,k)];
+				w=cal_weight(i,j,k,cur_center->x,cur_center->y,cur_center->z,cur_intensity,intensity,r);
+
+				double core_z=cal_core(k,cur_center->z,r);
+				sum1_z+=core_z*w*k;
+				sum2_z+=core_z*w;
+
+				double core_y=cal_core(j,cur_center->y,r);
+				sum1_y+=core_y*w*j;
+				sum2_y+=core_y*w;
+
+				double core_x=cal_core(i,cur_center->x,r);
+				sum1_x+=core_x*w*i;
+				sum2_x+=core_x*w;
+
+			}
+		}
+	}
+
+	V3DLONG temp_x=cur_center->x;
+	V3DLONG temp_y=cur_center->y;
+	V3DLONG temp_z=cur_center->z;
+
+	//printf("%lf   %lf   %lf\n",sum2_x,sum2_y,sum2_z);
+	if ((sum2_x==0)&&(sum2_y==0)&&(sum2_z==0))//avoiding the program crash.
+	{
+		cur_center->x=temp_x;
+		cur_center->y=temp_y;
+		cur_center->z=temp_z;
+
+	}else
+	{
+		V3DLONG next_x=(sum1_x/sum2_x)+0.5;//may shift to the node whose intensity equals zero, and may shfit to the node which was not included in the roots found in the first step
+		V3DLONG next_y=(sum1_y/sum2_y)+0.5;
+		V3DLONG next_z=(sum1_z/sum2_z)+0.5;
+		cur_center->x=next_x;
+		cur_center->y=next_y;
+		cur_center->z=next_z;
+
+	}
+	return cur_center;
+}
+
+
+Gradient* gradient_node(Node* node,unsigned char* &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//calculate the gradient of single node
+	V3DLONG radius=(V3DLONG)node->r;
+	double sum=0;
+	double intensity=0;
+	V3DLONG node_number=0;
+	
+	Gradient* node_gradient=new Gradient();
+
+	for(V3DLONG i=node->z-radius;i<=node->z+radius;i++)
+	{
+		if(i<0)
+		{
+			i=0;
+
+		}else if(i>sz_z)
+		{
+			i=sz_z;
+		}else if(i>=sz_z-1)
+		{
+			//continue;
+			break;
+
+		}
+		for(V3DLONG j=node->y-radius;j<=node->y+radius;j++)
+		{
+			if(j<0)
+			{
+				j=0;
+
+			}else if(j>sz_y)
+			{
+				j=sz_y;
+			}
+			for(V3DLONG k=node->x-radius;k<=node->x+radius;k++)
+			{
+				if(k<0)
+				{
+					k=0;
+
+				}else if(k>sz_x)
+				{
+					k=sz_x;
+				}
+				sum+=img1d[GET_IND(k,j,i)];//calculate the sum intensity of all nodes
+				node_number++;
+
+			}
+		}
+
+	}
+	intensity=sum/node_number;
+
+	{
+		node_gradient->gradient_x=(double)(img1d[GET_IND(node->x,node->y+radius,node->z)]-intensity+img1d[GET_IND(node->x+radius,node->y+radius,node->z)]-img1d[GET_IND(node->x+radius,node->y,node->z)])/2+0.0000001;
+		node_gradient->gradient_y=(double)(intensity-img1d[GET_IND(node->x+radius,node->y,node->z)]+img1d[GET_IND(node->x,node->y+radius,node->z)]-img1d[GET_IND(node->x+radius,node->y+radius,node->z)])/2+0.0000001;
+		node_gradient->gradient_z=(double)(intensity-img1d[GET_IND(node->x,node->y,node->z+radius)]+img1d[GET_IND(node->x,node->y+radius,node->z)]-img1d[GET_IND(node->x+radius,node->y+radius,node->z+radius)])/2+0.0000001;
+	}
+	return node_gradient;
+	
+
+}
+QList<Gradient*> gradient(QList<Node*> nodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//calculate the gradient of a list of nodes
+	QList<Gradient*> result_grad;
+	printf("size:::%d\n",nodes.size());
+	for(int i=0;i<nodes.size();i++)
+	{
+		Node *node=nodes.at(i);
+		double radius=ceil(node->r);
+		Gradient *grad_list=new Gradient();//result
+		Gradient *grad=new Gradient [(2*radius+1)*(2*radius+1)*(2*radius+1)];//temp
+		//printf("radius:::%lf\n",radius);
+		int count=0;
+		double grad_sum=0;
+		double ax_sum=0;
+		double ay_sum=0;
+		double az_sum=0;
+		double x_sum=0;
+		double y_sum=0;
+		double z_sum=0;
+		for(V3DLONG i=node->z-radius;i<=node->z+radius;i++)
+		{
+			if(i<0)
+			{
+				i=0;
+
+			}else if(i>sz_z)
+			{
+				i=sz_z;
+			}else if(i>=sz_z-1)
+			{
+				//continue;
+				break;
+
+			}
+			for(V3DLONG j=node->y-radius;j<=node->y+radius;j++) 
+			{
+				if(j<0)
+				{
+					j=0;
+
+				}else if(j>sz_y)
+				{
+					j=sz_y;
+				}
+				for(V3DLONG k=node->x-radius;k<=node->x+radius;k++)
+				{
+					
+					if(k<0)
+					{
+						k=0;
+
+					}else if(k>sz_x)
+					{
+						k=sz_x;
+					}
+					if(img1d[GET_IND(k,j,i)]==0)
+					{
+						continue;
+					}else if((k+1>sz_x)||(j+1>sz_y)||(i+1>sz_z))
+					{
+						continue;
+					}
+					//printf("2:::kji:::%ld   %ld   %ld   %d   %lf\n",k,j,i,count,radius);
+					grad[count].gradient_x=(double)(img1d[GET_IND(k,j+1,i)]-img1d[GET_IND(k,j,i)]+img1d[GET_IND(k+1,j+1,i)]-img1d[GET_IND(k+1,j,i)])/2+0.0000001;
+					//printf("%lf  \n",grad[count].gradient_x);
+					grad[count].gradient_y=(double)(img1d[GET_IND(k,j,i)]-img1d[GET_IND(k+1,j,i)]+img1d[GET_IND(k,j+1,i)]-img1d[GET_IND(k+1,j+1,i)])/2+0.0000001;
+					//printf("y:::%lf  \n",grad[count].gradient_y);
+					//printf("%ld \n",GET_IND(k+1,j+1,i+1));
+					//printf("%ld \n",GET_IND(k,j,i+1));
+					//printf("   %lf \n",(double)img1d[GET_IND(k+1,j+1,i+1)]);
+					//printf("   %lf \n",(double)img1d[GET_IND(k,j,i+1)]);
+					
+					grad[count].gradient_z=(double)(img1d[GET_IND(k,j,i)]-img1d[GET_IND(k,j,i+1)]+img1d[GET_IND(k,j+1,i)]-img1d[GET_IND(k+1,j+1,i+1)])/2+0.0000001;
+					//printf("%lf  \n",grad[count].gradient_z);
+					grad[count].gradient=(double)sqrt(grad[count].gradient_x*grad[count].gradient_x+grad[count].gradient_y*grad[count].gradient_y+grad[count].gradient_z*grad[count].gradient_z+0.5);//amplitude of gradient
+					grad[count].angle_x=(double)atan(grad[count].gradient_y/sqrt(grad[count].gradient_x*grad[count].gradient_x+grad[count].gradient_z*grad[count].gradient_z+0.0000001))*57.3;//angle with x panel
+					grad[count].angle_y=(double)atan(grad[count].gradient_z/sqrt(grad[count].gradient_x*grad[count].gradient_x+grad[count].gradient_y*grad[count].gradient_y+0.0000001))*57.3;//angle with y panel
+					grad[count].angle_z=(double)atan(grad[count].gradient_x/sqrt(grad[count].gradient_y*grad[count].gradient_y+grad[count].gradient_z*grad[count].gradient_z+0.0000001))*57.3;//angle with z panel
+					//fprintf(fp,"%lf   %lf   %lf   \n",angle_x[k+j*step_y+i*step_y*step_z],angle_y[k+j*step_y+i*step_y*step_z],angle_z[k+j*step_y+i*step_y*step_z]);
+					//printf("%lf   %lf   %lf  %lf \n",grad[count].gradient,grad[count].angle_x,grad[count].angle_y,grad[count].angle_z);
+					grad_sum+=grad[count].gradient;
+					ax_sum+=grad[count].angle_x;
+					ay_sum+=grad[count].angle_y;
+					az_sum+=grad[count].angle_z;
+					x_sum+=grad[count].gradient_x;
+					y_sum+=grad[count].gradient_y;
+					z_sum+=grad[count].gradient_z;
+					
+					count++;
+					//printf("%lf   %lf   %lf  %lf %lf   %lf  %lf\n",grad_sum,ax_sum,ay_sum,az_sum,x_sum,y_sum,z_sum);
+					//printf("1:::kji:::%ld   %ld   %ld   %d   %lf\n",k,j,i,count,radius);
+				}
+			}
+		}
+		//printf("count:::%d\n",count);
+		grad_list->x=node->x;
+		grad_list->y=node->y;
+		grad_list->z=node->z;
+		grad_list->gradient_x=x_sum/(count+0.0000001);
+		grad_list->gradient_y=y_sum/(count+0.0000001);
+		grad_list->gradient_z=z_sum/(count+0.0000001);
+		grad_list->angle_x=ax_sum/(count+0.0000001);
+		grad_list->angle_y=ay_sum/(count+0.0000001);
+		grad_list->angle_z=az_sum/(count+0.0000001);
+		grad_list->gradient=grad_sum/(count+0.0000001);
+		printf("%lf   %lf   %lf\n",grad_list->angle_x,grad_list->angle_y,grad_list->angle_z);
+		result_grad.append(grad_list);
+		delete[] grad;
+
+	}
+	return result_grad;
+}
+void construct_tree_vn3(QMap<int,Node* > roots,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//combined the gradient and distance as weight of spanning to construct every roots
+	double weight_d=1;
+	double weight_g=1;
+	double nSigma=0.4;
+	QList<Node*> seeds;
+	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
+	{
+		Node* temp=iter.value();
+		seeds.append(temp);
+
+	}
+
+
+	V3DLONG marknum = seeds.size();
+	//	printf("111111111111111111111111111111111\n");
+	QList<Gradient*> grad=gradient(seeds,img1d, sz_x, sz_y, sz_z);//calculate the gradient of every seed
+	//printf("2222222222222222222222222222222\n");
+
+	double** markEdge = new double*[marknum];//distance
+	double** markEdge_g = new double*[marknum];//gradient
+	double** markEdge_d=new double*[marknum];
+	for(int i = 0; i < marknum; i++)
+	{
+		markEdge[i] = new double[marknum];
+		markEdge_g[i]=new double[marknum];
+		markEdge_d[i]=new double[marknum];
+		//fprintf(debug_fp,"markEdge[i]:%lf\n",markEdge[i]);
+	}
+
+	double x1,y1,z1;
+	double angle_x1,angle_y1,angle_z1;
+	double sum=0;//maximum value of all distance between nodes
+
+	for (int i=0;i<marknum;i++)
+	{
+		x1 = seeds.at(i)->x;
+		y1 = seeds.at(i)->y;
+		z1 = seeds.at(i)->z;
+		for (int j=0;j<marknum;j++)
+		{
+
+			markEdge_d[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
+			//fprintf(debug_fp,"markEdge[i][j]:%lf\n",markEdge[i][j]);
+
+			/*	if(max<markEdge_d[i][j])
+			{
+			max=markEdge_d[i][j];
+
+			}*/
+			sum+=markEdge_d[i][j];
+		}//calculating the weight between nodes using distance
+		//Considering the weight which combine the distance and gradient using Gauss equation
+		angle_x1=grad.at(i)->angle_x;
+		angle_y1=grad.at(i)->angle_y;
+		angle_z1=grad.at(i)->angle_z;
+		for(int j=0;j<marknum;j++)
+		{
+			markEdge_g[i][j]=(sqrt((angle_x1*grad.at(j)->angle_x+angle_y1*grad.at(j)->angle_y+angle_z1*grad.at(j)->angle_z)/(sqrt(angle_x1*angle_x1+angle_y1*angle_y1+angle_z1*angle_z1)*sqrt(grad.at(j)->angle_x*grad.at(j)->angle_x+grad.at(j)->angle_y*grad.at(j)->angle_y+grad.at(j)->angle_z*grad.at(j)->angle_z)))+1)/2;
+
+		}//calculating the weight between nodes using angle of gradient vector with x/y/z panel
+
+	}
+	for (int ii=0;ii<marknum;ii++)//normalizing operation
+	{
+		for(int jj=0;jj<marknum;jj++)
+		{
+			markEdge_d[ii][jj]=markEdge_d[ii][jj]/sum;
+			markEdge[ii][jj]=exp((-1/2)*(weight_d*markEdge_d[ii][jj]*markEdge_d[ii][jj]+weight_g*markEdge_g[ii][jj]*markEdge_g[ii][jj])/(nSigma*nSigma))/(2*3.1415926*nSigma*nSigma);
+			markEdge[ii][jj]=markEdge_d[ii][jj];
+		}
+	}
+
+
+
+
+
+	//NeutronTree structure
+	NeuronTree marker_MST;
+	QList <NeuronSWC> listNeuron;
+	QHash <int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	//set node
+
+	NeuronSWC S;
+	S.n 	= 1;
+	S.type 	= 3;
+	S.x 	= seeds.at(0)->x;
+	S.y 	= seeds.at(0)->y;
+	S.z 	= seeds.at(0)->z;
+	S.r 	= seeds.at(0)->r;
+	S.pn 	= -1;
+	listNeuron.append(S);
+	hashNeuron.insert(S.n, listNeuron.size()-1);
+
+	int* pi = new int[marknum];
+	for(int i = 0; i< marknum;i++)
+		pi[i] = 0;
+	pi[0] = 1;
+	int indexi,indexj;
+	for(int loop = 0; loop<marknum;loop++)
+	{
+		double min = 100000000;
+		for(int i = 0; i<marknum; i++)
+		{
+			if (pi[i] == 1)
+			{
+				for(int j = 0;j<marknum; j++)
+				{
+					if(pi[j] == 0 && min > markEdge[i][j])
+					{
+						min = markEdge[i][j];
+						indexi = i;
+						indexj = j;
+					}
+				}
+			}
+
+		}
+		if(indexi>=0)
+		{
+			S.n 	= indexj+1;
+			S.type 	= 7;
+			S.x 	= seeds.at(indexj)->x;
+			S.y 	= seeds.at(indexj)->y;
+			S.z 	= seeds.at(indexj)->z;
+			S.r 	= seeds.at(indexj)->r;
+			S.pn 	= indexi+1;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size()-1);
+
+		}else
+		{
+			break;
+		}
+		pi[indexj] = 1;
+		indexi = -1;
+		indexj = -1;
+	}
+	marker_MST.n = -1;
+	marker_MST.on = true;
+	marker_MST.listNeuron = listNeuron;
+	marker_MST.hashNeuron = hashNeuron;
+
+	QList<NeuronSWC> marker_MST_sorted;
+	marker_MST_sorted.clear();
+	if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+	{
+	}
+
+	prepare_write(marker_MST_sorted);
+
+	if(markEdge) {delete []markEdge, markEdge = 0;}
+	if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
+	if(markEdge_g) {delete []markEdge_g, markEdge_g = 0;}
+	delete [] pi;
+	seeds.clear();
+
+
+
+}
+
+
+void construct_tree_vn2(QMap<int,QList<Node*> > finalclass_node,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//based on the every roots which cluster pixel nodes, using spanning tree to construct subtrees with weights combined distance and gradient
+	double weight_d=1;
+	double weight_g=1;
+	double nSigma=0.4;
+    for(QMap<int,QList<Node*> >::iterator iter=finalclass_node.begin();iter!=finalclass_node.end();iter++)
+	{
+		{
+			if(iter.value().size()<=1)
+				continue;
+
+			QList<Node*> seed=iter.value();
+				
+			QList<Node*> seeds=trim_nodes(seed, sz_x, sz_y, sz_z);
+			
+			V3DLONG marknum = seeds.size();
+		//	printf("111111111111111111111111111111111\n");
+			QList<Gradient*> grad=gradient(seeds,img1d, sz_x, sz_y, sz_z);//calculate the gradient of every seed
+			//printf("2222222222222222222222222222222\n");
+
+			double** markEdge = new double*[marknum];//distance
+			double** markEdge_g = new double*[marknum];//gradient
+			double** markEdge_d=new double*[marknum];
+			for(int i = 0; i < marknum; i++)
+			{
+				markEdge[i] = new double[marknum];
+				markEdge_g[i]=new double[marknum];
+				markEdge_d[i]=new double[marknum];
+				//fprintf(debug_fp,"markEdge[i]:%lf\n",markEdge[i]);
+			}
+
+			double x1,y1,z1;
+			double angle_x1,angle_y1,angle_z1;
+			double sum=0;//maximum value of all distance between nodes
+
+			for (int i=0;i<marknum;i++)
+			{
+				x1 = seeds.at(i)->x;
+				y1 = seeds.at(i)->y;
+				z1 = seeds.at(i)->z;
+				for (int j=0;j<marknum;j++)
+				{
+			
+					markEdge_d[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
+					//fprintf(debug_fp,"markEdge[i][j]:%lf\n",markEdge[i][j]);
+					
+				/*	if(max<markEdge_d[i][j])
+					{
+						max=markEdge_d[i][j];
+
+					}*/
+					sum+=markEdge_d[i][j];
+				}//calculating the weight between nodes using distance
+				//Considering the weight which combine the distance and gradient using Gauss equation
+				angle_x1=grad.at(i)->angle_x;
+				angle_y1=grad.at(i)->angle_y;
+				angle_z1=grad.at(i)->angle_z;
+				for(int j=0;j<marknum;j++)
+				{
+					markEdge_g[i][j]=(sqrt((angle_x1*grad.at(j)->angle_x+angle_y1*grad.at(j)->angle_y+angle_z1*grad.at(j)->angle_z)/(sqrt(angle_x1*angle_x1+angle_y1*angle_y1+angle_z1*angle_z1)*sqrt(grad.at(j)->angle_x*grad.at(j)->angle_x+grad.at(j)->angle_y*grad.at(j)->angle_y+grad.at(j)->angle_z*grad.at(j)->angle_z)))+1)/2;
+					
+				}//calculating the weight between nodes using angle of gradient vector with x/y/z panel
+				
+			}
+			for (int ii=0;ii<marknum;ii++)//normalizing operation
+			{
+				for(int jj=0;jj<marknum;jj++)
+				{
+					markEdge_d[ii][jj]=markEdge_d[ii][jj]/sum;
+					markEdge[ii][jj]=exp((-1/2)*(weight_d*markEdge_d[ii][jj]*markEdge_d[ii][jj]+weight_g*markEdge_g[ii][jj]*markEdge_g[ii][jj])/(nSigma*nSigma))/(2*3.1415926*nSigma*nSigma);
+				}
+			}
+
+			
+
+			//NeutronTree structure
+			NeuronTree marker_MST;
+			QList <NeuronSWC> listNeuron;
+			QHash <int, int>  hashNeuron;
+			listNeuron.clear();
+			hashNeuron.clear();
+
+			//set node
+
+			NeuronSWC S;
+			S.n 	= 1;
+			S.type 	= 3;
+			S.x 	= seeds.at(0)->x;
+			S.y 	= seeds.at(0)->y;
+			S.z 	= seeds.at(0)->z;
+			S.r 	= seeds.at(0)->r;
+			S.pn 	= -1;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size()-1);
+
+			int* pi = new int[marknum];
+			for(int i = 0; i< marknum;i++)
+				pi[i] = 0;
+			pi[0] = 1;
+			int indexi,indexj;
+			for(int loop = 0; loop<marknum;loop++)
+			{
+				double min = 100000000;
+				for(int i = 0; i<marknum; i++)
+				{
+					if (pi[i] == 1)
+					{
+						for(int j = 0;j<marknum; j++)
+						{
+							if(pi[j] == 0 && min > markEdge[i][j])
+							{
+								min = markEdge[i][j];
+								indexi = i;
+								indexj = j;
+							}
+						}
+					}
+
+				}
+				if(indexi>=0)
+				{
+					S.n 	= indexj+1;
+					S.type 	= 7;
+					S.x 	= seeds.at(indexj)->x;
+					S.y 	= seeds.at(indexj)->y;
+					S.z 	= seeds.at(indexj)->z;
+					S.r 	= seeds.at(indexj)->r;
+					S.pn 	= indexi+1;
+					listNeuron.append(S);
+					hashNeuron.insert(S.n, listNeuron.size()-1);
+
+				}else
+				{
+					break;
+				}
+				pi[indexj] = 1;
+				indexi = -1;
+				indexj = -1;
+			}
+			marker_MST.n = -1;
+			marker_MST.on = true;
+			marker_MST.listNeuron = listNeuron;
+			marker_MST.hashNeuron = hashNeuron;
+
+			QList<NeuronSWC> marker_MST_sorted;
+			marker_MST_sorted.clear();
+			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+			{
+			}
+
+			prepare_write(marker_MST_sorted);
+
+			if(markEdge) {delete []markEdge, markEdge = 0;}
+			if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
+			if(markEdge_g) {delete []markEdge_g, markEdge_g = 0;}
+			delete [] pi;
+			seeds.clear();
+
+		}
+	}
+}
+
+unsigned char* Gauss_filter(unsigned char * &img1d,unsigned char* nData1,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DPluginCallback2 &callback, QWidget *parent)
+{
+	//printf("11111111111111111111111111111111111111111111\n");
+	//根据三维高斯滤波系数对神经元图像进行滤波
+	float nSigma=0.4;
+	int nWindowSize=1+2*ceil(3*nSigma);
+	int nCenter=(nWindowSize)/2;
+	int i,j,k;
+	//printf("11111111111111111111111111111111111111111111\n");
+	unsigned char* nGauss=new unsigned char[sz_x*sz_y*sz_z];//allocate the memory for the filtered image
+	printf("11111111111111111111111111111111111111111111\n");
+	//save the filtering result of Gauss in the x direction
+	//float* nData2  =new float[sz_x*sz_y*sz_z];//save the filtering result of Gauss in the y direction
+	float *Gkernal=new float[nWindowSize];//define the Guass array of three dimension
+	float sum=0;
+	for(i=0;i<nWindowSize;i++)//generate the Gauss coefficient 
+	{
+		
+				int nDis=i-nCenter;				
+				Gkernal[i]=exp(-(1/2)*(nDis*nDis)/(nSigma*nSigma))/(sqrt(2*3.1415924)*nSigma);	
+				sum+=Gkernal[i];
+	}
+	for(i=0;i<nWindowSize;i++)
+	{
+		Gkernal[i]/=sum;//normailized
+
+	}
+//filtering the nodes in the X direction
+	for(i=0;i<sz_z;i++)
+	{
+		for(j=0;j<sz_y;j++)
+		{
+			for(k=0;k<sz_x;k++)
+			{
+				float dSum=0;
+				float dFilter=0;
+				for(int nLimit=(-nCenter);nLimit<=nCenter;nLimit++)
+				{
+					if((k+nLimit)>=0&&(k+nLimit)<sz_x)
+					{
+						dFilter+=(float)img1d[k+nLimit+j*sz_x+i*sz_x*sz_y]*Gkernal[nCenter+nLimit];
+						dSum+=Gkernal[nCenter+nLimit];
+					}
+				}
+				nData1[k+j*sz_x+i*sz_x*sz_y]=(unsigned char)(int)dFilter/dSum;
+			}
+
+		}
+
+	}
+	//filtering the nodes in the Y direction
+	for(i=0;i<sz_z;i++)
+	{
+		for(j=0;j<sz_x;j++)
+		{
+			for(k=0;k<sz_y;k++)
+			{
+				float dSum=0;
+				float dFilter=0;
+				for(int nLimit=(-nCenter);nLimit<=nCenter;nLimit++)
+				{
+					if((k+nLimit)>=0&&(k+nLimit)<sz_y)
+					{
+						dFilter+=(float)nData1[k+nLimit+j*sz_y+i*sz_x*sz_y]*Gkernal[nCenter+nLimit];
+						dSum+=Gkernal[nCenter+nLimit];
+					}
+				}
+				nData1[k+j*sz_y+i*sz_x*sz_y]=(unsigned char)(int)dFilter/dSum;
+			}
+
+		}
+
+	}
+	//filtering the nodes in the Z direction
+	for(i=0;i<sz_y;i++)
+	{
+		for(j=0;j<sz_x;j++)
+		{
+			for(k=0;k<sz_z;k++)
+			{
+				float dSum=0;
+				float dFilter=0;
+				for(int nLimit=(-nCenter);nLimit<=nCenter;nLimit++)
+				{
+					if((k+nLimit)>=0&&(k+nLimit)<sz_z)
+					{
+						dFilter+=(float)nData1[k+nLimit+j*sz_z+i*sz_z*sz_x]*Gkernal[nCenter+nLimit];
+						dSum+=Gkernal[nCenter+nLimit];
+					}
+				}
+				//int pixel=(int)dFilter/dSum;
+				//if(pixel<30)
+				//{
+				//	nGauss[k+j*sz_z+i*sz_x*sz_z]=0;
+
+				//}else
+				//{
+					nGauss[k+j*sz_z+i*sz_x*sz_z]=(unsigned char)(int)dFilter/dSum;
+
+				//}
+				
+			}
+
+		}
+
+	}
+	
+	 // 4 - Set and show the Gauss filtering image in a new window
+	v3dhandle curwin = callback.currentImageWindow();
+	if(!curwin)
+	{
+		//QMessageBox::information(0, title, QObject::tr("No image is open."));
+		//return -1;
+	}
+        v3dhandle newwin = callback.newImageWindow();
+		if(! newwin)
+	{
+		//QMessageBox::information(0, title, QObject::tr("No image is open."));
+		//return -1;
+	}
+		/*Image4DSimple *p4DImage = callback.getImage(curwin);
+        p4DImage->setData(nGauss, sz_x, sz_y, sz_z, 1, p4DImage->getDatatype());//setData() will free the original memory automatically
+        callback.setImage(newwin, p4DImage);
+        callback.setImageName(newwin, QObject::tr("Gauss filtering"));*/
+       //callback.updateImageWindow(newwin);
+		//if(nData1) {delete []nData1,nData1 = 0;}
+		//if(nData2) {delete []nData2,nData1 = 0;}
+		if(Gkernal) {delete []Gkernal,Gkernal = 0;}
+		
+			
+        return nGauss;
+
+
+}
+
+
+
+void construct_tree_vn4(QMap<int,Node* > roots,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
+	
+	QList<Node*> result_shift;
+	QList<Node*> shift_vector;
+	QList<Node*> original_roots;
+
+	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
+	{
+		Node* temp=iter.value();
+		Node* temp2=new Node();
+		//temp=gradient_node(temp,sz_x,sz_y,sz_z);
+		Node* temp1=found_direction(img1d,temp->x,temp->y,temp->z,sz_x,sz_y,sz_z,10);//some nodes cannot shift
+
+		result_shift.append(temp1);
+		//printf("%ld  %ld  %ld\n",temp1->x,temp1->y,temp1->z);
+		V3DLONG A_x=temp1->x-temp->x;
+		V3DLONG A_y=temp1->y-temp->y;
+		V3DLONG A_z=temp1->z-temp->z;
+
+		temp2->x=A_x;
+		temp2->y=A_y;
+		temp2->z=A_z;
+		shift_vector.append(temp2);
+		original_roots.append(temp);
+
+	}
+
+	V3DLONG marknum = original_roots.size();
+
+	double** markEdge = new double*[marknum];
+	double** markEdge_g = new double*[marknum];//shift vector
+	double** markEdge_d=new double*[marknum];//distance
+	for(int i = 0; i < marknum; i++)
+	{
+		markEdge[i] = new double[marknum];
+		markEdge_g[i]=new double[marknum];
+		markEdge_d[i]=new double[marknum];
+		//fprintf(debug_fp,"markEdge[i]:%lf\n",markEdge[i]);
+	}
+//	printf("1111111111111111111111111\n");
+
+	V3DLONG x1,y1,z1;
+	V3DLONG A_x,A_y,A_z;
+	double sum=0;//maximum value of all distance between nodes
+
+	for (int i=0;i<marknum;i++)
+	{
+		x1 = original_roots.at(i)->x;
+		y1 = original_roots.at(i)->y;
+		z1 = original_roots.at(i)->z;
+		for (int j=0;j<marknum;j++)
+		{
+			markEdge_d[i][j] = sqrt(double(x1-original_roots.at(j)->x)*double(x1-original_roots.at(j)->x) + double(y1-original_roots.at(j)->y)*double(y1-original_roots.at(j)->y) + double(z1-original_roots.at(j)->z)*double(z1-original_roots.at(j)->z));
+			sum+=markEdge_d[i][j];
+		}//calculating the weight between nodes using distance
+
+		A_x=shift_vector.at(i)->x;
+		A_y=shift_vector.at(i)->y;
+		A_z=shift_vector.at(i)->z;
+		for(int j=0;j<marknum;j++)
+		{
+			double q1=A_x*shift_vector.at(j)->x+A_y*shift_vector.at(j)->y+A_z*shift_vector.at(j)->z;
+			double q2=shift_vector.at(j)->x*shift_vector.at(j)->x+shift_vector.at(j)->y*shift_vector.at(j)->y+shift_vector.at(j)->z*shift_vector.at(j)->z;
+			double q3=A_x*A_x+A_y*A_y+A_z*A_z;
+			markEdge_g[i][j]=sqrt(q1)/(sqrt(q2)*sqrt(q3)+0.0000001);
+			//printf("%lf\n",q3);
+
+		}//calculating the weight between nodes using angle of gradient vector with x/y/z panel
+
+	}
+	for (int ii=0;ii<marknum;ii++)//normalizing operation and calculate the weight
+	{
+		for(int jj=0;jj<marknum;jj++)
+		{
+			markEdge_d[ii][jj]=markEdge_d[ii][jj]/sum;
+			//markEdge[ii][jj]=(markEdge_d[ii][jj])*markEdge_g[ii][jj];
+			markEdge[ii][jj]=(markEdge_d[ii][jj]);
+			//printf("%lf\n",markEdge[ii][jj]);
+		}
+	}
+	//printf("1111111111111111111111111\n");
+
+
+
+
+	//NeutronTree structure
+	NeuronTree marker_MST;
+	QList <NeuronSWC> listNeuron;
+	QHash <int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+//printf("1111111111111111111111111\n");
+	//set node
+
+	NeuronSWC S;
+	S.n 	= 1;
+	S.type 	= 3;
+	S.x 	= original_roots.at(0)->x;
+	S.y 	= original_roots.at(0)->y;
+	S.z 	= original_roots.at(0)->z;
+	S.r 	= original_roots.at(0)->r;
+	S.pn 	= -1;
+	listNeuron.append(S);
+	hashNeuron.insert(S.n, listNeuron.size()-1);
+//printf("1111111111111111111111111\n");
+	int* pi = new int[marknum];
+	for(int i = 0; i< marknum;i++)
+		pi[i] = 0;
+	pi[0] = 1;
+	int indexi,indexj;
+	for(int loop = 0; loop<marknum;loop++)
+	{
+		double min = 100000000;
+		for(int i = 0; i<marknum; i++)
+		{
+			if (pi[i] == 1)
+			{
+				for(int j = 0;j<marknum; j++)
+				{
+					if(pi[j] == 0 && min > markEdge[i][j])
+					{
+						min = markEdge[i][j];
+						indexi = i;
+						indexj = j;
+					}
+				}
+			}
+
+		}
+		if(indexi>=0)
+		{
+			S.n 	= indexj+1;
+			S.type 	= 7;
+			S.x 	= original_roots.at(indexj)->x;
+			S.y 	= original_roots.at(indexj)->y;
+			S.z 	= original_roots.at(indexj)->z;
+			S.r 	= original_roots.at(indexj)->r;
+			S.pn 	= indexi+1;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size()-1);
+
+		}else
+		{
+			break;
+		}
+		pi[indexj] = 1;
+		indexi = -1;
+		indexj = -1;
+	}
+	marker_MST.n = -1;
+	marker_MST.on = true;
+	marker_MST.listNeuron = listNeuron;
+	marker_MST.hashNeuron = hashNeuron;
+//	printf("1111111111111111111111111\n");
+
+	QList<NeuronSWC> marker_MST_sorted;
+	marker_MST_sorted.clear();
+	if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+	{
+	}
+
+	prepare_write(marker_MST_sorted);
+
+	if(markEdge) {delete []markEdge, markEdge = 0;}
+	if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
+	if(markEdge_g) {delete []markEdge_g, markEdge_g = 0;}
+	delete [] pi;
+	original_roots.clear();
+
+}
+
+
+void construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//combined the gradient and distance as weight of spanning to construct every roots
+	QList<Node*> seeds;
+	
+	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
+	{
+		Node* temp=iter.value();
+		seeds.append(temp);
+
+	}
+
+	V3DLONG marknum = seeds.size();
+
+	double** markEdge = new double*[marknum];//distance
+	
+	double** markEdge_d=new double*[marknum];
+	for(int i = 0; i < marknum; i++)
+	{
+		markEdge[i] = new double[marknum];
+	
+		markEdge_d[i]=new double[marknum];
+		//fprintf(debug_fp,"markEdge[i]:%lf\n",markEdge[i]);
+	}
+	double x1,y1,z1;
+	double sum=0;//maximum value of all distance between nodes
+	int count=0;
+
+	for (int i=0;i<marknum;i++)
+	{
+		x1 = seeds.at(i)->x;
+		y1 = seeds.at(i)->y;
+		z1 = seeds.at(i)->z;
+		for (int j=0;j<marknum;j++)
+		{
+			
+			markEdge_d[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
+
+			sum+=markEdge_d[i][j];
+			count++;
+		}//Calculating the weight between nodes using distance
+		//Considering the weight which combine the distance and gradient using Gauss equation
+		
+	}
+
+	double average_dis=sum/count;
+	printf("start breath search!%lf\n",average_dis);
+	markEdge=bf( root,img1d, average_dis,sz_x, sz_y, sz_z);
+
+	printf(" breath search finished!\n");
+
+
+	//NeutronTree structure
+	NeuronTree marker_MST;
+	QList <NeuronSWC> listNeuron;
+	QHash <int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	//set node
+
+	NeuronSWC S;
+	S.n 	= 1;
+	S.type 	= 3;
+	S.x 	= seeds.at(0)->x;
+	S.y 	= seeds.at(0)->y;
+	S.z 	= seeds.at(0)->z;
+	S.r 	= seeds.at(0)->r;
+	S.pn 	= -1;
+	listNeuron.append(S);
+	hashNeuron.insert(S.n, listNeuron.size()-1);
+
+	int* pi = new int[marknum];
+	for(int i = 0; i< marknum;i++)
+		pi[i] = 0;
+	pi[0] = 1;
+	int indexi,indexj;
+	for(int loop = 0; loop<marknum;loop++)
+	{
+		double min = 100000000;
+		for(int i = 0; i<marknum; i++)
+		{
+			if (pi[i] == 1)
+			{
+				for(int j = 0;j<marknum; j++)
+				{
+					if(pi[j] == 0 && min > markEdge[i][j])
+					{
+						min = markEdge[i][j];
+						indexi = i;
+						indexj = j;
+					}
+				}
+			}
+
+		}
+		if(indexi>=0)
+		{
+			S.n 	= indexj+1;
+			S.type 	= 7;
+			S.x 	= seeds.at(indexj)->x;
+			S.y 	= seeds.at(indexj)->y;
+			S.z 	= seeds.at(indexj)->z;
+			S.r 	= seeds.at(indexj)->r;
+			S.pn 	= indexi+1;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size()-1);
+
+		}else
+		{
+			break;
+		}
+		pi[indexj] = 1;
+		indexi = -1;
+		indexj = -1;
+	}
+	marker_MST.n = -1;
+	marker_MST.on = true;
+	marker_MST.listNeuron = listNeuron;
+	marker_MST.hashNeuron = hashNeuron;
+
+	QList<NeuronSWC> marker_MST_sorted;
+	marker_MST_sorted.clear();
+	if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+	{
+	}
+
+	prepare_write(marker_MST_sorted);
+
+	if(markEdge) {delete []markEdge, markEdge = 0;}
+	if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
+	
+	delete [] pi;
+	seeds.clear();
+
+
+
+}
+
+
+
+double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//found the shortest path between one node and other nodes using breadth first algorithm
+	
+	
+	QQueue<double> queue_distance;//keep the unit distance of two nodes
+	//QMultiMap<int,QMap<int,QList<Node*>*>*> result_double;//keep the shortest path between A node and other nodes
+	
+	V3DLONG up_limit;
+	V3DLONG down_limit;
+	int marknum=roots.size();
+
+	double ** weight_result=new double*[marknum];
+	for(int i = 0; i < marknum; i++)
+	{
+		weight_result[i] = new double[marknum];
+	}
+
+	int row=-1;
+	QQueue<Node*> queue;
+	QMap<V3DLONG,Node*> path_map;
+	QMap<V3DLONG,bool> node_searched;
+	QMap<V3DLONG,Node*> parent_path;
+	QList<Node*> path_shortest;//delete it in the end of loop
+	
+
+	
+	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
+	{
+		int cloumn=-1;
+		row++;
+		//printf("key1::%d\n",iter.key());
+		int key1=iter.key();
+		
+		
+		//QList<bool> end_mark=new QList<bool>();
+		//double stop_distance=0;//set this parameter so as to stop the while loop if a long distance between two nodes appeared
+		Node* node1=iter.value();//start node
+		V3DLONG start_x=node1->x;
+		V3DLONG start_y=node1->y;
+		V3DLONG start_z=node1->z;
+		V3DLONG limit1=GET_IND(start_x,start_y,start_z);
+		//Node* temp=new Node(start_x,start_y,start_z);
+		for(QMap<int,Node* >::iterator iter1=roots.begin();iter1!=roots.end();iter1++)
+		{
+			cloumn++;
+			//printf("key2::%d\n",iter1.key());
+			int key2=iter1.key();
+			
+			Node* node2=iter1.value();//terminal node
+			V3DLONG end_x=node2->x;
+			V3DLONG end_y=node2->y;
+			V3DLONG end_z=node2->z;
+			V3DLONG limit2=GET_IND(end_x,end_y,end_z);
+			
+			queue.clear();
+			QList<Node*> path;//keep the shortest path temporally;
+			path.clear();
+			
+			path_map.clear();
+			
+			node_searched.clear();
+			
+			parent_path.clear();
+			
+			path_shortest.clear();
+			bool flag=false;//mark the terminal condition which shows the program found the end node from start node
+			
+			//QMap<int,QList<Node*>*> *result_single=new QMap<int,QList<Node*>*>();
+			//result_single->clear();//keep the new one clean
+
+			double stop_distance=(double)(sqrt(double(node2->x-node1->x)*(node2->x-node1->x)+double(node2->y-node1->y)*(node2->y-node1->y)+double(node2->z-node1->z)*(node2->z-node1->z)));
+			//printf("stop distance calculated:%lf\n",stop_distance);
+			//if((stop_distance>=(average_dis/10))||stop_distance==0)
+			if((stop_distance>=(7))||stop_distance==0)//stop_distance can be input in the dialogue
+			{
+				//printf("size:%d\n",roots.size());
+				weight_result[row][cloumn]=stop_distance;
+			//	printf("continue\n");
+				continue;
+
+			}else
+			{
+
+				if(limit1<=limit2)
+				{
+					up_limit=limit2;
+					down_limit=limit1;
+				}else
+				{
+					up_limit=limit1;
+					down_limit=limit2;
+				}
+
+				//printf("%ld  %ld  %ld  %ld  %ld  %ld\n",start_x,start_y,start_z,end_x,end_y,end_z);
+
+				V3DLONG node_number=(abs(start_x-end_x)+1)*(abs(start_y-end_y)+1)*(abs(start_z-end_z)+1);
+				V3DLONG count=1;
+				V3DLONG offset_x=start_x;
+				V3DLONG offset_y=start_y;
+				V3DLONG offset_z=start_z;
+				V3DLONG offset_dis=0;
+
+				queue.append(node1);
+
+				//queue_intensity(img1d[GET_IND(start_x,start_y,start_z)]);
+				//while((offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))
+			//	printf("start while:%ld\n",node_number);
+				/*if(node_number<=1)
+				{
+					weight_result[key1-1][key2-1]=stop_distance;
+					continue;//two roots have the same location
+
+				}else*/
+				{
+					//while((count<=node_number)&&(!(offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))&&(queue.size()!=0))
+					while(!((offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))&&(queue.size()!=0))//here exists arguement!
+					{//condition 1 gaurantee the number of searched node will not more than the nodes in the block,because maybe there is a gap between nodes
+						//condition 2 gaurantee the loop will be stoped when the terminal node was found
+						//condition 3 gaurantee the loop will be stoped when there is a gap between two nodes, it means that A node will never get to B node
+						//printf("looping...\n");
+						Node *temp1=queue.head();//get the first node in the queue every loop
+						//node_searched[GET_IND(offset_x,offset_y,offset_z)]=false;//initialization
+						//need to set a flag here means the node was searched
+						for(int times=0;times<26;times++)
+						{
+							//printf("%lf",node_table[times].dist);
+							offset_x=temp1->x+node_table[times].i;
+							offset_y=temp1->y+node_table[times].j;
+							offset_z=temp1->z+node_table[times].k;
+							//offset_dis=node_table[times].dist;
+							V3DLONG index=GET_IND(offset_x,offset_y,offset_z);
+
+							if((index<down_limit)||(index>up_limit))//outrange
+							{
+							//	printf("%ld  %ld  %ld\n",index,down_limit,up_limit);
+								continue;
+
+							}else if(img1d[index]==0)//not connected ,also means no edge
+							{
+								count++;
+							//	printf("%lf\n",(double) img1d[index]);
+								continue;
+							}else
+							{
+
+							//	printf("%d\n",node_searched[GET_IND(offset_x,offset_y,offset_z)]); 
+							//considering other method about how to 
+								if(node_searched[GET_IND(offset_x,offset_y,offset_z)]!=true)//if true, which  means the node was searched before
+								{
+									//printf("node_searched\n");
+									parent_path.insert(GET_IND(offset_x,offset_y,offset_z),temp1);
+									count++;//if count equals with node number, that mean all nodes were put in the queue
+									Node* temp2=new Node(offset_x,offset_y,offset_z);//consider change it to intensity
+									node_searched[GET_IND(offset_x,offset_y,offset_z)]=true;
+									queue.append(temp2);
+									//queue_distance.append(offset_dis);//cannot calculate the node distance here,because it is not the shortest path
+									//queue_intensity.append(img1d[GET_IND(offset_x,offset_y,offset_z)]);
+
+								}
+
+								if((offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))
+								{
+									flag=true;//found the terminal node, stop
+									//printf("found the terminal node\n");
+									break;
+
+								}
+							}
+						}
+						//	printf("out \n");
+						//record the distance, pixal intensity, waiting...20150511
+						//consider how to stop when a long distance between two nodes, because the two nodes cannot ever be connected
+						//familiar with the spanning tree algorithm
+						//path.append(queue.head());//keep the first node in every loop so that we can record the path from start to end
+						//path_map.insert(GET_IND(queue.head()->x,queue.head()->y,queue.head()->z),queue.head());
+						//end_mark.append(flag);
+
+						/*if(A_distance>stop_distance)
+						{
+						break;//loop will be stopped when the two nodes have a long distance
+						//20150512,this idea cannot meet the running condition of spanning tree, give up
+
+						}*/
+
+						queue.dequeue();
+
+					}
+
+				}
+
+				//printf("out while:%d\n",flag);
+
+				
+				if(flag)
+				{
+					//path_shortest=found_path(path,path_map,node1,node2,sz_x,sz_y,sz_z);// if get the terminal node, found the shortest path using backward method
+					path_shortest=found_path_vn2(parent_path,node1,node2,sz_x,sz_y,sz_z);
+					//printf("shortest path found\n");
+					weight_result[row][cloumn]=distance_calculate(img1d,path_shortest,sz_x,sz_y,sz_z);
+					//printf("calculated weight_result:%lf\n",weight_result[row][cloumn]);
+					if(path_shortest.size()==0)
+					{
+						v3d_msg(QString("the shortest path is empty, program crash."));
+
+					}
+
+				}else
+				{
+					path_shortest.clear();//if not found the terminal node that means maybe there is a gap between two nodes and A node cannot ever get to B node
+					weight_result[row][cloumn]=stop_distance;
+				}
+
+				//result_single->insert(key2,path_shortest);
+				//result_double.insert(key1,result_single);
+				//calculate weight_result[key1-1][key2-1] here 
+				//printf("quit if\n");
+
+
+			}
+			queue.clear();
+			//queue_distance.clear();
+			path.clear();
+			path_map.clear();
+			node_searched.clear();
+			path_shortest.clear();
+			parent_path.clear();
+			//delete path_shortest;
+		}
+	}
+
+	//calculate markEdge matrix,found the shortest path between two nodes
+	return weight_result;
+}
+
+QList<Node*> found_path_vn2( QMap<V3DLONG,Node*> path_map, Node* temp,Node* temp1,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//considering the distance and pixal intensity as weight so as to calculate the markEdge
+	bool flag=false;
+	QList<Node*> result;
+	result.append(temp1);//temp1 represent the terminal node
+	//printf("length is correct:%ld\n",current_node->x);
+	V3DLONG index;
+
+	V3DLONG current_x=result.first()->x;
+	V3DLONG current_y=result.first()->y;
+	V3DLONG current_z=result.first()->z;
+	while(!((current_x==temp->x)&&(current_y==temp->y)&&(current_z==temp->z)))
+	{
+		//printf("looping1...\n");
+		if(path_map.contains(GET_IND(current_x,current_y,current_z)))
+		{
+			//printf("contained,%ld   %ld   %ld\n",path_map[GET_IND(current_x,current_y,current_z)]->x,path_map[GET_IND(current_x,current_y,current_z)]->y,path_map[GET_IND(current_x,current_y,current_z)]->z);
+
+		}
+		V3DLONG x1=path_map[GET_IND(current_x,current_y,current_z)]->x;
+		V3DLONG y1=path_map[GET_IND(current_x,current_y,current_z)]->y;
+		V3DLONG z1=path_map[GET_IND(current_x,current_y,current_z)]->z;
+
+		current_x=x1;
+		current_y=y1;
+		current_z=z1;
+		//printf("looping2...\n");
+		if(((current_x==temp->x)&&(current_y==temp->y)&&(current_z==temp->z)))
+		{
+			result.append(temp);
+			break;
+			
+
+		}else
+		{
+			result.append(path_map[GET_IND(current_x,current_y,current_z)]);
+
+		}
+		//printf("looping3...\n");
+		
+
+	}
+	//printf("out while...\n");
+	return result;
+}
+
+double distance_calculate(unsigned char * &img1d,QList<Node*> path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//Temporally, just take the distance as weight
+	double sum_distance=0;
+	double varience_intensity;
+	for(int i=0;i<path.length()-1;i++)
+	{
+		Node* first=path.at(i);
+		Node* second=path.at(i+1);
+		double distance=sqrt((double)(second->x-first->x)*(second->x-first->x)+(double)(second->y-first->y)*(second->y-first->y)+(double)(second->z-first->z)*(second->z-first->z));
+		sum_distance+=distance;
+	}
+
+
+	return sum_distance;
+
+
+}
 
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu)
 {
-        V3DLONG sz_x = in_sz[0];
-        V3DLONG sz_y = in_sz[1];
-        V3DLONG sz_z = in_sz[2];
+	//这里需要进行第一次去噪，去掉一些像素小的点，但其他点的像素基本上不改变
+	V3DLONG sz_x = in_sz[0];
+	V3DLONG sz_y = in_sz[1];
+	V3DLONG sz_z = in_sz[2];
 	flag=new int [sz_x*sz_y*sz_z];
+	unsigned char* nData1=new unsigned char[sz_x*sz_y*(sz_z)];
 
 	V3DLONG r=10;
 	V3DLONG count=0;
@@ -542,6 +1908,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	//在这里将找到的root打印出来
 
 	printf("###  cluster nodes using meanshift and connect subtrees by spanning tree   ###\n");
+
 	for(V3DLONG i=0;i<sz_x;i++)
 	{
 		for(V3DLONG j=0;j<sz_y;j++)
@@ -571,11 +1938,21 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	
 
 	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	construct_tree(finalclass_node, sz_x, sz_y, sz_z);
+
 	
+	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
+	printf("###   denosing the image using Gauss method   ###\n");//这里作为第二次去噪，采用distance transform计算中心线
+	img1d=Gauss_filter(img1d,nData1,sz_x,sz_y,sz_z,callback, parent);//for calculate the gradient of nodes better
+
+	printf("###   denoising finished   ###\n");
+	//construct_tree_vn2(finalclass_node, img1d,sz_x, sz_y, sz_z);
+	
+	//construct_tree_vn4(root, img1d,sz_x, sz_y, sz_z);//call bf method to find the shortest path between nodes
+	construct_tree_vn5(root,img1d,sz_x,sz_y,sz_z);
+		
         QString outswc_file = image_name + "_meanshift.swc";
         printSWCByQList_Neuron(result_list,outswc_file.toStdString().c_str());
+		printSWCByQList_Neuron(result_list,"D:\\result\\result11.swc");
 
         V3DPluginArgItem arg;
         V3DPluginArgList input_sort;
@@ -588,13 +1965,14 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
         arg.type = "random";std::vector<char*> arg_sort_para; arg.p = (void *) & arg_sort_para; input_sort << arg;
         arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
 
-        QString full_plugin_name_sort = "sort_neuron_swc";
+        QString full_plugin_name_sort = "sort_neuron_swc"; 
         QString func_name_sort = "sort_swc";
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
         vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
         saveSWC_file(outswc_file.toStdString(), temp_out_swc);
         v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()),bmenu);
+		if(nData1) {delete []nData1,nData1 = 0;}
         delete []flag;
 }
 
@@ -604,7 +1982,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 {
 	
 	QMultiMap<double, int> r_root;
-	QMap<int,Node*> root;
+	
 	QMultiMap<int,int> parent_root;
 
 	
@@ -926,19 +2304,7 @@ void prepare_write(QList<NeuronSWC> marker_MST_sorted)
 }
 
 
-double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3DLONG z,double inte_nd,double inte_cen,V3DLONG r)//MeanShiftﾋ羚ｨﾖﾐｼﾆﾋ羞耨・ｭｵ聊ｮｼ莊ﾄﾈｨﾖｵ｣ｬﾀ・ｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴｬﾏﾘｺﾍﾔｭｵ耿ｽｽ・ﾄﾈｨﾖｵﾔｽｴ・
-{
-	//double r=100;
-	double I=255;
-	double weight=0;
-	double distance=(curi-x)/r*(curi-x)/r+(curj-y)/r*(curj-y)/r+(curk-z)/r*(curk-z)/r;
-	double inten_sim=(inte_nd-inte_cen)/I*(inte_nd-inte_cen)/I;
-	weight=exp(-1.0*sqrt(2*inten_sim+distance))+0.000001;
-	//printf("%lf  %lf  %lf \n",distance,inten_sim,weight);
-	return weight;
-}
 
-#define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))+0.000001;
 
 bool found_final(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r)
 {
