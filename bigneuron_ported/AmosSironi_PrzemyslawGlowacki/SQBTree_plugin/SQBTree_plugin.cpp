@@ -38,17 +38,6 @@ Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
-bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-template <class T> void gaussian_filter(T* data1d,
-                                        V3DLONG *in_sz,
-                                        unsigned int Wx,
-                                        unsigned int Wy,
-                                        unsigned int Wz,
-                                        unsigned int c,
-                                        double sigma,
-                                        float* &outimg);
-
-
 //template<typename ImageType>
 //typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d, const long int  *in_sz);
 
@@ -61,7 +50,7 @@ template <class T> void gaussian_filter(T* data1d,
 template<typename ImageType>
 typename ImageType::Pointer Imcreate(unsigned char *data1d,const long int *in_sz);
 //void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg);
-void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites);
+void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites,V3DPluginCallback2 &callback);
 
 QStringList SQBTreePlugin::menulist() const
 {
@@ -271,13 +260,14 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      //cout<<"N bites per pixel:  "<<unit_bites<< endl;
 
 //callback.saveImage(inimg, outimg_file);
-     convolveV3D((unsigned char *)inimg->getRawDataAtChannel(c), in_sz, outimg,unit_bites);
+     convolveV3D((unsigned char *)inimg->getRawDataAtChannel(c), in_sz, outimg,unit_bites,callback);
 
 
  cout<<"saving image"<<endl;
      // save image
      Image4DSimple outimg1;
-     outimg1.setData((unsigned char *)inimg->getRawDataAtChannel(c), in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
+   //  outimg1.setData((unsigned char *)inimg->getRawDataAtChannel(c), in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
+     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
 
 
   //   cout<<outimg_file<<endl;
@@ -295,7 +285,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
 //template<typename ImageType>
 //void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg){
-void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites){
+void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites,V3DPluginCallback2 &callback){
 
 //template <class T> void convolveV3D(T* data1d,
 //                     V3DLONG *in_sz,
@@ -330,7 +320,12 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
        std::cout << "size image " <<size_image <<std::endl;
 
 
-       unsigned char *data1d_after_itk;
+       V3DLONG N = in_sz[0];
+       V3DLONG M = in_sz[1];
+       V3DLONG P = in_sz[2];
+       V3DLONG sc = in_sz[3];
+        V3DLONG pagesz = N*M*P;
+       unsigned char *data1d_after_itk = new unsigned char [pagesz];
 
        for(int iz = 0; iz < in_sz[2]; iz++)
          {
@@ -358,29 +353,31 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
          }
 
 
-       Image4DSimple outimg_after_itk;
-       outimg_after_itk.setData(data1d_after_itk, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+       std::cout << "copied values back " <<std::endl;
 
-
-    //   cout<<outimg_file<<endl;
-       char *  name_out_after_itk = '/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8_after_itk.v3draw';
-       callback.saveImage(&outimg_after_itk, name_out_after_itk);
-
+       //OK  !
+     //  Image4DSimple outimg_after_itk;
+     //  outimg_after_itk.setData(data1d_after_itk, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+     //  cout<<"saving image itk copy"<<endl;
+     //  char *  name_out_after_itk = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8_after_itk.v3draw";
+     //  callback.saveImage(&outimg_after_itk, name_out_after_itk);
+       //OK  !
 
 
        //unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
 
-
+/*
         std::cout << "unit_bites " <<unit_bites <<std::endl;
        V3DLONG tb = in_sz[0]*in_sz[1]*in_sz[2]*unit_bites;
        float *pImage = new float [tb];
 
 
-V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+//V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
        for(V3DLONG i=0; i<pagesz; i++)
             pImage[i] = data1d[i];
+*/
 
-       outimg = pImage;
+       outimg = (float *)data1d_after_itk;
 
 
     /*
