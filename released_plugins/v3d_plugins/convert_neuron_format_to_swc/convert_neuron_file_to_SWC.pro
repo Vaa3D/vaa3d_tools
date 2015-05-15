@@ -40,5 +40,5 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 #            Lm/RString.cpp \
 #            Lm/Elaboration.cpp
 
-TARGET	= $$qtLibraryTarget(convert_neuron_file_to_SWC)
+TARGET	= $$qtLibraryTarget(convert_Neurolucida_ASC_file_to_SWC)
 DESTDIR	= $$VAA3DPATH/bin/plugins/data_IO/convert_Neurolucida_ASC_file_to_SWC/
