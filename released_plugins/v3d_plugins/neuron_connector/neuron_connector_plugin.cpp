@@ -76,7 +76,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //get parameters
         double angthr=60, disthr=10, xscale=1, yscale=1, zscale=1;
-        int matchtype = 1;
+        int matchtype = 1, rootid=-1;
         bool b_minusradius = true;
         if(input.size() >= 2){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
@@ -121,8 +121,12 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
                 int tmp=atoi(paras.at(6));
                 b_minusradius = tmp;
             }
+            if(paras.size()>7){
+                int tmp=atoi(paras.at(7));
+                rootid = tmp;
+            }
         }
-        cout<<"angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
+        cout<<"rootid="<<rootid<<"; angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
         if(matchtype==1) cout<<"Only branch with the same type will be matched"<<endl;
         if(matchtype==2) cout<<"Topology constrain will be applied for connections."<<endl;
         cout<<"Distance between "; b_minusradius ? cout<<"skeleton" : cout<<"surface"; cout<<" will be calculate to match"<<endl;
@@ -134,7 +138,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 
         //do connect
         QList<NeuronSWC> newNeuron;
-        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr, matchtype, b_minusradius);
+        connectall(nt, newNeuron, xscale, yscale, zscale, angthr, disthr, matchtype, b_minusradius, rootid);
 
         qDebug()<<"output result: "<<fname_output;
         //output result
@@ -154,7 +158,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
 void printHelp()
 {
     cout<<"\nUsage: v3d -x neuron_connector -f connect_neuron_SWC -i <input.swc> -o <output.swc> "
-          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1> <matchtype=1> <surfacedis=true>"<<endl;
+          <<"-p <angular threshold=60> <distance threshold=10> <zscale=1> <xscale=1> <yscale=1> <matchtype=1> <surfacedis=true> <rootid=-1>"<<endl;
     cout<<"angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection."<<endl;
     cout<<"distance threshold: Maximum Euclidean distance to generate new connections. Set to ALL to connect everything."<<endl;
     cout<<"scale: e.g. when zscale=2, the z coordinate will be multiplied by 2 before computing."<<endl;
@@ -276,6 +280,8 @@ void neuron_connector_dialog::creat()
     cb_distanceType = new QComboBox();
     cb_distanceType->addItem("between surface (suggested)");
     cb_distanceType->addItem("between skeleton");
+    spin_rootid = new QSpinBox();
+    spin_rootid->setRange(-1, 2147483647); spin_rootid->setValue(-1);
     QLabel* label_0 = new QLabel("sacles: ");
     gridLayout->addWidget(label_0,9,0,1,1);
     QLabel* label_1 = new QLabel("X: ");
@@ -299,6 +305,9 @@ void neuron_connector_dialog::creat()
     QLabel* label_7 = new QLabel("rules of connected fragment type: ");
     gridLayout->addWidget(label_7,13,0,1,4);
     gridLayout->addWidget(cb_matchType,13,4,1,3);
+    QLabel* label_8 = new QLabel("root node (-1 = use existing first one): ");
+    gridLayout->addWidget(label_8,14,0,1,6);
+    gridLayout->addWidget(spin_rootid,14,6,1,1);
 
     //operation zone
     QFrame *line_2 = new QFrame();
@@ -321,6 +330,7 @@ void neuron_connector_dialog::creat()
     info+=">> angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection. If distance threshold is -1, there is no preference to tip-tip match.\n";
     info+=">> scale: the coordinate will be multiplied by scale before computing.\n";
     info+=">> topology constrain for connection rule: except soma (1), only fragments with the same type will be matched. And only 1 connection between axon and soma\n";
+    info+=">> set root node by the node number in input swc. If it is -1 or none existing node number, current root will be used.";
     text_info = new QTextEdit;
     text_info->setText(info);
     text_info->setReadOnly(true);
@@ -383,6 +393,7 @@ void neuron_connector_dialog::run()
     int matchtype=cb_matchType->currentIndex();
     int distancetype=cb_distanceType->currentIndex();
     bool surfdis=(distancetype==0);
+    int rootid=spin_rootid->value();
 
     //load neuron
     nt = new NeuronTree();
@@ -395,7 +406,7 @@ void neuron_connector_dialog::run()
         addinfo(">> failed to read SWC file: "+fileOpenName + "\n");
     }else{
         QList<NeuronSWC> newNeuron;
-        connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr, matchtype, surfdis);
+        connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr, matchtype, surfdis, rootid);
 
         qDebug()<<"output result";
         if(!export_list2file(newNeuron, this->edit_load1->text())){
@@ -414,7 +425,7 @@ void neuron_connector_dialog::addinfo(QString info)
     textcursor.insertText(info);
 }
 
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchType, bool b_minusradius)
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchType, bool b_minusradius, int rootID=-1)
 {
     newNeuron.clear();
     bool b_connectall = false;
@@ -632,7 +643,33 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
     QVector<V3DLONG> newid(nt->listNeuron.size(), -1);
     QVector<V3DLONG> newpn(nt->listNeuron.size(), -1); //id starts from 1, -1: not touched, 0: touched but overlap with parent
     curid=1;
-    for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
+    int rootidx=nt->hashNeuron.value(rootID);
+    if(nt->listNeuron[rootidx].n != rootID)
+        rootidx=-1;
+    QVector<V3DLONG> prinode;
+    if(rootidx==-1){
+        for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
+            if(nt->listNeuron[i].parent==-1){
+                prinode.push_back(i);
+            }
+        }
+    }else{
+        prinode.push_back(rootidx);
+    }
+    V3DLONG i=0;
+    V3DLONG priIdx=0;
+    while(1){
+        if(priIdx<prinode.size()){
+            i=prinode[priIdx];
+            priIdx++;
+        }else if(priIdx==prinode.size()){
+            i=0;
+            priIdx++;
+        }else{
+            i++;
+            if(i>=nt->listNeuron.size())
+                break;
+        }
         if(newid[i]>0) continue;
         QQueue<V3DLONG> pqueue; pqueue.clear();
         pqueue.enqueue(i);

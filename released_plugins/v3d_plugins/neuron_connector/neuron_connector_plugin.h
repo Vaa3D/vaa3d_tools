@@ -34,6 +34,7 @@ public:
     QLabel *label_load0, *label_load1;
     QLineEdit *edit_load0, *edit_load1;
     QDoubleSpinBox *spin_zscale, *spin_xscale, *spin_yscale, *spin_ang, *spin_dis;
+    QSpinBox *spin_rootid;
     QPushButton *btn_quit, *btn_run;
     QComboBox *cb_distanceType, *cb_matchType;
     QTextEdit* text_info;
@@ -59,7 +60,7 @@ public:
 };
 
 void printHelp();
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchtype, bool minusradius);
+void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchtype, bool minusradius, int rootID);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif
