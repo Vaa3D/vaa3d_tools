@@ -1211,26 +1211,7 @@ unsigned char* Gauss_filter(unsigned char * &img1d,unsigned char* nData1,V3DLONG
 
 	}
 	
-	 // 4 - Set and show the Gauss filtering image in a new window
-	v3dhandle curwin = callback.currentImageWindow();
-	if(!curwin)
-	{
-		//QMessageBox::information(0, title, QObject::tr("No image is open."));
-		//return -1;
-	}
-        v3dhandle newwin = callback.newImageWindow();
-		if(! newwin)
-	{
-		//QMessageBox::information(0, title, QObject::tr("No image is open."));
-		//return -1;
-	}
-		/*Image4DSimple *p4DImage = callback.getImage(curwin);
-        p4DImage->setData(nGauss, sz_x, sz_y, sz_z, 1, p4DImage->getDatatype());//setData() will free the original memory automatically
-        callback.setImage(newwin, p4DImage);
-        callback.setImageName(newwin, QObject::tr("Gauss filtering"));*/
-       //callback.updateImageWindow(newwin);
-		//if(nData1) {delete []nData1,nData1 = 0;}
-		//if(nData2) {delete []nData2,nData1 = 0;}
+
 		if(Gkernal) {delete []Gkernal,Gkernal = 0;}
 		
 			
@@ -1594,6 +1575,20 @@ double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3D
 		V3DLONG start_x=node1->x;
 		V3DLONG start_y=node1->y;
 		V3DLONG start_z=node1->z;
+		if(start_x==sz_x)
+		{
+			start_x=start_x-1;
+		}
+		if(start_y==sz_y)
+		{
+			start_y=start_y-1;
+
+		}
+		if(start_z==sz_z)
+		{
+			start_z=start_z-1;
+
+		}
 		V3DLONG limit1=GET_IND(start_x,start_y,start_z);
 		//Node* temp=new Node(start_x,start_y,start_z);
 		for(QMap<int,Node* >::iterator iter1=roots.begin();iter1!=roots.end();iter1++)
@@ -1606,6 +1601,11 @@ double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3D
 			V3DLONG end_x=node2->x;
 			V3DLONG end_y=node2->y;
 			V3DLONG end_z=node2->z;
+			if(end_z==sz_z)
+			{
+				end_z=end_z-1;
+
+			}
 			V3DLONG limit2=GET_IND(end_x,end_y,end_z);
 			
 			queue.clear();
@@ -1627,7 +1627,7 @@ double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3D
 			double stop_distance=(double)(sqrt(double(node2->x-node1->x)*(node2->x-node1->x)+double(node2->y-node1->y)*(node2->y-node1->y)+double(node2->z-node1->z)*(node2->z-node1->z)));
 			//printf("stop distance calculated:%lf\n",stop_distance);
 			//if((stop_distance>=(average_dis/10))||stop_distance==0)
-			if((stop_distance>=(7))||stop_distance==0)//stop_distance can be input in the dialogue
+			if((stop_distance>=(20))||stop_distance==0)//stop_distance can be input in the dialogue
 			{
 				//printf("size:%d\n",roots.size());
 				weight_result[row][cloumn]=stop_distance;
@@ -1669,7 +1669,7 @@ double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3D
 				}else*/
 				{
 					//while((count<=node_number)&&(!(offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))&&(queue.size()!=0))
-					while(!((offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))&&(queue.size()!=0))//here exists arguement!
+					while(!((offset_x==end_x)&&(offset_y==end_y)&&(offset_z==end_z))&&(queue.size()!=0)&&(count<=node_number))//here exists arguement!
 					{//condition 1 gaurantee the number of searched node will not more than the nodes in the block,because maybe there is a gap between nodes
 						//condition 2 gaurantee the loop will be stoped when the terminal node was found
 						//condition 3 gaurantee the loop will be stoped when there is a gap between two nodes, it means that A node will never get to B node
