@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'Opencv_example_plugin.h'
 **
-** Created: Fri May 15 14:40:09 2015
+** Created: Thu May 21 10:36:36 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!

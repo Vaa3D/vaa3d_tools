@@ -105,7 +105,7 @@ int Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
                 sum_value = sum_value + (int)PixelVaule;
 
-                int *v3 = new int[3];
+                int v3[3];
 
                 v3[0] = int(ix);
 
@@ -120,7 +120,7 @@ int Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     }
 
-    v3d_msg(QString("The sum of the image is %1").arg(sum_value));
+    v3d_msg(QString("The sum of the image 2 is %1").arg(sum_value));
 
     Mat image;
 
@@ -129,7 +129,7 @@ int Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
    double sum_value2 = (double)std::accumulate(image.begin<uchar>(), image.end<uchar>(), 0.0);
 
-   v3d_msg(QString("The sum of the image is %1").arg(sum_value2));
+   v3d_msg(QString("The sum of the image 2 is %1").arg(sum_value2));
 
     int sum_value3 = 0;
 
@@ -147,7 +147,7 @@ int Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 				  for(int k = 0; k < image.channels(); k ++ )
 				  {
 
-					  int *vc = new int[3];
+					  int vc[3];
 
 					  vc[0] = i;
 
@@ -163,7 +163,7 @@ int Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
 		  }
 
-		  v3d_msg(QString("The sum of the image 3 is %1").arg(sum_value3));
+		  v3d_msg(QString("The sum 3 of the image 3 is %1").arg(sum_value3));
 
 
 
