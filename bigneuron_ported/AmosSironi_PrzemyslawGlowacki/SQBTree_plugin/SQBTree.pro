@@ -35,22 +35,23 @@ LIBS += -llbfgs
 LIBS += -L"$$_PRO_FILE_PWD_/libconfig-1.4.9/lib/.libs"
 LIBS += -lconfig++
 
-HEADERS	+= SQBTree_plugin.h
 HEADERS += sqb_0.1/src/MatrixSQB/vaa3d_link.h
-HEADERS += regression/regressor.h
-HEADERS += regression/sep_conv.h
-HEADERS += regression/regression_test2.h
+#HEADERS += regression/regressor.h
+#HEADERS += regression/regression_test2.h
 HEADERS += sqb_0.1/src/MatrixSQB/sqb_trees.h
+HEADERS += regression/sep_conv.h
+HEADERS	+= SQBTree_plugin.h
 
-SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
-SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp
 
-SOURCES	+= SQBTree_plugin.cpp
+#SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp
+
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
-SOURCES	+= regression/regressor.cpp
+#SOURCES	+= regression/regressor.cpp
+SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
 SOURCES	+= regression/sep_conv.cpp
 #SOURCES	+= regression/regression_test2.cpp
 #SOURCES	+= sqb_0.1/src/MatrixSQB/sqb_trees.cpp
+SOURCES	+= SQBTree_plugin.cpp
 
 #QMAKE_CXXFLAGS += -DMEX
 QMAKE_CXXFLAGS += -DLIBCONFIGXX_VER_REVISION

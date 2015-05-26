@@ -9,6 +9,16 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
+#include "v3d_message.h"
+#include <vector>
+#include "SQBTree_plugin.h"
+#include "sqb_trees.h"
+
+
+#include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+
+#include "regression/sep_conv.h"
+//#include "regression/regression_test2.h"
 
 
 class SQBTreePlugin : public QObject, public V3DPluginInterface2_1

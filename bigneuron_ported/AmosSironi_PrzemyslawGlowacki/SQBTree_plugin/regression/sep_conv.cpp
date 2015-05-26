@@ -30,6 +30,16 @@ typedef Eigen::MatrixXf MatrixTypeFloat;
 ////functions definitions
 ///
 
+template<typename T1,typename T2>
+T2 dumbfun(T1 s)
+{
+    T1 t = s;
+    T2 t2 =1;
+    return t2;
+
+}
+
+
 MatrixTypeDouble readMatrix(const char *filename)
     {
     int cols = 0, rows = 0;
@@ -74,7 +84,7 @@ MatrixTypeDouble readMatrix(const char *filename)
 // helper for itk separable filter
 // dir is [0,1,2]
 template<typename ImageType, typename VectorType>
-static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned dir, const VectorType &origVec )
+ void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned dir, const VectorType &origVec )
 {
     typename ImageType::IndexType start;
     start.Fill(0);
@@ -106,7 +116,7 @@ static void prepare1DKernel( typename ImageType::Pointer &kernel, const unsigned
 
 
 template<typename ImageType, typename VectorType>
-static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, Matrix3D<float> &out){
+  void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, Matrix3D<float> &out){
 
 
     typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
@@ -137,7 +147,7 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, type
 
 
 template<typename ImageType, typename VectorType>
-static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z, Matrix3D<float> &out)
+  void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z, Matrix3D<float> &out)
 {
 
 
@@ -155,7 +165,7 @@ static void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, cons
 
 
 template<typename ImageType, typename VectorType>
-static void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out){
+  void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out){
 
         VectorType kernel_eig_x;
           VectorType kernel_eig_y;
@@ -352,5 +362,15 @@ MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, co
 
         return nonsep_features_all;
 }
+
+
+
+////to instantiate explicitely
+template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
+//template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< unsigned char, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< unsigned char, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
+//template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3> I,MatrixTypeFloat M,VectorTypeFloat V);
+//template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< float, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
+
+template int dumbfun<float,int>(float s);
 
 //#endif

@@ -15,12 +15,13 @@
 #include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
 #include "regression/sep_conv.h"
-#include "regression/regression_test2.h"
+//#include "regression/regression_test2.h"
+
 //using namespace Eigen;
-//typedef Eigen::VectorXf VectorTypeFloat;
-//typedef Eigen::VectorXd VectorTypeDouble;
-//typedef Eigen::MatrixXd MatrixTypeDouble;
-//typedef Eigen::MatrixXf MatrixTypeFloat;
+typedef Eigen::VectorXf VectorTypeFloat;
+typedef Eigen::VectorXd VectorTypeDouble;
+typedef Eigen::MatrixXd MatrixTypeDouble;
+typedef Eigen::MatrixXf MatrixTypeFloat;
 
 
 using namespace std;
@@ -201,9 +202,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     */
 
-
-
-
   cout<<"Welcome this plugin"<<endl;
   if (output.size() != 1) return false;
 
@@ -277,6 +275,54 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     //callback.saveImage(inimg, outimg_file);
     convolveV3D((unsigned char *)inimg->getRawDataAtChannel(c), in_sz, outimg,unit_bites,callback);
+
+    ////convert image to itk format
+//    typedef unsigned char ImageScalarType;
+    typedef float ImageScalarType;
+
+    typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
+    ITKImageType::Pointer I  =  ITKImageType::New();
+
+    I =Imcreate<ITKImageType>((unsigned char *)inimg->getRawDataAtChannel(c),in_sz);
+
+//    ////rescale in [0 1]
+     typedef itk::RescaleIntensityImageFilter< ITKImageType, ITKImageType > RescaleFilterType;
+    RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+    rescaleFilter->SetInput(I);
+    rescaleFilter->SetOutputMinimum(0.0);
+    rescaleFilter->SetOutputMaximum(1.0);
+
+
+    ////load filters
+    const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
+    const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
+
+    MatrixTypeDouble weights = readMatrix(weight_file);
+    MatrixTypeDouble sep_filters = readMatrix(sep_filters_file);
+
+    std::cout << "Loaded weights ! max :" << weights.maxCoeff() <<std::endl;
+
+    ////convolve image
+
+   // template<typename ImageType, typename MatrixType, typename VectorType>
+    const float scale_factor =1.0;
+    MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
+    MatrixTypeFloat weights_float = weights.cast<float>();
+    ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
+rescaleFilter->Update();
+      MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(rescaled_img,sep_filters_float,weights_float, scale_factor);
+  //  MatrixTypeFloat nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
+//MatrixTypeFloat sep_features_all = convolveSepFilterBank<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float);
+
+//convolve 3D image with separable filters (split eigen vector in 3 equal parts)
+//template<typename ImageType, typename VectorType>
+//Matrix3D<float> outxx;
+// wholeConvolveSepFilterSplitVec<ITKImageType,VectorTypeFloat>( I, sep_filters_float.col(0),outxx);
+//float s = 1.0;
+//int t = dumbfun<float,int>(s);
+
+//    MatrixTypeDouble feats_all =  convolveSepFilterBankComb<ITKImageType,MatrixTypeDouble,VectorTypeDouble>( I, sep_filters, weights, scale_factor );
+
 
 
     cout<<"saving image"<<endl;
