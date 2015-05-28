@@ -80,10 +80,12 @@ if [ "$(uname)" == "Darwin"]; then
   sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/macx-g++42
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" && ! -f ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/c/lib/libneurolabi_debug.so]; then
   sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/linux-g++
+  sh ../../../../hackathon/zhi/neuTube_zhi/update_library
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
   echo "detected windows platform" 
 fi
 
 cd ../../../../hackathon/zhi/neuTube_zhi/
+
 qmake
 make
