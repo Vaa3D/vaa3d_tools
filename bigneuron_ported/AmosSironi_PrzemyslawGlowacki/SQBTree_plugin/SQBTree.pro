@@ -40,7 +40,9 @@ HEADERS += sqb_0.1/src/MatrixSQB/vaa3d_link.h
 #HEADERS += regression/regression_test2.h
 HEADERS += sqb_0.1/src/MatrixSQB/sqb_trees.h
 HEADERS += regression/sep_conv.h
+HEADERS += regression/util.h
 HEADERS	+= SQBTree_plugin.h
+
 
 
 #SOURCES += $$_PRO_FILE_PWD_/regression/regression_test2.cpp

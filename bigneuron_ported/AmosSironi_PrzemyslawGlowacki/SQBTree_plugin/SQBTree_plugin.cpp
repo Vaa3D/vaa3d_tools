@@ -40,6 +40,11 @@ typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayTy
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
 
+
+typedef float ImageScalarType;
+typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
+
+
 typedef SQB::MatrixFeatureIndexList<gFeatArrayType>          MatrixFeatureIndexListType;
 typedef SQB::MatrixSampleIndexList<gFeatArrayType>           MatrixSampleIndexListType;
 typedef SQB::MatrixFeatureValueObject<gFeatArrayType>        MatrixFeatureValueObjectType;
@@ -63,21 +68,22 @@ Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 //   sqb_entrance( nlhs, plhs,  nrhs, prhs);
 //}
 
+bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
 //template<typename ImageType>
-//typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d, const long int  *in_sz);
+//typename ImageType::Pointer rawData2ItkImage(typename ImageType::PixelType *data1d, const long int  *in_sz);
 
 //template <class T> void convolveV3D(T* data1d,
 //                     V3DLONG *in_sz,
 //                     float* &outimg);
 //template<typename ImageType>
-//void Imcreate(typename ImageType::PixelType *data1d);
+//void rawData2ItkImage(typename ImageType::PixelType *data1d);
 
-template<typename ImageType>
-typename ImageType::Pointer Imcreate(unsigned char *data1d,const long int *in_sz);
+//template<typename ImageType>
+//typename ImageType::Pointer rawData2ItkImage(unsigned char *data1d,const long int *in_sz);
 //void convolveV3D(typename ImageType::PixelType *data1d,V3DLONG *in_sz,float* &outimg);
 void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites,V3DPluginCallback2 &callback);
 
@@ -123,14 +129,13 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 
   if(func_name == tr("train"))
   {
+      return trainTubularityImage(callback, input, output);
 
   }
   else if (func_name == tr("test")) // apply already trained classifier to an image and save results
   {
     //const char *input_filename = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2.tif";
     //   testConvolve(input_filename);
-
-
 
     return testTubularityImage(callback, input, output);
 
@@ -152,83 +157,68 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 }
 
 
+bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+
+    if (output.size() != 1) return false;
+
+    vector<char*> *trainImagePaths = ((vector<char*> *)(input.at(0).p));
+
+    unsigned int n_train_images = trainImagePaths->size()/2; //half inputs are images, second half are swc gt files
+    if (n_train_images < 1){
+
+        cout<<"No input train images!"<<endl;
+        return false;
+    }
+    if (2*n_train_images !=  input.size()){
+        cout<<"Number of input train images and swc files must be the same !"<<endl;
+        return false;
+    }
+
+    unsigned int channel = 1; //only process first channel
+
+    //// get features and gt
+    for(unsigned int i_img =0; i_img<n_train_images; i_img++){
+
+        char * train_img_file = trainImagePaths->at(i_img);
+        char * swc_gt_file = trainImagePaths->at(i_img+n_train_images);
+
+        Image4DSimple *train_img = callback.loadImage(train_img_file);
+        if (!train_img || !train_img->valid())
+        {
+          v3d_msg("Fail to open the image file.", 0);
+          return false;
+        }
+
+        V3DLONG in_sz[4];
+        in_sz[0] = train_img->getXDim();
+        in_sz[1] = train_img->getYDim();
+        in_sz[2] = train_img->getZDim();
+        in_sz[3] = train_img->getCDim();
+
+
+        ImagePixelType pixel_type = train_img->getDatatype();
+
+        ////convert image to itk format
+        ITKImageType::Pointer train_img_ITK  =  ITKImageType::New();
+
+        train_img_ITK =v3d2ItkImage<ITKImageType,ImageScalarType>(train_img,in_sz,channel);
+
+        ////convert swc file to diastance gt image
+
+
+    }
+
+    cout<<"Starting Training!"<<endl;
+
+
+
+    return true;
+}
 
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
-
-  /*
-    cout<<"Welcome to Gaussian filter"<<endl;
-    if (output.size() != 1) return false;
-
-    unsigned int Wx=7, Wy=7, Wz=3, c=1;
-     float sigma = 1.0;
-     if (input.size()>=2)
-     {
-          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) Wx = atoi(paras.at(0));
-          if(paras.size() >= 2) Wy = atoi(paras.at(1));
-          if(paras.size() >= 3) Wz = atoi(paras.at(2));
-          if(paras.size() >= 4) c = atoi(paras.at(3));
-          if(paras.size() >= 5) sigma = atof(paras.at(4));
-    }
-
-    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    cout<<"Wx = "<<Wx<<endl;
-     cout<<"Wy = "<<Wy<<endl;
-    cout<<"Wz = "<<Wz<<endl;
-     cout<<"c = "<<c<<endl;
-     cout<<"sigma = "<<sigma<<endl;
-    cout<<"inimg_file = "<<inimg_file<<endl;
-    cout<<"outimg_file = "<<outimg_file<<endl;
-
-     double sigma_s2 = 0.5/(sigma*sigma);
-
-    Image4DSimple *inimg = callback.loadImage(inimg_file);
-    if (!inimg || !inimg->valid())
-    {
-        v3d_msg("Fail to open the image file.", 0);
-        return false;
-    }
-
-     if(c > inimg->getCDim())// check the input channel number range
-     {
-          v3d_msg("The input channel number is out of real channel range.\n", 0 );
-          return false;
-     }
-
-    //input
-     float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
-
-     V3DLONG in_sz[4];
-     in_sz[0] = inimg->getXDim();
-     in_sz[1] = inimg->getYDim();
-     in_sz[2] = inimg->getZDim();
-     in_sz[3] = inimg->getCDim();
-
-     switch (inimg->getDatatype())
-     {
-          case V3D_UINT8: gaussian_filter(inimg->getRawData(), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case V3D_UINT16: gaussian_filter((unsigned short int*)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case V3D_FLOAT32: gaussian_filter((float *)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          default:
-               v3d_msg("Invalid datatype in Gaussian fileter.", 0);
-               if (inimg) {delete inimg; inimg=0;}
-               return false;
-     }
-
-     // save image
-     Image4DSimple outimg1;
-     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
-
-     callback.saveImage(&outimg1, outimg_file);
-
-     if(inimg) {delete inimg; inimg =0;}
-
-     return true;
-
-    */
 
   cout<<"Welcome this plugin"<<endl;
   if (output.size() != 1) return false;
@@ -239,7 +229,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
   if (input.size()>=2)
   {
     vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-    //    if(paras.size() >= 1) classifier_filename = atoi(paras.at(0));
+    //    if(paras.size() >= 1) classifier_filename = (paras.at(0));
     //   if(paras.size() >= 2) Wy = atoi(paras.at(1));
     //   if(paras.size() >= 3) Wz = atoi(paras.at(2));
     //   if(paras.size() >= 4) c = atoi(paras.at(3));
@@ -306,19 +296,24 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     ////convert image to itk format
 //    typedef unsigned char ImageScalarType;
-    typedef float ImageScalarType;
+   // typedef float ImageScalarType;
+   // typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
 
-    typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
     ITKImageType::Pointer I  =  ITKImageType::New();
+    I =v3d2ItkImage<ITKImageType,ImageScalarType>(inimg,in_sz,c);
 
-    I =Imcreate<ITKImageType>((unsigned char *)inimg->getRawDataAtChannel(c),in_sz);
 
-//    ////rescale in [0 1]
-     typedef itk::RescaleIntensityImageFilter< ITKImageType, ITKImageType > RescaleFilterType;
-    RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
-    rescaleFilter->SetInput(I);
-    rescaleFilter->SetOutputMinimum(0.0);
-    rescaleFilter->SetOutputMaximum(1.0);
+//    typedef itk::Image< ImageScalarType, 3 >         ITKImageType;
+//    ITKImageType::Pointer I  =  ITKImageType::New();
+
+//    I =rawData2ItkImage<ITKImageType>((unsigned char *)inimg->getRawDataAtChannel(c),in_sz);
+
+//   ////rescale in [0 1]
+//     typedef itk::RescaleIntensityImageFilter< ITKImageType, ITKImageType > RescaleFilterType;
+//    RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
+//    rescaleFilter->SetInput(I);
+//    rescaleFilter->SetOutputMinimum(0.0);
+//    rescaleFilter->SetOutputMaximum(1.0);
 
 
     ////load filters
@@ -336,9 +331,9 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     const float scale_factor =1.0;
     MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
     MatrixTypeFloat weights_float = weights.cast<float>();
-    ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
-    rescaleFilter->Update();
-      MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(rescaled_img,sep_filters_float,weights_float, scale_factor);
+   // ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
+    //rescaleFilter->Update();
+      MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
   //  MatrixTypeFloat nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
 //MatrixTypeFloat sep_features_all = convolveSepFilterBank<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float);
 
@@ -444,7 +439,7 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
 
 
 
-  I =Imcreate<ITKImageType>(data1d,in_sz);
+  I =rawData2ItkImage<ITKImageType>(data1d,in_sz);
 
 
   ITKImageType::SizeType size_image = I->GetLargestPossibleRegion().GetSize();
@@ -545,114 +540,6 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
 }
 
 
-
-
-
-template<typename ImageType>
-//void Imcreate(ImageType::PixelType *data1d){
-typename ImageType::Pointer Imcreate(unsigned char *data1d,const long int *in_sz){
-  //typename ImageType::Pointer Imcreate(typename ImageType::PixelType *data1d,const long int *in_sz){
-
-  //typedef itk::Image<signed int, 3> ImageType;
-  unsigned int SN = in_sz[0];
-  unsigned int  SM = in_sz[1];
-  unsigned int  SZ = in_sz[2];
-
-  // typename ImageType::Pointer I  = ImageType::New();
-  typename ImageType::SizeType size;
-  size[0] = SN;
-  size[1] = SM;
-  size[2] = SZ;
-
-  cout<<"size    "<<size <<endl;
-
-
-  typename ImageType::RegionType region;
-  typename  ImageType::IndexType start;
-  start[0] = 0;
-  start[1] = 0;
-  start[2] = 0;
-
-
-  region.SetSize(size);
-  region.SetIndex(start);
-
-  typename ImageType::Pointer I = ImageType::New();
-  I->SetRegions(region);
-  I->Allocate();
-
-
-
-  //    typename ImageType::IndexType idx;
-  //    idx.Fill(0);
-  //    typename ImageType::RegionType region;
-  //    region.SetSize( size );
-  //    region.SetIndex( idx );
-
-  //    I->SetRegions(region);
-  //    I->Allocate();
-  //    I->FillBuffer(0);
-
-  //    I->Update();
-
-  cout<<"allocating image  " <<endl;
-
-
-  //  ImageType::RegionType region;
-  // / region.SetSize(regionSize);
-  //  region.SetIndex(regionIndex);
-
-
-  //    itk::ImageRegionIterator<ImageType> imageIterator(I,region);
-  //    unsigned int idx_lin= 0;
-  //    while(!imageIterator.IsAtEnd())
-  //        {
-  //            // Get the value of the current pixel
-  //            //unsigned char val = imageIterator.Get();
-  //            //std::cout << (int)val << std::endl;
-
-  //            // Set the current pixel to white
-  //            unsigned char PixelVaule =  data1d[idx_lin];
-  //            if(PixelVaule == NULL){
-  //                cout<< "NULL POINTER !: " <<idx_lin  << endl;
-  //            }
-  //            // PixelVaule = 0.0;
-  //            imageIterator.Set(PixelVaule);
-
-  //            ++imageIterator;
-  //            ++idx_lin;
-  //        }
-
-
-  for(int iz = 0; iz < SZ; iz++)
-  {
-    int offsetk = iz*SM*SN;
-    for(int iy = 0; iy < SM; iy++)
-    {
-      int offsetj = iy*SN;
-      for(int ix = 0; ix < SN; ix++)
-      {
-
-        //  //                cout<< offsetk + offsetj + ix ;
-
-        unsigned char PixelVaule =  data1d[offsetk + offsetj + ix];
-        itk::Index<3> indexX;
-        indexX[0] = ix;
-        indexX[1] = iy;
-        indexX[2] = iz;
-        //cout<< ": " << indexX <<endl;
-        I->SetPixel(indexX, PixelVaule);
-      }
-    }
-
-  }
-
-
-  cout<<"allocated image  "<<size <<endl;
-
-  return I;
-
-}
 
 
 

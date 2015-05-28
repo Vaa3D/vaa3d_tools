@@ -18,6 +18,7 @@
 #include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
 #include "regression/sep_conv.h"
+#include "regression/util.h"
 //#include "regression/regression_test2.h"
 
 
