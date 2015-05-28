@@ -17,12 +17,40 @@
 #include "regression/sep_conv.h"
 //#include "regression/regression_test2.h"
 
+
+//#include <SQB/Core/RegTree.h>
+//#include <SQB/Core/Utils.h>
+
+//#include <SQB/Core/Booster.h>
+
+//#include <SQB/Core/LineSearch.h>
+
+
 //using namespace Eigen;
 typedef Eigen::VectorXf VectorTypeFloat;
 typedef Eigen::VectorXd VectorTypeDouble;
 typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
+
+typedef SQB::TreeBoosterWeightsType  WeightsType;
+typedef float   FeatsType;
+
+typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayType;
+typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
+typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
+
+typedef SQB::MatrixFeatureIndexList<gFeatArrayType>          MatrixFeatureIndexListType;
+typedef SQB::MatrixSampleIndexList<gFeatArrayType>           MatrixSampleIndexListType;
+typedef SQB::MatrixFeatureValueObject<gFeatArrayType>        MatrixFeatureValueObjectType;
+typedef SQB::MatrixSingleResponseValueObject<gResponseArrayType>   MatrixClassifResponseValueObjectType;
+
+
+typedef SQB::TreeBooster<
+            MatrixSampleIndexListType,
+            MatrixFeatureIndexListType,
+            MatrixFeatureValueObjectType,
+            MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
 using namespace std;
 Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
@@ -116,7 +144,7 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
   }
   else if (func_name == tr("help"))
   {
-    v3d_msg("To be implemented jewfwefjewfjiopew.");
+    v3d_msg("To be implemented.");
   }
   else return false;
 
@@ -309,7 +337,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
     MatrixTypeFloat weights_float = weights.cast<float>();
     ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
-rescaleFilter->Update();
+    rescaleFilter->Update();
       MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(rescaled_img,sep_filters_float,weights_float, scale_factor);
   //  MatrixTypeFloat nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
 //MatrixTypeFloat sep_features_all = convolveSepFilterBank<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float);
@@ -323,8 +351,48 @@ rescaleFilter->Update();
 
 //    MatrixTypeDouble feats_all =  convolveSepFilterBankComb<ITKImageType,MatrixTypeDouble,VectorTypeDouble>( I, sep_filters, weights, scale_factor );
 
+    ////apply trained regressor
+    const char *regressor_file = "TODO.cfg";
+
+    libconfig::Config cfg;
+
+    // Read the file. If there is an error, report it and exit.
+    try
+    {
+      cfg.readFile(regressor_file);
+    }
+    catch(const libconfig::FileIOException &fioex)
+    {
+      std::cerr << "I/O error while reading file." << std::endl;
+//      return(EXIT_FAILURE);
+    }
+    catch(const libconfig::ParseException &pex)
+    {
+      std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                << " - " << pex.getError() << std::endl;
+//      return(EXIT_FAILURE);
+    }
+
+    libconfig::Setting &root = cfg.getRoot();
+
+    libconfig::Setting &regressor = root["regressor"];
+
+    TreeBoosterType TB;
+    TB.loadFromLibconfig(regressor);
+
+    unsigned maxIters = TB.numWeakLearners();
+
+    //need to convert format?
+    //gFeatArrayType feats = Eigen::Map< const gFeatArrayType >( testFeaturesArray, testFeaturesRowsNo, testFeaturesColsNo );
+
+    TreeBoosterType::ResponseArrayType newScores;
+    TB.predict( TreeBoosterType::SampleListType(nonsep_features_all),
+                TreeBoosterType::FeatureValueObjectType(nonsep_features_all),
+                newScores,
+                maxIters );
 
 
+    ////save image
     cout<<"saving image"<<endl;
     // save image
     Image4DSimple outimg1;
