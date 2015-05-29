@@ -199,6 +199,8 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     unsigned int n_neg_samples_tot =1000;
     n_neg_samples_tot = 2*(n_neg_samples_tot/2); //ensure it is even
 
+    unsigned int n_samples_tot =n_pos_samples_tot+ n_neg_samples_tot;
+
     ////get filters to compute features
     /// TODO: pass path as parameter
     const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
@@ -209,7 +211,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
     MatrixTypeFloat weights_float = weights.cast<float>();
 
-
+    unsigned int n_features_tot = weights_float.cols();//for now just number of non-sep filters (TODO: add context features)
     const float scale_factor =1.0; //no rescale filter
     unsigned int channel = 1; //only process first channel of image
 
@@ -220,6 +222,9 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     unsigned int n_neg_samples_per_image;
     unsigned int collected_pos_samples = 0;
     unsigned int collected_neg_samples = 0;
+
+    MatrixTypeFloat sampled_features_image = MatrixTypeFloat::Zero(n_samples_tot,n_features_tot) ;
+    VectorTypeFloat sampled_gt_vector = VectorTypeFloat::Zero(n_samples_tot) ;
 
     for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
@@ -283,8 +288,7 @@ std::cout << train_gt_vector << "\n\n";
 cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_image.cols() <<endl;
 
         ////random sampling
-        MatrixTypeFloat sampled_features_image;
-        VectorTypeFloat sampled_gt_vector;
+
         getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector,n_pos_samples_per_image,n_neg_samples_per_image);
 
         std::cout << sampled_gt_vector << "\n\n";
@@ -298,6 +302,8 @@ cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_ima
     //clean up: clear train_img_ITK, train_gt_ITK, train_gt_vector,features_image,weights, sep_filters
 
     cout<<"Starting Training!"<<endl;
+
+
 
 
 
