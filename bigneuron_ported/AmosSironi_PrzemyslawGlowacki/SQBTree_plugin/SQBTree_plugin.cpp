@@ -16,6 +16,7 @@
 
 #include "regression/sep_conv.h"
 #include "regression/sampling.h"
+#include "regression/regressor.h"
 //#include "regression/regression_test2.h"
 
 
@@ -161,8 +162,13 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
+    //sample call: ./vaa3d -x SQBTree -f train -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg -p TODO.swc
+
+
      cout<<"Reading Input Files and Parameters."<<endl;
     if (output.size() != 1) return false;
+    // vector<char*> *regressor_output_file = ((vector<char*> *)(output.at(0).p));
+     char * regressor_output_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
     vector<char*> *trainImagePaths = ((vector<char*> *)(input.at(0).p)); //train images
 
@@ -193,10 +199,15 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
         }
           //  classifier_filename = (paras.at(0));
 
+    ////boost parameters (TODO pass as arguments)
+    const unsigned max_boost_iters = 15;
+    const unsigned max_depth_wl_tree = 0;
+    char * loss_type = "squaredloss";
+
     /// TODO: pass n_samples_tot and n_neg_samples_tot as parameter
-    unsigned int n_pos_samples_tot =1000;
+    unsigned int n_pos_samples_tot =10;
     n_pos_samples_tot = 2*(n_pos_samples_tot/2); //ensure it is even
-    unsigned int n_neg_samples_tot =1000;
+    unsigned int n_neg_samples_tot =10;
     n_neg_samples_tot = 2*(n_neg_samples_tot/2); //ensure it is even
 
     unsigned int n_samples_tot =n_pos_samples_tot+ n_neg_samples_tot;
@@ -223,9 +234,11 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     unsigned int collected_pos_samples = 0;
     unsigned int collected_neg_samples = 0;
 
-    MatrixTypeFloat sampled_features_image = MatrixTypeFloat::Zero(n_samples_tot,n_features_tot) ;
-    VectorTypeFloat sampled_gt_vector = VectorTypeFloat::Zero(n_samples_tot) ;
+    MatrixTypeFloat all_samples_features = MatrixTypeFloat::Zero(n_samples_tot,n_features_tot) ;
+    VectorTypeFloat all_samples_gt = VectorTypeFloat::Zero(n_samples_tot) ;
 
+    MatrixTypeFloat sampled_features_image;
+    VectorTypeFloat sampled_gt_vector_image;
     for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
         if(i_img<n_train_images-1)
@@ -288,10 +301,15 @@ std::cout << train_gt_vector << "\n\n";
 cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_image.cols() <<endl;
 
         ////random sampling
+        getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector_image,n_pos_samples_per_image,n_neg_samples_per_image);
 
-        getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector,n_pos_samples_per_image,n_neg_samples_per_image);
+   //     cout <<all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image).rows() << " "<<  all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image -1).cols()  << endl;
+   //     cout << sampled_features_image.rows() << " " << sampled_features_image.cols() << endl;
 
-        std::cout << sampled_gt_vector << "\n\n";
+        all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image ) = sampled_features_image;//P.middleRows(i, rows) <=> P(i+1:i+rows, :)
+        all_samples_gt.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image ) = sampled_gt_vector_image;
+
+    //    std::cout << sampled_gt_vector_image << "\n\n";
 
         collected_pos_samples += n_pos_samples_per_image;
         collected_neg_samples += n_neg_samples_per_image;
@@ -299,11 +317,19 @@ cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_ima
 
     cout<<"Collected " << collected_pos_samples << " Pos samples and " <<collected_neg_samples << " negative samples."<< endl;
 
-    //clean up: clear train_img_ITK, train_gt_ITK, train_gt_vector,features_image,weights, sep_filters
+    //clean up: delete train_img_ITK, train_gt_ITK, train_gt_vector,features_image,weights, sep_filters
 
     cout<<"Starting Training!"<<endl;
 
+    //SQB wants double labels and float features
+    trainRegressor(all_samples_features.cast<float>(),all_samples_gt.cast<double>(),regressor_output_file,loss_type,max_boost_iters,max_depth_wl_tree);
 
+
+
+    //debug
+   // MatrixTypeFloat all_samples_features_debug = MatrixTypeFloat::Random(200,5);
+   // VectorTypeFloat all_samples_gt_debug  = VectorTypeFloat::Random(200);
+   // trainRegressor(all_samples_features_debug.cast<float>(),all_samples_gt_debug.cast<double>(),regressor_output_file,loss_type,max_boost_iters,max_depth_wl_tree);
 
 
 
@@ -322,6 +348,8 @@ cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_ima
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
+   //sample call ./vaa3d -x SQBTree -f test -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_32_copy_after_itk_DEBUG.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg
+
 
   cout<<"Welcome this plugin"<<endl;
   if (output.size() != 1) return false;
@@ -329,10 +357,12 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
   //   unsigned int Wx=7, Wy=7, Wz=3, c=1;
   //   float sigma = 1.0;
   //  input_filename = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2.tif";
+  const char *regressor_filename;
   if (input.size()>=2)
   {
     vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-    //    if(paras.size() >= 1) classifier_filename = (paras.at(0));
+        if(paras.size() < 1) return false;
+        regressor_filename = (paras.at(0));
     //   if(paras.size() >= 2) Wy = atoi(paras.at(1));
     //   if(paras.size() >= 3) Wz = atoi(paras.at(2));
     //   if(paras.size() >= 4) c = atoi(paras.at(3));
@@ -450,14 +480,14 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 //    MatrixTypeDouble feats_all =  convolveSepFilterBankComb<ITKImageType,MatrixTypeDouble,VectorTypeDouble>( I, sep_filters, weights, scale_factor );
 
     ////apply trained regressor
-    const char *regressor_file = "TODO.cfg";
+   // const char *regressor_file = "TODO.cfg";
 
     libconfig::Config cfg;
 
     // Read the file. If there is an error, report it and exit.
     try
     {
-      cfg.readFile(regressor_file);
+      cfg.readFile(regressor_filename);
     }
     catch(const libconfig::FileIOException &fioex)
     {
@@ -483,19 +513,52 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     //need to convert format?
     //gFeatArrayType feats = Eigen::Map< const gFeatArrayType >( testFeaturesArray, testFeaturesRowsNo, testFeaturesColsNo );
 
+
+    std::cout << "Predicting...";
     TreeBoosterType::ResponseArrayType newScores;
+    newScores = TreeBoosterType::ResponseArrayType::Zero(nonsep_features_all.rows());
+
+//    for (unsigned i=0; i < 10; i++) {
+//      std::cout << newScores.coeff(i) << std::endl;
+//    }
+
+
+//    MatrixTypeFloat nonsep_features_all_debug = MatrixTypeFloat::Zero(nonsep_features_all.rows(),nonsep_features_all.cols());
+//    MatrixTypeFloat nonsep_features_all_debug = MatrixTypeFloat::Random(20,5);
+//        for (unsigned i=0; i < 10; i++) {
+//          std::cout << nonsep_features_all_debug.coeff(i) << std::endl;
+//    //      outMatrix.data()[i] = newScores.coeff(i);
+//        }
+
     TB.predict( TreeBoosterType::SampleListType(nonsep_features_all),
                 TreeBoosterType::FeatureValueObjectType(nonsep_features_all),
                 newScores,
                 maxIters );
+    std::cout<< "Done!"<< std::endl;
 
+//    std::cout << " "<<std::endl;
+//    for (unsigned i=0; i <20; i++) {
+//      std::cout << newScores.coeff(i) << std::endl;
+////      outMatrix.data()[i] = newScores.coeff(i);
+//    }
 
     ////save image
     cout<<"saving image"<<endl;
     // save image
     Image4DSimple outimg1;
+
+   // VectorTypeFloat newScoresFloat = newScores.cast<float>();
+    //float* resultC = newScoresFloat.data();
+ //   float* resultC ;
+//Map<VectorTypeFloat>( resultC, newScores.rows() ) =   newScoresFloat;
+    //cout << "num feat: " << nonsep_features_all.rows()<<  endl;
+    //cout << "num data: " << newScores.rows()<<  endl;
+    //cout << "num out: " << in_sz[0]*in_sz[1]*in_sz[2]<<  endl;
+
+  //  Map<MatrixTypeDouble>( resultC, newScores.rows(), newScores.cols() ) =   newScores;
     //  outimg1.setData((unsigned char *)inimg->getRawDataAtChannel(c), in_sz[0], in_sz[1], in_sz[2], 1, pixel_type);
     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+    //outimg1.setData((unsigned char *)(resultC), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32); //this gives seg fault
 
 
     //   cout<<outimg_file<<endl;

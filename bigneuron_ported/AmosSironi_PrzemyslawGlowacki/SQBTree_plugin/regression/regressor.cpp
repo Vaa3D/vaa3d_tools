@@ -1,45 +1,27 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include "Eigen/Dense"
-#include "superannotator_sel/Matrix3D.h"
 
 
-//#include "sqb_0.1/include/SQB/Matlab/matlab_utils.hxx"
-#include "sqb_0.1/include/SQB/Core/RegTree.h"
-#include "sqb_0.1/include/SQB/Core/Utils.h"
-#include "sqb_0.1/include/SQB/Core/Booster.h"
-#include "sqb_0.1/include/SQB/Core/LineSearch.h"
+#include <SQB/Core/RegTree.h>
+#include <SQB/Core/Utils.h>
+
+#include <SQB/Core/Booster.h>
+
+#include <SQB/Core/LineSearch.h>
 
 
-#include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkConvolutionImageFilter.h"
-#include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
-#include "itkRescaleIntensityImageFilter.h"
-
-//#include <omp.h>
-
-using namespace std;
-using namespace Eigen;
-
-#define MAXBUFSIZE  ((int) 1e6)
-
+//using namespace Eigen;
 typedef Eigen::VectorXf VectorTypeFloat;
 typedef Eigen::VectorXd VectorTypeDouble;
 typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
 
+
 typedef SQB::TreeBoosterWeightsType  WeightsType;
 typedef float   FeatsType;
 
 typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayType;
-//typedef Eigen::MatrixXf gFeatArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
 typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
-
 
 typedef SQB::MatrixFeatureIndexList<gFeatArrayType>          MatrixFeatureIndexListType;
 typedef SQB::MatrixSampleIndexList<gFeatArrayType>           MatrixSampleIndexListType;
@@ -52,85 +34,73 @@ typedef SQB::TreeBooster<
             MatrixFeatureValueObjectType,
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
-// TODO: pass options
- void SQBTreesTrain(MatrixXf &input_feats,MatrixXf &labels,const unsigned int maxIters){
 
+void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_samples_gt,char *regressor_output_file,char * loss_type = "squaredloss",const unsigned int max_boost_iters = 200,const unsigned int max_depth_wl_tree = 0,const double shrink_factor = 0.1,unsigned int m_try =0){
 
-    TreeBoosterType TB;
-
-    // we will use a random sampler
     SQB::TreeBoosterNaiveResampler< TreeBoosterType::ResamplerBaseObjectType::WeightsArrayType,
                                     TreeBoosterType::ResamplerBaseObjectType::LabelsArrayType >  resampler;
 
-    TB.setResamplerObject( &resampler );
-
-/*
-    gFeatArrayType input_feats_b = input_feats;
-    gResponseArrayType labels_b = labels;
-
-    TB.printOptionsSummary();
-    TB.learn( TreeBoosterType::SampleListType(input_feats),
-            TreeBoosterType::FeatureListType(input_feats),
-            TreeBoosterType::FeatureValueObjectType(input_feats),
-            TreeBoosterType::ClassifierResponseValueObjectType(labels),
-            maxIters );
-    TB.printOptionsSummary();
-
-*/
-   // TB.saveToLibconfig(base);
-
-
-}
-
-
-/*
-
-
-//static void SQBTreesPredict(int model, MatrixXf &feats, const unsigned int maxIters){
-
-gResponseArrayType SQBTreesPredict(const libconfig::Setting &model, MatrixXf &feats){
-
 
     TreeBoosterType TB;
+    TB.setResamplerObject( &resampler );
 
-    // load model
-    //TB.loadFromMatlab( mModel );
-    TB.loadFromLibconfig(model);
+    //// set options
+    TB.setShrinkageFactor( shrink_factor );
+    TB.setMTry(m_try);
+    TB.setMaxTreeDepth( max_depth_wl_tree );
+    if (strcmp(loss_type, "exploss") == 0)
+                TB.setLoss( SQB::ExpLoss );
+    else if ( strcmp(loss_type, "logloss") == 0 )
+                TB.setLoss( SQB::LogLoss );
+    else if ( strcmp(loss_type, "squaredloss") == 0 )
+                TB.setLoss( SQB::SquaredLoss );
+    else
+          std::cerr<<"Invalid Loss value: "<< loss_type<< std::endl;
+
+    TB.printOptionsSummary();
+
+    //// training
 
 
-    unsigned maxIters = TB.numWeakLearners();
-    /*
-    if (nrhs >= 3)
+    TB.learn( TreeBoosterType::SampleListType(all_samples_features),
+              TreeBoosterType::FeatureListType(all_samples_features),
+              TreeBoosterType::FeatureValueObjectType(all_samples_features),
+              TreeBoosterType::ClassifierResponseValueObjectType(all_samples_gt),
+              max_boost_iters );
+    TB.printOptionsSummary();
+
+
+
+//    for (unsigned i=0; i < all_samples_features.rows(); i++) {
+//      std::cout << all_samples_features.coeff(i) << std::endl;
+//    }
+
+//    for (unsigned i=0; i < all_samples_gt.rows(); i++) {
+//      std::cout << all_samples_gt.coeff(i) << std::endl;
+//    }
+
+    ////save trained regressor
+
+    libconfig::Config cfg;
+    libconfig::Setting &root = cfg.getRoot();
+
+    libconfig::Setting &regressor = root.add("regressor", libconfig::Setting::TypeList);
+
+    TB.saveToLibconfig(regressor);
+
+    // Write the new configuration.
+    try
     {
-        MatlabInputMatrix<unsigned int> pMaxIters( mMaxIters, 1, 1, "maxiters" );
-        unsigned inputMaxIters = pMaxIters.data()[0];
+      cfg.writeFile(regressor_output_file);
+      std::cerr << "New configuration successfully written to: " << regressor_output_file
+           << std::endl;
 
-        if (inputMaxIters <= 0)
-            mexErrMsgTxt("maxIters must be higher than zero.");
-
-        if (inputMaxIters > maxIters)
-            mexPrintf("-- WARNING: maxIters is greater than the number of weaklearners used!\n");
-        else
-        {
-            maxIters = inputMaxIters;
-            mexPrintf("Limiting number of weak learners to %d\n", (int)maxIters);
-        }
     }
-    //
-
-    // for now just copy the values
-   // gFeatArrayType feats = Eigen::Map< const gFeatArrayType >( pFeats.data(), pFeats.rows(), pFeats.cols() );
-
-    TreeBoosterType::ResponseArrayType newScores;
-    TB.predict( TreeBoosterType::SampleListType(input_feats),
-                TreeBoosterType::FeatureValueObjectType(input_feats),
-                newScores,
-                maxIters );
-
-    return newScores;
-   // MatlabOutputMatrix<double>   outMatrix( &plhs[0], feats.rows(), 1 );
-   // for (unsigned i=0; i < feats.rows(); i++)
-   //     outMatrix.data()[i] = newScores.coeff(i);
+    catch(const libconfig::FileIOException &fioex)
+    {
+      std::cerr << "I/O error while writing file: " << regressor_output_file << std::endl;
+      //return(EXIT_FAILURE);
+    }
 
 }
-*/
+

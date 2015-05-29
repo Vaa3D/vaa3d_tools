@@ -36,12 +36,12 @@ LIBS += -L"$$_PRO_FILE_PWD_/libconfig-1.4.9/lib/.libs"
 LIBS += -lconfig++
 
 HEADERS += sqb_0.1/src/MatrixSQB/vaa3d_link.h
-#HEADERS += regression/regressor.h
 #HEADERS += regression/regression_test2.h
 HEADERS += sqb_0.1/src/MatrixSQB/sqb_trees.h
 HEADERS += regression/sep_conv.h
 HEADERS += regression/util.h
 HEADERS += regression/sampling.h
+HEADERS += regression/regressor.h
 HEADERS	+= SQBTree_plugin.h
 
 
@@ -53,6 +53,7 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
 SOURCES	+= regression/sep_conv.cpp
 SOURCES	+= regression/sampling.cpp
+SOURCES	+= regression/regressor.cpp
 #SOURCES	+= regression/regression_test2.cpp
 #SOURCES	+= sqb_0.1/src/MatrixSQB/sqb_trees.cpp
 SOURCES	+= SQBTree_plugin.cpp

@@ -12,9 +12,13 @@ void getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
 
 //float thres = 50.0; //consider positive gt samples greater than this threshold
 
+
+    unsigned int n_features_tot = features_matrix.cols();
+
 //pos_samples = gt_vector.Array()>pos_thresh;
-    sampled_features_matrix = MatrixType::Zero(1,1);
-    sampled_gt_vector = VectorType::Zero(1);
+    sampled_features_matrix = MatrixType::Zero(n_neg_samples+n_pos_samples,n_features_tot);
+    sampled_gt_vector = VectorType::Zero(n_neg_samples+n_pos_samples);
+
 
 }
 
