@@ -15,6 +15,7 @@
 #include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
 #include "regression/sep_conv.h"
+#include "regression/sampling.h"
 //#include "regression/regression_test2.h"
 
 
@@ -60,7 +61,7 @@ typedef SQB::TreeBooster<
 using namespace std;
 Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 
-#define INF 1E9
+//#define INF 1E9
 
 
 //void callSQBTree_mex(int nlhs, void *plhs[], int nrhs, void *prhs[])
@@ -160,28 +161,88 @@ bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
+     cout<<"Reading Input Files and Parameters."<<endl;
     if (output.size() != 1) return false;
 
-    vector<char*> *trainImagePaths = ((vector<char*> *)(input.at(0).p));
+    vector<char*> *trainImagePaths = ((vector<char*> *)(input.at(0).p)); //train images
 
-    unsigned int n_train_images = trainImagePaths->size()/2; //half inputs are images, second half are swc gt files
+    unsigned int n_train_images = trainImagePaths->size(); //
+
+   // cout<< "Number input train images= " <<n_train_images<<endl;
+   // cout<< "name train image 1= " <<trainImagePaths->at(0)<<endl;
     if (n_train_images < 1){
 
         cout<<"No input train images!"<<endl;
         return false;
     }
-    if (2*n_train_images !=  input.size()){
-        cout<<"Number of input train images and swc files must be the same !"<<endl;
-        return false;
-    }
+//    if (2*n_train_images !=  input.size()){
+//        cout<<"Number of input train images and swc files must be the same !"<<endl;
+//        return false;
+//    }
 
-    unsigned int channel = 1; //only process first channel
+    //first n_train_images parameters are swc files
+    vector<char*> *parameters = ((vector<char*> *)(input.at(1).p));
+        if(parameters->size() < n_train_images){
+            cout<<"Number of input train images and swc files must be the same !"<<endl;
+            return false;
+        }
 
-    //// get features and gt
+        vector<char*> trainGtSwcPaths(n_train_images);
+        for(unsigned int i_swc = 0; i_swc<n_train_images; i_swc++){
+            trainGtSwcPaths.at(i_swc) =  parameters->at(i_swc);
+        }
+          //  classifier_filename = (paras.at(0));
+
+    /// TODO: pass n_samples_tot and n_neg_samples_tot as parameter
+    unsigned int n_pos_samples_tot =1000;
+    n_pos_samples_tot = 2*(n_pos_samples_tot/2); //ensure it is even
+    unsigned int n_neg_samples_tot =1000;
+    n_neg_samples_tot = 2*(n_neg_samples_tot/2); //ensure it is even
+
+    ////get filters to compute features
+    /// TODO: pass path as parameter
+    const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
+    const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
+
+    MatrixTypeDouble weights = readMatrix(weight_file);
+    MatrixTypeDouble sep_filters = readMatrix(sep_filters_file);
+    MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
+    MatrixTypeFloat weights_float = weights.cast<float>();
+
+
+    const float scale_factor =1.0; //no rescale filter
+    unsigned int channel = 1; //only process first channel of image
+
+
+     cout<<"Computing Features!"<<endl;
+    //// get gt, compute features and random samples
+    unsigned int n_pos_samples_per_image;
+    unsigned int n_neg_samples_per_image;
+    unsigned int collected_pos_samples = 0;
+    unsigned int collected_neg_samples = 0;
+
     for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
+        if(i_img<n_train_images-1)
+        {
+            n_pos_samples_per_image = n_pos_samples_tot/n_train_images;
+            n_neg_samples_per_image = n_neg_samples_tot/n_train_images;
+        }
+        else
+        {
+            n_pos_samples_per_image = n_pos_samples_tot - collected_pos_samples;
+            n_neg_samples_per_image = n_neg_samples_tot - collected_neg_samples;
+        }
+
+
+     //   cout<<"n samples pos img "<< n_pos_samples_per_image << endl;
+     //   cout<<"n samples neg img"<< n_neg_samples_per_image << endl;
+
         char * train_img_file = trainImagePaths->at(i_img);
-        char * swc_gt_file = trainImagePaths->at(i_img+n_train_images);
+        cout<<"image file "<< train_img_file << endl;
+
+        char * swc_gt_file = trainGtSwcPaths.at(i_img);
+        cout<<"swc file "<< swc_gt_file << endl;
 
         Image4DSimple *train_img = callback.loadImage(train_img_file);
         if (!train_img || !train_img->valid())
@@ -190,31 +251,67 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
           return false;
         }
 
-        V3DLONG in_sz[4];
-        in_sz[0] = train_img->getXDim();
-        in_sz[1] = train_img->getYDim();
-        in_sz[2] = train_img->getZDim();
-        in_sz[3] = train_img->getCDim();
+        V3DLONG train_img_size[4];
+        train_img_size[0] = train_img->getXDim();
+        train_img_size[1] = train_img->getYDim();
+        train_img_size[2] = train_img->getZDim();
+        train_img_size[3] = train_img->getCDim();
 
+        V3DLONG n_pixels = train_img_size[0]*train_img_size[1]*train_img_size[2];
 
         ImagePixelType pixel_type = train_img->getDatatype();
 
         ////convert image to itk format
         ITKImageType::Pointer train_img_ITK  =  ITKImageType::New();
 
-        train_img_ITK =v3d2ItkImage<ITKImageType,ImageScalarType>(train_img,in_sz,channel);
+        train_img_ITK =v3d2ItkImage<ITKImageType,ImageScalarType>(train_img,train_img_size,channel);
 
-        ////convert swc file to diastance gt image
+         cout<<"Loaded and converted image!"<<endl;
 
+        ////TODO ! convert swc file to distance gt image
+        ITKImageType::Pointer train_gt_ITK  =  ITKImageType::New();
+        train_gt_ITK =swc2ItkImage<ITKImageType,ImageScalarType>(swc_gt_file,train_img_size);//for now return null poinyter !
+        //convert gt to vector
+        //VectorTypeFloat train_gt_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(train_gt_ITK,n_pixels,n_pixels);
+        VectorTypeFloat train_gt_vector = VectorTypeFloat::Zero(5);
+train_gt_vector.row(3) << 1;
+std::cout << train_gt_vector << "\n\n";
 
+        ////compute features (TODO add context features)
+        MatrixTypeFloat features_image = computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(train_img_ITK,sep_filters_float,weights_float, scale_factor);
+
+cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_image.cols() <<endl;
+
+        ////random sampling
+        MatrixTypeFloat sampled_features_image;
+        VectorTypeFloat sampled_gt_vector;
+        getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector,n_pos_samples_per_image,n_neg_samples_per_image);
+
+        std::cout << sampled_gt_vector << "\n\n";
+
+        collected_pos_samples += n_pos_samples_per_image;
+        collected_neg_samples += n_neg_samples_per_image;
     }
+
+    cout<<"Collected " << collected_pos_samples << " Pos samples and " <<collected_neg_samples << " negative samples."<< endl;
+
+    //clean up: clear train_img_ITK, train_gt_ITK, train_gt_vector,features_image,weights, sep_filters
 
     cout<<"Starting Training!"<<endl;
 
 
 
+    cout<<"Done!"<<endl;
     return true;
 }
+
+
+
+
+
+
+
+
 
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -333,7 +430,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     MatrixTypeFloat weights_float = weights.cast<float>();
    // ITKImageType::Pointer rescaled_img = rescaleFilter->GetOutput();
     //rescaleFilter->Update();
-      MatrixXf nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixXf,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
+      MatrixTypeFloat nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
   //  MatrixTypeFloat nonsep_features_all = convolveSepFilterBankComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float,weights_float, scale_factor);
 //MatrixTypeFloat sep_features_all = convolveSepFilterBank<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(I,sep_filters_float);
 

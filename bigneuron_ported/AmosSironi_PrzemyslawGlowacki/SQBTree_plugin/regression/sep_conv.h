@@ -70,6 +70,10 @@ MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const 
 template<typename ImageType, typename MatrixType, typename VectorType>
 MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix, const float scale_factor );
 
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType computeFeaturesSepComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix, const float scale_factor );
+
+
 
 
 #endif

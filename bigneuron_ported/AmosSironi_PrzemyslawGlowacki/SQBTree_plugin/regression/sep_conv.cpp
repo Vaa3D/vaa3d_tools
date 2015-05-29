@@ -363,6 +363,33 @@ MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, co
         return nonsep_features_all;
 }
 
+//TODO: for now just convolve image, eventually add context features
+template<typename ImageType, typename MatrixType, typename VectorType>
+MatrixType computeFeaturesSepComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor){
+
+        typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
+        const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
+        const unsigned int n_nonsep_features = weight_matrix.cols();
+
+
+        MatrixType sep_features_all = convolveSepFilterBank<ImageType,MatrixType,VectorType>(input_img,sep_filters_matrix);
+
+
+
+        //multiply with weight to get original filters convolution
+        //const float scale_factor = 1.0; // used for multiscale appraoch if rescale filers to compute features
+        MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
+
+
+
+        nonsep_features_all = sep_features_all*weight_matrix;
+        nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+
+
+
+        return nonsep_features_all;
+}
+
 
 
 ////to instantiate explicitely
@@ -370,6 +397,7 @@ template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, Matrix
 //template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< unsigned char, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< unsigned char, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
 //template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3> I,MatrixTypeFloat M,VectorTypeFloat V);
 //template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< float, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
+template MatrixTypeFloat computeFeaturesSepComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
 
 template int dumbfun<float,int>(float s);
 
