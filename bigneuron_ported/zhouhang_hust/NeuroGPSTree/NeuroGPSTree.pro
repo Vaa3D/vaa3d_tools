@@ -49,7 +49,7 @@ SOURCES	+= NeuroGPSTree_plugin.cpp \
     ngtypes/soma.cpp \
     ngtypes/tree.cpp \
     ngtypes/volume.cpp
-#SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(NeuroGPSTree)
