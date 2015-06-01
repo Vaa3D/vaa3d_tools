@@ -113,7 +113,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
 
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c,Ws;
-    V3DLONG *in_sz = 0;
+    V3DLONG in_sz[4];
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -162,7 +162,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
         if(!ok2)
             return;
 
-        in_sz = new V3DLONG[4];
+       // in_sz = new V3DLONG[4];
         in_sz[0] = N;
         in_sz[1] = M;
         in_sz[2] = P;
@@ -173,7 +173,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     else
     {
         int datatype = 0;
-        if (loadImage(const_cast<char *>(PARA.inimg_file.toStdString().c_str()), data1d, in_sz, datatype)!=true)
+        if (simple_loadimage_wrapper(callback,const_cast<char *>(PARA.inimg_file.toStdString().c_str()), data1d, in_sz, datatype)!=true)
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return;
@@ -356,7 +356,6 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
 
     writeSWC_file(swc_name,nt_final);
 
-    if(in_sz) {delete []in_sz; in_sz = 0;}
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
