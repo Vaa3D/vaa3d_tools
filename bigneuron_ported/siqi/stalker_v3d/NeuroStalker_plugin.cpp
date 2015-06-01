@@ -13,7 +13,7 @@
 
 #include "NeuroStalker_plugin.h"
 #include "lib/ImageOperation.h"
-#include "stackutil.h"
+#include "test/unittest.h"
 //#include "../../v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 
 ImageOperation *IM;
@@ -26,7 +26,8 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
-    int preprocessing; // 1 : downsample the image within 256*256*256; 0: keep the original image
+    int preprocessing; // 2 : downsample the image within 256*256*256; 1: Crop the image; 0: keep the original image
+    int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -63,7 +64,12 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     }
 }
 
-bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+
+bool NeuroStalker::dofunc(const QString & func_name, 
+                          const V3DPluginArgList & input,
+                          V3DPluginArgList & output, 
+                          V3DPluginCallback2 & callback,  
+                          QWidget * parent)
 {
     if (func_name == tr("tracing_func"))
     {
@@ -85,6 +91,7 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.preprocessing = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.unittest = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
     }
     else if (func_name == tr("help"))
@@ -93,10 +100,11 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("**** Usage of NeuroStalker tracing **** \n");
-        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing>\n");
+        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing> <run unit-tests>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("preprocessing    The preprocessing flag - 1: crop; 2: crop only; 3: crop and downsampling; \n");
+        printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
+        printf("run unit-tests   - 1: Run Tracing Only; 2: Run unit-tests only; 3: Run Both Unit Tests and Tracing; \n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -106,7 +114,10 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
     return true;
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+void reconstruction_func(V3DPluginCallback2 &callback, 
+                         QWidget *parent, 
+                         input_PARA &PARA, 
+                         bool bmenu)
 {
     cout<<"Welcome to NeuroStalker!!"<<endl;
     unsigned char* data1d = 0;
@@ -183,6 +194,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         c = PARA.channel;
     }
 
+    // ------- Run Unit-Tests
+    if (PARA.unittest & 2){
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestMatMath();
+    }
+
+    if (!(PARA.unittest & 1)) return;
+
     // ------- Main neuron reconstruction code
     // Crop The image
     if (PARA.preprocessing & 1)
@@ -227,9 +246,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     
-    /*
-    IM->Imcreate(data1d, in_sz_int);
     // Preprocessing
+    IM->Imcreate(data1d, in_sz_int);
     std::cout<<"=== Compute Gradient Vector Flow..."<<std::endl;
     IM->computeGVF(1000, 5, 1);
     std::cout<<"=== Compute Vesselness (CPU)..."<<std::endl;
@@ -243,7 +261,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // Adaptive Tracing here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
-    */
     
     //Output
     NeuronTree nt;
@@ -262,7 +279,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 }
 
 
-unsigned char * downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz)
+unsigned char * downsample(V3DLONG *in_sz,
+                           V3DLONG c, 
+                           unsigned char* data1d, 
+                           V3DLONG * downsz)
 {
     V3DLONG N, M, P;
     N = in_sz[0];
