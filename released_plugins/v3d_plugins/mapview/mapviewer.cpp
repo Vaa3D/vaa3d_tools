@@ -519,7 +519,8 @@ QStringList MAPiewerPlugin::menulist() const
 						 << tr("About");
 }
 
-void MAPiewerPlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+
+void MAPiewerPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("load image: using istitch's tiled configuration (.tc) file"))
     {
@@ -545,6 +546,20 @@ void MAPiewerPlugin::domenu(const QString &menu_name, V3DPluginCallback &callbac
 	{
 		v3d_msg("MapView version 0.1. developed by Hanchuan Peng lab, JFRC, HHMI.");
 	}
+}
+
+QStringList MAPiewerPlugin::funclist() const
+{
+    return QStringList() << tr("help");
+}
+
+bool MAPiewerPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & v3d, QWidget * parent)
+{
+    if (func_name == tr("help"))
+    {
+        v3d_msg("To be implemented.",0);
+        return true;
+    }
 }
 void MAPiewerPlugin::loadtc_save(V3DPluginCallback &callback, QWidget *parent)
 {

@@ -353,36 +353,34 @@ public:
 };
 
 // interface v3d plugin
-class MAPiewerPlugin : public QObject, public V3DPluginInterface
+class MAPiewerPlugin : public QObject, public V3DPluginInterface2_1
 {
     Q_OBJECT
-    Q_INTERFACES(V3DPluginInterface);
-	
-// v3d interface	
-public:
-	QStringList menulist() const;
-	
-	void domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent);
-	
-	QStringList funclist() const {return QStringList();}
-	
-	void dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, QWidget *parent) {}	
-	
-	void iViewer(V3DPluginCallback &callback, QWidget *parent);
-	
-	void resampling_tc(V3DPluginCallback &callback, QWidget *paren);
+    Q_INTERFACES(V3DPluginInterface2_1);
 
-	void resampling_rawdata(V3DPluginCallback &callback, QWidget *parent);
-	
-	void tifdata_rawdata(V3DPluginCallback &callback, QWidget *parent);
-	
-	void loadtc_save(V3DPluginCallback &callback, QWidget *parent);
-	
-	Y_VIM<float, long, indexed_t<long, float>, LUT<long> > vim;
-	
-		
+// v3d interface
 public:
-	
+    float getPluginVersion() const {return 1.0f;} // version info
+
+    QStringList menulist() const;
+
+    void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
+
+    QStringList funclist() const;
+
+    bool dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & v3d, QWidget * parent);
+
+    void iViewer(V3DPluginCallback &callback, QWidget *parent);
+
+    void resampling_tc(V3DPluginCallback &callback, QWidget *paren);
+
+    void resampling_rawdata(V3DPluginCallback &callback, QWidget *parent);
+
+    void tifdata_rawdata(V3DPluginCallback &callback, QWidget *parent);
+
+    void loadtc_save(V3DPluginCallback &callback, QWidget *parent);
+
+    Y_VIM<float, long, indexed_t<long, float>, LUT<long> > vim;
 };
 class Mutthread_tiftoraw : public QThread
 {
