@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{FC2A0004-9E80-4094-BD84-6CA2F31269BF}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Sigen</RootNamespace>
+    <AssemblyName>MorphExtractorCL</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Dendrite.cs" />
+    <Compile Include="DendriteNode.cs" />
+    <Compile Include="ImageData.cs" />
+    <Compile Include="ImageProcess.cs" />
+    <Compile Include="ImageProcessRunner.cs" />
+    <Compile Include="libcmdline\Attributes\BaseOptionAttribute.cs" />
+    <Compile Include="libcmdline\Attributes\HelpOptionAttribute.cs" />
+    <Compile Include="libcmdline\Attributes\OptionArrayAttribute.cs" />
+    <Compile Include="libcmdline\Attributes\OptionAttribute.cs" />
+    <Compile Include="libcmdline\Attributes\OptionListAttribute.cs" />
+    <Compile Include="libcmdline\Attributes\Tests\AttributesFixture.cs" />
+    <Compile Include="libcmdline\Attributes\Tests\HelpOptionAttributeFixture.cs" />
+    <Compile Include="libcmdline\Attributes\Tests\ValueListAttributeFixture.cs" />
+    <Compile Include="libcmdline\Attributes\ValueListAttribute.cs" />
+    <Compile Include="libcmdline\Core\ArgumentParser.cs" />
+    <Compile Include="libcmdline\Core\IArgumentEnumerator.cs" />
+    <Compile Include="libcmdline\Core\LongOptionParser.cs" />
+    <Compile Include="libcmdline\Core\OneCharStringEnumerator.cs" />
+    <Compile Include="libcmdline\Core\OptionGroupParser.cs" />
+    <Compile Include="libcmdline\Core\OptionInfo.cs" />
+    <Compile Include="libcmdline\Core\OptionMap.cs" />
+    <Compile Include="libcmdline\Core\PairT.cs" />
+    <Compile Include="libcmdline\Core\ParserState.cs" />
+    <Compile Include="libcmdline\Core\StringArrayEnumerator.cs" />
+    <Compile Include="libcmdline\Core\TargetWrapper.cs" />
+    <Compile Include="libcmdline\Core\Tests\ArgumentParserFixture.cs" />
+    <Compile Include="libcmdline\Core\Tests\EnumeratorsFixture.cs" />
+    <Compile Include="libcmdline\Core\Tests\OptionMapFixture.cs" />
+    <Compile Include="libcmdline\Parser\CommandLineParser.cs" />
+    <Compile Include="libcmdline\Parser\CommandLineParserException.cs" />
+    <Compile Include="libcmdline\Parser\CommandLineParserSettings.cs" />
+    <Compile Include="libcmdline\Parser\ICommandLineParser.cs" />
+    <Compile Include="libcmdline\Parser\Tests\CommandLineParserFixture.cs" />
+    <Compile Include="libcmdline\Parser\Tests\CommandLineParserSettingsFixture.cs" />
+    <Compile Include="libcmdline\Parser\Tests\MutuallyExclusiveParsingFixture.cs" />
+    <Compile Include="libcmdline\Parser\Tests\NullableTypesParsingFixture.cs" />
+    <Compile Include="libcmdline\Parser\Tests\OptionArrayAttributeParsingFixture.cs" />
+    <Compile Include="libcmdline\Parser\Tests\ValueListAttributeParsingFixture.cs" />
+    <Compile Include="libcmdline\Tests\BaseFixture.cs" />
+    <Compile Include="libcmdline\Tests\CommandLineParserBaseFixture.cs" />
+    <Compile Include="libcmdline\Tests\DebugStringUtil.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\BooleanSetOptions.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\MixedCaseOptions.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\NullableTypesOptions.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\NumberSetOptions.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsBase.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsWithDefaultSet.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsWithMultipleSet.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsWithMultipleSetAndOneOption.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsWithValueListMaximumThree.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\OptionsWithValueListMaximumZero.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptions.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithArray.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithArrayAndValueList.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithBadOptionArray.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithEnum.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithHelpOption.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithOptionList.cs" />
+    <Compile Include="libcmdline\Tests\Mocks\SimpleOptionsWithValueList.cs" />
+    <Compile Include="libcmdline\Text\CopyrightInfo.cs" />
+    <Compile Include="libcmdline\Text\HeadingInfo.cs" />
+    <Compile Include="libcmdline\Text\HelpText.cs" />
+    <Compile Include="libcmdline\Text\Tests\CopyrightInfoFixture.cs" />
+    <Compile Include="libcmdline\Text\Tests\HeadingInfoFixture.cs" />
+    <Compile Include="libcmdline\Text\Tests\HelpTextFixture.cs" />
+    <Compile Include="libcmdline\Utility\Assumes.cs" />
+    <Compile Include="libcmdline\Utility\ReflectionUtil.cs" />
+    <Compile Include="libcmdline\Utility\Tests\ReflectionUtilFixture.cs" />
+    <Compile Include="Point3D.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SkewHeap.cs" />
+    <Compile Include="DendriteIO.cs" />
+    <Compile Include="SwcHeaderStore.cs" />
+    <Compile Include="SwcParser.cs" />
+    <Compile Include="VtkWriter.cs" />
+    <Compile Include="DendriteModel.cs" />
+    <Compile Include="Point3DExd.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows インストーラー 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetDir)$(TargetFileName) $(SolutionDir)swctools\bin\</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

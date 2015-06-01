@@ -1,0 +1,593 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using Sigen.IO.Swc;
+
+namespace MorphExtractorCL
+{
+    public class DendriteIO
+    {
+        #region 入力
+
+        #region SWC入力
+        /// <summary>
+        /// SWCファイルを読み込んでDendriteインスタンスを生成
+        /// </summary>
+        /// <param name="filename">入力ファイル名</param>
+        /// <returns>Dendriteインスタンス</returns>
+        public Dendrite LoadFromSWC(string filename)
+        {
+            var fileContent = File.ReadLines(filename);
+            return LoadFromSWC(fileContent);
+        }
+
+        public Dendrite LoadFromSWC(IEnumerable<string> fileContent)
+        {
+            // ParseSWCはSWCファイルが複数のルートノードを持つ場合も想定して作られているが、
+            // ここでは0番目以外のノードは捨てている
+            return ParseSWC(fileContent).First();
+        }
+
+        // 参考情報: SWCファイルのフォーマット
+        // 1. ノードID (1オリジン)
+        // 2. NodeType (0:undefined, 1:soma, 2:axon, 3:dendrite, 4:apical dendrite, 5:fork point(ブランチ), 6:end point(エッジ), 7:custom)
+        // 3,4,5. x座標,y座標,z座標
+        // 6. 半径
+        // 7. 親ノード (1オリジン, ルートノードの親ノードは-1)
+        // http://research.mssm.edu/cnic/swc.html
+        private IEnumerable<Dendrite> ParseSWC(IEnumerable<string> fileContents)
+        {
+            // nodeId -> DendriteNode
+            var nodelist = new Dictionary<int, DendriteNode>();
+
+            var parser = new SwcParser(fileContents);
+
+            foreach (var swcNode in parser.GetSwcNode())
+            {
+                DendriteNode node = new DendriteNode(swcNode);
+                nodelist.Add(node.Id, node);
+            }
+
+            // 1つのSWCファイルにルートノードは1つとは限らないので配列にしてある
+            List<Dendrite> dendrites = new List<Dendrite>();
+
+            foreach (var node in nodelist.Values)
+            {
+                int parentNodeId = node.Distance;
+
+                // nodeがルートノードだったとき
+                if (parentNodeId == -1)
+                {
+                    Dendrite dend = new Dendrite(/* maxdist = */ 0, /* rx = */ 1.0, /* rz = */ 1.0);
+                    dend.root = node;
+                    dendrites.Add(dend);
+                }
+                else
+                {
+                    // nodeとその親ノードを連結する
+                    var parentNode = nodelist[parentNodeId];
+
+                    parentNode.ConnectedNodes.Add(node);
+                    node.ConnectedNodes.Add(parentNode);
+                }
+            }
+
+            // 1つのSWCファイルにルートノードは1つとは限らないので
+            // それぞれについてツリー構造を生成
+            foreach (Dendrite dend in dendrites)
+            {
+                dend.Create();
+                dend.SwcHeader.InitBySwcComments(parser.Comments);
+            }
+
+            return dendrites;
+        }
+        #endregion // SWC入力
+
+        #endregion // 入力
+
+        #region 出力
+
+        #region SWC出力
+        /// <summary>
+        /// DendriteインスタンスをSWCファイルに出力
+        /// </summary>
+        /// <param name="filename">出力ファイル名</param>
+        public void SaveToSWC(string filename, Dendrite dend)
+        {
+            // 拡張子をつける
+            filename = Path.ChangeExtension(filename, ".swc");
+
+            using (var writer = new StreamWriter(filename))
+            {
+                foreach (var line in dend.SwcHeader.PublishHeader())
+                {
+                    writer.WriteLine(line);
+                }
+
+                SaveToSWCRec(dend.root, null, writer);
+            }
+        }
+
+        void SaveToSWCRec(DendriteNode node, DendriteNode parent, StreamWriter writer)
+        {
+            int type;
+
+            switch (node.NodeType)
+            {
+                case DendriteNodeType.EDGE:
+                    type = 6;
+                    break;
+
+                case DendriteNodeType.BRANCH:
+                    type = 5;
+                    break;
+
+                case DendriteNodeType.CONNECT:
+                    type = 3;
+                    break;
+
+                default:
+                    type = 0;
+                    break;
+            }
+
+            int parentId = (parent == null ? -1 : parent.Id + 1);
+
+            writer.WriteLine("{0} {1} {2} {3} {4} {5} {6}",
+                node.Id + 1, type,
+                node.gx, node.gy, node.gz,
+                node.Radius.ToString("G7"),
+                parentId);
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) SaveToSWCRec(next, node, writer);
+            }
+        }
+        #endregion // SWC出力
+
+        #region TLP出力
+        public void SaveAsTLP(String fname, Dendrite dend)
+        {
+            using (StreamWriter sw = new StreamWriter(System.IO.Path.ChangeExtension(fname, ".tlp")))
+            {
+
+                sw.WriteLine("(tlp \"2.0\"");
+
+                sw.WriteLine(" (date \"{0}\")", DateTime.Now);
+                sw.WriteLine(" (comments \"This file was generated by SIGEN.\")");
+                int count;
+
+                count = 1;
+                //ノード生成
+                sw.Write(" (nodes ");
+                // for (int i = 1; i <= dend.idsum; i++) sw.Write("{0} ", i);
+                TLPNodes(sw, dend.root, null, ref count);
+                sw.WriteLine(")");
+
+
+
+                ///プロパティ追加
+                ///
+                ///viewColor
+                sw.WriteLine(" (property 0 color \"viewColor\"");
+                sw.WriteLine("  (default \"(0,0,0,255)\" \"(0,0,0,0)\" )");
+                sw.WriteLine(" )");
+
+                ///ノード座標
+                sw.WriteLine(" (property 0 layout \"viewLayout\"");
+                sw.WriteLine("  (default \"(0,0,0)\" \"()\" )");
+                TLPCoord(sw, dend.root, null);
+                sw.WriteLine(" )");
+
+                ///ノード半径
+                sw.WriteLine(" (property 0 double \"nodeRadius\"");
+                sw.WriteLine("  (default \"0\" \"0\" )");
+                TLPRadius(sw, dend.root, null);
+                sw.WriteLine(" )");
+
+                ///ノード距離
+                sw.WriteLine(" (property 0 double \"nodeRealDistance\"");
+                sw.WriteLine("  (default \"0\" \"0\" )");
+                TLPDistance(sw, dend.root, null);
+                sw.WriteLine(" )");
+
+                ///ノード電気的距離
+                sw.WriteLine(" (property 0 double \"nodeElectricalDistance\"");
+                sw.WriteLine("  (default \"0\" \"0\" )");
+                TLPElectricalDistance(sw, dend.root, null);
+                sw.WriteLine(" )");
+
+                ///ノードタイプ
+                sw.WriteLine(" (property 0 int \"nodeType\"");
+                sw.WriteLine("  (default \"0\" \"0\" )");
+                TLPNodeType(sw, dend.root, null);
+                sw.WriteLine(" )");
+
+
+
+                //sw.WriteLine(" (property  0 bool \"viewSelection\" \n  (default \"true\" \"true\")\n )");
+
+                //ノードの接続情報
+                count = 1;
+                TLPEdge(sw, dend.root, null, null, ref count);
+                sw.WriteLine(")");
+
+
+                /////エッジプロパティ
+                //sw.WriteLine(" (property 0 double \"edgeLength\"");
+                //sw.WriteLine("  (default \"0\" \"0\" )");
+                //count = 1;
+                //TLPEdgeLength(sw, dend.root, null,null,ref count);
+                //sw.WriteLine(" )");
+            }
+        }
+
+        void TLPNodes(StreamWriter sw, DendriteNode node, DendriteNode parent, ref int count)
+        {
+
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                node.Id = count;
+                sw.Write("{0} ", count++);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPNodes(sw, next, node, ref count);
+            }
+        }
+
+        void TLPCoord(StreamWriter sw, DendriteNode node, DendriteNode parent)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine("  (node {0} \"({1},{2},{3})\")", node.Id, node.gx, node.gy, node.gz);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPCoord(sw, next, node);
+            }
+        }
+
+        void TLPRadius(StreamWriter sw, DendriteNode node, DendriteNode parent)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine("  (node {0} \"{1}\" )", node.Id, node.Radius);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPRadius(sw, next, node);
+            }
+        }
+
+        void TLPDistance(StreamWriter sw, DendriteNode node, DendriteNode parent)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine("  (node {0} \"{1}\" )", node.Id, node.RealDistance);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPDistance(sw, next, node);
+            }
+        }
+
+
+        void TLPElectricalDistance(StreamWriter sw, DendriteNode node, DendriteNode parent)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine("  (node {0} \"{1}\" )", node.Id, node.ElectricalDistance);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPElectricalDistance(sw, next, node);
+            }
+        }
+
+        void TLPNodeType(StreamWriter sw, DendriteNode node, DendriteNode parent)
+        {
+
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine("  (node {0} \"{1}\" )", node.Id, (int)node.NodeType);
+            }
+
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent) TLPNodeType(sw, next, node);
+            }
+        }
+
+
+        void TLPEdge(StreamWriter sw, DendriteNode node, DendriteNode parent, DendriteNode pnode, ref int count)
+        {
+            if (parent != null && node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine(" (edge {0} {1} {2})", count++, pnode.Id, node.Id);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    if (node.NodeType != DendriteNodeType.CONNECT) TLPEdge(sw, next, node, node, ref count);
+                    else TLPEdge(sw, next, node, pnode, ref count);
+                }
+            }
+        }
+
+
+        void TLPEdgeLength(StreamWriter sw, DendriteNode node, DendriteNode parent, DendriteNode pnode, ref int count)
+        {
+            if (parent != null && node.NodeType != DendriteNodeType.CONNECT)
+            {
+                sw.WriteLine(" (edge {0} \"{1}\")", count++, node.RealDistance - pnode.RealDistance);
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    if (node.NodeType != DendriteNodeType.CONNECT) TLPEdgeLength(sw, next, node, node, ref count);
+                    else TLPEdgeLength(sw, next, node, pnode, ref count);
+                }
+            }
+        }
+        #endregion // TLP出力
+
+        #region Pajekフォーマット出力
+        public void SaveAsPajekFormat(String fname, Dendrite dend)
+        {
+            using (StreamWriter sw = new StreamWriter(System.IO.Path.ChangeExtension(fname, ".net")))
+            {
+                sw.WriteLine("*Vertices {0}", dend.branch + dend.edge);
+
+                int count = 1;
+                PajekVerticesRD(sw, dend, dend.root, null, ref count);
+
+                count = 1;
+                sw.WriteLine("*Edges");
+                PajekEdgesRD(sw, dend.root, null, null);
+
+            }
+        }
+
+        void PajekVerticesRD(StreamWriter sw, Dendrite dend, DendriteNode node, DendriteNode parent, ref int count)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                node.Id = count;
+                sw.WriteLine("{0} \"{1}\" {2} {3} {4} ", count++, node.RealDistance, (node.gx - dend.XMin) / (dend.XMax - dend.XMin), (node.gy - dend.YMin) / (dend.YMax - dend.YMin), (node.gz - dend.ZMin) / (dend.ZMax - dend.ZMin));
+                //sw.WriteLine("{0} {1}", count++, node.RealDistance);
+
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    PajekVerticesRD(sw, dend, next, node, ref count);
+                }
+            }
+
+        }
+
+        void PajekEdgesRD(StreamWriter sw, DendriteNode node, DendriteNode parent, DendriteNode pnode)
+        {
+            if (pnode != null && node.NodeType != DendriteNodeType.CONNECT) sw.WriteLine("{0} {1} {2}", pnode.Id, node.Id, node.RealDistance - pnode.RealDistance);
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    if (node.NodeType == DendriteNodeType.CONNECT) PajekEdgesRD(sw, next, node, pnode);
+                    else PajekEdgesRD(sw, next, node, node);
+                }
+            }
+
+        }
+
+
+        public void SaveAsCytoscapeFreeFormat(String fname, Dendrite dend)
+        {
+            string nameEdges = Path.GetFileNameWithoutExtension(fname) + "_edge.txt";
+            string nameNodes = Path.GetFileNameWithoutExtension(fname) + "_node.txt";
+
+            using (StreamWriter swe = new StreamWriter(nameEdges))
+            using (StreamWriter swn = new StreamWriter(nameNodes))
+            {
+                int count = 1;
+                CytNodes(swn, dend, dend.root, null, ref count);
+
+                count = 1;
+                CytEdges(swe, dend, dend.root, null, null);
+
+            }
+        }
+        #endregion // Pajekフォーマット出力
+
+        #region For Cytoscape
+        void CytNodes(StreamWriter sw, Dendrite dend, DendriteNode node, DendriteNode parent, ref int count)
+        {
+            if (node.NodeType != DendriteNodeType.CONNECT)
+            {
+                node.Id = count;
+                sw.WriteLine("{0} {1} {2} {3} {4} {5}", count++, node.RealDistance, node.ElectricalDistance, (node.gx - dend.XMin) / (dend.XMax - dend.XMin), (node.gy - dend.YMin) / (dend.YMax - dend.YMin), (node.gz - dend.ZMin) / (dend.ZMax - dend.ZMin));
+
+
+            }
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    CytNodes(sw, dend, next, node, ref count);
+                }
+            }
+
+        }
+
+        void CytEdges(StreamWriter sw, Dendrite dend, DendriteNode node, DendriteNode parent, DendriteNode pnode)
+        {
+            if (pnode != null && node.NodeType != DendriteNodeType.CONNECT) sw.WriteLine("{0} {1} {2} {3}", pnode.Id, node.Id, (node.RealDistance - pnode.RealDistance), (node.ElectricalDistance - pnode.ElectricalDistance));
+
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != parent)
+                {
+                    if (node.NodeType == DendriteNodeType.CONNECT) CytEdges(sw, dend, next, node, pnode);
+                    else CytEdges(sw, dend, next, node, node);
+                }
+            }
+
+        }
+        #endregion // For Cytoscape
+
+        #region Edge出力 (swc2elから使用されている)
+        List<DendriteNode> edgec = new List<DendriteNode>();
+        int[] count;
+        bool flag;
+
+        public void SaveEdgeList(string fname, Dendrite dend)
+        {
+            StringBuilder[] sbs = new StringBuilder[dend.MaxDegree];
+            count = new int[dend.MaxDegree];
+            Array.Clear(count, 0, count.Length);
+
+            for (int i = 0; i < dend.MaxDegree; i++)
+            {
+                sbs[i] = new StringBuilder();
+                flag = false;
+                Edge(dend.root, null, i + 1, sbs[i]);
+            }
+
+            using (StreamWriter sw = new StreamWriter(fname))
+            {
+                sw.WriteLine("# total length");
+                sw.WriteLine(dend.TotalLength);
+
+                sw.WriteLine("# total e length");
+                sw.WriteLine(dend.TotalElectricalLength);
+
+                sw.WriteLine("# count");
+                foreach (int c in count) sw.Write("{0},", c);
+                sw.WriteLine();
+
+                int i = 1;
+                foreach (StringBuilder sb in sbs)
+                {
+                    sw.WriteLine("#{0}", i);
+                    sw.WriteLine(sb.ToString());
+                    i++;
+                }
+            }
+
+        }
+
+        void Edge(DendriteNode node, DendriteNode root, int deg, StringBuilder sb)
+        {
+            if (node.Degree == deg && !flag)
+            {
+                flag = true;
+                if (root != null && root.NodeType == DendriteNodeType.BRANCH) edgec.Add(root);
+            }
+
+            if (flag) edgec.Add(node);
+
+            if (node.NodeType == DendriteNodeType.EDGE && root != null && flag)
+            {
+                double aver = 0;
+                double length = 0;
+                double elength = 0;
+
+                // calc average radius
+                edgec.ForEach(item => aver += item.Radius);
+                aver /= edgec.Count;
+
+                // calc edge length
+                length = edgec[edgec.Count - 1].RealDistance - edgec[0].RealDistance;
+                elength = edgec[edgec.Count - 1].ElectricalDistance - edgec[0].ElectricalDistance;
+
+
+                sb.AppendFormat("{0},{1},{2},", aver, length, elength);
+                edgec.ForEach(item => sb.AppendFormat("{0},", item.Id + 1));
+                sb.Remove(sb.Length - 1, 1);
+                sb.AppendLine();
+
+                edgec.Clear();
+                count[deg - 1]++;
+
+                flag = false;
+                return;
+            }
+
+
+            bool end = true;
+            DendriteNode tmp;
+            if (node.NodeType == DendriteNodeType.BRANCH && flag)
+            {
+                for (int i = 0; i < node.ConnectedNodes.Count; i++)
+                {
+                    if (node.ConnectedNodes[i] != root)
+                    {
+                        if (node.ConnectedNodes[i].Degree == deg)
+                        {
+                            end = false;
+                            if (i == 0) continue;
+                            tmp = node.ConnectedNodes[0];
+                            node.ConnectedNodes[0] = node.ConnectedNodes[i];
+                            node.ConnectedNodes[i] = tmp;
+                        }
+                    }
+                }
+
+                if (end)
+                {
+                    double aver = 0;
+                    double length = 0;
+                    double elength = 0;
+
+                    // calc average radius
+                    edgec.ForEach(item => aver += item.Radius);
+                    aver /= edgec.Count;
+
+                    // calc edge length
+                    length = edgec[edgec.Count - 1].RealDistance - edgec[0].RealDistance;
+                    elength = edgec[edgec.Count - 1].ElectricalDistance - edgec[0].ElectricalDistance;
+
+                    sb.AppendFormat("{0},{1},{2},", aver, length, elength);
+                    edgec.ForEach(item => sb.AppendFormat("{0},", item.Id + 1));
+                    sb.Remove(sb.Length - 1, 1);
+                    sb.AppendLine();
+
+                    edgec.Clear();
+                    count[deg - 1]++;
+                    flag = false;
+                }
+            }
+            foreach (DendriteNode next in node.ConnectedNodes)
+            {
+                if (next != root)
+                {
+                    Edge(next, node, deg, sb);
+                }
+            }
+
+
+        }
+        #endregion // Edge出力 (swc2elから使用されている)
+       
+        #endregion // 出力
+    }
+}
