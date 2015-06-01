@@ -48,8 +48,8 @@ void nctuTW::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 	}
 	else
 	{
-        v3d_msg(tr("This is the implementation of the tracing algorithm published in PLoS Computational Biology, \"High-throughput Computer Method for 3D Neuronal Structure Reconstruction from the Image Stack of the Drosophila Brain and Its Applications\", September 13, 2013. "
-            "Implemented by P. C. Lee, K. W. He, C. C. Cheng, Y. T. Ching, 2015-5-23."));
+        v3d_msg(QString("This is the implementation of the tracing algorithm published in PLoS Computational Biology, \"High-throughput Computer Method for 3D Neuronal Structure Reconstruction from the Image Stack of the Drosophila Brain and Its Applications\", September 13, 2013. "
+            "Implemented by P. C. Lee, K. W. He, C. C. Cheng, Y. T. Ching, 2015-5-23. Version %1").arg(getPluginVersion()));
 	}
 }
 
