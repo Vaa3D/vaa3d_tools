@@ -291,17 +291,29 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
         train_gt_ITK =swc2ItkImage<ITKImageType,ImageScalarType>(swc_gt_file,train_img_size);//for now return null poinyter !
         //convert gt to vector
         //VectorTypeFloat train_gt_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(train_gt_ITK,n_pixels,n_pixels);
-        VectorTypeFloat train_gt_vector = VectorTypeFloat::Zero(5);
-train_gt_vector.row(3) << 1;
-std::cout << train_gt_vector << "\n\n";
+        VectorTypeFloat train_gt_vector = VectorTypeFloat::Zero(n_pixels);
+
+        for(unsigned int i = 0; i<n_pixels/2; i++){
+train_gt_vector.row(i) << 100.0;
+        }
+//std::cout << train_gt_vector << "\n\n";
 
         ////compute features (TODO add context features)
         MatrixTypeFloat features_image = computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(train_img_ITK,sep_filters_float,weights_float, scale_factor);
 
 cout<<"Rows Features: "<<features_image.rows()<<" Cols Features: "<<features_image.cols() <<endl;
+cout<< "n pixels: "<< n_pixels << endl;
+
 
         ////random sampling
-        getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector_image,n_pos_samples_per_image,n_neg_samples_per_image);
+        bool got_samples = getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector_image,n_pos_samples_per_image,n_neg_samples_per_image);
+
+        if(!got_samples){
+            cout<< "Problems encountered while getting samples ! " << endl;
+            return false;
+        }
+
+
 
    //     cout <<all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image).rows() << " "<<  all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image -1).cols()  << endl;
    //     cout << sampled_features_image.rows() << " " << sampled_features_image.cols() << endl;
