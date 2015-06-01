@@ -94,28 +94,43 @@ template<typename VectorType>
 void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixTypeUint &found_smaller_indeces,MatrixTypeUint & found_greater_indeces ){
 
 
-   //std::cout << "initi matrix samples " << std::endl;
+   std::cout << "initi matrix samples " << std::endl;
     unsigned int n_samples = gt_vector.rows();
-    found_greater_indeces = MatrixTypeUint::Zero(n_samples,1);
-    found_smaller_indeces = MatrixTypeUint::Zero(n_samples,1);
+    MatrixTypeUint found_greater_indeces_temp = MatrixTypeUint::Zero(n_samples,1);
+    MatrixTypeUint found_smaller_indeces_temp = MatrixTypeUint::Zero(n_samples,1);
 
 
-   // std::cout << "entering loop samples samples " << std::endl;
+    std::cout << "entering loop samples samples " << std::endl;
     unsigned int i_found_great = 0;
     unsigned int i_found_small = 0;
     for(unsigned int i_sample = 0; i_sample<n_samples; i_sample++){
         if(gt_vector(i_sample)>=thresh){
-            found_greater_indeces(i_found_great) = i_sample;
+            found_greater_indeces_temp(i_found_great) << i_sample;
             i_found_great++;
         }
         else{
-            found_smaller_indeces(i_found_small)= i_sample;
+            found_smaller_indeces_temp(i_found_small) << i_sample;
             i_found_small++;
         }
     }
 
-    found_greater_indeces = found_greater_indeces.head(i_found_great);
-    found_smaller_indeces = found_smaller_indeces.head(i_found_small);
+  //  const unsigned int found_great_tot=i_found_great;
+  //  const unsigned int found_small_tot=i_found_small;
+
+    std::cout << "n samples: " << n_samples<< std::endl;
+    //std::cout << "size great " << found_greater_indeces.rows() << std::endl;
+   // std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
+
+
+    std::cout << "i_found_great " << i_found_great << std::endl;
+
+
+     //found_greater_indeces.head(found_great_tot);
+    found_greater_indeces = found_greater_indeces_temp.head(i_found_great);
+    std::cout << "i_found_small " << i_found_small << std::endl;
+
+    found_smaller_indeces = found_smaller_indeces_temp.head(i_found_small);
+
 
 }
 

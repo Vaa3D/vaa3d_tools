@@ -25,7 +25,7 @@ INCLUDEPATH += $$_PRO_FILE_PWD_/libconfig-1.4.9/lib
 INCLUDEPATH += ITK_include
 INCLUDEPATH += $$_PRO_FILE_PWD_/regression
 INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB
-INCLUDEPATH += $$_PRO_FILE_PWD_/boost_1_58_0
+INCLUDEPATH += $$_PRO_FILE_PWD_/boost_1_58_0 # download and unzip it (not in svn because it is big)
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib

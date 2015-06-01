@@ -200,14 +200,14 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
           //  classifier_filename = (paras.at(0));
 
     ////boost parameters (TODO pass as arguments)
-    const unsigned max_boost_iters = 15;
-    const unsigned max_depth_wl_tree = 0;
+    const unsigned max_boost_iters = 100;
+    const unsigned max_depth_wl_tree = 2;
     char * loss_type = "squaredloss";
 
     /// TODO: pass n_samples_tot and n_neg_samples_tot as parameter
-    unsigned int n_pos_samples_tot =10;
+    unsigned int n_pos_samples_tot =2000;
     n_pos_samples_tot = 2*(n_pos_samples_tot/2); //ensure it is even
-    unsigned int n_neg_samples_tot =10;
+    unsigned int n_neg_samples_tot =2000;
     n_neg_samples_tot = 2*(n_neg_samples_tot/2); //ensure it is even
 
     unsigned int n_samples_tot =n_pos_samples_tot+ n_neg_samples_tot;
@@ -289,13 +289,30 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
         ////TODO ! convert swc file to distance gt image
         ITKImageType::Pointer train_gt_ITK  =  ITKImageType::New();
         train_gt_ITK =swc2ItkImage<ITKImageType,ImageScalarType>(swc_gt_file,train_img_size);//for now return null poinyter !
-        //convert gt to vector
-        //VectorTypeFloat train_gt_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(train_gt_ITK,n_pixels,n_pixels);
-        VectorTypeFloat train_gt_vector = VectorTypeFloat::Zero(n_pixels);
 
-        for(unsigned int i = 0; i<n_pixels/2; i++){
-train_gt_vector.row(i) << 100.0;
+        //for now load gt
+        char * train_gt_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_exp_dist_gt.tif";
+        cout<<"gt file "<< train_gt_file << endl;
+        Image4DSimple *train_gt = callback.loadImage(train_gt_file);
+        if (!train_gt || !train_gt->valid())
+        {
+          v3d_msg("Fail to open the gt image file.", 0);
+          return false;
         }
+train_gt_ITK = v3d2ItkImage<ITKImageType,ImageScalarType>(train_gt,train_img_size,channel);
+
+        //convert gt to vector
+        VectorTypeFloat train_gt_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(train_gt_ITK,n_pixels,n_pixels);
+
+        train_gt_vector = train_gt_vector*409.5;
+
+        cout << "min gt: "<< train_gt_vector.minCoeff() << " max gt: " << train_gt_vector.maxCoeff()  << endl;
+
+        //for debug
+//        VectorTypeFloat train_gt_vector = VectorTypeFloat::Zero(n_pixels);
+//        for(unsigned int i = 0; i<n_pixels/2; i++){
+//train_gt_vector.row(i) << 100.0;
+//        }
 //std::cout << train_gt_vector << "\n\n";
 
         ////compute features (TODO add context features)
@@ -360,7 +377,7 @@ cout<< "n pixels: "<< n_pixels << endl;
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
-   //sample call ./vaa3d -x SQBTree -f test -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_32_copy_after_itk_DEBUG.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg
+   //sample call ./vaa3d -x SQBTree -f test -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_predicted_DEBUG.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg
 
 
   cout<<"Welcome this plugin"<<endl;
@@ -559,8 +576,12 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     // save image
     Image4DSimple outimg1;
 
-   // VectorTypeFloat newScoresFloat = newScores.cast<float>();
-    //float* resultC = newScoresFloat.data();
+    VectorTypeFloat newScoresFloat = newScores.cast<float>();
+
+    cout << "min pred: "<< newScoresFloat.minCoeff() << " max predic: " << newScoresFloat.maxCoeff()  << endl;
+
+
+   // float* resultC = newScoresFloat.data();
  //   float* resultC ;
 //Map<VectorTypeFloat>( resultC, newScores.rows() ) =   newScoresFloat;
     //cout << "num feat: " << nonsep_features_all.rows()<<  endl;
