@@ -8,8 +8,8 @@
 #include "superannotator_sel/Matrix3D.h"
 
 #include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
+//#include "itkImageFileReader.h"
+//#include "itkImageFileWriter.h"
 #include "itkConvolutionImageFilter.h"
 #include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"

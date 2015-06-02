@@ -1,11 +1,16 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include "itkImageRegionIterator.h"
 
 
 template<typename ITKImageType,typename ImageScalarType>
 typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int *in_sz, unsigned int c=1);
 
+
+
+template<typename ImageType>
+Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image);
 
 template<typename ImageType>
 typename ImageType::Pointer rawData2ItkImage(unsigned char *data1d,const long int *in_sz);
@@ -42,6 +47,52 @@ typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int 
     rescaleFilter->Update();
     return rescaleFilter->GetOutput();
 }
+
+
+template<typename ImageType>
+Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
+
+
+        //typename ImageType::RegionType region;
+        typename ImageType::RegionType region = itk_image->GetLargestPossibleRegion();
+//        typename  ImageType::IndexType start;
+//         typename ImageType::SizeType size;
+//        size = itk_image.GetSize();
+//        start.Fill(0);
+//        region.SetSize(size);
+//        region.SetIndex(start);
+
+        itk::ImageRegionIterator<ImageType> imageIterator(itk_image,region);
+
+        typename ImageType::SizeType size = region.GetSize();
+        long int *in_sz;
+        in_sz[0] = size[0];
+        in_sz[1] = size[2];
+        in_sz[2] = size[2];
+
+        const long int n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
+
+            Image4DSimple outimg_v3d;
+
+            float * out_data_copy = new float [n_pixels];
+
+          long int i_pix = 0;
+          while(!imageIterator.IsAtEnd())
+            {
+
+              out_data_copy[i_pix] = (float)imageIterator.Get();
+
+            ++imageIterator;
+            ++i_pix;
+            }
+
+
+        outimg_v3d.setData((unsigned char *)(out_data_copy), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+
+
+        return outimg_v3d;
+}
+
 
 
 //definition here to avoid explicit instantiation of template function
@@ -150,6 +201,8 @@ typename ImageType::Pointer rawData2ItkImage(unsigned char *data1d,const long in
   return I;
 
 }
+
+
 
 
 
