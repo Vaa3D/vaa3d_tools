@@ -14,7 +14,7 @@
 #include "convert_type2uint8.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(jba, JBAPlugin);
+Q_EXPORT_PLUGIN2(brainaligner, JBAPlugin);
 
 void printHelp()
 {
