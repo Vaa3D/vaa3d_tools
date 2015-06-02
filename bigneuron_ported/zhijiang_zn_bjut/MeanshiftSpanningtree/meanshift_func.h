@@ -14,10 +14,15 @@
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent);
 void meanshift_vn5(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 Node getnode(Node *node);
+QList<NeuronSWC> connect_shortest_path_vn3(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QList<NeuronSWC> connect_shortest_path_vn2(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QList<NeuronSWC> connect_shortest_path(unsigned char * &img1d,QList<Node> path,NeuronSWC begin,NeuronSWC end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+double distance_calculate_vn2(unsigned char * &img1d,QList<Node> path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QList<Node> found_path_vn3( QMap<V3DLONG,Node> path_map, Node* temp,Node* temp1,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 QList<Node*> found_path_vn2( QMap<V3DLONG,Node*> path_map, Node* temp,Node* temp1,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
-
+void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 double distance_calculate(unsigned char * &img1d,QList<Node*> path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
-double** bf(QMap<int,Node* > roots,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+void bf(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 bool contain(QList<Node> *queue,V3DLONG x,V3DLONG y,V3DLONG z);
 int meanshift_plugin(V3DPluginCallback2 &callback, QWidget *parent);
 int meanshift_plugin_vn2(V3DPluginCallback2 &callback, QWidget *parent);
