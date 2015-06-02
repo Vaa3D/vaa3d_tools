@@ -729,6 +729,20 @@ double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3
 }
 
 #define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))+0.000001;
+bool compare_NeuronSWC(NeuronSWC node1,NeuronSWC node2)
+{
+	if((node1.x==node2.x)&&(node1.y==node2.y)&&(node1.z==node2.z))
+	{
+		return true;
+
+	}else {
+		return false;
+
+	}
+
+
+
+}
 unsigned char* Gauss_filter(unsigned char * &img1d,unsigned char* nData1,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DPluginCallback2 &callback, QWidget *parent)
 {
 	//printf("11111111111111111111111111111111111111111111\n");
@@ -987,6 +1001,17 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 				S_vn2=connect_shortest_path_vn3(img1d,temp22,seeds.at(indexi),seeds.at(indexj),sz_x,sz_y,sz_z);
 				for(int i=0;i<S_vn2.length();i++)
 				{
+					if(i==0)
+					{
+						listNeuron.append(S_vn2.at(i));
+						continue;
+					}
+						
+					if(compare_NeuronSWC(S_vn2.at(i-1),S_vn2.at(i)))
+					{
+						continue;
+
+					}
 					
 					listNeuron.append(S_vn2.at(i));
 					/*	if(!original_tree.contains(GET_IND(S_vn2.at(i).x,S_vn2.at(i).y,S_vn2.at(i).z)))
@@ -1009,13 +1034,13 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 	marker_MST.hashNeuron = hashNeuron;
 	//printSWCByQList_Neuron(listNeuron,"C:\\Vaa3D\\list.SWC");
 
-	/*QList<NeuronSWC> marker_MST_sorted;
+	QList<NeuronSWC> marker_MST_sorted;
 	marker_MST_sorted.clear();
 	if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
 	{
 	}
 
-	prepare_write(marker_MST_sorted);*/
+	prepare_write(marker_MST_sorted);
 
 	if(markEdge) {delete []markEdge, markEdge = 0;}
 	//if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
