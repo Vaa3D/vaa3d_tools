@@ -13,6 +13,16 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+
+//
+
+#include <QtGui>
+#include <cmath>
+#include <stdlib.h>
+#include "../plugin_loader/v3d_plugin_loader.h"
+#include <boost/lexical_cast.hpp>
+
 
 //
 
@@ -209,6 +219,38 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     
     ofstream macro_file;
 
+    //
+    // GUI setting
+    bool ok1, ok2, ok3, ok4, ok5;
+    unsigned int th=20, dt=10, vt=1, ns=0, nc=0;
+
+    th = QInputDialog::getInteger(parent, "Binarization Threshold ",
+                                  "Enter Threhold for binarization (0-255):",
+                                  30, 0, 255, 1, &ok1);
+    if (!ok1) return;
+
+    dt = QInputDialog::getInteger(parent, "Distance Threshold ",
+                                  "Enter Threhold for distance:",
+                                  10, 0, 100, 1, &ok2);
+    if (!ok2) return;
+
+    vt = QInputDialog::getInteger(parent, "Volume Threshold ",
+                                  "Enter Threhold for fragment volume:",
+                                  1, 0, 100, 1, &ok3);
+    if (!ok3) return;
+
+    ns = QInputDialog::getInteger(parent, "Smoothing Level",
+                                  "Enter Smoothing level:",
+                                  0, 0, 50, 1, &ok4);
+    if (!ok4) return;
+
+    nc = QInputDialog::getInteger(parent, "Clipping Level",
+                                  "Enter Clipping level:",
+                                  0, 0, 50, 1, &ok5);
+    if (!ok5) return;
+    //
+
+
     // using Fiji in /Applications/Fiji.app/
     
     macro_file.open("/Applications/Fiji.app/macros/fileOut.ijm");
@@ -229,7 +271,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx fileOut.ijm");
 
     // executing MorphExtractorCL.exe on mono
-    system("mono ./MorphExtractorCL.exe -i tmp -o out -b 20 -t 1 -v 1 -d 80 -s 5");
+    QString strTh, strDt, strVt, strNs, strNc;
+    QString command = "mono ./MorphExtractorCL.exe -i tmp -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
+    system(command.toStdString().c_str());
+
     //    system("mono ./MorphExtractorCL.exe -i ./tmp -o out -b 128 -t -v 2 -d 10 -s 10 -a 10");
     system("rm /Volumes/Ultra1/BigNeuron/v3d_external/bin/tmp/*");
 
@@ -237,9 +282,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     NeuronTree nt;
 	QString swc_name = PARA.inimg_file + "_SIGEN.swc";
-	nt.name = "execSIGEN";
+    nt.name = "execSIGEN";
 	//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-	QString command = "cp out.swc "+swc_name;
+    command = "cp out.swc "+swc_name;
         system(command.toStdString().c_str());
 
     if(!bmenu)
