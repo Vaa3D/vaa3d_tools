@@ -52,6 +52,6 @@ unix {
     LIBS += -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 }
 
-TARGET	= $$qtLibraryTarget(jba)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_registration/jba/
+TARGET	= $$qtLibraryTarget(brainaligner)
+DESTDIR	= $$VAA3DPATH/bin/plugins/image_registration/brainaligner/
 
