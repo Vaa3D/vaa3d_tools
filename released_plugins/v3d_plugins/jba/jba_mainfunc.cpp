@@ -296,113 +296,113 @@ bool eba3d(WarpParameterAffine3D *wp, Image2DSimple<MYFLOAT_JBA> * & dTable,
     
 	const V3DLONG myCUBECOLUMNNUM=15;
     
-	Image2DSimple<MYFLOAT_JBA> *curDTable = new Image2DSimple<MYFLOAT_JBA> (cubelen, myCUBECOLUMNNUM);
-	if (!curDTable || !curDTable->valid())
-	{
-	    fprintf(stderr, "Fail to allocate memory. [%s][%d].\n", __FILE__, __LINE__);
-		return false;
-	}
-	MYFLOAT_JBA **  cubeData2d = curDTable->getData2dHandle();
+    Image2DSimple<MYFLOAT_JBA> *curDTable = new Image2DSimple<MYFLOAT_JBA> (cubelen, myCUBECOLUMNNUM);
+    if (!curDTable || !curDTable->valid())
+    {
+        fprintf(stderr, "Fail to allocate memory. [%s][%d].\n", __FILE__, __LINE__);
+        return false;
+    }
+    MYFLOAT_JBA **  cubeData2d = curDTable->getData2dHandle();
     
-	V3DLONG curind=0;
-	for (k=ks;k<=ke;k++)
-	{
-		double mk = (k-zc);
-		for (j=js;j<=je;j++)
-		{
-#ifndef POSITIVE_Y_COORDINATE	
-			double mj = -(j-yc);
+    V3DLONG curind=0;
+    for (k=ks;k<=ke;k++)
+    {
+        double mk = (k-zc);
+        for (j=js;j<=je;j++)
+        {
+#ifndef POSITIVE_Y_COORDINATE
+            double mj = -(j-yc);
 #else
-			double mj = (j-yc); 
+            double mj = (j-yc);
 #endif
-			for (i=is;i<=ie;i++)
-			{
-				double mi = (i-xc);
+            for (i=is;i<=ie;i++)
+            {
+                double mi = (i-xc);
                 
-				cubeData2d[0][curind] = dfx3d[k][j][i] * mi;
-				cubeData2d[1][curind] = dfx3d[k][j][i] * mj;
-				cubeData2d[2][curind] = dfx3d[k][j][i] * mk;
+                cubeData2d[0][curind] = dfx3d[k][j][i] * mi;
+                cubeData2d[1][curind] = dfx3d[k][j][i] * mj;
+                cubeData2d[2][curind] = dfx3d[k][j][i] * mk;
                 
-				cubeData2d[3][curind] = dfy3d[k][j][i] * mi;
-				cubeData2d[4][curind] = dfy3d[k][j][i] * mj;
-				cubeData2d[5][curind] = dfy3d[k][j][i] * mk;
+                cubeData2d[3][curind] = dfy3d[k][j][i] * mi;
+                cubeData2d[4][curind] = dfy3d[k][j][i] * mj;
+                cubeData2d[5][curind] = dfy3d[k][j][i] * mk;
                 
-				cubeData2d[6][curind] = dfz3d[k][j][i] * mi;
-				cubeData2d[7][curind] = dfz3d[k][j][i] * mj;
-				cubeData2d[8][curind] = dfz3d[k][j][i] * mk;
+                cubeData2d[6][curind] = dfz3d[k][j][i] * mi;
+                cubeData2d[7][curind] = dfz3d[k][j][i] * mj;
+                cubeData2d[8][curind] = dfz3d[k][j][i] * mk;
                 
-				cubeData2d[9][curind] = dfx3d[k][j][i];
-				cubeData2d[10][curind] = dfy3d[k][j][i];
-				cubeData2d[11][curind] = dfz3d[k][j][i];
+                cubeData2d[9][curind] = dfx3d[k][j][i];
+                cubeData2d[10][curind] = dfy3d[k][j][i];
+                cubeData2d[11][curind] = dfz3d[k][j][i];
                 
-				cubeData2d[12][curind] = -subject3d[k][j][i];
-				cubeData2d[13][curind] = -1;
+                cubeData2d[12][curind] = -subject3d[k][j][i];
+                cubeData2d[13][curind] = -1;
                 
-				cubeData2d[14][curind] = dft3d[k][j][i] + cubeData2d[12][curind] + cubeData2d[0][curind] + cubeData2d[4][curind] + cubeData2d[8][curind];
+                cubeData2d[14][curind] = dft3d[k][j][i] + cubeData2d[12][curind] + cubeData2d[0][curind] + cubeData2d[4][curind] + cubeData2d[8][curind];
                 
-				curind++;
-			}
-		}
-	}
+                curind++;
+            }
+        }
+    }
     
-	Matrix P_Matrix(14,14);
-	Matrix K_Matrix(14,1);
-	double tmpp=0.0, tmpk=0.0;
+    Matrix P_Matrix(14,14);
+    Matrix K_Matrix(14,1);
+    double tmpp=0.0, tmpk=0.0;
     
-	for (k=0;k<14;k++)
-	{
-		for (j=k;j<14;j++)
-		{
-			for (i=0, tmpp=0.0;i<cubelen;i++)
-				tmpp += cubeData2d[k][i] * cubeData2d[j][i];
-			P_Matrix(k+1,j+1) = tmpp;
-			P_Matrix(j+1,k+1) = tmpp;
-		}
+    for (k=0;k<14;k++)
+    {
+        for (j=k;j<14;j++)
+        {
+            for (i=0, tmpp=0.0;i<cubelen;i++)
+                tmpp += cubeData2d[k][i] * cubeData2d[j][i];
+            P_Matrix(k+1,j+1) = tmpp;
+            P_Matrix(j+1,k+1) = tmpp;
+        }
         
-		for (i=0, tmpk=0.0;i<cubelen;i++)
-		{
-			tmpk += cubeData2d[k][i] * (cubeData2d[14][i]);
-		}
-		K_Matrix(k+1,1) = tmpk;
-	}
+        for (i=0, tmpk=0.0;i<cubelen;i++)
+        {
+            tmpk += cubeData2d[k][i] * (cubeData2d[14][i]);
+        }
+        K_Matrix(k+1,1) = tmpk;
+    }
     
-	Matrix Y;
-	Try
-	{
-		Y = P_Matrix.i() * K_Matrix;
+    Matrix Y;
+    Try
+    {
+        Y = P_Matrix.i() * K_Matrix;
         
-		wp->mxx = Y(1,1); wp->mxy = Y(2,1); wp->mxz = Y(3,1);
-		wp->myx = Y(4,1); wp->myy = Y(5,1); wp->myz = Y(6,1);
-		wp->mzx = Y(7,1); wp->mzy = Y(8,1); wp->mzz = Y(9,1);
-		wp->sx = Y(10,1); wp->sy = Y(11,1); wp->sz = Y(12,1);
-		wp->si = Y(13,1); wp->sb = Y(14,1);
+        wp->mxx = Y(1,1); wp->mxy = Y(2,1); wp->mxz = Y(3,1);
+        wp->myx = Y(4,1); wp->myy = Y(5,1); wp->myz = Y(6,1);
+        wp->mzx = Y(7,1); wp->mzy = Y(8,1); wp->mzz = Y(9,1);
+        wp->sx = Y(10,1); wp->sy = Y(11,1); wp->sz = Y(12,1);
+        wp->si = Y(13,1); wp->sb = Y(14,1);
         
-		wp->b_transform=1; 
-	}
-	CatchAll
-	{
-		wp->resetToDefault();
-	}
+        wp->b_transform=1;
+    }
+    CatchAll
+    {
+        wp->resetToDefault();
+    }
     
-	if (b_VERBOSE_PRINT)
-	{
-		Matrix Y1(4,4);
-		Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
-		Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
-		Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
-		Y1.row(4) << 0 << 0 << 0 << 1;
-		cout << "Transform matrix" << endl;
-		cout << setw(12) << setprecision(3) << Y1 << endl;
-	}
+//    if (b_VERBOSE_PRINT)
+//    {
+//        Matrix Y1(4,4);
+//        Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
+//        Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
+//        Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
+//        Y1.row(4) << 0 << 0 << 0 << 1;
+//        cout << "Transform matrix" << endl;
+//        cout << setw(12) << setprecision(3) << Y1 << endl;
+//    }
     
-	if (b_returnDTable==true)
-	{
-	    dTable = curDTable;
-	}
-	else
-	{
-		if (curDTable) delete curDTable; curDTable=0;
-	}
+    if (b_returnDTable==true)
+    {
+        dTable = curDTable;
+    }
+    else
+    {
+        if (curDTable) delete curDTable; curDTable=0;
+    }
 	return true;
 }
 
@@ -1943,14 +1943,14 @@ bool eba3d_noshift(WarpParameterAffine3D *wp, Image2DSimple<MYFLOAT_JBA> * & dTa
 	}
 
 	b_VERBOSE_PRINT=true;
-	if (b_VERBOSE_PRINT)
-	{
-		cout << "P_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
+//	if (b_VERBOSE_PRINT)
+//	{
+//		cout << "P_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
 
-		cout << "K_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
-	}
+//		cout << "K_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
+//	}
 
 	Matrix Y;
 	Try
@@ -1969,16 +1969,16 @@ bool eba3d_noshift(WarpParameterAffine3D *wp, Image2DSimple<MYFLOAT_JBA> * & dTa
 		wp->resetToDefault();
 	}
 
-	if (b_VERBOSE_PRINT)
-	{
-		Matrix Y1(4,4);
-		Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
-		Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
-		Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
-		Y1.row(4) << 0 << 0 << 0 << 1;
-		cout << "Transform matrix" << endl;
-		cout << setw(12) << setprecision(3) << Y1 << endl;
-	}
+//	if (b_VERBOSE_PRINT)
+//	{
+//		Matrix Y1(4,4);
+//		Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
+//		Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
+//		Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
+//		Y1.row(4) << 0 << 0 << 0 << 1;
+//		cout << "Transform matrix" << endl;
+//		cout << setw(12) << setprecision(3) << Y1 << endl;
+//	}
 
 	if (b_returnDTable==true)
 	{
@@ -3522,14 +3522,14 @@ bool est_best_scale_3d(WarpParameterAffine3D *wp, Image2DSimple<MYFLOAT_JBA> * &
 		K_Matrix(k+1,1) = tmpk;
 	}
 
-	if (b_VERBOSE_PRINT)
-	{
-		cout << "P_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
+//	if (b_VERBOSE_PRINT)
+//	{
+//		cout << "P_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
 
-		cout << "K_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
-	}
+//		cout << "K_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
+//	}
 
 	Matrix Y;
 	Try
@@ -3547,16 +3547,16 @@ bool est_best_scale_3d(WarpParameterAffine3D *wp, Image2DSimple<MYFLOAT_JBA> * &
 		wp->resetToDefault();
 	}
 
-	if (b_VERBOSE_PRINT)
-	{
-		Matrix Y1(4,4);
-		Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
-		Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
-		Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
-		Y1.row(4) << 0 << 0 << 0 << 1;
-		cout << "Transform matrix" << endl;
-		cout << setw(12) << setprecision(3) << Y1 << endl;
-	}
+//	if (b_VERBOSE_PRINT)
+//	{
+//		Matrix Y1(4,4);
+//		Y1.row(1) << wp->mxx << wp->mxy << wp->mxz << wp->sx;
+//		Y1.row(2) << wp->myx << wp->myy << wp->myz << wp->sy;
+//		Y1.row(3) << wp->mzx << wp->mzy << wp->mzz << wp->sz;
+//		Y1.row(4) << 0 << 0 << 0 << 1;
+//		cout << "Transform matrix" << endl;
+//		cout << setw(12) << setprecision(3) << Y1 << endl;
+//	}
 
 	if (b_returnDTable==true)
 	{
@@ -3708,14 +3708,14 @@ bool ebs3d(DisplaceFieldF3D *wp, Image2DSimple<MYFLOAT_JBA> * & dTable,
 		K_Matrix(k+1,1) = tmpk;
 	}
 
-	if (b_VERBOSE_PRINT)
-	{
-		cout << "P_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
+//	if (b_VERBOSE_PRINT)
+//	{
+//		cout << "P_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << P_Matrix << endl <<endl;
 
-		cout << "K_Matrix" << endl;
-		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
-	}
+//		cout << "K_Matrix" << endl;
+//		cout << setw(12) << setprecision(3) << K_Matrix << endl <<endl;
+//	}
 
 	Matrix Y;
 	Try
@@ -4468,7 +4468,7 @@ bool eba3d_interface(WarpParameterAffine3D & wp_current,  Vol3DSimple <MYFLOAT_J
 		diffxyz(dfx->getData3dHandle(), dfy->getData3dHandle(), dfz->getData3dHandle(), dft->getData3dHandle(),
 				targetImg->getData3dHandle(), warpImg->getData3dHandle(), csz0, csz1, csz2);
 
-		eba3d(&wp_tmp, dTable, dfx, dfy, dfz, dft, warpImg, 0, csz0-1, 0, csz1-1, 0, csz2-1, false);
+        eba3d(&wp_tmp, dTable, dfx, dfy, dfz, dft, warpImg, 0, csz0-1, 0, csz1-1, 0, csz2-1, false);
 
 		aggregateAffineWarp(&wp_current,  &wp_current, &wp_tmp); 
 
