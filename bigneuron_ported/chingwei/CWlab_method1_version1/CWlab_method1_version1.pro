@@ -22,4 +22,4 @@ SOURCES += my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(CWlab_method1_version1)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuron_ported/CWlab_method1_version1/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/CWlab_method1_version1/
