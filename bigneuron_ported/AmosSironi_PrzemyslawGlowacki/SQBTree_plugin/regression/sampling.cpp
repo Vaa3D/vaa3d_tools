@@ -15,7 +15,7 @@ typedef Eigen::MatrixXf MatrixTypeFloat;
 typedef Eigen::Matrix<unsigned int,-1,1 > MatrixTypeUint;
 
 template<typename MatrixType, typename VectorType>
-bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const VectorType &gt_vector,MatrixType &sampled_features_matrix, VectorType &sampled_gt_vector,unsigned int n_pos_samples,unsigned int n_neg_samples,float pos_thresh = 50.0){
+bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const VectorType &gt_vector,MatrixType &sampled_features_matrix, VectorType &sampled_gt_vector,unsigned int n_pos_samples,unsigned int n_neg_samples,float pos_thresh = 100.0){
 
 //float thres = 50.0; //consider positive gt samples greater than this threshold
 
@@ -27,7 +27,7 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
     sampled_gt_vector = VectorType::Zero(n_neg_samples+n_pos_samples);
 
 
-    std::cout << "finding samples " << std::endl;
+  //  std::cout << "finding samples " << std::endl;
 
     MatrixTypeUint pos_indeces;// = getIndecesGreater<VectorType>(gt_vector,pos_thresh); //find(gt_vector>=pos_thresh)
     MatrixTypeUint neg_indeces;// = getIndecesSmaller<VectorType>(gt_vector,pos_thresh); //find(gt_vector<pos_thresh)
@@ -47,7 +47,7 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
     }
 
 
-    std::cout << "rows pos indeces: "<< pos_indeces.rows()<< "cols pos indeces: "<< pos_indeces.cols()<<std::endl;
+ //   std::cout << "rows pos indeces: "<< pos_indeces.rows()<< "cols pos indeces: "<< pos_indeces.cols()<<std::endl;
 
 //    for(unsigned int i_pos =0; i_pos<n_pos_samples;i_pos++ ){
 //        std::cout << "pos indeces all: " << pos_indeces(i_pos)<< std::endl;
@@ -70,7 +70,10 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
 
         unsigned int rand_pos_index = distribution_pos(generator_pos);
 
-    //    std::cout << "rand pos index: " <<pos_indeces(rand_pos_index) << std::endl;
+     //   std::cout << "rand pos index: " <<rand_pos_index << std::endl;
+     //   std::cout << "index rand pos index: " <<pos_indeces(rand_pos_index) << std::endl;
+     //   std::cout << "pos sample value: " <<gt_vector(pos_indeces(rand_pos_index)) << std::endl;
+
 
         sampled_features_matrix.row(i_pos) = features_matrix.row(pos_indeces(rand_pos_index));
         sampled_gt_vector(i_pos) = gt_vector(pos_indeces(rand_pos_index));
@@ -79,11 +82,18 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
     for(unsigned int i_neg =0; i_neg<n_neg_samples;i_neg++ ){
         unsigned int rand_neg_index = distribution_neg(generator_neg);
 
-    //    std::cout << "rand neg index: " <<neg_indeces(rand_neg_index) << std::endl;
+     //   std::cout << " rand neg index: " <<(rand_neg_index) << std::endl;
+     //   std::cout << "index rand neg index: " <<neg_indeces(rand_neg_index) << std::endl;
+     //   std::cout << "neg sample value: " <<gt_vector(neg_indeces(rand_neg_index)) << std::endl;
 
         sampled_features_matrix.row(i_neg+n_pos_samples) = features_matrix.row(neg_indeces(rand_neg_index));
         sampled_gt_vector(i_neg+n_pos_samples) = gt_vector(neg_indeces(rand_neg_index));
     }
+
+
+  //  std::cout << "min gt: "<< gt_vector.minCoeff() << " max gt: " << gt_vector.maxCoeff()  << std::endl;
+  //  std::cout << "min gt sampled: "<< sampled_gt_vector.minCoeff() << " max gt sampled: " << sampled_gt_vector.maxCoeff()  << std::endl;
+
 
     return true;
 
@@ -105,11 +115,11 @@ void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixT
     unsigned int i_found_small = 0;
     for(unsigned int i_sample = 0; i_sample<n_samples; i_sample++){
         if(gt_vector(i_sample)>=thresh){
-            found_greater_indeces_temp(i_found_great) << i_sample;
+            found_greater_indeces_temp(i_found_great) = i_sample;
             i_found_great++;
         }
         else{
-            found_smaller_indeces_temp(i_found_small) << i_sample;
+            found_smaller_indeces_temp(i_found_small) = i_sample;
             i_found_small++;
         }
     }
@@ -117,19 +127,23 @@ void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixT
   //  const unsigned int found_great_tot=i_found_great;
   //  const unsigned int found_small_tot=i_found_small;
 
-    std::cout << "n samples: " << n_samples<< std::endl;
+  //  std::cout << "n samples: " << n_samples<< std::endl;
     //std::cout << "size great " << found_greater_indeces.rows() << std::endl;
    // std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
 
 
-    std::cout << "i_found_great " << i_found_great << std::endl;
+   // std::cout << "i_found_great " << i_found_great << std::endl;
 
 
      //found_greater_indeces.head(found_great_tot);
     found_greater_indeces = found_greater_indeces_temp.head(i_found_great);
-    std::cout << "i_found_small " << i_found_small << std::endl;
-
+  //  std::cout << "i_found_small " << i_found_small << std::endl;
+//
     found_smaller_indeces = found_smaller_indeces_temp.head(i_found_small);
+
+ //   std::cout << "min found_smaller_indeces: "<< found_smaller_indeces.minCoeff() << " max found_smaller_indeces: " << found_smaller_indeces.maxCoeff()  << std::endl;
+ //   std::cout << "min found_smaller_indeces_temp: "<< found_smaller_indeces_temp.minCoeff() << " max found_smaller_indeces_temp: " << found_smaller_indeces_temp.maxCoeff()  << std::endl;
+
 
 
 }
