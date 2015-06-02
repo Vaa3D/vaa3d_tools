@@ -1,25 +1,19 @@
-# pre-processing module for BlastNeuron
-# by Yinan Wan
-# 20140113
 
-TEMPLATE = app
-CONFIG += qt warn_off
-CONFIG -= app_bundle
+TEMPLATE	= lib
+CONFIG	+= qt plugin warn_off
+CONFIG  -= bundle_off
+VAA3DPATH = ../../../../../v3d_external
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-V3DMAINPATH = ../../../v3d_external/v3d_main
-INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
-
-HEADERS += $$V3DMAINPATH/basic_c_fun/v3d_message.h
-HEADERS += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
-HEADERS += prune_short_branch.h
-HEADERS += align_axis.h
-HEADERS += pca1.h
-HEADERS += resampling.h
-
-SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
-SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
-SOURCES += main.cpp
-SOURCES += prune_short_branch.cpp
+HEADERS	+= pre_processing_plugin.h
+SOURCES	+= pre_processing_plugin.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES += pre_processing_main.cpp
 SOURCES += align_axis.cpp
+SOURCES += prune_short_branch.cpp
 SOURCES += pca1.cpp
 
+
+TARGET	= $$qtLibraryTarget(pre_processing)
+DESTDIR	= $$VAA3DPATH/bin/plugins/blastneuron/pre_processing
