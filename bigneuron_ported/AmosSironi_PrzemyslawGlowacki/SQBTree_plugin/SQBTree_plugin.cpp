@@ -205,23 +205,23 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     const unsigned max_depth_wl_tree = 2;
     char * loss_type = "squaredloss";
     const double shrink_factor = 0.1;
-    unsigned int m_try =0;
+    unsigned int m_try =200;
 
 
     /// TODO: pass n_samples_tot and n_neg_samples_tot as parameter
-    unsigned int n_pos_samples_tot =2000;
+    unsigned int n_pos_samples_tot =100000;
     n_pos_samples_tot = 2*(n_pos_samples_tot/2); //ensure it is even
-    unsigned int n_neg_samples_tot =2000;
+    unsigned int n_neg_samples_tot =100000;
     n_neg_samples_tot = 2*(n_neg_samples_tot/2); //ensure it is even
 
     unsigned int n_samples_tot =n_pos_samples_tot+ n_neg_samples_tot;
 
     ////get filters to compute features
     /// TODO: pass path as parameter
-    const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
-    const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
-//const char *weight_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/weights_join_learned_gauss_21_rank_80.txt";
-  //  const char *sep_filters_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/sep_join_learned_gauss_21_rank_80.txt";
+  //  const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
+  //  const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
+const char *weight_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/weights_join_learned_gauss_21_rank_80.txt";
+    const char *sep_filters_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/sep_join_learned_gauss_21_rank_80.txt";
 
     MatrixTypeDouble weights = readMatrix(weight_file);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file);
@@ -397,6 +397,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 {
 
    //sample call ./vaa3d -x SQBTree -f test -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_predicted_DEBUG.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg
+//sample call ./vaa3d -x SQBTree -f test -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_predicted_DEBUG.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG_long.cfg
 
 
   cout<<"Welcome this plugin"<<endl;
@@ -498,8 +499,10 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
 
     ////load filters
-    const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
-    const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
+   // const char *weight_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_weigths_cpd_rank_25_rot_n1.txt";
+   // const char *sep_filters_file = "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/oof_fb_3d_scale_5_sep_cpd_rank_25_rot_n1.txt";
+    const char *weight_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/weights_join_learned_gauss_21_rank_80.txt";
+        const char *sep_filters_file ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/learned/sep_join_learned_gauss_21_rank_80.txt";
 
     MatrixTypeDouble weights = readMatrix(weight_file);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file);

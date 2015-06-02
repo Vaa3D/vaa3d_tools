@@ -57,9 +57,9 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
  //   std::cout << "rand sampling  " << std::endl;
 
     boost::random::mt19937 generator_pos;
-    boost::random::uniform_int_distribution<unsigned int> distribution_pos(0,pos_indeces.rows());
+    boost::random::uniform_int_distribution<unsigned int> distribution_pos(0,pos_indeces.rows()-1);
     boost::random::mt19937 generator_neg;
-    boost::random::uniform_int_distribution<unsigned int> distribution_neg(0,pos_indeces.rows());
+    boost::random::uniform_int_distribution<unsigned int> distribution_neg(0,pos_indeces.rows()-1);
 //    std::default_random_engine generator_pos;
 //    std::uniform_int_distribution<unsigned int> distribution_pos(0,pos_indeces.rows());
 //    std::default_random_engine generator_neg;
@@ -70,9 +70,16 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
 
         unsigned int rand_pos_index = distribution_pos(generator_pos);
 
-     //   std::cout << "rand pos index: " <<rand_pos_index << std::endl;
-     //   std::cout << "index rand pos index: " <<pos_indeces(rand_pos_index) << std::endl;
-     //   std::cout << "pos sample value: " <<gt_vector(pos_indeces(rand_pos_index)) << std::endl;
+//if(rand_pos_index > pos_indeces.rows()){
+
+//    std::cout << "rand pos index: " <<rand_pos_index << std::endl;
+//    std::cout << "length pos indeces: " <<pos_indeces.rows() << std::endl;
+//}
+
+
+  //      std::cout << "rand pos index: " <<rand_pos_index << std::endl;
+  //      std::cout << "index rand pos index: " <<pos_indeces(rand_pos_index) << std::endl;
+  //      std::cout << "pos sample value: " <<gt_vector(pos_indeces(rand_pos_index)) << std::endl;
 
 
         sampled_features_matrix.row(i_pos) = features_matrix.row(pos_indeces(rand_pos_index));
@@ -82,17 +89,17 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
     for(unsigned int i_neg =0; i_neg<n_neg_samples;i_neg++ ){
         unsigned int rand_neg_index = distribution_neg(generator_neg);
 
-     //   std::cout << " rand neg index: " <<(rand_neg_index) << std::endl;
-     //   std::cout << "index rand neg index: " <<neg_indeces(rand_neg_index) << std::endl;
-     //   std::cout << "neg sample value: " <<gt_vector(neg_indeces(rand_neg_index)) << std::endl;
+    //    std::cout << " rand neg index: " <<(rand_neg_index) << std::endl;
+    //    std::cout << "index rand neg index: " <<neg_indeces(rand_neg_index) << std::endl;
+    //    std::cout << "neg sample value: " <<gt_vector(neg_indeces(rand_neg_index)) << std::endl;
 
         sampled_features_matrix.row(i_neg+n_pos_samples) = features_matrix.row(neg_indeces(rand_neg_index));
         sampled_gt_vector(i_neg+n_pos_samples) = gt_vector(neg_indeces(rand_neg_index));
     }
 
 
-  //  std::cout << "min gt: "<< gt_vector.minCoeff() << " max gt: " << gt_vector.maxCoeff()  << std::endl;
-  //  std::cout << "min gt sampled: "<< sampled_gt_vector.minCoeff() << " max gt sampled: " << sampled_gt_vector.maxCoeff()  << std::endl;
+   // std::cout << "min gt: "<< gt_vector.minCoeff() << " max gt: " << gt_vector.maxCoeff()  << std::endl;
+   // std::cout << "min gt sampled: "<< sampled_gt_vector.minCoeff() << " max gt sampled: " << sampled_gt_vector.maxCoeff()  << std::endl;
 
 
     return true;
@@ -127,22 +134,22 @@ void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixT
   //  const unsigned int found_great_tot=i_found_great;
   //  const unsigned int found_small_tot=i_found_small;
 
-  //  std::cout << "n samples: " << n_samples<< std::endl;
-    //std::cout << "size great " << found_greater_indeces.rows() << std::endl;
-   // std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
+    std::cout << "n samples: " << n_samples<< std::endl;
+    std::cout << "size great " << found_greater_indeces.rows() << std::endl;
+    std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
 
 
-   // std::cout << "i_found_great " << i_found_great << std::endl;
+    std::cout << "i_found_great " << i_found_great << std::endl;
 
 
      //found_greater_indeces.head(found_great_tot);
     found_greater_indeces = found_greater_indeces_temp.head(i_found_great);
-  //  std::cout << "i_found_small " << i_found_small << std::endl;
+    std::cout << "i_found_small " << i_found_small << std::endl;
 //
     found_smaller_indeces = found_smaller_indeces_temp.head(i_found_small);
 
- //   std::cout << "min found_smaller_indeces: "<< found_smaller_indeces.minCoeff() << " max found_smaller_indeces: " << found_smaller_indeces.maxCoeff()  << std::endl;
- //   std::cout << "min found_smaller_indeces_temp: "<< found_smaller_indeces_temp.minCoeff() << " max found_smaller_indeces_temp: " << found_smaller_indeces_temp.maxCoeff()  << std::endl;
+    std::cout << "min found_smaller_indeces: "<< found_smaller_indeces.minCoeff() << " max found_smaller_indeces: " << found_smaller_indeces.maxCoeff()  << std::endl;
+    std::cout << "min found_smaller_indeces_temp: "<< found_smaller_indeces_temp.minCoeff() << " max found_smaller_indeces_temp: " << found_smaller_indeces_temp.maxCoeff()  << std::endl;
 
 
 

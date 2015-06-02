@@ -381,10 +381,10 @@ MatrixType computeFeaturesSepComb( typename ImageType::Pointer &input_img, const
         MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
 
 
-
+ std::cout << "Computing non-sep features...";
         nonsep_features_all = sep_features_all*weight_matrix;
         nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
-
+ std::cout << "Done!" << std::endl;
 
 
         return nonsep_features_all;
