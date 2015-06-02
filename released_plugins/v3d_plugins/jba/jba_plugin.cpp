@@ -20,7 +20,7 @@ void printHelp()
 {
     char JBA_VERSION[128] = "1.000";
     printf("\n===================================================================================================\n");
-    printf("\nUsage: ./vaa3d -x jba -f brainaligner -p \"#t <input_target_image> #s <input_subject_image> #o <aligned/warped_subject_image> #w <registration_type> ... <other_arguments>\"\n");
+    printf("\nUsage: ./vaa3d -x brainaligner -f brainaligner -p \"#t <input_target_image> #s <input_subject_image> #o <aligned/warped_subject_image> #w <registration_type> ... <other_arguments>\"\n");
     printf("\n");
     printf("\t [-t <input_target_image>]          .raw/.tif/.lsm file containing 3D template/target stack to which a subject image will be warped/mapped. The .raw file is in V3D's RAW format.\n");
     printf("\t [-C <target_ref_channel>]          the ID of the reference channel of the target image (default = 0). \n");
