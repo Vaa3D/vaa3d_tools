@@ -17,8 +17,8 @@ using namespace std;
 
 struct input_PARA
 {
-    QString inimg_file;
-    V3DLONG channel;
+    QString inimg_file,inmarker_file;
+    double threshold;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -73,7 +73,8 @@ bool nctuTW::dofunc(const QString & func_name, const V3DPluginArgList & input, V
         else
             PARA.inimg_file = infiles[0];
         int k=0;
-        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.inmarker_file = paras.empty() ? "" : paras[k]; if(PARA.inmarker_file == "NULL") PARA.inmarker_file = ""; k++;
+        PARA.threshold = (paras.size() >= k+1) ? atof(paras[k]) : 0.9;
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
@@ -83,9 +84,10 @@ bool nctuTW::dofunc(const QString & func_name, const V3DPluginArgList & input, V
 
 
 		printf("**** Usage of nctuTW tracing **** \n");
-		printf("vaa3d -x nctuTW -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x nctuTW -f tracing_func -i <inimg_file> -p <inmarker_file> <threshold>\n");
         printf("inimg_file       The input image\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("inmarker_file    If no input marker file, please set this para to NULL and it will detect soma automatically.\n");
+        printf("threshold        Default 0.9, otherwise the threshold (from 0 to 1) specified by a user will be used.\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -124,23 +126,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         P = p4DImage->getZDim();
         sc = p4DImage->getCDim();
 
-        bool ok1;
-
-        if(sc==1)
-        {
-            c=1;
-            ok1=true;
-        }
-        else
-        {
-            c = QInputDialog::getInteger(parent, "Channel",
-                                             "Enter channel NO:",
-                                             1, 1, sc, 1, &ok1);
-        }
-
-        if(!ok1)
-            return;
-
         in_sz[0] = N;
         in_sz[1] = M;
         in_sz[2] = P;
@@ -157,16 +142,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return;
         }
-        if(PARA.channel < 1 || PARA.channel > in_sz[3])
-        {
-            fprintf (stderr, "Invalid channel number. \n");
-            return;
-        }
         N = in_sz[0];
         M = in_sz[1];
         P = in_sz[2];
         sc = in_sz[3];
-        c = PARA.channel;
     }
 
     //main neuron reconstruction code
@@ -196,8 +175,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         oRawFile.close();
     }
 
-    QDlgPara* pqDlgPara = new QDlgPara(parent);
-    int nParaState = pqDlgPara->exec();
+
 /*
     // For debug
     if(nParaState == QDialog::Accepted){
@@ -206,10 +184,33 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         v3d_msg(QString(sPara.c_str()));
     }
 */
-
+    QDlgPara* pqDlgPara;
+    if(bmenu)
+    {
+        pqDlgPara = new QDlgPara(parent);
+        int nParaState = pqDlgPara->exec();
+    }
+    else
+    {
+        QList<ImageMarker> file_inmarkers;
+        if(!PARA.inmarker_file.isEmpty())
+        {
+            file_inmarkers = readMarker_file(PARA.inmarker_file);
+            g_nSomaX = file_inmarkers.at(0).x;
+            g_nSomaY = file_inmarkers.at(0).y;
+            g_nSomaZ = file_inmarkers.at(0).z;
+        }
+        else
+        {
+           g_nSomaX = -1;
+           g_nSomaY = -1;
+           g_nSomaZ = -1;
+        }
+        g_rThreshold = PARA.threshold;
+    }
     int state=NeuronTracingMain();
 
-    delete pqDlgPara;
+    if(bmenu) delete pqDlgPara;
 
     //Output
 
