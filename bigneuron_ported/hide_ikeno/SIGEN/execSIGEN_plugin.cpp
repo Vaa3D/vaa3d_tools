@@ -528,7 +528,8 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
 
     ofstream macro_file;
 
-    macro_file.open("/Applications/Fiji.app/macros/fileOut.ijm");
+//    macro_file.open("/Applications/Fiji.app/macros/fileOut.ijm");
+    macro_file.open("/var/tmp/fileOut.ijm");
 
     QString fiji_com = "open(\""+PARA.inimg_file+"\");\n";
     macro_file << fiji_com.toStdString();
@@ -544,7 +545,9 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
     // using Fiji
     // Fiji have to be loacted in /Applications
 
-    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx fileOut.ijm");
+    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx /var/tmp/fileOut.ijm");
+    system("/var/tmp/fileOut.ijm");
+
 
     // executing MorphExtractorCL.exe on mono
     QString strTh, strDt, strVt, strNs, strNc;
