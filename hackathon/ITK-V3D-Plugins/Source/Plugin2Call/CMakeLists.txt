@@ -1,4 +1,4 @@
-SET(PLUGIN_GROUP_NAME "Superplugin/Plugin2Call")
+SET(PLUGIN_DIRECTORY_NAME "Plugin2Call")
 CONFIGURE_V3D_PLUGIN(BinaryThreshold_called)
 CONFIGURE_V3D_PLUGIN(CannyEdgeDetection_called)
 CONFIGURE_V3D_PLUGIN(Cast2Float_called)
