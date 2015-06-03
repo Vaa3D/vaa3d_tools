@@ -100,11 +100,12 @@ bool nctuTW::dofunc(const QString & func_name, const V3DPluginArgList & input, V
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
     unsigned char* data1d = 0;
-    V3DLONG N,M,P,sc,c;
+    V3DLONG N,M,P,sc;
     V3DLONG in_sz[4];
+    v3dhandle curwin;
     if(bmenu)
     {
-        v3dhandle curwin = callback.currentImageWindow();
+        curwin = callback.currentImageWindow();
         if (!curwin)
         {
             QMessageBox::information(0, "", "You don't have any image open in the main window.");
@@ -118,7 +119,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
             return;
         }
-
 
         data1d = p4DImage->getRawData();
         N = p4DImage->getXDim();
@@ -193,12 +193,20 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         v3d_msg(QString(sPara.c_str()));
     }
 */
-    bmenu=false;
     QDlgPara* pqDlgPara;
     if(bmenu)
     {
+        LandmarkList  Landmark;
+        Landmark = callback.getLandmark(curwin);
+        if (Landmark.size()>0)
+        {
+            g_nSomaX= Landmark.at(0).x - 1;
+            g_nSomaY= Landmark.at(0).y - 1;
+            g_nSomaZ= Landmark.at(0).z - 1;
+        }
         pqDlgPara = new QDlgPara(parent);
         int nParaState = pqDlgPara->exec();
+
     }
     else
     {
@@ -221,8 +229,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     int state=NeuronTracingMain();
 
-    if(bmenu) delete pqDlgPara;
-     bmenu=true;
+    if(bmenu)
+    {
+        delete pqDlgPara;
+        g_nSomaX = -1;
+        g_nSomaY = -1;
+        g_nSomaZ = -1;
+    }
+
     //Output
 
 //    NeuronTree nt;
