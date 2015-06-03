@@ -30,7 +30,7 @@ QStringList BinarizationPlugin::funclist() const
 
 void BinarizationPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("LSK") || menu_name == tr("Line_segment_kernels"))
+	if (menu_name == tr("Line_segment_kernels") || menu_name == tr("experimental"))
 	{
 		bool bmenu = true;
 		input_PARA PARA;

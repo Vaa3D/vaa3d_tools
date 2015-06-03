@@ -10,7 +10,7 @@ using namespace std;
 #define PI 3.141592653589793238462
 
 template <class T, class U>
-void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d)
+void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d, double C)
 {
 	long count = imageD*imageH*imageW/10L;
 	long current = 0L;
@@ -46,6 +46,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 						dry = sin(a_interval*a) * sin(a_interval*b);
 						drz = cos(a_interval*a);
 						for(int k = -d; k <= d; k++){
+
 							rx = x + k * drx;
 							ry = y + k * dry;
 							rz = z + k * drz;
@@ -90,8 +91,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 						}
 						sum -= verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
 						sum /= d*2 + 1;
-						h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] > sum ? 
-																		h_Src[z*imageW*imageH + y*imageW + x] - sum : 0;
+						h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] - C > sum ? 255.0 : 0;
 					}
 				}
 
@@ -109,7 +109,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 
 //experimental
 template <class T, class U>
-void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d)
+void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d, double C)
 {
 	long count = imageD*imageH*imageW/10L;
 	long current = 0L;
@@ -296,8 +296,10 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 					if(maxval < sum/(d*2+1)) maxval = sum/(d*2+1);
 				}
 
-				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] > maxval ? 
-					(h_Src[z * imageW * imageH + y * imageW + x] - maxval)*(bval>maxval ? (bval-maxval) : 0.0) : 0;
+//				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] > maxval ? 
+//					(h_Src[z * imageW * imageH + y * imageW + x] - maxval)*(bval>maxval ? (bval-maxval) : 0.0) : 0;
+				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x]*(bval>maxval ? pow(1.0 + (bval-maxval), 0.5) : 0.0) - C*5 > maxval ? 
+					255.0 : 0;
 
 				current++;
 				if(current == count){
@@ -398,6 +400,8 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 		d = PARA.d;
 	}
 
+	double C = 10;
+
 	//main neuron reconstruction code
 
 	//// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
@@ -420,8 +424,8 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 
 		{
 			unsigned char * pSubtmp_uint8 = (unsigned char *)data1d;
-			if(mode == 0)BinaryProcess(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d  );
-			if(mode == 1)BinaryProcess2(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d  );
+			if(mode == 0)BinaryProcess(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d, C);
+			if(mode == 1)BinaryProcess2(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d, C);
 		}
 		break;
 
@@ -439,8 +443,8 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 
 		{
 			short int * pSubtmp_uint16 = (short int *)data1d;
-			if(mode == 0)BinaryProcess(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d );
-			if(mode == 1)BinaryProcess2(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d );
+			if(mode == 0)BinaryProcess(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d, C);
+			if(mode == 1)BinaryProcess2(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d, C);
 		}
 
 		break;
@@ -459,8 +463,8 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 
 		{
 			float * pSubtmp_float32 = (float *)data1d;
-			if(mode == 0)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d );
-			if(mode == 1)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d );
+			if(mode == 0)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d, C);
+			if(mode == 1)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d, C);
 //			for (V3DLONG ich=0; ich<sc; ich++)
 //				BinaryProcess(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, N, M, P, d );
 		}
