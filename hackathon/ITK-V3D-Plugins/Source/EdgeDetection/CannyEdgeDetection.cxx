@@ -89,6 +89,10 @@ public:
 
     this->m_OutputCast->Update();
 
+    if (!this->m_OutputCast->GetOutput())
+      {
+      qDebug()<<"Error Canny: outputCast is null";
+      }
     this->SetOutputImage( this->m_OutputCast->GetOutput() );
     }
 

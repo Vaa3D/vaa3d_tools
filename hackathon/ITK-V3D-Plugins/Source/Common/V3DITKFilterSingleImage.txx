@@ -113,7 +113,7 @@ V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
 
 //Now add connect to cancel button
 //  if ( this->m_used_filer ) {
-//	qDebug() << "add Cancle button";
+//	qDebug() << "add cancel button";
 //	progressDialog.setFilter(this->m_used_filer); 
 //	QObject::connect(&progressDialog, SIGNAL(cancelButtonClicked()), &progressDialog, SLOT(stopFilter()));
  // }
@@ -135,8 +135,7 @@ V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
 
     this->ComputeOneRegion();
 	if (this->m_Output3DImage.IsNull()) {
-		qDebug() << "Stop do it";
-		return;
+		qDebug() << "Error in V3DITKFilterSingleImage.txx:  Empty Output!";
 	}
     this->AddOutputImageChannel( channel );
     }
