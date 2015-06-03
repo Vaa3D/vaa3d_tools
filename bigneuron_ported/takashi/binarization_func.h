@@ -41,8 +41,8 @@ public:
 		Dlevel = new QSpinBox();
 		Dnumber = new QSpinBox();
 
-		Dlevel->setMaximum(10); Dlevel->setMinimum(1); Dlevel->setValue(1);
-		Dnumber->setMaximum(255); Dnumber->setMinimum(1); Dnumber->setValue(3);
+		Dlevel->setMaximum(10); Dlevel->setMinimum(1); Dlevel->setValue(3);
+		Dnumber->setMaximum(255); Dnumber->setMinimum(1); Dnumber->setValue(4);
 
 		ok     = new QPushButton("OK");
 		cancel = new QPushButton("Cancel");
