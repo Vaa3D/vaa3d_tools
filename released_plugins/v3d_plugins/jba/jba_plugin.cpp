@@ -97,8 +97,9 @@ void JBAPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 {
     if (menu_name == tr("about"))
     {
-        v3d_msg(tr("This is a plugin of Janelia Brain Aligner (Hanchuan2011).\n"
-                   "More details can be found at http://penglab.janelia.org/proj/brainaligner/BrainAligner/Download.html\n"
+        v3d_msg(tr("This is a simple plugin to port Janelia BrainAligner developed by Hanchuan Peng (Nature Methods 2011) to Vaa3D).\n"
+"At this moment, this plugin can be executed only via command-line use of Vaa3D. The GUI access of the plugin will be added later."                   
+"More details can be found at http://penglab.janelia.org/proj/brainaligner/BrainAligner/Download.html\n"
                    "Developed by Yang Yu (yuy@janelia.hhmi.org), 2015-6-1"));
     }
 }
