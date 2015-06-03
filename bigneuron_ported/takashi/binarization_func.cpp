@@ -24,7 +24,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 				double sum;
 				double rx, ry, rz, fx, fy, fz, drx, dry, drz, val;
 				int ix, iy, iz;
-				double verticalC = 0;
+				double verticalC = C;
 
 				//z-axis
 				sum = 0;
@@ -34,7 +34,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 					if(zz >= imageD)zz = imageD - 1;
 					sum += h_Src[zz * imageW * imageH + y * imageW + x];// * h_Kernel[kernelR - k];
 				}
-				sum -= verticalC;
+				sum += verticalC;
 				h_Dst[z * imageW * imageH + y * imageW + x] = sum/(d*2+1);
 
 				// a: y-axis b: z-axis
@@ -46,7 +46,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 						dry = sin(a_interval*a) * sin(a_interval*b);
 						drz = cos(a_interval*a);
 						for(int k = -d; k <= d; k++){
-
+/*
 							rx = x + k * drx;
 							ry = y + k * dry;
 							rz = z + k * drz;
@@ -86,12 +86,26 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 								c011*(1.0f-fx)*fy*fz +
 								c110*fx*fy*(1.0f-fz) +
 								c111*fx*fy*fz;
+*/
+							rx = x + k * drx;
+							ry = y + k * dry;
+							rz = z + k * drz;
+							int ix = (int)(rx + 0.5);
+							int iy = (int)(ry + 0.5);
+							int iz = (int)(rz + 0.5);
+							if(ix < 0)ix = 0;
+							if(ix >= imageW)ix = imageW - 1;
+							if(iy < 0)iy = 0;
+							if(iy >= imageH)iy = imageH - 1;
+							if(iz < 0)iz = 0;
+							if(iz >= imageD)iz = imageD - 1;
+							val = h_Src[iz*imageH*imageW + iy*imageW + ix];
 
 							sum += val;//(float)(val * h_Kernel[kernelR - k]);
 						}
-						sum -= verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
+						sum += verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
 						sum /= d*2 + 1;
-						h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] - C > sum ? 255.0 : 0;
+						h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] > sum ? 255.0 : 0;
 					}
 				}
 
@@ -297,9 +311,8 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 				}
 
 //				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] > maxval ? 
-//					(h_Src[z * imageW * imageH + y * imageW + x] - maxval)*(bval>maxval ? (bval-maxval) : 0.0) : 0;
-				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x]*(bval>maxval ? pow(1.0 + (bval-maxval), 0.5) : 0.0) - C*5 > maxval ? 
-					255.0 : 0;
+//					(h_Src[z * imageW * imageH + y * imageW + x] - maxval)*(bval>maxval ? sqrt(1.0 + (bval-maxval)/vmax*255.0) : 0.0) : 0;
+				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] - C > maxval ? 255.0 : 0;
 
 				current++;
 				if(current == count){
@@ -400,7 +413,7 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 		d = PARA.d;
 	}
 
-	double C = 10;
+	double C = 15;
 
 	//main neuron reconstruction code
 
