@@ -299,7 +299,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
         system("rm out.swc");
     } else {
-        v3d_msg(QString("Install Mono at http://www.mono-project.com/"));
+        v3d_msg(QString("Install Mono at http://www.mono-project.com/ & copy MorphExtractorCL.exe in your vaa3D directory"));
     }
 
     ofstream log_file;
