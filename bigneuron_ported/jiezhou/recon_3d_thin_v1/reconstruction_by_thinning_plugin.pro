@@ -4,16 +4,16 @@ CONFIG	+= qt plugin warn_off
 
 mac{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
-    ITKLIBPATH = ITKlibs_MAC
+    ITKLIBPATH = ../../../hackathon/zhi/snake_tracing/ITKlibs_MAC
 }
 else{
-    ITKLIBPATH = ITKlibs_Linux
-    SOURCES = ITK_include/itkLightProcessObject.cxx
+    ITKLIBPATH = ../../../hackathon/zhi/snake_tracing/ITKlibs_Linux
+    SOURCES = ../../../hackathon/zhi/snake_tracing/ITK_include/itkLightProcessObject.cxx
 }
 
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/v3d $$VAA3DPATH/basic_c_fun $$VAA3DPATH/common_lib/include
-INCLUDEPATH     += ITK_include
+INCLUDEPATH     += ../../../hackathon/zhi/snake_tracing/ITK_include
 
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
@@ -31,7 +31,7 @@ SOURCES += itkBinaryThinningImageFilter3D.txx
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
-SOURCES += ITK_include/vcl_deprecated.cxx
+SOURCES += ../../../hackathon/zhi/snake_tracing/ITK_include/vcl_deprecated.cxx
 
 TARGET	= $$qtLibraryTarget(reconstruction_by_thinning)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/reconstruction_by_thinning
+DESTDIR	= $$VAA3DPATH/../bin/plugins/bigneuronhackathon/reconstruction_by_thinning

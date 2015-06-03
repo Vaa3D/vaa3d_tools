@@ -190,6 +190,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 
         PARA.inimg_file = p4DImage->getFileName();
+        PARA.threshold = 0;
     }
     else
     {
