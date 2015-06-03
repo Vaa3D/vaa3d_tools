@@ -17,7 +17,7 @@ ImageDataTransmit (V3DPluginCallback2* V3dCallback): m_V3DPluginCallback(V3dCall
 template <typename TInputPixelType>
 void
 ImageDataTransmit < TInputPixelType >
-::initial() 
+::initial()
 {
   this->m_GlobalSetting = this->m_V3DPluginCallback->getGlobalSetting();
   this->m_4DImage = this->m_V3DPluginCallback->getImage(m_V3DPluginCallback->currentImageWindow());
@@ -238,6 +238,7 @@ getPluginName() const
 {
   return m_pluginName;
 }
+
 template <typename TInputPixelType>
 ImageDataTransmit < TInputPixelType > ::
 ~ImageDataTransmit()
@@ -247,10 +248,14 @@ ImageDataTransmit < TInputPixelType > ::
   {
     //m_InputItkImageList[i]->Delete();
     //m_OutputItkImageList[i]->Delete();
-    m_InputItkImageList[i]->UnRegister();
-    m_OutputItkImageList[i]->UnRegister();
     qDebug() << "Input Reference Account: " << m_InputItkImageList.at(i)->GetReferenceCount();
+   //  m_InputItkImageList[i]->UnRegister();    //might introduce memory leak?
+  }
+
+  for (int i = 0; i < m_OutputItkImageList.size(); i++)
+  {
     qDebug() << "Output Reference Account: " << m_OutputItkImageList.at(i)->GetReferenceCount();
+  //  m_OutputItkImageList[i]->UnRegister();  //might introduce memory leak?
   }
 }
 #endif

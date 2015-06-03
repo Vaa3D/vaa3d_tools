@@ -31,7 +31,7 @@ endif()
 target_link_libraries(${PLUGIN_NAME} V3DITKCommon)
 
 if(NOT PLUGIN_DIRECTORY_NAME)
-  set(PLUGIN_DIRECTORY_NAME ${PLUGIN_NAME})
+  set(PLUGIN_DIRECTORY_NAME ${PLUGIN_GROUP_NAME}/${PLUGIN_NAME})
 endif()
 
 # Install plugins below executable for cpack installer builds
