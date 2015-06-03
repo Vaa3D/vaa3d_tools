@@ -8,7 +8,7 @@ echo '========================================'
 
 ITK_DIR=
 ITK_BUILD_DIR=ITK_build
-V3D_SOURCE_DIR=
+V3D_SOURCE_DIR=../../../v3d_external
 V3D_SOURCE_DIR_FILE=V3D_Source_dir.tmp
 V3D_BINARY_DIR=
 V3D_BASIC_C_FUN_SOURCE_DIR=
@@ -106,7 +106,7 @@ if [ -d $PLUGINS_BUILD_DIR ]; then
 else
 	mkdir $PLUGINS_BUILD_DIR && cd $PLUGINS_BUILD_DIR
 fi
-cmake -DV3D_BASIC_C_FUN_SOURCE_DIR=$V3D_BASIC_C_FUN_SOURCE_DIR -DV3D_BINARY_DIR=$V3D_BINARY_DIR -DITK_DIR=$ITK_DIR -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-w -g" ../
+cmake -DV3D_BASIC_C_FUN_SOURCE_DIR=$V3D_BASIC_C_FUN_SOURCE_DIR -DV3D_BINARY_DIR=$V3D_BINARY_DIR  -DCMAKE_CXX_FLAGS="-fPIC -O3 -stdlib=libstdc++" -DITK_DIR=$ITK_DIR -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-w -g" ../
 make -j4
 echo '============================'
 echo 'Now start to install plugins'
