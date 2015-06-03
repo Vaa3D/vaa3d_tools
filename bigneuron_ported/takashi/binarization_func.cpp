@@ -3,7 +3,7 @@
 #include "basic_surf_objs.h"
 #include "binarization_func.h"
 
-#include <omp.h>
+//#include <omp.h>
 
 using namespace std;
 
