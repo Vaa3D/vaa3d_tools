@@ -9,6 +9,7 @@
 
 //
 
+#include <QtGui>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -23,6 +24,7 @@
 #include "../plugin_loader/v3d_plugin_loader.h"
 #include <boost/lexical_cast.hpp>
 
+//
 
 //
 
@@ -31,6 +33,7 @@ Q_EXPORT_PLUGIN2(execSIGEN, SIGEN);
 
 using namespace std;
 
+
 struct input_PARA
 {
     QString inimg_file;
@@ -38,13 +41,11 @@ struct input_PARA
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
-void setting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 
 QStringList SIGEN::menulist() const
 {
 	return QStringList() 
-		<<tr("tracing_menu")
-		<<tr("setting_menu")
+        <<tr("tracing_menu")
 		<<tr("about");
 }
 
@@ -52,7 +53,6 @@ QStringList SIGEN::funclist() const
 {
 	return QStringList()
 		<<tr("tracing_func")
-		<<tr("setting_func")
 		<<tr("help");
 }
 
@@ -60,18 +60,12 @@ void SIGEN::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidg
 {
 	if (menu_name == tr("tracing_menu"))
 	{
+
         bool bmenu = true;
         input_PARA PARA;
+
         reconstruction_func(callback,parent,PARA,bmenu);
-
 	}
-	else if (menu_name == tr("setting_menu"))
-	  {
-	    bool bmenu = true;
-	    input_PARA PARA;
-
-	    setting_func(callback,parent,PARA,bmenu);
-	  }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -102,13 +96,6 @@ bool SIGEN::dofunc(const QString & func_name, const V3DPluginArgList & input, V3
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
-    else if (func_name == tr("setting_func"))
-        {
-            bool bmenu = false;
-            input_PARA PARA;
-            
-            setting_func(callback,parent,PARA,bmenu);
-	}
     else if (func_name == tr("help"))
         {
 
@@ -127,6 +114,17 @@ so you don't have to specify it.\n\n");
 
 	return true;
 }
+
+int fexist(const char *filename)
+{
+    FILE  *fp;
+
+    if ((fp = fopen(filename, "r")) == NULL)
+        return (0);
+    fclose(fp);
+    return (1);
+}
+
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
@@ -206,19 +204,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
 
-    
-    if (mkdir("tmp", S_IRUSR | S_IWUSR | S_IXUSR |         /* rwx */
-                     S_IRGRP | S_IWGRP | S_IXGRP |         /* rwx */
-                     S_IROTH | S_IXOTH | S_IXOTH) == 0)  {
-        printf("create tmp directory \n");
-    } else {
-        printf("fail to create tmp directory \n");
-    }
-    
+
     //    v3d_msg(QString("Image file: %1").arg(PARA.inimg_file),bmenu);
     
-    ofstream macro_file;
-
     //
     // GUI setting
     bool ok1, ok2, ok3, ok4, ok5;
@@ -241,24 +229,41 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     ns = QInputDialog::getInteger(parent, "Smoothing Level",
                                   "Enter Smoothing level:",
-                                  0, 0, 50, 1, &ok4);
+                                  5, 0, 50, 1, &ok4);
     if (!ok4) return;
 
     nc = QInputDialog::getInteger(parent, "Clipping Level",
                                   "Enter Clipping level:",
                                   0, 0, 50, 1, &ok5);
     if (!ok5) return;
-    //
 
+    /*
+    bool ok6;
+    QInputDialog* inputDialog = new QInputDialog();
+    inputDialog->setOptions(QInputDialog::NoButtons);
+
+    QString pathFiji =  QInputDialog::getText(NULL ,"QInputDialog::getText() Example",
+                                          "Path to Fiji:", QLineEdit::Normal,
+                                          QDir::home().dirName(), &ok6);
+
+    if (!ok6) return;
+    */
+
+    // using /var/tmp area for temporary saving of image files
+
+    system("mkdir /var/tmp/vaa3D-SIGEN");
 
     // using Fiji in /Applications/Fiji.app/
-    
+    // in the case of different directory, we have to change line 261
+
+    ofstream macro_file;
+
     macro_file.open("/Applications/Fiji.app/macros/fileOut.ijm");
 
     QString fiji_com = "open(\""+PARA.inimg_file+"\");\n";
     macro_file << fiji_com.toStdString();
 
-    fiji_com = "run(\"Image Sequence... \", \"format=BMP name=in start=0 digits=4 save=/Volumes/Ultra1/BigNeuron/v3d_external/bin/tmp\");\n";
+    fiji_com = "run(\"Image Sequence... \", \"format=BMP name=in start=0 digits=4 save=/var/tmp/vaa3D-SIGEN/\");\n";
     macro_file << fiji_com.toStdString();
 
     fiji_com = "run(\"Quit\")";
@@ -267,25 +272,67 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     macro_file.close();
     
     // using Fiji
+    // Fiji have to be loacted in /Applications
     
     system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx fileOut.ijm");
 
     // executing MorphExtractorCL.exe on mono
     QString strTh, strDt, strVt, strNs, strNc;
-    QString command = "mono ./MorphExtractorCL.exe -i tmp -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
+    QString command = "mono ./MorphExtractorCL.exe -i /var/tmp/vaa3D-SIGEN -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
     system(command.toStdString().c_str());
 
     //    system("mono ./MorphExtractorCL.exe -i ./tmp -o out -b 128 -t -v 2 -d 10 -s 10 -a 10");
-    system("rm /Volumes/Ultra1/BigNeuron/v3d_external/bin/tmp/*");
+    system("rm /var/tmp/vaa3D-SIGEN/*");
+    system("rmdir /var/tmp/vaa3D-SIGEN");
 
     //Output
 
+
     NeuronTree nt;
-	QString swc_name = PARA.inimg_file + "_SIGEN.swc";
+    QString swc_name = PARA.inimg_file + "_SIGEN.swc";
     nt.name = "execSIGEN";
-	//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-    command = "cp out.swc "+swc_name;
-        system(command.toStdString().c_str());
+    //    writeSWC_file(swc_name.toStdString().c_str(),nt);
+
+    if (fexist("out.swc")) {
+        command = "cp out.swc "+swc_name;
+            system(command.toStdString().c_str());
+
+        system("rm out.swc");
+    } else {
+        v3d_msg(QString("Install Mono http://www.mono-project.com/"));
+    }
+
+    ofstream log_file;
+    QString log_name = PARA.inimg_file+"_SIGEN.txt";
+    log_file.open(log_name.toStdString().c_str());
+
+    time_t now = time(NULL);
+    struct tm *pnow = localtime(&now);
+    log_file << "Date_Time: ";
+    log_file << pnow->tm_year + 1900 << "/" << pnow->tm_mon + 1 << "/" << pnow->tm_mday <<
+                " " << pnow->tm_hour << ":" << pnow->tm_min << ":" << pnow->tm_sec << "\n";
+
+    log_file << "Input: ";
+    log_file << PARA.inimg_file.toStdString().c_str() << "\n";
+    log_file << "Output: ";
+    log_file << swc_name.toStdString().c_str();
+    log_file << "\n";
+    log_file << "Binarization_threshold: ";
+    log_file << strTh.setNum(th).toStdString().c_str();
+    log_file << "\n";
+    log_file << "Volume_threshold: ";
+    log_file << strTh.setNum(vt).toStdString().c_str();
+    log_file << "\n";
+    log_file << "Distance_threshold: ";
+    log_file << strTh.setNum(dt).toStdString().c_str();
+    log_file << "\n";
+    log_file << "Smoothing_level: ";
+    log_file << strTh.setNum(ns).toStdString().c_str();
+    log_file << "\n";
+    log_file << "Clipping_level: ";
+    log_file << strTh.setNum(nc).toStdString().c_str();
+
+    log_file.close();
 
     if(!bmenu)
     {
@@ -297,9 +344,3 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     return;
 }
 
-void setting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
-{
-   v3d_msg("Now you can in the setting function",bmenu);
-
-  return;
-}
