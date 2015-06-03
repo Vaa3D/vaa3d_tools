@@ -461,7 +461,7 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
     QFormLayout form(&dialog);
 
     // Add some text above the fields
-    form.addRow(new QLabel("SIGEN Extraction"));
+    form.addRow(new QLabel("SIGEN segmentation conditions"));
 
     // Add the lineEdits with their respective labels
     QList<QLineEdit *> fields;
@@ -495,7 +495,13 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
     QString label5 = QString("Clipping Level").arg(5);
     form.addRow(label5, lineEdit5);
     fields << lineEdit5;
-
+/*
+    QLineEdit *lineEdit6 = new QLineEdit(&dialog);
+    lineEdit6->setText("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx");
+    QString label6 = QString("Clipping Level").arg(6);
+    form.addRow(label6, lineEdit6);
+    fields << lineEdit6;
+*/
     // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                                Qt::Horizontal, &dialog);
@@ -545,9 +551,14 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
     // using Fiji
     // Fiji have to be loacted in /Applications
 
-    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx /var/tmp/fileOut.ijm");
-    system("/var/tmp/fileOut.ijm");
+    std:string fiji_command;
+  //  fiji_command = lineEdit6->text().toStdString().c_str();
 
+    fiji_command = "/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx /var/tmp/fileOut.ijm";
+//    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx /var/tmp/fileOut.ijm");
+    system(fiji_command.c_str());
+    system("/var/tmp/fileOut.ijm");
+    system("rm /var/tmp/fileOut.ijm");
 
     // executing MorphExtractorCL.exe on mono
     QString strTh, strDt, strVt, strNs, strNc;
