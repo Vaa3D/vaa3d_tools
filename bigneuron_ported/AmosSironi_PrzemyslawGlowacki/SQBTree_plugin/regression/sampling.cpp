@@ -134,9 +134,9 @@ void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixT
   //  const unsigned int found_great_tot=i_found_great;
   //  const unsigned int found_small_tot=i_found_small;
 
-    std::cout << "n samples: " << n_samples<< std::endl;
-    std::cout << "size great " << found_greater_indeces.rows() << std::endl;
-    std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
+   // std::cout << "n samples: " << n_samples<< std::endl;
+   // std::cout << "size great " << found_greater_indeces.rows() << std::endl;
+   // std::cout << "size small " << found_smaller_indeces.rows() << std::endl;
 
 
     std::cout << "i_found_great " << i_found_great << std::endl;

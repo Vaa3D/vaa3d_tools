@@ -114,6 +114,54 @@ void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_s
 
 }
 
+void predictRegressor(const char * regressor_output_file,gFeatArrayType all_samples_features,TreeBoosterType::ResponseArrayType &newScores){
+
+
+    ////apply trained regressor
+   std::cout << "Loading Regressor...";
+
+    libconfig::Config cfg;
+
+    // Read the file. If there is an error, report it and exit.
+    try
+    {
+      cfg.readFile(regressor_output_file);
+    }
+    catch(const libconfig::FileIOException &fioex)
+    {
+      std::cerr << "I/O error while reading file." << std::endl;
+    }
+    catch(const libconfig::ParseException &pex)
+    {
+      std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                << " - " << pex.getError() << std::endl;
+    }
+
+    libconfig::Setting &root = cfg.getRoot();
+
+    libconfig::Setting &regressor = root["regressor"];
+
+    TreeBoosterType TB;
+    TB.loadFromLibconfig(regressor);
+
+    unsigned maxIters = TB.numWeakLearners();
+    std::cout<< "Done!"<< std::endl; //loaded regressor
+
+    std::cout << "Predicting...";
+    //TreeBoosterType::ResponseArrayType newScores;
+    newScores = TreeBoosterType::ResponseArrayType::Zero(all_samples_features.rows());
+
+    TB.predict( TreeBoosterType::SampleListType(all_samples_features),
+                TreeBoosterType::FeatureValueObjectType(all_samples_features),
+                newScores,
+                maxIters );
+    std::cout<< "Done!"<< std::endl;
+
+
+   // return newScores;
+
+}
+
 
 
 template<typename ImageType>

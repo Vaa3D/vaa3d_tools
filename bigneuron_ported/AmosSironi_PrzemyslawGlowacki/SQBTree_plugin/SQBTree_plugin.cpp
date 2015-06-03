@@ -164,6 +164,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
     //sample call: ./vaa3d -x SQBTree -f train -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg -p TODO.swc
     //sample call: ./vaa3d -x SQBTree -f train -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG_long.cfg -p TODO.swc
+    //sample call 2 train images: ./vaa3d -x SQBTree -f train -i /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_unit8.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/regressor_path_DEBUG.cfg -p TODO.swc TODO.swc
 
 
      cout<<"Reading Input Files and Parameters."<<endl;

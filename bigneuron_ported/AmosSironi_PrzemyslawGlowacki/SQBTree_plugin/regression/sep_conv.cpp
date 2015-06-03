@@ -266,7 +266,7 @@ typename ImageType::RegionType region;
 
   //check dimensions
   if (size_image[0]*size_image[1]*size_image[2] != input_vector.rows()){
-       printf ("Error: Tot number of pixels in vector (%i) don't match size of image' (%i, %i, %i)\n",input_vector.rows(),size_image[0],size_image[1],size_image[2]);
+       printf ("Error: Tot number of pixels in vector (%i) does not match size of image' (%i, %i, %i)\n",input_vector.rows(),size_image[0],size_image[1],size_image[2]);
        return image;
   }
 
@@ -398,6 +398,10 @@ template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, Matrix
 //template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3> I,MatrixTypeFloat M,VectorTypeFloat V);
 //template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< float, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
 template MatrixTypeFloat computeFeaturesSepComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
+template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeDouble>(const VectorTypeDouble &newScores,const itk::Image< float, 3>::SizeType &size_img);
+template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeFloat>(const VectorTypeFloat &newScores,const itk::Image< float, 3>::SizeType &size_img);
+
+
 
 template int dumbfun<float,int>(float s);
 
