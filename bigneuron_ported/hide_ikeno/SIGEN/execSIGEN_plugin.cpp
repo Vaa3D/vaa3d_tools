@@ -33,6 +33,8 @@ Q_EXPORT_PLUGIN2(execSIGEN, SIGEN);
 
 using namespace std;
 
+QString getAppPath();
+
 
 struct input_PARA
 {
@@ -291,7 +293,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     ofstream macro_file;
 
-    macro_file.open("/Applications/Fiji.app/macros/fileOut.ijm");
+    macro_file.open("/var/tmp/fileOut.ijm");
 
     QString fiji_com = "open(\""+PARA.inimg_file+"\");\n";
     macro_file << fiji_com.toStdString();
@@ -307,11 +309,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // using Fiji
     // Fiji have to be loacted in /Applications
     
-    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx fileOut.ijm");
+    system("/Applications/Fiji.app/Contents/MacOS/ImageJ-macosx -macro /var/tmp/fileOut.ijm");
 
     // executing MorphExtractorCL.exe on mono
     QString strTh, strDt, strVt, strNs, strNc;
-    QString command = "mono ./MorphExtractorCL.exe -i /var/tmp/vaa3D-SIGEN -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
+    QString command = "mono " + getAppPath() + "/../../vaa3d_tools/bigneuron_ported/hide_ikeno/SIGEN/MorphExtractorCL.exe -i /var/tmp/vaa3D-SIGEN -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
     system(command.toStdString().c_str());
 
     //    system("mono ./MorphExtractorCL.exe -i ./tmp -o out -b 128 -t -v 2 -d 10 -s 10 -a 10");
@@ -371,6 +373,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
 }
@@ -623,6 +627,30 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+
     return;
 }
 
+QString getAppPath()
+{
+    QString v3dAppPath("~/Work/v3d_external/v3d");
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    v3dAppPath = testPluginsDir.absolutePath();
+    return v3dAppPath;
+}
