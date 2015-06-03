@@ -1,7 +1,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
-#include "test_func.h"
+#include "binarization_func.h"
 
 #include <omp.h>
 
@@ -10,7 +10,7 @@ using namespace std;
 #define PI 3.141592653589793238462
 
 template <class T, class U>
-void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG h, V3DLONG d)
+void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d)
 {
 	long count = imageD*imageH*imageW/10L;
 	long current = 0L;
@@ -29,7 +29,7 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 				//z-axis
 				sum = 0;
 				for(int k = -d; k <= d; k++){
-					int zz = z + k*h;
+					int zz = z + k;
 					if(zz < 0)zz = 0;
 					if(zz >= imageD)zz = imageD - 1;
 					sum += h_Src[zz * imageW * imageH + y * imageW + x];// * h_Kernel[kernelR - k];
@@ -46,9 +46,9 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 						dry = sin(a_interval*a) * sin(a_interval*b);
 						drz = cos(a_interval*a);
 						for(int k = -d; k <= d; k++){
-							rx = x + k * drx * h;
-							ry = y + k * dry * h;
-							rz = z + k * drz * h;
+							rx = x + k * drx;
+							ry = y + k * dry;
+							rz = z + k * drz;
 
 							if(rx < 0)rx = 0;
 							if(rx >= imageW)rx = imageW - 1;
@@ -107,8 +107,9 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 }
 
 
+//experimental
 template <class T, class U>
-void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG h, V3DLONG d)
+void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG imageD, V3DLONG l, V3DLONG d)
 {
 	long count = imageD*imageH*imageW/10L;
 	long current = 0L;
@@ -139,7 +140,7 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 				//z-axis
 				sum = 0;
 				for(int k = -d; k <= d; k++){
-					int zz = z + k*h;
+					int zz = z + k;
 					if(zz < 0)zz = 0;
 					if(zz >= imageD)zz = imageD - 1;
 					sum += h_Src[zz * imageW * imageH + y * imageW + x];// * h_Kernel[kernelR - k];
@@ -158,9 +159,9 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 						drz = cos(a_interval*a);
 						for(int k = -d; k <= d; k++){
 
-							rx = x + k * drx * h;
-							ry = y + k * dry * h;
-							rz = z + k * drz * h;
+							rx = x + k * drx;
+							ry = y + k * dry;
+							rz = z + k * drz;
 
 							if(rx < 0)rx = 0;
 							if(rx >= imageW)rx = imageW - 1;
@@ -199,9 +200,9 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 								c111*fx*fy*fz;
 
 /*					
-							rx = x + k * drx * h;
-							ry = y + k * dry * h;
-							rz = z + k * drz * h;
+							rx = x + k * drx;
+							ry = y + k * dry;
+							rz = z + k * drz;
 							int ix = floor(rx + 0.5);
 							int iy = floor(ry + 0.5);
 							int iz = floor(rz + 0.5);
@@ -235,9 +236,9 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 
 					sum = 0;
 					for(int k = -d; k <= d; k++){
-						rx = x + k * drx * h;
-						ry = y + k * dry * h;
-						rz = z + k * drz * h;
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
 
 						if(rx < 0)rx = 0;
 						if(rx >= imageW)rx = imageW - 1;
@@ -275,9 +276,9 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 							c110*fx*fy*(1.0f-fz) +
 							c111*fx*fy*fz;
 /*
-						rx = x + k * drx * h;
-						ry = y + k * dry * h;
-						rz = z + k * drz * h;
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
 						int ix = floor(rx + 0.5);
 						int iy = floor(ry + 0.5);
 						int iz = floor(rz + 0.5);
@@ -309,10 +310,10 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 	putchar('\n');
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu, int mode)
 {
 	unsigned char* data1d = 0;
-	V3DLONG N,M,P,sc,c,l,h,d;
+	V3DLONG N,M,P,sc,c,l,d;
 	V3DLONG in_sz[4];
 	ImagePixelType datatype;
 	if(bmenu)
@@ -372,9 +373,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		else
 		{
 			l = dialog.Dlevel->text().toLong();
-			h = 1;//dialog.Ddistance->text().toLong();
 			d = dialog.Dnumber->text().toLong();
-			printf("%d l,%d h,%d d \n ",l,h,d);
+			printf("%d l,%d d \n ", l, d);
 		}
 	}
 	else
@@ -395,7 +395,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		sc = in_sz[3];
 		c = PARA.channel-1;
 		l = PARA.l;
-		h = 1;//PARA.h;
 		d = PARA.d;
 	}
 
@@ -421,7 +420,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 		{
 			unsigned char * pSubtmp_uint8 = (unsigned char *)data1d;
-			BinaryProcess2(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, h, d  );
+			if(mode == 0)BinaryProcess(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d  );
+			if(mode == 1)BinaryProcess2(pSubtmp_uint8+c*channelsz, (unsigned char *)pData, N, M, P, l, d  );
 		}
 		break;
 
@@ -439,7 +439,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 		{
 			short int * pSubtmp_uint16 = (short int *)data1d;
-			BinaryProcess2(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, h, d );
+			if(mode == 0)BinaryProcess(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d );
+			if(mode == 1)BinaryProcess2(pSubtmp_uint16+c*channelsz, (short int *)pData, N, M, P, l, d );
 		}
 
 		break;
@@ -458,9 +459,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 		{
 			float * pSubtmp_float32 = (float *)data1d;
-			BinaryProcess2(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, h, d );
+			if(mode == 0)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d );
+			if(mode == 1)BinaryProcess(pSubtmp_float32+c*channelsz, (float *)pData, N, M, P, l, d );
 //			for (V3DLONG ich=0; ich<sc; ich++)
-//				BinaryProcess(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, N, M, P, h, d );
+//				BinaryProcess(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, N, M, P, d );
 		}
 
 		break;
@@ -508,6 +510,4 @@ void DSLTDialog::update()
 	//get current data
 	Dl = Dlevel->text().toLong()-1;
 	Dn = Dnumber->text().toLong()-1;
-	Dh = Ddistance->text().toLong()-1;
-		//printf("channel %ld val %d x %ld y %ld z %ld ind %ld \n", c, data1d[ind], nx, ny, nz, ind);
 }

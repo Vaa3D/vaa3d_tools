@@ -7,10 +7,10 @@
 struct input_PARA
 {
 	QString inimg_file;
-	V3DLONG channel, l, h, d;
+	V3DLONG channel, l, d;
 };
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu, int mode);
 
 
 //define a simple dialog for choose DT parameters
@@ -22,10 +22,8 @@ public:
 	QGridLayout *gridLayout;
 
 	QLabel *labell;
-	QLabel *labelx;
-	QLabel *labely;
+	QLabel *labeld;
 	QSpinBox* Dlevel;
-	QSpinBox* Ddistance;
 	QSpinBox* Dnumber;
 
 	QPushButton* ok;
@@ -33,8 +31,7 @@ public:
 
 	V3DLONG Dl;
 	V3DLONG Dn;
-	V3DLONG Dh;
-
+	
 public:
 	DSLTDialog(V3DPluginCallback2 &cb, QWidget *parent)
 	{
@@ -42,11 +39,9 @@ public:
 		QString imageName = cb.getImageName(cb.currentImageWindow());
 		//create a dialog
 		Dlevel = new QSpinBox();
-		Ddistance= new QSpinBox();
 		Dnumber = new QSpinBox();
 
 		Dlevel->setMaximum(10); Dlevel->setMinimum(1); Dlevel->setValue(1);
-		Ddistance->setMaximum(255); Ddistance->setMinimum(1); Ddistance->setValue(5);
 		Dnumber->setMaximum(255); Dnumber->setMinimum(1); Dnumber->setValue(3);
 
 		ok     = new QPushButton("OK");
@@ -54,12 +49,10 @@ public:
 		gridLayout = new QGridLayout();
 
 		labell = new QLabel(QObject::tr("quality"));
-		labelx = new QLabel(QObject::tr("sampling interval"));
-		labely = new QLabel(QObject::tr("number of sampling points"));
+		labeld = new QLabel(QObject::tr("number of sampling points"));
 
 		gridLayout->addWidget(labell, 0,0); gridLayout->addWidget(Dlevel, 0,1);
-		gridLayout->addWidget(labelx, 1,0); gridLayout->addWidget(Ddistance, 1,1);
-		gridLayout->addWidget(labely, 2,0); gridLayout->addWidget(Dnumber, 2,1);
+		gridLayout->addWidget(labeld, 1,0); gridLayout->addWidget(Dnumber, 1,1);
 
 		gridLayout->addWidget(cancel, 6,1); gridLayout->addWidget(ok, 6,0);
 		setLayout(gridLayout);
@@ -70,7 +63,6 @@ public:
 
 		//slot interface
 		connect(Dlevel, SIGNAL(valueChanged(int)), this, SLOT(update()));
-		connect(Ddistance, SIGNAL(valueChanged(int)), this, SLOT(update()));
 		connect(Dnumber,SIGNAL(valueChanged(int)), this, SLOT(update()));
 	}
 

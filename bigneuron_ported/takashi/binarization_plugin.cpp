@@ -6,33 +6,37 @@
  
 #include "v3d_message.h"
 #include <vector>
-#include "test_plugin.h"
-#include "test_func.h"
+#include "binarization_plugin.h"
+#include "binarization_func.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(test, TestPlugin);
+Q_EXPORT_PLUGIN2(binarization, BinarizationPlugin);
 
-QStringList TestPlugin::menulist() const
+QStringList BinarizationPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
+		<<tr("Line_segment_kernels")
+		<<tr("experimental")
 		<<tr("about");
 }
 
-QStringList TestPlugin::funclist() const
+QStringList BinarizationPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+		<<tr("LSK")
+		<<tr("experimental")
 		<<tr("help");
 }
 
-void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void BinarizationPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("LSK") || menu_name == tr("Line_segment_kernels"))
 	{
 		bool bmenu = true;
 		input_PARA PARA;
-		reconstruction_func(callback,parent,PARA,bmenu);
+		int mode = 0;
+		if(menu_name == tr("experimental")) mode = 1;
+		binarization_func(callback, parent, PARA, bmenu, mode);
 	}
 	else
 	{
@@ -41,9 +45,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 }
 
-bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool BinarizationPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("func1"))
+	if (func_name == tr("LSK") || func_name == tr("experimental"))
 	{
 		bool bmenu = false;
 		input_PARA PARA;
@@ -53,12 +57,11 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 		vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
 		vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-		PARA.l = 1; PARA.h = 5; PARA.d = 3;
+		PARA.l = 1; PARA.d = 3;
 		if (pparas)
 		{
 			if(pparas->size() >= 1) PARA.l = atoi(pparas->at(0));
-			if(pparas->size() >= 2) PARA.h = atoi(pparas->at(1));
-			if(pparas->size() >= 3) PARA.d = atoi(pparas->at(2));
+			if(pparas->size() >= 2) PARA.d = atoi(pparas->at(1));
 		}
 
 		if(infiles.empty())
@@ -70,7 +73,11 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 			PARA.inimg_file = infiles[0];
 		int k=0;
 		PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-		reconstruction_func(callback,parent,PARA,bmenu);
+		
+		int mode = 0;
+		if(func_name == tr("experimental")) mode = 1;
+		
+		binarization_func(callback, parent, PARA, bmenu, mode);
 	}
 	else if (func_name == tr("help"))
 	{
