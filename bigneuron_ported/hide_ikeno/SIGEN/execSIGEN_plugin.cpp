@@ -330,7 +330,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     if (fexist("out.swc")) {
         command = "cp out.swc "+swc_name;
-            system(command.toStdString().c_str());
+        system(command.toStdString().c_str());
 
         system("rm out.swc");
     } else {
@@ -566,7 +566,7 @@ void reconstruction_func2(V3DPluginCallback2 &callback, QWidget *parent, input_P
 
     // executing MorphExtractorCL.exe on mono
     QString strTh, strDt, strVt, strNs, strNc;
-    QString command = "mono ./MorphExtractorCL.exe -i /var/tmp/vaa3D-SIGEN -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
+    QString command = "mono " + getAppPath() + "/../../vaa3d_tools/bigneuron_ported/hide_ikeno/SIGEN/MorphExtractorCL.exe -i /var/tmp/vaa3D-SIGEN -o out -b "+strTh.setNum(th)+" -t 1 -v "+strVt.setNum(vt)+" -d "+strDt.setNum(dt)+" -s "+strNs.setNum(ns)+" -a "+strNc.setNum(nc);
     system(command.toStdString().c_str());
 
     //    system("mono ./MorphExtractorCL.exe -i ./tmp -o out -b 128 -t -v 2 -d 10 -s 10 -a 10");
