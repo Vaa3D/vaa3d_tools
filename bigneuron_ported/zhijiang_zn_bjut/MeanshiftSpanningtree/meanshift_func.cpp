@@ -73,16 +73,16 @@ QMap<int,QList<Node*> > finalclass_node;
 QList<QList<NeuronSWC> > result_tree_part;
 QList<NeuronSWC> result_final_tree;
 QMap<int,Node*> root;
-QMap<int,QMap<int,QList<Node*>>> number_path;
-QMap<int,QMap<int,QList<Node>>> number_path_vn2;
-QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>> number_path_vn3;
+QMap<int,QMap<int,QList<Node*> > > number_path;
+QMap<int,QMap<int,QList<Node> > > number_path_vn2;
+QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > > number_path_vn3;
 QList<NeuronSWC> final_listNeuron;
 
-QMap<int,QList<Node*>> unit_path;
-QMap<int,QList<Node>> unit_path_vn2;//keep the shortest path of all nodes
+QMap<int,QList<Node*> >  unit_path;
+QMap<int,QList<Node> > unit_path_vn2;//keep the shortest path of all nodes
 
-QList<QList<Node*>> final_path;
-QList<QList<Node>> final_path_vn2;
+QList<QList<Node*> >  final_path;
+QList<QList<Node> > final_path_vn2;
 
 QMap<V3DLONG, NeuronSWC> original_tree;//keep the original tree and insert the shortest path into each two nodes
 
@@ -411,7 +411,7 @@ void writeSWC_file(char* path,QList<NeuronSWC> listNeuron)
 	return;
 
 }
-void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*>>> nodeMap)
+void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*> > > nodeMap)
 {
 	V3DLONG number=0;
 	FILE * fp = fopen(path, "wt");
@@ -422,10 +422,10 @@ void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*>>> nodeMap)
 	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
 
 
-	for(QMap<int,QMap<int,QList<Node*>>>::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
+    for(QMap<int,QMap<int,QList<Node*> > >::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
 	{
-		QMap<int,QList<Node*>> temp1=iter1.value();
-		for(QMap<int,QList<Node*>>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
+        QMap<int,QList<Node*> >  temp1=iter1.value();
+        for(QMap<int,QList<Node*> > ::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
 		{
 			QList<Node*> temp2=iter2.value();
 			for(int i=0;i<temp2.length();i++)
@@ -963,8 +963,8 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 
 			}
 			//here record the each shortest node from every node, wirte a function here to select shortest path from "number_path"  
-			//QMap<int,QMap<int,QList<Node*>>> number_path;
-			//QMap<int,QList<Node*>> temp1=number_path[indexi];
+            //QMap<int,QMap<int,QList<Node*> > > number_path;
+            //QMap<int,QList<Node*> >  temp1=number_path[indexi];
 			//I need to find the node which number is indexi and indexj every time and plug the path between them
 			//the begin node is seeds.at(indexi) and the end node is seeds.at(indexj)
 			//QMap<int,QList<Node>> temp1=number_path_vn2[indexi];
@@ -975,8 +975,8 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 			V3DLONG loc1=GET_IND(seeds.at(indexi)->x,seeds.at(indexi)->y,seeds.at(indexi)->z);
 			V3DLONG loc2=GET_IND(seeds.at(indexj)->x,seeds.at(indexj)->y,seeds.at(indexj)->z);
 			QList<Node> temp22;
-			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator begin=number_path_vn3.lowerBound(loc1);
-			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator end=number_path_vn3.upperBound(loc1);
+            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator begin=number_path_vn3.lowerBound(loc1);
+            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator end=number_path_vn3.upperBound(loc1);
 			//printf("times:::%d\n",times);
 			while((begin!=end))
 			{
@@ -1194,7 +1194,7 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 	QMap<V3DLONG,bool> node_searched;
 	QMap<V3DLONG,Node> parent_path_vn2;
 	QList<Node> path_shortest_vn2;
-	QMap<V3DLONG,QList<Node>> unit_path_vn3;
+    QMap<V3DLONG,QList<Node> > unit_path_vn3;
 
 	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
 	{
