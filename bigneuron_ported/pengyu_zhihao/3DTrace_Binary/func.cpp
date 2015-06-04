@@ -29,11 +29,11 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 
 	// Initialize the MATLAB Compiler Runtime global state
 	if (!mclInitializeApplication(NULL, 0))
-	{
+	/*{
 		std::cerr << "Could not initialize the application properly." << mclGetLastErrorMessage()
 			<< 'Z' << std::endl;
 		//return -1;
-	}
+	}*/
 	// Initialize the Vigenere library
 	if (!libvaa_port_testInitialize())
 	{
@@ -112,7 +112,7 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 	std::cout << "free mx t\n";
 	mxDestroyArray(mx_para);
 	std::cout << "free mx para\n";
-	//libvaa_port_testTerminate();
+	libvaa_port_testTerminate();
 	//mclTerminateApplication();
 	std::cout << "Matlab Part Finished." << std::endl;
 	return output;
