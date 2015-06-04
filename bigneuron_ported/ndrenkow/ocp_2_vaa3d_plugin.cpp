@@ -565,6 +565,28 @@ int check_extents(const string &resolution, const string &x_ex, const string &y_
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
+string generate_ocp_url(const string &token, const string &resolution, const vector<string> &channels,
+                        const string &x_extents, const string &y_extents, const string &z_extents) {
+    // -------------------
+    //  Format URL string
+    // -------------------
+    string base_url = "/ocp/ca";
+    char buffer[200];
+    if (channels.empty()) {
+        // Omit channel from the URL
+        sprintf(buffer,"%s/%s/hdf5/%s/%s/%s/%s/",base_url.c_str(),token.c_str(),resolution.c_str(),x_extents.c_str(),y_extents.c_str(),z_extents.c_str());
+    } else {
+        string channel_str = channels[0];
+        for (int i=1; i < channels.size(); ++i) {
+            channel_str += "," + channels[i];
+        }
+        sprintf(buffer,"%s/%s/hdf5/%s/%s/%s/%s/%s/",base_url.c_str(),token.c_str(),channel_str.c_str(),resolution.c_str(),x_extents.c_str(),y_extents.c_str(),z_extents.c_str());
+    }
+    return string(buffer);
+}
+//---------------------------------------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------------------------------------
 void retrieve_ocp_url(const string &project, const vector<string> &channels,
                       const vector<string> &dimensions, string &data_url, vector<string> &selected_channels)
 {
@@ -703,25 +725,13 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
         return;
     }
 
-    // -------------------
-    //  Format URL string
-    // -------------------
-    string base_url = "/ocp/ca";
-    char buffer[200];
-    if (num_channels == 0) {
-        // Omit channel from the URL
-        sprintf(buffer,"%s/%s/hdf5/%s/%s/%s/%s/",base_url.c_str(),project.c_str(),resolution.c_str(),x_extents.c_str(),y_extents.c_str(),z_extents.c_str());
-    } else {
-        sprintf(buffer,"%s/%s/hdf5/%s/%s/%s/%s/%s/",base_url.c_str(),project.c_str(),all_selected_channels.c_str(),resolution.c_str(),x_extents.c_str(),y_extents.c_str(),z_extents.c_str());
-    }
-    data_url = buffer;
+    data_url = generate_ocp_url(project,resolution,selected_channels,x_extents,y_extents,z_extents);
 
     qDebug() << QString(data_url.c_str());
 }
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
-
 unsigned char* permute_hdf5(const unsigned char *old_data, const hsize_t* hdf5_dims, int pixel_depth)
 {
     /*
@@ -788,7 +798,6 @@ unsigned char* permute_hdf5(const unsigned char *old_data, const hsize_t* hdf5_d
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
-
 void OCP2Vaa3D::import_from_ocp(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
@@ -866,13 +875,68 @@ bool OCP2Vaa3D::dofunc(const QString & func_name, const V3DPluginArgList & input
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("Import_data"))
+    if (func_name == tr("Import_data"))
 	{
-        v3d_msg("To be implemented.");
+        if (infiles.size() > 0) cout << "Ignoring input file." << endl;
+        if (inparas.empty()) {
+            cout << "No OCP parameters passed as input. Exiting..." << endl;
+            return false;
+        }
+
+        printf("Found %d input parameters.\n",inparas.size());
+        string token(inparas.at(0));
+        string resolution(inparas.at(1));
+        string x_extents,y_extents,z_extents;
+        x_extents = string(inparas.at(2)); //X (start,stop)
+        y_extents = string(inparas.at(3)); //Y (start,stop)
+        z_extents = string(inparas.at(4)); //Z (start,stop)
+
+        // Channels are optional and should be entered last
+        vector<string> channels;
+        if (inparas.size() > 5) {
+            printf("Processing channels...\n");
+            for (int iP=5; iP < inparas.size(); ++iP) {
+                channels.push_back(string(inparas.at(iP)));
+            }
+        }
+
+        printf("%s/hdf5/%s/%s/%s/%s/\n",token.c_str(),resolution.c_str(),x_extents.c_str(),y_extents.c_str(),z_extents.c_str());
+        string ocp_url = generate_ocp_url(token,resolution,channels,x_extents,y_extents,z_extents);
+
+        printf("%s\n",ocp_url.c_str());
+
+        unsigned char* data;
+        Image4DSimple p4DImage;
+        if (channels.empty()) {
+            hsize_t data_dims[3];
+            data = get_image_data(SERVER,ocp_url,data_dims);
+            // HDF5 represents data as Z,Y,X so note the swap in dimensions
+            p4DImage.setData(data, data_dims[2], data_dims[1], data_dims[0], 1, V3D_UINT8);
+        } else {
+            hsize_t data_dims[4];
+            data = get_channel_data(SERVER,ocp_url,channels,data_dims);
+            // HDF5 represents data as Z,Y,X so note the swap in dimensions
+            p4DImage.setData(data, data_dims[2], data_dims[1], data_dims[0], data_dims[3], V3D_UINT16);
+        }
+
+        if (outfiles.size() > 0) {
+            if (outfiles.size() > 1) cout << "Multiple output files were detected.  Only the first one will be used." << endl;
+            printf("Saving image to specified file.\n");
+            callback.saveImage(&p4DImage,outfiles.at(0));
+        }
+        return true;
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        cout << "Usage: v3d -x ocp_2_vaa3d -f Import_data -p <token> <resolution> <x_extents> <y_extents> <z_extents> [<channel> <channel> ...] [-o <output_file>]" << endl;
+        cout << endl;
+        cout << "token          Project token in OCP" << endl;
+        cout << "resolution     Integer resolution level" << endl;
+        cout << "[xyz]_extents  Desired volume extents listed as: <x_start>,<x_stop>" << endl;
+        cout << "channels       (optional) Image channels listed as separate arguments (i.e., <channel_1> <channel_2> ...)" << endl;
+        cout << "output_file    (optional) Output filename if the volume should be written to file" << endl;
+        cout << endl;
+        return true;
 	}
 	else return false;
 
