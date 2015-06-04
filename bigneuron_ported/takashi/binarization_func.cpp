@@ -15,97 +15,86 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 	long count = imageD*imageH*imageW/10L;
 	long current = 0L;
 
+	double a_interval = (PI / 2.0) / (double)l;
+	double *drxtable = new double [l*2*(l*2-1)+1];
+	double *drytable = new double [l*2*(l*2-1)+1];
+	double *drztable = new double [l*2*(l*2-1)+1];
+	int knum = l*2*(l*2-1)+1;
+
+	drxtable[0] = 0.0; drytable[0] = 0.0; drztable[0] = 1.0;
+
+	for(int b = 0; b < l*2; b++){
+		for(int a = 1; a < l*2; a++){
+			drxtable[b*(l*2-1) + (a-1) + 1] = sin(a_interval*a) * cos(a_interval*b);
+			drytable[b*(l*2-1) + (a-1) + 1] = sin(a_interval*a) * sin(a_interval*b);
+			drztable[b*(l*2-1) + (a-1) + 1] = cos(a_interval*a);
+		}
+	}
+
 	for(int z = 0; z < imageD; z++){
 		for(int y = 0; y < imageH; y++){
 			#pragma omp parallel for
 			for(int x = 0; x < imageW; x++){
-
-				double a_interval = (PI / 2.0) / (double)l;
+				
 				double sum;
 				double rx, ry, rz, fx, fy, fz, drx, dry, drz, val;
 				int ix, iy, iz;
 				double verticalC = C;
 
-				//z-axis
-				sum = 0;
-				for(int k = -d; k <= d; k++){
-					int zz = z + k;
-					if(zz < 0)zz = 0;
-					if(zz >= imageD)zz = imageD - 1;
-					sum += h_Src[zz * imageW * imageH + y * imageW + x];// * h_Kernel[kernelR - k];
-				}
-				h_Dst[z * imageW * imageH + y * imageW + x] = sum/(d*2+1) + verticalC;
+				for(int i = 0; i < knum; i++){
+					sum = 0;
+					drx = drxtable[i];
+					dry = drytable[i];
+					drz = drztable[i];
 
-				// a: y-axis b: z-axis
-				//0 < radian < PI
-				for(int b = 0; b < l*2; b++){
-					for(int a = 1; a < l*2; a++){
-						sum = 0;
-						drx = sin(a_interval*a) * cos(a_interval*b);
-						dry = sin(a_interval*a) * sin(a_interval*b);
-						drz = cos(a_interval*a);
-						for(int k = -d; k <= d; k++){
-/*
-							rx = x + k * drx;
-							ry = y + k * dry;
-							rz = z + k * drz;
+					double left = 0.0;
+					double right = 0.0;
+					double center = 0.0;
 
-							if(rx < 0)rx = 0;
-							if(rx >= imageW)rx = imageW - 1;
-							if(ry < 0)ry = 0;
-							if(ry >= imageH)ry = imageH - 1;
-							if(rz < 0)rz = 0;
-							if(rz >= imageD)rz = imageD - 1;
+					for(int k = -d; k < 0; k++){
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
+						if(ix < 0)ix = 0;
+						if(ix >= imageW)ix = imageW - 1;
+						if(iy < 0)iy = 0;
+						if(iy >= imageH)iy = imageH - 1;
+						if(iz < 0)iz = 0;
+						if(iz >= imageD)iz = imageD - 1;
+						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
 
-							ix = (int)rx;
-							iy = (int)ry;
-							iz = (int)rz;
-
-							if(ix == imageW - 1)ix--;
-							if(iy == imageH - 1)iy--;
-							if(iz == imageD - 1)iz--;
-
-							fx = rx - ix;
-							fy = ry - iy;
-							fz = rz - iz;
-
-							float c000 = h_Src[iz*imageH*imageW + iy*imageW + ix];
-							float c100 = h_Src[iz*imageH*imageW + iy*imageW + (ix + 1)];
-							float c010 = h_Src[iz*imageH*imageW + (iy + 1)*imageW + ix];
-							float c001 = h_Src[(iz + 1)*imageH*imageW + iy*imageW + ix];
-							float c101 = h_Src[(iz + 1)*imageH*imageW + iy*imageW + (ix + 1)];
-							float c011 = h_Src[(iz + 1)*imageH*imageW + (iy + 1)*imageW + ix];
-							float c110 = h_Src[iz*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
-							float c111 = h_Src[(iz + 1)*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
-							val = c000*(1.0f-fx)*(1.0f-fy)*(1.0f-fz) + 
-								c100*fx*(1.0f-fy)*(1.0f-fz) + 
-								c010*(1.0f-fx)*fy*(1.0f-fz) +
-								c001*(1.0f-fx)*(1.0f-fy)*fz +
-								c101*fx*(1.0f-fy)*fz +
-								c011*(1.0f-fx)*fy*fz +
-								c110*fx*fy*(1.0f-fz) +
-								c111*fx*fy*fz;
-*/
-							rx = x + k * drx;
-							ry = y + k * dry;
-							rz = z + k * drz;
-							int ix = (int)(rx + 0.5);
-							int iy = (int)(ry + 0.5);
-							int iz = (int)(rz + 0.5);
-							if(ix < 0)ix = 0;
-							if(ix >= imageW)ix = imageW - 1;
-							if(iy < 0)iy = 0;
-							if(iy >= imageH)iy = imageH - 1;
-							if(iz < 0)iz = 0;
-							if(iz >= imageD)iz = imageD - 1;
-							val = h_Src[iz*imageH*imageW + iy*imageW + ix];
-
-							sum += val;//(float)(val * h_Kernel[kernelR - k]);
-						}
-						sum /= d*2 + 1;
-						sum += verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
-						h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] > sum ? 255.0 : 0;
+						left += val;//(float)(val * h_Kernel[kernelR - k]);
 					}
+
+					center = h_Src[z*imageH*imageW + y*imageW + x];;
+
+					for(int k = 1; k <= d; k++){
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
+						if(ix < 0)ix = 0;
+						if(ix >= imageW)ix = imageW - 1;
+						if(iy < 0)iy = 0;
+						if(iy >= imageH)iy = imageH - 1;
+						if(iz < 0)iz = 0;
+						if(iz >= imageD)iz = imageD - 1;
+						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
+
+						right += val;//(float)(val * h_Kernel[kernelR - k]);
+					}
+
+					sum = right + center + left;
+					sum /= (d*2+1);
+					//double baseth = (sum + abs(right - left)/2.0)/(d*2+1);
+
+					//sum += verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
+					h_Dst[z*imageW*imageH + y*imageW + x] = h_Src[z*imageW*imageH + y*imageW + x] > 127.0+C*(sum-127.0) ? 255.0 : 0;
 				}
 
 				current++;
@@ -117,6 +106,10 @@ void BinaryProcess(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG i
 		}
 	}
 	putchar('\n');
+
+	delete [] drxtable;
+	delete [] drytable;
+	delete [] drztable;
 }
 
 
@@ -136,119 +129,48 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 		}
 	}
 
-	
+	double a_interval = (PI / 2.0) / (double)l;
+	double *slatitable = new double [l*2*(l*2-1)+1];
+	double *clatitable = new double [l*2*(l*2-1)+1];
+	double *slongitable = new double [l*2*(l*2-1)+1];
+	double *clongitable = new double [l*2*(l*2-1)+1];
+	int knum = l*2*(l*2-1)+1;
+
+	slatitable[0] = 0.0; clatitable[0] = 1.0; slongitable[0] = 0.0; clongitable[0] = 0.0;
+
+	for(int b = 0; b < l*2; b++){
+		for(int a = 1; a < l*2; a++){
+			slatitable[b*(l*2-1) + (a-1) + 1] = sin(a_interval*a);
+			clatitable[b*(l*2-1) + (a-1) + 1] = cos(a_interval*a);
+			slongitable[b*(l*2-1) + (a-1) + 1] = sin(a_interval*b);
+			clongitable[b*(l*2-1) + (a-1) + 1] = cos(a_interval*b);
+		}
+	}
+
 	for(int z = 0; z < imageD; z++){
 		for(int y = 0; y < imageH; y++){
 			#pragma omp parallel for
 			for(int x = 0; x < imageW; x++){
-				double a_interval = (PI / 2.0) / (double)l;
 				double sum;
 				double rx, ry, rz, fx, fy, fz, drx, dry, drz, val;
 				int ix, iy, iz;
-				double verticalC = 0;
-				double longi, lati;
+				double sinlongi, sinlati;
+				double coslongi, coslati;
 				
-				double bval;
+				double bval = -DBL_MAX;
 				
-				//z-axis
-				sum = 0;
-				for(int k = -d; k <= d; k++){
-					int zz = z + k;
-					if(zz < 0)zz = 0;
-					if(zz >= imageD)zz = imageD - 1;
-					sum += h_Src[zz * imageW * imageH + y * imageW + x];// * h_Kernel[kernelR - k];
-				}
-				sum -= verticalC;
-				bval = sum/(d*2+1);
-				lati = 0.0; longi = 0.0;
-
-				// a: y-axis b: z-axis
-				//0 < radian < PI
-				for(int b = 0; b < l*2; b++){
-					for(int a = 1; a < l*2; a++){
-						sum = 0;
-						drx = sin(a_interval*a) * cos(a_interval*b);
-						dry = sin(a_interval*a) * sin(a_interval*b);
-						drz = cos(a_interval*a);
-						for(int k = -d; k <= d; k++){
-
-							rx = x + k * drx;
-							ry = y + k * dry;
-							rz = z + k * drz;
-
-							if(rx < 0)rx = 0;
-							if(rx >= imageW)rx = imageW - 1;
-							if(ry < 0)ry = 0;
-							if(ry >= imageH)ry = imageH - 1;
-							if(rz < 0)rz = 0;
-							if(rz >= imageD)rz = imageD - 1;
-
-							ix = (int)rx;
-							iy = (int)ry;
-							iz = (int)rz;
-
-							if(ix == imageW - 1)ix--;
-							if(iy == imageH - 1)iy--;
-							if(iz == imageD - 1)iz--;
-
-							fx = rx - ix;
-							fy = ry - iy;
-							fz = rz - iz;
-
-							float c000 = h_Src[iz*imageH*imageW + iy*imageW + ix];
-							float c100 = h_Src[iz*imageH*imageW + iy*imageW + (ix + 1)];
-							float c010 = h_Src[iz*imageH*imageW + (iy + 1)*imageW + ix];
-							float c001 = h_Src[(iz + 1)*imageH*imageW + iy*imageW + ix];
-							float c101 = h_Src[(iz + 1)*imageH*imageW + iy*imageW + (ix + 1)];
-							float c011 = h_Src[(iz + 1)*imageH*imageW + (iy + 1)*imageW + ix];
-							float c110 = h_Src[iz*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
-							float c111 = h_Src[(iz + 1)*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
-							val = c000*(1.0f-fx)*(1.0f-fy)*(1.0f-fz) + 
-								c100*fx*(1.0f-fy)*(1.0f-fz) + 
-								c010*(1.0f-fx)*fy*(1.0f-fz) +
-								c001*(1.0f-fx)*(1.0f-fy)*fz +
-								c101*fx*(1.0f-fy)*fz +
-								c011*(1.0f-fx)*fy*fz +
-								c110*fx*fy*(1.0f-fz) +
-								c111*fx*fy*fz;
-
-/*					
-							rx = x + k * drx;
-							ry = y + k * dry;
-							rz = z + k * drz;
-							int ix = floor(rx + 0.5);
-							int iy = floor(ry + 0.5);
-							int iz = floor(rz + 0.5);
-							if(ix < 0)ix = 0;
-							if(ix >= imageW)ix = imageW - 1;
-							if(iy < 0)iy = 0;
-							if(iy >= imageH)iy = imageH - 1;
-							if(iz < 0)iz = 0;
-							if(iz >= imageD)iz = imageD - 1;
-							val = h_Src[iz*imageH*imageW + iy*imageW + ix];
-*/
-							sum += val;//(float)(val * h_Kernel[kernelR - k]);
-						}
-						sum -= verticalC;//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
-						if(bval < sum/(d*2+1)){
-							bval = sum/(d*2+1);
-							lati = a_interval*a; longi = a_interval*b;
-						}
-					}
-				}
-
-
-				double drx2, dry2, drz2;
-				double maxval = -1.0;
-				for(int a = 0; a < l*2; a++){
-					double bx, by, bz;
-					bx = cos(a_interval*a); by = sin(a_interval*a); bz = 0.0;
-					drx2 = bx*cos(lati)*cos(longi) - by*sin(longi) + bz*sin(lati)*cos(longi);
-					dry2 = bx*cos(lati)*sin(longi) + by*cos(longi) + bz*sin(lati)*sin(longi);
-					drz2 = -bx*sin(lati) + bz*cos(lati);
-
+				for(int i = 0; i < knum; i++){
 					sum = 0;
-					for(int k = -d; k <= d; k++){
+					drx = slatitable[i]*clongitable[i];
+					dry = slatitable[i]*slongitable[i];
+					drz = clatitable[i];
+
+					double left = 0.0;
+					double right = 0.0;
+					double center;
+
+					for(int k = -d; k < 0; k++){
+						/*
 						rx = x + k * drx;
 						ry = y + k * dry;
 						rz = z + k * drz;
@@ -281,20 +203,20 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 						float c110 = h_Src[iz*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
 						float c111 = h_Src[(iz + 1)*imageH*imageW + (iy + 1)*imageW + (ix + 1)];
 						val = c000*(1.0f-fx)*(1.0f-fy)*(1.0f-fz) + 
-							c100*fx*(1.0f-fy)*(1.0f-fz) + 
-							c010*(1.0f-fx)*fy*(1.0f-fz) +
-							c001*(1.0f-fx)*(1.0f-fy)*fz +
-							c101*fx*(1.0f-fy)*fz +
-							c011*(1.0f-fx)*fy*fz +
-							c110*fx*fy*(1.0f-fz) +
-							c111*fx*fy*fz;
-/*
+						c100*fx*(1.0f-fy)*(1.0f-fz) + 
+						c010*(1.0f-fx)*fy*(1.0f-fz) +
+						c001*(1.0f-fx)*(1.0f-fy)*fz +
+						c101*fx*(1.0f-fy)*fz +
+						c011*(1.0f-fx)*fy*fz +
+						c110*fx*fy*(1.0f-fz) +
+						c111*fx*fy*fz;
+						*/
 						rx = x + k * drx;
 						ry = y + k * dry;
 						rz = z + k * drz;
-						int ix = floor(rx + 0.5);
-						int iy = floor(ry + 0.5);
-						int iz = floor(rz + 0.5);
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
 						if(ix < 0)ix = 0;
 						if(ix >= imageW)ix = imageW - 1;
 						if(iy < 0)iy = 0;
@@ -302,16 +224,106 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 						if(iz < 0)iz = 0;
 						if(iz >= imageD)iz = imageD - 1;
 						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
-*/
-						sum += val;//(float)(val * h_Kernel[kernelR - k]);
+
+						left += val;//(float)(val * h_Kernel[kernelR - k]);
 
 					}
-					if(maxval < sum/(d*2+1)) maxval = sum/(d*2+1);
+
+					center = h_Src[z * imageW * imageH + y * imageW + x];
+
+					for(int k = 1; k <= d; k++){
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
+						if(ix < 0)ix = 0;
+						if(ix >= imageW)ix = imageW - 1;
+						if(iy < 0)iy = 0;
+						if(iy >= imageH)iy = imageH - 1;
+						if(iz < 0)iz = 0;
+						if(iz >= imageD)iz = imageD - 1;
+						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
+
+						right += val;//(float)(val * h_Kernel[kernelR - k]);
+
+					}
+
+					sum = left + center + right;
+					sum = (sum - abs(left - right)/2)/(d*2+1);
+
+					//pararelC*(1.0 - abs(a*a_interval*2.0/PI - 1.0)) + verticalC * abs(a*a_interval*2.0/PI - 1.0);
+					if(bval < sum){
+						bval = sum;
+						sinlati = slatitable[i]; sinlongi = slongitable[i];
+						coslati = clatitable[i]; coslongi = clongitable[i];
+					}
+				}
+
+				double drx2, dry2, drz2;
+				double maxval = -DBL_MAX;
+				for(int a = 0; a < l*2; a++){
+					double bx, by, bz;
+					bx = cos(a_interval*a); by = sin(a_interval*a); bz = 0.0;
+					drx2 = bx*coslati*coslongi - by*sinlongi + bz*sinlati*coslongi;
+					dry2 = bx*coslati*sinlongi + by*coslongi + bz*sinlati*sinlongi;
+					drz2 = -bx*sinlati + bz*coslati;
+
+					sum = 0.0;
+					double left = 0.0;
+					double right = 0.0;
+					double center = 0.0;
+
+					for(int k = -d; k < 0; k++){
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
+						if(ix < 0)ix = 0;
+						if(ix >= imageW)ix = imageW - 1;
+						if(iy < 0)iy = 0;
+						if(iy >= imageH)iy = imageH - 1;
+						if(iz < 0)iz = 0;
+						if(iz >= imageD)iz = imageD - 1;
+						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
+
+						left += val;//(float)(val * h_Kernel[kernelR - k]);
+
+					}
+
+					center = h_Src[z * imageW * imageH + y * imageW + x];
+
+					for(int k = 1; k <= d; k++){
+						rx = x + k * drx;
+						ry = y + k * dry;
+						rz = z + k * drz;
+						int ix = (int)(rx + 0.5);
+						int iy = (int)(ry + 0.5);
+						int iz = (int)(rz + 0.5);
+						if(ix < 0)ix = 0;
+						if(ix >= imageW)ix = imageW - 1;
+						if(iy < 0)iy = 0;
+						if(iy >= imageH)iy = imageH - 1;
+						if(iz < 0)iz = 0;
+						if(iz >= imageD)iz = imageD - 1;
+						val = h_Src[iz*imageH*imageW + iy*imageW + ix];
+
+						right += val;//(float)(val * h_Kernel[kernelR - k]);
+
+					}
+
+					sum = right + center + left;
+					double baseth = (sum + abs(right - left)/2.0)/(d*2+1);
+
+					if(maxval < baseth) maxval = baseth;
 				}
 
 //				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] > maxval ? 
 //					(h_Src[z * imageW * imageH + y * imageW + x] - maxval)*(bval>maxval ? sqrt(1.0 + (bval-maxval)/vmax*255.0) : 0.0) : 0;
-				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] - C > maxval ? 255.0 : 0;
+				h_Dst[z * imageW * imageH + y * imageW + x] = h_Src[z * imageW * imageH + y * imageW + x] > 127.0+C*(maxval-127.0) ? 255.0 : 0;
 
 				current++;
 				if(current == count){
@@ -322,6 +334,11 @@ void BinaryProcess2(T *h_Src, U *h_Dst, V3DLONG imageW, V3DLONG imageH, V3DLONG 
 		}
 	}
 	putchar('\n');
+
+	delete [] slatitable;
+	delete [] clatitable;
+	delete [] slongitable;
+	delete [] clongitable;
 }
 
 void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu, int mode)
@@ -412,7 +429,7 @@ void binarization_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA
 		d = PARA.d;
 	}
 
-	double C = 10;
+	double C = 0.95;
 
 	//main neuron reconstruction code
 
