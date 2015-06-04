@@ -26,9 +26,23 @@ QStringList VaaPortTest::funclist() const
 		<<tr("help");
 }
 
+double* VaaPortTest::getPara(QWidget *parent){
+	bool ok = 0;
+	double *result = new double [2]; 
+	QString paraStr = QInputDialog::getText(parent, tr("Input trace parameter"),
+		tr("Please Input Min Soma Size, Max Neurite Width"),
+		QLineEdit::Normal, tr("400 8"), &ok);
+	QStringList listStr = paraStr.split(' ');
+
+	result[0] = listStr[0].toDouble();
+	result[1] = listStr[1].toDouble();
+	return result;
+}
+
 void VaaPortTest::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	bool* result = NULL;
+	double* para = NULL;
 	if (menu_name == tr("3DTrace"))
 	{
 		// 1 - Obtain the current 4D image pointer
@@ -38,9 +52,10 @@ void VaaPortTest::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 			v3d_msg("no image open");
 			return;
 		}
+		para = VaaPortTest::getPara(parent);
 		Image4DSimple *p4DImage = callback.getImage(curwin);
 
-		result = shared_lib_func(p4DImage->getRawData(), p4DImage->getTotalBytes(), p4DImage->getUnitBytes(), p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), 1);
+		result = shared_lib_func(p4DImage->getRawData(), p4DImage->getTotalBytes(), p4DImage->getUnitBytes(), p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), 1,2,para);
 
 		// 4 - Set and show the thresholded image in a new window
 		//v3dhandle newwin = callback.newImageWindow();
@@ -71,6 +86,7 @@ void VaaPortTest::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 		//callback.setImageName(newwin, QObject::tr("Trace3D"));
 		//callback.updateImageWindow(newwin);
 		simple_saveimage_wrapper(callback, "trace3D_result.v3draw", (unsigned char *)new_image_data, sz, V3D_UINT8);
+		delete []para;
 		v3d_msg("Tracing Finished.");
 	}
 	else if (menu_name == tr("menu2"))
