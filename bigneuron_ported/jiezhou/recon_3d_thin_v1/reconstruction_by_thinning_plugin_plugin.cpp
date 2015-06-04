@@ -4,6 +4,8 @@
  * 2015-6-1 : by Edward Hottendorf and Jie Zhou
  * Hackthon Test Plugin.
  *
+ * 2015-6-3 : renamed the plugin to SimpleAxisAnalyzer (modify the pro file and the menu list, function list, usage)
+ *
  * ToDo: 1. add parameters to decide how many trees need to be included
  *       2. pre-processing and loop pruning need to added or to be translated from Java
  *
@@ -43,17 +45,18 @@ struct input_PARA
     QString inimg_file;
     V3DLONG channel = 1;
     int threshold = 0 ;
+    int treeNum = 1;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 
 //added functions here
 itk::Image<signed short, (unsigned) 3>* createITKImage(unsigned char *datald, int *in_sz);
-void reconstructionThinning(itk::Image<signed short, (unsigned) 3> *input, QString qoutputfilename, int reconstructionTh);
+void reconstructionThinning(itk::Image<signed short, (unsigned) 3> *input, QString qoutputfilename, int reconstructionTh, int treeNum);
 vector<pixPoint*> visitSkeleton(itk::Image<signed short, (unsigned)3> *image, pixPoint* root, bool ***);
-void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilename);
+void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilename, int treeNum);
 signed short getPixel(itk::Image<signed short, (unsigned)3> *image, int x, int y, int z);
-void outputSWC(vector<pixPoint*> & Points, QString outfilename);
+void outputSWC(vector<pixPoint*> & Points, QString outfilename, long);
 signed short getPixel(itk::Image<signed short, (unsigned)3> *image, int x, int y, int z);
 void getNeighbors(itk::Image<signed short, (unsigned)3> *image, vector<pixPoint*> & neigh, pixPoint* p);
 int numberOfNeighbors(itk::Image<signed short, (unsigned)3> *image, int xCoord, int yCoord, int zCoord);
@@ -85,13 +88,19 @@ void reconstruction_by_thinning_plugin::domenu(const QString &menu_name, V3DPlug
         input_PARA PARA;
 
         //input
-         bool ok1;
+         bool ok1, ok2;
 
         PARA.threshold = QInputDialog::getInteger(parent, "Window X ",
                                        "Enter threshold (voxel > threshold considered as foreground. Default 0):",
                                        0, 0, 255, 1, &ok1);
 
         if (!ok1) return;  //have problem getting threshold
+
+        PARA.treeNum = QInputDialog::getInteger(parent, "Window X ",
+                                       "Enter number of tree you would like to reconstruct (Default 1):",
+                                       1, 1, 10, 1, &ok2);
+
+        if (!ok2) return;  //have problem getting threshold
 
         reconstruction_func(callback,parent,PARA,bmenu);
 
@@ -124,7 +133,9 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
             PARA.inimg_file = infiles[0];
         int k=0;
         PARA.threshold = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        PARA.treeNum = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+
 
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
@@ -134,10 +145,11 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
 
-		printf("**** Usage of reconstruction_by_thinning_plugin tracing **** \n");
-        printf("vaa3d -x reconstruction_by_thinning_plugin -f reconstruct_thinning -i <inimg_file> -p <parameters>\n");
+        printf("**** Usage of axis analyzer plugin **** \n");
+        printf("vaa3d -x SimpleAxisAnalyzer -f medial_axis_analysis -i <inimg_file> -p <parameters>\n");
         printf("inimg_file       The input image\n");
         printf("threshold        Threshold by binarization (default 0).\n");
+        printf("numberOfTrees    Number of trees to include in reconstruction (default 1)");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
@@ -239,7 +251,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     /* //debugging
     // * Note by J Zhou June 3 2015
     // * Vaa3D appears having issue reading a signed int image of only 0 and 1 which was the output skeleton of the thinning algorithm of itk.
-    // *  But it is ok as long as start directly from an unsigned image file.
+    // *  But it is ok as long as the plugin starts directly from an unsigned image file.
     long num = 0;
 
     for(int iz = 0; iz < P; iz++)
@@ -272,8 +284,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     //2. call Reconstruction3D by passing the itkimage
 
     QString swc_name = PARA.inimg_file + "_axis_analyzer.swc";
-    int reconstructionTH = PARA.threshold;
-    reconstructionThinning(input, swc_name, reconstructionTH);
+
+    reconstructionThinning(input, swc_name, PARA.threshold, PARA.treeNum);
 
     if(!bmenu)
     {
@@ -284,7 +296,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 }
 
 //the logic is similar as those in the main of Reconstruction3D()
-void reconstructionThinning(itk::Image<signed short, (unsigned) 3> *input, QString qoutputfilename, int reconstructionTh)
+void reconstructionThinning(itk::Image<signed short, (unsigned) 3> *input, QString qoutputfilename, int reconstructionTh, int treeNumber)
 {
      typedef itk::Image< signed short, (unsigned)3> ImageType;
     // Define the thinning filter
@@ -307,7 +319,7 @@ void reconstructionThinning(itk::Image<signed short, (unsigned) 3> *input, QStri
     v3d_msg(QString("time used for thinning in secs  %1").arg(elapsed_secs), 0);
 
     //call true analyze which outputs swc file
-    trueAnalyze(thinningFilter->GetOutput(), qoutputfilename);
+    trueAnalyze(thinningFilter->GetOutput(), qoutputfilename, treeNumber);
 
 }
 
@@ -358,7 +370,8 @@ itk::Image<signed short, (unsigned) 3>* createITKImage(unsigned char *datald, in
              }
 
              //return the filled image pointer
-             globalImage = I;
+             globalImage = I; //optional (testing purpsoe only)
+
              return I;
 
 
@@ -367,7 +380,7 @@ itk::Image<signed short, (unsigned) 3>* createITKImage(unsigned char *datald, in
 
 
 
-void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilename){
+void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilename, int treeNumber){
 
 
         typedef itk::Image< signed short, (unsigned)3> ImageType;
@@ -426,7 +439,6 @@ void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilena
         for (int i = 0; i < endPoints.size(); i++)
                 if (visited[endPoints[i]->x][endPoints[i]->y][endPoints[i]->z] != true)
                       skeletonPoints.push_back(visitSkeleton(image, endPoints[i], visited));
-                    //skeletonPoints.push_back(visitSkeleton(globalImage, endPoints[i], visited));
 
         v3d_msg(QString("Number of total trees we get:  %1").arg(skeletonPoints.size()), 0);
 
@@ -467,7 +479,18 @@ void trueAnalyze(itk::Image<signed short, (unsigned)3> *image, QString outfilena
                 }
          */
 
-        outputSWC(skeletonPoints[indexNum[skeletonPoints.size() - 1 ]], outfilename); //currently outputing the largest tree
+        //output certain number of largest trees to a swc file, will be a parameter
+
+        //int treeNumerb = PARA.treeNum;
+        if (treeNumber >  skeletonPoints.size())
+               treeNumber = skeletonPoints.size();
+
+        long startVisitNum = 0;
+        for (int i = 1; i<= treeNumber; i++)
+        {
+          outputSWC(skeletonPoints[indexNum[skeletonPoints.size() - i ]], outfilename, startVisitNum); //currently outputing the largest tree
+          startVisitNum += skeletonPoints[indexNum[skeletonPoints.size() - i ]].size();
+        }
 
 
         points.clear();
@@ -640,17 +663,29 @@ signed short getPixel(itk::Image<signed short, (unsigned)3> *image, int x, int y
 }//end getpixel
 
 
-void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename){
+void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVisitNum){
 
 
        const char *outfilename = qoutputfilename.toStdString().c_str();
        cout << "filename converted from QString" << outfilename << endl;
-       ofstream outFile(outfilename);
-       outFile << "#name reconstruction3d \n#comment \n##n,type,x,y,z,radius,parent\n";
 
-       for (int i = 0; i < Points.size(); i++){
-                        outFile << Points[i]->visitNum << ' ' << 7 << ' ' << Points[i]->x << ' ' << Points[i]->y << ' ' << Points[i]->z << ' ' << 1 << ' ' << Points[i]->parent << endl;
-                }
+       ofstream outFile;
+       if (startVisitNum == 0) //first tree
+       {
+           outFile.open(outfilename);
+           outFile << "#name reconstruction3d \n#comment \n##n,type,x,y,z,radius,parent\n";
+       }
+       else //subsequent trees
+           outFile.open(outfilename, ios::app);
+
+       for (int i = 0; i < Points.size(); i++)
+       {
+           if (Points[i]->parent == -1)  //root of a separate tree
+              outFile << Points[i]->visitNum + startVisitNum << ' ' << 7 << ' ' << Points[i]->x << ' ' << Points[i]->y << ' ' << Points[i]->z << ' ' << 1 << ' ' << -1 << endl;
+
+           else
+             outFile << Points[i]->visitNum + startVisitNum << ' ' << 7 << ' ' << Points[i]->x << ' ' << Points[i]->y << ' ' << Points[i]->z << ' ' << 1 << ' ' << Points[i]->parent + startVisitNum << endl;
+       }
 
         outFile.close();
         cout << outfilename << " Successfully written to swc file.";
