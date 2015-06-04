@@ -39,6 +39,34 @@ T2 dumbfun(T1 s)
 
 }
 
+template<typename MatrixType>
+void writeMatrix(const char *filename,MatrixType matrix_to_write){
+
+    ofstream fout(filename); //opening an output stream for file test.txt
+        /*checking whether file could be opened or not. If file does not exist or don't have write permissions, file
+      stream could not be opened.*/
+      if(fout.is_open())
+        {
+        //file opened successfully so we are here
+        cout << "File Opened successfully!!!. Writing data from matrix to file" << endl;
+
+        //std::ofstream output("Power vector.txt");
+        for (unsigned int k=0; k<matrix_to_write.rows(); k++)
+        {
+            for ( unsigned int l=0; l<matrix_to_write.cols(); l++)
+            {
+             //   cout << matrix_to_write(k,l) << endl;
+                fout << matrix_to_write(k,l) << " "; // behaves like cout - cout is also a stream
+            }
+            fout << ";" << endl;
+        }
+        cout << "matrix data successfully saved into the file " <<filename<< endl;
+        }
+        else //file could not be opened
+        {
+            cout << "File could not be opened." << endl;
+        }
+}
 
 MatrixTypeDouble readMatrix(const char *filename)
     {
@@ -401,7 +429,8 @@ template MatrixTypeFloat computeFeaturesSepComb<itk::Image< float, 3>, MatrixTyp
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeDouble>(const VectorTypeDouble &newScores,const itk::Image< float, 3>::SizeType &size_img);
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeFloat>(const VectorTypeFloat &newScores,const itk::Image< float, 3>::SizeType &size_img);
 
-
+template void writeMatrix<MatrixTypeDouble>(const char * filename, MatrixTypeDouble mat);
+template void writeMatrix<MatrixTypeFloat>(const char * filename, MatrixTypeFloat mat);
 
 template int dumbfun<float,int>(float s);
 

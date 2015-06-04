@@ -33,6 +33,9 @@ typedef Eigen::MatrixXf MatrixTypeFloat;
 // read text file and store it in Eigen matrix
 MatrixTypeDouble readMatrix(const char *filename);
 
+template<typename MatrixType>
+void writeMatrix(const char *filename,MatrixType matrix_to_write);
+
 template<typename T1,typename T2>
 T2 dumbfun(T1 s);
 

@@ -2,6 +2,7 @@
 //#include <random> //only c++11
 #include "sampling.h"
 #include <iostream>
+#include <ctime>
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
@@ -57,9 +58,11 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
  //   std::cout << "rand sampling  " << std::endl;
 
     boost::random::mt19937 generator_pos;
+    generator_pos.seed(static_cast<unsigned int>(std::time(0)));
     boost::random::uniform_int_distribution<unsigned int> distribution_pos(0,pos_indeces.rows()-1);
     boost::random::mt19937 generator_neg;
-    boost::random::uniform_int_distribution<unsigned int> distribution_neg(0,pos_indeces.rows()-1);
+    generator_neg.seed(static_cast<unsigned int>(std::time(0)));
+    boost::random::uniform_int_distribution<unsigned int> distribution_neg(0,neg_indeces.rows()-1);
 //    std::default_random_engine generator_pos;
 //    std::uniform_int_distribution<unsigned int> distribution_pos(0,pos_indeces.rows());
 //    std::default_random_engine generator_neg;
@@ -77,7 +80,7 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
 //}
 
 
-  //      std::cout << "rand pos index: " <<rand_pos_index << std::endl;
+    //    std::cout << "rand pos index: " <<rand_pos_index << std::endl;
   //      std::cout << "index rand pos index: " <<pos_indeces(rand_pos_index) << std::endl;
   //      std::cout << "pos sample value: " <<gt_vector(pos_indeces(rand_pos_index)) << std::endl;
 
@@ -89,7 +92,7 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
     for(unsigned int i_neg =0; i_neg<n_neg_samples;i_neg++ ){
         unsigned int rand_neg_index = distribution_neg(generator_neg);
 
-    //    std::cout << " rand neg index: " <<(rand_neg_index) << std::endl;
+      //  std::cout << " rand neg index: " <<(rand_neg_index) << std::endl;
     //    std::cout << "index rand neg index: " <<neg_indeces(rand_neg_index) << std::endl;
     //    std::cout << "neg sample value: " <<gt_vector(neg_indeces(rand_neg_index)) << std::endl;
 
