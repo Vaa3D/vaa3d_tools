@@ -1,6 +1,6 @@
 /*
  * MATLAB Compiler: 6.0 (R2015a)
- * Date: Wed Jun  3 17:15:17 2015
+ * Date: Thu Jun  4 16:23:04 2015
  * Arguments: "-B" "macro_default" "-B" "csharedlib:libvaa_port_test" "-W"
  * "lib:libvaa_port_test" "-T" "link:lib" "vaa3d_trace3D" 
  */
@@ -77,7 +77,7 @@ bool MW_CALL_CONV mlxVaa3d_trace3D(int nlhs, mxArray *plhs[], int nrhs, mxArray 
 
 
 
-extern LIB_libvaa_port_test_C_API bool MW_CALL_CONV mlfVaa3d_trace3D(int nargout, mxArray** result, mxArray* raw, mxArray* unit_bytes, mxArray* x, mxArray* y, mxArray* z, mxArray* t);
+extern LIB_libvaa_port_test_C_API bool MW_CALL_CONV mlfVaa3d_trace3D(int nargout, mxArray** result, mxArray* raw, mxArray* unit_bytes, mxArray* x, mxArray* y, mxArray* z, mxArray* t, mxArray* para);
 
 #ifdef __cplusplus
 }

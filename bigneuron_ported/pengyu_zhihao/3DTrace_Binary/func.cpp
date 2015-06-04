@@ -23,17 +23,17 @@ int simple_func(){
 	std::cerr << "Hello" << std::endl;
 	return 1;
 }
-bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_bytes, V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG t){
+bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_bytes, V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG t,int paran, double* para){
 	
 	std::cerr << "Matlab Part Start." << std::endl;
 
 	// Initialize the MATLAB Compiler Runtime global state
-	/*if (!mclInitializeApplication(NULL, 0))
+	if (!mclInitializeApplication(NULL, 0))
 	{
 		std::cerr << "Could not initialize the application properly." << mclGetLastErrorMessage()
 			<< 'Z' << std::endl;
 		//return -1;
-	}*/
+	}
 	// Initialize the Vigenere library
 	if (!libvaa_port_testInitialize())
 	{
@@ -45,7 +45,10 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 	mxArray *mx_output = NULL;
 	size_t raw_dim[1] = {x*y*z*t};
 	size_t dim[1] = { 1 };
-	mxArray *mx_raw, *mx_unit_bytes, *mx_x, *mx_y, *mx_z, *mx_t;
+	size_t dim_para[1];
+	dim_para[0] = paran;
+
+	mxArray *mx_raw, *mx_unit_bytes, *mx_x, *mx_y, *mx_z, *mx_t, *mx_para;
 	int pause;
 	unsigned char *dynamic_raw = (unsigned char *)mxCalloc(total_bytes, sizeof(UINT8_T));
 	for (V3DLONG i = 0; i < total_bytes; i++){
@@ -78,8 +81,15 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 	dynamic_t[0] = t;
 	mx_t = mxCreateUninitNumericArray(1, dim, get_mxClass(8), mxREAL);
 	mxSetData(mx_t, dynamic_t);
+
+	double *dynamic_para = (double *)mxCalloc(paran, sizeof(double));
+	for (int i = 0; i < paran; i++){
+		dynamic_para[i] = para[i];
+	}
+	mx_para = mxCreateUninitNumericArray(1, dim_para, mxDOUBLE_CLASS, mxREAL);
+	mxSetData(mx_para, dynamic_para);
 	std::cout << "Assignment Finished\n";
-	mlfVaa3d_trace3D(1, &mx_output, mx_raw,mx_unit_bytes,mx_x,mx_y,mx_z,mx_t);
+	mlfVaa3d_trace3D(1, &mx_output, mx_raw, mx_unit_bytes, mx_x, mx_y, mx_z, mx_t, mx_para);
 	//y = (double*)mxGetPr(y_ptr);
 	//std::cout << "answer:" << *y << '\n';
 	// Shut down the library and the application global state.
@@ -87,20 +97,23 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 
 	
 	mxDestroyArray(mx_raw);
-	//std::cout << "free mx raw";
+	std::cout << "free mx raw\n";
 	//mxDestroyArray(mx_output);
 	//std::cout << "free mx output";
 	mxDestroyArray(mx_unit_bytes);
-	//std::cout << "free mx unit";
+	std::cout << "free mx unit\n";
 	mxDestroyArray(mx_x);
-	//std::cout << "free mx x";
+	std::cout << "free mx x\n";
 	mxDestroyArray(mx_y);
-	//std::cout << "free mx y";
+	std::cout << "free mx y\n";
 	mxDestroyArray(mx_z);
-	//std::cout << "free mx z";
+	std::cout << "free mx z\n";
 	mxDestroyArray(mx_t);
-	//std::cout << "free mx t";
-	libvaa_port_testTerminate();
-        std::cout<< "Matlab Part Finished" << std::endl;
+	std::cout << "free mx t\n";
+	mxDestroyArray(mx_para);
+	std::cout << "free mx para\n";
+	//libvaa_port_testTerminate();
+	//mclTerminateApplication();
+	std::cout << "Matlab Part Finished." << std::endl;
 	return output;
 }
