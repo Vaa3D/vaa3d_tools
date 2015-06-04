@@ -402,6 +402,61 @@ unsigned char* get_image_data(const std::string &server, const std::string &url,
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
+unsigned char* get_channel_data(const std::string &server, const std::string &url, const std::string &channel, hsize_t* dims)
+{
+    // Create Temp Dir
+    boost::filesystem::path tempfile = boost::filesystem::unique_path();
+    boost::filesystem::path temp_path = boost::filesystem::temp_directory_path();
+    boost::filesystem::temp_directory_path();
+    temp_path /= tempfile;
+    temp_path += ".h5";
+    const std::string tempstr = temp_path.native();  // optional
+
+    // Get image data from server
+    std::ofstream outFile(tempstr.c_str(), std::ofstream::out | std::ofstream::binary);
+    GetFile(server, url, outFile);
+    outFile.close();
+
+    // Open the file
+    H5File file( tempstr, H5F_ACC_RDONLY );
+
+    // Grab the dataset
+    Group top_group = file.openGroup("CUTOUT");
+    DataSet cutout = top_group.openDataSet(channel);
+
+    // get the dataspace
+    DataSpace dspace = cutout.getSpace();
+
+    // get the size of the dataset
+    hsize_t rank;
+    rank = dspace.getSimpleExtentDims(dims, NULL);
+
+
+    // Define the memory dataspace
+    //hsize_t dimsm[1];
+    //dimsm[0] = dims[0];
+    DataSpace memspace(rank,dims);
+
+    // Assuming INT - create a vector the same size as the dataset
+    // TODO: MAKE LOOK AT DATATYPE
+    int data_size = dims[0] * dims[1] * dims[2];
+    unsigned char* data_out = new unsigned char[data_size * 2]; // 16-bit
+
+    cutout.read(data_out, PredType::NATIVE_INT16, memspace, dspace);
+
+    file.close();
+
+    printf("%s\n",tempstr.c_str());
+    // Delete hdf5 file
+    if(boost::filesystem::exists(tempstr))
+        boost::filesystem::remove(tempstr);
+
+    return data_out;
+
+}
+//---------------------------------------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------------------------------------
 void select_project_token(const vector<string> &ocp_projects, string &token)
 {
     // -------------------
@@ -437,7 +492,7 @@ void select_project_token(const vector<string> &ocp_projects, string &token)
 
 //---------------------------------------------------------------------------------------------------------
 void retrieve_ocp_url(const string &project, const vector<string> &channels,
-                      const vector<string> &dimensions, string &data_url)
+                      const vector<string> &dimensions, string &data_url, string &channel)
 {
     int num_resolutions = dimensions.size();
     int num_channels = channels.size();
@@ -449,7 +504,7 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
     QGridLayout *mainLayout = new QGridLayout;
 
     // Image Resolution Selection
-    QGroupBox *resolutionBox = new QGroupBox(QString("Resolution (x_end,y_end,z_start,z_end):"));
+    QGroupBox *resolutionBox = new QGroupBox(QString("Resolution (level,x_end,y_end,z_start,z_end):"));
     QVBoxLayout *resolutionBoxLayout = new QVBoxLayout();
     QRadioButton *buttons[num_resolutions];
     for (int i=0; i<num_resolutions; ++i) {
@@ -473,7 +528,6 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
     QGroupBox *channelBox = new QGroupBox(QString("Channel:"));
     QVBoxLayout *channelBoxLayout = new QVBoxLayout;
     QComboBox *channelComboBox = new QComboBox;
-
     for (int i=0; i<num_channels; ++i) {
         channelComboBox->addItem(QString(channels[i].c_str()));
     }
@@ -517,7 +571,7 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
     // Prepare dialog for viewing
     dialog.setLayout(mainLayout);
     string x_extents,y_extents,z_extents;
-    string channel = "";
+    channel = "";
     string resolution = "";
     if (dialog.exec() == QDialog::Accepted) {
         // Retrieve resolution value
@@ -659,22 +713,30 @@ void OCP2Vaa3D::import_from_ocp(V3DPluginCallback2 &callback, QWidget *parent) {
     vector<string> channels,dimensions;
     dimensions = get_image_set_dimensions(proj_info_file);
     channels = get_channels(proj_info_file);
-    retrieve_ocp_url(token,channels,dimensions,ocp_url);
+    string selected_channel;
+    retrieve_ocp_url(token,channels,dimensions,ocp_url,selected_channel);
     delete_hdf5_file(proj_info_file);
+    if (ocp_url.empty()) {
+        qDebug() << QString("No URL retrieved");
+        return;
+    }
 
     // -------------------
     //  Retrieve data
     // -------------------
     unsigned char* data;
     hsize_t data_dims[3];
-    data = get_image_data(SERVER,ocp_url,data_dims);
-
-    // -------------------
-    //  Convert volume to Vaa3D format
-    // -------------------
     Image4DSimple p4DImage;
-    // HDF5 represents data as Z,Y,X so note the swap in dimensions
-    p4DImage.setData(data, data_dims[2], data_dims[1], data_dims[0], 1, V3D_UINT8);
+    if (selected_channel.empty()) {
+        data = get_image_data(SERVER,ocp_url,data_dims);
+        // HDF5 represents data as Z,Y,X so note the swap in dimensions
+        p4DImage.setData(data, data_dims[2], data_dims[1], data_dims[0], 1, V3D_UINT8);
+    } else {
+        printf("Selected channel: %s\n",selected_channel.c_str());
+        data = get_channel_data(SERVER,ocp_url,selected_channel,data_dims);
+        // HDF5 represents data as Z,Y,X so note the swap in dimensions
+        p4DImage.setData(data, data_dims[2], data_dims[1], data_dims[0], 1, V3D_UINT16);
+    }
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, &p4DImage);
     callback.updateImageWindow(newwin);
