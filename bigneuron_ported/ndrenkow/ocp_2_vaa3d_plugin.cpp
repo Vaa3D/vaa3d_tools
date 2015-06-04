@@ -503,6 +503,68 @@ void select_project_token(const vector<string> &ocp_projects, string &token)
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
+int check_extents(const string &resolution, const string &x_ex, const string &y_ex, const string &z_ex) {
+
+    // Extract volume dimensions from comma-separated strings
+    int counter = 0;
+    string token = resolution;
+    vector<int> extents; //x_end,y_end,z_start,z_end
+    bool exist_commas = true;
+    while (exist_commas) {
+        size_t found = token.find_first_of(",");
+        if (found != std::string::npos) {
+            if (counter > 0) {
+                // First token will be resolution level
+                extents.push_back(atoi(token.substr(0,found).c_str()));
+            }
+            token = token.substr(found+1);
+        } else if (!token.empty()) {
+            // Last value in string
+            extents.push_back(atoi(token.c_str()));
+            exist_commas = false;
+        } else {
+            exist_commas = false;
+        }
+        ++counter;
+    }
+
+    // Extract extents from comma-separated strings
+    int xstart,xstop,ystart,ystop,zstart,zstop;
+    size_t found = x_ex.find_first_of(",");
+    if (found != std::string::npos) {
+        xstart = atoi(x_ex.substr(0,found).c_str());
+        xstop = atoi(x_ex.substr(found+1).c_str());
+    } else {
+        return 0;
+    }
+
+    found = y_ex.find_first_of(",");
+    if (found != std::string::npos) {
+        ystart = atoi(y_ex.substr(0,found).c_str());
+        ystop = atoi(y_ex.substr(found+1).c_str());
+    } else {
+        return 0;
+    }
+
+    found = z_ex.find_first_of(",");
+    if (found != std::string::npos) {
+        zstart = atoi(z_ex.substr(0,found).c_str());
+        zstop = atoi(z_ex.substr(found+1).c_str());
+    } else {
+        return 0;
+    }
+
+    // Check extents
+    printf("%d,%d,%d,%d\n",extents[0],extents[1],extents[2],extents[3]);
+    printf("%d,%d,%d,%d,%d,%d\n",xstart,xstop,ystart,ystop,zstart,zstop);
+    return (xstop > xstart) && (xstart >= 0) && (xstop <= extents[0]) &&
+           (ystop > ystart) && (ystart >= 0) && (ystop <= extents[1]) &&
+           (zstop > zstart) && (zstart >= extents[2]) && (zstop <= extents[3]);
+
+}
+//---------------------------------------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------------------------------------
 void retrieve_ocp_url(const string &project, const vector<string> &channels,
                       const vector<string> &dimensions, string &data_url, vector<string> &selected_channels)
 {
@@ -577,12 +639,14 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
     string x_extents,y_extents,z_extents;
     string all_selected_channels = "";
     string resolution = "";
+    string full_extents = "";
     if (dialog.exec() == QDialog::Accepted) {
         // Retrieve resolution value
         for (int i=0; i<num_resolutions; ++i) {
             if (buttons[i]->isChecked()) {
                 std::size_t found = dimensions[i].find_first_of(",");
                 resolution = dimensions[i].substr(0,found);
+                full_extents = dimensions[i];
                 break;
             }
         }
@@ -615,6 +679,16 @@ void retrieve_ocp_url(const string &project, const vector<string> &channels,
         x_extents = xLine->text().toStdString();
         y_extents = yLine->text().toStdString();
         z_extents = zLine->text().toStdString();
+
+        int valid_extents = check_extents(full_extents,x_extents,y_extents,z_extents);
+        if (!valid_extents) {
+            QMessageBox *msg_box = new QMessageBox;
+            msg_box->setText("Extents are invalid. Exiting ocp_2_vaa3d plugin...");
+            msg_box->setStandardButtons(QMessageBox::Ok);
+            msg_box->setDefaultButton(QMessageBox::Ok);
+            int ret = msg_box->exec();
+            return;
+        }
 
         // Debugging
         qDebug() << QString(project.c_str());
