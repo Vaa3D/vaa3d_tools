@@ -4,7 +4,8 @@
  * 2015-6-1 : by Edward Hottendorf and Jie Zhou
  * Hackthon Test Plugin.
  *
- * ToDo: add parameters to decide if linking all the structures and the fg/bg foreground
+ * ToDo: 1. add parameters to decide how many trees need to be included
+ *       2. pre-processing and loop pruning need to added or to be translated from Java
  *
  */
  
@@ -40,8 +41,8 @@ using namespace std;
 struct input_PARA
 {
     QString inimg_file;
-    V3DLONG channel;
-    int threshold;
+    V3DLONG channel = 1;
+    int threshold = 0 ;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -65,36 +66,46 @@ ImageType::Pointer globalImage = ImageType::New();
 QStringList reconstruction_by_thinning_plugin::menulist() const
 {
 	return QStringList() 
-		<<tr("reconstruct_thinning")
+        <<tr("medial_axis_analysis")
 		<<tr("about");
 }
 
 QStringList reconstruction_by_thinning_plugin::funclist() const
 {
 	return QStringList()
-		<<tr("reconstruct_thinning")
+        <<tr("medial_axis_analysis")
 		<<tr("help");
 }
 
 void reconstruction_by_thinning_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("reconstruct_thinning"))
+    if (menu_name == tr("medial_axis_analysis"))
 	{
         bool bmenu = true;
         input_PARA PARA;
+
+        //input
+         bool ok1;
+
+        PARA.threshold = QInputDialog::getInteger(parent, "Window X ",
+                                       "Enter threshold (voxel > threshold considered as foreground. Default 0):",
+                                       0, 0, 255, 1, &ok1);
+
+        if (!ok1) return;  //have problem getting threshold
+
         reconstruction_func(callback,parent,PARA,bmenu);
 
 	}
 	else
 	{
-		v3d_msg(tr("reconstruction_by_thinning_plugin. "
-            "Developed by Jie Zhou, Edward Hottendorf, 2015-6-1"));
+        v3d_msg(tr("NeuronAxisAnalyser -- Input: Gray-level Image; Output: Reconstructed swc"
+            "Developed by Jie Zhou and Edward Hottendorf, 2015-6-1"));
 	}
 }
 
 bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("reconstruct_thinning"))
+    if (func_name == tr("medial_axis_analysis"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -190,7 +201,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 
         PARA.inimg_file = p4DImage->getFileName();
-        PARA.threshold = 0;
     }
     else
     {
@@ -261,7 +271,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     itk::Image<signed short, (unsigned) 3> *input = createITKImage(data1d, imageSize);
     //2. call Reconstruction3D by passing the itkimage
 
-    QString swc_name = PARA.inimg_file + "_ron.swc";
+    QString swc_name = PARA.inimg_file + "_axis_analyzer.swc";
     int reconstructionTH = PARA.threshold;
     reconstructionThinning(input, swc_name, reconstructionTH);
 
