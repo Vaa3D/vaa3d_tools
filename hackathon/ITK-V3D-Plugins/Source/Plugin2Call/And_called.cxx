@@ -62,7 +62,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -85,6 +85,7 @@ public:
         arg.p=m_Filter->GetOutput();
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 
 
@@ -118,10 +119,7 @@ bool AndPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
       return false;
     }
     PluginSpecialized<unsigned char> *runner=new PluginSpecialized<unsigned char>(&v3d);
-    runner->ComputeOneRegion(input, output);
-
-    return true;
-
+    return (runner->ComputeOneRegion(input, output) );
 }
 
 

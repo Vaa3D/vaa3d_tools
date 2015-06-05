@@ -124,7 +124,7 @@ public:
         }
 
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         b_use_binary=false;
         QMessageBox mb;
@@ -148,7 +148,10 @@ public:
         this->RegisterInternalFilter(this->filter_g,1.0);
         void * p=NULL;
         p=(void*)input.at(0).p;
-        if(!p)perror("errro");
+        if(!p){
+          qDebug()<<"ComputeOneRegion: no inputs.";
+          return false;
+        }
 
         if (b_use_binary)
         {
@@ -178,8 +181,9 @@ public:
         catch ( itk::ExceptionObject & excp )
         {
             v3d_msg(QObject::tr( excp.what() )); //or use excp.GetDesciption() may do it as well. suggested by Luis!
-            return;
+            return false;
         }
+
         V3DPluginArgItem arg;
         typename ImageType::Pointer outputImage;
 
@@ -195,6 +199,7 @@ public:
         arg.p = (void*)outputImage;
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 
 private:
@@ -235,9 +240,7 @@ bool ErodePlugin::dofunc(const QString & func_name, const V3DPluginArgList & inp
         return false ;
     }
     ErodeSpecialized<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-
-    return true;
+    return (runner.ComputeOneRegion(input, output));
 }
 
 

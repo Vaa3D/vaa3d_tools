@@ -83,7 +83,7 @@ public:
         relabelComponent->Update();
         this->SetOutputImage(relabelComponent->GetOutput());
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -112,10 +112,16 @@ public:
 
         V3DPluginArgItem arg;
         typename InputImageType::Pointer outputImage = this->relabelComponent->GetOutput();
+        if (! outputImage){
+          qDebug()<< "NULL outputImage!";
+          return false;
+        }
+
         outputImage->Register();
         arg.p = (void*)outputImage;
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 
 
@@ -157,9 +163,7 @@ bool ITKMorphologicalWatershedFromMarkersPlugin::dofunc(const QString & func_nam
         return false ;
     }
     ITKMorphologicalWatershedFromMarkersSpecializaed <unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-
-    return true;
+    return(runner.ComputeOneRegion(input, output));
 }
 
 void ITKMorphologicalWatershedFromMarkersPlugin::domenu(const QString & menu_name, V3DPluginCallback2 & callback, QWidget * parent)

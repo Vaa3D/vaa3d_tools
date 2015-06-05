@@ -78,7 +78,7 @@ public:
         this->SetOutputImage(this->rescaler_32f_8u->GetOutput());
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -91,7 +91,11 @@ public:
 
         void * p=NULL;
         p=(void*)input.at(0).p;
-        if(!p)perror("errro");
+        if(!p)
+         {
+          qDebug()<<"ComputeOneregion: empty p";
+          return false;
+         }
 
         rescaler_8u_32f->SetInput((ImageType*) p );
         filter->SetInput(rescaler_8u_32f->GetOutput());
@@ -100,10 +104,16 @@ public:
 
         V3DPluginArgItem arg;
         typename ImageType::Pointer outputImage = rescaler_32f_8u->GetOutput();
+        if (! outputImage)
+         {
+          qDebug()<< "NULL outputimage";
+          return false;
+         }
         outputImage->Register();
         arg.p = (void*)outputImage;
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 private:
     typename RescaleFilterType_input::Pointer rescaler_8u_32f ;
@@ -138,9 +148,7 @@ bool ITKDiscreteGaussianFilterPlugin::dofunc(const QString & func_name, const V3
         V3DPluginCallback2 & v3d,  QWidget * parent)
 {
     ITKDiscreteGaussianFilterSpecializaed<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-
-    return true;
+    return(runner.ComputeOneRegion(input, output));
 }
 
 

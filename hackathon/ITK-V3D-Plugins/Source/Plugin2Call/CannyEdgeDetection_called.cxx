@@ -93,7 +93,7 @@ public:
     }
     bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
-
+        qDebug()<<"Canny: ComputeOneRegion";
         V3DITKGenericDialog dialog("CannyEdgeDetection");
 
         dialog.AddDialogElement("Sigma",1.0, 0.0, 50.0);

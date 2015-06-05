@@ -62,7 +62,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -78,7 +78,10 @@ public:
 
         void * p=NULL;
         p=(void*)input.at(0).p;
-        if(!p)perror("errro");
+        if(!p){
+          qDebug()<<"ComputeOneRegion: no inputs.";
+          return false;
+        }
 
         this->m_Filter->SetInput((ImageType*) p );
 
@@ -87,8 +90,14 @@ public:
         typename ImageType::Pointer outputImage = m_Filter->GetOutput();
         outputImage->Register();
         arg.p=(void*)outputImage;
+        if (! outputImage)
+        {  qDebug()<<"empty outputimage";
+           return false;
+        }
+
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 private:
     typename FilterType ::Pointer m_Filter;
@@ -126,9 +135,7 @@ bool ITKMeanFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         return false ;
     }
     ITKMeanFilterSpecializaed<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-
-    return true;
+    return (runner.ComputeOneRegion(input, output));
 }
 
 void ITKMeanFilterPlugin::domenu(const QString & menu_name, V3DPluginCallback2 & callback, QWidget * parent)

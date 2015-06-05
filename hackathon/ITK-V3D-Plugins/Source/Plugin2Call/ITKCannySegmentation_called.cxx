@@ -129,7 +129,7 @@ public:
         std::cout << "No. elpased iterations: " << cannySegmentation->GetElapsedIterations() << std::endl;
         std::cout << "RMS change: " << cannySegmentation->GetRMSChange() << std::endl;
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -157,9 +157,14 @@ public:
         typename InputImageType::Pointer outputImage = thresholder->GetOutput();
         outputImage->Register();
         arg.p = (void*)outputImage;
-        arg.p=thresholder->GetOutput();
+        if (! arg.p){
+          qDebug()<< "empty thresholder output";
+          return false;
+        }
+
         arg.type="outputImage";
         output.replace(0,arg);
+        return true;
     }
 
 
@@ -203,9 +208,7 @@ bool ITKCannySegmentationPlugin::dofunc(const QString & func_name, const V3DPlug
         return false ;
     }
     ITKCannySegmentationSpecializaed <unsigned char,unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-
-    return true;
+    return(runner.ComputeOneRegion(input, output));
 }
 
 void ITKCannySegmentationPlugin::domenu(const QString & menu_name, V3DPluginCallback2 & callback, QWidget * parent)

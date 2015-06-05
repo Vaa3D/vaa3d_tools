@@ -60,7 +60,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -76,7 +76,10 @@ public:
 
         void * p=NULL;
         p=(void*)input.at(0).p;
-        if(!p)perror("errro");
+        if(!p){
+          qDebug()<<"ComputeOneRegion: no inputs.";
+          return false;
+        }
 
         this->m_Filter->SetInput((ImageType*) p );
 
@@ -84,6 +87,11 @@ public:
         V3DPluginArgItem arg;
         typename ImageType::Pointer outputImage = m_Filter->GetOutput();
         outputImage->Register();
+        if (! outputImage)
+        {  qDebug()<<"empty outputimage";
+           return false;
+        }
+
         arg.p = (void*)outputImage;
         arg.type="outputImage";
         output.replace(0,arg);

@@ -137,7 +137,7 @@ switch( pixelType )\
         output << arg; \
         bool result = itkPluginCall -> dofunc("", input, output, *(this->v3dHook), (QWidget*) 0);\
         if (!result){\
-          qDebug() << "error run the plugin"; \
+          qDebug() << "Call_FUNC: Error running the plugin"; \
           result = false; \
           break;  \
         } \
