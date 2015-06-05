@@ -15,7 +15,7 @@
 
 #include <vector>
 #include <iostream> 
-
+ 
 using namespace std;
 
 /* function used in DOMENU typically takes 2 inputs:
@@ -67,32 +67,32 @@ static struct adj_node{
 int *flag;
 
 QMap<int,QList<Node*> > Map_finalnode_list;
-QMap<int,Node*> Map_rootnode;
-QMap<int,Node> Map_rootnode_n;
-QMultiMap<int,Node*> Map_allnodes;
+QMap<int,Node* > Map_rootnode;
+QMap<int,Node > Map_rootnode_n;
+QMultiMap<int,Node* > Map_allnodes;
 QMap<int,QList<Node*> > finalclass_node;
 QList<QList<NeuronSWC> > result_tree_part;
-QList<NeuronSWC> result_final_tree;
-QMap<int,Node*> root;
-QMap<int,QMap<int,QList<Node*>>> number_path;
-QMap<int,QMap<int,QList<Node>>> number_path_vn2;
-QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>> number_path_vn3;
-QList<NeuronSWC> final_listNeuron;
-QMap<V3DLONG,int> cp_SWC;
+QList<NeuronSWC > result_final_tree;
+QMap<int,Node* > root;
+QMap<int,QMap<int,QList<Node*> > > number_path;
+QMap<int,QMap<int,QList<Node> > > number_path_vn2;
+QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > > number_path_vn3;
+QList<NeuronSWC > final_listNeuron;
+QMap<V3DLONG,int > cp_SWC;
 
-QMap<int,QList<Node*>> unit_path;
-QMap<int,QList<Node>> unit_path_vn2;//keep the shortest path of all nodes
+QMap<int,QList<Node*> > unit_path;
+QMap<int,QList<Node> > unit_path_vn2;//keep the shortest path of all nodes
 
-QList<QList<Node*>> final_path;
-QList<QList<Node>> final_path_vn2;
+QList<QList<Node*> > final_path;
+QList<QList<Node> > final_path_vn2;
 
-QMap<V3DLONG, NeuronSWC> original_tree;//keep the original tree and insert the shortest path into each two nodes
+QMap<V3DLONG, NeuronSWC > original_tree;//keep the original tree and insert the shortest path into each two nodes
 
-QMap<V3DLONG,int> Map_finalnode; 
-QMap<V3DLONG,int> Map_nodes;
-QMap<V3DLONG,V3DLONG> Map_allnode;
-QList <NeuronSWC> result_list;
-QList <NeuronSWC> con_tree;
+QMap<V3DLONG,int > Map_finalnode; 
+QMap<V3DLONG,int > Map_nodes;
+QMap<V3DLONG,V3DLONG > Map_allnode;
+QList <NeuronSWC > result_list;
+QList <NeuronSWC > con_tree;
 vector<QList<Node*> > v_List;
 QMap<V3DLONG,QList<Node*> > root_class;
 
