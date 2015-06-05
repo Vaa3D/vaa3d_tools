@@ -36,10 +36,10 @@ _NOTE: This code was developed and tested on Mac OSX exclusively.  No claims are
   - If the dataset contains multiple channels, select the desired channels
     - *Note* - Only 3 channels may selected since they will be rendered as RGB.  If multiple channels are selected, only the first three channels checked (in the original list order) will be visualized
   - Select the desired volume indices
-    - All indices should be written as *<start>,<stop>*
+    - All indices should be written as *<start_idx>,<stop_idx>*
     - Some error checking is implemented to verify valid extents are entered, but the checks are not comprehensive.  Any errors encountered will result in the plugin closing. 
    
-### Vaa3D Commanline
+### Vaa3D Commandline
 1. Navigate to the Vaa3D binary directory
 2. Run as follows:
 
@@ -62,14 +62,17 @@ _NOTE_: Be careful about the use of commas and spaces.  Improper use may result 
 - Download volume(s) from OCP and save to Vaa3D data format (via the commandline interface)
 
 ### Plugin Limitations
-In current form, this plugin _CANNOT_ due the following.
+In current form, this plugin _CANNOT_ due the following:
 
 - Interface with non-OCP servers  
 - Load time series data 
-- Load more than 3 channels
+- Visualize more than 3 channels
+- Load annotation data (in addition to imaging data)
 
-## Links
+## Links and references
 [http://openconnecto.me](http://openconnecto.me) 
+
+[Original Open Connectome paper](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3881956/)
 
 ## Primary developers
 
