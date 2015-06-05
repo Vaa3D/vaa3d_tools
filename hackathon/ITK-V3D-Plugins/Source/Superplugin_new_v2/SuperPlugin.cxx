@@ -53,8 +53,8 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
         testPluginsDir.cdUp();
     }
 #endif
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/Vaa3D_ITK/Plugin2Call").arg(testPluginsDir.absolutePath()));
-    QString vaa3dPluginsDir = QDir::fromNativeSeparators(QString("%1/plugins/Vaa3D_ITK/Plugin2Call").arg(testPluginsDir.absolutePath()));
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/Vaa3D_ITK/PipelinePlugins/Plugin2Call").arg(testPluginsDir.absolutePath()));
+    QString vaa3dPluginsDir = QDir::fromNativeSeparators(QString("%1/plugins/Vaa3D_ITK/PipelinePlugins/Plugin2Call").arg(testPluginsDir.absolutePath()));
     Dialog* mydialog = new Dialog((QWidget*)parent);
     mydialog->setCallback(callback);
     mydialog->setInitialDir(initialDir);

@@ -195,10 +195,11 @@ void Dialog::onDirChangeButtonClicked()
 
   if (! folderName.startsWith(m_vaa3DworkingPluginsDir) )
   {
-    v3d_msg(tr("Error path! The plugins path should under folder plugins"));
+    v3d_msg(tr("Error path! Please check your input path agin."));
+    qDebug() << "Folder:" << folderName;
     return ;
   }
-  qDebug() << "new folder: " << folderName;
+
   this->m_initialDir = folderName;
   this->intialPluginManager();
 }

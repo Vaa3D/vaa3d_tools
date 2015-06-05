@@ -1,4 +1,4 @@
-SET(PLUGIN_DIRECTORY_NAME "PLUGIN2Call")
+SET(PLUGIN_DIRECTORY_NAME "PipelinePlugins/Plugin2Call")
 CONFIGURE_V3D_PLUGIN(CurvatureFlow_called)
 CONFIGURE_V3D_PLUGIN(ITKConfidenceConnected_called)
 CONFIGURE_V3D_PLUGIN(ITKConnectedThreshold_called)
