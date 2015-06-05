@@ -7,13 +7,19 @@
 #define __EXAMPLE_FUNC_H__
 
 #include <v3d_interface.h>
-#include "Gradient.h"
+#include<Gradient.h>
 #include "node.h"
 
 
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent);
 void meanshift_vn5(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 Node getnode(Node *node);
+QList<NeuronSWC> connect_shortest_path_vn4(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QList<NeuronSWC> smooth_SWC_radius(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+double fix_radius(QHash<V3DLONG,NeuronSWC> neuron,V3DLONG Parent,QList<V3DLONG> Childs );
+QHash<V3DLONG,V3DLONG> Child_Parent_Wan(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QHash<V3DLONG,V3DLONG> Parent_Child_Wan(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+void change_type(std::vector<NeuronSWC *> &target,QList<NeuronSWC> source);
 QList<NeuronSWC> connect_shortest_path_vn3(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 QList<NeuronSWC> connect_shortest_path_vn2(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 QList<NeuronSWC> connect_shortest_path(unsigned char * &img1d,QList<Node> path,NeuronSWC begin,NeuronSWC end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);

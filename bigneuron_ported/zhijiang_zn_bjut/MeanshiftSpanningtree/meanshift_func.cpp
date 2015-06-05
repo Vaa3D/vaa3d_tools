@@ -7,6 +7,7 @@
 #include "v3d_message.h"
 #include "stackutil.h"
 #include "meanshift_func.h"
+#include "smooth_curve.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/heap.h"
 #include "../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
@@ -73,16 +74,17 @@ QMap<int,QList<Node*> > finalclass_node;
 QList<QList<NeuronSWC> > result_tree_part;
 QList<NeuronSWC> result_final_tree;
 QMap<int,Node*> root;
-QMap<int,QMap<int,QList<Node*> > > number_path;
-QMap<int,QMap<int,QList<Node> > > number_path_vn2;
-QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > > number_path_vn3;
+QMap<int,QMap<int,QList<Node*>>> number_path;
+QMap<int,QMap<int,QList<Node>>> number_path_vn2;
+QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>> number_path_vn3;
 QList<NeuronSWC> final_listNeuron;
+QMap<V3DLONG,int> cp_SWC;
 
-QMap<int,QList<Node*> >  unit_path;
-QMap<int,QList<Node> > unit_path_vn2;//keep the shortest path of all nodes
+QMap<int,QList<Node*>> unit_path;
+QMap<int,QList<Node>> unit_path_vn2;//keep the shortest path of all nodes
 
-QList<QList<Node*> >  final_path;
-QList<QList<Node> > final_path_vn2;
+QList<QList<Node*>> final_path;
+QList<QList<Node>> final_path_vn2;
 
 QMap<V3DLONG, NeuronSWC> original_tree;//keep the original tree and insert the shortest path into each two nodes
 
@@ -411,7 +413,7 @@ void writeSWC_file(char* path,QList<NeuronSWC> listNeuron)
 	return;
 
 }
-void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*> > > nodeMap)
+void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*>>> nodeMap)
 {
 	V3DLONG number=0;
 	FILE * fp = fopen(path, "wt");
@@ -422,10 +424,10 @@ void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*> > > nodeMap)
 	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
 
 
-    for(QMap<int,QMap<int,QList<Node*> > >::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
+	for(QMap<int,QMap<int,QList<Node*>>>::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
 	{
-        QMap<int,QList<Node*> >  temp1=iter1.value();
-        for(QMap<int,QList<Node*> > ::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
+		QMap<int,QList<Node*>> temp1=iter1.value();
+		for(QMap<int,QList<Node*>>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
 		{
 			QList<Node*> temp2=iter2.value();
 			for(int i=0;i<temp2.length();i++)
@@ -535,10 +537,40 @@ void printSWCByQList_Neuron(QList <NeuronSWC> result_list,const char* path)
 			NeuronSWC temp2= result_list.at(j);
 			//if (j == 0); temp2.parent = -1;
 			//printf(" %lf \n",temp2.r);
-			printf( "%ld %d %f %f %f %lf %ld\n",
-				temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
+			//printf( "%ld %d %f %f %f %lf %ld\n",temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
 			fprintf(fp, "%ld %d %f %f %f %lf %ld\n",
 				temp2.n, temp2.type,  temp2.x,  temp2.y,  temp2.z, temp2.r, temp2.parent);
+
+		}
+	}
+
+	fclose(fp);
+	return;
+
+
+}
+
+void printSWCByQList_Neuron_pointer(std::vector <NeuronSWC*> result_list,const char* path)
+{
+	V3DLONG number=0;
+	FILE * fp = fopen(path, "a");
+	if (!fp) return; 
+
+	fprintf(fp, "#name\n");
+	fprintf(fp, "#comment\n");
+	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
+
+	//for(int i=0;i<result_list.size();i++)
+	{
+		//QList<NeuronSWC> temp1=result_list.at(i);
+		for(int j=0;j< result_list.size();j++)
+		{
+			NeuronSWC* temp2= result_list.at(j);
+			//if (j == 0); temp2.parent = -1;
+			//printf(" %lf \n",temp2.r);
+			
+			fprintf(fp, "%ld %d %f %f %f %lf %ld\n",
+				temp2->n, temp2->type,  temp2->x,  temp2->y,  temp2->z, temp2->r, temp2->parent);
 
 		}
 	}
@@ -917,6 +949,8 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 	original_tree.insert(GET_IND(seeds.at(0)->x,seeds.at(0)->y,seeds.at(0)->z),S);
 	hashNeuron.insert(S.n, listNeuron.size()-1);
 	final_listNeuron.append(S);
+	listNeuron.append(S);
+	cp_SWC.insert(GET_IND(seeds.at(0)->x,seeds.at(0)->y,seeds.at(0)->z),S.pn);
 
 	int* pi = new int[marknum];
 	for(int i = 0; i< marknum;i++)
@@ -959,27 +993,21 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 			if(markEdge[indexi][indexj]>1000000)
 			{
 				printf("444444444444444444444444444444444444\n");
-
-
 			}
 			//here record the each shortest node from every node, wirte a function here to select shortest path from "number_path"  
-            //QMap<int,QMap<int,QList<Node*> > > number_path;
-            //QMap<int,QList<Node*> >  temp1=number_path[indexi];
 			//I need to find the node which number is indexi and indexj every time and plug the path between them
 			//the begin node is seeds.at(indexi) and the end node is seeds.at(indexj)
-			//QMap<int,QList<Node>> temp1=number_path_vn2[indexi];
-			//QList<Node> temp2=temp1[indexj];
 
-			//	final_path.append(temp2);
-			//final_path_vn2.append(temp2);
 			V3DLONG loc1=GET_IND(seeds.at(indexi)->x,seeds.at(indexi)->y,seeds.at(indexi)->z);
 			V3DLONG loc2=GET_IND(seeds.at(indexj)->x,seeds.at(indexj)->y,seeds.at(indexj)->z);
 			QList<Node> temp22;
-            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator begin=number_path_vn3.lowerBound(loc1);
-            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator end=number_path_vn3.upperBound(loc1);
+			temp22.clear();
+			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator begin=number_path_vn3.lowerBound(loc1);
+			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator end=number_path_vn3.upperBound(loc1);
 			//printf("times:::%d\n",times);
 			while((begin!=end))
 			{
+				
 				if(begin.value().contains(loc2))
 				{
 					temp22=begin.value().value(loc2);
@@ -994,20 +1022,20 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 
 			}
 
+			final_path_vn2.append(temp22);
+
 			//connect the shortest path with the begin node and end node
 			//	if(temp2.size()!=0)
 			{
 				S_vn2.clear();
-				S_vn2=connect_shortest_path_vn3(img1d,temp22,seeds.at(indexi),seeds.at(indexj),sz_x,sz_y,sz_z);
+			
+				S_vn2=connect_shortest_path_vn4(img1d,temp22,seeds.at(indexi),seeds.at(indexj),sz_x,sz_y,sz_z);
+				//insert the root node into listNeuron first and check the next node is also root or not
+			
 				for(int i=0;i<S_vn2.length();i++)
 				{
-					if(i==0)
-					{
-						listNeuron.append(S_vn2.at(i));
-						continue;
-					}
 						
-					if(compare_NeuronSWC(S_vn2.at(i-1),S_vn2.at(i)))
+					if(compare_NeuronSWC(listNeuron.first(),S_vn2.first()))
 					{
 						continue;
 
@@ -1018,10 +1046,12 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 					original_tree.insert(GET_IND(S_vn2.at(i).x,S_vn2.at(i).y,S_vn2.at(i).z),S_vn2.at(i));*/
 
 				}
+			
 			}
 			hashNeuron.insert(S.n, listNeuron.size()-1);
 		}else
 		{
+			
 			break;
 		}
 		pi[indexj] = 1;
@@ -1047,8 +1077,183 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 	number_path_vn3.clear();
 	delete [] pi;
 	seeds.clear();
+	cp_SWC.clear();
+	final_listNeuron.clear();
+	original_tree.clear();
+
 	return listNeuron;
 }
+
+
+
+
+QList<NeuronSWC> connect_shortest_path_vn4(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
+	QList<NeuronSWC> result;
+	result.clear();
+
+	if(path.size()!=0)
+	{
+
+		///////////////////////////////////////for testing
+		if((begin->x==path.last().x)&&(begin->y==path.last().y)&&(begin->z==path.last().z))
+		{
+		}else{
+			printf("11111111111111111111111111111111\n");
+			printf("path size::%d\n",path.size());
+			printf("%ld   %ld   %ld \n",begin->x,begin->y,begin->z);
+			printf("%ld   %ld   %ld \n",path.last().x,path.last().y,path.last().z);
+
+			//return result;
+
+		}
+		if((end->x==path.first().x)&&(end->y==path.first().y)&&(end->z==path.first().z))
+		{
+		}else
+		{
+			printf("222222222222222222222222222222222222\n");
+
+		}
+		//////////////////////////////////////////////////
+
+
+		for(int i=path.length()-1;i>=0;i--)
+		{
+
+			Node temp=path.at(i);
+			NeuronSWC next_S;
+
+			if(cp_SWC.value(GET_IND(temp.x,temp.y,temp.z))==-1)
+			{
+				continue;
+
+			}else if((final_listNeuron.last().x==temp.x)&&(final_listNeuron.last().y==temp.y)&&(final_listNeuron.last().z==temp.z))
+			{
+				continue;
+
+			}
+
+
+			//next_S.n=original_tree.size()+1;
+			next_S.n=final_listNeuron.size()+1;
+			if(i==path.length()-1)
+			{
+				if(original_tree.contains(GET_IND(path.at(i).x,path.at(i).y,path.at(i).z)))
+				{
+					//next_S.pn=original_tree[GET_IND(path.at(i).x,path.at(i).y,path.at(i).z)].pn;
+					continue;
+
+				}else
+				{
+					next_S.pn=original_tree[GET_IND(final_listNeuron.last().x,final_listNeuron.last().y,final_listNeuron.last().z)].n;
+
+				}
+			}else
+			{
+					next_S.pn=original_tree[GET_IND(path.at(i+1).x,path.at(i+1).y,path.at(i+1).z)].n;
+			}
+
+
+
+			next_S.x=temp.x;
+			next_S.y=temp.y;
+			next_S.z=temp.z;
+			next_S.r=enlarge_radiusof_single_node_xy_vn2(img1d,temp,sz_x, sz_y, sz_z);
+			next_S.type=7;
+			result.append(next_S);
+			final_listNeuron.append(next_S);
+			original_tree.insert(GET_IND(temp.x,temp.y,temp.z),next_S);
+			cp_SWC.insert(GET_IND(temp.x,temp.y,temp.z),next_S.pn);
+
+
+		}
+	}else
+	{
+		if(cp_SWC.value(GET_IND(begin->x,begin->y,begin->z))==-1)
+		{
+			NeuronSWC end_S;
+			end_S.x=end->x;
+			end_S.y=end->y;
+			end_S.z=end->z;
+			end_S.r=enlarge_radiusof_single_node_xy_vn2(img1d,getnode(end),sz_x, sz_y, sz_z);
+			end_S.type=7;
+			//end_S.n=original_tree.size()+1;
+			end_S.n=final_listNeuron.size()+1;
+			end_S.pn=original_tree[GET_IND(begin->x,begin->y,begin->z)].n;
+			result.append(end_S);
+			final_listNeuron.append(end_S);
+			original_tree.insert(GET_IND(end_S.x,end_S.y,end_S.z),end_S);
+			cp_SWC.insert(GET_IND(end->x,end->y,end->z),end_S.pn);
+
+
+
+		}else if((final_listNeuron.last().x==begin->x)&&(final_listNeuron.last().y==begin->y)&&(final_listNeuron.last().z==begin->z))
+		{
+			NeuronSWC end_S;
+			end_S.x=end->x;
+			end_S.y=end->y;
+			end_S.z=end->z;
+			end_S.r=enlarge_radiusof_single_node_xy_vn2(img1d,getnode(end),sz_x, sz_y, sz_z);
+			end_S.type=7;
+			//end_S.n=original_tree.size()+1;
+			end_S.n=final_listNeuron.size()+1;
+			end_S.pn=original_tree[GET_IND(begin->x,begin->y,begin->z)].n;
+			result.append(end_S);
+			final_listNeuron.append(end_S);
+			original_tree.insert(GET_IND(end_S.x,end_S.y,end_S.z),end_S);
+			cp_SWC.insert(GET_IND(end->x,end->y,end->z),end_S.pn);
+
+
+		}else
+		{
+			
+			NeuronSWC begin_S;
+			begin_S.x=begin->x;
+			begin_S.y=begin->y;
+			begin_S.z=begin->z;
+			//begin_S.n=original_tree[GET_IND(begin_S.x,begin_S.y,begin_S.z)].n;
+			if(original_tree.contains(GET_IND(begin_S.x,begin_S.y,begin_S.z)))
+			{//if original_tree contain the node which means it has already exist in the tree and meanless to add it again
+				begin_S.pn=original_tree[GET_IND(begin_S.x,begin_S.y,begin_S.z)].pn;
+
+			}else
+			{
+				begin_S.r=enlarge_radiusof_single_node_xy_vn2(img1d,getnode(begin),sz_x, sz_y, sz_z);
+				begin_S.type=7;
+				begin_S.n=final_listNeuron.size()+1;
+				begin_S.pn=original_tree[GET_IND(final_listNeuron.last().x,final_listNeuron.last().y,final_listNeuron.last().z)].n;
+				result.append(begin_S);
+				final_listNeuron.append(begin_S);
+				original_tree.insert(GET_IND(begin_S.x,begin_S.y,begin_S.z),begin_S);
+				cp_SWC.insert(GET_IND(begin->x,begin->y,begin->z),begin_S.pn);
+
+			}
+			
+			
+			
+
+			NeuronSWC end_S;
+			end_S.x=end->x;
+			end_S.y=end->y;
+			end_S.z=end->z;
+			end_S.r=enlarge_radiusof_single_node_xy_vn2(img1d,getnode(end),sz_x, sz_y, sz_z);
+			end_S.type=7;
+			//end_S.n=original_tree.size()+1;
+			end_S.n=final_listNeuron.size()+1;
+			end_S.pn=original_tree[GET_IND(begin_S.x,begin_S.y,begin_S.z)].n;
+			result.append(end_S);
+			final_listNeuron.append(end_S);
+			original_tree.insert(GET_IND(end_S.x,end_S.y,end_S.z),end_S);
+			cp_SWC.insert(GET_IND(end->x,end->y,end->z),end_S.pn);
+			
+
+		}
+
+	}
+
+	return result;
+}
+
 
 QList<NeuronSWC> connect_shortest_path_vn3(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
 {
@@ -1114,6 +1319,7 @@ QList<NeuronSWC> connect_shortest_path_vn3(unsigned char * &img1d,QList<Node> pa
 		}
 	}else
 	{
+		printf("the size of shortest path is zero\n");
 		NeuronSWC begin_S;
 		begin_S.x=begin->x;
 		begin_S.y=begin->y;
@@ -1194,7 +1400,7 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 	QMap<V3DLONG,bool> node_searched;
 	QMap<V3DLONG,Node> parent_path_vn2;
 	QList<Node> path_shortest_vn2;
-    QMap<V3DLONG,QList<Node> > unit_path_vn3;
+	QMap<V3DLONG,QList<Node>> unit_path_vn3;
 
 	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
 	{
@@ -1300,7 +1506,6 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 
 						}else if(img1d[index]==0)//not connected ,also means no edge
 						{//need to deicde whether the node has choosed before
-
 							if(node_searched[GET_IND(offset_x,offset_y,offset_z)]!=true)//change the code here
 							{
 								node_searched[GET_IND(offset_x,offset_y,offset_z)]=true;
@@ -1367,7 +1572,7 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 
 					unit_path_vn3.insert(GET_IND(node2->x,node2->y,node2->z),path_shortest_vn2);
 					number_path_vn3.insert(GET_IND(node1->x,node1->y,node1->z),unit_path_vn3);
-					weight_result[row][cloumn]=stop_distance;
+					weight_result[row][cloumn]=stop_distance*2;
 				}
 			}
 
@@ -1469,6 +1674,9 @@ double distance_calculate_vn2(unsigned char * &img1d,QList<Node> path,V3DLONG sz
 
 }
 
+
+
+
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu)
 {
 	/////////////////////////////////////////////////////////
@@ -1483,9 +1691,6 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	unsigned char* img2d = p4d->getRawDataAtChannel(1);//used for keeping the Gauss denoising result
 
 	////////////////////////////////////////////////////////////
-
-
-
 	//这里需要进行第一次去噪，去掉一些像素小的点，但其他点的像素基本上不改变
 	V3DLONG sz_x = in_sz[0];
 	V3DLONG sz_y = in_sz[1];
@@ -1586,17 +1791,125 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	//printSWCByQMap_QMap("C:\\Vaa3D\\shortest_path.swc",number_path);
 	//printSWCByQList_QList1(final_path,"C:\\Vaa3D\\shortest_path.swc");
 	//printSWCByQList_QList1_vn2(final_path_vn2,"C:\\Vaa3D\\shortest_path.swc");
-	printf("size::%d\n",con_tree.size());
+	
+	printf("fix the radius of nodes and trim some covering nodes\n");
+	std::vector<NeuronSWC *> target;
+
+	//change_type(target,con_tree);
+	//printf("target size:::%d\n",target.size());
+	//smooth_curve_and_radius(target, 5);
+	con_tree=smooth_SWC_radius(con_tree,sz_x,sz_y,sz_z);
 	QString outswc_file = image_name + "_meanshift.swc";
-
-	printSWCByQList_Neuron(con_tree,outswc_file.toStdString().c_str());
+	
+printSWCByQList_Neuron(con_tree,outswc_file.toStdString().c_str());
+	//printSWCByQList_Neuron_pointer(target,outswc_file.toStdString().c_str());
 	printf("%s\n",outswc_file.toStdString().c_str());
-	//printSWCByQList_Neuron(result_list,"D:\\result\\result11.swc");
-
 	v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()),bmenu);
 	if(nData1) {delete []nData1,nData1 = 0;}
 	delete []flag;
 }
+
+QList<NeuronSWC> smooth_SWC_radius(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
+	QList<NeuronSWC> result;
+	QHash<V3DLONG,NeuronSWC> neuron;//for searching the node using V3DLONG
+	QList<V3DLONG> childs;
+	for(int j=0;j<target.size();j++)
+	{
+		NeuronSWC temp=target.at(j);
+		V3DLONG index=GET_IND(temp.x,temp.y,temp.z);
+		neuron.insert(index,temp);
+	}
+	QHash<V3DLONG,V3DLONG> cp=Child_Parent_Wan(target,sz_x,sz_y,sz_z);
+	QHash<V3DLONG,V3DLONG> pc=Parent_Child_Wan(target,sz_x,sz_y,sz_z);
+
+	for(int i=0;i<target.size();i++)
+	{
+		if(i==0||i==target.size()-1)
+		{
+			result.append(target.at(i));
+
+		}else
+		{
+			childs.clear();
+			NeuronSWC element=target.at(i);
+			V3DLONG parent=cp.value(GET_IND(element.x,element.y,element.z));
+			childs=pc.values(GET_IND(element.x,element.y,element.z));
+			element.r=fix_radius(neuron,parent,childs);
+			result.append(element);
+		}
+	}
+	return result;
+}
+
+double fix_radius(QHash<V3DLONG,NeuronSWC> neuron,V3DLONG Parent,QList<V3DLONG> Childs )
+{
+	double result;
+	result=neuron.value(Parent).r;
+	for(int i=0;i<Childs.size();i++)
+	{
+		result+=neuron.value(Childs.at(i)).r;
+
+	}
+	return result/(Childs.size()+1);
+}
+QHash<V3DLONG,V3DLONG> Child_Parent_Wan(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
+	QHash<V3DLONG,V3DLONG> result;
+	
+	for(int i=1;i<target.size()-1;i++)//ignore the first and end node
+	{
+		NeuronSWC element_child=target.at(i);
+		V3DLONG child=GET_IND(element_child.x,element_child.y,element_child.z);
+		NeuronSWC element_parent=target.at(element_child.parent-1);
+		V3DLONG parent=GET_IND(element_parent.x,element_parent.y,element_parent.z);
+		result.insert(child,parent);//every node have a single parent
+		//neuron.insert(child,element_child);
+
+
+	}
+
+	return result;
+}
+
+QHash<V3DLONG,V3DLONG> Parent_Child_Wan(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{
+	QHash<V3DLONG,V3DLONG> result;
+	for(int i=1;i<target.size()-1;i++)//ignore the first and end node
+	{
+		NeuronSWC element_child=target.at(i);
+		V3DLONG child=GET_IND(element_child.x,element_child.y,element_child.z);
+		NeuronSWC element_parent=target.at(element_child.parent-1);
+		V3DLONG parent=GET_IND(element_parent.x,element_parent.y,element_parent.z);
+		result.insertMulti(parent,child);//one parent may have zero or multi childs
+		
+	}
+
+	return result;
+}
+
+
+void change_type(std::vector<NeuronSWC *> &target,QList<NeuronSWC> source)
+{
+	for(int i=0;i<source.size();i++)
+	{
+		NeuronSWC *element=new NeuronSWC();
+		element->n=source.at(i).n;
+		element->type=source.at(i).type;
+		element->x=source.at(i).x;
+		element->y=source.at(i).y;
+		element->z=source.at(i).z;
+		element->r=source.at(i).r;
+		element->radius=source.at(i).radius;
+		element->parent=source.at(i).parent;
+		element->pn=source.at(i).pn;
+		target.push_back(element);
+	}
+
+}
+
+
+
 
 
 
