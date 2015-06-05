@@ -97,7 +97,7 @@ void V3DITKProgressDialog::reject()
 {
   this->CancelButtonHasBeenPressed = true;
   qDebug() << "cancel button clicked";
-  //emit cancelButtonClicked();
+  emit cancelButtonClicked();
 }
 
 bool V3DITKProgressDialog::HasCancelBeenPressed() const

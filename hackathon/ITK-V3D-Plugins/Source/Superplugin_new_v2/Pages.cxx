@@ -51,6 +51,7 @@ void AutoPipePage::CallPipeline()
 {
     for (int i = 0; i < PaintFilter->count(); i++) {
         QString itkPluginName = PaintFilter->item(i)->text();
+        qDebug()<<"Pages.cxx: call plugin from superplugin:"<<itkPluginName;
         this->itkPluginManager->runItkPluginFunc(itkPluginName);
     }
 }
@@ -81,45 +82,18 @@ void AutoPipePage::initialTest()
   QStringList example5List;
   QStringList example6List;
 
-  example1List << QString("CurvatureFlow")
-               << QString("ITKConfidenceConnected");
+  example1List << QString("BinaryThreshold_called")
+               << QString("CannyEdgeDetection_called");
   if (this->validatePluginExits(example1List))
     m_pipeLineList << example1List;
 
-  example2List << QString("CurvatureFlow")
-               << QString("ITKConnectedThreshold");
-  if (this->validatePluginExits(example2List))
-    m_pipeLineList << example2List;
-
-  example3List << QString("CurvatureFlow")
-               << QString("ITKIsolatedConnected");
-  if (this->validatePluginExits(example3List))
-    m_pipeLineList << example3List;
-  
-  example4List << QString("CurvatureAnisotropicDiffusion")
-               << QString("GradientMagnitudeRecursiveGaussian")
+  example2List << QString("CurvatureAnisotropicDiffusion_called")
+               << QString("GradientMagnitudeRecursiveGaussian_called")
                << QString("Sigmoid")
                << QString("ITKFastMarching")
                << QString("BinaryThreshold");
   if (this->validatePluginExits(example4List))
-    m_pipeLineList << example4List;
-  
-  example5List << QString("CurvatureAnisotropicDiffusion")
-               << QString("GradientMagnitudeRecursiveGaussian")
-               << QString("Sigmoid")
-               << QString("ITKShapeDetection")
-               << QString("BinaryThreshold");
-  if (this->validatePluginExits(example5List))
-    m_pipeLineList << example5List;
-  
-  example6List << QString("CurvatureAnisotropicDiffusion")
-               << QString("GradientMagnitudeRecursiveGaussian")
-               << QString("Sigmoid")
-               << QString("ITKGeodesicActiveContour")
-               << QString("BinaryThreshold");
-  if (this->validatePluginExits(example6List))
-    m_pipeLineList << example6List;
-
+    m_pipeLineList << example2List;
   for (int i = 0; i < m_pipeLineList.size(); i++)
   {
     pipelineExp->addItem(QString("Example Pipeline%1").arg(i+1));

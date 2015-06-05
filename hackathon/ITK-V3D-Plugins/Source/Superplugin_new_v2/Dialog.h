@@ -28,6 +28,7 @@ public:
 private slots:
     void changePage(QListWidgetItem *currunt,QListWidgetItem *previous);
     void onDirChangeButtonClicked();
+    void myclose();
 private:
     void createIcons();
  //   void getAllThePluginsToCall();

@@ -203,13 +203,12 @@ bool ItkPluginManager :: runItkPluginFunc ( const QString& itkPluginName )
     ImagePixelType pixelType = p4DImage->getDatatype();
     int channelNum = p4DImage->getCDim();
     int indexOfItkPlugin = this->itkPluginsHash.value(itkPluginName) - 1;
-    //std::cout << "index is : " << indexOfItkPlugin<<std::endl;
+    std::cout << "index is : " << indexOfItkPlugin<<std::endl;
     QObject* itkPlugin = this->itkPlugins.at(indexOfItkPlugin) -> instance();
     if ( !itkPlugin ) return false;
     ItkPluginManager::InterfaceType pluginInterfaceType = this->getItkPluginInterfaceType ( itkPlugin );
-    //std::cout << "tpye is : " << pluginInterfaceType<<std::endl;
+    qDebug() << "The plugin interface type is : " << pluginInterfaceType;
     
-    qDebug() << "Now call the func";
     bool result = true;
     switch ( pluginInterfaceType)
     {
@@ -224,6 +223,7 @@ bool ItkPluginManager :: runItkPluginFunc ( const QString& itkPluginName )
         }
     case ItkPluginManager::itkPluginInterface2:
         {
+        qDebug()<<"ItkPluginManager: Interface 2";
         V3DPluginInterface2* itkPluginCall = qobject_cast < V3DPluginInterface2* > (itkPlugin);
         QStringList funcList = itkPluginCall -> funclist();
         CALL_FUNC(pixelType)
@@ -231,7 +231,6 @@ bool ItkPluginManager :: runItkPluginFunc ( const QString& itkPluginName )
         }
     case ItkPluginManager::itkPluginInterface2_1:
         {
-
         V3DPluginInterface2_1* itkPluginCall = qobject_cast < V3DPluginInterface2_1* > (itkPlugin);
         QStringList funcList = itkPluginCall -> funclist();
         CALL_FUNC(pixelType)
@@ -239,6 +238,7 @@ bool ItkPluginManager :: runItkPluginFunc ( const QString& itkPluginName )
         }
     }
     //free the memory
+
     this->itkPlugins.at(indexOfItkPlugin)->unload();
     return result;
 }

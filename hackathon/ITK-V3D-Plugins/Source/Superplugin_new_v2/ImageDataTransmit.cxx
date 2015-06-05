@@ -7,7 +7,7 @@
 
 template <typename TInputPixelType>
 ImageDataTransmit < TInputPixelType > ::
-ImageDataTransmit (V3DPluginCallback2* V3dCallback): m_V3DPluginCallback(V3dCallback) 
+ImageDataTransmit (V3DPluginCallback2* V3dCallback): m_V3DPluginCallback(V3dCallback)
 {
   this->m_Import2DFilter = Import2DFilterType::New();
   this->m_Import3DFilter = Import3DFilterType::New();
@@ -106,7 +106,6 @@ void
 ImageDataTransmit < TInputPixelType > ::
 transferOutputImage()
 {
-
   QList<V3D_Image3DBasic> m_outputImageList;
   for (int i = 0; i < m_channelNumbers; i++)
   {
@@ -114,25 +113,33 @@ transferOutputImage()
     image3DBasic.cid = i;
     transferOutput(image3DBasic, i);
     m_outputImageList << image3DBasic;
-  } 
+  }
+
   bool transferResult = assembleProcessedChannels2Image4DClass(m_outputImageList, *(this->m_V3DPluginCallback));
 
   if (!transferResult)
   {
     v3d_msg(QObject::tr("Error while transfering output image."));
   }
+
   //reduce the refernce
   for (int i = 0; i < m_OutputItkImageList.size(); i++) {
     m_OutputItkImageList[i]->UnRegister();
   }
 
-} 
+
+}
 
 template <typename TInputPixelType>
 void
 ImageDataTransmit < TInputPixelType > ::
 transferOutput(V3D_Image3DBasic & outputImage, int channel) const
 {
+
+  if (m_OutputItkImageList.size() == 0){
+     qDebug()<<"No output generated";
+     return;
+  }
 
   OutputImagePointer m_outputItkImage = m_OutputItkImageList.at(channel);
 
@@ -221,7 +228,7 @@ setOutput3DImage(OutputImagePointer outputImage, int channel)
     return;
   }
   this->m_OutputItkImageList << outputImage;
-} 
+}
 
 template <typename TInputPixelType>
 void
@@ -243,19 +250,14 @@ template <typename TInputPixelType>
 ImageDataTransmit < TInputPixelType > ::
 ~ImageDataTransmit()
 {
-  qDebug() << "Now free the memory";
   for (int i = 0; i < m_InputItkImageList.size(); i++)
   {
-    //m_InputItkImageList[i]->Delete();
-    //m_OutputItkImageList[i]->Delete();
     qDebug() << "Input Reference Account: " << m_InputItkImageList.at(i)->GetReferenceCount();
-   //  m_InputItkImageList[i]->UnRegister();    //might introduce memory leak?
   }
 
   for (int i = 0; i < m_OutputItkImageList.size(); i++)
   {
     qDebug() << "Output Reference Account: " << m_OutputItkImageList.at(i)->GetReferenceCount();
-  //  m_OutputItkImageList[i]->UnRegister();  //might introduce memory leak?
   }
 }
 #endif

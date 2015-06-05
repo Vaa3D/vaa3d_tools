@@ -48,7 +48,7 @@ Dialog::Dialog( QWidget *parent ) : QDialog(parent)
     //this->userFilterpage->setPluginName ( this -> pluginName );
     //this->userFilterpage->setPluginPath ( this->pluginPath );
 
-    connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
+    connect(closeButton, SIGNAL(clicked()), this, SLOT(myclose()));
     connect(m_dirChangeButton, SIGNAL(clicked()), this, SLOT(onDirChangeButtonClicked()));
 
     QHBoxLayout *horizontalLayout = new QHBoxLayout;
@@ -118,7 +118,6 @@ void Dialog::intialPluginManager () {
     if ( !done ) {std::cerr << "erro search the plugins! "<< std::endl;
                   return;
     }
-    std::cout << "get the ITK-Plugins!!" << std::endl;
     this->autoPipepage->initialTest();
     this->userPipepage->getItkPluginList();
     this->userFilterpage->getItkPluginList();
@@ -174,6 +173,17 @@ void Dialog::setVaa3DWorkingPluginsDir(const QString& workingDir)
 {
   this->m_vaa3DworkingPluginsDir = workingDir;
 }
+
+void Dialog::myclose()
+{
+  qDebug()<<"Xiaoxiao : close";
+  qDebug()<<"Xiaoxiao : close";
+  qDebug()<<"Xiaoxiao : close";
+  qDebug()<<"Xiaoxiao : close";
+  qDebug()<<"Xiaoxiao : close";
+  
+}
+
 void Dialog::onDirChangeButtonClicked()
 {
   QString folderName = QFileDialog::getExistingDirectory(this,
@@ -182,7 +192,7 @@ void Dialog::onDirChangeButtonClicked()
                         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
                       );
   if (folderName == "") return;
-    
+
   if (! folderName.startsWith(m_vaa3DworkingPluginsDir) )
   {
     v3d_msg(tr("Error path! The plugins path should under folder plugins"));

@@ -1,3 +1,3 @@
-SET(PLUGIN_GROUP_NAME "PureITKPlugin")
+SET(PLUGIN_DIRECTORY_NAME "PureITKPlugin")
 
 CONFIGURE_V3D_PLUGIN(InvertIntensity_sample)
