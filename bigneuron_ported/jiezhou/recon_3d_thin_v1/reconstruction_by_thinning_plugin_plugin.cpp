@@ -6,8 +6,7 @@
  *
  * 2015-6-3 : renamed the plugin to SimpleAxisAnalyzer (modify the pro file and the menu list, function list, usage)
  *
- * ToDo: 1. add parameters to decide how many trees need to be included
- *       2. pre-processing and loop pruning need to added or to be translated from Java
+ * ToDo:  Pre-processing and loop pruning need to be aded or to be translated from Java
  *
  */
  
@@ -97,8 +96,8 @@ void reconstruction_by_thinning_plugin::domenu(const QString &menu_name, V3DPlug
         if (!ok1) return;  //have problem getting threshold
 
         PARA.treeNum = QInputDialog::getInteger(parent, "Window X ",
-                                       "Enter number of tree you would like to reconstruct (Default 1):",
-                                       1, 1, 10, 1, &ok2);
+                                       "Enter number of tree you would like to reconstruct (Default 10):",
+                                       10, 1, 15, 1, &ok2);
 
         if (!ok2) return;  //have problem getting threshold
 
@@ -107,7 +106,7 @@ void reconstruction_by_thinning_plugin::domenu(const QString &menu_name, V3DPlug
 	}
 	else
 	{
-        v3d_msg(tr("NeuronAxisAnalyser -- Input: Gray-level Image; Output: Reconstructed swc"
+        v3d_msg(tr("NeuronAxisAnalyser -- Input: Gray-level Image (or Binary Image); Output: Reconstructed swc\n"
             "Developed by Jie Zhou and Edward Hottendorf, 2015-6-1"));
 	}
 }
@@ -672,7 +671,7 @@ void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVi
        ofstream outFile;
        if (startVisitNum == 0) //first tree
        {
-           outFile.open(outfilename);
+           outFile.open(outfilename, ios::trunc);
            outFile << "#name reconstruction3d \n#comment \n##n,type,x,y,z,radius,parent\n";
        }
        else //subsequent trees
