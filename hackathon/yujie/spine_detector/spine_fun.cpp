@@ -191,6 +191,7 @@ bool spine_fun::init()
                 }
             }
         }
+        if (cur_layer.size()==0) return false;
         qDebug()<<"round: "<<idst<<"; new seed:"<<cur_layer.size()<<"; voxels:"<<voxels_map.size();
         pre_layer.clear();
     }
@@ -1437,8 +1438,8 @@ void spine_fun::closing(GOV seeds, int id, GOV &new_seeds)
         }
         if (!flag) new_seeds.push_back(single_seed);
     }
-    qDebug()<<"before closing"<<seeds.size()-seeds_next.size()<<" after closing:"
-           <<new_seeds.size();
+//    qDebug()<<"before closing"<<seeds.size()-seeds_next.size()<<" after closing:"
+//           <<new_seeds.size();
 }
 
 void spine_fun::write_spine_center_profile()
