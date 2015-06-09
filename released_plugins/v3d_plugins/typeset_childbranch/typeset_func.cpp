@@ -17,7 +17,6 @@
 
 //const QString title = QObject::tr("typeset Neuron");
 
-static LandmarkList current_3Dview_markers;
 
 bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName)
 {
@@ -39,6 +38,7 @@ static int file_count = 0;
 static QString last_save_name;
 static QString FileSWCOpenName;
 static QList <NeuronSWC> nt_list_tosave;
+static int cur_window = -1, cur_neuron = -1;
 
 int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMarker> tmp_list_in)
 {
@@ -47,13 +47,32 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMa
     //QString FileSWCOpenName;
     NeuronTree nt;
 
-        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
-        if (!openDlg->exec())
-            return 0;
+    OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+    if (!openDlg->exec())
+        return 0;
 
-        FileSWCOpenName = openDlg->file_name;
+    FileSWCOpenName = openDlg->file_name;
 
-        nt = openDlg->nt;
+    nt = openDlg->nt;
+
+    cur_window = -1;
+    cur_neuron = -1;
+    QList<V3dR_MainWindow*> list_windows = callback.getListAll3DViewers();
+    for(int i = 0; i<list_windows.size();i++)
+    {
+           QList<NeuronTree> * treeList = callback.getHandleNeuronTrees_Any3DViewer(list_windows.at(i));
+           for(int j = 0; j < treeList->size();j++)
+           {
+               if(treeList->at(j).file == FileSWCOpenName)
+               {
+                   cur_window = i;
+                   cur_neuron = j;
+                   break;
+               }
+
+           }
+
+    }
 
     QList<ImageMarker> tmp_list;
     NeuronTree result = nt;
@@ -88,21 +107,55 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMa
             FileSWCOpenName.chop(14);
             fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
         }
-        //write new SWC to file
-        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-                fileDefaultName,
-                QObject::tr("Supported file (*.swc)"
-                    ";;Neuron structure	(*.swc)"
-                    ));
-        last_save_name = fileSaveName;
+
         nt_list_tosave = result.listNeuron;
-        if (!export_list2file_v2(nt_list_tosave,fileSaveName,FileSWCOpenName))
+
+        if(list_windows.size()<1 || cur_window == -1 || cur_neuron ==-1)
         {
-            v3d_msg("fail to write the output swc file.");
-            return 0;
+            //write new SWC to file
+            QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                    fileDefaultName,
+                    QObject::tr("Supported file (*.swc)"
+                        ";;Neuron structure	(*.swc)"
+                        ));
+            last_save_name = fileSaveName;
+            if (!export_list2file_v2(nt_list_tosave,fileSaveName,FileSWCOpenName))
+            {
+                v3d_msg("fail to write the output swc file.");
+                return 0;
+            }
+            file_count++;
+            reload_SWC(callback);
         }
-        file_count++;
-        reload_SWC(callback);
+        else
+        {
+            QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer(list_windows.at(cur_window));
+            NeuronTree  resultTree;
+            QList <NeuronSWC> listNeuron;
+            QHash <int, int>  hashNeuron;
+            listNeuron.clear();
+            hashNeuron.clear();
+             for(int j = 0; j < result.listNeuron.size(); j++)
+            {
+                listNeuron.append(result.listNeuron.at(j));
+                hashNeuron.insert(result.listNeuron.at(j).n, listNeuron.size()-1);
+            }
+            resultTree.listNeuron = listNeuron;
+            resultTree.hashNeuron = hashNeuron;
+            nt_list_tosave = result.listNeuron;
+            last_save_name = fileDefaultName;
+
+            new_treeList->clear();
+            resultTree.color.r = 0;
+            resultTree.color.g = 0;
+            resultTree.color.b = 0;
+            resultTree.color.a = 0;
+            resultTree.file = fileDefaultName;
+            new_treeList->push_back(resultTree);
+          //  callback.setWindowDataTitle(list_windows.at(0), fileDefaultName);
+            callback.update_NeuronBoundingBox(list_windows.at(0));
+
+        }
         return 1;
     }
 }
@@ -138,12 +191,15 @@ QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
 {
 
     QList<ImageMarker> tmp_list;
+    LandmarkList* current_3Dview_markers;
 
-    v3dhandleList list_windows = callback.getImageWindowList();
 
-    if (list_windows.size() < 1)
+   // v3dhandleList list_windows = callback.getImageWindowList();
+    QList<V3dR_MainWindow*> list_windows = callback.getListAll3DViewers();
+
+    if (list_windows.size() < 1 || cur_window == -1 || cur_neuron ==-1)
     {
-        v3d_msg("No image open. Must load marker file.");
+        v3d_msg("No window open. Must load marker file.");
 
         QString FileMarkerOpenName;
         FileMarkerOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
@@ -158,13 +214,13 @@ QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
     }
     else
     {
-        v3dhandle current_window = callback.currentImageWindow();
-        current_3Dview_markers = callback.getLandmark(current_window); //gives list of markers drawn
+//        v3dhandle current_window = callback.currentImageWindow();
+//       current_3Dview_markers = callback.getLandmark(current_window); //gives list of markers drawn
 
-
-        for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
+        current_3Dview_markers = callback.getHandleLandmarkList_Any3DViewer(list_windows.at(cur_window));
+        for (V3DLONG i=0;i<current_3Dview_markers->size();i++)//translate marker info from landmark list to tmp_list
         {
-            LocationSimple t = current_3Dview_markers.at(i);
+            LocationSimple t = current_3Dview_markers->at(i);
 
             ImageMarker pt;
             pt.n = i+1; //marker number
