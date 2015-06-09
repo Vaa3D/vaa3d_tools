@@ -21,6 +21,7 @@ ImageOperation *IM;
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
 using namespace std;
+const int ForegroundThreshold = 30; // The threshold used in APP2
 
 struct input_PARA
 {
@@ -30,9 +31,11 @@ struct input_PARA
     int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
 };
 
+
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
-unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
+LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold);
 
 QStringList NeuroStalker::menulist() const
 {
@@ -105,7 +108,6 @@ bool NeuroStalker::dofunc(const QString & func_name,
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
         printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
         printf("run unit-tests   - 1: Run Tracing Only; 2: Run unit-tests only; 3: Run Both Unit Tests and Tracing; \n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
     }
@@ -193,22 +195,18 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         sc = in_sz[3];
         c = PARA.channel;
     }
-
-    // ------- Run Unit-Tests
-    if (PARA.unittest & 2){
+        if (PARA.unittest & 2)
+    {
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
-        TestMatMath();
+        TestRadius(data1d, in_sz);
     }
-
-    if (!(PARA.unittest & 1)) return;
-
     // ------- Main neuron reconstruction code
     // Crop The image
     if (PARA.preprocessing & 1)
     {
         cout<<"=============== Cropping the image ==============="<<endl;
         V3DLONG sz_img_crop[4];
-        unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
+        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop);    
         cout<<"Saving cropped image to downsample.v3draw"<<endl;
         saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
         if (data1d) delete [] data1d;
@@ -230,9 +228,11 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
         cout<<"Saving downsampled image to test/testdata/downsample.v3draw"<<endl;
-        saveImage("downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
+
+
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
@@ -258,10 +258,34 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     IM->SeedAdjustment(10);
     std::cout<<"=== Preprocessing Finished..."<<std::endl;
 
-    // Adaptive Tracing here, may replace with graph cut
+    // Adaptive thresholding here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
-    
+
+    // Get the Binary Image
+    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+
+    // Save the binary img to visualise the segmentation
+    unsigned short int * binaryimgbuffer =  binaryimg->GetBufferPointer();
+    unsigned char * binaryimg2uchar = new unsigned char [in_sz[0]*in_sz[1]*in_sz[2]];
+    for (int i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
+    {
+        binaryimg2uchar[i] = (unsigned char) ((double)(binaryimgbuffer[i]) * 255.0);
+    }
+    saveImage("test/testdata/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
+
+    // ------- Run Unit-Tests
+    if (PARA.unittest & 2){
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestMatMath();
+        TestPressureSampler(IM->I, IM->IGVF);
+        cout<<"Testing Finished"<<endl;
+    }
+
+    if (PARA.unittest & 1) {
+        // TODO: Run the real tracing
+    }
+
     //Output
     NeuronTree nt;
     QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
@@ -368,7 +392,7 @@ unsigned char * downsample(V3DLONG *in_sz,
 }
 
 
-unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
 {    
     printf("1. Find the bounding box and crop image. \n");
     V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
@@ -376,14 +400,17 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
     
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
+
     if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
     {
         printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
         if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
     }
+
     printf("boundingbox x dimension: %d,y dimension: %d,z dimension: %d.\n", in_sz[0], in_sz[1], in_sz[2]);
     l_boundbox_min[0] = in_sz[0];  l_boundbox_min[1] = in_sz[1];  l_boundbox_min[2] = in_sz[2];
     l_boundbox_max[0] = 0;                l_boundbox_max[1] = 0;                l_boundbox_max[2] = 0;
+
     for(long X=0;X<in_sz[0];X++)
         for(long Y=0;Y<in_sz[1];Y++)
             for(long Z=0;Z<in_sz[2];Z++)
@@ -405,12 +432,15 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
     l_npixels_crop = sz_img_crop[0] * sz_img_crop[1] * sz_img_crop[2];
 
     unsigned char *p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
+
     if(!p_img8u_crop)
     {
         printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
         if(p_img8u_3d)              {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
     }
+
     unsigned char *p_tmp = p_img8u_crop;
+
     for(long Z = 0;Z < sz_img_crop[2];Z++)
         for(long Y = 0;Y < sz_img_crop[1];Y++)
             for(long X = 0;X < sz_img_crop[0];X++)
@@ -418,8 +448,55 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
                 *p_tmp = p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]];
                 p_tmp++;
             }
+
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
+
     saveImage("test/testdata/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
 
     return p_img8u_crop;
  }   
+
+
+
+
+
+
+LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
+{   itk::ImageLinearConstIteratorWithIndex<ImageType> originitr(I, I->GetRequestedRegion());
+    originitr.SetDirection(2);
+    originitr.GoToBegin();
+    ImageType::SizeType originsize = I->GetLargestPossibleRegion().GetSize();
+
+    LabelImagePointer pBinaryImage = LabelImageType::New();
+    LabelImageType::SizeType size;
+    size[0] = originsize[0];
+    size[1] = originsize[1];
+    size[2] = originsize[2];
+    LabelImageType::IndexType idx;
+    idx.Fill(0);
+    LabelImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex(idx);
+    pBinaryImage->SetRegions(region);
+    pBinaryImage->Allocate();
+    pBinaryImage->FillBuffer(0);
+    itk::ImageLinearIteratorWithIndex<LabelImageType> 
+                        binaryitr(pBinaryImage, pBinaryImage->GetRequestedRegion());
+    binaryitr.SetDirection(2);
+    binaryitr.GoToBegin();
+
+    while( !originitr.IsAtEnd() && !binaryitr.IsAtEnd())
+    {
+        while(!originitr.IsAtEndOfLine()){
+            if (originitr.Get() > threshold){
+                binaryitr.Set(1);
+            }
+            ++originitr;
+            ++binaryitr;
+        }
+        originitr.NextLine();
+        binaryitr.NextLine();
+    }
+    
+    return pBinaryImage;
+}
