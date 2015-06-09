@@ -1,4 +1,6 @@
 #include "detect_fun.h"
+#include "set"
+#include <algorithm>
 
 detect_fun::detect_fun()
 {
@@ -17,12 +19,12 @@ detect_fun::~detect_fun()
         memory_free_uchar1D(mask1D);
 }
 
-vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3DLONG ind,
+vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned short *label,V3DLONG ind,
                         int max_spine_width,int spine_id,int max_pixel,int min_pixel)
 {
     //qDebug()<<"in spine_grow";
-//    QString filename=QString::number(spine_id-1)+".txt";
-//    FILE *fp=fopen(filename.toAscii(),"wt");
+    QString filename=QString::number(spine_id-1)+".txt";
+    FILE *fp=fopen(filename.toAscii(),"wt");
 
     V3DLONG y_offset=sz_image[0];
     V3DLONG z_offset=sz_image[0]*sz_image[1];
@@ -34,12 +36,13 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
     //tmp_curr_layer.push_back(ind);
     float temp_floor=bound_box[ind];
     //qDebug()<<"temp floor:"<<bound_box[ind];
-    //fprintf(fp,"temp floor: %.2f\n",temp_floor);
+    fprintf(fp,"temp floor: %.2f\n",temp_floor);
     map<V3DLONG,bool> temp_label;
     //temp_label[ind]=true;
 
    //label=0 not visited; label==2 indicates fg
     float floor=-1;
+    vector<float> floor_array;
     float cluster_spread_width=-1;
     cluster_spread_width=-1;
     float spread_width=0;
@@ -103,9 +106,13 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
                }
            }
            //qDebug()<<"temp_j size:"<<temp_j.size();
-           //fprintf(fp,"temp_curr_layer size: %d\n",temp_j.size());
-           if (floor<0) {floor=temp_floor;}
-               //fprintf(fp,"floor: %.2f\n",floor);}
+           fprintf(fp,"temp_curr_layer size: %d\n",temp_j.size());
+           if (floor<0)
+           {
+               floor=temp_floor;
+               fprintf(fp,"floor: %.2f\n",floor);
+               floor_array.push_back(floor);
+           }
            //qDebug()<<"floor:"<<floor;
            temp_i.clear();
            //if for the first round
@@ -117,8 +124,47 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
            {
                over_max_pixel=true;
                qDebug()<<"over_max_pixel break:"<<tmp_curr_layer.size()<<":"<<max_pixel;
-               //fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
+               fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
+               floor_array.pop_back();
                break;
+           }
+           if (spread_width_array.size()>=3)
+           {
+               //Check the spongeness of the new layer
+               count_ng=0; nsum=0;
+               for (int j=0;j<tmp_curr_layer.size();j++)
+               {
+                   if(tmp_curr_layer[j]-1>=0&&tmp_curr_layer[j]+1<page_size&&tmp_curr_layer[j]-sz_image[0]>=0&&
+                           tmp_curr_layer[j]+sz_image[0]<page_size
+                           &&tmp_curr_layer[j]-z_offset>=0&&tmp_curr_layer[j]+z_offset<page_size)
+                   {
+                       count_ng++;
+                       neighbor[0]=tmp_curr_layer[j]-1;
+                       neighbor[1]=tmp_curr_layer[j]+1;
+                       neighbor[2]=tmp_curr_layer[j]-sz_image[0];
+                       neighbor[3]=tmp_curr_layer[j]+sz_image[0];
+                       neighbor[4]=tmp_curr_layer[j]-z_offset;
+                       neighbor[5]=tmp_curr_layer[j]+z_offset;
+                       for (int k=0;k<6;k++)
+                       {
+                           if(bound_box[neighbor[k]]>=0)
+                               nsum++;
+                       }
+                   }
+               }
+               if (count_ng>0)
+                   ave=nsum/count_ng;
+               else ave=0;
+               //qDebug()<<"label:"<<label_marker<<"group size:"<<cluster.size()<<" ave:"<<ave;
+               fprintf(fp,"average nb <3: %.2f\n",ave);
+               if (ave<=3)
+               {
+                   qDebug()<<"ave<3:"<<ave<<": this layer rejects due to spongeness";
+                   fprintf(fp,"average nb <3: %.2f rejects this layer\n",ave);
+                   tmp_curr_layer.clear();
+                   floor_array.pop_back();
+                   break;
+               }
            }
            //qDebug()<<"tmp_curr_layer size:"<<tmp_curr_layer.size();
            temp_i=temp_j;
@@ -128,17 +174,18 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
         if (tmp_curr_layer.size()<=0)
         {
             qDebug()<<"seeds run out";
-            //fprintf(fp,"seeds run out\n");
+            fprintf(fp,"seeds run out\n");
             break;
         }
         if (over_max_pixel) {break;}
         //current layer analysis: spread width
         spread_width=calc_spread_width(tmp_curr_layer);
-        //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
+        fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
         if (spread_width>max_spine_width)
         {
             qDebug()<<"width breakout_spine_grow"<<spread_width;
-            //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
+            fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
+            floor_array.pop_back();
             break;
         }
 
@@ -147,72 +194,89 @@ vector<V3DLONG> detect_fun::spine_grow(float* bound_box,unsigned char *label,V3D
             tmp_cluster.push_back(tmp_curr_layer[k]);
         }
 
-//        //check the cluster spread ratio after adding the curr layer
-//        if (cluster_spread_width==-1){ //first time to calc cluster_spread_width
-//            cluster_spread_width=spread_width;
-//            spread_ratio=1;
-//            spread_width_array.push_back(spread_width);
-//            //fprintf(fp,"first layer\n");
-//        }
-//        else
-//        {
-//            cluster_spread_width=calc_spread_width(tmp_cluster);
-//            //fprintf(fp,"2+ layer cluster spread width: %.2f\n",cluster_spread_width);
-//            spread_width_array.push_back(cluster_spread_width);
-//            float sum=0.;
-//            for (int kk=0;kk<spread_width_array.size();kk++)
-//            {
-//                sum+=spread_width_array[kk];
-//            }
-//            if (sum==0) {qDebug()<<"sum==0,will crash"; break;}
-//            spread_ratio=cluster_spread_width*spread_width_array.size()/sum;
-//            //fprintf(fp,"spread ratio: %.2f\n",spread_ratio);
-//        }
+        //check the cluster spread ratio after adding the curr layer
+        if (cluster_spread_width==-1){ //first time to calc cluster_spread_width
+            cluster_spread_width=spread_width;
+            spread_ratio=1;
+            spread_width_array.push_back(spread_width);
+            fprintf(fp,"first layer\n");
+        }
+        else
+        {
+            cluster_spread_width=calc_spread_width(tmp_cluster);
+            fprintf(fp,"2+ layer cluster spread width: %.2f\n",cluster_spread_width);
+            spread_width_array.push_back(cluster_spread_width);
+            float sum=0.;
+            for (int kk=0;kk<spread_width_array.size();kk++)
+            {
+                sum+=spread_width_array[kk];
+            }
+            if (sum==0) {qDebug()<<"sum==0,will crash"; break;}
+            spread_ratio=cluster_spread_width*spread_width_array.size()/sum;
+            fprintf(fp,"spread ratio: %.2f\n",spread_ratio);
+        }
 
-//        if (spread_ratio>1.8 && tmp_cluster.size()>=100)
-//        {
-//            qDebug()<<"ratio break"<<spread_ratio<<"cluster_width:"
-//                   <<cluster_spread_width<<" current spread_width:"<<spread_width;
-//            //fprintf(fp,"ratio break: %.2f\n",spread_ratio);
-//            break; //tmp_curr layer cannot be added
-//        }
-//        //fprintf(fp,"push to cluster\n");
-//        for (int k=0;k<tmp_curr_layer.size();k++)
-//        {
-//            cluster.push_back(tmp_curr_layer[k]);
-//        }
+        if (spread_ratio>2 && tmp_cluster.size()>=100)
+        {
+            qDebug()<<"ratio break"<<spread_ratio<<"cluster_width:"
+                   <<cluster_spread_width<<" current spread_width:"<<spread_width;
+            fprintf(fp,"ratio break: %.2f\n",spread_ratio);
+            floor_array.pop_back();
+            break; //tmp_curr layer cannot be added
+        }
+        fprintf(fp,"push to cluster\n");
+        for (int k=0;k<tmp_curr_layer.size();k++)
+        {
+            cluster.push_back(tmp_curr_layer[k]);
+        }
 
         temp_i.clear();
         temp_i=tmp_curr_layer;
+
     }
-    //fprintf(fp,"cluster build finished,check aspect ratio and size\n");
+    fprintf(fp,"cluster build finished,check aspect ratio and size\n");
     //compute aspect ratio
-//    if (!spread_width_array.empty())
+//    if (spread_width_array.size()<=1)
 //    {
-//        float aspect_ratio=bound_box[ind]/spread_width_array.back();
-//        //fprintf(fp,"aspect ratio: %.2f\n",aspect_ratio);
-//        if (aspect_ratio<0.2)
-//        {
-//            qDebug()<<"aspect ratio breakout"<<aspect_ratio;
-//            //fprintf(fp,"aspect ratio breakout, reject cluster\n");
-//            cluster.clear();
-//            //fprintf(fp,"cluster size: %d\n",cluster.size());
-//            //fclose(fp);
-//            return cluster;
-//        }
+//        fprintf(fp,"only 1 layer,reject\n");
+//        cluster.clear();
+//        fclose(fp);
+//        return cluster;
 //    }
-    if (tmp_cluster.size()>=min_pixel)
+    if (!spread_width_array.empty())
     {
-        //fprintf(fp,"cluster size: %d\n",cluster.size());
+        for (int i=0;i<spread_width_array.size();i++)
+        {
+            fprintf(fp,"spread witdth:");
+            fprintf(fp,"%.f,",spread_width_array[i]);
+        }
+        fprintf(fp,"\n");
+        fprintf(fp,"floor: %.2f\n",floor_array.back());
+        float aspect_ratio=(bound_box[ind]-floor_array.back())/spread_width_array.back();
+        fprintf(fp,"aspect ratio: %.2f\n",aspect_ratio);
+
+        if (aspect_ratio<=0.11)
+        {
+            //qDebug()<<"aspect ratio breakout"<<aspect_ratio;
+            fprintf(fp,"aspect ratio breakout, reject cluster\n");
+            cluster.clear();
+            fprintf(fp,"cluster size: %d\n",cluster.size());
+            fclose(fp);
+            return cluster;
+        }
+    }
+    if (cluster.size()>=min_pixel)
+    {
+        fprintf(fp,"cluster size: %d\n",cluster.size());
         for (int j=0;j<tmp_cluster.size();j++)
         {
             //if(label[cluster[j]]==0)
-                label[tmp_cluster[j]]=2;
+                label[tmp_cluster[j]]=spine_id;
         }
     }
-    else {tmp_cluster.clear();}//fprintf(fp,"cluster too small, reject cluster\n");}
-    //fclose(fp);
-    return tmp_cluster;
+    else {cluster.clear();fprintf(fp,"cluster too small, reject cluster\n");}
+    fclose(fp);
+    return cluster;
 }
 
 float detect_fun::calc_spread_width(vector<V3DLONG> array)
@@ -240,6 +304,42 @@ float detect_fun::calc_spread_width(vector<V3DLONG> array)
     float tmp=(x_max-x_min)*(x_max-x_min)+(y_max-y_min)*(y_max-y_min)+
             (z_max-z_min)*(z_max-z_min);
     float dis_tmp=sqrt(tmp);
+//    qDebug()<<"spread width:"<<x_max<<":"<<x_min<<":"<<y_max<<":"<<y_min<<":"
+//           <<z_max<<":"<<z_min<<":"<<dis_tmp;
+    return dis_tmp;
+}
+
+float detect_fun::calc_spread_width2(vector<V3DLONG> array)
+{
+    float sum_x,sum_y,sum_z,center_x,center_y,center_z;
+    sum_x=sum_y=sum_z;
+    for (int i=0;i<array.size();i++)
+    {
+        vector<V3DLONG> coord=pos2xyz(array[i],y_offset,z_offset);
+        V3DLONG x=coord[0];
+        V3DLONG y=coord[1];
+        V3DLONG z=coord[2];
+        sum_x+=x;
+        sum_y+=y;
+        sum_z+=z;
+    }
+    center_x=sum_x/array.size();
+    center_y=sum_y/array.size();
+    center_z=sum_z/array.size();
+    float distance=0;
+    for (int i=0;i<array.size();i++)
+    {
+        vector<V3DLONG> coord=pos2xyz(array[i],y_offset,z_offset);
+        V3DLONG x=coord[0];
+        V3DLONG y=coord[1];
+        V3DLONG z=coord[2];
+        float tmp=(x-center_x)*(x-center_x)+(y-center_y)*(y-center_y)+
+            (z-center_z)*(z-center_z);
+        if (tmp>distance*distance)
+            distance=tmp;
+    }
+
+    float dis_tmp=sqrt(distance)*2;
 //    qDebug()<<"spread width:"<<x_max<<":"<<x_min<<":"<<y_max<<":"<<y_min<<":"
 //           <<z_max<<":"<<z_min<<":"<<dis_tmp;
     return dis_tmp;
@@ -632,7 +732,7 @@ vector<V3DLONG> detect_fun::distance_to_skel(vector<MyMarker> bubbles,NeuronTree
         float x=coord[0];
         float y=coord[1];
         float z=coord[2];
-        float min_dis=10000;
+        float min_dis=1e16;
         V3DLONG tmp_neuron_id=0;
         for (int i=0;i<neuron.listNeuron.size();i++)
         {
@@ -1594,7 +1694,593 @@ V3DLONG detect_fun::extract_nonoverlap(unsigned char *skel_mask,long *label,
     return x_all.size();
 }
 
-void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,int &label_marker,
+int detect_fun::watershed(unsigned char *tmp_image,unsigned short *label, unsigned short * new_label,int &label_marker)
+{
+    vector<V3DLONG> seeds;
+    V3DLONG x,y,z,pos;
+    vector<V3DLONG> coord;
+    memset(mask1D,0,page_size);
+    vector<int> group_size;
+    int count_size;
+
+    for (V3DLONG i=0;i<page_size;i++)
+    {
+        if (label[i]<=1) data1Dc_float[i]=0;
+    }
+    for (V3DLONG i=0;i<page_size;i++)
+    {
+        if (label[i]<=1) continue;
+        V3DLONG ind=i;
+        seeds.push_back(ind);
+        mask1D[ind]=1;
+        V3DLONG sid=0;
+        count_size=1;
+        while(sid<seeds.size())
+        {
+            coord=pos2xyz(seeds[sid], y_offset, z_offset);
+            x=coord[0];y=coord[1];z=coord[2];
+            for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                    for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                        if (mask1D[pos]>0)  continue; //mask1D==1 visited mask1D==0 not visited
+                        if (label[pos]<=1) continue;
+                        count_size++;
+                        seeds.push_back(pos);
+                        mask1D[pos]=1;
+                        new_label[pos]=label_marker;
+                        label[pos]=0;
+
+                    }
+                }
+            }
+            sid++;
+        }
+        group_size.push_back(count_size);
+        label_marker++;
+    }
+//    QString fname="region_watershed.marker";
+//    FILE *fp1=fopen(fname.toAscii(),"wt");
+//    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+    vector<V3DLONG> points;
+    memset(label,0,page_size*sizeof(unsigned short));
+    int floor;
+    V3DLONG max_ind=0;
+    int group_id=1;
+    qDebug()<<"label_marker:"<<label_marker;
+
+    for (int j=1;j<label_marker;j++)
+    {
+        qDebug()<<"J:"<<j<<" group_id:"<<group_id;
+        if(group_size[j-1]<=300)
+        {
+            for (V3DLONG i=0;i<page_size;i++)
+            {
+                if (new_label[i]==j)
+                    label[i]=group_id;
+            }
+           group_id++;
+           continue;
+        }
+
+        else
+        {
+            points.clear();
+            floor=0;
+            for (V3DLONG i=0;i<page_size;i++)
+            {
+                if (new_label[i]==j)
+                {
+                    points.push_back(i);
+                    if (data1Dc_float[i]>floor)
+                    {
+                        max_ind=i;
+                        floor=data1Dc_float[i];
+                    }
+                }
+            }
+            //coord=pos2xyz(max_ind,y_offset,z_offset);
+//            fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0]+1,coord[1]+1,coord[2]+1);
+            qDebug()<<"before watershed:"<<group_id<<" j:"<<j;
+            watershed_imp2(tmp_image,points,floor,label,group_id);
+            qDebug()<<"after watershed:"<<group_id<<" j:"<<j;
+        }
+    }
+    qDebug()<<"before returning group_id";
+    return group_id;
+}
+
+void detect_fun::spine_analysis2(float *bound_box,unsigned short *label,int group_id)
+{
+    vector<V3DLONG> coord(3,0);
+    V3DLONG x,y,z,pos;
+    float spongeness;
+    vector<V3DLONG> points;
+    QString fname="spine_analysis.marker";
+    FILE *fp1=fopen(fname.toAscii(),"wt");
+    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+
+    QString outfile="spine_analysis2.csv";
+    FILE *fp2=fopen(outfile.toAscii(),"wt");
+    fprintf(fp2,"##id,volume,spine_distance,spine_length,ave_nb,ave_dis,std_dis\n");
+    qDebug()<<"in spine_analysis: group_id:"<<group_id;
+    for (int i=1;i<group_id;i++)
+    {
+        float max_dis=0;
+        float min_dis=1000;
+        int sum_nb=0;
+        int count_num=0;
+        V3DLONG max_id=0;
+        float sum_dis=0;
+        float ave_dis=0;
+        points.clear();
+        for (V3DLONG j=0;j<page_size;j++)
+        {
+            if (label[j]==i)
+            {
+                points.push_back(j);
+                count_num++;
+                sum_dis+=bound_box[j];
+                if (bound_box[j]>max_dis) { max_dis=bound_box[j]; max_id=j;}
+                if (bound_box[j]<min_dis) min_dis=bound_box[j];
+                coord=pos2xyz(j, y_offset, z_offset);
+                x=coord[0];y=coord[1];z=coord[2];
+                for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                    for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                         for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                            pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                            if (label[pos]==i) sum_nb++;
+                        }
+                    }
+                }
+            }
+        }
+        if (points.size()<30)
+        {
+            for (int k=0;k<points.size();k++)
+            {
+                label[points[k]]=0;
+            }
+            continue;
+        }
+        spongeness=sum_nb/count_num;
+        if (spongeness<11) //delete this group
+        {
+            for (int k=0;k<points.size();k++)
+            {
+                label[points[k]]=0;
+            }
+            continue;
+        }
+        ave_dis=sum_dis/count_num;
+        float std_sum=0;
+        //calculate std
+        for (int k=0;k<points.size();k++)
+        {
+            std_sum+=(bound_box[points[k]]-ave_dis)*(bound_box[points[k]]-ave_dis);
+        }
+        float std=sqrt(std_sum/count_num);
+        coord=pos2xyz(max_id,y_offset,z_offset);
+        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0]+1,coord[1]+1,coord[2]+1);
+        float spine_length=max_dis-min_dis;
+
+        fprintf(fp2,"%d,%d,%.1f,%.1f,%.1f,%.1f,%.1f\n",i,count_num,min_dis,spine_length,spongeness,ave_dis,std);
+    }
+    fclose(fp2);
+    fclose(fp1);
+}
+
+bool sort_size(group_info a, group_info b){ return (a.size > b.size); }
+
+void detect_fun::watershed_imp2(unsigned char *tmp_image,vector<V3DLONG> points,int max_int,unsigned short *label,int &new_label)
+{
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    vector<V3DLONG> coord(3,0);
+    V3DLONG x,y,z,pos;
+    int step=10;
+    int floor=MIN(200,max_int);
+    int new_id=1;
+    set<int> nb_group;
+    int size_thr=20;
+    map<V3DLONG,int> point_mask;
+    int size_count;
+    int count_left_point;
+    int tmp_id=0;
+    vector<V3DLONG> seeds;
+    //qDebug()<<"points size:"<<points.size();
+
+    //initialize the components
+    for (int i=0;i<points.size();i++)
+    {
+        if(data1Dc_float[points[i]]<floor) continue;
+        if(point_mask[points[i]]>0) continue;
+        point_mask[points[i]]=new_id;
+        seeds.clear();
+        seeds.push_back(points[i]);
+        int sid=0;
+        while(sid<seeds.size())
+        {
+            coord=pos2xyz(seeds[sid], y_offset, z_offset);
+            x=coord[0];y=coord[1];z=coord[2];
+            for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                    for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                        if (data1Dc_float[pos]>=floor && point_mask[pos]<=0)
+                        {
+                            seeds.push_back(pos);
+                            point_mask[pos]=point_mask[seeds[sid]];
+                        }
+                    }
+                }
+            }
+            sid++;
+        }
+        new_id++;
+    }
+
+    while(floor-step>0)
+    {
+        if (floor>150)
+        floor=floor-step;
+        else floor=floor-5;
+        qDebug()<<"floor:"<<floor;
+        tmp_id++;
+        for (int i=0;i<points.size();i++)
+        {
+            if(data1Dc_float[points[i]]<floor) continue;
+            if(point_mask[points[i]]>0) continue;
+            tmp_image[points[i]]=tmp_id;
+            nb_group.clear();
+            coord=pos2xyz(points[i], y_offset, z_offset);
+            x=coord[0];y=coord[1];z=coord[2];
+            for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                    for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                        if (data1Dc_float[pos]<floor) continue;
+                        if (point_mask[pos]>0){
+                            nb_group.insert(point_mask[pos]);
+                        }
+                    }
+                }
+            }
+            //qDebug()<<"nb_group size:"<<nb_group.size()<<"; pos:"<<points[i]<<"; newid:"<<new_id;
+            if (nb_group.size()==0)
+            {
+                point_mask[points[i]]=new_id;
+                //qDebug()<<"new id:"<<new_id;
+                new_id++;
+            }
+            else if (nb_group.size()==1)
+            {
+                point_mask[points[i]]=*nb_group.begin();
+            }
+            else if (nb_group.size()>=2)
+            {
+                //qDebug()<<"more than 2 nb_group"<<nb_group.size();
+                //first select one group for points[i]
+                float sum_x,sum_y,sum_z;
+
+                float center_x,center_y,center_z;
+                center_x=center_y=center_z=0;
+                float min_distance=1e16;
+                float distance;
+                int min_id;
+                vector<group_info> groups;
+                bool merge_flag=false;
+                for (set<int>::iterator it=nb_group.begin();it!=nb_group.end();it++)
+                {
+                    size_count=0;
+                    sum_x=sum_y=sum_z=0;
+                    for (int j=0;j<points.size();j++)
+                    {
+                        if (point_mask[points[j]]==*it)
+                        {
+                            coord=pos2xyz(points[j],y_offset,z_offset);
+                            sum_x+=coord[0];
+                            sum_y+=coord[1];
+                            sum_z+=coord[2];
+                            size_count++;
+                        }
+                    }
+                    if (size_count<size_thr) merge_flag=true;
+                    center_x=sum_x/size_count;
+                    center_y=sum_y/size_count;
+                    center_z=sum_z/size_count;
+                    group_info tmp;
+                    tmp.group_num=*it;
+                    //if (size_count==0) qDebug()<<"alert:this group is empty:"<<tmp.group_num;
+                    tmp.size=size_count;
+                    tmp.center_x=center_x;
+                    tmp.center_y=center_y;
+                    tmp.center_z=center_z;
+                    groups.push_back(tmp);
+                    distance=(center_x-x)*(center_x-x)+(center_y-y)*(center_y-y)
+                            +(center_z-z)*(center_z-z);
+                    if (distance<min_distance)
+                    {
+                        min_distance=distance;
+                        min_id=*it;
+                    }
+                }
+                point_mask[points[i]]=min_id;
+
+                //second, consider whether there is a merge
+                if(merge_flag)
+                {
+                    //qDebug()<<"groups numbers:"<<groups.size()<<"sorting"<<groups[0].size<<":"<<groups[1].size;
+                    sort(groups.begin(),groups.end(),sort_size);//decending sort by size
+                    while(groups.size()>1)
+                    {
+                        if (groups.back().size>size_thr) {qDebug()<<"no more merges";break;}
+                        min_distance=1e16;
+                        for (int k=0;k<groups.size()-1;k++)
+                        {
+                            distance=(groups.back().center_x-groups[k].center_x)*(groups.back().center_x-groups[k].center_x)
+                                    +(groups.back().center_y-groups[k].center_y)*(groups.back().center_y-groups[k].center_y)
+                                    +(groups.back().center_z-groups[k].center_z)*(groups.back().center_z-groups[k].center_z);
+
+                            if (min_distance>distance)
+                            {
+                                min_distance=distance;
+                                min_id=k;
+                            }
+                        }
+                        //qDebug()<<"all points in "<<groups.back().group_num<<" move to "<<groups[min_id].group_num;
+                        for (int j=0;j<points.size();j++)
+                        {
+                            if (point_mask[points[j]]==groups.back().group_num)
+                            {
+                                point_mask[points[j]]=groups[min_id].group_num;
+                            }
+                        }
+                        //update group_info
+                        //qDebug()<<"size:"<<groups[min_id].size<<":"<<groups.back().size;
+
+                        groups[min_id].center_x=(groups[min_id].center_x*groups[min_id].size+
+                             groups.back().center_x*groups.back().size)/(groups[min_id].size+groups.back().size);
+                        groups[min_id].center_y=(groups[min_id].center_y*groups[min_id].size+
+                             groups.back().center_y*groups.back().size)/(groups[min_id].size+groups.back().size);
+                        groups[min_id].center_z=(groups[min_id].center_z*groups[min_id].size+
+                             groups.back().center_z*groups.back().size)/(groups[min_id].size+groups.back().size);
+                        groups[min_id].size=groups.back().size+groups[min_id].size;
+
+//                        qDebug()<<"groups new center:"<<groups[min_id].center_x<<":"<<groups[min_id].center_y<<":"
+//                               <<groups[min_id].center_z<<":"<<groups[min_id].size;
+                        groups.pop_back();
+
+                    }
+
+                }
+            }
+        }
+        //check whether there are points left to be assigned
+
+        count_left_point=0;
+        for (int kk=0;kk<points.size();kk++)
+        {
+            if (point_mask[points[kk]]<=0) count_left_point++;
+        }
+        //qDebug()<<"points left:"<<count_left_point;
+        if (count_left_point<=0) break;
+    }
+    //qDebug()<<"new_label:"<<new_label<<"floor:"<<floor;
+    for (int i=1;i<new_id;i++)
+    {
+        bool group_exist=false;
+        for (int j=0;j<points.size();j++)
+        {
+            if (point_mask[points[j]]==i)
+            {
+                label[points[j]]=new_label;
+                group_exist=true;
+            }
+        }
+        if(group_exist) new_label++;
+    }
+    qDebug()<<"till this many group:"<<new_label;
+}
+
+
+void detect_fun::watershed_imp(vector<V3DLONG> points,int max_int,unsigned short *label,int &new_label)
+{
+    int new_id=1;
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    vector<V3DLONG> coord(3,0);
+    V3DLONG x,y,z,pos;
+    set<int> conflict_array;
+    map<int,int> size_array;
+    map<V3DLONG,int> point_mask;
+    int count_size;
+    vector<V3DLONG> seeds;
+    int step=10;
+    int count_left_point;
+    int floor=max_int;
+    //initialize connected components
+    for (int i=0;i<points.size();i++)
+    {
+        if (data1Dc_float[points[i]]>=floor && point_mask[points[i]]==0)
+            point_mask[points[i]]=new_id;
+        count_size=0;
+        conflict_array.clear();
+        coord=pos2xyz(points[i], y_offset, z_offset);
+        x=coord[0];y=coord[1];z=coord[2];
+        for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+            for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                    if (data1Dc_float[pos]<floor) continue;
+                    if (point_mask[pos]<=0)
+                    {
+                        point_mask[pos]=new_id;
+                        count_size++;
+                    }
+                    else
+                        conflict_array.insert(point_mask[pos]);
+                }
+            }
+        }
+       // order_map.insert(pair<float, V3DLONG> (outimg1d_tmp[i],i));
+        size_array.insert(pair<int,int>(new_id,count_size)); //size before resolving conflicts
+        //check conflicts
+        if (conflict_array.size()==0) continue;
+
+        for (set<int>::iterator it=conflict_array.begin();it!=conflict_array.end();it++)
+        {
+            if (size_array[*it]<=30)
+            {
+                for (int k=0;k<points.size();k++)
+                {
+                    if (point_mask[k]==*it)
+                    {
+                        count_size++;
+                        point_mask[k]=new_id;
+                    }
+                }
+                size_array[*it]=0;
+                size_array[new_id]=count_size;  //update size_array;
+            }
+            qDebug()<<"two arrays merged:"<<count_size;
+        }
+        new_id++;
+    }
+
+    //start growing
+    qDebug()<<"start growing";
+    while (floor>0)
+    {
+        qDebug()<<"floor:"<<floor;
+        floor=floor-step;
+        for (int i=0;i<new_id;i++)
+        {
+            for (int j=0;j<points.size();j++)
+            {
+                if (points[j]==i) seeds.push_back(points[j]);
+            }
+            int sid=0;
+            count_size=0;
+            conflict_array.clear();
+            while (sid<seeds.size())
+            {
+                coord=pos2xyz(seeds[sid], y_offset, z_offset);
+                x=coord[0];y=coord[1];z=coord[2];
+                for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                    for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                        for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                            pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                            if (point_mask[pos]<=0)
+                            {
+                                point_mask[pos]=i;
+                                count_size++;
+                                seeds.push_back(pos);
+                            }
+                            else
+                                conflict_array.insert(point_mask[pos]);
+                        }
+                    }
+                }
+                sid++;
+            }
+            size_array[i]=size_array[i]+count_size;
+            //check for conflicts
+            qDebug()<<"conflict_array size:"<<conflict_array.size();
+            if (conflict_array.size()==0) continue;
+            for (set<int>::iterator it=conflict_array.begin();it!=conflict_array.end();it++)
+            {
+                if (size_array[*it]<=30)
+                {
+                    count_size=0;
+                    for (int m=0;m<points.size();m++)
+                    {
+                        if (point_mask[points[m]]==*it)
+                        {
+                            count_size++;
+                            point_mask[points[m]]=i;
+                        }
+                    }
+                    size_array[*it]=0;
+                    size_array[i]+=count_size;  //update size_array;
+                }
+            }
+
+        }
+        //leftover
+        for (int i=0;i<points.size();i++)
+        {
+            if (data1Dc_float[points[i]]>=floor && point_mask[points[i]]==0)
+                point_mask[i]=new_id;
+            count_size=0;
+            conflict_array.clear();
+            coord=pos2xyz(points[i], y_offset, z_offset);
+            x=coord[0];y=coord[1];z=coord[2];
+            for(V3DLONG dx=MAX(x-1,0); dx<=MIN(sz_image[0]-1,x+1); dx++){
+                for(V3DLONG dy=MAX(y-1,0); dy<=MIN(sz_image[1]-1,y+1); dy++){
+                    for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
+                        pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                        if (data1Dc_float[pos]<floor) continue;
+                        if (point_mask[pos]<=0)
+                        {
+                            point_mask[pos]=new_id;
+                            count_size++;
+                        }
+                        else
+                            conflict_array.insert(point_mask[pos]);
+                    }
+                }
+            }
+            size_array.insert(pair<int,int>(new_id,count_size)); //size before resolving conflicts
+            //check conflicts
+            if (conflict_array.size()==0) continue;
+            for (set<int>::iterator it=conflict_array.begin();it!=conflict_array.end();it++)
+            {
+                if (size_array[*it]<=30)
+                {
+                    count_size=0;
+                    for (int k=0;k<points.size();k++)
+                    {
+                        if (point_mask[points[k]]==*it)
+                        {
+                            count_size++;
+                            point_mask[points[k]]=new_id;
+                        }
+                    }
+                    size_array[*it]=0;
+                    size_array[new_id]+=count_size;  //update size_array;
+                }
+            }
+            new_id++;
+        }
+        //check whether there are points left to be assigned
+        //and whether all clusters have over 30 points
+        count_left_point=0;
+        for (int kk=0;kk<points.size();kk++)
+        {
+            if (point_mask[points[kk]]<=0) count_left_point++;
+        }
+        if (count_left_point>0) continue;
+
+    }
+    //check how many groups eventually
+    for (int j=0;j<size_array.size();j++)
+    {
+        if (size_array[j]>30)
+        {
+            for (int i=0;i<points.size();i++)
+            {
+                if (point_mask[points[i]]==size_array[j])
+                    label[points[i]]=new_label;
+            }
+            new_label++;
+        }
+
+    }
+
+}
+
+void detect_fun::connect_comp(unsigned char *tmp_img,unsigned char *label, unsigned short * new_label,int &label_marker,
                               float *bound_box,int max_pixel, int min_pixel,int max_spine_width)
 {
     memset(mask1D,0,page_size*sizeof(unsigned char));
@@ -1641,9 +2327,6 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
     if (gsdt_image!=0) {delete gsdt_image; gsdt_image=0;}
     qDebug()<<"order_map size:"<<order_map.size();
 
-//    V3DLONG sz[4]={sz_image[0],sz_image[1],sz_image[2],1};
-//    simple_saveimage_wrapper(callback,test_fname.toAscii(),(unsigned char*)new_label,sz,2);
-
     V3DLONG x,y,z,pos;
     vector<V3DLONG> coord(3,0);
     V3DLONG neighbor[6];
@@ -1663,9 +2346,12 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
     //qDebug()<<"before loop";
     while(it!= order_map.rend())
     {
-//        qDebug()<<"in loop";
         V3DLONG tmp_id=it->second;
+        if (tmp_id!=30269758) {it++;continue;}
         if (label[tmp_id]<=1) {it++;continue;}
+        QString filename="cc_"+QString::number(label_marker)+".txt";
+        FILE *fp=fopen(filename.toAscii(),"wt");
+        fprintf(fp,"tmp_id: %d\n",tmp_id);
         bool over_max_pixel=false;
         //qDebug()<<"tmp_id:"<<tmp_id;
         vector<V3DLONG> temp_i,temp_j,tmp_curr_layer,cluster,tmp_cluster;
@@ -1682,22 +2368,33 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
         center_x=coord[0];
         center_y=coord[1];
         center_z=coord[2];
+        int tmp_indicator=1;
+        floor=data1Dc_float[tmp_id];
+        int count_fg;
 
-        while(distance_diff<1)
+        while(distance_diff<1.5)
         {
-            //qDebug()<<"tmp_curr_layer size added to cluster:"<<tmp_curr_layer.size();
-            floor=-1; temp_floor=-1;
+
             if (tmp_curr_layer.size()>0)
             {
+                qDebug()<<"tmp_curr_layer size added to cluster:"<<tmp_curr_layer.size();
                 cluster=tmp_cluster;
                 spine_width=calc_spread_width(tmp_curr_layer);
                 spine_width_array.push_back(spine_width);
+                for (int i=0;i<tmp_curr_layer.size();i++)
+                {
+                    tmp_img[tmp_curr_layer[i]]=tmp_indicator;
+                }
+                tmp_indicator++;
                 tmp_curr_layer.clear();
-            }
 
+            }
+            count_fg=0;
+            floor=floor-10;
             while (temp_i.size()>0)
             {
                temp_j.clear();
+               qDebug()<<"floor:"<<floor;
                 //look at 26 neighbors of ind
                for (int k=0;k<temp_i.size();k++)
                {
@@ -1709,19 +2406,19 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
                            for(V3DLONG dz=MAX(z-1,0); dz<=MIN(sz_image[2]-1,z+1); dz++){
                                V3DLONG pos1=xyz2pos(dx,dy,dz,y_offset,z_offset);
                                if (mask1D[pos1]>0) continue;
-                               if (label[pos1]>1 && data1Dc_float[pos1]>=floor)
+                               if (label[pos1]<=1) continue;
+                               count_fg++;
+                               if (data1Dc_float[pos1]>=floor)
                                {
                                    temp_j.push_back(pos1);
                                    mask1D[pos1]=1;
-                                   if (floor<0&&data1Dc_float[pos1]>temp_floor)
-                                       temp_floor=data1Dc_float[pos1];
                                }
                            }
                        }
                    }
                }
+
                if (temp_j.size()<=0) break;
-               if (floor<0) {floor=temp_floor; qDebug()<<"floor:"<<floor;}
                temp_i.clear();
                for (int k=0;k<temp_j.size();k++)
                {
@@ -1731,27 +2428,31 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
                {
                    over_max_pixel=true;
                    qDebug()<<"over_max_pixel break:"<<tmp_curr_layer.size()<<":"<<max_pixel;
-                   //fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
+                   fprintf(fp,"over_max_pixel_break: %d ,%d\n",tmp_curr_layer.size(),max_pixel);
                    break;
                }
-               temp_i=temp_j;
-               //qDebug()<<"temp_j size:"<<temp_j.size();
+
+               temp_i=tmp_curr_layer;
+               qDebug()<<"temp_j size:"<<temp_j.size();
             }
             //calculate center
-            if (tmp_curr_layer.size()<=0) break;
-            if (over_max_pixel) {break;}
-            spread_width=calc_spread_width(tmp_curr_layer);
-            //fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
-            if (spread_width>max_spine_width)
-            {
-                qDebug()<<"width breakout_connect_comp"<<spread_width<<":"<<tmp_id;
-                //fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
-                break;
-            }
+            if (count_fg<=0) {fprintf(fp,"seeds out: %d\n",count_fg); break;}
+            if (over_max_pixel) {qDebug()<<"over_max_pixel";break;}
+//            spread_width=calc_spread_width(tmp_curr_layer);
+//            fprintf(fp,"spread_width of current layer: %.2f\n",spread_width);
+//            if (spread_width>max_spine_width)
+//            {
+//                qDebug()<<"width breakout_connect_comp"<<spread_width<<":"<<tmp_id;
+//                fprintf(fp,"width breakout: %.2f %d\n",spread_width,max_spine_width);
+//                break;
+//            }
+
             for (int k=0;k<tmp_curr_layer.size();k++)
             {
                 tmp_cluster.push_back(tmp_curr_layer[k]);
             }
+            fprintf(fp,"tmp_cluster_size: %d\n",tmp_cluster.size());
+            if (tmp_curr_layer.size()==0) continue;
             sum_x=sum_y=sum_z=0;
             for (int k=0;k<tmp_cluster.size();k++)
             {
@@ -1766,20 +2467,29 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
             float tmp_diff=(new_center_x-center_x)*(new_center_x-center_x)+
                     (new_center_y-center_y)*(new_center_y-center_y)
                     +(new_center_z-center_z)*(new_center_z-center_z);
-            distance_diff=sqrt(tmp_diff);
+
             temp_i.clear();
-            temp_i=tmp_curr_layer;
+            temp_i=tmp_cluster;
             center_x=new_center_x;
             center_y=new_center_y;
             center_z=new_center_z;
-            if (prev_diff>0&&distance_diff>10*prev_diff)
-                {qDebug()<<"sudden increase:"<<prev_diff<<":"<<distance_diff<<":"<<tmp_id;
-                break;}
-            prev_diff=distance_diff;
-            //qDebug()<<"distance_diff:"<<distance_diff<<" center:"<<center_x
-//                   <<":"<<center_y<<":"<<center_z;
+            if (tmp_cluster.size()<300)
+                distance_diff=0;
+            else distance_diff=sqrt(tmp_diff);
+            fprintf(fp,"distance_movement: %f\n", distance_diff);
+            qDebug()<<"distance_diff:"<<distance_diff<<" center:"<<center_x
+                   <<":"<<center_y<<":"<<center_z;
+
         }
-        if (cluster.size()<=min_pixel) {it++; qDebug()<<"not enough pixels"; continue;}
+        if (cluster.size()<=min_pixel)
+        {
+            it++;
+            qDebug()<<"not enough pixels";
+            fprintf(fp,"not enough pixels: %d\n", cluster.size());
+            fclose(fp);
+            continue;
+        }
+
         //check group's average ng number
         count_ng=0; nsum=0;
         for (int j=0;j<cluster.size();j++)
@@ -1806,33 +2516,52 @@ void detect_fun::connect_comp(unsigned char *label, unsigned short * new_label,i
             ave=nsum/count_ng;
         else ave=0;
         //qDebug()<<"label:"<<label_marker<<"group size:"<<cluster.size()<<" ave:"<<ave;
-
-        if (ave<=3) {it++; qDebug()<<"ave<3:"<<ave;continue;}
+        fprintf(fp,"check average nb: %f\n",ave);
+        if (ave<=3)
+        {
+            it++;
+            fprintf(fp,"average nb<3");
+            fclose(fp);
+            qDebug()<<"ave<3:"<<ave;continue;
+        }
         else if (ave>3)
         {
-            coord=pos2xyz(cluster[10],y_offset,z_offset);
-            fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
-            for (int j=0;j<cluster.size();j++)
-            {
-                label[cluster[j]]=0;
-                new_label[cluster[j]]=label_marker;
-            }
             spine_profile tmp;
-            tmp=spine_analysis(spine_width_array,cluster,bound_box);
-            fprintf(fp2,"%d,%d,%.1f,%.1f,%.1f,%.1f\n",label_marker,tmp.volume,tmp.neck_length
-                    ,tmp.head_width,tmp.head_length,ave);
-            label_marker++;
-            qDebug()<<"label updated:"<<label_marker<<" cluster size:"<<cluster.size();
+            if (spine_analysis(tmp,spine_width_array,cluster,bound_box))
+            {
+                fprintf(fp2,"%d,%d,%.1f,%.1f,%.1f,%.1f\n",label_marker,tmp.volume,tmp.neck_length
+                        ,tmp.head_width,tmp.head_length,ave);
+                fprintf(fp,"label_marker: %d cluster_size: %d",label_marker,cluster.size());
+                qDebug()<<"label updated:"<<label_marker<<" cluster size:"<<cluster.size();
+                coord=pos2xyz(cluster[10],y_offset,z_offset);
+                fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
+                for (int j=0;j<cluster.size();j++)
+                {
+                    label[cluster[j]]=0;
+                    new_label[cluster[j]]=label_marker;
+                }
+                label_marker++;
+                fclose(fp);
+            }
+            else
+            {
+                for (int j=0;j<cluster.size();j++)
+                {
+                    label[cluster[j]]=0;
+                }
+                fclose(fp);
+            }
         }
         it++;
     }
     label_marker--;
     fclose(fp1);
     fclose(fp2);
+
 }
 
 
-spine_profile detect_fun::spine_analysis(vector<float> array_width, vector<V3DLONG> cluster,
+bool detect_fun::spine_analysis(spine_profile &spine,vector<float> array_width, vector<V3DLONG> cluster,
                                 float *bound_box)
 {
     float min_dis=bound_box[cluster[0]]; float max_dis=bound_box[cluster[0]];
@@ -1850,12 +2579,12 @@ spine_profile detect_fun::spine_analysis(vector<float> array_width, vector<V3DLO
         if (array_width[i]>max_head_width)
             max_head_width=array_width[i];
     }
-    spine_profile tmp;
-    tmp.head_width=max_head_width;
-    tmp.head_length=max_dis-min_dis;
-    tmp.neck_length=min_dis;
-    tmp.volume=cluster.size();
-    return tmp;
+    if ((max_dis-min_dis)/max_head_width<=0.15) return false;
+    spine.head_width=max_head_width;
+    spine.head_length=max_dis-min_dis;
+    spine.neck_length=min_dis;
+    spine.volume=cluster.size();
+    return true;
 }
 
 V3DLONG detect_fun::extract_nonsphere(unsigned char * all)

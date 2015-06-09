@@ -20,7 +20,9 @@ HEADERS	+= spine_detector_plugin.h \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.h \
     #../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h \
     app2.h \
-    spine_fun.h
+    spine_fun.h \
+    manual_correct_dialog.h \
+    svm.h
 
 SOURCES	+= spine_detector_plugin.cpp \
     spine_detector_dialog.cpp \
@@ -29,7 +31,9 @@ SOURCES	+= spine_detector_plugin.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp \
     #../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp \
     app2.cpp \
-    spine_fun.cpp
+    spine_fun.cpp \
+    manual_correct_dialog.cpp \
+    svm.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp \
            $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp \
            $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp

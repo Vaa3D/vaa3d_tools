@@ -475,12 +475,12 @@ void spine_detector_dialog::distance_measure()
     //within neuron node radius bound_box=0;
     //between radius and radius_new, if not visited, bound_box=first dis value
     //if visited bound_box=smallest dis value
-    int search_length=40; int bg_thr=120;
+    int search_length=40; int bg_thr=50;
     for (V3DLONG i=0;i<neuron.listNeuron.size();i++)
     {
-        float s_x=neuron.listNeuron.at(i).x;
-        float s_y=neuron.listNeuron.at(i).y;
-        float s_z=neuron.listNeuron.at(i).z;
+        float s_x=neuron.listNeuron.at(i).x+0.5;
+        float s_y=neuron.listNeuron.at(i).y+0.5;
+        float s_z=neuron.listNeuron.at(i).z+0.5;
         float radius=neuron.listNeuron[i].radius;
         float radius_new=radius+search_length;
         for(V3DLONG dx=MAX(s_x-radius_new,0); dx<=MIN(sz_img[0]-1,s_x+radius_new); dx++){
@@ -579,70 +579,75 @@ void spine_detector_dialog::distance_measure()
 //    }
 //    qDebug()<<"count0_2:"<<count0_2<<":"<<count2_5<<":"<<count5_10<<":"
 //           <<count10;
-    unsigned char *label=new unsigned char[size_page];
-    memset(label,0,size_page);
+    unsigned short *label=new unsigned short[size_page];
+    memset(label,0,size_page*sizeof(unsigned short));
 //    for (V3DLONG i=0;i<size_page;i++)
 //    {
 //        if (bound_box[i]==0)
 //            label[i]=1;
 //    }
     multimap<float,V3DLONG>::reverse_iterator it = order_map.rbegin();
-    V3DLONG spine_id=2;
-
-//    QString fname="all.marker";
-//    FILE *fp1=fopen(fname.toAscii(),"wt");
-//    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+    int spine_id=2;
+    QString fname="all.marker";
+    FILE *fp1=fopen(fname.toAscii(),"wt");
+    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
     while(it!= order_map.rend())
     {
         V3DLONG tmp=it->second;
         if (label[tmp]>=2) {qDebug()<<"seed used"; it++; continue;}
         coord=pos2xyz(tmp,y_offset,z_offset);
         vector<V3DLONG> temp_vec;
-        temp_vec=detect_obj.spine_grow(bound_box,label,tmp,40,spine_id,3000,30);
+        temp_vec=detect_obj.spine_grow(bound_box,label,tmp,40,spine_id,3000,20);
         qDebug()<<"spine_id:"<<spine_id<<":"<<bound_box[tmp];
-        //spine_id++;
-        //fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
+        spine_id++;
+        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",coord[0],coord[1],coord[2]);
         for (V3DLONG i=0;i<temp_vec.size();i++)
-            visual_data[temp_vec[i]+1*size_page]=255;
+            visual_data[temp_vec[i]+2*size_page]=255;
         it++;
     }
 
-    //fclose(fp1);
+    fclose(fp1);
 
-//    QString filename="2.marker";
+//    QString filename="all.marker";
 //    QList<ImageMarker> LList=readMarker_file(filename);
 //    for (int i=0;i<LList.size();i++)
 //    {
 //      qDebug()<<"i:__________"<<i;
 //      V3DLONG tmp=xyz2pos(LList[i].x+0.5,LList[i].y+0.5,LList[i].z+0.5,y_offset,z_offset);
 //      if (bound_box[tmp]<=0) {qDebug()<<"seeds not qualified";continue;}
-//      temp_vec=detect_obj.spine_grow(bound_box,label,tmp,35,spine_id,2000,40);
-//      spine_id++;
+//      vector<V3DLONG> temp_vec;
+//      temp_vec=detect_obj.spine_grow(bound_box,label,tmp,40,spine_id,3000,30);
+//      //spine_id++;
 //      for (V3DLONG i=0;i<temp_vec.size();i++)
 //          visual_data[temp_vec[i]+2*size_page]=255;
-//      it++;
 //    }
 
     if (neuron_id!=0) {delete[] neuron_id; neuron_id=0;}
     unsigned short *new_label=new unsigned short[size_page];
     memset(new_label,0,size_page*sizeof(unsigned short));
     int label_marker=1;
-    detect_obj.connect_comp(label,new_label,label_marker,bound_box,2000,30,40);
-    if (label!=0) {delete[] label; label=0;}
+    unsigned char *tmp_img=new unsigned char [size_page];
+    memset(tmp_img,0,size_page);
+
+    //detect_obj.connect_comp(tmp_img,label,new_label,label_marker,bound_box,2000,30,40);
+    int group_id;
+    group_id=detect_obj.watershed(tmp_img,label,new_label,label_marker);
+    detect_obj.spine_analysis2(bound_box,label,group_id);
     if (bound_box!=0) {delete[] bound_box; bound_box=0;}
     //memcpy(visual_data+2*size_page,image1Dc_in,size_page);
 
     for (V3DLONG i=0;i<size_page;i++)
     {
         if (new_label[i]>0)
-            visual_data[i+2*size_page]=image1Dc_in[i];
+            visual_data[i+size_page]=image1Dc_in[i];
     }
 
-      //filename="test.v3draw";
-      //simple_saveimage_wrapper(*callback,filename.toAscii(),visual_data,sz_img,1);
-    QString test_fname="newlabel.v3draw";
+    QString filename="tmp_img.v3draw";
+    //simple_saveimage_wrapper(*callback,filename.toAscii(),tmp_img,sz_img,1);
+    QString test_fname="label.v3draw";
     V3DLONG sz[4]={sz_img[0],sz_img[1],sz_img[2],1};
-    simple_saveimage_wrapper(*callback,test_fname.toAscii(),(unsigned char*)new_label,sz,2);
+    simple_saveimage_wrapper(*callback,test_fname.toAscii(),(unsigned char*)label,sz,2);
+    if (label!=0) {delete[] label; label=0;}
     Image4DSimple image4d;
     image4d.setData(visual_data,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
     //image4d.setData((unsigned char*)new_label,sz_img[0],sz_img[1],sz_img[2],1,V3D_UINT16);
@@ -816,8 +821,6 @@ void spine_detector_dialog::loadImage()
             return;
         }
 
-
-
         V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
         if(intype==1)
         {
@@ -958,7 +961,7 @@ bool spine_detector_dialog::load_image()
 
 
 
-void spine_detector_dialog::convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     unsigned short* pPre = (unsigned short*)pre1d;
     unsigned short max_v=0, min_v = 255;
@@ -984,7 +987,7 @@ void spine_detector_dialog::convert2UINT8(unsigned short *pre1d, unsigned char *
     }
 }
 
-void spine_detector_dialog::convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     float* pPre = (float*)pre1d;
     float max_v=0, min_v = 65535;
@@ -1099,3 +1102,4 @@ void spine_detector_dialog::count_neighbors(unsigned char *boundary,unsigned cha
     qDebug()<<"count_total:"<<count_total;
 
 }
+

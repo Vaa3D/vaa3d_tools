@@ -5,6 +5,7 @@
  
 #include "spine_detector_plugin.h"
 #include "app2.h"
+#include "manual_correct_dialog.h"
 
 
 using namespace std;
@@ -15,8 +16,9 @@ QString versionStr = "v2.620";
 QStringList spine_detector::menulist() const
 {
 	return QStringList() 
-        <<tr("spine_detector")
-        <<tr("skeleton analysis")
+//        <<tr("spine_detector")
+//        <<tr("skeleton analysis")
+        <<tr("spine_detector_1.0")
         <<tr("about");
 }
 
@@ -36,6 +38,32 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         spine_detector_dialog *dialog=new spine_detector_dialog(&callback);
         dialog->exec();
 	}
+    else if (menu_name==tr("spine_detector_1"))
+    {
+       //QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\Gaussian_5_5_4.v3draw";
+       //QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\shape_learn\\Test\\Dan_data\\dendrite_segment5_CN3_gausian_4_4_3.v3draw";
+       QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\cd1_coh13-96_100x_cell_d1-1_s5_r1_c4_lh.v3draw";
+       QString skel_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\skeleton.swc_resampled.swc";
+       //QString skel_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\shape_learn\\Test\\Dan_data\\segment5_resampled.swc";
+       QString name_out="predict";
+       spine_fun * spine_obj=new spine_fun(image_name.toAscii(),skel_name.toAscii()
+                              ,name_out.toAscii(),&callback);
+       spine_obj->loadData();
+       spine_obj->init();
+       spine_obj->reverse_dst_grow();
+//       spine_obj->run_dstGroup();
+       spine_obj->run_intensityGroup();
+       spine_obj->conn_comp_nb6();
+//       spine_obj->construct_group_profile();
+       spine_obj->write_spine_center_profile();
+       spine_obj->saveResult();
+
+    }
+    else if(menu_name==tr("spine_detector_1.0"))
+    {
+        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
+        manual_dialog->show();
+    }
     else if (menu_name == tr("skeleton analysis"))
 	{
         PARA_APP2 p;
@@ -51,7 +79,7 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 	}
 	else
 	{
-		v3d_msg(tr("This tool detects spine. "
+        v3d_msg(tr("This tool detects spines. "
 			"Developed by Yujie Li, 2015-3-11"));
 	}
 }

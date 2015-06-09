@@ -7,6 +7,7 @@
 #define __SPINE_DETECTOR_PLUGIN_H__
 
 #include "spine_detector_dialog.h"
+#include "spine_fun.h"
 
 class spine_detector : public QObject, public V3DPluginInterface2_1
 {

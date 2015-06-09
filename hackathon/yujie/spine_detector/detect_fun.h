@@ -14,6 +14,8 @@
 #define ABS(x) ((x) > 0 ? (x) : (-(x)))
 #endif
 
+struct group_info {int group_num;int size;float center_x; float center_y; float center_z;};
+
 using namespace std;
 struct spine_profile {int volume; float neck_length; float head_width;float head_length;};
 unsigned char * memory_allocate_uchar1D(const V3DLONG i_size);
@@ -58,16 +60,23 @@ public:
     V3DLONG extract_nonsphere(unsigned char *all);
     vector<V3DLONG> bubbles_no_gsdt(unsigned char *seperate);
     float calc_spread_width(vector<V3DLONG> array);
-    vector<V3DLONG> spine_grow(float *bound_box, unsigned char *label,
+    float calc_spread_width2(vector<V3DLONG> array);
+    vector<V3DLONG> spine_grow(float *bound_box, unsigned short *label,
          V3DLONG ind, int max_spine_width, int spine_id, int max_pixel, int min_pixel);
-    void connect_comp(unsigned char *label, unsigned short * new_label, int &label_marker, float *bound_box, int max_pixel, int min_pixel, int max_spine_width);
-    spine_profile spine_analysis(vector<float> array_width, vector<V3DLONG> cluster,
+    void connect_comp(unsigned char *tmp_img, unsigned char *label, unsigned short * new_label, int &label_marker, float *bound_box, int max_pixel, int min_pixel, int max_spine_width);
+    bool spine_analysis(spine_profile &spine, vector<float> array_width, vector<V3DLONG> cluster,
                                     float *bound_box);
+    int watershed(unsigned char *tmp_image, unsigned short *label, unsigned short * new_label, int &label_marker);
+    void watershed_imp(vector<V3DLONG> points,int max_int,unsigned short *label,int &new_label);
+    void watershed_imp2(unsigned char *tmp_image, vector<V3DLONG> points, int max_int, unsigned short *label, int &new_label);
+    void spine_analysis2(float *bound_box,unsigned short *label,int group_id);
 
 private:
     V3DLONG page_size;
     float * data1Dc_float;
     int bg_thr;
+    V3DLONG z_offset;
+    V3DLONG y_offset;
 
 public:
     V3DLONG sz_image[4];
@@ -86,7 +95,8 @@ public:
         sz_image[2]=sz_img[2];
         sz_image[3]=sz_img[3];
         page_size=sz_image[0]*sz_image[1]*sz_image[2];
-
+        y_offset=sz_image[0];
+        z_offset=sz_image[0]*sz_image[1];
         data1Dc_float = memory_allocate_float1D(sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         for(V3DLONG i=0; i<page_size*sz_img[3]; i++){
             data1Dc_float[i]=(float) (data1Dc_in[i]);
