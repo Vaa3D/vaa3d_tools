@@ -27,6 +27,7 @@
 #include <basic_landmark.h>
 #include "compute_win_pca.h"
 #include "convert_type2uint8.h"
+#include <time.h>
 using namespace std;
 const int const_length_histogram = 256;
 const double const_max_voxelValue = 255;
@@ -243,7 +244,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize, QString _name_currentWindow,
 			V3DLONG _maxMovement1, V3DLONG _maxMovement2)
 		{
-			if (!this->is_initialized)
+			//if (!this->is_initialized) // Temporally solution for the "parameter window not popped up" problem;
 			{
 				this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 				this->size_page = dim_X*dim_Y*dim_Z;
@@ -274,7 +275,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->name_currentWindow = _name_currentWindow;
 				this->max_movment1 = _maxMovement1*_maxMovement1;
 				this->max_movment2 = _maxMovement2*_maxMovement2;
-				this->is_initialized=true;
+				this->is_initialized=false;
 			}
 			vector<double> thresholds_valueChangeRatio;
 			vector<V3DLONG > thresholds_voxelValue;
@@ -1985,7 +1986,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		}
 		dialogRun dialogRun1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_C);
 		bool is_success = false;
-		if (this->class_segmentationMain1.is_initialized)
+		
+		/*if (this->class_segmentationMain1.is_initialized) //temporary solution for the "parameter window not popped up" problem;
 		{
 			is_success = this->class_segmentationMain1.control_run(this->class_segmentationMain1.Image1D_page, this->class_segmentationMain1.dim_X, 
 				this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, this->class_segmentationMain1.idx_channel, 
@@ -1993,8 +1995,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				this->class_segmentationMain1.threshold_deltaShapeStat, this->class_segmentationMain1.multiplier_thresholdRegionSize,
 				this->class_segmentationMain1.multiplier_uThresholdRegionSize, this->class_segmentationMain1.name_currentWindow,
 				this->class_segmentationMain1.max_movment1, this->class_segmentationMain1.max_movment1);
-		}
-		else
+		}*/
+		//else
 		{
 			if (dialogRun1.exec()!=QDialog::Accepted) {return false;}
 			int idx_shape; //get shape paramters;
@@ -2033,6 +2035,32 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandleList_current[i]);
 				}*/
 			}
+			//temporary solution for Haru's request;
+			ofstream ofstream_log;
+			
+			time_t rawtime;
+			struct tm * timeinfo;
+			time (&rawtime);
+			timeinfo = localtime (&rawtime);
+			char buffer[80];
+			strftime(buffer,80,"%d_%m_%Y_%I_%M_%S",timeinfo);
+
+			stringstream tt;
+			tt<<"C:\\segmentationResult_"<<buffer<<".csv";
+
+			ofstream_log.open (tt.str().c_str());
+
+			V3DLONG count_segments = this->class_segmentationMain1.possVct_segmentationResult.size();
+			for (V3DLONG i=0; i<count_segments; i++)
+			{
+				V3DLONG count_poss = this->class_segmentationMain1.possVct_segmentationResult[i].size();
+				for (V3DLONG j=0; j<(count_poss-1); j++)
+				{
+					ofstream_log<<this->class_segmentationMain1.possVct_segmentationResult[i][j]<<",";
+				}
+				ofstream_log<<this->class_segmentationMain1.possVct_segmentationResult[i][count_poss-1]<<endl;
+			}
+			ofstream_log.close();
 			return true;
 		}
 		else
