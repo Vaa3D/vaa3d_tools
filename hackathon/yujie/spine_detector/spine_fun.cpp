@@ -43,6 +43,7 @@ spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=1)
     param.spongeness = 11;
     param.aspect_thr = 0.1;
     param.intensity_step = 10;
+    param.dst_max_pixel=2000;
     sel_channel=channel;
 
     qDebug()<<"para reset: param bg_thr:"<<param.bgthr<<" channel:"<<sel_channel;
