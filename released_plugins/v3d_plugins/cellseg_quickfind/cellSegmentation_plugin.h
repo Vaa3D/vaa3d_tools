@@ -464,7 +464,10 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			this->possVct2Image1D(this->possVct_segmentationResult, this->Image1D_mask, 0);
 			this->poss_segmentationResultCenter = this->mergePoss(poss_exemplar, this->poss_segmentationResultCenter);
 			this->LandmarkList_segmentationResult = this->poss2LandMarkList(this->poss_segmentationResultCenter);
-			this->possVct2Image1DC(this->possVct_segmentationResult, this->Image1D_segmentationResult);
+
+            //QString filename="quickfind_test.v3draw";
+            //simple_saveimage_wrapper(this->_V3DPluginCallback2_currentCallback,filename.toAscii(),this->Image1D_segmentationResult,this->dim_X,this->dim_Y,this->dim_Z);
+            this->possVct2Image1DC(this->possVct_segmentationResult, this->Image1D_segmentationResult);
 			this->memory_free_uchar2D(masks_page, count_exemplar);
 			return true;
 		}

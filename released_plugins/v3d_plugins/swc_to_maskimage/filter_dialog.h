@@ -2,10 +2,6 @@
 #define FILTER_DIALOG_H
 
 #include <QtGui>
-#include <QDialog>
-#include <QToolBar>
-#include <QVBoxLayout>
-#include <QToolButton>
 #include <v3d_interface.h>
 #include <vector>
 

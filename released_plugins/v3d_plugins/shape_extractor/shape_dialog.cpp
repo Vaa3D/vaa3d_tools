@@ -219,9 +219,10 @@ void shape_dialog::extract()
     //volume.clear();
     for (int j=0;j<poss_landmark.size();j++){
         qDebug()<<"j:"<<j;
+        if (label[j]>0) continue;
         V3DLONG rsize=shape_ext_obj.extract(x_all, y_all,z_all,label,poss_landmark[j],
                                        convolute_iter,bg_thr,j+1);
-        if(rsize<=0) continue;
+        if(rsize<=1) continue;
 
         GetColorRGB(rgb,j);
         V3DLONG finalpos;

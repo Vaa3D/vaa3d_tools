@@ -67,7 +67,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
     // c) the r_grow is over 30;
     //3)if criteria satisfied,the radius of the sphere increased. repeat 1).
 
-    while(seeds_pre.size()>0&&(float)seeds_pre.size()/total_r_grow>=0.2)
+    while(seeds_pre.size()>0&&(float)seeds_pre.size()/total_r_grow>=0.3)
     {
         seeds_pre.clear();
         total_r_grow=0;
@@ -92,6 +92,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
                             double distance=sqrt(tmp);
                             if (distance>r_grow) continue;
                             total_r_grow++;
+                            if (label[pos]>0) continue;
                             for(int cid=0; cid<sz_image[3]; cid++){
                                 color[cid]=data1Dc_float[pos+cid*page_size];
                             }
@@ -160,7 +161,7 @@ V3DLONG extract_fun::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all,vect
 //               <<":"<<(float)seeds_pre.size()/total_r_grow;
 //        qDebug()<<"r_grow"<<r_grow;
     }
-
+    return x_all.size();
 }
 
 
