@@ -1036,6 +1036,7 @@ int spine_fun::construct_layer_info(GOV tmp_group, group_profile *cur_group_info
 bool spine_fun::run_intensityGroup()
 {
     qDebug()<<"~~~~~Spine Detector: intensity sorting done, start to grow regions based on intensity";
+    qDebug()<<"dst group size:"<<dst_groups.size();
     intensity_groups.clear();
     for (int gid=0;gid<dst_groups.size();gid++)
     {
@@ -1370,26 +1371,26 @@ void spine_fun::conn_comp_nb6()
             GOV new_seeds;
             closing(seeds,id,new_seeds);
             final_groups.push_back(new_seeds);
-            if (id==6)
-            {
-                qDebug()<<"final_group 6:"<<new_seeds.size();
-                V3DLONG sum_x,sum_y,sum_z,center_x,center_y,center_z;
-                sum_x=sum_y=sum_z=0;
-                for (int kk=0;kk<new_seeds.size();kk++)
-                {
-                    qDebug()<<kk<<"  xyz"<<new_seeds[kk]->x<<":"<<new_seeds[kk]->y<<":"
-                           <<new_seeds[kk]->z;
-                    sum_x+=new_seeds[kk]->x;
-                    sum_y+=new_seeds[kk]->y;
-                    sum_z+=new_seeds[kk]->z;
-                }
-                center_x=sum_x/new_seeds.size();
-                center_y=sum_y/new_seeds.size();
-                center_z=sum_z/new_seeds.size();
-                qDebug()<<"sum:"<<sum_x<<":"<<sum_y<<":"<<sum_z<<":"<<center_x<<
-                         ":"<<center_y<<":"<<center_z;
+//            if (id==6)
+//            {
+//                qDebug()<<"final_group 6:"<<new_seeds.size();
+//                V3DLONG sum_x,sum_y,sum_z,center_x,center_y,center_z;
+//                sum_x=sum_y=sum_z=0;
+//                for (int kk=0;kk<new_seeds.size();kk++)
+//                {
+//                    qDebug()<<kk<<"  xyz"<<new_seeds[kk]->x<<":"<<new_seeds[kk]->y<<":"
+//                           <<new_seeds[kk]->z;
+//                    sum_x+=new_seeds[kk]->x;
+//                    sum_y+=new_seeds[kk]->y;
+//                    sum_z+=new_seeds[kk]->z;
+//                }
+//                center_x=sum_x/new_seeds.size();
+//                center_y=sum_y/new_seeds.size();
+//                center_z=sum_z/new_seeds.size();
+//                qDebug()<<"sum:"<<sum_x<<":"<<sum_y<<":"<<sum_z<<":"<<center_x<<
+//                         ":"<<center_y<<":"<<center_z;
 
-            }
+//            }
             id++;
         }
     }

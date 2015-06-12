@@ -390,7 +390,7 @@ bool manual_correct_dialog::before_proof_dialog()
          QMessageBox::information(0,"spine_detector",info,QMessageBox::Ok);
          write_spine_profile("automatic_spine_profile.csv");
          open_main_triview();
-         callback->setImageName(main_win,"spine_detector_result");
+         callback->setImageName(main_win,"automatic_spine_detector_result");
          callback->setLandmark(main_win,LList_in);
          callback->updateImageWindow(main_win);
          callback->open3DWindow(main_win);
@@ -405,8 +405,6 @@ bool manual_correct_dialog::before_proof_dialog()
              GetColorRGB(rgb,i);
 
              GOV tmp = label_group[i];
-             if (i==5)
-                 qDebug()<<"show the six group:"<<tmp.size();
 
              for (int j=0; j<tmp.size(); j++)
              {
@@ -418,7 +416,7 @@ bool manual_correct_dialog::before_proof_dialog()
 
          Image4DSimple image_label;
          image_label.setData((unsigned char*)label,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT16);
-         QString name="spine_detector_label";
+         QString name="automatic_spine_detector_label";
          v3dhandle new_win2=callback->newImageWindow(name);
          callback->setImage(new_win2,&image_label);
          callback->setLandmark(new_win2,LList_in);
