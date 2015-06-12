@@ -16,10 +16,11 @@ struct parameters{
     int width_thr; //limitation of the width of layer
     int layer_thr; //minimum number of layer required
     int max_dis; //distance from skel to cover
-    int max_pixel; //maximum pixels allowed per layer
+    int intensity_max_pixel; //maximum pixels allowed per layer
     int min_pixel; //minimum number of pixels in a group
     float spongeness; //minimum ng of each group
     float aspect_thr; //minumum aspect ratio
+    int dst_max_pixel; //during reverse dst grow the max pixels allowed for each layer
 };
 
 struct VOI{
@@ -65,7 +66,7 @@ public:
     void saveResult();
     bool run_dstGroup_individual();
     void dst_group_check();
-    void reverse_dst_grow();
+    bool reverse_dst_grow();
     //LandmarkList construct_group_profile();
     void group_check();
     void conn_comp_nb6();

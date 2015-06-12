@@ -31,7 +31,7 @@ void manual_correct_dialog::create()
     btn_swc = new QPushButton("...");
     mygridLayout->addWidget(btn_swc,1,7,1,1);
 
-    QLabel* label_csv = new QLabel(QObject::tr("Output csv:"));
+    QLabel* label_csv = new QLabel(QObject::tr("Output directory:"));
     mygridLayout->addWidget(label_csv,2,0,1,1);
     edit_csv = new QLineEdit;
     edit_csv->setText(""); edit_csv->setReadOnly(true);
@@ -74,8 +74,8 @@ void manual_correct_dialog::create()
     spin_bg_thr->setRange(1,255);
     spin_bg_thr->setValue(90);
     spin_max_pixel=new QSpinBox;
-    spin_max_pixel->setRange(1000,6000);
-    spin_max_pixel->setValue(3000);
+    spin_max_pixel->setRange(2000,8000);
+    spin_max_pixel->setValue(7000);
     spin_width_thr=new QSpinBox;
     spin_width_thr->setRange(10,100);
     spin_width_thr->setValue(35);
@@ -146,7 +146,8 @@ void manual_correct_dialog::check_data()
     }
     this->accept();
     get_para();
-    auto_spine_detect();
+    if(!auto_spine_detect())
+        return;
     if(before_proof_dialog())
         create_standing_dialog();
     else
@@ -200,8 +201,8 @@ void manual_correct_dialog::create_standing_dialog()
 
     mydialog->setLayout(layout2);
 
-    connect(button_save,SIGNAL(clicked()),this,SLOT(save()));
-    connect(button_p_cancel,SIGNAL(clicked()),this,SLOT(finish()));
+    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
+    connect(button_p_cancel,SIGNAL(clicked()),this,SLOT(maybe_save()));
     connect(markers,SIGNAL(currentIndexChanged(int)),this,SLOT(marker_roi()));
     connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker()));
     connect(reject,SIGNAL(clicked()),this,SLOT(delete_marker()));
@@ -212,8 +213,8 @@ void manual_correct_dialog::create_standing_dialog()
 
     marker_roi();
     mydialog->show();
-
 }
+
 
 void manual_correct_dialog::dialoguefinish(int)
 {
@@ -363,10 +364,11 @@ void manual_correct_dialog::get_para()
     //obtain all para
     all_para.bgthr=spin_bg_thr->value();
     all_para.max_dis=spin_max_dis->value();
-    all_para.max_pixel=spin_max_pixel->value();
+    all_para.intensity_max_pixel=spin_max_pixel->value();
     all_para.min_pixel=spin_min_pixel->value();
     all_para.width_thr=spin_width_thr->value();
     sel_channel=channel_menu->currentIndex();
+    all_para.dst_max_pixel=2000;
 }
 
 bool manual_correct_dialog::before_proof_dialog()
@@ -401,7 +403,11 @@ bool manual_correct_dialog::before_proof_dialog()
          for(int i=0; i<label_group.size(); i++)
          {
              GetColorRGB(rgb,i);
+
              GOV tmp = label_group[i];
+             if (i==5)
+                 qDebug()<<"show the six group:"<<tmp.size();
+
              for (int j=0; j<tmp.size(); j++)
              {
                  label[tmp.at(j)->pos] = rgb[0];
@@ -423,14 +429,25 @@ bool manual_correct_dialog::before_proof_dialog()
      }
 }
 
-void manual_correct_dialog::finish_proof_dialog(int final_landmarks_num)
+bool manual_correct_dialog::finish_proof_dialog()
 {
-    QMessageBox mybox;
-    QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
-    info+="The spine csv profile is saved at "+ edit_csv->text();
-    mybox.information(0,"spine detector",info,QMessageBox::Ok);
-    //mybox.exec();
-    return;
+    QMessageBox msgBox;
+    msgBox.setText("Have you finished proofreading?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    int ret = msgBox.exec();
+    if (ret==QMessageBox::No)
+        return false;
+    else if(ret==QMessageBox::Yes)
+    {
+        int final_landmarks_num;
+        final_landmarks_num = save();
+        QMessageBox mybox;
+        QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
+        info+="The spine csv profile is saved at "+ edit_csv->text();
+        mybox.information(0,"spine detector",info,QMessageBox::Ok);
+        return true;
+    }
 }
 
 void manual_correct_dialog::loadLabel()
@@ -469,18 +486,22 @@ void manual_correct_dialog::loadLabel()
 //    }
 }
 
-void manual_correct_dialog::auto_spine_detect()
+bool manual_correct_dialog::auto_spine_detect()
 {
     qDebug()<<"~~~~Auto spine detection starts....";
     spine_fun spine_obj(callback,all_para,sel_channel);
     if (!spine_obj.pushImageData(image1Dc_in,sz_img))
-        return;
+        return false;
     spine_obj.pushSWCData(neuron);
     if(!spine_obj.init()){
         v3d_msg("No spine candidates were found. Please check image and swc file");
-        return;
+        return false;
     }
-    spine_obj.reverse_dst_grow();
+    if(!spine_obj.reverse_dst_grow())
+    {
+        v3d_msg("No spines candidates were found; Please check image and swc file");
+        return false;
+    }
     spine_obj.run_intensityGroup();
     spine_obj.conn_comp_nb6();
     LList_in = spine_obj.get_center_landmarks();
@@ -517,25 +538,7 @@ void manual_correct_dialog::auto_spine_detect()
 //    simple_saveimage_wrapper(*callback,fname_output.toStdString().c_str(),(unsigned char *)label,label_sz, 2);
 
     qDebug()<<"auto spine_detect complete"<<"LList size:"<<LList_in.size();
-
-}
-
-void manual_correct_dialog::obtain_Groups()
-{
-//    //get the max of label
-//    int max_label=0;
-//    for (V3DLONG i=0;i<sz_img[0]*sz_img[1]*sz_img[2];i++)
-//    {
-//        if (label[i]>max_label)
-//            max_label=label[i];
-//    }
-//    label_groups.resize(max_label+1);
-//    for (V3DLONG i=0;i<sz_img[0]*sz_img[1]*sz_img[2];i++)
-//    {
-//        if(label[i]>0)
-//            label_groups[label[i]].push_back(i);
-//    }
-//    qDebug()<<"~~~~~label group set:"<<max_label;
+    return true;
 }
 
 void manual_correct_dialog::reset_image_data()
@@ -611,11 +614,6 @@ void manual_correct_dialog::reset_label_group()
 {
     int mid=markers->currentIndex();
     GOV tmp_group=label_group_copy[mid];
-    for (int i=0;i<tmp_group.size();i++)
-    {
-        tmp_group[i]->intensity_label=mid+1;
-    }
-
     label_group[mid].clear();
     label_group[mid]=tmp_group;
 
@@ -689,7 +687,7 @@ void manual_correct_dialog::marker_roi()
 
     //Step 6: reset marker color back to original color
     LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
-
+    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=255;
     qDebug()<<"~~~~marker roi finished";
 }
 
@@ -713,6 +711,9 @@ void manual_correct_dialog::accept_marker()
     prev_idx=mid;
     LList_in[mid].color.r=LList_in[mid].color.b=0;
     LList_in[mid].color.g=255;
+    LList_adj[mid].color.r=LList_in[mid].color.b=0;
+    LList_adj[mid].color.g=255;
+
     QString tmp=QString::number(1);
     LList_in[mid].comments=tmp.toStdString(); //accepted marker
     callback->setLandmark(curwin,LList_in);
@@ -734,19 +735,22 @@ void manual_correct_dialog::delete_marker()
     check_window();
     qDebug()<<"delete marker";
     //update landmarks color and status
-    int i=markers->currentIndex();
-    prev_idx=i;
-    LList_in[i].color.g=LList_in[i].color.b=0;
-    LList_in[i].color.r=255;
-    LList_in[i].comments=QString::number(2).toStdString(); //rejected marker
+    int mid=markers->currentIndex();
+
+    LList_in[mid].color.g=LList_in[mid].color.b=0;
+    LList_in[mid].color.r=255;
+    LList_adj[mid].color.g=LList_in[mid].color.b=0;
+    LList_adj[mid].color.r=255;
+
+    LList_in[mid].comments=QString::number(2).toStdString(); //rejected marker
 
     //update combobox
-    markers->setItemText(i, "Marker: " + QString::number(i+1) + " rejected");
-    edit_status->setPlainText("Marker: " + QString::number(i+1) + " rejected");
+    markers->setItemText(mid, "Marker: " + QString::number(mid+1) + " rejected");
+    //edit_status->setPlainText("Marker: " + QString::number(mid+1) + " rejected");
     edit_flag=false;
 
-    if(i+1<markers->count()){
-        markers->setCurrentIndex(i+1);
+    if(mid+1<markers->count()){
+        markers->setCurrentIndex(mid+1);
     }
 }
 
@@ -822,101 +826,95 @@ void manual_correct_dialog::check_local_3d_window()
     }
 }
 
-bool manual_correct_dialog::save()
+int manual_correct_dialog::save()
 {
     open_main_triview();
-    QMessageBox mybox;
-    mybox.setText("Have you finished proofreading?");
-    QPushButton *save_button = mybox.addButton(QMessageBox::Yes);
-    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
-    mybox.setDefaultButton(QMessageBox::Yes);
-    mybox.exec();
+    //prepare Landmarkers and image
+    LandmarkList LList_new;
 
-    if (mybox.clickedButton() == cancel_button) {
-        return false;
-    }
-    else if (mybox.clickedButton() == save_button)
+    V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
+    //prepare label
+    unsigned short *label = new unsigned short [size_page*3];
+    memset(label,0,size_page*3);
+    memset(image1Dc_spine+size_page,0,size_page);
+
+    for (int i=0;i<LList_in.size();i++)
     {
-        //prepare Landmarkers and image
-        LandmarkList LList_new;
-        V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
-        for (int i=0;i<LList_in.size();i++)
+        QString tmp;
+        tmp=QString::fromStdString(LList_in[i].comments);
+        if (tmp.contains("2")) //reject
         {
-            QString tmp;
-            tmp=QString::fromStdString(LList_in[i].comments);
-            if (tmp.contains("2")) //reject
-            {
-                GOV tmp_group=label_group[i];
-                for (int j=0;j<tmp_group.size();j++)
-                {
-                    image1Dc_spine[tmp_group[j]->pos +size_page]=0;
-                }
-            }
-            else if (tmp.contains("1"))
-            {
-                LList_new.append(LList_in[i]);
-                GOV tmp_group=label_group[i];
-                for (int j=0;j<tmp_group.size();j++)
-                {
-                    if (tmp_group[j]->intensity_label>0)
-                    {
-                        image1Dc_spine[tmp_group[j]->pos+size_page]=255;
-                    }
-                }
-            }
+//            GOV tmp_group=label_group[i];
+//            for (int j=0;j<tmp_group.size();j++)
+//            {
+//                image1Dc_spine[tmp_group[j]->pos +size_page]=0;
+//            }
         }
-        //prepare label
-        unsigned short *label = new unsigned short [size_page*3];
-        memset(label,0,size_page*3);
-        for(int i=0; i<label_group.size(); i++)
+        else if (tmp.contains("1"))
         {
+            GOV tmp_group=label_group[i];
             GetColorRGB(rgb,i);
-            GOV tmp = label_group[i];
-            for (int j=0; j<tmp.size(); j++)
+            int sum_x,sum_y,sum_z;
+            sum_x=sum_y=sum_z=0;
+            for (int j=0;j<tmp_group.size();j++)
             {
-                label[tmp.at(j)->pos] = rgb[0];
-                label[tmp.at(j)->pos+size_page]=rgb[1];
-                label[tmp.at(j)->pos+size_page]=rgb[2];
+                image1Dc_spine[tmp_group[j]->pos+size_page]=255;
+                sum_x+=tmp_group[j]->x;
+                sum_y+=tmp_group[j]->y;
+                sum_z+=tmp_group[j]->z;
+
+                label[tmp_group.at(j)->pos] = rgb[0];
+                label[tmp_group.at(j)->pos+size_page]=rgb[1];
+                label[tmp_group.at(j)->pos+size_page]=rgb[2];
             }
+            LocationSimple tmp;
+            tmp.x=sum_x/tmp_group.size();
+            tmp.y=sum_y/tmp_group.size();
+            tmp.z=sum_z/tmp_group.size();
+            tmp.color.r=tmp.color.b=0;
+            tmp.color.g=255;
+            LList_new.append(tmp);
         }
-        finish_proof_dialog(LList_new.size());
-        write_spine_profile("automatic_manual_proof_spine_profile.csv");
+    }
 
-        //need to close all image windows //check 3D window
-        v3dhandleList list_triwin = callback->getImageWindowList();
-        for(V3DLONG i=0; i<list_triwin.size(); i++){
-            if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
-            {
-                callback->close3DWindow(list_triwin[i]);
-            }
+    //finish_proof_dialog(LList_new.size());
+    write_spine_profile("automatic_manual_proof_spine_profile.csv");
+
+    //need to close all image windows //check 3D window
+    v3dhandleList list_triwin = callback->getImageWindowList();
+    for(V3DLONG i=0; i<list_triwin.size(); i++){
+        if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
+        {
+            callback->close3DWindow(list_triwin[i]);
         }
+    }
 
-        mydialog->close();
+    mydialog->close();
 
-        //visualize
-        Image4DSimple image4d;
-        unsigned char *input_image=new unsigned char [size_page*sz_img[3]];
-        memcpy(input_image,image1Dc_spine,size_page*sz_img[3]);
-        image4d.setData(input_image,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT8);
-        QString final_name="proofread_image";
-        callback->setImage(curwin,&image4d);
-        callback->setImageName(curwin,final_name);
-        callback->setLandmark(curwin,LList_new);
-        callback->updateImageWindow(curwin);
-        callback->open3DWindow(curwin);
-        callback->pushObjectIn3DWindow(curwin);
+    //visualize
+    Image4DSimple image4d;
+    unsigned char *input_image=new unsigned char [size_page*sz_img[3]];
+    memcpy(input_image,image1Dc_spine,size_page*sz_img[3]);
+    image4d.setData(input_image,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT8);
+    QString final_name="proofread_image";
+    callback->setImage(curwin,&image4d);
+    callback->setImageName(curwin,final_name);
+    callback->setLandmark(curwin,LList_new);
+    callback->updateImageWindow(curwin);
+    callback->open3DWindow(curwin);
+    callback->pushObjectIn3DWindow(curwin);
 
-        Image4DSimple image_label;
-        image_label.setData((unsigned char*)label,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT16);
-        QString name="proofread_image_label";
-        v3dhandle new_win2=callback->newImageWindow(name);
-        callback->setImage(new_win2,&image_label);
-        callback->setLandmark(new_win2,LList_new);
-        callback->updateImageWindow(new_win2);
-        callback->open3DWindow(new_win2);
-        callback->pushObjectIn3DWindow(new_win2);
-        return true;
-     }
+    Image4DSimple image_label;
+    image_label.setData((unsigned char*)label,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT16);
+    QString name="proofread_image_label";
+    v3dhandle new_win2=callback->newImageWindow(name);
+    callback->setImage(new_win2,&image_label);
+    callback->setLandmark(new_win2,LList_new);
+    callback->updateImageWindow(new_win2);
+    callback->open3DWindow(new_win2);
+    callback->pushObjectIn3DWindow(new_win2);
+    return LList_new.size();
+
 }
 
 
@@ -924,22 +922,39 @@ bool manual_correct_dialog::maybe_save()
 {
     QMessageBox mybox;
     mybox.setText("Do you want to exit without saving?");
-    QPushButton *yes_button = mybox.addButton(QMessageBox::Yes);
-    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
 
-    mybox.setDefaultButton(QMessageBox::Cancel);
+    QPushButton *save_button = mybox.addButton(QMessageBox::Save);
+    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
+    QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
+
+    mybox.setDefaultButton(QMessageBox::Save);
     mybox.exec();
 
-     if (mybox.clickedButton() == yes_button) {
-         return false;
-     } else if (mybox.clickedButton() == cancel_button) {
+     if (mybox.clickedButton() == save_button) {
+         save();
          return true;
+     } else if (mybox.clickedButton() == cancel_button) {
+         return false;
+     }
+     else if (mybox.clickedButton()== discard_button) {
+         //need to close all image windows //check 3D window
+         v3dhandleList list_triwin = callback->getImageWindowList();
+         for(V3DLONG i=0; i<list_triwin.size(); i++){
+             if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
+             {
+                 callback->close3DWindow(list_triwin[i]);
+             }
+         }
+         mydialog->close();
+         return false;
      }
 }
 
-void manual_correct_dialog::close_event(QCloseEvent *event)
+void manual_correct_dialog::reject()
 {
+    qDebug()<<"reject working";
     finish();
+    return;
 }
 
 void manual_correct_dialog::write_spine_profile(QString filename)
@@ -1000,23 +1015,17 @@ void manual_correct_dialog::dilate()
 {
     open_main_triview();
     check_window();
-    qDebug()<<"in dilate now";
+    //qDebug()<<"in dilate now";
     int bg_thr=80;
     V3DLONG size_page=sz[0]*sz[1]*sz[2];
     GOV seeds_next;
 
     int mid=markers->currentIndex();
     GOV tmp_group = label_group[mid];
-    GOV update_group;
-    for (int i=0;i<tmp_group.size();i++)
-    {
-        if (tmp_group[i]->intensity_label!=-1)
-            update_group.push_back(tmp_group[i]);
-    }
 
-    for (int sid=0;sid<update_group.size();sid++)
+    for (int sid=0;sid<tmp_group.size();sid++)
     {
-        VOI * single_voi = update_group[sid];
+        VOI * single_voi = tmp_group[sid];
         int label_id=single_voi->intensity_label;
         for (int neid=0; neid<single_voi->neighbors_6.size();neid++)
         {
@@ -1029,29 +1038,26 @@ void manual_correct_dialog::dilate()
         }
     }
 
-    qDebug()<<"~~~dilate~~~~increase:"<<seeds_next.size();
     if (seeds_next.size()==0)
     {
         edit_status->setPlainText("No more voxels available. Cannot dilate");
-        label_group[mid].clear();
-        label_group[mid]=update_group;
         return;
     }
     else if (seeds_next.size()>0)
     {
         edit_status->setPlainText(QString::number(seeds_next.size())+" voxels added in this round of dilation");
-        update_group.insert(update_group.end(),seeds_next.begin(),seeds_next.end());
+        tmp_group.insert(tmp_group.end(),seeds_next.begin(),seeds_next.end());
         label_group[mid].clear();
-        label_group[mid]=update_group;
+        label_group[mid]=tmp_group;
     }
 
-    for (int i=0;i<update_group.size();i++)
+    for (int i=0;i<seeds_next.size();i++)
     {
-        VOI * single_voi=update_group[i];
+        VOI * single_voi=seeds_next[i];
         V3DLONG pos_trun=xyz2pos(single_voi->x-x_start,single_voi->y-y_start,single_voi->z-z_start
                                  ,sz[0],sz[0]*sz[1]);
         image_trun[pos_trun+size_page]=255;
-        image_trun[pos_trun+2*size_page]=255;
+        //image_trun[pos_trun+2*size_page]=255;
     }
 
     unsigned char *dilate_tmp =new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
@@ -1063,7 +1069,9 @@ void manual_correct_dialog::dilate()
     callback->setImage(curwin,&image4d_tmp);
     callback->updateImageWindow(curwin);
     callback->close3DWindow(curwin);
+    callback->setLandmark(curwin,LList_adj);
     callback->open3DWindow(curwin);
+    callback->pushObjectIn3DWindow(curwin);
 }
 
 void manual_correct_dialog::erode()
@@ -1076,23 +1084,20 @@ void manual_correct_dialog::erode()
 
     int mid=markers->currentIndex();
     GOV tmp_group = label_group[mid];
-    GOV update_group;
-    for (int i=0;i<tmp_group.size();i++)
-    {
-        if (tmp_group[i]->intensity_label!=-1)
-            update_group.push_back(tmp_group[i]);
-    }
-    if (update_group.size()==0)
+
+    if (tmp_group.size()==0)
     {
         edit_status->setPlainText("No more voxels left. Cannot erode");
         return;
     }
-    sort(update_group.begin(),update_group.end(),sortfunc_dst_ascend); //ascending
-    int min_dis=update_group.front()->dst;
+    sort(tmp_group.begin(),tmp_group.end(),sortfunc_dst_ascend); //ascending
+    //qDebug()<<"sort done:"<<"size:"<<tmp_group.size();
+
+    int min_dis=tmp_group.front()->dst;
     int vid_begin, vid_end;
     vid_begin=vid_end=0;
 
-    while(vid_end<update_group.size() && update_group[vid_end]->dst==min_dis){
+    while(vid_end<tmp_group.size() && tmp_group[vid_end]->dst==min_dis){
         vid_end++;
         continue;
     }
@@ -1104,15 +1109,23 @@ void manual_correct_dialog::erode()
 
     for (int i=vid_begin;i<vid_end;i++)
     {
-        VOI * single_voi= update_group[i];
-        single_voi->intensity_label=-1;
+        VOI * single_voi= tmp_group[i];
         V3DLONG trun_pos= xyz2pos(single_voi->x-x_start ,single_voi->y-y_start,
                                   single_voi->z-z_start,sz[0],sz[0]*sz[1]);
         image_trun[trun_pos+size_page]=0;
-        image_trun[trun_pos+2*size_page]=0;
     }
     edit_status->setPlainText(QString::number(vid_end-vid_begin)+" voxels deleted in this round of erosion");
-    qDebug()<<"~~~erode~~~~decrease:"<<vid_end-vid_begin;
+    //qDebug()<<"~~~erode~~~~decrease:"<<vid_end-vid_begin;
+
+    GOV update_group;
+    for (int i=vid_end;i<tmp_group.size();i++)
+    {
+        update_group.push_back(tmp_group[i]);
+    }
+
+    label_group[mid].clear();
+    label_group[mid]=update_group;
+    //qDebug()<<"new group update";
     unsigned char *erode_tmp =new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
     memcpy(erode_tmp,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
     edit_flag=true;
@@ -1122,16 +1135,19 @@ void manual_correct_dialog::erode()
     callback->setImage(curwin,&image4d_tmp);
     callback->updateImageWindow(curwin);
     callback->close3DWindow(curwin);
+    callback->setLandmark(curwin,LList_adj);
     callback->open3DWindow(curwin);
+    callback->pushObjectIn3DWindow(curwin);
 }
 
 void manual_correct_dialog::reset_edit()
 {
-    reset_image_data();
     reset_label_group();
+    reset_image_data();
     edit_flag=false;
     unsigned char *reset_tmp =new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
     memcpy(reset_tmp,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
+    edit_status->setPlainText("Image reset");
 
     Image4DSimple image4d_tmp;
     image4d_tmp.setData(reset_tmp,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);

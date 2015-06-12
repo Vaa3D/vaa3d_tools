@@ -17,16 +17,15 @@ public:
     void reset_image_data();
     void check_window();
     void check_local_3d_window();
-    void obtain_Groups();
     void open_main_triview();
     void adjust_LList_to_imagetrun();
     bool save_edit();
     void create_standing_dialog();
-    void auto_spine_detect();
+    bool auto_spine_detect();
     bool before_proof_dialog();
     void reset_label_group();
     void get_para();
-    void finish_proof_dialog(int final_landmarks_num);
+    int save();
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
 
@@ -45,10 +44,11 @@ public slots:
     void erode();
     void reset_edit();
 
-    bool save();
+
     bool maybe_save();
-    void close_event(QCloseEvent *event);
+    void reject();
     void finish();
+    bool finish_proof_dialog();
 
     void load_marker();
     void loadLabel();

@@ -38,7 +38,7 @@ spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=1)
     param.width_thr = set_para.width_thr;
     param.max_dis = set_para.max_dis;
     param.min_pixel=set_para.min_pixel;
-    param.max_pixel = set_para.max_dis;
+    param.intensity_max_pixel = set_para.intensity_max_pixel;
     param.layer_thr = 5;
     param.spongeness = 11;
     param.aspect_thr = 0.1;
@@ -340,7 +340,7 @@ bool spine_fun::run_dstGroup()
     return true;
 }
 
-void spine_fun::reverse_dst_grow()
+bool spine_fun::reverse_dst_grow()
 {
     sort(voxels.begin(), voxels.end(), sortfunc_dst_ascend);
     vector<VOI*> cur_layer,seeds,seeds_next;
@@ -410,7 +410,7 @@ void spine_fun::reverse_dst_grow()
                     }
                 }
             }
-            if (tmp_group.size()>2000)
+            if (tmp_group.size()>param.dst_max_pixel)
             {
                 //qDebug()<<"this group exeeds the maximum pixels"<<tmp_group.size();
                 for (int j=0;j<tmp_group.size();j++)
@@ -516,7 +516,11 @@ void spine_fun::reverse_dst_grow()
         dst_groups.push_back(tmp_group);
         spine_id++;
     }
-
+    if (dst_groups.size()<=0)
+    {
+        return false;
+    }
+    return true;
     qDebug()<<"dst_groups grow finished~~~~~~  dst_group size:"<<dst_groups.size()<<"spine id:"<<spine_id;
 }
 
@@ -1224,41 +1228,7 @@ long spine_fun::sub2ind(V3DLONG x, V3DLONG y, V3DLONG z)
 bool sortfunc_dst(VOI * a, VOI * b){ return (a->dst > b->dst); }
 bool sortfunc_intensity(VOI * a, VOI * b){ return (a->intensity > b->intensity); }
 
-//float spine_fun::calc_spread_width(GOV array)
-//{
-//    float sum_x,sum_y,sum_z,center_x,center_y,center_z;
-//    sum_x=sum_y=sum_z;
-//    for (int i=0;i<array.size();i++)
-//    {
-//        vector<V3DLONG> coord=pos2xyz(array[i],y_offset,z_offset);
-//        V3DLONG x=coord[0];
-//        V3DLONG y=coord[1];
-//        V3DLONG z=coord[2];
-//        sum_x+=x;
-//        sum_y+=y;
-//        sum_z+=z;
-//    }
-//    center_x=sum_x/array.size();
-//    center_y=sum_y/array.size();
-//    center_z=sum_z/array.size();
-//    float distance=0;
-//    for (int i=0;i<array.size();i++)
-//    {
-//        vector<V3DLONG> coord=pos2xyz(array[i],y_offset,z_offset);
-//        V3DLONG x=coord[0];
-//        V3DLONG y=coord[1];
-//        V3DLONG z=coord[2];
-//        float tmp=(x-center_x)*(x-center_x)+(y-center_y)*(y-center_y)+
-//            (z-center_z)*(z-center_z);
-//        if (tmp>distance*distance)
-//            distance=tmp;
-//    }
 
-//    float dis_tmp=sqrt(distance)*2;
-////    qDebug()<<"spread width:"<<x_max<<":"<<x_min<<":"<<y_max<<":"<<y_min<<":"
-////           <<z_max<<":"<<z_min<<":"<<dis_tmp;
-//    return dis_tmp;
-//}
 
 bool spine_fun::run_dstGroup_individual()
 {
@@ -1356,10 +1326,11 @@ void spine_fun::conn_comp_nb6()
     for (int i=0;i<intensity_groups.size();i++)
     {
         if (intensity_groups[i].size()==0) continue;
+        if (intensity_groups[i].size()>param.intensity_max_pixel) continue;
 
         GOV cur_group = intensity_groups[i];
         //check connected components
-        qDebug()<<"i:"<<i<<" Id:"<<id<<"group size:"<<cur_group.size();
+        //qDebug()<<"i:"<<i<<" Id:"<<id<<"group size:"<<cur_group.size();
 
         GOV seeds;
         map<V3DLONG, int> lookup;
@@ -1399,6 +1370,26 @@ void spine_fun::conn_comp_nb6()
             GOV new_seeds;
             closing(seeds,id,new_seeds);
             final_groups.push_back(new_seeds);
+            if (id==6)
+            {
+                qDebug()<<"final_group 6:"<<new_seeds.size();
+                V3DLONG sum_x,sum_y,sum_z,center_x,center_y,center_z;
+                sum_x=sum_y=sum_z=0;
+                for (int kk=0;kk<new_seeds.size();kk++)
+                {
+                    qDebug()<<kk<<"  xyz"<<new_seeds[kk]->x<<":"<<new_seeds[kk]->y<<":"
+                           <<new_seeds[kk]->z;
+                    sum_x+=new_seeds[kk]->x;
+                    sum_y+=new_seeds[kk]->y;
+                    sum_z+=new_seeds[kk]->z;
+                }
+                center_x=sum_x/new_seeds.size();
+                center_y=sum_y/new_seeds.size();
+                center_z=sum_z/new_seeds.size();
+                qDebug()<<"sum:"<<sum_x<<":"<<sum_y<<":"<<sum_z<<":"<<center_x<<
+                         ":"<<center_y<<":"<<center_z;
+
+            }
             id++;
         }
     }
@@ -1501,9 +1492,12 @@ LandmarkList spine_fun::get_center_landmarks()
         }
 
         LocationSimple tmp_marker;
-        tmp_marker.x=sum_x/tmp.size();
-        tmp_marker.y=sum_y/tmp.size();
-        tmp_marker.z=sum_z/tmp.size();
+        tmp_marker.x=sum_x/tmp.size()+1;
+        tmp_marker.y=sum_y/tmp.size()+1;
+        tmp_marker.z=sum_z/tmp.size()+1;
+        tmp_marker.color.r=255;
+        tmp_marker.color.g=255;
+        tmp_marker.color.b=255;
         tmp_marker.name = QString::number(tmp[0]->intensity_label).toStdString().c_str();
         LList.append(tmp_marker);
     }
