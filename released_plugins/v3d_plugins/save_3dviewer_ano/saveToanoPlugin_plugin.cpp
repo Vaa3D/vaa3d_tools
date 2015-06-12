@@ -81,16 +81,13 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
     qDebug("search for 3D windows");
     for (V3DLONG i=0;i<allWindowList.size();i++)
     {
-        ntTreeList = callback.getHandleNeuronTrees_Any3DViewer(allWindowList[i]);
-        if(ntTreeList->size()>0){
-            QString fname_win=callback.getImageName(allWindowList[i]);
-            if(fname_win.contains("[") && fname_win.contains("]"))
-                selectWindowList.append(allWindowList[i]);
-        }
+        QString fname_win=callback.getImageName(allWindowList[i]);
+        if(fname_win.contains("3D View [") && fname_win.contains("]"))
+            selectWindowList.append(allWindowList[i]);
     }
     qDebug("match and select 3D windows");
     if(selectWindowList.size()<1){
-        v3d_msg("Cannot find 3D view with SWC file. Please load the SWC files you want to color in the 3D view");
+        v3d_msg("Cannot find 3D viewer.");
         return;
     }else if(selectWindowList.size()>1){
         //pop up a window to select
