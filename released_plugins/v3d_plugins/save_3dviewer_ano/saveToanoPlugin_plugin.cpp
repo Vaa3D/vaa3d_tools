@@ -114,7 +114,13 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
     //get the file name
     QString fname_win=callback.getImageName(v3dwin).remove("3D View [").remove("]");
     QDateTime mytime = QDateTime::currentDateTime();
-    QString fname_out=fname_win + "_stamp_" + mytime.toString("yyyy_MM_dd_hh_mm");
+    QString fname_out=fname_win;
+    if(fname_out.contains("_stamp_")){
+        int pos = fname_out.indexOf("_stamp_");
+        int len = fname_out.length()-pos;
+        fname_out.remove(pos,len);
+    }
+    fname_out=fname_out + "_stamp_" + mytime.toString("yyyy_MM_dd_hh_mm");
     qDebug()<<"Will save file to "<<fname_out;
 
     //get content
