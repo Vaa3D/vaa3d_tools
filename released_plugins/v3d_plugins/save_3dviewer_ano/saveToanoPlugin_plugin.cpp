@@ -69,6 +69,7 @@ bool saveToanoPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 	return true;
 }
 
+//updated by CHB 2015/6/12
 void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *parent)
 {
     //select the window to operate
@@ -131,7 +132,7 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
         SWC_list.append(fname_swc);
     }
 
-    DataLists_in_3dviewer listItem = callback.fetch_3dviewer_datafilelist(callback.getImageName(v3dwin));
+    DataLists_in_3dviewer listItem = callback.fetch_3dviewer_datafilelist(fname_win);
 
     QList<NeuronTree> * mTreeList;
     mTreeList = callback.getHandleNeuronTrees_Any3DViewer(v3dwin);
