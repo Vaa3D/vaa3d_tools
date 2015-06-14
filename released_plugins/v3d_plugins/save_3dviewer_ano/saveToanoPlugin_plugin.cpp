@@ -160,6 +160,7 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
         return;
     }
 
+
     if(SWC_list.count()>0)
     {
         for(V3DLONG i = 0; i < SWC_list.count(); i++)
@@ -167,21 +168,32 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
             NeuronTree mTree = mTreeList->at(i);
             QString newSWCname = SWC_list.at(i);
             writeSWC_file(newSWCname,mTree);
-            anofile << "SWCFILE=" << newSWCname.toStdString().c_str() << endl;
+            QFileInfo tmp(newSWCname);
+            anofile << "SWCFILE=" << tmp.fileName().toStdString().c_str() << endl;
         }
 
     }
 
     if(APO_list.count()>0)
     {
-            QString newAPOname = fname_out + "_" + QFileInfo(APO_list.at(0)).fileName();
+            QString newAPOname = fname_out + ".apo";
             writeAPO_file(newAPOname,mAPOList_v2);
-            anofile << "APOFILE=" << newAPOname.toStdString().c_str() << endl;
+            QFileInfo tmp(newAPOname);
+            anofile << "APOFILE=" << tmp.fileName().toStdString().c_str() << endl;
     }
 
-    if(imgname.size()>0) anofile << "RAWIMG=" << imgname.toStdString().c_str() << endl;
-    if(surfacename.size()>0) anofile << "SURFILE=" << surfacename.toStdString().c_str() << endl;
-    if(labelfieldname.size()>0) anofile << "SURFILE=" << labelfieldname.toStdString().c_str() << endl;
+    if(imgname.size()>0){
+        QFileInfo tmp(imgname);
+        anofile << "RAWIMG=" << tmp.fileName().toStdString().c_str() << endl;
+    }
+    if(surfacename.size()>0){
+        QFileInfo tmp(surfacename);
+        anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
+    }
+    if(labelfieldname.size()>0){
+        QFileInfo tmp(labelfieldname);
+        anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
+    }
 
     anofile.close();
 
