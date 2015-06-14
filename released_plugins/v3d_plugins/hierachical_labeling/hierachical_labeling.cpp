@@ -56,7 +56,7 @@ bool hierachical_labeling(NeuronTree & nt)
 		while (branches[cur]!=0 && pid>0);
 	}
 
-	V3DLONG colored = 1;
+	float colored = 1;
 	for (V3DLONG i=0;i<siz;i++)
 	{
 		if (branches[i]!=0) continue;
@@ -66,7 +66,7 @@ bool hierachical_labeling(NeuronTree & nt)
 		{
 			NeuronSWC s = nt.listNeuron[cur];
 			if (s.pn<0) break;
-			nt.listNeuron[cur].fea_val = colored;
+			nt.listNeuron[cur].fea_val.append(colored);
 			pid = nt.hashNeuron.value(s.pn);
 			cur = pid;
 		}
