@@ -43,6 +43,7 @@ void nt_selfcorrect_func::correct_tracing(QString fname_img, QString fname_swc, 
     getTrainingSample();
     performTraining();
     smartTracing_seedstart();
+    finalTracing();
 //    predictExisting();
 //    correctExisting();
 //    saveData(fname_output);
@@ -75,14 +76,28 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     fname_tmpout=fname_output+"_tmp";
     fname_outswc=fname_output+".swc";
     fname_inimg=fname_img;
+    //measuring computation performance
+    QString fname_time=fname_tmpout+"_timer.txt";
+    QElapsedTimer timer;
 
+    ofstream fp(fname_time.toStdString().c_str());
+    timer.start();
     loadImageData(fname_img);
+    fp << timer.restart() <<"\t";
     simpleTracing();
+    fp << timer.restart() <<"\t";
     calculateScore_topology();
+    fp << timer.restart() <<"\t";
     getTrainingSample();
+    fp << timer.restart() <<"\t";
     performTraining();
+    fp << timer.restart() <<"\t";
     //smartTracing_regionstart();
     smartTracing_seedstart();
+    fp << timer.restart() <<"\t";
+    finalTracing();
+    fp << timer.elapsed() <<"\t";
+    fp.close();
     //saveData(fname_output);
 }
 
@@ -904,6 +919,12 @@ bool nt_selfcorrect_func::simpleTracing(){
     return true;
 }
 
+bool nt_selfcorrect_func::finalTracing(){
+    QString fname_img = fname_tmpout+"_foreground.raw";
+    ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+    return true;
+}
+
 bool nt_selfcorrect_func::smartTracing_regionstart(){
     double STEP=0.4;
 
@@ -1057,7 +1078,7 @@ bool nt_selfcorrect_func::smartTracing_regionstart(){
     }
     QString fname_img = fname_tmpout+"_foreground.raw";
     saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
-    ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+    //ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
 }
 
 bool nt_selfcorrect_func::smartTracing_seedstart(){
@@ -1136,7 +1157,7 @@ bool nt_selfcorrect_func::smartTracing_seedstart(){
     QString fname_img = fname_tmpout+"_foreground.raw";
     saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
     qDebug()<<"smartTracing: Done prediction. Calculate final tracing.";
-    ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+    //ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
 }
 
 void nt_selfcorrect_func::initParameter()

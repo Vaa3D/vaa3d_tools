@@ -60,6 +60,7 @@ private:
     bool saveData(QString fname_output);
     bool initTracing();
     bool simpleTracing();
+    bool finalTracing();
     bool smartTracing_regionstart();
     bool smartTracing_seedstart();
     bool calculateScore_topology();
