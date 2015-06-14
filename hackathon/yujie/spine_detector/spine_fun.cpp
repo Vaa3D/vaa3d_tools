@@ -1,4 +1,5 @@
 #include "spine_fun.h"
+#include "FL_bwdist.h"
 
 
 #define FLAG_ISTEST 1
@@ -82,6 +83,108 @@ int spine_fun::loadData()
 }
 
 bool spine_fun::init()
+{
+    qDebug()<<"~~~~~Spine Detector: init voxels of interest along neuron skeleton";
+
+    V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
+    map<V3DLONG, VOI *> voxels_map;
+
+    float * dst = 0;
+    V3DLONG * label = 0;
+
+    try{
+        dst=new float[sz_page];
+        label=new V3DLONG[sz_page];
+    }
+    catch(...){
+        qDebug()<<"ERROR: failed to allocate memory for distance transform";
+        if(dst!=0) delete[] dst;
+        if(label!=0) delete[] label;
+        return false;
+    }
+
+    for(V3DLONG i=0; i<sz_page; i++){
+        dst[i]=INF;
+    }
+
+    for(V3DLONG nid=0; nid<nt.listNeuron.size(); nid++){
+        V3DLONG nx = nt.listNeuron.at(nid).x;
+        V3DLONG ny = nt.listNeuron.at(nid).y;
+        V3DLONG nz = nt.listNeuron.at(nid).z;
+        int disthr_2 = nt.listNeuron.at(nid).radius*nt.listNeuron.at(nid).radius;
+        for(V3DLONG x=MAX(nx-nt.listNeuron.at(nid).radius,0); x<=MIN(nx+nt.listNeuron.at(nid).radius,sz_img[0]-1); x++){
+            for(V3DLONG y=MAX(ny-nt.listNeuron.at(nid).radius,0); y<=MIN(ny+nt.listNeuron.at(nid).radius,sz_img[1]-1); y++){
+                for(V3DLONG z=MAX(nz-nt.listNeuron.at(nid).radius,0); z<=MIN(nz+nt.listNeuron.at(nid).radius,sz_img[2]-1); z++){
+                    if(ppp_img3D[z][y][x]<param.bgthr){ //too dark, skip
+                        continue;
+                    }
+                    int dis=(x-nx)*(x-nx)+(y-ny)*(y-ny)+(z-nz)*(z-nz);
+                    if(dis>disthr_2){ //too far, skip
+                        continue;
+                    }
+                    dst[x+y*sz_img[0]+z*sz_img[0]*sz_img[1]]=0;
+                }
+            }
+        }
+    }
+
+    qDebug()<<"~~~~~Spine Dectector: distance transform";
+    dt3d(dst, label, sz_img);
+
+    qDebug()<<"~~~~~Spine Dectector: init voxels";
+    for(V3DLONG i=0; i<sz_page; i++){
+        if(dst[i]>param.max_dis){ //too far away
+            continue;
+        }
+        if(p_img1D[i]<param.bgthr){ //too dark
+            continue;
+        }
+        if(dst[i]<1e-10){ //skeleton node
+            continue;
+        }
+        V3DLONG x,y,z;
+        ind2sub(x,y,z,i);
+        VOI * tmp_voxel = new VOI(i,x,y,z);
+        tmp_voxel->intensity=p_img1D[i];
+        tmp_voxel->dst=(int)dst[i];
+        tmp_voxel->skel_idx=0;
+        tmp_voxel->dst_label=tmp_voxel->dst_layer=-1;
+        tmp_voxel->intensity_label=tmp_voxel->intensity_layer=-1;
+        voxels_map[i]=tmp_voxel;
+    }
+
+    qDebug()<<"~~~~~Spine Dectector: init neighbors";
+    for(map<V3DLONG, VOI *>::iterator iter_map=voxels_map.begin(); iter_map!=voxels_map.end(); iter_map++){
+        if(iter_map->second->dst>=0) //only consider selected skel points
+        {
+            VOI * tmp_voxel =iter_map->second;
+            voxels.push_back(tmp_voxel);
+            //construct neighbors
+            for(V3DLONG x=MAX(tmp_voxel->x-1,0); x<=MIN(tmp_voxel->x+1,sz_img[0]-1); x++)
+                for(V3DLONG y=MAX(tmp_voxel->y-1,0); y<=MIN(tmp_voxel->y+1,sz_img[0]-1); y++)
+                    for(V3DLONG z=MAX(tmp_voxel->z-1,0); z<=MIN(tmp_voxel->z+1,sz_img[0]-1); z++){
+                        if(x==tmp_voxel->x && y==tmp_voxel->y && z==tmp_voxel->z) //self
+                            continue;
+                        V3DLONG pos = sub2ind(x,y,z);
+                        if(voxels_map.find(pos) == voxels_map.end()){ //background
+                            continue;
+                        }
+                        if(voxels_map[pos]->dst<=0){ //skeleton voxels
+                            continue;
+                        }
+                        tmp_voxel->neighbors_26.push_back(voxels_map[pos]);
+                        if( (x==tmp_voxel->x && y==tmp_voxel->y) || (x==tmp_voxel->x && z==tmp_voxel->z) ||(z==tmp_voxel->z && y==tmp_voxel->y)){
+                            tmp_voxel->neighbors_6.push_back(voxels_map[pos]);
+                        }
+                    }
+        }
+    }
+
+    qDebug()<<"~~~~~Spine Detector: found "<<voxels.size()<<" voxels of interest.";
+    return true;
+}
+
+bool spine_fun::init_old()
 {
     qDebug()<<"~~~~~Spine Detector: init voxels of interest along neuron skeleton";
     //find the eligible voxels and their parameters

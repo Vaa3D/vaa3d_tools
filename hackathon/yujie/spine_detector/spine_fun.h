@@ -61,6 +61,7 @@ public:
     spine_fun(V3DPluginCallback * cb, parameters set_para, int channel);
     int loadData(); //read images and swc files
     bool init(); //init the voxels of interest (within distance and intesnity is above threshold)
+    bool init_old(); //init the voxels of interest (within distance and intesnity is above threshold)
     bool run_dstGroup();
     bool run_intensityGroup();
     void saveResult();
