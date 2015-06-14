@@ -16,10 +16,9 @@ public:
     void create();
     void reset_image_data();
     void check_window();
-    void check_local_3d_window();
     void open_main_triview();
     void adjust_LList_to_imagetrun();
-    bool save_edit();
+    int save_edit();
     void create_standing_dialog();
     bool auto_spine_detect();
     bool before_proof_dialog();
@@ -43,15 +42,13 @@ public slots:
     void dilate();
     void erode();
     void reset_edit();
-
-
-    bool maybe_save();
-    void reject();
-    void finish();
     bool finish_proof_dialog();
 
+    //not used
+    bool maybe_save();
     void load_marker();
     void loadLabel();
+    void check_local_3d_window();
 
 private:
     V3DPluginCallback2 *callback;
@@ -66,14 +63,13 @@ private:
              *spin_width_thr;
     QPushButton *btn_load,*btn_swc,*btn_csv;
 
-    V3DLONG sz_img[4],label_sz[4],sz[4];
+    V3DLONG sz_img[4],sz[4];
     unsigned char *image1Dc_in,*image_trun, *image1Dc_spine;
     int intype;
-    int label_intype;
     NeuronTree neuron;
     LandmarkList LList_in,LList_adj;
     QString fname_image,folder_output,fname_output;
-    int prev_idx,x_start,y_start,z_start,sel_channel;
+    int x_start,y_start,z_start,sel_channel;
     ROIList pRoiList;
     vector<GOV> label_group,label_group_copy;
     bool edit_flag;

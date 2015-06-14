@@ -194,15 +194,15 @@ void manual_correct_dialog::create_standing_dialog()
 
     QPushButton *button_save=new QPushButton;
     button_save->setText("Finish proofreading");
-    QPushButton *button_p_cancel=new QPushButton;
-    button_p_cancel->setText("Quit");
+//    QPushButton *button_p_cancel=new QPushButton;
+//    button_p_cancel->setText("Quit");
     layout2->addWidget(button_save,6,0,1,2);
-    layout2->addWidget(button_p_cancel,6,2,1,1);
+//    layout2->addWidget(button_p_cancel,6,2,1,1);
 
     mydialog->setLayout(layout2);
 
     connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
-    connect(button_p_cancel,SIGNAL(clicked()),this,SLOT(maybe_save()));
+    //connect(button_p_cancel,SIGNAL(clicked()),this,SLOT(maybe_save()));
     connect(markers,SIGNAL(currentIndexChanged(int)),this,SLOT(marker_roi()));
     connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker()));
     connect(reject,SIGNAL(clicked()),this,SLOT(delete_marker()));
@@ -375,7 +375,7 @@ bool manual_correct_dialog::before_proof_dialog()
 {
     QMessageBox mybox;
     int size=label_group.size();
-    QString info="The automatic spine detection finds "+ QString::number(size)+" spines";
+    QString info="The automatic spine detector finds "+ QString::number(size)+" spines";
     mybox.setText(info);
     QPushButton *start=mybox.addButton(tr("Start proofreading"),QMessageBox::ActionRole);
     QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
@@ -388,7 +388,7 @@ bool manual_correct_dialog::before_proof_dialog()
      } else if (mybox.clickedButton() == cancel_button) {
          QString info="The spine csv profile is saved at "+ edit_csv->text();
          QMessageBox::information(0,"spine_detector",info,QMessageBox::Ok);
-         write_spine_profile("automatic_spine_profile.csv");
+         write_spine_profile("_auto_spine_profile.csv");
          open_main_triview();
          callback->setImageName(main_win,"automatic_spine_detector_result");
          callback->setLandmark(main_win,LList_in);
@@ -403,20 +403,18 @@ bool manual_correct_dialog::before_proof_dialog()
          for(int i=0; i<label_group.size(); i++)
          {
              GetColorRGB(rgb,i);
-
              GOV tmp = label_group[i];
-
              for (int j=0; j<tmp.size(); j++)
              {
                  label[tmp.at(j)->pos] = rgb[0];
                  label[tmp.at(j)->pos+size_page]=rgb[1];
-                 label[tmp.at(j)->pos+size_page]=rgb[2];
+                 label[tmp.at(j)->pos+2*size_page]=rgb[2];
              }
          }
 
          Image4DSimple image_label;
          image_label.setData((unsigned char*)label,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT16);
-         QString name="automatic_spine_detector_label";
+         QString name="auto_spine_detector_label";
          v3dhandle new_win2=callback->newImageWindow(name);
          callback->setImage(new_win2,&image_label);
          callback->setLandmark(new_win2,LList_in);
@@ -429,23 +427,40 @@ bool manual_correct_dialog::before_proof_dialog()
 
 bool manual_correct_dialog::finish_proof_dialog()
 {
-    QMessageBox msgBox;
-    msgBox.setText("Have you finished proofreading?");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    msgBox.setDefaultButton(QMessageBox::No);
-    int ret = msgBox.exec();
-    if (ret==QMessageBox::No)
-        return false;
-    else if(ret==QMessageBox::Yes)
-    {
-        int final_landmarks_num;
-        final_landmarks_num = save();
-        QMessageBox mybox;
-        QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
-        info+="The spine csv profile is saved at "+ edit_csv->text();
-        mybox.information(0,"spine detector",info,QMessageBox::Ok);
-        return true;
-    }
+    QMessageBox mybox;
+    mybox.setText("Have you finished proofreading?");
+
+    QPushButton *save_button = mybox.addButton(tr("Finish and save"),QMessageBox::ActionRole);
+    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
+    QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
+
+    mybox.setDefaultButton(save_button);
+    mybox.exec();
+
+     if (mybox.clickedButton() == save_button) {
+         int final_landmarks_num;
+         final_landmarks_num = save();
+         QMessageBox mynewbox;
+         QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
+         info+="The spine csv profile is saved at "+ edit_csv->text();
+         mynewbox.information(0,"spine detector",info,QMessageBox::Ok);
+         return true;
+
+     } else if (mybox.clickedButton() == cancel_button) {
+         return false;
+     }
+     else if (mybox.clickedButton()== discard_button) {
+         //need to close all image windows //check 3D window
+         v3dhandleList list_triwin = callback->getImageWindowList();
+         for(V3DLONG i=0; i<list_triwin.size(); i++){
+             if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
+             {
+                 callback->close3DWindow(list_triwin[i]);
+             }
+         }
+         mydialog->close();
+         return false;
+     }
 }
 
 void manual_correct_dialog::loadLabel()
@@ -521,20 +536,10 @@ bool manual_correct_dialog::auto_spine_detect()
             image1Dc_spine[tmp.at(j)->pos+size_page]=255;
         }
     }
-
-//    unsigned char * input_image = new unsigned char [size_page *3];
-//    memcpy(input_image,image1Dc_spine,size_page*3);
-
-//    Image4DSimple image;
-//    image.setData(input_image,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
-//    v3dhandle newwin = callback->newImageWindow("test");
-//    callback->setImage(newwin,&image);
-//    callback->updateImageWindow(newwin);
-//    callback->open3DWindow(newwin);
-
-//    QString fname_output = "test_tmp_label.v3draw";
-//    simple_saveimage_wrapper(*callback,fname_output.toStdString().c_str(),(unsigned char *)label,label_sz, 2);
-
+    if (image1Dc_in!=0)
+    {
+        delete[] image1Dc_in; image1Dc_in=0;
+    }
     qDebug()<<"auto spine_detect complete"<<"LList size:"<<LList_in.size();
     return true;
 }
@@ -588,8 +593,6 @@ void manual_correct_dialog::reset_image_data()
                 V3DLONG pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                 V3DLONG pos1=xyz2pos(dx-x_start,dy-y_start,dz-z_start,sz[0],sz[0]*sz[1]);
                 image_trun[pos1]=image1Dc_spine[pos];
-//                if (label[pos]==mid+1)
-//                    image_trun[pos1+sz[0]*sz[1]*sz[2]]=255;
             }
         }
     }
@@ -605,7 +608,6 @@ void manual_correct_dialog::reset_image_data()
         image_trun[trun_pos+sz[0]*sz[1]*sz[2]]=255;
     }
 
-    qDebug()<<"image trun set";
 }
 
 void manual_correct_dialog::reset_label_group()
@@ -641,7 +643,6 @@ void manual_correct_dialog::marker_roi()
     V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
     int mid=markers->currentIndex();
-    prev_idx=mid;
 
     //check whether previous editing needs saving
     if (edit_flag) save_edit();
@@ -686,13 +687,20 @@ void manual_correct_dialog::marker_roi()
     //Step 6: reset marker color back to original color
     LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
     LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=255;
-    qDebug()<<"~~~~marker roi finished";
+    //qDebug()<<"~~~~marker roi finished";
 }
 
 void manual_correct_dialog::skip_marker()
 {
     open_main_triview();
     check_window();
+    if (edit_flag)
+    {
+        int ret;
+        ret=save_edit();
+        if (ret!=3)  //not discard
+            return;
+    }
     int i=markers->currentIndex();
     if(i+1<markers->count())
         markers->setCurrentIndex(i+1);
@@ -706,7 +714,6 @@ void manual_correct_dialog::accept_marker()
 
     //update landmarks color and status
     int mid=markers->currentIndex();
-    prev_idx=mid;
     LList_in[mid].color.r=LList_in[mid].color.b=0;
     LList_in[mid].color.g=255;
     LList_adj[mid].color.r=LList_in[mid].color.b=0;
@@ -789,7 +796,7 @@ void manual_correct_dialog::check_window()
             break;
         }
     }
-    qDebug()<<"check window: window_open_flag:"<<window_open_flag;
+    //qDebug()<<"check window: window_open_flag:"<<window_open_flag;
     if(!window_open_flag)
     {
         curwin=callback->newImageWindow(fname_image);
@@ -863,7 +870,7 @@ int manual_correct_dialog::save()
 
                 label[tmp_group.at(j)->pos] = rgb[0];
                 label[tmp_group.at(j)->pos+size_page]=rgb[1];
-                label[tmp_group.at(j)->pos+size_page]=rgb[2];
+                label[tmp_group.at(j)->pos+2*size_page]=rgb[2];
             }
             LocationSimple tmp;
             tmp.x=sum_x/tmp_group.size();
@@ -875,8 +882,7 @@ int manual_correct_dialog::save()
         }
     }
 
-    //finish_proof_dialog(LList_new.size());
-    write_spine_profile("automatic_manual_proof_spine_profile.csv");
+    write_spine_profile("_auto_proofread_spine_profile.csv");
 
     //need to close all image windows //check 3D window
     v3dhandleList list_triwin = callback->getImageWindowList();
@@ -948,12 +954,6 @@ bool manual_correct_dialog::maybe_save()
      }
 }
 
-void manual_correct_dialog::reject()
-{
-    qDebug()<<"reject working";
-    finish();
-    return;
-}
 
 void manual_correct_dialog::write_spine_profile(QString filename)
 {
@@ -990,24 +990,6 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     fclose(fp2);
 }
 
-void manual_correct_dialog::finish()
-{
-    if (!maybe_save())
-    {
-        //need to close all image windows //check 3D window
-        v3dhandleList list_triwin = callback->getImageWindowList();
-        for(V3DLONG i=0; i<list_triwin.size(); i++){
-            if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
-            {
-                callback->close3DWindow(list_triwin.at(i));
-                callback->closeROI3DWindow(list_triwin.at(i));
-            }
-        }
-        mydialog->close();
-    }
-    else
-        return;
-}
 
 void manual_correct_dialog::dilate()
 {
@@ -1108,6 +1090,7 @@ void manual_correct_dialog::erode()
     for (int i=vid_begin;i<vid_end;i++)
     {
         VOI * single_voi= tmp_group[i];
+        single_voi->intensity_label=-1;
         V3DLONG trun_pos= xyz2pos(single_voi->x-x_start ,single_voi->y-y_start,
                                   single_voi->z-z_start,sz[0],sz[0]*sz[1]);
         image_trun[trun_pos+size_page]=0;
@@ -1159,11 +1142,16 @@ void manual_correct_dialog::reset_edit()
 }
 
 
-bool manual_correct_dialog::save_edit()
+int manual_correct_dialog::save_edit()
 {
     QMessageBox mybox;
-    mybox.setText("Click accept after editing to save. Otherwise your edit will be discarded");
+    mybox.setText("<b>The spine has been edited.<\b>");
+    QString info="-Accept: save edit and keep the spine<br> -Delete: delete the spine<br>"
+            "-Discard: discard the edit<br> -Cancel: Do nothing";
+    mybox.setInformativeText(info);
+
     QPushButton *accept_button=mybox.addButton(tr("Accept"),QMessageBox::ActionRole);
+    QPushButton *delete_button=mybox.addButton(tr("Delete"),QMessageBox::ActionRole);
     QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
     QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
 
@@ -1172,14 +1160,18 @@ bool manual_correct_dialog::save_edit()
 
      if (mybox.clickedButton() == accept_button) {
          accept_marker();
-         return true;
+         return 1;
      } else if (mybox.clickedButton() == cancel_button) {
-         return false;
+         return 4;
      } else if (mybox.clickedButton() == discard_button) {
          reset_image_data();
          reset_label_group();
          edit_flag=false;
-         return false;
+         return 3;
+     } else if (mybox.clickedButton()==delete_button)
+     {
+         delete_marker();
+         return 2;
      }
 }
 
