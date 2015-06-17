@@ -145,6 +145,9 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
 
 
   std::cout << "Managed to create an empty image!\n" << std::flush;
+  std::cout << "(Displaying insie utils) First pixel: " << train_gt_radial_ITK->GetPixel(pixelIndex) << std::endl << std::flush;
+
+
 
 ////  for(unsigned int swci = 0; swci < swcFileContent.rows.size(); swci++) {
 //  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
