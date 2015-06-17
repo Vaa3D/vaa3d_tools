@@ -24,6 +24,7 @@ private:
 
 public:
   std::vector< SwcRow > rows;
+  std::map< int, int > swcInd2VectorIndMap;
 
   SwcFileContent(std::vector< std::string > swcFilePaths) {
 //    if(swcFilePaths.size() != 1) {
@@ -48,6 +49,7 @@ public:
               int parentInd;
               lineStream >> ind >> type >> x >> y >> z >> r >> parentInd;
               rows.push_back(SwcRow(ind + globalMaxInd, type, x, y, z, r, parentInd + globalMaxInd));
+              swcInd2VectorIndMap[ind + globalMaxInd] = rows.size() - 1;
               if(ind + globalMaxInd > currentMaxInd) {
                 currentMaxInd = ind + globalMaxInd ;
               }
@@ -106,57 +108,40 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
 
   typename ITKImageType::IndexType pixelIndex;
 
-      pixelIndex[0] = 0;
-      pixelIndex[1] = 0;
-      pixelIndex[2] = 0;
-      I->SetPixel(pixelIndex, 66);
+  std::cout << "Managed to create an empty image!\n" << std::flush;
 
+  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
+    typename ITKImageType::IndexType pixelIndex;
 
+    if(rowi->parentInd != -1) {
+      std::vector< SwcFileContent::SwcRow >::iterator parentRowi = swcFileContent.rows.begin() + swcFileContent.swcInd2VectorIndMap[rowi->parentInd];
+      double vecX = (parentRowi->x - rowi->x);
+      double vecY = (parentRowi->y - rowi->y);
+      double vecZ = (parentRowi->z - rowi->z);
 
-      for(int iz = 0; iz < size[2]; iz++)
-      {
-//        int offsetk = iz*SM*SN;
-//        pixelIndex[2] = iz;
-        for(int iy = 0; iy < size[1]; iy++)
-        {
-//          int offsetj = iy*SN;
-//          pixelIndex[1] = iy;
-          for(int ix = 0; ix < size[0]; ix++)
-          {
-//            pixelIndex[0] = ix;
-
-            //  //                cout<< offsetk + offsetj + ix ;
-
-//            T PixelVaule =  data1d[offsetk + offsetj + ix];
-            itk::Index<3> indexX;
-            indexX[0] = ix;
-            indexX[1] = iy;
-            indexX[2] = iz;
-            //cout<< ": " << indexX <<endl;
-            I->SetPixel(indexX, 77);
-          }
-        }
-
+      double segmentLength = sqrt(
+                (rowi->x - parentRowi->x) * (rowi->x - parentRowi->x)
+              + (rowi->y - parentRowi->y) * (rowi->y - parentRowi->y)
+              + (rowi->z - parentRowi->z) * (rowi->z - parentRowi->z)
+            );
+      for(double i = 0.0; i < 1.0; i += 1.0 / segmentLength) {
+        pixelIndex[0] = round(rowi->x + vecX * i);
+        pixelIndex[1] = round(rowi->y + vecX * i);
+        pixelIndex[2] = round(rowi->z + vecX * i);
+        I->SetPixel(pixelIndex, (1.0 - i) * rowi->r + i * parentRowi->r);
       }
 
+      pixelIndex[0] = round(parentRowi->x);
+      pixelIndex[1] = round(parentRowi->y);
+      pixelIndex[2] = round(parentRowi->z);
+      I->SetPixel(pixelIndex, parentRowi->r);
+    }
 
-
-
-
-
-  std::cout << "Managed to create an empty image!\n" << std::flush;
-  std::cout << "(Displaying insie utils) First pixel: " << train_gt_radial_ITK->GetPixel(pixelIndex) << std::endl << std::flush;
-
-
-
-////  for(unsigned int swci = 0; swci < swcFileContent.rows.size(); swci++) {
-//  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
-//    typename ITKImageType::IndexType pixelIndex;
-//    pixelIndex[round(rowi->x)];
-//    pixelIndex[round(rowi->y)];
-//    pixelIndex[round(rowi->z)];
-//    I->SetPixel(pixelIndex, rowi->r);
-//  }
+    pixelIndex[0] = round(rowi->x);
+    pixelIndex[1] = round(rowi->y);
+    pixelIndex[2] = round(rowi->z);
+    I->SetPixel(pixelIndex, rowi->r);
+  }
 
 
 //  // Make a white square

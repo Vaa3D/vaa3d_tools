@@ -321,7 +321,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
             Image4DSimple IinV3dFormat = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
             std::cout << "Attempting to save to file!\n" << std::flush;
-//            callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
+            callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
 
 
 
