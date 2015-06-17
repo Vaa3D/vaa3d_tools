@@ -102,6 +102,47 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
   I->SetRegions(region);
   I->Allocate();
   I->FillBuffer(0);
+  I->Update();
+
+  typename ITKImageType::IndexType pixelIndex;
+
+      pixelIndex[0] = 0;
+      pixelIndex[1] = 0;
+      pixelIndex[2] = 0;
+      I->SetPixel(pixelIndex, 66);
+
+
+
+      for(int iz = 0; iz < size[2]; iz++)
+      {
+//        int offsetk = iz*SM*SN;
+//        pixelIndex[2] = iz;
+        for(int iy = 0; iy < size[1]; iy++)
+        {
+//          int offsetj = iy*SN;
+//          pixelIndex[1] = iy;
+          for(int ix = 0; ix < size[0]; ix++)
+          {
+//            pixelIndex[0] = ix;
+
+            //  //                cout<< offsetk + offsetj + ix ;
+
+//            T PixelVaule =  data1d[offsetk + offsetj + ix];
+            itk::Index<3> indexX;
+            indexX[0] = ix;
+            indexX[1] = iy;
+            indexX[2] = iz;
+            //cout<< ": " << indexX <<endl;
+            I->SetPixel(indexX, 77);
+          }
+        }
+
+      }
+
+
+
+
+
 
   std::cout << "Managed to create an empty image!\n" << std::flush;
 
@@ -170,6 +211,8 @@ typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int 
 template<typename ImageType>
 Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 
+  std::cout << "Attempting to convert to V3D! Hereeeee----11!" << std::endl << std::flush;
+
 
         //typename ImageType::RegionType region;
         typename ImageType::RegionType region = itk_image->GetLargestPossibleRegion();
@@ -179,6 +222,9 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 //        start.Fill(0);
 //        region.SetSize(size);
 //        region.SetIndex(start);
+
+  std::cout << "Attempting to convert to V3D! Hereeeee00!" << std::endl << std::flush;
+
 
         itk::ImageRegionIterator<ImageType> imageIterator(itk_image,region);
 
@@ -193,6 +239,7 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
         in_sz[1] = size[1];
         in_sz[2] = size[2];
 
+        std::cout << "Attempting to convert to V3D! Hereeeee11!" << std::endl << std::flush;
 
         const long int n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
 
@@ -215,6 +262,7 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
               std::cout << " elem 1,2,3" <<out_data_copy[0] << "," << out_data_copy[1] << ","<<out_data_copy[2]<<std::endl;
 
 
+        std::cout << "Attempting to convert to V3D! Hereeeee22!" << std::endl << std::flush;
 
 
         outimg_v3d.setData((unsigned char *)(out_data_copy), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
