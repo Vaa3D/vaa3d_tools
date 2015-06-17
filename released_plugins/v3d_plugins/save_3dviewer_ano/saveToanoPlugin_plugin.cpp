@@ -112,7 +112,15 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
     v3dwin = selectWindowList[winid];
 
     //get the file name
-    QString fname_win=callback.getImageName(v3dwin).remove("3D View [").remove("]");
+    QString fname_win;
+    QString fname_3dwin=callback.getImageName(v3dwin);
+    bool b_islocalview=false;
+    if(fname_3dwin.contains("Local 3D View [")){
+        fname_win=callback.getImageName(v3dwin).remove("Local 3D View [").remove("]");
+        b_islocalview=true;
+    }else{
+        fname_win=callback.getImageName(v3dwin).remove("3D View [").remove("]");
+    }
     QDateTime mytime = QDateTime::currentDateTime();
     QString fname_out=fname_win;
     if(fname_out.contains("_stamp_")){
@@ -135,8 +143,6 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
         SWC_list.append(fname_swc);
     }
 
-    DataLists_in_3dviewer listItem = callback.fetch_3dviewer_datafilelist(fname_win);
-
     QList<NeuronTree> * mTreeList;
     mTreeList = callback.getHandleNeuronTrees_Any3DViewer(v3dwin);
 
@@ -147,19 +153,13 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
     for (int i = 0; i < mAPOList->size();i++)
             mAPOList_v2.push_back(mAPOList->at(i));
 
-    QString imgname = listItem.imgfile;
-    QString labelfieldname = listItem.labelfield_file;
-    QString surfacename = listItem.surface_file;
-    QStringList APO_list = listItem.pointcloud_file_list;
-
     //start saving
     QString filename=fname_out+".ano";
-    ofstream anofile(filename.toStdString().c_str(),ios::out | ios::app );
+    ofstream anofile(filename.toStdString().c_str(),ios::out);
     if(!anofile.is_open()){
         v3d_msg("Error opening file to save: "+filename);
         return;
     }
-
 
     if(SWC_list.count()>0)
     {
@@ -174,7 +174,7 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
 
     }
 
-    if(APO_list.count()>0)
+    if(mAPOList_v2.size()>0)
     {
             QString newAPOname = fname_out + ".apo";
             writeAPO_file(newAPOname,mAPOList_v2);
@@ -182,17 +182,27 @@ void generatorAno43Dviewer_timestamp(V3DPluginCallback2 &callback, QWidget *pare
             anofile << "APOFILE=" << tmp.fileName().toStdString().c_str() << endl;
     }
 
-    if(imgname.size()>0){
-        QFileInfo tmp(imgname);
-        anofile << "RAWIMG=" << tmp.fileName().toStdString().c_str() << endl;
-    }
-    if(surfacename.size()>0){
-        QFileInfo tmp(surfacename);
-        anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
-    }
-    if(labelfieldname.size()>0){
-        QFileInfo tmp(labelfieldname);
-        anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
+    if(!b_islocalview){
+        DataLists_in_3dviewer listItem = callback.fetch_3dviewer_datafilelist(fname_win);
+        QString imgname = listItem.imgfile;
+        QString labelfieldname = listItem.labelfield_file;
+        QString surfacename = listItem.surface_file;
+//        QStringList APO_list = listItem.pointcloud_file_list;
+
+        if(imgname.size()>0){
+            QFileInfo tmp(imgname);
+            anofile << "RAWIMG=" << tmp.fileName().toStdString().c_str() << endl;
+        }
+        if(surfacename.size()>0){
+            QFileInfo tmp(surfacename);
+            anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
+        }
+        if(labelfieldname.size()>0){
+            QFileInfo tmp(labelfieldname);
+            anofile << "SURFILE=" << tmp.fileName().toStdString().c_str() << endl;
+        }
+    }else{
+        v3d_msg("Because the corresponding local view is opened, only SWC files were saved in ANO linker file. Suggest to close the Local 3D Viewer, Syncronize the object and then save.");
     }
 
     anofile.close();
