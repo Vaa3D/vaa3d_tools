@@ -45,7 +45,7 @@ typedef SQB::TreeBooster<
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
 
-void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_samples_gt,char *regressor_output_file,char * loss_type,const unsigned int max_boost_iters ,const unsigned int max_depth_wl_tree,const double shrink_factor,unsigned int m_try){
+void trainRegressor(const gFeatArrayType &all_samples_features,const gResponseArrayType &all_samples_gt,char *regressor_output_file,char * loss_type,const unsigned int max_boost_iters ,const unsigned int max_depth_wl_tree,const double shrink_factor,unsigned int m_try){
 
     SQB::TreeBoosterNaiveResampler< TreeBoosterType::ResamplerBaseObjectType::WeightsArrayType,
                                     TreeBoosterType::ResamplerBaseObjectType::LabelsArrayType >  resampler;
@@ -71,7 +71,7 @@ void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_s
 
     //// training
 
-
+//    TB.setRandSeed(std::time(0));
     TB.learn( TreeBoosterType::SampleListType(all_samples_features),
               TreeBoosterType::FeatureListType(all_samples_features),
               TreeBoosterType::FeatureValueObjectType(all_samples_features),
@@ -79,15 +79,6 @@ void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_s
               max_boost_iters );
     TB.printOptionsSummary();
 
-
-
-//    for (unsigned i=0; i < all_samples_features.rows(); i++) {
-//      std::cout << all_samples_features.coeff(i) << std::endl;
-//    }
-
-//    for (unsigned i=0; i < all_samples_gt.rows(); i++) {
-//      std::cout << all_samples_gt.coeff(i) << std::endl;
-//    }
 
     ////save trained regressor
 
@@ -114,11 +105,11 @@ void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_s
 
 }
 
-void predictRegressor(const char * regressor_output_file,gFeatArrayType all_samples_features,TreeBoosterType::ResponseArrayType &newScores){
+void predictRegressor(const char * regressor_output_file,const gFeatArrayType &all_samples_features,TreeBoosterType::ResponseArrayType &newScores){
 
 
     ////apply trained regressor
-   std::cout << "Loading Regressor...";
+   std::cout << "Loading Regressor..." << std::endl;
 
     libconfig::Config cfg;
 
@@ -145,9 +136,9 @@ void predictRegressor(const char * regressor_output_file,gFeatArrayType all_samp
     TB.loadFromLibconfig(regressor);
 
     unsigned maxIters = TB.numWeakLearners();
-    std::cout<< "Done!"<< std::endl; //loaded regressor
+    std::cout << "Loading Regressor...Done." << std::endl;
 
-    std::cout << "Predicting...";
+    std::cout << "Predicting..."<< std::endl;
     //TreeBoosterType::ResponseArrayType newScores;
     newScores = TreeBoosterType::ResponseArrayType::Zero(all_samples_features.rows());
 
@@ -155,10 +146,7 @@ void predictRegressor(const char * regressor_output_file,gFeatArrayType all_samp
                 TreeBoosterType::FeatureValueObjectType(all_samples_features),
                 newScores,
                 maxIters );
-    std::cout<< "Done!"<< std::endl;
-
-
-   // return newScores;
+    std::cout<< "Predicting...Done!"<< std::endl;
 
 }
 
@@ -180,9 +168,6 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
 
    // if(!compute_multiscale_gt){
 
-
-     //   typedef itk::Image<float, 3>  ITKDistImageType;
-
         typename BinaryThresholdImageFilterType::Pointer thresholdFilter
             = BinaryThresholdImageFilterType::New();
           thresholdFilter->SetInput(train_gt_radial_ITK);
@@ -203,7 +188,6 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
 
           dt->Update();
 
-     //     std::cout << "distance transform" << std::endl;
           ITKFloatImageType::Pointer distImg = dt->GetOutput();
 //std::cout << "Done" << std::endl;
 
@@ -227,10 +211,8 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
 //std::cout << "exp distance transform" << std::endl;
     ITKFloatImageType::Pointer distImgExp = transformDistGt<ITKFloatImageType>(distImg,thresh_distance);
 //std::cout << "done" << std::endl;
-    //debug: write exp dist transform
 
     return distImgExp;
-//return distImg;
 
 }
 
@@ -266,13 +248,6 @@ typename DistImageType::Pointer transformDistGt(typename DistImageType::Pointer 
    // typename DistImageType::RegionType region;
     typename DistImageType::RegionType region = dist_gt_image->GetLargestPossibleRegion();
 
-//    typename  DistImageType::IndexType start;
-//     typename DistImageType::SizeType size;
-//    size = dist_gt_image.GetSize();
-//    start.Fill(0);
-//    region.SetSize(size);
-//    region.SetIndex(start);
-
     itk::ImageRegionIterator<DistImageType> imageIterator(transfDistImg,region);
 
     float pixel_value_in;
@@ -295,8 +270,6 @@ typename DistImageType::Pointer transformDistGt(typename DistImageType::Pointer 
 
         imageIterator.Set(pixel_value_out);
 
-      //  std::cout << "pix in: "<<pixel_value_in<< " pix out: "<< imageIterator.Get() << std::endl;
-
         ++imageIterator;
         }
 
@@ -308,5 +281,4 @@ return transfDistImg;
 template ITKFloatImageType::Pointer binaryGt2ExpDistGt<ITKFloatImageType>(ITKFloatImageType::Pointer train_gt_radial_ITK,float thresh_distance);
 template ITK4DDistImageType::Pointer radialGt2ExpDistGt<ITKFloatImageType>(ITKFloatImageType::Pointer train_gt_radial_ITK,float thresh_distance,VectorTypeFloat scales, float scale_toll);
 
-//template bool getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(const MatrixTypeFloat &features_matrix,const VectorTypeFloat &gt_vector,MatrixTypeFloat &sampled_features_matrix, VectorTypeFloat &sampled_gt_vector,unsigned int n_pos_samples,unsigned int n_neg_samples,float pos_thresh);
 

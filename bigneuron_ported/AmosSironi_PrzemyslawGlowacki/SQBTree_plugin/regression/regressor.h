@@ -31,9 +31,9 @@ typedef SQB::TreeBooster<
             MatrixFeatureValueObjectType,
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
-void trainRegressor(gFeatArrayType all_samples_features,gResponseArrayType all_samples_gt,char *regressor_output_file,char * loss_type = "squaredloss",const unsigned int max_boost_iters = 200,const unsigned int max_depth_wl_tree = 0,const double shrink_factor = 0.1,unsigned int m_try =0);
+void trainRegressor(const gFeatArrayType &all_samples_features,const gResponseArrayType &all_samples_gt,char *regressor_output_file,char * loss_type = "squaredloss",const unsigned int max_boost_iters = 200,const unsigned int max_depth_wl_tree = 0,const double shrink_factor = 0.1,unsigned int m_try =0);
 
-void predictRegressor(const char * regressor_output_file, gFeatArrayType all_samples_features, TreeBoosterType::ResponseArrayType &newScores);
+void predictRegressor(const char * regressor_output_file, const gFeatArrayType &all_samples_features, TreeBoosterType::ResponseArrayType &newScores);
 
 template<typename ImageType>
 ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_gt_radial_ITK,float thresh_distance);

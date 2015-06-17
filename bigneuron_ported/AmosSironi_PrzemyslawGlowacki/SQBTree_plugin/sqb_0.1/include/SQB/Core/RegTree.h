@@ -1088,8 +1088,8 @@ namespace SQB
 
                 ///std::cout << "Err: " << "  Thr: " << thr << err << "  y1: " << y1 << "  y2: " << y2 << std::endl;
 
-                //std::cout << "y1: " << y1 << std::endl;
-                //std::cout << "y2: " << y2 << std::endl;
+             //   std::cout << "y1: " << y1 << std::endl;
+            //    std::cout << "y2: " << y2 << std::endl;
 
                 /*cE = checkErr(X,R,W, X(I+1), y1, y2);
 

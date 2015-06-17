@@ -93,7 +93,8 @@ namespace SQB
             else if ( LS->mLossType == SquaredLoss )
             {
 
-                fx = ( LS->mPrevScores + alpha * LS->mNewScores - LS->mY ).square().sum();
+                unsigned int N =LS->mY.size();
+                fx = ( LS->mPrevScores + alpha * LS->mNewScores - LS->mY ).square().sum() /N;
 
                 if (LS->mLossScale == 0.0)  // initialize for the 1st time
                 {
@@ -104,7 +105,7 @@ namespace SQB
                 else
                     fx = fx * LS->mLossScale;
 
-                g[0] = 2 * LS->mLossScale * ( LS->mNewScores * ( alpha * LS->mNewScores + LS->mPrevScores - LS->mY ) ).sum();
+                g[0] = 2 * LS->mLossScale * ( LS->mNewScores * ( alpha * LS->mNewScores + LS->mPrevScores - LS->mY ) ).sum() /N ;
 
             }
             else

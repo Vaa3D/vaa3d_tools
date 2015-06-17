@@ -401,7 +401,7 @@ namespace SQB
                     
                 // re-scale W to avoid numerical problems
                 W /= W.maxCoeff();
-                R /= R.abs().maxCoeff();
+               // R /= R.abs().maxCoeff();
 
                 TreeResponseValueObjectType     treeValueObj(R, W);
 
@@ -468,7 +468,7 @@ namespace SQB
                         curLoss = logLoss( Y, curPred );
                         break;
                     case SquaredLoss:
-                        curLoss = squaredLoss( Y, curPred );
+                        curLoss = squaredLoss( Y, curPred ) / N;
                         break;
                 }
 
@@ -483,7 +483,7 @@ namespace SQB
 
                 if(mVerboseOutput)
                 {
-                    myQDebug("Misclassif. error: %f\n", miscErr);
+                 //   myQDebug("Misclassif. error: %f\n", miscErr);
                     if (TimerRT::implemented())
                         myQDebug("---> Total WL took: %f\n", theTimer.elapsed() );
                 }

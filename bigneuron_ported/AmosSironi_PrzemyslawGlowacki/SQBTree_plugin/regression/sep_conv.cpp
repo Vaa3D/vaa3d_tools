@@ -6,7 +6,13 @@
 #include <string>
 #include "sqb_0.1/include/Eigen/Dense"
 #include "superannotator_sel/Matrix3D.h"
+#include <SQB/Core/RegTree.h>
+#include <SQB/Core/RegTree.h>
+#include <SQB/Core/Utils.h>
 
+#include <SQB/Core/Booster.h>
+
+#include <SQB/Core/LineSearch.h>
 #include "itkImage.h"
 //#include "itkImageFileReader.h"
 //#include "itkImageFileWriter.h"
@@ -27,17 +33,27 @@ typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
 
+typedef SQB::TreeBoosterWeightsType  WeightsType;
+typedef float   FeatsType;
+
+typedef Eigen::Array<FeatsType, Eigen::Dynamic, Eigen::Dynamic>     gFeatArrayType;
+typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gResponseArrayType;
+typedef Eigen::Array<WeightsType, Eigen::Dynamic, 1>                gWeightsArrayType;
+
+typedef SQB::MatrixFeatureIndexList<gFeatArrayType>          MatrixFeatureIndexListType;
+typedef SQB::MatrixSampleIndexList<gFeatArrayType>           MatrixSampleIndexListType;
+typedef SQB::MatrixFeatureValueObject<gFeatArrayType>        MatrixFeatureValueObjectType;
+typedef SQB::MatrixSingleResponseValueObject<gResponseArrayType>   MatrixClassifResponseValueObjectType;
+
+typedef SQB::TreeBooster<
+            MatrixSampleIndexListType,
+            MatrixFeatureIndexListType,
+            MatrixFeatureValueObjectType,
+            MatrixClassifResponseValueObjectType >      TreeBoosterType;
+
+
 ////functions definitions
 ///
-
-template<typename T1,typename T2>
-T2 dumbfun(T1 s)
-{
-    T1 t = s;
-    T2 t2 =1;
-    return t2;
-
-}
 
 template<typename MatrixType>
 void writeMatrix(const char *filename,MatrixType matrix_to_write){
@@ -48,7 +64,7 @@ void writeMatrix(const char *filename,MatrixType matrix_to_write){
       if(fout.is_open())
         {
         //file opened successfully so we are here
-        cout << "File Opened successfully!!!. Writing data from matrix to file" << endl;
+        cout << "File Opened successfully. Writing data from matrix to file" << endl;
 
         //std::ofstream output("Power vector.txt");
         for (unsigned int k=0; k<matrix_to_write.rows(); k++)
@@ -236,8 +252,6 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
         unsigned int i_pixel =0;
           while(!imageIterator.IsAtEnd())
             {
-          //  std::cout << imageIterator.Get() << std::endl;
-
             out_vector(i_pixel) = imageIterator.Get() ;
 
             ++imageIterator;
@@ -253,7 +267,6 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
          unsigned int i_pixel =0;
            while(!imageIterator.IsAtEnd())
              {
-           //  std::cout << imageIterator.Get() << std::endl;
 
              out_vector(i_pixel) = imageIterator.Get() ;
 
@@ -304,9 +317,6 @@ typename ImageType::RegionType region;
     unsigned int i_pixel = 0;
     while(!imageIterator.IsAtEnd())
         {
-        // Get the value of the current pixel
-        //unsigned char val = imageIterator.Get();
-        //std::cout << (int)val << std::endl;
 
         // Set the current pixel to white
         imageIterator.Set(input_vector(i_pixel));
@@ -321,7 +331,7 @@ typename ImageType::RegionType region;
 
 //TODO: VectorType and MatrixType should be compatible !!!
 template<typename ImageType, typename MatrixType, typename VectorType>
-MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix){
+void convolveSepFilterBank(MatrixType &sep_features_all, typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix){
 
 
     const unsigned int n_sep_features = sep_filters_matrix.cols();
@@ -329,30 +339,20 @@ MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const 
     typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
     const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
 
-    MatrixType sep_features_all(n_pixels,n_sep_features);
-
+    sep_features_all = MatrixType::Zero(n_pixels,n_sep_features);
     //#pragma omp parallel for
     for(unsigned int i_filter = 0; i_filter<n_sep_features ;i_filter++)
     {
-        std::cout << "convolving sep filter "<<i_filter << std::endl;
+      //  std::cout << "convolving sep filter "<<i_filter << std::endl;
         const VectorType kernel_eig = sep_filters_matrix.col(i_filter);
 
         Matrix3D<float> out_matrix;
 
         wholeConvolveSepFilterSplitVec<ImageType, VectorType >( input_img, kernel_eig, out_matrix);
 
-        /*
-        char buffer_out_name [500];
-        //char *output_image_file_i_filter;
-        const int temp_int =sprintf(buffer_out_name,"/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/filters/cropped_N2_convolved_%i.nrrd",i_filter);
-
-    //    std::cout << buffer_out_name << std::endl;
-        out_matrix.save(buffer_out_name);
-*/
 
         // store result in coumns of a matrix
         typename ImageType::Pointer convolved_img= out_matrix.asItkImage();
-//        VectorTypeFloat temp_vector = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(convolved_img,n_samples_per_image,n_pixels);
         VectorType temp_vector = itkImage2EigenVector<ImageType,VectorType>(convolved_img,n_pixels,n_pixels);
 
         sep_features_all.col(i_filter) = temp_vector;
@@ -361,26 +361,25 @@ MatrixType convolveSepFilterBank( typename ImageType::Pointer &input_img, const 
 
 
 
-    return sep_features_all;
+ //   return sep_features_all;
 }
 
-//TODO: VectorType and MatrixType should be compatible !!!
+//NB: VectorType and MatrixType should have compatible types !!!
 template<typename ImageType, typename MatrixType, typename VectorType>
-MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor){
+void convolveSepFilterBankComb(MatrixType &nonsep_features_all, typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor){
 
         typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
         const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
         const unsigned int n_nonsep_features = weight_matrix.cols();
 
-
-        MatrixType sep_features_all = convolveSepFilterBank<ImageType,MatrixType,VectorType>(input_img,sep_filters_matrix);
+        MatrixType sep_features_all;
+        convolveSepFilterBank<ImageType,MatrixType,VectorType>(sep_features_all,input_img,sep_filters_matrix);
 
 
 
         //multiply with weight to get original filters convolution
         //const float scale_factor = 1.0; // used for multiscale appraoch if rescale filers to compute features
-        MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
-
+        //MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
 
 
         nonsep_features_all = sep_features_all*weight_matrix;
@@ -388,50 +387,85 @@ MatrixType convolveSepFilterBankComb( typename ImageType::Pointer &input_img, co
 
 
 
-        return nonsep_features_all;
+      //  return nonsep_features_all;
+}
+
+
+
+
+template<typename MatrixType>
+void getContextFeatures(MatrixType &nonsep_features_all,const MatrixType &nonsep_features_all_no_context,const float sigma_pool){
+
+const unsigned int n_pixels = nonsep_features_all_no_context.rows();
+    const unsigned int n_features = nonsep_features_all_no_context.cols();
+    nonsep_features_all   = MatrixType::Zero(n_pixels,n_features);
+
+
 }
 
 //TODO: for now just convolve image, eventually add context features
 template<typename ImageType, typename MatrixType, typename VectorType>
-MatrixType computeFeaturesSepComb( typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor){
+void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor,bool add_context_features ){
 
         typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
         const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
         const unsigned int n_nonsep_features = weight_matrix.cols();
 
-
-        MatrixType sep_features_all = convolveSepFilterBank<ImageType,MatrixType,VectorType>(input_img,sep_filters_matrix);
+        MatrixType sep_features_all;
+        convolveSepFilterBank<ImageType,MatrixType,VectorType>(sep_features_all,input_img,sep_filters_matrix);
 
 
 
         //multiply with weight to get original filters convolution
         //const float scale_factor = 1.0; // used for multiscale appraoch if rescale filers to compute features
-        MatrixTypeFloat nonsep_features_all(n_pixels,n_nonsep_features);
+        //nonsep_features_all(n_pixels,n_nonsep_features);
 
+        if(~add_context_features){
 
- std::cout << "Computing non-sep features...";
-        nonsep_features_all = sep_features_all*weight_matrix;
-        nonsep_features_all = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
- std::cout << "Done!" << std::endl;
+             std::cout << "Computing non-sep features..."<<std::endl;
+                    nonsep_features_all = sep_features_all*weight_matrix;
+                    nonsep_features_all /=(scale_factor*scale_factor*scale_factor);
+                    std::cout << "Computing non-sep features...Done."<<std::endl;
+        }
+         else{//TODO
 
+            MatrixType nonsep_features_all_no_context;
+            std::cout << "Computing non-sep features..." << std::endl;
+            nonsep_features_all_no_context = sep_features_all*weight_matrix;
+            nonsep_features_all_no_context = nonsep_features_all/(scale_factor*scale_factor*scale_factor);
+            std::cout << "Computing non-sep features...Done!" << std::endl;
 
-        return nonsep_features_all;
+            float sigma_pool = 2.0;
+            std::cout << "Getting context features..."<< std::endl;
+            getContextFeatures<MatrixType>(nonsep_features_all,nonsep_features_all_no_context,sigma_pool);
+            std::cout << "Getting context features...Done!" << std::endl;
+
+         }
+
+        //return nonsep_features_all;
 }
 
 
 
-////to instantiate explicitely
-template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
+//// instantiate explicitely
+////template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
+template void convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(MatrixTypeFloat &feats_sep_all,itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
 //template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< unsigned char, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< unsigned char, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
 //template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3> I,MatrixTypeFloat M,VectorTypeFloat V);
 //template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< float, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
-template MatrixTypeFloat computeFeaturesSepComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
+template void computeFeaturesSepComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(MatrixTypeFloat &feats_all, itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor,bool add_context_features );
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeDouble>(const VectorTypeDouble &newScores,const itk::Image< float, 3>::SizeType &size_img);
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeFloat>(const VectorTypeFloat &newScores,const itk::Image< float, 3>::SizeType &size_img);
+template VectorTypeFloat itkImage2EigenVector<itk::Image< float, 3>,VectorTypeFloat>( itk::Image< float, 3>::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+template VectorTypeDouble itkImage2EigenVector<itk::Image< float, 3>,VectorTypeDouble>( itk::Image< float, 3>::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+template TreeBoosterType::ResponseArrayType itkImage2EigenVector<itk::Image< float, 3>,TreeBoosterType::ResponseArrayType>( itk::Image< float, 3>::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
+template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,TreeBoosterType::ResponseArrayType>(const TreeBoosterType::ResponseArrayType &input_vector, const itk::Image< float, 3>::SizeType &size_img);
+
+template void getContextFeatures<MatrixTypeFloat>(MatrixTypeFloat &nonsep_features_all,const MatrixTypeFloat &nonsep_features_all_no_context,const float sigma_pool);
+
 
 template void writeMatrix<MatrixTypeDouble>(const char * filename, MatrixTypeDouble mat);
 template void writeMatrix<MatrixTypeFloat>(const char * filename, MatrixTypeFloat mat);
 
-template int dumbfun<float,int>(float s);
 
 //#endif
