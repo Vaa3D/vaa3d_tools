@@ -28,8 +28,8 @@
 
 //#include <SQB/Matlab/matlab_utils.hxx>
 
-#ifndef __SQB_TREES_H__
-#define __SQB_TREES_H__
+//#ifndef __SQB_TREES_H__
+//#define __SQB_TREES_H__
 
 #define SHOW_TIMINGS 0
 
@@ -37,12 +37,7 @@
     #define SHOW_TIMINGS 0
 #endif
 
-#include <SQB/Core/RegTree.h>
-#include <SQB/Core/Utils.h>
-
-#include <SQB/Core/Booster.h>
-
-#include <SQB/Core/LineSearch.h>
+#include "sqb_trees.h"
 
 typedef SQB::TreeBoosterWeightsType  WeightsType;
 typedef float   FeatsType;
@@ -61,6 +56,68 @@ typedef SQB::TreeBooster<
             MatrixFeatureIndexListType,
             MatrixFeatureValueObjectType,
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
+
+//class SwcFileContent {
+
+//private:
+//  class swcRow {
+//  public:
+//    int ind;
+//    int type;
+//    double x, y, z, r;
+//    int parentInd;
+
+//    swcRow(int ind, int type, double x, double y, double z, double r, int parentInd): ind(ind), type(type), x(x), y(y), z(z), r(r), parentInd(parentInd) {
+
+//    }
+//  };
+
+//public:
+//  std::vector< swcRow > rows;
+
+//  SwcFileContent(std::vector< std::string > swcFilePaths) {
+////    if(swcFilePaths.size() != 1) {
+////      std::cerr << "For now swcFilePaths has to be of size 1! (And here it is of size " << swcFilePaths.size() << ")" << std::endl;
+////    }
+
+//    int globalMaxInd = 0;
+//    for(unsigned int swci = 0; swci < swcFilePaths.size(); swci++) {
+//      std::ifstream swcFile(swcFilePaths[swci].c_str());
+//      std::string line;
+//      int currentMaxInd = globalMaxInd;
+//      if(swcFile.is_open()) {
+//        while( getline (swcFile,line) ) {
+//          size_t firstNonBlankIndex = line.find_first_not_of(" \t\r\n");
+//          if(firstNonBlankIndex != std::string::npos) {
+//            if(line[firstNonBlankIndex] != '#') {
+//              std::cout << "line: " << line << '\n';
+//              std::stringstream lineStream(line);
+//              int ind;
+//              int type;
+//              double x, y, z, r;
+//              int parentInd;
+//              lineStream >> ind >> type >> x >> y >> z >> r >> parentInd;
+//              rows.push_back(swcRow(ind + globalMaxInd, type, x, y, z, r, parentInd + globalMaxInd));
+//              if(ind + globalMaxInd > currentMaxInd) {
+//                currentMaxInd = ind + globalMaxInd ;
+//              }
+//            } else {
+//              std::cout << "comment: " << line << '\n';
+//            }
+//          } else {
+//            std::cout << "blank line: " << line << '\n';
+//          }
+//        }
+//        swcFile.close();
+//        globalMaxInd = currentMaxInd;
+//        std::cout << "globalMaxInd: " << globalMaxInd << std::endl;
+//      }
+
+//      else std::cout << "Unable to open file";
+//    }
+//  }
+
+//};
 
 void mexFunctionTrain(TreeBoosterType &TB/*int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]*/)
 {
@@ -444,22 +501,112 @@ void mexFunctionTest(TreeBoosterType &TB) //int nlhs, mxArray *plhs[], int nrhs,
 //#endif
 }
 
+template<typename ImageType>
+typename ImageType::Pointer swcFile2itkImage(const SwcFileContent swcFileContent, typename ImageType::Pointer &inputImage){
+  // Allocate empty image
+//  itk::Index<3> start; start.Fill(0);
+//  itk::Size<3> size; size.Fill(100);
+//  typename ImageType::RegionType region(inputImage->GetOrigin(), inputImage->GetLargestPossibleRegion().GetSize());
+
+//  std::cout << "HereA!\n" << std::flush;
+
+//  typename ImageType::RegionType region(inputImage->GetLargestPossibleRegion());
+
+  std::cout << "I am HereB!\n" << std::flush;
+
+  typedef itk::ImageDuplicator< ImageType > DuplicatorType;
+  typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+  duplicator->SetInputImage(inputImage);
+  duplicator->Update();
+
+  std::cout << "I am HereC!\n" << std::flush;
+
+  typename ImageType::Pointer groundTruthImage = duplicator->GetOutput();
+
+//  groundTruthImage->SetRegions(region);
+
+//  std::cout << "And I am HereC!\n" << std::flush;
+
+//  groundTruthImage->Allocate();
+
+//  std::cout << "And I am HereD!\n" << std::flush;
+
+//  groundTruthImage->FillBuffer(0);
+
+  std::cout << "I am HereD!\n" << std::flush;
+
+  return groundTruthImage;
+}
+
 //int main(int argc, char *argv[]) {
-int mockTrainAndTest() {
+int mockTrainAndTest(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output) {
   printf("Wooow!\n");
 
-  TreeBoosterType TB;
 
-  mexFunctionTrain(TB);
+// /////////////////////
+//  TreeBoosterType TB;
 
-  TreeBoosterType TB2;
+//  mexFunctionTrain(TB);
 
-  mexFunctionTest(TB2);
+//  TreeBoosterType TB2;
+
+//  mexFunctionTest(TB2);
+// /////////////////////
 
 
+  std::vector< std::string > swcFilePaths;
+  swcFilePaths.push_back(std::string(
+    "/cvlabdata1/home/pglowack/Data/3dtest/carouge_1/inputs/3d/train/manual_tracing/swc/testcarouge2009_train_seq_1_half.swc"));
+  swcFilePaths.push_back(std::string(
+    "/cvlabdata1/home/pglowack/Data/3dtest/carouge_1/inputs/3d/train/manual_tracing/swc/testcarouge2009_train_seq_1_half2.swc"));
+  SwcFileContent swcFileContent(swcFilePaths);
+
+  typedef float ImageScalarType;
+  typedef itk::Image< ImageScalarType, 3 > ITKImageType;
+  typename ITKImageType::Pointer inputImage;
+
+  typedef itk::ImageFileReader< ITKImageType > ReaderType;
+  try {
+    ReaderType::Pointer reader = ReaderType::New();
+    itk::TIFFImageIOFactory::RegisterOneFactory();
+//    reader->SetFileName("/cvlabdata1/home/pglowack/Data/3dtest/carouge_1/inputs/3d/train/images_respaced/saved-original/carouge2009_train_seq_1_half.tif");
+    reader->SetFileName("/cvlabdata1/home/pglowack/Data/3dtest/carouge_1/inputs/3d/train/images_respaced/images_respaced-png/carouge2009_train_seq_1_half.png");
+    reader->Update();
+    inputImage = reader->GetOutput();
+  } catch(itk::ExceptionObject &ex) {
+    std::cout << ex.what() << std::flush;
+  }
+  //viewer.AddImage<ImageType>(reader->GetOutput());
+
+  std::cout << "Read the image!\n" << std::flush;
+
+  typename ITKImageType::Pointer groundTruthImage = swcFile2itkImage< ITKImageType >(swcFileContent, inputImage);
+
+  // // // // // // // // // // // // // // // // // // // // // // // // //
+  // Save the ground truth image
+
+  typedef  itk::ImageFileWriter< ITKImageType  > WriterType;
+  WriterType::Pointer writer = WriterType::New();
+//  writer->SetFileName("/cvlabdata1/home/pglowack/Data/3dtest/carouge_1/inputs/3d/train/manual_tracing/swc/experimental-ground_truth_images/carouge2009_train_seq_1_half-ground_truth.tif");
+  writer->SetFileName("test.tif");
+//  writer->SetInput(groundTruthImage);
+  writer->SetInput(inputImage);
 
 
+  std::cout << "I am HereE!\n" << std::flush;
+  try {
+      writer->Update();
+  } catch(itk::ExceptionObject &ex) {
+      std::cout << ex.what() << std::flush;
+  }
 
+  std::cout << "I am HereF!\n" << std::flush;
+
+
+  // // // // // // // // // // // // // // // // // // // // // // // // //
+
+
+//  swcFile2itkImage< ITKImageType >(swcFileContent, inputImage);
 
 //  MEX_PATH = '../build';
 
@@ -499,4 +646,4 @@ int mockTrainAndTest() {
   return 0;
 }
 
-#endif
+//#endif

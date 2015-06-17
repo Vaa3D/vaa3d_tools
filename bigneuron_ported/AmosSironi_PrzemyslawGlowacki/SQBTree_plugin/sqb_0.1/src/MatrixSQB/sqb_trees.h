@@ -9,9 +9,23 @@
 
 #include <SQB/Core/LineSearch.h>
 
+#include <fstream>
 
+#include <v3d_interface.h>
 
-void mockTrainAndTest();
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkImageDuplicator.h"
+#include "itkTIFFImageIOFactory.h"
+#include "itkPNGImageIOFactory.h"
+
+#include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+
+#include "regression/sep_conv.h"
+#include "regression/util.h"
+
+int mockTrainAndTest(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 #endif
 

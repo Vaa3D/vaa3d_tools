@@ -7,6 +7,69 @@
 #include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
 #include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
 
+class SwcFileContent {
+
+private:
+  class SwcRow {
+  public:
+    int ind;
+    int type;
+    double x, y, z, r;
+    int parentInd;
+
+    SwcRow(int ind, int type, double x, double y, double z, double r, int parentInd): ind(ind), type(type), x(x), y(y), z(z), r(r), parentInd(parentInd) {
+
+    }
+  };
+
+public:
+  std::vector< SwcRow > rows;
+
+  SwcFileContent(std::vector< std::string > swcFilePaths) {
+//    if(swcFilePaths.size() != 1) {
+//      std::cerr << "For now swcFilePaths has to be of size 1! (And here it is of size " << swcFilePaths.size() << ")" << std::endl;
+//    }
+
+    int globalMaxInd = 0;
+    for(unsigned int swci = 0; swci < swcFilePaths.size(); swci++) {
+      std::ifstream swcFile(swcFilePaths[swci].c_str());
+      std::string line;
+      int currentMaxInd = globalMaxInd;
+      if(swcFile.is_open()) {
+        while( getline (swcFile,line) ) {
+          size_t firstNonBlankIndex = line.find_first_not_of(" \t\r\n");
+          if(firstNonBlankIndex != std::string::npos) {
+            if(line[firstNonBlankIndex] != '#') {
+              std::cout << "line: " << line << '\n';
+              std::stringstream lineStream(line);
+              int ind;
+              int type;
+              double x, y, z, r;
+              int parentInd;
+              lineStream >> ind >> type >> x >> y >> z >> r >> parentInd;
+              rows.push_back(SwcRow(ind + globalMaxInd, type, x, y, z, r, parentInd + globalMaxInd));
+              if(ind + globalMaxInd > currentMaxInd) {
+                currentMaxInd = ind + globalMaxInd ;
+              }
+            } else {
+              std::cout << "comment: " << line << '\n';
+            }
+          } else {
+            std::cout << "blank line: " << line << '\n';
+          }
+        }
+        swcFile.close();
+        globalMaxInd = currentMaxInd;
+        std::cout << "globalMaxInd: " << globalMaxInd << std::endl;
+      }
+
+      else std::cout << "Unable to open file";
+    }
+  }
+
+};
+
+
 
 template<typename ITKImageType,typename ImageScalarType>
 typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int *in_sz, unsigned int c=1);
@@ -26,8 +89,47 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
 template<typename ITKImageType,typename ImageScalarType>
 typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz){
 
-    typename ITKImageType::Pointer I  =  ITKImageType::New();
-    return I;
+  std::vector< std::string > swcFilePathsVector;
+  swcFilePathsVector.push_back(std::string(swc_file));
+  SwcFileContent swcFileContent(swcFilePathsVector);
+
+  itk::Index<3> start; start.Fill(0);
+  itk::Size<3> size;
+  size[0] = in_sz[0]; size[1] = in_sz[1]; size[2] = in_sz[2];
+  typename ITKImageType::RegionType region(start, size);
+
+  typename ITKImageType::Pointer I  =  ITKImageType::New();
+  I->SetRegions(region);
+  I->Allocate();
+  I->FillBuffer(0);
+
+  std::cout << "Managed to create an empty image!\n" << std::flush;
+
+////  for(unsigned int swci = 0; swci < swcFileContent.rows.size(); swci++) {
+//  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
+//    typename ITKImageType::IndexType pixelIndex;
+//    pixelIndex[round(rowi->x)];
+//    pixelIndex[round(rowi->y)];
+//    pixelIndex[round(rowi->z)];
+//    I->SetPixel(pixelIndex, rowi->r);
+//  }
+
+
+//  // Make a white square
+//  for(unsigned int r = 40; r < 60; r++)
+//    {
+//    for(unsigned int c = 40; c < 60; c++)
+//      {
+//      typename ITKImageType::IndexType pixelIndex;
+//      pixelIndex[0] = r;
+//      pixelIndex[1] = c;
+//      pixelIndex[2] = 1;
+//      I->SetPixel(pixelIndex, 255);
+//      }
+//    }
+
+
+  return I;
 
 }
 

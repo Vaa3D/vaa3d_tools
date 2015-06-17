@@ -1,3 +1,5 @@
+// Unnecessary file. Should probably be deleted.
+
 #ifndef __VAA3D_LINK_SQB_H__
 #define __VAA3D_LINK_SQB_H__
 
