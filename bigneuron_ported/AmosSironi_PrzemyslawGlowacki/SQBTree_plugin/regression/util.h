@@ -65,7 +65,7 @@ public:
         std::cout << "globalMaxInd: " << globalMaxInd << std::endl;
       }
 
-      else std::cout << "Unable to open file";
+      else std::cout << "Unable to open file" << std::endl;
     }
   }
 
@@ -76,91 +76,17 @@ public:
 template<typename ITKImageType,typename ImageScalarType>
 typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int *in_sz, unsigned int c=1);
 
-
 template<typename ImageType>
 Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image);
 
 template<typename ImageType,typename T>
 typename ImageType::Pointer rawData2ItkImage(T *data1d,const long int *in_sz);
 
-
-////TODO !
 template<typename ITKImageType,typename ImageScalarType>
 typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz);
-////TODO !
-template<typename ITKImageType,typename ImageScalarType>
-typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz){
 
-  std::vector< std::string > swcFilePathsVector;
-  swcFilePathsVector.push_back(std::string(swc_file));
-  SwcFileContent swcFileContent(swcFilePathsVector);
-
-  itk::Index<3> start; start.Fill(0);
-  itk::Size<3> size;
-  size[0] = in_sz[0]; size[1] = in_sz[1]; size[2] = in_sz[2];
-  typename ITKImageType::RegionType region(start, size);
-
-  typename ITKImageType::Pointer I  =  ITKImageType::New();
-  I->SetRegions(region);
-  I->Allocate();
-  I->FillBuffer(0);
-  I->Update();
-
-  typename ITKImageType::IndexType pixelIndex;
-
-  std::cout << "Managed to create an empty image!\n" << std::flush;
-
-  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
-    typename ITKImageType::IndexType pixelIndex;
-
-    if(rowi->parentInd != -1) {
-      std::vector< SwcFileContent::SwcRow >::iterator parentRowi = swcFileContent.rows.begin() + swcFileContent.swcInd2VectorIndMap[rowi->parentInd];
-      double vecX = (parentRowi->x - rowi->x);
-      double vecY = (parentRowi->y - rowi->y);
-      double vecZ = (parentRowi->z - rowi->z);
-
-      double segmentLength = sqrt(
-                (rowi->x - parentRowi->x) * (rowi->x - parentRowi->x)
-              + (rowi->y - parentRowi->y) * (rowi->y - parentRowi->y)
-              + (rowi->z - parentRowi->z) * (rowi->z - parentRowi->z)
-            );
-      for(double i = 0.0; i < 1.0; i += 1.0 / segmentLength) {
-        pixelIndex[0] = round(rowi->x + vecX * i);
-        pixelIndex[1] = round(rowi->y + vecX * i);
-        pixelIndex[2] = round(rowi->z + vecX * i);
-        I->SetPixel(pixelIndex, (1.0 - i) * rowi->r + i * parentRowi->r);
-      }
-
-      pixelIndex[0] = round(parentRowi->x);
-      pixelIndex[1] = round(parentRowi->y);
-      pixelIndex[2] = round(parentRowi->z);
-      I->SetPixel(pixelIndex, parentRowi->r);
-    }
-
-    pixelIndex[0] = round(rowi->x);
-    pixelIndex[1] = round(rowi->y);
-    pixelIndex[2] = round(rowi->z);
-    I->SetPixel(pixelIndex, rowi->r);
-  }
-
-
-//  // Make a white square
-//  for(unsigned int r = 40; r < 60; r++)
-//    {
-//    for(unsigned int c = 40; c < 60; c++)
-//      {
-//      typename ITKImageType::IndexType pixelIndex;
-//      pixelIndex[0] = r;
-//      pixelIndex[1] = c;
-//      pixelIndex[2] = 1;
-//      I->SetPixel(pixelIndex, 255);
-//      }
-//    }
-
-
-  return I;
-
-}
+template<typename ITKImageType>
+bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageType::SizeType size);
 
 template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,const long int * out_sz);
@@ -199,7 +125,7 @@ typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int 
 template<typename ImageType>
 Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 
-  std::cout << "Attempting to convert to V3D! Hereeeee----11!" << std::endl << std::flush;
+//  std::cout << "Attempting to convert to V3D! Hereeeee----11!" << std::endl << std::flush;
 
 
         //typename ImageType::RegionType region;
@@ -211,7 +137,7 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 //        region.SetSize(size);
 //        region.SetIndex(start);
 
-  std::cout << "Attempting to convert to V3D! Hereeeee00!" << std::endl << std::flush;
+ // std::cout << "Attempting to convert to V3D! Hereeeee00!" << std::endl << std::flush;
 
 
         itk::ImageRegionIterator<ImageType> imageIterator(itk_image,region);
@@ -227,7 +153,7 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
         in_sz[1] = size[1];
         in_sz[2] = size[2];
 
-        std::cout << "Attempting to convert to V3D! Hereeeee11!" << std::endl << std::flush;
+   //     std::cout << "Attempting to convert to V3D! Hereeeee11!" << std::endl << std::flush;
 
         const long int n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
 
@@ -246,11 +172,11 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
             ++i_pix;
             }
 
+//
+    //          std::cout << " elem 1,2,3" <<out_data_copy[0] << "," << out_data_copy[1] << ","<<out_data_copy[2]<<std::endl;
 
-              std::cout << " elem 1,2,3" <<out_data_copy[0] << "," << out_data_copy[1] << ","<<out_data_copy[2]<<std::endl;
 
-
-        std::cout << "Attempting to convert to V3D! Hereeeee22!" << std::endl << std::flush;
+  //      std::cout << "Attempting to convert to V3D! Hereeeee22!" << std::endl << std::flush;
 
 
         outimg_v3d.setData((unsigned char *)(out_data_copy), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
@@ -369,6 +295,116 @@ typename ImageType::Pointer rawData2ItkImage(T *data1d,const long int *in_sz){
   return I;
 
 }
+
+
+
+
+template<typename ITKImageType,typename ImageScalarType>
+typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz){
+
+  std::vector< std::string > swcFilePathsVector;
+  swcFilePathsVector.push_back(std::string(swc_file));
+  SwcFileContent swcFileContent(swcFilePathsVector);
+
+  itk::Index<3> start; start.Fill(0);
+  itk::Size<3> size;
+  size[0] = in_sz[0]; size[1] = in_sz[1]; size[2] = in_sz[2];
+  typename ITKImageType::RegionType region(start, size);
+
+  typename ITKImageType::Pointer I  =  ITKImageType::New();
+  I->SetRegions(region);
+  I->Allocate();
+  I->FillBuffer(0);
+  //I->Update();
+
+  typename ITKImageType::IndexType pixelIndex;
+
+  std::cout << "Managed to create an empty image!\n" << std::flush;
+
+  for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
+    typename ITKImageType::IndexType pixelIndex;
+
+    if(rowi->parentInd != -1) {
+      std::vector< SwcFileContent::SwcRow >::iterator parentRowi = swcFileContent.rows.begin() + swcFileContent.swcInd2VectorIndMap[rowi->parentInd];
+      double vecX = (parentRowi->x - rowi->x);
+      double vecY = (parentRowi->y - rowi->y);
+      double vecZ = (parentRowi->z - rowi->z);
+
+      double segmentLength = sqrt(
+                (rowi->x - parentRowi->x) * (rowi->x - parentRowi->x)
+              + (rowi->y - parentRowi->y) * (rowi->y - parentRowi->y)
+              + (rowi->z - parentRowi->z) * (rowi->z - parentRowi->z)
+            );
+      for(double i = 0.0; i < 1.0; i += 1.0 / segmentLength) {
+        pixelIndex[0] = round(rowi->x + vecX * i);
+        pixelIndex[1] = in_sz[1] -1 -round(rowi->y + vecY * i);//v3d transpose y axis
+        pixelIndex[2] = round(rowi->z + vecZ * i);
+
+        if(!check_range<ITKImageType>(pixelIndex,size)){
+            std::cout << "pixel out of range (Interp). Index: " << pixelIndex << "Size: " <<  size <<std::endl << std::flush;
+        }
+
+        I->SetPixel(pixelIndex, (1.0 - i) * rowi->r + i * parentRowi->r);
+      }
+
+      pixelIndex[0] = round(parentRowi->x);
+      pixelIndex[1] = in_sz[1] -1 -round(parentRowi->y);
+      pixelIndex[2] = round(parentRowi->z);
+
+      if(!check_range<ITKImageType>(pixelIndex,size)){
+          std::cout << "pixel out of range (End). Index: " << pixelIndex << "Size: " << size<< std::endl << std::flush;
+      }
+      I->SetPixel(pixelIndex, parentRowi->r);
+    }else{
+        std::cout << "PARENT FOund" << std::endl<<std::flush;
+    }
+
+
+    pixelIndex[0] = round(rowi->x);
+    pixelIndex[1] = in_sz[1] -1 -round(rowi->y);
+    pixelIndex[2] = round(rowi->z);
+
+    if(!check_range<ITKImageType>(pixelIndex,size)){
+        std::cout << "pixel out of range (Root). Index: " << pixelIndex << "Size: " << size<< std::endl << std::flush;
+    }
+    I->SetPixel(pixelIndex, rowi->r);
+  }
+
+
+//  // Make a white square
+//  for(unsigned int r = 40; r < 60; r++)
+//    {
+//    for(unsigned int c = 40; c < 60; c++)
+//      {
+//      typename ITKImageType::IndexType pixelIndex;
+//      pixelIndex[0] = r;
+//      pixelIndex[1] = c;
+//      pixelIndex[2] = 1;
+//      I->SetPixel(pixelIndex, 255);
+//      }
+//    }
+
+
+  return I;
+
+}
+
+
+
+template<typename ITKImageType>
+bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageType::SizeType size){
+
+    if(pixelIndex[0]>=size[0] || pixelIndex[1]>=size[1] || pixelIndex[2]>=size[2] || pixelIndex[0]<0 || pixelIndex[1]<0 || pixelIndex[2]<0){
+        std::cout << "AAA pixel out of range (Root). Index: " << pixelIndex << "Size: " << size<< std::endl << std::flush;
+        return false;
+    }else{
+        return true;
+    }
+
+}
+
+
+
 
 template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,const long int * out_sz){

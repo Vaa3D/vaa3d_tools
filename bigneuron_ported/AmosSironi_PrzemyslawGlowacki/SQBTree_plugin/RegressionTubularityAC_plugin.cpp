@@ -321,20 +321,21 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
             Image4DSimple IinV3dFormat = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
             std::cout << "Attempting to save to file!\n" << std::flush;
-            callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
+          //  callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
+          char *  name_out_swc_to_radial = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_to_itk.v3draw";
+            callback.saveImage(&IinV3dFormat, name_out_swc_to_radial);
 
 
+//save also radial gt and image to check size and  axis
+//            //radial gt
+//            Image4DSimple *train_radial_gt = callback.loadImage("/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
+//            callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_gt_debug.v3draw");
+
+//            Image4DSimple input_debug_image = itk2v3dImage<ITKImageType>(train_img_ITK);
+//            callback.saveImage(&input_debug_image, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_image_debug.v3draw");
 
 
-
-
-
-
-
-
-
-
-
+   //     return false;
 
 //            //copy data to save with v3d format
 
@@ -362,24 +363,18 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
 
 
-
-
-
-
-
-
             // // // // // // // // // // // // // // // //
 
 
     //// //for now load radial gt and compute exp dist gt
-             cout<<"gt file "<< swc_gt_file << endl;
-             Image4DSimple *train_radial_gt = callback.loadImage(swc_gt_file);
-             if (!train_radial_gt || !train_radial_gt->valid())
-             {
-               v3d_msg("Fail to open the radial gt image file.", 0);
-               return false;
-             }
-              train_gt_radial_ITK = v3d2ItkImage<ITKImageType,ImageScalarTypeUint8>(train_radial_gt,train_img_size,channel);
+//             cout<<"gt file "<< swc_gt_file << endl;
+//             Image4DSimple *train_radial_gt = callback.loadImage(swc_gt_file);
+//             if (!train_radial_gt || !train_radial_gt->valid())
+//             {
+//               v3d_msg("Fail to open the radial gt image file.", 0);
+//               return false;
+//             }
+//              train_gt_radial_ITK = v3d2ItkImage<ITKImageType,ImageScalarTypeUint8>(train_radial_gt,train_img_size,channel);
 
               cout << "Computing distance gt...  "<< endl;
             // train_gt_ITK = radialGt2ExpDistGt<ITKImageType>(train_gt_radial_ITK,thresh_distance,scales,scale_toll);
