@@ -313,17 +313,17 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
             ITKImageType::Pointer train_gt_radial_ITK  =  ITKImageType::New();
             train_gt_radial_ITK =swc2ItkImage<ITKImageType,ImageScalarTypeFloat>(swc_gt_file,train_img_size);//for now return null pointer !
 
-            // Test! To be deleted!!!  // // // // // // //
-            std::cout << "Attempting to convert to V3D! size: " << train_gt_radial_ITK->GetLargestPossibleRegion().GetSize() << std::endl << std::flush;
+//            // Test! To be deleted!!!  // // // // // // //
+//            std::cout << "Attempting to convert to V3D! size: " << train_gt_radial_ITK->GetLargestPossibleRegion().GetSize() << std::endl << std::flush;
 
-            typename ITKImageType::IndexType pixelIndex; pixelIndex[0] = pixelIndex[1] = pixelIndex[2] = 0;
-            std::cout << "First pixel: " << train_gt_radial_ITK->GetPixel(pixelIndex) << std::endl << std::flush;
+//            typename ITKImageType::IndexType pixelIndex; pixelIndex[0] = pixelIndex[1] = pixelIndex[2] = 0;
+//            std::cout << "First pixel: " << train_gt_radial_ITK->GetPixel(pixelIndex) << std::endl << std::flush;
 
-            Image4DSimple IinV3dFormat = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
-            std::cout << "Attempting to save to file!\n" << std::flush;
-          //  callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
-          char *  name_out_swc_to_radial = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_to_itk.v3draw";
-            callback.saveImage(&IinV3dFormat, name_out_swc_to_radial);
+//            Image4DSimple IinV3dFormat = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
+//            std::cout << "Attempting to save to file!\n" << std::flush;
+//          //  callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
+//          char *  name_out_swc_to_radial = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_to_itk.v3draw";
+//            callback.saveImage(&IinV3dFormat, name_out_swc_to_radial);
 
 
 //save also radial gt and image to check size and  axis
@@ -366,7 +366,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
             // // // // // // // // // // // // // // // //
 
 
-    //// //for now load radial gt and compute exp dist gt
+    //// (old)  load radial gt and compute exp dist gt
 //             cout<<"gt file "<< swc_gt_file << endl;
 //             Image4DSimple *train_radial_gt = callback.loadImage(swc_gt_file);
 //             if (!train_radial_gt || !train_radial_gt->valid())
