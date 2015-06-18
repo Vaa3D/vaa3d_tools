@@ -14,6 +14,7 @@ QStringList SWCRadiusPlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("neuron_radius")
+        <<tr("neuron_radius_current_window")
 		<<tr("about");
 }
 
@@ -94,6 +95,79 @@ void SWCRadiusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 		for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 		if(inimg1d){delete [] inimg1d; inimg1d = 0;}
 	}
+    if (menu_name == tr("neuron_radius_current_window"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        QDialog * dialog = new QDialog();
+        QLineEdit * inswc_box = new QLineEdit("");
+        QLineEdit * outswc_box = new QLineEdit("(optional)");
+        QLineEdit * thresh_box = new QLineEdit("40");
+        QCheckBox * is2d_checker = new QCheckBox("Is 2D radius");
+        is2d_checker->setChecked(true);
+        {
+            QGridLayout * layout = new QGridLayout;
+            layout->addWidget(new QLabel("In swc path"), 0, 0, 1, 1);
+            layout->addWidget(inswc_box, 0, 1, 1, 5);
+            layout->addWidget(new QLabel("Threshold"), 1, 0, 1, 1);
+            layout->addWidget(thresh_box, 1, 1, 1, 5);
+            layout->addWidget(new QLabel("Out swc path"), 2, 0, 1, 1);
+            layout->addWidget(outswc_box, 2, 1, 1, 5);
+            layout->addWidget(is2d_checker, 3, 0, 1, 6);
+            QPushButton * ok = new QPushButton("Ok");
+            QPushButton * cancel = new QPushButton("Cancel");
+            ok->setDefault(true);
+            layout->addWidget(ok, 5, 0, 1, 3);
+            layout->addWidget(cancel, 5, 3, 1, 3);
+            dialog->setLayout(layout);
+            connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+        }
+        if(dialog->exec() != QDialog::Accepted) return;
+
+        string inswc_file = inswc_box->text().toStdString();
+        string outswc_file =outswc_box->text().toStdString();
+        if(outswc_file == "" || outswc_file == "(optional)") outswc_file = inswc_file + ".out.swc";
+        bool is_2d = is2d_checker->isChecked();
+
+        double bkg_thresh = atof(thresh_box->text().toStdString().c_str());
+
+        V3DLONG  in_sz[4];
+        unsigned char* inimg1d = p4DImage->getRawData();
+
+        in_sz[0] = p4DImage->getXDim();
+        in_sz[1] = p4DImage->getYDim();
+        in_sz[2] = p4DImage->getZDim();
+        in_sz[3] = p4DImage->getCDim();
+
+
+        vector<MyMarker*> inswc = readSWC_file(inswc_file);
+        if(inswc.empty()) return;
+        for(int i = 0; i < inswc.size(); i++)
+        {
+            MyMarker * marker = inswc[i];
+            if(is_2d)
+                marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh);
+            else
+                marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh);
+        }
+        saveSWC_file(outswc_file, inswc);
+        QMessageBox::information(0,"", string("neuron radius is calculated successfully. \n\nThe output swc is saved to " +outswc_file).c_str());
+        for(int i = 0; i < inswc.size(); i++) delete inswc[i];
+    }
 	else
 	{
 		v3d_msg(tr("Re-estimate the radius of a swc. "
