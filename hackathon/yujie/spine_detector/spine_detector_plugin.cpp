@@ -16,7 +16,7 @@ QString versionStr = "v2.620";
 QStringList spine_detector::menulist() const
 {
 	return QStringList() 
-//        <<tr("spine_detector")
+        <<tr("spine_detector_1")
 //        <<tr("skeleton analysis")
         <<tr("spine_detector_1.0")
         <<tr("about");

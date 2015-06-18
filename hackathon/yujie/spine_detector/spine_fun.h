@@ -61,17 +61,18 @@ public:
     spine_fun(V3DPluginCallback * cb, parameters set_para, int channel);
     int loadData(); //read images and swc files
     bool init(); //init the voxels of interest (within distance and intesnity is above threshold)
-    bool init_old(); //init the voxels of interest (within distance and intesnity is above threshold)
-    bool run_dstGroup();
     bool run_intensityGroup();
     void saveResult();
-    bool run_dstGroup_individual();
     void dst_group_check();
     bool reverse_dst_grow();
-    //LandmarkList construct_group_profile();
     void group_check();
     void conn_comp_nb6();
+    vector<GOV> conn_comp_nb6_imp(vector<GOV> old_groups);
     void closing(GOV seeds, int id, GOV &new_seeds);
+
+    //not used
+    bool init_old(); //init the voxels of interest (within distance and intesnity is above threshold)
+    bool run_dstGroup();
 
     inline vector<GOV> get_group_label() {return final_groups;}
     float check_spongeness(GOV group);
@@ -108,7 +109,7 @@ private:
 public:
     bool pushImageData(unsigned char * data1Dc_in, V3DLONG new_sz_img[4])
     {
-        qDebug()<<"in push imageData";
+        //qDebug()<<"in push imageData";
         if(ppp_img3D!=0){
             delete [] ppp_img3D; ppp_img3D=0;
         }

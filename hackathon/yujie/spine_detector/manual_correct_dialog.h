@@ -29,7 +29,6 @@ public:
     void write_spine_profile(QString filename);
 
 public slots:
-    void dialoguefinish(int);
     bool loadImage();
     bool load_swc();
     bool csv_out();
@@ -62,7 +61,7 @@ private:
     QSpinBox *spin_max_pixel, *spin_min_pixel,*spin_max_dis,*spin_bg_thr,
              *spin_width_thr;
     QPushButton *btn_load,*btn_swc,*btn_csv;
-
+    QCheckBox* small_remover;
     V3DLONG sz_img[4],sz[4];
     unsigned char *image1Dc_in,*image_trun, *image1Dc_spine;
     int intype;

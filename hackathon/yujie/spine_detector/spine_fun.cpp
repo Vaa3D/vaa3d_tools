@@ -16,15 +16,15 @@ spine_fun::spine_fun(const char * inname_img, const char* inname_skel, const cha
     ppp_img3D = 0;
 
     //init parameters
-//    param.bgthr = 90;//used
-//    param.intensity_step = 10; //used
-//    param.width_thr = 35;//used
-//    param.layer_thr = 5;
-//    param.max_dis = 40;//used
-//    param.min_pixel=30;//used
-//    param.max_pixel = 3000;//used
-//    param.spongeness = 11;
-//    param.aspect_thr = 0.1;
+    param.bgthr = 90;//used
+    param.intensity_step = 10; //used
+    param.width_thr = 35;//used
+    param.layer_thr = 5;
+    param.max_dis = 40;//used
+    param.min_pixel=30;//used
+    param.dst_max_pixel = 2000;//used
+    param.spongeness = 11;
+    param.aspect_thr = 0.1;
 }
 
 spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=1)
@@ -127,13 +127,22 @@ bool spine_fun::init()
             }
         }
     }
-
+    sz_img[3]=1;
     qDebug()<<"~~~~~Spine Dectector: distance transform";
     dt3d(dst, label, sz_img);
+    if (label!=0) {delete[] label; label=0;}
+
+//    for(V3DLONG i=0; i<sz_page; i++){
+//        dst[i]=sqrt(dst[i]);
+//    }
+
+//    QString fn="dst.v3draw";
+//    simple_saveimage_wrapper(*callback,fn.toStdString().c_str(),(unsigned char *)dst,
+//                             sz_img,V3D_FLOAT32);
 
     qDebug()<<"~~~~~Spine Dectector: init voxels";
     for(V3DLONG i=0; i<sz_page; i++){
-        if(dst[i]>param.max_dis){ //too far away
+        if(dst[i]>param.max_dis*param.max_dis){ //too far away
             continue;
         }
         if(p_img1D[i]<param.bgthr){ //too dark
@@ -146,13 +155,16 @@ bool spine_fun::init()
         ind2sub(x,y,z,i);
         VOI * tmp_voxel = new VOI(i,x,y,z);
         tmp_voxel->intensity=p_img1D[i];
-        tmp_voxel->dst=(int)dst[i];
+        tmp_voxel->dst=(int)sqrt(dst[i]);
         tmp_voxel->skel_idx=0;
         tmp_voxel->dst_label=tmp_voxel->dst_layer=-1;
         tmp_voxel->intensity_label=tmp_voxel->intensity_layer=-1;
         voxels_map[i]=tmp_voxel;
     }
 
+    delete [] dst;
+    dst=0;
+    qDebug()<<"voxels map size:"<<voxels_map.size();
     qDebug()<<"~~~~~Spine Dectector: init neighbors";
     for(map<V3DLONG, VOI *>::iterator iter_map=voxels_map.begin(); iter_map!=voxels_map.end(); iter_map++){
         if(iter_map->second->dst>=0) //only consider selected skel points
@@ -564,7 +576,7 @@ bool spine_fun::reverse_dst_grow()
         //qDebug()<<"seeds next size:"<<seeds_next.size();
         seeds_next.clear();
     }
-    qDebug()<<"~~~~~dst grow complete, check connected component";
+    //qDebug()<<"~~~~~dst grow complete, check connected component";
     //find connected components among points whose dst_label!=0
     //1)get rid of groups that are too small
     //2)get ready for intesity grow
@@ -1139,8 +1151,8 @@ int spine_fun::construct_layer_info(GOV tmp_group, group_profile *cur_group_info
 
 bool spine_fun::run_intensityGroup()
 {
-    qDebug()<<"~~~~~Spine Detector: intensity sorting done, start to grow regions based on intensity";
-    qDebug()<<"dst group size:"<<dst_groups.size();
+    qDebug()<<"~~~~~start to grow regions based on intensity"<<"dst group size:"<<dst_groups.size();
+
     intensity_groups.clear();
     for (int gid=0;gid<dst_groups.size();gid++)
     {
@@ -1334,108 +1346,74 @@ bool sortfunc_dst(VOI * a, VOI * b){ return (a->dst > b->dst); }
 bool sortfunc_intensity(VOI * a, VOI * b){ return (a->intensity > b->intensity); }
 
 
-
-bool spine_fun::run_dstGroup_individual()
-{
-//    sort(voxels.begin(), voxels.end(), sortfunc_dst); //descending sort by dst
-//    dst_groups.clear();
-//    vector<VOI*> temp_i,temp_j,tmp_curr_layer,cluster;
-
-//    int dst_floor=-10;
-//    int sid=0;
-//    int tmp_floor;
-//    bool first_time_flag=true;
-//    bool over_max_pixel=false;
-
-//    while(sid<voxels.size()&&voxels[sid]->dst>0)
-//    {
-//        //need to check if this seed is used
-//        if (voxels[sid]->dst_label>=0) {sid++; continue;}
-
-//        tmp_curr_layer.clear();
-//        temp_i.push_back(voxels[sid]);
-//        tmp_floor=voxels[sid]->dst;
-
-//        while (temp_i.size()>0)
-//        {
-//            temp_j.clear();
-//            for (V3DLONG i=0;i<temp_i.size();i++)
-//            {
-//                VOI * tmp_voxel = temp_i[i];
-//                for(int neid=0; neid<tmp_voxel->neighbors_26.size(); neid++)
-//                {
-//                    if(tmp_voxel->neighbors_26[neid]->dst_label<0 &&
-//                            tmp_voxel->neighbors_26[neid]->dst>=dst_floor &&
-//                            tmp_voxel->neighbors_6.size()>=2)
-//                    {
-//                        VOI * tmp_seed = tmp_voxel->neighbors_26[neid];
-//                        tmp_seed->dst_layer=tmp_voxel->dst_layer;
-//                        tmp_seed->dst_label=tmp_voxel->dst_label;
-//                        //dst_groups[tmp_seed->dst_label].push_back(tmp_seed);
-//                        temp_j.push_back(tmp_seed);
-//                        if (first_time_flag && tmp_seed->dst<tmp_floor)
-//                        {
-//                            temp_floor=bound_box[pos1];
-//                        }
-//                    }
-//                }
-//            }
-//            if (first_time_flag)
-//            {
-//                floor=temp_floor;
-//                first_time_flag=false;
-//                //floor_array.push_back(floor);
-//            }
-//            for (int k=0;k<temp_j.size();k++)
-//            {
-//                tmp_curr_layer.push_back(temp_j[k]);
-//            }
-//            if (tmp_curr_layer.size()>param.max_pixel)
-//            {
-//                over_max_pixel=true;
-//                qDebug()<<"over_max_pixel break:"<<tmp_curr_layer.size()<<":"<<max_pixel;
-//                //floor_array.pop_back();
-//                break;
-//            }
-//            temp_i.clear();
-//            temp_i=temp_j;
-//        }
-//        if (tmp_curr_layer.size()<=0)
-//        {
-//            qDebug()<<"seeds run out";
-//            break;
-//        }
-//        if (over_max_pixel) {break;}
-//        //current layer analysis: spread width
-//        spread_width=calc_spread_width(tmp_curr_layer);
-//        if (spread_width>max_spine_width)
-//        {
-//            qDebug()<<"width breakout_spine_grow"<<spread_width;
-//            floor_array.pop_back();
-//            break;
-//        }
-
-//        for (int k=0;k<tmp_curr_layer.size();k++)
-//        {
-//            cluster.push_back(tmp_curr_layer[k]);
-//        }
-//    }
-    return true;
-
-}
-
 void spine_fun::conn_comp_nb6()
 {
+    final_groups=conn_comp_nb6_imp(intensity_groups);
+//    int id=1;
+//    for (int i=0;i<intensity_groups.size();i++)
+//    {
+//        if (intensity_groups[i].size()==0) continue;
+//        if (intensity_groups[i].size()>param.intensity_max_pixel) continue;
+
+//        GOV cur_group = intensity_groups[i];
+//        //check connected components
+//        //qDebug()<<"i:"<<i<<" Id:"<<id<<"group size:"<<cur_group.size();
+
+//        GOV seeds;
+//        map<V3DLONG, int> lookup;
+//        for (int j=0;j<cur_group.size();j++)
+//        {
+//            VOI * tmp_voi=cur_group[j];
+//            if (lookup[tmp_voi->pos]>0) continue;
+//            seeds.clear();
+//            lookup[tmp_voi->pos]=id;
+//            seeds.push_back(tmp_voi);
+//            int sid=0;
+//            while (sid<seeds.size())
+//            {
+//                VOI * single_seed = seeds[sid];
+//                for (int neid=0; neid<single_seed->neighbors_6.size();neid++)
+//                {
+//                    if (lookup[single_seed->neighbors_6[neid]->pos]==0 &&
+//                            single_seed->neighbors_6[neid]->intensity_label==
+//                            tmp_voi->intensity_label)
+//                    {
+//                        seeds.push_back(single_seed->neighbors_6[neid]);
+//                        lookup[single_seed->neighbors_6[neid]->pos]=id;
+//                        single_seed->neighbors_6[neid]->intensity_label=id;
+//                    }
+//                }
+//                sid++;
+//            }
+//            //qDebug()<<"seeds size:"<<seeds.size();
+//            if (seeds.size()<param.min_pixel)
+//            {
+//                for (int k=0;k<seeds.size();k++)
+//                    seeds[k]->intensity_label=-1;
+//                continue;
+//            }
+
+//            tmp_voi->intensity_label=id;
+//            GOV new_seeds;
+//            closing(seeds,id,new_seeds);
+//            final_groups.push_back(new_seeds);
+//            id++;
+//        }
+//    }
+    qDebug()<<"final groups size:"<<final_groups.size();
+}
+
+
+vector<GOV> spine_fun::conn_comp_nb6_imp(vector<GOV> old_groups)
+{
     int id=1;
-
-    for (int i=0;i<intensity_groups.size();i++)
+    vector<GOV> new_groups;
+    for (int i=0;i<old_groups.size();i++)
     {
-        if (intensity_groups[i].size()==0) continue;
-        if (intensity_groups[i].size()>param.intensity_max_pixel) continue;
+        if (old_groups[i].size()==0) continue;
+        if (old_groups[i].size()>param.intensity_max_pixel) continue;
 
-        GOV cur_group = intensity_groups[i];
-        //check connected components
-        //qDebug()<<"i:"<<i<<" Id:"<<id<<"group size:"<<cur_group.size();
+        GOV cur_group = old_groups[i];
 
         GOV seeds;
         map<V3DLONG, int> lookup;
@@ -1474,32 +1452,71 @@ void spine_fun::conn_comp_nb6()
             tmp_voi->intensity_label=id;
             GOV new_seeds;
             closing(seeds,id,new_seeds);
-            final_groups.push_back(new_seeds);
-//            if (id==6)
-//            {
-//                qDebug()<<"final_group 6:"<<new_seeds.size();
-//                V3DLONG sum_x,sum_y,sum_z,center_x,center_y,center_z;
-//                sum_x=sum_y=sum_z=0;
-//                for (int kk=0;kk<new_seeds.size();kk++)
-//                {
-//                    qDebug()<<kk<<"  xyz"<<new_seeds[kk]->x<<":"<<new_seeds[kk]->y<<":"
-//                           <<new_seeds[kk]->z;
-//                    sum_x+=new_seeds[kk]->x;
-//                    sum_y+=new_seeds[kk]->y;
-//                    sum_z+=new_seeds[kk]->z;
-//                }
-//                center_x=sum_x/new_seeds.size();
-//                center_y=sum_y/new_seeds.size();
-//                center_z=sum_z/new_seeds.size();
-//                qDebug()<<"sum:"<<sum_x<<":"<<sum_y<<":"<<sum_z<<":"<<center_x<<
-//                         ":"<<center_y<<":"<<center_z;
-
-//            }
+            new_groups.push_back(new_seeds);
             id++;
         }
     }
     qDebug()<<"final groups size:"<<final_groups.size();
+    return new_groups;
 }
+
+//vector<GOV> conn_comp_nb6_implement(vector<GOV> old_groups,int intensity_max_pixel,
+//                                    int min_pixel,int close_code)
+//{
+//    int id=1;
+//    vector<GOV> new_groups;
+//    for (int i=0;i<old_groups.size();i++)
+//    {
+//        if (old_groups[i].size()==0) continue;
+//        if (old_groups[i].size()>intensity_max_pixel) continue;
+
+//        GOV cur_group = old_groups[i];
+
+//        GOV seeds;
+//        map<V3DLONG, int> lookup;
+//        for (int j=0;j<cur_group.size();j++)
+//        {
+//            VOI * tmp_voi=cur_group[j];
+//            if (lookup[tmp_voi->pos]>0) continue;
+//            seeds.clear();
+//            lookup[tmp_voi->pos]=id;
+//            seeds.push_back(tmp_voi);
+//            int sid=0;
+//            while (sid<seeds.size())
+//            {
+//                VOI * single_seed = seeds[sid];
+//                for (int neid=0; neid<single_seed->neighbors_6.size();neid++)
+//                {
+//                    if (lookup[single_seed->neighbors_6[neid]->pos]==0 &&
+//                            single_seed->neighbors_6[neid]->intensity_label==
+//                            tmp_voi->intensity_label)
+//                    {
+//                        seeds.push_back(single_seed->neighbors_6[neid]);
+//                        lookup[single_seed->neighbors_6[neid]->pos]=id;
+//                        single_seed->neighbors_6[neid]->intensity_label=id;
+//                    }
+//                }
+//                sid++;
+//            }
+//            //qDebug()<<"seeds size:"<<seeds.size();
+//            if (seeds.size()<min_pixel)
+//            {
+//                for (int k=0;k<seeds.size();k++)
+//                    seeds[k]->intensity_label=-1;
+//                continue;
+//            }
+
+//            tmp_voi->intensity_label=id;
+
+//            GOV new_seeds;
+//            closing(seeds,id,new_seeds);
+//            new_groups.push_back(new_seeds);
+//            id++;
+//        }
+//    }
+//    qDebug()<<"final groups size:"<<final_groups.size();
+//    return new_groups;
+//}
 
 void spine_fun::closing(GOV seeds, int id, GOV &new_seeds)
 {
