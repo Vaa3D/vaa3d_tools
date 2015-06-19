@@ -19,7 +19,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-int _main(V3DPluginCallback2 &callback);
+int _main(V3DPluginCallback2 &callback,QWidget *parent);
 
 void load_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>& z,std::vector<long>& tree_id,
                std::vector<float>& r, std::vector<long>& ppid,std::vector<long> &pid,QString &path);

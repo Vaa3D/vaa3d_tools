@@ -37,7 +37,7 @@ void N3DfixPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
         //QString path = QFileDialog::getOpenFileName(0, "Select *.swc file to work with", "", "*.swc");
-        _main(callback);
+        _main(callback,parent);
 
         //v3d_msg("To be implemented.");
     }
@@ -58,7 +58,7 @@ bool N3DfixPlugin::dofunc(const QString & func_name, const V3DPluginArgList & in
 	if (func_name == tr("Run_cmd"))
 	{
         //QString path = QFileDialog::getOpenFileName(0, "Select *.swc file to work with", "", "*.swc");
-        _main(callback);
+        _main(callback,parent);
 
 	}
 	else if (func_name == tr("help"))
