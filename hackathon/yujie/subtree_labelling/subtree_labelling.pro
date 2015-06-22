@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = C:/Users/Jade/Documents/V3d/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= subtree_labelling_plugin.h \
