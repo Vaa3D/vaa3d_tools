@@ -898,8 +898,307 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 }
 
 
+int roi_img(cv::Mat &image,cv::Mat image1)
+{
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+    	if(xv[i] < 1000)
+    		xv[i] = 0;
+    	else
+    		xv[i] = 1000;
+
+    }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+    	if(yv[i] < 1000)
+    		yv[i] = 0;
+    	else
+    		yv[i] = 1000;
+
+    }
+
+
+    for(int i = 0; i < image1.size[2]; i++)
+    {
+    	if(zv[i] < 1000)
+    		zv[i] = 0;
+    	else
+    		zv[i] = 1000;
+
+    }
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    delete [] xv;
+
+    delete [] yv;
+
+    delete [] zv;
+
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+
+
+   // cout << "bx is " << bx[0] << " " << bx[1] << endl;
+
+   // cout << "by is " << by[0] << " " << by[1] << endl;
+
+  //  cout << "bz is " << bz[0] << " " << bz[1] << endl;
+
+    image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    return 1;
+
+}
+
 //./vaa3d -x Opencv_example -f Opencv_example -i B5.v3draw -o tmp_tst.v3draw tmp_tst.swc
 
+// call the function to batch process  the whole data
+bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	unsigned char * inimg1d = 0;
+
+
+	if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+        if (inlist->size() != 1)
+        {
+                cout<<"You must specify 1 input file!"<<endl;
+                return -1;
+        }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+
+    for(int i_img = 1; i_img < 51; i_img ++)
+    {
+
+
+        ostringstream convert;
+
+    	convert << i_img;
+
+    	string im_file = infile;
+
+    	im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + convert.str() + ".v3draw";
+
+    	string roi_fn = infile;
+
+    	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+
+        string save_seg = infile;
+
+     	save_seg = "/media/gulin/E402023602020DEC/Data/Seg/seg_" + base_fn1 + convert.str() + ".v3draw";
+
+
+
+    //	string base_fn1 = infile;
+
+    //	base_fn1 = "/media/gulin/E402023602020DEC/Data/mE/mE_" + base_fn1 + convert.str() + ".v3draw";
+
+    //	string base_fn2 = infile;
+
+    //	base_fn2 = "/media/gulin/E402023602020DEC/Data/FM/FM_" + base_fn2 + convert.str() + ".v3draw";
+
+    //	string roi_fn = infile;
+
+    //	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+
+    //	string sav_mat = infile;
+
+    //	sav_mat = "/media/gulin/E402023602020DEC/Data/Mat_sav/mat_" + sav_mat + convert.str() + ".yml";
+
+
+        Mat image1;
+
+        loadMat(image1, infile);
+
+
+     	Mat image;
+
+    	roi_img(image,image1);
+
+        image1.release();
+
+
+        saveMat(image,(char*)roi_fn);
+
+        Mat conf_img;
+
+        int t1,t2;
+
+        char * dataset = new char[100];
+
+        cout << "......................" << endl;
+
+        cout << "Start the base method" << endl;
+
+        if(1)
+        {
+            multiscaleEhance(callback, tmp_nm, conf_img);
+
+
+            t1 = 20;
+
+            t2 = 5;
+
+
+            //t1 = 80;
+
+            //t2 = 20;
+
+            sprintf(dataset,"OPFmEh");
+
+
+        }
+        else
+        {
+            fastMarch(tmp_nm, conf_img);
+
+            t1 = 7;
+
+            t2 = 3;
+
+            sprintf(dataset,"OPFFM");
+
+        }
+
+
+        cout << "Complete the base method" << endl;
+
+        Mat seg_img;
+
+        LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+        cout << "complete the LCM " << endl;
+
+
+
+        // output the result into the harddisk
+
+        saveMat(seg_img,outfile);
+
+        // trace the image
+
+        trace_img(seg_img, image, outfile_swc);
+
+
+    }
+
+	return true;
+}
 
 
 bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)

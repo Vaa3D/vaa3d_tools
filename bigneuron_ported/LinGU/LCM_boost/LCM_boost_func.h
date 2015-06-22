@@ -144,6 +144,8 @@ QString getAppPath();
 
 string file_type1(string para);
 
+bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
 int multiscaleEhance(V3DPluginCallback2 & callback, char * infile, cv::Mat & conf_img);
 
 int loadMat(cv::Mat & image, char * fileName_string);

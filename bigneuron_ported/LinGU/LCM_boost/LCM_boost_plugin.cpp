@@ -41,5 +41,11 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	{
 		return Opencv_example(callback, input, output);
 	}
+
+	if (func_name == tr("Batch"))
+	{
+		return Batch_Process(callback, input, output);
+	}
+
 }
 
