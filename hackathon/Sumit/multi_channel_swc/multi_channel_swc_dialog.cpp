@@ -1,5 +1,6 @@
 #include "multi_channel_swc_dialog.h"
 #include "multi_channel_swc_template.h"
+#include "multi_channel_swc_func.h"
 #include <fstream>
 
 multi_channel_swc_dialog::multi_channel_swc_dialog(V3DPluginCallback2 *cb, QWidget *parent) :
@@ -186,7 +187,7 @@ void multi_channel_swc_dialog::load_swc()
                 ));
     nt = new NeuronTree();
     if(!fileOpenName.isEmpty()){
-        *nt = readSWC_file(fileOpenName);
+        *nt = readSWC_file_multichannel(fileOpenName);
     }
     if(nt->listNeuron.size()>0){
         edit_swc->setText(fileOpenName);

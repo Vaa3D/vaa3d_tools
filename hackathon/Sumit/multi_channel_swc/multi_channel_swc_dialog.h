@@ -47,5 +47,4 @@ public slots:
     void set_output();
     void run();
 };
-
 #endif // MULTI_CHANNEL_SWC_DIALOG_H

@@ -7,6 +7,8 @@
 #include <vector>
 #include "multi_channel_swc_plugin.h"
 #include "multi_channel_swc_dialog.h"
+#include "multi_channel_swc_func.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(multi_channel_swc, MultiChannelSWC);
  
@@ -34,6 +36,7 @@ void MultiChannelSWC::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
     else if (menu_name == tr("multi_channel_render"))
     {
+        do_calculate_render_eswc();
     }
 	else
 	{
@@ -60,5 +63,53 @@ bool MultiChannelSWC::dofunc(const QString & func_name, const V3DPluginArgList &
 	else return false;
 
 	return true;
+}
+
+void do_calculate_render_eswc()
+{
+    QSettings settings("V3D plugin","multiChannelSWC");
+    QString fname_neuronTree;
+    if(settings.contains("fname_swc"))
+        fname_neuronTree=settings.value("fname_swc").toString();
+
+    //read swc
+    QString fileOpenName=fname_neuronTree;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            fileOpenName,
+            QObject::tr("Supported file (*.swc *.eswc)"
+                ";;Neuron structure	(*.swc)"
+                ";;Extended neuron structure (*.eswc)"
+                ));
+    NeuronTree nt;
+    if(!fileOpenName.isEmpty()){
+        nt = readSWC_file_multichannel(fileOpenName);
+    }else{
+        return;
+    }
+    if(nt.listNeuron.size()>0){
+        fname_neuronTree=fileOpenName;
+    }else{
+        v3d_msg("Error: cannot read file "+fileOpenName);
+        return;
+    }
+    if(nt.listNeuron.at(0).fea_val.size()==0){
+        v3d_msg("Error: could not find feature informations from the file "+fileOpenName);
+    }
+    settings.setValue("fname_swc",fname_neuronTree);
+
+    //do the calculation
+    NeuronTree nt_new = convert_SWC_to_render_ESWC(nt);
+
+    //save eswc
+    QString fileSaveName=fname_neuronTree+"_render.eswc";
+    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                    fileSaveName,
+                QObject::tr("Supported file (*.eswc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+    if(fileOpenName.isEmpty()){
+        return;
+    }
+    writeESWC_file(fileSaveName,nt_new);
 }
 
