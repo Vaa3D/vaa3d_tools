@@ -4467,7 +4467,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 	cout << "Start merging the base" << endl;
 
-    cin.get();
+   // cin.get();
 
 
 //    vector<int> base_list;
