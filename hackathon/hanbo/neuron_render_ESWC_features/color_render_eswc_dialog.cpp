@@ -19,6 +19,7 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
     }
 
     //create
+    this->setWindowTitle(nt->file);
     cb_feature = new QComboBox();
     for(int i=0; i<feaNum; i++)
         cb_feature->addItem(QString::number(i+1));
@@ -165,6 +166,8 @@ void color_render_ESWC_dialog::reset()
 
 void color_render_ESWC_dialog::reject()
 {
+    checkwindow();
+
     reset();
     if(v3dwin){
         callback->update_3DViewer(v3dwin);
