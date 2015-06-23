@@ -4,8 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "sqb_0.1/include/Eigen/Dense"
-#include "superannotator_sel/Matrix3D.h"
+#include "../libs/sqb_0.1/include/Eigen/Dense"
+#include "../libs/superannotator_sel/Matrix3D.h"
 #include <SQB/Core/RegTree.h>
 #include <SQB/Core/Utils.h>
 #include <SQB/Core/Booster.h>

@@ -20,7 +20,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 #INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/include
 #INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/
 INCLUDEPATH += ../libs/liblbfgs-1.10/include
-INCLUDEPATH	+= libs/sqb_0.1/include
+INCLUDEPATH += ../libs/sqb_0.1/include
 INCLUDEPATH += ../libs/libconfig-1.4.9/lib
 INCLUDEPATH += ../libs/ITK_include
 INCLUDEPATH += ../libs/regression
@@ -30,15 +30,15 @@ INCLUDEPATH += ../libs/boost_1_58_0 # download and unzip it (not in svn because 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
-LIBS += -L"libs/liblbfgs-1.10/lib"
+LIBS += -L"../libs/liblbfgs-1.10/lib"
 LIBS += -llbfgs
 
-LIBS += -L"libs/libconfig-1.4.9/lib/.libs"
+LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
 LIBS += -lconfig++
 
 HEADERS += ../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h
 #HEADERS += sqb_0.1/include/SQB/Core/Booster.h
-HEADERS += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.h
+#HEADERS += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.h
 HEADERS += ../libs/regression/sep_conv.h
 HEADERS += ../libs/regression/util.h
 HEADERS += ../libs/regression/sampling.h
@@ -52,7 +52,6 @@ HEADERS	+= RegressionTubularityAC_plugin.h
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 #SOURCES	+= regression/regressor.cpp
-SOURCES += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
 SOURCES	+= ../libs/regression/sep_conv.cpp
 SOURCES	+= ../libs/regression/sampling.cpp
 SOURCES	+= ../libs/regression/regressor.cpp
