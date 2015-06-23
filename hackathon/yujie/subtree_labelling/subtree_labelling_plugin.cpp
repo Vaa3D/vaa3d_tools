@@ -30,14 +30,14 @@ void subtree_label::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
 	if (menu_name == tr("subtree_labelling"))
 	{
-        subtree_dialog *dialog=new subtree_dialog(&callback);
-        dialog->get_swc_marker();
-        dialog->assign_marker_type();
-        dialog->subtree_extract();
+            subtree_dialog *dialog=new subtree_dialog(&callback);
+            if (!dialog->get_swc_marker()) return;
+            if(!dialog->subtree_extract()) return;
+            dialog->assign_marker_type();
 	}
 	else
 	{
-		v3d_msg(tr("This tree labels dendrite id, segment id and branch order. "
+            v3d_msg(tr("This tree labels dendrite id, segment id and branch order. "
 			"Developed by Yujie Li, 2015-6-19"));
 	}
 }

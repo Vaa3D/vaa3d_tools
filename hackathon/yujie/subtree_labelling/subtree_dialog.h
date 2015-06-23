@@ -9,6 +9,7 @@
 #include <vector>
 
 using namespace std;
+void backupNeuron(NeuronTree & source, NeuronTree & backup);
 
 class subtree_dialog:public QDialog
 {
@@ -17,23 +18,35 @@ public:
    explicit subtree_dialog(V3DPluginCallback2 *cb);
    //void create();
    bool get_swc_marker();
-   void subtree_extract();
+   bool subtree_extract();
    void assign_marker_type();
-   void soma_clicked();
+   void check_window();
+
+
+
 public slots:
    void marker_change();
+   void soma_clicked();
+   void axon_clicked();
+   void apical_dendrite_clicked();
+   void basal_clicked();
+   void oblique_clicked();
+   void refresh_marker();
+   bool maybe_save();
+   bool save();
 
 private:
    int calc_nearest_node_around_marker();
-   void type_def(int type, int dendrite_id, int marker_id);
+   void type_def(int type, float dendrite_id, int marker_id);
 private:
    V3DPluginCallback2 *callback;
    LandmarkList LList_in;
-   NeuronTree nt;
+   NeuronTree *nt;
    V3DLONG sz_img[4];
    V3dR_MainWindow *swc_win;
    vector<vector<int> > subtree;
    QComboBox *markers;
+   QDialog *mydialog2;
 };
 
 #endif // SUBTREE_DIALOG_H
