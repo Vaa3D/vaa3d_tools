@@ -4992,11 +4992,15 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
     cout << "There are " << base_list.size() << " in the label image"<< endl;
 
+    if(debug_on > 0)
+    {
     string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg.v3draw";
 
 	char * base_file_char = (char *)base_file.c_str();
 
     saveMat(seg_img,base_file_char);
+
+    }
 
     float dt = 3;
 
