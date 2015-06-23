@@ -191,7 +191,7 @@ void multi_channel_swc_dialog::load_swc()
     }
     if(nt->listNeuron.size()>0){
         edit_swc->setText(fileOpenName);
-        edit_output->setText(fileOpenName+"_processed.swc");
+        edit_output->setText(fileOpenName+"_multichannel_S.swc");
         fname_neuronTree=fileOpenName;
     }else{
         v3d_msg("Error: cannot read file "+fileOpenName);
@@ -274,10 +274,11 @@ void save_result(const QString fname, NeuronTree* nt, vector<float>& ratio, vect
         fp<<endl;
     }
     fp<<"#CHANNELSWC"<<endl;
-    fp<<"#"<<"1"<<" 2 "<<ratio.size()<<endl;
-    fp<<"#Channel"<<endl;
+ //fp<<"#"<<"1"<<" 2 "<<ratio.size()<<endl;
+    fp<<"#"<<nt->listNeuron.at(0).fea_val.size()/2+1<<" "<<nt->listNeuron.at(0).fea_val.size()+2<<" "<<ratio.size()<<endl;
+    fp<<"#Ratio, Mean intensity"<<endl;
     for(V3DLONG nid=0; nid<ratio.size(); nid++){
-   // fp<<"#"<<ratio.at(nid)<<" "<<mean.at(nid)<<endl;
+           // fp<<"#"<<ratio.at(nid)<<" "<<mean.at(nid)<<endl;
         fp<<"#";
                 for(int i=0; i<nt->listNeuron.at(nid).fea_val.size();i++){
                     fp<<nt->listNeuron.at(nid).fea_val.at(i)<<" ";
