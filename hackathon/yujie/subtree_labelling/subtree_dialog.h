@@ -16,13 +16,11 @@ class subtree_dialog:public QDialog
     Q_OBJECT
 public:
    explicit subtree_dialog(V3DPluginCallback2 *cb);
-   //void create();
    bool get_swc_marker();
    bool subtree_extract();
    void assign_marker_type();
    void check_window();
-
-
+   void calc_distance_to_soma();
 
 public slots:
    void marker_change();
