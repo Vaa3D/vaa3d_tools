@@ -1,1 +1,0 @@
-/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/sep_conv2/build/CMakeFiles/sep_conv_test2.dir
