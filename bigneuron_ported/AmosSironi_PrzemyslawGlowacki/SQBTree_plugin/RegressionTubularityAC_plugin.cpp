@@ -12,11 +12,11 @@
 #include "sqb_trees.h"
 #include <math.h>
 
-#include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-#include "regression/sep_conv.h"
-#include "regression/sampling.h"
-#include "regression/regressor.h"
+#include "../libs/regression/sep_conv.h"
+#include "../libs/regression/sampling.h"
+#include "../libs/regression/regressor.h"
 //#include "regression/regression_test2.h"
 
 #include <sys/stat.h>

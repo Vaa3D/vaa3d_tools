@@ -5,11 +5,11 @@ CONFIG	+= qt plugin warn_off
 
 mac{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
-    ITKLIBPATH = ITKlibs_MAC
+    ITKLIBPATH = ../libs/ITKlibs_MAC
 }
 else{
-    ITKLIBPATH = ITKlibs_Linux
-    SOURCES = ITK_include/itkLightProcessObject.cxx
+    ITKLIBPATH = ../libs/ITKlibs_Linux
+    SOURCES = ../libs/ITK_include/itkLightProcessObject.cxx
 }
 
 VAA3DPATH = ../../../../v3d_external
@@ -19,30 +19,31 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 #INCLUDEPATH	+= /Applications/MATLAB_R2013a.app/extern/include
 #INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/include
 #INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/
-INCLUDEPATH += liblbfgs-1.10/include
-INCLUDEPATH	+= $$_PRO_FILE_PWD_/sqb_0.1/include
-INCLUDEPATH += $$_PRO_FILE_PWD_/libconfig-1.4.9/lib
-INCLUDEPATH += ITK_include
-INCLUDEPATH += $$_PRO_FILE_PWD_/regression
-INCLUDEPATH += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB
-INCLUDEPATH += $$_PRO_FILE_PWD_/boost_1_58_0 # download and unzip it (not in svn because it is big)
+INCLUDEPATH += ../libs/liblbfgs-1.10/include
+INCLUDEPATH	+= libs/sqb_0.1/include
+INCLUDEPATH += ../libs/libconfig-1.4.9/lib
+INCLUDEPATH += ../libs/ITK_include
+INCLUDEPATH += ../libs/regression
+INCLUDEPATH += ../libs/sqb_0.1/src/MatrixSQB
+INCLUDEPATH += ../libs/boost_1_58_0 # download and unzip it (not in svn because it is big)
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
-LIBS += -L"$$_PRO_FILE_PWD_/liblbfgs-1.10/lib"
+LIBS += -L"libs/liblbfgs-1.10/lib"
 LIBS += -llbfgs
 
-LIBS += -L"$$_PRO_FILE_PWD_/libconfig-1.4.9/lib/.libs"
+LIBS += -L"libs/libconfig-1.4.9/lib/.libs"
 LIBS += -lconfig++
 
-HEADERS += sqb_0.1/src/MatrixSQB/vaa3d_link.h
+HEADERS += ../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h
 #HEADERS += sqb_0.1/include/SQB/Core/Booster.h
-HEADERS += sqb_0.1/src/MatrixSQB/sqb_trees.h
-HEADERS += regression/sep_conv.h
-HEADERS += regression/util.h
-HEADERS += regression/sampling.h
-HEADERS += regression/regressor.h
+HEADERS += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.h
+HEADERS += ../libs/regression/sep_conv.h
+HEADERS += ../libs/regression/util.h
+HEADERS += ../libs/regression/sampling.h
+HEADERS += ../libs/regression/regressor.h
+
 HEADERS	+= RegressionTubularityAC_plugin.h
 
 
@@ -51,10 +52,10 @@ HEADERS	+= RegressionTubularityAC_plugin.h
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 #SOURCES	+= regression/regressor.cpp
-SOURCES += $$_PRO_FILE_PWD_/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
-SOURCES	+= regression/sep_conv.cpp
-SOURCES	+= regression/sampling.cpp
-SOURCES	+= regression/regressor.cpp
+SOURCES += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.cpp
+SOURCES	+= ../libs/regression/sep_conv.cpp
+SOURCES	+= ../libs/regression/sampling.cpp
+SOURCES	+= ../libs/regression/regressor.cpp
 #SOURCES	+= regression/regression_test2.cpp
 #SOURCES	+= sqb_0.1/src/MatrixSQB/sqb_trees.cpp
 SOURCES	+= RegressionTubularityAC_plugin.cpp

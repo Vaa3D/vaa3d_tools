@@ -11,14 +11,14 @@
 
 #include "v3d_message.h"
 #include <vector>
-#include "SQBTree_plugin.h"
-#include "sqb_trees.h"
+//#include "SQBTree_plugin.h"
+//#include "sqb_trees.h"
 
 
-#include "sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-#include "regression/sep_conv.h"
-#include "regression/util.h"
+#include "../libs/regression/sep_conv.h"
+#include "../libs/regression/util.h"
 //#include "regression/regression_test2.h"
 
 
