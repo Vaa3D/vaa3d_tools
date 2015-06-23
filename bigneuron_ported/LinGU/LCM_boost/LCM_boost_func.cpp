@@ -1098,9 +1098,14 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
 
-        string save_seg = infile;
+        string save_seg_fn = infile;
 
-     	save_seg = "/media/gulin/E402023602020DEC/Data/Seg/seg_" + base_fn1 + convert.str() + ".v3draw";
+     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/Seg/seg_" + save_seg_fn + convert.str() + ".v3draw";
+
+
+        string save_swc_fn = infile;
+
+     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/SWC/swc_" + save_swc_fn + convert.str() + ".swc";
 
 
 
@@ -1123,7 +1128,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         Mat image1;
 
-        loadMat(image1, infile);
+        loadMat(image1, (char*)im_file.c_str());
 
 
      	Mat image;
@@ -1133,7 +1138,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
         image1.release();
 
 
-        saveMat(image,(char*)roi_fn);
+        saveMat(image,(char*)roi_fn.c_str());
 
         Mat conf_img;
 
@@ -1145,19 +1150,38 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         cout << "Start the base method" << endl;
 
+        int img_pg = image.size[0] * image.size[1];
+
         if(1)
         {
-            multiscaleEhance(callback, tmp_nm, conf_img);
+            if(img_pg > (300 * 250))
+            {
+                t1 = 50;
 
+                t2 = 5;
 
-            t1 = 20;
+            }else
+            {
 
-            t2 = 5;
+                if(img_pg > (200 * 200))
+                    {
+                        t1 = 20;
 
+                        t2 = 5;
 
-            //t1 = 80;
+                    }
+                    else
+                    {
+                        t1 = 10;
 
-            //t2 = 20;
+                        t2 = 5;
+
+                    }
+
+            }
+
+            multiscaleEhance(callback, (char*)roi_fn.c_str(), conf_img);
+
 
             sprintf(dataset,"OPFmEh");
 
@@ -1165,7 +1189,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
         }
         else
         {
-            fastMarch(tmp_nm, conf_img);
+            fastMarch((char*)roi_fn.c_str(), conf_img);
 
             t1 = 7;
 
@@ -1184,15 +1208,15 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         cout << "complete the LCM " << endl;
 
-
-
         // output the result into the harddisk
 
-        saveMat(seg_img,outfile);
+        saveMat(seg_img,(char*)save_seg_fn.c_str());
 
         // trace the image
 
-        trace_img(seg_img, image, outfile_swc);
+        trace_img(seg_img, image, (char*)save_swc_fn.c_str());
+
+       // cin.get();
 
 
     }
@@ -1598,7 +1622,7 @@ int get_main_branch(cv::Mat image, cv::Mat &seg_img, int t1, int & base_t)
 
     int base_i = 0;
 
-    base_i = max(max_label - 30,0);
+    base_i = max(max_label - 20,0);
 
 	base_t = max(npl[base_i],10);
 
@@ -2514,7 +2538,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
     uchar t3c = 5;
 
-    int dt = 3;
+    int dt = 1;
 
     float dtf = (float)dt;
 
@@ -3095,7 +3119,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
     }
 
 
-    int dt = 3;
+    int dt = 1;
 
     float dtf = (float)dt;
 
@@ -4642,8 +4666,178 @@ int force_merge(cv::Mat image, cv::Mat &seg_img, vector<int> base_list,vector<tr
     }
 
 
+
+
 }
 
+
+
+int check_connect(cv::Mat &seg_img)
+{
+   // Mat label_base;
+
+    Mat label_t2;
+
+    cout << "Ready to do the bwconnmp_img3" << endl;
+
+    int n_t2 = bwconnmp_img3(seg_img,label_t2,80);
+
+	cout << "Complete the bwconnmp on the images" << endl;
+
+	cout << "There are " << n_t2 <<  " components in the image" << endl;
+
+	// find how many labels are there in the image
+
+	vector<vector<int> > PList_t2_x(n_t2);
+
+	vector<vector<int> > PList_t2_y(n_t2);
+
+	vector<vector<int> > PList_t2_z(n_t2);
+
+    bwconnmp(label_t2,PList_t2_x,PList_t2_y,PList_t2_z);
+
+
+    label_t2.release();
+
+    cout << "Release the label_t2 " << endl;
+
+
+
+
+
+    int n_t12 = bwconnmp_img4(seg_img,label_t2,50);
+
+ 	vector<vector<int> > PList_t12_x(n_t12);
+
+	vector<vector<int> > PList_t12_y(n_t12);
+
+	vector<vector<int> > PList_t12_z(n_t12);
+
+	bwconnmp(label_t2,PList_t12_x,PList_t12_y,PList_t12_z);
+
+    int * label_t2_list = new int[n_t2];
+
+    for(int i = 0; i < n_t2; i++)
+    {
+        int v3[3];
+
+        v3[0] = PList_t2_x[i][0];
+
+        v3[1] = PList_t2_y[i][0];
+
+        v3[2] = PList_t2_z[i][0];
+
+        label_t2_list[i] = label_t2.at<int>(v3);
+
+    }
+
+	label_t2.release();
+
+	int * np;
+
+	int n_t1 = bwconnmp_img3(seg_img,label_t2,254);
+
+	count_n_labels_img(label_t2, np);
+
+    double * p_seg = new double[n_t1];
+
+    for(int i = 0; i < n_t1; i++)
+    {
+        p_seg[i] = (double)np[i];
+
+    }
+
+    delete [] np;
+
+    double n_sum = accumulate(p_seg,p_seg + n_t2,0);
+
+    for(int i = 0; i < n_t2; i++)
+        p_seg[i] = p_seg[i] / n_sum;
+
+
+    double * p_segt1 = new double[n_t1];
+
+	int * pt1 = new int[n_t1];
+
+	int * t12_c = new int[n_t12];
+
+	double * t12_cp = new double[n_t12];
+
+    //int * seg_cn[] = new int[n_];
+
+	for(int i = 0; i < n_t12; i++)
+	{
+        for(int j = 0; j < n_t1; j++)
+        {
+            pt1[j] = 0;
+
+            p_segt1[j] = 0;
+
+        }
+
+        for(int j = 0; j < PList_t12_x[i].size(); j ++)
+        {
+            int v3[3];
+
+            v3[0] = PList_t12_x[i][j];
+
+            v3[1] = PList_t12_y[i][j];
+
+            v3[2] = PList_t12_z[i][j];
+
+            int label = label_t2.at<int>(v3);
+
+            if(label > 0)
+            {
+                pt1[label - 1]  = 1;
+
+                p_segt1[label - 1] = p_seg[label - 1];
+
+            }
+
+
+        }
+
+        t12_c[i] = accumulate(pt1,pt1 + n_t1,0);
+
+        t12_cp[i] = accumulate(p_segt1,p_segt1 + n_t1,0);
+
+	}
+
+	label_t2.release();
+
+	int * pt2 = new int[n_t2];
+
+	double * pt12_cp = new double[n_t2];
+
+	for(int i = 0; i < n_t2; i ++)
+    {
+        pt2[i] = t12_c[label_t2_list[i]];
+
+        pt12_cp[i] = t12_cp[label_t2_list[i]];
+
+        cout << " The pt2 is " << pt2[i] << endl;
+
+        cout << " The prop for pt2 is " << pt12_cp[i] << endl;
+
+	}
+
+	cin.get();
+
+	delete [] t12_c;
+
+	delete [] t12_cp;
+
+	delete [] p_segt1;
+
+	delete [] pt1;
+
+	delete [] pt2;
+
+	delete [] pt12_cp;
+
+
+}
 
 
 
@@ -4739,7 +4933,17 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 	int base_thres;
 
+	//cin.get();
+
 	n_base  = get_main_branch(image, seg_img, t1,base_thres);
+
+	// determine the connecting branch
+
+ 	find_t2_fragments(image, seg_img, t2, 0);
+
+    cout << "Complete t2 seeds" << endl;
+
+//	check_connect(seg_img);
 
 
 	cout << "Base image contains " << n_base << " main branches" << endl;
@@ -4796,7 +5000,14 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
     float dt = 3;
 
- 	//find_t2_fragments(image, seg_img, t2, dt);
+ //	find_t2_fragments(image, seg_img, t2, dt);
+
+ 	//Mat features_t2;
+
+    //retrieve_low_confidence(input_img, image,  seg_img, dataset);
+
+
+
 
 
  	 	/*
@@ -5365,15 +5576,13 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 }
 
-int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img)
+int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img, char * dataset)
 {
 
 
 	cout << "Ready to do the bwconnmp on the images" << endl;
 
 	Mat label_img;
-
-
 
 	int n_t2 = bwconnmp_img4(seg_img,label_img,100);
 
@@ -5437,55 +5646,6 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img)
 
 
 
-
-
-/*
-
-
-	for(int i = 0; i < max_label; i++)
-	{
-
-		int np = PixelIdxListx[i].size();
-
-		cout << np << endl;
-
-		PLmd[i] = 0;
-
-		for(int j = 0; j < np; j++)
-		{
-
-			V3DLONG ix = (V3DLONG) PList_t2_x[i][j];
-
-			V3DLONG iy = (V3DLONG) PList_t2_y[i][j];
-
-			V3DLONG iz = (V3DLONG) PList_t2_z[i][j];
-
-
-			V3DLONG offsetk = iz*sz[1]*sz[0];
-
-			V3DLONG offsetj = iy* sz[0];
-
-			float dist_b = dist_t1[offsetk + offsetj + ix];
-
-			PLmd[i] = PLmd[i] + dist_b;
-
-		}
-
-		cout << "The sum distance is  " << PLmd[i] << endl;
-
-		if(PLmd[i] < 1)
-			base_pl[i] = 1;
-		else
-			base_pl[i] = 0;
-
-	}
-
-	*/
-
-
-
-	//  delete [] dist_t1;
-
 	// be very cautious the 0 of PixelIdxListx is label 1
 	cout << "start the determine_bounding_box on the images" << endl;
 
@@ -5520,7 +5680,6 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img)
 
 	int hist_page = 3 * 3 * 3;
 
-/*
 
 	// get the local features
 
@@ -5574,38 +5733,41 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img)
 
 	//double feature_cc[max_label][4 + cub_page + hist_page];
 
-	Mat feature_cc(max_label,6 + cub_page + hist_page,CV_32F);
+    Mat feature_cc = Mat(n_t2,6 + cub_page + hist_page,CV_32F);
 
 	// fill the features for individual component
 
 	cout << "start filling" << endl;
 
-	fill_features(feature_cc,PixelIdxListx, bnd,min_dist1, curvature_l,hist1,cub1);
+	fill_features(feature_cc,PList_t2_x, bnd,min_dist1, curvature_l,hist1,cub1);
 
 	cout << "complete filling" << endl;
 
 	// now starts to apply the learned random forest
 
-	int n_samp = feature_cc.rows;
+	int n_samp = n_t2;
 
 	cout << n_samp << endl;
 
 	// apply the random forest to test the image
-	double * resp_tst = new double[n_samp + 100];
+	double * resp_tst = new double[n_samp];
 
 	for(int i = 0; i < n_samp; i++)
-		resp_tst[i] = 0;
+		resp_tst[i] = 1;
 
 
 	//  v3d_msg(" Start classifying");
 
+
 	cout << "Start classifying" << endl;
 
-	LCM_classify(feature_cc, resp_tst,dataset);
+	//LCM_classify(feature_cc, resp_tst,dataset);
 
 	cout << "Complete classifying" << endl;
 
 	//rt_test(feature_cc, resp_tst);
+
+    /*
 
 	int * fila_frag = new int[n_samp];
 
@@ -5624,7 +5786,44 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img)
 
 	}
 
-*/
+	*/
+
+
+
+	for(int i = 0; i < n_t2; i++)
+	{
+
+		//   cout << "fila_frag " << i << " is " << fila_frag[i] << endl;
+
+		if((resp_tst[i] < 0)&(base_pl[i] < 0))
+		{
+			int n_p = PList_t2_x[i].size();
+
+			//       cout << "n_p is " << n_p << endl;
+
+			//     cout <<  " Reconstruct Seed " << i << endl;
+
+			for(int j = 0; j < n_p; j ++)
+			{
+				int v3[3];
+
+				v3[0] = PList_t2_x[i][j];
+
+				v3[1] = PList_t2_y[i][j];
+
+				v3[2] = PList_t2_z[i][j];
+
+				seg_img.at<uchar>(v3) = 0;
+
+			}
+
+
+		}
+
+	}
+
+
+
 
 
 
@@ -6154,7 +6353,7 @@ int bwconnmp_img4(Mat input_img, Mat &label_img, uchar cv)
 
 	int sum_img = accumulate(img,img + im_sz[0] * im_sz[1] * im_sz[2],0);
 
-	cout << "sum of the image in the bwconnomp4 is " << sum_img <<  endl;
+	cout << "sum of the image in the bwconnomp 4 is " << sum_img <<  endl;
 
 //	int n_img = (int)accumulate(img,img + im_sz[0] * im_sz[1] * im_sz[2], 0);
 

@@ -164,11 +164,13 @@ int merge_base_img(cv::Mat image, cv::Mat &seg_img, vector<int> & comp_list);
 
 int count_merged_base(cv::Mat seg_img,cv::Mat label_img, int * base_merge_list);
 
-int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img);
+int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img, char * dataset);
 
 int collect_hog1(cv::Mat label_img, cv::Mat & hist1, int * base_list,
 vector<vector<int> > PixelIdxListx,vector<vector<int> > PixelIdxListy,vector<vector<int> > PixelIdxListz);
 
+
+int check_connect(cv::Mat &seg_img);
 
 int grow_base(cv::Mat label_img, cv::Mat &seg_img, int source, int *target_tip, float min_dist);
 
