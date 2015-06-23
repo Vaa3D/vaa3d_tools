@@ -355,8 +355,6 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
           std::cout << "pixel out of range (End). Index: " << pixelIndex << "Size: " << size<< std::endl << std::flush;
       }
       I->SetPixel(pixelIndex, parentRowi->r);
-    }else{
-        std::cout << "PARENT FOund" << std::endl<<std::flush;
     }
 
 
@@ -395,7 +393,6 @@ template<typename ITKImageType>
 bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageType::SizeType size){
 
     if(pixelIndex[0]>=size[0] || pixelIndex[1]>=size[1] || pixelIndex[2]>=size[2] || pixelIndex[0]<0 || pixelIndex[1]<0 || pixelIndex[2]<0){
-        std::cout << "AAA pixel out of range (Root). Index: " << pixelIndex << "Size: " << size<< std::endl << std::flush;
         return false;
     }else{
         return true;
