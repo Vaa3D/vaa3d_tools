@@ -41,7 +41,7 @@ void MultiChannelSWC::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	else
 	{
         v3d_msg(tr("This plugin will create swc files based on multiple channel information in the neuron image.."
-			"Developed by Sumit and Hanbo, 2015-6-18"));
+                   "Developed by Sumit Nanda (snanda2@gmu.edu) and Hanbo Chen (cojoc.chen@gmail.com), 2015-6-18"));
 	}
 }
 
