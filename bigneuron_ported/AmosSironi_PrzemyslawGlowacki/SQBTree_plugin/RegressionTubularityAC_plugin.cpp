@@ -64,12 +64,15 @@ typedef SQB::TreeBooster<
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
 using namespace std;
-Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin);
 
+#ifndef __EXPORT_PLUGIN_H__
+#define __EXPORT_PLUGIN_H__
+//Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin)
+#endif
 
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
-bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+//bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 bool resampleImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
@@ -575,6 +578,9 @@ cout<<"Training Done!"<<endl;
 
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
+
+    std::cout << "INSIDE TEST TUBULARITY PLUGIN  " << std::endl;
+
 
    //sample call:  ./vaa3d -x RegressionTubularityAC -f test -i /cvlabdata1/cvlab/datasets_amos/data3D/OPF/train/images/images_tif/OP_9.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/OP_9_tubularity.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_0.cfg /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_1.cfg
 

@@ -4,8 +4,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkResampleImageFilter.h"
 
-#include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
-#include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
+//#include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
+//#include "../../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
 
 class SwcFileContent {
 
@@ -94,7 +94,7 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,float *scale_factor);
 
-template<typename ITKImageType>
+template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg,const double * scale_factor, long int * out_sz);
 
 //template<typename ITKImageType>
@@ -494,7 +494,7 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 
 }
 
-
+/*
 template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg, const double *dfactor, long int * out_sz){
 
@@ -600,6 +600,7 @@ typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg, const doub
     return I_resized;
 
 }
+*/
 
 //template<typename ITKImageType>
 //typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg,const long int * out_sz){
