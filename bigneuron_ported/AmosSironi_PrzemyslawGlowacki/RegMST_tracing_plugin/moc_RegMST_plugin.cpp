@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'RegMST_plugin.h'
 **
-** Created: Wed Jun 24 11:23:44 2015
+** Created: Wed Jun 24 16:11:31 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.1)
 **
 ** WARNING! All changes made in this file will be lost!

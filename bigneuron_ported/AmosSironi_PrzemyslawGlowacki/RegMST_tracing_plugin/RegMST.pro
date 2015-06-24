@@ -47,7 +47,7 @@ HEADERS += ../libs/regression/sep_conv.h
 HEADERS += ../libs/regression/util.h
 HEADERS += ../libs/regression/sampling.h
 HEADERS += ../libs/regression/regressor.h
-HEADERS += ../SQBTree_plugin/RegressionTubularityAC_plugin.h
+#HEADERS += ../SQBTree_plugin/RegressionTubularityAC_plugin.h
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.h \
@@ -85,7 +85,7 @@ HEADERS	+= RegMST_plugin.h
 SOURCES	+= ../libs/regression/sep_conv.cpp
 SOURCES	+= ../libs/regression/sampling.cpp
 SOURCES	+= ../libs/regression/regressor.cpp
-SOURCES	+= ../SQBTree_plugin/RegressionTubularityAC_plugin.cpp
+#SOURCES	+= ../SQBTree_plugin/RegressionTubularityAC_plugin.cpp
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.cpp \

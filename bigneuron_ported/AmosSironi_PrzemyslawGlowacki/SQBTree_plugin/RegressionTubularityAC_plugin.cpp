@@ -65,10 +65,10 @@ typedef SQB::TreeBooster<
 
 using namespace std;
 
-#ifndef __EXPORT_PLUGIN_H__
-#define __EXPORT_PLUGIN_H__
-//Q_EXPORT_PLUGIN2(SQBTree, SQBTreePlugin)
-#endif
+//#ifndef __EXPORT_PLUGIN_H__
+//#define __EXPORT_PLUGIN_H__
+Q_EXPORT_PLUGIN2(RegressionTubularityAC, RegressionTubularityACPlugin)
+//#endif
 
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
@@ -78,7 +78,7 @@ bool resampleImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
 
 void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites,V3DPluginCallback2 &callback);
 
-QStringList SQBTreePlugin::menulist() const
+QStringList RegressionTubularityACPlugin::menulist() const
 {
   return QStringList()
       <<tr("menu1")
@@ -86,7 +86,7 @@ QStringList SQBTreePlugin::menulist() const
     <<tr("about");
 }
 
-QStringList SQBTreePlugin::funclist() const
+QStringList RegressionTubularityACPlugin::funclist() const
 {
   return QStringList()
       <<tr("func1")
@@ -94,7 +94,7 @@ QStringList SQBTreePlugin::funclist() const
     <<tr("help");
 }
 
-void SQBTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
   if (menu_name == tr("menu1"))
   {
@@ -111,7 +111,7 @@ void SQBTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
   }
 }
 
-bool SQBTreePlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
   //	vector<char*> infiles, inparas, outfiles;
   //	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);

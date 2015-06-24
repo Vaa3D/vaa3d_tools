@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'RegressionTubularityAC_plugin.h'
 **
-** Created: Wed Jun 24 11:23:39 2015
+** Created: Wed Jun 24 14:39:20 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -17,7 +17,7 @@
 #endif
 
 QT_BEGIN_MOC_NAMESPACE
-static const uint qt_meta_data_SQBTreePlugin[] = {
+static const uint qt_meta_data_RegressionTubularityACPlugin[] = {
 
  // content:
        5,       // revision
@@ -33,37 +33,37 @@ static const uint qt_meta_data_SQBTreePlugin[] = {
        0        // eod
 };
 
-static const char qt_meta_stringdata_SQBTreePlugin[] = {
-    "SQBTreePlugin\0"
+static const char qt_meta_stringdata_RegressionTubularityACPlugin[] = {
+    "RegressionTubularityACPlugin\0"
 };
 
-const QMetaObject SQBTreePlugin::staticMetaObject = {
-    { &QObject::staticMetaObject, qt_meta_stringdata_SQBTreePlugin,
-      qt_meta_data_SQBTreePlugin, 0 }
+const QMetaObject RegressionTubularityACPlugin::staticMetaObject = {
+    { &QObject::staticMetaObject, qt_meta_stringdata_RegressionTubularityACPlugin,
+      qt_meta_data_RegressionTubularityACPlugin, 0 }
 };
 
 #ifdef Q_NO_DATA_RELOCATION
-const QMetaObject &SQBTreePlugin::getStaticMetaObject() { return staticMetaObject; }
+const QMetaObject &RegressionTubularityACPlugin::getStaticMetaObject() { return staticMetaObject; }
 #endif //Q_NO_DATA_RELOCATION
 
-const QMetaObject *SQBTreePlugin::metaObject() const
+const QMetaObject *RegressionTubularityACPlugin::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
 }
 
-void *SQBTreePlugin::qt_metacast(const char *_clname)
+void *RegressionTubularityACPlugin::qt_metacast(const char *_clname)
 {
     if (!_clname) return 0;
-    if (!strcmp(_clname, qt_meta_stringdata_SQBTreePlugin))
-        return static_cast<void*>(const_cast< SQBTreePlugin*>(this));
+    if (!strcmp(_clname, qt_meta_stringdata_RegressionTubularityACPlugin))
+        return static_cast<void*>(const_cast< RegressionTubularityACPlugin*>(this));
     if (!strcmp(_clname, "V3DPluginInterface2_1"))
-        return static_cast< V3DPluginInterface2_1*>(const_cast< SQBTreePlugin*>(this));
+        return static_cast< V3DPluginInterface2_1*>(const_cast< RegressionTubularityACPlugin*>(this));
     if (!strcmp(_clname, "com.janelia.v3d.V3DPluginInterface/2.1"))
-        return static_cast< V3DPluginInterface2_1*>(const_cast< SQBTreePlugin*>(this));
+        return static_cast< V3DPluginInterface2_1*>(const_cast< RegressionTubularityACPlugin*>(this));
     return QObject::qt_metacast(_clname);
 }
 
-int SQBTreePlugin::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int RegressionTubularityACPlugin::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QObject::qt_metacall(_c, _id, _a);
     if (_id < 0)

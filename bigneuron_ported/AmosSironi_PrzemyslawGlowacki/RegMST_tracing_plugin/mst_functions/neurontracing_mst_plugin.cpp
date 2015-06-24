@@ -227,8 +227,10 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     trace_para.b_deformcurve = b_usedshortestpathonly;
     trace_para.b_postMergeClosebyBranches = b_mergeCloseBranches;
     trace_para.b_3dcurve_width_from_xyonly = true;
-    trace_para.b_post_trimming = b_postTrim;
-    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
+    trace_para.b_post_trimming = b_postTrim;//no visible effect
+    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches; //no visible effect
+trace_para.b_estRadii = false;
+
 
     NeuronTree nt_final;
     QList <NeuronSWC> listNeuron;

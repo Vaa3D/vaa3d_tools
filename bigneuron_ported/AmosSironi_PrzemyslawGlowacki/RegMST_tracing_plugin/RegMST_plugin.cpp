@@ -35,10 +35,10 @@
 //#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 
 
-#ifndef __EXPORT_PLUGIN_H__
-#define __EXPORT_PLUGIN_H__
+//#ifndef __EXPORT_PLUGIN_H__
+//#define __EXPORT_PLUGIN_H__
 Q_EXPORT_PLUGIN2(RegMST, RegMST);
-#endif
+// #endif
 
 using namespace std;
 
@@ -134,7 +134,7 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.n_ac_iters = (paras.size() >= k+1) ? atoi(paras[k]) : -1;  k++;
-        for(unsigned int i_ac =0; i_ac < PARA.n_ac_iters+1; i_ac++,k++){
+        for(unsigned int i_ac =0; i_ac < PARA.n_ac_iters; i_ac++,k++){
             PARA.regressor_paths.append(paras[k]);
         }
         PARA.Ws = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
@@ -151,7 +151,7 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
         printf("vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>\n");
         printf("inimg_file                                The input image\n");
         printf("channel                                   Data channel for tracing. Start from 1 (default 1).\n");
-        printf("n_AC                                      Number of autoncontext iterations to compute tubularity. 0 = no Auto-context; -1 = apply MST on original image (default -1)\n");
+        printf("n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n");
         printf("reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors. Number of files must be equal to n_AC.\n");
         printf("window size                               Window size for seed detection in MST. (default 10)\n");
 
@@ -241,7 +241,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
 
-    std::cout << "size image input : " << N <<" "<< M << " " << P <<std::endl;
+//    std::cout << "size image input : " << N <<" "<< M << " " << P <<std::endl;
 
 
  V3DPluginArgList  input;
@@ -253,10 +253,10 @@ buf_input_vec->push_back(buf_input);
  name_input_v3d.p =buf_input_vec;
  input.append(name_input_v3d);
 
-  std::cout << "PARA.inimg_file.toStdString().c_str():  " << PARA.inimg_file.toStdString().c_str()<< std::endl;
- std::cout << "buf input:  " << buf_input<< std::endl;
+//  std::cout << "PARA.inimg_file.toStdString().c_str():  " << PARA.inimg_file.toStdString().c_str()<< std::endl;
+// std::cout << "buf input:  " << buf_input<< std::endl;
 // std::cout << "name_input_v3d.p:  " << name_para_v3d.p<< std::endl;
- std::cout << "input.at(0).p:   " << (char*)input.at(0).p<< std::endl;
+// std::cout << "input.at(0).p:   " << (char*)input.at(0).p<< std::endl;
 
 //V3DPluginArgItem name_input_v3d;//(PARA.inimg_file);
 //name_input_v3d =
@@ -277,9 +277,9 @@ output.append(name_output_v3d);
 //char buf_para_array[PARA.n_ac_iters+1];
 //char **buf_para_point = new char*[PARA.n_ac_iters+1];
 
-vector<char*> *buf_para_vec= new vector<char*>[PARA.n_ac_iters+1];
+vector<char*> *buf_para_vec= new vector<char*>[PARA.n_ac_iters];
 
-for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters+1; i_ac++){
+for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters; i_ac++){
 
     char *buf_para = new char[PARA.regressor_paths.at(i_ac).toStdString().size()+1];
     strcpy(buf_para, PARA.regressor_paths.at(i_ac).toStdString().c_str());
@@ -291,11 +291,11 @@ for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters+1; i_ac++){
 
 //   strcpy(&buf_para_array[i_ac], PARA.regressor_paths.at(i_ac).toStdString().c_str());
 
-     std::cout << "PARA.regressor_paths.at(i_ac).toStdString().c_str():  " << PARA.regressor_paths.at(i_ac).toStdString().c_str()<< std::endl;
-     std::cout << "buf_para:  " << buf_para<< std::endl;
+//     std::cout << "PARA.regressor_paths.at(i_ac).toStdString().c_str():  " << PARA.regressor_paths.at(i_ac).toStdString().c_str()<< std::endl;
+//     std::cout << "buf_para:  " << buf_para<< std::endl;
    //  std::cout << "buf_para_array[i_ac]:  " << buf_para_array[i_ac]<< std::endl;
    //    std::cout << "buf_para_point[i_ac]:  " << buf_para_point[i_ac]<< std::endl;
-     std::cout << "buf_para_vec.at(i_ac):  " << buf_para_vec->at(i_ac)<< std::endl;
+//     std::cout << "buf_para_vec.at(i_ac):  " << buf_para_vec->at(i_ac)<< std::endl;
     // std::cout << "input.at(i_ac+1).p:   " << (char * )input.at(i_ac+1).p<< std::endl;
 
 }
@@ -307,7 +307,7 @@ std::cout << "params size:  " <<buf_para_vec->size()<<std::endl;
 
 //std::cout << "copied Params " <<std::endl << std::flush;
 
-if( (PARA.n_ac_iters+1)>0){
+if( (PARA.n_ac_iters)>0){
     V3DPluginArgItem name_para_v3d;
    // name_para_v3d.p =buf_para_array;
    // name_para_v3d.p =buf_para_point;
@@ -322,7 +322,7 @@ MST_PARA mst_PARA;
 mst_PARA.Ws = PARA.Ws;
 mst_PARA.channel = PARA.channel;
 
-if(!(PARA.n_ac_iters<0)){//compute regression tubularity
+if((PARA.n_ac_iters>0)){//compute regression tubularity
 
     std::cout << "calling tubularity plugin  " <<std::endl << std::flush;
 
@@ -333,7 +333,11 @@ if(!(PARA.n_ac_iters<0)){//compute regression tubularity
 
 
 
-    testTubularityImage(callback, input,  output);
+  //  testTubularityImage(callback, input,  output);
+
+    QString full_plugin_name_tubularity = "RegressionTubularityAC";
+    QString func_name_test_tubularity = "test";
+    callback.callPluginFunc(full_plugin_name_tubularity,func_name_test_tubularity, input,output);
 
     mst_PARA.inimg_file = out_tubularity_filename;
 
