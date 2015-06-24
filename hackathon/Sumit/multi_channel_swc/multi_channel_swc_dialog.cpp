@@ -227,7 +227,12 @@ void multi_channel_swc_dialog::run()
     float thr1=spin_threshold1->value();
     float thr2=spin_threshold2->value();
     vector<float> N, mean, stdev, ratio, N_P, ratio_P, mean_P, stdev_P;
-    calculate_info(p_img, sz_img, nt, ch1, thr1, ch2, thr2, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
+    if(intype==2)
+        calculate_info((unsigned short *)p_img, sz_img, nt, ch1, thr1, ch2, thr2, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
+    else if(intype==4)
+        calculate_info((float *)p_img, sz_img, nt, ch1, thr1, ch2, thr2, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
+    else
+        calculate_info(p_img, sz_img, nt, ch1, thr1, ch2, thr2, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
     save_result(edit_output->text(), nt, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
 
     accept();

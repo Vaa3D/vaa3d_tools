@@ -25,6 +25,6 @@ public:
 };
 
 void do_calculate_render_eswc();
-
+void printHelp();
 #endif
 
