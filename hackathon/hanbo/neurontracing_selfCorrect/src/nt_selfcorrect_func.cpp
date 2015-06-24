@@ -906,6 +906,8 @@ bool nt_selfcorrect_func::initTracing(){
 
 bool nt_selfcorrect_func::simpleTracing(){
     double thr=param.app2_bgThrs[0];
+    bool gapflag=param.app2_gap;
+    param.app2_gap=true;
     QString fname_app2;
     if(FLAG_TEST){
         if(thr<0)
@@ -916,12 +918,16 @@ bool nt_selfcorrect_func::simpleTracing(){
         fname_app2=fname_outswc;
     }
     ntmarkers=nt_selfcorrect_func::app2Tracing(fname_inimg,fname_app2,thr);
+    param.app2_gap=gapflag;
     return true;
 }
 
 bool nt_selfcorrect_func::finalTracing(){
     QString fname_img = fname_tmpout+"_foreground.raw";
+    bool gapflag=param.app2_gap;
+    param.app2_gap=false;
     ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+    param.app2_gap=gapflag;
     return true;
 }
 
