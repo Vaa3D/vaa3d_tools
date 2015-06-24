@@ -22,7 +22,8 @@ LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 
 HEADERS	+= NeuroStalker_plugin.h\
-           PressureSampler.h
+           PressureSampler.h\
+           DandelionTracer.h
 HEADERS += utils/vn_imgpreprocess.h\
            utils/matmath.h
 
@@ -40,6 +41,7 @@ HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h
 
 SOURCES	+= NeuroStalker_plugin.cpp\
            PressureSampler.cpp\
+           DandelionTracer.cpp\
            utils/vn_imgpreprocess.cpp\
            utils/matmath.cpp\
            lib/ImageOperation.cpp\

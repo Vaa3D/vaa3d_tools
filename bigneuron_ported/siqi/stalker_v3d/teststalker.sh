@@ -5,4 +5,7 @@ vaa3d=../../../../v3d_external/bin/vaa3d;
 qmake;
 make -j4;
 
-$vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.little-soma.v3draw -p 1 3 3 | tee runlog.txt
+#$vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.little-soma.v3draw -p 1 3 3 | tee runlog.txt
+$vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.v3draw -p 1 3 1 | tee runlog.txt
+#$vaa3d -x NeuroStalker -f tracing_func -i ~/Desktop/OP1.v3draw -p 1 3 3 | tee runlog.txt
+#matlab -nodesktop -nosplash -r "run('test/plotall.m')";

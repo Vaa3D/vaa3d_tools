@@ -10,16 +10,13 @@
 #define MAX(x,y) (x > y ? (x) : (y))
 #endif
 
-
-
-
 using namespace std;
 
-vectype linspace(const double a, const double b, const int n) {
+vectype linspace(const PRECISION a, const PRECISION b, const int n) {
 // Equals to linspace in matlab
     vectype outvec (n);
-    double step = (b-a) / (n-1);
-    double t = a;
+    PRECISION step = (b-a) / (n-1);
+    PRECISION t = a;
     vectype::iterator outitr = outvec.begin();
     while(t <= b && outitr != outvec.end()) {
         *outitr = t;
@@ -173,8 +170,23 @@ void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
 	f.close();
 }
 
+void savepts2csvfourva(vectype a, vectype b, vectype c, vectype d, const char* filename){
+// Save a list of points to a text file
+// Each point occupies a line
+// Since three coordinates are saved, this function works both for Cartisian and Spherical 
+	ofstream f;
+	f.open(filename);
+	assert(a.size() == b.size() && b.size() == c.size() && c.size() == d.size());
 
-vectype eucdistance2center(const float x, const float y, const float z, const vectype lx, const vectype ly, const vectype lz)
+	for (int i = 0; i < a.size(); i++)
+	{
+	   f<<a[i]<<","<<b[i]<<","<<c[i]<<","<<d[i]<<endl;
+	}
+
+	f.close();
+}
+
+vectype eucdistance2center(const PRECISION x, const PRECISION y, const PRECISION z, const vectype lx, const vectype ly, const vectype lz)
 {
 	assert(lx.size() == ly.size() && ly.size() == lz.size());
 
@@ -189,11 +201,13 @@ vectype eucdistance2center(const float x, const float y, const float z, const ve
 }
 
 
-int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z){
+// find the radius of the seed
+// Same method used in APP2
+int appradius(unsigned char * inimg1d, V3DLONG * sz,  PRECISION thresh, int location_x, int location_y, int location_z){
 
     int max_r = MAX(MAX(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
     int r;
-    double tol_num, bak_num;
+    PRECISION tol_num, bak_num;
     int mx = location_x + 0.5;
     int my = location_y+ 0.5;
     int mz = location_z + 0.5;
@@ -203,22 +217,22 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int locatio
     V3DLONG sz01 = sz[0] * sz[1];
     for(r = 1; r <= max_r; r++)
     {
-        double r1 = r - 0.5;
-        double r2 = r + 0.5;
-        double r1_r1 = r1 * r1;
-        double r2_r2 = r2 * r2;
-        double z_min = 0, z_max = r2;
+        PRECISION r1 = r - 0.5;
+        PRECISION r2 = r + 0.5;
+        PRECISION r1_r1 = r1 * r1;
+        PRECISION r2_r2 = r2 * r2;
+        PRECISION z_min = 0, z_max = r2;
         for(int dz = z_min ; dz < z_max; dz++)
         {
-            double dz_dz = dz * dz;
-            double y_min = 0;
-            double y_max = sqrt(r2_r2 - dz_dz);
+            PRECISION dz_dz = dz * dz;
+            PRECISION y_min = 0;
+            PRECISION y_max = sqrt(r2_r2 - dz_dz);
             for(int dy = y_min; dy < y_max; dy++)
             {
-                double dy_dy = dy * dy;
-                double x_min = r1_r1 - dz_dz - dy_dy;
+                PRECISION dy_dy = dy * dy;
+                PRECISION x_min = r1_r1 - dz_dz - dy_dy;
                 x_min = x_min > 0 ? sqrt(x_min)+1 : 0;
-                double x_max = sqrt(r2_r2 - dz_dz - dy_dy);
+                PRECISION x_max = sqrt(r2_r2 - dz_dz - dy_dy);
                 for(int dx = x_min; dx < x_max; dx++)
                 {
                     x[0] = mx - dx, x[1] = mx + dx;
@@ -241,4 +255,108 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int locatio
         }
     }
     return r;
+}
+
+
+void vecproj(vectype * u, const vectype v)
+{
+	// Projv(u) = [ (u•v)/(v•v) ] · v project u ulong v
+	double udotv = (*u)[0] * v[0] + (*u)[1] * v[1] + (*u)[2] * v[2]; 
+	double vdotv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	(*u)[0] = udotv / vdotv * v[0];
+	(*u)[1] = udotv / vdotv * v[1];
+	(*u)[2] = udotv / vdotv * v[2];
+}
+
+
+void vecnorm(vectype *u, const vectype v)
+{
+	// Projv(u) = [ (u•v)/(v•v) ] · v project u ulong v
+	double udotv = (*u)[0] * v[0] + (*u)[1] * v[1] + (*u)[2] * v[2]; 
+	double vdotv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	(*u)[0] = (*u)[0] - udotv / vdotv * v[0];
+	(*u)[1] = (*u)[1] - udotv / vdotv * v[1];
+	(*u)[2] = (*u)[2] - udotv / vdotv * v[2];
+}
+
+
+float constrain(float in, float low, float high)
+{
+	if (in < low) return low;
+	if (in > high) return high;
+}
+
+
+// Calculate the value of the cosine of the angle between two spherical vectors
+// Larger cosine between these two angles means closer these two angles are
+// Ref: http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
+vectype sphveccos(vectype th1, vectype phi1, vectype th2, vectype phi2)
+{
+    assert(th1.size() == phi1.size() && th2.size() == phi2.size() && phi1.size() == phi2.size());
+
+    vectype result(th1.size());
+
+    for (int i = 0; i < th1.size(); i++)
+    {
+        result[i] = cos(th1[i]) * cos(th2[i]) + sin(th1[i]) * sin(th2[i]) * cos(phi1[i] - phi2[i]);
+    }
+
+    return result;
+}
+
+void seedadjust(vectype *seedx, vectype *seedy, vectype *seedz){
+	//seedadjust is put in math for a reason. the seedadjust can also be used as a approximation to filter
+	//redundant points similar to k-means
+    vectype adseedx, adseedy, adseedz;
+	assert((*seedx).size() == (*seedy).size() && (*seedy).size() == (*seedz).size());
+	vectype::iterator xitr, yitr, zitr;
+	int counter = 0;
+	bool judge = true;
+	bool curjudge = false;
+	bool xjudge = true;
+	bool yjudge = true;
+	bool zjudge = true;
+	float diffx = 0;
+	float diffy = 0;
+	float diffz = 0;
+	for (xitr = seedx->begin(), 
+		 yitr = seedy->begin(), 
+		 zitr = seedz->begin(); 
+		 xitr != seedx->end();
+		 xitr++, yitr++, zitr++)
+	{
+		judge = true;
+		curjudge = false;
+		counter++;
+		//cout<<"counter: "<<counter<<endl;
+		//cout<<"xitr: "<<round(*xitr)<<"yitr: "<<round(*yitr)<<"zitr: "<<round(*zitr)<<endl;
+		for(int i = 0; i < adseedx.size(); i++)
+		{
+			//cout<<"adseedx value is working: "<<(*adseedx)[i]<<endl;x
+			diffx = abs((*xitr)-adseedx[i]);
+			diffy = abs((*yitr)-adseedy[i]);
+			diffz = abs((*zitr)-adseedz[i]);
+			xjudge = (diffx > 3);
+			yjudge = (diffy > 3);
+			zjudge = (diffz > 3);
+			curjudge = xjudge || yjudge || zjudge; 
+			//cout<<"xdiff: "<<diffx<<"ydiff: "<<diffy<<"zdiff: "<<diffz<<endl;
+			//cout<<"xjudge: "<<xjudge<<"yjudge: "<<yjudge<<"zjudge: "<<zjudge<<"curjudge: "<<curjudge<<endl;
+			judge = judge && curjudge;
+		}
+		if (judge == true)
+		{
+			(adseedx).push_back(round(*xitr));
+			(adseedy).push_back(round(*yitr));
+			(adseedz).push_back(round(*zitr));
+		}
+		//cout<<"adseedx size: "<<adseedx.size()<<endl;
+	}
+	(*seedx).clear();
+	(*seedy).clear();
+	(*seedz).clear();
+	(*seedx) = (adseedx);
+	(*seedy) = (adseedy);
+	(*seedz) = (adseedz);
+
 }

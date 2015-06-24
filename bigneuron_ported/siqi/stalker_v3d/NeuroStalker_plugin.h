@@ -8,8 +8,9 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-
-
+#include "lib/ImageOperation.h"
+#include "lib/PointOperation.h"
+using namespace std;
 
 class NeuroStalker : public QObject, public V3DPluginInterface2_1
 {
@@ -25,6 +26,8 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
+
+
 
 #endif
 
