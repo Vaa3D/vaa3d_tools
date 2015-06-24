@@ -151,6 +151,7 @@ bool spine_fun::init()
         if(dst[i]<1e-10){ //skeleton node
             continue;
         }
+        qDebug()<<"i:"<<i;
         V3DLONG x,y,z;
         ind2sub(x,y,z,i);
         VOI * tmp_voxel = new VOI(i,x,y,z);
@@ -1624,4 +1625,9 @@ LandmarkList spine_fun::get_center_landmarks()
         LList.append(tmp_marker);
     }
     return LList;
+}
+
+void spine_fun::divide_neurontree()
+{
+
 }

@@ -15,7 +15,7 @@ static spine_detector *dialog=0;
 QStringList spine_detector::menulist() const
 {
 	return QStringList() 
-        <<tr("spine_detector_1")
+//        <<tr("spine_detector_1")
 //        <<tr("skeleton analysis")
         <<tr("spine_detector_1.0")
         <<tr("about");
@@ -63,24 +63,24 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
         manual_dialog->show();
     }
-    else if (menu_name == tr("skeleton analysis"))
-	{
-        PARA_APP2 p;
-        if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
-            return;
+//    else if (menu_name == tr("skeleton analysis"))
+//	{
+//        PARA_APP2 p;
+//        if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
+//            return;
 
-        // fetch parameters from dialog
-        if (!p.app2_dialog())
-            return;
+//        // fetch parameters from dialog
+//        if (!p.app2_dialog())
+//            return;
 
-        if (!proc_app2(callback, p, versionStr))
-            return;
-	}
-	else
-	{
-        v3d_msg(tr("This tool detects spines. "
-			"Developed by Yujie Li, 2015-3-11"));
-	}
+//        if (!proc_app2(callback, p, versionStr))
+//            return;
+//	}
+//	else
+//	{
+//        v3d_msg(tr("This tool detects spines. "
+//			"Developed by Yujie Li, 2015-3-11"));
+//	}
 }
 
 bool spine_detector::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
