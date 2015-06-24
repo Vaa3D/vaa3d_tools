@@ -12,7 +12,6 @@ using namespace std;
 Q_EXPORT_PLUGIN2(spine_detector, spine_detector);
 static spine_detector *dialog=0;
 
-QString versionStr = "v2.620";
 QStringList spine_detector::menulist() const
 {
 	return QStringList() 
