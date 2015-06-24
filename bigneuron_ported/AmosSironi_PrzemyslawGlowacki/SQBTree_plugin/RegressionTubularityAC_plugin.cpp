@@ -579,7 +579,7 @@ cout<<"Training Done!"<<endl;
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
-    std::cout << "INSIDE TEST TUBULARITY PLUGIN  " << std::endl;
+   // std::cout << "INSIDE TEST TUBULARITY PLUGIN  " << std::endl;
 
 
    //sample call:  ./vaa3d -x RegressionTubularityAC -f test -i /cvlabdata1/cvlab/datasets_amos/data3D/OPF/train/images/images_tif/OP_9.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/OP_9_tubularity.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_0.cfg /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_1.cfg
@@ -857,12 +857,24 @@ std::cout << "Computing features...Done."<<std::endl;
     cout << "saving final result to: " << outimg_file<<endl;
     Image4DSimple outimg_final;
 
-    float* out_data_copy_final = new float[n_pixels];
-    for(unsigned int i_pix = 0; i_pix < n_pixels; i_pix++){
-             out_data_copy_final[i_pix] = (float)finalScores(i_pix);
-    }
+    //save double
+//    float* out_data_copy_final = new float[n_pixels];
+//    for(unsigned int i_pix = 0; i_pix < n_pixels; i_pix++){
+//             out_data_copy_final[i_pix] = (float)finalScores(i_pix);
+//    }
 
-     outimg_final.setData((unsigned char *)(out_data_copy_final), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+//     outimg_final.setData((unsigned char *)(out_data_copy_final), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+//     callback.saveImage(&outimg_final, outimg_file);
+
+    //save uint8
+    //normalize in 0 255
+    finalScores = 255.0*(finalScores - finalScores.minCoeff())/( finalScores.maxCoeff() - finalScores.minCoeff() );
+    unsigned char* out_data_copy_final = new unsigned char[n_pixels];
+    for(unsigned int i_pix = 0; i_pix < n_pixels; i_pix++){
+             out_data_copy_final[i_pix] = (unsigned char)finalScores(i_pix);
+    }
+    outimg_final.setData((unsigned char *)(out_data_copy_final), in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+
      callback.saveImage(&outimg_final, outimg_file);
 
  cout << "Saved final result to: " << outimg_file<<endl;
