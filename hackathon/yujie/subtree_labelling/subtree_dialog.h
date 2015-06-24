@@ -7,6 +7,7 @@
 #include "v3d_interface.h"
 #include "math.h"
 #include <vector>
+#include "v3d_message.h"
 
 using namespace std;
 void backupNeuron(NeuronTree & source, NeuronTree & backup);
@@ -20,7 +21,9 @@ public:
    bool subtree_extract();
    void assign_marker_type();
    void check_window();
-   void calc_distance_to_soma();
+   void calc_distance_to_subtree_root();
+   bool sort_swc_dialog();
+   void build_connt_LUT();
 
 public slots:
    void marker_change();
@@ -32,10 +35,12 @@ public slots:
    void refresh_marker();
    bool maybe_save();
    bool save();
+   bool sort_slot();
+   void skip_slot();
 
 private:
    int calc_nearest_node_around_marker();
-   void type_def(int type, float dendrite_id, int marker_id);
+   void sort_type_def(int type, float dendrite_id, int marker_id);
 private:
    V3DPluginCallback2 *callback;
    LandmarkList LList_in;
