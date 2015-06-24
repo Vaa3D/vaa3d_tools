@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void save_result(QString fname, NeuronTree* nt, vector<float>& ratio, vector<float>& mean, vector<float>& stdev);
+void save_result(QString fname, NeuronTree* nt,vector<float>& N, vector<float>& ratio, vector<float>& mean, vector<float>& stdev, vector<float>& N_P, vector<float>& ratio_P, vector<float>& mean_P, vector<float>& stdev_P);
 
 bool compute_swc_render(QString fname, NeuronTree* nt_rend);
 
