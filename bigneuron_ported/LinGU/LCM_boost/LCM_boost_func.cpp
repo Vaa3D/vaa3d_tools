@@ -247,7 +247,7 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     }
 
-    delete [] data1d;
+   // delete [] data1d;
 
     char *tmp_nm = new char[100];
 
@@ -323,13 +323,15 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     // trace the image
 
-    sprintf(tmp_nm,"neuron_swc.swc");
+    QString swc_name = 	callback.getImageName(curwin) + "_LCMboost.swc";
+
+    sprintf(tmp_nm,swc_name.toStdString().c_str());
 
     trace_img(seg_img, image, tmp_nm);
 
-    cout << "The traced result has been saved in neuron_swc.swc" << endl;
+   // cout << "The traced result has been saved in neuron_swc.swc" << endl;
 
-    v3d_msg("The traced result has been saved in neuron_swc.swc");
+    v3d_msg(QString("The traced result has been saved in %1").arg(swc_name));
 
 
     //v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
@@ -1913,7 +1915,7 @@ int max_component(cv:: Mat label_img)
     }
 
 
-    delete [] np;
+  //  delete [] np;
 
    // delete npmaxp;
 

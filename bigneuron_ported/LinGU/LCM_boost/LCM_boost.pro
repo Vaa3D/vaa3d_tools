@@ -2,7 +2,7 @@ TEMPLATE    = lib
 CONFIG  += debug qt plugin warn_off
 #CONFIG += x86_64
 
-VAA3DPATH = /home/gulin/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun 
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
@@ -12,9 +12,9 @@ INCLUDEPATH += ./include
 
 LIBS += -L. -lv3dtiff -L$$VAA3DPATH/v3d_main/common_lib/lib
 
-LIBS += -L"$$_PRO_FILE_PWD_/lib"
+LIBS += -L"$$_PRO_FILE_PWD_/lib_centos"
 
-LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml  \
+LIBS+= -lopencv_core -lopencv_imgproc -lopencv_ml  \
 
 HEADERS =  LCM_boost_plugin.h
 HEADERS += LCM_boost_func.h
@@ -45,5 +45,5 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET  = $$qtLibraryTarget(LCM_boost)
-DESTDIR = $$VAA3DPATH/../bin/plugins/LCM_boost/
+DESTDIR = $$VAA3DPATH/bin/plugins/LCM_boost/
 

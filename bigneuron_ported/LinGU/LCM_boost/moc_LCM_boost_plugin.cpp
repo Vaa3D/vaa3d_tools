@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'LCM_boost_plugin.h'
 **
-** Created: Sun Jun 21 16:35:44 2015
+** Created: Wed Jun 24 15:03:55 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!
