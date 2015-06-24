@@ -133,7 +133,7 @@ bool MultiChannelSWC::dofunc(const QString & func_name, const V3DPluginArgList &
 
         qDebug()<<"output result: "<<fname_output;
         //output result
-        save_result(fname_output, nt, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
+        save_result(fname_output, thr1, thr2, nt, N, ratio, mean, stdev, N_P, ratio_P, mean_P, stdev_P);
 	}
     else if (func_name == tr("render_swc_by_eswc"))
     {
