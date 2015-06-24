@@ -302,6 +302,11 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     }
 
+    // remove the temporary file
+
+    remove(tmp_nm);
+
+
     cout << "Complete the base method" << endl;
 
     Mat seg_img;
@@ -312,9 +317,9 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     // output the result into the harddisk
 
-    sprintf(tmp_nm,"neuron_segmentation.v3draw");
+   // sprintf(tmp_nm,"neuron_segmentation.v3draw");
 
-    saveMat(seg_img,tmp_nm);
+   // saveMat(seg_img,tmp_nm);
 
     // trace the image
 
@@ -323,6 +328,9 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
     trace_img(seg_img, image, tmp_nm);
 
     cout << "The traced result has been saved in neuron_swc.swc" << endl;
+
+    v3d_msg("The traced result has been saved in neuron_swc.swc");
+
 
     //v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
 
@@ -1520,6 +1528,8 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
         sprintf(dataset,"OPFFM");
 
     }
+
+    remove(tmp_nm);
 
     cout << "Complete the base method" << endl;
 

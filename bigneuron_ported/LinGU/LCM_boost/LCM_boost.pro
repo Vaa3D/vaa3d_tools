@@ -46,3 +46,4 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET  = $$qtLibraryTarget(LCM_boost)
 DESTDIR = $$VAA3DPATH/../bin/plugins/LCM_boost/
+
