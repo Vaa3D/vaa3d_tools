@@ -302,7 +302,7 @@ for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters; i_ac++){
 //vector<char*> *params_array = ((vector<char*> *) buf_para_point);
 //std::cout << "params size:  " <<params_array->size()<<std::endl;
 
-std::cout << "params size:  " <<buf_para_vec->size()<<std::endl;
+//std::cout << "params size:  " <<buf_para_vec->size()<<std::endl;
 
 
 //std::cout << "copied Params " <<std::endl << std::flush;
@@ -314,7 +314,7 @@ if( (PARA.n_ac_iters)>0){
      name_para_v3d.p =buf_para_vec;
     input.append(name_para_v3d);
 }
-std::cout << "appended to input   " <<std::endl << std::flush;
+//std::cout << "appended to input   " <<std::endl << std::flush;
 
 
 
@@ -324,7 +324,7 @@ mst_PARA.channel = PARA.channel;
 
 if((PARA.n_ac_iters>0)){//compute regression tubularity
 
-    std::cout << "calling tubularity plugin  " <<std::endl << std::flush;
+    std::cout << "calling REG tubularity plugin  " <<std::endl << std::flush;
 
 //    vector<char*> *inputImagePaths = ((vector<char*> *)(input.at(0).p));
 //    vector<char*> *outputImagePaths = ((vector<char*> *)(output.at(0).p));
@@ -350,7 +350,7 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
 
 //now call tracing function
 
-std::cout << "calling MST tracing:  " <<std::endl<< std::flush;;
+std::cout << "calling MST tracing plugin  " <<std::endl<< std::flush;;
     autotrace_mst(callback,parent,mst_PARA,bmenu);
 
 //std::cout << "saving output  " <<std::endl << std::flush;

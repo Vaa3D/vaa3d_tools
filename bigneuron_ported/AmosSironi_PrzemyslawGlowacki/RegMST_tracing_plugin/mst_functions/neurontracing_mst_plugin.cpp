@@ -91,8 +91,6 @@ using namespace std;
 
 void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA, bool bmenu)
 {
-
-    std::cout << "INSIDE TRACING MST FUNC (try to run MST)" << std::endl;
    // return;
 
 
