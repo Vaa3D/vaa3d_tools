@@ -1,6 +1,4 @@
 /* SQBTree_plugin.h
- * a plugin for test
- * 2015-5-5 : by HP
  */
  
 #ifndef __SQBTREE_PLUGIN_H__

@@ -1,6 +1,9 @@
 /* RegMST_plugin.cpp
- * This is a test plugin, you can use it as a demo.
- * 2015-6-23 : by Amos Sironi and Przemyslaw Glowacki
+ * a plugin for applying the regression tubularity approach [1]
+ * in combiantion with the MST algorithm to reconstruct tubular structures.
+ * 2015-6-23: by Amos Sironi and Przemysław Głowacki
+ *
+ * [1] A. Sironi, E. Türetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence.
  */
  
 #include "v3d_message.h"
@@ -21,24 +24,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
-//#include "../../../vaa3d_tools/hackathon/zhi/neurontracing_mst/neurontracing_mst_plugin.h"
-//#include "../../../vaa3d_tools/hackathon/zhi/neurontracing_mst/neurontracing_mst_plugin.cpp"
 #include "../SQBTree_plugin/RegressionTubularityAC_plugin.h"
 #include "mst_functions/neurontracing_mst_plugin.h"
 
-//#include "basic_surf_objs.h"
-//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
-//#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
-//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-//#include "stackutil.h"
-//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
-
-
-//#ifndef __EXPORT_PLUGIN_H__
-//#define __EXPORT_PLUGIN_H__
 Q_EXPORT_PLUGIN2(RegMST, RegMST);
-// #endif
 
 using namespace std;
 
@@ -52,35 +41,9 @@ struct input_PARA
     V3DLONG Ws;
 };
 
-//parameters used by tracing plugin
-//#ifndef __MST_PARA__
-//#define __MST_PARA__
-//struct MST_PARA
-//{
-//    QString inimg_file;
-//    V3DLONG channel;
-//    V3DLONG Ws;
-//};
-//#endif
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
  
-
-//void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
-//template <class T> QList<NeuronSWC> seed_detection(T* data1d,
-//                                      V3DLONG *in_sz,
-//                                      unsigned int Ws,
-//                                      unsigned int c,
-//                                      double th);
-
-//template <class T> T pow2(T a)
-//{
-//    return a*a;
-
-//}
-//NeuronTree post_process(NeuronTree nt);
-
-
 
 QStringList RegMST::menulist() const
 {
@@ -101,13 +64,26 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 	if (menu_name == tr("tracing_menu"))
 	{
         bool bmenu = true;
-        input_PARA PARA;
-        reconstruction_func(callback,parent,PARA,bmenu);
+        v3d_msg("To be implemented. Please call this plugin from command line.\n "
+                "\n
+                "***Usage of RegMST tracing***\n"
+                "vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>\n"
+                "inimg_file                                The input image\n"
+                "channel                                   Data channel for tracing. Start from 1 (default 1)\n"
+                "n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n"
+                "reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC\n"
+                "window size                               Window size for seed detection in MST. (default 10)\n"
+                "outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
+
+        // input_PARA PARA;
+       // reconstruction_func(callback,parent,PARA,bmenu);
 
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+        v3d_msg(tr("plugin for applying the regression tubularity approach [1]\n "
+                   "in combiantion with the MST algorithm to reconstruct tubular structures.\n\n"
+                   " [1]  A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence."
 			"Developed by Amos Sironi and Przemyslaw Glowacki, 2015-6-23"));
 	}
 }

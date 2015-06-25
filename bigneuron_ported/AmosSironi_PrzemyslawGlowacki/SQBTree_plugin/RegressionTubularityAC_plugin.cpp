@@ -83,25 +83,25 @@ void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCal
 {
   if (menu_name == tr("test"))
   {
-    v3d_msg("To be implemented. Please call this plugin from command line. "
-            "Example call: ./vaa3d -x RegressionTubularityAC -f test    "
-            "-i <Test_Img1.tif> <Test_Img2.tif> ... <Test_ImgN.tif> "
-            "-o  <Tubularity_img1.raw> <Tubularity_Img2.raw> ... <Tubularity_ImgN.v3draw> "
-            "-p <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>");
+    v3d_msg("To be implemented. Please call this plugin from command line.\n\n "
+            "Example call: ./vaa3d -x RegressionTubularityAC -f test   \n "
+            "-i <Test_Img1.tif> <Test_Img2.tif> ... <Test_ImgN.tif> \n"
+            "-o  <Tubularity_img1.raw> <Tubularity_Img2.raw> ... <Tubularity_ImgN.v3draw> \n"
+            "-p <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>\n");
   }
   else if (menu_name == tr("train"))
   {
-      v3d_msg("To be implemented. Please call this plugin from command line. "
-              "Example call: ./vaa3d -x RegressionTubularityAC -f train "
-              "-i <Train_Img1.tif> <Train_Img2.tif> ... <Train_ImgN.tif> "
-              "-o <Output_Results_Dir> "
-              "-p <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> "
-              "   <N_Autocontext_Iters> <N_Train_Samples> <N_boosting_Iters> <Tree_Depth> <Shrinkage_factor> <m_try>");
+      v3d_msg("To be implemented. Please call this plugin from command line. \n\n"
+              "Example call: ./vaa3d -x RegressionTubularityAC -f train \n"
+              "-i <Train_Img1.tif> <Train_Img2.tif> ... <Train_ImgN.tif> \n"
+              "-o <Output_Results_Dir> \n"
+              "-p <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> \n"
+              "   <N_Autocontext_Iters> <N_Train_Samples> <N_boosting_Iters> <Tree_Depth> <Shrinkage_factor> <m_try>\n");
   }
   else
   {
-    v3d_msg(tr("A plugin for training and testing a tubularity regressor [1]. "
-               "You can call this plugin from command line. See README.txt file for more details."
+    v3d_msg(tr("A plugin for training and testing a tubularity regressor [1]. \n"
+               "You can call this plugin from command line. See README.txt file for more details.\n\n"
                ""
                "[1] A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence."));
   }
@@ -110,12 +110,12 @@ void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCal
 bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-  if(func_name == tr("train")) //train a classifier
+  if(func_name == tr("train")) //train a regressor
   {
       return trainTubularityImage(callback, input, output);
 
   }
-  else if (func_name == tr("test")) // apply already trained classifier to an image and save results
+  else if (func_name == tr("test")) // apply already trained regressor to an image and save results
   {
 
     return testTubularityImage(callback, input, output);

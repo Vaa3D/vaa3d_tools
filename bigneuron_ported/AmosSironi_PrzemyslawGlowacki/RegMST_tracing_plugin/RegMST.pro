@@ -14,13 +14,10 @@ else{
 
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-#INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/worm_straighten_c
-#INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/cellseg
-#INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
 
 INCLUDEPATH += ../libs/liblbfgs-1.10/include
@@ -41,13 +38,10 @@ LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
 LIBS += -lconfig++
 
 HEADERS += ../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h
-#HEADERS += sqb_0.1/include/SQB/Core/Booster.h
-#HEADERS += ../libs/sqb_0.1/src/MatrixSQB/sqb_trees.h
 HEADERS += ../libs/regression/sep_conv.h
 HEADERS += ../libs/regression/util.h
 HEADERS += ../libs/regression/sampling.h
 HEADERS += ../libs/regression/regressor.h
-#HEADERS += ../SQBTree_plugin/RegressionTubularityAC_plugin.h
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.h \
@@ -85,7 +79,6 @@ HEADERS	+= RegMST_plugin.h
 SOURCES	+= ../libs/regression/sep_conv.cpp
 SOURCES	+= ../libs/regression/sampling.cpp
 SOURCES	+= ../libs/regression/regressor.cpp
-#SOURCES	+= ../SQBTree_plugin/RegressionTubularityAC_plugin.cpp
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.cpp \
