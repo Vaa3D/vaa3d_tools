@@ -145,11 +145,11 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 
 
 
-const char *weight_file_im ="../data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-const char *sep_filters_file_im ="../data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
 
-const char *weight_file_ac = "../data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-const char *sep_filters_file_ac = "../data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
 
 
 
@@ -850,7 +850,7 @@ std::cout << "Computing features...Done."<<std::endl;
 
                 char outimg_file_ac [500];
 
-                    sprintf (outimg_file_ac, "./temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
+                    sprintf (outimg_file_ac, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
 
                     cout << "saving: " << outimg_file_ac<<endl;
                   callback.saveImage(&outimg1, outimg_file_ac);

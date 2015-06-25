@@ -92,26 +92,33 @@ MatrixTypeDouble readMatrix(const char *filename)
     // Read numbers from file into buffer.
     ifstream infile;
     infile.open(filename);
-    while (! infile.eof())
-        {
-        string line;
-        getline(infile, line);
+    if(infile){
 
-        int temp_cols = 0;
-        stringstream stream(line);
-        while(! stream.eof())
-            stream >> buff[cols*rows+temp_cols++];
+        while (! infile.eof())
+            {
+            string line;
+            getline(infile, line);
 
-        if (temp_cols == 0)
-            continue;
+            int temp_cols = 0;
+            stringstream stream(line);
+            while(! stream.eof())
+                stream >> buff[cols*rows+temp_cols++];
 
-        if (cols == 0)
-            cols = temp_cols;
+            if (temp_cols == 0)
+                continue;
 
-        rows++;
-        }
+            if (cols == 0)
+                cols = temp_cols;
 
-    infile.close();
+            rows++;
+            }
+
+        infile.close();
+
+    }else{
+
+        std::cout << "File " << filename << " not found. " << std::endl;
+    }
 
     rows--;
 
