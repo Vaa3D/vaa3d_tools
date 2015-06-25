@@ -1,6 +1,9 @@
 /* RegressionTubularityAC_plugin.cpp
- * a plugin for test
- * 2015-5-5 : by HP
+ * a plugin for training and testing the regression tubularity approach [1].
+ * 2015-5-5 : by Amos Sironi and Przemysław Głowacki
+ *
+ *
+ * [1] A. Sironi, E. Türetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence.
  */
 
 #define myQDebug(...) printf (__VA_ARGS__)
@@ -9,7 +12,6 @@
 #include "v3d_message.h"
 #include <vector>
 #include "RegressionTubularityAC_plugin.h"
-//#include "sqb_trees.h"
 #include <math.h>
 
 #include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
@@ -17,19 +19,9 @@
 #include "../libs/regression/sep_conv.h"
 #include "../libs/regression/sampling.h"
 #include "../libs/regression/regressor.h"
-//#include "regression/regression_test2.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <boost/filesystem.hpp>
-//#include <SQB/Core/RegTree.h>
-//#include <SQB/Core/Utils.h>
-
-//#include <SQB/Core/Booster.h>
-
-//#include <SQB/Core/LineSearch.h>
-
-
 
 //using namespace Eigen;
 typedef Eigen::VectorXf VectorTypeFloat;
@@ -65,18 +57,11 @@ typedef SQB::TreeBooster<
 
 using namespace std;
 
-//#ifndef __EXPORT_PLUGIN_H__
-//#define __EXPORT_PLUGIN_H__
 Q_EXPORT_PLUGIN2(RegressionTubularityAC, RegressionTubularityACPlugin)
-//#endif
 
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
-//bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-
 bool resampleImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-
-void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsigned int unit_bites,V3DPluginCallback2 &callback);
 
 QStringList RegressionTubularityACPlugin::menulist() const
 {
@@ -98,25 +83,32 @@ void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCal
 {
   if (menu_name == tr("test"))
   {
-    v3d_msg("To be implemented.");
+    v3d_msg("To be implemented. Please call this plugin from command line. "
+            "Example call: ./vaa3d -x RegressionTubularityAC -f test    "
+            "-i <Test_Img1.tif> <Test_Img2.tif> ... <Test_ImgN.tif> "
+            "-o  <Tubularity_img1.raw> <Tubularity_Img2.raw> ... <Tubularity_ImgN.v3draw> "
+            "-p <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>");
   }
   else if (menu_name == tr("train"))
   {
-    v3d_msg("To be implemented.");
+      v3d_msg("To be implemented. Please call this plugin from command line. "
+              "Example call: ./vaa3d -x RegressionTubularityAC -f train "
+              "-i <Train_Img1.tif> <Train_Img2.tif> ... <Train_ImgN.tif> "
+              "-o <Output_Results_Dir> "
+              "-p <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> "
+              "   <N_Autocontext_Iters> <N_Train_Samples> <N_boosting_Iters> <Tree_Depth> <Shrinkage_factor> <m_try>");
   }
   else
   {
-    v3d_msg(tr("a plugin for training and testing a tubularity regressor. "
-               "You can call this plugin from command line. See README file for more details."));
+    v3d_msg(tr("A plugin for training and testing a tubularity regressor [1]. "
+               "You can call this plugin from command line. See README.txt file for more details."
+               ""
+               "[1] A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence."));
   }
 }
 
 bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-  //	vector<char*> infiles, inparas, outfiles;
-  //	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-  //	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-  //	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
   if(func_name == tr("train")) //train a classifier
   {
@@ -143,7 +135,7 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 }
 
 
-
+//filter banks to compute features (use hand-crafter filters)
 //image features
 const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
 const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
@@ -153,12 +145,8 @@ const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi
 
 
 
-
-
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-
- //sample call:  ./vaa3d -x RegressionTubularityAC -f train -i /cvlabdata1/cvlab/datasets_amos/data3D/OPF/train/images/images_tif/OP_1.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac -p /cvlabdata1/cvlab/datasets_amos/data3D/OPF/train/radial_gt/images_tif/OP_1_radial_gt.tif 1 2000 2000 15 0 0.1 50
 
      cout<<"Reading Input Files and Parameters."<<endl;
     if (output.size() != 1) return false;
@@ -239,7 +227,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     MatrixTypeFloat weights_float = weights.cast<float>();
 
 
-    MatrixTypeDouble weights_ac = readMatrix(weight_file_ac); //weights_ac = weights_ac/255.0;
+    MatrixTypeDouble weights_ac = readMatrix(weight_file_ac);
     MatrixTypeDouble sep_filters_ac = readMatrix(sep_filters_file_ac);
     MatrixTypeFloat sep_filters_float_ac = sep_filters_ac.cast<float>();
     MatrixTypeFloat weights_float_ac = weights_ac.cast<float>();
@@ -256,33 +244,10 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
     MatrixTypeFloat * features_image = new MatrixTypeFloat[n_train_images];
     VectorTypeFloat * train_gt_vector = new VectorTypeFloat[n_train_images];
     ITKImageType::SizeType * size_img = new ITKImageType::SizeType[n_train_images];
-        // cout<<"Computing Features!"<<endl;
-//        //// get gt, compute features and random samples
-//        unsigned int n_pos_samples_per_image;
-//        unsigned int n_neg_samples_per_image;
-//        unsigned int collected_pos_samples = 0;
-//        unsigned int collected_neg_samples = 0;
 
-//        MatrixTypeFloat all_samples_features = MatrixTypeFloat::Zero(n_samples_tot,n_features_tot) ;
-//        VectorTypeFloat all_samples_gt = VectorTypeFloat::Zero(n_samples_tot) ;
-
-//        MatrixTypeFloat sampled_features_image;
-//        VectorTypeFloat sampled_gt_vector_image;
         for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
             cout<<"Processing Train Image "<< i_img+1<< "/"<< n_train_images << endl;
-
-//            if(i_img<n_train_images-1)
-//            {
-//                n_pos_samples_per_image = n_pos_samples_tot/n_train_images;
-//                n_neg_samples_per_image = n_neg_samples_tot/n_train_images;
-//            }
-//            else
-//            {
-//                n_pos_samples_per_image = n_pos_samples_tot - collected_pos_samples;
-//                n_neg_samples_per_image = n_neg_samples_tot - collected_neg_samples;
-//            }
-
 
             char * train_img_file = trainImagePaths->at(i_img);
             cout<<"image file "<< train_img_file << endl;
@@ -316,66 +281,21 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
             train_img_ITK =v3d2ItkImage<ITKImageType,ImageScalarTypeUint8>(train_img,train_img_size,channel);
 
-            ////TODO ! convert swc file to distance gt image
-
+            //// convert swc file to distance gt image
             ITKImageType::Pointer train_gt_radial_ITK  =  ITKImageType::New();
-            train_gt_radial_ITK =swc2ItkImage<ITKImageType,ImageScalarTypeFloat>(swc_gt_file,train_img_size);//for now return null pointer !
-
-//            // Test! To be deleted!!!  // // // // // // //
-//            std::cout << "Attempting to convert to V3D! size: " << train_gt_radial_ITK->GetLargestPossibleRegion().GetSize() << std::endl << std::flush;
-
-//            typename ITKImageType::IndexType pixelIndex; pixelIndex[0] = pixelIndex[1] = pixelIndex[2] = 0;
-//            std::cout << "First pixel: " << train_gt_radial_ITK->GetPixel(pixelIndex) << std::endl << std::flush;
-
-//            Image4DSimple IinV3dFormat = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
-//            std::cout << "Attempting to save to file!\n" << std::flush;
-//          //  callback.saveImage(&IinV3dFormat, "/cvlabdata1/home/pglowack/Data/3dtest/geneva/inputs/3d/test/images_respaced/images_respaced-tif/whatever.v3draw");
-//          char *  name_out_swc_to_radial = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_to_itk.v3draw";
-//            callback.saveImage(&IinV3dFormat, name_out_swc_to_radial);
-
+            train_gt_radial_ITK =swc2ItkImage<ITKImageType,ImageScalarTypeFloat>(swc_gt_file,train_img_size);
 
 //save also radial gt and image to check size and  axis
 //            //radial gt
-//            Image4DSimple *train_radial_gt = callback.loadImage("/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
-//            callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_gt_debug.v3draw");
+//            Image4DSimple *train_radial_gt = callback.loadImage("../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
+//            callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/swc_gt_debug.v3draw");
 
 //            Image4DSimple input_debug_image = itk2v3dImage<ITKImageType>(train_img_ITK);
-//            callback.saveImage(&input_debug_image, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/swc_image_debug.v3draw");
+//            callback.saveImage(&input_debug_image, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/swc_image_debug.v3draw");
 
-
-   //     return false;
-
-//            //copy data to save with v3d format
-
-
-//            V3DLONG n_pixelsss = train_gt_radial_ITK->GetLargestPossibleRegion().GetSize()[0]
-//                             * train_gt_radial_ITK->GetLargestPossibleRegion().GetSize()[1]
-//                             * train_gt_radial_ITK->GetLargestPossibleRegion().GetSize()[2];
-//           float* out_data_copyyy = new float[n_pixelsss];
-//         for(unsigned int i_pix = 0; i_pix < n_pixelsss; i_pix++){
-//                out_data_copyyy[i_pix] = (float) (i_pix);
-//           }
-
-
-//     outimg1.setData((unsigned char *)(out_data_copy), size_img_scaled[0], size_img_scaled[1], size_img_scaled[2], 1, V3D_FLOAT32);
-
-
-
-//            char outimg_file_ac [500];
-
-//                sprintf (outimg_file_ac, "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
-
-//                cout << "saving: " << outimg_file_ac<<endl;
-//              callback.saveImage(&outimg1, outimg_file_ac);
-
-
-
-
-            // // // // // // // // // // // // // // // //
 
 
     //// (old)  load radial gt and compute exp dist gt
-//             cout<<"gt file "<< swc_gt_file << endl;
 //             Image4DSimple *train_radial_gt = callback.loadImage(swc_gt_file);
 //             if (!train_radial_gt || !train_radial_gt->valid())
 //             {
@@ -384,42 +304,24 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 //             }
 //              train_gt_radial_ITK = v3d2ItkImage<ITKImageType,ImageScalarTypeUint8>(train_radial_gt,train_img_size,channel);
 
-              cout << "Computing distance gt...  "<< endl;
+              cout << "Computing distance gt...  "<< endl << std::flush;
             // train_gt_ITK = radialGt2ExpDistGt<ITKImageType>(train_gt_radial_ITK,thresh_distance,scales,scale_toll);
              float thresh_distance = 21.0;
              ITKImageType::Pointer  train_gt_ITK_computed = binaryGt2ExpDistGt<ITKImageType>(train_gt_radial_ITK,thresh_distance);
-             cout << "Computing distance gt... Done."<< endl;
+             cout << "Computing distance gt... Done."<< endl<< std::flush;
 
            train_gt_vector[i_img]  = itkImage2EigenVector<ITKImageType,VectorTypeFloat>(train_gt_ITK_computed,n_pixels,n_pixels);
 
             ////compute features image (TODO add context features)
-            cout<<"Computing Features..."<<endl;
+            cout<<"Computing Features..."<<endl<< std::flush;
             computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(features_image[i_img],train_img_ITK,sep_filters_float,weights_float, scale_factor);
-
-            cout<<"Computing Features...Done!"<<endl;
+            cout<<"Computing Features...Done!"<<endl<< std::flush;
 
  //   cout<<"Rows Features: "<<features_image[i_img].rows()<<" Cols Features: "<<features_image[i_img].cols() <<endl;
     //cout<< "n pixels: "<< n_pixels << endl;
 
 
-//            ////random sampling
-//            cout<<"Getting Samples..."<<endl;
-//            bool got_samples = getTrainSamplesFeaturesAndGt<MatrixTypeFloat,VectorTypeFloat>(features_image,train_gt_vector,sampled_features_image, sampled_gt_vector_image,n_pos_samples_per_image,n_neg_samples_per_image);
-
-//            if(!got_samples){
-//                cout<< "Problems encountered while getting samples ! " << endl;
-//                return false;
-//            }
-//    cout<<"Getting Samples...Done!"<<endl;
-
-
-//            all_samples_features.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image ) = sampled_features_image;//P.middleRows(i, rows) <=> P(i+1:i+rows, :)
-//            all_samples_gt.middleRows(i_img*(collected_pos_samples+collected_neg_samples), n_pos_samples_per_image+n_neg_samples_per_image ) = sampled_gt_vector_image;
-
-//            collected_pos_samples += n_pos_samples_per_image;
-//            collected_neg_samples += n_neg_samples_per_image;
         }
-
         cout<<"Processed all Train Images "<< endl;
 
   cout<<"Starting Training..."<<endl;
@@ -432,9 +334,9 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
         if(i_ac>0){
             n_features_tot = features_image[0].cols()+features_ac[0].cols();
-        } //for now use same filter for image and autocontext features
+        }
 
-      //  cout << "n features all: " <<n_features_tot << endl;
+        cout << "Tot number of features available for training Regressor: " <<n_features_tot << endl;
 
         // get samples
         ////random sampling
@@ -450,7 +352,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
         MatrixTypeFloat sampled_features_image;
         VectorTypeFloat sampled_gt_vector_image;
         ///
-        cout<<"Getting Samples..."<<endl;
+        cout<<"Getting Samples..."<<endl << std::flush;
 
         for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
@@ -495,12 +397,9 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
         }//end sampling image
          cout<<"Getting Samples...Done!"<<endl;
-         cout<<"Collected " << collected_pos_samples << " Pos samples and " <<collected_neg_samples << " negative samples."<< endl;
+         cout<<"Collected " << collected_pos_samples << " positive samples and " <<collected_neg_samples << " negative samples."<< endl<< std::flush;
 
-//    cout<<"Max features: "<< all_samples_features.cast<float>().maxCoeff() <<"Min features: "<< all_samples_features.cast<float>().minCoeff()  << endl;
-//    cout<<"Max gt: "<< all_samples_gt.cast<double>().maxCoeff() <<"Min gt: "<< all_samples_gt.cast<double>().minCoeff()  << endl;
-
-
+         //write matrix features
 //        if(i_ac>0){
 //cout<<"writing matrix ac1 :" << endl;
 //            writeMatrix<MatrixTypeFloat>("/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/results/feats_AC1.txt",all_samples_features.cast<float>());
@@ -524,10 +423,10 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
         if(i_ac<n_ac_iters && n_ac_iters>0){
 
-            std::cout << "Computing Features Auto-Context..." << std::endl;
+            std::cout << "Computing Features Auto-Context..." << std::endl << std::flush;
             for(unsigned int i_img =0; i_img<n_train_images; i_img++){
 
-                cout<<"...Train Image "<< i_img+1<< "/"<< n_train_images << "..."<<endl;
+                cout<<"...Train Image "<< i_img+1<< "/"<< n_train_images << "..."<<endl<< std::flush;
 
 
                 if(i_ac>0){
@@ -567,13 +466,13 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
             }
 
-            std::cout << "Computing Features Auto-Context...Done." << std::endl;
+            std::cout << "Computing Features Auto-Context...Done." << std::endl<< std::flush;
 
         }
 
     }//end AC iters
-cout<<"Training Done!"<<endl;
 
+    cout<<"Training Done!"<<endl;
     cout<<"Training Terminated Normally"<<endl;
     return true;
 }
@@ -584,15 +483,11 @@ cout<<"Training Done!"<<endl;
 bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
-   // std::cout << "INSIDE TEST TUBULARITY PLUGIN  " << std::endl;
-
-
-   //sample call:  ./vaa3d -x RegressionTubularityAC -f test -i /cvlabdata1/cvlab/datasets_amos/data3D/OPF/train/images/images_tif/OP_9.tif -o /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/OP_9_tubularity.v3draw -p /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_0.cfg /cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/OPF1_bf_filters_ac/Regressor_ac_1.cfg
 
   if (output.size() != 1) return false;
   const char *regressor_filename;
 
-    vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+  vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
         if(paras.size() < 1) return false;
 
   vector<char*> *inputImagePaths = ((vector<char*> *)(input.at(0).p));
@@ -602,8 +497,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     std::cerr << "The number of input images is different than the number of output images." << std::endl;
     return false;
   } else {
-   // std::cout << "inputImagePaths->size():  " << inputImagePaths->size() << std::endl
-     //         << "outputImagePaths->size(): " << outputImagePaths->size() << std::endl;
+   // do nothing
   }
 
   unsigned int n_ac_iters = paras.size()-1;
@@ -626,8 +520,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
       v3d_msg("Fail to open the image file.", 0);
       return false;
     }
-
-   // cout<<"Loaded image"<<endl;
 
     //input
     float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
@@ -653,7 +545,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     I =v3d2ItkImage<ITKImageType,ImageScalarTypeUint8>(inimg,in_sz,c);
 
     ////load filters
-
     MatrixTypeDouble weights = readMatrix(weight_file_im);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file_im);
 
@@ -667,7 +558,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     unsigned int n_img_features = weights.cols();
     unsigned int n_ac_features = weights_ac.cols();
-    ////convolve image
 
     const float scale_factor =1.0;
     MatrixTypeFloat sep_filters_float = sep_filters.cast<float>();
@@ -722,13 +612,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
 
-
-      //MatrixTypeFloat features_ac;
-
-
-    //  ITKImageType::PixelType max_pred;
-    //  ITKImageType::PixelType min_pred;
-
       for(unsigned int i_ac=0; i_ac<=n_ac_iters; i_ac++){
 
            cout<<"Auto-Context Iter "<< i_ac<< "/" <<n_ac_iters<< endl;
@@ -745,7 +628,6 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
 //          }
 
-            //TreeBoosterType::ResponseArrayType newScores = predictRegressor(regressor_filename,features_image_and_ac);
           cout<<"applying regressor:  "<<  regressor_filename<< endl<< std::flush;
            predictRegressor(regressor_filename,nonsep_features_all,newScores);
             predImg = eigenVector2itkImage<ITKImageType,VectorTypeFloat>(newScores.cast<float>(),size_img_scaled);
@@ -753,27 +635,13 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
             if(i_ac<n_ac_iters && n_ac_iters>0){
 
 
-//                typedef itk::MinimumMaximumImageCalculator <ITKImageType>
-//                          ImageCalculatorFilterType;
-//                ImageCalculatorFilterType::Pointer imageCalculatorFilter
-//                          = ImageCalculatorFilterType::New ();
-//                  imageCalculatorFilter->SetImage(predImg);
-//                  imageCalculatorFilter->Compute();
-// max_pred = imageCalculatorFilter->GetMaximum();
-// min_pred = imageCalculatorFilter->GetMinimum();
-
-                //  features_image_and_ac =  MatrixTypeFloat::Zero(nonsep_features_all.rows(),nonsep_features_all.cols()+features_ac.cols()) ;
                 if(i_ac<1){
                     nonsep_features_all.conservativeResize(nonsep_features_all.rows(), n_img_features+ n_ac_features);
                 }
-                //  features_image_and_ac.middleCols(0,nonsep_features_all.cols()) = nonsep_features_all;
-                //  features_image_and_ac.middleCols(nonsep_features_all.cols(),features_ac.cols()) = features_ac;
-               //    predictRegressor(regressor_filename,nonsep_features_all,newScores);
 
 
                 //compute features auto-context
                 std::cout << "Computing features Auto-context..."<<std::endl<< std::flush;
-//                computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(features_ac,predImg,sep_filters_float_ac,weights_float_ac, scale_factor);
                 MatrixTypeFloat temp_features_ac;
                 computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(temp_features_ac,predImg,sep_filters_float_ac,weights_float_ac, scale_factor);
                 nonsep_features_all.middleCols(n_img_features,n_ac_features) = temp_features_ac;
@@ -797,22 +665,16 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
                  scale_factor_inv[1] = ((double)in_sz[1])/((double)out_sz_res[1]);
                  scale_factor_inv[2] = ((double)in_sz[2])/((double)out_sz_res[2]);
 
-           //     std::cout << "scale_factor_inv: " << scale_factor_inv[0]<< " "<<  scale_factor_inv[1] << " " <<scale_factor_inv[2]<< endl;
 
                     ITKImageType::SizeType size_res; size_res[0] = out_sz_res[0]; size_res[1] = out_sz_res[1]; size_res[2] = out_sz_res[2];
                    pred_img_itk =  eigenVector2itkImage<ITKImageType,TreeBoosterType::ResponseArrayType>(newScores, size_res);
                    Image4DSimple pred_img_v3d =  itk2v3dImage<ITKImageType>(pred_img_itk);
-                 //   std::cout << "RESAMPLING PRED: " << endl;
 
                     predImg_scaled_original_size = resize_image_v3d<ITKImageType,float>(&pred_img_v3d,scale_factor_inv,out_sz_back);
-//                 //   std::cout << "RESAMPLING SIZE: " << out_sz_back[0]<< "IN SIZE: "<<in_sz[0]  <<endl;
 
                    newScores_original_size = itkImage2EigenVector<ITKImageType,TreeBoosterType::ResponseArrayType>(predImg_scaled_original_size,n_pixels,n_pixels);
                     std::cout << "Resampling output Done." <<std::endl;
                 }
-          //       std::cout << "summin output scale" <<i_scale <<std::endl;
-          //       std::cout << "score orig 0: " <<finalScores[0] <<std::endl;
-          //        std::cout << "score rescaled 0: " <<newScores_original_size[0] <<std::endl;
 
                finalScores +=newScores_original_size;
 
@@ -821,7 +683,6 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
                 ////save image
                 cout<<"saving image"<<endl;
-                // save image
 
                 //copy data to save with v3d format
                // V3DLONG n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
@@ -839,7 +700,7 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
                     sprintf (outimg_file_ac, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
 
-                    cout << "saving: " << outimg_file_ac<<endl;
+                    cout << "saving temp results: " << outimg_file_ac<<endl;
                   callback.saveImage(&outimg1, outimg_file_ac);
 
 
@@ -866,7 +727,7 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 //     callback.saveImage(&outimg_final, outimg_file);
 
     //save uint8
-    //normalize in 0 255
+    //normalize in [0,255]
     finalScores = 255.0*(finalScores - finalScores.minCoeff())/( finalScores.maxCoeff() - finalScores.minCoeff() );
     unsigned char* out_data_copy_final = new unsigned char[n_pixels];
     for(unsigned int i_pix = 0; i_pix < n_pixels; i_pix++){
@@ -884,5 +745,5 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
   return true;
 
 
-}// end test funciton
+}// end test function
 
