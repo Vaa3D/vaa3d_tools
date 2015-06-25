@@ -17,7 +17,7 @@
 
 Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
 
-QString versionStr = "v2.620";
+QString versionStr = "v2.621";
 
 QStringList NTApp2Plugin::menulist() const
 {
@@ -107,7 +107,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
     {
         v3d_msg(versionStr.prepend("\nVaa3D-Neuron2 APP2/APP1  "), 0);
         printf("\n**** Usage of APP2 ****\n");
-        printf("vaa3d -x plugin_name -f app2 -i <inimg_file> -o <outswc_file> -p [<inmarker_file> [<channel> [<bkg_thresh> [<b_256cube> [<b_RadiusFrom2D> [<is_gsdt> [<is_gap> [<length_thresh> [is_resample][is_high_intensity]]]]]]]]]\n");
+        printf("vaa3d -x plugin_name -f app2 -i <inimg_file> -o <outswc_file> -p [<inmarker_file> [<channel> [<bkg_thresh> [<b_256cube> [<b_RadiusFrom2D> [<is_gsdt> [<is_gap> [<length_thresh> [is_resample][is_brightfield][is_high_intensity]]]]]]]]]\n");
         printf("inimg_file          Should be 8/16/32bit image\n");
         printf("inmarker_file       If no input marker file, please set this para to NULL and it will detect soma automatically. \n"
                "                    When the file is set, then the first marker is used as root/soma.\n");
@@ -121,11 +121,13 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         
         printf("length_thresh       Default 5\n");
         printf("is_resample         If allow resample (1 for yes and 0 for no. Default 1.)\n");
+        printf("is_brightfield      If the signals are dark instead of bright (1 for yes and 0 for no. Default 0.)\n");
         printf("is_high_intensity   If the image has high intensity background (1 for yes and 0 for no. Default 0.)\n");
 
 
+
         //printf("SR_ratio         signal/reduntancy threshold, default 1/3\n");
-        printf("outswc_file      If not be specified, will be named automatically based on the input image file name.\n");
+        printf("outswc_file         If not be specified, will be named automatically based on the input image file name.\n");
         
         printf("\n**** Usage of APP1 ****\n");
         printf("vaa3d -x plugin_name -f app1 -i <inimg_file> -p [<inmarker_file> [<channel> [<bkg_thresh> [<b_256cube> ]]]]\n");

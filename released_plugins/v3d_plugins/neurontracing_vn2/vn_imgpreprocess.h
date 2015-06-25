@@ -22,5 +22,12 @@ bool subvolumecopy(Image4DSimple * dstImg,
                    V3DLONG z0, V3DLONG szz,
                    V3DLONG c0, V3DLONG szc);
 
+bool invertedsubvolumecopy(Image4DSimple * dstImg,
+                   Image4DSimple * srcImg,
+                   V3DLONG x0, V3DLONG szx,
+                   V3DLONG y0, V3DLONG szy,
+                   V3DLONG z0, V3DLONG szz,
+                   V3DLONG c0, V3DLONG szc);
+
 #endif
 

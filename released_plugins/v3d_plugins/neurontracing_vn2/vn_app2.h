@@ -19,6 +19,7 @@ struct PARA_APP2: public PARA_VN
     bool b_RadiusFrom2D; //how to estimate radius of each reconstruction node, from 2D plane (for anisotropic case) or 3D (for isotropic case)
     int b_resample;
     int b_intensity;
+    int b_brightfiled;
 
     
     QString inimg_file, inmarker_file, outswc_file;
@@ -37,6 +38,7 @@ struct PARA_APP2: public PARA_VN
         b_RadiusFrom2D = true;
         b_resample = 1;
         b_intensity = 0;
+        b_brightfiled = 0;
 
         inimg_file = "";
         inmarker_file = "";
@@ -79,6 +81,8 @@ struct PARA_APP2: public PARA_VN
             bresample_Checker->setChecked(b_resample);
             QCheckBox * b_intensity_Checker = new QCheckBox();
             b_intensity_Checker->setChecked(b_intensity);
+            QCheckBox * b_brightfiled_Checker = new QCheckBox();
+            b_brightfiled_Checker->setChecked(b_brightfiled);
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -100,6 +104,8 @@ struct PARA_APP2: public PARA_VN
             hbox2->addWidget(bresample_Checker);
             hbox2->addWidget(new QLabel("high intensity background"));
             hbox2->addWidget(b_intensity_Checker);
+            hbox2->addWidget(new QLabel("bright filed"));
+            hbox2->addWidget(b_brightfiled_Checker);
 
             layout->addLayout(hbox1,2,0,1,6);
             layout->addLayout(hbox2,3,0,1,6);
@@ -141,7 +147,7 @@ struct PARA_APP2: public PARA_VN
             b_RadiusFrom2D = b_radius2Dchecker->isChecked();
             b_resample = bresample_Checker->isChecked();
             b_intensity = b_intensity_Checker->isChecked();
-
+            b_brightfiled = b_brightfiled_Checker->isChecked();
             
             if (dialog) {delete dialog; dialog=0;}
         }

@@ -125,6 +125,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     tmpstr =  qPrintable( qtstr.setNum(p.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_resample).prepend("#b_resample = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_intensity).prepend("#b_intensity = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.b_brightfiled).prepend("#b_brightfiled = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc0).prepend("#xc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc1).prepend("#xc1 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.yc0).prepend("#yc0 = ") ); infostring.push_back(tmpstr);
@@ -150,13 +151,27 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         if(!p4dImageNew->createImage(p.xc1-p.xc0+1, p.yc1-p.yc0+1, p.zc1-p.zc0+1, 1, p.p4dImage->getDatatype()))
             return false;
         
-        if (!subvolumecopy(p4dImageNew,
-                           p.p4dImage,
-                           p.xc0, p.xc1-p.xc0+1,
-                           p.yc0, p.yc1-p.yc0+1,
-                           p.zc0, p.zc1-p.zc0+1,
-                           p.channel, 1))
+        if (p.b_brightfiled)
+        {
+            if(!invertedsubvolumecopy(p4dImageNew,
+                                      p.p4dImage,
+                                      p.xc0, p.xc1-p.xc0+1,
+                                      p.yc0, p.yc1-p.yc0+1,
+                                      p.zc0, p.zc1-p.zc0+1,
+                                      p.channel, 1))
             return false;
+        }
+        else
+        {
+            if(!subvolumecopy(p4dImageNew,
+                              p.p4dImage,
+                              p.xc0, p.xc1-p.xc0+1,
+                              p.yc0, p.yc1-p.yc0+1,
+                              p.zc0, p.zc1-p.zc0+1,
+                              p.channel, 1))
+
+            return false;
+        }
     }
     else
     {
@@ -173,6 +188,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     int marker_thresh = INF;
     if(p.b_intensity)
     {
+        if(p.b_brightfiled) p.bkg_thresh = 255 - p.bkg_thresh;
+
         for(int d = 1; d < p.landmarks.size(); d++)
         {
             int marker_x = p.landmarks[d].x - p.xc0;
@@ -184,6 +201,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                 marker_thresh = indata1d[marker_z*in_sz[0]*in_sz[1] + marker_y*in_sz[0] + marker_x];
             }
         }
+
         p.bkg_thresh = (marker_thresh - 10 > p.bkg_thresh) ? marker_thresh - 10 : p.bkg_thresh;
     }
 
@@ -283,6 +301,12 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         
         tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
     }
+    else if (p.b_brightfiled)
+    {
+        p.bkg_thresh = 255 - p.bkg_thresh;
+    }
+
+
 
     float * phi = 0;
     vector<MyMarker> inmarkers;
@@ -546,6 +570,13 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         
         V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
         unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
+        if(p.b_brightfiled)
+        {
+            for(V3DLONG i = 0; i < p.p4dImage->getTotalUnitNumberPerChannel(); i++)
+                pOriginalData[i] = 255 - pOriginalData[i];
+
+        }
+
         int method_radius_est = ( p.b_RadiusFrom2D ) ? 1 : 2;
         
         switch (p.p4dImage->getDatatype())
@@ -583,6 +614,12 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                 break;
         }
         
+        if(p.b_brightfiled)
+        {
+            for(V3DLONG i = 0; i < p.p4dImage->getTotalUnitNumberPerChannel(); i++)
+                pOriginalData[i] = 255 - pOriginalData[i];
+
+        }
         //prepare the output comments for neuron info in the swc file
         
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
@@ -691,6 +728,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : is_break_accept; k++;// true
     length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : length_thresh; k++;// 1.0;
     b_resample = (paras.size() >= k+1) ? atoi(paras[k]) : b_resample; k++;// 1.0;
+    b_brightfiled = (paras.size() >= k+1) ? atoi(paras[k]) : b_brightfiled; k++;// 0.0;
     b_intensity = (paras.size() >= k+1) ? atoi(paras[k]) : b_intensity; k++;// 0.0;
 
     //cnn_type = 2; // default connection type 2

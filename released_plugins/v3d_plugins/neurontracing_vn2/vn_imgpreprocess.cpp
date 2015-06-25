@@ -316,4 +316,71 @@ bool subvolumecopy(Image4DSimple * dstImg,
     return true;
 }
 
+bool invertedsubvolumecopy(Image4DSimple * dstImg,
+                   Image4DSimple * srcImg,
+                   V3DLONG x0, V3DLONG szx,
+                   V3DLONG y0, V3DLONG szy,
+                   V3DLONG z0, V3DLONG szz,
+                   V3DLONG c0, V3DLONG szc)
+{
+    if (!dstImg || !dstImg->valid() ||
+        !srcImg || !srcImg->valid() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy(). 111");
+        return false;
+    }
+    if (x0<0 || szx<1 || szx> dstImg->getXDim() || x0+szx > srcImg->getXDim() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy() 21.");
+        return false;
+    }
+    if (y0<0 || szy<1 || szy> dstImg->getYDim() || y0+szy > srcImg->getYDim() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy() 22.");
+        return false;
+    }
+    if (z0<0 || szz<1 || szz> dstImg->getZDim() || z0+szz > srcImg->getZDim() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy() 23.");
+        return false;
+    }
+    if ( c0<0 || szc<1 || szc> dstImg->getCDim() || c0+szc > srcImg->getCDim() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy() 24.");
+        return false;
+    }
+    if (dstImg->getDatatype() != srcImg->getDatatype() )
+    {
+        v3d_msg("Invalid parameters for the function subvolumecopy() 3.");
+        return false;
+    }
 
+    unsigned char *dst1d = dstImg->getRawData();
+    unsigned char *src1d = srcImg->getRawData();
+
+    V3DLONG srcChannelLen = srcImg->getTotalUnitNumberPerChannel();
+    V3DLONG srcPlaneLen = srcImg->getTotalUnitNumberPerPlane();
+    V3DLONG srcLineLen = srcImg->getXDim();
+
+    V3DLONG i,j,k,c;
+    V3DLONG n=0;
+
+    if(dstImg->getDatatype() == V3D_UINT8)
+    {
+        for (c=0;c<szc;c++)
+            for (k=0;k<szz;k++)
+                for (j=0;j<szy;j++)
+                    for (i=0;i<szx;i++)
+                    {
+                        dst1d[n] = 255 - src1d[(c+c0)*srcChannelLen + (k+z0)*srcPlaneLen + (j+y0)*srcLineLen + (i+x0)];
+                        n++;
+                    }
+    }
+    else
+    {
+        v3d_msg("Invalid data type in invertedsubvolumecopy(). do nothing.");
+        return false;
+    }
+
+    return true;
+}
