@@ -25,7 +25,8 @@ INCLUDEPATH += ../libs/libconfig-1.4.9/lib
 INCLUDEPATH += ../libs/ITK_include
 INCLUDEPATH += ../libs/regression
 INCLUDEPATH += ../libs/sqb_0.1/src/MatrixSQB
-INCLUDEPATH += ../libs/boost_1_58_0 # download and unzip it (not in svn because it is big)
+#INCLUDEPATH += ../libs/boost_1_58_0 # download and unzip it (not in svn because it is big)
+INCLUDEPATH += ../libs/boost_1_58_0
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
