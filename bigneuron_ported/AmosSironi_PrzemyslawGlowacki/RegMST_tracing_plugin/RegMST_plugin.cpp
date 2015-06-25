@@ -152,7 +152,7 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
         printf("inimg_file                                The input image\n");
         printf("channel                                   Data channel for tracing. Start from 1 (default 1).\n");
         printf("n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n");
-        printf("reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors. Number of files must be equal to n_AC.\n");
+        printf("reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC.\n");
         printf("window size                               Window size for seed detection in MST. (default 10)\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
