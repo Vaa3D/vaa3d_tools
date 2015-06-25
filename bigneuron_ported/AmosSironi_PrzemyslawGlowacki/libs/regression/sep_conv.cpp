@@ -429,10 +429,10 @@ void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType:
 
         if(~add_context_features){
 
-             std::cout << "Computing non-sep features..."<<std::endl;
+             std::cout << "Computing non-sep features..."<<std::endl<< std::flush;
                     nonsep_features_all = sep_features_all*weight_matrix;
                     nonsep_features_all /=(scale_factor*scale_factor*scale_factor);
-                    std::cout << "Computing non-sep features...Done."<<std::endl;
+                    std::cout << "Computing non-sep features...Done."<<std::endl<< std::flush;
         }
          else{//TODO
 

@@ -109,7 +109,7 @@ void predictRegressor(const char * regressor_output_file,const gFeatArrayType &a
 
 
     ////apply trained regressor
-   std::cout << "Loading Regressor..." << std::endl;
+   std::cout << "Loading Regressor..." << std::endl<< std::flush;
 
     libconfig::Config cfg;
 
@@ -136,9 +136,9 @@ void predictRegressor(const char * regressor_output_file,const gFeatArrayType &a
     TB.loadFromLibconfig(regressor);
 
     unsigned maxIters = TB.numWeakLearners();
-    std::cout << "Loading Regressor...Done." << std::endl;
+    std::cout << "Loading Regressor...Done." << std::endl<< std::flush;
 
-    std::cout << "Predicting..."<< std::endl;
+    std::cout << "Predicting..."<< std::endl<< std::flush;
     //TreeBoosterType::ResponseArrayType newScores;
     newScores = TreeBoosterType::ResponseArrayType::Zero(all_samples_features.rows());
 
@@ -146,7 +146,7 @@ void predictRegressor(const char * regressor_output_file,const gFeatArrayType &a
                 TreeBoosterType::FeatureValueObjectType(all_samples_features),
                 newScores,
                 maxIters );
-    std::cout<< "Predicting...Done!"<< std::endl;
+    std::cout<< "Predicting...Done!"<< std::endl<< std::flush;
 
 }
 

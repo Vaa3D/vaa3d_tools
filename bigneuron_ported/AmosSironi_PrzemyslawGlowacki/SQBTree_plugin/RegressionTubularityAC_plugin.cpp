@@ -81,8 +81,8 @@ void convolveV3D(unsigned char *data1d,V3DLONG *in_sz,float* &outimg, const unsi
 QStringList RegressionTubularityACPlugin::menulist() const
 {
   return QStringList()
-      <<tr("menu1")
-     <<tr("menu2")
+      <<tr("test")
+     <<tr("train")
     <<tr("about");
 }
 
@@ -96,18 +96,18 @@ QStringList RegressionTubularityACPlugin::funclist() const
 
 void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-  if (menu_name == tr("menu1"))
+  if (menu_name == tr("test"))
   {
     v3d_msg("To be implemented.");
   }
-  else if (menu_name == tr("menu2"))
+  else if (menu_name == tr("train"))
   {
     v3d_msg("To be implemented.");
   }
   else
   {
-    v3d_msg(tr("a plugin for test. "
-               "Developed by HP, 2015-5-5"));
+    v3d_msg(tr("a plugin for training and testing a tubularity regressor. "
+               "You can call this plugin from command line. See README file for more details."));
   }
 }
 
@@ -118,7 +118,7 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
   //	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
   //	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-  if(func_name == tr("train"))
+  if(func_name == tr("train")) //train a classifier
   {
       return trainTubularityImage(callback, input, output);
 
@@ -144,10 +144,10 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 
 
 
-
+//image features
 const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
 const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
-
+//auto-context features
 const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
 const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
 
@@ -232,13 +232,6 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
 
     ////get filters to compute features
- //image features
-//   const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-//       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
-//    //autocontext features
-//       const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-//       const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
-
 
     MatrixTypeDouble weights = readMatrix(weight_file_im);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file_im);
@@ -661,12 +654,6 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     ////load filters
 
-//    const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-//       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
-
-//  const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-//  const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
-
     MatrixTypeDouble weights = readMatrix(weight_file_im);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file_im);
 
@@ -730,9 +717,9 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
         V3DLONG n_pixels_scaleed = size_img_scaled[0]*size_img_scaled[1]*size_img_scaled[2];
 
     MatrixTypeFloat nonsep_features_all;
-   std::cout << "Computing features..."<<std::endl;
+   std::cout << "Computing features..."<<std::endl<< std::flush;
     computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(nonsep_features_all,I_resized,sep_filters_float,weights_float, scale_factor);
-std::cout << "Computing features...Done."<<std::endl;
+std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
 
 
@@ -759,7 +746,7 @@ std::cout << "Computing features...Done."<<std::endl;
 //          }
 
             //TreeBoosterType::ResponseArrayType newScores = predictRegressor(regressor_filename,features_image_and_ac);
-          cout<<"applying regressor:  "<<  regressor_filename<< endl;
+          cout<<"applying regressor:  "<<  regressor_filename<< endl<< std::flush;
            predictRegressor(regressor_filename,nonsep_features_all,newScores);
             predImg = eigenVector2itkImage<ITKImageType,VectorTypeFloat>(newScores.cast<float>(),size_img_scaled);
 
@@ -785,13 +772,13 @@ std::cout << "Computing features...Done."<<std::endl;
 
 
                 //compute features auto-context
-                std::cout << "Computing features Auto-context..."<<std::endl;
+                std::cout << "Computing features Auto-context..."<<std::endl<< std::flush;
 //                computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(features_ac,predImg,sep_filters_float_ac,weights_float_ac, scale_factor);
                 MatrixTypeFloat temp_features_ac;
                 computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(temp_features_ac,predImg,sep_filters_float_ac,weights_float_ac, scale_factor);
                 nonsep_features_all.middleCols(n_img_features,n_ac_features) = temp_features_ac;
                 temp_features_ac.resize(0,0);
-                std::cout << "Computing features Auto-context...Done."<<std::endl;
+                std::cout << "Computing features Auto-context...Done."<<std::endl<< std::flush;
 
             }//end compute features auto-context
 

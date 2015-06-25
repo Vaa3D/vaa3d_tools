@@ -41,7 +41,7 @@ public:
           size_t firstNonBlankIndex = line.find_first_not_of(" \t\r\n");
           if(firstNonBlankIndex != std::string::npos) {
             if(line[firstNonBlankIndex] != '#') {
-              std::cout << "line: " << line << '\n';
+             // std::cout << "line: " << line << '\n';
               std::stringstream lineStream(line);
               int ind;
               int type;
@@ -54,15 +54,15 @@ public:
                 currentMaxInd = ind + globalMaxInd ;
               }
             } else {
-              std::cout << "comment: " << line << '\n';
+            //  std::cout << "comment: " << line << '\n';
             }
           } else {
-            std::cout << "blank line: " << line << '\n';
+           // std::cout << "blank line: " << line << '\n';
           }
         }
         swcFile.close();
         globalMaxInd = currentMaxInd;
-        std::cout << "globalMaxInd: " << globalMaxInd << std::endl;
+       // std::cout << "globalMaxInd: " << globalMaxInd << std::endl;
       }
 
       else std::cout << "Unable to open file" << std::endl;
@@ -125,7 +125,7 @@ typename ITKImageType::Pointer v3d2ItkImage(Image4DSimple *inimg,const long int 
 template<typename ImageType>
 Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 
-//  std::cout << "Attempting to convert to V3D! Hereeeee----11!" << std::endl << std::flush;
+//  std::cout << "Attempting to convert to V3D!" << std::endl << std::flush;
 
 
         //typename ImageType::RegionType region;
@@ -137,7 +137,6 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
 //        region.SetSize(size);
 //        region.SetIndex(start);
 
- // std::cout << "Attempting to convert to V3D! Hereeeee00!" << std::endl << std::flush;
 
 
         itk::ImageRegionIterator<ImageType> imageIterator(itk_image,region);
@@ -153,7 +152,6 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
         in_sz[1] = size[1];
         in_sz[2] = size[2];
 
-   //     std::cout << "Attempting to convert to V3D! Hereeeee11!" << std::endl << std::flush;
 
         const long int n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
 
@@ -173,10 +171,8 @@ Image4DSimple itk2v3dImage(typename ImageType::Pointer itk_image){
             }
 
 //
-    //          std::cout << " elem 1,2,3" <<out_data_copy[0] << "," << out_data_copy[1] << ","<<out_data_copy[2]<<std::endl;
 
 
-  //      std::cout << "Attempting to convert to V3D! Hereeeee22!" << std::endl << std::flush;
 
 
         outimg_v3d.setData((unsigned char *)(out_data_copy), in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
@@ -319,7 +315,7 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
 
   typename ITKImageType::IndexType pixelIndex;
 
-  std::cout << "Managed to create an empty image!\n" << std::flush;
+//  std::cout << "Managed to create an empty image!\n" << std::flush;
 
   for(std::vector< SwcFileContent::SwcRow >::iterator rowi = swcFileContent.rows.begin(); rowi != swcFileContent.rows.end(); rowi++) {
     typename ITKImageType::IndexType pixelIndex;

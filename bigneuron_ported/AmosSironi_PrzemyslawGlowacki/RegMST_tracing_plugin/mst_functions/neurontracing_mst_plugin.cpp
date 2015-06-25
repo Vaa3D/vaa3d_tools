@@ -337,7 +337,7 @@ trace_para.b_estRadii = false;
     nt_final.listNeuron = listNeuron;
     nt_final.hashNeuron = hashNeuron;
 
-    QString swc_name = PARA.inimg_file + "_MST_Tracing.swc";
+    QString swc_name = PARA.inimg_file + "_RegMST_Tracing.swc";
 
     writeSWC_file(swc_name,nt_final);
 
