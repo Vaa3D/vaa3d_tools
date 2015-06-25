@@ -322,63 +322,60 @@ void subtree_dialog::soma_clicked()
 {
     qDebug()<<"soma clicked";
     int mid=markers->currentIndex();
-    int marker_id=calc_nearest_node_around_marker();
-    nt->listNeuron[marker_id].type=1;
+//    int marker_id=calc_nearest_node_around_marker();
+//    nt->listNeuron[marker_id].type=1;
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " soma");
     LList_in[mid].color.r=LList_in[mid].color.g=LList_in[mid].color.b=0;
     LList_in[mid].comments="soma";
+    LList_in[mid].name=QString::number(1).toStdString();
 
 }
 
 void subtree_dialog::axon_clicked()
 {
     int mid=markers->currentIndex();
-    int marker_id=calc_nearest_node_around_marker();
-    qDebug()<<"marker id:"<<marker_id;
-    sort_type_def(2,(float)(mid+1),marker_id);
+//    int marker_id=calc_nearest_node_around_marker();
+//    sort_type_def(2,(float)(mid+1),marker_id);
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " axon");
-    LList_in[mid].color.r=255;
-    LList_in[mid].color.g=LList_in[mid].color.b=0;
+//    LList_in[mid].color.r=255;
+//    LList_in[mid].color.g=LList_in[mid].color.b=0;
     LList_in[mid].comments="axon";
-    LList_in[mid].name=QString::number(marker_id).toStdString();
+    LList_in[mid].name=QString::number(2).toStdString();
 }
 
 void subtree_dialog::apical_dendrite_clicked()
 {
     int mid=markers->currentIndex();
-    int marker_id=calc_nearest_node_around_marker();
-    qDebug()<<"marker id:"<<marker_id;
-    sort_type_def(4,(float)(mid+1),marker_id);
+//    int marker_id=calc_nearest_node_around_marker();
+//    sort_type_def(4,(float)(mid+1),marker_id);
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " apical dendrite");
-    LList_in[mid].color.r=LList_in[mid].color.g=LList_in[mid].color.b=0;
+//    LList_in[mid].color.r=LList_in[mid].color.g=LList_in[mid].color.b=0;
     LList_in[mid].comments="apical dendrite";
-    LList_in[mid].name=QString::number(marker_id).toStdString();
+    LList_in[mid].name=QString::number(4).toStdString();
 }
 
 void subtree_dialog::basal_clicked()
 {
     int mid=markers->currentIndex();
-    int marker_id=calc_nearest_node_around_marker();
-    qDebug()<<"marker id:"<<marker_id;
-    sort_type_def(7,(float)(mid+1),marker_id);
+//    int marker_id=calc_nearest_node_around_marker();
+//    sort_type_def(7,(float)(mid+1),marker_id);
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " basal dendrite");
-    LList_in[mid].color.g=255;
-    LList_in[mid].color.r=LList_in[mid].color.b=0;
+//    LList_in[mid].color.g=255;
+//    LList_in[mid].color.r=LList_in[mid].color.b=0;
     LList_in[mid].comments="basal dendrite";
-    LList_in[mid].name=QString::number(marker_id).toStdString();
+    LList_in[mid].name=QString::number(7).toStdString();
 }
 
 void subtree_dialog::oblique_clicked()
 {
     int mid=markers->currentIndex();
-    int marker_id=calc_nearest_node_around_marker();
-    qDebug()<<"marker id:"<<marker_id;
-    sort_type_def(3,(float)(mid+1),marker_id);
+//    int marker_id=calc_nearest_node_around_marker();
+//    sort_type_def(3,(float)(mid+1),marker_id);
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " oblique dendrite");
-    LList_in[mid].color.b=255;
-    LList_in[mid].color.r=LList_in[mid].color.g=0;
+//    LList_in[mid].color.b=255;
+//    LList_in[mid].color.r=LList_in[mid].color.g=0;
     LList_in[mid].comments="oblique dendrite";
-    LList_in[mid].name=QString::number(marker_id).toStdString();
+    LList_in[mid].name=QString::number(3).toStdString();
 }
 
 void subtree_dialog::check_window()
@@ -701,3 +698,49 @@ void subtree_dialog::calc_distance_to_subtree_root()
     qDebug()<<"finish calc distance to node";
 }
 
+void subtree_dialog::connected_components()
+{
+    map<int,int> mask;;
+    vector<int> seeds;
+
+    for (int i=0;i<nt->listNeuron.size();i++)
+    {
+        if(mask[i]>0) continue;
+        seeds.push_back(i);
+        mask[i]=tree_comp.size()+1;
+        int sid=0;
+        while (sid<seeds.size())
+        {
+            vector<int> nb_seeds=subtree[seeds[sid]];
+            for (int nid=0;nid<nb_seeds.size();nid++)
+            {
+                if (mask[nb_seeds[nid]]<=0)
+                {
+                    mask[nb_seeds[nid]]=mask[seeds[sid]];
+                    seeds.push_back(nb_seeds[nid]);
+                }
+            }
+            sid++;
+        }
+        tree_comp.push_back(seeds);
+    }
+}
+
+void subtree_dialog::run()
+{
+    //check nearest node for each marker
+    vector<int> close_nodes=calc_nearest_node_around_marker();
+
+    //check each tree how many, which and type of the markers
+    for (int i=0;i<tree_comp.size();i++)
+    {
+        int marker_num=0;
+        for (int j=0;j<close_nodes.size();j++)
+        {
+            if (mask[close_nodes[j]]==i+1)
+                marker_num++;
+        }
+
+    }
+    //
+}

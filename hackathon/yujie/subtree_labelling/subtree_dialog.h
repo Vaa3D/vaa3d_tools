@@ -24,6 +24,7 @@ public:
    void calc_distance_to_subtree_root();
    bool sort_swc_dialog();
    void build_connt_LUT();
+   void connected_components();
 
 public slots:
    void marker_change();
@@ -45,11 +46,11 @@ private:
    V3DPluginCallback2 *callback;
    LandmarkList LList_in;
    NeuronTree *nt;
-   V3DLONG sz_img[4];
    V3dR_MainWindow *swc_win;
    vector<vector<int> > subtree;
    QComboBox *markers;
    QDialog *mydialog2;
+   vector<vector<int> > tree_comp;
 };
 
 #endif // SUBTREE_DIALOG_H
