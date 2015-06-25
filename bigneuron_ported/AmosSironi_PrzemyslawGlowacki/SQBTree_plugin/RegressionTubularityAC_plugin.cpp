@@ -143,6 +143,18 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 }
 
 
+
+
+const char *weight_file_im ="../data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+const char *sep_filters_file_im ="../data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+
+const char *weight_file_ac = "../data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+const char *sep_filters_file_ac = "../data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+
+
+
+
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
@@ -221,11 +233,11 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
     ////get filters to compute features
  //image features
-   const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
-    //autocontext features
-       const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-       const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+//   const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+//       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+//    //autocontext features
+//       const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+//       const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
 
 
     MatrixTypeDouble weights = readMatrix(weight_file_im);
@@ -649,11 +661,11 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     ////load filters
 
-    const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+//    const char *weight_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+//       const char *sep_filters_file_im ="/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
 
-  const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-  const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+//  const char *weight_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+//  const char *sep_filters_file_ac = "/cvlabdata1/cvlab/datasets_amos/data3D/filter_banks/oof/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
 
     MatrixTypeDouble weights = readMatrix(weight_file_im);
     MatrixTypeDouble sep_filters = readMatrix(sep_filters_file_im);
@@ -838,7 +850,7 @@ std::cout << "Computing features...Done."<<std::endl;
 
                 char outimg_file_ac [500];
 
-                    sprintf (outimg_file_ac, "/cvlabdata1/home/asironi/vaa3d/vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
+                    sprintf (outimg_file_ac, "./temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
 
                     cout << "saving: " << outimg_file_ac<<endl;
                   callback.saveImage(&outimg1, outimg_file_ac);
