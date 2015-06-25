@@ -1,5 +1,5 @@
 # In this folder you find a vaa3d plugin implementing the method described in [1] (./SQBTree_plugin)
-# and a plugin using the the method [1] in combination with the Minimum Spanning Tree (MST) algorithm to reconstruct a neuron in an 3D image (./RegMST_tracing_plugin)
+# and a plugin using the method [1] in combination with the Minimum Spanning Tree (MST) algorithm to reconstruct a neuron in an 3D image (./RegMST_tracing_plugin)
 #
 # The plugin under ./RegMST_tracing_plugin will be used in the BigNeuron bench-testing [2]
  
