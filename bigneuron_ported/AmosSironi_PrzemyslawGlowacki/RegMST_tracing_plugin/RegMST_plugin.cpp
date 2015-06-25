@@ -65,7 +65,7 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 	{
         bool bmenu = true;
         v3d_msg("To be implemented. Please call this plugin from command line.\n "
-                "\n
+                "\n"
                 "***Usage of RegMST tracing***\n"
                 "vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>\n"
                 "inimg_file                                The input image\n"
@@ -83,7 +83,7 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 	{
         v3d_msg(tr("plugin for applying the regression tubularity approach [1]\n "
                    "in combiantion with the MST algorithm to reconstruct tubular structures.\n\n"
-                   " [1]  A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence."
+                   " [1]  A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence.\n"
 			"Developed by Amos Sironi and Przemyslaw Glowacki, 2015-6-23"));
 	}
 }
@@ -214,10 +214,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     //main neuron reconstruction code
-
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
-
-//    std::cout << "size image input : " << N <<" "<< M << " " << P <<std::endl;
 
 
  V3DPluginArgList  input;
@@ -229,14 +226,6 @@ buf_input_vec->push_back(buf_input);
  name_input_v3d.p =buf_input_vec;
  input.append(name_input_v3d);
 
-//  std::cout << "PARA.inimg_file.toStdString().c_str():  " << PARA.inimg_file.toStdString().c_str()<< std::endl;
-// std::cout << "buf input:  " << buf_input<< std::endl;
-// std::cout << "name_input_v3d.p:  " << name_para_v3d.p<< std::endl;
-// std::cout << "input.at(0).p:   " << (char*)input.at(0).p<< std::endl;
-
-//V3DPluginArgItem name_input_v3d;//(PARA.inimg_file);
-//name_input_v3d =
-//input.at(0).p = 0;//(char *)PARA.inimg_file.toStdString().c_str();
 
 V3DPluginArgList  output;
 V3DPluginArgItem name_output_v3d;
@@ -250,47 +239,21 @@ name_output_v3d.p =buf_out_vec;
 output.append(name_output_v3d);
 
 
-//char buf_para_array[PARA.n_ac_iters+1];
-//char **buf_para_point = new char*[PARA.n_ac_iters+1];
-
 vector<char*> *buf_para_vec= new vector<char*>[PARA.n_ac_iters];
 
 for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters; i_ac++){
 
     char *buf_para = new char[PARA.regressor_paths.at(i_ac).toStdString().size()+1];
     strcpy(buf_para, PARA.regressor_paths.at(i_ac).toStdString().c_str());
-   // buf_para_array[i_ac] =*buf_para;
-   // buf_para_point[i_ac] = buf_para;
     buf_para_vec->push_back(buf_para);
 
-
-
-//   strcpy(&buf_para_array[i_ac], PARA.regressor_paths.at(i_ac).toStdString().c_str());
-
-//     std::cout << "PARA.regressor_paths.at(i_ac).toStdString().c_str():  " << PARA.regressor_paths.at(i_ac).toStdString().c_str()<< std::endl;
-//     std::cout << "buf_para:  " << buf_para<< std::endl;
-   //  std::cout << "buf_para_array[i_ac]:  " << buf_para_array[i_ac]<< std::endl;
-   //    std::cout << "buf_para_point[i_ac]:  " << buf_para_point[i_ac]<< std::endl;
-//     std::cout << "buf_para_vec.at(i_ac):  " << buf_para_vec->at(i_ac)<< std::endl;
-    // std::cout << "input.at(i_ac+1).p:   " << (char * )input.at(i_ac+1).p<< std::endl;
-
 }
-//vector<char*> *params_array = ((vector<char*> *) buf_para_point);
-//std::cout << "params size:  " <<params_array->size()<<std::endl;
-
-//std::cout << "params size:  " <<buf_para_vec->size()<<std::endl;
-
-
-//std::cout << "copied Params " <<std::endl << std::flush;
 
 if( (PARA.n_ac_iters)>0){
     V3DPluginArgItem name_para_v3d;
-   // name_para_v3d.p =buf_para_array;
-   // name_para_v3d.p =buf_para_point;
      name_para_v3d.p =buf_para_vec;
     input.append(name_para_v3d);
 }
-//std::cout << "appended to input   " <<std::endl << std::flush;
 
 
 
@@ -302,15 +265,6 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
 
     std::cout << "calling REG tubularity plugin  " <<std::endl << std::flush;
 
-//    vector<char*> *inputImagePaths = ((vector<char*> *)(input.at(0).p));
-//    vector<char*> *outputImagePaths = ((vector<char*> *)(output.at(0).p));
-//  std::cout << "input size:  " <<inputImagePaths->size()<< std::endl;
-//   std::cout << "out size:  " <<outputImagePaths->size()<< std::endl;
-
-
-
-  //  testTubularityImage(callback, input,  output);
-
     QString full_plugin_name_tubularity = "RegressionTubularityAC";
     QString func_name_test_tubularity = "test";
     callback.callPluginFunc(full_plugin_name_tubularity,func_name_test_tubularity, input,output);
@@ -320,7 +274,8 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
 }else{//use original image for tracing
     mst_PARA.inimg_file = PARA.inimg_file;
 
-    std::cout << "no ac iter:  " <<PARA.n_ac_iters<<std::endl<< std::flush;;
+    std::cout << "no Regressor passed as input. n_ac_iters =   " <<PARA.n_ac_iters<<std::endl<< std::flush;
+    std::cout << "Applying MST to original image." <<std::endl<< std::flush;;
 
 }
 
@@ -328,22 +283,6 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
 
 std::cout << "calling MST tracing plugin  " <<std::endl<< std::flush;;
     autotrace_mst(callback,parent,mst_PARA,bmenu);
-
-//std::cout << "saving output  " <<std::endl << std::flush;
-//    //Output
-//    NeuronTree nt;
-
-//	QString swc_name = PARA.inimg_file + "_RegMST.swc";
-//	nt.name = "RegMST";
-
-//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-//    if(!bmenu)
-//    {
-//      //  std::cout << "free memory  " <<std::endl << std::flush;
-//        if(data1d) {delete []data1d; data1d = 0;}
-//    }
-
-//    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
 }
