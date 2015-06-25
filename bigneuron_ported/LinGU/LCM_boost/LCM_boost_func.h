@@ -277,9 +277,11 @@ int recover_component(cv::Mat image,cv::Mat label_img, int * fila_frag, std::vec
 		std::vector<std::vector<int> > PixelIdxListz);
 
 
+int filter_small_comp1(cv::Mat &seg_img, double thres);
 
+int merge_base2(cv::Mat input_image, cv::Mat &seg_img, int t2);
 
-
+int force_merge1(cv::Mat image, cv::Mat &seg_img);
 
 int is_breach(int v3[], int im_sz[]);
 
