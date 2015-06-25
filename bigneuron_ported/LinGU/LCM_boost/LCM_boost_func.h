@@ -307,6 +307,8 @@ void import_matrix_from_txt_file(const char* filename_X, std::vector <double>& v
 
 int trace_img(cv::Mat seg_img, cv::Mat image, char * outfile_swc);
 
+int trace_img1(cv::Mat seg_img, cv::Mat image, int offset[], char * outfile_swc);
+
 bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent);
 bool Opencv_example(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 

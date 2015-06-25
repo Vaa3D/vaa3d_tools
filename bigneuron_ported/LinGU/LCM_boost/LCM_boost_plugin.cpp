@@ -47,13 +47,11 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	{
 
 		cout << "**** Usage of LCM_boost tracing **** " << endl;
-		printf("vaa3d -x LCM_boost -f LCM_boost -i <inimg_file> -o <output_segmentation_file> <outswc_file>\n");
+		printf("vaa3d -x LCM_boost -f LCM_boost -i <inimg_file> -o  <outswc_file>\n");
 
-		printf("e.g.    vaa3d -x LCM_boost -f LCM_boost -i B4.v3draw -o tmp_tst.v3draw tmp_tst.swc \n");
+		printf("e.g.    vaa3d -x LCM_boost -f LCM_boost -i B4.v3draw -o tmp_tst.swc \n");
 
 		printf("inimg_file       The input image\n");
-
-        printf("output_segmentation_file          The file name of output segmentation.\n");
 
         printf("outswc_file      The file name of output swc.\n");
 

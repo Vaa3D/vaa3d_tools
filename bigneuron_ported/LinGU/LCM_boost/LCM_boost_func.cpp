@@ -210,6 +210,14 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     img_sz_new[2] = bz[1] - bz[0];
 
+    int offset[3];
+
+    offset[0] = bx[0];
+
+    offset[1] = by[1];
+
+    offset[2] = bz[0];
+
 
     Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
 
@@ -327,7 +335,9 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     sprintf(tmp_nm,swc_name.toStdString().c_str());
 
-    trace_img(seg_img, image, tmp_nm);
+  //  trace_img(seg_img, image, tmp_nm);
+
+  trace_img1(seg_img, image,offset, tmp_nm);
 
    // cout << "The traced result has been saved in neuron_swc.swc" << endl;
 
@@ -908,6 +918,309 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 }
 
 
+int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
+{
+    V3DLONG *sz = new V3DLONG[4];
+
+    for(int i =0; i < 3; i++)
+        sz[i] = (V3DLONG)seg_img.size[i];
+
+    int img_sz[3];
+
+    for(int i =0; i < 3; i++)
+        img_sz[i] = seg_img.size[i];
+
+
+    sz[3] = 1;
+
+    int datatype = 1;
+
+    int img_pg = img_sz[0] * img_sz[1] * img_sz[2];
+
+    uchar * show_img = new uchar[img_pg];
+
+
+    // subsititute the filled part with the average value
+
+    // first get the average value
+
+    int n_base = 0;
+
+    int mean_base = 0;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                unsigned char PixelValue = seg_img.at<uchar>(v3);
+
+                if(PixelValue > 150)
+                {
+                    n_base ++;
+
+                    mean_base = mean_base + (int)image.at<uchar>(v3);
+
+                }
+
+            }
+        }
+
+    }
+
+    mean_base = mean_base / n_base;
+
+    cout << "The mean value of image is " << mean_base << endl;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz * img_sz[1] * img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy * img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                unsigned char PixelValue = seg_img.at<uchar>(v3);
+                //unsigned char PV = image.at<uchar>(v3);
+
+
+                if(PixelValue > 10)
+                {
+
+                    if(PixelValue > 150)
+                    {
+                        //show_img[offsetk + offsetj + ix] = image.at<uchar>(v3);
+
+                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+                    }
+                    else
+                    {
+                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+
+                    }
+                }
+                else
+                {
+
+                    show_img[offsetk + offsetj + ix] = 0;
+
+                }
+
+            }
+        }
+
+    }
+
+    // extract the swc file from the segmented image
+
+    vector<MyMarker *> outtree;
+
+    cout<<"Start detecting cellbody"<<endl;
+
+    float * phi = 0;
+    vector<MyMarker> inmarkers;
+
+    fastmarching_dt_XY(show_img, phi, seg_img.size[0], seg_img.size[1], seg_img.size[2],2, 10);
+
+    int in_sz[3];
+
+    in_sz[0] = sz[0];
+
+    in_sz[1] = sz[1];
+
+    in_sz[2] = sz[2];
+
+
+    V3DLONG sz0 = sz[0];
+    V3DLONG sz1 = sz[1];
+    V3DLONG sz2 = sz[2];
+    V3DLONG sz01 = sz0 * sz1;
+    V3DLONG tol_sz = sz01 * sz2;
+
+    V3DLONG max_loc = 0;
+    double max_val = phi[0];
+    for(V3DLONG i = 0; i < tol_sz; i++)
+    {
+        if(phi[i] > max_val)
+        {
+            max_val = phi[i];
+            max_loc = i;
+        }
+    }
+
+    MyMarker max_marker(max_loc % sz0, max_loc % sz01 / sz0, max_loc / sz01);
+
+    inmarkers.push_back(max_marker);
+
+    cout<<"======================================="<<endl;
+    cout<<"Construct the neuron tree"<<endl;
+
+    fastmarching_tree(inmarkers[0], show_img, outtree, sz[0], sz[1], sz[2], 2, 10, false);
+    cout<<"======================================="<<endl;
+
+
+    //save a copy of the constructed tree
+    cout<<"Save the reconstruced tree"<<endl;
+    vector<MyMarker*> & inswc = outtree;
+
+    double dfactor_xy = 1, dfactor_z = 1;
+
+
+    if (1)
+    {
+        V3DLONG tmpi;
+
+        vector<MyMarker*> tmpswc;
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
+        {
+            MyMarker * curp = new MyMarker(*(inswc[tmpi]));
+            tmpswc.push_back(curp);
+
+            if (dfactor_xy>1) inswc[tmpi]->x *= dfactor_xy;
+            inswc[tmpi]->x += (0);
+            if (dfactor_xy>1) inswc[tmpi]->x += dfactor_xy/2;
+
+            if (dfactor_xy>1) inswc[tmpi]->y *= dfactor_xy;
+            inswc[tmpi]->y += (0);
+            if (dfactor_xy>1) inswc[tmpi]->y += dfactor_xy/2;
+
+            if (dfactor_z>1) inswc[tmpi]->z *= dfactor_z;
+            inswc[tmpi]->z += (0);
+            if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
+        }
+
+        int sz_swc = inswc.size();
+
+        cout << sz_swc << endl;
+
+
+        //saveSWC_file(outfile_swc, inswc);
+
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
+        {
+            inswc[tmpi]->x = tmpswc[tmpi]->x;
+            inswc[tmpi]->y = tmpswc[tmpi]->y;
+            inswc[tmpi]->z = tmpswc[tmpi]->z;
+        }
+
+        for(tmpi = 0; tmpi < tmpswc.size(); tmpi++)
+            delete tmpswc[tmpi];
+        tmpswc.clear();
+    }
+
+
+    inmarkers[0].x *= dfactor_xy;
+
+    inmarkers[0].y *= dfactor_xy;
+
+    inmarkers[0].z *= dfactor_z;
+
+
+    vector<MyMarker*> outswc;
+
+    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3);
+  //  v3d_msg("start to use happ.\n", 0);
+    //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
+
+ //   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
+
+    inmarkers[0].x *= dfactor_xy;
+    inmarkers[0].y *= dfactor_xy;
+    inmarkers[0].z *= dfactor_z;
+
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
+        outswc[i]->x += 0;
+        if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2;
+
+        if (dfactor_xy>1) outswc[i]->y *= dfactor_xy;
+        outswc[i]->y += 0;
+        if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
+
+        if (dfactor_z>1) outswc[i]->z *= dfactor_z;
+        outswc[i]->z += 0;
+        if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
+
+        outswc[i]->radius *= dfactor_xy; //use xy for now
+    }
+
+    //re-estimate the radius using the original image
+    double real_thres = 40;
+
+
+   V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
+
+    int method_radius_est = 2;
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        //printf(" node %ld of %ld.\n", i, outswc.size());
+        outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+    }
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x += offset[0];
+
+        outswc[i]->y += offset[1];
+
+        outswc[i]->z += offset[2];
+
+    }
+
+
+
+   saveSWC_file(outfile_swc, outswc);
+
+
+   delete [] show_img;
+
+   //delete [] phi;
+
+
+     if(phi){delete [] phi; phi = 0;}
+    for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
+    outtree.clear();
+
+  //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
+
+
+//    delete [] phi;
+
+    return 1;
+
+
+
+
+}
+
+
 int roi_img(cv::Mat &image,cv::Mat image1)
 {
 
@@ -1222,9 +1535,11 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         saveMat(seg_img,(char*)save_seg_fn.c_str());
 
-        // trace the image
+
 
         trace_img(seg_img, image, (char*)save_swc_fn.c_str());
+
+       //trace_img1(seg_img, image, (char*)save_swc_fn.c_str());
 
        // cin.get();
 
@@ -1256,17 +1571,17 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
         vector<char*>* outlist = (vector<char*>*)(output.at(0).p);
 
-        if (outlist->size() != 2)
+        if (outlist->size() != 1)
         {
-                cout<<"You must specify 2 output file!"<<endl;
+                cout<<"You must specify 1 output file!"<<endl;
                 return -1;
         }
 
-        char * outfile = outlist->at(0);
+       // char * outfile = outlist->at(0);
 
-        char * outfile_swc = outlist->at(1);
+        char * outfile_swc = outlist->at(0);
 
-        cout<<"output file: "<<outfile<<endl;
+        //cout<<"output file: "<<outfile<<endl;
 
 
 
@@ -1399,6 +1714,14 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
     img_sz_new[1] = by[1] - by[0];
 
     img_sz_new[2] = bz[1] - bz[0];
+
+    int offset[3];
+
+    offset[0] = bx[0];
+
+    offset[1] = by[0];
+
+    offset[2] = bz[0];
 
 
 
@@ -1543,11 +1866,13 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     // output the result into the harddisk
 
-    saveMat(seg_img,outfile);
+   // saveMat(seg_img,outfile);
 
     // trace the image
 
-    trace_img(seg_img, image, outfile_swc);
+   // trace_img(seg_img, image, outfile_swc);
+
+   trace_img1(seg_img, image, offset, outfile_swc);
 
 	return true;
 }
