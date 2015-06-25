@@ -1,6 +1,3 @@
-//#ifndef _SEP_CONV_H
-//#define _SEP_CONV_H
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,8 +11,6 @@
 
 #include <SQB/Core/LineSearch.h>
 #include "itkImage.h"
-//#include "itkImageFileReader.h"
-//#include "itkImageFileWriter.h"
 #include "itkConvolutionImageFilter.h"
 #include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -117,7 +112,7 @@ MatrixTypeDouble readMatrix(const char *filename)
 
     }else{
 
-        std::cout << "File " << filename << " not found. " << std::endl;
+        std::cout << "File " << filename << " could not be open. " << std::endl;
     }
 
     rows--;
@@ -325,7 +320,7 @@ typename ImageType::RegionType region;
     while(!imageIterator.IsAtEnd())
         {
 
-        // Set the current pixel to white
+        // Set the current pixel
         imageIterator.Set(input_vector(i_pixel));
 
         ++imageIterator;
@@ -399,7 +394,7 @@ void convolveSepFilterBankComb(MatrixType &nonsep_features_all, typename ImageTy
 
 
 
-
+//TODO
 template<typename MatrixType>
 void getContextFeatures(MatrixType &nonsep_features_all,const MatrixType &nonsep_features_all_no_context,const float sigma_pool){
 
@@ -457,9 +452,6 @@ void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType:
 //// instantiate explicitely
 ////template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
 template void convolveSepFilterBankComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(MatrixTypeFloat &feats_sep_all,itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor);
-//template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< unsigned char, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< unsigned char, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
-//template MatrixTypeFloat convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeFloat,VectorTypeFloat>(itk::Image< float, 3> I,MatrixTypeFloat M,VectorTypeFloat V);
-//template MatrixTypeDouble convolveSepFilterBankComb<itk::Image< float, 3> ,MatrixTypeDouble,VectorTypeDouble>(itk::Image< float, 3> I,MatrixTypeDouble M,VectorTypeDouble V);
 template void computeFeaturesSepComb<itk::Image< float, 3>, MatrixTypeFloat,VectorTypeFloat>(MatrixTypeFloat &feats_all, itk::Image< float, 3>::Pointer &I, const MatrixTypeFloat &M, const MatrixTypeFloat &V, const float scale_factor,bool add_context_features );
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeDouble>(const VectorTypeDouble &newScores,const itk::Image< float, 3>::SizeType &size_img);
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,VectorTypeFloat>(const VectorTypeFloat &newScores,const itk::Image< float, 3>::SizeType &size_img);
@@ -469,7 +461,6 @@ template TreeBoosterType::ResponseArrayType itkImage2EigenVector<itk::Image< flo
 template itk::Image< float, 3>::Pointer eigenVector2itkImage<itk::Image< float, 3>,TreeBoosterType::ResponseArrayType>(const TreeBoosterType::ResponseArrayType &input_vector, const itk::Image< float, 3>::SizeType &size_img);
 
 template void getContextFeatures<MatrixTypeFloat>(MatrixTypeFloat &nonsep_features_all,const MatrixTypeFloat &nonsep_features_all_no_context,const float sigma_pool);
-
 
 template void writeMatrix<MatrixTypeDouble>(const char * filename, MatrixTypeDouble mat);
 template void writeMatrix<MatrixTypeFloat>(const char * filename, MatrixTypeFloat mat);

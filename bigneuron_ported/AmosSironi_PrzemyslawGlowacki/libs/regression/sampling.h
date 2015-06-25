@@ -14,11 +14,5 @@ bool getTrainSamplesFeaturesAndGt(const MatrixType &features_matrix,const Vector
 template<typename VectorType>
 void getIndecesSmallerGreater(const VectorType &gt_vector, float thresh, MatrixTypeUint &found_smaller_indeces,MatrixTypeUint & found_greater_indeces );
 
-//template<typename VectorType>
-//MatrixTypeUint getIndecesGreater(const VectorType &gt_vector, float thresh);
-//template<typename VectorType>
-//MatrixTypeUint getIndecesSmaller(const VectorType &gt_vector, float thresh);
-
-
 
 #endif

@@ -1,11 +1,12 @@
-#include "../libs/sqb_0.1/include/Eigen/Dense"
 //#include <random> //only c++11
+#include "../libs/sqb_0.1/include/Eigen/Dense"
 #include "sampling.h"
 #include <iostream>
 #include <ctime>
 
 #include <../libs/boost_1_58_0/boost/random/mersenne_twister.hpp>
 #include <../libs/boost_1_58_0/boost/random/uniform_int_distribution.hpp>
+
 
 
 //using namespace Eigen;

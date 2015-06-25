@@ -30,14 +30,6 @@ typedef Eigen::VectorXd VectorTypeDouble;
 typedef Eigen::MatrixXd MatrixTypeDouble;
 typedef Eigen::MatrixXf MatrixTypeFloat;
 
-//typedef SQB::TreeBooster<
-//            MatrixSampleIndexListType,
-//            MatrixFeatureIndexListType,
-//            MatrixFeatureValueObjectType,
-//            MatrixClassifResponseValueObjectType >      TreeBoosterType;
-
-
-
 ////functions declarations
 ///
 // read text file and store it in Eigen matrix

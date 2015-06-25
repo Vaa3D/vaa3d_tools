@@ -41,9 +41,6 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
 template<typename ImageType>
 ITK4DDistImageType::Pointer radialGt2ExpDistGt(typename ImageType::Pointer train_gt_radial_ITK,float thresh_distance,VectorTypeFloat scales, float scale_toll);
 
-
-//train_gt_ITK = radialGt2ExpDistGt(train_gt_radial_ITK,scales,scale_toll);
-
 template<typename DistImageType>
 typename DistImageType::Pointer transformDistGt(typename DistImageType::Pointer dist_gt_image,float thresh_distance);
 

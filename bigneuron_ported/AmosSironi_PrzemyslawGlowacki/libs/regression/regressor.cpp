@@ -1,5 +1,3 @@
-
-
 #include <SQB/Core/RegTree.h>
 #include <SQB/Core/Utils.h>
 
@@ -139,7 +137,6 @@ void predictRegressor(const char * regressor_output_file,const gFeatArrayType &a
     std::cout << "Loading Regressor...Done." << std::endl<< std::flush;
 
     std::cout << "Predicting..."<< std::endl<< std::flush;
-    //TreeBoosterType::ResponseArrayType newScores;
     newScores = TreeBoosterType::ResponseArrayType::Zero(all_samples_features.rows());
 
     TB.predict( TreeBoosterType::SampleListType(all_samples_features),
@@ -189,28 +186,9 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
           dt->Update();
 
           ITKFloatImageType::Pointer distImg = dt->GetOutput();
-//std::cout << "Done" << std::endl;
-
-          //return distImg;
-
-//        distance_transform = disance_transform_function(double(radial_gt)>0);
-//        distance_transform(distance_transform<0) = 0;
-//        threshold = min_scales+single(filter_size)/2+toll;
-//        distance_transform = single(threshold_distance(distance_transform,threshold));
 
 
-//    }
-//    else{//compute multiscale gt
-
-//    //    typedef itk::Image<float, 4>  ITKDistImageType;
-
-//    }
-
-
-
-//std::cout << "exp distance transform" << std::endl;
     ITKFloatImageType::Pointer distImgExp = transformDistGt<ITKFloatImageType>(distImg,thresh_distance);
-//std::cout << "done" << std::endl;
 
     return distImgExp;
 
@@ -245,7 +223,6 @@ typename DistImageType::Pointer transformDistGt(typename DistImageType::Pointer 
 
     typename DistImageType::Pointer transfDistImg = dist_gt_image;
 
-   // typename DistImageType::RegionType region;
     typename DistImageType::RegionType region = dist_gt_image->GetLargestPossibleRegion();
 
     itk::ImageRegionIterator<DistImageType> imageIterator(transfDistImg,region);

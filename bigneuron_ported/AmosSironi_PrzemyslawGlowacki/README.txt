@@ -17,7 +17,7 @@ cd ../../../v3d_external/bin
 ./vaa3d -x RegMST -f tracing_func -i ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/cropped_OP_9.tif -p 1 2 ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/trained_models/OPF_debug/Regressor_ac_0.cfg ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/trained_models/OPF_debug/Regressor_ac_1.cfg 21 
 
  *** visualize results ***
-load in vaaa3d the original image : ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/cropped_OP_9.tif
+load in vaa3d the original image : ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/cropped_OP_9.tif
           and  the reconstruction swc file : ../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/cropped_OP_9.tif_tubularity.v3draw_RegMST_Tracing.swc
 
 
