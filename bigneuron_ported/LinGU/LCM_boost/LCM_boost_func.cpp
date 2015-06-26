@@ -11286,21 +11286,21 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
 
      srand(time(NULL));
 
-     QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
+     //QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
 
-     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+     //system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
-      if(tmpfolder.isEmpty())
-    {
+    //if(tmpfolder.isEmpty())
+   // {
 
-        printf("Can not create a tmp folder!\n");
-        return 0;
+     //   printf("Can not create a tmp folder!\n");
+      //  return 0;
 
-    }
+    //}
 
     char * outfile = new char [300];
 
-    sprintf(outfile,"tmp_cache/tmp_msenhance.v3draw");
+    sprintf(outfile,"tmp_msenhance.v3draw");
 
     cout << "input files    " << infile << endl;
 
@@ -11354,6 +11354,9 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
     loadMat(conf_img, outfile);
 
     cout << "Complete loading the image" << endl;
+
+
+    remove(infile);
 
     return 1;
 
