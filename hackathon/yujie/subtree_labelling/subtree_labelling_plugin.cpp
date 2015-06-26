@@ -3,7 +3,6 @@
  * 2015-6-19 : by Yujie Li
  */
  
-
 #include "subtree_labelling_plugin.h"
 
 
@@ -29,21 +28,20 @@ void subtree_label::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
 	if (menu_name == tr("subtree_labelling"))
 	{
-            subtree_dialog *dialog=new subtree_dialog(&callback);
-            if (!dialog->get_swc_marker())
-                return;
-            dialog->build_connt_LUT();
-            dialog->connected_components();
-            dialog->assign_marker_type();
+        subtree_dialog *dialog=new subtree_dialog(&callback);
+        if (!dialog->get_swc_marker())
+            return;
+        dialog->build_connt_LUT();
+        dialog->connected_components();
+        dialog->assign_marker_type();
 	}
 	else
 	{
-
-            QString info="The subtree label plug-in is used to label subtrees. Each node in the subtree is assigned subtree type,subtree id,segment id,branch order and the distance between the node to subtree root node."
-                    "The plug-in does not assume the precence of soma or a complete neuron tree."
-                    " Each markers defined by the user will be the root node of one subtree.The segment id and branch order of the subree root node is set to 1 and increase when there is a bifurcation."
-                    " The input is a <b>sorted</b> swc file and markers. The output is a eswc file";
-            QMessageBox::information(0,"subtree plug-in information",info,QMessageBox::Ok);
+        QString info="The subtree label plug-in is used to label subtrees. Each node in the subtree is assigned subtree type,subtree id,segment id,branch order and the distance between the node to subtree root node."
+                "The plug-in does not assume the precence of soma or a complete neuron tree."
+                " Each markers defined by the user will be the root node of one subtree.The segment id and branch order of the subree root node is set to 1 and increase when there is a bifurcation."
+                " The input is a <b>sorted</b> swc file and markers. The output is a eswc file";
+        QMessageBox::information(0,"subtree plug-in information",info,QMessageBox::Ok);
 	}
 }
 

@@ -1,5 +1,4 @@
 #include "subtree_dialog.h"
-#include "sort_swc.h"
 
 #define swc_win_name "subtree_labelling_swc"
 
@@ -32,47 +31,6 @@ subtree_dialog::subtree_dialog(V3DPluginCallback2 *cb)
 //    connect(btn_sort,SIGNAL(clicked()),this,SLOT(sort_slot()));
 //    connect(btn_skip,SIGNAL(clicked()),this,SLOT(skip_slot()));
 //}
-
-//void subtree_dialog::skip_slot()
-//{
-//    backupNeuron(*nt,*sorted_nt);
-//}
-
-//bool subtree_dialog::sort_slot()
-//{
-//    QList<NeuronSWC> neuron = nt->listNeuron;
-
-//    V3DLONG rootid;
-//    V3DLONG thres;
-//    bool ok;
-//    rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
-//    if (!ok)
-//            rootid = VOID;
-//    thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
-//    if (!ok)
-//            thres = VOID;
-
-//    if (!SortSWC(neuron, result ,rootid, thres))
-//    {
-//        v3d_msg("Sorting error!");
-//        return false;
-//    }
-//    QHash <int, int>  hashNeuron;
-//    for (int i=0;i<result.size();i++)
-//    {
-//        result[i].level=result[i].seg_id=0;
-//        result[i].fea_val.clear();
-//        result[i].fea_val.append(0);
-//        result[i].fea_val.append(0);
-//        hashNeuron.insert(result[i].n,result.size()-1);
-//    }
-//    sorted_nt->hashNeuron=hashNeuron;
-
-//    QMessageBox::information(0,"Sort complete","",QMessageBox::Ok);
-
-//    return true;
-//}
-
 
 bool subtree_dialog::get_swc_marker()
 {
@@ -306,14 +264,14 @@ void subtree_dialog::build_connt_LUT()
         subtree[i].push_back(nt->hashNeuron.value(parent_id));
     }
     qDebug()<<"build_connt_LUT done";
-    for (int i=0;i<subtree.size();i++)
-    {
-        vector<int> tmp=subtree[i];
-        for (int j=0;j<tmp.size();j++)
-        {
-            qDebug()<<"i:"<<i+1<< " j:"<<j+1<<" members:"<<tmp[j]+1;
-        }
-    }
+//    for (int i=0;i<subtree.size();i++)
+//    {
+//        vector<int> tmp=subtree[i];
+//        for (int j=0;j<tmp.size();j++)
+//        {
+//            qDebug()<<"i:"<<i+1<< " j:"<<j+1<<" members:"<<tmp[j]+1;
+//        }
+//    }
 }
 
 void subtree_dialog::marker_change()
@@ -434,34 +392,6 @@ int subtree_dialog::calc_nearest_node_around_marker()
     return close_node;
 }
 
-vector<int> subtree_dialog::calc_nearest_node_around_markers()
-{
-    vector<int> close_nodes;
-    for (int i=0;i<LList_in.size();i++)
-    {
-        V3DLONG x,y,z;
-        x=LList_in.at(i).x-1;
-        y=LList_in.at(i).y-1;
-        z=LList_in.at(i).z-1;
-        float min_dis=1e16;
-        float dis;
-        int close_node;
-        for (int i=0;i<nt->listNeuron.size();i++)
-        {
-            dis=(nt->listNeuron.at(i).x-x)*(nt->listNeuron.at(i).x-x)+
-                    (nt->listNeuron.at(i).y-y)*(nt->listNeuron.at(i).y-y)+
-                    (nt->listNeuron.at(i).z-z)*(nt->listNeuron.at(i).z-z);
-            if (dis<min_dis)
-            {
-                min_dis=dis;
-                close_node=i;
-            }
-        }
-        close_nodes.push_back(close_node);
-    }
-
-    return close_nodes;
-}
 
 void subtree_dialog::sort_type_def(int type, float dendrite_id, int marker_id)
 {
@@ -622,6 +552,7 @@ void subtree_dialog::refresh_marker()
         {
             if (tmp==LList_in[j])
             {
+                //qDebug()<<"found the same marker";
                 found_flag=true;
                 break;
             }
@@ -634,20 +565,20 @@ void subtree_dialog::refresh_marker()
     {
         QString tmp_str;
         tmp_str=QString::fromStdString((LList_in[i].comments));
-        if (tmp_str.contains("soma"))
+        if (tmp_str.contains("1"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" soma");
-        else if (tmp_str.contains("axon"))
+        else if (tmp_str.contains("2"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" axon");
-        else if (tmp_str.contains("apical dendrite"))
+        else if (tmp_str.contains("4"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" apical dendrite");
-        else if (tmp_str.contains("basal dendrite"))
+        else if (tmp_str.contains("7"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" basal dendrite");
-        else if (tmp_str.contains("oblique dendrite"))
+        else if (tmp_str.contains("3"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" oblique dendrite");
         else
             markers->addItem(QString("marker ")+QString::number(i+1));
     }
-
+    qDebug()<<"refresh markers finished";
 }
 
 
@@ -675,67 +606,7 @@ bool subtree_dialog::maybe_save()
      }
 }
 
-void subtree_dialog::calc_distance_to_subtree_root()
-{
-    qDebug()<<"in calc dis to soma";
-    for (int i=0;i<LList_in.size();i++)
-    {
-        QString tmp;
-        tmp=QString::fromStdString(LList_in[i].name);
-        if (tmp.size()==0) continue;
-        V3DLONG root_id=tmp.toInt();
-        qDebug()<<"root_id"<<root_id;
-        map<int,bool> mark_used;
 
-        vector<int> seeds,seeds_next;
-        seeds.push_back(root_id);
-        mark_used[root_id]=1;
-
-        int sid=0;
-        V3DLONG parent;
-        while (sid<seeds.size())
-        {
-            //check how many children the seed has, if more than one, seg_id reset,level++
-            //the forked node belongs to the previous seg (has the same property has parent)
-            qDebug()<<"sid:"<<sid<<" seeds size:"<<seeds.size();
-            seeds_next.clear();
-            parent=seeds[sid];
-            V3DLONG p_x=nt->listNeuron[parent].x;
-            V3DLONG p_y=nt->listNeuron[parent].y;
-            V3DLONG p_z=nt->listNeuron[parent].z;
-            float p_dis=nt->listNeuron[parent].fea_val[1];
-
-            for (int i=0;i<subtree[parent].size();i++)
-            {
-                if (mark_used[subtree[parent][i]]==0)
-                    seeds_next.push_back(subtree[parent][i]);
-            }
-
-            if (seeds_next.size()==0)
-            {
-                sid++;
-                continue;
-            }
-
-            else if (seeds_next.size()>=1)
-            {
-                for (int i=0;i<seeds_next.size();i++)
-                {
-                    V3DLONG child_node=seeds_next[i];
-                    V3DLONG c_x=nt->listNeuron[child_node].x;
-                    V3DLONG c_y=nt->listNeuron[child_node].y;
-                    V3DLONG c_z=nt->listNeuron[child_node].z;
-                    float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
-                    nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
-                    mark_used[seeds_next[i]]=1;
-                }
-                seeds.insert(seeds.end(),seeds_next.begin(),seeds_next.end());
-            }
-            sid++;
-        }
-    }
-    qDebug()<<"finish calc distance to node";
-}
 
 void subtree_dialog::connected_components()
 {
@@ -816,7 +687,7 @@ void subtree_dialog::define_sort_id_for_trees()
             }
 
         }
-        qDebug()<<"tree:"<<i+1<<"# of markers:"<<all_trees[i].belong_markers.size()<<"sort_node:"<<all_trees[i].sort_node;
+        //qDebug()<<"tree:"<<i+1<<"# of markers:"<<all_trees[i].belong_markers.size()<<"sort_node:"<<all_trees[i].sort_node;
     }
 }
 
@@ -827,7 +698,7 @@ void subtree_dialog::sort_all_trees()
     for (int i=0;i<all_trees.size();i++)
     {
         tree this_tree=all_trees[i];
-        qDebug()<<"sort node:"<<this_tree.sort_node;
+        //qDebug()<<"sort node:"<<this_tree.sort_node;
         if (this_tree.sort_node==-1) //no marker on this tree, no need to sort
             continue;
         vector<int> seeds,seeds_next;
@@ -840,7 +711,7 @@ void subtree_dialog::sort_all_trees()
         V3DLONG parent;
         while (sid<seeds.size())
         {
-            qDebug()<<"seeds number:"<<seeds[sid]<<"seeds.size:"<<seeds.size()<<"seeds_next size:"<<seeds_next.size();
+            //qDebug()<<"seeds number:"<<seeds[sid]<<"seeds.size:"<<seeds.size()<<"seeds_next size:"<<seeds_next.size();
 
             seeds_next.clear();
             parent=seeds[sid];
@@ -871,7 +742,7 @@ void subtree_dialog::sort_all_trees()
 
             sid++;
         }
-        qDebug()<<"tree:"<<i+1<<" sorted"<<" size:"<<seeds.size()<<"map size:"<<mark_used.size();
+        //qDebug()<<"tree:"<<i+1<<" sorted"<<" size:"<<seeds.size()<<"map size:"<<mark_used.size();
     }
 
 }
@@ -959,9 +830,9 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
             nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
             seeds.push_back(child_node);
 
-            qDebug()<<"one child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)<<
-                       "child:"<<nt->listNeuron[child_node].type<<" seg id:"
-                       <<nt->listNeuron[child_node].seg_id<<" level:"<<nt->listNeuron[child_node].level;
+//            qDebug()<<"one child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)<<
+//                       "child:"<<nt->listNeuron[child_node].type<<" seg id:"
+//                       <<nt->listNeuron[child_node].seg_id<<" level:"<<nt->listNeuron[child_node].level;
         }
         else if (parent_LUT[parent].size()>1 && nt->listNeuron[parent].parent!=-1)
         {
@@ -978,9 +849,9 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
                 float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
                 nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
 
-                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
-                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"
-                           <<nt->listNeuron[parent_LUT[parent][i]].seg_id<<" level:"<<nt->listNeuron[parent_LUT[parent][i]].level;
+//                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
+//                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"
+//                           <<nt->listNeuron[parent_LUT[parent][i]].seg_id<<" level:"<<nt->listNeuron[parent_LUT[parent][i]].level;
             }
             seeds.insert(seeds.end(),parent_LUT[parent].begin(),parent_LUT[parent].end());
         }
@@ -1000,19 +871,78 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
                 float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
                 nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
 
-                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
-                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"
-                           <<nt->listNeuron[parent_LUT[parent][i]].seg_id<<" level:"<<nt->listNeuron[parent_LUT[parent][i]].level;
+//                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
+//                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"
+//                           <<nt->listNeuron[parent_LUT[parent][i]].seg_id<<" level:"<<nt->listNeuron[parent_LUT[parent][i]].level;
             }
             seeds.insert(seeds.end(),parent_LUT[parent].begin(),parent_LUT[parent].end());
 
         }
         sid++;
     }
-    qDebug()<<"seeds size:"<<seeds.size();
+    //qDebug()<<"seeds size:"<<seeds.size();
 }
 
+void subtree_dialog::calc_distance_to_subtree_root()
+{
+    qDebug()<<"in calc dis to soma";
+    for (int i=0;i<LList_in.size();i++)
+    {
+        QString tmp;
+        tmp=QString::fromStdString(LList_in[i].name);
+        if (tmp.size()==0) continue;
+        V3DLONG root_id=tmp.toInt();
+        map<int,bool> mark_used;
 
+        vector<int> seeds,seeds_next;
+        seeds.push_back(root_id);
+        mark_used[root_id]=1;
+
+        int sid=0;
+        V3DLONG parent;
+        while (sid<seeds.size())
+        {
+            //check how many children the seed has, if more than one, seg_id reset,level++
+            //the forked node belongs to the previous seg (has the same property has parent)
+            //qDebug()<<"sid:"<<sid<<" seeds size:"<<seeds.size();
+            seeds_next.clear();
+            parent=seeds[sid];
+            V3DLONG p_x=nt->listNeuron[parent].x;
+            V3DLONG p_y=nt->listNeuron[parent].y;
+            V3DLONG p_z=nt->listNeuron[parent].z;
+            float p_dis=nt->listNeuron[parent].fea_val[1];
+
+            for (int i=0;i<subtree[parent].size();i++)
+            {
+                if (mark_used[subtree[parent][i]]==0)
+                    seeds_next.push_back(subtree[parent][i]);
+            }
+
+            if (seeds_next.size()==0)
+            {
+                sid++;
+                continue;
+            }
+
+            else if (seeds_next.size()>=1)
+            {
+                for (int i=0;i<seeds_next.size();i++)
+                {
+                    V3DLONG child_node=seeds_next[i];
+                    V3DLONG c_x=nt->listNeuron[child_node].x;
+                    V3DLONG c_y=nt->listNeuron[child_node].y;
+                    V3DLONG c_z=nt->listNeuron[child_node].z;
+                    float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
+                    nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
+                    mark_used[seeds_next[i]]=1;
+                }
+                seeds.insert(seeds.end(),seeds_next.begin(),seeds_next.end());
+            }
+            sid++;
+        }
+    }
+    qDebug()<<"finish calc distance to node";
+}
 
 
 
