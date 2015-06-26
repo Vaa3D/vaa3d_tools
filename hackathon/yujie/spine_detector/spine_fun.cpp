@@ -1627,7 +1627,3 @@ LandmarkList spine_fun::get_center_landmarks()
     return LList;
 }
 
-void spine_fun::divide_neurontree()
-{
-
-}

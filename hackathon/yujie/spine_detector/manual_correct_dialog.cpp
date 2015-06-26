@@ -876,6 +876,8 @@ int manual_correct_dialog::save() //need further work
             tmp.color.g=255;
             LList_new.append(tmp);
         }
+        else
+            label_group[i].clear();
     }
 
     write_spine_profile("auto_proofread_spine_profile.csv");
@@ -961,6 +963,7 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
+        if (tmp.size()<=0) continue;
         sort(tmp.begin(),tmp.end(),sortfunc_dst);
         int group_id=tmp.front()->intensity_label;
         int max_dis=tmp.front()->dst;
