@@ -86,13 +86,13 @@ bool subtree_dialog::get_swc_marker()
 
         //get markers and check markers
         //qDebug()<<"Only 1 window open";
-        LList_in.clear();
-        LList_in=*(callback->getHandleLandmarkList_Any3DViewer(swc_win));
-        if (LList_in.size()==0)
-        {
-            v3d_msg("Please load markers");
-            return false;
-        }
+//        LList_in.clear();
+//        LList_in=*(callback->getHandleLandmarkList_Any3DViewer(swc_win));
+//        if (LList_in.size()==0)
+//        {
+//            v3d_msg("Please load markers");
+//            return false;
+//        }
 
     }
     else if (items.size()>1)
@@ -159,13 +159,13 @@ bool subtree_dialog::get_swc_marker()
          }
 
         //get markers and check markers
-        LList_in.clear();
-        LList_in=*(callback->getHandleLandmarkList_Any3DViewer(swc_win));
-        if (LList_in.size()==0)
-        {
-            v3d_msg("Please load markers");
-            return false;
-        }
+//        LList_in.clear();
+//        LList_in=*(callback->getHandleLandmarkList_Any3DViewer(swc_win));
+//        if (LList_in.size()==0)
+//        {
+//            v3d_msg("Please load markers");
+//            return false;
+//        }
     }
     qDebug()<<"swc set: nt size:"<<nt->listNeuron.size();
     return true;
@@ -181,7 +181,7 @@ void subtree_dialog::assign_marker_type()
     markers=new QComboBox();
     for (int i=0;i<LList_in.size();i++)
         markers->addItem(QString("marker ")+QString::number(i+1));
-    markers->setFixedWidth(230);
+    markers->setFixedWidth(215);
     markers->setCurrentIndex(0);
     layout2->addWidget(markers,2,0,1,4);
     QPushButton *refresh=new QPushButton(tr("Refresh markers"));
@@ -540,7 +540,7 @@ void subtree_dialog::refresh_marker()
     }
     else
     {
-        v3d_msg("swc window is closed");
+        v3d_msg("swc window is closed.Please relaunch the plug-in");
         return;
     }
 
