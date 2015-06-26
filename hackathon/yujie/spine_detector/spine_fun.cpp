@@ -151,7 +151,6 @@ bool spine_fun::init()
         if(dst[i]<1e-10){ //skeleton node
             continue;
         }
-        qDebug()<<"i:"<<i;
         V3DLONG x,y,z;
         ind2sub(x,y,z,i);
         VOI * tmp_voxel = new VOI(i,x,y,z);
@@ -1566,7 +1565,7 @@ void spine_fun::write_spine_center_profile()
 
     QString outfile="spine_analysis2.csv";
     FILE *fp2=fopen(outfile.toAscii(),"wt");
-    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
+    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
     for (int i=0;i<final_groups.size();i++)
     {
         GOV tmp=final_groups[i];
@@ -1589,10 +1588,22 @@ void spine_fun::write_spine_center_profile()
         int center_y=sum_y/tmp.size();
         int center_z=sum_z/tmp.size();
         int center_dis=sum_dis/tmp.size();
+        int skel_id=0;
+        for (int j=0;j<tmp.size();j++)
+        {
+            VOI *tmp_voi=tmp[j];
+            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
+            {
+                skel_id=tmp_voi->skel_idx;
+                break;
+            }
+        }
+
         fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",center_x+1,center_y+1,center_z+1);
 
-        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d\n",group_id,volume,max_dis,
-                min_dis,center_dis,center_x,center_y,center_z);
+        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\n",group_id,volume,max_dis,
+                min_dis,center_dis,center_x,center_y,center_z,skel_id,nt.listNeuron.at(skel_id).type,nt.listNeuron.at(skel_id).seg_id,
+                nt.listNeuron.at(skel_id).level, nt.listNeuron.at(skel_id).fea_val[1]);
 
     }
     fclose(fp1);

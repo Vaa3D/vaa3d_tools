@@ -239,7 +239,7 @@ bool manual_correct_dialog::csv_out()
 bool manual_correct_dialog::load_swc()
 {
     QString filename;
-    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.swc)" ";;Neuron structure(*.swc)",0,0);
+    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.swc *.eswc)" ";;Neuron structure(*.swc *eswc)",0,0);
 
     if(filename.isEmpty())
     {
@@ -960,6 +960,7 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     QString outfile=edit_csv->text()+"/"+filename;
     FILE *fp2=fopen(outfile.toAscii(),"wt");
     fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
+    //fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
@@ -982,9 +983,24 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         int center_y=sum_y/tmp.size();
         int center_z=sum_z/tmp.size();
         int center_dis=sum_dis/tmp.size();
+        int skel_id=0;
+        bool found_center=false;
+        for (int j=0;j<tmp.size();j++)
+        {
+            VOI *tmp_voi=tmp[j];
+            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
+            {
+                skel_id=tmp_voi->skel_idx;
+                found_center=true;
+                break;
+            }
+        }
+        if (!found_center)
+            qDebug()<<"NO center is found in this group "<<i;
         fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d\n",group_id,volume,max_dis,
                 min_dis,center_dis,center_x,center_y,center_z);
-
+//                skel_id,neuron.listNeuron.at(skel_id).type,neuron.listNeuron.at(skel_id).seg_id,
+//                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1]);
     }
     fclose(fp2);
     qDebug()<<"file complete wrriting, outfile path:"<<outfile;
