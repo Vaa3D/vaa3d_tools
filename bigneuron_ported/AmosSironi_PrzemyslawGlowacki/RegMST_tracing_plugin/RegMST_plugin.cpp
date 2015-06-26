@@ -1,9 +1,10 @@
 /* RegMST_plugin.cpp
  * a plugin for applying the regression tubularity approach [1]
- * in combiantion with the MST algorithm to reconstruct tubular structures.
+ * in combiantion with a MST algorithm [2] to reconstruct tubular structures.
  * 2015-6-23: by Amos Sironi and Przemysław Głowacki
  *
  * [1] A. Sironi, E. Türetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence.
+ * [2] H. Peng, Z. Ruan, D. Atasoy and S. Sternson Automatic reconstruction of 3D neuron structures using a graph-augmented deformable model. Bioinformatics.
  */
  
 #include "v3d_message.h"
