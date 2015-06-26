@@ -12,19 +12,25 @@
 using namespace std;
 void backupNeuron(NeuronTree & source, NeuronTree & backup);
 
+struct tree{int tree_id;
+            int sort_node;  //use which node to sort, if no marker set to -1, if -1 no sort
+            int soma_marker; //which landmark is the soma, if no soma set to -1
+            vector<int> belong_markers;}; //record landmark idx put on this tree
+
 class subtree_dialog:public QDialog
 {
     Q_OBJECT
 public:
    explicit subtree_dialog(V3DPluginCallback2 *cb);
    bool get_swc_marker();
-   bool subtree_extract();
+   void build_new_parent_LUT_after_sort();
    void assign_marker_type();
    void check_window();
    void calc_distance_to_subtree_root();
    bool sort_swc_dialog();
    void build_connt_LUT();
    void connected_components();
+   void subtree_define();
 
 public slots:
    void marker_change();
@@ -38,19 +44,28 @@ public slots:
    bool save();
    bool sort_slot();
    void skip_slot();
+   void run();
 
 private:
    int calc_nearest_node_around_marker();
+   vector<int> calc_nearest_node_around_markers();
    void sort_type_def(int type, float dendrite_id, int marker_id);
+   void define_sort_id_for_trees();
+   void sort_all_trees();
+   void label_single_tree(int type, int tree_id, int marker_id);
+
 private:
    V3DPluginCallback2 *callback;
    LandmarkList LList_in;
    NeuronTree *nt;
    V3dR_MainWindow *swc_win;
    vector<vector<int> > subtree;
+   vector<vector<int> > parent_LUT;
    QComboBox *markers;
    QDialog *mydialog2;
-   vector<vector<int> > tree_comp;
+   //vector<vector<int> > tree_comp;
+   map<int,int> mask;
+   vector<tree> all_trees;
 };
 
 #endif // SUBTREE_DIALOG_H

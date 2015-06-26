@@ -32,8 +32,8 @@ void subtree_label::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             subtree_dialog *dialog=new subtree_dialog(&callback);
             if (!dialog->get_swc_marker())
                 return;
-            //if(!dialog->subtree_extract()) return;
             dialog->build_connt_LUT();
+            dialog->connected_components();
             dialog->assign_marker_type();
 	}
 	else
