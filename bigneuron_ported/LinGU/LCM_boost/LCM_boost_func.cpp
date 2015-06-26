@@ -11356,7 +11356,7 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
     cout << "Complete loading the image" << endl;
 
 
-    remove(infile);
+    remove(outfile);
 
     return 1;
 
