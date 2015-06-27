@@ -28,7 +28,7 @@ void AffineTransformSWC::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 {
 	if (menu_name == tr("apply_transform"))
 	{
-		v3d_msg("To be implemented.");
+		v3d_msg("This plugin in is right now only available from command line usage.");
 	}
 	else
 	{

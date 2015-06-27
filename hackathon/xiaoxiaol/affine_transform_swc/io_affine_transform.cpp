@@ -13,8 +13,6 @@
 
 Matrix readTransform(QString filename)
 {
-
-
         Matrix affineMatrix(3,4);
 	QFile qf(filename);
 	qf.open (QIODevice::ReadOnly | QIODevice::Text); 
@@ -25,13 +23,12 @@ Matrix readTransform(QString filename)
 		for (int count=0; count<4 || !qf.atEnd(); count++)
 		{
 			in >> affineMatrix(i, count+1);
-                         std::cout<< affineMatrix(i, count+1)<<std::endl ;
+//                        std::cout<< affineMatrix(i, count+1)<<std::endl ;
 
 		}
 	}
 	qf.close();
 	return affineMatrix;
-
 }
 
 

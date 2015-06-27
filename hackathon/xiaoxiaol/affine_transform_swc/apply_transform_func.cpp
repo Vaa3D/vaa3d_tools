@@ -1,7 +1,7 @@
 #include "apply_transform_func.h"
 #include "basic_surf_objs.h"
 #include <math.h>
-#include <stdio.h>
+#include <iostream>
 #include "io_affine_transform.h"
 
 
@@ -16,9 +16,12 @@ NeuronTree apply_transform(NeuronTree * nt, Matrix  trans )
                 NeuronSWC s = nt->listNeuron[i];
 		NeuronSWC p = s;
                 // apply the 3x4 transform matrix
+
+
 		p.x = trans(1,1) * s.x + trans(1,2) * s.y + trans(1,3) * s.z + trans(1,4) ;
 		p.y = trans(2,1) * s.x + trans(2,2) * s.y + trans(2,3) * s.z + trans(2,4) ;
                 p.z = trans(3,1) * s.x + trans(3,2) * s.y + trans(3,3) * s.z + trans(3,4) ;
+                
                 
 		result.listNeuron.push_back(p);
 	}
