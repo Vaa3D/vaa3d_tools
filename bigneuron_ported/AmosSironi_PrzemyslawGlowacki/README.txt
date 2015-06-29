@@ -4,12 +4,15 @@
 # The plugin under ./RegMST_tracing_plugin will be used in the BigNeuron bench-testing [3]
  
 
-***1. compile dependent libraries ***
- cd ./libs/libconfig-1.4.9
-  ./configure && make
+# (TODO try using static libs) ***1. compile dependent libraries ***
+# cd ./libs/libconfig-1.4.9
+#  ./configure && make
+#
+# cd ./libs/liblbfgs-1.10
+# ./configure --disable-shared --enable-static --enable-sse2 && make 
 
- cd ./libs/liblbfgs-1.10
- ./configure --disable-shared --enable-static --enable-sse2 && make 
+
+
 
  ***2. compile the two plugins ***
 cd ./SQBTree_plugin

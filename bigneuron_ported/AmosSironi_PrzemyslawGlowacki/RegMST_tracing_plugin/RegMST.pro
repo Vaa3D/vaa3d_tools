@@ -20,8 +20,11 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main/worm_straighten_c
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/cellseg
 
 
-INCLUDEPATH += ../libs/liblbfgs-1.10/include
+#INCLUDEPATH += ../libs/liblbfgs-1.10/include
+INCLUDEPATH += ../libs/liblbfgs-1.10_include
 INCLUDEPATH += ../libs/sqb_0.1/include
+#INCLUDEPATH += ../libs/libconfig-1.4.9/lib
+INCLUDEPATH += ../libs/libconfig-1.4.9_include
 INCLUDEPATH += ../libs/libconfig-1.4.9/lib
 INCLUDEPATH += ../libs/ITK_include
 INCLUDEPATH += ../libs/regression
@@ -31,10 +34,12 @@ INCLUDEPATH += ../libs/boost_1_58_0 # download and unzip it (not in svn because 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
-LIBS += -L"../libs/liblbfgs-1.10/lib"
+#LIBS += -L"../libs/liblbfgs-1.10/lib"
+LIBS += -L"../libs/liblbfgs-1.10_Linux"
 LIBS += -llbfgs
 
-LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
+#LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
+LIBS += -L"../libs/libconfig-1.4.9_Linux"
 LIBS += -lconfig++
 
 HEADERS += ../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h

@@ -14,6 +14,7 @@
 #include "itkConvolutionImageFilter.h"
 #include "itkImageRandomNonRepeatingConstIteratorWithIndex.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkMultiThreader.h"
 
 //#include <omp.h>
 
@@ -45,6 +46,10 @@ typedef SQB::TreeBooster<
             MatrixFeatureIndexListType,
             MatrixFeatureValueObjectType,
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
+
+
+
+
 
 
 ////functions definitions
@@ -408,6 +413,11 @@ const unsigned int n_pixels = nonsep_features_all_no_context.rows();
 //TODO: for now just convolve image, eventually add context features
 template<typename ImageType, typename MatrixType, typename VectorType>
 void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType::Pointer &input_img, const MatrixType &sep_filters_matrix, const MatrixType &weight_matrix ,const float scale_factor,bool add_context_features ){
+
+
+
+  //  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
+
 
         typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
         const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];

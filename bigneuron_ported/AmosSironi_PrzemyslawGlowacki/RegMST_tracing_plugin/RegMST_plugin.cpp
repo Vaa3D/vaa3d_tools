@@ -28,6 +28,7 @@
 #include "../SQBTree_plugin/RegressionTubularityAC_plugin.h"
 #include "mst_functions/neurontracing_mst_plugin.h"
 
+
 Q_EXPORT_PLUGIN2(RegMST, RegMST);
 
 using namespace std;
@@ -42,6 +43,8 @@ struct input_PARA
     V3DLONG Ws;
 };
 
+
+//bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
  
@@ -269,6 +272,13 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
     QString full_plugin_name_tubularity = "RegressionTubularityAC";
     QString func_name_test_tubularity = "test";
     callback.callPluginFunc(full_plugin_name_tubularity,func_name_test_tubularity, input,output);
+
+    //no dependency from other plugin
+//    bool computed_tubularity = testTubularityImage(callback,  input,  output);
+//    if(~computed_tubularity){
+//        std::cout << "Problem encounterd during computation of tubularity image !" << std::endl;
+//        return;
+//    }
 
     mst_PARA.inimg_file = out_tubularity_filename;
 
