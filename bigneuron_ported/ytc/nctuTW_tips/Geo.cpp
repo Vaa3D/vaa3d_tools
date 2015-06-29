@@ -1,5 +1,7 @@
 #include "Geo.h"
 #include <cmath>
+#include <cstdlib>
+
 
 bool VectorCordinate::operator == (const VectorCordinate V)
 {

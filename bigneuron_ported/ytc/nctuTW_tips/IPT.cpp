@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cstring>
+
 
 void ReadIPT(const char* filename)
 {

@@ -950,7 +950,7 @@ void FindCCs(unsigned char* ImgBuf, const int width, const int height, const int
 								if( x + mx >=0 && x + mx < width && y + my >= 0 && y + my < height && 
 									newPos >=0 && newPos < volume && !ccVisit[newPos] )
 								{
-									if( ImgBuf[newPos] > 0 && abs( ImgBuf[newPos] - ImgBuf[ originPos ] ) <= GREY_RADIUS  )
+                                    if( ImgBuf[newPos] > 0 && fabs( ImgBuf[newPos] - ImgBuf[ originPos ] ) <= GREY_RADIUS  )
 									{
 										ccVisit[ newPos ] = true;
 										ccStack.push_back( newPos );
