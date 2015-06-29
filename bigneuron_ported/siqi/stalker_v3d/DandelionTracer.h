@@ -28,8 +28,8 @@ private:
 class Dandelion
 {
 public:
-	Dandelion(PressureSampler sampler, Point3D position, float step,
-		      float fromth, float fromphi, LabelImagePointer wallimg,
+    Dandelion(PressureSampler sampler, Point3D position, float step,
+              float fromth, float fromphi, LabelImagePointer wallimg,
 		      DandelionTree * tree);
 	vector<Dandelion*> walk();
 	Point3D GetPosition();
@@ -40,8 +40,8 @@ private:
 	float step;
 	Point3D position;// position
     PressureSampler sampler;
-    float fromth = -1;
-    float fromphi = -1;
+    float fromth;
+    float fromphi;
     DandelionTree* tree;
     ImagePointer srcimg;
     LabelImagePointer wallimg;

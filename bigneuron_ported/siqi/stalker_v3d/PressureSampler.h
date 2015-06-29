@@ -30,7 +30,7 @@ public:
     	             int density,
     	             ImagePointer OriginalImg,
     	             GradientImagePointer GVF,
-    	             float radius = 10);
+                     float radius = 10);
     ~PressureSampler();
 	void RandRotateSph();
 	void RandSample(); // Randomly sample the pressure at specific postion (x,y,z)
@@ -39,7 +39,7 @@ public:
 	vectype GetBasePhi();
 	vectype GetPeakTh();
 	vectype GetPeakPhi();
-    float radius = 0;
+    float radius;
     float x, y, z;// position
     void HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi);
     float GetRadius(); // Calculate the radius at the current position using the raw image
