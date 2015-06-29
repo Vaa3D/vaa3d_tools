@@ -257,6 +257,8 @@ bool manual_correct_dialog::load_swc()
             v3d_msg("You have illeagal radius values. Check your data.");
             return false;
         }
+        qDebug()<<"seg_id:"<<neuron.listNeuron[ii].seg_id<<" level:"<<neuron.listNeuron[ii].level
+               <<"fea1:"<<neuron.listNeuron[ii].fea_val[0];
      }
     edit_swc->setText(filename);
     qDebug()<<"swc set";
@@ -959,8 +961,8 @@ void manual_correct_dialog::write_spine_profile(QString filename)
 
     QString outfile=edit_csv->text()+"/"+filename;
     FILE *fp2=fopen(outfile.toAscii(),"wt");
-    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
-    //fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
+    //fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
+    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
@@ -972,35 +974,45 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         int volume=tmp.size();
         V3DLONG sum_x,sum_y,sum_z,sum_dis;
         sum_x=sum_y=sum_z=sum_dis=0;
+        map<int,int> skel_id_vector;
+        qDebug()<<"i:"<<i<<" before loop";
+
         for (int j=0;j<tmp.size();j++)
         {
             sum_x+=tmp[j]->x;
             sum_y+=tmp[j]->y;
             sum_z+=tmp[j]->z;
             sum_dis+=tmp[j]->dst;
+            skel_id_vector[tmp[j]->skel_idx]= skel_id_vector[tmp[j]->skel_idx]+1;
         }
         int center_x=sum_x/tmp.size();
         int center_y=sum_y/tmp.size();
         int center_z=sum_z/tmp.size();
         int center_dis=sum_dis/tmp.size();
-        int skel_id=0;
-        bool found_center=false;
-        for (int j=0;j<tmp.size();j++)
+        qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
+        int skel_id=skel_id_vector[0];
+        for (int j=1;j<skel_id_vector.size();j++)
         {
-            VOI *tmp_voi=tmp[j];
-            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
-            {
-                skel_id=tmp_voi->skel_idx;
-                found_center=true;
-                break;
-            }
+            if (skel_id_vector[j]>skel_id)
+                skel_id=skel_id_vector[j];
         }
-        if (!found_center)
-            qDebug()<<"NO center is found in this group "<<i;
-        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d\n",group_id,volume,max_dis,
-                min_dis,center_dis,center_x,center_y,center_z);
-//                skel_id,neuron.listNeuron.at(skel_id).type,neuron.listNeuron.at(skel_id).seg_id,
-//                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1]);
+//        bool found_center=false;
+//        for (int j=0;j<tmp.size();j++)
+//        {
+//            VOI *tmp_voi=tmp[j];
+//            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
+//            {
+//                skel_id=tmp_voi->skel_idx;
+//                found_center=true;
+//                break;
+//            }
+//        }
+//        if (!found_center)
+//            qDebug()<<"NO center is found in this group "<<i;
+        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\n",group_id,volume,max_dis,
+                min_dis,center_dis,center_x,center_y,center_z,
+                skel_id,neuron.listNeuron.at(skel_id).type,neuron.listNeuron.at(skel_id).seg_id,
+                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1]);
     }
     fclose(fp2);
     qDebug()<<"file complete wrriting, outfile path:"<<outfile;
