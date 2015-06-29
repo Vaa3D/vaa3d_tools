@@ -106,7 +106,7 @@ public:
   itkStaticConstMacro(OutputImageDimension, unsigned int,
                       TOutputImage::ImageDimension );
   /** added to process gray level image of non-zero background */
-  int threshold = 0; //J Z
+  int threshold ; //J Z
 
 
 #ifdef ITK_USE_CONCEPT_CHECKING

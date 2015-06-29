@@ -42,9 +42,9 @@ using namespace std;
 struct input_PARA
 {
     QString inimg_file;
-    V3DLONG channel = 1;
-    int threshold = 0 ;
-    int treeNum = 1;
+    V3DLONG channel;
+    int threshold;
+    int treeNum;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
