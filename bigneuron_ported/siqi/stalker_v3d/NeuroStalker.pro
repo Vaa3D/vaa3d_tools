@@ -47,7 +47,8 @@ SOURCES	+= NeuroStalker_plugin.cpp\
            lib/ImageOperation.cpp\
            lib/PointOperation.cpp\
            lib/SnakeOperation.cpp\
-           test/unittest.cpp
+           test/unittest.cpp\
+           lib/ITK_include/vcl_deprecated.cxx
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -55,6 +56,10 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
+
+LIBS         += -lm -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
+LIBS         += -lpthread
+LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
 
 TARGET	= $$qtLibraryTarget(NeuroStalker)
 DESTDIR	= $$VAA3DPATH/bin/plugins/NeuroStalker/
