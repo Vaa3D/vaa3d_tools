@@ -257,8 +257,9 @@ bool manual_correct_dialog::load_swc()
             v3d_msg("You have illeagal radius values. Check your data.");
             return false;
         }
-        qDebug()<<"seg_id:"<<neuron.listNeuron[ii].seg_id<<" level:"<<neuron.listNeuron[ii].level
-               <<"fea1:"<<neuron.listNeuron[ii].fea_val[0];
+//        qDebug()<<"seg_id:"<<neuron.listNeuron[ii].seg_id;
+//        qDebug()<<" level:"<<neuron.listNeuron[ii].level;
+//        qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0];
      }
     edit_swc->setText(filename);
     qDebug()<<"swc set";
@@ -962,7 +963,7 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     QString outfile=edit_csv->text()+"/"+filename;
     FILE *fp2=fopen(outfile.toAscii(),"wt");
     //fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
-    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
+    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
@@ -972,10 +973,11 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         int max_dis=tmp.front()->dst;
         int min_dis=tmp.back()->dst;
         int volume=tmp.size();
+
         V3DLONG sum_x,sum_y,sum_z,sum_dis;
         sum_x=sum_y=sum_z=sum_dis=0;
         map<int,int> skel_id_vector;
-        qDebug()<<"i:"<<i<<" before loop";
+//        qDebug()<<"i:"<<i<<" before loop";
 
         for (int j=0;j<tmp.size();j++)
         {
@@ -989,30 +991,19 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         int center_y=sum_y/tmp.size();
         int center_z=sum_z/tmp.size();
         int center_dis=sum_dis/tmp.size();
-        qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
+        //qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
         int skel_id=skel_id_vector[0];
         for (int j=1;j<skel_id_vector.size();j++)
         {
             if (skel_id_vector[j]>skel_id)
                 skel_id=skel_id_vector[j];
         }
-//        bool found_center=false;
-//        for (int j=0;j<tmp.size();j++)
-//        {
-//            VOI *tmp_voi=tmp[j];
-//            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
-//            {
-//                skel_id=tmp_voi->skel_idx;
-//                found_center=true;
-//                break;
-//            }
-//        }
-//        if (!found_center)
-//            qDebug()<<"NO center is found in this group "<<i;
-        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\n",group_id,volume,max_dis,
+
+        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",group_id,volume,max_dis,
                 min_dis,center_dis,center_x,center_y,center_z,
                 skel_id,neuron.listNeuron.at(skel_id).type,neuron.listNeuron.at(skel_id).seg_id,
-                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1]);
+                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
+                neuron.listNeuron.at(skel_id).fea_val[0]);
     }
     fclose(fp2);
     qDebug()<<"file complete wrriting, outfile path:"<<outfile;
@@ -1201,6 +1192,118 @@ int manual_correct_dialog::save_edit()
          delete_marker();
          return 2;
      }
+}
+
+void manual_correct_dialog::build_parent_LUT()
+{
+    int size=neuron->listNeuron.size();
+    parent_LUT.clear();
+    parent_LUT.resize(size);
+    for (int i=0;i<size;i++)
+    {
+        int parent_id=neuron->listNeuron.at(i).parent;
+        if (parent_id==-1)
+        {
+            tree_head.push_back(i);
+            continue;
+        }
+        parent_LUT[nt->hashNeuron.value(parent_id)].push_back(i);
+    }
+//    for (int i=0;i<subtree.size();i++)
+//    {
+//        vector<int> tmp=subtree[i];
+//        for (int j=0;j<tmp.size();j++)
+//        {
+//            qDebug()<<"i:"<<i+1<< " j:"<<j+1<<" members:"<<tmp[j]+1;
+//        }
+//    }
+    qDebug()<<"building new parnet LUT";
+}
+
+void manual_correct_dialog::neurontree_divide_by_treeid()
+{
+    float distance_thresh=1500;
+    vector<int> leaf_nodes_id;
+    for (int i=0;i<neuron.listNeuron.size();i++)
+    {
+        if (parent_LUT[neuron.listNeuron[i]].size()==0)
+        {
+           leaf_nodes_id.push_back(i);
+        }
+    }
+    map<int,bool> used_flag; //use the idex starting from 0
+    vector<vector<int> > segment_neuronswc;
+
+    for (int i=0;i<leaf_nodes_id.size();i++)
+    {
+        int leaf_node=leaf_nodes_id[i];
+
+        float start_distance;
+        int start_node,end_node,child_node,parent_node;
+
+        float accu_distance=0;
+        int parent;
+        start_node=leaf_node;
+
+        while (true)
+        {
+            //start_node=neuron.listNeuron[neuron.hashNeuron.value(parent)];
+            start_distance=neuron.listNeuron[start_node].fea_val[1];
+            child_node=start_node;
+            parent=neuron.listNeuron[start_node].parent;
+            accu_distance=0;
+            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent]>0)
+           {
+                parent_node=neuron.hashNeuron.value(parent);
+                accu_distance=start_distance-neuron.listNeuron[parent_node].fea_val[1];
+                used_flag[parent_node]=1;
+                parent=neuron.listNeuron[parent_node].parent;
+
+           }
+           if (parent==-1)
+               break;
+           else
+           {
+               end_node=start_node;
+               segment_neuronswc.push_back();
+           }
+        }
+
+    }
+
+
+    trees.resize(max_tree_id+1);
+
+    for (int i=0;i<neuron->listNeuron.size();i++)
+    {
+        int tree_id=neuron.listNeuron[i].fea_val[0];
+        if (tree_id>0)
+        {
+            trees[tree_id].push_back(neuron.listNeuron[i]);
+        }
+    }
+
+    qDebug()<<"In connected components. We have "<<trees.size()-1 <<" trees!";
+}
+
+
+void manual_correct_dialog::image_divide()
+{
+    float distance_thresh=1500;
+    for (int i=1;i<trees.size();i++)
+    {
+        vector<NeuronSWC> single_tree=trees[i];
+        sort(single_tree.begin(),single_tree.end(),sortfunc_neuron_distance_ascend());
+        int sid_begin,sid_end;
+        sid_begin=sid_end=0;
+        float distance=0;
+        while(sid_end<single_tree.size()&& distance<=distance_thresh )
+        {
+            distance=distance+single_tree.at(sid_end).fea_val[1];
+            sid_end++;
+        }
+
+    }
 }
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)

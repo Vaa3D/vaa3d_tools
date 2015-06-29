@@ -27,6 +27,11 @@ public:
     int save();
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
+private:
+    void build_parent_LUT();
+    void neurontree_divide_by_treeid();
+    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
+    {return (a->fea_val[1] < b->fea_val[1]);}
 
 public slots:
     bool loadImage();
@@ -74,6 +79,8 @@ private:
     bool edit_flag;
     parameters all_para;
     int rgb[3];
+    vector<vector<int> > parent_LUT;
+    vector<vector<NeuronSWC> > trees;
 
 };
 
