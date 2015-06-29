@@ -217,7 +217,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize);
         cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
         cout<<"Saving cropped image to downsample.v3draw"<<endl;
-        saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+        saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
         if (data1d) delete [] data1d;
         data1d = p_img8u_crop;
 
@@ -238,8 +238,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
 
         unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
-        cout<<"Saving downsampled image to test/testdata/downsample.v3draw"<<endl;
-        saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        cout<<"Saving downsampled image to test/downsample.v3draw"<<endl;
+        saveImage("test/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
 
@@ -282,7 +282,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     {
         binaryimg2uchar[i] = (unsigned char) ((double)(binaryimgbuffer[i]) * 255.0);
     }
-    saveImage("test/testdata/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
+    saveImage("test/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
 
     vectype xpfinal, ypfinal, zpfinal, rfinal, pn, sn;
 
@@ -488,7 +488,7 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
 
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
 
-    saveImage("test/testdata/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+    saveImage("test/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
     (*boxlowsize).push_back(float(l_boundbox_min[0]));
     (*boxlowsize).push_back(float(l_boundbox_min[1]));
     (*boxlowsize).push_back(float(l_boundbox_min[2]));

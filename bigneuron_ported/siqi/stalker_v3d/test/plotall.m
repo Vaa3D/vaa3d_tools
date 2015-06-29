@@ -4,9 +4,9 @@ filepath = fileparts(mfilename('fullpath'));
 % Plot Seeds
 figure
 title('Checking Seeds')
-seeds = csvread(fullfile(filepath, 'testdata', 'seeds.csv'));
+seeds = csvread(fullfile(filepath, 'seeds.csv'));
 seeds(isnan(seeds)) = 0 ;
-bimg = csvread(fullfile(filepath, 'testdata', 'binaryimg.csv'));
+bimg = csvread(fullfile(filepath, 'binaryimg.csv'));
 hold on
 plot3(bimg(:,1), bimg(:,2), bimg(:,3), 'b.');
 plot3(seeds(:,1), seeds(:,2), seeds(:,3), 'r+');
@@ -15,8 +15,8 @@ hold off
 nseed = size(seeds, 1);
 % s
 % for i = 1 : nseed
-% 	sph = csvread(fullfile(filepath, 'testdata', sprintf('sampledsphere%d.csv', i-1)));
-% 	momentlist = csvread(fullfile(filepath, 'testdata', sprintf('moment%d.csv', i-1)));
+% 	sph = csvread(fullfile(filepath, sprintf('sampledsphere%d.csv', i-1)));
+% 	momentlist = csvread(fullfile(filepath, sprintf('moment%d.csv', i-1)));
 % 	[value index] = min(momentlist(:,3));
 % 	seedx = repmat(seeds(i, 1), size(sph, 1), 1);
 % 	seedy = repmat(seeds(i, 2), size(sph, 1), 1);
@@ -32,7 +32,7 @@ nseed = size(seeds, 1);
 % end
 
 figure
-halfsphere = csvread(fullfile(filepath, 'testdata', 'halfsphere.csv'));
+halfsphere = csvread(fullfile(filepath, 'halfsphere.csv'));
 scatter3(halfsphere(:,1), halfsphere(:, 2), halfsphere(:, 3))
 title('Checking halfsphere')
 
@@ -44,8 +44,8 @@ title('Checking halfsphere')
 % 	view([2^0.5, 2^0.5, 2^0.5])
 % 	titlestr = sprintf('sphere %d', i - 1);
 % 	title(titlestr)
-% 	sph = csvread(fullfile(filepath, 'testdata', sprintf('sampledsphere%d.csv', i-1)));
-% 	peak = csvread(fullfile(filepath, 'testdata', sprintf('sphpeak%d.csv', i-1)));
+% 	sph = csvread(fullfile(filepath, sprintf('sampledsphere%d.csv', i-1)));
+% 	peak = csvread(fullfile(filepath, sprintf('sphpeak%d.csv', i-1)));
 % 	startpts = zeros(size(peak, 1), 1);
 % 	hold on
 % 	plot3(sph(:,1),sph(:,2),sph(:,3), 'co');
@@ -53,7 +53,7 @@ title('Checking halfsphere')
 % end
 
 % Show GVF
-gvf = csvread(fullfile(filepath, 'testdata', 'gvf-littlesoma.csv'));
+gvf = csvread(fullfile(filepath, 'gvf-littlesoma.csv'));
 
 figure
 title('GVF')
@@ -69,7 +69,7 @@ hold off
 % figure
 % hold on
 % plot3(bimg(:,1), bimg(:,2), bimg(:,3), 'b.');
-% peakdir = csvread(fullfile(filepath, 'testdata', sprintf('sphpeak%d.csv', nseed-1)));
+% peakdir = csvread(fullfile(filepath, sprintf('sphpeak%d.csv', nseed-1)));
 % for i = 1: nseed
 % quiver3(seeds(i, 1), seeds(i, 2), seeds(i, 3), peakdir(i, 1), peakdir(i, 2), peakdir(i, 3), 4);
 % end
@@ -80,7 +80,7 @@ figure
 title('NextMove')
 hold on
 plot3(bimg(:,1), bimg(:,2), bimg(:,3), 'b.');
-mp = csvread(fullfile(filepath, 'testdata', 'manypoint.csv'));
+mp = csvread(fullfile(filepath, 'manypoint.csv'));
 plot3(mp(:,1), mp(:,2), mp(:,3), 'g+');
 hold off
 

@@ -265,7 +265,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"==== Test Case : GenSph"<<endl;
     // -- Save spheres with multiple sampling rate for visual check
-    // Pls drag the csv files generated in test/testdata/*sph.csv in matlab to check 
+    // Pls drag the csv files generated in test/*sph.csv in matlab to check 
     // whether the points were flatly distributed in a unit sphere
     p.SetNDir(ndir);
     vectype rvec100(p.ndir, 1);
@@ -273,7 +273,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     assert(p.baseth.size() < ndir);
     vectype x100(p.ndir), y100(p.ndir), z100(p.ndir);
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
-    savepts2csv(x100, y100, z100, "test/testdata/100sph.csv");
+    savepts2csv(x100, y100, z100, "test/100sph.csv");
 
     /*
     // Test Neighbours
@@ -352,13 +352,13 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     assert(p.baseth.size() == p.ndir);
     assert(p.basephi.size() == p.ndir);
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
-    savepts2csv(x100, y100, z100, "test/testdata/RandRotated1.csv");
+    savepts2csv(x100, y100, z100, "test/RandRotated1.csv");
     p.RandRotateSph();
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
-    savepts2csv(x100, y100, z100, "test/testdata/RandRotated2.csv");
+    savepts2csv(x100, y100, z100, "test/RandRotated2.csv");
     p.RandRotateSph();
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
-    savepts2csv(x100, y100, z100, "test/testdata/RandRotated3.csv");
+    savepts2csv(x100, y100, z100, "test/RandRotated3.csv");
     cout<<"== Test Case Passed"<<endl;
 
     /*
@@ -492,8 +492,8 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         }
     }
 
-    cout<<"Saving Seeds to test/testdata/seeds.csv"<<endl;
-    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
+    cout<<"Saving Seeds to test/seeds.csv"<<endl;
+    savepts2csv(seedx, seedy, seedz, "test/seeds.csv");
 
     // Save the coordinates of the binary labels to csv
     vector<float> bx;
@@ -501,7 +501,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     vector<float> bz;
     int bctr = 0;
     ofstream bstream;
-    bstream.open("test/testdata/binaryimg.csv");
+    bstream.open("test/binaryimg.csv");
     for (int m=0; m<M; m++)
         for (int n=0; n<N; n++)
             for (int z=0; z<Z; z++)
@@ -516,7 +516,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                 bctr++;
             }
 
-    cout<<"Saving the binary image to test/testdata/binaryimg.csv"<<endl;
+    cout<<"Saving the binary image to test/binaryimg.csv"<<endl;
     cout<<"== Test Case Passed"<<endl;
 
     char sphfiletitle[80];
@@ -558,7 +558,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     int gsz = gM * gN * gZ;
     vector<int> gx(gsz), gy(gsz), gz(gsz);
     ofstream fgvf;
-    fgvf.open ("test/testdata/gvf-littlesoma.csv");
+    fgvf.open ("test/gvf-littlesoma.csv");
     int gctr = 0;
     for(int i=0; i< gM; i++)
         for(int j=0; j< gN; j++)
@@ -603,7 +603,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     vectype outyhalf(halfphi.size());
     vectype outzhalf(halfphi.size());
     sph2cart(halfth, halfphi, rhalf, &outxhalf, &outyhalf, &outzhalf);
-    sprintf(sphfiletitle, "test/testdata/halfsphere.csv");
+    sprintf(sphfiletitle, "test/halfsphere.csv");
     savepts2csv(outxhalf, outyhalf, outzhalf, sphfiletitle);
     cout<<"== Test Case Passed"<<endl;
 
@@ -651,7 +651,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                         }
                     }
             }
-        sprintf(mpfiletitle, "test/testdata/manypoint.csv");
+        sprintf(mpfiletitle, "test/manypoint.csv");
         savepts2csvfourva(xpoint, ypoint, zpoint, rpoint, mpfiletitle);
     }
     cout<<"== Test Case Passed"<<endl;
