@@ -15,7 +15,6 @@
 #include "../../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 
 
-
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
