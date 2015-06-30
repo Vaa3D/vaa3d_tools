@@ -64,12 +64,17 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     {
         bool bmenu = true;
         input_PARA PARA;
+        PARA.channel = 1;
+        PARA.preprocessing = 1;
+        PARA.unittest = 1;
+        cout<<"PARA.channel: "<<PARA.channel<<"PARA.preprocessing: "<<PARA.preprocessing<<"PARA.unittest"
+            <<PARA.unittest<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
-
+        v3d_msg(tr("This is working or after?"));
     }
     else
     {
-        v3d_msg(tr("A learning-based tracing algorithm. "
+        v3d_msg(tr("A tracing algorithm. "
             "Developed by Siqi Liu, Donghao Zhang, 2015-4-25"));
     }
 }
@@ -132,6 +137,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+    Image4DSimple* p4DImage;
 
     if(bmenu)
     {
@@ -142,7 +148,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
             return;
         }
 
-        Image4DSimple* p4DImage = callback.getImage(curwin);
+        p4DImage = callback.getImage(curwin);
 
         if (!p4DImage)
         {
@@ -181,7 +187,6 @@ void reconstruction_func(V3DPluginCallback2 &callback,
 
 
         PARA.inimg_file = p4DImage->getFileName();
-        if(p4DImage) {delete p4DImage;};
     }
     else
     {
@@ -202,12 +207,15 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         sc = in_sz[3];
         c = PARA.channel;
     }
-        if (PARA.unittest & 2)
+
+    if (PARA.unittest & 2)
     {
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         //TestRadius(data1d, in_sz);
     }
+
     // ------- Main neuron reconstruction code
+
     // Crop The image
     vectype boxlowsize;
     if (PARA.preprocessing & 1)
@@ -216,8 +224,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         V3DLONG sz_img_crop[4];
         unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize);
         cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
-        cout<<"Saving cropped image to downsample.v3draw"<<endl;
-        saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+        //cout<<"Saving cropped image to downsample.v3draw"<<endl;
+        //saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
         if (data1d) delete [] data1d;
         data1d = p_img8u_crop;
 
@@ -237,9 +245,14 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         cout<<"Data size before downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
 
         unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
+        data1d = downdata1d;
+        in_sz[0] = downsz[0];
+        in_sz[1] = downsz[1];
+        in_sz[2] = downsz[2];
+        in_sz[3] = downsz[3];
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
-        cout<<"Saving downsampled image to test/downsample.v3draw"<<endl;
-        saveImage("test/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        //cout<<"Saving downsampled image to test/downsample.v3draw"<<endl;
+        //saveImage("test/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
 
@@ -269,8 +282,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     std::cout<<"=== Preprocessing Finished..."<<std::endl;
 
     // Adaptive thresholding here, may replace with graph cut
-    IM->ImComputeInitBackgroundModel(IM->v_threshold);
-    IM->ImComputeInitForegroundModel();
+    //IM->ImComputeInitBackgroundModel(IM->v_threshold);
+    //IM->ImComputeInitForegroundModel();
 
     // Get the Binary Image
     LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
@@ -282,7 +295,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     {
         binaryimg2uchar[i] = (unsigned char) ((double)(binaryimgbuffer[i]) * 255.0);
     }
-    saveImage("test/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
+    //saveImage("test/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
 
     vectype xpfinal, ypfinal, zpfinal, rfinal, pn, sn;
 
@@ -329,13 +342,10 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     nt.name = "NeuroStalker";
     writeSWC_file(swc_name.toStdString().c_str(), nt);
 
-    if(!bmenu)
-    {
-        if(data1d) {delete [] data1d; data1d = 0;}
-        //if(p_img8u_crop) {delete [] p_img8u_crop;  p_img8u_crop = 0;}
-    }
+    if(data1d) {delete [] data1d; data1d = 0;}
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+
     return;
 }
 
@@ -432,8 +442,8 @@ unsigned char * downsample(V3DLONG *in_sz,
 unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize)
 {    
     printf("1. Find the bounding box and crop image. \n");
-    V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
-    long l_npixels_crop;
+    V3DLONG V3DLONG l_boundbox_min[3], l_boundbox_max[3];//xyz
+    V3DLONG l_npixels_crop;
     
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
@@ -447,16 +457,17 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
     printf("boundingbox x dimension: %d,y dimension: %d,z dimension: %d.\n", in_sz[0], in_sz[1], in_sz[2]);
     l_boundbox_min[0] = in_sz[0];  l_boundbox_min[1] = in_sz[1];  l_boundbox_min[2] = in_sz[2];
     l_boundbox_max[0] = 0;                l_boundbox_max[1] = 0;                l_boundbox_max[2] = 0;
-
-    for(long X=0;X<in_sz[0];X++)
-        for(long Y=0;Y<in_sz[1];Y++)
-            for(long Z=0;Z<in_sz[2];Z++)
+    for(V3DLONG X=0;X<in_sz[0];X++)
+        for(V3DLONG Y=0;Y<in_sz[1];Y++)
+            for(V3DLONG Z=0;Z<in_sz[2];Z++)
+            {
                 if(p_img8u_3d[Z][Y][X]>0.1)
                 {
                     if(l_boundbox_min[0] > X) l_boundbox_min[0] = X;    if(l_boundbox_max[0] < X) l_boundbox_max[0] = X;
                     if(l_boundbox_min[1] > Y) l_boundbox_min[1] = Y;    if(l_boundbox_max[1] < Y) l_boundbox_max[1] = Y;
                     if(l_boundbox_min[2] > Z) l_boundbox_min[2] = Z;    if(l_boundbox_max[2] < Z) l_boundbox_max[2] = Z;
                 }
+            }
     printf(">>boundingbox: x[%ld~%ld],y[%ld~%ld],z[%ld~%ld]\n",l_boundbox_min[0], l_boundbox_max[0],
                                                                l_boundbox_min[1], l_boundbox_max[1],
                                                                l_boundbox_min[2], l_boundbox_max[2]);
@@ -478,9 +489,9 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
 
     unsigned char *p_tmp = p_img8u_crop;
 
-    for(long Z = 0;Z < sz_img_crop[2];Z++)
-        for(long Y = 0;Y < sz_img_crop[1];Y++)
-            for(long X = 0;X < sz_img_crop[0];X++)
+    for(V3DLONG Z = 0;Z < sz_img_crop[2];Z++)
+        for(V3DLONG Y = 0;Y < sz_img_crop[1];Y++)
+            for(V3DLONG X = 0;X < sz_img_crop[0];X++)
             {
                 *p_tmp = p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]];
                 p_tmp++;
@@ -488,7 +499,7 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
 
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
 
-    saveImage("test/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+    //saveImage("test/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
     (*boxlowsize).push_back(float(l_boundbox_min[0]));
     (*boxlowsize).push_back(float(l_boundbox_min[1]));
     (*boxlowsize).push_back(float(l_boundbox_min[2]));
