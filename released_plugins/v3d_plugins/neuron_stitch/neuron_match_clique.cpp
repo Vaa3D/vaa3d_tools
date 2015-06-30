@@ -205,21 +205,6 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
     //back up type
     backup_swc_type();
 
-    //reset the color of neuron list
-    NeuronTree* ntp = 0;
-    ntp = (NeuronTree*)&(ntList->at(0));
-    ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
-    for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
-        NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
-        p->type=2;
-    }
-    ntp = (NeuronTree*)&(ntList->at(1));
-    ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
-    for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
-        NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
-        p->type=7;
-    }
-
     //back up
     for(int i=0; i<2; i++){
         NeuronTree nt_tmp;
@@ -227,12 +212,17 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
         ntList_bk.append(nt_tmp);
     }
 
-    mList = cb->getHandleLandmarkList_Any3DViewer(v3dwin);
-
+    //creat dialog
     creat();
+
+    mList = cb->getHandleLandmarkList_Any3DViewer(v3dwin);
 
     matchfunc = new neuron_match_clique((NeuronTree*)(&ntList->at(0)),(NeuronTree*)(&ntList->at(1)));
     matchfunc->initNeuronComponents();
+
+    //update color;
+    change_color();
+
     //update markers
     link_new_marker_neuron();
     updatematchlist();
@@ -370,6 +360,13 @@ void NeuronLiveMatchDialog::creat()
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_2,optrow,0,1,6);
+    cb_color = new QComboBox();
+    cb_color->addItem("stitch result");
+    cb_color->addItem("swc type");
+    QLabel* label_color = new QLabel("Color neuron by:");
+    gridLayout->addWidget(label_color,optrow+1,0,1,1,Qt::AlignRight);
+    gridLayout->addWidget(cb_color,optrow+1,1,1,1);
+    connect(cb_color, SIGNAL(currentIndexChanged(int)), this, SLOT(change_color()));
     btn_output = new QPushButton("Save"); btn_output->setAutoDefault(false);
     gridLayout->addWidget(btn_output,optrow+1,4,1,1);
     connect(btn_output,     SIGNAL(clicked()), this, SLOT(output()));
@@ -378,6 +375,15 @@ void NeuronLiveMatchDialog::creat()
     gridLayout->addWidget(btn_quit,optrow+1,5,1,1);
 
     setLayout(gridLayout);
+}
+
+void NeuronLiveMatchDialog::reject()
+{
+    _checkwindow();
+
+    setback_swc_type();
+
+    QDialog::reject();
 }
 
 
@@ -450,11 +456,7 @@ void NeuronLiveMatchDialog::match()
         matchfunc->spineLengthThr = 0;
         matchfunc->spineRadiusThr = 0;
     }
-    if(check_type->isChecked()){
-        matchfunc->setSWCType(swcType0, swcType1);
-    }else{
-        matchfunc->resetSWCType();
-    }
+    matchfunc->typeConstrain = check_type->isChecked();
 
     //clean up dialog storage:
     pmatch0.clear();
@@ -484,8 +486,11 @@ void NeuronLiveMatchDialog::match()
     cur_pair=0;
 
     callback->update_NeuronBoundingBox(v3dwin);
+
     updateview();
     updatematchlist();
+
+    change_color();
 }
 
 void NeuronLiveMatchDialog::updatematchlist()
@@ -602,12 +607,17 @@ void NeuronLiveMatchDialog::highlight_pair()
             SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
             SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
 
-            if(stitchmask.at(cur_pair)>0){
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
-                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
+            if(cb_color->currentIndex()==0){
+                if(stitchmask.at(cur_pair)>0){
+                    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
+                    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
+                }else{
+                    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
+                    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+                }
             }else{
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
-                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],-1);
+                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],-1);
             }
         }
 
@@ -621,8 +631,10 @@ void NeuronLiveMatchDialog::highlight_pair()
         SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
 
         //if(stitchmask.at(cur_pair)<=0){
+        if(cb_color->currentIndex()==0){
             matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ACTIVE1);
             matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ACTIVE0);
+        }
         //}
 
         updateview();
@@ -636,6 +648,55 @@ void NeuronLiveMatchDialog::change_pair(int idx)
     highlight_pair();
 
     btn_stitch->setEnabled(stitchmask.at(idx)==0);
+}
+
+void NeuronLiveMatchDialog::change_color()
+{
+    _checkwindow();
+
+    if(cb_color->currentIndex()==0){
+        //reset the color of neuron list
+        NeuronTree* ntp = 0;
+        ntp = (NeuronTree*)&(ntList->at(0));
+        ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+        for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
+            NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
+            p->type=COLOR_ORG0;
+        }
+        ntp = (NeuronTree*)&(ntList->at(1));
+        ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+        for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
+            NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
+            p->type=COLOR_ORG1;
+        }
+        //adjust the color of stitched pairs
+        //reset cur_pair
+        for(int idx_pair=0; idx_pair<pmatch1.size(); idx_pair++){
+            if(stitchmask.at(idx_pair)>0){
+                matchfunc->highlight_nt1_seg(pmatch1[idx_pair],COLOR_STITCHED1);
+                matchfunc->highlight_nt0_seg(pmatch0[idx_pair],COLOR_STITCHED0);
+            }
+        }
+    }else if(cb_color->currentIndex()==1){
+        //reset the color of neuron list
+        NeuronTree* ntp = 0;
+        ntp = (NeuronTree*)&(ntList->at(0));
+        ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+        for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
+            NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
+            p->type=swcType0.at(i);
+        }
+        ntp = (NeuronTree*)&(ntList->at(1));
+        ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+        for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
+            NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
+            p->type=swcType1.at(i);
+        }
+    }
+
+    updateview();
+
+    highlight_pair();
 }
 
 void NeuronLiveMatchDialog::manualadd()
@@ -664,14 +725,15 @@ void NeuronLiveMatchDialog::manualadd()
             SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
 
-            if(stitchmask.at(cur_pair)>0){
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
-                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
-            }else{
-                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
-                matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+            if(cb_color->currentIndex()==0){
+                if(stitchmask.at(cur_pair)>0){
+                    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_STITCHED1);
+                    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_STITCHED0);
+                }else{
+                    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],COLOR_ORG1);
+                    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],COLOR_ORG0);
+                }
             }
-
         }
     }
 
@@ -1002,6 +1064,7 @@ void NeuronMatchDialog::creat()
     spin_searchspan->setRange(0,100000); spin_searchspan->setValue(20);
     spin_cmatchdis = new QDoubleSpinBox();
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
+    check_type = new QCheckBox("match by type defined in SWC file");
     spin_segthr = new QDoubleSpinBox();
     spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
     spin_gapthr = new QDoubleSpinBox();
@@ -1044,6 +1107,7 @@ void NeuronMatchDialog::creat()
     QLabel* label_62 = new QLabel("small gap filter (0=no filter): ");
     gridLayout->addWidget(label_62,13,0,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_gapthr,13,2,1,1);
+    gridLayout->addWidget(check_type,13,3,1,3,Qt::AlignRight);
     gridLayout->addWidget(check_spine,14,0,1,2);
     QLabel* label_7 = new QLabel("segment point #:");
     gridLayout->addWidget(label_7,15,0,1,1,Qt::AlignRight);
@@ -1492,6 +1556,7 @@ void NeuronMatchDialog::run()
     matchfunc.segmentThr = spin_segthr->value();
     matchfunc.maxClique3Num = spin_maxcnum->value();
     matchfunc.gapThr = spin_gapthr->value();
+    matchfunc.typeConstrain = check_type->isChecked();
     if(check_spine->isChecked()){
         matchfunc.spineLengthThr = spin_spineLen->value();
         matchfunc.spineAngThr = cos(spin_spineAng->value()/180*M_PI);
@@ -1559,7 +1624,7 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     constructNeuronGraph(*nt0, ng0);
     constructNeuronGraph(*nt1, ng1);
 
-    resetSWCType();
+    setSWCType(nt0, nt1);
 
     spanCand = 20;
     direction = 2;
@@ -1576,6 +1641,7 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     spineAngThr = -1;
     spineRadiusThr = 0;
     maxClique3Num = 10000;
+    typeConstrain = false;
 }
 
 void neuron_match_clique::globalmatch()
@@ -1586,11 +1652,20 @@ void neuron_match_clique::globalmatch()
     pmatch1.clear();
     double bestEnergy = 0;
     QList<int> candtype0, candtype1;
-    for(V3DLONG i=0; i<candID0.size(); i++){
-        candtype0.append(swcType0.at(candID0.at(i)));
-    }
-    for(V3DLONG i=0; i<candID1.size(); i++){
-        candtype1.append(swcType1.at(candID1.at(i)));
+    if(typeConstrain){
+        for(V3DLONG i=0; i<candID0.size(); i++){
+            candtype0.append(swcType0.at(candID0.at(i)));
+        }
+        for(V3DLONG i=0; i<candID1.size(); i++){
+            candtype1.append(swcType1.at(candID1.at(i)));
+        }
+    }else{
+        for(V3DLONG i=0; i<candID0.size(); i++){
+            candtype0.append(1);
+        }
+        for(V3DLONG i=0; i<candID1.size(); i++){
+            candtype1.append(1);
+        }
     }
 
     if(candID0.size()==0 || candID1.size()==0){
@@ -2004,7 +2079,7 @@ void neuron_match_clique::output_parameter(QString fname)
     myfile<<"spine_length_point_number= "<<spineLengthThr<<endl; //number of maximum points for spine
     myfile<<"spine_angle_threshold= "<<spineAngThr<<endl; //angular threshold for spine turning
     myfile<<"max_number_of_triangles_to_match= "<<maxClique3Num<<endl; //compare less triangles can increase the speed
-
+    myfile<<"match_branches_by_type= "<<(typeConstrain?1:0)<<endl; //if true/1, only match the branch with the same type defined in SWC
     file.close();
 }
 
@@ -2504,7 +2579,7 @@ void neuron_match_clique::output_stitch(QString fname)
         S.n = nt0_stitch->listNeuron.at(i).n;
         S.pn = nt0_stitch->listNeuron.at(i).pn;
         S.r = nt0_stitch->listNeuron.at(i).r;
-        S.type = 2;
+        S.type = swcType0.at(i);
         combined.append(S);
         idmax=idmax>S.n?idmax:S.n;
         idmax=idmax>S.pn?idmax:S.pn;
@@ -2516,7 +2591,7 @@ void neuron_match_clique::output_stitch(QString fname)
         S.z = nt1_stitch->listNeuron.at(i).z;
         S.n = nt1_stitch->listNeuron.at(i).n+idmax+1;
         S.r = nt1_stitch->listNeuron.at(i).r;
-        S.type = 2;
+        S.type = swcType1.at(i);
         if(nt1_stitch->listNeuron.at(i).pn>=0)
             S.pn = nt1_stitch->listNeuron.at(i).pn+idmax+1;
         else
@@ -2632,12 +2707,31 @@ void neuron_match_clique::matchCliquesAndCands()
     MS_x=candID0.size();
     MS_y=candID1.size();
     candMS.resize(MS_x*MS_y,0);
+    QList<int> candtype0, candtype1;
+    if(typeConstrain){
+        for(V3DLONG i=0; i<candID0.size(); i++){
+            candtype0.append(swcType0.at(candID0.at(i)));
+        }
+        for(V3DLONG i=0; i<candID1.size(); i++){
+            candtype1.append(swcType1.at(candID1.at(i)));
+        }
+    }else{
+        for(V3DLONG i=0; i<candID0.size(); i++){
+            candtype0.append(1);
+        }
+        for(V3DLONG i=0; i<candID1.size(); i++){
+            candtype1.append(1);
+        }
+    }
 //    candMS=QVector(MS_x*MS_y,0);
 
     QVector<QVector<int> > cliquePairs;
     for(int i=0; i<cliqueList0.size(); i++){
         for(int j=0; j<cliqueList1.size(); j++){
             //find matching clique
+            if(candtype0.at(cliqueList0[i].idx[0]) != candtype1.at(cliqueList1[i].idx[0])) continue;
+            if(candtype0.at(cliqueList0[i].idx[1]) != candtype1.at(cliqueList1[i].idx[1])) continue;
+            if(candtype0.at(cliqueList0[i].idx[2]) != candtype1.at(cliqueList1[i].idx[2])) continue;
             if(fabs(cliqueList0[i].e[0]-cliqueList1[j].e[0])>cmatchThr) continue;
             if(fabs(cliqueList0[i].e[1]-cliqueList1[j].e[1])>cmatchThr) continue;
             if(fabs(cliqueList0[i].e[2]-cliqueList1[j].e[2])>cmatchThr) continue;
@@ -2750,7 +2844,11 @@ void neuron_match_clique::highlight_nt1_seg(int point1, int type)
     int idx=components1.indexOf(cid);
     while(idx>=0){
         NeuronSWC* p = (NeuronSWC*)&(nt1_stitch->listNeuron.at(idx));
-        p->type=type;
+        if(type>=0){
+            p->type=type;
+        }else{
+            p->type=swcType1.at(idx);
+        }
         idx=components1.indexOf(cid, idx+1);
     }
 }
@@ -2761,7 +2859,11 @@ void neuron_match_clique::highlight_nt0_seg(int point0, int type)
     int idx=components0.indexOf(cid);
     while(idx>=0){
         NeuronSWC* p = (NeuronSWC*)&(nt0_stitch->listNeuron.at(idx));
-        p->type=type;
+        if(type>=0){
+            p->type=type;
+        }else{
+            p->type=swcType0.at(idx);
+        }
         idx=components0.indexOf(cid, idx+1);
     }
 }
@@ -3207,10 +3309,10 @@ void neuron_match_clique::resetSWCType()
     swcType0.clear();
     swcType1.clear();
     for(V3DLONG i=0; i<nt0->listNeuron.size(); i++){
-        swcType0.append(1);
+        swcType0.append(2);
     }
     for(V3DLONG i=0; i<nt1->listNeuron.size(); i++){
-        swcType1.append(1);
+        swcType1.append(2);
     }
 }
 

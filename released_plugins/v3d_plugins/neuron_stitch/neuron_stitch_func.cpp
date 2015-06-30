@@ -2086,17 +2086,17 @@ double compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double
     }
 
     //3 steps rotation
+    double mdis=distance_XYZList(c0,c1);
+    double mang=0;
     if(c0.size()<2){
         angle_r=0;
-        return true;
+        return mdis;
     }
     QList<XYZ> c1bk; c1bk.clear();
     for(int i=0; i<c0.size(); i++){
         c1bk.append(XYZ(c1[i]));
     }
     //step 1
-    double mdis=distance_XYZList(c0,c1);
-    double mang=0;
     for(double ang=10; ang<360; ang+=10){
         rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);

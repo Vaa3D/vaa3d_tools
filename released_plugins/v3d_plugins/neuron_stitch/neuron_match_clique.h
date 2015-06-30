@@ -35,6 +35,7 @@ private:
     QList<XYZ> candcoord0, candcoord1, candcoord1_adj; //cooridnate of candidates
     QList<XYZ> canddir0, canddir1, canddir1_adj; //direction of neuron tips
     QList<XYZ> canddircoord0, canddircoord1, canddircoord1_adj; //this is for transformation
+    QList<int> candtype0, candtype1;
     QList<int> pmatch0, pmatch1; //matched candidate, the index of neuron tree point
     QList<int> candmatch0, candmatch1; //matched candidate, the index of candidate in List
     QList<int> candcomponents0, candcomponents1; //the connected components each cand belongs to
@@ -64,6 +65,7 @@ public:
     double spineAngThr; //angular threshold of spine
     double spineRadiusThr; //radius threshold of spine
     int maxClique3Num; //the maximum number of 3 cliques considered in each stack - for speed
+    bool typeConstrain; //true: branches will be matched by type
 
     //transformation
     double shift_x, shift_y, shift_z, rotation_ang, rotation_cx, rotation_cy, rotation_cz;
@@ -174,7 +176,9 @@ public slots:
     void stitchall();
     void output();
     void change_pair(int idx);
+    void change_color();
     void spineCheck(int c);
+    void reject();
 
 private:
     V3DPluginCallback2 * callback;
@@ -194,7 +198,7 @@ private:
 
 public:
     QGridLayout *gridLayout;
-    QComboBox *cb_dir,*cb_pair;
+    QComboBox *cb_dir,*cb_pair,*cb_color;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr, *spin_gapthr;
     QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
@@ -252,7 +256,7 @@ public:
     QCheckBox *check_stitch;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
-    QCheckBox *check_spine;
+    QCheckBox *check_spine, *check_type;
 };
 
 #endif // NEURON_MATCH_CLIQUE_H

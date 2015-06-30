@@ -205,6 +205,13 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
             else
                 cerr<<"error: wrong border tips spine radius filter: "<<tmp<<"; use default value 0, no tips will be considered as spine"<<endl;
         }
+        if(paras.size()>12){
+            int tmp=atoi(paras.at(12));
+            if(tmp==0 || tmp==1)
+                matchfunc.typeConstrain=(tmp==1);
+            else
+                cerr<<"error: wrong type constrain mask: "<<tmp<<"; use default value 0, no constrain will be given"<<endl;
+        }
 
         //do match
         //init clique and candidate
@@ -243,7 +250,7 @@ void neuron_stitch::printHelp()
     cout<<"\nUsage: v3d -x neuron_stitch -f neuron_stitch_auto -i <input_first.swc> <input_second.swc> -o <output_base> "
        <<"-p <stack dir=2(x/y/z=0/1/2)> <stack rescale=1> <match angle thr=60> <match distance thr=100> <triangle match thr=100> <max number of triangles=10000> "<<
             "<border tips serch span=20> <border tips gap filter=0> <border tips segment filter=0> <border tips spine filter_size=0> "<<
-            "<border tips spine filter_angle=180> <border tips spine filter_radius=0>"<<endl;
+            "<border tips spine filter_angle=180> <border tips spine filter_radius=0> <match branch by type=0>"<<endl;
     cout<<"\n";
 }
 
