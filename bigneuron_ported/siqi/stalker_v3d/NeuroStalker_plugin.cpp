@@ -70,7 +70,7 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         cout<<"PARA.channel: "<<PARA.channel<<"PARA.preprocessing: "<<PARA.preprocessing<<"PARA.unittest"
             <<PARA.unittest<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
-        v3d_msg(tr("This is working or after?"));
+     //   v3d_msg(tr("This is working or after?"));
     }
     else
     {
@@ -226,7 +226,10 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
         //cout<<"Saving cropped image to downsample.v3draw"<<endl;
         //saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
-        if (data1d) delete [] data1d;
+        if(!bmenu)
+        {
+            if (data1d) delete [] data1d;
+        }
         data1d = p_img8u_crop;
 
         for (int i=0; i<4; i++){
@@ -342,7 +345,10 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     nt.name = "NeuroStalker";
     writeSWC_file(swc_name.toStdString().c_str(), nt);
 
-    if(data1d) {delete [] data1d; data1d = 0;}
+    if(!bmenu)
+    {
+        if(data1d) {delete [] data1d; data1d = 0;}
+    }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
