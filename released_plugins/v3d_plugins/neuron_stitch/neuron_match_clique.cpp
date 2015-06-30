@@ -201,6 +201,10 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
         v3d_msg("The number of neurons in the window is not 2");
         return;
     }
+
+    //back up type
+    backup_swc_type();
+
     //reset the color of neuron list
     NeuronTree* ntp = 0;
     ntp = (NeuronTree*)&(ntList->at(0));
@@ -267,6 +271,7 @@ void NeuronLiveMatchDialog::creat()
     spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
     spin_maxcnum = new QSpinBox();
     spin_maxcnum->setRange(0,1e10); spin_maxcnum->setValue(1000);
+    check_type = new QCheckBox("match by type defined in SWC file");
 
     QLabel* label_0 = new QLabel("stacking direction: ");
     gridLayout->addWidget(label_0,9,0,1,2,Qt::AlignRight);
@@ -286,6 +291,7 @@ void NeuronLiveMatchDialog::creat()
     QLabel* label_61 = new QLabel("Max number of triangles to match: ");
     gridLayout->addWidget(label_61,11,3,1,2,Qt::AlignRight);
     gridLayout->addWidget(spin_maxcnum,11,5,1,1);
+    gridLayout->addWidget(check_type,12,0,1,3,Qt::AlignRight);
 
     //border tips zone
     group_marker = new QGroupBox("search for border tips, otherwise use existing ones:");
@@ -444,6 +450,11 @@ void NeuronLiveMatchDialog::match()
         matchfunc->spineLengthThr = 0;
         matchfunc->spineRadiusThr = 0;
     }
+    if(check_type->isChecked()){
+        matchfunc->setSWCType(swcType0, swcType1);
+    }else{
+        matchfunc->resetSWCType();
+    }
 
     //clean up dialog storage:
     pmatch0.clear();
@@ -540,6 +551,30 @@ void NeuronLiveMatchDialog::updatematchlist()
         btn_skip->setEnabled(true);
         btn_stitch->setEnabled(stitchmask.at(id)>=0);
         cur_pair=id;
+    }
+}
+
+void NeuronLiveMatchDialog::backup_swc_type()
+{
+    swcType0.clear();
+    swcType1.clear();
+    for(V3DLONG i=0; i<ntList->at(0).listNeuron.size(); i++){
+        swcType0.append(ntList->at(0).listNeuron.at(i).type);
+    }
+    for(V3DLONG i=0; i<ntList->at(1).listNeuron.size(); i++){
+        swcType1.append(ntList->at(1).listNeuron.at(i).type);
+    }
+}
+
+void NeuronLiveMatchDialog::setback_swc_type()
+{
+    for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
+        p->type=swcType0.at(i);
+    }
+    for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
+        p->type=swcType1.at(i);
     }
 }
 
@@ -1524,6 +1559,8 @@ neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topN
     constructNeuronGraph(*nt0, ng0);
     constructNeuronGraph(*nt1, ng1);
 
+    resetSWCType();
+
     spanCand = 20;
     direction = 2;
     midplane = 0;
@@ -1548,13 +1585,23 @@ void neuron_match_clique::globalmatch()
     pmatch0.clear();
     pmatch1.clear();
     double bestEnergy = 0;
+    QList<int> candtype0, candtype1;
+    for(V3DLONG i=0; i<candID0.size(); i++){
+        candtype0.append(swcType0.at(candID0.at(i)));
+    }
+    for(V3DLONG i=0; i<candID1.size(); i++){
+        candtype1.append(swcType1.at(candID1.at(i)));
+    }
 
     if(candID0.size()==0 || candID1.size()==0){
         return;
     }else if(candID0.size()==1){ //only one candidate, match by angle
         double mang=-1;
-        int mid=0;
+        int mid=-1;
         for(int i=0; i<candID1.size(); i++){
+            //match by swc type first
+            if(candtype0.at(0) != candtype1.at(i))
+                continue;
             //find the one with the highest angle similarity
             double ang=NTDOT(canddir0.at(0),canddir1.at(i));
             if(ang>mang){
@@ -1562,12 +1609,17 @@ void neuron_match_clique::globalmatch()
                 mid=i;
             }
         }
-        candmatch0.append(0);
-        candmatch1.append(mid);
+        if(mid>=0){
+            candmatch0.append(0);
+            candmatch1.append(mid);
+        }
     }else if(candID1.size()==1){ //only one candidate, match by angle
         double mang=-1;
-        int mid=0;
+        int mid=-1;
         for(int i=0; i<candID0.size(); i++){
+            //match by swc type first
+            if(candtype0.at(i) != candtype1.at(0))
+                continue;
             //find the one with the highest angle similarity
             double ang=NTDOT(canddir0.at(i),canddir1.at(0));
             if(ang>mang){
@@ -1575,14 +1627,21 @@ void neuron_match_clique::globalmatch()
                 mid=i;
             }
         }
-        candmatch0.append(mid);
-        candmatch1.append(0);
-    }else if(candID0.size()==2){
+        if(mid>=0){
+            candmatch0.append(mid);
+            candmatch1.append(0);
+        }
+    }else if(candID0.size()==2){ //only two markers to match
         QList<int> tmpmatch0, tmpmatch1;
         double errdis=1e16;
         double errang=-2;
         for(int i=0; i<candID1.size(); i++){
             for(int j=i+1; j<candID1.size(); j++){
+                //check swc type first
+                if((candtype0.at(0) != candtype1.at(i) && candtype0.at(0) != candtype1.at(j) ) ||
+                        (candtype0.at(1) != candtype1.at(i) && candtype0.at(1) != candtype1.at(j) ))
+                    continue;
+                //check distance
                 double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
                 if(direction==0) tmp_shift_x=-1;
                 if(direction==1) tmp_shift_y=-1;
@@ -1594,8 +1653,9 @@ void neuron_match_clique::globalmatch()
                 c1.append(XYZ(candcoord1.at(j)));
                 double dis=compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
                 if(dis<0){
-                    break;
+                    continue;
                 }
+                //check angular
                 if(dis<errdis){
                     affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
@@ -1603,7 +1663,7 @@ void neuron_match_clique::globalmatch()
                     QList<int> tmpMatchMarkers[2];
                     tmpMatchMarkers[0]=QList<int>();
                     tmpMatchMarkers[1]=QList<int>();
-                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, candtype0, candtype1, tmpMatchMarkers, pmatchThr, angThr_match);
                     double ang=NTDOT(canddir0.at(0),tmpdir.at(i));
                     ang+=NTDOT(canddir0.at(1),tmpdir.at(j));
                     if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
@@ -1616,7 +1676,7 @@ void neuron_match_clique::globalmatch()
                     affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     minus_XYZList(tmpdir,tmpcoord,tmpdir);
-                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, candtype0, candtype1, tmpMatchMarkers, pmatchThr, angThr_match);
                     ang=NTDOT(canddir0.at(1),tmpdir.at(i));
                     ang+=NTDOT(canddir0.at(0),tmpdir.at(j));
                     if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
@@ -1636,6 +1696,11 @@ void neuron_match_clique::globalmatch()
         double errang=-2;
         for(int i=0; i<candID0.size(); i++){
             for(int j=i+1; j<candID0.size(); j++){
+                //check swc type first
+                if((candtype0.at(i) != candtype1.at(0) && candtype0.at(i) != candtype1.at(1) ) ||
+                        (candtype0.at(j) != candtype1.at(0) && candtype0.at(j) != candtype1.at(1) ))
+                    continue;
+                //check distance
                 double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
                 if(direction==0) tmp_shift_x=-1;
                 if(direction==1) tmp_shift_y=-1;
@@ -1647,8 +1712,9 @@ void neuron_match_clique::globalmatch()
                 c1.append(XYZ(candcoord1.at(1)));
                 double dis=compute_affine_4dof(c0,c1,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
                 if(dis<0){
-                    break;
+                    continue;
                 }
+                //check angular
                 if(dis<errdis){
                     affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
@@ -1656,7 +1722,7 @@ void neuron_match_clique::globalmatch()
                     QList<int> tmpMatchMarkers[2];
                     tmpMatchMarkers[0]=QList<int>();
                     tmpMatchMarkers[1]=QList<int>();
-                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, candtype0, candtype1, tmpMatchMarkers, pmatchThr, angThr_match);
                     double ang=NTDOT(canddir0.at(i),tmpdir.at(0));
                     ang+=NTDOT(canddir0.at(j),tmpdir.at(1));
                     if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
@@ -1669,7 +1735,7 @@ void neuron_match_clique::globalmatch()
                     affine_XYZList(candcoord1, tmpcoord, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     affine_XYZList(canddircoord1, tmpdir, tmp_shift_x, tmp_shift_y, tmp_shift_z, tmp_angle+180, tmp_cent_x, tmp_cent_y, tmp_cent_z, direction);
                     minus_XYZList(tmpdir,tmpcoord,tmpdir);
-                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                    getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, candtype0, candtype1, tmpMatchMarkers, pmatchThr, angThr_match);
                     ang=NTDOT(canddir0.at(i),tmpdir.at(1));
                     ang+=NTDOT(canddir0.at(j),tmpdir.at(0));
                     if((ang>errang && tmpMatchMarkers[0].size()>=tmpmatch0.size()) || tmpMatchMarkers[0].size()>tmpmatch0.size()){
@@ -1752,7 +1818,7 @@ void neuron_match_clique::globalmatch()
                 QList<int> tmpMatchMarkers[2];
                 tmpMatchMarkers[0]=QList<int>();
                 tmpMatchMarkers[1]=QList<int>();
-                getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
+                getMatchPairs_XYZList(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, candtype0, candtype1, tmpMatchMarkers, pmatchThr, angThr_match);
                 //double tmpE = getMatchPairs_XYZList_energy(candcoord0, tmpcoord, canddir0, tmpdir, candcomponents0, candcomponents1, tmpMatchMarkers, pmatchThr, angThr_match);
                 if(tmpMatchMarkers[0].size()>tmpmatch0.size()){
                 //if(tmpE>tmpEnergy){
@@ -3132,6 +3198,52 @@ void neuron_match_clique::initNeuron(NeuronTree& nt, const HBNeuronGraph& ng, QL
         }
         componentLength.append(length);
     }
+}
+
+//Neuron Type from SWC file as extra matching constrain
+//set all the type to 1 to disable type constrain
+void neuron_match_clique::resetSWCType()
+{
+    swcType0.clear();
+    swcType1.clear();
+    for(V3DLONG i=0; i<nt0->listNeuron.size(); i++){
+        swcType0.append(1);
+    }
+    for(V3DLONG i=0; i<nt1->listNeuron.size(); i++){
+        swcType1.append(1);
+    }
+}
+
+void neuron_match_clique::setSWCType(NeuronTree* botNeuron, NeuronTree* topNeuron)
+{
+    if(botNeuron->listNeuron.size()!=nt0->listNeuron.size() ||
+            topNeuron->listNeuron.size()!=nt1->listNeuron.size()){
+        resetSWCType();
+        qDebug()<<"ERROR: setSWCType - the number of node in the swc source does not match with target";
+        return;
+    }
+    swcType0.clear();
+    swcType1.clear();
+    for(V3DLONG i=0; i<nt0->listNeuron.size(); i++){
+        swcType0.append(botNeuron->listNeuron.at(i).type);
+    }
+    for(V3DLONG i=0; i<nt1->listNeuron.size(); i++){
+        swcType1.append(topNeuron->listNeuron.at(i).type);
+    }
+}
+
+void neuron_match_clique::setSWCType(QList<int>& botType, QList<int>& topType)
+{
+    if(botType.size()!=nt0->listNeuron.size() ||
+            topType.size()!=nt1->listNeuron.size()){
+        resetSWCType();
+        qDebug()<<"ERROR: setSWCType - the number of node in the type source does not match with target";
+        return;
+    }
+    swcType0.clear();
+    swcType0=botType;
+    swcType1.clear();
+    swcType1=topType;
 }
 
 //normal type: 1:single root; 2:path; 5:fork point; 6:end point;

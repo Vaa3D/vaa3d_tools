@@ -1763,6 +1763,64 @@ double getMatchPairs_XYZList_energy(const QList<XYZ>& c0, const QList<XYZ>& c1, 
     return angAll;
 }
 
+void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, const QList<int>& c0_type, const QList<int>& c1_type, QList<int> * MatchMarkers, double span, double cos_angle)
+{
+    double thr = span*span;
+    QMap<double, QList<int> > MatchPoints;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    for(int i=0; i<c0.size(); i++){
+        for(int j=0; j<c1.size(); j++){
+            if(c0_type.at(i) != c1_type.at(j)) //match by type
+                continue;
+            double dis = NTDIS(c0.at(i),c1.at(j));
+            if(dis>thr) continue; //match by distance
+            double ang = NTDOT(c0_dir.at(i),c1_dir.at(j));
+            if(ang<cos_angle) continue; //match by angle
+            QList<int> tmp = QList<int>()<<i<<j;
+            MatchPoints.insertMulti(dis, tmp);
+        }
+    }
+
+    //this is to avoid loop in matched point
+    QList<int> cctmp;
+    int ccmax=0;
+    int c0_size=c0.size();
+    for(int i=0; i<c0_conncomponent.size(); i++){
+        ccmax=ccmax>c0_conncomponent.at(i)?ccmax:c0_conncomponent.at(i);
+        cctmp.append(c0_conncomponent.at(i));
+    }
+    ccmax+=10;
+    for(int i=0; i<c1_conncomponent.size(); i++){
+        cctmp.append(c1_conncomponent.at(i)+ccmax);
+    }
+
+    QVector<int> mask0(c0.size(),0);
+    QVector<int> mask1(c1.size(),0);
+    for(QMap<double, QList<int> >::Iterator iter = MatchPoints.begin(); iter!=MatchPoints.end(); iter++){
+        int a = iter.value().at(0);
+        int b = iter.value().at(1);
+        if(mask0[a]+mask1[b]>0)
+            continue;
+        if(cctmp[b+c0_size]==cctmp[a])
+            continue;
+
+        mask0[a]++;
+        mask1[b]++;
+
+        int tmpccid=cctmp.at(b+c0_size);
+        int idx=cctmp.indexOf(tmpccid);
+        while(idx>=0){
+            cctmp[idx]=cctmp.at(a);
+            idx=cctmp.indexOf(tmpccid);
+        }
+
+        MatchMarkers[0].append(a);
+        MatchMarkers[1].append(b);
+    }
+}
+
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle)
 {
     double thr = span*span;

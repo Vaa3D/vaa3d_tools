@@ -26,6 +26,7 @@ private:
     NeuronTree *nt1_stitch;
     QList<int> components0, components1;
     QList<int> parent0, parent1;
+    QList<int> swcType0, swcType1;
     HBNeuronGraph ng0, ng1;
     QList<int> neuronType0, neuronType1;
 
@@ -72,6 +73,9 @@ public:
     void init();
     void init(LandmarkList * mList); //init based on markers
     void initNeuronComponents(); //this is contained in init()
+    void resetSWCType();
+    void setSWCType(NeuronTree* botNeuron, NeuronTree* topNeuron);
+    void setSWCType(QList<int>& botType, QList<int>& topType);
     void globalmatch();
     void update_matchedPoints_to_Markers(LandmarkList * mList);
     void output_matchedMarkers(QString fname, const NeuronTree& nt, QList<int> points);
@@ -159,6 +163,8 @@ private:
     void highlight_pair();
     void link_new_marker_neuron();
     void update_marker_to_neuron();
+    void backup_swc_type();
+    void setback_swc_type();
 
 public slots:
     void match();
@@ -175,6 +181,7 @@ private:
     V3dR_MainWindow* v3dwin;
     QList<NeuronTree> *ntList;
     QList<NeuronTree> ntList_bk;
+    QList<int> swcType0, swcType1;
     neuron_match_clique * matchfunc;
     LandmarkList * mList;
     View3DControl * v3dcontrol;
@@ -193,7 +200,7 @@ public:
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
     QSpinBox *spin_spineLen;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
-    QCheckBox *check_spine;
+    QCheckBox *check_spine, *check_type;
     QGroupBox *group_marker;
 };
 
