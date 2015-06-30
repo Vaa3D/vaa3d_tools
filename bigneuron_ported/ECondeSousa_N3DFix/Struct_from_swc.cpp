@@ -18,7 +18,7 @@
 #include <math.h>
 #include "Dend_Section.h"
 #include "myHeader.h"
-#include "N3Dfix_plugin.h"
+#include "N3DFix_plugin.h"
 
 	
 //////////////////////////////////////////////////////////////////////////

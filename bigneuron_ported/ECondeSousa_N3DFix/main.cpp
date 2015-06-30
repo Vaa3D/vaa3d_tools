@@ -19,7 +19,7 @@
 #include <iostream>
 #include "myHeader.h"
 #include "Dend_Section.h"
-#include "N3Dfix_plugin.h"
+#include "N3DFix_plugin.h"
 #include <ctime>
 #include <QtGui>
 #include "openSWCDialog.h"
