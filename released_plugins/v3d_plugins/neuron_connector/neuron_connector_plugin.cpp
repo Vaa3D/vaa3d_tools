@@ -403,26 +403,54 @@ void neuron_connector_dialog::run()
         *nt = readSWC_file(fileOpenName);
     }
     if(nt->listNeuron.size()<=0){
-        addinfo(">> failed to read SWC file: "+fileOpenName + "\n");
+        addinfo("failed to read SWC file: "+fileOpenName,true);
     }else{
         QList<NeuronSWC> newNeuron;
         connectall(nt, newNeuron, xscale, yscale, zscale, angThr, disThr, matchtype, surfdis, rootid);
 
         qDebug()<<"output result";
         if(!export_list2file(newNeuron, this->edit_load1->text())){
-            addinfo(">> failed to save to: "+this->edit_load1->text() + "\n");
+            addinfo("failed to save to: "+this->edit_load1->text(),true);
         }else{
-            addinfo(">> save: "+this->edit_load1->text() + "\n");
+            addinfo("save: "+this->edit_load1->text(),true);
         }
     }
     //this->accept();
 }
 
-void neuron_connector_dialog::addinfo(QString info)
+void neuron_connector_dialog::addinfo(QString info, bool bold)
 {
     QTextCursor textcursor = this->text_info->textCursor();
     textcursor.movePosition(QTextCursor::Start);
-    textcursor.insertText(info);
+    if(bold)
+        textcursor.insertHtml(">> <b>"+info+"</b><br>");
+    else
+        textcursor.insertText(">> "+info+"\n");
+}
+
+double getswcdiameter(NeuronTree* nt)
+{
+    if(nt->listNeuron.size()<=0)
+        return 0;
+    float x_min=nt->listNeuron.at(0).x;
+    float x_max=nt->listNeuron.at(0).x;
+    float y_min=nt->listNeuron.at(0).y;
+    float y_max=nt->listNeuron.at(0).y;
+    float z_min=nt->listNeuron.at(0).z;
+    float z_max=nt->listNeuron.at(0).z;
+    for(V3DLONG i=1; i<nt->listNeuron.size(); i++){
+        x_min=MIN(nt->listNeuron.at(i).x, x_min);
+        y_min=MIN(nt->listNeuron.at(i).y, y_min);
+        z_min=MIN(nt->listNeuron.at(i).z, z_min);
+        x_max=MAX(nt->listNeuron.at(i).x, x_max);
+        y_max=MAX(nt->listNeuron.at(i).y, y_max);
+        z_max=MAX(nt->listNeuron.at(i).z, z_max);
+    }
+    double tmp=(x_max-x_min)*(x_max-x_min);
+    tmp=(y_max-y_min)*(y_max-y_min);
+    tmp=(z_max-z_min)*(z_max-z_min);
+    tmp=sqrt(tmp);
+    return tmp;
 }
 
 void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchType, bool b_minusradius, int rootID=-1)
@@ -431,7 +459,7 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
     bool b_connectall = false;
     bool b_somaaxon = false;
     if(disThr<0){
-        disThr=MAX_DOUBLE;
+        disThr=getswcdiameter(nt);
         b_connectall=true;
     }
     //rescale neurons
@@ -564,31 +592,29 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                     mvdis=dis;
                     mvid=id;
                 }
-                if(!b_connectall){
-                    if(dis<mtdis){
-                        if(connNum.at(id)<1){//tips
-                            V3DLONG tmpid=cand.indexOf(id);
-                            if(tmpid<0){//should not happen, just in case
-                                qDebug()<<"unexpected error: cannot locate dead end in candidate list, please check code."<<tid<<":"<<cid<<":"<<id;
-                                id=components.indexOf(cid, id+1);
-                                continue;
-                            }
-                            if(NTDOT(canddir.at(tid),canddir.at(tmpid))<angThr){
-                                mtdis=dis;
-                                mtid=id;
-                            }
+                if(dis<mtdis){
+                    if(connNum.at(id)<1){//tips
+                        V3DLONG tmpid=cand.indexOf(id);
+                        if(tmpid<0){//should not happen, just in case
+                            qDebug()<<"unexpected error: cannot locate dead end in candidate list, please check code."<<tid<<":"<<cid<<":"<<id;
+                            id=components.indexOf(cid, id+1);
+                            continue;
+                        }
+                        if(NTDOT(canddir.at(tid),canddir.at(tmpid))<angThr){
+                            mtdis=dis;
+                            mtid=id;
                         }
                     }
                 }
                 id=components.indexOf(cid, id+1);
             }
-            if(b_connectall){
-                if(mvid>=0){
-                    QVector<V3DLONG> tmp;
-                    tmp.append(tidx); tmp.append(mvid);
-                    connMap.insert(pair<double, QVector<V3DLONG> >(mvdis,tmp));
-                }
-            }else{
+//            if(b_connectall){
+//                if(mvid>=0){
+//                    QVector<V3DLONG> tmp;
+//                    tmp.append(tidx); tmp.append(mvid);
+//                    connMap.insert(pair<double, QVector<V3DLONG> >(mvdis,tmp));
+//                }
+//            }else{
                 if(mvid>=0){
                     QVector<V3DLONG> tmp;
                     tmp.append(tidx); tmp.append(mvid);
@@ -599,7 +625,7 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                     tmp.append(tidx); tmp.append(mtid);
                     connMap.insert(pair<double, QVector<V3DLONG> >(mtdis,tmp));
                 }
-            }
+//            }
         }
     }
 
@@ -647,14 +673,13 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
     if(nt->listNeuron[rootidx].n != rootID)
         rootidx=-1;
     QVector<V3DLONG> prinode;
-    if(rootidx==-1){
-        for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
-            if(nt->listNeuron[i].parent==-1){
-                prinode.push_back(i);
-            }
-        }
-    }else{
+    if(rootidx!=-1){
         prinode.push_back(rootidx);
+    }
+    for(V3DLONG i=0; i<nt->listNeuron.size(); i++){
+        if(nt->listNeuron[i].parent==-1){
+            prinode.push_back(i);
+        }
     }
     V3DLONG i=0;
     V3DLONG priIdx=0;
