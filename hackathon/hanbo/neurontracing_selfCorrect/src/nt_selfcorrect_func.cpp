@@ -88,6 +88,9 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     fp << timer.restart() <<"\t";
     calculateScore_topology();
     fp << timer.restart() <<"\t";
+    QString fname_tmp=fname_tmpout+"_score.eswc";
+    saveESWC_score(fname_tmp.toStdString().c_str(),ntmarkers,score_map);
+    timer.restart();
     getTrainingSample();
     fp << timer.restart() <<"\t";
     performTraining();
@@ -98,6 +101,28 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     finalTracing();
     fp << timer.elapsed() <<"\t";
     fp.close();
+    //saveData(fname_output);
+}
+
+void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb, int ch)
+{
+    taskID = 3;
+    callback=cb;
+
+    fname_tmpout=fname_output+"_tmp";
+    fname_outswc=fname_output+".swc";
+    fname_inimg=fname_img;
+    //measuring computation performance
+    loadImageData(fname_img, ch);
+    simpleTracing();
+    calculateScore_topology();
+    QString fname_tmp=fname_tmpout+"_score.eswc";
+    saveESWC_score(fname_tmp.toStdString().c_str(),ntmarkers,score_map);
+    getTrainingSample();
+    performTraining();
+    //smartTracing_regionstart();
+    smartTracing_seedstart();
+    finalTracing();
     //saveData(fname_output);
 }
 
@@ -112,7 +137,7 @@ bool nt_selfcorrect_func::loadData(QString fname_img, QString fname_swc)
     return true;
 }
 
-bool nt_selfcorrect_func::loadImageData(QString fname_img)
+bool nt_selfcorrect_func::loadImageData(QString fname_img, int ch)
 {
     char* cstr;
     string fname = fname_img.toStdString();
@@ -125,7 +150,9 @@ bool nt_selfcorrect_func::loadImageData(QString fname_img)
     }
     delete [] cstr;
     if(sz_img[3]>1){
-        qDebug()<<"warning: image has more than 1 color channel. Only the first channel will be used.";
+        if(ch>0 && ch<sz_img[3]){
+            p_img1D = p_img1D+sz_img[0]*sz_img[1]*sz_img[2]*ch*type_img;
+        }
         sz_img[3]=1;
     }
     //arrange the image into 3D
@@ -222,6 +249,22 @@ bool nt_selfcorrect_func::getTrainingSample()
     double STEP=0.4;
     train_positive_idx.clear();
     train_negative_idx.clear();
+
+    //check the score to make sure there is training sample
+    float minScore=-1;
+    for(V3DLONG nid=0; nid<ntmarkers.size(); nid++){
+        MyMarker* current = ntmarkers.at(nid);
+        if(nid==0) minScore=score_map[current]+1;
+        float tmp;
+        if(current->parent<=0){
+            tmp=score_map[current];
+        }else{
+            tmp=MAX(score_map[current],score_map[current->parent]);
+        }
+        minScore=MIN(minScore, tmp);
+    }
+    if(minScore>param.sample_scoreThr)
+        param.sample_scoreThr=minScore+1e-6;
 
     unsigned char * p_mask1D=new unsigned char[sz_img[0]*sz_img[1]*sz_img[2]];
     memset(p_mask1D,0,sz_img[0]*sz_img[1]*sz_img[2]);
@@ -1208,7 +1251,7 @@ void nt_selfcorrect_func::initParameter()
     param.app2_channel = 0;
     param.app2_b256 = false;
     param.app2_2dradius = true;
-    param.app2_gap = false;
+    param.app2_gap = true;
     param.app2_gsdt = true;
     param.app2_lenThr = 5.0;
 

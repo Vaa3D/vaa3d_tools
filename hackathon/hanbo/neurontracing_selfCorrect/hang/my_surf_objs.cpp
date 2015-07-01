@@ -190,6 +190,36 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers)
 	return true;
 }
 
+
+bool saveESWC_score(string swc_file, vector<MyMarker*> & out_markers, map<MyMarker*, double> & score_map)
+{
+    cout<<"marker num = "<<out_markers.size()<<", save swc file to "<<swc_file.c_str()<<endl;
+    map<MyMarker*, int> ind;
+    ofstream ofs(swc_file.c_str());
+
+    if(ofs.fail())
+    {
+        cout<<"open swc file error"<<endl;
+        return false;
+    }
+    ofs<<"#name "<<swc_file.c_str()<<endl;
+    ofs<<"#comment "<<endl;
+    ofs<<"##n,type,x,y,z,radius,parent"<<endl;
+    for(int i = 0; i < out_markers.size(); i++) ind[out_markers[i]] = i+1;
+
+    for(int i = 0; i < out_markers.size(); i++)
+    {
+        MyMarker * marker = out_markers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id
+             <<" -1 -1 "<<score_map[marker]<<endl;
+    }
+    ofs.close();
+    return true;
+}
+
 double dist(MyMarker a, MyMarker b)
 {
 	return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));

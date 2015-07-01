@@ -102,6 +102,7 @@ bool saveMarker_score(string marker_file, vector<MyMarker*> & out_markers, map<M
 vector<MyMarker*> readSWC_file(string swc_file);
 bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers);
 bool saveSWC_score(string swc_file, vector<MyMarker*> & out_markers, map<MyMarker*, double> & score_map);
+bool saveESWC_score(string swc_file, vector<MyMarker*> & out_markers, map<MyMarker*, double> & score_map);
 
 double dist(MyMarker a, MyMarker b);
 

@@ -134,14 +134,14 @@ bool smartTrace_plugin::dofunc(const QString & func_name, const V3DPluginArgList
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("\n\n**** Usage of smartTrace tracing **** \n");
+        printf("vaa3d -x smartTrace -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("inimg_file       The input image\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+
         printf("vaa3d -x smartTrace -f selfCorrection -i <inimg_file> <inswc_file> -o <output> -p <score.txt> \n");
         printf("inimg_file       The input image\n");
         printf("inswc_file       The input tracing\n");
         printf("score.txt        Confidential score calculated by plugin: calculate_reliability_score.\n");
-
-		printf("vaa3d -x smartTrace -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
-        printf("inimg_file       The input image\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
         printf("\n\nvaa3d -x smartTrace -f smartTrace -i <inimg_file> -p <channel> <other parameters>\n");
         printf("inimg_file       The input image\n");
@@ -160,6 +160,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+    int datatype = 0;
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -183,6 +184,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         M = p4DImage->getYDim();
         P = p4DImage->getZDim();
         sc = p4DImage->getCDim();
+        datatype = (int) p4DImage->getDatatype();
 
         bool ok1;
 
@@ -211,7 +213,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
     else
     {
-        int datatype = 0;
         if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
@@ -231,13 +232,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //main neuron reconstruction code
 
-    //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
+    QString swc_name=PARA.inimg_file+"_smartTracing";
 
-    //Output
-    NeuronTree nt;
-	QString swc_name = PARA.inimg_file + "_smartTrace.swc";
-	nt.name = "smartTrace";
-    writeSWC_file(swc_name.toStdString().c_str(),nt);
+    nt_selfcorrect_func tracefunc;
+    tracefunc.smart_tracing(PARA.inimg_file,swc_name,&callback,c-1);
+
 
     if(!bmenu)
     {

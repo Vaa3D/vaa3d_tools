@@ -53,10 +53,11 @@ public:
     void correct_tracing(QString fname_img, QString fname_swc, QString fname_score, QString fname_output, V3DPluginCallback2* cb);
     void tracing_correct(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
     void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
+    void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb, int ch);
 
 private:
     bool loadData(QString fname_img, QString fname_swc);
-    bool loadImageData(QString fname_img);
+    bool loadImageData(QString fname_img, int ch=0);
     bool saveData(QString fname_output);
     bool initTracing();
     bool simpleTracing();
