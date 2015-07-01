@@ -134,7 +134,7 @@ bool smartTrace_plugin::dofunc(const QString & func_name, const V3DPluginArgList
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("\n\n**** Usage of smartTrace tracing **** \n");
-        printf("vaa3d -x smartTrace -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x smartTrace -f tracing_func -i <inimg_file> -p <channel>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
@@ -143,7 +143,7 @@ bool smartTrace_plugin::dofunc(const QString & func_name, const V3DPluginArgList
         printf("inswc_file       The input tracing\n");
         printf("score.txt        Confidential score calculated by plugin: calculate_reliability_score.\n");
 
-        printf("\n\nvaa3d -x smartTrace -f smartTrace -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("\n\nvaa3d -x smartTrace -f smartTrace -i <inimg_file> -p <channel>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
@@ -240,14 +240,33 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     nt_selfcorrect_func tracefunc;
     tracefunc.smart_tracing(PARA.inimg_file,swc_name,&callback,c-1);
-
-
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
-
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-
+    if(tracefunc.error_code==0)
+    {
+        v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+    }else{
+        QString error_msg;
+        switch(tracefunc.error_code){
+        case 1:
+            error_msg="Failed to call APP2 tracing function. Please check if plugin Vaa3D_Neuron2 is installed correctly.";
+            break;
+        case 2:
+            error_msg="Failed to run SVM. Please check your configuration.";
+            break;
+        case 31:
+            error_msg="Failed to read image file.";
+            break;
+        case 32:
+            error_msg="Invalid image type. Please convert and save the image in type UINT8.";
+            break;
+        default:
+            error_msg="Encounter unknown error. Please check the code or contact developer: Hanbo Chen";
+            break;
+        }
+        v3d_msg(error_msg,bmenu);
+    }
     return;
 }

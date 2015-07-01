@@ -11,6 +11,8 @@
 
 nt_selfcorrect_func::nt_selfcorrect_func()
 {
+    error_code = 0;
+
     p_img1D = 0;
     ppp_img3D = 0;
     tmp_ppp_window = 0;
@@ -113,16 +115,22 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     fname_outswc=fname_output+".swc";
     fname_inimg=fname_img;
     //measuring computation performance
-    if(!loadImageData(fname_img, ch))
-        return;
+    loadImageData(fname_img, ch);
+    if(error_code!=0) return;
     simpleTracing();
+    if(error_code!=0) return;
     calculateScore_topology();
+    if(error_code!=0) return;
     QString fname_tmp=fname_tmpout+"_score.eswc";
     saveESWC_score(fname_tmp.toStdString().c_str(),ntmarkers,score_map);
+    if(error_code!=0) return;
     getTrainingSample();
+    if(error_code!=0) return;
     performTraining();
+    if(error_code!=0) return;
     //smartTracing_regionstart();
     smartTracing_seedstart();
+    if(error_code!=0) return;
     finalTracing();
     //saveData(fname_output);
 }
@@ -147,10 +155,12 @@ bool nt_selfcorrect_func::loadImageData(QString fname_img, int ch)
     //load image
     if(!loadImage(cstr, p_img1D, sz_img, type_img)){
         qDebug()<<"error: cannot read image "<<fname_img;
+        error_code=31;
         return false;
     }
     if(type_img!=1){
         qDebug()<<"ERROR: only support image type UINT8";
+        error_code=32;
         return false;
     }
     delete [] cstr;
@@ -600,13 +610,15 @@ bool nt_selfcorrect_func::performTraining()
 
     if(param.svm_param.kernel_type == PRECOMPUTED){
         qDebug()<<"SVM ERROR: wrong kernel type, no precomputed kernel.";
-        exit(1);
+        error_code=2;
+        return false;
     }
 
     const char *error_msg = svm_check_parameter(&svmProb,&(param.svm_param));
     if(error_msg){
         qDebug()<<"SVM ERROR:"<<error_msg;
-        exit(1);
+        error_code=2;
+        return false;
     }
     svmModel = svm_train(&svmProb,&(param.svm_param));
 
@@ -690,7 +702,8 @@ bool nt_selfcorrect_func::correctExisting()
             MyMarker* parent=ntmarkers[i]->parent;
             if(parent==0){//this should not happen!
                 qDebug()<<"Error: something unexpected happened. Please check the code and data.";
-                exit(1);
+                error_code = -1;
+                return false;
             }
             if(visitMask[parent]){ //assign the parent component to the child if visited
                 compId[ntmarkers[i]]=compId[parent];
@@ -1358,10 +1371,11 @@ vector<MyMarker *> nt_selfcorrect_func::app2Tracing(QString fname_img, QString f
 
     if(!callback->callPluginFunc(full_plugin_name,func_name,input,output)){
          qDebug()<<"Error: failed to call the tracing plugin: "<<full_plugin_name;
-         exit(0);
+         error_code = 1;
+         return vector<MyMarker*>();
+    }else{
+        return readSWC_file(fname_output.toStdString());
     }
-
-    return readSWC_file(fname_output.toStdString());
 }
 
 double nt_selfcorrect_func::getMarkersDistance(vector<MyMarker*> &m1, vector<MyMarker*> &m2)

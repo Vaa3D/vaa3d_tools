@@ -55,6 +55,10 @@ public:
     void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb);
     void smart_tracing(QString fname_img, QString fname_output, V3DPluginCallback2* cb, int ch);
 
+    //0: no error; 1: failed to call app2; 2: SVM configuration error; -1: other unexpected errors;
+    //31: cannot read image file; 32: image is not uint8
+    int error_code;
+
 private:
     bool loadData(QString fname_img, QString fname_swc);
     bool loadImageData(QString fname_img, int ch=0);
