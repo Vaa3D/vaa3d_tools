@@ -54,6 +54,7 @@ public slots:
     bool finish_proof_dialog();
 
     void segment_change();
+    void marker_in_one_seg();
 
     //not used
     bool maybe_save();
@@ -88,6 +89,7 @@ private:
     parameters all_para;
     int rgb[3];
 
+    int x_min,y_min,z_min;
     vector<vector<int> > segment_neuronswc;
     QDialog *seg_dialog;
     QPlainTextEdit *edit_seg, *edit_marker;

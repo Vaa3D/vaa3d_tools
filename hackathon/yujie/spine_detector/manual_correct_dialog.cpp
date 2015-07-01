@@ -691,8 +691,8 @@ void manual_correct_dialog::marker_roi()
 
     //Step 4: Focus on this marker on tri-view
     TriviewControl * p_control = callback->getTriviewControl(curwin);
-    p_control->setFocusLocation((long)LList_in.at(mid).x,
-                                (long)LList_in.at(mid).y,(long)LList_in.at(mid).z);
+    p_control->setFocusLocation((long)LList_adj.at(mid).x,
+                                (long)LList_adj.at(mid).y,(long)LList_adj.at(mid).z);
 
     //Step 5: update marker in 2 tri-view and one 3D
     // if this markers is not determined,Landmark color change
@@ -1361,7 +1361,7 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
 {
     int extra_length=5;
     float r0,r1;
-    int x_min,y_min,z_min,x_max,y_max,z_max;
+    int x_max,y_max,z_max;
     r0=neuron.listNeuron.at(one_seg[0]).r+all_para.max_dis;
     r1=neuron.listNeuron.at(one_seg[1]).r+all_para.max_dis;
     qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
@@ -1410,12 +1410,13 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
         }
     }
 
+    LList_seg.clear();
     //find all the spines in this set.
     //also need to check if the whole spine is displayed
     for (int j=0;j<LList_in.size();j++)
     {
         if (LList_in[j].x-1<=x_min || LList_in[j].x-1>=x_max || LList_in[j].y-1<=y_min
-            || LList_in[j].y-1>=y_min || LList_in[j].z-1<=z_min ||LList_in[j].z-1>=z_max )
+            || LList_in[j].y-1>=y_max || LList_in[j].z-1<=z_min ||LList_in[j].z-1>=z_max )
             continue;
         GOV tmp_spine= label_group [j];
         bool incomplete_flag=false;
@@ -1434,11 +1435,11 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
         {
             for (int k=0;k<tmp_spine.size();k++)
             {
-                int x=tmp_spine[k]->x-x_min;
-                int y=tmp_spine[k]->y-y_min;
-                int z=tmp_spine[k]->z-z_min;
+                V3DLONG x=tmp_spine[k]->x-x_min;
+                V3DLONG y=tmp_spine[k]->y-y_min;
+                V3DLONG z=tmp_spine[k]->z-z_min;
                 V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
-                image_seg[pos+sz_seg[0],sz_seg[0]*sz_seg[1]]=0;
+                image_seg[pos+sz_seg[0]*sz_seg[1]*sz_seg[2]]=0;
             }
             continue;
         }
@@ -1463,8 +1464,212 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
 //        memcpy(image_copy,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
 //        simple_saveimage_wrapper(*callback,filename.toStdString().c_str(),image_copy,sz_seg,V3D_UINT8);
 //    }
-    qDebug()<<"set visualize window";
+    qDebug()<<"set visualize window."<<LList_seg.size()<<"markers have been found";
 }
+
+
+
+
+void manual_correct_dialog::standing_segment_dialog()
+{
+    seg_dialog=new QDialog;
+    seg_dialog->setWindowTitle("spine proofreading_by_segment");
+    QGridLayout *layout2=new QGridLayout;
+
+    segments=new QComboBox;
+    for (int i=0;i<segment_neuronswc.size();i++)
+        segments->addItem(QString("Segment ")+QString::number(i+1));
+    segments->setFixedWidth(150);
+    segments->setCurrentIndex(0);
+    layout2->addWidget(segments,0,0,1,2);
+
+    markers=new QComboBox;
+//    for (int i=0;i<LList_in.size();i++)
+//        markers->addItem(QString("marker ")+QString::number(i+1));
+    //markers->setFixedWidth(250);
+    //markers->setCurrentIndex(0);
+    layout2->addWidget(markers,0,2,1,4);
+
+//    edit_marker = new QPlainTextEdit;
+//    edit_marker->setReadOnly(true);
+//    edit_marker->setFixedHeight(50);
+//    layout2->addWidget(edit_marker,1,4,1,2);
+
+    QPushButton *accept=new QPushButton(tr("Accept"));
+    QPushButton *reject=new QPushButton(tr("Delete"));
+    QPushButton *skip = new QPushButton(tr("Skip"));
+
+    layout2->addWidget(accept,3,0,1,2);
+    layout2->addWidget(reject,3,2,1,2);
+    layout2->addWidget(skip,3,4,1,2);
+
+    QPushButton *dilate = new QPushButton(tr("Dilate"));
+    QPushButton *erode =new QPushButton (tr("Erode"));
+    QPushButton *reset = new QPushButton (tr("Reset"));
+    layout2->addWidget(dilate,4,0,1,2);
+    layout2->addWidget(erode,4,2,1,2);
+    layout2->addWidget(reset,4,4,1,2);
+
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    layout2->addWidget(line_1,5,0,1,6);
+
+    QPushButton *button_save=new QPushButton;
+    button_save->setText("Finish");
+    layout2->addWidget(button_save,6,0,1,2);
+
+    edit_seg = new QPlainTextEdit;
+    edit_seg->setReadOnly(true);
+    //edit_seg->setFixedHeight(50);
+    layout2->addWidget(edit_seg,7,0,1,6);
+//    small_remover=new QCheckBox;
+//    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
+//    small_remover->setChecked(false);
+//    layout2->addWidget(small_remover,6,2,1,4);
+//    QPushButton *button_p_cancel=new QPushButton;
+//    button_p_cancel->setText("Quit");
+//    layout2->addWidget(button_p_cancel,6,2,1,1);
+
+    seg_dialog->setLayout(layout2);
+
+//    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
+    connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+//    connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker()));
+//    connect(reject,SIGNAL(clicked()),this,SLOT(delete_marker()));
+//    connect(skip,SIGNAL(clicked()),this,SLOT(skip_marker()));
+//    connect(dilate,SIGNAL(clicked()),this,SLOT(dilate()));
+//    connect(erode,SIGNAL(clicked()),this,SLOT(erode()));
+//    connect(reset,SIGNAL(clicked()),this,SLOT(reset_edit()));
+
+    segment_change();
+    seg_dialog->show();
+}
+
+
+void manual_correct_dialog::segment_change()
+{
+    if(segments->count()==0) return;
+    disconnect(markers,SIGNAL(currentIndexChanged(int)),this,SLOT(marker_in_one_seg()));
+    edit_seg->clear();
+    int seg_id=segments->currentIndex();
+
+    //check whether previous editing needs saving
+//    if (edit_flag) save_edit();
+//    edit_flag=false;
+
+    //step 1: check whether main-triview is open
+    open_main_triview();
+
+    //step 2:set data ready and open local tri-view/3d window
+    set_visualize_image_marker(segment_neuronswc[seg_id]);
+
+    //step 3: check whether local triview is open
+    check_window_seg();
+
+    //step 4: get the list of markers
+    qDebug()<<"LList seg size;"<<LList_seg.size();
+
+    markers->clear();
+    for (int i=0;i<LList_seg.size();i++)
+        markers->addItem("marker "+ QString::number(i+1));
+                         //QString::fromStdString(LList_seg[i].comments));
+    markers->setCurrentIndex(0);
+    connect(markers,SIGNAL(currentIndexChanged(int)),this,SLOT(marker_in_one_seg()));
+
+    //step 5: get the image ready
+    qDebug()<<"getting the image ready";
+    Image4DSimple image4d;
+    unsigned char * image_input=new unsigned char [sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+    memcpy(image_input,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+    qDebug()<<"sz_seg size:"<<sz_seg[0]<<":"<<sz_seg[1]<<":"<<sz_seg[2];
+    qDebug()<<"xyz_min:"<<x_min<<":"<<y_min<<":"<<z_min;
+//    for (int i=0;i<LList_seg.size();i++)
+//    {
+//        QString tmp_id=QString::fromStdString(LList_seg.at(i).name);
+//        int id=tmp_id.toInt()-1;
+
+//        GOV tmp_spine=label_group[id];
+//        qDebug()<<"I:"<<i<<"ID:"<<id<<"size:"<<tmp_spine.size();
+//        for (int k=0;k<tmp_spine.size();k++)
+//        {
+//            V3DLONG x=tmp_spine[k]->x-x_min;
+//            V3DLONG y=tmp_spine[k]->y-y_min;
+//            V3DLONG z=tmp_spine[k]->z-z_min;
+//            V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
+//            image_input[pos]=0;
+//            image_input[pos+sz_seg[0]*sz_seg[1]*sz_seg[2]]=85;
+//            image_input[pos+2*sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
+//        }
+//    }
+    qDebug()<<"setting data";
+    image4d.setData(image_input,sz_seg[0],sz_seg[1],sz_seg[2],sz_seg[3],V3D_UINT8);
+    callback->setImage(curwin,&image4d);
+    callback->setLandmark(curwin,LList_seg);
+    callback->updateImageWindow(curwin);
+    callback->close3DWindow(curwin);
+    callback->open3DWindow(curwin);
+    callback->pushObjectIn3DWindow(curwin);
+
+}
+
+void manual_correct_dialog::marker_in_one_seg()
+{
+    qDebug()<<"in markerin one seg";
+    int mid=markers->currentIndex();
+//    //Focus on this marker on tri-view
+//    TriviewControl * p_control = callback->getTriviewControl(curwin);
+//    p_control->setFocusLocation((long)LList_seg.at(mid).x+x_min;
+//                                (long)LList_seg.at(mid).y,(long)LList_seg.at(mid).z);
+
+    //update marker in 2 tri-view and one 3D
+    // if this markers is not determined,Landmark color change
+    QString tmp_name=QString::fromStdString(LList_seg.at(mid).name);
+    int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
+    QString status=QString::fromStdString(LList_in[idx].comments);
+    qDebug()<<"mid:"<<mid<<"idx"<<idx<<"comments:"<<status;
+    if (status.contains("0"))
+    {
+        LList_in[idx].color.r=LList_in[idx].color.b=255;
+        LList_seg[mid].color.r=LList_seg[mid].color.b=255;
+        LList_in[idx].color.g=70;
+        LList_seg[mid].color.g=70;
+    }
+
+    qDebug()<<"before setting up image";
+    Image4DSimple image4d;
+    unsigned char * image_input=new unsigned char [sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+    memcpy(image_input,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+
+    //highlight the selected group
+    GOV tmp_spine=label_group[idx];
+    qDebug()<<'number of voxels in this spine:'<<tmp_spine.size();
+    qDebug()<<"xyz_min:"<<x_min<<":"<<y_min<<":"<<z_min;
+    for (int k=0;k<tmp_spine.size();k++)
+    {
+        V3DLONG x=tmp_spine[k]->x-x_min;
+        V3DLONG y=tmp_spine[k]->y-y_min;
+        V3DLONG z=tmp_spine[k]->z-z_min;
+        V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
+        image_input[pos+2*sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
+    }
+    qDebug()<<"before image4d setdata"<<sz_seg[0]<<":"<<sz_seg[1];
+    image4d.setData(image_input,sz_seg[0],sz_seg[1],sz_seg[2],sz_seg[3],V3D_UINT8);
+    callback->setImage(curwin,&image4d);
+    callback->setLandmark(curwin,LList_seg);
+    callback->updateImageWindow(curwin);
+    callback->close3DWindow(curwin);
+    callback->open3DWindow(curwin);
+    callback->pushObjectIn3DWindow(curwin);
+    callback->setLandmark(main_win,LList_in);
+
+    //Step 6: reset marker color back to original color
+    LList_in[idx].color.r=LList_in[idx].color.b=LList_in[idx].color.g=255;
+    LList_seg[mid].color.r=LList_seg[mid].color.b=LList_seg[mid].color.g=255;
+    //qDebug()<<"~~~~marker roi finished";
+
+}
+
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
 {
@@ -1609,138 +1814,4 @@ void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
         rgb[1]=0;
         rgb[2]=0;
     }
-}
-
-
-void manual_correct_dialog::standing_segment_dialog()
-{
-    seg_dialog=new QDialog;
-    seg_dialog->setWindowTitle("spine proofreading_by_segment");
-    QGridLayout *layout2=new QGridLayout;
-
-    segments=new QComboBox;
-    for (int i=0;i<segment_neuronswc.size();i++)
-        segments->addItem(QString("Segment ")+QString::number(i+1));
-    segments->setFixedWidth(150);
-    segments->setCurrentIndex(0);
-    layout2->addWidget(segments,0,0,1,2);
-
-    markers=new QComboBox;
-//    for (int i=0;i<LList_in.size();i++)
-//        markers->addItem(QString("marker ")+QString::number(i+1));
-    //markers->setFixedWidth(250);
-    markers->setCurrentIndex(0);
-    layout2->addWidget(markers,0,2,1,4);
-
-//    edit_marker = new QPlainTextEdit;
-//    edit_marker->setReadOnly(true);
-//    edit_marker->setFixedHeight(50);
-//    layout2->addWidget(edit_marker,1,4,1,2);
-
-    QPushButton *accept=new QPushButton(tr("Accept"));
-    QPushButton *reject=new QPushButton(tr("Delete"));
-    QPushButton *skip = new QPushButton(tr("Skip"));
-
-    layout2->addWidget(accept,3,0,1,2);
-    layout2->addWidget(reject,3,2,1,2);
-    layout2->addWidget(skip,3,4,1,2);
-
-    QPushButton *dilate = new QPushButton(tr("Dilate"));
-    QPushButton *erode =new QPushButton (tr("Erode"));
-    QPushButton *reset = new QPushButton (tr("Reset"));
-    layout2->addWidget(dilate,4,0,1,2);
-    layout2->addWidget(erode,4,2,1,2);
-    layout2->addWidget(reset,4,4,1,2);
-
-    QFrame *line_1 = new QFrame();
-    line_1->setFrameShape(QFrame::HLine);
-    line_1->setFrameShadow(QFrame::Sunken);
-    layout2->addWidget(line_1,5,0,1,6);
-
-    QPushButton *button_save=new QPushButton;
-    button_save->setText("Finish");
-    layout2->addWidget(button_save,6,0,1,2);
-
-    edit_seg = new QPlainTextEdit;
-    edit_seg->setReadOnly(true);
-    //edit_seg->setFixedHeight(50);
-    layout2->addWidget(edit_seg,7,0,1,6);
-//    small_remover=new QCheckBox;
-//    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
-//    small_remover->setChecked(false);
-//    layout2->addWidget(small_remover,6,2,1,4);
-//    QPushButton *button_p_cancel=new QPushButton;
-//    button_p_cancel->setText("Quit");
-//    layout2->addWidget(button_p_cancel,6,2,1,1);
-
-    seg_dialog->setLayout(layout2);
-
-//    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
-    connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
-//    connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker()));
-//    connect(reject,SIGNAL(clicked()),this,SLOT(delete_marker()));
-//    connect(skip,SIGNAL(clicked()),this,SLOT(skip_marker()));
-//    connect(dilate,SIGNAL(clicked()),this,SLOT(dilate()));
-//    connect(erode,SIGNAL(clicked()),this,SLOT(erode()));
-//    connect(reset,SIGNAL(clicked()),this,SLOT(reset_edit()));
-
-    //marker_roi();
-    seg_dialog->show();
-}
-
-
-void manual_correct_dialog::segment_change()
-{
-    if(segments->count()==0) return;
-    edit_seg->clear();
-    int seg_id=segments->currentIndex();
-
-    //check whether previous editing needs saving
-//    if (edit_flag) save_edit();
-//    edit_flag=false;
-
-    //step 1: check whether main-triview is open
-    open_main_triview();
-
-    //step 2:set data ready and open local tri-view/3d window
-    set_visualize_image_marker(segment_neuronswc[seg_id]);
-
-    //step 3: check whether local triview is open
-    check_window_seg();
-
-    //step 4: get the list of markers
-    for (int i=0;i<LList_seg.size();i++)
-        markers->addItems("marker "+ QString::fromStdString(LList_seg[i].comments));
-
-//    //Step 4: Focus on this marker on tri-view
-//    TriviewControl * p_control = callback->getTriviewControl(curwin);
-//    p_control->setFocusLocation((long)LList_in.at(mid).x,
-//                                (long)LList_in.at(mid).y,(long)LList_in.at(mid).z);
-
-//    //Step 5: update marker in 2 tri-view and one 3D
-//    // if this markers is not determined,Landmark color change
-//    if (LList_in[mid].comments.empty())
-//    {
-//        LList_in[mid].color.r=LList_in[mid].color.b=255;
-//        LList_adj[mid].color.r=LList_adj[mid].color.b=255;
-//        LList_in[mid].color.g=70;
-//        LList_adj[mid].color.g=70;
-//    }
-//    Image4DSimple image4d;
-//    unsigned char * image_input=new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
-//    memcpy(image_input,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
-//    image4d.setData(image_input,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
-//    callback->setImage(curwin,&image4d);
-//    callback->setLandmark(curwin,LList_adj);
-//    callback->updateImageWindow(curwin);
-//    callback->close3DWindow(curwin);
-//    callback->open3DWindow(curwin);
-//    callback->pushObjectIn3DWindow(curwin);
-//    callback->setLandmark(main_win,LList_in);
-
-//    //Step 6: reset marker color back to original color
-//    LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
-//    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=255;
-//    //qDebug()<<"~~~~marker roi finished";
-
 }
