@@ -28,16 +28,21 @@ public:
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
 private:
-    void build_parent_LUT();
-    void neurontree_divide_by_treeid();
-    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
-    {return (a->fea_val[1] < b->fea_val[1]);}
+    vector<vector<int> > build_parent_LUT();
+    void neurontree_divide();
+    void set_visualize_image_marker(vector<int> one_seg);
+//    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
+//    {return (a->fea_val[1] < b->fea_val[1]);}
+
+    void standing_segment_dialog();
+    void check_window_seg();
 
 public slots:
     bool loadImage();
     bool load_swc();
     bool csv_out();
     void check_data();
+    void check_data2(); //invoke proofreading by segments
 
     void accept_marker();
     void delete_marker();
@@ -47,6 +52,8 @@ public slots:
     void erode();
     void reset_edit();
     bool finish_proof_dialog();
+
+    void segment_change();
 
     //not used
     bool maybe_save();
@@ -58,7 +65,7 @@ private:
     V3DPluginCallback2 *callback;
     v3dhandle curwin,main_win;
     View3DControl * v3dcontrol;
-    QLineEdit *edit_load, *edit_label,*edit_marker, *edit_swc,*edit_csv;
+    QLineEdit *edit_load, *edit_label, *edit_swc,*edit_csv;
     QPlainTextEdit *edit_status;
     QDialog *mydialog;
     QLabel *marker_info;
@@ -67,11 +74,12 @@ private:
              *spin_width_thr;
     QPushButton *btn_load,*btn_swc,*btn_csv;
     QCheckBox* small_remover;
-    V3DLONG sz_img[4],sz[4];
-    unsigned char *image1Dc_in,*image_trun, *image1Dc_spine;
+    V3DLONG sz_img[4],sz[4],sz_seg[4];
+    unsigned short *label;
+    unsigned char *image1Dc_in,*image_trun, *image1Dc_spine, *image_seg;
     int intype;
     NeuronTree neuron;
-    LandmarkList LList_in,LList_adj;
+    LandmarkList LList_in,LList_adj,LList_seg;
     QString fname_image,folder_output,fname_output;
     int x_start,y_start,z_start,sel_channel;
     ROIList pRoiList;
@@ -79,8 +87,11 @@ private:
     bool edit_flag;
     parameters all_para;
     int rgb[3];
-    vector<vector<int> > parent_LUT;
-    vector<vector<NeuronSWC> > trees;
+
+    vector<vector<int> > segment_neuronswc;
+    QDialog *seg_dialog;
+    QPlainTextEdit *edit_seg, *edit_marker;
+    QComboBox *segments;
 
 };
 

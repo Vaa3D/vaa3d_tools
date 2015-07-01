@@ -1,14 +1,17 @@
 #include "manual_correct_dialog.h"
 #define main_win_name "spine_detector_result"
 #define fname_image "truncated_view"
+#define fname_image_seg "segmented view"
 
 manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
     image1Dc_in=0;
     image1Dc_spine=0;
-    create();
+    image_seg=0;
     image_trun=0;
+    label=0;
+    create();
     edit_flag=false;
 }
 
@@ -117,7 +120,7 @@ void manual_correct_dialog::create()
     this->setLayout(mygridLayout);
     this->setWindowTitle("Spine_detector");
     this->show();
-    connect(ok,     SIGNAL(clicked()), this, SLOT(check_data()));
+    connect(ok,     SIGNAL(clicked()), this, SLOT(check_data2()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(btn_load, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(btn_swc,SIGNAL(clicked()),this,SLOT(load_swc()));
@@ -150,6 +153,38 @@ void manual_correct_dialog::check_data()
         return;
     if(before_proof_dialog())
         create_standing_dialog();
+    else
+    {
+        return;
+    }
+}
+
+void manual_correct_dialog::check_data2()
+{
+    qDebug()<<"in check data2";
+
+    if(edit_load->text().size()==0)
+    {
+        v3d_msg("You have not provided a valid image");
+        return;
+    }
+    if(edit_swc->text().size()==0)
+    {
+        v3d_msg("You have not provided a valid swc file");
+        return;
+    }
+    if(edit_csv->text().size()==0)
+    {
+        v3d_msg("You have not provdied a valid csv output path");
+        return; //find the place to write csv
+    }
+    this->accept();
+    get_para();
+    neurontree_divide();
+    if(!auto_spine_detect())
+        return;
+    if(before_proof_dialog())
+        standing_segment_dialog();
     else
     {
         return;
@@ -249,6 +284,7 @@ bool manual_correct_dialog::load_swc()
     NeuronSWC *p_cur=0;
 
     neuron = readSWC_file(filename);
+    //qDebug()<<"neuron loaded"<<neuron.listNeuron.size();
     for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
     {
         p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
@@ -257,36 +293,39 @@ bool manual_correct_dialog::load_swc()
             v3d_msg("You have illeagal radius values. Check your data.");
             return false;
         }
-//        qDebug()<<"seg_id:"<<neuron.listNeuron[ii].seg_id;
+//        qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
 //        qDebug()<<" level:"<<neuron.listNeuron[ii].level;
 //        qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0];
      }
+    qDebug()<<"finished reading"<<neuron.listNeuron.size();
+//    build_parent_LUT();
+//    neurontree_divide();
     edit_swc->setText(filename);
     qDebug()<<"swc set";
 }
 
 void manual_correct_dialog::load_marker()
 {
-    QString filename;
-    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.marker)" ";;Marker file(*.marker)",0,0);
+//    QString filename;
+//    filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.marker)" ";;Marker file(*.marker)",0,0);
 
-    if(filename.isEmpty())
-    {
-        v3d_msg("You don't have any marker file open in the main window.");
-        return;
-    }
-    QList<ImageMarker> tmp_list;
-    tmp_list=readMarker_file(filename.toAscii());
-    for (int i=0;i<tmp_list.size();i++)
-    {
-        LocationSimple tmp;
-        tmp.x=tmp_list.at(i).x;
-        tmp.y=tmp_list.at(i).y;
-        tmp.z=tmp_list.at(i).z;
-        tmp.color.r=tmp.color.g=tmp.color.b=255;
-        LList_in.append(tmp);
-    }
-    edit_marker->setText(filename);
+//    if(filename.isEmpty())
+//    {
+//        v3d_msg("You don't have any marker file open in the main window.");
+//        return;
+//    }
+//    QList<ImageMarker> tmp_list;
+//    tmp_list=readMarker_file(filename.toAscii());
+//    for (int i=0;i<tmp_list.size();i++)
+//    {
+//        LocationSimple tmp;
+//        tmp.x=tmp_list.at(i).x;
+//        tmp.y=tmp_list.at(i).y;
+//        tmp.z=tmp_list.at(i).z;
+//        tmp.color.r=tmp.color.g=tmp.color.b=255;
+//        LList_in.append(tmp);
+//    }
+//    edit_marker->setText(filename);
 }
 
 bool manual_correct_dialog::loadImage()
@@ -517,6 +556,7 @@ bool manual_correct_dialog::auto_spine_detect()
     image1Dc_spine = new unsigned char [size_page*3];
     memset(image1Dc_spine,0,size_page*3);
     memcpy(image1Dc_spine,image1Dc_in,size_page);
+
     for(int i=0; i<label_group.size(); i++)
     {
         GOV tmp = label_group[i];
@@ -795,6 +835,31 @@ void manual_correct_dialog::check_window()
         memcpy(image_input,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
         Image4DSimple image_tmp;
         image_tmp.setData(image_input,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+        callback->setImage(curwin,&image_tmp);
+        callback->updateImageWindow(curwin);
+    }
+}
+
+void manual_correct_dialog::check_window_seg()
+{
+    bool window_open_flag=false;
+    v3dhandleList list_triwin = callback->getImageWindowList();
+    for(V3DLONG i=0; i<list_triwin.size(); i++){
+        if(callback->getImageName(list_triwin.at(i)).contains(fname_image_seg))
+        {
+            window_open_flag=true;
+            curwin=list_triwin[i];
+            break;
+        }
+    }
+    //qDebug()<<"check window: window_open_flag:"<<window_open_flag;
+    if(!window_open_flag)
+    {
+        curwin=callback->newImageWindow(fname_image_seg);
+        unsigned char *image_input=new unsigned char [sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+        memcpy(image_input,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+        Image4DSimple image_tmp;
+        image_tmp.setData(image_input,sz_seg[0],sz_seg[1],sz_seg[2],sz_seg[3],V3D_UINT8);
         callback->setImage(curwin,&image_tmp);
         callback->updateImageWindow(curwin);
     }
@@ -1194,20 +1259,20 @@ int manual_correct_dialog::save_edit()
      }
 }
 
-void manual_correct_dialog::build_parent_LUT()
+vector<vector<int> > manual_correct_dialog::build_parent_LUT()
 {
-    int size=neuron->listNeuron.size();
+    int size=neuron.listNeuron.size();
+    vector<vector<int> > parent_LUT;
     parent_LUT.clear();
     parent_LUT.resize(size);
     for (int i=0;i<size;i++)
     {
-        int parent_id=neuron->listNeuron.at(i).parent;
+        int parent_id=neuron.listNeuron.at(i).parent;
         if (parent_id==-1)
         {
-            tree_head.push_back(i);
             continue;
         }
-        parent_LUT[nt->hashNeuron.value(parent_id)].push_back(i);
+        parent_LUT[neuron.hashNeuron.value(parent_id)].push_back(i);
     }
 //    for (int i=0;i<subtree.size();i++)
 //    {
@@ -1218,92 +1283,187 @@ void manual_correct_dialog::build_parent_LUT()
 //        }
 //    }
     qDebug()<<"building new parnet LUT";
+    return parent_LUT;
 }
 
-void manual_correct_dialog::neurontree_divide_by_treeid()
+void manual_correct_dialog::neurontree_divide()
 {
-    float distance_thresh=1500;
+    qDebug()<<"neurontree divide";
+    float distance_thresh=100;
     vector<int> leaf_nodes_id;
+    vector<vector <int> > parent_LUT = build_parent_LUT();
     for (int i=0;i<neuron.listNeuron.size();i++)
     {
-        if (parent_LUT[neuron.listNeuron[i]].size()==0)
+        if (parent_LUT[i].size()==0)
         {
            leaf_nodes_id.push_back(i);
         }
     }
+    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
     map<int,bool> used_flag; //use the idex starting from 0
-    vector<vector<int> > segment_neuronswc;
+    //vector<vector<int> > segment_neuronswc;
 
     for (int i=0;i<leaf_nodes_id.size();i++)
     {
+        //qDebug()<<"i:"<<i;
         int leaf_node=leaf_nodes_id[i];
 
         float start_distance;
-        int start_node,end_node,child_node,parent_node;
+        int start_node,parent_node,parent;
 
         float accu_distance=0;
-        int parent;
         start_node=leaf_node;
 
         while (true)
         {
             //start_node=neuron.listNeuron[neuron.hashNeuron.value(parent)];
             start_distance=neuron.listNeuron[start_node].fea_val[1];
-            child_node=start_node;
             parent=neuron.listNeuron[start_node].parent;
-            accu_distance=0;
-            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent]>0)
+            parent_node=neuron.hashNeuron.value(parent);
+            //accu_distance=0;
+            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
            {
-                parent_node=neuron.hashNeuron.value(parent);
                 accu_distance=start_distance-neuron.listNeuron[parent_node].fea_val[1];
                 used_flag[parent_node]=1;
                 parent=neuron.listNeuron[parent_node].parent;
-
+                parent_node=neuron.hashNeuron.value(parent);
+                //qDebug()<<"accu_distance:"<<accu_distance;
            }
-           if (parent==-1)
+           if (parent==-1||used_flag[parent_node]>0)
+           {
+               vector<int> oneseg;
+               oneseg.push_back(start_node);
+               oneseg.push_back(parent_node);
+               segment_neuronswc.push_back(oneseg);
                break;
+           }
            else
            {
-               end_node=start_node;
-               segment_neuronswc.push_back();
+               vector<int> oneseg(2,0);
+               oneseg[0]=start_node;
+               oneseg[1]=parent_node;
+               segment_neuronswc.push_back(oneseg);
+               start_node=parent_node;
+               accu_distance=0;
            }
         }
-
     }
 
-
-    trees.resize(max_tree_id+1);
-
-    for (int i=0;i<neuron->listNeuron.size();i++)
-    {
-        int tree_id=neuron.listNeuron[i].fea_val[0];
-        if (tree_id>0)
-        {
-            trees[tree_id].push_back(neuron.listNeuron[i]);
-        }
-    }
-
-    qDebug()<<"In connected components. We have "<<trees.size()-1 <<" trees!";
+    qDebug()<<"After division. We have "<<segment_neuronswc.size() <<" windows!";
+//    for (int i=0;i<segment_neuronswc.size();i++)
+//    {
+//        qDebug()<<"start:"<<segment_neuronswc[i][0]<<" end:"<<segment_neuronswc[i][1];
+//    }
 }
 
 
-void manual_correct_dialog::image_divide()
+void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
 {
-    float distance_thresh=1500;
-    for (int i=1;i<trees.size();i++)
+    int extra_length=5;
+    float r0,r1;
+    int x_min,y_min,z_min,x_max,y_max,z_max;
+    r0=neuron.listNeuron.at(one_seg[0]).r+all_para.max_dis;
+    r1=neuron.listNeuron.at(one_seg[1]).r+all_para.max_dis;
+    qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
+            << neuron.listNeuron.at(one_seg[0]).z<<":"<<r0;
+    qDebug()<<"second node:"<<neuron.listNeuron.at(one_seg[1]).x <<":"<<neuron.listNeuron.at(one_seg[1]).y<<":"
+             << neuron.listNeuron.at(one_seg[1]).z<<":"<<r1;
+
+    x_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).x-r0,neuron.listNeuron.at(one_seg[1]).x-r1);
+    x_min=MAX(x_min-extra_length,0);
+    y_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).y-r0,neuron.listNeuron.at(one_seg[1]).y-r1);
+    y_min=MAX(y_min-extra_length,0);
+    z_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).z-r0,neuron.listNeuron.at(one_seg[1]).z-r1);
+    z_min=MAX(z_min-extra_length,0);
+
+    x_max=(int)MAX(neuron.listNeuron.at(one_seg[0]).x+r0,neuron.listNeuron.at(one_seg[1]).x+r1);
+    x_max=MIN(x_max+extra_length,sz_img[0]-1);
+    y_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).y+r0,neuron.listNeuron.at(one_seg[1]).y+r1);
+    y_max=MIN(y_max+extra_length,sz_img[1]-1);
+    z_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).z+r0,neuron.listNeuron.at(one_seg[1]).z+r1);
+    z_max=MIN(z_max+extra_length,sz_img[2]-1);
+    qDebug()<<"xyz_min:"<<x_min<<":"<<y_min<<":"<<z_min;
+    qDebug()<<"xyz max:"<<x_max<<":"<<y_max<<":"<<z_max;
+
+    sz_seg[0]=x_max-x_min;
+    sz_seg[1]=y_max-y_min;
+    sz_seg[2]=z_max-z_min;
+    sz_seg[3]=3;
+    qDebug()<<"sz:"<<sz_seg[0]<<":"<<sz_seg[1]<<":"<<sz_seg[2];
+    if (image_seg!=0)
     {
-        vector<NeuronSWC> single_tree=trees[i];
-        sort(single_tree.begin(),single_tree.end(),sortfunc_neuron_distance_ascend());
-        int sid_begin,sid_end;
-        sid_begin=sid_end=0;
-        float distance=0;
-        while(sid_end<single_tree.size()&& distance<=distance_thresh )
+        delete [] image_seg;
+        image_seg=0;
+    }
+    image_seg=new unsigned char[sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+    memset(image_seg,0,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+
+    for (V3DLONG dx=x_min;dx<x_max;dx++){
+        for (V3DLONG dy=y_min;dy<y_max;dy++){
+            for (V3DLONG dz=z_min;dz<z_max;dz++){
+                V3DLONG pos=xyz2pos(dx,dy,dz,sz_img[0],sz_img[0]*sz_img[1]);
+                V3DLONG pos1=xyz2pos(dx-x_min,dy-y_min,dz-z_min,sz_seg[0],sz_seg[0]*sz_seg[1]);
+                image_seg[pos1]=image1Dc_spine[pos];
+                if (image1Dc_spine[pos+sz_img[0]*sz_img[1]*sz_img[2]]>0)
+                    image_seg[pos1+sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
+            }
+        }
+    }
+
+    //find all the spines in this set.
+    //also need to check if the whole spine is displayed
+    for (int j=0;j<LList_in.size();j++)
+    {
+        if (LList_in[j].x-1<=x_min || LList_in[j].x-1>=x_max || LList_in[j].y-1<=y_min
+            || LList_in[j].y-1>=y_min || LList_in[j].z-1<=z_min ||LList_in[j].z-1>=z_max )
+            continue;
+        GOV tmp_spine= label_group [j];
+        bool incomplete_flag=false;
+
+        //check if the spine is complete
+        for (int k=0;k<tmp_spine.size();k++)
         {
-            distance=distance+single_tree.at(sid_end).fea_val[1];
-            sid_end++;
+            if (tmp_spine[k]->x<x_min || tmp_spine[k]->x > x_max || tmp_spine[k]->y <y_min
+                    || tmp_spine[k]->y>y_max || tmp_spine[k]->z<z_min || tmp_spine[k]->z>z_max)
+            {
+                incomplete_flag=true;
+                break;
+            }
+        }
+        if (incomplete_flag) //if incomplete, not to include the spine
+        {
+            for (int k=0;k<tmp_spine.size();k++)
+            {
+                int x=tmp_spine[k]->x-x_min;
+                int y=tmp_spine[k]->y-y_min;
+                int z=tmp_spine[k]->z-z_min;
+                V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
+                image_seg[pos+sz_seg[0],sz_seg[0]*sz_seg[1]]=0;
+            }
+            continue;
+        }
+        else
+        {
+            LocationSimple tmp;
+            tmp.x=LList_in[j].x-x_min;
+            tmp.y=LList_in[j].y-y_min;
+            tmp.z=LList_in[j].z-z_min;
+            tmp.color.r=LList_in[j].color.r;
+            tmp.color.g=LList_in[j].color.g;
+            tmp.color.b=LList_in[j].color.b;
+            tmp.name=LList_in[j].name;
+            tmp.comments=LList_in[j].comments;
+            LList_seg.append(tmp);
         }
 
     }
+
+//        QString filename=QString::number(i)+".v3draw";
+//        unsigned char *image_copy=new unsigned char[sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+//        memcpy(image_copy,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+//        simple_saveimage_wrapper(*callback,filename.toStdString().c_str(),image_copy,sz_seg,V3D_UINT8);
+//    }
+    qDebug()<<"set visualize window";
 }
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
@@ -1449,4 +1609,138 @@ void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
         rgb[1]=0;
         rgb[2]=0;
     }
+}
+
+
+void manual_correct_dialog::standing_segment_dialog()
+{
+    seg_dialog=new QDialog;
+    seg_dialog->setWindowTitle("spine proofreading_by_segment");
+    QGridLayout *layout2=new QGridLayout;
+
+    segments=new QComboBox;
+    for (int i=0;i<segment_neuronswc.size();i++)
+        segments->addItem(QString("Segment ")+QString::number(i+1));
+    segments->setFixedWidth(150);
+    segments->setCurrentIndex(0);
+    layout2->addWidget(segments,0,0,1,2);
+
+    markers=new QComboBox;
+//    for (int i=0;i<LList_in.size();i++)
+//        markers->addItem(QString("marker ")+QString::number(i+1));
+    //markers->setFixedWidth(250);
+    markers->setCurrentIndex(0);
+    layout2->addWidget(markers,0,2,1,4);
+
+//    edit_marker = new QPlainTextEdit;
+//    edit_marker->setReadOnly(true);
+//    edit_marker->setFixedHeight(50);
+//    layout2->addWidget(edit_marker,1,4,1,2);
+
+    QPushButton *accept=new QPushButton(tr("Accept"));
+    QPushButton *reject=new QPushButton(tr("Delete"));
+    QPushButton *skip = new QPushButton(tr("Skip"));
+
+    layout2->addWidget(accept,3,0,1,2);
+    layout2->addWidget(reject,3,2,1,2);
+    layout2->addWidget(skip,3,4,1,2);
+
+    QPushButton *dilate = new QPushButton(tr("Dilate"));
+    QPushButton *erode =new QPushButton (tr("Erode"));
+    QPushButton *reset = new QPushButton (tr("Reset"));
+    layout2->addWidget(dilate,4,0,1,2);
+    layout2->addWidget(erode,4,2,1,2);
+    layout2->addWidget(reset,4,4,1,2);
+
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    layout2->addWidget(line_1,5,0,1,6);
+
+    QPushButton *button_save=new QPushButton;
+    button_save->setText("Finish");
+    layout2->addWidget(button_save,6,0,1,2);
+
+    edit_seg = new QPlainTextEdit;
+    edit_seg->setReadOnly(true);
+    //edit_seg->setFixedHeight(50);
+    layout2->addWidget(edit_seg,7,0,1,6);
+//    small_remover=new QCheckBox;
+//    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
+//    small_remover->setChecked(false);
+//    layout2->addWidget(small_remover,6,2,1,4);
+//    QPushButton *button_p_cancel=new QPushButton;
+//    button_p_cancel->setText("Quit");
+//    layout2->addWidget(button_p_cancel,6,2,1,1);
+
+    seg_dialog->setLayout(layout2);
+
+//    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
+    connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+//    connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker()));
+//    connect(reject,SIGNAL(clicked()),this,SLOT(delete_marker()));
+//    connect(skip,SIGNAL(clicked()),this,SLOT(skip_marker()));
+//    connect(dilate,SIGNAL(clicked()),this,SLOT(dilate()));
+//    connect(erode,SIGNAL(clicked()),this,SLOT(erode()));
+//    connect(reset,SIGNAL(clicked()),this,SLOT(reset_edit()));
+
+    //marker_roi();
+    seg_dialog->show();
+}
+
+
+void manual_correct_dialog::segment_change()
+{
+    if(segments->count()==0) return;
+    edit_seg->clear();
+    int seg_id=segments->currentIndex();
+
+    //check whether previous editing needs saving
+//    if (edit_flag) save_edit();
+//    edit_flag=false;
+
+    //step 1: check whether main-triview is open
+    open_main_triview();
+
+    //step 2:set data ready and open local tri-view/3d window
+    set_visualize_image_marker(segment_neuronswc[seg_id]);
+
+    //step 3: check whether local triview is open
+    check_window_seg();
+
+    //step 4: get the list of markers
+    for (int i=0;i<LList_seg.size();i++)
+        markers->addItems("marker "+ QString::fromStdString(LList_seg[i].comments));
+
+//    //Step 4: Focus on this marker on tri-view
+//    TriviewControl * p_control = callback->getTriviewControl(curwin);
+//    p_control->setFocusLocation((long)LList_in.at(mid).x,
+//                                (long)LList_in.at(mid).y,(long)LList_in.at(mid).z);
+
+//    //Step 5: update marker in 2 tri-view and one 3D
+//    // if this markers is not determined,Landmark color change
+//    if (LList_in[mid].comments.empty())
+//    {
+//        LList_in[mid].color.r=LList_in[mid].color.b=255;
+//        LList_adj[mid].color.r=LList_adj[mid].color.b=255;
+//        LList_in[mid].color.g=70;
+//        LList_adj[mid].color.g=70;
+//    }
+//    Image4DSimple image4d;
+//    unsigned char * image_input=new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
+//    memcpy(image_input,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
+//    image4d.setData(image_input,sz[0],sz[1],sz[2],sz[3],V3D_UINT8);
+//    callback->setImage(curwin,&image4d);
+//    callback->setLandmark(curwin,LList_adj);
+//    callback->updateImageWindow(curwin);
+//    callback->close3DWindow(curwin);
+//    callback->open3DWindow(curwin);
+//    callback->pushObjectIn3DWindow(curwin);
+//    callback->setLandmark(main_win,LList_in);
+
+//    //Step 6: reset marker color back to original color
+//    LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
+//    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=255;
+//    //qDebug()<<"~~~~marker roi finished";
+
 }
