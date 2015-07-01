@@ -113,7 +113,8 @@ void nt_selfcorrect_func::smart_tracing(QString fname_img, QString fname_output,
     fname_outswc=fname_output+".swc";
     fname_inimg=fname_img;
     //measuring computation performance
-    loadImageData(fname_img, ch);
+    if(!loadImageData(fname_img, ch))
+        return;
     simpleTracing();
     calculateScore_topology();
     QString fname_tmp=fname_tmpout+"_score.eswc";
@@ -148,11 +149,17 @@ bool nt_selfcorrect_func::loadImageData(QString fname_img, int ch)
         qDebug()<<"error: cannot read image "<<fname_img;
         return false;
     }
+    if(type_img!=1){
+        qDebug()<<"ERROR: only support image type UINT8";
+        return false;
+    }
     delete [] cstr;
     if(sz_img[3]>1){
         if(ch>0 && ch<sz_img[3]){
             p_img1D = p_img1D+sz_img[0]*sz_img[1]*sz_img[2]*ch*type_img;
+            param.app2_channel = ch;
         }
+        qDebug()<<"warning: multiple color channels in the image. Only channel "<<ch+1<<" will be used";
         sz_img[3]=1;
     }
     //arrange the image into 3D

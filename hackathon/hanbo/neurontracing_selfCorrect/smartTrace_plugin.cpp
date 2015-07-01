@@ -230,6 +230,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         c = PARA.channel;
     }
 
+    if(datatype!=1){
+        v3d_msg(QString("Now only support image type UINT8."),bmenu);
+        return;
+    }
     //main neuron reconstruction code
 
     QString swc_name=PARA.inimg_file+"_smartTracing";
