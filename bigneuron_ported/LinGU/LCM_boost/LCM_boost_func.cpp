@@ -23,8 +23,22 @@ using namespace cv::ml;
 
 #define debug_on5 0
 
-
 #define debug_on6 0
+
+#define debug_on7 0
+
+#define debug_on8 0
+
+#define debug_on9 0
+
+#define debug_on10 0
+
+#define debug_on11 0
+
+#define debug_on12 0
+
+
+#define checkin 1
 
 
 
@@ -65,8 +79,88 @@ string file_type(string para)
 	cout << (double) pos << endl;
 
 	if(pos == string::npos) return string("");
-	else return para.substr(pos, para.size() - pos);
+    else return para.substr(pos, para.size() - pos);
 }
+
+int swc2image(cv::Mat &image,char * filename)
+{
+    //NeuronTree neuron;
+    double x_min,x_max,y_min,y_max,z_min,z_max;
+    x_min=x_max=y_min=y_max=z_min=z_max=0;
+    V3DLONG sx,sy,sz;
+	unsigned char* pImMask = 0;
+	unsigned char* ImMark = 0;
+
+	QString fs(filename);
+
+   // vector<MyMarker*>  neuron = readSWC_file(fs);
+
+    NeuronTree neuron = readSWC_file(fs);
+
+
+    sx = (V3DLONG)image.size[0];
+
+    sy = (V3DLONG)image.size[1];
+
+    sz = (V3DLONG)image.size[2];
+
+    V3DLONG in_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        in_sz[i] = (V3DLONG)image.size[i];
+
+
+    V3DLONG stacksz = sx*sy*sz;
+
+	pImMask = new unsigned char [stacksz];
+
+	ImMark = new unsigned char [stacksz];
+
+    for (V3DLONG i=0; i<stacksz; i++)
+        pImMask[i] = ImMark[i] = 0;
+
+
+  // NeuronTree neuron1;
+
+   //neuron1 = (NeuronTree)neuron;
+
+    ComputemaskImage(neuron, pImMask, ImMark, sx, sy, sz,1);
+
+    delete [] ImMark;
+
+    for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
+    {
+
+        V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+        for(V3DLONG iy = 0; iy <  in_sz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz[0];
+            for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
+            {
+
+                unsigned char PixelValue = pImMask[offsetk + offsetj + ix];
+
+                int v3[3];
+
+                v3[0] = (int)ix;
+
+                v3[1] = (int)iy;
+
+                v3[2] = (int)iz;
+
+                if(PixelValue > 0)
+                    image.at<uchar>(v3) = 100;
+
+
+            }
+        }
+
+    }
+
+    delete [] pImMask;
+
+}
+
 
 bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -213,13 +307,14 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     img_sz_new[2] = bz[1] - bz[0];
 
-    int offset[3];
+        int offset[3];
 
     offset[0] = bx[0];
 
     offset[1] = by[0];
 
     offset[2] = bz[0];
+
 
 
     Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
@@ -291,7 +386,7 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
         t1 = 20;
 
-        t2 = 5;
+        t2 = 3;
 
 
         //t1 = 80;
@@ -313,7 +408,36 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     }
 
-    // remove the temporary file
+    remove(tmp_nm);
+
+   //Neuron
+
+   // boost the result using the app2
+
+    sprintf(tmp_nm,"tmp_swc.swc");
+
+    app2_trace(image, tmp_nm);
+
+    cout << "Complete app2_tracing" << endl;
+
+    if(debug_on11)
+    {
+
+		string patial_seg_file = "/media/gulin/E402023602020DEC/Cache/BigN/init_swc.swc";
+
+		char * patial_seg_file_char = (char *)patial_seg_file.c_str();
+
+		//sprintf(base_file, " partial_segmentation.v3draw");
+
+		app2_trace(image, patial_seg_file_char);
+
+
+    }
+
+
+    swc2image(conf_img,tmp_nm);
+
+    cout << "Complete Swc2img" << endl;
 
     remove(tmp_nm);
 
@@ -328,26 +452,35 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     // output the result into the harddisk
 
-   // sprintf(tmp_nm,"neuron_segmentation.v3draw");
-
-   // saveMat(seg_img,tmp_nm);
-
-    // trace the image
-
     QString swc_name = 	callback.getImageName(curwin) + "_LCMboost.swc";
 
     sprintf(tmp_nm,swc_name.toStdString().c_str());
 
-  //  trace_img(seg_img, image, tmp_nm);
+    //saveMat(seg_img,tmp_nm);
+
+    // trace the image
+
+    //sprintf(tmp_nm,"neuron_swc.swc");
+
+    //trace_img(seg_img, image, tmp_nm);
+
+     if(checkin > 0)
+        trace_img1(seg_img, image, offset, tmp_nm);
+    else
+        trace_img(seg_img, image,tmp_nm);
+
+
+    delete [] tmp_nm;
+
+    cout << "The traced result has been saved in neuron_swc.swc" << endl;
 
 
 
+    delete [] xv;
 
-    trace_img1(seg_img, image,offset, tmp_nm);
+    delete [] yv;
 
-   // cout << "The traced result has been saved in neuron_swc.swc" << endl;
-
-    v3d_msg(QString("The traced result has been saved in %1").arg(swc_name));
+    delete [] zv;
 
 
     //v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
@@ -494,6 +627,8 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 */
+
+
 
     return true;
 }
@@ -721,30 +856,62 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
                 v3[2] = iz;
 
                 unsigned char PixelValue = seg_img.at<uchar>(v3);
-                //unsigned char PV = image.at<uchar>(v3);
+
+                unsigned char PV = image.at<uchar>(v3);
 
 
                 if(PixelValue > 10)
                 {
 
-                    if(PixelValue > 150)
-                    {
-                        //show_img[offsetk + offsetj + ix] = image.at<uchar>(v3);
+                    /*
 
-                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+                    if(PV > 10)
+                    {
+                        show_img[offsetk + offsetj + ix] = PV;
+
                     }
                     else
                     {
-                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+
+                        show_img[offsetk + offsetj + ix] = 10;
 
                     }
-                }
-                else
-                {
 
-                    show_img[offsetk + offsetj + ix] = 0;
+                    */
+
+                    show_img[offsetk + offsetj + ix] = 50;
+
 
                 }
+
+
+
+
+              //  show_img[offsetk + offsetj + ix] = PV;
+
+
+
+
+
+
+                //  if(PixelValue > 150)
+                //{
+                // show_img[offsetk + offsetj + ix] = image.at<uchar>(v3);
+
+                //  show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+                // }
+                // else
+                // {
+                //show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+
+                // }
+                //}
+                // else
+                //{
+
+                //  show_img[offsetk + offsetj + ix] = 0;
+
+                //}
 
             }
         }
@@ -858,11 +1025,11 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 
     vector<MyMarker*> outswc;
 
-    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3);
-  //  v3d_msg("start to use happ.\n", 0);
+    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3333);
+    //  v3d_msg("start to use happ.\n", 0);
     //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 
- //   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
+//   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
 
     inmarkers[0].x *= dfactor_xy;
     inmarkers[0].y *= dfactor_xy;
@@ -890,31 +1057,71 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
     double real_thres = 40;
 
 
-   V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
+    V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
 
     int method_radius_est = 2;
+
+    double * radius_list = new double[outswc.size()];
+
     for(V3DLONG i = 0; i < outswc.size(); i++)
     {
         //printf(" node %ld of %ld.\n", i, outswc.size());
         outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+        radius_list[i] = outswc[i]->radius;
     }
 
-   saveSWC_file(outfile_swc, outswc);
+    // apply a simple mean filter on the radius of the swc to make it look better
+
+    double m_rad = 0;
 
 
-   delete [] show_img;
+    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+    {
+        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
 
-   //delete [] phi;
+        //m_rad = m_rad / 5;
+
+        outswc[i]->radius = m_rad / 5;
+
+        //    outswc[i]->
+
+        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+    }
+
+    saveSWC_file(outfile_swc, outswc);
+
+    delete [] radius_list;
 
 
-     if(phi){delete [] phi; phi = 0;}
+    delete [] show_img;
+
+    //delete [] phi;
+
+
+    if(phi)
+    {
+        delete [] phi;
+        phi = 0;
+    }
     for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
     outtree.clear();
 
-  //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
+    //for(V3DLONG i = 0; i < outswc.size(); i++) delete outswc[i];
+   // outswc.clear();
+
+
+    // for(V3DLONG i = 0; i < inswc.size(); i++) delete inswc[i];
+    //inswc.clear();
+
+
+
+    //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
 
 
 //    delete [] phi;
+
+    delete [] sz;
 
     return 1;
 
@@ -923,18 +1130,17 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 
 }
 
-
-int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
+int app2_trace(cv::Mat image, char * outfile_swc)
 {
     V3DLONG *sz = new V3DLONG[4];
 
     for(int i =0; i < 3; i++)
-        sz[i] = (V3DLONG)seg_img.size[i];
+        sz[i] = (V3DLONG)image.size[i];
 
     int img_sz[3];
 
     for(int i =0; i < 3; i++)
-        img_sz[i] = seg_img.size[i];
+        img_sz[i] = image.size[i];
 
 
     sz[3] = 1;
@@ -954,43 +1160,6 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
     int mean_base = 0;
 
-    for(int iz = 0; iz < img_sz[2]; iz++)
-    {
-
-        int offsetk = iz*img_sz[1]*img_sz[0];
-        for(int iy = 0; iy <  img_sz[1]; iy++)
-        {
-            int offsetj = iy* img_sz[0];
-            for(int ix = 0; ix < img_sz[0]; ix++)
-            {
-
-
-                int v3[3];
-
-                v3[0] = ix;
-
-                v3[1] = iy;
-
-                v3[2] = iz;
-
-                unsigned char PixelValue = seg_img.at<uchar>(v3);
-
-                if(PixelValue > 150)
-                {
-                    n_base ++;
-
-                    mean_base = mean_base + (int)image.at<uchar>(v3);
-
-                }
-
-            }
-        }
-
-    }
-
-    mean_base = mean_base / n_base;
-
-    cout << "The mean value of image is " << mean_base << endl;
 
     for(int iz = 0; iz < img_sz[2]; iz++)
     {
@@ -1011,31 +1180,10 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
                 v3[2] = iz;
 
-                unsigned char PixelValue = seg_img.at<uchar>(v3);
-                //unsigned char PV = image.at<uchar>(v3);
+                unsigned char PixelValue = image.at<uchar>(v3);
 
+                show_img[offsetk + offsetj + ix] = PixelValue;
 
-                if(PixelValue > 10)
-                {
-
-                    if(PixelValue > 150)
-                    {
-                        //show_img[offsetk + offsetj + ix] = image.at<uchar>(v3);
-
-                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
-                    }
-                    else
-                    {
-                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
-
-                    }
-                }
-                else
-                {
-
-                    show_img[offsetk + offsetj + ix] = 0;
-
-                }
 
             }
         }
@@ -1051,7 +1199,7 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
     float * phi = 0;
     vector<MyMarker> inmarkers;
 
-    fastmarching_dt_XY(show_img, phi, seg_img.size[0], seg_img.size[1], seg_img.size[2],2, 10);
+    fastmarching_dt_XY(show_img, phi, image.size[0], image.size[1], image.size[2],2, 10);
 
     int in_sz[3];
 
@@ -1149,11 +1297,11 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
     vector<MyMarker*> outswc;
 
-    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3);
-  //  v3d_msg("start to use happ.\n", 0);
+    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3333);
+    //  v3d_msg("start to use happ.\n", 0);
     //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 
- //   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
+//   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
 
     inmarkers[0].x *= dfactor_xy;
     inmarkers[0].y *= dfactor_xy;
@@ -1181,57 +1329,81 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
     double real_thres = 40;
 
 
-   V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
+    V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
 
     int method_radius_est = 2;
+
+    double * radius_list = new double[outswc.size()];
+
     for(V3DLONG i = 0; i < outswc.size(); i++)
     {
         //printf(" node %ld of %ld.\n", i, outswc.size());
         outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+        radius_list[i] = outswc[i]->radius;
     }
 
+    // apply a simple mean filter on the radius of the swc to make it look better
+
+    double m_rad = 0;
 
 
-    cout << "offset is " <<  offset[0] << " " << offset[1] << " " << offset[2] << endl;
-
-   // cin.get();
-
-
-    for(V3DLONG i = 0; i < outswc.size(); i++)
+    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
     {
-        outswc[i]->x += (double)offset[0];
+        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
 
-        outswc[i]->y += (double)offset[1];
+        //m_rad = m_rad / 5;
 
-        outswc[i]->z += (double)offset[2];
+        outswc[i]->radius = m_rad / 5;
 
+        //    outswc[i]->
+
+        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
     }
 
+    saveSWC_file(outfile_swc, outswc);
+
+    delete [] radius_list;
+
+    delete [] show_img;
+
+    //delete [] phi;
 
 
-   saveSWC_file(outfile_swc, outswc);
-
-
-   delete [] show_img;
-
-   //delete [] phi;
-
-
-     if(phi){delete [] phi; phi = 0;}
+    if(phi)
+    {
+        delete [] phi;
+        phi = 0;
+    }
     for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
     outtree.clear();
 
-  //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
+    cout << "complete outree" << endl;
+
+    //for(V3DLONG i = 0; i < outswc.size(); i++) delete outswc[i];
+    //outswc.clear();
+
+
+   // cout << "complete outswc" << endl;
+
+    //for(V3DLONG i = 0; i < inswc.size(); i++) delete inswc[i];
+   // inswc.clear();
+
+   // cout << "complete inswc" << endl;
+
+
+    //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
 
 
 //    delete [] phi;
 
+    delete [] sz;
+
     return 1;
 
-
-
-
 }
+
+
 
 
 int roi_img(cv::Mat &image,cv::Mat image1)
@@ -1394,7 +1566,6 @@ int roi_img(cv::Mat &image,cv::Mat image1)
 
 }
 
-//./vaa3d -x Opencv_example -f Opencv_example -i B5.v3draw -o tmp_tst.v3draw tmp_tst.swc
 
 // call the function to batch process  the whole data
 bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -1418,7 +1589,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
     cout << "The input is " << infile << endl;
 
 
-    for(int i_img = 1; i_img < 51; i_img ++)
+    for(int i_img = 137; i_img < 2014; i_img ++)
     {
 
 
@@ -1426,9 +1597,9 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     	convert << i_img;
 
-    	string im_file = infile;
+    	string im_file;
 
-    	im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + convert.str() + ".v3draw";
+    	im_file = "/media/gulin/E402023602020DEC/Data/Big_Neuron/" + convert.str() + ".v3draw";
 
     	string roi_fn = infile;
 
@@ -1492,25 +1663,25 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
         {
             if(img_pg > (300 * 250))
             {
-                t1 = 50;
+                t1 = 20;
 
-                t2 = 5;
+                t2 = 2;
 
             }else
             {
 
                 if(img_pg > (200 * 200))
                     {
-                        t1 = 20;
+                        t1 = 10;
 
-                        t2 = 5;
+                        t2 = 2;
 
                     }
                     else
                     {
                         t1 = 10;
 
-                        t2 = 5;
+                        t2 = 2;
 
                     }
 
@@ -1535,10 +1706,34 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         }
 
+        char * tmp_nm = new char[100];
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+        if(debug_on11 > 0)
+        {
+            sprintf(tmp_nm,"/media/gulin/E402023602020DEC/Cache/BigN/tmp_swc.swc");
+
+            app2_trace(image, tmp_nm);
+
+          //  cin.get();
+
+        }
+
+
+
 
         cout << "Complete the base method" << endl;
 
         Mat seg_img;
+
+        seg_img = image;
 
         LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
 
@@ -1548,14 +1743,31 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         saveMat(seg_img,(char*)save_seg_fn.c_str());
 
+        // trace the image
+
+        int offset[3];
+
+        offset[0] = 0;
+
+        offset[1] = 0;
+
+        offset[2] = 0;
 
 
-        //trace_img(seg_img, image, (char*)save_swc_fn.c_str());
+        if(checkin > 0)
+            trace_img1(seg_img, image, offset, (char*)save_swc_fn.c_str());
+        else
+            trace_img(seg_img, image, (char*)save_swc_fn.c_str());
 
-       //trace_img1(seg_img, image, (char*)save_swc_fn.c_str());
+        seg_img.release();
+
+        image.release();
+
+        conf_img.release();
+
+        delete [] tmp_nm;
 
        // cin.get();
-
 
     }
 
@@ -1593,10 +1805,6 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
        // char * outfile = outlist->at(0);
 
         char * outfile_swc = outlist->at(0);
-
-        //cout<<"output file: "<<outfile<<endl;
-
-
 
 
     Mat image1;
@@ -1728,6 +1936,7 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     img_sz_new[2] = bz[1] - bz[0];
 
+
     int offset[3];
 
     offset[0] = bx[0];
@@ -1735,7 +1944,6 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
     offset[1] = by[0];
 
     offset[2] = bz[0];
-
 
 
     Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
@@ -1845,7 +2053,7 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
         t1 = 20;
 
-        t2 = 5;
+        t2 = 3;
 
 
         //t1 = 80;
@@ -1867,7 +2075,19 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     }
 
+        remove(tmp_nm);
+
+   // boost the result using the app2
+
+   sprintf(tmp_nm,"tmp_swc.swc");
+
+    app2_trace(image, tmp_nm);
+
+    swc2image(conf_img,tmp_nm);
+
     remove(tmp_nm);
+
+
 
     cout << "Complete the base method" << endl;
 
@@ -1879,18 +2099,19 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     // output the result into the harddisk
 
-
-     //string base_file = "base_seg.v3draw";
-
-	//char * base_file_char = (char *)base_file.c_str();
-
-   // saveMat(seg_img,base_file_char);
+    //saveMat(seg_img,outfile);
 
     // trace the image
+    if(checkin > 0)
+        trace_img1(seg_img, image, offset, outfile_swc);
+    else
+        trace_img(seg_img, image,outfile_swc);
 
-  //  trace_img(seg_img, image, outfile_swc);
 
-   trace_img1(seg_img, image, offset, outfile_swc);
+
+    delete [] dataset;
+
+    delete [] tmp_nm;
 
 	return true;
 }
@@ -1977,7 +2198,7 @@ int get_main_branch(cv::Mat image, cv::Mat &seg_img, int t1, int & base_t)
 
     int base_i = 0;
 
-    base_i = max(max_label - 20,0);
+    base_i = max(max_label - 40,0);
 
 	base_t = max(npl[base_i],10);
 
@@ -2091,6 +2312,134 @@ int filter_small_comp(cv::Mat &seg_img, int thres)
 	return n_mb;
 
 }
+
+int filter_small_comp1(cv::Mat &seg_img, double thres)
+{
+
+	int img_sz[3];
+
+	img_sz[0] = (int)seg_img.size[0];
+
+	img_sz[1] = (int)seg_img.size[1];
+
+	img_sz[2] = (int)seg_img.size[2];
+
+	//uchar t1c = (uchar)t1;
+
+    Mat label_img;
+
+	int max_label;
+
+	max_label = bwconnmp_img4(seg_img,label_img,20);
+
+
+
+//	cout << "There are " << max_label << " components in the base image" << endl;
+
+	// clean the small pixels
+
+	// find how many labels are there in the image
+
+
+
+	vector<vector<int> > PixelIdxListx(max_label);
+
+	vector<vector<int> > PixelIdxListy(max_label);
+
+	vector<vector<int> > PixelIdxListz(max_label);
+
+
+    cout << "2263" << endl;
+
+	bwconnmp(label_img,PixelIdxListx,PixelIdxListy,PixelIdxListz);
+
+	label_img.release();
+
+	int base_t = 100;
+
+	int n_mb = 0;
+
+	int n_sum = 0;
+
+	for(int i = 0; i < max_label; i++)
+        n_sum = n_sum + PixelIdxListx[i].size();
+
+
+
+	double *npl = new double[max_label];
+
+	for(int i = 0; i < max_label; i++)
+        npl[i] = (double)PixelIdxListx[i].size() / (double)n_sum;
+
+
+	sort(npl,npl + max_label);
+
+
+
+    if(debug_on9 > 0)
+	{
+        for(int i = 0; i < max_label; i++)
+            cout << "npl is "  << npl[i] * 100.0 << "% " << endl;
+
+
+       // cin.get();
+
+    }
+
+
+    int base_thres_i = 0;
+
+    base_thres_i = max(max_label - 10,0);
+
+	//base_t = max(npl[base_i],10);
+
+	thres = max(npl[base_thres_i], thres);
+
+
+	delete [] npl;
+
+
+
+ //   cout << "1784" << endl;
+
+	for(int i = 0; i < max_label; i++)
+	{
+
+		int n_p = PixelIdxListx[i].size();
+
+        double p_np = (double)n_p / (double)n_sum;
+
+      //  cout << "prop_p" << p_np << endl;
+
+		if(p_np < thres)
+		{
+
+			for(int j = 0; j < n_p; j ++)
+			{
+				int v3[3];
+
+				v3[0] = PixelIdxListx[i][j];
+
+				v3[1] = PixelIdxListy[i][j];
+
+				v3[2] = PixelIdxListz[i][j];
+
+				seg_img.at<uchar>(v3) = 0;
+
+			}
+
+		}
+		else
+			n_mb ++;
+
+
+	}
+
+	return n_mb;
+
+}
+
+
 
 
 
@@ -2258,7 +2607,7 @@ int max_component(cv:: Mat label_img)
     }
 
 
-  //  delete [] np;
+    delete [] np;
 
    // delete npmaxp;
 
@@ -2357,8 +2706,8 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
     count_n_labels_img(label_base_img,np);
 
-    for(int i = 0; i < max_label; i++)
-        cout << "np " << i << " is " << np[i] << endl;
+  //  for(int i = 0; i < max_label; i++)
+    //    cout << "np " << i << " is " << np[i] << endl;
 
 
     int n_sum = accumulate(np, np + max_label,0);
@@ -2778,19 +3127,19 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
             //  if(!(*npmaxp) == (max_scc + 1))
             //    ////cin.get();
 
-            cout << 1709 << endl;
+            //cout << 1709 << endl;
 
             //if(stopsigh > 0)
                 //cin.get();
 
             //////cin.get();
 
-            for(int i = 0; i < max_label; i++)
-                cout << "np " << i << " is "  << np[i] << endl;
+          //  for(int i = 0; i < max_label; i++)
+            //    cout << "np " << i << " is "  << np[i] << endl;
 
 
 
-            cout << 1721 << endl;
+          //  cout << 1721 << endl;
 
             ////cin.get();
 
@@ -2801,7 +3150,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
             cout << "The target tip is of label " << target_label << endl;
 
 
-            cout << 1732 << endl;
+      //      cout << 1732 << endl;
 
             //if(stopsigh > 0)
                 //cin.get();
@@ -3437,6 +3786,612 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 }
 
+int merge_base3(Mat input_image, Mat &seg_img)
+{
+
+	int img_sz[3];
+
+	for(int i = 0;  i < 3;  i++)
+		img_sz[i] = input_image.size[i];
+
+
+    cout << "Begin bwconnmp_img3" << endl;
+
+    Mat image;
+
+    int max_label = bwconnmp_img3(seg_img,image,254);
+
+    cout << "There are " << max_label << " base components in the base image" << endl;
+
+    // count the number of individual base fragment
+
+    int * nl_base;
+
+    count_n_labels_img(image,nl_base);
+
+  //  for(int i = 0; i < max_label; i++)
+        //cout << "np " << i << " is " << nl_base[i] << endl;
+
+
+    int n_sum = accumulate(nl_base, nl_base + max_label,0);
+
+    cout << "There are " << n_sum << " pixels in the base image" << endl;
+
+	double * pl_base = new double[max_label];
+
+    vector<double> pl_b;
+
+    for(int i = 0; i < max_label; i++)
+    {
+
+        pl_base[i] = (double)nl_base[i] / (double)n_sum;
+
+        pl_b.push_back(pl_base[i]);
+
+        //cout << "proportion of individual base " << i << " is " << pl_base[i] << endl;
+
+    }
+
+    double p_sum = accumulate(pl_base,pl_base + max_label,(double)0);
+
+    cout << "The sum of the proportion is" << p_sum << endl;
+
+    //cin.get();
+
+    delete [] pl_base;
+
+
+
+
+    //int max_b;
+
+    int *max_b_p = max_element(nl_base, nl_base + max_label);
+
+    int max_b = distance(nl_base,max_b_p);
+
+    delete [] nl_base;
+
+
+    int img_page = img_sz[0] * img_sz[1] * img_sz[2];
+
+    uchar * seg_img1 = new uchar[img_page];
+
+    uchar * seg_img2 = new uchar[img_page];
+
+ //   cout << "img_page is " << img_page << endl;
+
+ //   cout << "img_page is " << sz[0] * sz[1] * sz[2] << endl;
+
+    int seg_sm = 0;
+
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                int LabelValue = image.at<int>(v3);
+
+                uchar PixelValue = input_image.at<uchar>(v3);
+
+
+                if(LabelValue == (max_b + 1) )
+                {
+
+                    seg_img1[offsetk + offsetj + ix] = 0;
+
+                    seg_img2[offsetk + offsetj + ix] = 0;
+
+                    seg_sm ++;
+
+                }else{
+
+                    int PixelValue1 = 255 - (int)PixelValue;
+
+                    // avoid becoming background
+
+
+                    PixelValue1 = max(PixelValue1, 1);
+
+                    PixelValue = (uchar)PixelValue1;
+
+                    //if(LabelValue > 254)
+                      //  LabelValue = 254;
+
+                    if(LabelValue > 0)
+                    {
+
+                        seg_img2[offsetk + offsetj + ix] = (uchar)LabelValue;
+
+                        seg_img1[offsetk + offsetj + ix] = 2;
+
+
+                    }else{
+
+
+                        seg_img2[offsetk + offsetj + ix] = 0;
+
+                        seg_img1[offsetk + offsetj + ix] = PixelValue;
+
+                    }
+
+                }
+
+            }
+        }
+
+    }
+
+    image.release();
+
+    float * dist_img;
+
+    vector<int> px;
+
+    vector<int> py;
+
+    vector<int> pz;
+
+    vector<double> prop_base;
+
+    float min_dist = fastmarching_cc3(seg_img1,seg_img2,dist_img,img_sz[0],img_sz[1],img_sz[2],pl_b, px, py, pz, prop_base, 10);
+
+    cout << "px is of " << px.size() << endl;
+
+    cout << "prop_base is of " << prop_base.size() << endl;
+
+    //cin.get();
+
+
+    cout << "The min_dist is " << min_dist << endl;
+
+//    cin.get();
+
+    delete [] seg_img1;
+
+    delete [] seg_img2;
+
+
+    // draw the connecting pixels
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+                float dist_p = dist_img[offsetk + offsetj + ix];
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+
+                uchar pV = seg_img.at<uchar>(v3);
+
+                if((dist_p < ( min_dist + 1)) & (pV < 220))
+                    seg_img.at<uchar>(v3) = 200;
+
+
+            }
+
+
+        }
+
+
+    }
+
+    delete [] dist_img;
+
+    seg_sm = 0;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                uchar pSeg = seg_img.at<uchar>(v3);
+
+                uchar pV = input_image.at<uchar>(v3);
+
+                if(pSeg == 200)
+                {
+
+                    if(pV > 3)
+                    {
+                        seg_img.at<uchar>(v3) = 200;
+
+                        seg_sm ++;
+
+                    }else
+                        seg_img.at<uchar>(v3) = 0;
+
+
+                }
+
+            }
+
+
+        }
+
+
+    }
+
+    for(int i = 0; i < px.size(); i++)
+    {
+        int v3[3];
+
+        v3[0] = px[i];
+
+        v3[1] = py[i];
+
+        v3[2] = pz[i];
+
+        expand_tip(seg_img,v3);
+
+        //cin.get();
+    }
+
+
+    cout << "Fill " << seg_sm << " pixels" << endl;
+
+
+}
+
+
+
+int merge_base2(Mat input_image, Mat &seg_img, int t2)
+{
+
+	int img_sz[3];
+
+	for(int i = 0;  i < 3;  i++)
+		img_sz[i] = input_image.size[i];
+
+
+    cout << "Begin bwconnmp_img3" << endl;
+
+    Mat image;
+
+    int max_label = bwconnmp_img3(seg_img,image,254);
+
+    cout << "There are " << max_label << " base components in the base image" << endl;
+
+    // count the number of individual base fragment
+
+    int * nl_base;
+
+    count_n_labels_img(image,nl_base);
+
+    //for(int i = 0; i < max_label; i++)
+      //  cout << "np " << i << " is " << nl_base[i] << endl;
+
+
+    int n_sum = accumulate(nl_base, nl_base + max_label,0);
+
+    cout << "There are " << n_sum << " pixels in the base image" << endl;
+
+	double * pl_base = new double[max_label];
+
+    vector<double> pl_b;
+
+    for(int i = 0; i < max_label; i++)
+    {
+
+        pl_base[i] = (double)nl_base[i] / (double)n_sum;
+
+        pl_b.push_back(pl_base[i]);
+
+        //cout << "proportion of individual base " << i << " is " << pl_base[i] << endl;
+
+    }
+
+    double p_sum = accumulate(pl_base,pl_base + max_label,(double)0);
+
+    cout << "The sum of the proportion is" << p_sum << endl;
+
+    //cin.get();
+
+    delete [] pl_base;
+
+
+
+
+    //int max_b;
+
+    int *max_b_p = max_element(nl_base, nl_base + max_label);
+
+    int max_b = distance(nl_base,max_b_p);
+
+    delete [] nl_base;
+
+
+    int img_page = img_sz[0] * img_sz[1] * img_sz[2];
+
+    uchar * seg_img1 = new uchar[img_page];
+
+    uchar * seg_img2 = new uchar[img_page];
+
+ //   cout << "img_page is " << img_page << endl;
+
+ //   cout << "img_page is " << sz[0] * sz[1] * sz[2] << endl;
+
+    int seg_sm = 0;
+
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                int LabelValue = image.at<int>(v3);
+
+                uchar PixelValue = input_image.at<uchar>(v3);
+
+
+                if(LabelValue == (max_b + 1) )
+                {
+
+                    seg_img1[offsetk + offsetj + ix] = 0;
+
+                    seg_img2[offsetk + offsetj + ix] = 0;
+
+                    seg_sm ++;
+
+                }else{
+
+                    int PixelValue1 = 255 - (int)PixelValue;
+
+                    // avoid becoming background
+
+
+                    PixelValue1 = max(PixelValue1, 1);
+
+                    PixelValue = (uchar)PixelValue1;
+
+                    //if(LabelValue > 254)
+                      //  LabelValue = 254;
+
+                    if(LabelValue > 0)
+                    {
+
+                        seg_img2[offsetk + offsetj + ix] = (uchar)LabelValue;
+
+                        seg_img1[offsetk + offsetj + ix] = 2;
+
+
+                    }else{
+
+
+                        seg_img2[offsetk + offsetj + ix] = 0;
+
+                        seg_img1[offsetk + offsetj + ix] = PixelValue;
+
+                    }
+
+                }
+
+            }
+        }
+
+    }
+
+    image.release();
+
+    float * dist_img;
+
+    vector<int> px;
+
+    vector<int> py;
+
+    vector<int> pz;
+
+    vector<double> prop_base;
+
+    float min_dist = fastmarching_cc3(seg_img1,seg_img2,dist_img,img_sz[0],img_sz[1],img_sz[2],pl_b, px, py, pz, prop_base, 10);
+
+    cout << "px is of " << px.size() << endl;
+
+    cout << "prop_base is of " << prop_base.size() << endl;
+
+    //cin.get();
+
+
+    cout << "The min_dist is " << min_dist << endl;
+
+//    cin.get();
+
+    delete [] seg_img1;
+
+    delete [] seg_img2;
+
+
+    // draw the connecting pixels
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+                float dist_p = dist_img[offsetk + offsetj + ix];
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+
+                uchar pV = seg_img.at<uchar>(v3);
+
+                if((dist_p < ( min_dist + 1)) & (pV < 220))
+                    seg_img.at<uchar>(v3) = 200;
+
+
+            }
+
+
+        }
+
+
+    }
+
+
+
+    if(debug_on6 > 0)
+    {
+
+    string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg_interm.v3draw";
+
+	char * base_file_char = (char *)base_file.c_str();
+
+    saveMat(seg_img,base_file_char);
+
+    cin.get();
+
+    }
+
+
+
+
+
+    delete [] dist_img;
+
+    seg_sm = 0;
+
+    uchar t2c = (uchar)t2;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                uchar pSeg = seg_img.at<uchar>(v3);
+
+                uchar pV = input_image.at<uchar>(v3);
+
+                if(pSeg == 200)
+                {
+
+                    if(pV > t2c)
+                    {
+                        seg_img.at<uchar>(v3) = 200;
+
+                        seg_sm ++;
+
+                    }else
+                        seg_img.at<uchar>(v3) = 0;
+
+
+                }
+
+            }
+
+
+        }
+
+
+    }
+
+    int exp_sz[3];
+
+    exp_sz[0] = 2;
+
+    exp_sz[1] = 2;
+
+    exp_sz[2] = 2;
+
+    for(int i = 0; i < px.size(); i++)
+    {
+        int v3[3];
+
+        v3[0] = px[i];
+
+        v3[1] = py[i];
+
+        v3[2] = pz[i];
+
+        expand_tip1(seg_img,v3,exp_sz);
+
+        //cin.get();
+    }
+
+
+    cout << "Fill " << seg_sm << " pixels" << endl;
+
+    cout << "Complete merge2 " << endl;
+
+
+}
+
+
 int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_idx> & base_idx, int large_flag)
 {
 
@@ -3480,12 +4435,12 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
     float *dist_t1 = 0;
 
-    bwdist(seg_img,dist_t1,10,5);
+    //bwdist(seg_img,dist_t1,10,5);
 
 
     //cout << "image size is " << img_sz[0] << img_sz[1] << img_sz[2] << endl;
 
-    if(large_flag < 300)
+    if(0)
     {
 
     for(int iz = 0; iz < img_sz[2]; iz++)
@@ -3523,7 +4478,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
     }
 
-    delete [] dist_t1;
+  //  delete [] dist_t1;
 
     filter_small_comp(seg_img,6);
 
@@ -3534,7 +4489,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
     cout << "Begin bwconnmp_img3" << endl;
 
-    max_label = bwconnmp_img3(seg_img,label_base_img,254);
+    max_label = bwconnmp_img3(seg_img,label_base_img,100);
 
     cout << "There are " << max_label << " components in the base image" << endl;
 
@@ -3545,8 +4500,8 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
     count_n_labels_img(label_base_img,np);
 
-    for(int i = 0; i < max_label; i++)
-        cout << "np " << i << " is " << np[i] << endl;
+  //  for(int i = 0; i < max_label; i++)
+    //    cout << "np " << i << " is " << np[i] << endl;
 
 
     int n_sum = accumulate(np, np + max_label,0);
@@ -3599,7 +4554,8 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
     while(prop_cc > 0.1)
     {
 
-       // //cin.get();
+
+        //cin.get();
 
         cout << "Start growing the base" << endl;
 
@@ -4347,12 +5303,74 @@ int grow_base_img(cv::Mat image, cv::Mat label_img, cv::Mat &seg_img, int source
                         np++;
 
                     }
+
                     //  }
 
                 }
 
             }
         }
+
+        if(np > 10000)
+        {
+
+            if(debug_on12 > 0)
+            {
+                cout << "clean " << np << " pixels" << endl;
+
+                cin.get();
+
+            }
+
+
+            for(int iz = 0; iz < img_sz[2]; iz++)
+            {
+                int offsetk = iz * img_sz[1] * img_sz[0];
+                for(int iy = 0; iy <  img_sz[1]; iy++)
+                {
+                    int offsetj = iy * img_sz[0];
+                    for(int ix = 0; ix < img_sz[0]; ix++)
+                    {
+
+                        int v3[3];
+
+                        v3[0] = ix;
+
+                        v3[1] = iy;
+
+                        v3[2] = iz;
+
+                        float dt = dist_t[offsetk + offsetj + ix];
+
+                        float ds = dist_s[offsetk + offsetj + ix];
+
+                        int label = label_img.at<uchar>(v3);
+
+
+                        if((dt <= min_dist_s) && (ds <= min_dist_t))
+                        {
+                            // cout << "The filled image is " << (int)image.at<uchar>(v3) << endl;
+
+                            double ddt = (double)dist_t1[offsetk + offsetj + ix];
+
+                            //if((ddt < (double)(min_dist1 + 2)) & (ddt > 0))
+                            //    cout << "The filled image is " << ddt << endl;
+
+                            seg_img.at<uchar>(v3) = 0;
+                            np++;
+
+                        }
+
+                        //  }
+
+                    }
+
+                }
+            }
+
+        }
+
+
 
         cout << "min_dist is " << min_dist << endl;
 
@@ -4381,6 +5399,8 @@ int expand_tip(cv::Mat &seg_img,int target_tip[])
 
     for(int i = 0; i < 3; i++)
         img_sz[i] = seg_img.size[i];
+
+    int n_sub = 0;
 
     for(int ix = -1; ix < 2; ix++)
     {
@@ -4416,8 +5436,12 @@ int expand_tip(cv::Mat &seg_img,int target_tip[])
                 v3[2] = z;
 
                 if(seg_img.at<uchar>(v3) < 1)
+                {
                     seg_img.at<uchar>(v3) = 128;
 
+                    n_sub ++;
+
+                }
             }
 
         }
@@ -4425,6 +5449,73 @@ int expand_tip(cv::Mat &seg_img,int target_tip[])
 
 
     }
+
+ //   cout << "Fill " << n_sub << " pixels" << endl;
+
+    return 1;
+
+}
+
+
+int expand_tip1(cv::Mat &seg_img,int target_tip[], int exp_sz[])
+{
+
+    int img_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        img_sz[i] = seg_img.size[i];
+
+    int n_sub = 0;
+
+    for(int ix = -exp_sz[0]; ix < exp_sz[0] + 1; ix++)
+    {
+        for(int iy = -exp_sz[1]; iy < exp_sz[1] + 1; iy++)
+        {
+
+            for(int iz = - exp_sz[2]; iz < exp_sz[2] + 1; iz ++)
+            {
+                int x = ix + target_tip[0];
+
+                int y = iy + target_tip[1];
+
+                int z = iz + target_tip[2];
+
+                x = min(x,img_sz[0]);
+
+                y = min(y,img_sz[1]);
+
+                z = min(z,img_sz[2]);
+
+                x = max(x,1);
+
+                y = max(y,1);
+
+                z = max(z,1);
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                if(seg_img.at<uchar>(v3) < 1)
+                {
+                    seg_img.at<uchar>(v3) = 128;
+
+                    n_sub ++;
+
+                }
+            }
+
+        }
+
+
+
+    }
+
+ //   cout << "Fill " << n_sub << " pixels" << endl;
 
     return 1;
 
@@ -4755,6 +5846,348 @@ int count_merged_base(cv::Mat seg_img,cv::Mat label_base_img, int * base_merge_l
     return max_label;
 
 }
+
+
+int force_merge1(cv::Mat image, cv::Mat &seg_img, int t_seg)
+{
+
+    int img_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        img_sz[i] = image.size[i];
+
+    Mat label_img;
+
+    //label_img = Mat(3,img_sz,CV_32S,Scalar::all(0));
+
+    int n_base;
+
+    uchar t_segc = (uchar)t_seg;
+
+    n_base = bwconnmp_img4(seg_img, label_img,t_segc);
+
+    vector<vector<int> > px(n_base);
+
+    vector<vector<int> > py(n_base);
+
+    vector<vector<int> > pz(n_base);
+
+    bwconnmp(label_img,px,py,pz);
+
+    int bi = 0;
+
+     vector<int> base_list;
+
+     vector<trip_idx> base_idx;
+
+     int * base_offset = new int[n_base];
+
+
+    for(int i = 0; i < n_base; i++)
+    {
+        int np = px[i].size();
+
+        base_list.push_back(np);
+
+        base_offset[i] = bi;
+
+        for(int j = 0; j < np; j++)
+        {
+            int x = px[i][j];
+
+            int y = py[i][j];
+
+            int z = pz[i][j];
+
+            base_idx.push_back(trip_idx(x,y,z));
+
+            bi++;
+
+        }
+
+
+    }
+
+    double * prop_l = new double[n_base];
+
+
+    for(int i = 0; i < n_base; i++)
+    {
+        prop_l[i] = (double)px[i].size() / (double) bi;
+
+        cout << "The proption of " << i << " is " << prop_l[i] << endl;
+
+    }
+
+    delete [] prop_l;
+
+  //  cin.get();
+
+
+
+
+
+   // int bi = 0;
+
+
+
+
+    /*
+
+    for(int i = 0; i < base_list.size(); i++)
+    {
+
+        base_offset[i] = bi;
+
+        for(int j = 0; j < base_list[i]; j++)
+        {
+            int v3[3];
+
+            v3[0] = base_idx[bi].x;
+
+            v3[1] = base_idx[bi].y;
+
+            v3[2] = base_idx[bi].z;
+
+            label_img.at<int>(v3) = (i + 1);
+
+            bi++;
+
+        }
+
+
+    }
+
+    */
+
+    int n_b = base_list.size();
+
+    int * cc_list = new int[n_b];
+
+    for(int i = 0; i < n_b; i++)
+        cc_list[i] = base_list[i];
+
+
+
+
+    int * mt_ip = max_element(cc_list,cc_list + n_b);
+
+    int mt_i = distance(cc_list,mt_ip) + 1;
+
+
+    cout << "The current main trunck is " << mt_i << endl;
+
+
+    //max_component(label_img);
+
+    int n_sum = base_idx.size();
+
+
+
+    double prop_cc = (double)base_list[mt_i - 1] / (double) n_sum;
+
+    cout << "The main trunk now contains " << prop_cc * 100 << "%" << endl;
+
+    vector<trip_idx> P_sub;
+
+
+
+    int num_b = n_b;
+
+
+
+
+    while((prop_cc > 0.05) & (num_b > 1))
+    {
+
+
+
+        if(debug_on1 > 0)
+            cin.get();
+
+        cout << "Start growing the base" << endl;
+
+        int target_tip[3];
+
+        // adaptively change the distance
+
+        int nc = grow_base_img(image, label_img, seg_img, mt_i, target_tip,15);
+
+        //if(target_tip > 0)
+
+        int target;
+
+
+        if(nc > 0)
+        {
+            target = label_img.at<int>(target_tip);
+
+            cout << "Connect to the label " << target << endl;
+
+            cout << "The label has " << cc_list[target - 1] << endl;
+
+
+            if(debug_on1 > 0)
+                cin.get();
+
+            //cc_list[mt_i - 1] = cc_list[mt_i - 1] + cc_list[target - 1] + n_c;
+
+
+            /*
+            for(int i = 0; i < base_list[i]; i++)
+            {
+
+                int v3[3];
+
+                v3[0] = base_idx[base_offset[target - 1] + i].x;
+
+                v3[1] = base_idx[base_offset[target - 1] + i].y;
+
+                v3[2] = base_idx[base_offset[target - 1] + i].z;
+
+                label_img.at<int>(v3) = mt_i;
+
+
+
+            }
+
+            */
+            collect_idx_c(seg_img,P_sub,128);
+
+
+
+            for(int iz = 0; iz < img_sz[2]; iz++)
+            {
+                for(int iy = 0; iy <  img_sz[1]; iy++)
+                {
+                    for(int ix = 0; ix < img_sz[0]; ix++)
+                    {
+
+                        int v3[3];
+
+                        v3[0] = ix;
+
+                        v3[1] = iy;
+
+                        v3[2] = iz;
+
+
+                        if(label_img.at<int>(v3) == target)
+                        {
+                            label_img.at<int>(v3) = mt_i;
+
+                            cc_list[mt_i - 1] ++;
+
+                        }
+
+                        if(seg_img.at<uchar>(v3) == 128)
+                        {
+
+
+                            label_img.at<int>(v3) = mt_i;
+
+                            cc_list[mt_i - 1] ++;
+
+
+                            seg_img.at<uchar>(v3) = 129;
+
+                        }
+                    }
+
+
+                }
+            }
+
+
+            cc_list[target - 1] = 0;
+
+            num_b --;
+
+
+        }else{
+
+            target = 0;
+
+            cout << "Fails to connect to any base" << endl;
+
+            cc_list[mt_i - 1] = 0;
+
+
+            mt_ip = max_element(cc_list,cc_list + n_b);
+
+            mt_i = distance(cc_list,mt_ip) + 1;
+
+            prop_cc = (double)base_list[mt_i - 1] / (double) n_sum;
+
+            cout << "The main trunk now contains " << prop_cc * 100 << "%" << endl;
+
+            if(debug_on1 > 0)
+                cin.get();
+
+
+
+            num_b --;
+
+        }
+
+    }
+
+    delete [] cc_list;
+
+    delete [] base_offset;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                if(seg_img.at<uchar>(v3) > 10)
+                {
+
+                    seg_img.at<uchar>(v3) = 254;
+
+                }
+            }
+
+
+        }
+    }
+
+    // change the subsititued pixels into 128
+
+    for(int i = 0; i < P_sub.size();i++)
+    {
+        int v3[3];
+
+        v3[0] = P_sub[i].x;
+
+        v3[1] = P_sub[i].y;
+
+        v3[2] = P_sub[i].z;
+
+        seg_img.at<uchar>(v3) = 128;
+
+        // expand individual substituted pixels
+
+        expand_tip(seg_img,v3);
+
+    }
+
+
+}
+
+
+
 
 int force_merge(cv::Mat image, cv::Mat &seg_img, vector<int> base_list,vector<trip_idx> base_idx)
 {
@@ -5131,6 +6564,8 @@ int check_connect(cv::Mat &seg_img)
 
     delete [] np;
 
+
+
 //    double n_sum = accumulate(p_seg,p_seg + n_t1,0);
 
     for(int i = 0; i < n_t1; i++)
@@ -5304,6 +6739,386 @@ int check_connect(cv::Mat &seg_img)
 
     delete [] pt1;
 
+    cout << "delete pt1" << endl;
+
+    delete [] p_seg;
+
+    cout << "delete p_seg" << endl;
+
+ //   delete [] p_seg1;
+
+    delete [] t12_cp;
+
+    cout << "delete t12_cp" << endl;
+
+    delete [] t12_c;
+
+    cout << "delete t12_c" << endl;
+
+    delete [] t12_cp1;
+
+    cout << "delete t12_cp1" << endl;
+
+    delete [] label_t2_list;
+
+    cout << "delete label_t2_list" << endl;
+
+    delete [] np_t2;
+
+    cout << "delete np_t2" << endl;
+
+    delete [] p_segt1;
+
+    cout << "delete p_segt1" << endl;
+
+  //  delete [] np;
+
+  //  cout << "delete np" << endl;
+
+
+
+
+	//label_t2.release();
+
+	//int * pt2 = new int[n_t2];
+
+	//double * pt12_cp = new double[n_t2];
+
+
+	/*
+
+
+    int n_iso = 0;
+
+    int n_small = 0;
+
+	for(int i = 0; i < n_t2; i ++)
+    {
+        pt2[i] = t12_c[label_t2_list[i] - 1];
+
+        if(pt2[i] < 4)
+            n_iso ++;
+
+        if(np_t2[i] < 30)
+            n_small ++;
+
+
+        pt12_cp[i] = t12_cp[label_t2_list[i] - 1];
+
+
+
+
+
+    //    cout << "The label is " << label_t2_list[i] << endl;
+
+    //    cout << " The pt2 is " << pt2[i] << endl;
+
+    //    cout << " The prop for pt2 is " << pt12_cp[i] << endl;
+
+
+
+
+	}
+
+
+
+	//int * t2_select = new int[n_t2];
+
+
+
+
+	for(int i = 0; i < n_t2; i ++)
+    {
+        t2_select[i] = 0;
+
+        pt2[i] = t12_c[label_t2_list[i] - 1];
+
+        if(pt2[i] > 3)
+            n_iso ++;
+
+        if(np_t2[i] < 30)
+            n_small ++;
+
+
+        pt12_cp[i] = t12_cp[label_t2_list[i] - 1];
+
+	}
+
+
+
+	cout << "nt2 is " << n_t2 << endl;
+
+	cout << "isolatedt2 is " << n_iso << endl;
+
+    cout << "The n small is " << n_small << endl;
+
+	cin.get();
+
+	delete [] t12_c;
+
+	delete [] t12_cp;
+
+	delete [] p_segt1;
+
+	delete [] pt1;
+
+	delete [] pt2;
+
+	delete [] pt12_cp;
+
+	*/
+
+
+}
+
+
+/*
+
+int check_connect1(cv::Mat &seg_img)
+{
+   // Mat label_base;
+
+    Mat label_t2;
+
+//    cout << "Ready to do the bwconnmp_img3" << endl;
+
+  //  int n_t2 = bwconnmp_img3(seg_img,label_t2,80);
+
+
+   // int * np_t2;
+
+    //count_n_labels_img(label_t2, np_t2);
+
+
+
+
+	//cout << "Complete the bwconnmp on the images" << endl;
+
+	//cout << "There are " << n_t2 <<  " components in the image" << endl;
+
+	// find how many labels are there in the image
+
+	//vector<vector<int> > PList_t2_x(n_t2);
+
+	//vector<vector<int> > PList_t2_y(n_t2);
+
+	//vector<vector<int> > PList_t2_z(n_t2);
+
+    //bwconnmp(label_t2,PList_t2_x,PList_t2_y,PList_t2_z);
+
+
+    //label_t2.release();
+
+   // cout << "Release the label_t2 " << endl;
+
+
+    int n_t12 = bwconnmp_img4(seg_img,label_t2,50);
+
+
+    cout << "Complete bwconnmp_img4 " << endl;
+
+    cout << "nt12 is " << n_t12 << endl;
+
+
+ 	vector<vector<int> > PList_t12_x(n_t12);
+
+	vector<vector<int> > PList_t12_y(n_t12);
+
+	vector<vector<int> > PList_t12_z(n_t12);
+
+	bwconnmp(label_t2,PList_t12_x,PList_t12_y,PList_t12_z);
+
+    int * label_t2_list = new int[n_t2];
+
+    int * np_t2 = new int[n_t2];
+
+    for(int i = 0; i < n_t2; i++)
+    {
+        int v3[3];
+
+        //cout << "i1 is " << i << endl;
+
+        v3[0] = PList_t2_x[i][0];
+
+        v3[1] = PList_t2_y[i][0];
+
+        v3[2] = PList_t2_z[i][0];
+
+
+        label_t2_list[i] = label_t2.at<int>(v3);
+
+
+        np_t2[i] = PList_t12_x[i].size();
+
+    }
+
+	label_t2.release();
+
+	int * np;
+
+	int n_t1 = bwconnmp_img3(seg_img,label_t2,254);
+
+	count_n_labels_img(label_t2, np);
+
+    double * p_seg = new double[n_t1];
+
+    cout << "n_t1 is " << n_t1 << endl;
+
+    double n_sum = 0;
+
+    for(int i = 0; i < n_t1; i++)
+    {
+        p_seg[i] = (double)np[i];
+
+        n_sum = n_sum + (double)np[i];
+
+       // cout << "i2 is " << i << endl;
+
+    }
+
+    delete [] np;
+
+//    double n_sum = accumulate(p_seg,p_seg + n_t1,0);
+
+    for(int i = 0; i < n_t1; i++)
+    {
+
+        p_seg[i] = p_seg[i] / n_sum;
+
+        //cout << "p_seg is " << p_seg[i] << endl;
+
+    }
+
+  //  cin.get();
+
+
+    double * p_segt1 = new double[n_t1];
+
+	int * pt1 = new int[n_t1];
+
+	int * t12_c = new int[n_t12];
+
+	double * t12_cp = new double[n_t12];
+
+	double * t12_cp1 = new double[n_t12];
+
+    //int * seg_cn[] = new int[n_];
+
+	for(int i = 0; i < n_t12; i++)
+	{
+
+
+        //cout << "i3 is " << i << endl;
+
+
+        for(int j = 0; j < n_t1; j++)
+        {
+            pt1[j] = 0;
+
+            p_segt1[j] = 0;
+
+        }
+
+        for(int j = 0; j < PList_t12_x[i].size(); j ++)
+        {
+            int v3[3];
+
+            v3[0] = PList_t12_x[i][j];
+
+            v3[1] = PList_t12_y[i][j];
+
+            v3[2] = PList_t12_z[i][j];
+
+            int label = label_t2.at<int>(v3);
+
+            if(label > 0)
+            {
+                pt1[label - 1]  = 1;
+
+                p_segt1[label - 1] = p_seg[label - 1];
+
+               // cout << "label is " << label << endl;
+
+               // cout << "p_segt1 is " << p_segt1[label - 1] << endl;
+
+
+            }
+
+
+        }
+
+        t12_c[i] = 0;
+
+        t12_cp[i] = 0;
+
+        for(int j = 0; j < n_t1; j++)
+        {
+           // cout << "pt1 is " << pt1[j] << endl;
+
+           // cout << "p_segt1 is " << p_segt1[j] << endl;
+
+            t12_c[i] = t12_c[i] + pt1[j];
+
+            t12_cp[i] = t12_cp[i] + p_segt1[j];
+
+        }
+
+       // t12_c[i] = accumulate(pt1,pt1 + n_t1,0);
+
+       // t12_cp[i] = accumulate(p_segt1,p_segt1 + n_t1,0);
+
+
+       // cout << "t12c is " << t12_c[i] << endl;
+
+      //  cout << "t12cp is " << t12_cp[i] << endl;
+
+       // if(t12_c[i] > 0)
+         //   cin.get();
+
+	}
+
+	int n_fill = 0;
+
+    for(int i = 0; i < n_t12; i ++)
+    {
+
+        if(t12_c[i] > 3)
+        {
+
+            for(int j = 0; j < PList_t12_x[i].size(); j ++)
+            {
+
+                int v3[3];
+
+                v3[0] = PList_t12_x[i][j];
+
+                v3[1] = PList_t12_y[i][j];
+
+                v3[2] = PList_t12_z[i][j];
+
+                if(seg_img.at<uchar>(v3) < 200)
+                {
+                    seg_img.at<uchar>(v3) = 254;
+
+                    n_fill ++;
+                }
+
+            }
+        }
+
+      //ŝ  cout << "the component has " << t12_c[i] << endl;
+
+
+    }
+
+    //cout << "nt1 is " << n_t_1 << "connecting pixels" << endl;
+
+     cout << "Totally find " << n_fill  << " connecting pixels" << endl;
+
+ //   cin.get();
+
+    delete [] pt1;
+
     delete [] p_seg;
 
  //   delete [] p_seg1;
@@ -5406,11 +7221,13 @@ int check_connect(cv::Mat &seg_img)
 
 	delete [] pt12_cp;
 
-	*/
+
 
 
 }
 
+
+*/
 
 int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * dataset)
 {
@@ -5508,21 +7325,28 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 	n_base  = get_main_branch(image, seg_img, t1,base_thres);
 
+
+
+	cout << "Base image contains " << n_base << " main branches" << endl;
+
+
+
 	// determine the connecting branch
 
  	find_t2_fragments(image, seg_img, t2, 0);
 
     cout << "Complete t2 seeds" << endl;
 
-    check_connect(seg_img);
+	check_connect(seg_img);
 
-
-//	check_connect(seg_img);
-
+	//cin.get();
 
     cout << "Start merging the base2" << endl;
 
     merge_base2(input_img,seg_img,t2);
+
+
+    //cin.get();
 
     cout << "Start cleaning small pixels " << endl;
 
@@ -5530,29 +7354,212 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
     cout << "Complete cleaning small pixels" << endl;
 
+    if(debug_on12 > 0)
+    {
 
-    force_merge1(image,seg_img);
+        string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg.v3draw";
 
+        char * base_file_char = (char *)base_file.c_str();
 
-    //cin.get();
+        saveMat(seg_img,base_file_char);
 
-//	float * dist_t1 = 0;
+       // cin.get();
 
-//	bwdist(seg_img,dist_t1,10,17);
-
-//	cout << "save the distance mapping" << endl;
-
-//	cout << "complete bwdist" << endl;
-
-
-//	string dist_mapping_file = "/media/gulin/E402023602020DEC/Cache/BigN/dist_imgs.v3draw";
-
-//	char * dist_mapping_file_char =  (char *)dist_mapping_file.c_str();
-
-//	saveImg(dist_t1,img_sz,dist_mapping_file_char);
+    }
 
 
-	//cout << "Start merging the base" << endl;
+    //vector<int> base_list;
+
+   // vector<trip_idx> base_idx;
+
+    force_merge1(image,seg_img,50);
+
+
+
+    if(debug_on12 > 0)
+    {
+
+        string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg_force_merge.v3draw";
+
+        char * base_file_char = (char *)base_file.c_str();
+
+        saveMat(seg_img,base_file_char);
+
+     //   cin.get();
+
+    }
+
+
+    float dt = 2;
+
+ 	//
+
+
+
+    if(debug_on8 > 0)
+    {
+
+        int n_sub = 0;
+
+        Mat tmp_img;
+
+        tmp_img = Mat(3,img_sz,CV_8UC1,Scalar::all(0));
+
+        for(int iz = 0; iz < img_sz[2]; iz++)
+        {
+
+            int offsetk = iz*img_sz[1]*img_sz[0];
+
+            for(int iy = 0; iy <  img_sz[1]; iy++)
+            {
+                int offsetj = iy* img_sz[0];
+                for(int ix = 0; ix < img_sz[0]; ix++)
+                {
+
+
+                    int v3[3];
+
+                    v3[0] = ix;
+
+                    v3[1] = iy;
+
+                    v3[2] = iz;
+
+                    uchar SegValue = seg_img.at<uchar>(v3);
+
+                    uchar PixelValue = input_img.at<uchar>(v3);
+
+                    if(PixelValue > 10)
+                        tmp_img.at<uchar>(v3) = 200;
+                    else{
+
+                        if(SegValue > 50)
+                        {
+                            tmp_img.at<uchar>(v3) = 50;
+
+                        }
+                    }
+
+
+
+
+                }
+            }
+
+        }
+
+        cout << "n_sub is " << n_sub << endl;
+
+        string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/t2_img.v3draw";
+
+        char * base_file_char = (char *)base_file.c_str();
+
+        saveMat(tmp_img,base_file_char);
+
+        base_file = "/media/gulin/E402023602020DEC/Cache/BigN/seg_img.v3draw";
+
+        base_file_char = (char *)base_file.c_str();
+
+        saveMat(seg_img,base_file_char);
+
+        tmp_img.release();
+
+       // cin.get();
+
+
+
+    //    cin.get();
+
+    }
+
+
+ 	//Mat features_t2;
+
+ 	find_t2_fragments(image, seg_img, t2, 0);
+
+ 	cout << "carry out the final filtering" << endl;
+
+ 	filter_small_comp1(seg_img,0.01);
+
+
+    if(debug_on12 > 0)
+    {
+
+        string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/t2_img_seg_before_merge.v3draw";
+
+        char * base_file_char = (char *)base_file.c_str();
+
+        saveMat(seg_img,base_file_char);
+
+     //   cin.get();
+
+    }
+
+
+
+ 	force_merge1(image,seg_img,50);
+
+    //retrieve_low_confidence(input_img, image,  seg_img, dataset);
+
+    if(debug_on12 > 0)
+    {
+
+        string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/t2_img_seg_afer_merge.v3draw";
+
+        char * base_file_char = (char *)base_file.c_str();
+
+        saveMat(seg_img,base_file_char);
+
+       // cin.get();
+
+    }
+
+  //  force_merge1(image,seg_img,50);
+
+
+
+
+  //  force_merge1(image,seg_img, 50);
+
+
+
+/*
+
+    Mat label_img;
+
+    int max_label = bwconnmp_img4(seg_img,label_img,100);
+
+    cout << "There are " << max_label << " base components in the base image" << endl;
+
+    // count the number of individual base fragment
+
+    int * nl_base;
+
+    count_n_labels_img(label_img,nl_base);
+
+    double * pl_base = new double[max_label];
+
+    double pl_sum = accumulate(nl_base,nl_base + max_label, 0.0);
+
+    for(int i = 0; i < max_label; i++){
+
+        pl_base[i] = (double)nl_base[i] / (double)pl_sum;
+
+        cout << "np " << i << " is " << pl_base[i] << endl;
+
+        //cout << "np " << i << " is " << nl_base[i] << endl;
+
+    }
+
+    cin.get();
+
+
+	cout << "start doing bwdist" << endl;
+
+
+
+
+	cout << "Start merging the base" << endl;
 
    // cin.get();
 
@@ -5563,36 +7570,33 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
  //   merge_base(image,seg_img,base_list);
 
-    //vector<int> base_list;
-
-    //vector<trip_idx> base_idx;
-
-    //merge_base1(image,seg_img,base_list, base_idx,base_thres);
-
-    //force_merge(image,seg_img,base_list,base_idx);
 
 
-    //cout << "The base idx has " << base_idx.size() << endl;
+*/
+ //   vector<int> base_list;
+
+  //  vector<trip_idx> base_idx;
+
+  //  merge_base1(image,seg_img,base_list, base_idx,base_thres);
+
+   // force_merge(image,seg_img,base_list,base_idx);
+
+
+
+
+   // cout << "The base idx has " << base_idx.size() << endl;
 
    // cout << "There are " << base_list.size() << " in the label image"<< endl;
 
-    if(debug_on > 0)
-    {
-    string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg.v3draw";
 
-	char * base_file_char = (char *)base_file.c_str();
 
-    saveMat(seg_img,base_file_char);
+    //float dt = 2;
 
-    }
-
-    //float dt = 3;
-
- //	find_t2_fragments(image, seg_img, t2, dt);
+ 	//find_t2_fragments(image, seg_img, t2, dt);
 
  	//Mat features_t2;
 
-    //retrieve_low_confidence(input_img, image,  seg_img, dataset);
+   // retrieve_low_confidence(input_img, image,  seg_img, dataset);
 
 
 
@@ -6164,770 +8168,6 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 }
 
-
-int force_merge1(cv::Mat image, cv::Mat &seg_img)
-{
-
-    int img_sz[3];
-
-    for(int i = 0; i < 3; i++)
-        img_sz[i] = image.size[i];
-
-    Mat label_img;
-
-    //label_img = Mat(3,img_sz,CV_32S,Scalar::all(0));
-
-    int n_base;
-
-    n_base = bwconnmp_img4(seg_img, label_img,100);
-
-    vector<vector<int> > px(n_base);
-
-    vector<vector<int> > py(n_base);
-
-    vector<vector<int> > pz(n_base);
-
-    bwconnmp(label_img,px,py,pz);
-
-    int bi = 0;
-
-     vector<int> base_list;
-
-     vector<trip_idx> base_idx;
-
-     int * base_offset = new int[n_base];
-
-
-    for(int i = 0; i < n_base; i++)
-    {
-        int np = px[i].size();
-
-        base_list.push_back(np);
-
-        base_offset[i] = bi;
-
-        for(int j = 0; j < np; j++)
-        {
-            int x = px[i][j];
-
-            int y = py[i][j];
-
-            int z = pz[i][j];
-
-            base_idx.push_back(trip_idx(x,y,z));
-
-            bi++;
-
-        }
-
-
-    }
-
-    double * prop_l = new double[n_base];
-
-
-    for(int i = 0; i < n_base; i++)
-    {
-        prop_l[i] = (double)px[i].size() / (double) bi;
-
-        cout << "The proption of " << i << " is " << prop_l[i] << endl;
-
-    }
-
-  //  cin.get();
-
-
-
-
-
-   // int bi = 0;
-
-
-
-
-    /*
-
-    for(int i = 0; i < base_list.size(); i++)
-    {
-
-        base_offset[i] = bi;
-
-        for(int j = 0; j < base_list[i]; j++)
-        {
-            int v3[3];
-
-            v3[0] = base_idx[bi].x;
-
-            v3[1] = base_idx[bi].y;
-
-            v3[2] = base_idx[bi].z;
-
-            label_img.at<int>(v3) = (i + 1);
-
-            bi++;
-
-        }
-
-
-    }
-
-    */
-
-    int n_b = base_list.size();
-
-    int * cc_list = new int[n_b];
-
-    for(int i = 0; i < n_b; i++)
-        cc_list[i] = base_list[i];
-
-
-
-
-    int * mt_ip = max_element(cc_list,cc_list + n_b);
-
-    int mt_i = distance(cc_list,mt_ip) + 1;
-
-
-    cout << "The current main trunck is " << mt_i << endl;
-
-
-    //max_component(label_img);
-
-    int n_sum = base_idx.size();
-
-
-
-    double prop_cc = (double)base_list[mt_i - 1] / (double) n_sum;
-
-    cout << "The main trunk now contains " << prop_cc * 100 << "%" << endl;
-
-    vector<trip_idx> P_sub;
-
-
-
-    int num_b = n_b;
-
-
-
-
-    while((prop_cc > 0.1) & (num_b > 1))
-    {
-
-
-
-        if(debug_on1 > 0)
-            cin.get();
-
-        cout << "Start growing the base" << endl;
-
-        int target_tip[3];
-
-        // adaptively change the distance
-
-        int nc = grow_base_img(image, label_img, seg_img, mt_i, target_tip,15);
-
-        //if(target_tip > 0)
-
-        int target;
-
-
-        if(nc > 0)
-        {
-            target = label_img.at<int>(target_tip);
-
-            cout << "Connect to the label " << target << endl;
-
-            cout << "The label has " << cc_list[target - 1] << endl;
-
-
-            if(debug_on1 > 0)
-                cin.get();
-
-            //cc_list[mt_i - 1] = cc_list[mt_i - 1] + cc_list[target - 1] + n_c;
-
-
-            /*
-            for(int i = 0; i < base_list[i]; i++)
-            {
-
-                int v3[3];
-
-                v3[0] = base_idx[base_offset[target - 1] + i].x;
-
-                v3[1] = base_idx[base_offset[target - 1] + i].y;
-
-                v3[2] = base_idx[base_offset[target - 1] + i].z;
-
-                label_img.at<int>(v3) = mt_i;
-
-
-
-            }
-
-            */
-            collect_idx_c(seg_img,P_sub,128);
-
-
-
-            for(int iz = 0; iz < img_sz[2]; iz++)
-            {
-                for(int iy = 0; iy <  img_sz[1]; iy++)
-                {
-                    for(int ix = 0; ix < img_sz[0]; ix++)
-                    {
-
-                        int v3[3];
-
-                        v3[0] = ix;
-
-                        v3[1] = iy;
-
-                        v3[2] = iz;
-
-
-                        if(label_img.at<int>(v3) == target)
-                        {
-                            label_img.at<int>(v3) = mt_i;
-
-                            cc_list[mt_i - 1] ++;
-
-                        }
-
-                        if(seg_img.at<uchar>(v3) == 128)
-                        {
-
-
-                            label_img.at<int>(v3) = mt_i;
-
-                            cc_list[mt_i - 1] ++;
-
-
-                            seg_img.at<uchar>(v3) = 129;
-
-                        }
-                    }
-
-
-                }
-            }
-
-
-            cc_list[target - 1] = 0;
-
-            num_b --;
-
-
-        }else{
-
-            target = 0;
-
-            cout << "Fails to connect to any base" << endl;
-
-            cc_list[mt_i - 1] = 0;
-
-
-            mt_ip = max_element(cc_list,cc_list + n_b);
-
-            mt_i = distance(cc_list,mt_ip) + 1;
-
-            prop_cc = (double)base_list[mt_i - 1] / (double) n_sum;
-
-            cout << "The main trunk now contains " << prop_cc * 100 << "%" << endl;
-
-            if(debug_on1 > 0)
-                cin.get();
-
-
-
-            num_b --;
-
-        }
-
-    }
-
-    delete [] cc_list;
-
-    delete [] base_offset;
-
-    for(int iz = 0; iz < img_sz[2]; iz++)
-    {
-        for(int iy = 0; iy <  img_sz[1]; iy++)
-        {
-            for(int ix = 0; ix < img_sz[0]; ix++)
-            {
-
-                int v3[3];
-
-                v3[0] = ix;
-
-                v3[1] = iy;
-
-                v3[2] = iz;
-
-                if(seg_img.at<uchar>(v3) > 10)
-                {
-
-                    seg_img.at<uchar>(v3) = 254;
-
-                }
-            }
-
-
-        }
-    }
-
-    // change the subsititued pixels into 128
-
-    for(int i = 0; i < P_sub.size();i++)
-    {
-        int v3[3];
-
-        v3[0] = P_sub[i].x;
-
-        v3[1] = P_sub[i].y;
-
-        v3[2] = P_sub[i].z;
-
-        seg_img.at<uchar>(v3) = 128;
-
-        // expand individual substituted pixels
-
-    //    expand_tip(seg_img,v3);
-
-
-
-
-
-    }
-
-
-
-
-}
-
-int filter_small_comp1(cv::Mat &seg_img, double thres)
-{
-
-	int img_sz[3];
-
-	img_sz[0] = (int)seg_img.size[0];
-
-	img_sz[1] = (int)seg_img.size[1];
-
-	img_sz[2] = (int)seg_img.size[2];
-
-	//uchar t1c = (uchar)t1;
-
-    Mat label_img;
-
-	int max_label;
-
-	max_label = bwconnmp_img4(seg_img,label_img,1);
-
-
-
-//	cout << "There are " << max_label << " components in the base image" << endl;
-
-	// clean the small pixels
-
-	// find how many labels are there in the image
-
-
-
-	vector<vector<int> > PixelIdxListx(max_label);
-
-	vector<vector<int> > PixelIdxListy(max_label);
-
-	vector<vector<int> > PixelIdxListz(max_label);
-
-
-   // cout << "1765" << endl;
-
-	bwconnmp(label_img,PixelIdxListx,PixelIdxListy,PixelIdxListz);
-
-	label_img.release();
-
-	int base_t = 100;
-
-	int n_mb = 0;
-
-	int n_sum = 0;
-
-	for(int i = 0; i < max_label; i++)
-        n_sum = n_sum + PixelIdxListx[i].size();
-
-
-
-	double *npl = new double[max_label];
-
-	for(int i = 0; i < max_label; i++)
-        npl[i] = (double)PixelIdxListx[i].size() / (double)n_sum;
-
-	sort(npl,npl + max_label);
-
-    int base_thres_i = 0;
-
-    base_thres_i = max(max_label - 10,0);
-
-	//base_t = max(npl[base_i],10);
-
-	thres = max(npl[base_thres_i], thres);
-
-
-
- //   cout << "1784" << endl;
-
-	for(int i = 0; i < max_label; i++)
-	{
-
-		int n_p = PixelIdxListx[i].size();
-
-        double p_np = (double)n_p / (double)n_sum;
-
-      //  cout << "prop_p" << p_np << endl;
-
-		if(p_np < thres)
-		{
-
-			for(int j = 0; j < n_p; j ++)
-			{
-				int v3[3];
-
-				v3[0] = PixelIdxListx[i][j];
-
-				v3[1] = PixelIdxListy[i][j];
-
-				v3[2] = PixelIdxListz[i][j];
-
-				seg_img.at<uchar>(v3) = 0;
-
-			}
-
-		}
-		else
-			n_mb ++;
-
-
-	}
-
-	return n_mb;
-
-}
-
-
-
-int merge_base2(Mat input_image, Mat &seg_img, int t2)
-{
-
-	int img_sz[3];
-
-	for(int i = 0;  i < 3;  i++)
-		img_sz[i] = input_image.size[i];
-
-
-    cout << "Begin bwconnmp_img3" << endl;
-
-    Mat image;
-
-    int max_label = bwconnmp_img3(seg_img,image,254);
-
-    cout << "There are " << max_label << " base components in the base image" << endl;
-
-    // count the number of individual base fragment
-
-    int * nl_base;
-
-    count_n_labels_img(image,nl_base);
-
-    //for(int i = 0; i < max_label; i++)
-      //  cout << "np " << i << " is " << nl_base[i] << endl;
-
-
-    int n_sum = accumulate(nl_base, nl_base + max_label,0);
-
-    cout << "There are " << n_sum << " pixels in the base image" << endl;
-
-	double * pl_base = new double[max_label];
-
-    vector<double> pl_b;
-
-    for(int i = 0; i < max_label; i++)
-    {
-
-        pl_base[i] = (double)nl_base[i] / (double)n_sum;
-
-        pl_b.push_back(pl_base[i]);
-
-        //cout << "proportion of individual base " << i << " is " << pl_base[i] << endl;
-
-    }
-
-    double p_sum = accumulate(pl_base,pl_base + max_label,(double)0);
-
-    cout << "The sum of the proportion is" << p_sum << endl;
-
-    //cin.get();
-
-    delete [] pl_base;
-
-
-
-
-    //int max_b;
-
-    int *max_b_p = max_element(nl_base, nl_base + max_label);
-
-    int max_b = distance(nl_base,max_b_p);
-
-    delete [] nl_base;
-
-
-    int img_page = img_sz[0] * img_sz[1] * img_sz[2];
-
-    uchar * seg_img1 = new uchar[img_page];
-
-    uchar * seg_img2 = new uchar[img_page];
-
- //   cout << "img_page is " << img_page << endl;
-
- //   cout << "img_page is " << sz[0] * sz[1] * sz[2] << endl;
-
-    int seg_sm = 0;
-
-
-    for(int iz = 0; iz < img_sz[2]; iz++)
-    {
-
-        int offsetk = iz*img_sz[1]*img_sz[0];
-        for(int iy = 0; iy <  img_sz[1]; iy++)
-        {
-            int offsetj = iy* img_sz[0];
-            for(int ix = 0; ix < img_sz[0]; ix++)
-            {
-
-
-                int v3[3];
-
-                v3[0] = ix;
-
-                v3[1] = iy;
-
-                v3[2] = iz;
-
-                int LabelValue = image.at<int>(v3);
-
-                uchar PixelValue = input_image.at<uchar>(v3);
-
-
-                if(LabelValue == (max_b + 1) )
-                {
-
-                    seg_img1[offsetk + offsetj + ix] = 0;
-
-                    seg_img2[offsetk + offsetj + ix] = 0;
-
-                    seg_sm ++;
-
-                }else{
-
-                    int PixelValue1 = 255 - (int)PixelValue;
-
-                    // avoid becoming background
-
-
-                    PixelValue1 = max(PixelValue1, 1);
-
-                    PixelValue = (uchar)PixelValue1;
-
-                    //if(LabelValue > 254)
-                      //  LabelValue = 254;
-
-                    if(LabelValue > 0)
-                    {
-
-                        seg_img2[offsetk + offsetj + ix] = (uchar)LabelValue;
-
-                        seg_img1[offsetk + offsetj + ix] = 2;
-
-
-                    }else{
-
-
-                        seg_img2[offsetk + offsetj + ix] = 0;
-
-                        seg_img1[offsetk + offsetj + ix] = PixelValue;
-
-                    }
-
-                }
-
-            }
-        }
-
-    }
-
-    image.release();
-
-    float * dist_img;
-
-    vector<int> px;
-
-    vector<int> py;
-
-    vector<int> pz;
-
-    vector<double> prop_base;
-
-    float min_dist = fastmarching_cc3(seg_img1,seg_img2,dist_img,img_sz[0],img_sz[1],img_sz[2],pl_b, px, py, pz, prop_base, 10);
-
-    cout << "px is of " << px.size() << endl;
-
-    cout << "prop_base is of " << prop_base.size() << endl;
-
-    //cin.get();
-
-
-    cout << "The min_dist is " << min_dist << endl;
-
-//    cin.get();
-
-    delete [] seg_img1;
-
-    delete [] seg_img2;
-
-
-    // draw the connecting pixels
-    for(int iz = 0; iz < img_sz[2]; iz++)
-    {
-
-        int offsetk = iz*img_sz[1]*img_sz[0];
-        for(int iy = 0; iy <  img_sz[1]; iy++)
-        {
-            int offsetj = iy* img_sz[0];
-            for(int ix = 0; ix < img_sz[0]; ix++)
-            {
-
-                float dist_p = dist_img[offsetk + offsetj + ix];
-
-                int v3[3];
-
-                v3[0] = ix;
-
-                v3[1] = iy;
-
-                v3[2] = iz;
-
-
-                uchar pV = seg_img.at<uchar>(v3);
-
-                if((dist_p < ( min_dist + 1)) & (pV < 220))
-                    seg_img.at<uchar>(v3) = 200;
-
-
-            }
-
-
-        }
-
-
-    }
-
-
-
-    if(debug_on6 > 0)
-    {
-
-    string base_file = "/media/gulin/E402023602020DEC/Cache/BigN/base_seg_interm.v3draw";
-
-	char * base_file_char = (char *)base_file.c_str();
-
-    saveMat(seg_img,base_file_char);
-
-    cin.get();
-
-    }
-
-
-
-
-
-    delete [] dist_img;
-
-    seg_sm = 0;
-
-    uchar t2c = (uchar)t2;
-
-    for(int iz = 0; iz < img_sz[2]; iz++)
-    {
-
-        int offsetk = iz*img_sz[1]*img_sz[0];
-        for(int iy = 0; iy <  img_sz[1]; iy++)
-        {
-            int offsetj = iy* img_sz[0];
-            for(int ix = 0; ix < img_sz[0]; ix++)
-            {
-
-                int v3[3];
-
-                v3[0] = ix;
-
-                v3[1] = iy;
-
-                v3[2] = iz;
-
-                uchar pSeg = seg_img.at<uchar>(v3);
-
-                uchar pV = input_image.at<uchar>(v3);
-
-                if(pSeg == 200)
-                {
-
-                    if(pV > t2c)
-                    {
-                        seg_img.at<uchar>(v3) = 200;
-
-                        seg_sm ++;
-
-                    }else
-                        seg_img.at<uchar>(v3) = 0;
-
-
-                }
-
-            }
-
-
-        }
-
-
-    }
-
-    for(int i = 0; i < px.size(); i++)
-    {
-        int v3[3];
-
-        v3[0] = px[i];
-
-        v3[1] = py[i];
-
-        v3[2] = pz[i];
-
-        expand_tip(seg_img,v3);
-
-        //cin.get();
-    }
-
-
-    cout << "Fill " << seg_sm << " pixels" << endl;
-
-    cout << "Complete merge2 " << endl;
-
-
-}
-
-
-
-
 int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img, char * dataset)
 {
 
@@ -6936,7 +8176,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	Mat label_img;
 
-	int n_t2 = bwconnmp_img4(seg_img,label_img,100);
+	int n_t2 = bwconnmp_img4(seg_img,label_img,60);
 
 	cout << "Complete the bwconnmp on the images" << endl;
 
@@ -6995,6 +8235,13 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
             base_pl[i] = 0;
 
 	}
+
+
+    for(int i = 0; i < n_t2; i++)
+        cout << " base_pl " << i << " is " << base_pl[i] << endl;
+
+
+	//cin.get();
 
 
 
@@ -7101,11 +8348,103 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << n_samp << endl;
 
+
+    double * npl = new double[n_samp];
+
+    for(int i = 0; i < n_samp; i++)
+        npl[i] = (double)feature_cc.at<float>(i,0);
+
+
+    double n_sum = accumulate(npl,npl + n_samp,0.0);
+
+    for(int i = 0; i < n_samp; i++)
+        npl[i] = npl[i] / n_sum;
+
+    sort(npl,npl + n_samp);
+
+
+
+
+
+
+    int base_thres_i = 0;
+
+    base_thres_i = max(n_samp - 10,0);
+
+	//base_t = max(npl[base_i],10);
+
+	double thres = 0.01;
+
+	thres = max(npl[base_thres_i], thres);
+
+	delete [] npl;
+
+
+
+
+
 	// apply the random forest to test the image
 	double * resp_tst = new double[n_samp];
 
 	for(int i = 0; i < n_samp; i++)
-		resp_tst[i] = 1;
+	{
+
+        if(((double)feature_cc.at<float>(i,0) / n_sum) >  thres)
+            resp_tst[i] = 1;
+        else
+            resp_tst[i] = 0;
+
+    }
+
+
+    if(debug_on9 > 0)
+    {
+
+        cout << "the threshold is " << thres << endl;
+
+        cin.get();
+
+
+        for(int i = 0; i < n_samp; i++)
+        {
+            cout << "The resp_tst is " << resp_tst[i] << endl;
+
+
+        }
+
+        cin.get();
+
+    }
+
+
+    if(debug_on8 > 0)
+    {
+
+
+        for(int i = 0; i < n_samp; i++)
+            cout << "Feature " << i << " is " << (double)feature_cc.at<float>(i,0) << endl;
+
+
+        for(int i = 0; i < n_samp; i++)
+        {
+            for(int j = 0; j < 6 + cub_page + hist_page; j++)
+            {
+
+                cout << "Feature " << j  << " is " << (double)feature_cc.at<float>(i,j) << endl;
+
+            }
+
+            cin.get();
+
+        }
+
+    }
+
+
+
+
+    //cin.get();
+
 
 
 	//  v3d_msg(" Start classifying");
@@ -7113,7 +8452,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << "Start classifying" << endl;
 
-	//LCM_classify(feature_cc, resp_tst,dataset);
+    //LCM_classify(feature_cc, resp_tst,dataset);
 
 	cout << "Complete classifying" << endl;
 
@@ -7147,7 +8486,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 		//   cout << "fila_frag " << i << " is " << fila_frag[i] << endl;
 
-		if((resp_tst[i] < 0)&(base_pl[i] < 0))
+		if((resp_tst[i] < 1)&(base_pl[i] < 1))
 		{
 			int n_p = PList_t2_x[i].size();
 
@@ -7175,7 +8514,15 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 	}
 
 
+	delete [] base_pl;
 
+    delete [] resp_tst;
+
+    delete [] bnd;
+
+	delete [] curvature_l;
+
+	delete [] min_dist1;
 
 
 
@@ -7297,6 +8644,8 @@ int count_n_labels_img(Mat label_img, int * &np )
         }
     }
 
+//    delete [] np;
+
 
     return max_label;
 
@@ -7386,6 +8735,11 @@ int count_x_labels_img(Mat label_img, int target, int * &tx, int * &ty, int * &t
         }
     }
 
+  //  delete [] tx;
+
+   // delete [] ty;
+
+    //delete [] tz;
 
     return n_target;
 
@@ -9017,25 +10371,27 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 
 		 cub_sz[min_axe_idx] = 0;
 
+
+
 		 int mid_axe = *max_element(cub_sz,cub_sz + 3);
 
 		 int nPixel = PixelIdxListx[k].size();
 
-		 feature_cc.at<float>(k,0) = float(nPixel);
+		 feature_cc.at<float>(k,0) = (float)nPixel;
 
-		 feature_cc.at<float>(k,1) = float(max_axe);
+		 feature_cc.at<float>(k,1) = (float)max_axe;
 
-		 feature_cc.at<float>(k,2) = float(mid_axe);
+		 feature_cc.at<float>(k,2) = (float)mid_axe;
 
-		 feature_cc.at<float>(k,3) = float(min_axe);
+		 feature_cc.at<float>(k,3) = (float)min_axe;
 
 		 int min_d = min_dist1[k];
 
-		 feature_cc.at<float>(k,4) = float(min_d);
+		 feature_cc.at<float>(k,4) = (float)min_d;
 
 		 double cur_l = curvature_l[k];
 
-		 feature_cc.at<float>(k,5) = float(cur_l);
+		 feature_cc.at<float>(k,5) = (float)cur_l;
 
 		 int fi = 0;
 
@@ -9089,7 +10445,7 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 
 					// v = float(cub[i][j][l][k]);
 
-					 int * vc = new int[4];
+					 int vc[4];
 
 					 vc[0] = i;
 
@@ -9110,9 +10466,16 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 			 }
 		 }
 
+      delete max_axe_p;
+
+      delete min_axe_p;
 
 	  }
 
+
+  //  delete max_axe_p;
+
+   // delete min_axe_p;
 
 	return 1;
 }
@@ -11286,21 +12649,21 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
 
      srand(time(NULL));
 
-     //QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
+     QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
 
-     //system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
-    //if(tmpfolder.isEmpty())
-   // {
+      if(tmpfolder.isEmpty())
+    {
 
-     //   printf("Can not create a tmp folder!\n");
-      //  return 0;
+        printf("Can not create a tmp folder!\n");
+        return 0;
 
-    //}
+    }
 
     char * outfile = new char [300];
 
-    sprintf(outfile,"tmp_msenhance.v3draw");
+    sprintf(outfile,"tmp_cache/tmp_msenhance.v3draw");
 
     cout << "input files    " << infile << endl;
 
@@ -11354,9 +12717,6 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
     loadMat(conf_img, outfile);
 
     cout << "Complete loading the image" << endl;
-
-
-    remove(outfile);
 
     return 1;
 
@@ -12962,5 +14322,344 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	return true;
 }
 
+int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
+{
+    V3DLONG *sz = new V3DLONG[4];
 
+    for(int i =0; i < 3; i++)
+        sz[i] = (V3DLONG)seg_img.size[i];
+
+    int img_sz[3];
+
+    for(int i =0; i < 3; i++)
+        img_sz[i] = seg_img.size[i];
+
+
+    sz[3] = 1;
+
+    int datatype = 1;
+
+    int img_pg = img_sz[0] * img_sz[1] * img_sz[2];
+
+    uchar * show_img = new uchar[img_pg];
+
+
+    // subsititute the filled part with the average value
+
+    // first get the average value
+
+    int n_base = 0;
+
+    int mean_base = 0;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz*img_sz[1]*img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy* img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                unsigned char PixelValue = seg_img.at<uchar>(v3);
+
+                if(PixelValue > 150)
+                {
+                    n_base ++;
+
+                    mean_base = mean_base + (int)image.at<uchar>(v3);
+
+                }
+
+            }
+        }
+
+    }
+
+    mean_base = mean_base / n_base;
+
+    cout << "The mean value of image is " << mean_base << endl;
+
+    for(int iz = 0; iz < img_sz[2]; iz++)
+    {
+
+        int offsetk = iz * img_sz[1] * img_sz[0];
+        for(int iy = 0; iy <  img_sz[1]; iy++)
+        {
+            int offsetj = iy * img_sz[0];
+            for(int ix = 0; ix < img_sz[0]; ix++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                unsigned char PixelValue = seg_img.at<uchar>(v3);
+                //unsigned char PV = image.at<uchar>(v3);
+
+
+                if(PixelValue > 10)
+                {
+
+                    if(PixelValue > 150)
+                    {
+                        //show_img[offsetk + offsetj + ix] = image.at<uchar>(v3);
+
+                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+                    }
+                    else
+                    {
+                        show_img[offsetk + offsetj + ix] = (uchar)mean_base;
+
+                    }
+                }
+                else
+                {
+
+                    show_img[offsetk + offsetj + ix] = 0;
+
+                }
+
+            }
+        }
+
+    }
+
+    // extract the swc file from the segmented image
+
+    vector<MyMarker *> outtree;
+
+    cout<<"Start detecting cellbody"<<endl;
+
+    float * phi = 0;
+    vector<MyMarker> inmarkers;
+
+    fastmarching_dt_XY(show_img, phi, seg_img.size[0], seg_img.size[1], seg_img.size[2],2, 10);
+
+    int in_sz[3];
+
+    in_sz[0] = sz[0];
+
+    in_sz[1] = sz[1];
+
+    in_sz[2] = sz[2];
+
+
+    V3DLONG sz0 = sz[0];
+    V3DLONG sz1 = sz[1];
+    V3DLONG sz2 = sz[2];
+    V3DLONG sz01 = sz0 * sz1;
+    V3DLONG tol_sz = sz01 * sz2;
+
+    V3DLONG max_loc = 0;
+    double max_val = phi[0];
+    for(V3DLONG i = 0; i < tol_sz; i++)
+    {
+        if(phi[i] > max_val)
+        {
+            max_val = phi[i];
+            max_loc = i;
+        }
+    }
+
+    MyMarker max_marker(max_loc % sz0, max_loc % sz01 / sz0, max_loc / sz01);
+
+    inmarkers.push_back(max_marker);
+
+    cout<<"======================================="<<endl;
+    cout<<"Construct the neuron tree"<<endl;
+
+    fastmarching_tree(inmarkers[0], show_img, outtree, sz[0], sz[1], sz[2], 2, 10, false);
+    cout<<"======================================="<<endl;
+
+
+    //save a copy of the constructed tree
+    cout<<"Save the reconstruced tree"<<endl;
+    vector<MyMarker*> & inswc = outtree;
+
+    double dfactor_xy = 1, dfactor_z = 1;
+
+
+    if (1)
+    {
+        V3DLONG tmpi;
+
+        vector<MyMarker*> tmpswc;
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
+        {
+            MyMarker * curp = new MyMarker(*(inswc[tmpi]));
+            tmpswc.push_back(curp);
+
+            if (dfactor_xy>1) inswc[tmpi]->x *= dfactor_xy;
+            inswc[tmpi]->x += (0);
+            if (dfactor_xy>1) inswc[tmpi]->x += dfactor_xy/2;
+
+            if (dfactor_xy>1) inswc[tmpi]->y *= dfactor_xy;
+            inswc[tmpi]->y += (0);
+            if (dfactor_xy>1) inswc[tmpi]->y += dfactor_xy/2;
+
+            if (dfactor_z>1) inswc[tmpi]->z *= dfactor_z;
+            inswc[tmpi]->z += (0);
+            if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
+        }
+
+        int sz_swc = inswc.size();
+
+        cout << sz_swc << endl;
+
+
+        //saveSWC_file(outfile_swc, inswc);
+
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
+        {
+            inswc[tmpi]->x = tmpswc[tmpi]->x;
+            inswc[tmpi]->y = tmpswc[tmpi]->y;
+            inswc[tmpi]->z = tmpswc[tmpi]->z;
+        }
+
+        for(tmpi = 0; tmpi < tmpswc.size(); tmpi++)
+            delete tmpswc[tmpi];
+        tmpswc.clear();
+    }
+
+
+    inmarkers[0].x *= dfactor_xy;
+
+    inmarkers[0].y *= dfactor_xy;
+
+    inmarkers[0].z *= dfactor_z;
+
+
+    vector<MyMarker*> outswc;
+
+    happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3);
+  //  v3d_msg("start to use happ.\n", 0);
+    //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
+
+ //   if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffe
+
+    inmarkers[0].x *= dfactor_xy;
+    inmarkers[0].y *= dfactor_xy;
+    inmarkers[0].z *= dfactor_z;
+
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
+        outswc[i]->x += 0;
+        if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2;
+
+        if (dfactor_xy>1) outswc[i]->y *= dfactor_xy;
+        outswc[i]->y += 0;
+        if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
+
+        if (dfactor_z>1) outswc[i]->z *= dfactor_z;
+        outswc[i]->z += 0;
+        if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
+
+        outswc[i]->radius *= dfactor_xy; //use xy for now
+    }
+
+    //re-estimate the radius using the original image
+    double real_thres = 40;
+
+
+   V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
+
+    int method_radius_est = 2;
+
+   double * radius_list = new double[outswc.size()];
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        //printf(" node %ld of %ld.\n", i, outswc.size());
+        outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+        radius_list[i] = outswc[i]->radius;
+    }
+
+    // apply a simple mean filter on the radius of the swc to make it look better
+
+    double m_rad = 0;
+
+
+    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+    {
+        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
+
+        //m_rad = m_rad / 5;
+
+        outswc[i]->radius = m_rad / 5;
+
+        //    outswc[i]->
+
+        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+    }
+
+
+
+
+
+
+    cout << "offset is " <<  offset[0] << " " << offset[1] << " " << offset[2] << endl;
+
+   // cin.get();
+
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x += (double)offset[0];
+
+        outswc[i]->y += (double)offset[1];
+
+        outswc[i]->z += (double)offset[2];
+
+    }
+
+
+
+   saveSWC_file(outfile_swc, outswc);
+
+
+   delete [] show_img;
+
+   delete [] radius_list;
+
+   //delete [] phi;
+
+
+     if(phi){delete [] phi; phi = 0;}
+    for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
+    outtree.clear();
+
+      //  for(V3DLONG i = 0; i < outswc.size(); i++) delete outswc[i];
+    //outswc.clear();
+
+
+     //for(V3DLONG i = 0; i < inswc.size(); i++) delete inswc[i];
+    //inswc.clear();
+
+  //  if(data1d_1ch){delete []data1d_1ch; data1d_1ch = 0;}
+
+
+//    delete [] phi;
+
+    return 1;
+
+}
 

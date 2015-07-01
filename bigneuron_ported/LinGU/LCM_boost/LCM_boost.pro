@@ -2,7 +2,7 @@ TEMPLATE    = lib
 CONFIG  += debug qt plugin warn_off
 #CONFIG += x86_64
 
-VAA3DPATH = ../../../../v3d_external
+VAA3DPATH = /home/gulin/v3d_external
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun 
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
@@ -23,11 +23,13 @@ HEADERS += fastmarching_tree.h
 HEADERS += hierarchy_prune.h
 HEADERS += fastmarching_dt.h
 HEADERS += my_surf_objs.h
+HEADERS += swc_to_maskimage.h
 
 SOURCES = LCM_boost_plugin.cpp
 SOURCES += LCM_boost_func.cpp
 SOURCES += my_surf_objs.cpp
 SOURCES += vn_imgpreprocess.cpp
+SOURCES += swc_to_maskimage.cpp
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.h
@@ -46,4 +48,4 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET  = $$qtLibraryTarget(LCM_boost)
 DESTDIR = $$VAA3DPATH/bin/plugins/LCM_boost/
-
+DESTDIR = /home/gulin/Vaa3D/plugins/LCM_boost/

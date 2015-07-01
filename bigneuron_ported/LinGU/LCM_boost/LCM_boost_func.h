@@ -35,6 +35,9 @@
 #include "smooth_curve.h"
 
 
+#include "swc_to_maskimage.h"
+
+
 #include <iostream>
 #include <stdio.h>
 
@@ -160,6 +163,16 @@ int merge_base(cv::Mat image, cv::Mat &seg_img, vector<int> & comp_list);
 
 int merge_base1(cv::Mat image, cv::Mat &seg_img, vector<int> & comp_list, vector<trip_idx> & base_idx, int large_flag);
 
+int merge_base2(cv::Mat input_image, cv::Mat &seg_img, int t2);
+
+int merge_base3(cv::Mat input_image, cv::Mat &seg_img);
+
+
+int app2_trace(cv::Mat image, char * outfile_swc);
+
+int swc2image(cv::Mat &image,char * filename);
+
+
 int merge_base_img(cv::Mat image, cv::Mat &seg_img, vector<int> & comp_list);
 
 int count_merged_base(cv::Mat seg_img,cv::Mat label_img, int * base_merge_list);
@@ -172,6 +185,8 @@ vector<vector<int> > PixelIdxListx,vector<vector<int> > PixelIdxListy,vector<vec
 
 int check_connect(cv::Mat &seg_img);
 
+//int check_connect1(cv::Mat &seg_img);
+
 int grow_base(cv::Mat label_img, cv::Mat &seg_img, int source, int *target_tip, float min_dist);
 
 int grow_base1(cv::Mat label_img, cv::Mat &seg_img, int source, int *target_tip, float min_dist);
@@ -183,6 +198,8 @@ float bwdist_img1(cv::Mat image, cv::Mat label_image, float * &dist_img, float *
 int grow_base_adv(cv::Mat label_img, cv::Mat &seg_img, int source, int *target_tip);
 
 int expand_tip(cv::Mat &seg_img,int target_tip[]);
+
+int expand_tip1(cv::Mat &seg_img,int target_tip[], int exp_sz[]);
 
 int collect_idx_c(cv::Mat seg_img, vector<trip_idx> &Pseg, uchar tc);
 
@@ -227,12 +244,18 @@ int collect_hog(cv::Mat label_img,cv::Mat & hist1,int base_thrs,std::vector<std:
 
 int force_merge(cv::Mat image, cv::Mat &seg_image, vector<int> base_list,vector<trip_idx> base_idx);
 
+int force_merge1(cv::Mat image, cv::Mat &seg_image, int t_seg);
+
 
 //int collect_hog1(int * label_img,cv::Mat & hist1,int base_thrs,std::vector<std::vector<int> > PixelIdxListx,
 	//make
 		//std::vector<std::vector<int> > PixelIdxListy,std::vector<std::vector<int> > PixelIdxListz);
 
 int filter_small_comp(cv::Mat &seg_img, int thres);
+
+
+int filter_small_comp1(cv::Mat &seg_img, double thres);
+
 
 int count_n_labels_img(cv::Mat label_img, int * &np );
 
@@ -277,11 +300,9 @@ int recover_component(cv::Mat image,cv::Mat label_img, int * fila_frag, std::vec
 		std::vector<std::vector<int> > PixelIdxListz);
 
 
-int filter_small_comp1(cv::Mat &seg_img, double thres);
 
-int merge_base2(cv::Mat input_image, cv::Mat &seg_img, int t2);
 
-int force_merge1(cv::Mat image, cv::Mat &seg_img);
+
 
 int is_breach(int v3[], int im_sz[]);
 
@@ -308,8 +329,6 @@ int ReadNumbers( const std::string & s, std::vector <double> & v );
 void import_matrix_from_txt_file(const char* filename_X, std::vector <double>& v, int& rows, int& cols);
 
 int trace_img(cv::Mat seg_img, cv::Mat image, char * outfile_swc);
-
-int trace_img1(cv::Mat seg_img, cv::Mat image, int offset[], char * outfile_swc);
 
 bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent);
 bool Opencv_example(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
@@ -344,6 +363,8 @@ template<class T> bool happ(std::vector<MyMarker*> &inswc, std::vector<MyMarker*
 double bkg_thresh = 10.0, double length_thresh = 2.0, double SR_ratio = 1.0/9.0,
  bool is_leaf_prune = true, bool is_smooth = true);
 
+
+int trace_img1(cv::Mat seg_img, cv::Mat image, int offset[], char * outfile_swc);
 
 #endif
 
