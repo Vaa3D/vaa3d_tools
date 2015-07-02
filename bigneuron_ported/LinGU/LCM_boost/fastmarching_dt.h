@@ -363,9 +363,23 @@ template<class T> bool fastmarching_dt1(T * inimg1d, float * &phi, int sz0, int 
 
 							}
 
-							elems.empty();
+							//elems.empty();
 
 							if(state) {delete [] state; state = 0;}
+
+							                            // clear the heap
+                            while(!heap.empty())
+                            {
+
+                                HeapElem* min_elem1 = heap.delete_min();
+                                elems.erase(min_elem1->img_ind);
+
+                                delete min_elem1;
+
+                            }
+
+							assert(elems.empty());
+
 
 							return true;
 
@@ -609,9 +623,24 @@ template<class T> float fastmarching_cc(T * inimg1d, uchar * seedimg1d, float * 
 
 							}
 
-							elems.empty();
+                            if(state)
+                            {
+                                delete [] state;
+                                state = 0;
+                            }
 
-							if(state) {delete [] state; state = 0;}
+                            // clear the heap
+                            while(!heap.empty())
+                            {
+
+                                HeapElem* min_elem1 = heap.delete_min();
+                                elems.erase(min_elem1->img_ind);
+
+                                delete min_elem1;
+
+                            }
+
+							assert(elems.empty());
 
 							return new_dist;
 
@@ -920,7 +949,7 @@ vector<int> &py, vector<int> &pz, vector<double> &target_prop, T md, int cnn_typ
 
                          //   cin.get();
 
-                            if(prop_base_merged > 0.95)
+                            if(prop_base_merged > 0.98)
                             {
 
                                 phi[index] = new_dist;
@@ -932,7 +961,6 @@ vector<int> &py, vector<int> &pz, vector<double> &target_prop, T md, int cnn_typ
 
                                 //}
 
-                                elems.empty();
 
                                 if(state)
                                 {
@@ -941,6 +969,21 @@ vector<int> &py, vector<int> &pz, vector<double> &target_prop, T md, int cnn_typ
                                 }
 
                                 delete [] b_label_tick;
+
+                                // clear the heap
+                                while(!heap.empty())
+                                {
+
+                                    HeapElem* min_elem1 = heap.delete_min();
+                                    elems.erase(min_elem1->img_ind);
+
+                                    delete min_elem1;
+
+                                }
+
+                                assert(elems.empty());
+
+
 
                                 return new_dist;
 
@@ -1195,9 +1238,22 @@ template<class T> float fastmarching_cc2(uchar * inimg1d, uchar * seedimg1d, flo
 
 							}
 
-							elems.empty();
-
 							if(state) {delete [] state; state = 0;}
+
+                            // clear the heap
+                            while(!heap.empty())
+                            {
+
+                                HeapElem* min_elem1 = heap.delete_min();
+                                elems.erase(min_elem1->img_ind);
+
+                                delete min_elem1;
+
+                            }
+
+							assert(elems.empty());
+
+
 
 							return new_dist;
 
@@ -1432,9 +1488,21 @@ template<class T> float fastmarching_cc1(T * inimg1d, uchar * seedimg1d, float *
 
 							}
 
-							elems.empty();
 
 							if(state) {delete [] state; state = 0;}
+							                            // clear the heap
+                            while(!heap.empty())
+                            {
+
+                                HeapElem* min_elem1 = heap.delete_min();
+                                elems.erase(min_elem1->img_ind);
+
+                                delete min_elem1;
+
+                            }
+
+							assert(elems.empty());
+
 
 							return new_dist;
 
