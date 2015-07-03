@@ -29,12 +29,12 @@ LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOI
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
 
-#LIBS += -L"../libs/liblbfgs-1.10/lib"
-LIBS += -L"../libs/liblbfgs-1.10_Linux"
+LIBS += -L"../libs/liblbfgs-1.10/lib/.libs"
+#LIBS += -L"../libs/liblbfgs-1.10_Linux"
 LIBS += -llbfgs
 
-#LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
-LIBS += -L"../libs/libconfig-1.4.9_Linux"
+LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
+#LIBS += -L"../libs/libconfig-1.4.9_Linux"
 LIBS += -lconfig++
 
 

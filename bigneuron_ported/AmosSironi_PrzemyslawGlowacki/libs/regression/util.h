@@ -4,6 +4,19 @@
 #include "itkImageRegionIterator.h"
 #include "itkResampleImageFilter.h"
 
+//#include <itkExtractImageFilter.h>
+#include "itkRegionOfInterestImageFilter.h"
+
+
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkBinaryImageToLabelMapFilter.h"
+
+#include "itkLabelStatisticsImageFilter.h"
+
+#include "itkBinaryMorphologicalClosingImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
+
+
 class SwcFileContent {
 
 private:
@@ -86,6 +99,9 @@ template<typename ITKImageType>
 bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageType::SizeType size);
 
 template<typename ITKImageType>
+bool check_range(typename ITKImageType::RegionType region,typename ITKImageType::SizeType size);
+
+template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,const long int * out_sz);
 
 template<typename ITKImageType>
@@ -93,6 +109,13 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 
 template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg,const double * scale_factor, long int * out_sz);
+
+template<typename ITKImageType>
+typename ITKImageType::Pointer cropItkImage(typename ITKImageType::Pointer &origImg, long int * crop_start_idxs, long int * in_sz_cropped);
+
+template<typename ITKImageType>
+typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageType::Pointer origImg,const long int * crop_start_idxs,const long int * in_sz_cropped,double uniform_thresh);
+
 
 //definition here to avoid explicit instantiation of template function
 template<typename ITKImageType,typename ImageScalarType>
@@ -301,6 +324,28 @@ bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageTy
 
 }
 
+template<typename ITKImageType>
+bool check_range(typename ITKImageType::RegionType region,typename ITKImageType::SizeType size){
+
+
+    typename ITKImageType::IndexType start_index, end_index;
+    typename ITKImageType::RegionType::SizeType  size_region = region.GetSize();
+    start_index = region.GetIndex();
+    end_index[0] = start_index[0] + size_region[0]-1;
+    end_index[1] = start_index[1] + size_region[1]-1;
+    end_index[2] = start_index[2] + size_region[2]-1;
+
+    return check_range<ITKImageType>(start_index,size) && check_range<ITKImageType>(end_index,size);
+
+
+//    if(pixelIndex[0]>=size[0] || pixelIndex[1]>=size[1] || pixelIndex[2]>=size[2] || pixelIndex[0]<0 || pixelIndex[1]<0 || pixelIndex[2]<0){
+//        return false;
+//    }else{
+//        return true;
+//    }
+
+}
+
 
 
 
@@ -375,6 +420,348 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
       return output;
 
 }
+
+
+template<typename ITKImageType>
+typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageType::Pointer &origImg, long int * crop_start_idxs, long int * in_sz_cropped,double uniform_thresh){
+
+
+    typename ITKImageType::SizeType orig_img_size = origImg->GetLargestPossibleRegion().GetSize();
+    typename ITKImageType::IndexType orig_img_origin = origImg->GetLargestPossibleRegion().GetIndex();
+
+    //threshold image
+    typedef unsigned char Uint8PixelType;
+    typedef itk::Image< Uint8PixelType, 3 > Uint8ImageType;
+    typedef itk::BinaryThresholdImageFilter<
+                 ITKImageType, Uint8ImageType >  ThresholdFilterType;
+    typename ThresholdFilterType::Pointer thresholdFilter = ThresholdFilterType::New();
+    thresholdFilter->SetInput( origImg );
+
+    const Uint8PixelType outsideValue = 255;
+    const Uint8PixelType insideValue  = 0;
+    thresholdFilter->SetOutsideValue( outsideValue );
+    thresholdFilter->SetInsideValue(  insideValue  );
+    const float lowerThreshold = 0.0;
+    const float upperThreshold = 0.09;
+    thresholdFilter->SetLowerThreshold( lowerThreshold );
+    thresholdFilter->SetUpperThreshold( upperThreshold );
+    //thresholdFilter->Update();
+
+    // close thresholded image
+        typedef itk::BinaryBallStructuringElement<Uint8ImageType::PixelType, Uint8ImageType::ImageDimension>
+                  StructuringElementType;
+      StructuringElementType structuringElement;
+      structuringElement.SetRadius(10.0);
+      structuringElement.CreateStructuringElement();
+      typedef itk::BinaryMorphologicalClosingImageFilter <Uint8ImageType, Uint8ImageType, StructuringElementType>
+              BinaryMorphologicalClosingImageFilterType;
+      typename BinaryMorphologicalClosingImageFilterType::Pointer closingFilter
+              = BinaryMorphologicalClosingImageFilterType::New();
+      closingFilter->SetInput(thresholdFilter->GetOutput());
+      closingFilter->SetKernel(structuringElement);
+    //  closingFilter->Update();
+
+
+    //remove small connected components
+    //BinaryImageToLabelMapFilter
+//relabelcomponentImageFilter
+    typedef itk::BinaryImageToLabelMapFilter<Uint8ImageType> BinaryImageToLabelMapFilterType;
+    typename  BinaryImageToLabelMapFilterType::Pointer binaryImageToLabelMapFilter = BinaryImageToLabelMapFilterType::New();
+    //  binaryImageToLabelMapFilter->SetInput(thresholdFilter->GetOutput());
+       binaryImageToLabelMapFilter->SetInput(closingFilter->GetOutput());
+
+      binaryImageToLabelMapFilter->Update();
+
+      // The output of this filter is an itk::LabelMap, which contains itk::LabelObject's
+        std::cout << "There are " << binaryImageToLabelMapFilter->GetOutput()->GetNumberOfLabelObjects() << " objects." << std::endl;
+
+        // Loop over each region
+//        for(unsigned int i = 0; i < binaryImageToLabelMapFilter->GetOutput()->GetNumberOfLabelObjects(); i++)
+//          {
+//          // Get the ith region
+//           BinaryImageToLabelMapFilterType::OutputImageType::LabelObjectType* labelObject = binaryImageToLabelMapFilter->GetOutput()->GetNthLabelObject(i);
+
+//          // Output the pixels composing the region
+//          //for(unsigned int pixelId = 0; pixelId < labelObject->Size(); pixelId++)
+//          //  {
+//          //  std::cout << "Object " << i << " contains pixel " << labelObject->GetIndex(pixelId) << std::endl;
+//           // }
+
+//       //     std::cout << "Object " << i << " contains " <<  labelObject->Size() << "pixels "<< std::endl;
+//          }
+
+       // return binaryImageToLabelMapFilter->GetOutput();
+       // binaryImageToLabelMapFilter->Update();
+
+
+
+    //get bounding box of connected components
+
+        std::cout << "updating  labelMapToLabelImageFilter"<< std::endl << std::flush;
+
+        typedef itk::LabelMapToLabelImageFilter<BinaryImageToLabelMapFilterType::OutputImageType, Uint8ImageType> LabelMapToLabelImageFilterType;
+        typename  LabelMapToLabelImageFilterType::Pointer labelMapToLabelImageFilter = LabelMapToLabelImageFilterType::New();
+         labelMapToLabelImageFilter->SetInput(binaryImageToLabelMapFilter->GetOutput());
+         labelMapToLabelImageFilter->Update();
+
+         std::cout << "updating  LabelStatisticsImageFilter"<< std::endl<< std::flush;
+
+         typedef itk::LabelStatisticsImageFilter< Uint8ImageType, Uint8ImageType > LabelStatisticsImageFilterType;
+        typename LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
+         labelStatisticsImageFilter->SetLabelInput( labelMapToLabelImageFilter->GetOutput() );
+         labelStatisticsImageFilter->SetInput(thresholdFilter->GetOutput());
+         labelStatisticsImageFilter->Update();
+         std::cout << "done"<< std::endl<< std::flush;
+
+
+         std::cout << "Number of labels: " << labelStatisticsImageFilter->GetNumberOfLabels() << std::endl;
+           std::cout << std::endl;
+
+           typedef LabelStatisticsImageFilterType::ValidLabelValuesContainerType ValidLabelValuesType;
+           typedef LabelStatisticsImageFilterType::LabelPixelType                LabelPixelType;
+
+           Uint8ImageType::RegionType region;
+           Uint8ImageType::SizeType in_sz_cropped_temp;
+           in_sz_cropped_temp = orig_img_size;
+           Uint8ImageType::IndexType crop_start_idxs_temp ;
+            crop_start_idxs_temp.Fill(0);
+            Uint8ImageType::IndexType crop_end_idxs_temp ;
+            crop_end_idxs_temp[0] = in_sz_cropped_temp[0]-1;  crop_end_idxs_temp[1] = in_sz_cropped_temp[1]-1;  crop_end_idxs_temp[2] = in_sz_cropped_temp[2]-1;
+
+
+            std::cout << "init region idx: " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: "<< crop_end_idxs_temp <<std::endl;
+
+           bool found_region = false;
+
+           for(ValidLabelValuesType::const_iterator vIt=labelStatisticsImageFilter->GetValidLabelValues().begin();
+               vIt != labelStatisticsImageFilter->GetValidLabelValues().end();
+               ++vIt)
+             {
+             if ( labelStatisticsImageFilter->HasLabel(*vIt) )
+               {
+
+                 LabelPixelType labelValue = *vIt;
+
+
+//                  std::cout << "count: " << labelStatisticsImageFilter->GetCount( labelValue ) << std::endl;
+//                   std::cout << "max: " << labelStatisticsImageFilter->GetMaximum( labelValue ) << std::endl;
+//                   std::cout << "--------------- "  << std::endl;
+
+
+                 if(    ( labelStatisticsImageFilter->GetCount( labelValue )   > 300  ) // large enough connected component
+                     && ( labelStatisticsImageFilter->GetMaximum( labelValue ) > 0      )    ){ // no background
+
+//                     std::cout << "************** "  << std::endl;
+//                     std::cout << "ok count: " << labelStatisticsImageFilter->GetCount( labelValue ) << std::endl;
+//                      std::cout << "ok max: " << labelStatisticsImageFilter->GetMaximum( labelValue ) << std::endl;
+//                      std::cout << "************** "  << std::endl;
+
+                     region = labelStatisticsImageFilter->GetRegion( labelValue );
+                     if(!found_region){ // first region found
+
+                            in_sz_cropped_temp =region.GetSize();
+                            crop_start_idxs_temp = region.GetIndex();
+                            crop_end_idxs_temp[0]  = crop_start_idxs_temp[0] +in_sz_cropped_temp[0] -1;
+                            crop_end_idxs_temp[1]  = crop_start_idxs_temp[1] +in_sz_cropped_temp[1] -1;
+                            crop_end_idxs_temp[2]  = crop_start_idxs_temp[2] +in_sz_cropped_temp[2] -1;
+                             found_region = true;
+
+                             std::cout << "found first region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+
+
+                     }else{
+
+
+                         Uint8ImageType::SizeType in_sz_cropped_temp_temp = region.GetSize();
+                         Uint8ImageType::IndexType crop_start_idxs_temp_temp = region.GetIndex();
+                        Uint8ImageType::IndexType crop_end_idxs_temp_temp;
+                        crop_end_idxs_temp_temp[0]  = crop_start_idxs_temp_temp[0] +in_sz_cropped_temp_temp[0] -1;
+                        crop_end_idxs_temp_temp[1]  = crop_start_idxs_temp_temp[1] +in_sz_cropped_temp_temp[1] -1;
+                        crop_end_idxs_temp_temp[2]  = crop_start_idxs_temp_temp[2] +in_sz_cropped_temp_temp[2] -1;
+
+
+                         crop_start_idxs_temp[0] = std::min(crop_start_idxs_temp[0],crop_start_idxs_temp_temp[0]);
+                         crop_start_idxs_temp[1] = std::min(crop_start_idxs_temp[1],crop_start_idxs_temp_temp[1]);
+                         crop_start_idxs_temp[2] = std::min(crop_start_idxs_temp[2],crop_start_idxs_temp_temp[2]);
+
+                         crop_end_idxs_temp[0] = std::max(crop_end_idxs_temp[0],crop_end_idxs_temp_temp[0]);
+                         crop_end_idxs_temp[1] = std::max(crop_end_idxs_temp[1],crop_end_idxs_temp_temp[1]);
+                         crop_end_idxs_temp[2] = std::max(crop_end_idxs_temp[2],crop_end_idxs_temp_temp[2]);
+
+                         in_sz_cropped_temp[0] = crop_end_idxs_temp[0] - crop_start_idxs_temp[0] +1;
+                         in_sz_cropped_temp[1] = crop_end_idxs_temp[1] - crop_start_idxs_temp[1] +1;
+                         in_sz_cropped_temp[2] = crop_end_idxs_temp[2] - crop_start_idxs_temp[2] +1;
+
+
+                         std::cout << "found other region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+
+
+                     }
+
+                 }
+
+
+              // std::cout << "min: " << labelStatisticsImageFilter->GetMinimum( labelValue ) << std::endl;
+              // std::cout << "max: " << labelStatisticsImageFilter->GetMaximum( labelValue ) << std::endl;
+              // std::cout << "median: " << labelStatisticsImageFilter->GetMedian( labelValue ) << std::endl;
+              // std::cout << "mean: " << labelStatisticsImageFilter->GetMean( labelValue ) << std::endl;
+              // std::cout << "sigma: " << labelStatisticsImageFilter->GetSigma( labelValue ) << std::endl;
+              // std::cout << "variance: " << labelStatisticsImageFilter->GetVariance( labelValue ) << std::endl;
+              // std::cout << "sum: " << labelStatisticsImageFilter->GetSum( labelValue ) << std::endl;
+              // std::cout << "count: " << labelStatisticsImageFilter->GetCount( labelValue ) << std::endl;
+               //std::cout << "box: " << labelStatisticsImageFilter->GetBoundingBox( labelValue ) << std::endl; // can't output a box
+              // std::cout << "region: " << labelStatisticsImageFilter->GetRegion( labelValue ) << std::endl;
+              // std::cout << std::endl << std::endl;
+
+               }
+             }
+
+
+
+        //   std::cout << "adding 10 voxels:  "<< std::endl << std::flush;
+
+
+           //add 10 voxels 'safe zone'
+           crop_start_idxs[0] = std::max(crop_start_idxs_temp[0]-10, orig_img_origin[0]);
+           crop_start_idxs[1] = std::max(crop_start_idxs_temp[1]-10, orig_img_origin[1]);
+           crop_start_idxs[2] = std::max(crop_start_idxs_temp[2]-10, orig_img_origin[2]);
+           in_sz_cropped[0] = std::min(in_sz_cropped_temp[0]+2*10, orig_img_size[0]);
+           in_sz_cropped[1] = std::min(in_sz_cropped_temp[1]+2*10, orig_img_size[1]);
+           in_sz_cropped[2] = std::min(in_sz_cropped_temp[2]+2*10, orig_img_size[2]);
+           in_sz_cropped[3] = 1;
+
+
+           ////for debug
+           typename ITKImageType::RegionType region_to_crop;
+           region_to_crop.SetSize(0,in_sz_cropped[0]);
+           region_to_crop.SetSize(1,in_sz_cropped[1]);
+           region_to_crop.SetSize(2,in_sz_cropped[2]);
+           region_to_crop.SetIndex(0,crop_start_idxs[0]);
+           region_to_crop.SetIndex(1,crop_start_idxs[1]);
+           region_to_crop.SetIndex(2,crop_start_idxs[2]);
+
+         //  std::cout << "final region to crop" << region_to_crop<<std::endl;
+
+           if(!check_range<ITKImageType>(region_to_crop,orig_img_size )  ) {
+               std::cout << "region out of range : " << region_to_crop << "Size: " << origImg->GetLargestPossibleRegion().GetSize()<< std::endl << std::flush;
+           }
+           /////
+
+
+        //   std::cout << "caliing crop fun:  "<< std::endl << std::flush;
+
+
+           return cropItkImage<ITKImageType>(origImg,  crop_start_idxs,  in_sz_cropped);
+
+//return origImg;
+
+
+////    origImg->DisconnectPipeline();
+
+//    //for debug use predifined region
+//   // crop_start_idxs[0] = 10;  crop_start_idxs[1] = 0;  crop_start_idxs[2] = 2;
+//  //  in_sz_cropped[0] = 100; in_sz_cropped[1] = 80;in_sz_cropped[2] = 50; in_sz_cropped[3] =1;
+
+
+//     typename ITKImageType::IndexType desiredStart;
+//   //desiredStart.Fill(3);
+//    desiredStart[0] = crop_start_idxs[0];
+//    desiredStart[1] =  crop_start_idxs[1];
+//    desiredStart[2] =  crop_start_idxs[2];
+
+
+//    typename ITKImageType::SizeType desiredSize;
+//      desiredSize[0] = in_sz_cropped[0];
+//      desiredSize[1] = in_sz_cropped[1];
+//      desiredSize[2] = in_sz_cropped[2];
+
+//////
+
+//      typedef itk::RegionOfInterestImageFilter< ITKImageType, ITKImageType > CropFilterType;
+//      typename  CropFilterType::Pointer crop_filter = CropFilterType::New();
+
+//      typename ITKImageType::RegionType desiredRegion;
+//       desiredRegion.SetSize(desiredSize);
+//       desiredRegion.SetIndex(desiredStart);
+
+//       crop_filter->SetRegionOfInterest(desiredRegion);
+//       crop_filter->SetInput(origImg);
+
+
+//////
+//       crop_filter->Update();
+//       std::cout << "cropped image up" << std::endl;
+
+
+//      typename ITKImageType::Pointer output = ITKImageType::New();
+//      output =  crop_filter->GetOutput();
+//       std::cout << "cropped image got out" << std::endl;
+
+////std::cout << "size out" << output->GetLargestPossibleRegion().GetSize()<< std::endl;
+
+////       output->DisconnectPipeline();
+//       output->Update();
+
+
+//       return output;
+
+}
+
+
+template<typename ITKImageType>
+typename ITKImageType::Pointer cropItkImage(typename ITKImageType::Pointer &origImg, long int * crop_start_idxs, long int * in_sz_cropped){
+
+
+
+    typename ITKImageType::IndexType desiredStart;
+  //desiredStart.Fill(3);
+   desiredStart[0] = crop_start_idxs[0];
+   desiredStart[1] =  crop_start_idxs[1];
+   desiredStart[2] =  crop_start_idxs[2];
+
+
+   typename ITKImageType::SizeType desiredSize;
+     desiredSize[0] = in_sz_cropped[0];
+     desiredSize[1] = in_sz_cropped[1];
+     desiredSize[2] = in_sz_cropped[2];
+
+////
+
+     typedef itk::RegionOfInterestImageFilter< ITKImageType, ITKImageType > CropFilterType;
+     typename  CropFilterType::Pointer crop_filter = CropFilterType::New();
+
+     typename ITKImageType::RegionType desiredRegion;
+      desiredRegion.SetSize(desiredSize);
+      desiredRegion.SetIndex(desiredStart);
+
+      crop_filter->SetRegionOfInterest(desiredRegion);
+      crop_filter->SetInput(origImg);
+
+
+////
+  //    std::cout << "cropping image up" << std::endl;
+
+      crop_filter->Update();
+   //   std::cout << "cropped image up" << std::endl;
+
+
+     typename ITKImageType::Pointer output = ITKImageType::New();
+     output =  crop_filter->GetOutput();
+   //   std::cout << "cropped image got out" << std::endl;
+
+//std::cout << "size out" << output->GetLargestPossibleRegion().GetSize()<< std::endl;
+
+//       output->DisconnectPipeline();
+      output->Update();
+
+
+      return output;
+
+
+
+
+}
+
 
 
 #endif

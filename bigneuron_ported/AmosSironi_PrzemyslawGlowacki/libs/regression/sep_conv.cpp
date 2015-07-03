@@ -170,6 +170,8 @@ template<typename ImageType, typename VectorType>
   void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, Matrix3D<float> &out){
 
 
+
+    //  std::cout << "convolving sep..." << std::endl<<std::flush;
     typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
     typename ConvolutionType::Pointer convX, convY, convZ;
 
@@ -188,13 +190,59 @@ template<typename ImageType, typename VectorType>
     convZ->SetKernelImage(kernelZ);
     convZ->SetOutputRegionModeToSame();
 
+//    std::cout << "updating convolving sep..." << std::endl<<std::flush;
+
    convZ->Update();
 
-   out.loadItkImage( convZ->GetOutput() );
+  // std::cout << "updated convolving sep..." << std::endl<<std::flush;
+  //  std::cout << "size conv: " <<convZ->GetOutput()->GetLargestPossibleRegion().GetSize()<< std::endl<<std::flush;
 
+   //out.loadItkImage( convZ->GetOutput() );
+   out.copyFrom( convZ->GetOutput() );
 
+//std::cout << "got out conv" << std::endl<<std::flush;
 
 }
+
+
+  template<typename ImageType, typename VectorType>
+    void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, typename ImageType::Pointer &convolved_img){
+
+
+
+      //  std::cout << "convolving sep..." << std::endl<<std::flush;
+      typedef itk::ConvolutionImageFilter< ImageType, ImageType, ImageType >  ConvolutionType;
+      typename ConvolutionType::Pointer convX, convY, convZ;
+
+      convX = ConvolutionType::New();
+      convX->SetInput( input_img );
+      convX->SetKernelImage(kernelX);
+      convX->SetOutputRegionModeToSame();
+
+      convY = ConvolutionType::New();
+      convY->SetInput( convX->GetOutput() );
+      convY->SetKernelImage(kernelY);
+      convY->SetOutputRegionModeToSame();
+
+      convZ = ConvolutionType::New();
+      convZ->SetInput( convY->GetOutput() );
+      convZ->SetKernelImage(kernelZ);
+      convZ->SetOutputRegionModeToSame();
+
+  //    std::cout << "updating convolving sep..." << std::endl<<std::flush;
+
+     convZ->Update();
+
+    // std::cout << "updated convolving sep..." << std::endl<<std::flush;
+    //  std::cout << "size conv: " <<convZ->GetOutput()->GetLargestPossibleRegion().GetSize()<< std::endl<<std::flush;
+
+     //out.loadItkImage( convZ->GetOutput() );
+     convolved_img=  convZ->GetOutput() ;
+
+  //std::cout << "got out conv" << std::endl<<std::flush;
+
+  }
+
 
 
 template<typename ImageType, typename VectorType>
@@ -213,6 +261,23 @@ template<typename ImageType, typename VectorType>
      wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernelX,kernelY,kernelZ,out);
 
 }
+
+  template<typename ImageType, typename VectorType>
+    void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z, typename ImageType::Pointer &convolved_img)
+  {
+
+
+        typename ImageType::Pointer kernelX = ImageType::New();
+        typename ImageType::Pointer kernelY = ImageType::New();
+        typename ImageType::Pointer kernelZ = ImageType::New();
+
+       prepare1DKernel< ImageType,  VectorType>( kernelX, 0, kernel_eig_x );
+       prepare1DKernel< ImageType, VectorType>( kernelY, 1, kernel_eig_y );
+       prepare1DKernel< ImageType, VectorType>( kernelZ, 2, kernel_eig_z );
+
+       wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernelX,kernelY,kernelZ,convolved_img);
+
+  }
 
 
 template<typename ImageType, typename VectorType>
@@ -233,6 +298,26 @@ template<typename ImageType, typename VectorType>
         wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernel_eig_x,kernel_eig_y,kernel_eig_z,out);
 
 }
+
+
+  template<typename ImageType, typename VectorType>
+    void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, typename ImageType::Pointer &convolved_img){
+
+          VectorType kernel_eig_x;
+            VectorType kernel_eig_y;
+            VectorType kernel_eig_z;
+
+
+           const int kernel_size = (int)(kernel_eig.rows()/3);
+
+
+          kernel_eig_x = kernel_eig.head(kernel_size);
+          kernel_eig_y = kernel_eig.segment(kernel_size,kernel_size);
+          kernel_eig_z = kernel_eig.tail(kernel_size);
+
+          wholeConvolveSepFilter<ImageType,VectorType>(input_img, kernel_eig_x,kernel_eig_y,kernel_eig_z,convolved_img);
+
+  }
 
 
 
@@ -269,9 +354,13 @@ VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const un
     }
     else // take all pixels
     {
+
+    //    std::cout << "taking all pixels" <<std::endl<<std::flush;
          itk::ImageRegionIterator<ImageType> imageIterator(input_img,input_img->GetLargestPossibleRegion());
          imageIterator.GoToBegin();
          unsigned int i_pixel =0;
+     //    std::cout << "iterating..." <<std::endl<<std::flush;
+
            while(!imageIterator.IsAtEnd())
              {
 
@@ -347,22 +436,37 @@ void convolveSepFilterBank(MatrixType &sep_features_all, typename ImageType::Poi
     const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
 
     sep_features_all = MatrixType::Zero(n_pixels,n_sep_features);
+    VectorType temp_vector;
+    typename ImageType::Pointer convolved_img = ImageType::New();
     //#pragma omp parallel for
     for(unsigned int i_filter = 0; i_filter<n_sep_features ;i_filter++)
     {
-      //  std::cout << "convolving sep filter "<<i_filter << std::endl;
+     //   std::cout << "convolving sep filter "<<i_filter << std::endl<< std::flush;
         const VectorType kernel_eig = sep_filters_matrix.col(i_filter);
+   //kernel_eig = sep_filters_matrix.col(i_filter);
 
-        Matrix3D<float> out_matrix;
 
-        wholeConvolveSepFilterSplitVec<ImageType, VectorType >( input_img, kernel_eig, out_matrix);
+//  std::cout << "coping result matrix" << std::endl<< std::flush;
+       //// Matrix3D<float> out_matrix;
+      //// wholeConvolveSepFilterSplitVec<ImageType, VectorType >( input_img, kernel_eig, out_matrix);
+      ////  typename ImageType::Pointer convolved_img= out_matrix.asItkImage();
+   //     convolved_img= out_matrix.asItkImage();
+    //    std::cout << "coping result matrix done" << std::endl<< std::flush;
 
+  //      std::cout << "coping temp vec" << std::endl<< std::flush;
+//
+
+        ////
+
+        wholeConvolveSepFilterSplitVec<ImageType, VectorType >( input_img, kernel_eig, convolved_img);
+        temp_vector = itkImage2EigenVector<ImageType,VectorType>(convolved_img,n_pixels,n_pixels);
+    //    temp_vector = itkImage2EigenVector<ImageType,VectorType>(convolved_img,n_pixels,n_pixels);
+    //    std::cout << "coping temp vec done." << std::endl<< std::flush;
 
         // store result in coumns of a matrix
-        typename ImageType::Pointer convolved_img= out_matrix.asItkImage();
-        VectorType temp_vector = itkImage2EigenVector<ImageType,VectorType>(convolved_img,n_pixels,n_pixels);
-
         sep_features_all.col(i_filter) = temp_vector;
+      //  std::cout << "stored temp vec in matrix feat" << std::endl<< std::flush;
+
 
     }//end for i_filter
 
@@ -416,12 +520,14 @@ void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType:
 
 
 
-  //  itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
+ //   itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
 
         typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();
         const unsigned int n_pixels = size_image[0]*size_image[1]*size_image[2];
         const unsigned int n_nonsep_features = weight_matrix.cols();
+
+     //   std::cout<< "size image comp features: " << size_image << std::endl << std::flush;
 
         MatrixType sep_features_all;
         convolveSepFilterBank<ImageType,MatrixType,VectorType>(sep_features_all,input_img,sep_filters_matrix);

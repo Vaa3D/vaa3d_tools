@@ -11,7 +11,8 @@
 
 Input: Supported formats: Tiff and vaa3d raw UINT8 3d volumes
 Output: The trained models will be saved in <Output_Results_Dir> under the names Regressor_ac_0.cfg, Regressor_ac_1.cfg, ..., Regressor_ac_<N_Autocontext_Iters>.cfg
-Parameters: <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> swc files contining ground truth. Must be same number of input images
+Parameters: <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> swc files contining ground truth. Must be same number of input images.
+											 N.B. It Assumes swc files are in image coordinate !
             <N_Autocontext_Iters> number of Auto-context iterations (set to 0 in order not to use Auto-context). Default 1.
             <N_Train_Samples> number of training samples. Default 100000.
             <N_boosting_Iters> number of boosting iterations. Default 200.

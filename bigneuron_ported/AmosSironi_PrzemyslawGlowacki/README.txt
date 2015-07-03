@@ -13,7 +13,6 @@
 
 
 
-
  ***2. compile the two plugins ***
 cd ./SQBTree_plugin
 qmake && make

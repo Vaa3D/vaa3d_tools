@@ -54,6 +54,20 @@ template<typename ImageType, typename VectorType>
 template<typename ImageType, typename VectorType>
    void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig, Matrix3D<float> &out);
 
+
+   //convolve 3D image with separable filters (itk arguments)
+   template<typename ImageType, typename VectorType>
+      void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, typename ImageType::Pointer kernelX,typename ImageType::Pointer kernelY,typename ImageType::Pointer kernelZ, typename ImageType::Pointer &convolved_img);
+
+   //convolve 3D image with separable filters (eigen arguments)
+   template<typename ImageType, typename VectorType>
+      void wholeConvolveSepFilter( typename ImageType::Pointer &input_img, const VectorType &kernel_eig_x,const VectorType &kernel_eig_y,const VectorType &kernel_eig_z,  typename ImageType::Pointer &convolved_img);
+
+   //convolve 3D image with separable filters (split eigen vector in 3 equal parts)
+   template<typename ImageType, typename VectorType>
+      void wholeConvolveSepFilterSplitVec( typename ImageType::Pointer &input_img, const VectorType &kernel_eig,  typename ImageType::Pointer &convolved_img);
+
+
 // store itk image into eigen colmun vector
 template<typename ImageType, typename VectorType>
 VectorType itkImage2EigenVector( typename ImageType::Pointer &input_img,const unsigned int n_rand_samples,const unsigned int tot_n_pixels);
