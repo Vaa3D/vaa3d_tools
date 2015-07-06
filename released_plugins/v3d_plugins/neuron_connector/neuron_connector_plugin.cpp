@@ -260,8 +260,15 @@ void neuron_connector_dialog::creat()
     QFrame *line_1 = new QFrame();
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
-    gridLayout->addWidget(line_1,8,0,1,7);
+    gridLayout->addWidget(line_1,7,0,1,7);
 
+    cb_conf = new QComboBox();
+    cb_conf->addItem("custom config");
+    cb_conf->addItem("connect all, shortest distance");
+    cb_conf->addItem("connect all, tip-tip only");
+    cb_conf->addItem("connect local joint only");
+    cb_conf->addItem("other config A");
+    connect(cb_conf, SIGNAL(currentIndexChanged(int)), this, SLOT(myconfig()));
     spin_xscale = new QDoubleSpinBox();
     spin_xscale->setRange(1,100000); spin_xscale->setValue(1);
     spin_yscale = new QDoubleSpinBox();
@@ -283,16 +290,19 @@ void neuron_connector_dialog::creat()
     spin_rootid = new QSpinBox();
     spin_rootid->setRange(-1, 2147483647); spin_rootid->setValue(-1);
     QLabel* label_0 = new QLabel("sacles: ");
-    gridLayout->addWidget(label_0,9,0,1,1);
+    gridLayout->addWidget(label_0,8,0,1,1);
     QLabel* label_1 = new QLabel("X: ");
-    gridLayout->addWidget(label_1,9,1,1,1);
-    gridLayout->addWidget(spin_xscale,9,2,1,1);
+    gridLayout->addWidget(label_1,8,1,1,1);
+    gridLayout->addWidget(spin_xscale,8,2,1,1);
     QLabel* label_2 = new QLabel("Y: ");
-    gridLayout->addWidget(label_2,9,3,1,1);
-    gridLayout->addWidget(spin_yscale,9,4,1,1);
+    gridLayout->addWidget(label_2,8,3,1,1);
+    gridLayout->addWidget(spin_yscale,8,4,1,1);
     QLabel* label_3 = new QLabel("Z: ");
-    gridLayout->addWidget(label_3,9,5,1,1);
-    gridLayout->addWidget(spin_zscale,9,6,1,1);
+    gridLayout->addWidget(label_3,8,5,1,1);
+    gridLayout->addWidget(spin_zscale,8,6,1,1);
+    QLabel* label_conf = new QLabel("connection configuration: ");
+    gridLayout->addWidget(label_conf,9,0,1,4);
+    gridLayout->addWidget(cb_conf,9,4,1,3);
     QLabel* label_4 = new QLabel("maximum connection distance (-1=connect all): ");
     gridLayout->addWidget(label_4,10,0,1,6);
     gridLayout->addWidget(spin_dis,10,6,1,1);
@@ -372,6 +382,37 @@ bool neuron_connector_dialog::load1()
 
     checkbtn();
     return true;
+}
+
+void neuron_connector_dialog::myconfig()
+{
+    if(cb_conf->currentIndex()==0){
+        spin_ang->setEnabled(true);
+        spin_dis->setEnabled(true);
+    }else{
+        spin_ang->setEnabled(false);
+        spin_dis->setEnabled(false);
+        switch (cb_conf->currentIndex()) {
+        case 1:
+            spin_ang->setValue(0);
+            spin_dis->setValue(-1);
+            break;
+        case 2:
+            spin_ang->setValue(180);
+            spin_dis->setValue(-1);
+            break;
+        case 3:
+            spin_ang->setValue(0);
+            spin_dis->setValue(1);
+            break;
+        case 4:
+            spin_ang->setValue(20);
+            spin_dis->setValue(60);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void neuron_connector_dialog::run()

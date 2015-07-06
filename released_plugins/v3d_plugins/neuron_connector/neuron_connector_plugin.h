@@ -26,6 +26,7 @@ private:
 public slots:
     bool load0();
     bool load1();
+    void myconfig();
     void run();
 
 public:
@@ -36,7 +37,7 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_xscale, *spin_yscale, *spin_ang, *spin_dis;
     QSpinBox *spin_rootid;
     QPushButton *btn_quit, *btn_run;
-    QComboBox *cb_distanceType, *cb_matchType;
+    QComboBox *cb_distanceType, *cb_matchType, *cb_conf;
     QTextEdit* text_info;
 };
 
