@@ -12,7 +12,6 @@ HEADERS	+= neuron_stitch_plugin.h \
     neuron_geometry_dialog.h \
     marker_match_dialog.h \
     neuron_match_clique.h \
-    neuron_tipspicker_dialog.h \
     performance_timer.h
     #$$VAA3DPATH/v3d_main/3drenderer/v3dr_mainwindow.h
 SOURCES	+= neuron_stitch_plugin.cpp \
@@ -21,10 +20,9 @@ SOURCES	+= neuron_stitch_plugin.cpp \
     neuron_stitch_func.cpp \
     marker_match_dialog.cpp \
     neuron_match_clique.cpp \
-    neuron_tipspicker_dialog.cpp \
     performance_timer.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_stitch)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_stitch/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_stitch/1_stitchers/

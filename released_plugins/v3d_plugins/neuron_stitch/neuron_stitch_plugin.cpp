@@ -7,7 +7,6 @@
 #include <vector>
 #include "neuron_stitch_plugin.h"
 #include "neuron_stitch_func.h"
-#include "neuron_tipspicker_dialog.h"
 #include "neuron_match_clique.h"
 #include "neuron_geometry_dialog.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
@@ -27,10 +26,6 @@ QStringList neuron_stitch::menulist() const
         <<tr("auto_stitch_neuron_SWC")
         <<tr("live_stitch_neuron_SWC")
         <<tr("manually_affine_neuron_SWC")
-        <<tr("find_border_tips_SWC_image")
-        <<tr("transform_neuron_SWC_by_affine_matrix")
-        <<tr("transform_markers_by_affine_matrix")
-        <<tr("combine_marker_files")
 		<<tr("about");
 }
 
@@ -56,23 +51,7 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         doadjust(callback, parent);
     }
-    else if (menu_name == tr("find_border_tips_SWC_image"))
-    {
-        dosearch(callback, parent);
-    }
-    else if (menu_name == tr("transform_neuron_SWC_by_affine_matrix"))
-    {
-        dotransform_swc(callback, parent);
-    }
-    else if (menu_name == tr("transform_markers_by_affine_matrix"))
-    {
-        dotransform_marker(callback, parent);
-    }
-    else if (menu_name == tr("combine_marker_files"))
-    {
-        docombine_marker(callback, parent);
-    }
-	else
+    else
 	{
 		v3d_msg(tr("This plugin is for link neuron segments across stacks.. "
 			"Developed by Hanbo Chen, 2014-10-07"));
@@ -262,52 +241,6 @@ void neuron_stitch::domatch(V3DPluginCallback2 &callback, QWidget *parent)
     myDialog->exec();
 }
 
-void neuron_stitch::dosearch(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    //select the window to operate
-    QList <V3dR_MainWindow *> allWindowList = callback.getListAll3DViewers();
-    QList <V3dR_MainWindow *> selectWindowList;
-    V3dR_MainWindow * v3dwin;
-    QList<NeuronTree> * ntTreeList;
-    int winid;
-    qDebug("search for 3D windows");
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        ntTreeList = callback.getHandleNeuronTrees_Any3DViewer(allWindowList[i]);
-        if(ntTreeList->size()>0)
-            selectWindowList.append(allWindowList[i]);
-    }
-    qDebug("match and select 3D windows");
-    if(selectWindowList.size()<1){
-        v3d_msg("Cannot find 3D view with only 2 SWC file. Please load the two SWC file you want to stitch in the same 3D view");
-        return;
-    }else if(selectWindowList.size()>1){
-        //pop up a window to select
-
-        QStringList items;
-        for(int i=0; i<selectWindowList.size(); i++){
-            items.append(callback.getImageName(selectWindowList[i]));
-        }
-        bool ok;
-        QString selectitem = QInputDialog::getItem(parent, QString::fromUtf8("Neuron Stitcher"), QString::fromUtf8("Select A Window to Operate"), items, 0, false, &ok);
-        if(!ok) return;
-        for(int i=0; i<selectWindowList.size(); i++){
-            if(selectitem==callback.getImageName(selectWindowList[i]))
-            {
-                winid=i;
-                break;
-            }
-        }
-    }else{
-        winid=0;
-    }
-    v3dwin = selectWindowList[winid];
-
-    neuron_tipspicker_dialog * myDialog = NULL;
-    myDialog = new neuron_tipspicker_dialog(&callback, v3dwin);
-    myDialog->show();
-}
-
 void neuron_stitch::dostitch(V3DPluginCallback2 &callback, QWidget *parent)
 {
     //select the window to operate
@@ -398,172 +331,6 @@ void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
     NeuronGeometryDialog * myDialog = NULL;
     myDialog = new NeuronGeometryDialog(&callback, v3dwin);
     myDialog->show();
-}
-
-int neuron_stitch::dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    //input file name
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
-            "",
-            QObject::tr("Supported file (*.swc *.eswc)"
-                ";;Neuron structure	(*.swc)"
-                ";;Extended neuron structure (*.eswc)"
-                ));
-    if(fileOpenName.isEmpty())
-        return 0;
-    NeuronTree nt;
-    if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
-    {
-        nt = readSWC_file(fileOpenName);
-    }
-
-    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
-            "",
-            QObject::tr("Supported file (*.txt)"
-                ";;Affine Matrix    (*.txt)"
-                ));
-    if(fileMatName.isEmpty()) return 0;
-
-    double amat[16]={0};
-    if (!readAmat(fileMatName.toStdString().c_str(),amat))
-    {
-            v3d_msg("error read affine transform matrix.");
-            return 0;
-    }
-
-    proc_neuron_affine(&nt, amat);
-
-    QString fileDefaultName = fileOpenName+QString("_affine.swc");
-    //write new SWC to file
-    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-            fileDefaultName,
-            QObject::tr("Supported file (*.swc)"
-                ";;Neuron structure	(*.swc)"
-                ));
-    if (!export_list2file(nt.listNeuron,fileSaveName,fileOpenName))
-    {
-        v3d_msg("fail to write the output swc file.");
-        return 0;
-    }
-
-    return 1;
-}
-
-int neuron_stitch::dotransform_marker(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    //input file name
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
-            "",
-            QObject::tr("Supported file (*.marker)"
-                ";;Marker file	(*.marker)"
-                ));
-    if(fileOpenName.isEmpty())
-        return 0;
-    QList <ImageMarker> inmarker;
-    if (fileOpenName.toUpper().endsWith(".MARKER"))
-    {
-         inmarker = readMarker_file(fileOpenName);
-    }
-
-    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
-            "",
-            QObject::tr("Supported file (*.txt)"
-                ";;Affine Matrix    (*.txt)"
-                ));
-    if(fileMatName.isEmpty()) return 0;
-
-    double afmatrix[16]={0};
-    if (!readAmat(fileMatName.toStdString().c_str(),afmatrix))
-    {
-        v3d_msg("error read affine transform matrix.");
-        return 0;
-    }
-
-    //marker affine
-    double x,y,z;
-    for(V3DLONG i=0; i<inmarker.size() ; i++)
-    {
-        ImageMarker* tp = &(inmarker[i]);
-        x = afmatrix[0] * tp->x + afmatrix[1] * tp->y + afmatrix[2] * tp->z + afmatrix[3];
-        y = afmatrix[4] * tp->x + afmatrix[5] * tp->y + afmatrix[6] * tp->z + afmatrix[7];
-        z = afmatrix[8] * tp->x + afmatrix[9] * tp->y + afmatrix[10] * tp->z + afmatrix[11];
-
-        //now update
-        tp->x = x;	tp->y = y; tp->z = z;
-    }
-
-    QString fileDefaultName = fileOpenName+QString("_affine.marker");
-    //write new marker to file
-    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-            fileDefaultName,
-            QObject::tr("Supported file (*.marker)"
-                ";;Marker	(*.marker)"
-                ));
-    if(fileSaveName.isEmpty())
-        return 0;
-    if (!writeMarker_file(fileSaveName, inmarker))
-    {
-        v3d_msg("fail to write the output marker file.");
-        return 0;
-    }
-
-    return 1;
-}
-
-void neuron_stitch::docombine_marker(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    //input file 1
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
-            "",
-            QObject::tr("Supported file (*.marker)"
-                ";;Marker file	(*.marker)"
-                ));
-    if(fileOpenName.isEmpty())
-        return;
-    QList <ImageMarker> inmarker;
-    if (fileOpenName.toUpper().endsWith(".MARKER"))
-    {
-         inmarker = readMarker_file(fileOpenName);
-    }
-
-    //input file 2
-    QString fileOpenName_2;
-    fileOpenName_2 = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
-            fileOpenName,
-            QObject::tr("Supported file (*.marker)"
-                ";;Marker file	(*.marker)"
-                ));
-    if(fileOpenName_2.isEmpty())
-        return;
-    QList <ImageMarker> inmarker_2;
-    if (fileOpenName.toUpper().endsWith(".MARKER"))
-    {
-         inmarker_2 = readMarker_file(fileOpenName_2);
-    }
-
-    //output file
-    for(V3DLONG i=0; i<inmarker_2.size() ; i++){
-        inmarker.append(inmarker_2[i]);
-    }
-
-    QString fileDefaultName = QFileInfo(fileOpenName).dir().filePath(QFileInfo(fileOpenName).baseName()+
-                                                                     "_"+QFileInfo(fileOpenName_2).baseName()+QString("_combine.marker"));
-    //write new marker to file
-    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-            fileDefaultName,
-            QObject::tr("Supported file (*.marker)"
-                ";;Marker	(*.marker)"
-                ));
-    if(fileSaveName.isEmpty())
-        return;
-    if (!writeMarker_file(fileSaveName, inmarker))
-    {
-        v3d_msg("fail to write the output marker file.");
-        return;
-    }
 }
 
 //temporary function for paper writting purpose
