@@ -475,7 +475,6 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
     cout << "The traced result has been saved in neuron_swc.swc" << endl;
 
 
-
     delete [] xv;
 
     delete [] yv;
@@ -1026,6 +1025,10 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
     vector<MyMarker*> outswc;
 
     happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3333);
+
+
+    cout << "Complete happ " << endl;
+
     //  v3d_msg("start to use happ.\n", 0);
     //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 
@@ -1060,38 +1063,66 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
     V3DLONG szOriginalData[4] = {sz0,sz1,sz2, 1};
 
     int method_radius_est = 2;
-
-    double * radius_list = new double[outswc.size()];
-
-    for(V3DLONG i = 0; i < outswc.size(); i++)
+    if(outswc.size() > 10)
     {
-        //printf(" node %ld of %ld.\n", i, outswc.size());
-        outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
 
-        radius_list[i] = outswc[i]->radius;
+
+        cout << "Ready to new the radius list" << endl;
+
+        double * radius_list = new double[outswc.size()];
+
+        cout << "Complete newing the radius list" << endl;
+
+
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+            radius_list[i] = outswc[i]->radius;
+        }
+
+        // apply a simple mean filter on the radius of the swc to make it look better
+
+        double m_rad = 0;
+
+
+        for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+        {
+            m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
+
+            //m_rad = m_rad / 5;
+
+            outswc[i]->radius = m_rad / 5;
+
+            //    outswc[i]->
+
+            //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+        }
+
+        delete [] radius_list;
+
+
+    }
+    else
+    {
+
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+        }
+
     }
 
-    // apply a simple mean filter on the radius of the swc to make it look better
 
-    double m_rad = 0;
-
-
-    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
-    {
-        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
-
-        //m_rad = m_rad / 5;
-
-        outswc[i]->radius = m_rad / 5;
-
-        //    outswc[i]->
-
-        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
-    }
+    cout << "Ready to save the swc file" << endl;
 
     saveSWC_file(outfile_swc, outswc);
 
-    delete [] radius_list;
+    cout << "Complete saving the swc" << endl;
+
 
 
     delete [] show_img;
@@ -1333,37 +1364,60 @@ int app2_trace(cv::Mat image, char * outfile_swc)
 
     int method_radius_est = 2;
 
-    double * radius_list = new double[outswc.size()];
-
-    for(V3DLONG i = 0; i < outswc.size(); i++)
+    if(outswc.size() > 10)
     {
-        //printf(" node %ld of %ld.\n", i, outswc.size());
-        outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
 
-        radius_list[i] = outswc[i]->radius;
+
+        cout << "Ready to new the radius list" << endl;
+
+        double * radius_list = new double[outswc.size()];
+
+        cout << "Complete newing the radius list" << endl;
+
+
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+            radius_list[i] = outswc[i]->radius;
+        }
+
+        // apply a simple mean filter on the radius of the swc to make it look better
+
+        double m_rad = 0;
+
+
+        for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+        {
+            m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
+
+            //m_rad = m_rad / 5;
+
+            outswc[i]->radius = m_rad / 5;
+
+            //    outswc[i]->
+
+            //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+        }
+
+        delete [] radius_list;
+
+
     }
-
-    // apply a simple mean filter on the radius of the swc to make it look better
-
-    double m_rad = 0;
-
-
-    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+    else
     {
-        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
 
-        //m_rad = m_rad / 5;
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
 
-        outswc[i]->radius = m_rad / 5;
+        }
 
-        //    outswc[i]->
-
-        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
     }
 
     saveSWC_file(outfile_swc, outswc);
-
-    delete [] radius_list;
 
     delete [] show_img;
 
@@ -1589,7 +1643,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
     cout << "The input is " << infile << endl;
 
 
-    for(int i_img = 137; i_img < 2014; i_img ++)
+    for(int i_img = 627; i_img < 2014; i_img ++)
     {
 
 
@@ -1635,7 +1689,10 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         Mat image1;
 
-        loadMat(image1, (char*)im_file.c_str());
+        if(loadMat(image1, (char*)im_file.c_str()) < 0)
+            continue;
+
+
 
 
      	Mat image;
@@ -6539,6 +6596,8 @@ int check_connect(cv::Mat &seg_img)
     }
 
 	label_t2.release();
+
+   // cin.get();
 
 	int * np;
 
@@ -14315,6 +14374,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	}
 	outswc.clear();
 	cout<<filter_segs.size()<<" segments left"<<endl;
+
 	topo_segs2swc1(filter_segs, outswc, 0); // no resampling
 
 	// release hierarchical segments
@@ -14548,6 +14608,9 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
     vector<MyMarker*> outswc;
 
     happ(inswc, outswc, show_img, sz[0], sz[1], sz[2],10, 5, 0.3);
+
+
+
   //  v3d_msg("start to use happ.\n", 0);
     //happ(inswc, outswc, show_img, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 
@@ -14583,37 +14646,58 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
     int method_radius_est = 2;
 
-   double * radius_list = new double[outswc.size()];
-
-    for(V3DLONG i = 0; i < outswc.size(); i++)
+    if(outswc.size() > 10)
     {
-        //printf(" node %ld of %ld.\n", i, outswc.size());
-        outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
 
-        radius_list[i] = outswc[i]->radius;
+
+        cout << "Ready to new the radius list" << endl;
+
+        double * radius_list = new double[outswc.size()];
+
+        cout << "Complete newing the radius list" << endl;
+
+
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+
+            radius_list[i] = outswc[i]->radius;
+        }
+
+        // apply a simple mean filter on the radius of the swc to make it look better
+
+        double m_rad = 0;
+
+
+        for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+        {
+            m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
+
+            //m_rad = m_rad / 5;
+
+            outswc[i]->radius = m_rad / 5;
+
+            //    outswc[i]->
+
+            //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
+        }
+
+        delete [] radius_list;
+
+
     }
-
-    // apply a simple mean filter on the radius of the swc to make it look better
-
-    double m_rad = 0;
-
-
-    for(V3DLONG i = 2; i < outswc.size() - 2; i++)
+    else
     {
-        m_rad = accumulate(radius_list + (i - 2),radius_list + i + 2,0.0);
 
-        //m_rad = m_rad / 5;
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            //printf(" node %ld of %ld.\n", i, outswc.size());
+            outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
 
-        outswc[i]->radius = m_rad / 5;
+        }
 
-        //    outswc[i]->
-
-        //outswc[i]->radius = markerRadius(show_img, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
     }
-
-
-
-
 
 
     cout << "offset is " <<  offset[0] << " " << offset[1] << " " << offset[2] << endl;
@@ -14638,7 +14722,6 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
    delete [] show_img;
 
-   delete [] radius_list;
 
    //delete [] phi;
 
