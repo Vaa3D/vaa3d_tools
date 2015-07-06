@@ -8,7 +8,7 @@
 * to visualize and remove artifacts resulting
 * from the 3D reconstruction of dendrites / axons
 *
-* (last update: June 30, 2015)
+* (last update: July 06, 2015)
 */
 
 
@@ -56,6 +56,7 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
     struct RawPoints Point;
     std::vector<struct RawPoints > n3d;
     std::vector< std::vector<struct RawPoints > > dend;
+    std::vector<long> soma;
     std::vector<double> ARC;
     std::vector<double> DIAM;
     std::vector<double> dydx;
@@ -98,16 +99,15 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
 
     clock_t begin = clock();
     load_data(x,y,z,tree_id,r,ppid,pid,fileOpenName);
-    find_nodes(ppid, nodes, endpoints, end_sec);
-    create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id);
+    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma);
+    create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id, soma);
 
 
     for(long dend_num = 0;dend_num<dend.size();dend_num++)
     {
         // Don't consider soma.
         // If file's "tree ID" field was erroneously written/created may cause some problems
-        if(dend.at(dend_num).at(0).tid != 1)
-        {
+        if(dend.at(dend_num).at( dend.at(dend_num).size()-1 ).tid != 1){
             locate_and_smooth_bumps(dydx,dend ,preprocessing_flag, dend_num, ppslope,pnslope, pzslope,ARC,DIAM,thresh,max_dist,step_min);
         }
 
@@ -188,6 +188,7 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
     struct RawPoints Point;
     std::vector<struct RawPoints > n3d;
     std::vector< std::vector<struct RawPoints > > dend;
+    std::vector<long> soma;
     std::vector<double> ARC;
     std::vector<double> DIAM;
     std::vector<double> dydx;
@@ -298,28 +299,25 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
     clock_t begin = clock();
 //    printf("Enter the main function\n");
     load_data(x,y,z,tree_id,r,ppid,pid,fileOpenName);
-//    printf("Loading Data\n");
-//    print_data(x,y,z,tree_id,r,ppid,pid);
-//    printf("Printing Data\n");
-    find_nodes(ppid, nodes, endpoints, end_sec);
-//    printf("Nodes found\n\n\n");
-//    printf("\t*\tStart creating tree\n\n\n");
-    create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id);
-//    printf("Tree successfully created\n");
-//    //getchar()
+
+    //    print_data(x,y,z,tree_id,r,ppid,pid);
+
+    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma);
+
+
+    create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id, soma);
+
 
     for(long dend_num = 0;dend_num<dend.size();dend_num++)
     {
         // Don't consider soma.
         // If file's "tree ID" field was erroneously written/created may cause some problems
-        if(dend.at(dend_num).at(0).tid != 1)
-        {
+        if(dend.at(dend_num).at( dend.at(dend_num).size()-1 ).tid != 1){
             locate_and_smooth_bumps(dydx,dend ,preprocessing_flag, dend_num, ppslope,pnslope, pzslope,ARC,DIAM,thresh,max_dist,step_min);
         }
 
     }
     write_data(dend,fileOpenName,fileSaveName);
-
 
 
 //    printf("pid = \t \t tid= \t ppid =");

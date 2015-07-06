@@ -8,7 +8,7 @@
 * to visualize and remove artifacts resulting
 * from the 3D reconstruction of dendrites / axons
 *
-* (last update: June 30, 2015)
+* (last update: July 06, 2015)
 */
  
 #ifndef __N3DFIX_PLUGIN_H__

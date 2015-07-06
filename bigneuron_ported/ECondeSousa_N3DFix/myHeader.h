@@ -8,7 +8,7 @@
 * to visualize and remove artifacts resulting 
 * from the 3D reconstruction of dendrites / axons
 *
-* (last update: June 30, 2015)
+* (last update: July 06, 2015)
 */
 
 #ifndef __MYFUNCS_H__
@@ -32,7 +32,8 @@ void load_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>&
 void print_data(std::vector<float> &x, std::vector<float> &y, std::vector<float> &z, std::vector<long> &tree_id,
                 std::vector<float> &r, std::vector<long> &ppid,std::vector<long> &pid);
 
-void find_nodes(std::vector<long> &ppid, std::vector<long> &nodes,std::vector<long> &endpoints,std::vector<long> &end_sec);
+void find_nodes(std::vector<long> &tree_id, std::vector<long> &ppid, std::vector<long> &nodes, std::vector<long> &endpoints,
+                std::vector<long> &end_sec, std::vector<long> &soma);
 
 bool my_compare( float a, float b);
 
@@ -43,7 +44,7 @@ void diff(std::vector<long> &my_vec);
 void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float> &z, std::vector<float> &r,
                  std::vector<long> &ppid, std::vector<long> &end_sec, struct RawPoints &Point,
                  std::vector<struct RawPoints > &n3d, std::vector< std::vector<struct RawPoints > > &dend, std::vector<long> &pid ,
-                 std::vector<long> &tree_id);
+                 std::vector<long> &tree_id, std::vector<long> &soma);
 
 void remove_points_with_same_coordinates(std::vector< std::vector<struct RawPoints > > &dend,
                                          bool &preprocessing_flag, unsigned dend_num);

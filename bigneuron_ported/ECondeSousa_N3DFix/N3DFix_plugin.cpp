@@ -8,7 +8,7 @@
 * to visualize and remove artifacts resulting
 * from the 3D reconstruction of dendrites / axons
 *
-* (last update: June 30, 2015)
+* (last update: July 06, 2015)
 */
  
 #include "v3d_message.h"
