@@ -6,10 +6,10 @@ VAA3DPATH = /local3/hanbo/vaa3d/v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
 
-HEADERS	+= image_transform_and_combine_by_affine_mat_plugin.h \
+HEADERS	+= file_transform_plugin.h \
     neuron_stitch_func.h \
     $$VAA3DPATH/v3d_main/neuron_editing/neuron_xforms.h
-SOURCES	+= image_transform_and_combine_by_affine_mat_plugin.cpp \
+SOURCES	+= file_transform_plugin.cpp \
     image_transform_and_combine_by_affine_mat_func.cpp \
     $$VAA3DPATH/v3d_main/neuron_editing/neuron_xforms.cpp \
     neuron_stitch_func.cpp

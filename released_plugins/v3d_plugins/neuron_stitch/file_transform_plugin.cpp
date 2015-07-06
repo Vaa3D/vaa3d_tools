@@ -1,36 +1,48 @@
-/* image_transform_and_combine_by_affine_mat_plugin.cpp
+/* file_transform_plugin.cpp
  * This plugin will transform and combine image by given affine matrix. Some functions are based on littleQuickWarper.
  * 2015-3-18 : by Hanbo Chen
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "image_transform_and_combine_by_affine_mat_plugin.h"
+#include "neuron_stitch_func.h"
+#include "file_transform_plugin.h"
 #include "image_transform_and_combine_by_affine_mat_func.cpp"
+#include "neuron_xforms.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(image_transform_and_combine_by_affine_mat, imageTransfromAndCombine);
+Q_EXPORT_PLUGIN2(file_transform, file_transform);
  
-QStringList imageTransfromAndCombine::menulist() const
+QStringList file_transform::menulist() const
 {
 	return QStringList() 
 		<<tr("transform_and_combine_images_by_affine_mat")
+        <<tr("transform_neuron_SWC_by_affine_matrix")
+        <<tr("transform_markers_by_affine_matrix")
 		<<tr("about");
 }
 
-QStringList imageTransfromAndCombine::funclist() const
+QStringList file_transform::funclist() const
 {
 	return QStringList()
         <<tr("affineImage")
 		<<tr("help");
 }
 
-void imageTransfromAndCombine::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void file_transform::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("transform_and_combine_images_by_affine_mat"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("Please check do_func, GUI to be implemented.");
 	}
+    else if (menu_name == tr("transform_neuron_SWC_by_affine_matrix"))
+    {
+        dotransform_swc(callback, parent);
+    }
+    else if (menu_name == tr("transform_markers_by_affine_matrix"))
+    {
+        dotransform_marker(callback, parent);
+    }
 	else
 	{
 		v3d_msg(tr("This plugin will transform and combine image by given affine matrix. Some functions are based on littleQuickWarper.. "
@@ -38,7 +50,7 @@ void imageTransfromAndCombine::domenu(const QString &menu_name, V3DPluginCallbac
 	}
 }
 
-bool imageTransfromAndCombine::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool file_transform::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
@@ -92,7 +104,7 @@ bool imageTransfromAndCombine::dofunc(const QString & func_name, const V3DPlugin
 	return true;
 }
 
-void imageTransfromAndCombine::doAffineImage(V3DPluginCallback2 & callback, QString fname_tar,
+void file_transform::doAffineImage(V3DPluginCallback2 & callback, QString fname_tar,
                                              QString fname_sub, QString fname_amat, QString fname_output,
                                              int interpMethod, bool b_negativeShift, bool b_channelSeperate)
 {
@@ -171,7 +183,119 @@ void imageTransfromAndCombine::doAffineImage(V3DPluginCallback2 & callback, QStr
     }
 }
 
-void imageTransfromAndCombine::printHelp()
+int file_transform::dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //input file name
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+            "",
+            QObject::tr("Supported file (*.swc *.eswc)"
+                ";;Neuron structure	(*.swc)"
+                ";;Extended neuron structure (*.eswc)"
+                ));
+    if(fileOpenName.isEmpty())
+        return 0;
+    NeuronTree nt;
+    if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+    {
+        nt = readSWC_file(fileOpenName);
+    }
+
+    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
+            "",
+            QObject::tr("Supported file (*.txt)"
+                ";;Affine Matrix    (*.txt)"
+                ));
+    if(fileMatName.isEmpty()) return 0;
+
+    double amat[16]={0};
+    if (!readAmat(fileMatName.toStdString().c_str(),amat))
+    {
+            v3d_msg("error read affine transform matrix.");
+            return 0;
+    }
+
+    proc_neuron_affine(&nt, amat);
+
+    QString fileDefaultName = fileOpenName+QString("_affine.swc");
+    //write new SWC to file
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.swc)"
+                ";;Neuron structure	(*.swc)"
+                ));
+    if (!export_list2file(nt.listNeuron,fileSaveName,fileOpenName))
+    {
+        v3d_msg("fail to write the output swc file.");
+        return 0;
+    }
+
+    return 1;
+}
+
+int file_transform::dotransform_marker(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //input file name
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open marker File"),
+            "",
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker file	(*.marker)"
+                ));
+    if(fileOpenName.isEmpty())
+        return 0;
+    QList <ImageMarker> inmarker;
+    if (fileOpenName.toUpper().endsWith(".MARKER"))
+    {
+         inmarker = readMarker_file(fileOpenName);
+    }
+
+    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
+            "",
+            QObject::tr("Supported file (*.txt)"
+                ";;Affine Matrix    (*.txt)"
+                ));
+    if(fileMatName.isEmpty()) return 0;
+
+    double afmatrix[16]={0};
+    if (!readAmat(fileMatName.toStdString().c_str(),afmatrix))
+    {
+        v3d_msg("error read affine transform matrix.");
+        return 0;
+    }
+
+    //marker affine
+    double x,y,z;
+    for(V3DLONG i=0; i<inmarker.size() ; i++)
+    {
+        ImageMarker* tp = &(inmarker[i]);
+        x = afmatrix[0] * tp->x + afmatrix[1] * tp->y + afmatrix[2] * tp->z + afmatrix[3];
+        y = afmatrix[4] * tp->x + afmatrix[5] * tp->y + afmatrix[6] * tp->z + afmatrix[7];
+        z = afmatrix[8] * tp->x + afmatrix[9] * tp->y + afmatrix[10] * tp->z + afmatrix[11];
+
+        //now update
+        tp->x = x;	tp->y = y; tp->z = z;
+    }
+
+    QString fileDefaultName = fileOpenName+QString("_affine.marker");
+    //write new marker to file
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.marker)"
+                ";;Marker	(*.marker)"
+                ));
+    if(fileSaveName.isEmpty())
+        return 0;
+    if (!writeMarker_file(fileSaveName, inmarker))
+    {
+        v3d_msg("fail to write the output marker file.");
+        return 0;
+    }
+
+    return 1;
+}
+
+void file_transform::printHelp()
 {
     qDebug()<<"Usage : v3d -x dllname -f affineImage -i <target_img_file> <subject_img_file> <affine_matrix.txt> -p <(0)interpmethod> <(1)negative shifting> <(0)seperate channel> -o <out_img_file>";
     qDebug()<<"interpmethod: 0(default): linera interpolate; 1: nearest neighbor interpolate.";
