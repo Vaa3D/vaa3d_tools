@@ -74,10 +74,12 @@ bool mostVesselTracerPlugin::dofunc(const QString & func_name, const V3DPluginAr
     }
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x dllname -f MOST_trace -i <inimg_file> -p <ch> <th>"<<endl;
+        cout<<"Usage : v3d -x dllname -f MOST_trace -i <inimg_file> -p <ch> <th> <seed> <slip>"<<endl;
         cout<<endl;
         cout<<"ch           the input channel value, start from 1, default 1"<<endl;
         cout<<"th           the threshold value, default 20"<<endl;
+        cout<<"seed         window size of the seed, default 20"<<endl;
+        cout<<"slip         window size to slip from seed, default 20"<<endl;
         cout<<"The output swc file will be named automatically based on the input image file nmae"<<endl;
         cout<<endl;
         cout<<endl;
@@ -202,6 +204,8 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
     cout<<"Welcome to MOST tracing"<<endl;
     unsigned int c=1;
     int InitThreshold = 20;
+    seed_size_all = 20;
+    int slipsize=20;
 
     if (input.size()>=2)
     {
@@ -209,6 +213,8 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
         cout<<paras.size()<<endl;
         if(paras.size() >= 1) c = atoi(paras.at(0));
         if(paras.size() >= 2) InitThreshold = atoi(paras.at(1));
+        if(paras.size() >= 3) seed_size_all = atoi(paras.at(2));
+        if(paras.size() >= 4) slipsize = atoi(paras.at(3));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -216,6 +222,8 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
     cout<<"ch = "<<c<<endl;
     cout<<"threshold = "<<InitThreshold<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"seedsize = "<<seed_size_all<<endl;
+    cout<<"slipsize = "<<slipsize<<endl;
 
     Image4DSimple *subject = callback.loadImage(inimg_file);
     if(!subject || !subject->valid())
@@ -261,7 +269,6 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
 
     LandmarkList seedList;
     QTime qtime_seed;
-    seed_size_all = 6;
     qtime_seed.start();
     if(1)
     {
@@ -291,7 +298,7 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
     NeuronTree vt;
     QTime qtime;
     qtime.start();
-    vt = img.trace_seed_list(seedList, visited,InitThreshold,1.0,1.0,1.0,swcfile,20.0,0);
+    vt = img.trace_seed_list(seedList, visited,InitThreshold,1.0,1.0,1.0,swcfile,slipsize,0);
     qDebug("  cost time totol= %g sec", qtime.elapsed()*0.001);
 
     v3d_msg(QString("\nNow you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swcfile),0);
