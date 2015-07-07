@@ -12,7 +12,7 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(file_combine, file_combine);
+Q_EXPORT_PLUGIN2(file_combine, file_combine)
 
 QStringList file_combine::menulist() const
 {

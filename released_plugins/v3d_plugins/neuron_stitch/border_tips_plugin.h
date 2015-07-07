@@ -14,7 +14,7 @@
 class border_tips : public QObject, public V3DPluginInterface2_1
 {
     Q_OBJECT
-    Q_INTERFACES(V3DPluginInterface2_1);
+    Q_INTERFACES(V3DPluginInterface2_1)
 
 public:
     float getPluginVersion() const {return 2.0f;}

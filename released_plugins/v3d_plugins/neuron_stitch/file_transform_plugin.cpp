@@ -11,7 +11,7 @@
 #include "neuron_xforms.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(file_transform, file_transform);
+Q_EXPORT_PLUGIN2(file_transform, file_transform)
  
 QStringList file_transform::menulist() const
 {

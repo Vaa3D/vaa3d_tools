@@ -11,7 +11,7 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(border_tips, border_tips);
+Q_EXPORT_PLUGIN2(search_border_tips, border_tips)
 
 QStringList border_tips::menulist() const
 {

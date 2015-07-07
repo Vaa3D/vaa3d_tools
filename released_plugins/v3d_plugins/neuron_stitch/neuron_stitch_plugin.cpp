@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Q_EXPORT_PLUGIN2(neuron_stitch, neuron_stitch);
+Q_EXPORT_PLUGIN2(neuron_stitch, neuron_stitch)
 
 QList<NeuronGeometryDialog* > dialogList;
 
