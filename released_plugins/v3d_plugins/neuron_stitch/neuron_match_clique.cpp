@@ -15,6 +15,7 @@
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
 #define _TESTFLAG 0
+#define WINNAME_LOCAL "neuron_stitcher_zoom_view"
 
 #define _checkwindow() \
     if (!callback){ \
@@ -196,6 +197,9 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
     callback = cb;
     v3dcontrol = callback->getView3DControl_Any3DViewer(v3dwin);
 
+    p_img0=0;
+    p_img1=0;
+
     ntList=cb->getHandleNeuronTrees_Any3DViewer(v3dwin);
     if(ntList->size()!=2){ //this should not happen
         v3d_msg("The number of neurons in the window is not 2");
@@ -354,8 +358,35 @@ void NeuronLiveMatchDialog::creat()
     btn_stitchall->setEnabled(false);
     btn_skip->setEnabled(false);
 
+    QGroupBox* group_localview = new QGroupBox("zoom-in view the pair to stitch:");
+    QGridLayout* localviewLayout = new QGridLayout();
+    check_localview = new QCheckBox("Auto Launch Local View");
+    check_localview->setChecked(true);
+    btn_localview = new QPushButton("Launch Local View");
+    btn_loadimage0 = new QPushButton("Bottom Section");
+    btn_loadimage1 = new QPushButton("Top Section");
+    spin_localview = new QSpinBox(); spin_localview->setRange(0,1000); spin_localview->setValue(50);
+
+    QLabel* label_localview = new QLabel("Caution: zoom in view is only for visual inspection. For manual editing, please operate in the original 3D view.");
+    localviewLayout->addWidget(label_localview,0,0,1,5);
+    localviewLayout->addWidget(check_localview,1,0,1,2);
+    localviewLayout->addWidget(btn_localview,1,2,1,1);
+    QLabel* label_localviewmargin = new QLabel("Window margin:");
+    localviewLayout->addWidget(label_localviewmargin, 1,3,1,1, Qt::AlignRight);
+    localviewLayout->addWidget(spin_localview,1,4,1,1);
+    QLabel* label_loadimage = new QLabel("Load the 3D image of the section to display:");
+    localviewLayout->addWidget(label_loadimage,2,0,1,2);
+    localviewLayout->addWidget(btn_loadimage0,2,2,1,1);
+    localviewLayout->addWidget(btn_loadimage1,2,3,1,1);
+    group_localview->setLayout(localviewLayout);
+    gridLayout->addWidget(group_localview, stitchrow+3,0,4,6);
+
+    connect(btn_localview,SIGNAL(clicked()), this, SLOT(updatelocalview()));
+    connect(btn_loadimage0,SIGNAL(clicked()), this, SLOT(load_img0()));
+    connect(btn_loadimage1,SIGNAL(clicked()), this, SLOT(load_img1()));
+
     //operation zone
-    int optrow=20;
+    int optrow=25;
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
@@ -403,6 +434,191 @@ void NeuronLiveMatchDialog::spineCheck(int c)
 void NeuronLiveMatchDialog::checkwindow()
 {
     _checkwindow();
+}
+
+void NeuronLiveMatchDialog::updatelocalview()
+{
+    //check callback
+    if (!callback){
+        this->hide();
+        return;
+    }
+
+    //check combobox
+    if(cb_pair->count()<=0){
+        return;
+    }
+
+    //prepair data for the window
+    //calculate neuron offset
+    int idx=cb_pair->currentIndex();
+    V3DLONG winsize[4], winoffset[3];
+    int winmargin = spin_localview->value();
+    const NeuronSWC * S0, * S1;
+    S0=&(ntList->at(0).listNeuron.at(pmatch0.at(idx)));
+    S1=&(ntList->at(1).listNeuron.at(pmatch1.at(idx)));
+    winsize[0]=fabs(S0->x-S1->x)+winmargin;
+    winsize[1]=fabs(S0->y-S1->y)+winmargin;
+    winsize[2]=fabs(S0->z-S1->z)+winmargin;
+    winsize[3]=2;
+
+    winoffset[0]=winsize[0]/2;
+    winoffset[1]=winsize[1]/2;
+    winoffset[2]=winsize[2]/2;
+
+    float x_offset, y_offset, z_offset;
+    x_offset=-(S0->x+S1->x)/2+winoffset[0];
+    y_offset=-(S0->y+S1->y)/2+winoffset[1];
+    z_offset=-(S0->z+S1->z)/2+winoffset[2];
+
+    //image
+    Image4DSimple * tmp_image = new Image4DSimple();
+    unsigned char * p_img = new unsigned char[winsize[0]*winsize[1]*winsize[2]*winsize[3]];
+    memset(p_img,0,winsize[0]*winsize[1]*winsize[2]*winsize[3]);
+    tmp_image->setFileName(WINNAME_LOCAL);
+    tmp_image->setData(p_img, winsize[0], winsize[1], winsize[2], winsize[3], (ImagePixelType)1);
+    //bottom section
+    V3DLONG pagesize=winsize[0]*winsize[1]*winsize[2];
+    if(p_img0!=0){
+        for(V3DLONG sx=0; sx<winsize[0]; sx++){
+            V3DLONG ox=sx-x_offset;
+            if(ox>=size_img0[0] || ox<0) continue;
+            for(V3DLONG sy=0; sy<winsize[1]; sy++){
+                V3DLONG oy=sy-y_offset;
+                if(oy>=size_img0[1] || oy<0) continue;
+                for(V3DLONG sz=0; sz<winsize[2]; sz++){
+                    V3DLONG oz=sz-z_offset;
+                    if(oz>=size_img0[2] || oz<0) continue;
+                    p_img[sx+sy*winsize[0]+sz*winsize[0]*winsize[1]+pagesize] =
+                            p_img0[ox+oy*size_img0[0]+oz*size_img0[0]*size_img0[1]];
+                }
+            }
+        }
+    }
+    //top section
+    double amat[16], amat_inv[16];
+    getAffineAmat(amat, matchfunc->shift_x, matchfunc->shift_y, matchfunc->shift_z, matchfunc->rotation_ang,
+                  matchfunc->rotation_cx, matchfunc->rotation_cy, matchfunc->rotation_cz, matchfunc->direction);
+    inverseAmat(amat, amat_inv);
+    if(p_img1!=0){
+        for(V3DLONG sx=0; sx<winsize[0]; sx++){
+            V3DLONG tx=sx-x_offset;
+            for(V3DLONG sy=0; sy<winsize[1]; sy++){
+                V3DLONG ty=sy-y_offset;
+                for(V3DLONG sz=0; sz<winsize[2]; sz++){
+                    V3DLONG tz=sz-z_offset;
+                    V3DLONG ox, oy, oz;
+                    ox=amat_inv[0]*tx+amat_inv[1]*ty+amat_inv[2]*tz+amat_inv[3];
+                    oy=amat_inv[4]*tx+amat_inv[5]*ty+amat_inv[6]*tz+amat_inv[7];
+                    oz=amat_inv[8]*tx+amat_inv[9]*ty+amat_inv[10]*tz+amat_inv[11];
+                    if(oz>=size_img1[2] || oz<0 || ox>=size_img1[0] || ox<0 || oy>=size_img1[1] || oy<0) continue;
+                    p_img[sx+sy*winsize[0]+sz*winsize[0]*winsize[1]] =
+                            p_img1[ox+oy*size_img1[0]+oz*size_img1[0]*size_img1[1]];
+                }
+            }
+        }
+    }
+
+    //neuron SWC
+    NeuronTree local_nt;
+    local_nt.editable=ntList->at(0).editable;
+    local_nt.file="";
+    local_nt.linemode=ntList->at(0).linemode;
+    local_nt.n=ntList->at(0).n;
+    local_nt.on=ntList->at(0).on;
+    local_nt.selected=ntList->at(0).selected;
+    local_nt.name=WINNAME_LOCAL;
+    local_nt.listNeuron.clear();
+    local_nt.hashNeuron.clear();
+    local_nt.color.r = local_nt.color.g = local_nt.color.b = local_nt.color.a = 0;
+    V3DLONG nmax=0;
+    V3DLONG noffset=0;
+    for(int ntid=0; ntid<2; ntid++){
+        const NeuronTree* source = &(ntList->at(ntid));
+        for(V3DLONG i=0; i<source->listNeuron.size(); i++)
+        {
+            NeuronSWC S;
+            S.n = source->listNeuron[i].n+noffset;
+            S.type = source->listNeuron[i].type;
+            S.x = source->listNeuron[i].x+x_offset-1;
+            S.y = source->listNeuron[i].y+y_offset-1;
+            S.z = source->listNeuron[i].z+z_offset-1;
+            S.r = source->listNeuron[i].r;
+            S.pn = source->listNeuron[i].pn;
+            if(S.pn>=0) S.pn+=noffset;
+            local_nt.listNeuron.append(S);
+            local_nt.hashNeuron.insert(S.n, local_nt.listNeuron.size()-1);
+            nmax=MAX(nmax,S.n);
+        }
+        noffset=nmax+1;
+    }
+
+    //markers
+    LandmarkList local_landmark;
+    for(int i=0; i<mList->size(); i++){
+        LocationSimple SP;
+        SP.x=mList->at(i).x+x_offset;
+        SP.y=mList->at(i).y+y_offset;
+        SP.z=mList->at(i).z+z_offset;
+        SP.color.r=mList->at(i).color.r;
+        SP.color.g=mList->at(i).color.g;
+        SP.color.b=mList->at(i).color.b;
+        SP.color.a=mList->at(i).color.a;
+        SP.comments=mList->at(i).comments;
+        SP.name=mList->at(i).name;
+        local_landmark.append(SP);
+    }
+
+    //push object into the window
+    //locate 3d window
+    v3dhandleList allWindowList = callback->getImageWindowList();
+    v3dhandle localwin = 0;
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(callback->getImageName(allWindowList.at(i)).contains(WINNAME_LOCAL)){
+            localwin = allWindowList[i];
+            break;
+        }
+    }
+    if(localwin == 0){
+        localwin = callback->newImageWindow(WINNAME_LOCAL);
+        callback->setImage(localwin, tmp_image);
+        callback->setLandmark(localwin, local_landmark);
+//        callback->setSWC(localwin, local_nt);
+        callback->updateImageWindow(localwin);
+        callback->open3DWindow(localwin);
+        callback->pushObjectIn3DWindow(localwin);
+
+        QList<NeuronTree> * local_ntList = callback->getHandleNeuronTrees_3DGlobalViewer(localwin);
+        local_ntList->clear();
+        local_ntList->push_back(local_nt);
+        V3dR_MainWindow * local3dwin = callback->find3DViewerByName(WINNAME_LOCAL);
+        if(local3dwin)
+            callback->update_3DViewer(local3dwin);
+
+        qDebug()<<"LiveNeuronStitcher: launch local view for pair: "<<idx;
+    }else{
+        callback->setImage(localwin, tmp_image);
+        callback->setLandmark(localwin, local_landmark);
+//        callback->setSWC(localwin, local_nt);
+        callback->updateImageWindow(localwin);
+        callback->open3DWindow(localwin);
+        callback->pushImageIn3DWindow(localwin);
+        callback->pushObjectIn3DWindow(localwin);
+
+//        View3DControl * local3dcontrol = callback->getView3DControl(localwin);
+//        local3dcontrol->cancelSelect();
+
+        QList<NeuronTree> * local_ntList = callback->getHandleNeuronTrees_3DGlobalViewer(localwin);
+        local_ntList->clear();
+        local_ntList->push_back(local_nt);
+        V3dR_MainWindow * local3dwin = callback->find3DViewerByName(WINNAME_LOCAL);
+        if(local3dwin)
+            callback->update_3DViewer(local3dwin);
+
+        qDebug()<<"LiveNeuronStitcher: update local view for pair: "<<idx;
+    }
+
 }
 
 void NeuronLiveMatchDialog::updateview()
@@ -638,6 +854,10 @@ void NeuronLiveMatchDialog::highlight_pair()
         //}
 
         updateview();
+
+        if(check_localview->isChecked()){
+            updatelocalview();
+        }
     }
 }
 
@@ -697,6 +917,78 @@ void NeuronLiveMatchDialog::change_color()
     updateview();
 
     highlight_pair();
+}
+
+void NeuronLiveMatchDialog::load_img0()
+{
+    QString fname_input;
+    fname_input = QFileDialog::getOpenFileName(0, QObject::tr("Choose the Image of Bottom Section "),
+                                               fname_input,
+                                               QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    if(fname_input.isEmpty()){
+        return;
+    }
+
+    unsigned char * p_img_tmp = 0;
+    V3DLONG sz_tmp[4];
+    int type_tmp;
+    if(!simple_loadimage_wrapper(*callback, fname_input.toStdString().c_str(), p_img_tmp, sz_tmp, type_tmp)){
+        v3d_msg("failed to load image: "+fname_input);
+        return;
+    }
+    if(type_tmp!=1){
+        v3d_msg("Only support UINT8/8bit image. Please convert datatype first (Image/Data->image type).");
+        return;
+    }
+    int ch=0;
+    if(sz_tmp[3]!=1){
+        bool ok;
+        ch=QInputDialog::getInteger(0, "select channel","Which channel to display? (start from 0)",0,0,sz_tmp[3]-1,1,&ok);
+        if(!ok)
+            return;
+    }
+    if(p_img0!=0) delete[] p_img0;
+    p_img0=p_img_tmp+ch*sz_tmp[0]*sz_tmp[1]*sz_tmp[2];
+    size_img0[0]=sz_tmp[0];
+    size_img0[1]=sz_tmp[1];
+    size_img0[2]=sz_tmp[2];
+    size_img0[3]=1;
+}
+
+void NeuronLiveMatchDialog::load_img1()
+{
+    QString fname_input;
+    fname_input = QFileDialog::getOpenFileName(0, QObject::tr("Choose the Image of Top Section "),
+                                               fname_input,
+                                               QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    if(fname_input.isEmpty()){
+        return;
+    }
+
+    unsigned char * p_img_tmp = 0;
+    V3DLONG sz_tmp[4];
+    int type_tmp;
+    if(!simple_loadimage_wrapper(*callback, fname_input.toStdString().c_str(), p_img_tmp, sz_tmp, type_tmp)){
+        v3d_msg("failed to load image: "+fname_input);
+        return;
+    }
+    if(type_tmp!=1){
+        v3d_msg("Only support UINT8/8bit image. Please convert datatype first (Image/Data->image type).");
+        return;
+    }
+    int ch=0;
+    if(sz_tmp[3]!=1){
+        bool ok;
+        ch=QInputDialog::getInteger(0, "select channel","Which channel to display? (start from 0)",0,0,sz_tmp[3]-1,1,&ok);
+        if(!ok)
+            return;
+    }
+    if(p_img1!=0) delete[] p_img1;
+    p_img1=p_img_tmp+ch*sz_tmp[0]*sz_tmp[1]*sz_tmp[2];
+    size_img1[0]=sz_tmp[0];
+    size_img1[1]=sz_tmp[1];
+    size_img1[2]=sz_tmp[2];
+    size_img1[3]=1;
 }
 
 void NeuronLiveMatchDialog::manualadd()

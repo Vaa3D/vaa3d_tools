@@ -57,6 +57,7 @@ void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, QList<int
 double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1);
 //double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1, QList<XYZ> c0, QList<XYZ> c1);
 void rotate_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis); //angle is 0-360  based
+bool inverseAmat(const double amat[16], double amat_inv[16]);
 void affine_XYZList(const QList<XYZ>& in, QList<XYZ>& out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis); //angle is 0-360  based
 bool minus_XYZList(QList<XYZ>& a, QList<XYZ>& b, QList<XYZ>& out);
 double compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);

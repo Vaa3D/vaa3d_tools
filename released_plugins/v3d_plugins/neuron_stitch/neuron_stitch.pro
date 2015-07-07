@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../..
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
-#INCLUDEPATH	+= $$VAA3DPATH/v3d_main/3drenderer/
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/3drenderer/
 
 HEADERS	+= neuron_stitch_plugin.h \
     neuron_stitch_func.h \

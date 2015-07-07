@@ -178,6 +178,9 @@ public slots:
     void change_pair(int idx);
     void change_color();
     void spineCheck(int c);
+    void updatelocalview();
+    void load_img0();
+    void load_img1();
     void reject();
 
 private:
@@ -189,6 +192,8 @@ private:
     neuron_match_clique * matchfunc;
     LandmarkList * mList;
     View3DControl * v3dcontrol;
+    unsigned char * p_img0, * p_img1;
+    V3DLONG size_img0[4], size_img1[4];
 
     QList<int> pmatch0, pmatch1, mmatch0, mmatch1;
     QList<int> stitchmask; //if loopmask[i] true, then connecct pmatch0[i] and pmatch1[i] will result in loop
@@ -202,9 +207,10 @@ public:
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr, *spin_gapthr;
     QSpinBox *spin_maxcnum;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
-    QSpinBox *spin_spineLen;
+    QSpinBox *spin_spineLen, *spin_localview;
     QDoubleSpinBox *spin_spineAng, *spin_spineRadius;
-    QCheckBox *check_spine, *check_type;
+    QCheckBox *check_spine, *check_type, *check_localview;
+    QPushButton *btn_localview, *btn_loadimage0, *btn_loadimage1;
     QGroupBox *group_marker;
 };
 

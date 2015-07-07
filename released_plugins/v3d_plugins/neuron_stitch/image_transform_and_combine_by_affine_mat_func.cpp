@@ -4,6 +4,7 @@
 #include <math.h>
 #include <QtGui>
 #include <fstream>
+#include "neuron_stitch_func.h"
 
 #define MAX(a,b) (a)>(b)?(a):(b)
 #define MIN(a,b) (a)<(b)?(a):(b)
@@ -20,65 +21,6 @@ void transformCoord(const A coord_in[3], B coord_out[3], double amat[16])
     coord_out[0]=(B)(amat[0]*(double)coord_in[0]+amat[1]*(double)coord_in[1]+amat[2]*(double)coord_in[2]+amat[3]);
     coord_out[1]=(B)(amat[4]*(double)coord_in[0]+amat[5]*(double)coord_in[1]+amat[6]*(double)coord_in[2]+amat[7]);
     coord_out[2]=(B)(amat[8]*(double)coord_in[0]+amat[9]*(double)coord_in[1]+amat[10]*(double)coord_in[2]+amat[11]);
-}
-
-//calculate the inverse of affine matrix
-bool inverseAmat(const double amat[16], double amat_inv[16])
-{
-    //1. check amat eligibility
-    if(fabs(amat[12])>1e-6 ||
-            fabs(amat[13])>1e-6 ||
-            fabs(amat[14])>1e-6 ||
-            fabs(amat[15]-1)>1e-6 )
-    {
-        qDebug()<<"invalide last row of amat";
-        return false;
-    }
-
-    //amat=[M b;[0] 1];
-    //inv(amat)=[inv(M) -inv(M)*b;[0] 1];
-
-    //2. calculate inv(M)
-    //calculate det of M
-    double detM=amat[0]*(amat[5]*amat[10]-amat[6]*amat[9]);
-    detM+=amat[1]*(amat[6]*amat[8]-amat[4]*amat[10]);
-    detM+=amat[2]*(amat[4]*amat[9]-amat[5]*amat[8]);
-    if(fabs(detM)<1e-6){
-        qDebug()<<"invalide determinant of amat (rotation, scaling, sheering)";
-        return false;
-    }
-
-    //calculate adj of M
-    double adjM[3][3];
-    adjM[0][0]=amat[5]*amat[10]-amat[9]*amat[6];
-    adjM[0][1]=amat[9]*amat[2]-amat[1]*amat[10];
-    adjM[0][2]=amat[1]*amat[6]-amat[5]*amat[2];
-    adjM[1][0]=amat[6]*amat[8]-amat[4]*amat[10];
-    adjM[1][1]=amat[0]*amat[10]-amat[8]*amat[2];
-    adjM[1][2]=amat[2]*amat[4]-amat[6]*amat[0];
-    adjM[2][0]=amat[4]*amat[9]-amat[5]*amat[8];
-    adjM[2][1]=amat[8]*amat[1]-amat[0]*amat[9];
-    adjM[2][2]=amat[0]*amat[5]-amat[1]*amat[4];
-
-    //invM=adjM/detM
-    amat_inv[0]=adjM[0][0]/detM;
-    amat_inv[1]=adjM[0][1]/detM;
-    amat_inv[2]=adjM[0][2]/detM;
-    amat_inv[4]=adjM[1][0]/detM;
-    amat_inv[5]=adjM[1][1]/detM;
-    amat_inv[6]=adjM[1][2]/detM;
-    amat_inv[8]=adjM[2][0]/detM;
-    amat_inv[9]=adjM[2][1]/detM;
-    amat_inv[10]=adjM[2][2]/detM;
-
-    //3. finalize rest part
-    amat_inv[3]=-(amat_inv[0]*amat[3]+amat_inv[1]*amat[7]+amat_inv[2]*amat[11]);
-    amat_inv[7]=-(amat_inv[4]*amat[3]+amat_inv[5]*amat[7]+amat_inv[6]*amat[11]);
-    amat_inv[11]=-(amat_inv[8]*amat[3]+amat_inv[9]*amat[7]+amat_inv[10]*amat[11]);
-    amat_inv[12]=amat_inv[13]=amat_inv[14]=0;
-    amat_inv[15]=1;
-
-    return true;
 }
 
 //affine transform image based on given affine matrix
