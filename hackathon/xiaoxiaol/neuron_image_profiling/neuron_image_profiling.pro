@@ -11,6 +11,7 @@ HEADERS	+= profile_swc.h
 SOURCES += openSWCDialog.cpp
 HEADERS += openSWCDialog.h
 
+SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_image_profiling)
