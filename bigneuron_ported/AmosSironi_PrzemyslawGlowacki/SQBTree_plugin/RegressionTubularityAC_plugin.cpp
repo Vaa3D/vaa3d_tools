@@ -346,9 +346,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
             V3DLONG n_pixels = size_img[i_img][0]*size_img[i_img][1]*size_img[i_img][2];
 
 
-
-
-//save also radial gt and image to check size and  axis
+//save radial gt and image to check size and  axis
             //radial gt
      //       Image4DSimple *train_radial_gt = callback.loadImage("../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
      //       callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/swc_gt_debug.v3draw");

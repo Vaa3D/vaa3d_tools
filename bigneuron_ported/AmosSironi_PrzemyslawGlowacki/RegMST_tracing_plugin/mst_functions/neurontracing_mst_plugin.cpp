@@ -338,6 +338,9 @@ trace_para.b_estRadii = false;
 
     QString swc_name = PARA.inimg_file + "_RegMST_Tracing.swc";
 
+    //post process
+  //   nt_final = post_process(nt_final);
+
     writeSWC_file(swc_name,nt_final);
 
     if(!bmenu)
@@ -348,6 +351,9 @@ trace_para.b_estRadii = false;
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
+
+     std::cout << "sorting" <<std::endl << std::flush;
+
 
     V3DPluginArgItem arg;
     V3DPluginArgList input_sort;
@@ -366,12 +372,19 @@ trace_para.b_estRadii = false;
     QString func_name_sort = "sort_swc";
     callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
-    return;
+   // return;
     //writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
+
+     std::cout << "post_processing" <<std::endl << std::flush;
 
     NeuronTree nt_sorted = readSWC_file(swc_name);
     NeuronTree nt_sorted_prund = post_process(nt_sorted);
     NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
+
+////    writeSWC_file(swc_name.toStdString().c_str(),nt_sorted_prund_2nd);
+
+
+ //    std::cout << "A" <<std::endl << std::flush;
 
     p0.x = nt_sorted_prund_2nd.listNeuron.at(0).x;
     p0.y = nt_sorted_prund_2nd.listNeuron.at(0).y;
@@ -389,6 +402,8 @@ trace_para.b_estRadii = false;
         childs[nt_sorted_prund_2nd.hashNeuron.value(par)].push_back(i);
     }
 
+   //  std::cout << "B" <<std::endl << std::flush;
+
 
     QList<NeuronSWC> list = nt_sorted_prund_2nd.listNeuron;
     for (int i=1;i<list.size();i++)
@@ -403,6 +418,8 @@ trace_para.b_estRadii = false;
         }
     }
 
+    // std::cout << "C" <<std::endl << std::flush;
+
     V3DLONG sz_tracing[4];
     sz_tracing[0] = in_sz[0];
     sz_tracing[1] = in_sz[1];
@@ -416,6 +433,9 @@ trace_para.b_estRadii = false;
         return;
     }
 
+
+   //  std::cout << "D" <<std::endl << std::flush;
+
    // trace_para.b_postMergeClosebyBranches = true;
     NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
                               p0, pp,
@@ -425,7 +445,7 @@ trace_para.b_estRadii = false;
     NeuronTree nt_2nd_sorted;
     SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5);
 
-    nt_2nd_sorted.name = "MST_Tracing";
+    nt_2nd_sorted.name = "_RegMST_Tracing";
     writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
 
 
@@ -566,7 +586,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
 
 
     double weight_xy_z=1.0;
-    bool b_mergeCloseBranches = false;
+    bool b_mergeCloseBranches = false;//false
     bool b_usedshortestpathonly = false;
     bool b_postTrim = true;
     bool b_pruneArtifactBranches = true;
@@ -789,6 +809,9 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
 NeuronTree  post_process(NeuronTree nt)
 {
 
+
+  //  std::cout << "a" <<std::endl << std::flush;
+
     double length = 5.0;
     QVector<QVector<V3DLONG> > childs;
 
@@ -805,26 +828,39 @@ NeuronTree  post_process(NeuronTree nt)
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+   // std::cout << "b" <<std::endl << std::flush;
+
     QList<NeuronSWC> list = nt.listNeuron;
+   // std::cout << "list.size() " <<list.size()<< std::endl << std::flush;
+
+//    std::cout << "neuronNum " <<neuronNum<< std::endl << std::flush;
+//getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+
+
     for (int i=0;i<list.size();i++)
     {
         if (childs[i].size()==0)
         {
             int index_tip = 0;
             int parent_tip = getParent(i,nt);
-            while(childs[parent_tip].size()<2)
+            while(childs[parent_tip].size()<2 && (nt).listNeuron.at(parent_tip).pn>0)
             {
-
+             //   std::cout << "b1 " << parent_tip <<std::endl << std::flush;
+             //   std::cout << "b11 " << (nt).listNeuron.at(parent_tip).pn <<std::endl << std::flush;
                 parent_tip = getParent(parent_tip,nt);
                 index_tip++;
             }
             if(index_tip < length)
             {
+             //   std::cout << "b2" <<std::endl << std::flush;
+
                 flag[i] = -1;
 
                 int parent_tip = getParent(i,nt);
-                while(childs[parent_tip].size()<2)
+                while(childs[parent_tip].size()<2  && (nt).listNeuron.at(parent_tip).pn>0)
                 {
+                //    std::cout << "b3" <<std::endl << std::flush;
+
                     flag[parent_tip] = -1;
                     parent_tip = getParent(parent_tip,nt);
                 }
@@ -833,6 +869,9 @@ NeuronTree  post_process(NeuronTree nt)
         }
 
     }
+
+  //  std::cout << "c" <<std::endl << std::flush;
+
 
    //NeutronTree structure
    NeuronTree nt_prunned;
@@ -860,12 +899,20 @@ NeuronTree  post_process(NeuronTree nt)
        }
 
   }
+
+ //  std::cout << "d" <<std::endl << std::flush;
+
+
    nt_prunned.n = -1;
    nt_prunned.on = true;
    nt_prunned.listNeuron = listNeuron;
    nt_prunned.hashNeuron = hashNeuron;
 
    if(flag) {delete[] flag; flag = 0;}
+
+ //  std::cout << "e" <<std::endl << std::flush;
+
+
    return nt_prunned;
 
 }

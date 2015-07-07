@@ -86,8 +86,9 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 	else
 	{
         v3d_msg(tr("plugin for applying the regression tubularity approach [1]\n "
-                   "in combiantion with the MST algorithm to reconstruct tubular structures.\n\n"
+                   "in combiantion with a MST algorithm [2] to reconstruct tubular structures.\n\n"
                    " [1]  A. Sironi, E. Turetken, V. Lepetit and P. Fua. Multiscale Centerline Detection, submitted to IEEE Transactions on Pattern Analysis and Machine Intelligence.\n"
+                   " [2]  H. Peng, Z. Ruan, D. Atasoy and S. Sternson Automatic reconstruction of 3D neuron structures using a graph-augmented deformable model. Bioinformatics.\n"
 			"Developed by Amos Sironi and Przemyslaw Glowacki, 2015-6-23"));
 	}
 }
@@ -267,7 +268,7 @@ mst_PARA.channel = PARA.channel;
 
 if((PARA.n_ac_iters>0)){//compute regression tubularity
 
-    std::cout << "calling REG tubularity plugin  " <<std::endl << std::flush;
+    std::cout << "calling Regression Tubularity plugin  " <<std::endl << std::flush;
 
     QString full_plugin_name_tubularity = "RegressionTubularityAC";
     QString func_name_test_tubularity = "test";

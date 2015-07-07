@@ -473,7 +473,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
       binaryImageToLabelMapFilter->Update();
 
       // The output of this filter is an itk::LabelMap, which contains itk::LabelObject's
-        std::cout << "There are " << binaryImageToLabelMapFilter->GetOutput()->GetNumberOfLabelObjects() << " objects." << std::endl;
+   //     std::cout << "There are " << binaryImageToLabelMapFilter->GetOutput()->GetNumberOfLabelObjects() << " objects." << std::endl;
 
         // Loop over each region
 //        for(unsigned int i = 0; i < binaryImageToLabelMapFilter->GetOutput()->GetNumberOfLabelObjects(); i++)
@@ -496,15 +496,15 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
 
 
     //get bounding box of connected components
-
-        std::cout << "updating  labelMapToLabelImageFilter"<< std::endl << std::flush;
+//
+    //    std::cout << "updating  labelMapToLabelImageFilter"<< std::endl << std::flush;
 
         typedef itk::LabelMapToLabelImageFilter<BinaryImageToLabelMapFilterType::OutputImageType, Uint8ImageType> LabelMapToLabelImageFilterType;
         typename  LabelMapToLabelImageFilterType::Pointer labelMapToLabelImageFilter = LabelMapToLabelImageFilterType::New();
          labelMapToLabelImageFilter->SetInput(binaryImageToLabelMapFilter->GetOutput());
          labelMapToLabelImageFilter->Update();
 
-         std::cout << "updating  LabelStatisticsImageFilter"<< std::endl<< std::flush;
+   //      std::cout << "updating  LabelStatisticsImageFilter"<< std::endl<< std::flush;
 
          typedef itk::LabelStatisticsImageFilter< Uint8ImageType, Uint8ImageType > LabelStatisticsImageFilterType;
         typename LabelStatisticsImageFilterType::Pointer labelStatisticsImageFilter = LabelStatisticsImageFilterType::New();
@@ -514,8 +514,8 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
          std::cout << "done"<< std::endl<< std::flush;
 
 
-         std::cout << "Number of labels: " << labelStatisticsImageFilter->GetNumberOfLabels() << std::endl;
-           std::cout << std::endl;
+     //    std::cout << "Number of labels: " << labelStatisticsImageFilter->GetNumberOfLabels() << std::endl;
+     //      std::cout << std::endl;
 
            typedef LabelStatisticsImageFilterType::ValidLabelValuesContainerType ValidLabelValuesType;
            typedef LabelStatisticsImageFilterType::LabelPixelType                LabelPixelType;
@@ -529,7 +529,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
             crop_end_idxs_temp[0] = in_sz_cropped_temp[0]-1;  crop_end_idxs_temp[1] = in_sz_cropped_temp[1]-1;  crop_end_idxs_temp[2] = in_sz_cropped_temp[2]-1;
 
 
-            std::cout << "init region idx: " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: "<< crop_end_idxs_temp <<std::endl;
+      //      std::cout << "init region idx: " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: "<< crop_end_idxs_temp <<std::endl;
 
            bool found_region = false;
 
@@ -566,7 +566,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
                             crop_end_idxs_temp[2]  = crop_start_idxs_temp[2] +in_sz_cropped_temp[2] -1;
                              found_region = true;
 
-                             std::cout << "found first region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+               //              std::cout << "found first region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
 
 
                      }else{
@@ -593,7 +593,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
                          in_sz_cropped_temp[2] = crop_end_idxs_temp[2] - crop_start_idxs_temp[2] +1;
 
 
-                         std::cout << "found other region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+                //         std::cout << "found other region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
 
 
                      }

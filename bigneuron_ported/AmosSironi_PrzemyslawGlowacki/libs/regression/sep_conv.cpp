@@ -48,10 +48,6 @@ typedef SQB::TreeBooster<
             MatrixClassifResponseValueObjectType >      TreeBoosterType;
 
 
-
-
-
-
 ////functions definitions
 ///
 
@@ -59,7 +55,7 @@ template<typename MatrixType>
 void writeMatrix(const char *filename,MatrixType matrix_to_write){
 
     ofstream fout(filename); //opening an output stream for file test.txt
-        /*checking whether file could be opened or not. If file does not exist or don't have write permissions, file
+        /*checking whether file could be opened or not. If file does not exist or you do not have write permissions, file
       stream could not be opened.*/
       if(fout.is_open())
         {
@@ -80,7 +76,7 @@ void writeMatrix(const char *filename,MatrixType matrix_to_write){
         }
         else //file could not be opened
         {
-            cout << "File could not be opened." << endl;
+            cout << "File "<< filename<<" could not be written." << endl;
         }
 }
 
@@ -129,7 +125,7 @@ MatrixTypeDouble readMatrix(const char *filename)
             result(i,j) = buff[ cols*i+j ];
 
     return result;
-    };
+    }
 
 
 // helper for itk separable filter

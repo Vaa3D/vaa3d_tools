@@ -118,7 +118,7 @@ void predictRegressor(const char * regressor_output_file,const gFeatArrayType &a
     }
     catch(const libconfig::FileIOException &fioex)
     {
-      std::cerr << "I/O error while reading file." << std::endl;
+      std::cerr << "Error while reading regression file: " << regressor_output_file<<  std::endl;
     }
     catch(const libconfig::ParseException &pex)
     {
@@ -195,6 +195,7 @@ ITKFloatImageType::Pointer binaryGt2ExpDistGt(typename ImageType::Pointer train_
 }
 
 
+//TODO
 template<typename ImageType>
 ITK4DDistImageType::Pointer radialGt2ExpDistGt(typename ImageType::Pointer train_gt_radial_ITK,float thresh_distance,VectorTypeFloat scales, float scale_toll){
 
