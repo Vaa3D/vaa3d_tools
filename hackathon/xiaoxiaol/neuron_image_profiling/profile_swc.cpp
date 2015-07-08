@@ -9,6 +9,8 @@
 #include "profile_swc.h"
 #include <vector>
 #include <iostream>
+#include "eswc_core.h"
+#include "math.h"
 using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
@@ -57,7 +59,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 		return false;
 
 	NeuronTree nt = openDlg->nt;
-	QList<NeuronSWC> neuron = nt.listNeuron;
+
 
 
 	QString swcFileName = openDlg->file_name;
@@ -65,7 +67,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
         float dilate_radius = 0.0;
 
-	if (!intensity_profile(neuron, image, dilate_radius, output_csv_file))
+    if (!intensity_profile(nt, image, dilate_radius, output_csv_file,callback))
 	{
 		cout<<"Error in intensity_profile() !"<<endl;
 		return false;
@@ -84,7 +86,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 	float  dilate_radius = 0.0;
 
-	QList<NeuronSWC> neuron;
+    NeuronTree  neuronTree;
 	bool hasPara, hasOutput;
 	if (input.size() < 3)
 	{
@@ -151,28 +153,9 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
         }
 
         if (swcFileName.endsWith(".swc") || swcFileName.endsWith(".SWC"))
-                neuron = readSWC_file(swcFileName).listNeuron;
-        else if (swcFileName.endsWith(".ano") || swcFileName.endsWith(".ANO"))
         {
-                P_ObjectFileType linker_object;
-                if (!loadAnoFile(swcFileName,linker_object))
-		{
-			cout<<"Error in reading the linker file."<<endl;
-                        return false;
-                }
-                QStringList nameList = linker_object.swc_file_list;
-                V3DLONG neuronNum = nameList.size();
-                vector<QList<NeuronSWC> > nt_list;
-                for (V3DLONG i=0;i<neuronNum;i++)
-                {
-                        QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
-                        nt_list.push_back(tmp);
-                }
-                if (!combine_linker(nt_list, neuron))
-                {
-                        cout<<"Error in combining neurons."<<endl;
-                        return false;
-                }
+            neuronTree = readSWC_file(swcFileName);
+
         }
         else
         {
@@ -182,7 +165,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
-    if (!intensity_profile(neuron, image, dilate_radius, output_csv_file))
+    if (!intensity_profile(neuronTree, image, dilate_radius, output_csv_file, callback))
 	{
 		cout<<"Error in intensity_profile() !"<<endl;
 		return false;
@@ -191,10 +174,83 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 }
 
-bool intensity_profile(QList<NeuronSWC> neuron, Image4DSimple * image, float dilate_radius, QString output_csv_file)
-{
-	return true; 
 
+
+//return singal to noise ratio
+IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment,V3DPluginCallback2 &callback){
+
+    IMAGE_METRICS metrics;
+    metrics.snr = 0.0;
+    metrics.dy = 0.0;
+
+    V3DLONG min_x = INFINITY, min_y = INFINITY, max_x = 0, max_y = 0;
+    for (V3DLONG i =0 ; i < neuronSegment.size() ; i++)
+    {
+       NeuronSWC node = neuronSegment.at(i);
+       if(min_x > node.x) min_x = node.x;
+       if(min_y > node.y) min_y = node.y;
+       if(max_x < node.x) max_x = node.x;
+       if(max_y < node.y) max_y = node.y;
+    }
+
+    unsigned char * fg_1d;
+    unsigned char * bg_1d;
+    unsigned char * roi_1d;
+
+    int width = max_x-min_x+1;
+    int length = max_y-min_y+1;
+    int size_1d = width * length;
+    roi_1d = new unsigned char[size_1d];
+    V3DLONG d = 0;
+    for(V3DLONG i = min_y; i < max_y; i++)
+        for(V3DLONG j = min_x; j < max_x; j++)
+        {
+            roi_1d [d]= image->getRawData()[i*image->getXDim()+j];
+            d++;
+        }
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData((unsigned char *)roi_1d, width, length, 1, 1, V3D_UINT8);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, new4DImage);
+    callback.setImageName(newwin, "cropped.result");
+    callback.updateImageWindow(newwin);
+
+
+    return metrics;
+
+}
+
+bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_radius, QString output_csv_file, V3DPluginCallback2 &callback)
+{
+    // parse swc, divide into segments
+    vector<V3DLONG> segment_id;
+    vector<V3DLONG> segment_layer; //not used
+
+    swc2eswc(neuronTree, segment_id, segment_layer);
+    // Assume the neuron tree nodes are ordered by segments (sorted neurons),
+    // so the last node has the biggest segmentent label and
+    // the nodes are sorted by the segment id, in increasing order.
+
+    V3DLONG num_segments =  segment_id.at(segment_id.size()-1);
+
+    QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
+    V3DLONG pre_id = 1;
+    QList<NeuronSWC> neuronSegment;
+    for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
+    {
+         if (segment_id[i] == pre_id)
+         {
+             neuronSegment.push_back( neuronSWCs.at(i) );
+         }
+         else
+         {
+            compute_metrics( image, neuronSegment,callback );
+            neuronSegment.clear();
+            pre_id = segment_id[i];
+         }
+    }
+
+	return true; 
 }
 
 void printHelp(const V3DPluginCallback2 &callback, QWidget *parent)
