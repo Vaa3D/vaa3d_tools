@@ -40,6 +40,7 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
 
 	tabWidget->addTab(fileDlg, tr("Open from File"));
 	if (fileList.isEmpty()) tabWidget->setTabEnabled(0, false);
+    else listWidget->setCurrentRow(0);
 
 	dlgLayout->addWidget(tabWidget);
 	setLayout(dlgLayout);
@@ -48,6 +49,10 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
 bool OpenSWCDialog::run()
 {
 	int row = listWidget->currentRow();
+    if(row<0){
+        v3d_msg("please select neuron");
+        return false;
+    }
 	nt = _3DViewerTreeList[row];
 	file_name = nt.file;
 	
