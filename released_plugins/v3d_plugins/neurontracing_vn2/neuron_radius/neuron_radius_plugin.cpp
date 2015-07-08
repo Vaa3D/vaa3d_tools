@@ -6,6 +6,9 @@
 #include "my_surf_objs.h"
 #include "stackutil.h"
 #include "marker_radius.h"
+#include "smooth_curve.h"
+#include "hierarchy_prune.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_radius, SWCRadiusPlugin);
@@ -164,6 +167,28 @@ void SWCRadiusPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             else
                 marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh);
         }
+
+        vector<HierarchySegment*> topo_segs;
+        swc2topo_segs(inswc, topo_segs, 1, inimg1d, 0, 0, 0);
+
+        cout<<"Smooth the final curve"<<endl;
+        for(int i = 0; i < topo_segs.size(); i++)
+        {
+            HierarchySegment * seg = topo_segs[i];
+            MyMarker * leaf_marker = seg->leaf_marker;
+            MyMarker * root_marker = seg->root_marker;
+            vector<MyMarker*> seg_markers;
+            MyMarker * p = leaf_marker;
+            while(p != root_marker)
+            {
+                seg_markers.push_back(p);
+                p = p->parent;
+            }
+            seg_markers.push_back(root_marker);
+            smooth_curve_and_radius(seg_markers, 5);
+        }
+        inswc.clear();
+        topo_segs2swc(topo_segs, inswc, 0); // no resampling
         saveSWC_file(outswc_file, inswc);
         QMessageBox::information(0,"", string("neuron radius is calculated successfully. \n\nThe output swc is saved to " +outswc_file).c_str());
         for(int i = 0; i < inswc.size(); i++) delete inswc[i];
