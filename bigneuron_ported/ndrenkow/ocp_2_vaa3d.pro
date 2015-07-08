@@ -5,6 +5,7 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += hdf5/include
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS	+= ocp_2_vaa3d_plugin.h
 SOURCES	+= ocp_2_vaa3d_plugin.cpp
