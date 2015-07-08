@@ -56,6 +56,7 @@ public:
     BranchContainer * get_root_branch();
     BranchContainer * get_branch_by_segment(NeuronSegment * segment);
     double get_confidence();
+    Reconstruction * copy();
 };
 
 class BranchTip {
@@ -107,10 +108,12 @@ public:
     void set_reconstruction(Reconstruction * reconstruction);
     void set_parent(BranchContainer * parent);
     void add_child(BranchContainer * branch);
-    void set_children(std::set<BranchContainer *> children);
+    void add_children(std::set<BranchContainer *> branches);
+    void remove_children();
+    void remove_child(BranchContainer * child);
+    //void set_children(std::set<BranchContainer *> children);
     void set_composite_match(CompositeBranchContainer * composite_match);
     void set_confidence(double confidence);
-    void remove_child(BranchContainer * child);
     
     // Getters
     NeuronSegment * get_segment();
@@ -128,30 +131,7 @@ public:
     }
 };
 
-std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment &root){
-    std::stack<NeuronSegment *> segment_stack;
-    segment_stack.push(&root);
-    std::vector<NeuronSegment *> segments;
-    NeuronSegment * segment;
-    while (!segment_stack.empty()){
-        segment = segment_stack.top();
-        segment_stack.pop();
-        segments.push_back(segment);
-    }
-    return segments;
-}
-
-std::map<NeuronSegment *, BranchContainer *> produce_segment_container_map(BranchContainer &container_root){
-    std::map<NeuronSegment *, BranchContainer *> sb_map;
-    std::stack<BranchContainer *> branch_stack;
-    branch_stack.push(&container_root);
-    BranchContainer * branch;
-    while (!branch_stack.empty()){
-        branch = branch_stack.top();
-        branch_stack.pop();
-        sb_map.insert(pair<NeuronSegment *,BranchContainer *>(branch->get_segment(), branch));
-    }
-    return sb_map;
-}
+std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment * root);
+std::map<NeuronSegment *, BranchContainer *> produce_segment_container_map(BranchContainer * container_root);
 
 #endif
