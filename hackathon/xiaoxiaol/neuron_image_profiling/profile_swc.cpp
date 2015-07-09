@@ -12,6 +12,7 @@
 #include "eswc_core.h"
 #include <math.h>
 #include <numeric>
+#include <algorithm>
 using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
