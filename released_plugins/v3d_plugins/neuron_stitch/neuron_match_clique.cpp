@@ -475,8 +475,6 @@ void NeuronLiveMatchDialog::updatelocalview()
     Image4DSimple * tmp_image = new Image4DSimple();
     unsigned char * p_img = new unsigned char[winsize[0]*winsize[1]*winsize[2]*winsize[3]];
     memset(p_img,0,winsize[0]*winsize[1]*winsize[2]*winsize[3]);
-    tmp_image->setFileName(WINNAME_LOCAL);
-    tmp_image->setData(p_img, winsize[0], winsize[1], winsize[2], winsize[3], (ImagePixelType)1);
     //bottom section
     V3DLONG pagesize=winsize[0]*winsize[1]*winsize[2];
     if(p_img0!=0){
@@ -518,6 +516,8 @@ void NeuronLiveMatchDialog::updatelocalview()
             }
         }
     }
+    tmp_image->setFileName(WINNAME_LOCAL);
+    tmp_image->setData(p_img, winsize[0], winsize[1], winsize[2], winsize[3], (ImagePixelType)1);
 
     //neuron SWC
     NeuronTree local_nt;
@@ -953,6 +953,8 @@ void NeuronLiveMatchDialog::load_img0()
     size_img0[1]=sz_tmp[1];
     size_img0[2]=sz_tmp[2];
     size_img0[3]=1;
+
+    updatelocalview();
 }
 
 void NeuronLiveMatchDialog::load_img1()
@@ -989,6 +991,8 @@ void NeuronLiveMatchDialog::load_img1()
     size_img1[1]=sz_tmp[1];
     size_img1[2]=sz_tmp[2];
     size_img1[3]=1;
+
+    updatelocalview();
 }
 
 void NeuronLiveMatchDialog::manualadd()
