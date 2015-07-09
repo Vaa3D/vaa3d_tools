@@ -46,7 +46,7 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 {
 	if (func_name == tr("profile_swc"))
 	{
-                profile_swc_func(callback,input, output);
+                    profile_swc_func(callback,input, output);
 	}
 	else if (func_name == tr("help"))
 	{

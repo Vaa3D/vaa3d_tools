@@ -80,89 +80,37 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-	vector<char*>* outlist = NULL;
-	vector<char*>* paralist = NULL;
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
+    if(infiles.size() != 2 && infiles.size() != 3)
+    {
+        cerr<<"Invalid input"<<endl;
+        return false;
+    }
+    QString imageFileName = QString(infiles[0]);
+    QString swcFileName = QString(infiles[1]);
 
-    float  dilate_ratio = 3.0;
+    float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
+
+    cout<<"inimg_file = "<<imageFileName.toStdString()<<endl;
+    cout<<"inswc_file = "<<swcFileName.toStdString()<<endl;
+    cout<<"dilate_ratio = "<<dilate_ratio<<endl;
 
     NeuronTree  neuronTree;
-	bool hasPara, hasOutput;
-	if (input.size() < 3)
-	{
-		cout<<"No new parameter specified.\n";
-		hasPara = false;
-	}
-	else {
-		hasPara = true;
-		paralist = (vector<char*>*)(input.at(2).p);
-	}
 
-	if (inlist->size() < 3)
-	{
-		cout<<"You must specify both the input image file and input swc file!"<<endl;
-		return false;
-	}
-
-	if (output.size()==0){
-		cout<<"No output file specified.\n";
-		hasOutput = false;
-	}
-	else {  
-		hasOutput = true;
-		if (output.size()>1)
-		{       
-			cout<<"You have specified more than 1 output file.\n";
-			return false;
-		}
-		outlist = (vector<char*>*)(output.at(0).p);
-	}
-
-
-	if (hasPara)
-	{
-		if (paralist->size()==0)
-		{
-			cout<<"Dilation diameter is set to be 0 by default."<<endl;
-            dilate_ratio = 1.0;
-		}
-		else if (paralist->size()==1)
-		{
-            dilate_ratio  = atof(paralist->at(0));
-            cout<<"dialation radius: "<< dilate_ratio<<endl;
-		}
-		else    
-		{
-			cout<<"Illegal parameter list."<<endl;
-			return false;
-		}
-	}
-
-
-        QString swcFileName = QString(inlist->at(0));
-        QString imageFileName = QString(inlist->at(1));
-        QString output_csv_file = swcFileName + "./out.csv";
-        if (hasOutput)
-        {
-                cout <<"output file: "<< outlist->at(0)<<endl;
-                output_csv_file = QString(outlist->at(0));
-        }       
-        else
-        {
-                output_csv_file= swcFileName+QString("_sorted.swc");
-        }
-
-        if (swcFileName.endsWith(".swc") || swcFileName.endsWith(".SWC"))
-        {
-            neuronTree = readSWC_file(swcFileName);
-
-        }
-        else
-        {
-                cout<<"The file type you specified is not supported."<<endl;
-                return false;
-        }
+    QString output_csv_file = swcFileName + "./out.csv";
+    if (swcFileName.endsWith(".swc") || swcFileName.endsWith(".SWC"))
+    {
+        neuronTree = readSWC_file(swcFileName);
+    }
+    else
+    {
+        cout<<"The file type you specified is not supported."<<endl;
+        return false;
+    }
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
@@ -405,12 +353,13 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"This plugin is used for profiling 2D images with SWC specified ROIs.\n";
     cout<<"usage:\n";
-	cout<<"-f<func name>:\t\t profile_swc\n";
-	cout<<"-i<file name>:\t\t input .swc or .ano file\n";
-	cout<<"-o<file name>:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: 'ouput.csv'\n";
-    cout<<"-p<dilation radius>:\t (not required) the dilation ratio to expand the radius for background ROI extraction";
-	cout<<"Example:\t ./v3d -x neuron_image_profiling -f profile_swc -i test.swc -o test.swc.output.csv -p 0.0\n";
-
+    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_radius> "
+    <<endl;
+    cout<<"inimg_file:\t\t input image file\n";
+    cout<<"inswc_file:\t\t input .swc file\n";
+    cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: 'ouput.csv'\n";
+    cout<<"dilation_radius:\t (not required) the dilation ratio to expand the radius for background ROI extraction\n"
+    <<endl;
 }
 
 
