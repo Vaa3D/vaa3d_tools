@@ -198,13 +198,13 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
        }
 
        float dilate_radius = dilate_ratio * r;
-       float node_x_min = node.x - r - dilate_radius - 0.5;
-       float node_y_min = node.y - r - dilate_radius - 0.5;
-       float node_z_min = node.z - r - dilate_radius - 0.5;
+       V3DLONG node_x_min = node.x - r - dilate_radius + 0.5; // with rounding
+       V3DLONG node_y_min = node.y - r - dilate_radius + 0.5;
+       V3DLONG node_z_min = node.z - r - dilate_radius + 0.5;
 
-       float node_x_max = node.x + r + dilate_radius + 0.5;
-       float node_y_max = node.y + r + dilate_radius + 0.5;
-       float node_z_max = node.z + r + dilate_radius + 0.5;
+       V3DLONG node_x_max = node.x + r + dilate_radius + 0.5;
+       V3DLONG node_y_max = node.y + r + dilate_radius + 0.5;
+       V3DLONG node_z_max = node.z + r + dilate_radius + 0.5;
 
        if(min_x > node_x_min) min_x = node_x_min;
        if(min_y > node_y_min) min_y = node_y_min;
@@ -233,15 +233,16 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     cout << "size:" << width<<" x" <<height <<" x"<<depth<<endl;
 
 
-    vector <float> fg_1d;
-    vector <float> bg_1d;
+    vector <double> fg_1d;
+    vector <double> bg_1d;
 
-    unsigned char * roi_1d_visited = new unsigned char[size_1d];
+    unsigned char  * roi_1d_visited = new  unsigned char [size_1d];
     for (V3DLONG i = 0; i < size_1d ; i++){ roi_1d_visited[i] = 0;} //not visited = 0
 
 
-    unsigned char  FG = 255; //foreground
-    unsigned char  BG = 100; //background
+    unsigned char FG = 255; //foreground
+    unsigned char BG = 100; //background
+
     for (V3DLONG i = 0; i < neuronSegment.size() ; i++)
     {
         NeuronSWC node = neuronSegment.at(i);
@@ -254,39 +255,17 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         }
         float dilate_radius = dilate_ratio * r;
 
+        V3DLONG xb,xe,yb,ye,zb,ze;
 
-
-        //label background
-        V3DLONG xb = node.x - r - dilate_radius - 0.5; if(xb<0) xb = 0;
-        V3DLONG xe = node.x + r + dilate_radius + 0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
-        V3DLONG yb = node.y - r - dilate_radius - 0.5; if(yb<0) yb = 0;
-        V3DLONG ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
-        V3DLONG zb = node.z - r - dilate_radius - 0.5; if(zb<0) zb = 0;
-        V3DLONG ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
-        for (V3DLONG z = zb; z <= ze; z++)
-        {
-            for ( V3DLONG y = yb; y <= ye; y++)
-            {
-                for ( V3DLONG x = xb; x <= xe; x++)
-                {
-                    V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
-                    V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    roi_1d_visited[roi_index] = BG;
-                    bg_1d.push_back(float(image->getRawData()[index_1d]));
-                }
-
-            }
-
-        }
 
 
         //label foreground
-        xb = node.x - r -0.5; if(xb<0) xb = 0;
-        xe = node.x + r +0.5; if(xe>image->getXDim()) xe = image->getXDim()-1;
-        yb = node.y - r -0.5; if(yb<0) yb = 0;
-        ye = node.y + r +0.5; if(ye>image->getYDim()) ye = image->getYDim()-1;
-        zb = node.z - r -0.5; if(zb<0) zb = 0;
-        ze = node.z + r +0.5; if(ze>image->getZDim()) ze = image->getZDim()-1;
+        xb = node.x - r +0.5; if(xb<0) xb = 0;
+        xe = node.x + r +0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
+        yb = node.y - r +0.5; if(yb<0) yb = 0;
+        ye = node.y + r +0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
+        zb = node.z - r +0.5; if(zb<0) zb = 0;
+        ze = node.z + r +0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -295,13 +274,43 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    roi_1d_visited[roi_index] = FG;
-                    fg_1d.push_back(float(image->getRawData()[index_1d]));
+                    if  (roi_1d_visited[roi_index] != FG)
+                    {
+                        roi_1d_visited[roi_index] = FG;
+                        fg_1d.push_back(double(image->getRawData()[index_1d]));
+                    }
                 }
 
             }
 
         }
+
+        //label background
+         xb = node.x - r - dilate_radius + 0.5; if(xb<0) xb = 0;
+         xe = node.x + r + dilate_radius + 0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
+         yb = node.y - r - dilate_radius + 0.5; if(yb<0) yb = 0;
+         ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
+         zb = node.z - r - dilate_radius + 0.5; if(zb<0) zb = 0;
+         ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
+        for (V3DLONG z = zb; z <= ze; z++)
+        {
+            for ( V3DLONG y = yb; y <= ye; y++)
+            {
+                for ( V3DLONG x = xb; x <= xe; x++)
+                {
+                    V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+                    V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+                    if  (roi_1d_visited[roi_index] == 0)
+                    {
+                        roi_1d_visited[roi_index] = BG;
+                        bg_1d.push_back(double(image->getRawData()[index_1d]));
+                    }
+                }
+
+            }
+
+        }
+////
 
     }
 
@@ -314,28 +323,28 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     callback.updateImageWindow(newwin);
 
 
-//    // compute metrics
-//    float max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
-//    float min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
-//    metrics.dy = max_fg - min_fg;
+    // compute metrics
+    double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
+    double min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
+    metrics.dy = max_fg - min_fg;
 
-//    float bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
-//    float fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
-//    float sum2;
+    double bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
+    double fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
+    double sum2;
 
-//    for ( V3DLONG i = 0; i < bg_1d.size(); i++ )
-//    {
-//        sum2 += pow(bg_1d[i]-bg_mean,2);
-//    }
-//    float bg_deviation= sqrt(sum2/(bg_1d.size()-1));
+    for ( V3DLONG i = 0; i < bg_1d.size(); i++ )
+    {
+        sum2 += pow(bg_1d[i]-bg_mean,2);
+    }
+    double bg_deviation= sqrt(sum2/(bg_1d.size()-1));
 
-//    if (bg_deviation != 0.0){
-//        metrics.snr = fabs(fg_mean - bg_mean)/bg_deviation;
-//    }
-//    else {
-//        metrics.snr  = INFINITY;
-//        cout<<"warning! background deviation is zero"<<endl;
-//    }
+    if (bg_deviation != 0.0){
+        metrics.snr = fabs(fg_mean - bg_mean)/bg_deviation;
+    }
+    else {
+        metrics.snr  = INFINITY;
+        cout<<"warning! background deviation is zero"<<endl;
+    }
 
 
     cout<<"\n\n\n My Segment "<< ":dy = "<<metrics.dy <<"; snr = "<<metrics.snr <<"\n\n\n\n\n"<< endl;
