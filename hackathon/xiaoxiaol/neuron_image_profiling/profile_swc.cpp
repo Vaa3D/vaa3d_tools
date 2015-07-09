@@ -17,6 +17,7 @@
 #include <QTextStream>
 #include <QInputDialog>
 #include "v3d_message.h"
+#include "compute_tubularity.h"
 
 using namespace std;
 
@@ -34,10 +35,10 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<<"dynamic_range"<<","<<"snr"<<"\n";
+        stream<< "segment_id" <<","<<"dynamic_range"<<","<<"snr" <<","<<"tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
-            stream << i+1 <<","<<result_metrics[i].dy << "," << result_metrics[i].snr << "\n";
+            stream << i+1 <<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
         }
 
         file.close();
@@ -87,12 +88,13 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Dynamic Range | Signal-to-Background Ratio \n";
+    QString disp_text = "Segment ID | Dynamic Range | Signal-to-Background Ratio | Ave Tubularity \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
      disp_text += QString::number(result_metrics[i].dy) + "             ";
-     disp_text += QString::number(result_metrics[i].snr)+ "\n";
+     disp_text += QString::number(result_metrics[i].snr)+ "                          ";
+     disp_text += QString::number(result_metrics[i].tubularity)+ "\n";
     }
     disp_text +="Output the metrics into:"+ output_csv_file +"\n";
     v3d_msg(disp_text);
@@ -171,6 +173,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     IMAGE_METRICS metrics;
     metrics.snr = 0.0;
     metrics.dy = 0.0;
+    metrics.tubularity = 0.0;
 
     V3DLONG min_x = INFINITY, min_y = INFINITY,  min_z = INFINITY, max_x = 0, max_y = 0, max_z= 0;
 
@@ -227,9 +230,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     vector <double> bg_1d;
 
     unsigned char  * roi_1d_visited = new  unsigned char [size_1d];
-//    unsigned char FG = (  unsigned char) 255; //foreground
-//    unsigned char BG =  (  unsigned char) 100; //background
-//    unsigned char EMPTY = (  unsigned char) 0; //not visited
     int FG = 255;
     int BG = 100;
 
@@ -237,11 +237,11 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     for (V3DLONG i = 0; i < size_1d ; i++)
     {
-        roi_1d_visited[i] = 0;
+        roi_1d_visited[i] = 0;  //unvisited tag
     }
 
 
-
+    vector <double> tubularities;
     for (V3DLONG i = 0; i < neuronSegment.size() ; i++)
     {
         NeuronSWC node = neuronSegment.at(i);
@@ -258,7 +258,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
         V3DLONG xb,xe,yb,ye,zb,ze;
 
-
+        // for each node
         //label foreground
         xb = node.x - r +0.5; if(xb<0) xb = 0;
         xe = node.x + r +0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
@@ -313,18 +313,20 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
             }
         }
 
+        // compute tubularity for each node
+        double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 1, node.x,node.y,node.z, r + dilate_radius);
+
+        tubularities.push_back(tubuV);
+
     }
 
+    //for debug purpose
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *) roi_1d_visited, width, height, depth, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
-
-    //for debug purpose
-
-
 
     // compute metrics
     double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
@@ -349,8 +351,13 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         cout<<"warning! background deviation is zero"<<endl;
     }
 
+    //average tubularity
+    metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
 
-    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean<<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"\n"<< endl;
+
+
+    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
+        <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; ave_tubularity = "<<metrics.tubularity <<"\n"<< endl;
     return metrics;
 
 }

@@ -10,6 +10,7 @@
 struct IMAGE_METRICS {
     double snr;
     double dy;
+    double tubularity;
 };
 
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);
