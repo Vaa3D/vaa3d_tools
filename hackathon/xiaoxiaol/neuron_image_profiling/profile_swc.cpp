@@ -10,7 +10,8 @@
 #include <vector>
 #include <iostream>
 #include "eswc_core.h"
-#include "math.h"
+#include <math.h>
+#include <numeric>
 using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
@@ -65,9 +66,9 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	QString swcFileName = openDlg->file_name;
         QString output_csv_file = swcFileName + QString("out.csv");
 
-        float dilate_radius = 0.0;
+        float dilate_ratio = 3.0;
 
-    if (!intensity_profile(nt, image, dilate_radius, output_csv_file,callback))
+    if (!intensity_profile(nt, image, dilate_ratio, output_csv_file,callback))
 	{
 		cout<<"Error in intensity_profile() !"<<endl;
 		return false;
@@ -84,7 +85,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 	vector<char*>* paralist = NULL;
 
 
-	float  dilate_radius = 0.0;
+    float  dilate_ratio = 3.0;
 
     NeuronTree  neuronTree;
 	bool hasPara, hasOutput;
@@ -124,12 +125,12 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 		if (paralist->size()==0)
 		{
 			cout<<"Dilation diameter is set to be 0 by default."<<endl;
-			dilate_radius = 0;   
+            dilate_ratio = 1.0;
 		}
 		else if (paralist->size()==1)
 		{
-			dilate_radius  = atof(paralist->at(0));
-			cout<<"dialation radius: "<< dilate_radius<<endl;
+            dilate_ratio  = atof(paralist->at(0));
+            cout<<"dialation radius: "<< dilate_ratio<<endl;
 		}
 		else    
 		{
@@ -165,7 +166,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
-    if (!intensity_profile(neuronTree, image, dilate_radius, output_csv_file, callback))
+    if (!intensity_profile(neuronTree, image, dilate_ratio, output_csv_file, callback))
 	{
 		cout<<"Error in intensity_profile() !"<<endl;
 		return false;
@@ -176,51 +177,173 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 
 
-//return singal to noise ratio
-IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment,V3DPluginCallback2 &callback){
+IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback){
 
     IMAGE_METRICS metrics;
     metrics.snr = 0.0;
     metrics.dy = 0.0;
 
-    V3DLONG min_x = INFINITY, min_y = INFINITY, max_x = 0, max_y = 0;
+    V3DLONG min_x = INFINITY, min_y = INFINITY,  min_z = INFINITY, max_x = 0, max_y = 0, max_z= 0;
+
+    //get the  bounding box of ROI include the background defined by the dilate_ratio
     for (V3DLONG i =0 ; i < neuronSegment.size() ; i++)
     {
        NeuronSWC node = neuronSegment.at(i);
-       if(min_x > node.x) min_x = node.x;
-       if(min_y > node.y) min_y = node.y;
-       if(max_x < node.x) max_x = node.x;
-       if(max_y < node.y) max_y = node.y;
+       float r;
+       if (node.radius < 0){
+           r = 1;
+       }
+       else{
+           r = node.radius;
+       }
+
+       float dilate_radius = dilate_ratio * r;
+       float node_x_min = node.x - r - dilate_radius - 0.5;
+       float node_y_min = node.y - r - dilate_radius - 0.5;
+       float node_z_min = node.z - r - dilate_radius - 0.5;
+
+       float node_x_max = node.x + r + dilate_radius + 0.5;
+       float node_y_max = node.y + r + dilate_radius + 0.5;
+       float node_z_max = node.z + r + dilate_radius + 0.5;
+
+       if(min_x > node_x_min) min_x = node_x_min;
+       if(min_y > node_y_min) min_y = node_y_min;
+       if(min_z > node_z_min) min_z = node_z_min;
+       if(max_x < node_x_max) max_x = node_x_max;
+       if(max_y < node_y_max) max_y = node_y_max;
+       if(max_z < node_z_max) max_z = node_z_max;
     }
 
-    unsigned char * fg_1d;
-    unsigned char * bg_1d;
-    unsigned char * roi_1d;
 
-    int width = max_x-min_x+1;
-    int length = max_y-min_y+1;
-    int size_1d = width * length;
-    roi_1d = new unsigned char[size_1d];
-    V3DLONG d = 0;
-    for(V3DLONG i = min_y; i < max_y; i++)
-        for(V3DLONG j = min_x; j < max_x; j++)
-        {
-            roi_1d [d]= image->getRawData()[i*image->getXDim()+j];
-            d++;
+    min_x = min_x < 0 ? 0 : min_x;
+    min_y = min_y < 0 ? 0 : min_y;
+    min_z = min_z < 0 ? 0 : min_z;
+    max_x = max_x > (image->getXDim()-1) ? (image->getXDim() - 1) : max_x;
+    max_y = max_y > (image->getYDim()-1) ? (image->getYDim() - 1) : max_y;
+    max_z = max_z > (image->getZDim()-1) ? (image->getZDim() - 1) : max_z;
+
+    int width =  max_x - min_x + 1;
+    int height = max_y - min_y + 1;
+    int depth =  max_z - min_z + 1;
+
+    int size_1d = width * height *depth;
+
+    cout << "min: "<< min_x<<" "<< min_y <<" " <<min_z<<endl;
+    cout << "max: "<< max_x<<" "<< max_y <<" " <<max_z<<endl;
+    cout << "size:" << width<<" x" <<height <<" x"<<depth<<endl;
+
+
+    vector <float> fg_1d;
+    vector <float> bg_1d;
+
+    unsigned char * roi_1d_visited = new unsigned char[size_1d];
+    for (V3DLONG i = 0; i < size_1d ; i++){ roi_1d_visited[i] = 0;} //not visited = 0
+
+
+    unsigned char  FG = 255; //foreground
+    unsigned char  BG = 100; //background
+    for (V3DLONG i = 0; i < neuronSegment.size() ; i++)
+    {
+        NeuronSWC node = neuronSegment.at(i);
+        float r;
+        if (node.radius < 0 ){
+            r = 1;
         }
+        else{
+            r = node.radius;
+        }
+        float dilate_radius = dilate_ratio * r;
+
+
+
+        //label background
+        V3DLONG xb = node.x - r - dilate_radius - 0.5; if(xb<0) xb = 0;
+        V3DLONG xe = node.x + r + dilate_radius + 0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
+        V3DLONG yb = node.y - r - dilate_radius - 0.5; if(yb<0) yb = 0;
+        V3DLONG ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
+        V3DLONG zb = node.z - r - dilate_radius - 0.5; if(zb<0) zb = 0;
+        V3DLONG ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
+        for (V3DLONG z = zb; z <= ze; z++)
+        {
+            for ( V3DLONG y = yb; y <= ye; y++)
+            {
+                for ( V3DLONG x = xb; x <= xe; x++)
+                {
+                    V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+                    V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+                    roi_1d_visited[roi_index] = BG;
+                    bg_1d.push_back(float(image->getRawData()[index_1d]));
+                }
+
+            }
+
+        }
+
+
+        //label foreground
+        xb = node.x - r -0.5; if(xb<0) xb = 0;
+        xe = node.x + r +0.5; if(xe>image->getXDim()) xe = image->getXDim()-1;
+        yb = node.y - r -0.5; if(yb<0) yb = 0;
+        ye = node.y + r +0.5; if(ye>image->getYDim()) ye = image->getYDim()-1;
+        zb = node.z - r -0.5; if(zb<0) zb = 0;
+        ze = node.z + r +0.5; if(ze>image->getZDim()) ze = image->getZDim()-1;
+        for (V3DLONG z = zb; z <= ze; z++)
+        {
+            for ( V3DLONG y = yb; y <= ye; y++)
+            {
+                for ( V3DLONG x = xb; x <= xe; x++)
+                {
+                    V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+                    V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+                    roi_1d_visited[roi_index] = FG;
+                    fg_1d.push_back(float(image->getRawData()[index_1d]));
+                }
+
+            }
+
+        }
+
+    }
+
+    //for debug purpose
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)roi_1d, width, length, 1, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char *) roi_1d_visited, width, height, depth, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
 
 
+//    // compute metrics
+//    float max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
+//    float min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
+//    metrics.dy = max_fg - min_fg;
+
+//    float bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
+//    float fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
+//    float sum2;
+
+//    for ( V3DLONG i = 0; i < bg_1d.size(); i++ )
+//    {
+//        sum2 += pow(bg_1d[i]-bg_mean,2);
+//    }
+//    float bg_deviation= sqrt(sum2/(bg_1d.size()-1));
+
+//    if (bg_deviation != 0.0){
+//        metrics.snr = fabs(fg_mean - bg_mean)/bg_deviation;
+//    }
+//    else {
+//        metrics.snr  = INFINITY;
+//        cout<<"warning! background deviation is zero"<<endl;
+//    }
+
+
+    cout<<"\n\n\n My Segment "<< ":dy = "<<metrics.dy <<"; snr = "<<metrics.snr <<"\n\n\n\n\n"<< endl;
     return metrics;
 
 }
 
-bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_radius, QString output_csv_file, V3DPluginCallback2 &callback)
+bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, QString output_csv_file, V3DPluginCallback2 &callback)
 {
     // parse swc, divide into segments
     vector<V3DLONG> segment_id;
@@ -232,6 +355,7 @@ bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilat
     // the nodes are sorted by the segment id, in increasing order.
 
     V3DLONG num_segments =  segment_id.at(segment_id.size()-1);
+    cout<<"\n\n\n\n\n TotalSegment number :"<<num_segments<<endl;
 
     QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
     V3DLONG pre_id = 1;
@@ -244,11 +368,21 @@ bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilat
          }
          else
          {
-            compute_metrics( image, neuronSegment,callback );
+            if (!neuronSegment.empty())
+            {
+              cout<<"Segment # :"<<pre_id<<endl;
+              IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
+            }
             neuronSegment.clear();
             pre_id = segment_id[i];
          }
     }
+
+    if (!neuronSegment.empty())
+    {
+      cout<<"Segment # :"<<segment_id[segment_id.size()-1]<<endl;
+      IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio,callback );
+     }
 
 	return true; 
 }
@@ -260,12 +394,12 @@ void printHelp(const V3DPluginCallback2 &callback, QWidget *parent)
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    cout<<"This plugin is used for profiling images with SWC specified ROIs.\n";
+    cout<<"This plugin is used for profiling 2D images with SWC specified ROIs.\n";
     cout<<"usage:\n";
 	cout<<"-f<func name>:\t\t profile_swc\n";
 	cout<<"-i<file name>:\t\t input .swc or .ano file\n";
 	cout<<"-o<file name>:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: 'ouput.csv'\n";
-	cout<<"-p<dilation radius>:\t (not required) the dilation radius to expand the radius sepcified in swc file to exclude from background for ROI calculation"; 
+    cout<<"-p<dilation radius>:\t (not required) the dilation ratio to expand the radius for background ROI extraction";
 	cout<<"Example:\t ./v3d -x neuron_image_profiling -f profile_swc -i test.swc -o test.swc.output.csv -p 0.0\n";
 
 }
