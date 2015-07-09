@@ -13,35 +13,38 @@
 #include <math.h>
 #include <numeric>
 #include <algorithm>
+#include <QFile>
+#include <QTextStream>
+#include <QInputDialog>
+#include "v3d_message.h"
+
 using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
 
-bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined)
+
+bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file)
 {
-        V3DLONG neuronNum = linker.size();
-        if (neuronNum<=0)
+    QFile file(output_csv_file);
+    if (!file.open(QFile::WriteOnly|QFile::Truncate))
+    {
+        cout <<"Error opening the file "<<output_csv_file.toStdString().c_str() << endl;
+        return false;
+    }
+    else
+    {
+        QTextStream stream (&file);
+        stream<< "segment_id" <<","<<"dynamic_range"<<","<<"snr"<<"\n";
+        for (int i  = 0; i < result_metrics.size() ; i++)
         {
-                cout<<"the linker file is empty, please check your data."<<endl;
-                return false;
+            stream << i+1 <<","<<result_metrics[i].dy << "," << result_metrics[i].snr << "\n";
         }
-        V3DLONG offset = 0;
-        combined = linker[0];
-        for (V3DLONG i=1;i<neuronNum;i++)
-        {
-                V3DLONG maxid = -1;
-                for (V3DLONG j=0;j<linker[i-1].size();j++)
-                        if (linker[i-1][j].n>maxid) maxid = linker[i-1][j].n;
-                offset += maxid+1;
-                for (V3DLONG j=0;j<linker[i].size();j++)
-                {
-                        NeuronSWC S = linker[i][j];
-                        S.n = S.n+offset;
-                        if (S.pn>=0) S.pn = S.pn+offset;
-                        combined.append(S);
-                }
-        }
-};
+
+        file.close();
+    }
+    return true;
+
+}
 
 
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
@@ -63,21 +66,43 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	NeuronTree nt = openDlg->nt;
 
 
+    QString swcFileName = openDlg->file_name;
+    QString output_csv_file = swcFileName + QString(".csv");
 
-	QString swcFileName = openDlg->file_name;
-        QString output_csv_file = swcFileName + QString("out.csv");
 
-        float dilate_ratio = 3.0;
+    float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
+                                 "Enter dialte ratio:",
+                                 3.0, 1.0, 100.0);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio, callback);
 
-    if (!intensity_profile(nt, image, dilate_ratio, output_csv_file,callback))
-	{
-		cout<<"Error in intensity_profile() !"<<endl;
-		return false;
-	}
-    cout<<" output file:" << output_csv_file.toStdString() <<endl;
+    if (result_metrics.isEmpty())
+    {
+        cout<<"Error in intensity_profile() !"<<endl;
+        return false;
+    }
+
+
+    //output
+    writeMetrics2CSV(result_metrics, output_csv_file);
+
+
+    //display metrics to the msg window
+    QString disp_text = "Segment ID | Dynamic Range | Signal-to-Background Ratio \n";
+    for (int i  = 0; i < result_metrics.size() ; i++)
+    {
+     disp_text += QString::number(i+1)+ "            ";
+     disp_text += QString::number(result_metrics[i].dy) + "             ";
+     disp_text += QString::number(result_metrics[i].snr)+ "\n";
+    }
+    disp_text +="Output the metrics into:"+ output_csv_file +"\n";
+    v3d_msg(disp_text);
+
+
 	return true;
 
 }
+
+
 
 bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -93,16 +118,21 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     }
     QString imageFileName = QString(infiles[0]);
     QString swcFileName = QString(infiles[1]);
+    QString output_csv_file;
+    if(!outfiles.empty())
+        output_csv_file = QString(outfiles[0]);
+    else
+        output_csv_file = swcFileName + ".csv";
 
     float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
 
-    cout<<"inimg_file = "<<imageFileName.toStdString()<<endl;
-    cout<<"inswc_file = "<<swcFileName.toStdString()<<endl;
-    cout<<"dilate_ratio = "<<dilate_ratio<<endl;
+    cout<<"inimg_file = "<< imageFileName.toStdString()<<endl;
+    cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
+    cout<<"output_file = "<< output_csv_file.toStdString()<<endl;
+    cout<<"dilate_ratio = "<< dilate_ratio<<endl;
 
     NeuronTree  neuronTree;
 
-    QString output_csv_file = swcFileName + "./out.csv";
     if (swcFileName.endsWith(".swc") || swcFileName.endsWith(".SWC"))
     {
         neuronTree = readSWC_file(swcFileName);
@@ -115,11 +145,21 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
-    if (!intensity_profile(neuronTree, image, dilate_ratio, output_csv_file, callback))
-	{
-		cout<<"Error in intensity_profile() !"<<endl;
-		return false;
-	}
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio, callback);
+
+    if (result_metrics.isEmpty())
+    {
+        cout<<"Error in intensity_profile() !"<<endl;
+        return false;
+    }
+    else{
+        if (!writeMetrics2CSV(result_metrics, output_csv_file))
+        {
+            cout<< "error in writeMetrics2CSV()" <<endl;
+        }
+    }
+
+
 	return true;
 
 }
@@ -141,6 +181,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
        float r;
        if (node.radius < 0){
            r = 1;
+           cout <<" warning: node radius is negtive?! " <<endl;
        }
        else{
            r = node.radius;
@@ -186,11 +227,20 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     vector <double> bg_1d;
 
     unsigned char  * roi_1d_visited = new  unsigned char [size_1d];
-    for (V3DLONG i = 0; i < size_1d ; i++){ roi_1d_visited[i] = 0;} //not visited = 0
+//    unsigned char FG = (  unsigned char) 255; //foreground
+//    unsigned char BG =  (  unsigned char) 100; //background
+//    unsigned char EMPTY = (  unsigned char) 0; //not visited
+    int FG = 255;
+    int BG = 100;
 
 
-    unsigned char FG = 255; //foreground
-    unsigned char BG = 100; //background
+
+    for (V3DLONG i = 0; i < size_1d ; i++)
+    {
+        roi_1d_visited[i] = 0;
+    }
+
+
 
     for (V3DLONG i = 0; i < neuronSegment.size() ; i++)
     {
@@ -199,13 +249,14 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         if (node.radius < 0 ){
             r = 1;
         }
-        else{
+        else
+        {
             r = node.radius;
         }
+
         float dilate_radius = dilate_ratio * r;
 
         V3DLONG xb,xe,yb,ye,zb,ze;
-
 
 
         //label foreground
@@ -223,7 +274,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    if  (roi_1d_visited[roi_index] != FG)
+                    if  ( roi_1d_visited[roi_index] != FG )
                     {
                         roi_1d_visited[roi_index] = FG;
                         fg_1d.push_back(double(image->getRawData()[index_1d]));
@@ -241,6 +292,9 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
          ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
          zb = node.z - r - dilate_radius + 0.5; if(zb<0) zb = 0;
          ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
+
+
+
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -249,7 +303,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    if  (roi_1d_visited[roi_index] == 0)
+                    if  ( roi_1d_visited[roi_index] == 0)
                     {
                         roi_1d_visited[roi_index] = BG;
                         bg_1d.push_back(double(image->getRawData()[index_1d]));
@@ -257,19 +311,19 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                 }
 
             }
-
         }
-////
 
     }
 
-    //for debug purpose
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *) roi_1d_visited, width, height, depth, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
+
+    //for debug purpose
+
 
 
     // compute metrics
@@ -296,13 +350,23 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     }
 
 
-    cout<<"\n\n\n My Segment "<< ":dy = "<<metrics.dy <<"; snr = "<<metrics.snr <<"\n\n\n\n\n"<< endl;
+    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean<<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"\n"<< endl;
     return metrics;
 
 }
 
-bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, QString output_csv_file, V3DPluginCallback2 &callback)
+QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, V3DPluginCallback2 &callback)
 {
+
+    QList<IMAGE_METRICS> result_metrics;
+    result_metrics.clear();
+
+    if (image->getDatatype() != V3D_UINT8)
+    {
+        cout << "This plugin only support 8 bit images." <<endl;
+        return result_metrics;
+    }
+
     // parse swc, divide into segments
     vector<V3DLONG> segment_id;
     vector<V3DLONG> segment_layer; //not used
@@ -313,36 +377,34 @@ bool intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilat
     // the nodes are sorted by the segment id, in increasing order.
 
     V3DLONG num_segments =  segment_id.at(segment_id.size()-1);
-    cout<<"\n\n\n\n\n TotalSegment number :"<<num_segments<<endl;
+    cout<<"\n TotalSegment number :"<<num_segments<<endl;
 
     QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
     V3DLONG pre_id = 1;
     QList<NeuronSWC> neuronSegment;
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
-         if (segment_id[i] == pre_id)
-         {
-             neuronSegment.push_back( neuronSWCs.at(i) );
-         }
-         else
-         {
+        if (segment_id[i] != pre_id || i == (neuronSWCs.size() -1))
+        {
             if (!neuronSegment.empty())
             {
-              cout<<"Segment # :"<<pre_id<<endl;
-              IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
+                cout<<"Segment # :"<<pre_id<<endl;
+                IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
+                result_metrics.push_back(metrics);
             }
             neuronSegment.clear();
             pre_id = segment_id[i];
-         }
+
+        }
+        else
+        {
+            neuronSegment.push_back( neuronSWCs.at(i) );
+        }
     }
 
-    if (!neuronSegment.empty())
-    {
-      cout<<"Segment # :"<<segment_id[segment_id.size()-1]<<endl;
-      IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio,callback );
-     }
+   // file.close();
 
-	return true; 
+    return result_metrics;
 }
 
 void printHelp(const V3DPluginCallback2 &callback, QWidget *parent)
@@ -354,11 +416,11 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"This plugin is used for profiling 2D images with SWC specified ROIs.\n";
     cout<<"usage:\n";
-    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_radius> "
+    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_ratio> "
     <<endl;
     cout<<"inimg_file:\t\t input image file\n";
     cout<<"inswc_file:\t\t input .swc file\n";
-    cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: 'ouput.csv'\n";
+    cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: '<inswc_file>.csv'\n";
     cout<<"dilation_radius:\t (not required) the dilation ratio to expand the radius for background ROI extraction\n"
     <<endl;
 }
