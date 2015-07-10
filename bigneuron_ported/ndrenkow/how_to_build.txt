@@ -1,0 +1,6 @@
+Currently, this code was developed and tested on Mac OSX exclusively.Please follow the instruction to build the plugin:
+1. unzip the boost headers file folder from the link (https://www.dropbox.com/s/hbxnuq10pz6dttt/boost.zip?dl=0) and put the folder into ./boost/include/
+2. create a folder under /Users/drenkng1/Documents/Tools/hdf5-1.8.15/build/lib/, and copy all libraries under ./hdf5/lib/ to this new folder.
+3. Make sure copy all boost libraries under ./boost/lib/ into somewhere in the library path.
+4. qmake
+5. make
