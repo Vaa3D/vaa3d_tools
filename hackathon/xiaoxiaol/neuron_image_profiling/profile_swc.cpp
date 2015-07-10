@@ -35,10 +35,10 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<<"dynamic_range"<<","<<"snr" <<","<<"tubularity"<<"\n";
+        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
-            stream << i+1 <<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
+            stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
         }
 
         file.close();
@@ -88,10 +88,11 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Dynamic Range | Signal-to-Background Ratio | Ave Tubularity \n";
+    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Signal-to-Background Ratio | Ave Tubularity \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
+     disp_text += QString::number(result_metrics[i].type) + "             ";;
      disp_text += QString::number(result_metrics[i].dy) + "             ";
      disp_text += QString::number(result_metrics[i].snr)+ "                          ";
      disp_text += QString::number(result_metrics[i].tubularity)+ "\n";
@@ -171,6 +172,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback){
 
     IMAGE_METRICS metrics;
+    metrics.type = neuronSegment.at(0).type; // one segment is one type ( all it's nodes should have the same type)
     metrics.snr = 0.0;
     metrics.dy = 0.0;
     metrics.tubularity = 0.0;
@@ -358,6 +360,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
         <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; ave_tubularity = "<<metrics.tubularity <<"\n"<< endl;
+
     return metrics;
 
 }
@@ -374,7 +377,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
         return result_metrics;
     }
 
-    // parse swc, divide into segments
+    //parse swc, divide into segments
     vector<V3DLONG> segment_id;
     vector<V3DLONG> segment_layer; //not used
 
@@ -408,9 +411,6 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
             neuronSegment.push_back( neuronSWCs.at(i) );
         }
     }
-
-   // file.close();
-
     return result_metrics;
 }
 

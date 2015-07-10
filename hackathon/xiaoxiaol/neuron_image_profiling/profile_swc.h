@@ -8,6 +8,7 @@
 #include <v3d_interface.h>
 
 struct IMAGE_METRICS {
+    int type; // segment type: 0-- soma;  1 -- dendrite;2--axon
     double snr;
     double dy;
     double tubularity;
