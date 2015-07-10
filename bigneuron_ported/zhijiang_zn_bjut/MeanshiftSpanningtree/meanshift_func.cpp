@@ -8,7 +8,11 @@
 #include "stackutil.h"
 #include "meanshift_func.h"
 #include "smooth_curve.h"
+#include "hierarchy_prune.h"
+
+
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/heap.h"
+
 #include "../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
@@ -466,6 +470,171 @@ void printSWCByQList_QList(QList<QList <NeuronSWC> > result_list,char* path)
 	fclose(fp);
 	return;
 }
+
+void construct_tree_vn2(QMap<int,QList<Node*> > finalclass_node,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
+{//based on the every roots which cluster pixel nodes, using spanning tree to construct subtrees with weights combined distance and gradient
+	double weight_d=1;
+	double weight_g=1;
+	double nSigma=0.4;
+	for(QMap<int,QList<Node*> >::iterator iter=finalclass_node.begin();iter!=finalclass_node.end();iter++)
+	{
+		{
+			if(iter.value().size()<=1)
+				continue;
+
+			QList<Node*> seed=iter.value();
+
+			QList<Node*> seeds=trim_nodes(seed, sz_x, sz_y, sz_z);
+
+			V3DLONG marknum = seeds.size();
+			//	printf("111111111111111111111111111111111\n");
+			//QList<Gradient*> grad=gradient(seeds,img1d, sz_x, sz_y, sz_z);//calculate the gradient of every seed
+			QList<Gradient*> grad;
+			//printf("2222222222222222222222222222222\n");
+
+			double** markEdge = new double*[marknum];//distance
+			double** markEdge_g = new double*[marknum];//gradient
+			double** markEdge_d=new double*[marknum];
+			for(int i = 0; i < marknum; i++)
+			{
+				markEdge[i] = new double[marknum];
+				markEdge_g[i]=new double[marknum];
+				markEdge_d[i]=new double[marknum];
+				//fprintf(debug_fp,"markEdge[i]:%lf\n",markEdge[i]);
+			}
+
+			double x1,y1,z1;
+			double angle_x1,angle_y1,angle_z1;
+			double sum=0;//maximum value of all distance between nodes
+
+			for (int i=0;i<marknum;i++)
+			{
+				x1 = seeds.at(i)->x;
+				y1 = seeds.at(i)->y;
+				z1 = seeds.at(i)->z;
+				for (int j=0;j<marknum;j++)
+				{
+
+					markEdge_d[i][j] = sqrt(double(x1-seeds.at(j)->x)*double(x1-seeds.at(j)->x) + double(y1-seeds.at(j)->y)*double(y1-seeds.at(j)->y) + double(z1-seeds.at(j)->z)*double(z1-seeds.at(j)->z));
+					//fprintf(debug_fp,"markEdge[i][j]:%lf\n",markEdge[i][j]);
+
+					/*	if(max<markEdge_d[i][j])
+					{
+					max=markEdge_d[i][j];
+
+					}*/
+					sum+=markEdge_d[i][j];
+				}//calculating the weight between nodes using distance
+				//Considering the weight which combine the distance and gradient using Gauss equation
+				angle_x1=grad.at(i)->angle_x;
+				angle_y1=grad.at(i)->angle_y;
+				angle_z1=grad.at(i)->angle_z;
+				for(int j=0;j<marknum;j++)
+				{
+					markEdge_g[i][j]=(sqrt((angle_x1*grad.at(j)->angle_x+angle_y1*grad.at(j)->angle_y+angle_z1*grad.at(j)->angle_z)/(sqrt(angle_x1*angle_x1+angle_y1*angle_y1+angle_z1*angle_z1)*sqrt(grad.at(j)->angle_x*grad.at(j)->angle_x+grad.at(j)->angle_y*grad.at(j)->angle_y+grad.at(j)->angle_z*grad.at(j)->angle_z)))+1)/2;
+
+				}//calculating the weight between nodes using angle of gradient vector with x/y/z panel
+
+			}
+			for (int ii=0;ii<marknum;ii++)//normalizing operation
+			{
+				for(int jj=0;jj<marknum;jj++)
+				{
+					markEdge_d[ii][jj]=markEdge_d[ii][jj]/sum;
+					markEdge[ii][jj]=exp((-1/2)*(weight_d*markEdge_d[ii][jj]*markEdge_d[ii][jj]+weight_g*markEdge_g[ii][jj]*markEdge_g[ii][jj])/(nSigma*nSigma))/(2*3.1415926*nSigma*nSigma);
+				}
+			}
+
+
+
+			//NeutronTree structure
+			NeuronTree marker_MST;
+			QList <NeuronSWC> listNeuron;
+			QHash <int, int>  hashNeuron;
+			listNeuron.clear();
+			hashNeuron.clear();
+
+			//set node
+
+			NeuronSWC S;
+			S.n 	= 1;
+			S.type 	= 3;
+			S.x 	= seeds.at(0)->x;
+			S.y 	= seeds.at(0)->y;
+			S.z 	= seeds.at(0)->z;
+			S.r 	= seeds.at(0)->r;
+			S.pn 	= -1;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size()-1);
+
+			int* pi = new int[marknum];
+			for(int i = 0; i< marknum;i++)
+				pi[i] = 0;
+			pi[0] = 1;
+			int indexi,indexj;
+			for(int loop = 0; loop<marknum;loop++)
+			{
+				double min = 100000000;
+				for(int i = 0; i<marknum; i++)
+				{
+					if (pi[i] == 1)
+					{
+						for(int j = 0;j<marknum; j++)
+						{
+							if(pi[j] == 0 && min > markEdge[i][j])
+							{
+								min = markEdge[i][j];
+								indexi = i;
+								indexj = j;
+							}
+						}
+					}
+
+				}
+				if(indexi>=0)
+				{
+					S.n 	= indexj+1;
+					S.type 	= 7;
+					S.x 	= seeds.at(indexj)->x;
+					S.y 	= seeds.at(indexj)->y;
+					S.z 	= seeds.at(indexj)->z;
+					S.r 	= seeds.at(indexj)->r;
+					S.pn 	= indexi+1;
+					listNeuron.append(S);
+					hashNeuron.insert(S.n, listNeuron.size()-1);
+
+				}else
+				{
+					break;
+				}
+				pi[indexj] = 1;
+				indexi = -1;
+				indexj = -1;
+			}
+			marker_MST.n = -1;
+			marker_MST.on = true;
+			marker_MST.listNeuron = listNeuron;
+			marker_MST.hashNeuron = hashNeuron;
+
+			QList<NeuronSWC> marker_MST_sorted;
+			marker_MST_sorted.clear();
+			if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+			{
+			}
+
+			prepare_write(marker_MST_sorted);
+
+			if(markEdge) {delete []markEdge, markEdge = 0;}
+			if(markEdge_d) {delete []markEdge_d, markEdge_d = 0;}
+			if(markEdge_g) {delete []markEdge_g, markEdge_g = 0;}
+			delete [] pi;
+			seeds.clear();
+
+		}
+	}
+}
+
+
 
 void printSWCByQList_QList1(QList<QList <Node*> > result_list,char* path)
 {
@@ -1660,6 +1829,7 @@ double distance_calculate_vn2(unsigned char * &img1d,QList<Node> path,V3DLONG sz
 {//Temporally, just take the distance as weight
 	double sum_distance=0;
 	double varience_intensity;
+	
 	for(int i=0;i<path.length()-1;i++)
 	{
 		Node first=path.at(i);
@@ -1673,6 +1843,58 @@ double distance_calculate_vn2(unsigned char * &img1d,QList<Node> path,V3DLONG sz
 
 
 }
+
+void change_NeuronSWCTo_MyMarker(QList<NeuronSWC> swc_tree, vector<MyMarker*> &tmpswc)
+{
+
+	QMap<int,MyMarker*> Map_index;
+	QList<NeuronSWC> tree;
+	int parent_n;
+
+	for(int i=0;i<swc_tree.size();i++)
+	{
+		NeuronSWC temp=swc_tree.at(i);
+		MyMarker* subnode=new MyMarker(temp.x,temp.y,temp.z);
+		subnode->radius=temp.r;
+		subnode->type=temp.type;
+		//tmpswc.push_back(subnode);
+		Map_index.insert(i+1,subnode);
+
+	}
+	for(int j=0;j<swc_tree.size();j++)
+	{
+
+		NeuronSWC temp1=swc_tree.at(j);
+		if(temp1.parent==-1)
+		{
+			tmpswc.push_back(Map_index.value(j+1));
+
+		}else
+		{
+			for(int k=0;k<swc_tree.size();k++)
+			{
+				NeuronSWC temp2=swc_tree.at(k);
+				if(temp1.parent==temp2.n)
+				{
+					parent_n=temp2.n;
+					break;
+
+				}
+
+			}
+			Map_index.value(j+1)->parent=Map_index.value(parent_n);
+			tmpswc.push_back(Map_index.value(j+1));
+
+		}
+
+
+	}
+
+
+}
+
+
+
 
 
 
@@ -1696,7 +1918,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	V3DLONG sz_y = in_sz[1];
 	V3DLONG sz_z = in_sz[2];
 	flag=new int [sz_x*sz_y*sz_z];
-	unsigned char* nData1=new unsigned char[sz_x*sz_y*(sz_z)];
+	//unsigned char* nData1=new unsigned char[sz_x*sz_y*(sz_z)];
 
 	V3DLONG r=10;
 	V3DLONG count=0;
@@ -1771,28 +1993,43 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 		}
 
 	}
+	delete []flag;
 	//printSWCByMap_List(Map_finalnode_list,"D:\\result\\compare.swc");
 	printf("###  cluster finished   ###\n");
 
 	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
+	
 
 
 	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	printf("###   Smooth the image using Gauss method   ###\n");//这里作为第二次去噪，采用distance transform计算中心线
-	img2d=Gauss_filter(img1d,nData1,sz_x,sz_y,sz_z,callback, parent);//for calculate the gradient of nodes better
+	//printf("###   Smooth the image using Gauss method   ###\n");//这里作为第二次去噪，采用distance transform计算中心线
+	//img2d=Gauss_filter(img1d,nData1,sz_x,sz_y,sz_z,callback, parent);//for calculate the gradient of nodes better
 
-	printf("###   Smooth finished   ###\n");
+	//printf("###   Smooth finished   ###\n");
 	//construct_tree_vn2(finalclass_node, img1d,sz_x, sz_y, sz_z);
 
 	//construct_tree_vn4(root, img1d,sz_x, sz_y, sz_z);//call bf method to find the shortest path between nodes
 	printf("###   connect all roots using an improved spanning tree which adopt bf method to calculate distance\n");
-	con_tree=construct_tree_vn5(root,img1d,img2d,sz_x,sz_y,sz_z);
+	con_tree=construct_tree_vn5(root,img1d,img1d,sz_x,sz_y,sz_z);
+
+	
+	//con_tree=construct_tree_vn5(root,img1d,img2d,sz_x,sz_y,sz_z);
 	printf("###   roots connected   ###\n");
 	//printSWCByQMap_QMap("C:\\Vaa3D\\shortest_path.swc",number_path);
 	//printSWCByQList_QList1(final_path,"C:\\Vaa3D\\shortest_path.swc");
 	//printSWCByQList_QList1_vn2(final_path_vn2,"C:\\Vaa3D\\shortest_path.swc");
 	
-	printf("fix the radius of nodes and trim some covering nodes\n");
+	//printf("fix the radius of nodes and trim some covering nodes\n");
+	printf("prune some nodes which were contained by other nodesn\n");
+	vector<MyMarker*>  inswc;
+	change_NeuronSWCTo_MyMarker(con_tree,inswc);
+
+
+	 cout<<"Pruning neuron tree"<<endl;
+
+    vector<MyMarker*> outswc;
+    v3d_msg("start to use happ.\n", 0);
+    happ(inswc, outswc, img1d, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 	std::vector<NeuronSWC *> target;
 
 	//change_type(target,con_tree);
@@ -1800,14 +2037,19 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	//smooth_curve_and_radius(target, 5);
 	con_tree=smooth_SWC_radius(con_tree,sz_x,sz_y,sz_z);
 	QString outswc_file = image_name + "_meanshift.swc";
+	saveSWC_file(outswc_file.toStdString(), outswc);
 	
-printSWCByQList_Neuron(con_tree,outswc_file.toStdString().c_str());
+    //printSWCByQList_Neuron(con_tree,outswc_file.toStdString().c_str());
 	//printSWCByQList_Neuron_pointer(target,outswc_file.toStdString().c_str());
 	printf("%s\n",outswc_file.toStdString().c_str());
 	v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()),bmenu);
-	if(nData1) {delete []nData1,nData1 = 0;}
-	delete []flag;
+	//if(nData1) {delete []nData1,nData1 = 0;}
+	
 }
+
+
+
+
 
 QList<NeuronSWC> smooth_SWC_radius(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
 {
@@ -1917,9 +2159,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 {
 
 	QMultiMap<double, int> r_root;
-
 	QMultiMap<int,int> parent_root;
-
 
 	QMap<int,int> evidence2;
 	printf("rootnodes:::%d\n",rootnodes.size());
@@ -2335,17 +2575,13 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 	else
 	{//not figure out why the roots found in the first step did not include ind2?20150417
 		//maybe because the first step did not find all roots, if we find all of them, we need to change code, slove it later
-		//printf("33333333333333333333333333333\n");
+
 		int new_mark=Map_rootnode.size()+1;
 		cur_center->class_mark=new_mark;
 
 		//enlarge_radiusof_single_node_xy(img1d,cur_center,sz_x,sz_y,sz_z);
 		if(cur_center->r==0)
 			printf("%lf\n",cur_center->r);
-
-		//printf("%lf\n",(double)img1d[ind2]);
-
-
 		Map_rootnode.insert(new_mark,cur_center);
 
 		for(int iii=0;iii<nodeList.size();iii++)
