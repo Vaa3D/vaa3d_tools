@@ -147,7 +147,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         int margin_size=15;
         float scale=4;
         float sparsthr=0.35;
-        float touchthr=0.5;
+        float touchthr=0.3;
 
         if(input.size()>1){
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));

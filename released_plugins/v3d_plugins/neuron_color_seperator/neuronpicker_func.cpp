@@ -510,6 +510,107 @@ V3DLONG neuronPickerMain2::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_al
     return seeds.size();
 }
 
+V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float* energy, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr)
+{
+    x_all.clear();
+    y_all.clear();
+    z_all.clear();
+
+    //get the projection direction from the seed
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
+    if(dir.size()<=0){
+        return 0;
+    }
+
+    //start region grow
+    vector<V3DLONG> seeds;
+    V3DLONG delta=neighbor_size/2;
+    V3DLONG x,y,z,pos;
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    vector<V3DLONG> coord;
+    vector<float> color(sz_image[3]);
+    memset(mask1D, 0, sz_image[0]*sz_image[1]*sz_image[2]*sizeof(unsigned char));
+    float project;
+
+    coord=neuronPickerMain::pos2xyz(seed_ind, y_offset, z_offset);
+    x=coord[0];
+    y=coord[1];
+    z=coord[2];
+
+    V3DLONG x_max, x_min, y_max, y_min, z_max, z_min;
+    x_max=x_min=x;
+    y_max=y_min=y;
+    z_max=z_min=z;
+
+    //populate the init seed regions
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
+                pos=neuronPickerMain::xyz2pos(dx,dy,dz,y_offset,z_offset);
+                mask1D[pos]=1;
+
+                float v=0;
+                for(int cid=0; cid<sz_image[3]; cid++){
+                    color[cid]=data1Dc_float[pos+cid*page_size];
+                    v=MAX(v,color[cid]);
+                }
+                project=getProjection(color, dir, convolute_iter);
+                project*=(energy[pos]/v);
+                if(project<bg_thr)
+                    continue;
+
+                x_all.push_back(dx);
+                y_all.push_back(dy);
+                z_all.push_back(dz);
+
+                seeds.push_back(pos);
+            }
+        }
+    }
+
+    qDebug()<<"==========NeuronPicker: found "<<seeds.size()<<" initial seeds";
+
+    //seed grow
+    V3DLONG sid=0;
+    while(sid<seeds.size()){
+        coord=neuronPickerMain::pos2xyz(seeds[sid], y_offset, z_offset);
+        x=coord[0];
+        y=coord[1];
+        z=coord[2];
+        for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
+            for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
+                for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
+                    pos=neuronPickerMain::xyz2pos(dx,dy,dz,y_offset,z_offset);
+                    if(mask1D[pos]>0) continue;
+
+                    mask1D[pos]=1;
+
+                    float v=0;
+                    for(int cid=0; cid<sz_image[3]; cid++){
+                        color[cid]=data1Dc_float[pos+cid*page_size];
+                        v=MAX(v,color[cid]);
+                    }
+                    project=getProjection(color, dir, convolute_iter);
+                    project*=(energy[pos]/v);
+                    if(project<bg_thr) continue;
+
+                    x_all.push_back(dx);
+                    y_all.push_back(dy);
+                    z_all.push_back(dz);
+
+                    seeds.push_back(pos);
+                }
+            }
+        }
+        sid++;
+    }
+
+    qDebug()<<"=========NeuronPicker: finally found "<<seeds.size()<<" voxels";
+
+    return seeds.size();
+}
+
 V3DLONG neuronPickerMain2::extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr)
 {
     x_all.clear();
@@ -645,19 +746,40 @@ V3DLONG neuronPickerMain2::autoSeeds(vector<V3DLONG>& seeds, int cubSize, int co
 V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * callback , int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size, float sparsthr, float touchthr)
 {
     float v=0;
-    unsigned char * mask1D_v=neuronPickerMain::memory_allocate_uchar1D(page_size);
+    float * mask1D_v=neuronPickerMain::memory_allocate_float1D(page_size);
+    float * mask1D_eng=neuronPickerMain::memory_allocate_float1D(page_size);
     unsigned char * data1D_out=neuronPickerMain::memory_allocate_uchar1D(page_size);
     for(int i=0; i<page_size; i++){
         v=data1Dc_float[i];
         for(int cid=1; cid<sz_image[3]; cid++){
             v=MAX(v,data1Dc_float[i+page_size*cid]);
         }
-        mask1D_v[i]=(unsigned char)v;
+        mask1D_eng[i]=v;
     }
-    unsigned char max_val, min_val;
+    V3DLONG x, y, z;
+    int seedwin=2;
+    for(x=0; x<sz_image[0]; x++){
+        for(y=0; y<sz_image[1]; y++){
+            for(z=0; z<sz_image[2]; z++){
+                V3DLONG pos=neuronPickerMain::xyz2pos(x,y,z,sz_image[0],sz_image[0]*sz_image[1]);
+                v=0;
+                int accum=0;
+                for(V3DLONG dx=MAX(x-seedwin,0); dx<MIN(x+seedwin+1,sz_image[0]); dx++){
+                    for(V3DLONG dy=MAX(y-seedwin,0); dy<MIN(y+seedwin+1,sz_image[1]); dy++){
+                        for(V3DLONG dz=MAX(z-seedwin,0); dz<MIN(z+seedwin+1,sz_image[2]); dz++){
+                            v+=mask1D_eng[neuronPickerMain::xyz2pos(dx,dy,dz,sz_image[0],sz_image[0]*sz_image[1])];
+                            accum++;
+                        }
+                    }
+                }
+                mask1D_v[pos]=MIN(v,mask1D_eng[pos]);
+            }
+        }
+    }
+    float max_val, min_val;
     V3DLONG max_ind, min_ind;
     vector<V3DLONG> x_all, y_all, z_all;
-    V3DLONG rsize, x, y, z;
+    V3DLONG rsize;
     int delta=cubSize/2;
     vector<float> color(sz_image[3]);
     float project;
@@ -668,28 +790,39 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     sz_out[2]=sz_image[2];
     sz_out[3]=1;
     bool eligible;
-    findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
+    findMaxMinVal<float>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
-        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+//        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
+        rsize=extract_eng(x_all, y_all, z_all, mask1D_eng, max_ind, conviter, cubSize, bgthr);
         if(rsize>sizethr)
             eligible=checkEligibility(x_all, y_all, z_all, sparsthr, touchthr, cubSize);
         else
             eligible=false;
-        mask1D_v[max_ind]=0;
-        for(int i=0; i<x_all.size(); i++){
-            x=x_all[i];
-            y=y_all[i];
-            z=z_all[i];
-            //mask all regions founded
-            for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
-                for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
-                    for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
-                        mask1D_v[dx+dy*sz_image[0]+dz*sz_image[0]*sz_image[1]]=0;
-                    }
+        vector<V3DLONG> coord=neuronPickerMain::pos2xyz(max_ind,sz_image[0],sz_image[0]*sz_image[1]);
+        for(V3DLONG dx=MAX(coord[0]-delta,0); dx<=MIN(sz_image[0]-1,coord[0]+delta); dx++){
+            for(V3DLONG dy=MAX(coord[1]-delta,0); dy<=MIN(sz_image[1]-1,coord[1]+delta); dy++){
+                for(V3DLONG dz=MAX(coord[2]-delta,0); dz<=MIN(sz_image[2]-1,coord[2]+delta); dz++){
+                    mask1D_v[neuronPickerMain::xyz2pos(dx,dy,dz,sz_image[0],sz_image[0]*sz_image[1])]=0;
                 }
             }
         }
+//        mask1D_v[max_ind]=0;
         if(eligible){ //save if it is an eligible neuron
+            //mask seed region
+            for(int i=0; i<x_all.size(); i++){
+                x=x_all[i];
+                y=y_all[i];
+                z=z_all[i];
+                vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
+                V3DLONG i=x+y*sz_image[0]+z*sz_image[0]*sz_image[1];
+                for(int cid=0; cid<sz_image[3]; cid++){
+                    color[cid]=data1Dc_float[i+cid*page_size];
+                }
+                project=getProjection(color, dir, conviter);
+                mask1D_v[i]-=project;
+            }
+
+            //set output
             memset(mask1D,0,page_size*sizeof(unsigned char));
             memset(data1D_out,0,page_size*sizeof(unsigned char));
             vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
@@ -714,6 +847,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                     color[cid]=data1Dc_float[i+cid*page_size];
                 }
                 project=getProjection(color, dir, conviter);
+                mask1D_eng[i]-=project;
 
                 data1D_out[i]=(unsigned char)MIN(project*innerScale,255);
             }
@@ -733,7 +867,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
             neuronNum++;
         }
 
-        findMaxMinVal<unsigned char>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
+        findMaxMinVal<float>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     }
 
     return neuronNum;
