@@ -23,6 +23,46 @@ using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
 
+#ifndef MIN
+#define MIN(a, b)  ( ((a)<(b))? (a) : (b) )
+#endif
+#ifndef MAX
+#define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
+#endif
+
+
+static V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
+{
+    x = MAX(x, m_min);
+    x = MIN(x, m_max);
+    return x;
+
+}
+
+
+//flip image along the Y direction ( due to the image matrix order convention in Vaa3D)
+bool flip_y (Image4DSimple * image)
+{
+    unsigned char * data1d = image->getRawData();
+    V3DLONG in_sz[3];
+    in_sz[0] =image->getXDim();
+    in_sz[1] = image->getYDim();
+    in_sz[2] = image->getZDim();
+
+    V3DLONG hsz1 = floor((double) (in_sz[1]-1)/2.0);
+    if (hsz1*2<in_sz[1]-1)
+        hsz1+=1;
+
+    for (int j=0;j<hsz1;j++)
+        for (int i=0;i<in_sz[0];i++)
+        {
+            unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
+            data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
+            data1d[j*in_sz[0] + i] = tmpv;
+        }
+
+    return true;
+}
 
 bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file)
 {
@@ -74,7 +114,8 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
                                  "Enter dialte ratio:",
                                  3.0, 1.0, 100.0);
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio, callback);
+    int flip = 0;
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip, callback);
 
     if (result_metrics.isEmpty())
     {
@@ -128,6 +169,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
         output_csv_file = swcFileName + ".csv";
 
     float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
+    int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
 
     cout<<"inimg_file = "<< imageFileName.toStdString()<<endl;
     cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
@@ -148,7 +190,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio, callback);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip, callback);
 
     if (result_metrics.isEmpty())
     {
@@ -169,7 +211,8 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 
 
-IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback){
+IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback)
+{
 
     IMAGE_METRICS metrics;
     metrics.type = neuronSegment.at(0).type; // one segment is one type ( all it's nodes should have the same type)
@@ -210,16 +253,26 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     }
 
 
-    min_x = min_x < 0 ? 0 : min_x;
-    min_y = min_y < 0 ? 0 : min_y;
-    min_z = min_z < 0 ? 0 : min_z;
-    max_x = max_x > (image->getXDim()-1) ? (image->getXDim() - 1) : max_x;
-    max_y = max_y > (image->getYDim()-1) ? (image->getYDim() - 1) : max_y;
-    max_z = max_z > (image->getZDim()-1) ? (image->getZDim() - 1) : max_z;
+    min_x = boundValue(min_x, 0,image->getXDim()-1 );
+    min_y = boundValue(min_y, 0,image->getYDim()-1 );
+    min_z = boundValue(min_z, 0,image->getZDim()-1 );
+
+    max_x = boundValue(max_x, 0,image->getXDim()-1 );
+    max_y = boundValue(max_y, 0,image->getYDim()-1 );
+    max_z = boundValue(max_z, 0,image->getZDim()-1 );
+
 
     int width =  max_x - min_x + 1;
     int height = max_y - min_y + 1;
     int depth =  max_z - min_z + 1;
+
+
+    if (image->getZDim() == 1)
+    {
+        depth = 1;
+        min_z = 0;
+        max_z = 0;
+    }
 
     int size_1d = width * height *depth;
 
@@ -356,8 +409,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     //average tubularity
     metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
 
-
-
     cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
         <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; ave_tubularity = "<<metrics.tubularity <<"\n"<< endl;
 
@@ -365,8 +416,16 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
 }
 
-QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, V3DPluginCallback2 &callback)
+QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, V3DPluginCallback2 &callback)
 {
+
+
+    if(flip>0)
+    {
+      flip_y(image);
+      cout<<"warning: the image is flipped in Y by default, to be consistent with other image readers, e.g. ImageJ."<<endl;
+    }
+
 
     QList<IMAGE_METRICS> result_metrics;
     result_metrics.clear();
@@ -423,13 +482,13 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"This plugin is used for profiling 2D images with SWC specified ROIs.\n";
     cout<<"usage:\n";
-    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_ratio> "
+    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_ratio>  <flip>"
     <<endl;
     cout<<"inimg_file:\t\t input image file\n";
     cout<<"inswc_file:\t\t input .swc file\n";
     cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: '<inswc_file>.csv'\n";
-    cout<<"dilation_radius:\t (not required) the dilation ratio to expand the radius for background ROI extraction\n"
-    <<endl;
+    cout<<"dilation_radius :\t (not required) the dilation ratio to expand the radius for background ROI extraction\n";
+    cout<<"flip in y [0 or 1]\t (not required)"<<endl;
 }
 
 
