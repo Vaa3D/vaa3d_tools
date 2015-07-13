@@ -23,8 +23,7 @@ unix:!macx {
 HEADERS	+= neuron_image_profiling_plugin.h \
     compute_tubularity.h
 SOURCES	+= neuron_image_profiling_plugin.cpp \
-    compute_tubularity.cpp \
-    flip_y.cpp
+    compute_tubularity.cpp
 SOURCES	+= profile_swc.cpp
 HEADERS	+= profile_swc.h
 SOURCES += openSWCDialog.cpp

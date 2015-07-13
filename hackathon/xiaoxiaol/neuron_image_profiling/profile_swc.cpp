@@ -319,7 +319,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         xe = node.x + r +0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
         yb = node.y - r +0.5; if(yb<0) yb = 0;
         ye = node.y + r +0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
-        zb = node.z - r +0.5; if(zb<0) zb = 0;
+        zb = node.z - r +0.5; if(zb<0 || zb>>image->getZDim()-1) zb = 0;
         ze = node.z + r +0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
         for (V3DLONG z = zb; z <= ze; z++)
         {
@@ -345,7 +345,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
          xe = node.x + r + dilate_radius + 0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
          yb = node.y - r - dilate_radius + 0.5; if(yb<0) yb = 0;
          ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
-         zb = node.z - r - dilate_radius + 0.5; if(zb<0) zb = 0;
+         zb = node.z - r - dilate_radius + 0.5; if(zb<0 || zb>>image->getZDim()-1) zb = 0;
          ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
 
 
