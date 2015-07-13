@@ -98,6 +98,8 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
             return false;
 	}
 
+
+
     Image4DSimple * image = callback.getImage(curwin);
 
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
@@ -114,7 +116,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
                                  "Enter dialte ratio:",
                                  3.0, 1.0, 100.0);
-    int flip = 0;
+    int flip = 0; // user can set the flip setting from preferences
     QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip, callback);
 
     if (result_metrics.isEmpty())
@@ -175,6 +177,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
     cout<<"output_file = "<< output_csv_file.toStdString()<<endl;
     cout<<"dilate_ratio = "<< dilate_ratio<<endl;
+    cout<<"flip y = "<< flip <<endl;
 
     NeuronTree  neuronTree;
 
