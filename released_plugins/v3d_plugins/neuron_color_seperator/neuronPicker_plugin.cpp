@@ -110,7 +110,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         int intype;
         if(!simple_loadimage_wrapper(callback, fname_input.toStdString().c_str(), image1Dc_in, sz_img, intype))
         {
-          v3d_msg("load image "+fname_input+" error!");
+          qDebug()<<"load image "<<fname_input<<" error!";
           return false;
         }
 
