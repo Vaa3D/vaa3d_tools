@@ -1,3 +1,5 @@
 # example terminal call
-vaa3d -x NeurAuto -f neurauto_func -i ~/bigbrain/testim.tif -p 1 5
+vaa3d -x NeurAuto -f neurauto_func -i ~/bigneuron/testim.tif -p 1 5
 
+vaa3d -x NeuronChaser -f nc_func -i  /media/miroslav/BURENCE/bigneuron/imgs/00008/00008.tif   -p  1  8  80  0.7 9  80 30 10  1 0 >> ~/Desktop/dbg.txt
+vaa3d -x NeuronChaser -f nc_func -i  /media/miroslav/BURENCE/bigneuron/imgs/00008/00008.tif   -p  1  8  80  0.7 9  80 30 10  1 0
