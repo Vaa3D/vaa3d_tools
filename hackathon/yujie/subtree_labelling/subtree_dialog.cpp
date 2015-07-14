@@ -6,10 +6,10 @@
 #define VOID 1000000000
 #endif
 
-// 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-Fork_point,
-//6-End_point, 7-basal_dendrite 8-apical tufts 9-custom
+// 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-apical tufts,
+//6-End_point, 7-basal_dendrite 9-custom
 
-enum type { undefined=0, soma=1, axon=2, oblique_dendrite=3,apical_dendrite=4, basal_dendrite=7 };
+//enum type { undefined=0, soma=1, axon=2, oblique_dendrite=3,apical_dendrite=4, basal_dendrite=7 };
 
 subtree_dialog::subtree_dialog(V3DPluginCallback2 *cb)
 {
@@ -180,8 +180,8 @@ void subtree_dialog::assign_marker_type()
     QPushButton *oblique = new QPushButton(tr("oblique dendrite"));
     QPushButton *apical_tufts = new QPushButton(tr("apical tufts"));
     QPushButton *custom = new QPushButton(tr("custom"));
-    // 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-Fork_point,
-    //6-End_point, 7-basal_dendrite 8-apical tufts 9-custom
+    // 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-apical tufts ,
+    //6-End_point, 7-basal_dendrite 9-custom
 
     layout2->addWidget(soma,3,0,1,2);
     layout2->addWidget(axon,3,2,1,2);
@@ -339,7 +339,7 @@ void subtree_dialog::apical_tuft_clicked()
     int mid=markers->currentIndex();
     int marker_id=calc_nearest_node_around_marker();
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " apical tuft");
-    LList_in[mid].comments="8";
+    LList_in[mid].comments="5";
     LList_in[mid].name=QString::number(marker_id).toStdString();
 }
 
@@ -545,7 +545,7 @@ void subtree_dialog::refresh_marker()
             markers->addItem(QString("marker ")+QString::number(i+1)+" basal dendrite");
         else if (tmp_str.contains("3"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" oblique dendrite");
-        else if (tmp_str.contains("8"))
+        else if (tmp_str.contains("5"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" apical tufts");
         else if (tmp_str.contains("9"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" custom");
