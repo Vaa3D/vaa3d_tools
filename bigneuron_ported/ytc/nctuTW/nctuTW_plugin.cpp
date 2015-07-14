@@ -201,7 +201,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     g_nSomaY = -1;
     g_nSomaZ = -1;
 
-    int nParaState;
+    int nParaState = 1;
 
     if(bmenu)       //ui
     {
