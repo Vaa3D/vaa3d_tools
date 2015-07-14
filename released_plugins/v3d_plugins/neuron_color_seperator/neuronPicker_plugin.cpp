@@ -226,8 +226,9 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
         thr_estimate[2]=thr_estimate[2]>bgthr?thr_estimate[2]:bgthr;
         thr_estimate[3]=thr_estimate[3]>bgthr?thr_estimate[3]:bgthr;
         thr_estimate[4]=thr_estimate[4]>bgthr?thr_estimate[4]:bgthr;
+        fgthr=fgthr>thr_estimate[1]+1?fgthr:(int)thr_estimate[1]+1;
         qDebug()<<"NeuronPicker: self-adapt background threshould "<<thr_estimate[0]<<":"<<thr_estimate[1]<<":"
-                  <<thr_estimate[2]<<":"<<thr_estimate[3]<<":"<<thr_estimate[4];
+               <<thr_estimate[2]<<":"<<thr_estimate[3]<<":"<<thr_estimate[4]<<":"<<fgthr;
 
         neuronPickerMain2 pickerObj;
         if (intype == 1) //V3D_UINT8;

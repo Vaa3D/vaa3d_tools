@@ -516,13 +516,7 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
     y_all.clear();
     z_all.clear();
 
-    //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, (int)(thr_bg[1]), convolute_iter);
-    if(dir.size()<=0){
-        return 0;
-    }
-
-    //start region grow
+    //init parameters
     vector<V3DLONG> seeds;
     V3DLONG delta=neighbor_size/2;
     V3DLONG x,y,z,pos;
@@ -530,13 +524,30 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     vector<V3DLONG> coord;
     vector<float> color(sz_image[3]);
-    memset(mask1D, 0, sz_image[0]*sz_image[1]*sz_image[2]*sizeof(unsigned char));
-    float project;
-
     coord=neuronPickerMain::pos2xyz(seed_ind, y_offset, z_offset);
     x=coord[0];
     y=coord[1];
     z=coord[2];
+
+    //mask the init seed region
+    for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
+        for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
+            for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
+                pos=neuronPickerMain::xyz2pos(dx,dy,dz,y_offset,z_offset);
+                energy_seed[pos]=0;
+            }
+        }
+    }
+
+    //get the projection direction from the seed
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, (int)(thr_bg[1]), convolute_iter);
+    if(dir.size()<=0){
+        return 0;
+    }
+
+    //start region grow
+    memset(mask1D, 0, sz_image[0]*sz_image[1]*sz_image[2]*sizeof(unsigned char));
+    float project;
 
     V3DLONG x_max, x_min, y_max, y_min, z_max, z_min;
     x_max=x_min=x;
