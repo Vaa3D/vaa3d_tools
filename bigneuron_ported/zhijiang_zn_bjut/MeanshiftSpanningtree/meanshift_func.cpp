@@ -417,7 +417,7 @@ void writeSWC_file(char* path,QList<NeuronSWC> listNeuron)
 	return;
 
 }
-void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*>>> nodeMap)
+void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*> > > nodeMap)
 {
 	V3DLONG number=0;
 	FILE * fp = fopen(path, "wt");
@@ -428,10 +428,10 @@ void printSWCByQMap_QMap(char* path,QMap<int,QMap<int,QList<Node*>>> nodeMap)
 	fprintf(fp, "##n,type,x,y,z,radius,parent\n");
 
 
-	for(QMap<int,QMap<int,QList<Node*>>>::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
+    for(QMap<int,QMap<int,QList<Node*> > >::iterator iter1 = nodeMap.begin(); iter1 != nodeMap.end(); iter1++)
 	{
-		QMap<int,QList<Node*>> temp1=iter1.value();
-		for(QMap<int,QList<Node*>>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
+        QMap<int,QList<Node*> > temp1=iter1.value();
+        for(QMap<int,QList<Node*> >::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
 		{
 			QList<Node*> temp2=iter2.value();
 			for(int i=0;i<temp2.length();i++)
@@ -929,7 +929,7 @@ double cal_weight(V3DLONG curi,V3DLONG curj,V3DLONG curk, V3DLONG x,V3DLONG y,V3
 	return weight;
 }
 
-#define cal_core(cur,center,radius) exp(-0.1*(abs(cur-center)))+0.000001;
+#define cal_core(cur,center,radius) exp(-0.1*(ABS(cur-center)))+0.000001;
 bool compare_NeuronSWC(NeuronSWC node1,NeuronSWC node2)
 {
 	if((node1.x==node2.x)&&(node1.y==node2.y)&&(node1.z==node2.z))
@@ -1171,8 +1171,8 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 			V3DLONG loc2=GET_IND(seeds.at(indexj)->x,seeds.at(indexj)->y,seeds.at(indexj)->z);
 			QList<Node> temp22;
 			temp22.clear();
-			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator begin=number_path_vn3.lowerBound(loc1);
-			QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator end=number_path_vn3.upperBound(loc1);
+            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator begin=number_path_vn3.lowerBound(loc1);
+            QMultiMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator end=number_path_vn3.upperBound(loc1);
 			//printf("times:::%d\n",times);
 			while((begin!=end))
 			{
@@ -1532,16 +1532,16 @@ bool decide_outrange(V3DLONG current_x,V3DLONG current_y,V3DLONG current_z,Node*
 	V3DLONG con_endY=end->y;
 	V3DLONG con_endZ=end->z;
 
-	V3DLONG step_x=abs(con_startX-con_endX);
-	V3DLONG step_y=abs(con_startY-con_endY);
-	V3DLONG step_z=abs(con_startZ-con_endZ);
+    V3DLONG step_x=ABS(con_startX-con_endX);
+    V3DLONG step_y=ABS(con_startY-con_endY);
+    V3DLONG step_z=ABS(con_startZ-con_endZ);
 
-	V3DLONG condition_Xa=abs(current_x-con_startX);
-	V3DLONG condition_Xb=abs(current_x-con_endX);
-	V3DLONG condition_Ya=abs(current_y-con_startY);
-	V3DLONG condition_Yb=abs(current_y-con_endY);
-	V3DLONG condition_Za=abs(current_z-con_startZ);
-	V3DLONG condition_Zb=abs(current_z-con_endZ);
+    V3DLONG condition_Xa=ABS(current_x-con_startX);
+    V3DLONG condition_Xb=ABS(current_x-con_endX);
+    V3DLONG condition_Ya=ABS(current_y-con_startY);
+    V3DLONG condition_Yb=ABS(current_y-con_endY);
+    V3DLONG condition_Za=ABS(current_z-con_startZ);
+    V3DLONG condition_Zb=ABS(current_z-con_endZ);
 
 	if((condition_Xa<=step_x)&&(condition_Xb<=step_x)&&(condition_Ya<=step_y)&&(condition_Yb<=step_y)&&(condition_Za<=step_z)&&(condition_Zb<=step_z))
 	{
@@ -1569,7 +1569,7 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 	QMap<V3DLONG,bool> node_searched;
 	QMap<V3DLONG,Node> parent_path_vn2;
 	QList<Node> path_shortest_vn2;
-	QMap<V3DLONG,QList<Node>> unit_path_vn3;
+    QMap<V3DLONG,QList<Node> > unit_path_vn3;
 
 	for(QMap<int,Node* >::iterator iter=roots.begin();iter!=roots.end();iter++)
 	{
@@ -1637,7 +1637,7 @@ void bf_vn2(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 			{
 
 
-				V3DLONG node_number=(abs(start_x-end_x)+1)*(abs(start_y-end_y)+1)*(abs(start_z-end_z)+1);
+                V3DLONG node_number=(ABS(start_x-end_x)+1)*(ABS(start_y-end_y)+1)*(ABS(start_z-end_z)+1);
 				V3DLONG count=0;
 				V3DLONG offset_x=start_x;
 				V3DLONG offset_y=start_y;
