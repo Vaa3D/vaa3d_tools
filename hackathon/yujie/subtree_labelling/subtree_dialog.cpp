@@ -398,7 +398,7 @@ void subtree_dialog::sort_type_def(int type, float dendrite_id, int marker_id)
     V3DLONG parent;
     while (sid<seeds.size())
     {
-        qDebug()<<"seeds number:"<<seeds[sid]<<"seeds.size:"<<seeds.size();
+        //qDebug()<<"seeds number:"<<seeds[sid]<<"seeds.size:"<<seeds.size();
         //check how many children the seed has, if more than one, seg_id reset,level++
         //the forked node belongs to the previous seg (has the same property has parent)
         //qDebug()<<"sid:"<<sid;
@@ -413,8 +413,8 @@ void subtree_dialog::sort_type_def(int type, float dendrite_id, int marker_id)
                 seeds_next.push_back(subtree[parent][i]);
             }
         }
-        qDebug()<<"parent:"<<parent<< "fea value:"<< nt->listNeuron.at(parent).fea_val.at(1)<<"seg_id:"<< nt->listNeuron.at(parent).seg_id
-                   <<"level:"<< nt->listNeuron.at(parent).level<<"children:"<<seeds_next.size();
+//        qDebug()<<"parent:"<<parent<< "fea value:"<< nt->listNeuron.at(parent).fea_val.at(1)<<"seg_id:"<< nt->listNeuron.at(parent).seg_id
+//                   <<"level:"<< nt->listNeuron.at(parent).level<<"children:"<<seeds_next.size();
         if (seeds_next.size()==0)
         {
             sid++;
@@ -443,8 +443,8 @@ void subtree_dialog::sort_type_def(int type, float dendrite_id, int marker_id)
             nt->listNeuron[child_node].level=nt->listNeuron.at(parent).level;
             mark_used[child_node]=1;
             seeds.push_back(child_node);
-            qDebug()<<"one child__parent:"<<"child:"<<nt->listNeuron[child_node].type<<" seg id:"
-                       <<nt->listNeuron[child_node].seg_id<<" level:"<<nt->listNeuron[child_node].level;
+//            qDebug()<<"one child__parent:"<<"child:"<<nt->listNeuron[child_node].type<<" seg id:"
+//                       <<nt->listNeuron[child_node].seg_id<<" level:"<<nt->listNeuron[child_node].level;
         }
         else if (seeds_next.size()>1&& nt->listNeuron[parent].parent!=-1)
         {
@@ -502,7 +502,6 @@ void subtree_dialog::refresh_marker()
     for (int i=0;i<LList_new.size();i++)
     {
         LocationSimple tmp=LList_new[i];
-        bool found_flag=false;
         for (int j=0;j<LList_in.size();j++)
         {
             if (tmp==LList_in[j])
@@ -514,8 +513,6 @@ void subtree_dialog::refresh_marker()
                 break;
             }
         }
-//        if(!found_flag)
-//            LList_in.append(tmp);
     }
     markers->clear();
     LList_in.clear();
@@ -619,6 +616,7 @@ void subtree_dialog::define_sort_id_for_trees()
     //check each tree how many, which type of the markers
     for (int i=0;i<all_trees.size();i++)
     {
+        all_trees[i].belong_markers.clear();
         for (int j=0;j<LList_in.size();j++)
         {
             QString tmp;
@@ -733,6 +731,7 @@ void subtree_dialog::run()
         nt->listNeuron[ii].fea_val.append(0); //store dendrite id
         nt->listNeuron[ii].fea_val.append(0); //store distance to node
     }
+    refresh_marker();
     define_sort_id_for_trees(); //build sort node and soma marker for all_trees
     sort_all_trees();
     build_new_parent_LUT_after_sort();
@@ -742,13 +741,16 @@ void subtree_dialog::run()
 
 void subtree_dialog::subtree_define()
 {
+    qDebug()<<"in subtree defined";
     for (int i=0;i<all_trees.size();i++)
     {
         tree this_tree=all_trees[i];
         if (this_tree.sort_node==-1) //no marker on this tree, no need to sort
             continue;
+
         for (int j=0;j<this_tree.belong_markers.size();j++)
         {
+            //qDebug()<<"number of markers on this tree:"<<this_tree.belong_markers.size()<<":"<<j;
             QString type=QString::fromStdString(LList_in[this_tree.belong_markers[j]].comments);
             int seg_type=type.toInt();
             QString node=QString::fromStdString(LList_in[this_tree.belong_markers[j]].name);
@@ -771,6 +773,7 @@ void subtree_dialog::subtree_define()
 
 void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
 {
+    qDebug()<<"label single tree";
     vector<int> seeds;
     V3DLONG seg_id=1;
     V3DLONG level=1;
@@ -862,7 +865,7 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
         }
         sid++;
     }
-    //qDebug()<<"seeds size:"<<seeds.size();
+    //qDebug()<<"label single tree finished. seeds size:"<<seeds.size();
 }
 
 void subtree_dialog::calc_distance_to_subtree_root()
