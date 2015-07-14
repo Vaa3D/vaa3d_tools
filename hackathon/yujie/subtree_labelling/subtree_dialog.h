@@ -10,7 +10,6 @@
 #include "v3d_message.h"
 
 using namespace std;
-void backupNeuron(NeuronTree & source, NeuronTree & backup);
 
 struct tree{int tree_id; //start from 1
             int sort_node;  //use which node to sort, if no marker set to -1, if -1 no sort
@@ -24,9 +23,7 @@ public:
    explicit subtree_dialog(V3DPluginCallback2 *cb);
    bool get_swc_marker();
    void assign_marker_type();
-   void check_window();
    void calc_distance_to_subtree_root();
-   bool sort_swc_dialog();
    void build_connt_LUT();
    void connected_components();
 
@@ -36,6 +33,8 @@ public slots:
    void axon_clicked();
    void apical_dendrite_clicked();
    void basal_clicked();
+   void apical_tuft_clicked();
+   void custom_clicked();
    void oblique_clicked();
    void refresh_marker();
    bool maybe_save();

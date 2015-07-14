@@ -7,7 +7,7 @@
 #endif
 
 // 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-Fork_point,
-//6-End_point, 7-basal_dendrite
+//6-End_point, 7-basal_dendrite 8-apical tufts 9-custom
 
 enum type { undefined=0, soma=1, axon=2, oblique_dendrite=3,apical_dendrite=4, basal_dendrite=7 };
 
@@ -15,22 +15,6 @@ subtree_dialog::subtree_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
 }
-
-//bool subtree_dialog::sort_swc_dialog()
-//{
-//    QDialog *sort_dialog = new QDialog;
-//    QGridLayout *mylayout=new QGridLayout;
-//    QLabel *sort_info = new QLabel(tr("Before labelling subtree please sort the swc file first. If you have done so,"
-//                                      "please skip this step"));
-//    QPushButton *btn_sort= new QPushButton(tr("sort"));
-//    QPushButton *btn_skip= new QPushButton(tr("skip"));
-//    mylayout->addWidget(sort_info,0,0,1,4);
-//    mylayout->addWidget(btn_sort,2,0,1,2);
-//    mylayout->addWidget(btn_skip,2,2,1,2);
-//    sort_dialog->setLayout(mylayout);
-//    connect(btn_sort,SIGNAL(clicked()),this,SLOT(sort_slot()));
-//    connect(btn_skip,SIGNAL(clicked()),this,SLOT(skip_slot()));
-//}
 
 bool subtree_dialog::get_swc_marker()
 {
@@ -79,6 +63,7 @@ bool subtree_dialog::get_swc_marker()
             else
             {
                 nt->listNeuron[ii].type=nt->listNeuron[ii].seg_id=nt->listNeuron[ii].level=0;
+                nt->listNeuron[ii].fea_val.clear();
                 nt->listNeuron[ii].fea_val.append(0); //store dendrite id
                 nt->listNeuron[ii].fea_val.append(0); //store distance to node
             }
@@ -153,6 +138,7 @@ bool subtree_dialog::get_swc_marker()
             else //initialize
             {
                 nt->listNeuron[ii].type=nt->listNeuron[ii].seg_id=nt->listNeuron[ii].level=0;
+                nt->listNeuron[ii].fea_val.clear();
                 nt->listNeuron[ii].fea_val.append(0); //store dendrite id
                 nt->listNeuron[ii].fea_val.append(0); //store distance to node
             }
@@ -192,14 +178,18 @@ void subtree_dialog::assign_marker_type()
     QPushButton *apical_dendrite = new QPushButton(tr("apical_dendrite"));
     QPushButton *basal_dendrite =new QPushButton(tr("basal dendrite"));
     QPushButton *oblique = new QPushButton(tr("oblique dendrite"));
+    QPushButton *apical_tufts = new QPushButton(tr("apical tufts"));
+    QPushButton *custom = new QPushButton(tr("custom"));
     // 0-Undefined, 1-Soma, 2-Axon, 3-Dendrite(oblique), 4-Apical_dendrite, 5-Fork_point,
-    //6-End_point, 7-basal_dendrite
+    //6-End_point, 7-basal_dendrite 8-apical tufts 9-custom
 
     layout2->addWidget(soma,3,0,1,2);
     layout2->addWidget(axon,3,2,1,2);
-    layout2->addWidget(apical_dendrite,4,0,1,2);
+    layout2->addWidget(apical_dendrite,3,4,1,2);
+    layout2->addWidget(apical_tufts,4,0,1,2);
     layout2->addWidget(basal_dendrite,4,2,1,2);
     layout2->addWidget(oblique,4,4,1,2);
+    layout2->addWidget(custom,5,0,1,2);
 
     QFrame *line_3 = new QFrame();
     line_3->setFrameShape(QFrame::HLine);
@@ -217,7 +207,9 @@ void subtree_dialog::assign_marker_type()
     connect(axon,SIGNAL(clicked()),this,SLOT(axon_clicked()));
     connect(apical_dendrite,SIGNAL(clicked()),this,SLOT(apical_dendrite_clicked()));
     connect(basal_dendrite,SIGNAL(clicked()),this,SLOT(basal_clicked()));
+    connect(apical_tufts,SIGNAL(clicked()),this,SLOT(apical_tuft_clicked()));
     connect(oblique,SIGNAL(clicked()),this,SLOT(oblique_clicked()));
+    connect(custom,SIGNAL(clicked()),this,SLOT(custom_clicked()));
     connect(btn_quit,SIGNAL(clicked()),this,SLOT(maybe_save()));
     connect(refresh,SIGNAL(clicked()),this,SLOT(refresh_marker()));
     connect(btn_save,SIGNAL(clicked()),this,SLOT(save()));
@@ -296,17 +288,13 @@ void subtree_dialog::soma_clicked()
 //    LList_in[mid].color.r=LList_in[mid].color.g=LList_in[mid].color.b=0;
     LList_in[mid].comments="1";
     LList_in[mid].name=QString::number(marker_id).toStdString();
-
 }
 
 void subtree_dialog::axon_clicked()
 {
     int mid=markers->currentIndex();
     int marker_id=calc_nearest_node_around_marker();
-//    sort_type_def(2,(float)(mid+1),marker_id);
     markers->setItemText(mid, "marker "+QString::number(mid+1)+ " axon");
-//    LList_in[mid].color.r=255;
-//    LList_in[mid].color.g=LList_in[mid].color.b=0;
     LList_in[mid].comments="2";
     LList_in[mid].name=QString::number(marker_id).toStdString();
 }
@@ -346,26 +334,22 @@ void subtree_dialog::oblique_clicked()
     LList_in[mid].name=QString::number(marker_id).toStdString();
 }
 
-void subtree_dialog::check_window()
+void subtree_dialog::apical_tuft_clicked()
 {
-    bool window_open_flag=false;
-    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        if(callback->getImageName(allWindowList.at(i)).contains(swc_win_name))
-        {
-            window_open_flag=true;
-            swc_win=allWindowList[i];
-            break;
-        }
-    }
+    int mid=markers->currentIndex();
+    int marker_id=calc_nearest_node_around_marker();
+    markers->setItemText(mid, "marker "+QString::number(mid+1)+ " apical tuft");
+    LList_in[mid].comments="8";
+    LList_in[mid].name=QString::number(marker_id).toStdString();
+}
 
-    if (!window_open_flag)
-    {
-        swc_win=callback->createEmpty3DViewer();
-
-        //need a way to reset neurontree and landmarks.
-    }
+void subtree_dialog::custom_clicked()
+{
+    int mid=markers->currentIndex();
+    int marker_id=calc_nearest_node_around_marker();
+    markers->setItemText(mid, "marker "+QString::number(mid+1)+ " custom");
+    LList_in[mid].comments="9";
+    LList_in[mid].name=QString::number(marker_id).toStdString();
 }
 
 int subtree_dialog::calc_nearest_node_around_marker()
@@ -485,37 +469,8 @@ void subtree_dialog::sort_type_def(int type, float dendrite_id, int marker_id)
 }
 
 
-void backupNeuron(NeuronTree & source, NeuronTree & backup)
-{
-    NeuronTree *np = (NeuronTree *)(&backup);
-    np->n=source.n; np->on=source.on; np->selected=source.selected; np->name=source.name; np->comment=source.comment;
-    np->color.r=source.color.r; np->color.g=source.color.g; np->color.b=source.color.b; np->color.a=source.color.a;
-    np->listNeuron.clear();
-    for(V3DLONG i=0; i<source.listNeuron.size(); i++)
-    {
-        NeuronSWC S;
-        S.n = source.listNeuron[i].n;
-        S.type = source.listNeuron[i].type;
-        S.x = source.listNeuron[i].x;
-        S.y = source.listNeuron[i].y;
-        S.z = source.listNeuron[i].z;
-        S.r = source.listNeuron[i].r;
-        S.pn = source.listNeuron[i].pn;
-        S.seg_id = source.listNeuron[i].seg_id;
-        S.level = source.listNeuron[i].level;
-        S.fea_val = source.listNeuron[i].fea_val;
-        np->listNeuron.append(S);
-    }
-    np->hashNeuron = source.hashNeuron;
-    np->file     = source.file;
-    np->editable = source.editable;
-    np->linemode = source.linemode;
-}
-
-
 bool subtree_dialog::save()
 {
-    //calc_distance_to_subtree_root();
     QString filename="";
     if (!writeESWC_file(filename,*nt))
         return false;
@@ -553,14 +508,27 @@ void subtree_dialog::refresh_marker()
             if (tmp==LList_in[j])
             {
                 //qDebug()<<"found the same marker";
-                found_flag=true;
+                //found_flag=true;
+                LList_new[i].comments=LList_in[j].comments;
                 break;
             }
         }
-        if(!found_flag)
-            LList_in.append(tmp);
+//        if(!found_flag)
+//            LList_in.append(tmp);
     }
     markers->clear();
+    LList_in.clear();
+    //do a deep copy
+    for (int i=0;i<LList_new.size();i++)
+    {
+        LocationSimple new_tmp;
+        new_tmp.x=LList_new[i].x;
+        new_tmp.y=LList_new[i].y;
+        new_tmp.z=LList_new[i].z;
+        new_tmp.comments=LList_new[i].comments;
+        LList_in.append(new_tmp);
+    }
+
     for (int i=0;i<LList_in.size();i++)
     {
         QString tmp_str;
@@ -575,6 +543,10 @@ void subtree_dialog::refresh_marker()
             markers->addItem(QString("marker ")+QString::number(i+1)+" basal dendrite");
         else if (tmp_str.contains("3"))
             markers->addItem(QString("marker ")+QString::number(i+1)+" oblique dendrite");
+        else if (tmp_str.contains("8"))
+            markers->addItem(QString("marker ")+QString::number(i+1)+" apical tufts");
+        else if (tmp_str.contains("9"))
+            markers->addItem(QString("marker ")+QString::number(i+1)+" custom");
         else
             markers->addItem(QString("marker ")+QString::number(i+1));
     }
@@ -642,7 +614,7 @@ void subtree_dialog::define_sort_id_for_trees()
 {
 
     qDebug()<<"define sort id for trees";
-    //check each tree how many, which and type of the markers
+    //check each tree how many, which type of the markers
     for (int i=0;i<all_trees.size();i++)
     {
         for (int j=0;j<LList_in.size();j++)
@@ -751,6 +723,14 @@ void subtree_dialog::run()
 {
 //    build_connt_LUT(); //get ready subtree
 //    connected_components(); //build all_trees nodes/tree_id
+    //reset the neurontree
+    for (V3DLONG ii=0; ii<nt->listNeuron.size(); ii++)
+    {
+        nt->listNeuron[ii].type=nt->listNeuron[ii].seg_id=nt->listNeuron[ii].level=0;
+        nt->listNeuron[ii].fea_val.clear();
+        nt->listNeuron[ii].fea_val.append(0); //store dendrite id
+        nt->listNeuron[ii].fea_val.append(0); //store distance to node
+    }
     define_sort_id_for_trees(); //build sort node and soma marker for all_trees
     sort_all_trees();
     build_new_parent_LUT_after_sort();
