@@ -75,7 +75,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"tubularity"<<"\n";
+        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"average tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
@@ -350,7 +350,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         xe = boundValue(node.x + r + dilate_radius + 0.5, 0,image->getXDim()-1 );
         yb = boundValue(node.y - r - dilate_radius + 0.5, 0,image->getYDim()-1 );
         ye = boundValue(node.y + r + dilate_radius + 0.5, 0,image->getYDim()-1 );
-        zb = boundValue( node.z - r - dilate_radius + 0.5, 0,image->getZDim()-1 );
+        zb = boundValue(node.z - r - dilate_radius + 0.5, 0,image->getZDim()-1 );
         ze = boundValue(node.z + r + dilate_radius + 0.5, 0,image->getZDim()-1 );
 
 

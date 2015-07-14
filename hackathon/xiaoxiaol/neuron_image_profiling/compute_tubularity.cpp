@@ -1,6 +1,7 @@
 #include "compute_tubularity.h"
 #include "newmatap.h"
 #include "newmatio.h"
+#include <iostream>
 
 #ifndef MIN
 #define MIN(a, b)  ( ((a)<(b))? (a) : (b) )
@@ -9,6 +10,7 @@
 #define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
 #endif
 
+using namespace std;
 
 static V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
 {
@@ -160,7 +162,7 @@ double compute_anisotropy_sphere(const unsigned char * data1d, V3DLONG N, V3DLON
         }
     }
     cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
-
+    //std::cout <<"cc = "<<cc11<<" "<<cc12<<" "<<cc13<<" "<<cc22<<" "<<cc23<<" "<<cc33<<std::endl;
     double tubularity = 1; //the tubularity should at least be 1.
     try
     {
