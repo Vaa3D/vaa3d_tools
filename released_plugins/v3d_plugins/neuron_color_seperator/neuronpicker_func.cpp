@@ -510,14 +510,14 @@ V3DLONG neuronPickerMain2::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_al
     return seeds.size();
 }
 
-V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float* energy, float* energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr)
+V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float* energy, float* energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, double thr_bg[5])
 {
     x_all.clear();
     y_all.clear();
     z_all.clear();
 
     //get the projection direction from the seed
-    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, bg_thr, convolute_iter);
+    vector<float> dir = getProjectionDirection(seed_ind, neighbor_size, (int)(thr_bg[1]), convolute_iter);
     if(dir.size()<=0){
         return 0;
     }
@@ -549,6 +549,12 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
             for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
                 pos=neuronPickerMain::xyz2pos(dx,dy,dz,y_offset,z_offset);
                 mask1D[pos]=1;
+                energy_seed[pos]=0;
+
+                if(data1Dc_float[pos]<thr_bg[2] &&
+                        data1Dc_float[pos+1*page_size]<thr_bg[3] &&
+                        data1Dc_float[pos+2*page_size]<thr_bg[4])
+                    continue;
 
                 float v=0;
                 for(int cid=0; cid<sz_image[3]; cid++){
@@ -557,9 +563,7 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
                 }
                 project=getProjection(color, dir, convolute_iter);
 
-                energy_seed[pos]=0;
-
-                if(project*(energy[pos]/v)<bg_thr)
+                if(project*(energy[pos]/v)<thr_bg[0])
                     continue;
 
                 x_all.push_back(dx);
@@ -588,6 +592,11 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
 
                     mask1D[pos]=1;
 
+                    if(data1Dc_float[pos]<thr_bg[2] &&
+                            data1Dc_float[pos+1*page_size]<thr_bg[3] &&
+                            data1Dc_float[pos+2*page_size]<thr_bg[4])
+                        continue;
+
                     float v=0;
                     for(int cid=0; cid<sz_image[3]; cid++){
                         color[cid]=data1Dc_float[pos+cid*page_size];
@@ -596,7 +605,7 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
                     project=getProjection(color, dir, convolute_iter);
                     energy_seed[pos]-=project;
 
-                    if(project*(energy[pos]/v)<bg_thr) continue;
+                    if(project*(energy[pos]/v)<thr_bg[0]) continue;
 
                     x_all.push_back(dx);
                     y_all.push_back(dy);
@@ -746,7 +755,7 @@ V3DLONG neuronPickerMain2::autoSeeds(vector<V3DLONG>& seeds, int cubSize, int co
     return seeds.size();
 }
 
-V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * callback , int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size, float sparsthr, float touchthr)
+V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * callback , int cubSize, int conviter, int fgthr, double thr_bg[5], int sizethr, int margin_size, float sparsthr, float touchthr)
 {
     float v=0;
     float * mask1D_v=neuronPickerMain::memory_allocate_float1D(page_size);
@@ -797,7 +806,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     while((int)max_val>fgthr){
         qDebug()<<"==========NeuronPicker: seed intensity "<<max_val;
 //        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
-        rsize=extract_eng(x_all, y_all, z_all, mask1D_eng, mask1D_v, max_ind, conviter, cubSize, bgthr);
+        rsize=extract_eng(x_all, y_all, z_all, mask1D_eng, mask1D_v, max_ind, conviter, cubSize, thr_bg);
         if(rsize>sizethr)
             eligible=checkEligibility(x_all, y_all, z_all, sparsthr, touchthr, cubSize);
         else
@@ -806,7 +815,7 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
             //set output
             memset(mask1D,0,page_size*sizeof(unsigned char));
             memset(data1D_out,0,page_size*sizeof(unsigned char));
-            vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
+            vector<float> dir = getProjectionDirection(max_ind, cubSize, (int)(thr_bg[1]), conviter);
             //find the region
             for(int i=0; i<x_all.size(); i++){
                 x=x_all[i];
@@ -820,6 +829,18 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                     }
                 }
             }
+            for(int i=0; i<x_all.size(); i++){
+                x=x_all[i];
+                y=y_all[i];
+                z=z_all[i];
+                for(V3DLONG dx=MAX(x-delta,0); dx<=MIN(sz_image[0]-1,x+delta); dx++){
+                    for(V3DLONG dy=MAX(y-delta,0); dy<=MIN(sz_image[1]-1,y+delta); dy++){
+                        for(V3DLONG dz=MAX(z-delta,0); dz<=MIN(sz_image[2]-1,z+delta); dz++){
+                            mask1D[dx+dy*sz_image[0]+dz*sz_image[0]*sz_image[1]]=2;
+                        }
+                    }
+                }
+            }
             //calculate projection
             for(int i=0; i<page_size; i++){
                 if(mask1D[i]<1)
@@ -828,7 +849,8 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
                     color[cid]=data1Dc_float[i+cid*page_size];
                 }
                 project=getProjection(color, dir, conviter);
-                mask1D_eng[i]-=project;
+                if(mask1D[i]>1)
+                    mask1D_eng[i]-=project;
 
                 data1D_out[i]=(unsigned char)MIN(project*innerScale,255);
             }
@@ -862,7 +884,11 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     myfile<<"cubSize: "<<cubSize<<endl;
     myfile<<"conviter: "<<conviter<<endl;
     myfile<<"fgthr: "<<fgthr<<endl;
-    myfile<<"bgthr: "<<bgthr<<endl;
+    myfile<<"bgthr_v: "<<thr_bg[0]<<endl;
+    myfile<<"bgthr_seed: "<<(int)thr_bg[1]<<endl;
+    myfile<<"bgthr_r: "<<thr_bg[2]<<endl;
+    myfile<<"bgthr_g: "<<thr_bg[3]<<endl;
+    myfile<<"bgthr_b: "<<thr_bg[4]<<endl;
     myfile<<"sizethr: "<<sizethr<<endl;
     myfile<<"margin_size: "<<margin_size<<endl;
     myfile<<"sparsthr: "<<sparsthr<<endl;

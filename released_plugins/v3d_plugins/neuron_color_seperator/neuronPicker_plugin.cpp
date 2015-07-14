@@ -196,31 +196,38 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
           return false;
         }
 
+        double thr_estimate[5]={0};
         if(sz_img[3]>3){
             //use the 4th channel to generate mask and estimate the background
             double intens=bgthr;
             V3DLONG pagesize=sz_img[0]*sz_img[1]*sz_img[2];
             if (intype == 1) //V3D_UINT8;
             {
-                intens = findBgthrInMask<unsigned char>((unsigned char*)image1Dc_in, pagesize, (unsigned char)bgthr);
+                findBgthrInMask<unsigned char>((unsigned char*)image1Dc_in, pagesize, (unsigned char)bgthr, thr_estimate);
             }
             else if (intype == 2) //V3D_UINT16;
             {
-                intens = findBgthrInMask<unsigned short>((unsigned short*)image1Dc_in, pagesize, (unsigned short)bgthr);
+                findBgthrInMask<unsigned short>((unsigned short*)image1Dc_in, pagesize, (unsigned short)bgthr, thr_estimate);
             }
             else if(intype == 4) //V3D_FLOAT32;
             {
-                intens = findBgthrInMask<float>((float*)image1Dc_in, pagesize, (float)bgthr);
-            }
-            qDebug()<<"~~~"<<intens;
-            if(intens>bgthr){
-                bgthr=intens;
-                qDebug()<<"NeuronPicker: self-adapt background threshould "<<bgthr;
+                findBgthrInMask<float>((float*)image1Dc_in, pagesize, (float)bgthr, thr_estimate);
             }
 
             sz_img[3]=3;
             qDebug()<<"NeuronPicker: More than 3 channels were loaded. The first 3 channel will be applied for analysis.";
         }
+        if(sz_img[3]<3){
+            qDebug()<<"NeuronPicker: Less than 3 channels were loaded. Skip the case.";
+            return false;
+        }
+        thr_estimate[0]=thr_estimate[0]>bgthr?thr_estimate[0]:bgthr;
+        thr_estimate[1]=thr_estimate[1]>bgthr?thr_estimate[1]:bgthr;
+        thr_estimate[2]=thr_estimate[2]>bgthr?thr_estimate[2]:bgthr;
+        thr_estimate[3]=thr_estimate[3]>bgthr?thr_estimate[3]:bgthr;
+        thr_estimate[4]=thr_estimate[4]>bgthr?thr_estimate[4]:bgthr;
+        qDebug()<<"NeuronPicker: self-adapt background threshould "<<thr_estimate[0]<<":"<<thr_estimate[1]<<":"
+                  <<thr_estimate[2]<<":"<<thr_estimate[3]<<":"<<thr_estimate[4];
 
         neuronPickerMain2 pickerObj;
         if (intype == 1) //V3D_UINT8;
@@ -243,7 +250,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         qDebug()<<"NeuronPicker: searching, extracting, and saving starts.";
         pickerObj.innerScale=scale;
-        V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, bgthr, sizethr, margin_size, sparsthr, touchthr);
+        V3DLONG neuronNum = pickerObj.autoAll(fname_output, &callback, cubSize, conviter, fgthr, thr_estimate, sizethr, margin_size, sparsthr, touchthr);
         qDebug()<<"NeuronPicker: Found "<<neuronNum<<" seperate nuerons in "<<fname_input;
     }
 	else if (func_name == tr("help"))

@@ -58,7 +58,7 @@ public:
     //extract the eligiable area only
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract the eligiable area only, the energy matrix will be used for eligibility measurement
-    V3DLONG extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float * energy, float * energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    V3DLONG extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float * energy, float * energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, double thr_bg[5]);
     //extract both the eligialbe area and close neighbors
     V3DLONG extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract and output extraction to uchar
@@ -70,7 +70,11 @@ public:
     //find the seeds based on extractMore
     V3DLONG autoSeeds(vector<V3DLONG>& seeds, int cubSize, int conviter, int fgthr, int bgthr, int sizethr);
     //find, extract and save
-    V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, int bgthr, int sizethr, int margin_size,  float thr_sparse, float thr_touching);
+    //thr_bg[0/1]: intensity threshould
+    //thr_bg[2]: 1st channel threshould
+    //thr_bg[3]: 2nd channel threshould
+    //thr_bg[4]: 3rd channel threshould
+    V3DLONG autoAll(QString fname_output, V3DPluginCallback2 * callback, int cubSize, int conviter, int fgthr, double bgthr[5], int sizethr, int margin_size,  float thr_sparse, float thr_touching);
 
 private:
     vector<float> getProjectionDirection(V3DLONG seed_ind, int neighbor_size, int bg_thr, int convolute_iter);

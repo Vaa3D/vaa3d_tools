@@ -5,19 +5,31 @@
 
 //assum image has 4 channels, the intensity value is the maximum from first 3 volume, the mask is from the 4th volume
 template <class T>
-double findBgthrInMask(T *data1D, V3DLONG pagesize, T threshold)
+double findBgthrInMask(T *data1D, V3DLONG pagesize, T threshold, double estimates[5])
 {
-    double intens=0;
     double vol_num=0;
+    estimates[0]=0; //mean all channel
+    estimates[1]=0; //mean max all channel
+    estimates[2]=0; //mean first channel
+    estimates[3]=0; //mean second channel
+    estimates[4]=0; //mean third channel
     for(V3DLONG vid=0; vid<pagesize; vid++){
         if(data1D[vid+pagesize*3]>threshold){
-            T maxval=MAX(data1D[vid],data1D[vid+pagesize]);
+            double maxval=MAX(data1D[vid],data1D[vid+pagesize]);
             maxval=MAX(maxval,data1D[vid+pagesize*2]);
-            intens+=maxval;
+            estimates[1]+=maxval;
+            estimates[2]+=(double)data1D[vid];
+            estimates[3]+=(double)data1D[vid+pagesize];
+            estimates[4]+=(double)data1D[vid+pagesize*2];
             vol_num++;
         }
     }
-    return intens/vol_num;
+    estimates[1]/=vol_num;
+    estimates[2]/=vol_num;
+    estimates[3]/=vol_num;
+    estimates[4]/=vol_num;
+    estimates[0]=(estimates[2]+estimates[3]+estimates[4])/3;
+    return estimates[0];
 }
 
 template <class T>
