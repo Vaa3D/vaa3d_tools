@@ -377,7 +377,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         V3DLONG xx = boundValue(node.x, 0,image->getXDim()-1 );
         V3DLONG yy = boundValue(node.y, 0,image->getYDim()-1 );
         V3DLONG zz = boundValue(node.z, 0,image->getZDim()-1 );
-        double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 1, xx,yy,zz, r + dilate_radius);
+        double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 0, xx,yy,zz, r + dilate_radius);
 
         tubularities.push_back(tubuV);
 
