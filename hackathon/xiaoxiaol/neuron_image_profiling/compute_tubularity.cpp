@@ -2,6 +2,23 @@
 #include "newmatap.h"
 #include "newmatio.h"
 
+#ifndef MIN
+#define MIN(a, b)  ( ((a)<(b))? (a) : (b) )
+#endif
+#ifndef MAX
+#define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
+#endif
+
+
+static V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
+{
+    x = MAX(x, m_min);
+    x = MIN(x, m_max);
+    return x;
+
+}
+
+
 
 //referred from Image_enhancement_Anisotropy_plugin.cpp
 double compute_anisotropy_sphere(const unsigned char * data1d, V3DLONG N, V3DLONG M, V3DLONG P, V3DLONG c,
@@ -14,12 +31,12 @@ double compute_anisotropy_sphere(const unsigned char * data1d, V3DLONG N, V3DLON
         //get the boundary
         V3DLONG offsetc = (c)*(N*M*P);
 
-    V3DLONG xb = x0-radius;if(xb<0) xb = 0;
-    V3DLONG xe = x0+radius; if(xe>=N-1) xe = N-1;
-    V3DLONG yb = y0-radius;if(yb<0) yb = 0;
-    V3DLONG ye = y0+radius; if(ye>=M-1) ye = M-1;
-    V3DLONG zb = z0-radius;if(zb<0) zb = 0;
-    V3DLONG ze = z0+radius; if(ze>=P-1) ze = P-1;
+    V3DLONG xb = boundValue(x0-radius,0, N-1);
+    V3DLONG xe = boundValue(x0+radius,0, N-1);
+    V3DLONG yb = boundValue(y0-radius,0, M-1);
+    V3DLONG ye = boundValue(y0+radius,0, M-1);
+    V3DLONG zb = boundValue(z0-radius,0, P-1);
+    V3DLONG ze = boundValue(z0+radius,0, P-1);
 
     V3DLONG i,j,k;
     double w;

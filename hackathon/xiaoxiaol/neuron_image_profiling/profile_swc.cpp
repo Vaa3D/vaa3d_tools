@@ -116,7 +116,10 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
                                  "Enter dialte ratio:",
                                  3.0, 1.0, 100.0);
-    int flip = 0; // user can set the flip setting from preferences
+    int flip = QInputDialog::getInteger(parent, "flip in y ?",
+                                 "Flip in Y (0/1):",
+                                 0, 0, 1);
+
     QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip, callback);
 
     if (result_metrics.isEmpty())
@@ -128,7 +131,6 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     //output
     writeMetrics2CSV(result_metrics, output_csv_file);
-
 
     //display metrics to the msg window
     QString disp_text = "Segment ID | Segment Type | Dynamic Range | Signal-to-Background Ratio | Ave Tubularity \n";
@@ -318,12 +320,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
         // for each node
         //label foreground
-        xb = node.x - r +0.5; if(xb<0) xb = 0;
-        xe = node.x + r +0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
-        yb = node.y - r +0.5; if(yb<0) yb = 0;
-        ye = node.y + r +0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
-        zb = node.z - r +0.5; if(zb<0 || zb>>image->getZDim()-1) zb = 0;
-        ze = node.z + r +0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
+        xb = boundValue(node.x - r +0.5, 0,image->getXDim()-1 );
+        xe = boundValue(node.x + r +0.5, 0,image->getXDim()-1 );
+        yb = boundValue(node.y - r +0.5, 0,image->getYDim()-1 );
+        ye = boundValue(node.y + r +0.5, 0,image->getYDim()-1 );
+        zb = boundValue(node.z - r +0.5, 0,image->getZDim()-1 );
+        ze = boundValue(node.z + r +0.5, 0,image->getZDim()-1 );
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -344,12 +346,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         }
 
         //label background
-         xb = node.x - r - dilate_radius + 0.5; if(xb<0) xb = 0;
-         xe = node.x + r + dilate_radius + 0.5; if(xe>image->getXDim()-1) xe = image->getXDim()-1;
-         yb = node.y - r - dilate_radius + 0.5; if(yb<0) yb = 0;
-         ye = node.y + r + dilate_radius + 0.5; if(ye>image->getYDim()-1) ye = image->getYDim()-1;
-         zb = node.z - r - dilate_radius + 0.5; if(zb<0 || zb>>image->getZDim()-1) zb = 0;
-         ze = node.z + r + dilate_radius + 0.5; if(ze>image->getZDim()-1) ze = image->getZDim()-1;
+        xb = boundValue(node.x - r - dilate_radius + 0.5, 0,image->getXDim()-1 );
+        xe = boundValue(node.x + r + dilate_radius + 0.5, 0,image->getXDim()-1 );
+        yb = boundValue(node.y - r - dilate_radius + 0.5, 0,image->getYDim()-1 );
+        ye = boundValue(node.y + r + dilate_radius + 0.5, 0,image->getYDim()-1 );
+        zb = boundValue( node.z - r - dilate_radius + 0.5, 0,image->getZDim()-1 );
+        ze = boundValue(node.z + r + dilate_radius + 0.5, 0,image->getZDim()-1 );
 
 
 
@@ -372,19 +374,23 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         }
 
         // compute tubularity for each node
-        double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 1, node.x,node.y,node.z, r + dilate_radius);
+        V3DLONG xx = boundValue(node.x, 0,image->getXDim()-1 );
+        V3DLONG yy = boundValue(node.y, 0,image->getYDim()-1 );
+        V3DLONG zz = boundValue(node.z, 0,image->getZDim()-1 );
+        double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 1, xx,yy,zz, r + dilate_radius);
 
         tubularities.push_back(tubuV);
 
     }
 
-    //for debug purpose
+    /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *) roi_1d_visited, width, height, depth, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
+    */
 
     // compute metrics
     double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
@@ -444,35 +450,43 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     vector<V3DLONG> segment_layer; //not used
 
     swc2eswc(neuronTree, segment_id, segment_layer);
-    // Assume the neuron tree nodes are ordered by segments (sorted neurons),
-    // so the last node has the biggest segmentent label and
-    // the nodes are sorted by the segment id, in increasing order.
 
-    V3DLONG num_segments =  segment_id.at(segment_id.size()-1);
-    cout<<"\n TotalSegment number :"<<num_segments<<endl;
+    V3DLONG num_segments = 0 ;
 
     QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
-    V3DLONG pre_id = 1;
+    V3DLONG pre_id = segment_id.at(0); // segment id may not in order
     QList<NeuronSWC> neuronSegment;
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
-        if (segment_id[i] != pre_id || i == (neuronSWCs.size() -1))
+
+        if (segment_id[i] != pre_id)
         {
             if (!neuronSegment.empty())
             {
                 cout<<"Segment # :"<<pre_id<<endl;
                 IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
+                num_segments++;
                 result_metrics.push_back(metrics);
             }
             neuronSegment.clear();
-            pre_id = segment_id[i];
 
+            //start a new segment
+            pre_id = segment_id[i];
         }
-        else
-        {
-            neuronSegment.push_back( neuronSWCs.at(i) );
-        }
+
+        neuronSegment.push_back( neuronSWCs.at(i) );
+
     }
+
+    if (!neuronSegment.empty())
+    {
+        cout<<"Segment # :"<<pre_id<<endl;
+        IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
+        num_segments++;
+        result_metrics.push_back(metrics);
+    }
+
+    cout <<"total number of segments = " << num_segments <<endl;
     return result_metrics;
 }
 
