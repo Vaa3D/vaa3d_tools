@@ -510,6 +510,7 @@ void subtree_dialog::refresh_marker()
                 //qDebug()<<"found the same marker";
                 //found_flag=true;
                 LList_new[i].comments=LList_in[j].comments;
+                LList_new[i].name=LList_in[j].name;
                 break;
             }
         }
@@ -526,6 +527,7 @@ void subtree_dialog::refresh_marker()
         new_tmp.y=LList_new[i].y;
         new_tmp.z=LList_new[i].z;
         new_tmp.comments=LList_new[i].comments;
+        new_tmp.name=LList_new[i].name;
         LList_in.append(new_tmp);
     }
 
