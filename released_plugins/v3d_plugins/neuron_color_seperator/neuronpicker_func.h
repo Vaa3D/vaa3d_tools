@@ -58,7 +58,7 @@ public:
     //extract the eligiable area only
     V3DLONG extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract the eligiable area only, the energy matrix will be used for eligibility measurement
-    V3DLONG extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float * energy, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
+    V3DLONG extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float * energy, float * energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract both the eligialbe area and close neighbors
     V3DLONG extractMore(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr);
     //extract and output extraction to uchar

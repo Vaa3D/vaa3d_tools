@@ -3,6 +3,23 @@
 
 #include <v3d_interface.h>
 
+//assum image has 4 channels, the intensity value is the maximum from first 3 volume, the mask is from the 4th volume
+template <class T>
+double findBgthrInMask(T *data1D, V3DLONG pagesize, T threshold)
+{
+    double intens=0;
+    double vol_num=0;
+    for(V3DLONG vid=0; vid<pagesize; vid++){
+        if(data1D[vid+pagesize*3]>threshold){
+            T maxval=MAX(data1D[vid],data1D[vid+pagesize]);
+            maxval=MAX(maxval,data1D[vid+pagesize*2]);
+            intens+=maxval;
+            vol_num++;
+        }
+    }
+    return intens/vol_num;
+}
+
 template <class T>
 void findMaxMinVal(T *data1D, V3DLONG len, V3DLONG & max_ind, T & max_val,  V3DLONG & min_ind, T & min_val)
 {

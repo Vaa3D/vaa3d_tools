@@ -510,7 +510,7 @@ V3DLONG neuronPickerMain2::extract(vector<V3DLONG>& x_all, vector<V3DLONG>& y_al
     return seeds.size();
 }
 
-V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float* energy, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr)
+V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& y_all, vector<V3DLONG>& z_all, float* energy, float* energy_seed, V3DLONG seed_ind, int convolute_iter, int neighbor_size, int bg_thr)
 {
     x_all.clear();
     y_all.clear();
@@ -556,8 +556,10 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
                     v=MAX(v,color[cid]);
                 }
                 project=getProjection(color, dir, convolute_iter);
-                project*=(energy[pos]/v);
-                if(project<bg_thr)
+
+                energy_seed[pos]=0;
+
+                if(project*(energy[pos]/v)<bg_thr)
                     continue;
 
                 x_all.push_back(dx);
@@ -592,8 +594,9 @@ V3DLONG neuronPickerMain2::extract_eng(vector<V3DLONG>& x_all, vector<V3DLONG>& 
                         v=MAX(v,color[cid]);
                     }
                     project=getProjection(color, dir, convolute_iter);
-                    project*=(energy[pos]/v);
-                    if(project<bg_thr) continue;
+                    energy_seed[pos]-=project;
+
+                    if(project*(energy[pos]/v)<bg_thr) continue;
 
                     x_all.push_back(dx);
                     y_all.push_back(dy);
@@ -792,36 +795,14 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
     bool eligible;
     findMaxMinVal<float>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     while((int)max_val>fgthr){
+        qDebug()<<"==========NeuronPicker: seed intensity "<<max_val;
 //        rsize=extract(x_all, y_all, z_all, max_ind, conviter, cubSize, bgthr);
-        rsize=extract_eng(x_all, y_all, z_all, mask1D_eng, max_ind, conviter, cubSize, bgthr);
+        rsize=extract_eng(x_all, y_all, z_all, mask1D_eng, mask1D_v, max_ind, conviter, cubSize, bgthr);
         if(rsize>sizethr)
             eligible=checkEligibility(x_all, y_all, z_all, sparsthr, touchthr, cubSize);
         else
             eligible=false;
-        vector<V3DLONG> coord=neuronPickerMain::pos2xyz(max_ind,sz_image[0],sz_image[0]*sz_image[1]);
-        for(V3DLONG dx=MAX(coord[0]-delta,0); dx<=MIN(sz_image[0]-1,coord[0]+delta); dx++){
-            for(V3DLONG dy=MAX(coord[1]-delta,0); dy<=MIN(sz_image[1]-1,coord[1]+delta); dy++){
-                for(V3DLONG dz=MAX(coord[2]-delta,0); dz<=MIN(sz_image[2]-1,coord[2]+delta); dz++){
-                    mask1D_v[neuronPickerMain::xyz2pos(dx,dy,dz,sz_image[0],sz_image[0]*sz_image[1])]=0;
-                }
-            }
-        }
-//        mask1D_v[max_ind]=0;
         if(eligible){ //save if it is an eligible neuron
-            //mask seed region
-            for(int i=0; i<x_all.size(); i++){
-                x=x_all[i];
-                y=y_all[i];
-                z=z_all[i];
-                vector<float> dir = getProjectionDirection(max_ind, cubSize, bgthr, conviter);
-                V3DLONG i=x+y*sz_image[0]+z*sz_image[0]*sz_image[1];
-                for(int cid=0; cid<sz_image[3]; cid++){
-                    color[cid]=data1Dc_float[i+cid*page_size];
-                }
-                project=getProjection(color, dir, conviter);
-                mask1D_v[i]-=project;
-            }
-
             //set output
             memset(mask1D,0,page_size*sizeof(unsigned char));
             memset(data1D_out,0,page_size*sizeof(unsigned char));
@@ -869,6 +850,25 @@ V3DLONG neuronPickerMain2::autoAll(QString fname_outbase, V3DPluginCallback2 * c
 
         findMaxMinVal<float>(mask1D_v, page_size, max_ind, max_val, min_ind, min_val);
     }
+
+    //save configuration
+    QString fname_conf=fname_outbase+".conf";
+    QFile file(fname_conf);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text)){
+        qDebug()<<"cannot open "<<fname_conf<<" for write";
+        return neuronNum;
+    }
+    QTextStream myfile(&file);
+    myfile<<"cubSize: "<<cubSize<<endl;
+    myfile<<"conviter: "<<conviter<<endl;
+    myfile<<"fgthr: "<<fgthr<<endl;
+    myfile<<"bgthr: "<<bgthr<<endl;
+    myfile<<"sizethr: "<<sizethr<<endl;
+    myfile<<"margin_size: "<<margin_size<<endl;
+    myfile<<"sparsthr: "<<sparsthr<<endl;
+    myfile<<"touchthr: "<<touchthr<<endl;
+    myfile<<"seedwin: "<<seedwin<<endl;
+    file.close();
 
     return neuronNum;
 }
