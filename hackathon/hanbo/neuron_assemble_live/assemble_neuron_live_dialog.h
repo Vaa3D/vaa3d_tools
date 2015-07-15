@@ -21,7 +21,6 @@ typedef struct NOI{
     };
     QList<float> fea_val; //feature values
     QSet<NOI *> conn; //connections from NOI
-    QList<V3DLONG> nidx; //the index of the corresponding nodes
 }NOI;
 
 class assemble_neuron_live_dialog : public QDialog

@@ -69,7 +69,7 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
 {
     V3DLONG nmax=0;
     noffset=0;
-    QHash<NOI*,V3DLONG> parents;
+    QMultiHash<NOI*,V3DLONG> parents;
     //init nodes
     nodes.clear();
     for(int i=0; i<ntList.size(); i++){
@@ -85,10 +85,12 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
                 node->type=ntList.at(i).listNeuron.at(j).type;
                 node->r=ntList.at(i).listNeuron.at(j).r;
                 node->fea_val=ntList.at(i).listNeuron.at(j).fea_val;
+                node->cid = -1;
                 nodes.insert(n,node);
             }else{
                 node=nodes.value(n);
             }
+
             if(ntList.at(i).listNeuron.at(j).pn>=0){
                 parents.insert(node, ntList.at(i).listNeuron.at(j).pn+noffset);
             }
@@ -97,8 +99,9 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
         noffset=nmax+1;
     }
     //init connections
-    for(QHash<NOI*,V3DLONG>::Iterator iter=parents.begin(); iter!=parents.end(); iter++){
+    for(QMultiHash<NOI*,V3DLONG>::Iterator iter=parents.begin(); iter!=parents.end(); iter++){
         V3DLONG pn=iter.value();
+
         if(nodes.contains(pn) && pn!=iter.key()->n){ //skip unexist node or self loop
             iter.key()->conn.insert(nodes.value(pn));
             nodes.value(pn)->conn.insert(iter.key());
@@ -127,6 +130,30 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
         if(!mask_rm)
             iter++;
     }
+    //init connected components
+    {
+        V3DLONG cid=0;
+        for(QHash<V3DLONG, NOI*>::Iterator iter = nodes.begin(); iter!=nodes.end(); iter++){
+            NOI * node=iter.value();
+            if(node->cid>=0)
+                continue;
+            QQueue<NOI*> seeds;
+            node->cid=cid;
+            seeds.push_back(node);
+            while(seeds.size()>0){
+                node = seeds.dequeue();
+                for(QSet<NOI *>::Iterator iter_n = node->conn.begin(); iter_n != node->conn.end(); iter_n++){
+                    if((*iter_n)->cid<0){
+                        (*iter_n)->cid=cid;
+                        seeds.push_back(*iter_n);
+                    }
+                }
+            }
+            cid++;
+        }
+        qDebug()<<"NeuronAssembler: "<<cid<<" fragements identified";
+    }
+
     //init NeuronTree
     nt.file=ntList.at(0).file;
     nt.color = XYZW(0,0,0,0);
@@ -213,12 +240,13 @@ void assemble_neuron_live_dialog::update3DWindow()
         callback->update_NeuronBoundingBox(_3dwin);
     }
 
-    qDebug()<<nt.listNeuron.size();
-    for(int i=0; i<nt.listNeuron.size(); i++){
-        qDebug()<<nt.listNeuron.at(i).n<<" "<<nt.listNeuron.at(i).type<<" "<<nt.listNeuron.at(i).x<<" "<<nt.listNeuron.at(i).y<<" "
-               <<nt.listNeuron.at(i).z<<" "<<nt.listNeuron.at(i).type<<" "
-               <<nt.listNeuron.at(i).pn;
-    }
+//    //for test
+//    qDebug()<<nt.listNeuron.size();
+//    for(int i=0; i<nt.listNeuron.size(); i++){
+//        qDebug()<<nt.listNeuron.at(i).n<<" "<<nt.listNeuron.at(i).type<<" "<<nt.listNeuron.at(i).x<<" "<<nt.listNeuron.at(i).y<<" "
+//               <<nt.listNeuron.at(i).z<<" "<<nt.listNeuron.at(i).type<<" "
+//               <<nt.listNeuron.at(i).pn;
+//    }
 }
 
 void assemble_neuron_live_dialog::updateROIWindow()
