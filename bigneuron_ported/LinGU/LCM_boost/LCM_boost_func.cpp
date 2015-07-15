@@ -14886,8 +14886,6 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
    //cout << outfile_swc << endl;
 
-   //cin.get();
-
    saveSWC_file(outfile_swc, outswc);
 
 
@@ -15797,6 +15795,8 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
     for(int i = 0; i < (int)in_sz[0]; i++)
         xv[i] = 0;
 
+
+
     cout << "Initialise " << endl;
 
     for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
@@ -16060,7 +16060,9 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     //trace_img(seg_img, image, tmp_nm);
 
-     if(checkin > 0)
+
+
+    if(checkin > 0)
         trace_img1(seg_img, image, offset, tmp_nm);
     else
         trace_img(seg_img, image,tmp_nm);
@@ -16068,7 +16070,12 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     delete [] tmp_nm;
 
-    cout << "The traced result has been saved in neuron_swc.swc" << endl;
+    cout << "The traced result has been saved in " <<  swc_name.toStdString().c_str() << endl;
+
+   // v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
+
+   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()));
+
 
 
     delete [] xv;
@@ -16450,49 +16457,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     saveMat(image,tmp_nm);
 
- /*
-
-
-    loadMat(image1,infile);
-
-    cout << "............................" << endl;
-
-
-    cout << image1.size[0] << endl;
-
-    cout << image.size[0] << endl;
-
-
-    cout << image1.size[1] << endl;
-
-    cout << image.size[1] << endl;
-
-
-    cout << image1.size[2] << endl;
-
-    cout << image.size[2] << endl;
-
-    double sum_value = (double)std::accumulate(image.begin<uchar>(), image.end<uchar>(), 0.0);
-
-    cout << "sum value is " << sum_value << endl;
-
-
-    sum_value = (double)std::accumulate(image1.begin<uchar>(), image1.end<uchar>(), 0.0);
-
-    cout << "sum value is " << sum_value << endl;
-
-
-*/
-
-
     Mat conf_img;
-
-    //uchar * conf_img1;
-
-    //image.release();
-
-    // now use either the multiscale enhancement or the GWDT to collect
-    // the base image
 
     int t1,t2;
 
@@ -16503,36 +16468,6 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     cout << "Start the base method" << endl;
 
-    if(1)
-    {
-        multiscaleEhance(callback, tmp_nm, conf_img);
-
-
-        t1 = 20;
-
-        t2 = 3;
-
-
-        //t1 = 80;
-
-        //t2 = 20;
-
-        sprintf(dataset,"OPFmEh");
-
-
-    }else
-    {
-        fastMarch(tmp_nm, conf_img);
-
-        t1 = 7;
-
-        t2 = 3;
-
-        sprintf(dataset,"OPFFM");
-
-    }
-
-    remove(tmp_nm);
 
     if(bm1 == 1)
     {
