@@ -366,5 +366,14 @@ double bkg_thresh = 10.0, double length_thresh = 2.0, double SR_ratio = 1.0/9.0,
 
 int trace_img1(cv::Mat seg_img, cv::Mat image, int offset[], char * outfile_swc);
 
+int swc2conf(V3DPluginCallback2 & callback, char *infile, cv::Mat &conf_img,int base_swc);
+
+int swc2image_score(cv::Mat &image,char * filename , const char * score_name);
+
+bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1, int bm2);
+
+bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+
 #endif
 

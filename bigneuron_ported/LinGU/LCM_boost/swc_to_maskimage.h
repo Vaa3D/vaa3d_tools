@@ -130,6 +130,21 @@ public:
 };
 
 */
+
+
+
+
+void ComputemaskImage_score(NeuronTree neurons,
+					  unsigned char* pImMask, //output mask image
+					  unsigned char* ImMark,  //an indicator image to show whether or not a pixel has been visited/processed
+					  V3DLONG sx,
+					  V3DLONG sy,
+					  V3DLONG sz,
+					  int method_code,
+					  double *score
+);
+
+
 #endif
 
 

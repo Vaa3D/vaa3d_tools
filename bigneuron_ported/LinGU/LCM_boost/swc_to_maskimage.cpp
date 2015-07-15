@@ -1039,3 +1039,303 @@ void printHelp()
 	printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_to_maskimage -i <intput.swc> [-p <sz0> <sz1> <sz2>] [-o <output_image.raw>]\n");
 }
 */
+
+
+void ComputemaskImage_score(NeuronTree neurons,
+					  unsigned char* pImMask, //output mask image
+					  unsigned char* ImMark,  //an indicator image to show whether or not a pixel has been visited/processed
+					  V3DLONG sx,
+					  V3DLONG sy,
+					  V3DLONG sz,
+					  int method_code,
+					  double *score
+)
+{
+	NeuronSWC *p_cur = 0;
+	//double check the data to ensure it is correct!
+	for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
+	{
+		p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
+	//	v3d_msg(QString("x %1 y %2 z %3 r %4\n").arg(p_cur->x).arg(p_cur->y).arg(p_cur->z).arg(p_cur->r),0);
+
+		if (p_cur->x<0 || p_cur->y<0 || p_cur->z<0 || p_cur->r<0)
+		{
+			v3d_msg("You have illeagal x,y,z coordinates or radius values. Check your data.");
+			return;
+		}
+	}
+	//create a LUT
+	QHash<V3DLONG, V3DLONG> neuron_id_table = NeuronNextPn(neurons);
+
+	//compute mask
+	double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
+	V3DLONG pagesz = sx*sy;
+	for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
+	{
+		V3DLONG i,j,k;
+
+		p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
+
+		xs = p_cur->x;
+		ys = p_cur->y;
+		zs = p_cur->z;
+		rs = p_cur->r;
+		if (rs<1)
+		{
+			//rs=2-rs;
+		}
+		double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
+
+		ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sx-1));
+		ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sx-1));
+		if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
+
+		bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sy-1));
+		bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sy-1));
+		if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
+
+		ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz-1));
+		ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
+		if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
+
+		//marker all voxels close to the swc node(s)
+
+	    for (k = ballz0; k <= ballz1; k++)
+		{
+			for (j = bally0; j <= bally1; j++)
+			{
+				for (i = ballx0; i <= ballx1; i++)
+				{
+					double norms10 = (xs-i)*(xs-i) + (ys-j)*(ys-j) + (zs-k)*(zs-k);
+					double dt = sqrt(norms10);
+
+					V3DLONG ind = (k)*pagesz + (j)*sx + i;
+
+					if(dt <=rs || dt<=1)
+					{
+						if (method_code == 1)
+						{
+							pImMask[ind] = (uchar)score[ii];
+
+						}else if (method_code ==2)
+						{
+							ImMark[ind] = 1;
+
+						}
+
+					}
+				}
+			}
+		}
+
+		//find previous node
+		if (p_cur->pn < 0) //then it is root node already
+		{
+			continue;
+		}
+
+		//get the parent info
+
+		const NeuronSWC & pp  = neurons.listNeuron.at(neuron_id_table.value(p_cur->pn));
+		xe = pp.x;
+		ye = pp.y;
+		ze = pp.z;
+		re = pp.r;
+		if (re<1)
+		{
+			//re=2-re;
+		}
+		//judge if two points overlap, if yes, then do nothing as the sphere has already been drawn
+		if (xe==xs && ye==ys && ze==zs)
+		{
+			v3d_msg(QString("Detect overlapping coordinates of node [%1]\n").arg(p_cur->n), 0);
+			continue;
+		}
+
+//		//only set the current point's value in the mask image
+//		pImMask[V3DLONG(zs)*sx*sy + V3DLONG(ys)*sx + V3DLONG(xs)] = random()%250 + 1;
+//		continue;
+
+		double l =sqrt((xe-xs)*(xe-xs)+(ye-ys)*(ye-ys)+(ze-zs)*(ze-zs));
+
+		//printf("l=%lf\n",l);
+
+		V3DLONG xn,yn,zn;
+
+//		for(double kk = 0; kk <= l ; kk++)
+//		{
+//			xn = xs + (xe-xs)*(kk/(l*1.5));
+//			yn = ys + (ye-ys)*(kk/(l*1.5));
+//			zn = zs + (ze-zs)*(kk/(l*1.5));
+//
+//		    xn = ( xn > sx )? sx : xn;
+//			yn = ( yn > sy )? sy : yn;
+//			zn = ( zn > sz )? sz : zn;
+//
+//			V3DLONG idex=(zn)*sx*sy + (yn)*sx + xn;
+//			if (method_code == 1)
+//			{
+//				pImMask[idex] = 255;
+//			}
+//			else if (method_code ==2)
+//			{
+//				ImMark[idex] = 1;
+//			}
+//		}
+
+		double dx = (xe - xs);
+		double dy = (ye - ys);
+		double dz = (ze - zs);
+//		if (dx==0|| dz==0 || dy==0)
+//		{
+//			//printf("xs=%lf xe=%lf ys=%lf ye=%lf zs=%lf ze=%lf \n",xs,xe,ys,ye,zs,ze);
+//			//printf("dx=%lf dy=%lf dz=%lf\n",dx,dy,dz);
+//		}
+
+		double x = xs;
+		double y = ys;
+		double z = zs;
+
+		int steps = lroundf(l);
+
+		steps = (steps < fabs(dx))? fabs(dx):steps;
+		steps = (steps < fabs(dy))? fabs(dy):steps;
+		steps = (steps < fabs(dz))? fabs(dz):steps;
+		if (steps<1)
+		{
+			steps =1;
+		}
+	//	printf("steps=%ld\n",steps);
+
+		double xIncrement = double(dx) / (steps*2);
+		double yIncrement = double(dy) / (steps*2);
+		double zIncrement = double(dz) / (steps*2);
+//		if (xIncrement == 0 || yIncrement==0|| zIncrement==0)
+//		{
+//			printf("xIncrement=%lf yIncrement=%lf zIncrement=%lf\n",xIncrement,yIncrement,zIncrement);
+//			//printf("dx=%lf dy=%lf dz=%lf\n",dx,dy,dz);
+//		}
+		//printf("xIncrement=%lf yIncrement=%lf zIncrement=%lf\n",xIncrement,yIncrement,zIncrement);
+
+		V3DLONG idex1=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+//
+		if (method_code == 1)
+		{
+			pImMask[idex1] = (uchar)score[ii];
+		}
+		else if (method_code ==2)
+		{
+			ImMark[idex1] = 1;
+		}
+		for (int i = 0; i <= steps; i++)
+		{
+			x += xIncrement;
+			y += yIncrement;
+			z += zIncrement;
+
+		    x = ( x > sx )? sx : x;
+			y = ( y > sy )? sy : y;
+			z = ( z > sz )? sz : z;
+
+			V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+
+			if (method_code == 1)
+			{
+				pImMask[idex] = (uchar)score[ii];
+			}
+			else if (method_code ==2)
+			{
+				ImMark[idex] = 1;
+			}
+
+		}
+
+		//finding the envelope of the current line segment
+
+		double rbox = (rs>re) ? rs : re;
+		double x_down = (xs < xe) ? xs : xe; x_down -= rbox; x_down = V3DLONG(x_down); if (x_down<0) x_down=0; if (x_down>=sx-1) x_down = sx-1;
+		double x_top  = (xs > xe) ? xs : xe; x_top  += rbox; x_top  = V3DLONG(x_top ); if (x_top<0)  x_top=0;  if (x_top>=sx-1)  x_top  = sx-1;
+		double y_down = (ys < ye) ? ys : ye; y_down -= rbox; y_down = V3DLONG(y_down); if (y_down<0) y_down=0; if (y_down>=sy-1) y_down = sy-1;
+		double y_top  = (ys > ye) ? ys : ye; y_top  += rbox; y_top  = V3DLONG(y_top ); if (y_top<0)  y_top=0;  if (y_top>=sy-1)  y_top = sy-1;
+		double z_down = (zs < ze) ? zs : ze; z_down -= rbox; z_down = V3DLONG(z_down); if (z_down<0) z_down=0; if (z_down>=sz-1) z_down = sz-1;
+		double z_top  = (zs > ze) ? zs : ze; z_top  += rbox; z_top  = V3DLONG(z_top ); if (z_top<0)  z_top=0;  if (z_top>=sz-1)  z_top = sz-1;
+
+		//compute cylinder and flag mask
+
+		for (k=z_down; k<=z_top; k++)
+		{
+			for (j=y_down; j<=y_top; j++)
+			{
+				for (i=x_down; i<=x_top; i++)
+				{
+					double rr = 0;
+					double countxsi = (xs-i);
+					double countysj = (ys-j);
+					double countzsk = (zs-k);
+					double countxes = (xe-xs);
+					double countyes = (ye-ys);
+					double countzes = (ze-zs);
+					double norms10 = countxsi * countxsi + countysj * countysj + countzsk * countzsk;
+					double norms21 = countxes * countxes + countyes * countyes + countzes * countzes;
+					double dots1021 = countxsi * countxes + countysj * countyes + countzsk * countzes;
+					double dist = sqrt( norms10 - (dots1021*dots1021)/(norms21) );
+					double t1 = -dots1021/norms21;
+				//	printf("t1=%lf\n",t1);
+					if(t1<0)
+                        dist = sqrt(norms10);
+                    else if(t1>1)
+                        dist = sqrt((xe-i)*(xe-i) + (ye-j)*(ye-j) + (ze-k)*(ze-k));
+					//compute rr
+					if (rs==re)
+					{
+						rr =rs;
+
+					}else
+					{
+						// compute point of intersection
+						double v1 = xe - xs;
+						double v2 = ye - ys;
+						double v3 = ze - zs;
+						double vpt = v1*v1 + v2*v2 +v3*v3;
+						double t = (double(i-xs)*v1 +double(j-ys)*v2 + double(k-zs)*v3)/vpt;
+						double xc = xs + v1*t;
+						double yc = ys + v2*t;
+						double zc = zs + v3*t;
+						double normssc = sqrt((xs-xc)*(xs-xc)+(ys-yc)*(ys-yc)+(zs-zc)*(zs-zc));
+						double normsce = sqrt((xe-xc)*(xe-xc)+(ye-yc)*(ye-yc)+(ze-zc)*(ze-zc));
+						rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
+					}
+					V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
+					//printf("rr=%lf dist=%lf \n",rr,dist);
+					if (dist <= rr || dist<=1)
+					{
+						if (method_code == 1)
+						{
+							pImMask[ind1] = (uchar)score[ii];
+						}
+						else if (method_code ==2)
+						{
+							ImMark[ind1] = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (method_code == 2)
+	{
+		for (V3DLONG k = 0; k < sz; k++)
+		{
+			for(V3DLONG j = 0; j < sy; j++)
+			{
+				for(V3DLONG i = 0; i < sx; i ++)
+				{
+					pImMask[k*sx*sy + j*sx +i] += ImMark[k*sx*sy + j*sx +i];
+
+				}
+			}
+		}
+	}
+
+
+}
