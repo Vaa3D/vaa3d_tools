@@ -28,6 +28,12 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     btn_loop = new QPushButton("search loops");
     layout->addWidget(btn_link,1,0,1,1);
     layout->addWidget(btn_loop,1,1,1,1);
+    cb_color = new QComboBox();
+    cb_color->addItem("color by type");
+    cb_color->addItem("color by segment");
+    layout->addWidget(cb_color,2,1,1,1);
+
+    connect(cb_color, SIGNAL(currentIndexChanged(int)), this, SLOT(setColor(int)));
 
     tab = new QTabWidget(this);
     //neuron connector
@@ -45,12 +51,16 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     //neuron breaker
     QDialog * dialog_break = new QDialog(tab);
     QGridLayout * layout_break = new QGridLayout();
+    cb_loop = new QComboBox();
+    btn_colorloop = new QPushButton("highlight the loop");
     list_marker = new QListWidget();
     btn_break = new QPushButton("break at select");
     btn_syncmarker = new QPushButton("update markers");
     layout_break->addWidget(list_marker,0,0,6,2);
     layout_break->addWidget(btn_break,0,2,1,1);
     layout_break->addWidget(btn_syncmarker,1,2,1,1);
+    layout_break->addWidget(cb_loop, 3,2,1,1);
+    layout_break->addWidget(btn_colorloop, 4,2,1,1);
     dialog_break->setLayout(layout_break);
     tab->addTab(dialog_break,tr("break"));
 
@@ -182,6 +192,11 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
     }
 }
 
+void assemble_neuron_live_dialog::setColor(int i)
+{
+    updateColor();
+}
+
 void assemble_neuron_live_dialog::updateDisplay()
 {
     if(p_img4d!=0){
@@ -192,17 +207,11 @@ void assemble_neuron_live_dialog::updateDisplay()
     update3DWindow();
 }
 
-void assemble_neuron_live_dialog::updateImageWindow()
+v3dhandle assemble_neuron_live_dialog::updateImageWindow()
 {
-    v3dhandleList allWindowList = callback->getImageWindowList();
-    v3dhandle winhandle = 0;
-    for (V3DLONG i=0;i<allWindowList.size();i++)
-    {
-        if(callback->getImageName(allWindowList.at(i)).contains(WINNAME_ASSEM)){
-            winhandle = allWindowList[i];
-            break;
-        }
-    }
+    if(!p_img4d)
+        return 0;
+    v3dhandle winhandle = getImageWindow();
     if(winhandle == 0){
         winhandle = callback->newImageWindow(WINNAME_ASSEM);
         callback->setImage(winhandle, p_img4d);
@@ -213,10 +222,103 @@ void assemble_neuron_live_dialog::updateImageWindow()
         callback->updateImageWindow(winhandle);
         callback->open3DWindow(winhandle);
     }
+
+    return winhandle;
 }
 
-void assemble_neuron_live_dialog::update3DWindow()
+v3dhandle assemble_neuron_live_dialog::checkImageWindow()
 {
+    if(!p_img4d)
+        return 0;
+    v3dhandle winhandle = getImageWindow();
+    if(winhandle == 0){
+        winhandle = callback->newImageWindow(WINNAME_ASSEM);
+        callback->setImage(winhandle, p_img4d);
+        callback->updateImageWindow(winhandle);
+        callback->open3DWindow(winhandle);
+    }
+
+    return winhandle;
+}
+
+v3dhandle assemble_neuron_live_dialog::getImageWindow()
+{
+    if(!p_img4d)
+        return 0;
+    v3dhandleList allWindowList = callback->getImageWindowList();
+    v3dhandle winhandle = 0;
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(callback->getImageName(allWindowList.at(i)).contains(WINNAME_ASSEM)){
+            winhandle = allWindowList[i];
+            break;
+        }
+    }
+
+    return winhandle;
+}
+
+V3dR_MainWindow * assemble_neuron_live_dialog::update3DWindow()
+{
+    V3dR_MainWindow * _3dwin = get3DWindow();
+    if(_3dwin==0){
+        //check if there is image, try open 3d window from image window
+        if(p_img4d!=0){
+            v3dhandle winhandle = getImageWindow();
+            if(winhandle==0){
+                winhandle = checkImageWindow();
+            }else{
+                callback->open3DWindow(winhandle);
+            }
+            _3dwin = get3DWindow();
+        }
+        //otherwise open a independent 3D window
+        if(_3dwin==0){
+            _3dwin = callback->createEmpty3DViewer();
+            callback->setWindowDataTitle(_3dwin, WINNAME_ASSEM);
+        }
+    }
+    QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
+    tmp_ntList->clear();
+    tmp_ntList->push_back(nt);
+    callback->update_3DViewer(_3dwin);
+    callback->update_NeuronBoundingBox(_3dwin);
+
+    return _3dwin;
+}
+
+V3dR_MainWindow * assemble_neuron_live_dialog::check3DWindow()
+{
+    V3dR_MainWindow * _3dwin = get3DWindow();
+    if(_3dwin==0){
+        //check if there is image, try open 3d window from image window first
+        if(p_img4d!=0){
+            v3dhandle winhandle = getImageWindow();
+            if(winhandle==0){
+                winhandle = checkImageWindow();
+            }else{
+                callback->open3DWindow(winhandle);
+            }
+            _3dwin = get3DWindow();
+        }
+        //otherwise open a independent 3D window
+        if(_3dwin==0){
+            _3dwin = callback->createEmpty3DViewer();
+            callback->setWindowDataTitle(_3dwin, WINNAME_ASSEM);
+            QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
+            tmp_ntList->clear();
+            tmp_ntList->push_back(nt);
+            callback->update_3DViewer(_3dwin);
+            callback->update_NeuronBoundingBox(_3dwin);
+        }
+    }
+
+    return _3dwin;
+}
+
+V3dR_MainWindow * assemble_neuron_live_dialog::get3DWindow()
+{
+    //search 3d window
     V3dR_MainWindow * _3dwin = 0;
     QList <V3dR_MainWindow *> list_3dwin = callback->getListAll3DViewers();
     for(int i=0; i<list_3dwin.size(); i++){
@@ -224,29 +326,47 @@ void assemble_neuron_live_dialog::update3DWindow()
             _3dwin = list_3dwin[i];
         }
     }
-    if(_3dwin){
-        QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
-        tmp_ntList->clear();
-        tmp_ntList->push_back(nt);
-        callback->update_3DViewer(_3dwin);
-        callback->update_NeuronBoundingBox(_3dwin);
-    }else{
-        _3dwin = callback->createEmpty3DViewer();
-        callback->setWindowDataTitle(_3dwin, WINNAME_ASSEM);
-        QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
-        tmp_ntList->clear();
-        tmp_ntList->push_back(nt);
-        callback->update_3DViewer(_3dwin);
-        callback->update_NeuronBoundingBox(_3dwin);
-    }
 
-//    //for test
-//    qDebug()<<nt.listNeuron.size();
-//    for(int i=0; i<nt.listNeuron.size(); i++){
-//        qDebug()<<nt.listNeuron.at(i).n<<" "<<nt.listNeuron.at(i).type<<" "<<nt.listNeuron.at(i).x<<" "<<nt.listNeuron.at(i).y<<" "
-//               <<nt.listNeuron.at(i).z<<" "<<nt.listNeuron.at(i).type<<" "
-//               <<nt.listNeuron.at(i).pn;
-//    }
+    return _3dwin;
+}
+
+void assemble_neuron_live_dialog::updateColor()
+{
+    //find 3d window
+    V3dR_MainWindow * _3dwin = check3DWindow();
+    if(_3dwin==0){
+        v3d_msg("Error: failed to open 3D viewer.");
+        return;
+    }
+    //update the neuron stored
+    if(cb_color->currentIndex()==0){
+        for(V3DLONG idx=0; idx<nt.listNeuron.size(); idx++){
+            if(nodes.contains(nt.listNeuron[idx].n))
+                nt.listNeuron[idx].type = nodes[nt.listNeuron[idx].n]->type;
+        }
+    }else{
+        for(V3DLONG idx=0; idx<nt.listNeuron.size(); idx++){
+            if(nodes.contains(nt.listNeuron[idx].n)){
+                int type = nodes[nt.listNeuron[idx].n]->cid % 17;
+                if(type<2)
+                    type+=2;
+                else
+                    type+=3;
+                nt.listNeuron[idx].type = type;
+            }
+        }
+    }
+    //update the neuron in the window
+    QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
+    if(tmp_ntList->size()<1 || tmp_ntList->at(0).listNeuron.size()!=nt.listNeuron.size()){
+        update3DWindow();
+    }else{
+        for(V3DLONG idx=0; idx<nt.listNeuron.size(); idx++){
+            (*tmp_ntList)[0].listNeuron[idx].type = nt.listNeuron.at(idx).type;
+        }
+        callback->update_3DViewer(_3dwin);
+    }
+    qDebug()<<"done color update";
 }
 
 void assemble_neuron_live_dialog::updateROIWindow()
