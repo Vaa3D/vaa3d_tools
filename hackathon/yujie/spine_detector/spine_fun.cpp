@@ -1629,9 +1629,9 @@ LandmarkList spine_fun::get_center_landmarks()
         tmp_marker.x=sum_x/tmp.size()+1;
         tmp_marker.y=sum_y/tmp.size()+1;
         tmp_marker.z=sum_z/tmp.size()+1;
-        tmp_marker.color.r=255;
-        tmp_marker.color.g=255;
-        tmp_marker.color.b=255;
+        tmp_marker.color.r=0;
+        tmp_marker.color.g=0;
+        tmp_marker.color.b=0;
         tmp_marker.name = QString::number(tmp[0]->intensity_label).toStdString().c_str();
         tmp_marker.comments = QString::number(0).toStdString().c_str();
         LList.append(tmp_marker);

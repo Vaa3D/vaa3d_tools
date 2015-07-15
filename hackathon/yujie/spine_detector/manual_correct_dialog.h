@@ -36,6 +36,9 @@ private:
 
     void standing_segment_dialog();
     void check_window_seg();
+    int save_edit_for_seg_view();
+    bool save_seg_edit_for_seg_view();
+    void reset_edit_for_seg_view(bool visual_flag, int mid);
 
 public slots:
     bool loadImage();
@@ -54,7 +57,13 @@ public slots:
     bool finish_proof_dialog();
 
     void segment_change();
-    void marker_in_one_seg();
+    void marker_in_one_seg(int);
+    void reject_marker_for_seg_view();
+    void accept_marker_for_seg_view();
+    void dilate_for_seg_view();
+    void erode_for_seg_view();
+    void reset_clicked_for_seg_view();
+
 
     //not used
     bool maybe_save();
@@ -89,11 +98,13 @@ private:
     parameters all_para;
     int rgb[3];
 
-    int x_min,y_min,z_min;
+    int x_min,y_min,z_min,x_max,y_max,z_max,prev_idx;
     vector<vector<int> > segment_neuronswc;
     QDialog *seg_dialog;
-    QPlainTextEdit *edit_seg, *edit_marker;
+    QPlainTextEdit *edit_seg;
     QComboBox *segments;
+    QListWidget *list_markers;
+
 
 };
 
