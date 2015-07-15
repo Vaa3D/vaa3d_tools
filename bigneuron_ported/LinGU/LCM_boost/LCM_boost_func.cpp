@@ -37,9 +37,14 @@ using namespace cv::ml;
 
 #define debug_on12 0
 
+#define debug_on13 0
+
 
 #define checkin 1
 
+#define base_method 2
+
+#define base_line_open 0
 
 
 const QString title = QObject::tr("Load Image And SWC");
@@ -124,9 +129,12 @@ int swc2image(cv::Mat &image,char * filename)
 
    //neuron1 = (NeuronTree)neuron;
 
+
     ComputemaskImage(neuron, pImMask, ImMark, sx, sy, sz,1);
 
     delete [] ImMark;
+
+
 
     for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
     {
@@ -157,7 +165,10 @@ int swc2image(cv::Mat &image,char * filename)
 
     }
 
-    delete [] pImMask;
+    if(pImMask)
+        delete [] pImMask;
+
+    //cin.get();
 
 }
 
@@ -307,7 +318,7 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     img_sz_new[2] = bz[1] - bz[0];
 
-        int offset[3];
+    int offset[3];
 
     offset[0] = bx[0];
 
@@ -363,6 +374,8 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     Mat conf_img;
 
+
+
     //uchar * conf_img1;
 
     //image.release();
@@ -379,67 +392,70 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
 
     cout << "Start the base method" << endl;
 
-    if(1)
+
+    if(base_method == 1)
     {
         multiscaleEhance(callback, tmp_nm, conf_img);
-
 
         t1 = 20;
 
         t2 = 3;
 
-
-        //t1 = 80;
-
-        //t2 = 20;
-
-        sprintf(dataset,"OPFmEh");
-
-
-    }else
-    {
-        fastMarch(tmp_nm, conf_img);
-
-        t1 = 7;
-
-        t2 = 3;
-
         sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
 
     }
 
-    remove(tmp_nm);
+    if(base_method == 2)
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 2;
+
+        t2 = 0;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(base_method == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        swc2conf(callback,tmp_nm,conf_img,1);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"OPFtrace");
+
+    }
 
    //Neuron
 
    // boost the result using the app2
-
-    sprintf(tmp_nm,"tmp_swc.swc");
-
-    app2_trace(image, tmp_nm);
-
-    cout << "Complete app2_tracing" << endl;
-
-    if(debug_on11)
-    {
-
-		string patial_seg_file = "/media/gulin/E402023602020DEC/Cache/BigN/init_swc.swc";
-
-		char * patial_seg_file_char = (char *)patial_seg_file.c_str();
-
-		//sprintf(base_file, " partial_segmentation.v3draw");
-
-		app2_trace(image, patial_seg_file_char);
-
-
-    }
-
-
-    swc2image(conf_img,tmp_nm);
-
-    cout << "Complete Swc2img" << endl;
-
-    remove(tmp_nm);
 
 
     cout << "Complete the base method" << endl;
@@ -463,6 +479,10 @@ bool Opencv_example(V3DPluginCallback2 &callback, QWidget *parent)
     //sprintf(tmp_nm,"neuron_swc.swc");
 
     //trace_img(seg_img, image, tmp_nm);
+
+
+
+
 
      if(checkin > 0)
         trace_img1(seg_img, image, offset, tmp_nm);
@@ -1119,6 +1139,12 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 
     cout << "Ready to save the swc file" << endl;
 
+    cout << outfile_swc << endl;
+
+   // cin.get();
+
+
+
     saveSWC_file(outfile_swc, outswc);
 
     cout << "Complete saving the swc" << endl;
@@ -1642,8 +1668,30 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     cout << "The input is " << infile << endl;
 
+    string base_method_str;
 
-    for(int i_img = 627; i_img < 2014; i_img ++)
+    if(base_method == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(base_method == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+
+    if(base_method == 3)
+    {
+       base_method_str = "tracing_method";
+    }
+
+
+
+
+    for(int i_img = 1; i_img < 2014; i_img ++)
     {
 
 
@@ -1657,16 +1705,17 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     	string roi_fn = infile;
 
-    	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+    	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/" + base_method_str + "/roi_" + roi_fn + convert.str() + ".v3draw";
 
         string save_seg_fn = infile;
 
-     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/Seg/seg_" + save_seg_fn + convert.str() + ".v3draw";
+     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/Seg/" + base_method_str + "/seg_" + save_seg_fn + convert.str() + ".v3draw";
 
 
         string save_swc_fn = infile;
 
-     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/SWC/swc_" + save_swc_fn + convert.str() + ".swc";
+     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/SWC/" + base_method_str + "/swc_" + save_swc_fn + convert.str() + ".swc";
+
 
 
 
@@ -1716,7 +1765,9 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         int img_pg = image.size[0] * image.size[1];
 
-        if(1)
+         char * tmp_nm = new char[100];
+
+        if(base_method == 1)
         {
             if(img_pg > (300 * 250))
             {
@@ -1750,28 +1801,82 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
             sprintf(dataset,"OPFmEh");
 
 
+
+            sprintf(tmp_nm,"tmp_swc.swc");
+
+            app2_trace(image, tmp_nm);
+
+            swc2image(conf_img,tmp_nm);
+
+            remove(tmp_nm);
+
+            if(base_line_open)
+            {
+                string app2_swc_fn = infile;
+
+                app2_swc_fn = "/media/gulin/E402023602020DEC/Data/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+                app2_trace(image, (char*)app2_swc_fn.c_str());
+
+            }
+
         }
-        else
+
+
+        if(base_method == 2)
         {
             fastMarch((char*)roi_fn.c_str(), conf_img);
+
+            t1 = 2;
+
+            t2 = 0;
+
+            sprintf(dataset,"OPFFM");
+
+            sprintf(tmp_nm,"tmp_swc.swc");
+
+            app2_trace(image, tmp_nm);
+
+            swc2image(conf_img,tmp_nm);
+
+            remove(tmp_nm);
+
+            if(base_line_open)
+            {
+                string app2_swc_fn = infile;
+
+                app2_swc_fn = "/media/gulin/E402023602020DEC/Data/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+                app2_trace(image, (char*)app2_swc_fn.c_str());
+
+            }
+
+
+        }
+
+
+
+
+        if(base_method == 3)
+        {
+           // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+            swc2conf(callback,(char*)roi_fn.c_str(),conf_img,1);
 
             t1 = 7;
 
             t2 = 3;
 
-            sprintf(dataset,"OPFFM");
+            sprintf(dataset,"OPFtrace");
+
+            //cin.get();
+
+            //saveMat(conf_img,"tmp_conf.v3draw");
+
+          //  cin.get();
 
         }
 
-        char * tmp_nm = new char[100];
-
-        sprintf(tmp_nm,"tmp_swc.swc");
-
-        app2_trace(image, tmp_nm);
-
-        swc2image(conf_img,tmp_nm);
-
-        remove(tmp_nm);
 
         if(debug_on11 > 0)
         {
@@ -1782,8 +1887,6 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
           //  cin.get();
 
         }
-
-
 
 
         cout << "Complete the base method" << endl;
@@ -1810,11 +1913,13 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         offset[2] = 0;
 
+       // cin.get();
+
 
         if(checkin > 0)
-            trace_img1(seg_img, image, offset, (char*)save_swc_fn.c_str());
+            trace_img1(seg_img, conf_img, offset, (char*)save_swc_fn.c_str());
         else
-            trace_img(seg_img, image, (char*)save_swc_fn.c_str());
+            trace_img(seg_img, conf_img, (char*)save_swc_fn.c_str());
 
         seg_img.release();
 
@@ -2132,17 +2237,71 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     }
 
+    remove(tmp_nm);
+
+    if(base_method == 1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+        t1 = 20;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFmEh");
+
         remove(tmp_nm);
 
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(base_method == 2)
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(base_method == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        swc2conf(callback,tmp_nm,conf_img,1);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"OPFtrace");
+
+    }
+
    // boost the result using the app2
-
-   sprintf(tmp_nm,"tmp_swc.swc");
-
-    app2_trace(image, tmp_nm);
-
-    swc2image(conf_img,tmp_nm);
-
-    remove(tmp_nm);
 
 
 
@@ -7341,7 +7500,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 					uchar PixelValue = image.at<uchar>(v3);
 
-					if(PixelValue > 20)
+					if(PixelValue > 7)
 					{
 
 						seg_img.at<uchar>(v3) = 254;
@@ -7362,6 +7521,8 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 		//sprintf(base_file, " partial_segmentation.v3draw");
 
 		saveMat(seg_img,patial_seg_file_char);
+
+		cin.get();
 
 	}
 
@@ -7536,6 +7697,11 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
  	find_t2_fragments(image, seg_img, t2, 0);
 
+ //	retrieve_low_confidence(input_img, image, seg_img, char * dataset);
+
+
+
+
  	cout << "carry out the final filtering" << endl;
 
  	filter_small_comp1(seg_img,0.01);
@@ -7553,6 +7719,8 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
      //   cin.get();
 
     }
+
+    //retrieve_low_confidence
 
 
 
@@ -7578,7 +7746,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 
 
-  //  force_merge1(image,seg_img, 50);
+      //  force_merge1(image,seg_img, 50);
 
 
 
@@ -8235,7 +8403,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	Mat label_img;
 
-	int n_t2 = bwconnmp_img4(seg_img,label_img,60);
+	int n_t2 = bwconnmp_img4(seg_img,label_img,80);
 
 	cout << "Complete the bwconnmp on the images" << endl;
 
@@ -8422,10 +8590,6 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
     sort(npl,npl + n_samp);
 
 
-
-
-
-
     int base_thres_i = 0;
 
     base_thres_i = max(n_samp - 10,0);
@@ -8476,7 +8640,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
     }
 
 
-    if(debug_on8 > 0)
+    if(debug_on13 > 0)
     {
 
 
@@ -12708,21 +12872,21 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
 
      srand(time(NULL));
 
-     QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
+//     QString tmpfolder =  getAppPath() +("/") + ("tmp_cache");
 
-     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+//     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
-      if(tmpfolder.isEmpty())
-    {
+//      if(tmpfolder.isEmpty())
+ //   {
 
-        printf("Can not create a tmp folder!\n");
-        return 0;
+ //       printf("Can not create a tmp folder!\n");
+  //      return 0;
 
-    }
+   // }
 
     char * outfile = new char [300];
 
-    sprintf(outfile,"tmp_cache/tmp_msenhance.v3draw");
+    sprintf(outfile,"tmp_msenhance.v3draw");
 
     cout << "input files    " << infile << endl;
 
@@ -12776,6 +12940,10 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
     loadMat(conf_img, outfile);
 
     cout << "Complete loading the image" << endl;
+
+    remove(outfile);
+
+    delete [] outfile;
 
     return 1;
 
@@ -14716,6 +14884,9 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
     }
 
 
+   //cout << outfile_swc << endl;
+
+   //cin.get();
 
    saveSWC_file(outfile_swc, outswc);
 
@@ -14744,5 +14915,1715 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
     return 1;
 
+}
+
+int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int base_swc)
+{
+
+    // call different tracing method
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    string tmp_swc_name;
+
+    char * outfile;
+
+    switch (base_swc)
+    {
+
+    case 1:
+
+        plugin_name = "plugins/neuron_tracing/MOST_tracing/libmostVesselTracer.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "MOST_trace";
+
+        tmp_swc_name = string(infile);
+
+        tmp_swc_name = tmp_swc_name + "_MOST.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+        break;
+
+    case 2:
+
+
+        plugin_name = "plugins/neuron_tracing/neuTube/libneuTube.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "neutube";
+
+        outfile = infile;
+
+        break;
+
+    case 3:
+
+        plugin_name = "plugins/neuron_tracing/SimpleTracing/libSimpleTracing.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing";
+
+        tmp_swc_name = string(infile);
+
+        tmp_swc_name = tmp_swc_name + "_SimpleTracing.swc";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+        break;
+
+    case 4:
+
+        plugin_name = "plugins/neuron_tracing/Vaa3D_Neuron2/libvn2.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "app2";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 5:
+
+        plugin_name = "plugins/neuron_tracing/Vaa3D_Neuron2/libvn2.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "app1";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+
+    case 6:
+
+        plugin_name = "plugins/neuron_tracing/BJUT_fastmarching_spanningtree/libfastmarching_spanningtree.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        tmp_swc_name = string(infile) + "_fastmarching_spanningtree.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 7:
+
+        plugin_name = "plugins/neuron_tracing/HUST_NeuroGPSTree/libNeuroGPSTree.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        tmp_swc_name = string(infile) + "_NeuroGPSTree.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 8:
+
+        plugin_name = "plugins/neuron_tracing/MST_tracing/libneurontracing_mst.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        break;
+
+
+
+    default:
+
+        break;
+
+
+    }
+
+
+    V3DPluginArgItem arg;
+
+    V3DPluginArgItem arg1;
+
+    V3DPluginArgList input;
+
+    V3DPluginArgList output;
+
+
+
+    std::vector<char*> infiles;
+
+    infiles.push_back(infile);
+
+    arg.p =  &infiles;
+
+    input << arg;
+
+
+
+    std::vector<char*> outfiles;
+
+    outfiles.push_back(outfile);
+
+    arg1.p =  & outfiles;
+
+    output<< arg1;
+
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input, output) )
+    {
+
+        v3d_msg("Fail to call the base tracer");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the base tracer" << endl;
+
+    }
+
+//    cin.get();
+
+
+
+
+    //call the reliability score method
+
+    // push the swc file in
+
+    //infiles.push_back(infile);
+
+    infiles.push_back(outfile);
+
+    V3DPluginArgItem arg2;
+
+    arg2.p =  &infiles;
+
+    V3DPluginArgList input1;
+
+    input1 << arg2;
+
+    plugin_name = "plugins/neuron_utilities/calculate_reliability_score/libcalculate_reliability_score.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+    func_name = "calculate_score";
+
+    cout << "outfile is " << outfile << endl;
+
+    V3DPluginArgList output1;
+
+    V3DPluginArgItem arg3;
+
+
+    char * outfile1 = new char[100];
+
+    sprintf(outfile1,"swc");
+
+    std::vector<char*> outfiles1;
+
+    outfiles1.push_back(outfile1);
+
+    arg3.p =  & outfiles1;
+
+    output1<< arg3;
+
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input1, output1) )
+    {
+
+        v3d_msg("Fail to call the reliablity score");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the reliablity score" << endl;
+
+    }
+
+    //cin.get();
+
+    Mat image;
+
+    loadMat(image,infile);
+
+    //conf_img = mat
+
+    int sz[3];
+
+    for(int i = 0; i < 3; i++)
+        sz[i] = (int)image.size[i];
+
+    conf_img = Mat(3,sz,CV_32F,Scalar::all(0));
+
+
+
+
+    //swc2image(conf_img,outfile);
+
+    cout << "Complete swc" << endl;
+
+    //remove(outfile);
+
+
+
+    char * score_swc = new char[100];
+
+    sprintf(score_swc,"swc_scored.swc");
+
+
+    char * score_txt_fn = new char[100];
+
+    sprintf(score_txt_fn,"swc_score.txt");
+
+
+    swc2image_score(conf_img,score_swc,score_txt_fn);
+
+    // to fill the image, now directly add the swc score on the exisiting methods
+
+
+    for(int ix = 0; ix < image.size[0]; ix++)
+    {
+
+        for(int iy = 0; iy < image.size[1]; iy++)
+        {
+
+            for(int iz = 0; iz < image.size[2]; iz ++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                uchar pv1 = image.at<uchar>(v3);
+
+                uchar pv2 = conf_img.at<uchar>(v3);
+
+                int pv3 = (int)pv1 + (int)pv2;
+
+                pv3 = min(pv3, 254);
+
+                conf_img.at<uchar>(v3) = (uchar)pv3;
+
+            }
+
+        }
+
+    }
+
+     image.release();
+
+     remove(score_swc);
+
+     remove(score_txt_fn);
+
+     remove(outfile);
+
+
+    //cin.get();
+
+
+    //cin.get();
+
+
+    return 1;
+
+}
+
+int swc2image_score(cv::Mat &image,char * filename, const char * score_name)
+{
+    //NeuronTree neuron;
+    double x_min,x_max,y_min,y_max,z_min,z_max;
+    x_min=x_max=y_min=y_max=z_min=z_max=0;
+    V3DLONG sx,sy,sz;
+	unsigned char* pImMask = 0;
+	unsigned char* ImMark = 0;
+
+	QString fs(filename);
+
+   // vector<MyMarker*>  neuron = readSWC_file(fs);
+
+   vector <double> score_v;
+
+   int rows;
+
+   int cols;
+
+   import_matrix_from_txt_file(score_name, score_v, rows, cols);
+
+    double * neuron_score = new double[rows];
+
+
+    for(int i = 0; i < rows; i++)
+        neuron_score[i] = score_v[i * 2 + 1];
+
+
+    double * max_nsp;
+
+    max_nsp = max_element(neuron_score,neuron_score + rows);
+
+    double max_neuron;
+
+    max_neuron = max(*max_nsp,1.0);
+
+   // cout << "max neuron is " << max_neuron << endl;
+
+
+    for(int i = 0; i < rows; i++)
+        neuron_score[i] = neuron_score[i] / max_neuron * 254.0;
+
+
+   // for(int i = 0; i < 10; i++)
+     //   cout << "The neuron score " << i << " is " << neuron_score[i] << endl;
+
+
+
+    //cin.get();
+
+
+    NeuronTree neuron = readSWC_file(fs);
+
+
+    sx = (V3DLONG)image.size[0];
+
+    sy = (V3DLONG)image.size[1];
+
+    sz = (V3DLONG)image.size[2];
+
+    V3DLONG in_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        in_sz[i] = (V3DLONG)image.size[i];
+
+
+    V3DLONG stacksz = sx*sy*sz;
+
+	pImMask = new unsigned char [stacksz];
+
+	ImMark = new unsigned char [stacksz];
+
+    for (V3DLONG i=0; i<stacksz; i++)
+        pImMask[i] = ImMark[i] = 0;
+
+
+  // NeuronTree neuron1;
+
+   //neuron1 = (NeuronTree)neuron;
+
+    ComputemaskImage_score(neuron, pImMask, ImMark, sx, sy, sz,1,neuron_score);
+
+    delete [] ImMark;
+
+
+
+    for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
+    {
+
+        V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+        for(V3DLONG iy = 0; iy <  in_sz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz[0];
+            for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
+            {
+
+                unsigned char PixelValue = pImMask[offsetk + offsetj + ix];
+
+                int v3[3];
+
+                v3[0] = (int)ix;
+
+                v3[1] = (int)iy;
+
+                v3[2] = (int)iz;
+
+                if(PixelValue > 0)
+                    image.at<uchar>(v3) = PixelValue;
+
+
+            }
+        }
+
+    }
+
+    if(pImMask)
+        delete [] pImMask;
+
+    delete [] neuron_score;
+
+    //cin.get();
+
+}
+
+/*
+
+bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	unsigned char * inimg1d = 0;
+
+
+	if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+        if (inlist->size() != 1)
+        {
+                cout<<"You must specify 1 input file!"<<endl;
+                return -1;
+        }
+
+    char * infile = inlist->at(0);
+
+
+        vector<char*>* outlist = (vector<char*>*)(output.at(0).p);
+
+        if (outlist->size() != 1)
+        {
+                cout<<"You must specify 1 output file!"<<endl;
+                return -1;
+        }
+
+       // char * outfile = outlist->at(0);
+
+        char * outfile_swc = outlist->at(0);
+
+
+    Mat image1;
+
+    loadMat(image1, infile);
+
+    // shrink the iamge if possible
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+    cout << "Initialise " << endl;
+
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+      for(int i = 0; i < image1.size[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+     //   zv[i] = zv[i] / (double)(sz[0] * sz[1]);
+
+        //cout << "zv "  << i << " is " << zv[i] << endl;
+       }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+       // yv[i] = yv[i] / (do)uble)(sz[0] * sz[2]);
+
+      //cout << "yv is " << yv[i] << endl;
+
+    }
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+        //xv[i] = xv[i] / (double)(sz[1] * sz[2]);
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+    int offset[3];
+
+    offset[0] = bx[0];
+
+    offset[1] = by[0];
+
+    offset[2] = bz[0];
+
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    image1.release();
+
+
+    char *tmp_nm = new char[100];
+
+    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+
+    saveMat(image,tmp_nm);
+
+
+
+    Mat conf_img;
+
+    //uchar * conf_img1;
+
+    //image.release();
+
+    // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+    if(1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+
+        t1 = 20;
+
+        t2 = 3;
+
+
+        //t1 = 80;
+
+        //t2 = 20;
+
+        sprintf(dataset,"OPFmEh");
+
+
+    }else
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+    }
+
+    remove(tmp_nm);
+
+    if(base_method == 1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+        t1 = 20;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFmEh");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(base_method == 2)
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(base_method == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        swc2conf(callback,tmp_nm,conf_img,1);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"OPFtrace");
+
+    }
+
+   // boost the result using the app2
+
+
+
+    cout << "Complete the base method" << endl;
+
+    Mat seg_img;
+
+    LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+    // output the result into the harddisk
+
+    //saveMat(seg_img,outfile);
+
+    // trace the image
+    if(checkin > 0)
+        trace_img1(seg_img, image, offset, outfile_swc);
+    else
+        trace_img(seg_img, image,outfile_swc);
+
+
+
+    delete [] dataset;
+
+    delete [] tmp_nm;
+
+	return true;
+}
+
+*/
+
+bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm2)
+{
+	if(callback.getImageWindowList().empty()) return QMessageBox::information(0, title, QObject::tr("No image is open."));
+
+	unsigned char * data1d = 0;
+	V3DLONG * in_sz = 0;
+	NeuronTree nt;
+
+	v3dhandle curwin = callback.currentImageWindow();
+
+	Image4DSimple *p4DImage = callback.getImage(curwin);
+
+	data1d = p4DImage->getRawData();
+
+	in_sz = new V3DLONG[4];
+
+	in_sz[0] = p4DImage->getXDim();
+
+	in_sz[1] = p4DImage->getYDim();
+
+	in_sz[2] = p4DImage->getZDim();
+
+	in_sz[3] = p4DImage->getCDim();
+
+	ImagePixelType datatype = p4DImage->getDatatype();
+
+
+    // shrink the iamge if possible
+
+    double * zv = new double[in_sz[2]];
+
+    double * yv = new double[in_sz[1]];
+
+    double * xv = new double[in_sz[0]];
+
+    for(int i = 0; i < (int)in_sz[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < (int)in_sz[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < (int)in_sz[0]; i++)
+        xv[i] = 0;
+
+    cout << "Initialise " << endl;
+
+    for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
+    {
+
+        V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+        for(V3DLONG iy = 0; iy <  in_sz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz[0];
+            for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
+            {
+
+                unsigned char PixelValue = data1d[offsetk + offsetj + ix];
+
+                double p = (double)PixelValue;
+
+
+                xv[ix] = xv[ix] + p;
+
+                yv[iy] = yv[iy] + p;
+
+                zv[iz] = zv[iz] + p;
+
+            }
+        }
+
+    }
+
+
+      for(int i = 0; i < (int)in_sz[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+     //   zv[i] = zv[i] / (double)(sz[0] * sz[1]);
+
+        //cout << "zv "  << i << " is " << zv[i] << endl;
+       }
+
+
+    for(int i = 0; i < (int)in_sz[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+       // yv[i] = yv[i] / (do)uble)(sz[0] * sz[2]);
+
+      //cout << "yv is " << yv[i] << endl;
+
+    }
+
+    for(int i = 0; i < (int)in_sz[0]; i++)
+    {
+
+        //xv[i] = xv[i] / (double)(sz[1] * sz[2]);
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, in_sz[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, in_sz[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, in_sz[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+    int offset[3];
+
+    offset[0] = bx[0];
+
+    offset[1] = by[0];
+
+    offset[2] = bz[0];
+
+
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+
+        V3DLONG offsetk = (V3DLONG)(z + bz[0])*in_sz[1]*in_sz[0];
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            V3DLONG offsetj = (V3DLONG)(y + by[0])*in_sz[0];
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                unsigned char PixelValue = data1d[offsetk + offsetj + (V3DLONG)(x + bx[0])];
+
+                image.at<uchar>(v3) = PixelValue;
+
+
+            }
+
+         }
+
+    }
+
+   // delete [] data1d;
+
+    char *tmp_nm = new char[100];
+
+    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+    saveMat(image,tmp_nm);
+
+    Mat conf_img;
+
+
+
+    //uchar * conf_img1;
+
+    //image.release();
+
+    // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+
+    if(bm1 == 1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+        t1 = 20;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+    }
+
+    if(bm1 == 2)
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(bm1 == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        swc2conf(callback,tmp_nm,conf_img,bm2);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"OPFtrace");
+
+    }
+
+   //Neuron
+
+   // boost the result using the app2
+
+
+    cout << "Complete the base method" << endl;
+
+    Mat seg_img;
+
+    LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+    // output the result into the harddisk
+
+    QString swc_name = 	callback.getImageName(curwin) + "_LCMboost.swc";
+
+    sprintf(tmp_nm,swc_name.toStdString().c_str());
+
+    //saveMat(seg_img,tmp_nm);
+
+    // trace the image
+
+    //sprintf(tmp_nm,"neuron_swc.swc");
+
+    //trace_img(seg_img, image, tmp_nm);
+
+     if(checkin > 0)
+        trace_img1(seg_img, image, offset, tmp_nm);
+    else
+        trace_img(seg_img, image,tmp_nm);
+
+
+    delete [] tmp_nm;
+
+    cout << "The traced result has been saved in neuron_swc.swc" << endl;
+
+
+    delete [] xv;
+
+    delete [] yv;
+
+    delete [] zv;
+
+
+    //v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
+
+    //v3d_msg(tr("This plugin will boost the performance of the existing methods"));
+
+    //nt = readSWC_file((char *)tmp_nm);
+
+/*
+
+    uchar * show1d = new uchar[in_sz[0] * in_sz[1] * in_sz[2]];
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+        V3DLONG offsetk = (V3DLONG)z*in_sz[1]*in_sz[0];
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            V3DLONG offsetj = (V3DLONG)y*in_sz[0];
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                unsigned char PixelValue = image.at<uchar>(v3);
+
+                show1d[offsetk + offsetj + (V3DLONG)x] = PixelValue;
+
+            }
+
+         }
+
+    }
+
+
+
+	V3DLONG in_sz1[4];
+
+	in_sz1[0] = (V3DLONG)image.size[0];
+
+	in_sz1[1] = (V3DLONG)image.size[1];
+
+	in_sz1[2] = (V3DLONG)image.size[2];
+
+	in_sz1[3] = 1;
+
+
+
+        // start visualising the image
+
+    v3dhandle newwin = callback.newImageWindow();
+
+    Image4DSimple *p4DImage_new;
+
+    p4DImage_new->setData(show1d, in_sz1[0], in_sz1[1], in_sz1[2], 1, p4DImage->getDatatype());
+
+    callback.setImage(newwin, p4DImage_new);
+
+    callback.setImageName(newwin, QObject::tr("Boosted Image"));
+
+   // callback.setSWC(newwin, nt);
+
+    callback.updateImageWindow(newwin);
+
+    delete []  show1d;
+*/
+
+/*
+
+	int img_sz[3];
+
+	for(int i = 0; i < 3; i++)
+        img_sz[i] = (int)in_sz[i];
+
+    Mat label_img = Mat(3,img_sz,CV_32S,Scalar::all(0));
+
+    int sz[3];
+
+    for(int i = 0; i < 3; i++)
+        sz[i] = (int)in_sz[i];
+
+    image = Mat(3,sz,CV_8UC1,Scalar::all(0));
+
+    for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
+    {
+
+        V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+        for(V3DLONG iy = 0; iy <  in_sz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz[0];
+            for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
+            {
+
+                unsigned char PixelValue = inimg[offsetk + offsetj + ix];
+
+                int v3[3];
+
+                v3[0] = (int)ix;
+
+                v3[1] = (int)iy;
+
+                v3[2] = (int)iz;
+
+                image.at<uchar>(v3) = PixelValue;
+
+            }
+        }
+
+    }
+
+    delete [] inimg;
+
+    delete [] in_sz;
+
+
+    Mat conf_img;
+
+    // multiscaleEhance(callback, infile, conf_img);
+
+
+
+    // process the labelling image
+
+    cout << "Start processing  the image" << endl;
+
+    LCM_boost(label_img, );
+
+    cout << "Complete processing  the image" << endl;
+
+
+    Mat show_img;
+
+    label_img.convertTo(show_img,CV_8UC1);
+
+
+
+*/
+
+
+
+
+
+
+
+    return true;
+}
+
+bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2)
+{
+	unsigned char * inimg1d = 0;
+
+
+	if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+        if (inlist->size() != 1)
+        {
+                cout<<"You must specify 1 input file!"<<endl;
+                return -1;
+        }
+
+    char * infile = inlist->at(0);
+
+
+        vector<char*>* outlist = (vector<char*>*)(output.at(0).p);
+
+        if (outlist->size() != 1)
+        {
+                cout<<"You must specify 1 output file!"<<endl;
+                return -1;
+        }
+
+       // char * outfile = outlist->at(0);
+
+        char * outfile_swc = outlist->at(0);
+
+
+    Mat image1;
+
+    loadMat(image1, infile);
+
+    // shrink the iamge if possible
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+    cout << "Initialise " << endl;
+
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+      for(int i = 0; i < image1.size[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+     //   zv[i] = zv[i] / (double)(sz[0] * sz[1]);
+
+        //cout << "zv "  << i << " is " << zv[i] << endl;
+       }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+       // yv[i] = yv[i] / (do)uble)(sz[0] * sz[2]);
+
+      //cout << "yv is " << yv[i] << endl;
+
+    }
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+        //xv[i] = xv[i] / (double)(sz[1] * sz[2]);
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+    int offset[3];
+
+    offset[0] = bx[0];
+
+    offset[1] = by[0];
+
+    offset[2] = bz[0];
+
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    image1.release();
+
+
+    char *tmp_nm = new char[100];
+
+    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+
+    saveMat(image,tmp_nm);
+
+ /*
+
+
+    loadMat(image1,infile);
+
+    cout << "............................" << endl;
+
+
+    cout << image1.size[0] << endl;
+
+    cout << image.size[0] << endl;
+
+
+    cout << image1.size[1] << endl;
+
+    cout << image.size[1] << endl;
+
+
+    cout << image1.size[2] << endl;
+
+    cout << image.size[2] << endl;
+
+    double sum_value = (double)std::accumulate(image.begin<uchar>(), image.end<uchar>(), 0.0);
+
+    cout << "sum value is " << sum_value << endl;
+
+
+    sum_value = (double)std::accumulate(image1.begin<uchar>(), image1.end<uchar>(), 0.0);
+
+    cout << "sum value is " << sum_value << endl;
+
+
+*/
+
+
+    Mat conf_img;
+
+    //uchar * conf_img1;
+
+    //image.release();
+
+    // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+    if(1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+
+        t1 = 20;
+
+        t2 = 3;
+
+
+        //t1 = 80;
+
+        //t2 = 20;
+
+        sprintf(dataset,"OPFmEh");
+
+
+    }else
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+    }
+
+    remove(tmp_nm);
+
+    if(bm1 == 1)
+    {
+        multiscaleEhance(callback, tmp_nm, conf_img);
+
+        t1 = 20;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFmEh");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(bm1 == 2)
+    {
+        fastMarch(tmp_nm, conf_img);
+
+        t1 = 7;
+
+        t2 = 3;
+
+        sprintf(dataset,"OPFFM");
+
+        remove(tmp_nm);
+
+        sprintf(tmp_nm,"tmp_swc.swc");
+
+        app2_trace(image, tmp_nm);
+
+        swc2image(conf_img,tmp_nm);
+
+        remove(tmp_nm);
+
+
+    }
+
+
+    if(bm1 == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        swc2conf(callback,tmp_nm,conf_img,bm2);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"OPFtrace");
+
+    }
+
+   // boost the result using the app2
+
+
+
+    cout << "Complete the base method" << endl;
+
+    Mat seg_img;
+
+    LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+    // output the result into the harddisk
+
+    //saveMat(seg_img,outfile);
+
+    // trace the image
+    if(checkin > 0)
+        trace_img1(seg_img, image, offset, outfile_swc);
+    else
+        trace_img(seg_img, image,outfile_swc);
+
+
+
+    delete [] dataset;
+
+    delete [] tmp_nm;
+
+	return true;
 }
 
