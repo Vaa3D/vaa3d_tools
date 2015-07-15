@@ -180,7 +180,7 @@ double compute_anisotropy_sphere(const unsigned char * data1d, V3DLONG N, V3DLON
         double pc1 = DD(3);
         double pc2 = DD(2);
         // double pc3 = DD(1);
-        tubularity = pc1/pc2;
+        tubularity = (pc1+0.0001)/(pc2+0.0001);//perturbation to avoid infs
 
     }
     catch (...)

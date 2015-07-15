@@ -75,7 +75,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"average tubularity"<<"\n";
+        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"median tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
@@ -133,7 +133,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     writeMetrics2CSV(result_metrics, output_csv_file);
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Signal-to-Background Ratio | Ave Tubularity \n";
+    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Signal-to-Background Ratio | Median Tubularity \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
@@ -416,10 +416,14 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     }
 
     //average tubularity
-    metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
+    // metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
 
+    //median tubularity
+
+    sort(tubularities.begin(), tubularities.end());
+    metrics.tubularity = tubularities[tubularities.size()/2];
     cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
-        <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; ave_tubularity = "<<metrics.tubularity <<"\n"<< endl;
+        <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; median_tubularity = "<<metrics.tubularity <<"\n"<< endl;
 
     return metrics;
 
