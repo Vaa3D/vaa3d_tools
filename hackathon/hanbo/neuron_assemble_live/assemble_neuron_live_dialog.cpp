@@ -1,5 +1,9 @@
 #include "assemble_neuron_live_dialog.h"
 
+#include <map>
+
+using namespace std;
+
 assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb, QList<NeuronTree> &ntList, Image4DSimple * p_img4d_in, QWidget *parent) :
     QDialog(parent)
 {
@@ -8,6 +12,7 @@ assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb
     p_img4d = p_img4d_in;
 
     noffset=0;
+    coffset=0;
     if(ntList.size()>0){
         initNeuron(ntList);
     }else{
@@ -31,8 +36,10 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     cb_color = new QComboBox();
     cb_color->addItem("color by type");
     cb_color->addItem("color by segment");
+    cb_color->setCurrentIndex(1);
     layout->addWidget(cb_color,2,1,1,1);
 
+    connect(btn_link, SIGNAL(clicked()), this, SLOT(searchPair()));
     connect(cb_color, SIGNAL(currentIndexChanged(int)), this, SLOT(setColor(int)));
 
     tab = new QTabWidget(this);
@@ -52,6 +59,8 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     dialog_conn->setLayout(layout_conn);
     tab->addTab(dialog_conn,tr("connect"));
 
+    connect(list_link, SIGNAL(currentRowChanged(int)), this, SLOT(highlightPair()));
+    connect(btn_connect, SIGNAL(clicked()), this, SLOT(connectPair()));
     connect(btn_manuallink,SIGNAL(clicked()),this,SLOT(pairMarker()));
     connect(btn_deletelink,SIGNAL(clicked()),this,SLOT(delPair()));
 
@@ -72,6 +81,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     tab->addTab(dialog_break,tr("break"));
 
     connect(btn_syncmarker,SIGNAL(clicked()),this,SLOT(syncMarker()));
+    connect(list_marker, SIGNAL(currentRowChanged(int)), this, SLOT(highlightMarker()));
 
     layout->addWidget(tab,3,0,1,2);
 
@@ -170,6 +180,7 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
             }
             cid++;
         }
+        coffset=cid;
         qDebug()<<"NeuronAssembler: "<<cid<<" fragements identified";
     }
 
@@ -201,6 +212,365 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
     }
 }
 
+void assemble_neuron_live_dialog::searchPair()
+{
+    //check if need to clean exist node
+    LandmarkList * mList = getMarkerList();
+    if(list_link->count()!=0){
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Search Connection", "Do you want to clean the list of node to connect?",
+                                      QMessageBox::Yes|QMessageBox::No);
+        if(reply == QMessageBox::Yes){
+            mList->clear();
+            list_link->clear();
+            update3DView();
+        }
+    }
+
+    //get parameters
+    connect_param_dialog cpDlg;
+    if(cpDlg.exec()==QDialog::Rejected){
+        return;
+    }
+
+    //search for connections
+    QSet<QPair<V3DLONG, V3DLONG> > linknew = searchConnection(cpDlg.spin_xscale->value(), cpDlg.spin_yscale->value(), cpDlg.spin_zscale->value(),
+                                                               cos((180-cpDlg.spin_ang->value())/180*M_PI), cpDlg.spin_dis->value(),
+                                                               cpDlg.cb_matchType->currentIndex(), cpDlg.cb_distanceType->currentIndex()==0);
+
+    //update link list and markers
+    if(linknew.size()==0){
+        v3d_msg("No qualified connection found, please change parameter.");
+        return;
+    }
+
+    //find exist links
+    QSet<QPair<V3DLONG,V3DLONG> > links;
+    QList<int> info;
+    QHash<int, int> markerTable;
+    for(int mid=0; mid<mList->size(); mid++){
+        get_marker_info(mList->at(mid), info);
+        markerTable.insert(info.at(0),mid);
+    }
+    for(int mid=0; mid<mList->size(); mid++){
+        get_marker_info(mList->at(mid), info);
+        QList<int>::iterator iter = info.begin();
+        iter++;
+        while(iter!=info.end()){
+            if(info.at(0)!=*iter && markerTable.contains(*iter)){
+                QPair<V3DLONG,V3DLONG> tmp(MIN(info.at(0), *iter),MAX(info.at(0), *iter));
+                links.insert(tmp);
+                iter++;
+            }else{
+                iter=info.erase(iter);
+                update_marker_info(mList->at(mid), info);
+            }
+        }
+    }
+
+    //update marker and link
+    for(QSet<QPair<V3DLONG,V3DLONG> >::Iterator iter = linknew.begin(); iter!=linknew.end(); iter++){
+        //check marker
+        int mid1, mid2;
+        V3DLONG pid1 = (*iter).first;
+        V3DLONG pid2 = (*iter).second;
+        QList<int> info;
+        if(markerTable.contains(pid1)){
+            mid1=markerTable.value(pid1);
+            get_marker_info(mList->at(mid1),info);
+            if(!info.contains(pid2)){
+                info.push_back(pid2);
+                update_marker_info(mList->at(mid1),info);
+            }
+        }else{
+            LocationSimple S(nodes.value(pid1)->x,nodes.value(pid1)->y,nodes.value(pid1)->z);
+            S.color=XYZW(0,128,0,0);
+            S.name=QString::number(pid1).toStdString();
+            S.comments=QString::number(pid2).toStdString();
+            markerTable.insert(pid1,mList->size());
+            mList->push_back(S);
+        }
+        if(markerTable.contains(pid2)){
+            mid2=markerTable.value(pid2);
+            get_marker_info(mList->at(mid2),info);
+            if(!info.contains(pid1)){
+                info.push_back(pid1);
+                update_marker_info(mList->at(mid2),info);
+            }
+        }else{
+            LocationSimple S(nodes.value(pid2)->x,nodes.value(pid2)->y,nodes.value(pid2)->z);
+            S.color=XYZW(0,128,0,0);
+            S.name=QString::number(pid2).toStdString();
+            S.comments=QString::number(pid1).toStdString();
+            markerTable.insert(pid2,mList->size());
+            mList->push_back(S);
+        }
+        //update list
+        links.insert(*iter);
+    }
+
+    //update list widget
+    list_link->clear();
+    //sort the connections
+    multimap<int, QPair<V3DLONG, V3DLONG> > mlinks;
+    for(QSet<QPair<V3DLONG, V3DLONG> >::iterator iter = links.begin(); iter!=links.end(); iter++){
+        V3DLONG pid1, pid2;
+        pid1=iter->first;
+        pid2=iter->second;
+        int mid1 = markerTable[pid1]+1;
+        int mid2 = markerTable[pid2]+1;
+        if(mid1<mid2){
+            mlinks.insert(pair<int, QPair<V3DLONG, V3DLONG> >(mid1*markerTable.size()+mid2, QPair<V3DLONG,V3DLONG>(pid1, pid2)));
+        }else{
+            mlinks.insert(pair<int, QPair<V3DLONG, V3DLONG> >(mid2*markerTable.size()+mid1, QPair<V3DLONG,V3DLONG>(pid2, pid1)));
+        }
+    }
+    //update list
+    for(multimap<int, QPair<V3DLONG, V3DLONG> >::iterator iter = mlinks.begin(); iter!=mlinks.end(); iter++){
+        V3DLONG pid1, pid2;
+        pid1=iter->second.first;
+        pid2=iter->second.second;
+        int mid1 = markerTable[pid1]+1;
+        int mid2 = markerTable[pid2]+1;
+        QString tmp = "Marker "+QString::number(mid1)+" x "+
+                QString::number(mid2)+" (Node "+QString::number(pid1)+" x "+
+                QString::number(pid2)+" )";
+        list_link->addItem(tmp);
+    }
+    if(list_link->count()>0 && list_link->currentRow()!=0){
+        list_link->setCurrentRow(0);
+    }
+
+    update3DView();
+}
+
+QSet<QPair<V3DLONG, V3DLONG> > assemble_neuron_live_dialog::searchConnection
+(double xscale, double yscale, double zscale, double angThr, double disThr, int matchType, bool b_minusradius)
+{
+    QSet<QPair<V3DLONG, V3DLONG> > links;
+    bool b_somaaxon = false;
+    if(disThr<0){
+        disThr=getNeuronDiameter();
+    }
+    //init
+    qDebug()<<"Init neuron and tips";
+    QHash<NOI *, XYZ> scaledXYZ;
+    QList<NOI *> cand;
+    QHash<NOI *, XYZ> canddir;
+    QHash<int, int> clink;
+    QHash<int, QList<NOI *> > components;
+    for(NodeIter iter=nodes.begin(); iter!=nodes.end(); iter++){
+        NOI * node = iter.value();
+
+        //scale xyz
+        XYZ S;
+        S.x = node->x*xscale;
+        S.y = node->y*yscale;
+        S.z = node->z*zscale;
+        scaledXYZ.insert(iter.value(), S);
+
+        //link component to it self
+        clink.insert(node->cid,node->cid);
+        if(components.contains(node->cid)){
+            components[node->cid].push_back(node);
+        }else{
+            QList<NOI *> tmp;
+            tmp.push_back(node);
+            components.insert(node->cid,tmp);
+        }
+
+        //find tips
+        if(node->conn.size()<=1){
+            cand.push_back(node);
+            //get direction
+            XYZ tmpdir(0,0,0);
+            if(node->conn.size()==1){
+                tmpdir.x += scaledXYZ[node].x-scaledXYZ[*(node->conn.begin())].x;
+                tmpdir.y += scaledXYZ[node].y-scaledXYZ[*(node->conn.begin())].y;
+                tmpdir.z += scaledXYZ[node].z-scaledXYZ[*(node->conn.begin())].z;
+                double tmpNorm = sqrt(tmpdir.x*tmpdir.x+tmpdir.y*tmpdir.y+tmpdir.z*tmpdir.z);
+                if(tmpNorm>1e-16){
+                    tmpdir.x/=tmpNorm;
+                    tmpdir.y/=tmpNorm;
+                    tmpdir.z/=tmpNorm;
+                }
+            }
+            canddir.insert(node,tmpdir);
+        }
+    }
+
+    qDebug()<<"match tips";
+    //match tips
+    multimap<double, QPair<NOI *, NOI *> > connMap;
+    for(V3DLONG tid=0; tid<cand.size(); tid++){
+        NOI * tnode = cand.at(tid);
+        for(V3DLONG cid=0; cid<coffset; cid++){
+            if(cid==tnode->cid) continue;
+            if(!components.contains(cid) || components.value(cid).size()<1) continue;
+            double mvdis=disThr, mtdis=disThr;
+            NOI * mvnode=0, * mtnode=0;
+            for(QList<NOI *>::Iterator iter = components[cid].begin(); iter!= components[cid].end(); iter++){
+                NOI * node = *iter;
+                if(matchType==1){ //must be the same type to connect
+                    if(node->type!=tnode->type){
+                        continue;
+                    }
+                }
+                if(matchType==2){ //must be the same type except soma
+                    if(node->type!=tnode->type &&
+                            node->type!=1 && tnode->type!=1){
+                        continue;
+                    }
+                }
+                double dis=NTDIS(scaledXYZ[tnode],scaledXYZ[node]);
+                if(b_minusradius){
+                    dis-=node->radius;
+                    dis-=tnode->radius;
+                }
+                if(dis<mvdis){
+                    mvdis=dis;
+                    mvnode=node;
+                }
+                if(dis<mtdis){
+                    if(node->conn.size()<=1){//tips
+                        if(NTDOT(canddir[tnode],canddir[node])<angThr){
+                            mtdis=dis;
+                            mtnode=node;
+                        }
+                    }
+                }
+            }
+            if(mvnode!=0){
+                connMap.insert(pair<double, QPair<NOI *, NOI * > >(mvdis+disThr,QPair<NOI *, NOI *>(tnode, mvnode)));
+            }
+            if(mtnode!=0){
+                connMap.insert(pair<double, QPair<NOI *, NOI * > >(mtdis,QPair<NOI *, NOI *>(tnode, mtnode)));
+            }
+        }
+    }
+
+    qDebug()<<"connecting tips";
+    //find the best solution for connecting tips
+    for(multimap<double, QPair<NOI *, NOI * > >::iterator iter=connMap.begin(); iter!=connMap.end(); iter++){
+        NOI * node1 = iter->second.first;
+        NOI * node2 = iter->second.second;
+        if(clink.value(node1->cid)==clink.value(node2->cid)) //already connected
+            continue;
+        if(matchType==2){ //check soma axon connection
+            if(node1->type * node2->type == 2){ //is soma axon connection
+                if(b_somaaxon) //already has soma axon connection
+                    continue;
+                else
+                    b_somaaxon=true;
+            }
+        }
+        links.insert(QPair<V3DLONG, V3DLONG>(MIN(node1->n, node2->n),MAX(node1->n, node2->n)));
+        int cid1=clink.value(node1->cid);
+        int cid2=clink.value(node2->cid);
+        for(QHash<int, int>::Iterator citer=clink.begin(); citer!=clink.end(); citer++){
+            if(citer.value()==cid2){
+                citer.value()=cid1;
+            }
+        }
+    }
+
+    return links;
+}
+
+bool assemble_neuron_live_dialog::connectNode(V3DLONG pid1, V3DLONG pid2)
+{
+    bool modified = false;
+    //find the node
+    NOI * node1, * node2;
+    if(nodes.contains(pid1) && nodes.contains(pid2)){
+        node1=nodes.value(pid1);
+        node2=nodes.value(pid2);
+    }else{
+        return modified;
+    }
+    //connect node
+    if(!node1->conn.contains(node2)){
+        node1->conn.insert(node2);
+        NeuronSWC neuron;
+        neuron.n=node1->n;
+        neuron.type=node1->type;
+        neuron.x=node1->x;
+        neuron.y=node1->y;
+        neuron.z=node1->z;
+        neuron.r=node1->r;
+        neuron.pn=node2->n;
+        nt.listNeuron.push_back(neuron);
+        nt.hashNeuron.insert(neuron.n, nt.listNeuron.size()-1);
+        modified = true;
+    }
+    if(!node2->conn.contains(node1)){
+        node2->conn.insert(node1);
+        NeuronSWC neuron;
+        neuron.n=node2->n;
+        neuron.type=node2->type;
+        neuron.x=node2->x;
+        neuron.y=node2->y;
+        neuron.z=node2->z;
+        neuron.r=node2->r;
+        neuron.pn=node1->n;
+        nt.listNeuron.push_back(neuron);
+        nt.hashNeuron.insert(neuron.n, nt.listNeuron.size()-1);
+        modified = true;
+    }
+    //update connected component
+    if(node1->cid != node2->cid){
+        V3DLONG tmpc = node2->cid;
+        for(NodeIter iter = nodes.begin(); iter!=nodes.end(); iter++){
+            NOI * node = iter.value();
+            if(node->cid == tmpc){
+                node->cid = node1->cid;
+                modified = true;
+            }
+        }
+    }
+    return modified;
+}
+
+void assemble_neuron_live_dialog::connectPair()
+{
+    //get the node to connect
+    int idx=list_link->currentRow();
+    if(idx<0){
+        v3d_msg("Please select the node to connect. You can: a) search connection; or b) manually define markers on reconstruction and link them.");
+        return;
+    }
+    QString tmp=list_link->currentItem()->text();
+    QStringList items = tmp.split(" ", QString::SkipEmptyParts);
+    int pid1, pid2;
+    bool check;
+    pid1=items.at(5).toInt(&check);
+    if(!check || !nodes.contains(pid1)){
+        v3d_msg("Encounter unexpected error 1. Plase contact developer.");
+        return;
+    }
+    pid2=items.at(7).toInt(&check);
+    if(!check || !nodes.contains(pid2)){
+        v3d_msg("Encounter unexpected error 1. Plase contact developer.");
+        return;
+    }
+    //check the loop
+    if(check_loop->isChecked()){
+        if(nodes.value(pid1)->cid == nodes.value(pid2)->cid){
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Loop identified", "The nodes selected are from the same neuron. Connect them will result in loop. Are you sure you want to connect them?",
+                                          QMessageBox::Yes|QMessageBox::No);
+            if(reply == QMessageBox::No){
+                return;
+            }
+        }
+    }
+    //connect
+    if(connectNode(pid1, pid2)){
+        updateColor();
+    }
+    //remove the pair from the list
+    delPair();
+}
 
 void assemble_neuron_live_dialog::syncMarker()
 {
@@ -276,25 +646,33 @@ void assemble_neuron_live_dialog::pairMarker()
 
     //update list widget
     list_link->clear();
-    for(QSet<QPair<V3DLONG,V3DLONG> >::iterator iter = links.begin(); iter!=links.end(); iter++){
+    //sort the connections
+    multimap<int, QPair<V3DLONG, V3DLONG> > mlinks;
+    for(QSet<QPair<V3DLONG, V3DLONG> >::iterator iter = links.begin(); iter!=links.end(); iter++){
         V3DLONG pid1, pid2;
         pid1=iter->first;
         pid2=iter->second;
         int mid1 = markerTable[pid1]+1;
         int mid2 = markerTable[pid2]+1;
-        QString tmp;
         if(mid1<mid2){
-            tmp = "Marker "+QString::number(mid1)+" x "+
-                    QString::number(mid2)+" (Node "+QString::number(pid1)+" x "+
-                    QString::number(pid2)+" )";
+            mlinks.insert(pair<int, QPair<V3DLONG, V3DLONG> >(mid1*markerTable.size()+mid2, QPair<V3DLONG,V3DLONG>(pid1, pid2)));
         }else{
-            tmp = "Marker "+QString::number(mid2)+" x "+
-                    QString::number(mid1)+" (Node "+QString::number(pid2)+" x "+
-                    QString::number(pid1)+" )";
+            mlinks.insert(pair<int, QPair<V3DLONG, V3DLONG> >(mid2*markerTable.size()+mid1, QPair<V3DLONG,V3DLONG>(pid2, pid1)));
         }
+    }
+    //update list
+    for(multimap<int, QPair<V3DLONG, V3DLONG> >::iterator iter = mlinks.begin(); iter!=mlinks.end(); iter++){
+        V3DLONG pid1, pid2;
+        pid1=iter->second.first;
+        pid2=iter->second.second;
+        int mid1 = markerTable[pid1]+1;
+        int mid2 = markerTable[pid2]+1;
+        QString tmp = "Marker "+QString::number(mid1)+" x "+
+                QString::number(mid2)+" (Node "+QString::number(pid1)+" x "+
+                QString::number(pid2)+" )";
         list_link->addItem(tmp);
     }
-    if(list_link->count()>0){
+    if(list_link->count()>0 && list_link->currentRow()!=0){
         list_link->setCurrentRow(0);
     }
 
@@ -447,6 +825,7 @@ void assemble_neuron_live_dialog::updateDisplay()
     }
 
     update3DWindow();
+    updateColor();
 }
 
 void assemble_neuron_live_dialog::update3DView()
@@ -623,9 +1002,86 @@ void assemble_neuron_live_dialog::updateColor()
     qDebug()<<"done color update";
 }
 
+void assemble_neuron_live_dialog::highlightPair()
+{
+    int idx=list_link->currentRow();
+    if(idx<0 || idx>=list_link->count()) return;
+    QString tmp = list_link->currentItem()->text();
+    QStringList items = tmp.split(" ", QString::SkipEmptyParts);
+    int mid1, mid2;
+    bool check;
+    LandmarkList * mList = getMarkerList();
+    mid1=items.at(1).toInt(&check)-1;
+    if(!check) mid1=-1;
+    mid2=items.at(3).toInt(&check)-1;
+    if(!check) mid2=-1;
+
+    RGB8 color1; color1.r=color1.b=0; color1.g=128;
+    RGB8 color2; color2.r=255; color2.b=color2.g=0;
+    for(int i=0; i<mList->size(); i++){
+        if(i==mid1 || i==mid2){
+            set_marker_color(mList->at(i),color2);
+        }else{
+            set_marker_color(mList->at(i),color1);
+        }
+    }
+
+    update3DView();
+}
+
+void assemble_neuron_live_dialog::highlightMarker()
+{
+    int idx=list_marker->currentRow();
+    if(idx<0 || idx>=list_marker->count()) return;
+    QString tmp = list_marker->currentItem()->text();
+    QStringList items = tmp.split(" ", QString::SkipEmptyParts);
+    int mid;
+    bool check;
+    LandmarkList * mList = getMarkerList();
+    mid=items.at(1).toInt(&check)-1;
+    if(!check) mid=-1;
+
+    RGB8 color1; color1.r=color1.b=0; color1.g=128;
+    RGB8 color2; color2.r=255; color2.b=color2.g=0;
+    for(int i=0; i<mList->size(); i++){
+        if(i==mid){
+            set_marker_color(mList->at(i),color2);
+        }else{
+            set_marker_color(mList->at(i),color1);
+        }
+    }
+
+    update3DView();
+}
+
 void assemble_neuron_live_dialog::updateROIWindow()
 {
 
+}
+
+double assemble_neuron_live_dialog::getNeuronDiameter()
+{
+    if(nodes.size()<=0)
+        return 0;
+    float x_min=(*nodes.begin())->x;
+    float x_max=(*nodes.begin())->x;
+    float y_min=(*nodes.begin())->y;
+    float y_max=(*nodes.begin())->y;
+    float z_min=(*nodes.begin())->z;
+    float z_max=(*nodes.begin())->z;
+    for(NodeIter iter = nodes.begin(); iter!=nodes.end(); iter++){
+        x_min=MIN(iter.value()->x, x_min);
+        y_min=MIN(iter.value()->y, y_min);
+        z_min=MIN(iter.value()->z, z_min);
+        x_max=MAX(iter.value()->x, x_max);
+        y_max=MAX(iter.value()->y, y_max);
+        z_max=MAX(iter.value()->z, z_max);
+    }
+    double tmp=(x_max-x_min)*(x_max-x_min);
+    tmp=(y_max-y_min)*(y_max-y_min);
+    tmp=(z_max-z_min)*(z_max-z_min);
+    tmp=sqrt(tmp);
+    return tmp;
 }
 
 //~~~~~~~~~~pair dialog~~~~~~~~~~~
@@ -664,6 +1120,163 @@ pair_marker_dialog::pair_marker_dialog(LandmarkList * mList,QWidget *parent)
     connect(btn_no,SIGNAL(clicked()),this,SLOT(reject()));
 }
 
+//~~~~~~~~~~connect param dialog~~
+
+connect_param_dialog::connect_param_dialog()
+{
+    creat();
+    initDlg();
+}
+
+connect_param_dialog::~connect_param_dialog()
+{
+    QSettings settings("V3D plugin","neuronLiveAssemble_ConnParam");
+
+    settings.setValue("disthr",this->spin_dis->value());
+    settings.setValue("angthr",this->spin_ang->value());
+    settings.setValue("xscale",this->spin_xscale->value());
+    settings.setValue("yscale",this->spin_yscale->value());
+    settings.setValue("zscale",this->spin_zscale->value());
+    settings.setValue("distype",this->cb_distanceType->currentIndex());
+    settings.setValue("matchtype",this->cb_matchType->currentIndex());
+}
+
+void connect_param_dialog::initDlg()
+{
+    QSettings settings("V3D plugin","neuronLiveAssemble_ConnParam");
+
+    if(settings.contains("disthr"))
+        this->spin_dis->setValue(settings.value("disthr").toDouble());
+    if(settings.contains("angthr"))
+        this->spin_ang->setValue(settings.value("angthr").toDouble());
+    if(settings.contains("xscale"))
+        this->spin_xscale->setValue(settings.value("xscale").toDouble());
+    if(settings.contains("yscale"))
+        this->spin_yscale->setValue(settings.value("yscale").toDouble());
+    if(settings.contains("zscale"))
+        this->spin_zscale->setValue(settings.value("zscale").toDouble());
+    if(settings.contains("distype"))
+        this->cb_distanceType->setCurrentIndex(settings.value("distype").toInt());
+    if(settings.contains("matchtype"))
+        this->cb_matchType->setCurrentIndex(settings.value("matchtype").toInt());
+}
+
+void connect_param_dialog::creat()
+{
+    gridLayout = new QGridLayout();
+
+    cb_conf = new QComboBox();
+    cb_conf->addItem("custom config");
+    cb_conf->addItem("connect all, shortest distance");
+    cb_conf->addItem("connect all, tip-tip only");
+    cb_conf->addItem("connect local joint only");
+    cb_conf->addItem("other config A");
+    connect(cb_conf, SIGNAL(currentIndexChanged(int)), this, SLOT(myconfig()));
+    spin_xscale = new QDoubleSpinBox();
+    spin_xscale->setRange(1,100000); spin_xscale->setValue(1);
+    spin_yscale = new QDoubleSpinBox();
+    spin_yscale->setRange(1,100000); spin_yscale->setValue(1);
+    spin_zscale = new QDoubleSpinBox();
+    spin_zscale->setRange(1,100000); spin_zscale->setValue(1);
+    spin_ang = new QDoubleSpinBox();
+    spin_ang->setRange(0,180); spin_ang->setValue(60);
+    spin_dis = new QDoubleSpinBox();
+    spin_dis->setRange(-1,100000); spin_dis->setValue(10);
+    cb_matchType = new QComboBox();
+    cb_matchType->addItem("no type rule");
+    cb_matchType->addItem("must be the same type");
+    cb_matchType->addItem("topology constrain");
+    cb_matchType->setCurrentIndex(2);
+    cb_distanceType = new QComboBox();
+    cb_distanceType->addItem("between surface (suggested)");
+    cb_distanceType->addItem("between skeleton");
+    QLabel* label_0 = new QLabel("sacles: ");
+    gridLayout->addWidget(label_0,8,0,1,1);
+    QLabel* label_1 = new QLabel("X: ");
+    gridLayout->addWidget(label_1,8,1,1,1);
+    gridLayout->addWidget(spin_xscale,8,2,1,1);
+    QLabel* label_2 = new QLabel("Y: ");
+    gridLayout->addWidget(label_2,8,3,1,1);
+    gridLayout->addWidget(spin_yscale,8,4,1,1);
+    QLabel* label_3 = new QLabel("Z: ");
+    gridLayout->addWidget(label_3,8,5,1,1);
+    gridLayout->addWidget(spin_zscale,8,6,1,1);
+    QLabel* label_conf = new QLabel("connection configuration: ");
+    gridLayout->addWidget(label_conf,9,0,1,4);
+    gridLayout->addWidget(cb_conf,9,4,1,3);
+    QLabel* label_4 = new QLabel("maximum connection distance (-1=connect all): ");
+    gridLayout->addWidget(label_4,10,0,1,6);
+    gridLayout->addWidget(spin_dis,10,6,1,1);
+    QLabel* label_5 = new QLabel("tip-tip match angular threshold: ");
+    gridLayout->addWidget(label_5,11,0,1,6);
+    gridLayout->addWidget(spin_ang,11,6,1,1);
+    QLabel* label_6 = new QLabel("type of distance measurment: ");
+    gridLayout->addWidget(label_6,12,0,1,4);
+    gridLayout->addWidget(cb_distanceType,12,4,1,3);
+    QLabel* label_7 = new QLabel("rules of connected fragment type: ");
+    gridLayout->addWidget(label_7,13,0,1,4);
+    gridLayout->addWidget(cb_matchType,13,4,1,3);
+
+    //operation zone
+    QFrame *line_2 = new QFrame();
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_2,15,0,1,7);
+    btn_run = new QPushButton("Search");
+    connect(btn_run,     SIGNAL(clicked()), this, SLOT(accept()));
+    gridLayout->addWidget(btn_run,16,4,1,1);
+    btn_quit = new QPushButton("Cancel");
+    connect(btn_quit,     SIGNAL(clicked()), this, SLOT(reject()));
+    gridLayout->addWidget(btn_quit,16,6,1,1);
+
+    //operation zone
+    QFrame *line_3 = new QFrame();
+    line_3->setFrameShape(QFrame::HLine);
+    line_3->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_3,20,0,1,7);
+    QString info=">> Set parameters to search fragment connections in SWC file to construct tree by adding new connects.\n";
+    info+=">> angular threshold: Will first search for connections between tips with angle smaller than angthr degrees within disthr. Then will search for tip to segment connections. Set to 0 for no preference of tip to tip connection. If distance threshold is -1, there is no preference to tip-tip match.\n";
+    info+=">> scale: the coordinate will be multiplied by scale before computing.\n";
+    info+=">> topology constrain for connection rule: except soma (1), only fragments with the same type will be matched. And only 1 connection between axon and soma\n";
+    text_info = new QTextEdit;
+    text_info->setText(info);
+    text_info->setReadOnly(true);
+    gridLayout->addWidget(text_info,21,0,1,7);
+
+    setLayout(gridLayout);
+}
+
+void connect_param_dialog::myconfig()
+{
+    if(cb_conf->currentIndex()==0){
+        spin_ang->setEnabled(true);
+        spin_dis->setEnabled(true);
+    }else{
+        spin_ang->setEnabled(false);
+        spin_dis->setEnabled(false);
+        switch (cb_conf->currentIndex()) {
+        case 1:
+            spin_ang->setValue(0);
+            spin_dis->setValue(-1);
+            break;
+        case 2:
+            spin_ang->setValue(180);
+            spin_dis->setValue(-1);
+            break;
+        case 3:
+            spin_ang->setValue(0);
+            spin_dis->setValue(1);
+            break;
+        case 4:
+            spin_ang->setValue(20);
+            spin_dis->setValue(60);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 //~~~~~~~~~~functions~~~~~~~~~~~~~
 
 void update_marker_info(const LocationSimple& mk, QList<int> & info) //info[0]=node id, info[i]=point id to connect
@@ -695,6 +1308,15 @@ void update_marker_info(const LocationSimple& mk, QList<int> & info, int* color)
     p->color.r = color[0];
     p->color.g = color[1];
     p->color.b = color[2];
+}
+
+void set_marker_color(const LocationSimple& mk, RGB8 color)
+{
+    LocationSimple *p;
+    p = (LocationSimple *)&mk;
+    p->color.r = color.r;
+    p->color.g = color.g;
+    p->color.b = color.b;
 }
 
 bool get_marker_info(const LocationSimple& mk, QList<int> & info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name
