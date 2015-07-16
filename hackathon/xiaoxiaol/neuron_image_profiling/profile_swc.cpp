@@ -39,6 +39,11 @@ static V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
 
 }
 
+static double median(vector<double> x)
+{
+    sort(x.begin(), x.end());
+    return  x[x.size()/2];
+}
 
 //flip image along the Y direction ( due to the image matrix order convention in Vaa3D)
 bool flip_y (Image4DSimple * image)
@@ -75,10 +80,10 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"snr" <<","<<"median tubularity"<<"\n";
+        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"cnr" <<","<<"median tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
-            stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].snr <<","<< result_metrics[i].tubularity<< "\n";
+            stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].cnr <<","<< result_metrics[i].tubularity<< "\n";
         }
 
         file.close();
@@ -133,13 +138,13 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     writeMetrics2CSV(result_metrics, output_csv_file);
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Signal-to-Background Ratio | Median Tubularity \n";
+    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio | Median Tubularity \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
      disp_text += QString::number(result_metrics[i].type) + "             ";;
      disp_text += QString::number(result_metrics[i].dy) + "             ";
-     disp_text += QString::number(result_metrics[i].snr)+ "                          ";
+     disp_text += QString::number(result_metrics[i].cnr)+ "                          ";
      disp_text += QString::number(result_metrics[i].tubularity)+ "\n";
     }
     disp_text +="Output the metrics into:"+ output_csv_file +"\n";
@@ -221,7 +226,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     IMAGE_METRICS metrics;
     metrics.type = neuronSegment.at(0).type; // one segment is one type ( all it's nodes should have the same type)
-    metrics.snr = 0.0;
+    metrics.cnr = 0.0;
     metrics.dy = 0.0;
     metrics.tubularity = 0.0;
 
@@ -408,10 +413,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     double bg_deviation= sqrt(sum2/(bg_1d.size()-1));
 
     if (bg_deviation != 0.0){
-        metrics.snr = fabs(fg_mean - bg_mean)/bg_deviation;
+       // metrics.cnr = fabs(fg_mean - bg_mean)/bg_deviation;
+        double contrast = median(fg_1d) - median(bg_1d);
+        metrics.cnr = fabs(contrast)/bg_deviation;
     }
     else {
-        metrics.snr  = INFINITY;
+        metrics.cnr  = INFINITY;
         cout<<"warning! background deviation is zero"<<endl;
     }
 
@@ -420,10 +427,10 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     //median tubularity
 
-    sort(tubularities.begin(), tubularities.end());
-    metrics.tubularity = tubularities[tubularities.size()/2];
+
+    metrics.tubularity = median(tubularities);
     cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
-        <<"; bg_dev = "<<bg_deviation<<"; snr = "<<metrics.snr <<"; median_tubularity = "<<metrics.tubularity <<"\n"<< endl;
+        <<"; bg_dev = "<<bg_deviation<<"; cnr = "<<metrics.cnr <<"; median_tubularity = "<<metrics.tubularity <<"\n"<< endl;
 
     return metrics;
 
