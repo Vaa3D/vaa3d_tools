@@ -13,6 +13,7 @@ manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb)
     label=0;
     create();
     edit_flag=false;
+    first_seg_flag=true;
 }
 
 void manual_correct_dialog::create()
@@ -217,7 +218,7 @@ void manual_correct_dialog::create_standing_dialog()
 
     QPushButton *dilate = new QPushButton(tr("Dilate"));
     QPushButton *erode =new QPushButton (tr("Erode"));
-    QPushButton *reset = new QPushButton (tr("Reset"));
+    QPushButton *reset = new QPushButton (tr("Reset spine"));
     layout2->addWidget(dilate,4,0,1,2);
     layout2->addWidget(erode,4,2,1,2);
     layout2->addWidget(reset,4,4,1,2);
@@ -547,6 +548,7 @@ bool manual_correct_dialog::auto_spine_detect()
     spine_obj.conn_comp_nb6();
     progress->setValue(++progress_id);//10
     LList_in = spine_obj.get_center_landmarks();
+
     label_group = spine_obj.get_group_label();
     //spine_obj.saveResult();
 
@@ -1291,7 +1293,7 @@ vector<vector<int> > manual_correct_dialog::build_parent_LUT()
 void manual_correct_dialog::neurontree_divide()
 {
     qDebug()<<"neurontree divide";
-    float distance_thresh=100;
+    float distance_thresh=150;
     vector<int> leaf_nodes_id;
     vector<vector <int> > parent_LUT = build_parent_LUT();
     for (int i=0;i<neuron.listNeuron.size();i++)
@@ -1359,9 +1361,9 @@ void manual_correct_dialog::neurontree_divide()
 }
 
 
-void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
+void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg,int seg_id)
 {
-    int extra_length=8;
+    int extra_length=4;
     float r0,r1;
     r0=neuron.listNeuron.at(one_seg[0]).r+all_para.max_dis;
     r1=neuron.listNeuron.at(one_seg[1]).r+all_para.max_dis;
@@ -1405,8 +1407,6 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
                 V3DLONG pos=xyz2pos(dx,dy,dz,sz_img[0],sz_img[0]*sz_img[1]);
                 V3DLONG pos1=xyz2pos(dx-x_min,dy-y_min,dz-z_min,sz_seg[0],sz_seg[0]*sz_seg[1]);
                 image_seg[pos1]=image1Dc_spine[pos];
-//                if (image1Dc_spine[pos+sz_img[0]*sz_img[1]*sz_img[2]]>0)
-//                    image_seg[pos1+sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
             }
         }
     }
@@ -1416,53 +1416,56 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg)
     //also need to check if the whole spine is displayed
     for (int j=0;j<LList_in.size();j++)
     {
+
         if (LList_in[j].x-1<=x_min || LList_in[j].x-1>=x_max || LList_in[j].y-1<=y_min
             || LList_in[j].y-1>=y_max || LList_in[j].z-1<=z_min ||LList_in[j].z-1>=z_max )
             continue;
-        GOV tmp_spine= label_group [j];
-        bool incomplete_flag=false;
 
-        //check if the spine is complete
-        for (int k=0;k<tmp_spine.size();k++)
+        GOV tmp_spine= label_group [j];
+        if (LList_in.at(j).category!=seg_id)  //need to check if the spine is complete
         {
-            if (tmp_spine[k]->x<x_min || tmp_spine[k]->x > x_max || tmp_spine[k]->y <y_min
-                    || tmp_spine[k]->y>y_max || tmp_spine[k]->z<z_min || tmp_spine[k]->z>z_max)
-            {
-                incomplete_flag=true;
-                break;
-            }
-        }
-        if (incomplete_flag) //if incomplete, not to include the spine
-            continue;
-        else
-        {
+            bool incomplete_flag=false;
             for (int k=0;k<tmp_spine.size();k++)
             {
-                V3DLONG x=tmp_spine[k]->x-x_min;
-                V3DLONG y=tmp_spine[k]->y-y_min;
-                V3DLONG z=tmp_spine[k]->z-z_min;
-                V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
-                image_seg[pos+sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
+                if (tmp_spine[k]->x<x_min || tmp_spine[k]->x > x_max || tmp_spine[k]->y <y_min
+                        || tmp_spine[k]->y>y_max || tmp_spine[k]->z<z_min || tmp_spine[k]->z>z_max)
+                {
+                    incomplete_flag=true;
+                    break;
+                }
             }
-            LocationSimple tmp;
-            tmp.x=LList_in[j].x-x_min;
-            tmp.y=LList_in[j].y-y_min;
-            tmp.z=LList_in[j].z-z_min;
-            tmp.color.r=LList_in[j].color.r;
-            tmp.color.g=LList_in[j].color.g;
-            tmp.color.b=LList_in[j].color.b;
-            tmp.name=LList_in[j].name;
-            tmp.comments=LList_in[j].comments;
-            LList_seg.append(tmp);
+            if (incomplete_flag) //if incomplete, not to include the spine
+                continue;
+            if (LList_in.at(j).category==0)
+                LList_in[j].category=seg_id;
         }
 
+
+        for (int k=0;k<tmp_spine.size();k++)
+        {
+            V3DLONG x=tmp_spine[k]->x-x_min;
+            V3DLONG y=tmp_spine[k]->y-y_min;
+            V3DLONG z=tmp_spine[k]->z-z_min;
+            V3DLONG pos=xyz2pos(x,y,z,sz_seg[0],sz_seg[0]*sz_seg[1]);
+            image_seg[pos+sz_seg[0]*sz_seg[1]*sz_seg[2]]=255;
+        }
+        LocationSimple tmp;
+        tmp.x=LList_in[j].x-x_min;
+        tmp.y=LList_in[j].y-y_min;
+        tmp.z=LList_in[j].z-z_min;
+        tmp.color.r=LList_in[j].color.r;
+        tmp.color.g=LList_in[j].color.g;
+        tmp.color.b=LList_in[j].color.b;
+        tmp.name=LList_in[j].name;
+        tmp.comments=LList_in[j].comments;
+        LList_seg.append(tmp);
     }
 
-        QString filename=QString::number(one_seg[0])+"_"+QString::number(one_seg[1])+".v3draw";
-        unsigned char *image_copy=new unsigned char[sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
-        memcpy(image_copy,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
-        simple_saveimage_wrapper(*callback,filename.toStdString().c_str(),image_copy,sz_seg,V3D_UINT8);
-//    }
+//    QString filename=QString::number(one_seg[0])+"_"+QString::number(one_seg[1])+".v3draw";
+//    unsigned char *image_copy=new unsigned char[sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
+//    memcpy(image_copy,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
+//    simple_saveimage_wrapper(*callback,filename.toStdString().c_str(),image_copy,sz_seg,V3D_UINT8);
+
     qDebug()<<"set visualize window."<<LList_seg.size()<<"markers have been found";
 }
 
@@ -1483,6 +1486,10 @@ void manual_correct_dialog::standing_segment_dialog()
     segments->setCurrentIndex(0);
     layout2->addWidget(segments,0,0,1,2);
 
+    QPushButton *next_seg=new QPushButton(tr("Next segment"));
+
+    layout2->addWidget(next_seg,0,2,1,2);
+
     QLabel *spine_groups=new QLabel(tr("Spine groups:"));
     layout2->addWidget(spine_groups,2,0,1,4);
     //markers=new QComboBox;
@@ -1492,14 +1499,14 @@ void manual_correct_dialog::standing_segment_dialog()
     //markers->setCurrentIndex(0);
     list_markers=new QListWidget();
     layout2->addWidget(list_markers,3,0,8,4);
-    list_markers->setSelectionBehavior(QAbstractItemView::SelectRows);
-    list_markers->setSelectionMode(QAbstractItemView::SingleSelection);
+//    list_markers->setSelectionBehavior(QAbstractItemView::SelectRows);
+    list_markers->setSelectionMode(QAbstractItemView::ExtendedSelection);
     list_markers->setFocusPolicy(Qt::NoFocus);
 
     //    layout2->addWidget(markers,0,2,1,4);
 
     QPushButton *accept=new QPushButton(tr("Accept"));
-    QPushButton *reject=new QPushButton(tr("Delete"));
+    QPushButton *reject=new QPushButton(tr("Reject"));
     //QPushButton *skip = new QPushButton(tr("Skip"));
 
     layout2->addWidget(accept,3,4,1,2);
@@ -1513,10 +1520,9 @@ void manual_correct_dialog::standing_segment_dialog()
     layout2->addWidget(erode,6,4,1,2);
     layout2->addWidget(reset,7,4,1,2);
 
-//    QFrame *line_1 = new QFrame();
-//    line_1->setFrameShape(QFrame::HLine);
-//    line_1->setFrameShadow(QFrame::Sunken);
-//    layout2->addWidget(line_1,5,0,1,6);
+    QLabel *multiple = new QLabel;
+    multiple->setText("press ctrl/shift to select multiple markers");
+    layout2->addWidget(multiple,9,4,2,2);
 
     QPushButton *button_save=new QPushButton;
     button_save->setText("Finish");
@@ -1544,57 +1550,65 @@ void manual_correct_dialog::standing_segment_dialog()
     connect(dilate,SIGNAL(clicked()),this,SLOT(dilate_for_seg_view()));
     connect(erode,SIGNAL(clicked()),this,SLOT(erode_for_seg_view()));
     connect(reset,SIGNAL(clicked()),this,SLOT(reset_clicked_for_seg_view()));
+    connect(next_seg,SIGNAL(clicked()),this,SLOT(next_seg_clicked()));
 
     segment_change();
     seg_dialog->show();
 }
 
 
+void manual_correct_dialog::next_seg_clicked()
+{
+    int seg_id=segments->currentIndex();
+    segments->setCurrentIndex(seg_id+1);
+}
+
+
 void manual_correct_dialog::segment_change()
 {
-    if (!save_seg_edit_for_seg_view())
-        return;
-
+    if (!first_seg_flag)
+    {
+        if (!save_seg_edit_for_seg_view())
+            return;
+    }
+    else
+        first_seg_flag=false;
     if(segments->count()==0) return;
-    disconnect(list_markers,SIGNAL(currentRowChanged(int)),this,SLOT(marker_in_one_seg(int)));
     edit_seg->clear();
     int seg_id=segments->currentIndex();
 
     //check whether previous editing needs saving
-//    if (edit_flag) save_edit();
     edit_flag=false;
 
     //step 1: check whether main-triview is open
     open_main_triview();
 
     //step 2:set data ready and open local tri-view/3d window
-    set_visualize_image_marker(segment_neuronswc[seg_id]);
+    set_visualize_image_marker(segment_neuronswc[seg_id],seg_id+1);
 
     //step 3: check whether local triview is open
     check_window_seg();
 
     //step 4: get the list of markers
     qDebug()<<"LList seg size;"<<LList_seg.size();
-
-//    markers->clear();
-//    markers->addItem("all markers");
-//    for (int i=0;i<LList_seg.size();i++)
-//        markers->addItem("marker "+ QString::number(i+1));
-//                         //QString::fromStdString(LList_seg[i].comments));
-//    markers->setCurrentIndex(0);
-//    connect(markers,SIGNAL(currentIndexChanged(int)),this,SLOT(marker_in_one_seg()));
-
     list_markers->clear();
-    //list_markers->addItem("all markers");
-    new QListWidgetItem(tr("all markers"),list_markers);
     for (int i=0;i<LList_seg.size();i++)
     {
-        QString curstr="marker "+ QString::number(i+1);
-        list_markers->addItem(new QListWidgetItem(curstr));
-        //list_markers->addItem("marker "+ QString::number(i+1));
+//        QString curstr="marker "+ QString::number(i+1);
+//        list_markers->addItem(new QListWidgetItem(curstr));
+        QString tmp_comment=QString::fromStdString(LList_seg[i].comments);
+        if (tmp_comment.contains("1"))
+            list_markers->addItem("marker "+ QString::number(i+1)+ " accepted");
+        else if (tmp_comment.contains("2"))
+            list_markers->addItem("marker "+QString::number(i+1)+ " rejected");
+        else
+            list_markers->addItem("marker "+ QString::number(i+1));
     }
-    list_markers->setCurrentRow(0);
-    connect(list_markers,SIGNAL(currentRowChanged(int)),SLOT(marker_in_one_seg(int)));
+    list_markers->setCurrentItem(list_markers->item(0));
+
+    //connect(list_markers,SIGNAL(currentRowChanged(int)),this,SLOT(marker_in_one_seg(int)));
+    connect(list_markers,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(marker_in_one_seg()));
+    //connect(list_markers,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(marker_one_click()));
 
     //step 5: get the image ready
     //qDebug()<<"getting the image ready";
@@ -1614,7 +1628,8 @@ void manual_correct_dialog::segment_change()
 
 }
 
-void manual_correct_dialog::marker_in_one_seg(int)
+
+void manual_correct_dialog::marker_in_one_seg()
 {
     qDebug()<<"in markerin one seg";
     edit_seg->clear();
@@ -1624,56 +1639,32 @@ void manual_correct_dialog::marker_in_one_seg(int)
     {
        int ret;
        ret=save_edit_for_seg_view();
-       list_markers->setCurrentRow(mid);
-       connect(list_markers,SIGNAL(currentRowChanged(int)),SLOT(marker_in_one_seg(int)));
-//       if (ret==4)
-//       {
-//           QString name="marker "+QString::number(prev_idx);
-//           qDebug()<<"prev_idx:"<<prev_idx;
-//           QList<QListWidgetItem*> tmp_item=list_markers->findItems(name,Qt::MatchExactly);
-//           qDebug()<<"run into this line~~~~"<<tmp_item.size();
-//           list_markers->setCurrentItem(tmp_item[0]);
-//           list_markers->setCurrentRow(prev_idx);
-//           return;
-//       }
-//       else
-//       {
-//            list_markers->setCurrentRow(mid);
-//       }
+       if (ret==4)
+       {
+           list_markers->setCurrentItem(list_markers->item(prev_idx));
+           return;
+       }
+       else
+        list_markers->setCurrentItem(list_markers->item(mid));
     }
-    //int mid=list_markers->currentRow();
-    if (mid==0) //display all spines with updated landmarks
-    {
-        Image4DSimple image4d;
-        unsigned char * image_input=new unsigned char [sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]];
-        memcpy(image_input,image_seg,sz_seg[0]*sz_seg[1]*sz_seg[2]*sz_seg[3]);
-        image4d.setData(image_input,sz_seg[0],sz_seg[1],sz_seg[2],sz_seg[3],V3D_UINT8);
-        callback->setImage(curwin,&image4d);
-        callback->setLandmark(curwin,LList_seg);
-        callback->updateImageWindow(curwin);
-        callback->close3DWindow(curwin);
-        callback->open3DWindow(curwin);
-        callback->pushObjectIn3DWindow(curwin);
-        callback->setLandmark(main_win,LList_in);
-        return;
-    }
+
 //    //Focus on this marker on tri-view
-//    TriviewControl * p_control = callback->getTriviewControl(curwin);
-//    p_control->setFocusLocation((long)LList_seg.at(mid).x+x_min;
-//                                (long)LList_seg.at(mid).y,(long)LList_seg.at(mid).z);
+    TriviewControl * p_control = callback->getTriviewControl(curwin);
+    p_control->setFocusLocation((long)LList_seg.at(mid).x+1,
+                                (long)LList_seg.at(mid).y+1,(long)LList_seg.at(mid).z+1);
 
     //update marker in 2 tri-view and one 3D
     // if this markers is not determined,Landmark color change
-    QString tmp_name=QString::fromStdString(LList_seg.at(mid-1).name);
+    QString tmp_name=QString::fromStdString(LList_seg.at(mid).name);
     int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
     QString status=QString::fromStdString(LList_in[idx].comments);
     qDebug()<<"mid:"<<mid<<"idx"<<idx<<"comments:"<<status;
     if (status.contains("0"))
     {
-        LList_in[idx].color.r=LList_in[idx].color.b=255;
-        LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=255;
-        LList_in[idx].color.g=70;
-        LList_seg[mid-1].color.g=70;
+//        LList_in[idx].color.r=LList_in[idx].color.b=255;
+        LList_seg[mid].color.r=LList_seg[mid].color.b=255;
+//        LList_in[idx].color.g=70;
+        LList_seg[mid].color.g=70;
     }
 
     qDebug()<<"before setting up image";
@@ -1704,8 +1695,8 @@ void manual_correct_dialog::marker_in_one_seg(int)
     callback->setLandmark(main_win,LList_in);
 
     //Step 6: reset marker color back to original color
-    LList_in[idx].color.r=LList_in[idx].color.b=LList_in[idx].color.g=0;
-    LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=LList_seg[mid-1].color.g=0;
+//    LList_in[idx].color.r=LList_in[idx].color.b=LList_in[idx].color.g=0;
+    LList_seg[mid].color.r=LList_seg[mid].color.b=LList_seg[mid].color.g=0;
     //qDebug()<<"~~~~marker roi finished";
     prev_idx=mid;
 
@@ -1717,26 +1708,31 @@ void manual_correct_dialog::reject_marker_for_seg_view()
     check_window_seg();
     qDebug()<<"delete marker";
     //update landmarks color and status
-    int mid=list_markers->currentRow();
-
-    if(mid==0) return; //displaying all markers
-
-    LList_seg[mid-1].color.g=LList_seg[mid-1].color.b=0;
-    LList_seg[mid-1].color.r=255;
-
-    QString tmp_name=QString::fromStdString(LList_seg.at(mid-1).name);
-    int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
-
-    LList_in[idx].color.g=LList_in[idx].color.b=0;
-    LList_in[idx].color.r=255;
-    LList_in[idx].comments=QString::number(2).toStdString(); //rejected marker
-    LList_seg[mid].comments=QString::number(2).toStdString();
-
-    //update combobox
-    list_markers->currentItem()->setText("marker " + QString::number(mid) + " rejected");
+    QList<QListWidgetItem*> sel_list=list_markers->selectedItems();
+    qDebug()<<"this many selected:"<<sel_list.size();
     edit_seg->clear();
-    edit_seg->setPlainText("marker: " + QString::number(mid) + " rejected");
+    for (int i=0;i<sel_list.size();i++)
+    {
+        int mid= list_markers->row(sel_list[i]);
+
+        LList_seg[mid].color.g=LList_seg[mid].color.b=0;
+        LList_seg[mid].color.r=255;
+
+        QString tmp_name=QString::fromStdString(LList_seg.at(mid).name);
+        int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
+
+        LList_in[idx].color.g=LList_in[idx].color.b=0;
+        LList_in[idx].color.r=255;
+        LList_in[idx].comments=QString::number(2).toStdString(); //rejected marker
+        LList_seg[mid].comments=QString::number(2).toStdString();
+
+        sel_list[i]->setText("marker " + QString::number(mid+1) + " rejected");
+        edit_seg->appendPlainText("marker: " + QString::number(mid+1) + " rejected");
+    }
+
     edit_flag=false;
+    callback->setLandmark(curwin,LList_seg);
+    callback->pushObjectIn3DWindow(curwin);
 
 }
 
@@ -1746,27 +1742,30 @@ void manual_correct_dialog::accept_marker_for_seg_view()
     check_window_seg();
     qDebug()<<"accept marker";
     //update landmarks color and status
-    int mid=list_markers->currentRow();
+    QList<QListWidgetItem*> sel_list=list_markers->selectedItems();
+    edit_seg->clear();
+    for (int i=0;i<sel_list.size();i++)
+    {
+        int mid= list_markers->row(sel_list[i]);
 
-    if(mid==0) return; //displaying all markers
+        LList_seg[mid].color.r=LList_seg[mid].color.b=0;
+        LList_seg[mid].color.g=255;
 
-    LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=0;
-    LList_seg[mid-1].color.g=255;
+        QString tmp_name=QString::fromStdString(LList_seg.at(mid).name);
+        int idx=tmp_name.toInt()-1;
 
-    QString tmp_name=QString::fromStdString(LList_seg.at(mid-1).name);
-    int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
+        LList_in[idx].color.r=LList_in[idx].color.b=0;
+        LList_in[idx].color.g=255;
+        LList_in[idx].comments=QString::number(1).toStdString(); //accept marker
+        LList_seg[mid].comments=QString::number(1).toStdString();
 
-    LList_in[idx].color.r=LList_in[idx].color.b=0;
-    LList_in[idx].color.g=255;
+        sel_list[i]->setText("marker " + QString::number(mid+1) + " accepted");
+        edit_seg->appendPlainText("marker: " + QString::number(mid+1) + " accepted");
+    }
 
-    LList_in[idx].comments=QString::number(1).toStdString(); //rejected marker
-    LList_seg[mid].comments=QString::number(1).toStdString();
-
-    //update combobox
-    list_markers->currentItem()->setText("marker " + QString::number(mid) + " accepted");
-    edit_seg->setPlainText("marker: " + QString::number(mid) + " accepted");
     edit_flag=false;
-
+    callback->setLandmark(curwin,LList_seg);
+    callback->pushObjectIn3DWindow(curwin);
 }
 
 void manual_correct_dialog::dilate_for_seg_view()
@@ -1777,19 +1776,15 @@ void manual_correct_dialog::dilate_for_seg_view()
     int bg_thr=all_para.bgthr;
     qDebug()<<"in dilate now"<<sz_seg[0]<<":"<<sz_seg[1]<<":"<<sz_seg[2]<<"bg_thr"<<bg_thr;
     V3DLONG size_page=sz_seg[0]*sz_seg[1]*sz_seg[2];
-    GOV seeds_next; seeds_next.clear();
+    GOV seeds_next;
+    seeds_next.clear();
 
     int mid=list_markers->currentRow();
-    if (mid==0)
-    {
-        edit_seg->setPlainText("Please select a spine for dilation");
-        return;
-    }
-    LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=255;
-    LList_seg[mid-1].color.g=0;
-    list_markers->item(mid)->setText("marker " + QString::number(mid));
-    QString tmp_name=QString::fromStdString(LList_seg[mid-1].name);
-    int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
+    list_markers->item(mid)->setText("marker " + QString::number(mid+1));
+    LList_seg[mid].color.r=LList_seg[mid].color.b=255;
+    LList_seg[mid].color.g=0;
+    QString tmp_name=QString::fromStdString(LList_seg[mid].name);
+    int idx=tmp_name.toInt()-1;
 
     GOV tmp_group = label_group[idx];
     qDebug()<<"before tmp_group"<<tmp_group.size()<<"idx:"<<idx;
@@ -1805,7 +1800,7 @@ void manual_correct_dialog::dilate_for_seg_view()
             {
                 nb->intensity_label=label_id;
                 seeds_next.push_back(nb);
-                qDebug()<<"newvoxel:"<<nb->pos;
+                //qDebug()<<"newvoxel:"<<nb->pos;
             }
         }
     }
@@ -1849,6 +1844,7 @@ void manual_correct_dialog::dilate_for_seg_view()
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
     edit_flag=true;
+    LList_seg[mid].color.r=LList_seg[mid].color.b=LList_seg[mid].color.g=0;;
 }
 
 void manual_correct_dialog::erode_for_seg_view()
@@ -1860,16 +1856,12 @@ void manual_correct_dialog::erode_for_seg_view()
     V3DLONG size_page=sz_seg[0]*sz_seg[1]*sz_seg[2];
 
     int mid=list_markers->currentRow();
-    if (mid==0)
-    {
-        edit_seg->setPlainText("Please select a spine for erosion");
-        return;
-    }
-    LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=255;
-    LList_seg[mid-1].color.g=0;
-    list_markers->item(mid)->setText("marker " + QString::number(mid));
 
-    QString tmp_name=QString::fromStdString(LList_seg[mid-1].name);
+    LList_seg[mid].color.r=LList_seg[mid].color.b=255;
+    LList_seg[mid].color.g=0;
+    list_markers->item(mid)->setText("marker " + QString::number(mid+1));
+
+    QString tmp_name=QString::fromStdString(LList_seg[mid].name);
     int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
     GOV tmp_group = label_group[idx];
 
@@ -1916,8 +1908,6 @@ void manual_correct_dialog::erode_for_seg_view()
     label_group[idx].clear();
     label_group[idx]=update_group;
 
-    edit_flag=true;
-
     unsigned char *erode_tmp =new unsigned char [size_page*sz_seg[3]];
     memcpy(erode_tmp,image_seg,size_page*2);
     memset(erode_tmp+2*size_page,0,size_page);
@@ -1937,13 +1927,14 @@ void manual_correct_dialog::erode_for_seg_view()
     callback->setLandmark(curwin,LList_seg);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
+    edit_flag=true;
+    LList_seg[mid].color.g=LList_seg[mid].color.b=LList_seg[mid].color.r=0;
 }
 
 void manual_correct_dialog::reset_clicked_for_seg_view()
 {
     int mid=list_markers->currentRow();
     reset_edit_for_seg_view(true,mid);
-    LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=LList_seg[mid-1].color.g=0;
 }
 
 void manual_correct_dialog::reset_edit_for_seg_view(bool visual_flag,int mid)
@@ -1951,25 +1942,19 @@ void manual_correct_dialog::reset_edit_for_seg_view(bool visual_flag,int mid)
     qDebug()<<"in reset_edit for seg view"<<"trun image size:"<<sz_seg[1]<<":"<<sz_seg[3]<<"visual flag:"<<visual_flag;
     qDebug()<<"xyz_min:"<<x_min<<":"<<y_min<<":"<<z_min;
     edit_seg->clear();
-    if(mid==0)
-    {
-        edit_seg->setPlainText("Please select a spine to reset");
-        return;
-    }
+
     if (visual_flag)
     {
-        LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=255;
-        LList_seg[mid-1].color.g=0;
-        edit_seg->setPlainText("marker: "+ QString::number(mid)+ " reset");
-    }
-    else //no need to visualize
-    {
-        LList_seg[mid-1].color.r=LList_seg[mid-1].color.b=LList_seg[mid-1].color.g=0;
+        LList_seg[mid].color.r=LList_seg[mid].color.b=255;
+        LList_seg[mid].color.g=0;
+        edit_seg->setPlainText("marker: "+ QString::number(mid+1)+ " reset");
     }
 
-    QString tmp_name=QString::fromStdString(LList_seg.at(mid-1).name);
+    QString tmp_name=QString::fromStdString(LList_seg.at(mid).name);
     int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
     LList_in[idx].comments=QString("0").toStdString().c_str();
+    LList_in[idx].color.r=LList_in[idx].color.g=LList_in[idx].color.b=0;
+    list_markers->item(mid)->setText("marker " + QString::number(mid+1));
 
     V3DLONG size_page=sz_seg[0]*sz_seg[1]*sz_seg[2];
     GOV tmp_group=label_group[idx];
@@ -2009,8 +1994,6 @@ void manual_correct_dialog::reset_edit_for_seg_view(bool visual_flag,int mid)
 
     edit_flag=false;
 
-    list_markers->item(mid)->setText("marker " + QString::number(mid));
-
     if (!visual_flag)
         return;
     else
@@ -2024,6 +2007,7 @@ void manual_correct_dialog::reset_edit_for_seg_view(bool visual_flag,int mid)
         callback->open3DWindow(curwin);
         callback->pushObjectIn3DWindow(curwin);
     }
+    LList_seg[mid].color.r=LList_seg[mid].color.b=LList_seg[mid].color.g=0;
 }
 
 int manual_correct_dialog::save_edit_for_seg_view()
@@ -2037,23 +2021,19 @@ int manual_correct_dialog::save_edit_for_seg_view()
     QPushButton *accept_button=mybox.addButton(tr("Accept"),QMessageBox::ActionRole);
     QPushButton *delete_button=mybox.addButton(tr("Delete"),QMessageBox::ActionRole);
     QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
-    //QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
+    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
 
     mybox.setDefaultButton(accept_button);
     mybox.exec();
 
-    int mid=list_markers->currentRow();
-    disconnect(list_markers,SIGNAL(currentRowChanged(int)),this,SLOT(marker_in_one_seg(int)));
-    list_markers->item(mid)->setSelected(false);
-    list_markers->setCurrentRow(prev_idx);
     list_markers->setCurrentItem(list_markers->item(prev_idx));
 
      if (mybox.clickedButton() == accept_button) {
          accept_marker_for_seg_view();
          return 1;
-     } /*else if (mybox.clickedButton() == cancel_button) {
+     } else if (mybox.clickedButton() == cancel_button) {
          return 4;
-     }*/
+     }
      else if (mybox.clickedButton() == discard_button) {
          reset_edit_for_seg_view(false,prev_idx);
          edit_flag=false;
@@ -2068,28 +2048,67 @@ int manual_correct_dialog::save_edit_for_seg_view()
 
 bool manual_correct_dialog::save_seg_edit_for_seg_view()
 {
-    bool seg_edit_flag=false;
-    for (int i=0;i<LList_seg.size();i++)
-    {
-        QString tmp_comment= QString::fromStdString(LList_seg[i].comments);
-        if(tmp_comment.contains("1")||tmp_comment.contains("2"))
-        {
-            seg_edit_flag=true;
-            break;
-        }
-    }
-    qDebug()<<"seg_edit_flag:"<<seg_edit_flag;
-    if (!seg_edit_flag)
-        return true;
     QMessageBox mybox;
     mybox.setText("<b>Have you finished editing this segment? <\b>");
-    mybox.setStandardButtons(QMessageBox::Yes|QMessageBox::No);
+    mybox.setInformativeText("All spines not marked rejected will be accepted");
+    mybox.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel|QMessageBox::Discard);
     mybox.setDefaultButton(QMessageBox::Yes);
     int ret=mybox.exec();
     if (ret==QMessageBox::Yes)
+    {
+        for (int i=0;i<LList_seg.size();i++)
+        {
+            QString tmp_comment= QString::fromStdString(LList_seg[i].comments);
+            QString tmp_name=QString::fromStdString(LList_seg[i].name);
+            int idx=tmp_name.toInt()-1;
+            if(tmp_comment.contains("1")||tmp_comment.contains("0"))
+            {
+              LList_in[idx].comments=QString::number(1).toStdString();
+              LList_in[idx].color.r=LList_in[idx].color.b=0;
+              LList_in[idx].color.g=255;
+             }
+        }
+        int seg_id=segments->currentIndex();
+        segments->setItemText(seg_id,"Segment "+ QString::number(seg_id+1)+" finished");
         return true;
-    else
+    }
+    else if (ret==QMessageBox::Cancel)
         return false;
+    else if (ret==QMessageBox::Discard)
+    {
+        //reset label group and markers
+        reset_segment();
+        int seg_id=segments->currentIndex();
+        segments->setItemText(seg_id,"Segment "+ QString::number(seg_id+1));
+        return true;
+    }
+}
+
+void manual_correct_dialog::reset_segment()
+{
+    for (int i=0;i<LList_seg.size();i++)
+    {
+        QString tmp_name=QString::fromStdString(LList_seg.at(i).name);
+        int idx=tmp_name.toInt()-1;//idx in LList_in starting from 1
+        LList_in[idx].comments=QString("0").toStdString().c_str();
+        LList_in[idx].color.r=LList_in[idx].color.g=LList_in[idx].color.b=LList_in[idx].category=0;
+        list_markers->item(i)->setText("marker " + QString::number(i+1));
+        GOV tmp_group=label_group[idx];
+        for (int j=0;j<tmp_group.size();j++)
+        {
+            tmp_group[j]->intensity_label=-1;
+        }
+        tmp_group.clear();
+        tmp_group=label_group_copy[idx];
+        int label_id=idx+1;
+        for (int j=0;j<tmp_group.size();j++)
+        {
+            tmp_group[j]->intensity_label=label_id;
+        }
+        label_group[idx].clear();
+        label_group[idx]=tmp_group;
+    }
+    qDebug()<<"segment reset";
 }
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)

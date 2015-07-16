@@ -30,7 +30,7 @@ public:
 private:
     vector<vector<int> > build_parent_LUT();
     void neurontree_divide();
-    void set_visualize_image_marker(vector<int> one_seg);
+    void set_visualize_image_marker(vector<int> one_seg,int seg_id);
 //    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
 //    {return (a->fea_val[1] < b->fea_val[1]);}
 
@@ -39,6 +39,7 @@ private:
     int save_edit_for_seg_view();
     bool save_seg_edit_for_seg_view();
     void reset_edit_for_seg_view(bool visual_flag, int mid);
+    void reset_segment();
 
 public slots:
     bool loadImage();
@@ -57,7 +58,8 @@ public slots:
     bool finish_proof_dialog();
 
     void segment_change();
-    void marker_in_one_seg(int);
+    void next_seg_clicked();
+    void marker_in_one_seg();
     void reject_marker_for_seg_view();
     void accept_marker_for_seg_view();
     void dilate_for_seg_view();
@@ -104,7 +106,7 @@ private:
     QPlainTextEdit *edit_seg;
     QComboBox *segments;
     QListWidget *list_markers;
-
+    bool first_seg_flag;
 
 };
 
