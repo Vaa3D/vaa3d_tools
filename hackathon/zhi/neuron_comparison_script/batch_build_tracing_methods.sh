@@ -21,6 +21,7 @@
 #19.	GD_nctuTW (ALLEN + NCTUTW)
 #20.	SimpleAxisAnalyzer (NIU)
 #21.	smartTrace (ALLEN)
+#22.	NeuronChaser (Erasmus)
 
 
 #APP1 and APP2 
@@ -148,6 +149,12 @@ svn up
 qmake
 make
 
+#NeuronChaser
+cd ../../../bigneuron_ported/miroslav_r/NeuronChaser/
+make clean
+svn up
+qmake
+make
 
 #neuTube 
 cd ../../../hackathon/zhi/neuTube_zhi/

@@ -84,9 +84,9 @@ mv  "$2_fastmarching_spanningtree.swc" $3
 #$1 -x BJUT_meanshift -f meanshift -i $2
 #mv  "$2_fastmarching_meanshift.swc" $3
 $1 -x CWlab_method1_version1 -f tracing_func -i $2 -p 1
-mv  "$2__Cwlab_ver1.swc" $3
-#$1 -x LCM_boost -f LCM_boost -i $2 -o $2_LCMboost.swc 
-#mv  "$2__LCMboost.swc" $3
+mv  "$2_Cwlab_ver1.swc" $3
+$1 -x LCM_boost -f LCM_boost -i $2 -o $2_LCMboost.swc 
+mv  "$2_LCMboost.swc" $3
 $1 -x NeuroStalker -f tracing_func -i $2
 mv  "$2_NeuroStalker.swc" $3
 $1 -x nctuTW -f tracing_func -i $2 -p NULL
@@ -95,8 +95,11 @@ $1 -x tips_GD -f tracing_func -i $2
 mv  "$2_nctuTW_GD.swc" $3
 $1 -x SimpleAxisAnalyzer -f medial_axis_analysis -i $2
 mv  "$2_axis_analyzer.swc" $3
-#$1 -x  smartTrace -f smartTrace -i $2
-#mv  "$2_smartTracing.swc" $3
+$1 -x NeuronChaser -f nc_func -i $2 -p 1 10 80 0.75 10 60 30 10 1 0
+mv  "$2_NeuronChaser.swc" $3
+$1 -x  smartTrace -f smartTrace -i $2
+mv  "$2_smartTracing.swc" $3
+
 
 $1 -x linker_file_generator -f linker -i $3 -o linkerfile.ano -p 1
 
