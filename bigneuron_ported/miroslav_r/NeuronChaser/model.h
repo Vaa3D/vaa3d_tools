@@ -35,8 +35,8 @@ public:
     float *         vy;                 // ...
     float *         vz;                 // ...
 
-    const float sigma_min = 1.0;        // multiscale definition
-    const float sigma_stp = 0.5;
+    static float sigma_min;        // multiscale definition
+    static float sigma_stp;
 
     Model(int _D, int _Ndir, bool _is2D, float _zDist);
     ~Model();

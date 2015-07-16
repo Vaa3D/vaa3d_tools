@@ -20,7 +20,7 @@ public:
     // optional correlation at this location direction and scale (to sort the nodes)
     float corr;
 
-    std::vector<int> nbr = std::vector<int>(); // list of neighbouring node list indexes
+    std::vector<int> nbr; // list of neighbouring node list indexes
 
     // types as in neuromorpho.org description
     static int NOTHING;

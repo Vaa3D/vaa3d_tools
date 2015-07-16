@@ -16,6 +16,9 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 #include <v3d_interface.h>
 #include "basic_surf_objs.h"
 
+float Model::sigma_min = 1.0;
+float Model::sigma_stp = 0.5;
+
 Model::Model(int _D, int _Ndir, bool _is2D, float _zDist)
 {
     D = _D;
