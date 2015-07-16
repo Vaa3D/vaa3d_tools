@@ -45,6 +45,18 @@ static double median(vector<double> x)
     return  x[x.size()/2];
 }
 
+static void cutoff_outliers(vector<double> & x)
+{
+    //remove the top and bottom 10% data, to be more robust
+    sort(x.begin(), x.end());
+    int num_to_remove = x.size()*0.1;
+
+    // erase the top and bottom N elements:
+    x.erase( x.begin(), x.begin()+ num_to_remove);
+    x.erase( x.end()-num_to_remove, x.end());
+}
+
+
 //flip image along the Y direction ( due to the image matrix order convention in Vaa3D)
 bool flip_y (Image4DSimple * image)
 {
@@ -80,7 +92,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"cnr" <<","<<"median tubularity"<<"\n";
+        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"cnr" <<","<<"tubularity"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].cnr <<","<< result_metrics[i].tubularity<< "\n";
@@ -138,7 +150,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     writeMetrics2CSV(result_metrics, output_csv_file);
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio | Median Tubularity \n";
+    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio | Tubularity \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
@@ -388,16 +400,21 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     }
 
-    /*for debug purpose only
+   /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *) roi_1d_visited, width, height, depth, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
-    */
+   */
 
     // compute metrics
+    //remove the top and bottom 5% data to be robust
+    cutoff_outliers(fg_1d);
+    cutoff_outliers(bg_1d);
+    cutoff_outliers(tubularities);
+
     double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
     double min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
     metrics.dy = max_fg - min_fg;
@@ -413,9 +430,9 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     double bg_deviation= sqrt(sum2/(bg_1d.size()-1));
 
     if (bg_deviation != 0.0){
-       // metrics.cnr = fabs(fg_mean - bg_mean)/bg_deviation;
-        double contrast = median(fg_1d) - median(bg_1d);
-        metrics.cnr = fabs(contrast)/bg_deviation;
+        metrics.cnr = fabs(fg_mean - bg_mean)/bg_deviation;
+        //double contrast = median(fg_1d) - median(bg_1d);
+        //metrics.cnr = fabs(contrast)/bg_deviation;
     }
     else {
         metrics.cnr  = INFINITY;
@@ -423,14 +440,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     }
 
     //average tubularity
-    // metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
+     metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
 
     //median tubularity
-
-
-    metrics.tubularity = median(tubularities);
-    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<"; bg_mean="<<bg_mean
-        <<"; bg_dev = "<<bg_deviation<<"; cnr = "<<metrics.cnr <<"; median_tubularity = "<<metrics.tubularity <<"\n"<< endl;
+   // metrics.tubularity = median(tubularities);
+    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<";fg_median=" <<median(fg_1d)<<"; bg_mean="<<bg_mean <<";bg_median=" <<median(bg_1d)
+        <<"; bg_dev = "<<bg_deviation<<"; cnr = "<<metrics.cnr <<"; tubularity = "<<metrics.tubularity <<"\n"<< endl;
 
     return metrics;
 
