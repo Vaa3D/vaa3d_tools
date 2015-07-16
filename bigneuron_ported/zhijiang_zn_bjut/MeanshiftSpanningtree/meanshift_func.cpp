@@ -1092,7 +1092,7 @@ QList <NeuronSWC> construct_tree_vn5(QMap<int,Node* > roots,unsigned char * &img
 
 
 	double average_dis=0;
-	printf("start breath search!%lf\n");
+    printf("start breath search!\n");
 	//markEdge=bf( root,img1d, average_dis,sz_x, sz_y, sz_z);
 	bf_vn2( root,markEdge,img2d, average_dis,sz_x, sz_y, sz_z);
 
@@ -1894,11 +1894,6 @@ void change_NeuronSWCTo_MyMarker(QList<NeuronSWC> swc_tree, vector<MyMarker*> &t
 }
 
 
-
-
-
-
-
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu)
 {
 	/////////////////////////////////////////////////////////
@@ -1986,7 +1981,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 					continue;
 
 				}
-				//printf("111111111111111111111111111111111\n");
+
 				meanshift_vn4(img1d,i,j,k,sz_x,sz_y,sz_z,r,times);
 			}
 
@@ -1998,32 +1993,16 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 	printf("###  cluster finished   ###\n");
 
 	merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	
 
-
-	//merge_rootnode(Map_rootnode,img1d,sz_x,sz_y,sz_z);
-	//printf("###   Smooth the image using Gauss method   ###\n");//这里作为第二次去噪，采用distance transform计算中心线
-	//img2d=Gauss_filter(img1d,nData1,sz_x,sz_y,sz_z,callback, parent);//for calculate the gradient of nodes better
-
-	//printf("###   Smooth finished   ###\n");
-	//construct_tree_vn2(finalclass_node, img1d,sz_x, sz_y, sz_z);
-
-	//construct_tree_vn4(root, img1d,sz_x, sz_y, sz_z);//call bf method to find the shortest path between nodes
 	printf("###   connect all roots using an improved spanning tree which adopt bf method to calculate distance\n");
 	con_tree=construct_tree_vn5(root,img1d,img1d,sz_x,sz_y,sz_z);
 
-	
-	//con_tree=construct_tree_vn5(root,img1d,img2d,sz_x,sz_y,sz_z);
 	printf("###   roots connected   ###\n");
-	//printSWCByQMap_QMap("C:\\Vaa3D\\shortest_path.swc",number_path);
-	//printSWCByQList_QList1(final_path,"C:\\Vaa3D\\shortest_path.swc");
-	//printSWCByQList_QList1_vn2(final_path_vn2,"C:\\Vaa3D\\shortest_path.swc");
-	
-	//printf("fix the radius of nodes and trim some covering nodes\n");
-	printf("prune some nodes which were contained by other nodesn\n");
 	vector<MyMarker*>  inswc;
 	change_NeuronSWCTo_MyMarker(con_tree,inswc);
 
+    QString initswc_file = image_name + "init_meanshift.swc";
+    saveSWC_file(initswc_file.toStdString(), inswc);
 
 	 cout<<"Pruning neuron tree"<<endl;
 
@@ -2032,20 +2011,26 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     happ(inswc, outswc, img1d, in_sz[0], in_sz[1], in_sz[2],10, 5, 0.3333);
 	std::vector<NeuronSWC *> target;
 
-	//change_type(target,con_tree);
-	//printf("target size:::%d\n",target.size());
-	//smooth_curve_and_radius(target, 5);
-	con_tree=smooth_SWC_radius(con_tree,sz_x,sz_y,sz_z);
 	QString outswc_file = image_name + "_meanshift.swc";
 	saveSWC_file(outswc_file.toStdString(), outswc);
-	
-    //printSWCByQList_Neuron(con_tree,outswc_file.toStdString().c_str());
-	//printSWCByQList_Neuron_pointer(target,outswc_file.toStdString().c_str());
+
 	printf("%s\n",outswc_file.toStdString().c_str());
 	v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.toStdString().c_str()),bmenu);
-	//if(nData1) {delete []nData1,nData1 = 0;}
 	
 }
+
+/*void complete_tree(QMap<int,Node* > roots)
+{
+	for(QMap<int,QList<Node*> >::iterator iter=finalclass_node.begin();iter!=finalclass_node.end();iter++)
+	{
+		if(iter.value().size()<=1)
+				continue;
+
+
+	}
+
+
+}*/
 
 
 
