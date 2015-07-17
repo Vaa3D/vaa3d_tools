@@ -13,4 +13,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= my_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(retype_swc)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/retype_swc/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/retype_swc/
