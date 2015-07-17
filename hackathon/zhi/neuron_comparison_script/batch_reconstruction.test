@@ -58,7 +58,7 @@ fi
 
 $1 -x Vaa3D_Neuron2 -f app1 -i $2 -p NULL 0 40 0    
 mv  $2*_app1.swc $3
-$1 -x Vaa3D_Neuron2 -f app2 -i $2 -p NULL 0 40 0 1 1 0 5   
+$1 -x Vaa3D_Neuron2 -f app2 -i $2 -p NULL 0 10 1 1 0 0 5 0 0 0  
 mv  $2*_app2.swc $3
 rm  "$2_ini.swc"
 $1 -x MOST -f MOST_trace -i $2 -p 1 40   
