@@ -27,7 +27,7 @@ spine_fun::spine_fun(const char * inname_img, const char* inname_skel, const cha
     param.aspect_thr = 0.1;
 }
 
-spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=1)
+spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=0)
 {
     p_img1D = 0;
     ppp_img3D = 0;
@@ -106,6 +106,8 @@ bool spine_fun::init()
     for(V3DLONG i=0; i<sz_page; i++){
         dst[i]=INF;
     }
+
+    //map<V3DLONG,int> nearest_node_map;
 
     for(V3DLONG nid=0; nid<nt.listNeuron.size(); nid++){
         V3DLONG nx = nt.listNeuron.at(nid).x;
@@ -1349,6 +1351,12 @@ bool sortfunc_intensity(VOI * a, VOI * b){ return (a->intensity > b->intensity);
 void spine_fun::conn_comp_nb6()
 {
     final_groups=conn_comp_nb6_imp(intensity_groups);
+//    for (int i=0;i<final_groups.size();i++)
+//    {
+//        for (int j=0;j<final_groups[i].size();j++)
+//            qDebug()<<"skel node:"<<final_groups[i][j]->skel_idx;
+
+//    }
 //    int id=1;
 //    for (int i=0;i<intensity_groups.size();i++)
 //    {
@@ -1410,6 +1418,7 @@ vector<GOV> spine_fun::conn_comp_nb6_imp(vector<GOV> old_groups)
     vector<GOV> new_groups;
     for (int i=0;i<old_groups.size();i++)
     {
+
         if (old_groups[i].size()==0) continue;
         if (old_groups[i].size()>param.intensity_max_pixel) continue;
 
@@ -1419,6 +1428,7 @@ vector<GOV> spine_fun::conn_comp_nb6_imp(vector<GOV> old_groups)
         map<V3DLONG, int> lookup;
         for (int j=0;j<cur_group.size();j++)
         {
+
             VOI * tmp_voi=cur_group[j];
             if (lookup[tmp_voi->pos]>0) continue;
             seeds.clear();

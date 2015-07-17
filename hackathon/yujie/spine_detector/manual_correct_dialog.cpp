@@ -12,8 +12,9 @@ manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb)
     image_trun=0;
     label=0;
     create();
+    //create_big_image();
     edit_flag=false;
-    first_seg_flag=true;
+    seg_edit_flag=false;
 }
 
 void manual_correct_dialog::create()
@@ -274,6 +275,7 @@ bool manual_correct_dialog::csv_out()
 
 bool manual_correct_dialog::load_swc()
 {
+    eswc_flag=false;
     QString filename;
     filename = QFileDialog::getOpenFileName(0, 0,"","Supported file (*.swc *.eswc)" ";;Neuron structure(*.swc *eswc)",0,0);
 
@@ -283,9 +285,8 @@ bool manual_correct_dialog::load_swc()
         return false;
     }
     NeuronSWC *p_cur=0;
-
     neuron = readSWC_file(filename);
-    //qDebug()<<"neuron loaded"<<neuron.listNeuron.size();
+
     for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
     {
         p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
@@ -294,15 +295,33 @@ bool manual_correct_dialog::load_swc()
             v3d_msg("You have illeagal radius values. Check your data.");
             return false;
         }
-//        qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
-//        qDebug()<<" level:"<<neuron.listNeuron[ii].level;
-//        qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0];
      }
-    qDebug()<<"finished reading"<<neuron.listNeuron.size();
-//    build_parent_LUT();
-//    neurontree_divide();
+
+    if (filename.contains(".eswc"))
+    {
+        V3DLONG sum_level=0;
+        bool possible_eswc=true;
+        for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+        {
+            p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+//            qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
+//            qDebug()<<" level:"<<neuron.listNeuron[ii].level;
+//            qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0]<<"size:"<<neuron.listNeuron[ii].fea_val.size();
+            sum_level+=p_cur->level;
+            if (p_cur->fea_val.size()<2)
+            {
+                v3d_msg("No additional node info is provided. The csv output will onlly"
+                " produce the basic spine info.");
+                possible_eswc=false;
+                break;
+            }
+        }
+        if (possible_eswc && sum_level!=0)  //this is a eswc file
+            eswc_flag=true;
+    }
+
     edit_swc->setText(filename);
-    qDebug()<<"swc set";
+    qDebug()<<"finished reading"<<neuron.listNeuron.size();
 }
 
 void manual_correct_dialog::load_marker()
@@ -515,38 +534,39 @@ void manual_correct_dialog::loadLabel()
 bool manual_correct_dialog::auto_spine_detect()
 {
     int progress_id=0;
-    QProgressDialog *progress=new QProgressDialog;
-
-    progress->setModal(Qt::WindowModal);
-    progress->setAutoClose(true);
-    progress->setMinimum(0);
-    progress->setMaximum(10);
-    progress->setLabelText("Auto spine detection starts....");
-    progress->show();
+    QProgressDialog progress("Auto spine detection starts....","Abort",
+                                                 0,10,this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setValue(0);
 
     //qDebug()<<"~~~~Auto spine detection starts....";
     spine_fun spine_obj(callback,all_para,sel_channel);
     if (!spine_obj.pushImageData(image1Dc_in,sz_img))
         return false;
-    spine_obj.pushSWCData(neuron);
+    if (eswc_flag)
+        spine_obj.push_eswc_Data(neuron);
+    else
+        spine_obj.pushSWCData(neuron);
+    qDebug()<<"2"<<eswc_flag;
     progress_id=progress_id+6;
-    progress->setValue(progress_id); //6
+    progress.setValue(progress_id); //6
 
+    qDebug()<<"before init"<<sz_img[0]<<":"<<sz_img[1]<<":"<<sz_img[2]<<":"<<sz_img[3];
     if(!spine_obj.init()){
         v3d_msg("No spine candidates were found. Please check image and swc file");
         return false;
     }
-    progress->setValue(++progress_id); //7
+    progress.setValue(++progress_id); //7
     if(!spine_obj.reverse_dst_grow())
     {
         v3d_msg("No spines candidates were found; Please check image and swc file");
         return false;
     }
-    progress->setValue(++progress_id);//8
+    progress.setValue(++progress_id);//8
     spine_obj.run_intensityGroup();
-    progress->setValue(++progress_id);//9
+    progress.setValue(++progress_id);//9
     spine_obj.conn_comp_nb6();
-    progress->setValue(++progress_id);//10
+    progress.setValue(++progress_id);//10
     LList_in = spine_obj.get_center_landmarks();
 
     label_group = spine_obj.get_group_label();
@@ -572,8 +592,8 @@ bool manual_correct_dialog::auto_spine_detect()
     {
         delete[] image1Dc_in; image1Dc_in=0;
     }
-    progress->setValue(++progress_id);
-    progress->close();
+    progress.setValue(++progress_id);
+    progress.close();
     qDebug()<<"auto spine_detect complete"<<"LList size:"<<LList_in.size();
     return true;
 }
@@ -1027,13 +1047,14 @@ bool manual_correct_dialog::maybe_save()
 
 void manual_correct_dialog::write_spine_profile(QString filename)
 {
-    qDebug()<<"in write spine center profile";
+    qDebug()<<"in write spine center profile"<<"eswc flag:"<<eswc_flag;
 
     QString outfile=edit_csv->text()+"/"+filename;
     FILE *fp2=fopen(outfile.toAscii(),"wt");
-    //fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z\n");
-    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
-    qDebug()<<"1"<<label_group.size();
+    if (eswc_flag)
+        fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
+    else
+        fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node\n");
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
@@ -1046,8 +1067,6 @@ void manual_correct_dialog::write_spine_profile(QString filename)
 
         V3DLONG sum_x,sum_y,sum_z,sum_dis;
         sum_x=sum_y=sum_z=sum_dis=0;
-        map<int,int> skel_id_vector;
-        qDebug()<<"i:"<<i<<"group size:"<<tmp.size();
 
         for (int j=0;j<tmp.size();j++)
         {
@@ -1055,30 +1074,48 @@ void manual_correct_dialog::write_spine_profile(QString filename)
             sum_y+=tmp[j]->y;
             sum_z+=tmp[j]->z;
             sum_dis+=tmp[j]->dst;
-            skel_id_vector[tmp[j]->skel_idx]= skel_id_vector[tmp[j]->skel_idx]+1;
         }
-        int center_x=sum_x/tmp.size();
-        int center_y=sum_y/tmp.size();
-        int center_z=sum_z/tmp.size();
+        float center_x=sum_x/tmp.size();
+        float center_y=sum_y/tmp.size();
+        float center_z=sum_z/tmp.size();
         int center_dis=sum_dis/tmp.size();
         //qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
-        int skel_id=skel_id_vector[0];
-        for (int j=1;j<skel_id_vector.size();j++)
-        {
-            if (skel_id_vector[j]>skel_id)
-                skel_id=skel_id_vector[j];
-        }
 
-        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",group_id,volume,max_dis,
-                min_dis,center_dis,center_x,center_y,center_z,
-                skel_id,neuron.listNeuron.at(skel_id).type,neuron.listNeuron.at(skel_id).seg_id,
-                neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
-                neuron.listNeuron.at(skel_id).fea_val[0]);
+        int skel_id=calc_nearest_node(center_x,center_y,center_z);
+        //qDebug()<<"skel_id_size:"<<skel_id_size<<" skel_id:"<<skel_id;
+        if (eswc_flag)
+        {
+            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",group_id,volume,max_dis,
+                    min_dis,center_dis,(int)center_x,(int)center_y,(int)center_z,skel_id,
+                    neuron.listNeuron.at(skel_id).type,(int)neuron.listNeuron.at(skel_id).seg_id,
+                    (int)neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
+                    (int)neuron.listNeuron.at(skel_id).fea_val[0]);
+        }
+        else
+            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d\n",group_id,volume,max_dis,min_dis
+                    ,center_dis,(int)center_x,(int)center_y,(int)center_z,skel_id);
     }
     fclose(fp2);
     qDebug()<<"file complete wrriting, outfile path:"<<outfile;
 }
 
+int manual_correct_dialog::calc_nearest_node(float center_x,float center_y,float center_z)
+{
+    float distance=1e6;
+    int nearest_node_id=0;
+    for (int i=0;i<neuron.listNeuron.size();i++)
+    {
+        float tmp_dis=(center_x-neuron.listNeuron[i].x)*(center_x-neuron.listNeuron[i].x)+
+           (center_y-neuron.listNeuron[i].y)*(center_y-neuron.listNeuron[i].y)+
+                (center_z-neuron.listNeuron[i].z)*(center_z-neuron.listNeuron[i].z);
+        if (tmp_dis<distance)
+        {
+            distance=tmp_dis;
+            nearest_node_id=i;
+        }
+    }
+    return nearest_node_id;
+}
 
 void manual_correct_dialog::dilate()
 {
@@ -1147,7 +1184,7 @@ void manual_correct_dialog::erode()
 {
     open_main_triview();
     check_window();
-    qDebug()<<"in erode now";
+    //qDebug()<<"in erode now";
     V3DLONG size_page=sz[0]*sz[1]*sz[2];
 
     int mid=markers->currentIndex();
@@ -1482,13 +1519,15 @@ void manual_correct_dialog::standing_segment_dialog()
     segments=new QComboBox;
     for (int i=0;i<segment_neuronswc.size();i++)
         segments->addItem(QString("Segment ")+QString::number(i+1));
-    segments->setFixedWidth(150);
+    //segments->setFixedWidth(250);
     segments->setCurrentIndex(0);
-    layout2->addWidget(segments,0,0,1,2);
+    layout2->addWidget(segments,0,0,1,3);
 
-    QPushButton *next_seg=new QPushButton(tr("Next segment"));
-
-    layout2->addWidget(next_seg,0,2,1,2);
+    //QPushButton *next_seg=new QPushButton(tr("Next segment"));
+    QPushButton *finish_seg=new QPushButton(tr("Finish this segment"));
+    QPushButton *skip_seg=new QPushButton(tr("Skip this segment"));
+    layout2->addWidget(finish_seg,1,0,1,3);
+    layout2->addWidget(skip_seg,1,3,1,2);
 
     QLabel *spine_groups=new QLabel(tr("Spine groups:"));
     layout2->addWidget(spine_groups,2,0,1,4);
@@ -1498,7 +1537,7 @@ void manual_correct_dialog::standing_segment_dialog()
     //markers->setFixedWidth(250);
     //markers->setCurrentIndex(0);
     list_markers=new QListWidget();
-    layout2->addWidget(list_markers,3,0,8,4);
+    layout2->addWidget(list_markers,3,0,8,3);
 //    list_markers->setSelectionBehavior(QAbstractItemView::SelectRows);
     list_markers->setSelectionMode(QAbstractItemView::ExtendedSelection);
     list_markers->setFocusPolicy(Qt::NoFocus);
@@ -1524,14 +1563,14 @@ void manual_correct_dialog::standing_segment_dialog()
     multiple->setText("press ctrl/shift to select multiple markers");
     layout2->addWidget(multiple,9,4,2,2);
 
-    QPushButton *button_save=new QPushButton;
-    button_save->setText("Finish");
-    layout2->addWidget(button_save,11,0,1,2);
-
     edit_seg = new QPlainTextEdit;
     edit_seg->setReadOnly(true);
     edit_seg->setFixedHeight(60);
-    layout2->addWidget(edit_seg,1,0,1,6);
+    layout2->addWidget(edit_seg,12,0,1,6);
+
+    QPushButton *button_save=new QPushButton;
+    button_save->setText("Finish proofreading");
+    layout2->addWidget(button_save,13,0,1,2);
 //    small_remover=new QCheckBox;
 //    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
 //    small_remover->setChecked(false);
@@ -1546,39 +1585,55 @@ void manual_correct_dialog::standing_segment_dialog()
     connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
     connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker_for_seg_view()));
     connect(reject,SIGNAL(clicked()),this,SLOT(reject_marker_for_seg_view()));
-//    connect(skip,SIGNAL(clicked()),this,SLOT(skip_marker()));
     connect(dilate,SIGNAL(clicked()),this,SLOT(dilate_for_seg_view()));
     connect(erode,SIGNAL(clicked()),this,SLOT(erode_for_seg_view()));
     connect(reset,SIGNAL(clicked()),this,SLOT(reset_clicked_for_seg_view()));
-    connect(next_seg,SIGNAL(clicked()),this,SLOT(next_seg_clicked()));
+    //connect(skip_seg,SIGNAL(clicked()),this,SLOT();
+    //connect(finish_seg,SIGNAL(clicked()),this,SLOT(next_seg_clicked()));
 
     segment_change();
     seg_dialog->show();
 }
 
 
-void manual_correct_dialog::next_seg_clicked()
+void manual_correct_dialog::finish_seg_clicked()
 {
-    int seg_id=segments->currentIndex();
-    segments->setCurrentIndex(seg_id+1);
+    for (int i=0;i<LList_seg.size();i++)
+    {
+        QString tmp_comment= QString::fromStdString(LList_seg[i].comments);
+        QString tmp_name=QString::fromStdString(LList_seg[i].name);
+        int idx=tmp_name.toInt()-1;
+        if(tmp_comment.contains("1")||tmp_comment.contains("0"))
+        {
+          LList_in[idx].comments=QString::number(1).toStdString();
+          LList_in[idx].color.r=LList_in[idx].color.b=0;
+          LList_in[idx].color.g=255;
+         }
+    }
+    int seg_idx=segments->currentIndex();
+    segments->setItemText(seg_idx,"Segment "+ QString::number(seg_idx+1)+" finished");
+    //seg_edit_flag=true???
+    return;
 }
 
 
 void manual_correct_dialog::segment_change()
 {
-    if (!first_seg_flag)
+    if (seg_edit_flag)
     {
         if (!save_seg_edit_for_seg_view())
+        {
+            disconnect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+            segments->setCurrentIndex(prev_seg);
+            connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
             return;
+        }
     }
-    else
-        first_seg_flag=false;
+    //check whether previous editing needs saving
+    edit_flag=false;
     if(segments->count()==0) return;
     edit_seg->clear();
     int seg_id=segments->currentIndex();
-
-    //check whether previous editing needs saving
-    edit_flag=false;
 
     //step 1: check whether main-triview is open
     open_main_triview();
@@ -1592,6 +1647,7 @@ void manual_correct_dialog::segment_change()
     //step 4: get the list of markers
     qDebug()<<"LList seg size;"<<LList_seg.size();
     list_markers->clear();
+    disconnect(list_markers,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(marker_in_one_seg()));
     for (int i=0;i<LList_seg.size();i++)
     {
 //        QString curstr="marker "+ QString::number(i+1);
@@ -1625,7 +1681,7 @@ void manual_correct_dialog::segment_change()
     callback->close3DWindow(curwin);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
-
+    prev_seg=seg_id;
 }
 
 
@@ -2050,8 +2106,14 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
 {
     QMessageBox mybox;
     mybox.setText("<b>Have you finished editing this segment? <\b>");
-    mybox.setInformativeText("All spines not marked rejected will be accepted");
-    mybox.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel|QMessageBox::Discard);
+    QString info="-Yes: all spines not rejected will be accepted<br> -Skip: no changes of the segment will be saved<br>"
+            "-Reset: reset the segment<br> -Cancel: do nothing";
+    mybox.setInformativeText(info);
+    mybox.addButton(QMessageBox::Yes);
+    QPushButton *skip_button=mybox.addButton(tr("skip"),QMessageBox::ActionRole);
+    QPushButton *reset_button=mybox.addButton(tr("reset"),QMessageBox::ActionRole);
+    mybox.addButton(QMessageBox::Cancel);
+
     mybox.setDefaultButton(QMessageBox::Yes);
     int ret=mybox.exec();
     if (ret==QMessageBox::Yes)
@@ -2068,21 +2130,26 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
               LList_in[idx].color.g=255;
              }
         }
-        int seg_id=segments->currentIndex();
-        segments->setItemText(seg_id,"Segment "+ QString::number(seg_id+1)+" finished");
+        segments->setItemText(prev_seg,"Segment "+ QString::number(prev_seg+1)+" finished");
         return true;
     }
     else if (ret==QMessageBox::Cancel)
+    {
         return false;
-    else if (ret==QMessageBox::Discard)
+    }
+    else if (mybox.clickedButton()==reset_button)
     {
         //reset label group and markers
         reset_segment();
-        int seg_id=segments->currentIndex();
-        segments->setItemText(seg_id,"Segment "+ QString::number(seg_id+1));
+        segments->setItemText(prev_seg,"Segment "+ QString::number(prev_seg+1));
+        return true;
+    }
+    else if (mybox.clickedButton()==skip_button)
+    {
         return true;
     }
 }
+
 
 void manual_correct_dialog::reset_segment()
 {
@@ -2110,6 +2177,11 @@ void manual_correct_dialog::reset_segment()
     }
     qDebug()<<"segment reset";
 }
+
+//void manual_correct_dialog::skip_segment()
+//{
+
+//}
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
 {
@@ -2254,4 +2326,347 @@ void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
         rgb[1]=0;
         rgb[2]=0;
     }
+}
+
+void manual_correct_dialog::big_image_pipeline_start()
+{
+    get_para();
+    vector<vector <int> > nt_segs;
+    nt_segs= neurontree_divide_big_img();
+
+    for (int i=0;i<nt_segs.size();i++)
+    {
+        //prepare for x_start,y_start,z_start,x_end...
+        vector<V3DLONG> coord(6,0);
+        coord=image_seg_plan(nt_segs[i].front(),nt_segs[i].back());
+
+        unsigned char * data1d = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(fname.toStdString().c_str()),data1d,in_zz,in_sz,datatype,
+                           coord[0],coord[1],coord[2],coord[3],coord[4],coord[5]))
+        {
+            printf("can not load the region");
+            if(data1d) {delete []data1d; data1d = 0;}
+            return;
+        }
+        if (datatype!=1)
+        {
+            printf("cannot handle datatype other than uint8");
+            if(data1d) {delete []data1d; data1d = 0;}
+            return;
+        }
+        qDebug()<<"loading done:"<<in_zz[0]<<":"<<in_zz[1]<<":"<<in_zz[2]<<" trunc:"
+               <<in_sz[0]<<":"<<in_sz[1]<<":"<<in_sz[2]<<" datatype"<<datatype;
+        //prepare new neurontree maybe
+        NeuronTree this_tree;
+        this_tree=prep_seg_neurontree(nt_segs[i],coord[0],coord[1],coord[2]);
+        qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
+
+        if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
+            return;
+//        //need to store the results somewhere...
+    }
+}
+
+bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,int image_id)
+{
+    spine_fun spine_obj(callback,all_para,0);
+    if (!spine_obj.pushImageData(data1d,sz))
+        return false;
+    spine_obj.pushSWCData(nt_seg);
+
+    if(!spine_obj.init()){
+        v3d_msg("No spine candidates were found. Please check image and swc file");
+        return false;
+    }
+
+    if(!spine_obj.reverse_dst_grow())
+    {
+        v3d_msg("No spines candidates were found; Please check image and swc file");
+        return false;
+    }
+
+    spine_obj.run_intensityGroup();
+
+    spine_obj.conn_comp_nb6();
+
+    //LList_in = spine_obj.get_center_landmarks();
+    vector<GOV> label_record;
+    label_record = spine_obj.get_group_label();
+//    //spine_obj.saveResult();
+
+//    //make copy for label_group
+//    label_group_copy=label_group;
+
+    V3DLONG size_page=sz[0]*sz[1]*sz[2];
+    unsigned char *seg_result = new unsigned char [size_page*3];
+    memset(seg_result,0,size_page*3);
+    memcpy(seg_result,data1d,size_page);
+
+    for(int i=0; i<label_record.size(); i++)
+    {
+        GOV tmp = label_record[i];
+        for (int j=0; j<tmp.size(); j++)
+        {
+            seg_result[tmp.at(j)->pos+size_page]=255;
+        }
+    }
+    sz[3]=3;
+    QString fname_out="result_"+ QString::number(image_id)+".v3draw";
+    simple_saveimage_wrapper(*callback,fname_out.toStdString().c_str(),seg_result,sz,V3D_UINT8);
+    if (data1d!=0)
+    {
+        delete[] data1d; data1d=0;
+    }
+
+    qDebug()<<"auto spine_detect complete";
+    return true;
+}
+
+NeuronTree manual_correct_dialog::prep_seg_neurontree(vector<int> s_nt,int start_x,int start_y,int start_z)
+{
+    NeuronTree seg_nt;
+    QList<NeuronSWC> tmp_list;
+    tmp_list.clear();
+    for (int i=0;i<s_nt.size();i++)
+    {
+        NeuronSWC S;
+        S.x=neuron.listNeuron.at(s_nt[i]).x-start_x;
+        S.y=neuron.listNeuron.at(s_nt[i]).y-start_y;
+        S.z=neuron.listNeuron.at(s_nt[i]).z-start_z;
+        S.r=neuron.listNeuron.at(s_nt[i]).r;
+        tmp_list.append(S);
+    }
+    seg_nt.listNeuron=tmp_list;
+    return seg_nt;
+}
+
+bool manual_correct_dialog::get_big_image_name()
+{
+    fname = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
+             QDir::currentPath(),QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+    if (fname.isEmpty())
+    {
+        qDebug()<<"fname not valid";
+        return false;
+    }
+    else
+    {
+        edit_load->setText(fname);
+        qDebug()<<"fname:"<<fname;
+        return true;
+    }
+}
+
+vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
+{
+    qDebug()<<"in nt_divide_big_img";
+    float distance_thresh=150;
+    vector<int> leaf_nodes_id;
+    vector<vector <int> > parent_LUT = build_parent_LUT();
+    for (int i=0;i<neuron.listNeuron.size();i++)
+    {
+        if (parent_LUT[i].size()==0)
+        {
+           leaf_nodes_id.push_back(i);
+        }
+    }
+    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
+    map<int,bool> used_flag; //use the idex starting from 0
+    vector<vector<int> > nt_seg;
+
+    for (int i=0;i<leaf_nodes_id.size();i++)
+    {
+        //qDebug()<<"i:"<<i;
+        int leaf_node=leaf_nodes_id[i];
+
+        float start_distance;
+        int start_node,parent_node,parent;
+
+        float accu_distance=0;
+        start_node=leaf_node;
+        vector<int> one_nt;
+        one_nt.push_back(start_node);
+        while (true)
+        {
+            start_distance=neuron.listNeuron[start_node].fea_val[1];
+            parent=neuron.listNeuron[start_node].parent;
+            parent_node=neuron.hashNeuron.value(parent);
+            one_nt.push_back(parent_node);
+            //accu_distance=0;
+            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
+           {
+                accu_distance=start_distance-neuron.listNeuron[parent_node].fea_val[1];
+                used_flag[parent_node]=1;
+                parent=neuron.listNeuron[parent_node].parent;
+                parent_node=neuron.hashNeuron.value(parent);
+                one_nt.push_back(parent_node);
+                //qDebug()<<"accu_distance:"<<accu_distance;
+           }
+           if (parent==-1||used_flag[parent_node]>0)
+           {
+               nt_seg.push_back(one_nt);
+               break;
+           }
+           else
+           {
+               nt_seg.push_back(one_nt);
+               start_node=parent_node;
+               accu_distance=0;
+               one_nt.clear();
+           }
+        }
+    }
+
+    qDebug()<<"After division. We have "<<nt_seg.size() <<" windows!";
+//    for (int i=0;i<nt_seg.size();i++)
+//    {
+//        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()<<" end:"<<nt_seg[i].back();
+//    }
+    return nt_seg;
+}
+vector<V3DLONG> manual_correct_dialog::image_seg_plan(int first_node,int last_node)
+{
+    int extra_length=4;
+    float r0,r1;
+    int start_x,start_y,start_z,end_x,end_y,end_z;
+    r0=neuron.listNeuron.at(first_node).r+all_para.max_dis;
+    r1=neuron.listNeuron.at(last_node).r+all_para.max_dis;
+    qDebug()<<"first:"<<first_node<<" last node:"<<last_node<<"r0:"<<r0<<" r1:"<<r1;
+//    qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
+//            << neuron.listNeuron.at(one_seg[0]).z<<":"<<r0;
+//    qDebug()<<"second node:"<<neuron.listNeuron.at(one_seg[1]).x <<":"<<neuron.listNeuron.at(one_seg[1]).y<<":"
+//             << neuron.listNeuron.at(one_seg[1]).z<<":"<<r1;
+
+    start_x=(V3DLONG)MIN(neuron.listNeuron.at(first_node).x-r0,neuron.listNeuron.at(last_node).x-r1);
+    start_x=MAX(start_x-extra_length,0);
+    start_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y-r0,neuron.listNeuron.at(last_node).y-r1);
+    start_y=MAX(start_y-extra_length,0);
+    start_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z-r0,neuron.listNeuron.at(last_node).z-r1);
+    start_z=MAX(start_z-extra_length,0);
+
+    end_x=(V3DLONG)MAX(neuron.listNeuron.at(first_node).x+r0,neuron.listNeuron.at(last_node).x+r1);
+    end_x=MIN(end_x+extra_length,sz_img[0]-1);
+    end_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y+r0,neuron.listNeuron.at(last_node).y+r1);
+    end_y=MIN(end_y+extra_length,sz_img[1]-1);
+    end_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z+r0,neuron.listNeuron.at(last_node).z+r1);
+    end_z=MIN(end_z+extra_length,sz_img[2]-1);
+    qDebug()<<"xyz_min:"<<start_x<<":"<<start_y<<":"<<start_z;
+    qDebug()<<"xyz max:"<<end_x<<":"<<end_y<<":"<<end_z;
+
+    vector<V3DLONG> coord(6,0);
+    coord[0]=start_x;
+    coord[1]=start_y;
+    coord[2]=start_z;
+    coord[3]=end_x;
+    coord[4]=end_y;
+    coord[5]=end_z;
+    return coord;
+//    sz_big_seg[0]=end_x-start_x+1;
+//    sz_big_seg[1]=end_y-start_y+1;
+//    sz_big_seg[2]=end_z-start_z+1;
+//    sz_big_seg[3]=3;
+}
+
+void manual_correct_dialog::create_big_image()
+{
+    QGridLayout *mygridLayout = new QGridLayout;
+    QLabel* label_load = new QLabel(QObject::tr("Load Image:"));
+    mygridLayout->addWidget(label_load,0,0,1,1);
+    edit_load = new QLineEdit;
+    edit_load->setText(""); edit_load->setReadOnly(true);
+    mygridLayout->addWidget(edit_load,0,1,1,6);
+    btn_load = new QPushButton("...");
+    mygridLayout->addWidget(btn_load,0,7,1,1);
+
+    QLabel* label_swc = new QLabel(QObject::tr("Load swc:"));
+    mygridLayout->addWidget(label_swc,1,0,1,1);
+    edit_swc = new QLineEdit;
+    edit_swc->setText(""); edit_swc->setReadOnly(true);
+    mygridLayout->addWidget(edit_swc,1,1,1,6);
+    btn_swc = new QPushButton("...");
+    mygridLayout->addWidget(btn_swc,1,7,1,1);
+
+    QLabel* label_csv = new QLabel(QObject::tr("Output directory:"));
+    mygridLayout->addWidget(label_csv,2,0,1,1);
+    edit_csv = new QLineEdit;
+    edit_csv->setText(""); edit_csv->setReadOnly(true);
+    mygridLayout->addWidget(edit_csv,2,1,1,6);
+    btn_csv = new QPushButton("...");
+    mygridLayout->addWidget(btn_csv,2,7,1,1);
+
+    QLabel *channel = new QLabel(tr("Which channel to use?"));
+    channel_menu = new QComboBox;
+    channel_menu->addItem("red");
+    channel_menu->addItem("green");
+    channel_menu->addItem("blue");
+    mygridLayout->addWidget(channel,3,0,1,2);
+    mygridLayout->addWidget(channel_menu,3,3,1,5);
+
+    //para setting
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    mygridLayout->addWidget(line_1,4,0,1,8);
+
+    QLabel *bg_thr = new QLabel(tr("Background threshold:"));
+    mygridLayout->addWidget(bg_thr,5,0,1,6);
+    QLabel *max_pixel=new QLabel (tr("Max spine volume:"));
+    mygridLayout->addWidget(max_pixel,6,0,1,6);
+    QLabel *min_pixel=new QLabel (tr("Min spine volume:"));
+    mygridLayout->addWidget(min_pixel,7,0,1,6);
+    QLabel *max_dis=new QLabel(tr("Max spine distance to surface:"));
+    mygridLayout->addWidget(max_dis,8,0,1,6);
+    QLabel *width_thr=new QLabel(tr("Max spine width:"));
+    mygridLayout->addWidget(width_thr,9,0,1,6);
+
+    spin_max_dis=new QSpinBox;
+    spin_max_dis->setRange(5,80);
+    spin_max_dis->setValue(40);
+    spin_min_pixel=new QSpinBox;
+    spin_min_pixel->setRange(10,100);
+    spin_min_pixel->setValue(30);
+    spin_bg_thr=new QSpinBox;
+    spin_bg_thr->setRange(1,255);
+    spin_bg_thr->setValue(90);
+    spin_max_pixel=new QSpinBox;
+    spin_max_pixel->setRange(2000,8000);
+    spin_max_pixel->setValue(7000);
+    spin_width_thr=new QSpinBox;
+    spin_width_thr->setRange(10,100);
+    spin_width_thr->setValue(35);
+    mygridLayout->addWidget(spin_bg_thr,5,6,1,2);
+    mygridLayout->addWidget(spin_max_pixel,6,6,1,2);
+    mygridLayout->addWidget(spin_min_pixel,7,6,1,2);
+    mygridLayout->addWidget(spin_max_dis,8,6,1,2);
+    mygridLayout->addWidget(spin_width_thr,9,6,1,2);
+
+    QFrame *line_2 = new QFrame();
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+    mygridLayout->addWidget(line_2,15,0,1,8);
+    QPushButton *ok     = new QPushButton("OK");
+    QPushButton *cancel = new QPushButton("Cancel");
+    mygridLayout->addWidget(ok,16,2,1,2);
+    mygridLayout->addWidget(cancel,16,5,1,2);
+
+    //operation zone
+    QFrame *line_3 = new QFrame();
+    line_3->setFrameShape(QFrame::HLine);
+    line_3->setFrameShadow(QFrame::Sunken);
+    mygridLayout->addWidget(line_3,17,0,1,8);
+
+
+    this->setLayout(mygridLayout);
+    this->setWindowTitle("Spine_detector_big_image");
+    this->show();
+
+    connect(ok,SIGNAL(clicked()),this,SLOT(big_image_pipeline_start()));
+    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(btn_load, SIGNAL(clicked()), this, SLOT(get_big_image_name()));
+    connect(btn_swc,SIGNAL(clicked()),this,SLOT(load_swc()));
+    connect(btn_csv,SIGNAL(clicked()),this,SLOT(csv_out()));
+
 }

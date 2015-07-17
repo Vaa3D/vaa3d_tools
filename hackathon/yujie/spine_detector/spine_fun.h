@@ -151,6 +151,30 @@ public:
     {
         nt.copy(neuron);
     }
+
+    void push_eswc_Data(NeuronTree neuron)
+    {
+        qDebug()<<"in push eswc data";
+        QList<NeuronSWC> tmp_list;
+        tmp_list.clear();
+        for (int i=0;i<neuron.listNeuron.size();i++)
+        {
+            NeuronSWC S;
+            S.x=neuron.listNeuron.at(i).x;
+            S.y=neuron.listNeuron.at(i).y;
+            S.z=neuron.listNeuron.at(i).z;
+            S.r=neuron.listNeuron.at(i).r;
+            S.parent=neuron.listNeuron.at(i).parent;
+            S.level=neuron.listNeuron.at(i).level;
+            S.seg_id=neuron.listNeuron.at(i).seg_id;
+            S.type=neuron.listNeuron.at(i).type;
+            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(0));
+            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(1));
+            tmp_list.append(S);
+        }
+        nt.listNeuron=tmp_list;
+        qDebug()<<"finished";
+    }
 };
 
 #endif // SPINE_FUN_H
