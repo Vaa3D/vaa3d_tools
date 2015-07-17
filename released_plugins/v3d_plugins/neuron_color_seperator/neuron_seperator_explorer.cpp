@@ -544,12 +544,16 @@ void neuron_seperator_explorer::updateAll()
         while(!in.atEnd()) {
             QString line = in.readLine();
             QStringList fields = line.split(QRegExp("="));
+            QString fname_tmp=fields.at(1).trimmed();
 
             if(fields.size()>1){
-                if(!QFile::exists(fields.at(1).trimmed())){
-                    continue;
+                if(!QFile::exists(fname_tmp)){ //file not exist? try path relative to ano
+                    QFileInfo finfo_tmp(fnames_ano.at(idx_img));
+                    fname_tmp=QDir(finfo_tmp.path()).filePath(fname_tmp);
+                    if(!QFile::exists(fname_tmp))
+                        continue;
                 }
-                imgs[idx_img].fnames_extract.push_back(fields.at(1).trimmed());
+                imgs[idx_img].fnames_extract.push_back(fname_tmp);
                 imgs[idx_img].status_extract.push_back(0);
             }
         }
