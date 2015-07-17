@@ -122,11 +122,11 @@ qmake
 make
 
 #RegMST 
-cd ../../../bigneuron_ported/AmosSironi_PrzemyslawGlowacki/RegMST_tracing_plugin/
-make clean
-svn up
-qmake
-make
+#cd ../../../bigneuron_ported/AmosSironi_PrzemyslawGlowacki/RegMST_tracing_plugin/
+#make clean
+#svn up
+#qmake
+#make
 
 #nctuTW 
 cd ../../../bigneuron_ported/ytc/nctuTW/
