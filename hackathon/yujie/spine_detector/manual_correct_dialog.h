@@ -60,12 +60,15 @@ public slots:
 
     void segment_change();
     void finish_seg_clicked();
+    void reset_segment_clicked();
+    void skip_segment_clicked();
     void marker_in_one_seg();
     void reject_marker_for_seg_view();
     void accept_marker_for_seg_view();
     void dilate_for_seg_view();
     void erode_for_seg_view();
-    void reset_clicked_for_seg_view();
+    void reset_marker_clicked_for_seg_view();
+
 
 
     //not used
@@ -78,7 +81,7 @@ public slots:
 //for big image handlinng
 private:
     vector<vector<int> > neurontree_divide_big_img();
-    vector<long long> image_seg_plan(int first_node, int last_node);
+    vector<V3DLONG> image_seg_plan(int first_node, int last_node);
     void create_big_image();
     NeuronTree prep_seg_neurontree(vector<int> s_nt,int start_x,int start_y,int start_z);
     bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,

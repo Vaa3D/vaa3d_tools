@@ -1510,7 +1510,7 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg,int s
 void manual_correct_dialog::standing_segment_dialog()
 {
     seg_dialog=new QDialog;
-    seg_dialog->setWindowTitle("spine proofreading_by_segment");
+    seg_dialog->setWindowTitle("spine detector_proofread_by_segment");
     qDebug()<<"size:"<<seg_dialog->size();
     seg_dialog->setFixedWidth(500);
 //    seg_dialog->setFixedHeight();
@@ -1523,19 +1523,16 @@ void manual_correct_dialog::standing_segment_dialog()
     segments->setCurrentIndex(0);
     layout2->addWidget(segments,0,0,1,3);
 
-    //QPushButton *next_seg=new QPushButton(tr("Next segment"));
+    QPushButton *reset_seg=new QPushButton(tr("Reset this segment"));
     QPushButton *finish_seg=new QPushButton(tr("Finish this segment"));
     QPushButton *skip_seg=new QPushButton(tr("Skip this segment"));
-    layout2->addWidget(finish_seg,1,0,1,3);
-    layout2->addWidget(skip_seg,1,3,1,2);
+    layout2->addWidget(finish_seg,1,0,1,2);
+    layout2->addWidget(skip_seg,1,2,1,2);
+    layout2->addWidget(reset_seg,1,4,1,2);
 
-    QLabel *spine_groups=new QLabel(tr("Spine groups:"));
-    layout2->addWidget(spine_groups,2,0,1,4);
-    //markers=new QComboBox;
-//    for (int i=0;i<LList_in.size();i++)
-//        markers->addItem(QString("marker ")+QString::number(i+1));
-    //markers->setFixedWidth(250);
-    //markers->setCurrentIndex(0);
+    QLabel *spine_groups=new QLabel(tr("Spine groups:      Press ctrl/shift to select multiple markers"));
+    layout2->addWidget(spine_groups,2,0,1,6);
+
     list_markers=new QListWidget();
     layout2->addWidget(list_markers,3,0,8,3);
 //    list_markers->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -1559,10 +1556,8 @@ void manual_correct_dialog::standing_segment_dialog()
     layout2->addWidget(erode,6,4,1,2);
     layout2->addWidget(reset,7,4,1,2);
 
-    QLabel *multiple = new QLabel;
-    multiple->setText("press ctrl/shift to select multiple markers");
-    layout2->addWidget(multiple,9,4,2,2);
-
+    QLabel *infobox=new QLabel(tr("Info:"));
+    layout2->addWidget(infobox,8,0,1,2);
     edit_seg = new QPlainTextEdit;
     edit_seg->setReadOnly(true);
     edit_seg->setFixedHeight(60);
@@ -1575,9 +1570,6 @@ void manual_correct_dialog::standing_segment_dialog()
 //    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
 //    small_remover->setChecked(false);
 //    layout2->addWidget(small_remover,6,2,1,4);
-//    QPushButton *button_p_cancel=new QPushButton;
-//    button_p_cancel->setText("Quit");
-//    layout2->addWidget(button_p_cancel,6,2,1,1);
 
     seg_dialog->setLayout(layout2);
 
@@ -1587,10 +1579,10 @@ void manual_correct_dialog::standing_segment_dialog()
     connect(reject,SIGNAL(clicked()),this,SLOT(reject_marker_for_seg_view()));
     connect(dilate,SIGNAL(clicked()),this,SLOT(dilate_for_seg_view()));
     connect(erode,SIGNAL(clicked()),this,SLOT(erode_for_seg_view()));
-    connect(reset,SIGNAL(clicked()),this,SLOT(reset_clicked_for_seg_view()));
-    //connect(skip_seg,SIGNAL(clicked()),this,SLOT();
-    //connect(finish_seg,SIGNAL(clicked()),this,SLOT(next_seg_clicked()));
-
+    connect(reset,SIGNAL(clicked()),this,SLOT(reset_marker_clicked_for_seg_view()));
+    connect(skip_seg,SIGNAL(clicked()),this,SLOT(skip_segment_clicked()));
+    connect(finish_seg,SIGNAL(clicked()),this,SLOT(finish_seg_clicked()));
+    connect(reset_seg,SIGNAL(clicked()),this,SLOT(reset_segment_clicked()));
     segment_change();
     seg_dialog->show();
 }
@@ -1612,10 +1604,24 @@ void manual_correct_dialog::finish_seg_clicked()
     }
     int seg_idx=segments->currentIndex();
     segments->setItemText(seg_idx,"Segment "+ QString::number(seg_idx+1)+" finished");
-    //seg_edit_flag=true???
+    seg_edit_flag=false;
     return;
 }
 
+void manual_correct_dialog::reset_segment_clicked()
+{
+    reset_segment();
+    seg_edit_flag=false;
+    edit_seg->clear();
+    edit_seg->setPlainText("segment "+QString::number(segments->currentIndex()+1)+" reset");
+    segment_change();
+}
+
+void manual_correct_dialog::skip_segment_clicked()
+{
+    int seg_id=segments->currentIndex();
+    segments->setCurrentIndex(seg_id+1);
+}
 
 void manual_correct_dialog::segment_change()
 {
@@ -1623,9 +1629,9 @@ void manual_correct_dialog::segment_change()
     {
         if (!save_seg_edit_for_seg_view())
         {
-            disconnect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
-            segments->setCurrentIndex(prev_seg);
-            connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+//            disconnect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+//            segments->setCurrentIndex(prev_seg);
+//            connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
             return;
         }
     }
@@ -1787,6 +1793,7 @@ void manual_correct_dialog::reject_marker_for_seg_view()
     }
 
     edit_flag=false;
+    seg_edit_flag=true;
     callback->setLandmark(curwin,LList_seg);
     callback->pushObjectIn3DWindow(curwin);
 
@@ -1820,6 +1827,7 @@ void manual_correct_dialog::accept_marker_for_seg_view()
     }
 
     edit_flag=false;
+    seg_edit_flag=true;
     callback->setLandmark(curwin,LList_seg);
     callback->pushObjectIn3DWindow(curwin);
 }
@@ -1987,7 +1995,7 @@ void manual_correct_dialog::erode_for_seg_view()
     LList_seg[mid].color.g=LList_seg[mid].color.b=LList_seg[mid].color.r=0;
 }
 
-void manual_correct_dialog::reset_clicked_for_seg_view()
+void manual_correct_dialog::reset_marker_clicked_for_seg_view()
 {
     int mid=list_markers->currentRow();
     reset_edit_for_seg_view(true,mid);
@@ -2049,6 +2057,7 @@ void manual_correct_dialog::reset_edit_for_seg_view(bool visual_flag,int mid)
     }
 
     edit_flag=false;
+    seg_edit_flag=true;
 
     if (!visual_flag)
         return;
@@ -2107,11 +2116,11 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
     QMessageBox mybox;
     mybox.setText("<b>Have you finished editing this segment? <\b>");
     QString info="-Yes: all spines not rejected will be accepted<br> -Skip: no changes of the segment will be saved<br>"
-            "-Reset: reset the segment<br> -Cancel: do nothing";
+            "<br> -Cancel: do nothing";
     mybox.setInformativeText(info);
     mybox.addButton(QMessageBox::Yes);
     QPushButton *skip_button=mybox.addButton(tr("skip"),QMessageBox::ActionRole);
-    QPushButton *reset_button=mybox.addButton(tr("reset"),QMessageBox::ActionRole);
+    //QPushButton *reset_button=mybox.addButton(tr("reset"),QMessageBox::ActionRole);
     mybox.addButton(QMessageBox::Cancel);
 
     mybox.setDefaultButton(QMessageBox::Yes);
@@ -2135,15 +2144,12 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
     }
     else if (ret==QMessageBox::Cancel)
     {
+        disconnect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
+        segments->setCurrentIndex(prev_seg);
+        connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
         return false;
     }
-    else if (mybox.clickedButton()==reset_button)
-    {
-        //reset label group and markers
-        reset_segment();
-        segments->setItemText(prev_seg,"Segment "+ QString::number(prev_seg+1));
-        return true;
-    }
+
     else if (mybox.clickedButton()==skip_button)
     {
         return true;
@@ -2175,13 +2181,10 @@ void manual_correct_dialog::reset_segment()
         label_group[idx].clear();
         label_group[idx]=tmp_group;
     }
+    seg_edit_flag=false;
     qDebug()<<"segment reset";
 }
 
-//void manual_correct_dialog::skip_segment()
-//{
-
-//}
 
 void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
 {
