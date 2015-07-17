@@ -85,13 +85,13 @@ void retype_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     ));
         if(fileOpenName.isEmpty())
             return;
-        int type = 2;
+        int type;
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
              bool ok;
              nt = readSWC_file(fileOpenName);
-             type = QInputDialog::getInteger(parent, "Please specify the node type","type:",1,0,256,1,&ok);
+             type = QInputDialog::getInteger(parent, "Please specify the node type","type:",3,0,256,1,&ok);
              if (!ok)
                  return;
             for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
