@@ -450,7 +450,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
     double min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
-    metrics.dy = max_fg - min_fg;
+    metrics.dy = fabs(max_fg - min_fg);
 
     double bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
     double fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
