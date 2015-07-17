@@ -81,6 +81,34 @@ bool flip_y (Image4DSimple * image)
     return true;
 }
 
+
+
+
+#define MAX_INTENSITY 255
+bool invert_intensity (Image4DSimple * image)
+{
+    unsigned char * data1d = image->getRawData();
+    V3DLONG in_sz[3];
+    in_sz[0] = image->getXDim();
+    in_sz[1] = image->getYDim();
+    in_sz[2] = image->getZDim();
+
+    for (V3DLONG z = 0; z < in_sz[2]; z++)
+    {
+        for ( V3DLONG y = 0; y < in_sz[1]; y++)
+        {
+            for ( V3DLONG x = 0; x < in_sz[0]; x++)
+            {
+                V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+                data1d[index_1d] = MAX_INTENSITY - data1d[index_1d] ;
+            }
+        }
+    }
+
+    return true;
+}
+
+
 bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file)
 {
     QFile file(output_csv_file);
@@ -136,8 +164,11 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     int flip = QInputDialog::getInteger(parent, "flip in y ?",
                                  "Flip in Y (0/1):",
                                  0, 0, 1);
+    int invert = QInputDialog::getInteger(parent, "invert intensity ? (for calculating tubularities, signals should be brighter than background",
+                                 "Invert Intensity (0/1):",
+                                 0, 0, 1);
 
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip, callback);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip,invert,callback);
 
     if (result_metrics.isEmpty())
     {
@@ -191,12 +222,14 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
     int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
+    int  invert = (inparas.size() >= 3) ? atoi(inparas[2]) : 1;
 
     cout<<"inimg_file = "<< imageFileName.toStdString()<<endl;
     cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
     cout<<"output_file = "<< output_csv_file.toStdString()<<endl;
     cout<<"dilate_ratio = "<< dilate_ratio<<endl;
     cout<<"flip y = "<< flip <<endl;
+    cout<<"invert intensity = "<< invert <<endl;
 
     NeuronTree  neuronTree;
 
@@ -212,7 +245,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip, callback);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert, callback);
 
     if (result_metrics.isEmpty())
     {
@@ -451,16 +484,21 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
 }
 
-QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, V3DPluginCallback2 &callback)
+QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, int invert, V3DPluginCallback2 &callback)
 {
 
 
-    if(flip>0)
+    if(flip > 0)
     {
       flip_y(image);
       cout<<"warning: the image is flipped in Y by default, to be consistent with other image readers, e.g. ImageJ."<<endl;
     }
 
+    if (invert > 0)
+    {
+        invert_intensity(image);
+        cout<<"warning: the image is flipped in Y by default, to be consistent with other image readers, e.g. ImageJ."<<endl;
+    }
 
     QList<IMAGE_METRICS> result_metrics;
     result_metrics.clear();
@@ -531,7 +569,8 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"inswc_file:\t\t input .swc file\n";
     cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: '<inswc_file>.csv'\n";
     cout<<"dilation_radius :\t (not required) the dilation ratio to expand the radius for background ROI extraction\n";
-    cout<<"flip in y [0 or 1]\t (not required)"<<endl;
+    cout<<"flip in y [0 or 1]\t (not required)\n";
+    cout<<"invert intensity [0 or 1]\t (not required, signal should have higher intensties than background, for tubuliarty calculation)"<<endl;
 }
 
 
