@@ -17,7 +17,9 @@ QStringList spine_detector::menulist() const
 	return QStringList() 
 //        <<tr("spine_detector_1")
 //        <<tr("skeleton analysis")
-        <<tr("spine_detector_1.0")
+        <<tr("spine_detector_1.0 (view by spine)")
+        <<tr("spine_detector_1.1 (view by segment)")
+        <<tr("handele_big_image")
         <<tr("about");
 }
 
@@ -58,9 +60,9 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
        spine_obj->saveResult();
 
     }
-    else if(menu_name==tr("spine_detector_1.0"))
+    else if(menu_name==tr("spine_detector_1.0 (view by spine)"))
     {
-        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
+        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,0);
         manual_dialog->show();
     }
 //    else if (menu_name == tr("skeleton analysis"))
@@ -76,11 +78,19 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 //        if (!proc_app2(callback, p, versionStr))
 //            return;
 //	}
-//	else
-//	{
-//        v3d_msg(tr("This tool detects spines. "
-//			"Developed by Yujie Li, 2015-3-11"));
-//	}
+    else if (menu_name==tr("spine_detector_1.1 (view by segment)"))
+    {
+        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);
+        manual_dialog->show();
+    }
+    else if (menu_name==tr("handele_big_image"))
+    {
+        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
+        manual_dialog->show();
+    }
+    else
+        v3d_msg(tr("This tool detects spines. "
+            "Developed by Yujie Li, 2015-3-11"));
 }
 
 bool spine_detector::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

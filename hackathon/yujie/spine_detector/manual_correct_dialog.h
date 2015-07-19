@@ -12,7 +12,9 @@ class manual_correct_dialog:public QDialog
 {
     Q_OBJECT
 public:
-    explicit manual_correct_dialog(V3DPluginCallback2 *cb);
+    explicit manual_correct_dialog(V3DPluginCallback2 *cb,int proofread_code);
+    //code=0 view by spine //code=1 view by segment
+    manual_correct_dialog(V3DPluginCallback2 *cb);
     void create();
     void reset_image_data();
     void check_window();
@@ -24,7 +26,7 @@ public:
     bool before_proof_dialog();
     void reset_label_group();
     void get_para();
-    int save();
+    int save(QString window_name);
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
 private:
@@ -68,13 +70,12 @@ public slots:
     void dilate_for_seg_view();
     void erode_for_seg_view();
     void reset_marker_clicked_for_seg_view();
-
+    bool finish_proof_dialog_seg_view();
 
 
     //not used
     bool maybe_save();
     void load_marker();
-    void loadLabel();
     void check_local_3d_window();
 
 
@@ -83,9 +84,10 @@ private:
     vector<vector<int> > neurontree_divide_big_img();
     vector<V3DLONG> image_seg_plan(int first_node, int last_node);
     void create_big_image();
-    NeuronTree prep_seg_neurontree(vector<int> s_nt,int start_x,int start_y,int start_z);
+    NeuronTree prep_seg_neurontree(vector<V3DLONG> coord);
     bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,
                                      int image_id);
+    bool check_image_size();
 
 public slots:
     bool get_big_image_name();
@@ -95,6 +97,7 @@ public:
 
 private:
     V3DPluginCallback2 *callback;
+    int view_code;
     v3dhandle curwin,main_win;
     QLineEdit *edit_load, *edit_label, *edit_swc,*edit_csv;
     QPlainTextEdit *edit_status;

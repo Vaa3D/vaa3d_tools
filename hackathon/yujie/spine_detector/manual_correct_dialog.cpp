@@ -3,6 +3,21 @@
 #define fname_image "truncated_view"
 #define fname_image_seg "segmented view"
 
+manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb, int proofread_code)
+{
+    callback=cb;
+    view_code=proofread_code;
+    image1Dc_in=0;
+    image1Dc_spine=0;
+    image_seg=0;
+    image_trun=0;
+    label=0;
+    create();
+    //create_big_image();
+    edit_flag=false;
+    seg_edit_flag=false;
+}
+
 manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
@@ -11,8 +26,7 @@ manual_correct_dialog::manual_correct_dialog(V3DPluginCallback2 *cb)
     image_seg=0;
     image_trun=0;
     label=0;
-    create();
-    //create_big_image();
+    create_big_image();
     edit_flag=false;
     seg_edit_flag=false;
 }
@@ -122,7 +136,10 @@ void manual_correct_dialog::create()
     this->setLayout(mygridLayout);
     this->setWindowTitle("Spine_detector");
     this->show();
-    connect(ok,     SIGNAL(clicked()), this, SLOT(check_data2()));
+    if (view_code==1)
+        connect(ok,     SIGNAL(clicked()), this, SLOT(check_data2()));
+    else if(view_code==0)
+        connect(ok,     SIGNAL(clicked()), this, SLOT(check_data()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(btn_load, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(btn_swc,SIGNAL(clicked()),this,SLOT(load_swc()));
@@ -186,7 +203,10 @@ void manual_correct_dialog::check_data2()
     if(!auto_spine_detect())
         return;
     if(before_proof_dialog())
+    {
+        qDebug()<<"before standing segment dialog";
         standing_segment_dialog();
+    }
     else
     {
         return;
@@ -200,7 +220,7 @@ void manual_correct_dialog::create_standing_dialog()
     markers=new QComboBox;
     for (int i=0;i<LList_in.size();i++)
         markers->addItem(QString("marker ")+QString::number(i+1));
-    markers->setFixedWidth(250);
+    //markers->setFixedWidth(250);
     markers->setCurrentIndex(0);
     QGridLayout *layout2=new QGridLayout;
     edit_status = new QPlainTextEdit;
@@ -227,7 +247,7 @@ void manual_correct_dialog::create_standing_dialog()
     QFrame *line_1 = new QFrame();
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
-    layout2->addWidget(line_1,5,0,1,3);
+    layout2->addWidget(line_1,5,0,1,6);
 
     QPushButton *button_save=new QPushButton;
     button_save->setText("Finish");
@@ -471,7 +491,7 @@ bool manual_correct_dialog::finish_proof_dialog()
 
      if (mybox.clickedButton() == save_button) {
          int final_landmarks_num;
-         final_landmarks_num = save();
+         final_landmarks_num = save(fname_image);
          QMessageBox mynewbox;
          QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
          info+="The spine csv profile is saved at "+ edit_csv->text();
@@ -495,41 +515,6 @@ bool manual_correct_dialog::finish_proof_dialog()
      }
 }
 
-void manual_correct_dialog::loadLabel()
-{
-//    qDebug()<<"in loadLABEL";
-//    QString fileName;
-//    fileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the input image "),
-//             QDir::currentPath(),QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-
-//    if (!fileName.isEmpty())
-//    {
-//        unsigned char * label_tmp = 0;
-//        if (!simple_loadimage_wrapper(*callback, fileName.toStdString().c_str(), label_tmp, label_sz, label_intype))
-//        {
-//            QMessageBox::information(0,"","load image "+fileName+" error!");
-//            return;
-//        }
-//        if(label_intype==2)
-//            label=(unsigned short *)label_tmp;
-//        else{
-//            QMessageBox::information(0,"","this label is not unsigned short,error!");
-//            return;
-//        }
-//        if (label_sz[3]>3)
-//        {
-//            label_sz[3]=3;
-//            QMessageBox::information(0,"","More than 3 channels were loaded."
-//                                     "The first 3 channel will be applied for analysis.");
-//            return;
-//        }
-//        qDebug()<<"label_type:"<<label_intype<<":"<<label_sz[0]<<label_sz[3];
-
-//        qDebug()<<"finish loading";
-//        edit_label->setText(fileName);
-
-//    }
-}
 
 bool manual_correct_dialog::auto_spine_detect()
 {
@@ -547,11 +532,10 @@ bool manual_correct_dialog::auto_spine_detect()
         spine_obj.push_eswc_Data(neuron);
     else
         spine_obj.pushSWCData(neuron);
-    qDebug()<<"2"<<eswc_flag;
+
     progress_id=progress_id+6;
     progress.setValue(progress_id); //6
 
-    qDebug()<<"before init"<<sz_img[0]<<":"<<sz_img[1]<<":"<<sz_img[2]<<":"<<sz_img[3];
     if(!spine_obj.init()){
         v3d_msg("No spine candidates were found. Please check image and swc file");
         return false;
@@ -911,7 +895,7 @@ void manual_correct_dialog::check_local_3d_window()
     }
 }
 
-int manual_correct_dialog::save() //need further work
+int manual_correct_dialog::save(QString window_name) //need further work
 {
     open_main_triview();
     //prepare Landmarkers and image
@@ -977,14 +961,14 @@ int manual_correct_dialog::save() //need further work
     //need to close all image windows //check 3D window
     v3dhandleList list_triwin = callback->getImageWindowList();
     for(V3DLONG i=0; i<list_triwin.size(); i++){
-        if(callback->getImageName(list_triwin.at(i)).contains(fname_image))
+        if(callback->getImageName(list_triwin.at(i)).contains(window_name))
         {
             callback->close3DWindow(list_triwin[i]);
         }
     }
 
     mydialog->close();
-
+    qDebug()<<"before image set"<<sz_img[3];
     //visualize
     Image4DSimple image4d;
     unsigned char *input_image=new unsigned char [size_page*sz_img[3]];
@@ -997,7 +981,7 @@ int manual_correct_dialog::save() //need further work
     callback->updateImageWindow(curwin);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
-
+    qDebug()<<"before label";
     Image4DSimple image_label;
     image_label.setData((unsigned char*)label,sz_img[0],sz_img[1],sz_img[2],sz_img[3],V3D_UINT16);
     QString name="proofread_image_label";
@@ -1025,7 +1009,7 @@ bool manual_correct_dialog::maybe_save()
     mybox.exec();
 
      if (mybox.clickedButton() == save_button) {
-         save();
+         save(fname_image);
          return true;
      } else if (mybox.clickedButton() == cancel_button) {
          return false;
@@ -1052,13 +1036,15 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     QString outfile=edit_csv->text()+"/"+filename;
     FILE *fp2=fopen(outfile.toAscii(),"wt");
     if (eswc_flag)
-        fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
+        fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
     else
-        fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node\n");
+        fprintf(fp2,"##auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node\n");
+    int marker_id=0;
     for (int i=0;i<label_group.size();i++)
     {
         GOV tmp=label_group[i];
         if (tmp.size()<=0) continue;
+        marker_id++;
         sort(tmp.begin(),tmp.end(),sortfunc_dst);
         int group_id=tmp.front()->intensity_label;
         int max_dis=tmp.front()->dst;
@@ -1085,7 +1071,7 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         //qDebug()<<"skel_id_size:"<<skel_id_size<<" skel_id:"<<skel_id;
         if (eswc_flag)
         {
-            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",group_id,volume,max_dis,
+            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",marker_id,group_id,volume,max_dis,
                     min_dis,center_dis,(int)center_x,(int)center_y,(int)center_z,skel_id,
                     neuron.listNeuron.at(skel_id).type,(int)neuron.listNeuron.at(skel_id).seg_id,
                     (int)neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
@@ -1509,10 +1495,10 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg,int s
 
 void manual_correct_dialog::standing_segment_dialog()
 {
-    seg_dialog=new QDialog;
-    seg_dialog->setWindowTitle("spine detector_proofread_by_segment");
-    qDebug()<<"size:"<<seg_dialog->size();
-    seg_dialog->setFixedWidth(500);
+    mydialog=new QDialog();
+    mydialog->setWindowTitle("spine detector_proofread_by_segment");
+    qDebug()<<"size:"<<mydialog->size();
+    mydialog->setFixedWidth(500);
 //    seg_dialog->setFixedHeight();
     QGridLayout *layout2=new QGridLayout;
 
@@ -1523,57 +1509,59 @@ void manual_correct_dialog::standing_segment_dialog()
     segments->setCurrentIndex(0);
     layout2->addWidget(segments,0,0,1,3);
 
-    QPushButton *reset_seg=new QPushButton(tr("Reset this segment"));
-    QPushButton *finish_seg=new QPushButton(tr("Finish this segment"));
-    QPushButton *skip_seg=new QPushButton(tr("Skip this segment"));
+    QPushButton *reset_seg=new QPushButton(tr("Reset segment"));
+    QPushButton *finish_seg=new QPushButton(tr("Finish segment"));
+    QPushButton *skip_seg=new QPushButton(tr("Next segment"));
     layout2->addWidget(finish_seg,1,0,1,2);
     layout2->addWidget(skip_seg,1,2,1,2);
     layout2->addWidget(reset_seg,1,4,1,2);
 
-    QLabel *spine_groups=new QLabel(tr("Spine groups:      Press ctrl/shift to select multiple markers"));
-    layout2->addWidget(spine_groups,2,0,1,6);
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    layout2->addWidget(line_1,2,0,1,6);
+
+    QLabel *spine_groups=new QLabel(tr("Spine groups:"));
+    layout2->addWidget(spine_groups,3,0,1,6);
+    QLabel *multiple=new QLabel(tr("Press ctrl/shift to select multiple markers"));
+    layout2->addWidget(multiple,4,0,1,6);
 
     list_markers=new QListWidget();
-    layout2->addWidget(list_markers,3,0,8,3);
-//    list_markers->setSelectionBehavior(QAbstractItemView::SelectRows);
+    layout2->addWidget(list_markers,5,0,8,4);
     list_markers->setSelectionMode(QAbstractItemView::ExtendedSelection);
     list_markers->setFocusPolicy(Qt::NoFocus);
 
-    //    layout2->addWidget(markers,0,2,1,4);
-
     QPushButton *accept=new QPushButton(tr("Accept"));
     QPushButton *reject=new QPushButton(tr("Reject"));
-    //QPushButton *skip = new QPushButton(tr("Skip"));
 
-    layout2->addWidget(accept,3,4,1,2);
-    layout2->addWidget(reject,4,4,1,2);
-    //layout2->addWidget(skip,3,4,1,2);
+    layout2->addWidget(accept,5,4,1,2);
+    layout2->addWidget(reject,6,4,1,2);
 
     QPushButton *dilate = new QPushButton(tr("Dilate"));
     QPushButton *erode =new QPushButton (tr("Erode"));
     QPushButton *reset = new QPushButton (tr("Reset"));
-    layout2->addWidget(dilate,5,4,1,2);
-    layout2->addWidget(erode,6,4,1,2);
-    layout2->addWidget(reset,7,4,1,2);
+    layout2->addWidget(dilate,7,4,1,2);
+    layout2->addWidget(erode,8,4,1,2);
+    layout2->addWidget(reset,9,4,1,2);
 
     QLabel *infobox=new QLabel(tr("Info:"));
-    layout2->addWidget(infobox,8,0,1,2);
+    layout2->addWidget(infobox,13,0,1,2);
     edit_seg = new QPlainTextEdit;
     edit_seg->setReadOnly(true);
     edit_seg->setFixedHeight(60);
-    layout2->addWidget(edit_seg,12,0,1,6);
+    layout2->addWidget(edit_seg,14,0,1,6);
 
     QPushButton *button_save=new QPushButton;
     button_save->setText("Finish proofreading");
-    layout2->addWidget(button_save,13,0,1,2);
+    layout2->addWidget(button_save,15,0,1,2);
 //    small_remover=new QCheckBox;
 //    small_remover->setText(QObject::tr("Remove groups < min spine pixel"));
 //    small_remover->setChecked(false);
 //    layout2->addWidget(small_remover,6,2,1,4);
 
-    seg_dialog->setLayout(layout2);
+    mydialog->setLayout(layout2);
 
-//    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog()));
+    connect(button_save,SIGNAL(clicked()),this,SLOT(finish_proof_dialog_seg_view()));
     connect(segments,SIGNAL(currentIndexChanged(int)),this,SLOT(segment_change()));
     connect(accept,SIGNAL(clicked()),this,SLOT(accept_marker_for_seg_view()));
     connect(reject,SIGNAL(clicked()),this,SLOT(reject_marker_for_seg_view()));
@@ -1584,7 +1572,7 @@ void manual_correct_dialog::standing_segment_dialog()
     connect(finish_seg,SIGNAL(clicked()),this,SLOT(finish_seg_clicked()));
     connect(reset_seg,SIGNAL(clicked()),this,SLOT(reset_segment_clicked()));
     segment_change();
-    seg_dialog->show();
+    mydialog->show();
 }
 
 
@@ -1600,11 +1588,15 @@ void manual_correct_dialog::finish_seg_clicked()
           LList_in[idx].comments=QString::number(1).toStdString();
           LList_in[idx].color.r=LList_in[idx].color.b=0;
           LList_in[idx].color.g=255;
+          LList_seg[i].color.r=LList_seg[i].color.b=0;
+          LList_seg[i].color.g=255;
          }
     }
     int seg_idx=segments->currentIndex();
     segments->setItemText(seg_idx,"Segment "+ QString::number(seg_idx+1)+" finished");
     seg_edit_flag=false;
+    callback->setLandmark(curwin,LList_seg);
+    callback->pushObjectIn3DWindow(curwin);
     return;
 }
 
@@ -1612,8 +1604,8 @@ void manual_correct_dialog::reset_segment_clicked()
 {
     reset_segment();
     seg_edit_flag=false;
-    edit_seg->clear();
-    edit_seg->setPlainText("segment "+QString::number(segments->currentIndex()+1)+" reset");
+    int seg_idx=segments->currentIndex();
+    segments->setItemText(seg_idx,"Segment "+ QString::number(seg_idx+1));
     segment_change();
 }
 
@@ -1668,9 +1660,7 @@ void manual_correct_dialog::segment_change()
     }
     list_markers->setCurrentItem(list_markers->item(0));
 
-    //connect(list_markers,SIGNAL(currentRowChanged(int)),this,SLOT(marker_in_one_seg(int)));
     connect(list_markers,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(marker_in_one_seg()));
-    //connect(list_markers,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(marker_one_click()));
 
     //step 5: get the image ready
     //qDebug()<<"getting the image ready";
@@ -2115,11 +2105,11 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
 {
     QMessageBox mybox;
     mybox.setText("<b>Have you finished editing this segment? <\b>");
-    QString info="-Yes: all spines not rejected will be accepted<br> -Skip: no changes of the segment will be saved<br>"
-            "<br> -Cancel: do nothing";
+    QString info="-Yes: all spines not rejected will be accepted<br> -Discard: all changes to segment will be discarded<br>"
+            "-Cancel: return to proofreading dialog";
     mybox.setInformativeText(info);
     mybox.addButton(QMessageBox::Yes);
-    QPushButton *skip_button=mybox.addButton(tr("skip"),QMessageBox::ActionRole);
+    QPushButton *skip_button=mybox.addButton(tr("Discard"),QMessageBox::ActionRole);
     //QPushButton *reset_button=mybox.addButton(tr("reset"),QMessageBox::ActionRole);
     mybox.addButton(QMessageBox::Cancel);
 
@@ -2152,10 +2142,48 @@ bool manual_correct_dialog::save_seg_edit_for_seg_view()
 
     else if (mybox.clickedButton()==skip_button)
     {
+        reset_segment();
         return true;
     }
 }
 
+bool manual_correct_dialog::finish_proof_dialog_seg_view()
+{
+    QMessageBox mybox;
+    mybox.setText("Have you finished proofreading?");
+
+    QPushButton *save_button = mybox.addButton(tr("Finish and save"),QMessageBox::ActionRole);
+    QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
+    QPushButton *discard_button=mybox.addButton(QMessageBox::Discard);
+
+    mybox.setDefaultButton(save_button);
+    mybox.exec();
+
+     if (mybox.clickedButton() == save_button) {
+         int final_landmarks_num;
+         final_landmarks_num = save(fname_image_seg);
+         QMessageBox mynewbox;
+         QString info="After proofreading "+ QString::number(final_landmarks_num)+" spines were found\n";
+         info+="The spine csv profile is saved at "+ edit_csv->text();
+         mynewbox.information(0,"spine detector",info,QMessageBox::Ok);
+         return true;
+
+     } else if (mybox.clickedButton() == cancel_button) {
+         return false;
+     }
+     else if (mybox.clickedButton()== discard_button) {
+         //need to close all image windows //check 3D window
+         v3dhandleList list_triwin = callback->getImageWindowList();
+         for(V3DLONG i=0; i<list_triwin.size(); i++){
+             if(callback->getImageName(list_triwin.at(i)).contains(fname_image_seg))
+             {
+                 callback->close3DWindow(list_triwin[i]);
+             }
+         }
+         mydialog->close();
+         return false;
+     }
+}
 
 void manual_correct_dialog::reset_segment()
 {
@@ -2331,12 +2359,15 @@ void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
     }
 }
 
+
+
 void manual_correct_dialog::big_image_pipeline_start()
 {
     get_para();
     vector<vector <int> > nt_segs;
     nt_segs= neurontree_divide_big_img();
-
+    if(!check_image_size())
+        return;
     for (int i=0;i<nt_segs.size();i++)
     {
         //prepare for x_start,y_start,z_start,x_end...
@@ -2364,13 +2395,15 @@ void manual_correct_dialog::big_image_pipeline_start()
                <<in_sz[0]<<":"<<in_sz[1]<<":"<<in_sz[2]<<" datatype"<<datatype;
         //prepare new neurontree maybe
         NeuronTree this_tree;
-        this_tree=prep_seg_neurontree(nt_segs[i],coord[0],coord[1],coord[2]);
+        this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
         qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
+        writeSWC_file(QString::number(i+1)+".swc",this_tree);
 
         if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
             return;
 //        //need to store the results somewhere...
     }
+    this->close();
 }
 
 bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,int image_id)
@@ -2428,19 +2461,27 @@ bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V
     return true;
 }
 
-NeuronTree manual_correct_dialog::prep_seg_neurontree(vector<int> s_nt,int start_x,int start_y,int start_z)
+NeuronTree manual_correct_dialog::prep_seg_neurontree(vector<V3DLONG> coord)
 {
     NeuronTree seg_nt;
     QList<NeuronSWC> tmp_list;
     tmp_list.clear();
-    for (int i=0;i<s_nt.size();i++)
+    for (int i=0;i<neuron.listNeuron.size();i++)
     {
-        NeuronSWC S;
-        S.x=neuron.listNeuron.at(s_nt[i]).x-start_x;
-        S.y=neuron.listNeuron.at(s_nt[i]).y-start_y;
-        S.z=neuron.listNeuron.at(s_nt[i]).z-start_z;
-        S.r=neuron.listNeuron.at(s_nt[i]).r;
-        tmp_list.append(S);
+//        if (neuron.listNeuron[i].x>=coord[0] && neuron.listNeuron[i].x<coord[3]
+//           && neuron.listNeuron[i].y>=coord[1] && neuron.listNeuron[i].y<coord[4]
+//           && neuron.listNeuron[i].z>=coord[2] && neuron.listNeuron[i].z<coord[5])
+//        {
+            NeuronSWC S;
+            S.x=neuron.listNeuron.at(i).x-coord[0];
+            S.y=neuron.listNeuron.at(i).y-coord[1];
+            S.z=neuron.listNeuron.at(i).z-coord[2];
+            S.r=neuron.listNeuron.at(i).r;
+            S.parent=neuron.listNeuron.at(i).parent;
+            S.n=neuron.listNeuron.at(i).n;
+            tmp_list.append(S);
+//        }
+        //qDebug()<<"s_nt:"<<s_nt[i];
     }
     seg_nt.listNeuron=tmp_list;
     return seg_nt;
@@ -2573,6 +2614,20 @@ vector<V3DLONG> manual_correct_dialog::image_seg_plan(int first_node,int last_no
 //    sz_big_seg[3]=3;
 }
 
+bool manual_correct_dialog::check_image_size()
+{
+    Image4DSimple *inimg = 0;
+    inimg = callback->loadImage(const_cast<char *>(fname.toStdString().c_str()));
+    if (!inimg || !inimg->valid())
+        return false;
+    sz_img[0] = inimg->getXDim();
+    sz_img[1] = inimg->getYDim();
+    sz_img[2] = inimg->getZDim();
+    sz_img[3] = inimg->getCDim();
+    if (inimg) {delete inimg; inimg=0;}
+    qDebug()<<"sz img:"<<sz_img[0]<<":"<<sz_img[1]<<sz_img[3];
+    return true;
+}
 void manual_correct_dialog::create_big_image()
 {
     QGridLayout *mygridLayout = new QGridLayout;
