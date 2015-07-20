@@ -169,7 +169,7 @@ bool neuronPicker::dofunc(const QString & func_name, const V3DPluginArgList & in
             }
             if(paras.size()>7){
                 float tmp=atof(paras.at(7));
-                if(tmp>0 && tmp<1)
+                if(tmp>=0 && tmp<=1)
                     sparsthr=tmp;
                 else
                     cerr<<"error: illigal sparsity threshold: "<<tmp<<"; use default value "<<sparsthr<<endl;

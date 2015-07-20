@@ -17,7 +17,10 @@ double findBgthrInMask(T *data1D, V3DLONG pagesize, T threshold, double estimate
         if(data1D[vid+pagesize*3]>threshold){
             double maxval=MAX(data1D[vid],data1D[vid+pagesize]);
             maxval=MAX(maxval,data1D[vid+pagesize*2]);
-            estimates[1]+=maxval;
+            double minval=MIN(data1D[vid],data1D[vid+pagesize]);
+            minval=MIN(minval,data1D[vid+pagesize*2]);
+            estimates[0]+=(double)minval;
+            estimates[1]+=(double)maxval;
             estimates[2]+=(double)data1D[vid];
             estimates[3]+=(double)data1D[vid+pagesize];
             estimates[4]+=(double)data1D[vid+pagesize*2];
@@ -25,10 +28,10 @@ double findBgthrInMask(T *data1D, V3DLONG pagesize, T threshold, double estimate
         }
     }
     estimates[1]/=vol_num;
-    estimates[2]/=vol_num;
-    estimates[3]/=vol_num;
-    estimates[4]/=vol_num;
-    estimates[0]=(estimates[2]+estimates[3]+estimates[4])/3;
+    estimates[2]/=(vol_num);
+    estimates[3]/=(vol_num);
+    estimates[4]/=(vol_num);
+    estimates[0]/=(vol_num);//=MIN(MIN(estimates[2],estimates[3]),estimates[4]);
     return estimates[0];
 }
 
