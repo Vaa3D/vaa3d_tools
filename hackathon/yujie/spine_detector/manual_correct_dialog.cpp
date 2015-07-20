@@ -289,7 +289,7 @@ bool manual_correct_dialog::csv_out()
     //fname_output = QDir(folder_output).filePath("spine_profile.csv");
     edit_csv->setText(folder_output);
 
-    QDir::setCurrent(fileSaveDir);
+    //QDir::setCurrent(fileSaveDir);
     return true;
 }
 
@@ -2363,14 +2363,27 @@ void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
 
 void manual_correct_dialog::big_image_pipeline_start()
 {
+    this->close();
     get_para();
     vector<vector <int> > nt_segs;
     nt_segs= neurontree_divide_big_img();
     if(!check_image_size())
         return;
+
+    bool cancel_flag=false;
+    QProgressDialog progress("Automatic spine detection...", "Abort", 0, nt_segs.size(), this);
+    progress.setWindowModality(Qt::WindowModal);
+
     for (int i=0;i<nt_segs.size();i++)
     {
         //prepare for x_start,y_start,z_start,x_end...
+        progress.setValue(i);
+        if (progress.wasCanceled())
+        {
+            v3d_msg("Automatic spine detection CANCELLED!");
+            cancel_flag=true;
+            break;
+        }
         vector<V3DLONG> coord(6,0);
         coord=image_seg_plan(nt_segs[i].front(),nt_segs[i].back());
 
@@ -2397,13 +2410,18 @@ void manual_correct_dialog::big_image_pipeline_start()
         NeuronTree this_tree;
         this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
         qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
-        writeSWC_file(QString::number(i+1)+".swc",this_tree);
 
         if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
+        {
             return;
+        }
 //        //need to store the results somewhere...
     }
-    this->close();
+    if (cancel_flag)
+        return;
+    progress.setValue(nt_segs.size());
+    QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
+    return;
 }
 
 bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,int image_id)
@@ -2451,7 +2469,28 @@ bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V
     }
     sz[3]=3;
     QString fname_out="result_"+ QString::number(image_id)+".v3draw";
-    simple_saveimage_wrapper(*callback,fname_out.toStdString().c_str(),seg_result,sz,V3D_UINT8);
+    QString img_complete=QDir(folder_output).filePath(fname_out);
+    simple_saveimage_wrapper(*callback,img_complete.toStdString().c_str(),seg_result,sz,V3D_UINT8);
+    QString swc_fname=QString::number(image_id)+".swc";
+    QString swc_complete=QDir(folder_output).filePath(swc_fname);
+    writeSWC_file(swc_complete,nt_seg);
+
+    //output ano
+
+    QString fname_ano ="sd_result_"+ QString::number(image_id)+".ano";
+    QString ano_complete=QDir(folder_output).filePath(fname_ano);
+    QFile qf_anofile(ano_complete);
+    if(!qf_anofile.open(QIODevice::WriteOnly))
+    {
+        v3d_msg("Cannot open file for writing!");
+        return false;
+    }
+    QTextStream out(&qf_anofile);
+    out<<"RAWIMG="<<img_complete<<endl;
+    out<<"SWCFILE="<<swc_complete<<endl;
+    qf_anofile.close();
+
+
     if (data1d!=0)
     {
         delete[] data1d; data1d=0;
@@ -2619,7 +2658,10 @@ bool manual_correct_dialog::check_image_size()
     Image4DSimple *inimg = 0;
     inimg = callback->loadImage(const_cast<char *>(fname.toStdString().c_str()));
     if (!inimg || !inimg->valid())
+    {
+        v3d_msg("cannot get the image size.Error.");
         return false;
+    }
     sz_img[0] = inimg->getXDim();
     sz_img[1] = inimg->getYDim();
     sz_img[2] = inimg->getZDim();

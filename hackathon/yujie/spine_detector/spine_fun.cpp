@@ -166,6 +166,12 @@ bool spine_fun::init()
 
     delete [] dst;
     dst=0;
+
+    if (voxels_map.size()<=0)
+    {
+        v3d_msg("no voxels were found. Error!");
+        return false;
+    }
     qDebug()<<"voxels map size:"<<voxels_map.size();
     qDebug()<<"~~~~~Spine Dectector: init neighbors";
     for(map<V3DLONG, VOI *>::iterator iter_map=voxels_map.begin(); iter_map!=voxels_map.end(); iter_map++){
@@ -194,6 +200,11 @@ bool spine_fun::init()
         }
     }
 
+    if (voxels.size()<=0)
+    {
+        qDebug()<<"no voxels of interest are found.Please check image and reconstructions";
+        return false;
+    }
     qDebug()<<"~~~~~Spine Detector: found "<<voxels.size()<<" voxels of interest.";
     return true;
 }

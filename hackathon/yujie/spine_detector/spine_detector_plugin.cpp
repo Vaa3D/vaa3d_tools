@@ -17,9 +17,9 @@ QStringList spine_detector::menulist() const
 	return QStringList() 
 //        <<tr("spine_detector_1")
 //        <<tr("skeleton analysis")
-        <<tr("spine_detector_1.0 (view by spine)")
-        <<tr("spine_detector_1.1 (view by segment)")
-        <<tr("handele_big_image")
+        <<tr("spine_detector_1.0 (proofread by spine)")
+        <<tr("spine_detector_1.1 (proofread by segment)")
+        <<tr("spine_detector_2.0 (for big images")
         <<tr("about");
 }
 
@@ -52,15 +52,12 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
        spine_obj->loadData();
        spine_obj->init();
        spine_obj->reverse_dst_grow();
-//       spine_obj->run_dstGroup();
        spine_obj->run_intensityGroup();
        spine_obj->conn_comp_nb6();
-//       spine_obj->construct_group_profile();
        spine_obj->write_spine_center_profile();
        spine_obj->saveResult();
-
     }
-    else if(menu_name==tr("spine_detector_1.0 (view by spine)"))
+    else if(menu_name==tr("spine_detector_1.0 (proofread by spine)"))
     {
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,0);
         manual_dialog->show();
@@ -78,18 +75,18 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 //        if (!proc_app2(callback, p, versionStr))
 //            return;
 //	}
-    else if (menu_name==tr("spine_detector_1.1 (view by segment)"))
+    else if (menu_name==tr("spine_detector_1.1 (proofread by segment)"))
     {
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);
         manual_dialog->show();
     }
-    else if (menu_name==tr("handele_big_image"))
+    else if (menu_name==tr("spine_detector_2.0 (for big images"))
     {
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
         manual_dialog->show();
     }
     else
-        v3d_msg(tr("This tool detects spines. "
+        v3d_msg(tr("This tool is designed for spine morphology reconstructions. "
             "Developed by Yujie Li, 2015-3-11"));
 }
 
