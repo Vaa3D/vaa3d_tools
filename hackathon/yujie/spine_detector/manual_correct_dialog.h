@@ -8,6 +8,14 @@
 #include "read_raw_file.h"
 using namespace std;
 
+struct simple_neuronswc {
+        int id; float x;float y; float z; float r;
+};
+
+inline bool sortfunc_x_decend(simple_neuronswc *a,simple_neuronswc *b){return (a->x)>(b->x);}
+inline bool sortfunc_y_decend(simple_neuronswc *a,simple_neuronswc *b){return (a->y)>(b->y);}
+inline bool sortfunc_z_decend(simple_neuronswc *a,simple_neuronswc *b){return (a->z)>(b->z);}
+
 class manual_correct_dialog:public QDialog
 {
     Q_OBJECT
@@ -33,7 +41,7 @@ private:
     vector<vector<int> > build_parent_LUT();
     int calc_nearest_node(float center_x,float center_y,float center_z);
     void neurontree_divide();
-    void set_visualize_image_marker(vector<int> one_seg,int seg_id);
+    void set_visualize_image_marker(vector<simple_neuronswc *> one_seg,int seg_id);
 //    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
 //    {return (a->fea_val[1] < b->fea_val[1]);}
 
@@ -81,8 +89,8 @@ public slots:
 
 //for big image handlinng
 private:
-    vector<vector<int> > neurontree_divide_big_img();
-    vector<V3DLONG> image_seg_plan(int first_node, int last_node);
+    vector<vector<simple_neuronswc *> > neurontree_divide_big_img();
+    vector<V3DLONG> image_seg_plan(vector<simple_neuronswc *> seg);
     void create_big_image();
     NeuronTree prep_seg_neurontree(vector<V3DLONG> coord);
     bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,
@@ -122,7 +130,7 @@ private:
     int rgb[3];
 
     int x_min,y_min,z_min,x_max,y_max,z_max,prev_idx,prev_seg;
-    vector<vector<int> > segment_neuronswc;
+    vector<vector<simple_neuronswc*> > segment_neuronswc;
     QDialog *seg_dialog;
     QPlainTextEdit *edit_seg;
     QComboBox *segments;

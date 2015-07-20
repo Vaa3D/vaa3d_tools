@@ -19,7 +19,7 @@ QStringList spine_detector::menulist() const
 //        <<tr("skeleton analysis")
         <<tr("spine_detector_1.0 (proofread by spine)")
         <<tr("spine_detector_1.1 (proofread by segment)")
-        <<tr("spine_detector_2.0 (for big images")
+        <<tr("spine_detector_2.0 (for big images)")
         <<tr("about");
 }
 
@@ -80,7 +80,7 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);
         manual_dialog->show();
     }
-    else if (menu_name==tr("spine_detector_2.0 (for big images"))
+    else if (menu_name==tr("spine_detector_2.0 (for big images)"))
     {
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
         manual_dialog->show();

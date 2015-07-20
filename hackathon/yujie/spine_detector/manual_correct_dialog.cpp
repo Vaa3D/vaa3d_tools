@@ -199,7 +199,7 @@ void manual_correct_dialog::check_data2()
     }
     this->accept();
     get_para();
-    neurontree_divide();
+    segment_neuronswc=neurontree_divide_big_img();  //borrow for the big img;
     if(!auto_spine_detect())
         return;
     if(before_proof_dialog())
@@ -1315,66 +1315,66 @@ vector<vector<int> > manual_correct_dialog::build_parent_LUT()
 
 void manual_correct_dialog::neurontree_divide()
 {
-    qDebug()<<"neurontree divide";
-    float distance_thresh=150;
-    vector<int> leaf_nodes_id;
-    vector<vector <int> > parent_LUT = build_parent_LUT();
-    for (int i=0;i<neuron.listNeuron.size();i++)
-    {
-        if (parent_LUT[i].size()==0)
-        {
-           leaf_nodes_id.push_back(i);
-        }
-    }
-    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
-    map<int,bool> used_flag; //use the idex starting from 0
-    //vector<vector<int> > segment_neuronswc;
+//    qDebug()<<"neurontree divide";
+//    float distance_thresh=150;
+//    vector<int> leaf_nodes_id;
+//    vector<vector <int> > parent_LUT = build_parent_LUT();
+//    for (int i=0;i<neuron.listNeuron.size();i++)
+//    {
+//        if (parent_LUT[i].size()==0)
+//        {
+//           leaf_nodes_id.push_back(i);
+//        }
+//    }
+//    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
+//    map<int,bool> used_flag; //use the idex starting from 0
+//    //vector<vector<int> > segment_neuronswc;
 
-    for (int i=0;i<leaf_nodes_id.size();i++)
-    {
-        //qDebug()<<"i:"<<i;
-        int leaf_node=leaf_nodes_id[i];
+//    for (int i=0;i<leaf_nodes_id.size();i++)
+//    {
+//        //qDebug()<<"i:"<<i;
+//        int leaf_node=leaf_nodes_id[i];
 
-        float start_distance;
-        int start_node,parent_node,parent;
+//        float start_distance;
+//        int start_node,parent_node,parent;
 
-        float accu_distance=0;
-        start_node=leaf_node;
+//        float accu_distance=0;
+//        start_node=leaf_node;
 
-        while (true)
-        {
-            //start_node=neuron.listNeuron[neuron.hashNeuron.value(parent)];
-            start_distance=neuron.listNeuron[start_node].fea_val[1];
-            parent=neuron.listNeuron[start_node].parent;
-            parent_node=neuron.hashNeuron.value(parent);
-            //accu_distance=0;
-            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
-           {
-                accu_distance=start_distance-neuron.listNeuron[parent_node].fea_val[1];
-                used_flag[parent_node]=1;
-                parent=neuron.listNeuron[parent_node].parent;
-                parent_node=neuron.hashNeuron.value(parent);
-                //qDebug()<<"accu_distance:"<<accu_distance;
-           }
-           if (parent==-1||used_flag[parent_node]>0)
-           {
-               vector<int> oneseg;
-               oneseg.push_back(start_node);
-               oneseg.push_back(parent_node);
-               segment_neuronswc.push_back(oneseg);
-               break;
-           }
-           else
-           {
-               vector<int> oneseg(2,0);
-               oneseg[0]=start_node;
-               oneseg[1]=parent_node;
-               segment_neuronswc.push_back(oneseg);
-               start_node=parent_node;
-               accu_distance=0;
-           }
-        }
-    }
+//        while (true)
+//        {
+//            //start_node=neuron.listNeuron[neuron.hashNeuron.value(parent)];
+//            start_distance=neuron.listNeuron[start_node].fea_val[1];
+//            parent=neuron.listNeuron[start_node].parent;
+//            parent_node=neuron.hashNeuron.value(parent);
+//            //accu_distance=0;
+//            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
+//           {
+//                accu_distance=start_distance-neuron.listNeuron[parent_node].fea_val[1];
+//                used_flag[parent_node]=1;
+//                parent=neuron.listNeuron[parent_node].parent;
+//                parent_node=neuron.hashNeuron.value(parent);
+//                //qDebug()<<"accu_distance:"<<accu_distance;
+//           }
+//           if (parent==-1||used_flag[parent_node]>0)
+//           {
+//               vector<int> oneseg;
+//               oneseg.push_back(start_node);
+//               oneseg.push_back(parent_node);
+//               segment_neuronswc.push_back(oneseg);
+//               break;
+//           }
+//           else
+//           {
+//               vector<int> oneseg(2,0);
+//               oneseg[0]=start_node;
+//               oneseg[1]=parent_node;
+//               segment_neuronswc.push_back(oneseg);
+//               start_node=parent_node;
+//               accu_distance=0;
+//           }
+//        }
+//    }
 
     qDebug()<<"After division. We have "<<segment_neuronswc.size() <<" windows!";
 //    for (int i=0;i<segment_neuronswc.size();i++)
@@ -1384,30 +1384,39 @@ void manual_correct_dialog::neurontree_divide()
 }
 
 
-void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg,int seg_id)
+void manual_correct_dialog::set_visualize_image_marker(vector<simple_neuronswc*> one_seg,int seg_id)
 {
-    int extra_length=4;
-    float r0,r1;
-    r0=neuron.listNeuron.at(one_seg[0]).r+all_para.max_dis;
-    r1=neuron.listNeuron.at(one_seg[1]).r+all_para.max_dis;
-    qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
-            << neuron.listNeuron.at(one_seg[0]).z<<":"<<r0;
-    qDebug()<<"second node:"<<neuron.listNeuron.at(one_seg[1]).x <<":"<<neuron.listNeuron.at(one_seg[1]).y<<":"
-             << neuron.listNeuron.at(one_seg[1]).z<<":"<<r1;
+    vector<V3DLONG> coord(6,0);
+    coord=image_seg_plan(one_seg);
+//    int extra_length=4;
+//    float r0,r1;
+//    r0=neuron.listNeuron.at(one_seg[0]).r+all_para.max_dis;
+//    r1=neuron.listNeuron.at(one_seg[1]).r+all_para.max_dis;
+//    qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
+//            << neuron.listNeuron.at(one_seg[0]).z<<":"<<r0;
+//    qDebug()<<"second node:"<<neuron.listNeuron.at(one_seg[1]).x <<":"<<neuron.listNeuron.at(one_seg[1]).y<<":"
+//             << neuron.listNeuron.at(one_seg[1]).z<<":"<<r1;
 
-    x_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).x-r0,neuron.listNeuron.at(one_seg[1]).x-r1);
-    x_min=MAX(x_min-extra_length,0);
-    y_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).y-r0,neuron.listNeuron.at(one_seg[1]).y-r1);
-    y_min=MAX(y_min-extra_length,0);
-    z_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).z-r0,neuron.listNeuron.at(one_seg[1]).z-r1);
-    z_min=MAX(z_min-extra_length,0);
+//    x_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).x-r0,neuron.listNeuron.at(one_seg[1]).x-r1);
+//    x_min=MAX(x_min-extra_length,0);
+//    y_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).y-r0,neuron.listNeuron.at(one_seg[1]).y-r1);
+//    y_min=MAX(y_min-extra_length,0);
+//    z_min=(int)MIN(neuron.listNeuron.at(one_seg[0]).z-r0,neuron.listNeuron.at(one_seg[1]).z-r1);
+//    z_min=MAX(z_min-extra_length,0);
 
-    x_max=(int)MAX(neuron.listNeuron.at(one_seg[0]).x+r0,neuron.listNeuron.at(one_seg[1]).x+r1);
-    x_max=MIN(x_max+extra_length,sz_img[0]-1);
-    y_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).y+r0,neuron.listNeuron.at(one_seg[1]).y+r1);
-    y_max=MIN(y_max+extra_length,sz_img[1]-1);
-    z_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).z+r0,neuron.listNeuron.at(one_seg[1]).z+r1);
-    z_max=MIN(z_max+extra_length,sz_img[2]-1);
+//    x_max=(int)MAX(neuron.listNeuron.at(one_seg[0]).x+r0,neuron.listNeuron.at(one_seg[1]).x+r1);
+//    x_max=MIN(x_max+extra_length,sz_img[0]-1);
+//    y_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).y+r0,neuron.listNeuron.at(one_seg[1]).y+r1);
+//    y_max=MIN(y_max+extra_length,sz_img[1]-1);
+//    z_max=(int)MIN(neuron.listNeuron.at(one_seg[0]).z+r0,neuron.listNeuron.at(one_seg[1]).z+r1);
+//    z_max=MIN(z_max+extra_length,sz_img[2]-1);
+    x_min=coord[0];
+    y_min=coord[1];
+    z_min=coord[2];
+    x_max=coord[3];
+    y_max=coord[4];
+    z_max=coord[5];
+
     qDebug()<<"xyz_min:"<<x_min<<":"<<y_min<<":"<<z_min;
     qDebug()<<"xyz max:"<<x_max<<":"<<y_max<<":"<<z_max;
 
@@ -1612,7 +1621,14 @@ void manual_correct_dialog::reset_segment_clicked()
 void manual_correct_dialog::skip_segment_clicked()
 {
     int seg_id=segments->currentIndex();
-    segments->setCurrentIndex(seg_id+1);
+    if (seg_id+1<segment_neuronswc.size())
+        segments->setCurrentIndex(seg_id+1);
+    else
+    {
+        edit_seg->clear();
+        edit_seg->setPlainText("This is the last segment.");
+        return;
+    }
 }
 
 void manual_correct_dialog::segment_change()
@@ -2151,6 +2167,7 @@ bool manual_correct_dialog::finish_proof_dialog_seg_view()
 {
     QMessageBox mybox;
     mybox.setText("Have you finished proofreading?");
+    mybox.setInformativeText("Only the accpeted markers will be kept");
 
     QPushButton *save_button = mybox.addButton(tr("Finish and save"),QMessageBox::ActionRole);
     QPushButton *cancel_button=mybox.addButton(QMessageBox::Cancel);
@@ -2365,7 +2382,7 @@ void manual_correct_dialog::big_image_pipeline_start()
 {
     this->close();
     get_para();
-    vector<vector <int> > nt_segs;
+    vector<vector <simple_neuronswc *> > nt_segs;
     nt_segs= neurontree_divide_big_img();
     if(!check_image_size())
         return;
@@ -2385,7 +2402,7 @@ void manual_correct_dialog::big_image_pipeline_start()
             break;
         }
         vector<V3DLONG> coord(6,0);
-        coord=image_seg_plan(nt_segs[i].front(),nt_segs[i].back());
+        coord=image_seg_plan(nt_segs[i]);
 
         unsigned char * data1d = 0;
         V3DLONG *in_zz = 0;
@@ -2413,10 +2430,11 @@ void manual_correct_dialog::big_image_pipeline_start()
 
         if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
         {
-            return;
+            continue;
         }
-//        //need to store the results somewhere...
+        //need to store the results somewhere...
     }
+    return;
     if (cancel_flag)
         return;
     progress.setValue(nt_segs.size());
@@ -2543,10 +2561,11 @@ bool manual_correct_dialog::get_big_image_name()
     }
 }
 
-vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
+
+vector<vector<simple_neuronswc *> > manual_correct_dialog::neurontree_divide_big_img()
 {
     qDebug()<<"in nt_divide_big_img";
-    float distance_thresh=150;
+    float distance_thresh=all_para.max_dis*5;
     vector<int> leaf_nodes_id;
     vector<vector <int> > parent_LUT = build_parent_LUT();
     for (int i=0;i<neuron.listNeuron.size();i++)
@@ -2558,11 +2577,11 @@ vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
     }
     qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
     map<int,bool> used_flag; //use the idex starting from 0
-    vector<vector<int> > nt_seg;
+    vector<vector<simple_neuronswc *> > nt_seg;
 
     for (int i=0;i<leaf_nodes_id.size();i++)
     {
-        //qDebug()<<"i:"<<i;
+        qDebug()<<"i:"<<i;
         int leaf_node=leaf_nodes_id[i];
 
         float start_distance;
@@ -2570,14 +2589,28 @@ vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
 
         float accu_distance=0;
         start_node=leaf_node;
-        vector<int> one_nt;
-        one_nt.push_back(start_node);
+        vector<simple_neuronswc *> one_nt;
+        simple_neuronswc *one_node=new simple_neuronswc;
+        one_node->id=start_node;
+        one_node->x=neuron.listNeuron[start_node].x;
+        one_node->y=neuron.listNeuron[start_node].y;
+        one_node->z=neuron.listNeuron[start_node].z;
+        one_node->r=neuron.listNeuron[start_node].r;
+        one_nt.push_back(one_node);
+
         while (true)
         {
             start_distance=neuron.listNeuron[start_node].fea_val[1];
             parent=neuron.listNeuron[start_node].parent;
             parent_node=neuron.hashNeuron.value(parent);
-            one_nt.push_back(parent_node);
+            simple_neuronswc *one_node=new simple_neuronswc;
+            one_node->id=parent_node;
+            one_node->x=neuron.listNeuron[parent_node].x;
+            one_node->y=neuron.listNeuron[parent_node].y;
+            one_node->z=neuron.listNeuron[parent_node].z;
+            one_node->r=neuron.listNeuron[parent_node].r;
+            one_nt.push_back(one_node);
+
             //accu_distance=0;
             while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
            {
@@ -2585,7 +2618,14 @@ vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
                 used_flag[parent_node]=1;
                 parent=neuron.listNeuron[parent_node].parent;
                 parent_node=neuron.hashNeuron.value(parent);
-                one_nt.push_back(parent_node);
+                simple_neuronswc *one_node=new simple_neuronswc;
+                one_node->id=parent_node;
+                one_node->x=neuron.listNeuron[parent_node].x;
+                one_node->y=neuron.listNeuron[parent_node].y;
+                one_node->z=neuron.listNeuron[parent_node].z;
+                one_node->r=neuron.listNeuron[parent_node].r;
+                one_nt.push_back(one_node);
+
                 //qDebug()<<"accu_distance:"<<accu_distance;
            }
            if (parent==-1||used_flag[parent_node]>0)
@@ -2600,42 +2640,54 @@ vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img()
                accu_distance=0;
                one_nt.clear();
            }
+           qDebug()<<"nt_seg size:"<<nt_seg.size();
         }
     }
 
     qDebug()<<"After division. We have "<<nt_seg.size() <<" windows!";
 //    for (int i=0;i<nt_seg.size();i++)
 //    {
-//        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()<<" end:"<<nt_seg[i].back();
+//        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()->x<<" end:"<<nt_seg[i].back()->r;
 //    }
     return nt_seg;
 }
-vector<V3DLONG> manual_correct_dialog::image_seg_plan(int first_node,int last_node)
+vector<V3DLONG> manual_correct_dialog::image_seg_plan(vector<simple_neuronswc *> seg)
 {
-    int extra_length=4;
-    float r0,r1;
+    int extra_length=all_para.max_dis;
     int start_x,start_y,start_z,end_x,end_y,end_z;
-    r0=neuron.listNeuron.at(first_node).r+all_para.max_dis;
-    r1=neuron.listNeuron.at(last_node).r+all_para.max_dis;
-    qDebug()<<"first:"<<first_node<<" last node:"<<last_node<<"r0:"<<r0<<" r1:"<<r1;
+    std::sort(seg.begin(),seg.end(),sortfunc_x_decend);
+    start_x=MAX(seg.back()->x-seg.back()->r-extra_length,0);
+    end_x=MIN(seg.front()->x+seg.front()->r+extra_length,sz_img[0]-1);
+    sort(seg.begin(),seg.end(),sortfunc_y_decend);
+    start_y=MAX(seg.back()->y-seg.back()->r-extra_length,0);
+    end_y=MIN(seg.front()->y+seg.front()->r+extra_length,sz_img[1]-1);
+    sort(seg.begin(),seg.end(),sortfunc_z_decend);
+    start_z=MAX(seg.back()->z-seg.back()->r-extra_length,0);
+    end_z=MIN(seg.front()->z+seg.front()->r+extra_length,sz_img[2]-1);
+
+//    float r0,r1;
+//    //int start_x,start_y,start_z,end_x,end_y,end_z;
+//    r0=neuron.listNeuron.at(first_node).r+all_para.max_dis;
+//    r1=neuron.listNeuron.at(last_node).r+all_para.max_dis;
+    //qDebug()<<"first:"<<first_node<<" last node:"<<last_node<<"r0:"<<r0<<" r1:"<<r1;
 //    qDebug()<<"first node:"<<neuron.listNeuron.at(one_seg[0]).x <<":"<<neuron.listNeuron.at(one_seg[0]).y<<":"
 //            << neuron.listNeuron.at(one_seg[0]).z<<":"<<r0;
 //    qDebug()<<"second node:"<<neuron.listNeuron.at(one_seg[1]).x <<":"<<neuron.listNeuron.at(one_seg[1]).y<<":"
 //             << neuron.listNeuron.at(one_seg[1]).z<<":"<<r1;
 
-    start_x=(V3DLONG)MIN(neuron.listNeuron.at(first_node).x-r0,neuron.listNeuron.at(last_node).x-r1);
-    start_x=MAX(start_x-extra_length,0);
-    start_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y-r0,neuron.listNeuron.at(last_node).y-r1);
-    start_y=MAX(start_y-extra_length,0);
-    start_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z-r0,neuron.listNeuron.at(last_node).z-r1);
-    start_z=MAX(start_z-extra_length,0);
+//    start_x=(V3DLONG)MIN(neuron.listNeuron.at(first_node).x-r0,neuron.listNeuron.at(last_node).x-r1);
+//    start_x=MAX(start_x-extra_length,0);
+//    start_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y-r0,neuron.listNeuron.at(last_node).y-r1);
+//    start_y=MAX(start_y-extra_length,0);
+//    start_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z-r0,neuron.listNeuron.at(last_node).z-r1);
+//    start_z=MAX(start_z-extra_length,0);
 
-    end_x=(V3DLONG)MAX(neuron.listNeuron.at(first_node).x+r0,neuron.listNeuron.at(last_node).x+r1);
-    end_x=MIN(end_x+extra_length,sz_img[0]-1);
-    end_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y+r0,neuron.listNeuron.at(last_node).y+r1);
-    end_y=MIN(end_y+extra_length,sz_img[1]-1);
-    end_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z+r0,neuron.listNeuron.at(last_node).z+r1);
-    end_z=MIN(end_z+extra_length,sz_img[2]-1);
+//    end_x=(V3DLONG)MAX(neuron.listNeuron.at(first_node).x+r0,neuron.listNeuron.at(last_node).x+r1);
+//    end_x=MIN(end_x+extra_length,sz_img[0]-1);
+//    end_y=(V3DLONG)MIN(neuron.listNeuron.at(first_node).y+r0,neuron.listNeuron.at(last_node).y+r1);
+//    end_y=MIN(end_y+extra_length,sz_img[1]-1);
+//    end_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z+r0,neuron.listNeuron.at(last_node).z+r1);
+//    end_z=MIN(end_z+extra_length,sz_img[2]-1);
     qDebug()<<"xyz_min:"<<start_x<<":"<<start_y<<":"<<start_z;
     qDebug()<<"xyz max:"<<end_x<<":"<<end_y<<":"<<end_z;
 
