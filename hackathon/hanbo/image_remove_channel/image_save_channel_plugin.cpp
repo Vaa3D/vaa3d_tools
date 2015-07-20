@@ -68,7 +68,15 @@ void shiftTwoBits2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG ims
     for(V3DLONG i=0; i<imsz; i++)
     {
         pPost[i] = (unsigned char) MIN(255,pPre[i]/4);
-//        qDebug()<<i<<":"<<pPre[i]<<":"<<(int)pPost[i];
+    }
+}
+
+void shiftTwoBits2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+{
+    float* pPre = (float*)pre1d;
+    for(V3DLONG i=0; i<imsz; i++)
+    {
+        pPost[i] = (unsigned char) MIN(255,pPre[i]/4);
     }
 }
 
@@ -106,13 +114,18 @@ bool image_channel_io::dofunc(const QString & func_name, const V3DPluginArgList 
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("save_RGB_channel"))
+    if (func_name == tr("save_RGB_channel"))
 	{
         qDebug()<<"==== save RGB channel ====";
         if(infiles.size()!=1 || outfiles.size()!=1)
         {
             qDebug("ERROR: please set input and output!");
             return false;
+        }
+
+        int method=0;
+        if(inparas.size()>0){
+            method=atoi(inparas.at(0));
         }
 
         //load image
@@ -140,7 +153,10 @@ bool image_channel_io::dofunc(const QString & func_name, const V3DPluginArgList 
         if (intype == 2) //V3D_UINT16;
         {
             image1Dc_out = new unsigned char[size_tmp];
-            shiftTwoBits2UINT8((unsigned short*)image1Dc_in, image1Dc_out, size_tmp);
+            if(method==1)
+                shiftTwoBits2UINT8((unsigned short*)image1Dc_in, image1Dc_out, size_tmp);
+            else
+                convert2UINT8((unsigned short*)image1Dc_in, image1Dc_out, size_tmp);
             if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
                 v3d_msg("failed to save file to " + fname_output);
                 return false;
@@ -150,7 +166,10 @@ bool image_channel_io::dofunc(const QString & func_name, const V3DPluginArgList 
         else if(intype == 4) //V3D_FLOAT32;
         {
             image1Dc_out = new unsigned char[size_tmp];
-            convert2UINT8((float*)image1Dc_in, image1Dc_out, size_tmp);
+            if(method==1)
+                shiftTwoBits2UINT8((float*)image1Dc_in, image1Dc_out, size_tmp);
+            else
+                convert2UINT8((float*)image1Dc_in, image1Dc_out, size_tmp);
             if(!simple_saveimage_wrapper(callback, qPrintable(fname_output),image1Dc_out,sz_img,1)){
                 v3d_msg("failed to save file to " + fname_output);
                 return false;
@@ -170,7 +189,8 @@ bool image_channel_io::dofunc(const QString & func_name, const V3DPluginArgList 
 	else if (func_name == tr("help"))
 	{
         qDebug()<<"\n==== save RGB channel ====";
-        qDebug()<<"Usage: v3d -x dllname -f save_RGB_channel -i <input_image> -o <output_image> ";
+        qDebug()<<"Usage: v3d -x dllname -f save_RGB_channel -i <input_image> -o <output_image> -p <method>";
+        qDebug()<<"method: 0(default): linear scale; 1:shiftTwoBits";
         qDebug()<<"\n";
 	}
 	else return false;
