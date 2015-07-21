@@ -10,8 +10,11 @@
 struct IMAGE_METRICS {
     int type; // segment type: 0-- soma;  1 -- dendrite;2--axon
     double cnr;
+    double snr;
     double dy;
     double tubularity;
+    double fg_mean;
+    double bg_mean;
 };
 
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);

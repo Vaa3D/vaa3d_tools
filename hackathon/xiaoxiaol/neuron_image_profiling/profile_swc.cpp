@@ -120,10 +120,17 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id" <<","<< "segment_type"<<","<<"dynamic_range"<<","<<"cnr" <<","<<"tubularity"<<"\n";
+        stream<< "segment_id,segment_type,dynamic_range,cnr,snr,tubularity,fg_mean,bg_mean"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
-            stream << i+1 <<","<<result_metrics[i].type<<","<<result_metrics[i].dy << "," << result_metrics[i].cnr <<","<< result_metrics[i].tubularity<< "\n";
+            stream << i+1 <<","
+                   << result_metrics[i].type       <<","
+                   << result_metrics[i].dy         <<","
+                   << result_metrics[i].cnr        <<","
+                   << result_metrics[i].snr        <<","
+                   << result_metrics[i].tubularity <<","
+                   << result_metrics[i].fg_mean    <<","
+                   << result_metrics[i].bg_mean    <<"\n";
         }
 
         file.close();
@@ -160,7 +167,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
                                  "Enter dialte ratio:",
-                                 3.0, 1.0, 100.0);
+                                 4.0, 1.0, 100.0);
     int flip = QInputDialog::getInteger(parent, "flip in y ?",
                                  "Flip in Y (0/1):",
                                  0, 0, 1);
@@ -181,14 +188,19 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     writeMetrics2CSV(result_metrics, output_csv_file);
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio | Tubularity \n";
+    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio |"
+                        " Signal-to-Background Ratio | Tubularity |FG_mean | BG_MEAN \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
      disp_text += QString::number(i+1)+ "            ";
      disp_text += QString::number(result_metrics[i].type) + "             ";;
-     disp_text += QString::number(result_metrics[i].dy) + "             ";
-     disp_text += QString::number(result_metrics[i].cnr)+ "                          ";
-     disp_text += QString::number(result_metrics[i].tubularity)+ "\n";
+     disp_text += QString::number(result_metrics[i].dy)   + "             ";
+     disp_text += QString::number(result_metrics[i].cnr)  + "                          ";
+    // disp_text += QString::number(result_metrics[i].snr)  + "                          ";
+     disp_text += QString::number(result_metrics[i].tubularity) + "    ";
+     // disp_text += QString::number(result_metrics[i].fg_mean)  + "     ";
+     // disp_text += QString::number(result_metrics[i].bg_mean)  + "     ";
+    disp_text += "\n";
     }
     disp_text +="Output the metrics into:"+ output_csv_file +"\n";
     v3d_msg(disp_text);
@@ -220,7 +232,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     else
         output_csv_file = swcFileName + ".csv";
 
-    float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
+    float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 4.0;
     int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
     int  invert = (inparas.size() >= 3) ? atoi(inparas[2]) : 1;
 
@@ -272,6 +284,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     IMAGE_METRICS metrics;
     metrics.type = neuronSegment.at(0).type; // one segment is one type ( all it's nodes should have the same type)
     metrics.cnr = 0.0;
+    metrics.snr = 0.0;
     metrics.dy = 0.0;
     metrics.tubularity = 0.0;
 
@@ -464,21 +477,27 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     if (bg_deviation != 0.0){
         metrics.cnr = fabs(fg_mean - bg_mean)/bg_deviation;
-        //double contrast = median(fg_1d) - median(bg_1d);
-        //metrics.cnr = fabs(contrast)/bg_deviation;
+        metrics.snr = fg_mean/bg_deviation;
     }
     else {
         metrics.cnr  = INFINITY;
+        metrics.snr = INFINITY;
         cout<<"warning! background deviation is zero"<<endl;
     }
 
     //average tubularity
      metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
-
-    //median tubularity
-   // metrics.tubularity = median(tubularities);
-    cout<< "Segment "<< ":dy = "<<metrics.dy <<"; fg_mean="<<fg_mean<<";fg_median=" <<median(fg_1d)<<"; bg_mean="<<bg_mean <<";bg_median=" <<median(bg_1d)
-        <<"; bg_dev = "<<bg_deviation<<"; cnr = "<<metrics.cnr <<"; tubularity = "<<metrics.tubularity <<"\n"<< endl;
+     metrics.bg_mean = bg_mean;
+     metrics.fg_mean = fg_mean;
+    cout<< " dy = "<<metrics.dy
+        <<"; fg_mean ="<< fg_mean
+        <<"; fg_median =" << median(fg_1d)
+        <<"; bg_mean ="<< bg_mean
+        <<"; bg_median =" << median(bg_1d)
+        <<"; bg_dev = "<< bg_deviation
+        <<"; snr = "<< metrics.snr
+        <<"; cnr = "<< metrics.cnr
+        <<"; tubularity = "<< metrics.tubularity <<"\n"<< endl;
 
     return metrics;
 
