@@ -2384,70 +2384,74 @@ void manual_correct_dialog::big_image_pipeline_start()
     get_para();
     vector<vector <simple_neuronswc *> > nt_segs;
     nt_segs= neurontree_divide_big_img();
-    if(!check_image_size())
-        return;
+//    if(!check_image_size())
+//        return;
 
-    bool cancel_flag=false;
-    QProgressDialog progress("Automatic spine detection...", "Abort", 0, nt_segs.size(), this);
-    progress.setWindowModality(Qt::WindowModal);
+//    bool cancel_flag=false;
+//    QProgressDialog progress("Automatic spine detection...", "Abort", 0, nt_segs.size(), this);
+//    progress.setWindowModality(Qt::WindowModal);
 
-    for (int i=0;i<nt_segs.size();i++)
-    {
-        //prepare for x_start,y_start,z_start,x_end...
-        progress.setValue(i);
-        if (progress.wasCanceled())
-        {
-            v3d_msg("Automatic spine detection CANCELLED!");
-            cancel_flag=true;
-            break;
-        }
-        vector<V3DLONG> coord(6,0);
-        coord=image_seg_plan(nt_segs[i]);
+//    for (int i=0;i<nt_segs.size();i++)
+//    {
+//        //prepare for x_start,y_start,z_start,x_end...
+//        progress.setValue(i);
+//        if (progress.wasCanceled())
+//        {
+//            v3d_msg("Automatic spine detection CANCELLED!");
+//            cancel_flag=true;
+//            break;
+//        }
+//        vector<V3DLONG> coord(6,0);
+//        coord=image_seg_plan(nt_segs[i]);
+//        if (i==46)
+//        {
+//            qDebug()<<"size here!!!!!!!!"<<coord[0]<<":"<<coord[1]<<":"<<coord[2]<<":"<<coord[3]<<":"<<coord[4]<<":"<<coord[5];
+//        }
 
-        unsigned char * data1d = 0;
-        V3DLONG *in_zz = 0;
-        V3DLONG *in_sz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(fname.toStdString().c_str()),data1d,in_zz,in_sz,datatype,
-                           coord[0],coord[1],coord[2],coord[3],coord[4],coord[5]))
-        {
-            printf("can not load the region");
-            if(data1d) {delete []data1d; data1d = 0;}
-            return;
-        }
-        if (datatype!=1)
-        {
-            printf("cannot handle datatype other than uint8");
-            if(data1d) {delete []data1d; data1d = 0;}
-            return;
-        }
-        qDebug()<<"loading done:"<<in_zz[0]<<":"<<in_zz[1]<<":"<<in_zz[2]<<" trunc:"
-               <<in_sz[0]<<":"<<in_sz[1]<<":"<<in_sz[2]<<" datatype"<<datatype;
-        //prepare new neurontree maybe
-        NeuronTree this_tree;
-        this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
-        qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
+//        unsigned char * data1d = 0;
+//        V3DLONG *in_zz = 0;
+//        V3DLONG *in_sz = 0;
+//        int datatype;
+//        if (!loadRawRegion(const_cast<char *>(fname.toStdString().c_str()),data1d,in_zz,in_sz,datatype,
+//                           coord[0],coord[1],coord[2],coord[3],coord[4],coord[5]))
+//        {
+//            printf("can not load the region");
+//            if(data1d) {delete []data1d; data1d = 0;}
+//            return;
+//        }
+//        if (datatype!=1)
+//        {
+//            printf("cannot handle datatype other than uint8");
+//            if(data1d) {delete []data1d; data1d = 0;}
+//            return;
+//        }
+//        qDebug()<<"loading done:"<<in_zz[0]<<":"<<in_zz[1]<<":"<<in_zz[2]<<" trunc:"
+//               <<in_sz[0]<<":"<<in_sz[1]<<":"<<in_sz[2]<<" datatype"<<datatype;
+//        //prepare new neurontree maybe
+//        NeuronTree this_tree;
+//        this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
+//        qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
 
-        if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
-        {
-            if (data1d!=0)
-            {
-                delete[] data1d; data1d=0;
-            }
-            continue;
-        }
-        if (data1d!=0)
-        {
-            delete[] data1d; data1d=0;
-        }
-        //need to store the results somewhere...
-    }
-    return;
-    if (cancel_flag)
-        return;
-    progress.setValue(nt_segs.size());
-    QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
-    return;
+//        if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
+//        {
+//            if (data1d!=0)
+//            {
+//                delete[] data1d; data1d=0;
+//            }
+//            continue;
+//        }
+//        if (data1d!=0)
+//        {
+//            delete[] data1d; data1d=0;
+//        }
+//        //need to store the results somewhere...
+//    }
+//    return;
+//    if (cancel_flag)
+//        return;
+//    progress.setValue(nt_segs.size());
+//    QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
+//    return;
 }
 
 bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,int image_id)
@@ -2566,8 +2570,9 @@ bool manual_correct_dialog::get_big_image_name()
 
 vector<vector<simple_neuronswc *> > manual_correct_dialog::neurontree_divide_big_img()
 {
-    qDebug()<<"in nt_divide_big_img";
+
     float distance_thresh=all_para.max_dis*5;
+    qDebug()<<"in nt_divide_big_img"<<distance_thresh;
     vector<int> leaf_nodes_id;
     vector<vector <int> > parent_LUT = build_parent_LUT();
     for (int i=0;i<neuron.listNeuron.size();i++)
@@ -2577,13 +2582,13 @@ vector<vector<simple_neuronswc *> > manual_correct_dialog::neurontree_divide_big
            leaf_nodes_id.push_back(i);
         }
     }
-    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
+    //qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
     map<int,bool> used_flag; //use the idex starting from 0
     vector<vector<simple_neuronswc *> > nt_seg;
 
     for (int i=0;i<leaf_nodes_id.size();i++)
     {
-        qDebug()<<"i:"<<i;
+        //qDebug()<<"i:"<<i;
         int leaf_node=leaf_nodes_id[i];
 
         float start_distance;
@@ -2627,7 +2632,8 @@ vector<vector<simple_neuronswc *> > manual_correct_dialog::neurontree_divide_big
                 one_node->z=neuron.listNeuron[parent_node].z;
                 one_node->r=neuron.listNeuron[parent_node].r;
                 one_nt.push_back(one_node);
-
+                if (nt_seg.size()==47)
+                    qDebug()<<"47:accu_distance:"<<accu_distance<<"start_node:"<<start_node<<"x:"<<neuron.listNeuron[start_node].x<<"parent node:"<<parent_node<<"x:"<<one_node->x;
                 //qDebug()<<"accu_distance:"<<accu_distance;
            }
            if (parent==-1||used_flag[parent_node]>0)
@@ -2642,15 +2648,16 @@ vector<vector<simple_neuronswc *> > manual_correct_dialog::neurontree_divide_big
                accu_distance=0;
                one_nt.clear();
            }
-           qDebug()<<"nt_seg size:"<<nt_seg.size();
+           //qDebug()<<"nt_seg size:"<<nt_seg.size();
         }
     }
 
     qDebug()<<"After division. We have "<<nt_seg.size() <<" windows!";
-//    for (int i=0;i<nt_seg.size();i++)
-//    {
-//        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()->x<<" end:"<<nt_seg[i].back()->r;
-//    }
+    for (int i=0;i<nt_seg.size();i++)
+    {
+        if (i==46)
+            qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()->id<<" end:"<<nt_seg[i].back()->id;
+    }
     return nt_seg;
 }
 vector<V3DLONG> manual_correct_dialog::image_seg_plan(vector<simple_neuronswc *> seg)
@@ -2690,6 +2697,7 @@ vector<V3DLONG> manual_correct_dialog::image_seg_plan(vector<simple_neuronswc *>
 //    end_y=MIN(end_y+extra_length,sz_img[1]-1);
 //    end_z=(V3DLONG)MIN(neuron.listNeuron.at(first_node).z+r0,neuron.listNeuron.at(last_node).z+r1);
 //    end_z=MIN(end_z+extra_length,sz_img[2]-1);
+
     qDebug()<<"xyz_min:"<<start_x<<":"<<start_y<<":"<<start_z;
     qDebug()<<"xyz max:"<<end_x<<":"<<end_y<<":"<<end_z;
 
