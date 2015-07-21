@@ -903,6 +903,8 @@ void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent
 
 
         unsigned char *EnahancedImage_final=0;
+        EnahancedImage_final = new unsigned char [M*N];
+
         for(unsigned int  count = 0; count < scale; count++)
         {
             double sigma = maxDT1/2;
