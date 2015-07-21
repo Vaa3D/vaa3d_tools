@@ -1602,22 +1602,23 @@ bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgL
 {
     cout<<"Welcome to adaptive 2D enhancement filter"<<endl;
     if (output.size() != 1) return false;
-    unsigned int scale = 2, c=1;
+    unsigned int count = 2, c=1, invert = 0;
     double ratio = 1.0;
     if (input.size()>=2)
     {
 
         vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
         cout<<paras.size()<<endl;
-        if(paras.size() >= 1) scale = atoi(paras.at(0));
+        if(paras.size() >= 1) count = atoi(paras.at(0));
         if(paras.size() >= 2) c = atoi(paras.at(1));
         if(paras.size() >= 3) ratio = atof(paras.at(2));
+        if(paras.size() >= 4) invert = atof(paras.at(3));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
-    cout<<"scale = "<<scale<<endl;
+    cout<<"scale = "<<count<<endl;
     cout<<"ch = "<<c<<endl;
     cout<<"ratio = "<<ratio<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
@@ -1627,9 +1628,9 @@ bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgL
     Image4DSimple *subject = callback.loadImage(inimg_file);
     if(!subject || !subject->valid())
     {
-         v3d_msg("Fail to load the input image.");
-         if (subject) {delete subject; subject=0;}
-         return false;
+        v3d_msg("Fail to load the input image.");
+        if (subject) {delete subject; subject=0;}
+        return false;
     }
 
     V3DLONG N = subject->getXDim();
@@ -1651,6 +1652,7 @@ bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgL
 
     unsigned char *data1d = subject->getRawData();
     V3DLONG pagesz  = N*M;
+
     for(V3DLONG iz = 0; iz < P; iz++)
     {
 
@@ -1658,59 +1660,72 @@ bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgL
         data1d2D =  new unsigned char [M*N];
         V3DLONG offsetk = iz*M*N;
         for(int i = 0; i < N*M; i++)
-            data1d2D[i] = data1d[offsetc+offsetk+i];
+        {
+            if(invert ==1)
+                data1d2D[i] = 255 - data1d[offsetc+offsetk+i];
+            else
+                data1d2D[i] = data1d[offsetc+offsetk+i];
 
-        double maxDT1 = 2;
-        double maxDT2 = 1;
+        }
+
         V3DLONG in_sz[4];
         in_sz[0] = N; in_sz[1] = M; in_sz[2] = 1;in_sz[3] = 1;
 
-
         simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)data1d2D, in_sz, datatype);
-
 
         unsigned char *EnahancedImage_final=0;
         EnahancedImage_final = new unsigned char [M*N];
 
-        for(unsigned int  count = 0; count < scale; count++)
+        double sigma = 1;
+        for(unsigned int  scale = 0; scale < count; scale++)
         {
-            double sigma = maxDT1/2;
             unsigned char * data1d_gf = 0;
             unsigned char * gsdtld = 0;
             unsigned char* EnahancedImage = 0;
+            unsigned char* data1d_gf_ds = 0;
+
 
             switch (datatype)
             {
             case V3D_UINT8:
-                // FL for multithreading purpose
-                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
-                callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
-                AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2,ratio); break;
+                if (scale==0) //do not filter for the scale 0
+                {
+
+                    if(count ==2)
+                        sigma = 0.3;
+
+                    data1d_gf = new unsigned char [M*N];
+                    memcpy(data1d_gf, data1d2D, M*N);
+                }
+                else
+                {
+                    sigma = 1.2;
+                    callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
+                }
+
+                V3DLONG in_sz_ds[4];
+                if (!downsampling_img_xyz( data1d_gf, in_sz, 4, 1, data1d_gf_ds, in_sz_ds))
+                    return false;
+
+                callgsdtPlugin(callback,(unsigned char *)data1d_gf_ds, in_sz_ds, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt); // FL, change for multithreading
+                AdpThresholding_adpwindow_v2((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2,ratio);break;
             default: v3d_msg("Invalid data type. Do nothing."); return false;
             }
 
-            maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
-            if(maxDT1 > maxDT2)
-            {
-                if (count==0)
-                       memcpy(EnahancedImage_final, EnahancedImage, pagesz);
-                   else
-                   {
-                       for(V3DLONG i = 0; i<pagesz; i++)
-                       {
-                           if (EnahancedImage_final[i] < EnahancedImage[i])
-                               EnahancedImage_final[i] = EnahancedImage[i];
-                       }
-                   }
-
-                maxDT2 = maxDT1;
-                if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
-                if(gsdtld) {delete []gsdtld; gsdtld =0;}
-                if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
-                count++;
-            }
+            if (scale==0)
+                memcpy(EnahancedImage_final, EnahancedImage, pagesz);
             else
-                break;
+            {
+                for(V3DLONG i = 0; i<pagesz; i++)
+                {
+                    if (EnahancedImage_final[i] < EnahancedImage[i])
+                        EnahancedImage_final[i] = EnahancedImage[i];
+                }
+            }
+
+            if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+            if(gsdtld) {delete []gsdtld; gsdtld =0;}
+            if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
         }
         // display
         remove(temp_raw.toStdString().c_str());
@@ -1730,7 +1745,7 @@ bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgL
     if (EnahancedImage_final_3D) { delete []EnahancedImage_final_3D; EnahancedImage_final_3D=0;}
     if (subject) {delete subject; subject=0;}
 
-   return true;
+    return true;
 }
 
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
@@ -4290,7 +4305,12 @@ template <class T> void AdpThresholding_adpwindow_v2(const T* data1d,
     double LOG2 = log(2.0);
     V3DLONG DSN = floor(in_sz[0]/4);
     V3DLONG DSM = floor(in_sz[1]/4);
-    V3DLONG DSP = floor(in_sz[2]/4);
+    V3DLONG DSP;
+    if(dim ==3)
+        DSP = floor(in_sz[2]/4);
+    else if(dim ==2)
+        DSP = floor(in_sz[2]/1);
+
 
     V3DLONG pageszDS = DSN*DSM*DSP;
 
