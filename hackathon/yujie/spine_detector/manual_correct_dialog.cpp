@@ -2707,20 +2707,33 @@ vector<V3DLONG> manual_correct_dialog::image_seg_plan(vector<simple_neuronswc *>
 
 bool manual_correct_dialog::check_image_size()
 {
-    Image4DSimple *inimg = 0;
-    inimg = callback->loadImage(const_cast<char *>(fname.toStdString().c_str()));
-    if (!inimg || !inimg->valid())
-    {
-        v3d_msg("cannot get the image size.Error.");
+//    Image4DSimple *inimg = 0;
+//    inimg = callback->loadImage(const_cast<char *>(fname.toStdString().c_str()));
+//    if (!inimg || !inimg->valid())
+//    {
+//        v3d_msg("cannot get the image size.Error.");
+//        return false;
+//    }
+//    sz_img[0] = inimg->getXDim();
+//    sz_img[1] = inimg->getYDim();
+//    sz_img[2] = inimg->getZDim();
+//    sz_img[3] = inimg->getCDim();
+//    if (inimg) {delete inimg; inimg=0;}
+//    qDebug()<<"sz img:"<<sz_img[0]<<":"<<sz_img[1]<<sz_img[3];
+//    return true;
+    unsigned char * data1d = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+    int datatype;
+    if (!loadRawRegion(const_cast<char *>(fname.toStdString().c_str()),data1d,in_zz,in_sz,datatype,
+                               0,0,0,1,1,1))
         return false;
-    }
-    sz_img[0] = inimg->getXDim();
-    sz_img[1] = inimg->getYDim();
-    sz_img[2] = inimg->getZDim();
-    sz_img[3] = inimg->getCDim();
-    if (inimg) {delete inimg; inimg=0;}
-    qDebug()<<"sz img:"<<sz_img[0]<<":"<<sz_img[1]<<sz_img[3];
+    sz_img[0]=in_zz[0];
+    sz_img[1]=in_zz[1];
+    sz_img[2]=in_zz[2];
+    sz_img[3]=1;
     return true;
+
 }
 void manual_correct_dialog::create_big_image()
 {
