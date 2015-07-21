@@ -2430,7 +2430,15 @@ void manual_correct_dialog::big_image_pipeline_start()
 
         if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
         {
+            if (data1d!=0)
+            {
+                delete[] data1d; data1d=0;
+            }
             continue;
+        }
+        if (data1d!=0)
+        {
+            delete[] data1d; data1d=0;
         }
         //need to store the results somewhere...
     }
@@ -2507,12 +2515,6 @@ bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V
     out<<"RAWIMG="<<img_complete<<endl;
     out<<"SWCFILE="<<swc_complete<<endl;
     qf_anofile.close();
-
-
-    if (data1d!=0)
-    {
-        delete[] data1d; data1d=0;
-    }
 
     qDebug()<<"auto spine_detect complete";
     return true;
@@ -2727,7 +2729,11 @@ bool manual_correct_dialog::check_image_size()
     int datatype;
     if (!loadRawRegion(const_cast<char *>(fname.toStdString().c_str()),data1d,in_zz,in_sz,datatype,
                                0,0,0,1,1,1))
+    {
+        delete []data1d;
+
         return false;
+    }
     sz_img[0]=in_zz[0];
     sz_img[1]=in_zz[1];
     sz_img[2]=in_zz[2];
