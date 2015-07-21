@@ -1,4 +1,4 @@
-/* MultisclaeEnhancement_plugin.cpp
+﻿/* MultisclaeEnhancement_plugin.cpp
  * This is a test plugin, you can use it as a demo.
  * 2013-08-29 : by Zhi Zhou
  */
@@ -45,6 +45,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
 void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent);
 
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv_v2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
@@ -280,6 +281,10 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     if (func_name == tr("adaptive_auto"))
     {
         return processImage_adaptive_auto(input, output,callback);
+    }
+    else if (func_name == tr("adaptive_auto_2D"))
+    {
+        return processImage_adaptive_auto_2D(input, output,callback);
     }
     else if (func_name == tr("adaptive_auto_block"))
     {
@@ -1588,6 +1593,141 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
     if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
     if (EnahancedImage_final) { delete []EnahancedImage_final; EnahancedImage_final=0;}
     if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
+    if (subject) {delete subject; subject=0;}
+
+   return true;
+}
+
+bool processImage_adaptive_auto_2D(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to adaptive 2D enhancement filter"<<endl;
+    if (output.size() != 1) return false;
+    unsigned int scale = 2, c=1;
+    double ratio = 1.0;
+    if (input.size()>=2)
+    {
+
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) scale = atoi(paras.at(0));
+        if(paras.size() >= 2) c = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atof(paras.at(2));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    cout<<"scale = "<<scale<<endl;
+    cout<<"ch = "<<c<<endl;
+    cout<<"ratio = "<<ratio<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"outimg_file = "<<outimg_file<<endl;
+
+
+    Image4DSimple *subject = callback.loadImage(inimg_file);
+    if(!subject || !subject->valid())
+    {
+         v3d_msg("Fail to load the input image.");
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    V3DLONG N = subject->getXDim();
+    V3DLONG M = subject->getYDim();
+    V3DLONG P = subject->getZDim();
+    V3DLONG pagesz_3d = subject->getTotalUnitNumberPerChannel();
+    V3DLONG offsetc = (c-1)*pagesz_3d;
+
+    unsigned char *EnahancedImage_final_3D = 0;
+    try {EnahancedImage_final_3D = new unsigned char [pagesz_3d];}
+    catch(...)  {v3d_msg("cannot allocate memory for EnahancedImage_final_3D."); return false;}
+
+
+    int datatype = subject->getDatatype();
+
+    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
+    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
+    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+
+    unsigned char *data1d = subject->getRawData();
+    V3DLONG pagesz  = N*M;
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+
+        unsigned char *data1d2D=0;
+        data1d2D =  new unsigned char [M*N];
+        V3DLONG offsetk = iz*M*N;
+        for(int i = 0; i < N*M; i++)
+            data1d2D[i] = data1d[offsetc+offsetk+i];
+
+        double maxDT1 = 2;
+        double maxDT2 = 1;
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = 1;in_sz[3] = 1;
+
+
+        simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)data1d2D, in_sz, datatype);
+
+
+        unsigned char *EnahancedImage_final=0;
+        EnahancedImage_final = new unsigned char [M*N];
+
+        for(unsigned int  count = 0; count < scale; count++)
+        {
+            double sigma = maxDT1/2;
+            unsigned char * data1d_gf = 0;
+            unsigned char * gsdtld = 0;
+            unsigned char* EnahancedImage = 0;
+
+            switch (datatype)
+            {
+            case V3D_UINT8:
+                // FL for multithreading purpose
+                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
+                callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
+                AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2,ratio); break;
+            default: v3d_msg("Invalid data type. Do nothing."); return false;
+            }
+
+            maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
+            if(maxDT1 > maxDT2)
+            {
+                if (count==0)
+                       memcpy(EnahancedImage_final, EnahancedImage, pagesz);
+                   else
+                   {
+                       for(V3DLONG i = 0; i<pagesz; i++)
+                       {
+                           if (EnahancedImage_final[i] < EnahancedImage[i])
+                               EnahancedImage_final[i] = EnahancedImage[i];
+                       }
+                   }
+
+                maxDT2 = maxDT1;
+                if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+                if(gsdtld) {delete []gsdtld; gsdtld =0;}
+                if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+                count++;
+            }
+            else
+                break;
+        }
+        // display
+        remove(temp_raw.toStdString().c_str());
+
+        for(int i = 0; i < N*M; i++)
+            EnahancedImage_final_3D[offsetc+offsetk+i] = EnahancedImage_final[i];
+
+        if(EnahancedImage_final) {delete []EnahancedImage_final; EnahancedImage_final =0;}
+        if(data1d2D) {delete []data1d2D; data1d2D =0;}
+    }
+    V3DLONG in_sz[4];
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P;in_sz[3] = 1;
+
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)EnahancedImage_final_3D, in_sz, 1);
+
+
+    if (EnahancedImage_final_3D) { delete []EnahancedImage_final_3D; EnahancedImage_final_3D=0;}
     if (subject) {delete subject; subject=0;}
 
    return true;
@@ -3802,7 +3942,7 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
     args1.push_back(char_temp_raw); 
     arg.p = (void *) & args1; 
     input<< arg;
-    
+
     arg.type = "random";
     std::vector<char*> args;
     char channel = '0' + c;
@@ -3816,7 +3956,7 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
     args.push_back(winx);
     args.push_back(winx);
     args.push_back(winx);
-    args.push_back(&channel); 
+    args.push_back(&channel);
     args.push_back(sig); 
     arg.p = (void *) & args; 
     input << arg;
