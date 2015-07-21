@@ -113,6 +113,41 @@ public:
 //        shift2bitsTo255<float>(data1Dc_float, sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3]);
         mask1D = neuronPickerMain::memory_allocate_uchar1D(page_size);
     }
+
+    template <class T>
+    double estimateThrByMask(T *data1D_mask, T maskthr, double estimates[5])
+    {
+        double vol_num=0;
+        estimates[0]=0; //mean all channel
+        estimates[1]=0; //mean max all channel
+        estimates[2]=0; //mean first channel
+        estimates[3]=0; //mean second channel
+        estimates[4]=0; //mean third channel
+        for(V3DLONG vid=0; vid<page_size; vid++){
+            if(data1D_mask[vid]>maskthr){
+                double maxval=MAX(data1Dc_float[vid],data1Dc_float[vid+page_size]);
+                maxval=MAX(maxval,data1Dc_float[vid+page_size*2]);
+                double minval=MIN(data1Dc_float[vid],data1Dc_float[vid+page_size]);
+                minval=MIN(minval,data1Dc_float[vid+page_size*2]);
+                estimates[0]+=(double)minval;
+                estimates[1]+=(double)maxval;
+                estimates[2]+=(double)data1Dc_float[vid];
+                estimates[3]+=(double)data1Dc_float[vid+page_size];
+                estimates[4]+=(double)data1Dc_float[vid+page_size*2];
+                vol_num++;
+            }
+        }
+        estimates[1]/=(vol_num/5);
+        estimates[2]/=(vol_num/5);
+        estimates[3]/=(vol_num/5);
+        estimates[4]/=(vol_num/5);
+        estimates[0]/=(vol_num/5);//=MIN(MIN(estimates[2],estimates[3]),estimates[4]);
+
+        qDebug()<<"~~~~~~ "<<estimates[0]<<":"<<estimates[1]<<":"
+               <<estimates[2]<<":"<<estimates[3]<<":"<<estimates[4]<<":"<<vol_num/page_size;
+
+        return estimates[0];
+    }
 };
 
 

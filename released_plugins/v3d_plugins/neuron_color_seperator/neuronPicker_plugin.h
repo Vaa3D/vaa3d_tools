@@ -25,7 +25,7 @@ public:
 	bool interface_run(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent);
 	
 
-	float getPluginVersion() const {return 1.1f;}
+    float getPluginVersion() const {return 1.2f;}
 
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
