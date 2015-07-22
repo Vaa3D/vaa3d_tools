@@ -201,7 +201,9 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
      disp_text += "Tubularity:" + QString::number(result_metrics[i].tubularity) + "    ";
      disp_text += "FG Mean:"    + QString::number(result_metrics[i].fg_mean)  + "     ";
      disp_text += "BG Mean:"    + QString::number(result_metrics[i].bg_mean)  + "     ";
-    disp_text += "\n";
+     disp_text += "FG STD:"     + QString::number(result_metrics[i].fg_std)  + "     ";
+     disp_text += "BG STD:"     + QString::number(result_metrics[i].bg_std)  + "     ";
+     disp_text += "\n";
     }
     disp_text +="Output the metrics into:"+ output_csv_file +"\n";
     v3d_msg(disp_text);
@@ -454,7 +456,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "cropped.result");
     callback.updateImageWindow(newwin);
-   */
+*/
 
     // compute metrics
     //remove the top and bottom 5% data to be robust
@@ -468,17 +470,26 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     double bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
     double fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
-    double sum2;
+    double sum2 = 0;
 
     for ( V3DLONG i = 0; i < bg_1d.size(); i++ )
     {
         sum2 += pow(bg_1d[i]-bg_mean,2);
     }
-    double bg_deviation= sqrt(sum2/(bg_1d.size()-1));
+    double bg_std= sqrt(sum2/(bg_1d.size()-1));
+    metrics.bg_std = bg_std;
 
-    if (bg_deviation != 0.0){
-        metrics.cnr = fabs(fg_mean - bg_mean)/bg_deviation;
-        metrics.snr = fg_mean/bg_deviation;
+    sum2 = 0;
+    for ( V3DLONG i = 0; i < fg_1d.size(); i++ )
+    {
+        sum2 += pow(fg_1d[i]-fg_mean,2);
+    }
+    double fg_std= sqrt(sum2/(fg_1d.size()-1));
+    metrics.fg_std = fg_std;
+
+    if (bg_std != 0.0){
+        metrics.cnr = fabs(fg_mean - bg_mean)/bg_std;
+        metrics.snr = fg_mean/bg_std;
     }
     else {
         metrics.cnr  = INFINITY;
@@ -495,7 +506,8 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         <<"; fg_median =" << median(fg_1d)
         <<"; bg_mean ="<< bg_mean
         <<"; bg_median =" << median(bg_1d)
-        <<"; bg_dev = "<< bg_deviation
+        <<"; fg_dev = "<<fg_std
+        <<"; bg_dev = "<< bg_std
         <<"; snr = "<< metrics.snr
         <<"; cnr = "<< metrics.cnr
         <<"; tubularity = "<< metrics.tubularity <<"\n"<< endl;

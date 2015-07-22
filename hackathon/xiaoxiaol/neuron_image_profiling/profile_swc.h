@@ -15,6 +15,8 @@ struct IMAGE_METRICS {
     double tubularity;
     double fg_mean;
     double bg_mean;
+    double fg_std;
+    double bg_std;
 };
 
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);
