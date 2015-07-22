@@ -188,18 +188,19 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     writeMetrics2CSV(result_metrics, output_csv_file);
 
     //display metrics to the msg window
-    QString disp_text = "Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio |"
-                        " Signal-to-Background Ratio | Tubularity |FG_mean | BG_MEAN \n";
+    QString disp_text = "";
+    //"Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio |"
+    //                    " Signal-to-Background Ratio | Tubularity |FG_mean | BG_MEAN \n";
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
-     disp_text += QString::number(i+1)+ "            ";
-     disp_text += QString::number(result_metrics[i].type) + "             ";;
-     disp_text += QString::number(result_metrics[i].dy)   + "             ";
-     disp_text += QString::number(result_metrics[i].cnr)  + "                          ";
+     disp_text += "Seg ID:"  + QString::number(i+1)+ "            ";
+     disp_text += "Seg Type:"+ QString::number(result_metrics[i].type) + "             ";
+     disp_text += "DR:"      + QString::number(result_metrics[i].dy)   + "             ";
+     disp_text += "CNR:"     + QString::number(result_metrics[i].cnr)  + "                          ";
     // disp_text += QString::number(result_metrics[i].snr)  + "                          ";
-     disp_text += QString::number(result_metrics[i].tubularity) + "    ";
-     // disp_text += QString::number(result_metrics[i].fg_mean)  + "     ";
-     // disp_text += QString::number(result_metrics[i].bg_mean)  + "     ";
+     disp_text += "Tubularity:" + QString::number(result_metrics[i].tubularity) + "    ";
+     disp_text += "FG Mean:"    + QString::number(result_metrics[i].fg_mean)  + "     ";
+     disp_text += "BG Mean:"    + QString::number(result_metrics[i].bg_mean)  + "     ";
     disp_text += "\n";
     }
     disp_text +="Output the metrics into:"+ output_csv_file +"\n";
