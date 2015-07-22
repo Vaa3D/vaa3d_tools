@@ -147,6 +147,7 @@ const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi
 //bool crop_images = false;
 bool crop_images = true;
 double uniform_thresh = 0.1; //to crop images
+bool transpose_swc_y = false; // if true transpose Y axis when reading swc gt file
 
 
 
@@ -285,6 +286,8 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
 
 
+
+
             //check if input is .swc file, otherwise assumes it is radial gt image and try to load it
             std::string swc_gt_file_string(swc_gt_file);
             std::string gt_extension = swc_gt_file_string.substr(swc_gt_file_string.length()-4,swc_gt_file_string.length());
@@ -293,7 +296,7 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
             if(gt_extension.find(".swc")!=std::string::npos){
                 cout<<"loading swc file "<< swc_gt_file << endl;
                 //// convert swc file to distance gt image
-                train_gt_radial_ITK =swc2ItkImage<ITKImageType,ImageScalarTypeFloat>(swc_gt_file,train_img_size);
+                train_gt_radial_ITK =swc2ItkImage<ITKImageType,ImageScalarTypeFloat>(swc_gt_file,train_img_size,transpose_swc_y);
 
 
             }else{
@@ -309,6 +312,38 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
 
             }
+
+
+
+            //save radial gt and image to check size and  axis
+                        //radial gt
+                 //       Image4DSimple *train_radial_gt = callback.loadImage("../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
+                 //       callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/swc_gt_debug.v3draw");
+
+                        //debug: save radial gt
+                        Image4DSimple radial_img_debug = itk2v3dImage<ITKImageType>(train_gt_radial_ITK);
+                        std::string name_radial_gt_temp = swc_gt_file_string + "_radial_gt.v3draw";
+                        char *name_radial_gt_temp_char = new char[name_radial_gt_temp.length() + 1];
+                        strcpy(name_radial_gt_temp_char, name_radial_gt_temp.c_str());
+                        callback.saveImage(&radial_img_debug, name_radial_gt_temp_char);
+                        delete [] name_radial_gt_temp_char;
+
+
+
+//                        //size input image
+//                        std::cout << "v3d input X: " << train_img->getXDim() << " Y: " << train_img->getYDim() << " z: " << train_img->getZDim() << std::endl;
+//                     //   std::cout << "v3d input resX: " << train_img->getRezX() << " Y: " << train_img->getRezY() << " z: " << train_img->getRezZ() << std::endl;
+//                       //size input itk
+//                        ITKImageType::SizeType size_temp_img = train_img_ITK->GetLargestPossibleRegion().GetSize();
+//                        std::cout << "itk Rad X: " << size_temp_img[0] << " Y: " << size_temp_img[1] <<  " z: " << size_temp_img[2]  << std::endl;
+//                //        std::cout << "v3d input resX: " << train_img->getRezX() << " Y: " << train_img->getRezY() << "z: " << train_img->getRezZ() << std::endl;
+//                        //size itk radial
+//                        ITKImageType::SizeType size_temp = train_gt_radial_ITK->GetLargestPossibleRegion().GetSize();
+//                        std::cout << "itk Rad X: " << size_temp[0] << " Y: " << size_temp[1] << " z: " << size_temp[2]  << std::endl;
+//                        //size v3d radial
+//                        std::cout << "v3d Rad X: " << radial_img_debug.getXDim() << " Y: " << radial_img_debug.getYDim() << " z: " << radial_img_debug.getZDim() << std::endl;
+//                 //       std::cout << "v3d Rad resX: " << radial_img_debug.getRezX() << " Y: " << radial_img_debug.getRezY() << " z: " << radial_img_debug.getRezZ() << std::endl;
+
 
 
             // crop images and gt
@@ -331,6 +366,9 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
                 size_img[i_img][2] =in_sz_cropped[2];
                 cout<<"cropping image...Done." << endl << std::flush;
 
+                cout<<"size image cropped: " << size_img[i_img][0]<< " ;"<<size_img[i_img][1]<<  " ;"<<size_img[i_img][2]<<endl << std::flush;
+
+
             }else{
 
                 train_img_ITK_cropped = train_img_ITK;
@@ -345,15 +383,6 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
 
             V3DLONG n_pixels = size_img[i_img][0]*size_img[i_img][1]*size_img[i_img][2];
 
-
-//save radial gt and image to check size and  axis
-            //radial gt
-     //       Image4DSimple *train_radial_gt = callback.loadImage("../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/regression/cropped_N2_scaled_radial_gt_uint8.tif");
-     //       callback.saveImage(train_radial_gt, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/swc_gt_debug.v3draw");
-
-            //debgu: save radial gt
-    //        Image4DSimple radial_img_debug = itk2v3dImage<ITKImageType>(train_gt_radial_ITK_cropped);
-    //        callback.saveImage(&radial_img_debug, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/trained_models/OPF_3-train_imgs_swc_cropped/swc_train_debug.v3draw");
 
               cout << "Computing distance gt...  "<< endl << std::flush;
             // train_gt_ITK = radialGt2ExpDistGt<ITKImageType>(train_gt_radial_ITK,thresh_distance,scales,scale_toll);
@@ -613,10 +642,13 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
          n_pixels_cropped = in_sz_cropped[0]*in_sz_cropped[1]*in_sz_cropped[2];
          inimg_cropped = 0;
 
+         cout<<"size image cropped: " << in_sz_cropped[0]<< " ;"<<in_sz_cropped[1]<<  " ;"<<in_sz_cropped[2]<<endl << std::flush;
+
+
        //  std::cout << "image origin" << I_cropped->GetOrigin() <<std::endl;
 
-         Image4DSimple input_cropped_image = itk2v3dImage<ITKImageType>(I_cropped);
-         callback.saveImage(&input_cropped_image, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/trained_models/OPF_debug/large_image_cropped.v3draw");
+  //       Image4DSimple input_cropped_image = itk2v3dImage<ITKImageType>(I_cropped);
+  //       callback.saveImage(&input_cropped_image, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/trained_models/OPF_debug/large_image_cropped.v3draw");
 
 
     }else{
@@ -700,7 +732,7 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
         size_img_scaled = I_resized->GetLargestPossibleRegion().GetSize();
         V3DLONG n_pixels_scaleed = size_img_scaled[0]*size_img_scaled[1]*size_img_scaled[2];
 
-     //   std::cout << "size img cropped: " << size_img_scaled << std::endl << std::flush;
+//        std::cout << "size img cropped: " << size_img_scaled << std::endl << std::flush;
 
     MatrixTypeFloat nonsep_features_all;
    std::cout << "Computing features..."<<std::endl<< std::flush;
@@ -837,9 +869,14 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 //     callback.saveImage(&outimg_final, outimg_file);
 
 
-    //TODO: if cropped image, pad image to original size
 
     //save uint8
+    //set values smaller than 0 to 0
+    for(unsigned int i_pix = 0; i_pix < n_pixels_cropped; i_pix++){
+        if(finalScores(i_pix)<0.0){
+                finalScores(i_pix) = 0.0;
+        }
+    }
     //normalize in [0,255]
     finalScores = 255.0*(finalScores - finalScores.minCoeff())/( finalScores.maxCoeff() - finalScores.minCoeff() );
     unsigned char* out_data_copy_final = new unsigned char[n_pixels];
