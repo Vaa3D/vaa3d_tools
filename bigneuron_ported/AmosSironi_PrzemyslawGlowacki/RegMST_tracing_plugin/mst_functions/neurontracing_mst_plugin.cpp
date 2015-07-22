@@ -20,7 +20,7 @@ using namespace std;
 
 #define INF 1E9
 
-
+unsigned int thresh_pos = 100;
 
 //Q_EXPORT_PLUGIN2(neurontracing_mst, neurontracing_mst);
  
@@ -174,22 +174,22 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     double th = 0;
     V3DLONG offsetc = (c-1)*pagesz;
 
-    for(V3DLONG iz = 0; iz < P; iz++)
-    {
-        double PixelSum = 0;
-        V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = 0; iy <  M; iy++)
-        {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
-            {
+//    for(V3DLONG iz = 0; iz < P; iz++)
+//    {
+//        double PixelSum = 0;
+//        V3DLONG offsetk = iz*M*N;
+//        for(V3DLONG iy = 0; iy <  M; iy++)
+//        {
+//            V3DLONG offsetj = iy*N;
+//            for(V3DLONG ix = 0; ix < N; ix++)
+//            {
 
-                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
-                PixelSum = PixelSum + PixelVaule;
-            }
-        }
-        th += PixelSum/(M*N*P);
-    }
+//                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+//                PixelSum = PixelSum + PixelVaule;
+//            }
+//        }
+//        th += PixelSum/(M*N*P);
+//    }
 
 
     QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
@@ -506,7 +506,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                 zm += w*k;
                                 s += w;
                                 n = n+1;
-                                if(w > th + 100)
+                                if(w > th + thresh_pos)
                                 {
                                     ImageMarker local_point;
                                     local_point.x = i;
@@ -520,7 +520,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                 }
                 xm /= s; ym /=s; zm /=s;
                 V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                if(s >0 && data1d[seed_index] <= th + 100 && loc_points_list.size()>1) //find medoid point
+                if(s >0 && data1d[seed_index] <= th + thresh_pos && loc_points_list.size()>1) //find medoid point
                 {
                     double dist_min = INF;
                     V3DLONG medoid_index = -1;
@@ -546,7 +546,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                 }
                 loc_points_list.clear();
 
-                if(s >0 && data1d[seed_index] > th + 100)
+                if(s >0 && data1d[seed_index] > th + thresh_pos)
                 {
                     ImageMarker MARKER;
                     MARKER.x = xm;
@@ -563,6 +563,10 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     printf("\nGenerating Minimum Spanning Tree (MST) for all seed locations ...\n");
 
     V3DLONG marknum = seeds.size();
+
+    //TODO: avoid. if this is zero -> segfault
+    std::cout << "marknum: "<<marknum <<std::endl << std::flush;
+    std::cout << "th: "<<th <<std::endl << std::flush;
 
     double** markEdge = new double*[marknum];
     for(int i = 0; i < marknum; i++)
