@@ -16,6 +16,17 @@ neuron_seperator_explorer::neuron_seperator_explorer(V3DPluginCallback2 * cb, QW
     callback = cb;
 
     keyPressMask=false;
+
+    this->setWindowFlags(Qt::WindowStaysOnTopHint);
+    scene_output = new QGraphicsScene;
+    view_output = new QGraphicsView(scene_output);
+    view_output->setWindowTitle(NAME_OUTWIN);
+    scene_input = new QGraphicsScene;
+    view_input = new QGraphicsView(scene_input);
+    view_input->setWindowTitle(NAME_INWIN);
+    scene_extract = new QGraphicsScene;
+    view_extract = new QGraphicsView(scene_extract);
+    view_extract->setWindowTitle(NAME_EXTWIN);
 }
 
 void neuron_seperator_explorer::creat()
@@ -66,6 +77,8 @@ void neuron_seperator_explorer::creat()
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
     gridLayout->addWidget(line_1,10,0,1,6);
+    check_myview = new QCheckBox("launch seperate display"); check_myview->setChecked(true);
+    gridLayout->addWidget(check_myview,11,0,1,1);
     btn_screenshot = new QPushButton("ScreenShot (8)"); btn_screenshot->setAutoDefault(false);
     gridLayout->addWidget(btn_screenshot,11,3,1,1);
     btn_save = new QPushButton("Save"); btn_save->setAutoDefault(false);
@@ -634,8 +647,8 @@ void neuron_seperator_explorer::updateAll()
                 for(V3DLONG vid=0; vid<sz_img[0]*sz_img[1]*sz_img[2]; vid++){
                     if(image1Dc_tmp[vid]!=0){
                         for(V3DLONG cid=0; cid<sz_img[3]; cid++){
-                            int tmp=image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]+image1Dc_tmp[vid];
-                            image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]=tmp<255?tmp:255;
+                            int tmp=image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]-image1Dc_tmp[vid];
+                            image1Dc_out[vid+sz_img[0]*sz_img[1]*sz_img[2]*cid]=tmp>0?tmp:0;
                         }
                     }
                 }
@@ -756,6 +769,27 @@ void neuron_seperator_explorer::updateInputWindow()
                 }
             }
         }
+
+        //launch independent window
+        if(check_myview->isChecked()){
+            QImage tmpimg((int)sz_img[0],(int)sz_img[1],QImage::Format_RGB32);
+            for(int x=0; x<sz_img[0]; x++){
+                for(int y=0; y<sz_img[1]; y++){
+                    QColor value(image1D_input[x+y*sz_img[0]],
+                            image1D_input[x+y*sz_img[0]+sz_img[0]*sz_img[1]],
+                            image1D_input[x+y*sz_img[0]+sz_img[0]*sz_img[1]*2]);
+                    tmpimg.setPixel(x,y,value.rgb());
+                }
+            }
+            QPixmap tmppm;
+            tmppm.convertFromImage(tmpimg);
+            scene_input->clear();
+            QGraphicsPixmapItem * p = scene_input->addPixmap(tmppm);
+            scene_input->setSceneRect(0,0,sz_img[0],sz_img[1]);
+            view_input->resize(sz_img[0]+5, sz_img[1]+5);
+            view_input->show();
+            this->raise();
+        }
     }
 }
 
@@ -798,6 +832,27 @@ void neuron_seperator_explorer::updateOutputWindow()
                 }
             }
         }
+
+        //launch independent window
+        if(check_myview->isChecked()){
+            QImage tmpimg((int)sz_img[0],(int)sz_img[1],QImage::Format_RGB32);
+            for(int x=0; x<sz_img[0]; x++){
+                for(int y=0; y<sz_img[1]; y++){
+                    QColor value(image1Dc_input[x+y*sz_img[0]],
+                            image1Dc_input[x+y*sz_img[0]+sz_img[0]*sz_img[1]],
+                            image1Dc_input[x+y*sz_img[0]+sz_img[0]*sz_img[1]*2]);
+                    tmpimg.setPixel(x,y,value.rgb());
+                }
+            }
+            QPixmap tmppm;
+            tmppm.convertFromImage(tmpimg);
+            scene_output->clear();
+            QGraphicsPixmapItem * p = scene_output->addPixmap(tmppm);
+            scene_output->setSceneRect(0,0,sz_img[0],sz_img[1]);
+            view_output->resize(sz_img[0]+5, sz_img[1]+5);
+            view_output->show();
+            this->raise();
+        }
     }
 }
 
@@ -839,6 +894,25 @@ void neuron_seperator_explorer::updateExtractWindow(unsigned char *image1Dc, V3D
                     callback->updateImageWindow(v3dhandleList_current[i]);
                 }
             }
+        }
+
+        //launch independent window
+        if(check_myview->isChecked()){
+            QImage tmpimg((int)size[0],(int)size[1],QImage::Format_ARGB32);
+            for(int x=0; x<size[0]; x++){
+                for(int y=0; y<size[1]; y++){
+                    QColor value(image1Dc_input[x+y*size[0]],image1Dc_input[x+y*size[0]],image1Dc_input[x+y*size[0]]);
+                    tmpimg.setPixel(x,y,value.rgb());
+                }
+            }
+            QPixmap tmppm;
+            tmppm.convertFromImage(tmpimg);
+            scene_extract->clear();
+            QGraphicsPixmapItem * p = scene_extract->addPixmap(tmppm);
+            scene_extract->setSceneRect(0,0,size[0],size[1]);
+            view_extract->resize(size[0]+5, size[1]+5);
+            view_extract->show();
+            this->raise();
         }
     }
 }

@@ -61,12 +61,21 @@ private:
     int intype, outtype;
     bool keyPressMask;
 
+
+    QGraphicsScene * scene_output;
+    QGraphicsView * view_output;
+    QGraphicsScene * scene_input;
+    QGraphicsView * view_input;
+    QGraphicsScene * scene_extract;
+    QGraphicsView * view_extract;
+
 public:
     QLineEdit *edit_dir,*edit_curimg,*edit_curext;
     QPushButton *btn_acceptExt, *btn_rejectExt, *btn_rejectImg, *btn_weakAcceptExt;
     QPushButton *btn_preExt, *btn_preImg, *btn_nextImg, *btn_rerunImg;
     QPushButton *btn_save, *btn_quit, *btn_screenshot;
     QPushButton *btn_loadDir, *btn_loadPoj;
+    QCheckBox *check_myview;
 };
 
 #endif // NEURON_SEPERATOR_EXPLORER_H
