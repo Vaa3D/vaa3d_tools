@@ -19,6 +19,7 @@ public:
     explicit manual_correct_dialog(V3DPluginCallback2 *cb,int proofread_code);
     //code=0 view by spine //code=1 view by segment
     manual_correct_dialog(V3DPluginCallback2 *cb);
+
     void create();
     void reset_image_data();
     void check_window();
@@ -34,13 +35,13 @@ public:
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
 private:
-    vector<vector<int> > build_parent_LUT();
+    void initDlg();
+    bool check_button();
+    vector<vector<int> > build_parent_LUT(NeuronTree neuron_tmp);
     int calc_nearest_node(float center_x,float center_y,float center_z);
-    vector<vector<int> > neurontree_divide_swc();
+    vector<vector<int> > neurontree_divide_swc(NeuronTree neuron_tmp);
     void set_visualize_image_marker(vector<int> one_seg, int seg_id);
     float calc_between_dis(int node1_id,int node2_id);
-//    inline bool sortfunc_neuron_distance_ascend(NeuronSWC *a, NeuronSWC *b)
-//    {return (a->fea_val[1] < b->fea_val[1]);}
 
     void standing_segment_dialog();
     void check_window_seg();
@@ -48,13 +49,14 @@ private:
     bool save_seg_edit_for_seg_view();
     void reset_edit_for_seg_view(bool visual_flag, int mid);
     void reset_segment();
+    void check_neuron_tree();
 
 public slots:
     bool loadImage();
     bool load_swc();
     bool csv_out();
-    void check_data();
-    void check_data2(); //invoke proofreading by segments
+    void run_view_by_spine();
+    void run_view_by_seg(); //invoke proofreading by segments
 
     void accept_marker();
     void delete_marker();
@@ -87,7 +89,7 @@ public slots:
 //for big image handlinng
 private:
     vector<vector<int> > neurontree_divide_big_img_eswc();
-    vector<V3DLONG> image_seg_plan(vector<int> seg);
+    vector<V3DLONG> image_seg_plan(vector<int> seg,NeuronTree neuron_tmp);
     void create_big_image();
     NeuronTree prep_seg_neurontree(vector<V3DLONG> coord);
     bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,
@@ -106,17 +108,18 @@ private:
     v3dhandle curwin,main_win;
     QLineEdit *edit_load, *edit_label, *edit_swc,*edit_csv;
     QPlainTextEdit *edit_status;
+    QString image_load_path,swc_load_path,csv_load_path;
     QDialog *mydialog;
     QComboBox *markers,*channel_menu;
     QSpinBox *spin_max_pixel, *spin_min_pixel,*spin_max_dis,*spin_bg_thr,
              *spin_width_thr;
-    QPushButton *btn_load,*btn_swc,*btn_csv;
+    QPushButton *btn_load,*btn_swc,*btn_csv,*btn_run;
     //QCheckBox* small_remover;
     V3DLONG sz_img[4],sz[4],sz_seg[4];
     unsigned short *label;
     unsigned char *image1Dc_in,*image_trun, *image1Dc_spine, *image_seg;
     int intype;
-    NeuronTree neuron;
+    NeuronTree neuron,checked_neuron;
     LandmarkList LList_in,LList_adj,LList_seg;
     QString folder_output;
     int x_start,y_start,z_start,sel_channel;

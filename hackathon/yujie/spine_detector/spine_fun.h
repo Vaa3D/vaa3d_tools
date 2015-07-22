@@ -46,8 +46,6 @@ struct group_profile{int group_id; int number_of_layer; vector<float> layer_leng
                   vector<int> layer_voxel_num;vector<float> layer_spongeness;
                  vector<int> distance; float total_spongeness; QString comment;};
 
-struct group_profile_simple {int group_id; int volume; int min_dis; int max_dis;float center_x;float center_y;
-                            float center_z; int center_dis;};
 typedef vector<VOI *> GOV;
 
 bool sortfunc_dst(VOI * a, VOI * b);
@@ -150,31 +148,33 @@ public:
     void pushSWCData(NeuronTree neuron)
     {
         nt.copy(neuron);
+        qDebug()<<"nt size:"<<nt.listNeuron.size();
     }
 
-    void push_eswc_Data(NeuronTree neuron)
-    {
-        qDebug()<<"in push eswc data";
-        QList<NeuronSWC> tmp_list;
-        tmp_list.clear();
-        for (int i=0;i<neuron.listNeuron.size();i++)
-        {
-            NeuronSWC S;
-            S.x=neuron.listNeuron.at(i).x;
-            S.y=neuron.listNeuron.at(i).y;
-            S.z=neuron.listNeuron.at(i).z;
-            S.r=neuron.listNeuron.at(i).r;
-            S.parent=neuron.listNeuron.at(i).parent;
-            S.level=neuron.listNeuron.at(i).level;
-            S.seg_id=neuron.listNeuron.at(i).seg_id;
-            S.type=neuron.listNeuron.at(i).type;
-            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(0));
-            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(1));
-            tmp_list.append(S);
-        }
-        nt.listNeuron=tmp_list;
-        qDebug()<<"finished";
-    }
+//    void push_swc_Data(NeuronTree neuron)
+//    {
+//        //qDebug()<<"in push eswc data";
+//        QList<NeuronSWC> tmp_list;
+//        tmp_list.clear();
+//        for (int i=0;i<neuron.listNeuron.size();i++)
+//        {
+//            NeuronSWC S;
+//            S.x=neuron.listNeuron.at(i).x;
+//            S.y=neuron.listNeuron.at(i).y;
+//            S.z=neuron.listNeuron.at(i).z;
+//            S.r=neuron.listNeuron.at(i).r;
+//            S.parent=neuron.listNeuron.at(i).parent;
+//            S.level=neuron.listNeuron.at(i).level;
+//            S.seg_id=neuron.listNeuron.at(i).seg_id;
+//            S.type=neuron.listNeuron.at(i).type;
+//            S.fea_val.clear();
+//            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(0));
+//            S.fea_val.push_back(neuron.listNeuron.at(i).fea_val.at(1));
+//            tmp_list.append(S);
+//        }
+//        nt.listNeuron=tmp_list;
+//        qDebug()<<"finish copy eswc data";
+//    }
 };
 
 #endif // SPINE_FUN_H

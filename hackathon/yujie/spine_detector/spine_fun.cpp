@@ -113,6 +113,8 @@ bool spine_fun::init()
         V3DLONG nx = nt.listNeuron.at(nid).x;
         V3DLONG ny = nt.listNeuron.at(nid).y;
         V3DLONG nz = nt.listNeuron.at(nid).z;
+        if (nx<0 || nx>sz_img[0]-1 || ny<0 ||ny>sz_img[1]-1||nz<0 ||nz>sz_img[2]-1) //swc not in image
+            continue;
         int disthr_2 = nt.listNeuron.at(nid).radius*nt.listNeuron.at(nid).radius;
         for(V3DLONG x=MAX(nx-nt.listNeuron.at(nid).radius,0); x<=MIN(nx+nt.listNeuron.at(nid).radius,sz_img[0]-1); x++){
             for(V3DLONG y=MAX(ny-nt.listNeuron.at(nid).radius,0); y<=MIN(ny+nt.listNeuron.at(nid).radius,sz_img[1]-1); y++){
@@ -181,8 +183,8 @@ bool spine_fun::init()
             voxels.push_back(tmp_voxel);
             //construct neighbors
             for(V3DLONG x=MAX(tmp_voxel->x-1,0); x<=MIN(tmp_voxel->x+1,sz_img[0]-1); x++)
-                for(V3DLONG y=MAX(tmp_voxel->y-1,0); y<=MIN(tmp_voxel->y+1,sz_img[0]-1); y++)
-                    for(V3DLONG z=MAX(tmp_voxel->z-1,0); z<=MIN(tmp_voxel->z+1,sz_img[0]-1); z++){
+                for(V3DLONG y=MAX(tmp_voxel->y-1,0); y<=MIN(tmp_voxel->y+1,sz_img[1]-1); y++)
+                    for(V3DLONG z=MAX(tmp_voxel->z-1,0); z<=MIN(tmp_voxel->z+1,sz_img[2]-1); z++){
                         if(x==tmp_voxel->x && y==tmp_voxel->y && z==tmp_voxel->z) //self
                             continue;
                         V3DLONG pos = sub2ind(x,y,z);
@@ -333,8 +335,8 @@ bool spine_fun::init_old()
             voxels.push_back(tmp_voxel);
             //construct neighbors
             for(V3DLONG x=MAX(tmp_voxel->x-1,0); x<=MIN(tmp_voxel->x+1,sz_img[0]-1); x++)
-                for(V3DLONG y=MAX(tmp_voxel->y-1,0); y<=MIN(tmp_voxel->y+1,sz_img[0]-1); y++)
-                    for(V3DLONG z=MAX(tmp_voxel->z-1,0); z<=MIN(tmp_voxel->z+1,sz_img[0]-1); z++){
+                for(V3DLONG y=MAX(tmp_voxel->y-1,0); y<=MIN(tmp_voxel->y+1,sz_img[1]-1); y++)
+                    for(V3DLONG z=MAX(tmp_voxel->z-1,0); z<=MIN(tmp_voxel->z+1,sz_img[2]-1); z++){
                         if(x==tmp_voxel->x && y==tmp_voxel->y && z==tmp_voxel->z) //self
                             continue;
                         V3DLONG pos = sub2ind(x,y,z);
@@ -589,6 +591,8 @@ bool spine_fun::reverse_dst_grow()
         //qDebug()<<"seeds next size:"<<seeds_next.size();
         seeds_next.clear();
     }
+
+
     //qDebug()<<"~~~~~dst grow complete, check connected component";
     //find connected components among points whose dst_label!=0
     //1)get rid of groups that are too small
@@ -609,12 +613,12 @@ bool spine_fun::reverse_dst_grow()
         tmp_group.push_back(tmp_voxel);
         for(int sid=0; sid<seeds.size();sid++)
         {
-            VOI * tmp_voxel = seeds[sid];
-            for(int neid=0; neid<tmp_voxel->neighbors_26.size(); neid++){
-                if (tmp_voxel->neighbors_26[neid]->dst_label==-1||
-                       tmp_voxel->neighbors_26[neid]->dst_label==2 )
+            VOI * tmp_voxel_l = seeds[sid];
+            for(int neid=0; neid<tmp_voxel_l->neighbors_26.size(); neid++){
+                if (tmp_voxel_l->neighbors_26[neid]->dst_label==-1||
+                       tmp_voxel_l->neighbors_26[neid]->dst_label==2 )
                 {
-                    VOI * tmp_seed = tmp_voxel->neighbors_26[neid];
+                    VOI * tmp_seed = tmp_voxel_l->neighbors_26[neid];
                     tmp_group.push_back(tmp_seed);
                     seeds.push_back(tmp_seed);
                     tmp_seed->dst_label=spine_id;
@@ -622,14 +626,13 @@ bool spine_fun::reverse_dst_grow()
             }
             //qDebug()<<"seeds size:"<<seeds.size();
         }
-        //qDebug()<<"tmp_group size:"<<tmp_group.size();
+
         if (tmp_group.size()<param.min_pixel) //discard this group
         {
             for (int j=0;j<tmp_group.size();j++)
             {
                 tmp_group[j]->dst_label=0;
             }
-            //qDebug()<<"not enough pixels:"<<tmp_group.size();
             continue;
         }
         sort(tmp_group.begin(),tmp_group.end(),sortfunc_dst); //descending
@@ -639,7 +642,7 @@ bool spine_fun::reverse_dst_grow()
             {
                 tmp_group[j]->dst_label=0;
             }
-            //qDebug()<<"too flat:"<<tmp_group.front()->dst;
+            qDebug()<<"too flat:"<<tmp_group.front()->dst;
             continue;
         }
         dst_groups.push_back(tmp_group);
@@ -649,6 +652,7 @@ bool spine_fun::reverse_dst_grow()
     {
         return false;
     }
+
     return true;
     qDebug()<<"dst_groups grow finished~~~~~~  dst_group size:"<<dst_groups.size()<<"spine id:"<<spine_id;
 }
@@ -1308,10 +1312,11 @@ void spine_fun::saveResult()
         memset(tmp_out,0,sz_page*3);
         memcpy(tmp_out,p_img1D,sz_page);
         for(int i=0; i<voxels.size(); i++){
-            if (voxels.at(i)->dst_label>=3)
+            if (voxels.at(i)->dst_label==1)
                 tmp_out[voxels.at(i)->pos+2*sz_page]=255;
-            if (voxels.at(i)->intensity_label>0)
-                tmp_out[voxels.at(i)->pos+sz_page]=255;
+//            if (voxels.at(i)->intensity_label>0)
+//                tmp_out[voxels.at(i)->pos+sz_page]=255;
+            tmp_out[voxels.at(i)->pos+sz_page]=255;
 
         }
         QString fname_output = fname_out + "_tmp.v3draw";
