@@ -17,6 +17,7 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 #include "model.h"
 #include "node.h"
 #include "btracer.h"
+#include "connected.h"
 #include <ctime>
 #include <cfloat>
 #include <cstdlib>
@@ -33,24 +34,28 @@ Q_EXPORT_PLUGIN2(NeuronChaser, NeuronChaser);
 
 using namespace std;
 
-// input parameter default values (suggeted to user in menu)
+// input parameter default values (offered in user menu)
 static long     channel = 1;
-static int      scal    = 10;
-static int      perc    = 80;
-static float    znccTh  = 0.75;
-static int      Ndir    = 11;
+static int      scal    = 12;
+static int      perc    = 90;
+static float    znccTh  = 0.70;
+static int      Ndir    = 13;
 static float    angSig  = 60;
 //static float    gcsSig  = 3;
-static int      Ni      = 30;
-static int      Ns      = 10;
+static int      Ni      = 20; // trace length will go up to Ni*scal
+static int      Ns      = 5; // nr. states
 static float    zDist   = 1.0;
 static int      saveMidres = 0;
 
-static int nrInputParams = 10;
+static int nrInputParams = 10; // to constrain number of arguments
 
 // not necessary to tune
-static unsigned char imgTh = 1; // low end of the intensity range
-static int prune_len = 3; // those that reach endpoint after 1 step are removed from the reconstrction to clean the tree
+static unsigned char lowmargin = 1; // margin towards low end of the intensity range
+//static int prune_len = 4;   // those that reach endpoint after 1 step are removed from the reconstrction to clean the tree
+static int GRAYLEVEL = 256; // plugin works with 8 bit images
+static int Kskip = 3; // subsampling factor (useful for large stacks to reduce unnecessary computation)
+static int maxBlobCount = 5; // max nr. somas
+static int minSomaSize  = 1; // in voxels
 
 struct input_PARA
 {
@@ -309,20 +314,14 @@ public:
     bool hasItems(){return !kk.empty();}
 };
 
-int get_undiscovered(vector<int> indices, vector<bool> * discovered) {
+int get_undiscovered(vector<int> indices, bool * disc) {
 
-//    cout << "get_undiscovered()" << endl;
-
-    for (int i = 0; i < indices.size(); i++) {  // go through node indices sorted by the correlation value
+    for (int i = 0; i < indices.size(); i++) {  // go indices sorted by the correlation value
 
         if (indices[i]!=0) {
 
-            // check if there are any undiscovered here and if there are stop and return the node index
-            for (int j = 0; j < discovered[indices[i]].size(); j++) {
-                if (!discovered[indices[i]][j]) { // get out as soon as there is at leas one undiscovered
-                    return indices[i];
-                }
-            }
+            if (!disc[indices[i]])
+                return indices[i];
 
         }
 
@@ -437,218 +436,302 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout<<"-------------------------------------"   <<endl;
 
     long size = N * M * P; // N : width, M : height, P : nr. layers
-    printf("\ninimg:\t%d x %d x %d \n", N, M, P);
 
-    // tracer
-    BTracer btrcr(PARA.Ni, PARA.Ns, PARA.scal, P==1, PARA.zDist);
-
-    if (PARA.saveMidres) {
-        btrcr.save_templates(callback, PARA.inimg_file); // templates used for zncc()
+    // find min/max
+    unsigned char globalmin = data1d[0];
+    unsigned char globalmax = data1d[0];
+    for (long i = 1; i < size; ++i) {
+        if (data1d[i]<globalmin)
+            globalmin = data1d[i];
+        if (data1d[i]>globalmax)
+            globalmax = data1d[i];
     }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+    unsigned char imgTh = globalmin + lowmargin;
 
-    cout << "\nfg. score..."<<flush;
-
-    unsigned char * scr = new unsigned char [size]; // foreground score (size is usually huge for 3d stacks so that synamic allocation is chosen instead of static as static allocation would break for large arrays)
-    for (long var = 0; var < size; ++var) scr[var] = 0;
-
-    int range_xy = round(PARA.scal/2.0);
-    int range_z  = (P==1)?0:round((PARA.scal/2.0)/zDist); // range_z is 0 for 2d image   zDist
-
-    // xy
-
-    unsigned char * nbhood_xy = new unsigned char [(2*range_xy+1)*(2*range_xy+1)];
-
-    vector<int> dx_xy;
-    vector<int> dy_xy;
-    vector<int> dz_xy;
-
-    for (int dx = -range_xy; dx <= range_xy; ++dx) {
-        for (int dy = -range_xy; dy <= range_xy; ++dy) {
-            dx_xy.push_back(dx);
-            dy_xy.push_back(dy);
-            dz_xy.push_back(0);
-        }
-    }
-
-    // xz (in 3d)
-
-    unsigned char * nbhood_xz = new unsigned char [(2*range_xy+1)*(2*range_z +1)];
-
-    vector<int> dx_xz;
-    vector<int> dy_xz;
-    vector<int> dz_xz;
-
-    for (int dx = -range_xy; dx <= range_xy; ++dx) {
-        for (int dz = -range_z; dz <= range_z; ++dz) {
-            dx_xz.push_back(dx);
-            dy_xz.push_back(0);
-            dz_xz.push_back(dz);
-        }
-    }
-
-    // yz (in 3d)
-
-    unsigned char * nbhood_yz = new unsigned char [(2*range_xy+1)*(2*range_z +1)];
-
-    vector<int> dx_yz;
-    vector<int> dy_yz;
-    vector<int> dz_yz;
-
-    for (int dy = -range_xy; dy <= range_xy; ++dy) {
-        for (int dz = -range_z; dz <= range_z; ++dz) {
-            dx_yz.push_back(0);
-            dy_yz.push_back(dy);
-            dz_yz.push_back(dz);
-        }
-    }
-
-    unsigned char m05_xy, m95_xy, m05_xz, m95_xz, m05_yz, m95_yz;
-
-    for(long i = 0; i < size; i++) {
-
-        int x  = i % N;
-        int z  = i / (N*M);
-        int y  = i/N-z*M; // (M-1) - (i/N-z*M);
-
-        if (x>=range_xy && x<N-range_xy && y>=range_xy && y<M-range_xy && ((P==1)?true:(z>=range_z && z<P-range_z)) && data1d[i]>imgTh ) {
-
-            // xy
-            for (int k = 0; k < dx_xy.size(); ++k) {
-                nbhood_xy[k] = data1d[(z+dz_xy[k])*N*M+(y+dy_xy[k])*N+(x+dx_xy[k])];
+    ///////////////////////////////////////
+    // offsets in different planes
+    ///////////////////////////////////////
+    int limxy = ceil( PARA.scal/2.0);// PARA.scal corresponds to the diameter
+    int limz  = ceil((PARA.scal/2.0)/zDist);
+    //// offsets XY
+    vector<int> dx_XY, dy_XY;
+    for (int dx = -limxy; dx <= limxy; ++dx) {
+        for (int dy = -limxy; dy <= limxy; ++dy) {
+            if (pow(dx,2)/pow(limxy,2)+pow(dy,2)/pow(limxy,2)<=1) {
+                dx_XY.push_back(dx);
+                dy_XY.push_back(dy);
             }
-
-            m05_xy = quantile(nbhood_xy, dx_xy.size(), 5,  100);
-            m95_xy = quantile(nbhood_xy, dx_xy.size(), 95, 100);
-
-            if (P>1){
-                // xz, yz
-                for (int k = 0; k < dx_xz.size(); ++k) {
-                    nbhood_xz[k] = data1d[(z+dz_xz[k])*N*M+(y+dy_xz[k])*N+(x+dx_xz[k])];
-                    nbhood_yz[k] = data1d[(z+dz_yz[k])*N*M+(y+dy_yz[k])*N+(x+dx_yz[k])];
-                }
-
-                m05_xz = quantile(nbhood_xz, dx_xz.size(), 5,  100);
-                m95_xz = quantile(nbhood_xz, dx_xz.size(), 95, 100);
-
-                m05_yz = quantile(nbhood_yz, dx_yz.size(), 5,  100);
-                m95_yz = quantile(nbhood_yz, dx_yz.size(), 95, 100);
-            }
-
-
-            scr[z*N*M+y*N+x] = (P>1)?maximum(m95_xy-m05_xy, m95_xz-m05_xz, m95_yz-m05_yz):(m95_xy-m05_xy);
-
         }
-        else // score set to zero if nbhood went out of the image boundaries
-            scr[z*N*M+y*N+x] = 0;
-
+    }
+    //// offsets XZ
+    vector<int> dx_XZ, dz_XZ;
+    for (int dx = -limxy; dx <= limxy; ++dx) {
+        for (int dz = -limz; dz <= limz; ++dz) {
+            if (pow(dx,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                dx_XZ.push_back(dx);
+                dz_XZ.push_back(dz);
+            }
+        }
+    }
+    //// offsets YZ
+    vector<int> dy_YZ, dz_YZ;
+    for (int dy = -limxy; dy <= limxy; ++dy) {
+        for (int dz = -limz; dz <= limz; ++dz) {
+            if (pow(dy,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                dy_YZ.push_back(dy);
+                dz_YZ.push_back(dz);
+            }
+        }
     }
 
-    delete nbhood_xy; nbhood_xy = 0;
-    delete nbhood_xz; nbhood_xz = 0;
-    delete nbhood_yz; nbhood_yz = 0;
+    ///////////////////////////////////////
+    // erosion, variance
+    ///////////////////////////////////////
 
-    cout << "done."<< endl;
+    unsigned char * erd1d = new unsigned char[size]; // local min.
+    unsigned char * scr1 = new unsigned char[size]; // score
+    vector<unsigned char> scr;
+    scr.reserve(size/(Kskip*Kskip));
 
-    if (PARA.saveMidres) { // save scr
-        QString of = PARA.inimg_file + "_scr.tif";
-        simple_saveimage_wrapper(callback, of.toStdString().c_str(), scr, in_sz, V3D_UINT8);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// percentile threshold on score
-    ///
-
-    unsigned char * scr1 = new unsigned char[size];
-//    unsigned char scrmin = scr[0];
-//    unsigned char scrmax = scr[0];
-    for (long ii = 0; ii < size; ++ii) {
-        scr1[ii]  = scr[ii];
-//        if (scr[ii]>scrmax) scrmax = scr[ii];
-//        if (scr[ii]<scrmin) scrmin = scr[ii];
-    }
-
-    unsigned char th = quantile(scr1, size, PARA.perc, 100);
-    delete scr1; scr1 = 0;
-
-    cout << PARA.perc << "th = " << (int)th << endl;
-//    printf("th=%d\n", th);
-//    cout << "scrmin = " << (int)scrmin << endl;
-//    printf("scrmin=%d\n", scrmin);
-//    cout << "scrmax = " << (int)scrmax << endl;
-//    printf("scrmax=%d\n", scrmax);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    // tagmap define - this one will bookmark the pixels of the stack:
-    // 0    : background
-    // -1   : foreground
-    // -2   : mask this foreground location from calculating
-    // 1    : node<1>
-    // 2    : node<2>
-    // 3    : node<3>
-    // ...
-    // tag will correspond to the node index in the list
-    // node belonging to guidepoint or trace
-
-    int * tagmap = new int[size];
-//    int tagmap[size]; // tagmap can be allocated statically in principle but the size of the array is huge so that it cannot be allocated, unless dynamically
-    for (long iii = 0; iii < size; ++iii) {tagmap[iii] = 0;} // initialize tagmap with 0
-
-    cout << "\ngenerate fg. map..." << flush;
-
-    int rang_xy = PARA.scal;
-    int rang_z = round(PARA.scal/zDist);
-
-    // assign those that are in the foreground with -1
+    cout << "processing... " << flush;
     for (long i = 0; i < size; ++i) {
+
+        // default values
+        erd1d[i] = imgTh;
+        scr1[i]  = 0;
 
         int x  = i % N;
         int z  = i / (N*M);
         int y  = i/N-z*M;
 
-//        cout << x << ", " << y << ", " << z << " -- " << (int)(scr[z*N*M+y*N+x]) << " > " << (int)th << "  :::  " << (scr[z*N*M+y*N+x]>th) << endl;
-//        if (tagmap[z*N*M+y*N+x]==-1) continue;
+        if (x%Kskip==z%Kskip && y%Kskip==z%Kskip) { // every Kskip calculate
 
-        if (x>=rang_xy && x<N-rang_xy && y>=rang_xy && y<M-rang_xy && (P==1)?true:(z>=rang_z && z<P-rang_z)) {
-
-            if (scr[z*N*M+y*N+x]>th) { // assign to all the points
-
-                // first solution
-//                for (int xx = x-rang_xy; xx <= x+rang_xy; ++xx) {
-//                    for (int yy = y-rang_xy; yy <= y+rang_xy; ++yy) {
-//                        for (int zz = z-rang_z; zz <= z+rang_z; ++zz) {
-//                            if (
-//                                    pow(xx-x,2)/pow(rang_xy,2)+
-//                                    pow(yy-y,2)/pow(rang_xy,2)+
-//                                    pow(zz-z,2)/pow(rang_z,2)<=1) {
-//                                tagmap[zz*N*M+yy*N+xx] = -1; // -1 is tagging the foreground location
-//                            }
-//                        }
-//                    }
-//                }
-
-                // avoid dilating now, do it after the points are extracted
-                tagmap[z*N*M+y*N+x] = -1;
-
+            if (data1d[i]<imgTh) { // if below lowest boundary defined with min. value and margin
+                erd1d[i] = imgTh;
+                scr.push_back(0);
+                scr1[i] = 0;
             }
+            else {
+                unsigned char xymin=UCHAR_MAX, xymax=0;
+                unsigned char scrxyz;
 
+                for (int j = 0; j < dx_XY.size(); ++j) {
+
+                    int xi = x + dx_XY[j];
+                    int yi = y + dy_XY[j];
+
+                    if (xi>=0 && xi<N && yi>=0 && yi<M) {
+
+                        int ii = z*N*M+yi*N+xi;
+
+                        if (data1d[ii]<xymin)
+                            xymin = data1d[ii];
+
+                        if (data1d[ii]>xymax)
+                            xymax = data1d[ii];
+                    }
+
+                }
+
+                scrxyz = xymax - xymin;
+
+                if (P>1) {
+
+                    // xz plane
+                    unsigned char xzmin=UCHAR_MAX, xzmax=0;
+
+                    for (int j = 0; j < dx_XZ.size(); ++j) {
+
+                        int xi = x + dx_XZ[j];
+                        int zi = z + dz_XZ[j];
+
+                        if (xi>=0 && xi<N && zi>=0 && zi<P) {
+
+                            int ii = zi*N*M+y*N+xi;
+
+                            if (data1d[ii]<xzmin)
+                                xzmin = data1d[ii];
+
+                            if (data1d[ii]>xzmax)
+                                xzmax = data1d[ii];
+                        }
+
+                    }
+
+                    unsigned char sxz = xzmax - xzmin;
+                    scrxyz = (sxz>scrxyz)?sxz:scrxyz;
+
+                    // yz plane
+                    unsigned char yzmin=UCHAR_MAX, yzmax=0;
+
+                    for (int j = 0; j < dy_YZ.size(); ++j) {
+
+                        int yi = y + dy_YZ[j];
+                        int zi = z + dz_YZ[j];
+
+                        if (yi>=0 && yi<M && zi>=0 && zi<P) {
+
+                            int ii = zi*N*M+yi*N+x;
+
+                            if (data1d[ii]<yzmin)
+                                yzmin = data1d[ii];
+
+                            if (data1d[ii]>yzmax)
+                                yzmax = data1d[ii];
+
+                        }
+
+                    }
+
+                    unsigned char syz = yzmax - yzmin;
+                    scrxyz = (syz>scrxyz)?syz:scrxyz;
+
+                } // P>1
+
+                erd1d[i] = (xymin<imgTh)?imgTh:xymin;
+                scr.push_back(scrxyz);
+                scr1[i] = scrxyz;
+
+            } // >= imgTh
         }
-
     }
 
-    delete scr; scr = 0;
+    cout << "filling up... " << flush;
+    for (long i = 0; i < size; ++i) {
 
-    cout << "done."<< endl;
+        int x = i % N;
+        int z = i / (N*M);
+        int y = i/N-z*M;
+
+        if (!(x%Kskip==z%Kskip && y%Kskip==z%Kskip)) {
+            int x1 = (x/Kskip)*Kskip + z%Kskip;
+            int y1 = (y/Kskip)*Kskip + z%Kskip;
+
+            // those that are out of the boundaries are not filled up but kept the default
+            if (x1>=0 && x1<N && y1>=0 && y1<M) {
+                int ii = z*N*M+y1*N+x1;
+                erd1d[i] = erd1d[ii];
+                scr1[i] = scr1[ii];
+            }
+        }
+    }
+    cout << "done." << endl;
+
+    if (PARA.saveMidres) {
+        QString of = PARA.inimg_file + "_erd1d.tif";
+        simple_saveimage_wrapper(callback, of.toStdString().c_str(), erd1d, in_sz, V3D_UINT8);
+        of = PARA.inimg_file + "_scr1.tif";
+        simple_saveimage_wrapper(callback, of.toStdString().c_str(), scr1, in_sz, V3D_UINT8);
+    }
+
+    // threshold
+    unsigned char imth = intermodes_th(erd1d, size);
+    for (int i = 0; i < size; ++i)
+        erd1d[i] = (erd1d[i]>=imth)?255:0;
+
+    if (PARA.saveMidres) {
+        QString of = PARA.inimg_file + "_erd1dTh.tif";
+        simple_saveimage_wrapper(callback, of.toStdString().c_str(), erd1d, in_sz, V3D_UINT8);
+    }
+
+    // dilate thresholded
+    cout << "blobseg... " << flush;
+    unsigned char * somaseg = new unsigned char[size];
+    for (long i = 0; i < size; ++i)
+        somaseg[i] = 0;
+
+    for (long i = 0; i < size; ++i) {
+
+        int x = i % N;
+        int z = i / (N*M);
+        int y = i/N-z*M;
+
+        if (erd1d[i]==255) {
+
+            for (int j = 0; j < dx_XY.size(); ++j) {
+
+                int xi = x + dx_XY[j];
+                int yi = y + dy_XY[j];
+
+                if (xi>=0 && xi<N && yi>=0 && yi<M) { // && zi>=0 && zi<P
+
+                    int ii = z*N*M+yi*N+xi;
+
+                    if (somaseg[ii]==0)
+                        somaseg[ii] = 255;
+
+                }
+            }
+        }
+    }
+
+    cout << "done." << endl;
+
+    delete erd1d; erd1d = 0;
+
+    if (PARA.saveMidres) {
+        QString of = PARA.inimg_file + "_somaseg.tif";
+        simple_saveimage_wrapper(callback, of.toStdString().c_str(), somaseg, in_sz, V3D_UINT8);
+    }
+
+    ////////////////////////////////////////
+    // tagmap - bookmark stack voxels:
+    // 0    : background
+    // -1   : foreground
+    // -2   : mask this foreground location from calculating
+    // 1    : node<1>   (soma)
+    // 2    : node<2>   (soma)
+    // ...
+    // A    : node<A>   (gpnt)
+    // A+1  : node<A+1> (gpnt)
+    // ...
+    // B    : node<B>   (trc)
+    // B+1  : node<B+1> (trc)
+    // ...
+    // tag will correspond to the node index in the list
+    // node belongs to soma, gpnt or trc
+    ////////////////////////////////////////
+
+    int * tagmap = new int[size];   // size too large for static alloc
+    for (long i = 0; i < size; ++i)
+        tagmap[i] = 0;
+
+    vector<float> xc, yc, zc, rc;
+    conn3d(somaseg, N, M, P, tagmap, maxBlobCount, true, 0, minSomaSize, xc, yc, zc, rc); // connected c. -> soma labels and x,y,z,r
+
+    cout << xc.size() << " blob(s)" << endl;
+    for (int i = 0; i < xc.size(); ++i) {
+        cout << xc[i] << " " << yc[i] << " " << zc[i] << " " << rc[i] << endl;
+    }
+
+    delete somaseg; somaseg = 0;
+
+    ////////////////////////////////////////
+    // percentile on score
+    unsigned char th = quantile(scr, PARA.perc, 100);
+    cout << "\t" << PARA.perc << "th = " << (int)th << endl;
+
+    // assign those that are in the foreground with -1
+    for (long i = 0; i < size; ++i) {
+        if (scr1[i]>th && tagmap[i]==0)
+            tagmap[i] = -1;
+    }
+
+    delete scr1; scr1 = 0;
+
+//    unsigned char * conn = new unsigned char[size];
+//    ConnectedComponents cc(30);
+//    cc.connected(eroded1d, conn, N, M, std::equal_to<unsigned char>(), constant<bool,true>());
+//    delete conn; conn = 0;
+//    delete labimg; labimg = 0;
 
     if (PARA.saveMidres) {
         // save int* tagmap as set of .txt images (uint8 is not enough to save the range and saving float image regular way did not work)
-        cout << "exporting tagmap (1: fg-bg): ";
+        cout << "exporting tagmap (1: blob+fgbg): ";
         for (int zz = 0; zz < P; ++zz) {
             cout << zz << ", "<<flush;
-            QString of = PARA.inimg_file + "_tagmap_fgbg_"+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+            QString of = PARA.inimg_file + "_tagmap_soma_and_fgbg_"+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
             ofstream myfile;
             myfile.open (of.toStdString().c_str());
             for (int yy = 0; yy < M; ++yy) {
@@ -662,16 +745,23 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         cout << "done exporting." << endl;
     }
 
+    ////////////////////////////////////////
+    // tracer
+    BTracer btrcr(PARA.Ni, PARA.Ns, PARA.scal, P==1, PARA.zDist);
 
-
-
+    if (PARA.saveMidres) {
+        btrcr.save_templates(callback, PARA.inimg_file); // templates used for zncc()
+    }
+    ////////////////////////////////////////
     // count foreground locs for array allocation
     long cnt_fg = 0;
-    for (long i = 0; i < size; ++i) {if (tagmap[i]==-1) cnt_fg++;}
+    for (long i = 0; i < size; ++i)
+        if (tagmap[i]==-1)
+            cnt_fg++;
 
-    cout << setprecision(4) << cnt_fg/1000.0 << "k fg. locations, at scale=" << PARA.scal << endl;
-//if (true) {cout << "EXIT()"<<endl; return;}
-////////////////////////////////////////////////////////////////////////////////////////////////////
+    cout << setprecision(4) << cnt_fg/1000.0 << "k fg. locs, " << setprecision(2) << ((float)cnt_fg/size) << "%, at scale=" << PARA.scal << endl;
+
+    ////////////////////////////////////////
 
     int ** i2xyz = new int*[cnt_fg];
     for(long i = 0; i < cnt_fg; ++i)
@@ -698,10 +788,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
     }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    cout << "\nGPNT CALCULATION..." << endl;
-
+    ////////////////////////////////////////
+    cout << "\ngpnt calculation..." << endl;
     // book-keep all zncc calculations (zncc, gcsstd, vx, vy, vz)
     // in case they are accessed several times from the same location
     // this helps avoiding double calculation
@@ -716,7 +804,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     vector<Node> nodelist = vector<Node>(); // list of nodes (guidepoint nodes and trace nodes), reminder!! nodelist will have r as gcsstd
     Node dummynode(0,0,0,0,Node::UNDEFINED);//
-    nodelist.push_back(dummynode); // nodes start from index 1 (0 index would mix with background tag)
+    nodelist.push_back(dummynode); // nodes start from index 1 (index 0 would mix with background tag)
+
+
+    // add nodes that correspond to somas
+
+    for (int i = 0; i < xc.size(); ++i) {
+        Node gpntnode(xc[i], yc[i], zc[i], rc[i], Node::SOMA);
+        nodelist.push_back(gpntnode);
+    }
 
     float vx_corr[PARA.Ndir];
     float vy_corr[PARA.Ndir];
@@ -762,14 +858,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
         }
 
-//        cout << vx_corr[k] << "; " << vy_corr[k] << "; " << vz_corr[k] << "; " << endl; // << sqrt(vx_corr[k]*vx_corr[k]+vy_corr[k]*vy_corr[k]+vz_corr[k]*vz_corr[k])
+// cout << vx_corr[k] << "; " << vy_corr[k] << "; " << vz_corr[k] << "; " << endl; // << sqrt(vx_corr[k]*vx_corr[k]+vy_corr[k]*vy_corr[k]+vz_corr[k]*vz_corr[k])
 
     }
 
     float curr_zncc;
     float curr_gcsstd;
 
-    int rx = PARA.scal; // search for local max radius
+    int rx = PARA.scal; // search for local max, radius of the search
     int ry = PARA.scal;
     int rz = round(PARA.scal/zDist);
 
@@ -823,7 +919,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
                                 if (xn>=0 && xn<N && yn>=0 && yn<M && zn>=0 && zn<P) { // is in image
 
-                                    if (tagmap[zn*N*M+yn*N+xn]==-1) { // not in background, not in other region and would not overlap
+                                    if (tagmap[zn*N*M+yn*N+xn]==-1) { // not in background (0), not in other region (>0) and would not overlap (-2)
 
                                         if (pow(xn-x,2)/pow(rx,2)+pow(yn-y,2)/pow(ry,2)+pow(zn-z,2)/pow(rz,2)<=1) { // in the spherical neighbourhood (this is a bit expensive in loop)
 
@@ -931,71 +1027,60 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     cout << "DONE." << endl;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// dilate foreground so that the traces are allowed
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////
+    // expand foreground to accomodate traces
+    ////////////////////////////////////////
+    cout << "\nexpand tagmap..." << flush;
 
-    cout << "\ndilate tagmap..." << flush;
+    int * tagmap_temp = new int[size]; // tagmap copy
+    for (int i = 0; i < size; ++i)
+        tagmap_temp[i] = tagmap[i];
 
-    int * tagmap_temp = new int[size]; // temporary map for dilatation, will bi initialized with the current copy of tagmap
-    for (int i = 0; i < size; ++i) tagmap_temp[i] = tagmap[i];
+    // go through all of tagmap copy's non-zero elements and dilate with -1s, substituting zeros with -1s in original tagmap
 
-    int dil_xy = ceil( PARA.scal/1.0);
-    int dil_z  = ceil((PARA.scal/1.0)/zDist);
-
-    // sphere offsets
-    vector<int> dxoffset;
-    vector<int> dyoffset;
-    vector<int> dzoffset;
-
-    for (int dx = -dil_xy; dx <= dil_xy; ++dx) {
-        for (int dy = -dil_xy; dy <= dil_xy; ++dy) {
-            for (int dz = -dil_z; dz <= dil_z; ++dz) {
-                if (pow(dx,2)/pow(dil_xy,2)+pow(dy,2)/pow(dil_xy,2)+pow(dz,2)/pow(dil_z,2)<=1) {
-                    dxoffset.push_back(dx);
-                    dyoffset.push_back(dy);
-                    dzoffset.push_back(dz);
+    // offsets XYZ
+//    limxy = ceil( PARA.scal/2.0);
+//    limz  = 1;//ceil((PARA.scal/1.0)/zDist);
+    vector<int> dx_XYZ, dy_XYZ, dz_XYZ;
+    for (int dx = -limxy; dx <= limxy; ++dx) {
+        for (int dy = -limxy; dy <= limxy; ++dy) {
+            for (int dz = -limz; dz <= limz; ++dz) {
+                if (pow(dx,2)/pow(limxy,2)+pow(dy,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                    dx_XYZ.push_back(dx);
+                    dy_XYZ.push_back(dy);
+                    dz_XYZ.push_back(dz);
                 }
             }
         }
     }
-//    cout << dxoffset.size() << " offsets" << endl;
 
-    // take tagmap copy, go through all of copy's non-zero elements and dilate with -1s, substituting zeros with -1s in original tagmap
     for (long i = 0; i < size; ++i) {
 
         int x  = i % N;
         int z  = i / (N*M);
         int y  = i/N-z*M;
 
-        if (tagmap_temp[z*N*M+y*N+x]==0) continue; // skip those that are zero
+        if (tagmap_temp[z*N*M+y*N+x]==0)
+            continue; // skip those that are zero
 
-        if (x>=dil_xy && x<N-dil_xy && y>=dil_xy && y<M-dil_xy && z>=dil_z && z<P-dil_z) { // is in image
+        for (int k = 0; k < dx_XYZ.size(); ++k) {
 
-            for (int k = 0; k < dxoffset.size(); ++k) {
-                int curridx = (z+dzoffset[k])*N*M + (y+dyoffset[k])*N + (x+dxoffset[k]);
-                if (tagmap[curridx]==0) tagmap[curridx] = -1;
-            }
+                int xi = x+dx_XYZ[k];
+                int yi = y+dy_XYZ[k];
+                int zi = z+dz_XYZ[k];
 
-//            for (int xx = x-dil_xy; xx <= x+dil_xy; ++xx) {
-//                for (int yy = y-dil_xy; yy <= y+dil_xy; ++yy) {
-//                    for (int zz = z-dil_z; zz <= z+dil_z; ++zz) {
-//                        if (pow(xx-x,2)/pow(dil_xy,2)+pow(yy-y,2)/pow(dil_xy,2)+pow(zz-z,2)/pow(dil_z,2)<=1) { // is in sphere
-//                            if (tagmap[zz*N*M+yy*N+xx] == 0) {
-//                                tagmap[zz*N*M+yy*N+xx] = -1; // tag the neighbourhood as foreground
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-
+                if (xi>=0 && xi<N && yi>=0 && yi<M && zi>=0 && zi<P) { // inside image boundaries
+                    int ii = zi*N*M + yi*N + xi;
+                    if (tagmap[ii]==0)
+                        tagmap[ii] = -1;
+                }
         }
 
     }
 
     delete tagmap_temp; tagmap_temp = 0;
 
-    cout << "done."<< endl;
+    cout << "done.\n--------\n"<< endl;
 
     // test: check how many locations were calculated and how large they were
     int cnt_skipped = 0;
@@ -1011,7 +1096,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
     }
 
-    cout << setprecision(4) << cnt_fg/1000.0 << "k locations, " << flush;
+    cout << setprecision(4) << cnt_fg/1000.0 << "k " << flush;
     cout << setprecision(4) << (cnt_skipped/(float)cnt_fg)*100.0 << "% skipped" << endl;
     cout << setprecision(2) << znccmin << " zncc min, " << flush;
     cout << setprecision(2) << znccmax << " zncc max" << endl;
@@ -1023,14 +1108,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
     cout << setprecision(4) << cnt_new_fg/1000.0 << "k after expanding." << endl;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////
     for (int i = 0; i < cnt_fg; ++i) {delete i2xyz[i]; delete i2calcs[i];}
     delete i2xyz; i2xyz = 0;
     delete i2calcs; i2calcs = 0;
     delete xyz2i; xyz2i = 0;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////
 
     if (PARA.saveMidres) {
         // save int* tagmap as set of .txt images (uint8 is not enough to save the range and saving float image regular way did not work)
@@ -1059,7 +1142,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
             NeuronSWC nn;
             nn.n = nn.nodeinseg_id = ni;
-            nn.type = 3;
+            nn.type = (ni<=xc.size())? Node::SOMA : Node::APICAL_DENDRITE;
             nn.x = nodelist[ni].x;
             nn.y = nodelist[ni].y;
             nn.z = nodelist[ni].z;
@@ -1075,20 +1158,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////
     // arrange guidepoint nodes by correlation score (start chasing from the one with highest correlation)
     // std::sort(nodelist.begin(), nodelist.end(), compareNode); // highest correlation first
     // tags have been assigned to the index of the node in the list and changing the position in the list with sorting will deteriorate the tagmap
     // sort indices and trace from the top of the sorted original indices
     // sorted base od corr score
-
     vector<int> indices(nodelist.size()); // nr nodes before the tracing starts
     for (int i = 0; i < indices.size(); ++i) indices.at(i) = i; // std::iota does the same
     sort(indices.begin(), indices.end(), CompareIndicesByNodeVectorCorrValues(&nodelist));
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    ////////////////////////////////////////
 
     if (PARA.saveMidres) { // ttrace
 
@@ -1161,21 +1240,20 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         delete tt_tagmap; tt_tagmap = 0;
     }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // chasing... constrained tracing limited with tagmaps, starts from the highest corr guidepoint and grows the map
+    ////////////////////////////////////////
+    // tracing constrained with tagmaps, starts from the highest corr guidepoint and grows the map
     // final output is the list of linked nodes  (save individual nodes)
-    cout << "CHASING... " << endl;
-
+    cout << "chasing... " << endl;
     for (int ni = 0; ni < indices.size(); ++ni) {
 
-        // print process
-        if (ni!=0 && ni%(indices.size()/10)==0) cout << ni/(indices.size()/10)*10 << "%\t" << flush;
+        if (ni%(indices.size()/10)==0) cout << ni/(indices.size()/10)*10 << "%\t" << flush;
 
         for (int vsgn = -1; vsgn <= 1; vsgn+=2) { // -1, 1 direction
 
             int tt_i    = indices.at(ni); // get the nodelist index
-            if (tt_i == 0) continue; // node with index 0 is dummy node in nodelist
+
+            // skip dummy node and soma nodes as they are directionless
+            if (tt_i < xc.size()+1) continue; // node(0) is dummy node in nodelist and xc.size() nodes after are all without direction
 
             float tt_x  = nodelist.at(tt_i).x;
             float tt_y  = nodelist.at(tt_i).y;
@@ -1185,20 +1263,20 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             float tt_vz = nodelist.at(tt_i).vz;
             float tt_r  = nodelist.at(tt_i).r;
 
+            if (tt_vx==-FLT_MAX || tt_vy==-FLT_MAX || tt_vz==-FLT_MAX) {
+                // shouldn't happen, check nevertheless
+                cout << "ERROR: trace cannot start directe with vx, vy, vz" << endl;
+                return;
+            }
+
             vector<int> outcome_tags = btrcr.trace(tt_x, tt_y, tt_z,
                         vsgn*tt_vx, vsgn*tt_vy, vsgn*tt_vz, tt_r,
                         data1d, N, M, P,
                         PARA.angSig,
                         tagmap, tt_i, false); // each trace will use updated tagmap // PARA.gcsSig,
 
-//            cout << "\n" << ni << ".th/" << indices.size() << " :\t nodelist idx " << tt_i << "(" << vsgn << "):\t" << flush;
-//            for (int var = 0; var < outcome_tags.size(); ++var) {cout << outcome_tags[var] << " " << flush;}
-//            cout << endl;
-
             // there will be at least one member in the vector
             if (outcome_tags[0]>0 || outcome_tags[0]==-2) { // if the trace will be added
-
-//                cout << "add [0 -- " << btrcr.node_cnt <<"] nodes, nodelist has last index " << nodelist.size()-1 <<" "<< endl;
 
                 for (int ti = 0; ti <= btrcr.node_cnt; ++ti) {
 
@@ -1207,14 +1285,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                     nodelist.push_back(gpntnode); // reminder!! nodelist will have r as gcsstd
                     int nodetag = nodelist.size()-1;
 
-//                    cout << "\nappend index " << nodetag << endl;
-
                     // add bidirectional linking
                     if (ti==0) {
                         // towards previous
                         nodelist[nodetag].nbr.push_back(tt_i);
                         nodelist[tt_i].nbr.push_back(nodetag);
-//                        cout << ti <<" "<< nodetag << "<->" << tt_i << " " << flush;
 
                         // radius equalization
                         float ravg = 0.5*(nodelist[tt_i].r + nodelist[nodetag].r);
@@ -1227,7 +1302,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                         for (int k1 = 0; k1 < outcome_tags.size(); ++k1) {
                             nodelist[nodetag].nbr.push_back(outcome_tags[k1]);
                             nodelist[outcome_tags[k1]].nbr.push_back(nodetag);
-//                            cout << ti <<" "<< nodetag << "<->" << outcome_tags[k1] << " " <<flush;
 
                             // radius equalization
                             float ravg = 0.5*(nodelist[outcome_tags[k1]].r + nodelist[nodetag].r);
@@ -1241,10 +1315,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                     if (ti>0) { // previous will exist
                         nodelist[nodetag].nbr.push_back(nodetag-1);
                         nodelist[nodetag-1].nbr.push_back(nodetag);
-//                        cout << ti <<" "<< nodetag << "<->" << nodetag-1 <<" " << flush;
                     }
 
-                    // fill the tagmap with current nodetag - the same way it was in guidepoint extraction
+                    // trace tagging - fill the tagmap with current nodetag - the same way it was in guidepoint extraction and trace checking
                     // add the links in case there was an overlap in between node regions
                     float x_sph = nodelist.at(nodetag).x;
                     float y_sph = nodelist.at(nodetag).y;
@@ -1262,7 +1335,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                     for (int xfill = x1; xfill <= x2; ++xfill) {
                         for (int yfill = y1; yfill <= y2; ++yfill) {
                             for (int zfill = z1; zfill <= z2; ++zfill) {
-                                if (xfill>=0 && xfill<N && yfill>=0 && yfill<M && zfill>=0 && zfill<P) { // is in image
+                                if (xfill>=0 && xfill<N && yfill>=0 && yfill<M && zfill>=0 && zfill<P) { // is in image (general 2d/3d)
 
                                     // overwriting those tags makes sense, if it is 0+ don't overwrite already tagged ones
                                     float x2 = pow(xfill-x_sph,2);
@@ -1274,7 +1347,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                                     if (isinelipse) {
                                         int currenttag = tagmap[zfill*N*M+yfill*N+xfill];
                                         if (currenttag==-1 || currenttag==-2 || currenttag==0) {
-                                            //
                                             tagmap[zfill*N*M+yfill*N+xfill] = nodetag;
                                         }
                                         else {
@@ -1301,11 +1373,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     // remove double neighbourhoods from the neighbour list for each node
     for (int ni = 1; ni < nodelist.size(); ++ni) {
-//        cout << "node " << ni << " : " << nodelist.at(ni).nbr.size() << " nbrs ---> " << flush;
-//        for (int i = 0; i < nodelist[ni].nbr.size(); ++i) {cout << nodelist[ni].nbr[i] << " " << flush;}
         sort(nodelist.at(ni).nbr.begin(), nodelist.at(ni).nbr.end());
         nodelist.at(ni).nbr.erase(unique(nodelist.at(ni).nbr.begin(), nodelist.at(ni).nbr.end()), nodelist.at(ni).nbr.end());
-//        cout << "\nshort   -- " << nodelist.at(ni).nbr.size() << endl;
     }
 
     if (PARA.saveMidres) {
@@ -1352,9 +1421,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     delete tagmap; tagmap = 0;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /** traverse through the connected nodes to get the tree out - BFS
+    ////////////////////////////////////////
+    cout << "extract tree..." << endl;
+    /** traverse through the connected nodes to get the tree out
       *  breadth-first search (BFS) to traverse the tree from extracted node list
       *  http://en.wikipedia.org/wiki/Breadth-first_search
       *
@@ -1371,47 +1440,57 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
        *
        */
 
-    // will essentially convert nodelist with all its linking (2 directional connections)into NeuronTree which contains the list of neuron nodes
-    // each node (NeuronSWC) will have 1 parent
+    // will essentially convert linked nodelist into NeuronTree with the list of neuron nodes
+    // each node (NeuronSWC) having 1 parent
     // BFS needs Queue data structure that is implemented in class BfsQueue
-    // queue accumualtes the linkages between the nodes, where the linkage is described as vector with 2 node indexes vector<int> ~ [curr_node_idx, next_node_idx]
-    // since knowing just the node index in the queue is not enough, need to know the index of the mother node to initialize the trace in some direction
-    // discovered is array of vector<bool> that will bookkeep labels of the discovered adjacent node pairs, necessary for BFS
-    // the reason for keeping two values is that each time we need the mother index and so for each trace element, including the first node of the trace
+    // queue accumulates the linkages between nodes
+    // linkage is described as vector<int> with 2 node indexes [curr_node_idx, next_node_idx]
+    // knowing just the node_idx is not enough, need to know the index of the parent node
 
-    // nodelist datastructure:
+    // nodelist data structure:
     // nodelist[0] dummy node
     // nodelist[1] Node instance (tag 1) with connections to other neighbours stored in nbr
     // nodelist[2] Node instance (tag 2)
     // nodelist[3] Node instance (tag 3)
     // nodelist[4] ....
+    // ...
+    // nodelist[N].nbr will be a list of nodelist indexes of adjacent nodes
 
-    vector<bool> discovered[nodelist.size()]; // for book-keeping the discovered linkings between nodes (use nodelist to create it)
-    for (int ni = 1; ni < nodelist.size(); ++ni) {
-        for (int j = 0; j < nodelist[ni].nbr.size(); ++j) {
-            discovered[ni].push_back(false);
-        }
+
+    bool        D[nodelist.size()]; // for book-keeping the discovered nodes
+    int         L[nodelist.size()]; // len store the distance to backtrack towards nearest CP
+    int         I2Swc[nodelist.size()];// map node index with corresponding swc index
+
+    // initialize
+    for (int i = 0; i < nodelist.size(); ++i) {
+        D[i]        = (i==0)?true:false;
+        I2Swc[i]    = -1; // undefined
+        L[i]        = -1; // undefined
     }
 
-    NeuronTree nt;
-    int max_tree_nodes = -1;
-    int seed_idx; // seed index
+    NeuronTree nt; // selected output tree
+    int maxtreenodes = -1;
+    int seedidx;
+    bool fisrttime = true; // first time seed from blobs
 
-    while ( (seed_idx = get_undiscovered(indices, discovered))!=-1) { // seeds are undiscovered nodes
+    while ((seedidx = get_undiscovered(indices, D))!=-1) {
 
-        // generate tree for this seed
+        BfsQueue< vector<int> > boob; // queue for the BFS
 
-        // reset and initialize map to tag every node with corresponding swc index
-        int nodelist2swc[nodelist.size()]; // so that each index nodelist index can accomodate cooresponding swc reconstruction index
-        for (int k = 0; k < nodelist.size(); ++k) nodelist2swc[k] = -1;
+        vector<int> seed; // seed indexeses of nodes that will initialize the tree genesis
+        if (fisrttime && xc.size()>=1) { // if it's first time and soma regions exist
+            // take soma regions as seeds (seedidx won't be used)
+            for (int si = 1; si <= xc.size(); ++si)
+                seed.push_back(si);
+        }
+        else
+            seed.push_back(seedidx); // yet undiscovered with highest corr.
 
-        BfsQueue< vector<int> > boob; // queue for the bfs
-        vector<int> seed; // list of seed indexeses of nodes that will initialize the tree genesis
-        seed.push_back(seed_idx); // 1 seed, can have more (if somas are added)
+        fisrttime = false;
 
         NeuronTree ntcurr;
         ntcurr.name =
-                "NeuronChaser\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
+                "NeuronChaser\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
                 "\n#scal="+QString("%1").arg(PARA.scal)+
                 "\n#perc="+QString("%1").arg(PARA.perc)+
                 "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
@@ -1420,163 +1499,84 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 "\n#Ni="+QString("%1").arg(PARA.Ni)+
                 "\n#Ns="+QString("%1").arg(PARA.Ns)+
                 "\n#zDist="+QString("%1").arg(PARA.zDist)+
-                "\n#imgTh="+QString("%1").arg(imgTh)+
-                "\n#prune_len="+QString("%1").arg(prune_len);
+                "\n#---------------------\n#Kskip="+QString("%1").arg(Kskip)+
+//                "\n#prune_len="+QString("%1").arg(prune_len)+
+                "\n#maxBlobCount="+QString("%1").arg(maxBlobCount)+
+                "\n#minSomaSize="+QString("%1").arg(minSomaSize);
 
         for (int i = 0; i < seed.size(); i++) {
+            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+            vector<int> lnk(2);
+            lnk[0] = -1;
+            lnk[1] = seed[i];
+            boob.enqueue(lnk);
 
-            int curr = seed[i];
-            int next = INT_MIN;
-
-            NeuronSWC nseed;
-            nseed.n = nseed.nodeinseg_id = nodelist2swc[curr] = ntcurr.listNeuron.size()+1;
-            nseed.type = Node::NOTHING;
-            nseed.x = nodelist[curr].x;
-            nseed.y = nodelist[curr].y;
-            nseed.z = nodelist[curr].z;
-            nseed.r = btrcr.gcsstd2rad * nodelist[curr].r;
-            nseed.parent = -1;
-            ntcurr.listNeuron.append(nseed);
-
-            // add the neighbors to the queue and label them as discovered
-            for (int j = 0; j <nodelist[curr].nbr.size(); j++) {
-
-                next = nodelist[curr].nbr[j];
-
-                // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-                vector<int> lnk(2);
-                lnk[0] = curr;
-                lnk[1] = next;
-                boob.enqueue(lnk);
-
-                discovered[curr][j] = true;
-                int pos = find(nodelist[next].nbr.begin(), nodelist[next].nbr.end(), curr) - nodelist[next].nbr.begin();
-                discovered[next][pos] = true;
-
-            }
+            D[seed[i]] = true; // mark as discovered
+            L[seed[i]] = 0; // information on length toowards CP
+            // I2Swc will be filled at the dequeue moment
         }
 
-        while (boob.hasItems()) {
+        while (boob.hasItems()) { // while queue is not empty
 
             // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-            vector<int> takeit = boob.dequeue();
-            int prev = takeit[0];  // next neighbour at the time it was added to the queue becomes current
-            int curr = takeit[1];
+            vector<int> tt = boob.dequeue();
+            int prev = tt[0];
+            int curr = tt[1];
 
-            // auxilliary values (store branch indexes and branch length) used for removing the tail branches
-            vector<int> bchidxs; bchidxs.clear();
-            int bchlen = 0;
+            I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
 
-            bool nadd = nodelist2swc[curr]==-1;
+            // add to swc
+            NeuronSWC n0;
+            n0.n = n0.nodeinseg_id = I2Swc[curr];
+            n0.type = Node::AXON;
+            n0.x = nodelist[curr].x;
+            n0.y = nodelist[curr].y;
+            n0.z = nodelist[curr].z;
+            n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
+            n0.parent = (prev==-1)? -1 : I2Swc[prev];
+            ntcurr.listNeuron.append(n0);
 
-            if (nadd) {
+            vector<int> nextlist;
+            nextlist.empty();
 
-                bchlen++;
-                bchidxs.push_back(curr);
-
-                NeuronSWC n0;
-                n0.n = n0.nodeinseg_id = nodelist2swc[curr] = ntcurr.listNeuron.size()+1;
-                n0.type = Node::AXON;
-                n0.x = nodelist[curr].x;
-                n0.y = nodelist[curr].y;
-                n0.z = nodelist[curr].z;
-                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
-                n0.parent = nodelist2swc[prev];
-                ntcurr.listNeuron.append(n0);
-            }
-
-            int count_undiscovered = 0;
-
-            while (((count_undiscovered = count_vals(discovered[curr], false)) == 1) && nadd) {
-
-                prev = curr;
-                int pos = find(discovered[curr].begin(), discovered[curr].end(), false) - discovered[curr].begin();
-                curr = nodelist[curr].nbr[pos];
-
-                // curr->prev
-                pos = find(nodelist[curr].nbr.begin(), nodelist[curr].nbr.end(), prev) - nodelist[curr].nbr.begin();
-                discovered[curr][pos] = true;
-                // prev->curr
-                pos = find(nodelist[prev].nbr.begin(), nodelist[prev].nbr.end(), curr) - nodelist[prev].nbr.begin();
-                discovered[prev][pos] = true;
-
-                nadd = nodelist2swc[curr]==-1;
-
-                if (nadd) {
-
-                    bchlen++;
-                    bchidxs.push_back(curr);
-
-                    NeuronSWC n1;
-                    n1.n = n1.nodeinseg_id = nodelist2swc[curr] = ntcurr.listNeuron.size()+1;
-                    n1.type = Node::AXON;
-                    n1.x = nodelist[curr].x;
-                    n1.y = nodelist[curr].y;
-                    n1.z = nodelist[curr].z;
-                    n1.r = btrcr.gcsstd2rad * nodelist[curr].r;
-                    n1.parent = nodelist2swc[prev];
-                    ntcurr.listNeuron.append(n1);
-
-                }
-
-            }
-
-            int count_new_branches = 0;
-            for (int i = 0; i < discovered[curr].size(); i++) {
-                if (!discovered[curr][i]) { // if it was not discovered
-
-                    count_new_branches++;
-
-                    int next = nodelist[curr].nbr[i]; // take the index of the node that was not discovered
+            for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
+                int next = nodelist[curr].nbr[k];
+                if (!D[next]) {
 
                     vector<int> lnk(2);
                     lnk[0] = curr;
                     lnk[1] = next;
                     boob.enqueue(lnk);
 
-                    discovered[curr][i] = true;
-                    int pos = find(nodelist[next].nbr.begin(), nodelist[next].nbr.end(), curr) - nodelist[next].nbr.begin();
-                    discovered[next][pos] = true;
+                    D[next] = true;
+                    L[next] = L[curr] + 1;
+
+                    nextlist.push_back(next);
+
                 }
             }
 
-//            if (count_new_branches!=count_undiscovered) cout << "WRONG"<<endl;
-
-            // pruning : cancel those that were up to prune_len
-            if ((count_undiscovered==0 || !nadd) && bchlen<=prune_len) {
-
-                // when nadd=0 bchlen is always 0 so it's ok to place but maybe redundant as it does not affect the reduction
-                // also bchlen is redundant, bchidxs is enough to have
-                // remove the node from neurontree list and remove it's corresponding image map index
-                for (int ii = 1; ii <= bchlen; ++ii) {
-//                    cout << "PRUNE: bchlen=" << bchlen <<"\t"<<flush;
-//                    cout << "undiscovered"<< count_undiscovered << "\t" << flush;
-//                    cout << "NADD =" << nadd << "\t" << flush;
-//                    cout << ii <<"# remove, ntree size="<< ntcurr.listNeuron.size() <<" , nodelist2swc[" << bchidxs.back() << "] = -1"<<flush;
-                    nodelist2swc[bchidxs.back()] = -1; // reset what was set while traversing this branch
-                    bchidxs.pop_back();
+            if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) { // termination in tree search
+//                ntcurr.listNeuron.last().type = Node::END;
+//                for (int k = 0; k < L[curr]; ++k)
                     ntcurr.listNeuron.removeLast();
-//                    cout<<" after = "<<ntcurr.listNeuron.size()<<endl;
-
-                }
             }
-
+            else if (nextlist.size()>1) {
+//                for (int k = 0; k < nextlist.size(); ++k)
+//                    L[nextlist[k]] = 1; // reset if they are expanding from CP
+            }
         }
 
-        cout << "done. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
+        cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
 
-        if (ntcurr.listNeuron.size()>max_tree_nodes) {
-            max_tree_nodes = ntcurr.listNeuron.size();
+        if (ntcurr.listNeuron.size()>maxtreenodes) {
+            maxtreenodes = ntcurr.listNeuron.size();
             nt = ntcurr; // keep the one with highest number of nodes in nt
         }
-//        else {
-            // save ntcurr just in case for completeness
-            if (false) {
-                QString ntcurrswc_name = PARA.inimg_file + "_NeuronChaser_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
-                cout << ntcurrswc_name.toStdString().c_str() << " to save " << endl;
+        if (false) { // can be enabled to save the rest
+            QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
                 writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
-            }
-//        }
+        }
 
     }
 

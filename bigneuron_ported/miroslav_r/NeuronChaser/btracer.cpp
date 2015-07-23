@@ -23,13 +23,13 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 
 using namespace std;
 
-float   BTracer::gcsstd2rad = 2.0;
+float   BTracer::gcsstd2rad = 2.5;
 float   BTracer::gcsstd_min = 1.0;
 float   BTracer::gcsstd_step = 0.5;
-int     BTracer::Nsteps = 3;   // three steps to cover scale with samples
+int     BTracer::Nsteps = 4;   // steps to cover scale with samples, 3,4 is reasonable
 float   BTracer::ang = 3.14 * (30.0/180.0); // degrees in radians
 int     BTracer::Ndirs = 5; // these Ndirs are different from ones used in the main plugin
-float   BTracer::K = 3.0;
+float   BTracer::K = 4.0;
 
 BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _zDist)
 {
@@ -715,36 +715,42 @@ vector<int> BTracer::trace( float x,  float y,  float z,
             int y1 = floor(y_sph-rxy_sph);  int y2 = ceil(y_sph+rxy_sph);
             int z1 = floor(z_sph-rz_sph);   int z2 = ceil(z_sph+rz_sph);
 
-//            cout << x1 << " - " << x2 << " | " << y1 << " - " << y2 << " | " << z1 << " - " << z2 << endl;
+//cout << x1 << " - " << x2 << " | " << y1 << " - " << y2 << " | " << z1 << " - " << z2 << endl;
 
             tags_reached.clear();
 
             bool reached_background = true;
             bool readched_othertag = false;
+            int  cnttotal = 0;
+            int  cntbckg = 0;
 
-            // check the values -
+            // check the values - in the sphere (either 2d or 3d)
+            // criteria: certain ratio (say 50%) are in the background - stop
             for (int xChkLocal = x1; xChkLocal <= x2; ++xChkLocal) {
                 for (int yChkLocal = y1; yChkLocal <= y2; ++yChkLocal) {
 
                     if (is2D) { // then there is no need to loop through the layers
 
-//                        cout << "---- " << xChkLocal << " - " << yChkLocal << "   -------   " << img_length << endl;
+                        if (xChkLocal>=0 && xChkLocal<img_width  && yChkLocal>=0 && yChkLocal<img_height) { // loc is within the image
+                            if (pow(xChkLocal-x_sph,2)/pow(rxy_sph,2)+
+                                    pow(yChkLocal-y_sph,2)/pow(rxy_sph,2)<=1) {// it is in sphere
 
-                        if (xChkLocal>=0 && xChkLocal<img_width  && yChkLocal>=0 && yChkLocal<img_height) {
+                                cnttotal++;
 
-                            // loc is within the image
-                            int tag_curr = tag_map[0*(img_width*img_height)+yChkLocal*img_width+xChkLocal];
+                                int tag_curr = tag_map[0*(img_width*img_height)+yChkLocal*img_width+xChkLocal];
 
-                            reached_background = reached_background && (tag_curr==0);
+                                if (tag_curr==0) cntbckg++;
+                                reached_background = reached_background && (tag_curr==0);
 
-                            bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
+                                bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
 
-                            readched_othertag = readched_othertag || reached_othertag1;
-                            if (reached_othertag1) {
-                                tags_reached.push_back(tag_curr);
-                            }
+                                readched_othertag = readched_othertag || reached_othertag1;
+                                if (reached_othertag1) {
+                                    tags_reached.push_back(tag_curr);
+                                }
 
-                        }
+                            } // was in sphere
+                        } // was inside 2d image
                         else // it went out of the image - stop and return -1
                         {
                             tags_reached.clear();
@@ -759,21 +765,29 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                             if (    xChkLocal>=0 && xChkLocal<img_width  &&
                                     yChkLocal>=0 && yChkLocal<img_height &&
-                                    zChkLocal>=0 && zChkLocal<img_length) {
+                                    zChkLocal>=0 && zChkLocal<img_length) {// loc is within the image
 
-                                // loc is within the image
-                                int tag_curr = tag_map[zChkLocal*(img_width*img_height)+yChkLocal*img_width+xChkLocal];
+                                if (pow(xChkLocal-x_sph,2)/pow(rxy_sph,2)+
+                                        pow(yChkLocal-y_sph,2)/pow(rxy_sph,2)+
+                                        pow(zChkLocal-z_sph,2)/pow(rz_sph,2)<=1) {// it is inside the sphere
 
-                                reached_background = reached_background && (tag_curr==0);
+                                    cnttotal++;
 
-                                bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
+                                    int tag_curr = tag_map[zChkLocal*(img_width*img_height)+yChkLocal*img_width+xChkLocal];
 
-                                readched_othertag = readched_othertag || reached_othertag1;
-                                if (reached_othertag1) {
-                                    tags_reached.push_back(tag_curr);
-                                }
+                                    if (tag_curr==0) cntbckg++;
 
-                            }
+                                    reached_background = reached_background && (tag_curr==0);
+
+                                    bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
+
+                                    readched_othertag = readched_othertag || reached_othertag1;
+                                    if (reached_othertag1) {
+                                        tags_reached.push_back(tag_curr);
+                                    }
+
+                                } // it i in the sphere
+                            } // is in image
                             else // it went out of the image - stop and return -1
                             {
                                 tags_reached.clear();
@@ -785,10 +799,10 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                     }
 
-                }
-            }
+                } // y
+            } // x
 
-            if (reached_background) { // means that the voxel is in the background
+            if ((float)cntbckg/(float)cnttotal>=0.5) { // reached_background means that all voxels are in the background
 //                cout << "\nreached background at " << node_cnt << " steps " << x1 << ", " << x2 << ", " << y1 << ", " << y2 << ", " << z1 << ", " <<z2<<endl;
                 tags_reached.clear();
                 tags_reached.push_back(-1); // (-1) it's not added

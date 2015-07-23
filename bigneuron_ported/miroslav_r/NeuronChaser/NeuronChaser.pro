@@ -11,7 +11,8 @@ HEADERS	+= NeuronChaser_plugin.h \
     nf_dialog.h \
     toolbox.h \
     model.h \
-    node.h
+    node.h \
+    connected.h
 SOURCES	+= NeuronChaser_plugin.cpp \
     btracer.cpp \
     toolbox.cpp \

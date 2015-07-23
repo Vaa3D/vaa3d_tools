@@ -3,16 +3,27 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
 unsigned char quantile(unsigned char *a, int a_len, int ratioNum, int ratioDen);
+
+unsigned char quantile(vector<unsigned char> a, int ratioNum, int ratioDen);
 
 float zncc(float *v, int v_len, float v_avg, float *tmplt_hat, float tmplt_hat_sum_sqr);
 
 void descending(float * a, int a_len, int * idx);
 
 void probability_distribution(float * a, int a_len);
+
+void conn3d(unsigned char * inimg, int width, int height, int depth, int * labimg, int maxNrRegions, bool diagonal, int valuesOverDouble, int minRegSize, vector<float> &xc, vector<float> &yc, vector<float> &zc, vector<float> &rc);
+
+unsigned char intermodes_th(unsigned char * image1, long size);
+
+unsigned char otsu_th(unsigned char * image1, long size);
+
+unsigned char maxentropy_th(unsigned char * image1, long size);
 
 /*
  * sorting and array together with corresponding indexes
@@ -205,5 +216,7 @@ void print_array(T* arr, int arr_len) {
     }
     cout << endl;
 }
+
+
 
 #endif // TOOLBOX_H
