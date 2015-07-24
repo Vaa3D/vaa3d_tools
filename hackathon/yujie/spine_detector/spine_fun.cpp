@@ -1666,3 +1666,136 @@ LandmarkList spine_fun::get_center_landmarks()
     return LList;
 }
 
+//void spine_fun::get_48_ray_feature()
+//{
+//    //create a mask with spine to be fg and everything else bg
+//    map<V3DLONG,bool> mask_spine;
+//    vector<vector<float> > all_centers;
+
+//    for (int i=0;i<final_groups.size();i++)
+//    {
+//        GOV one_group=final_groups[i];
+//        //get the boundary
+//        float center_x,center_y,center_z,sum_x,sum_y,sum_z;
+//        sum_x=sum_y=sum_z=0;
+
+//        for (int j=0;j<one_group.size();j++)
+//        {
+//            mask_spine[one_group[j]->pos]=1;
+//            sum_x+=one_group[j]->x;
+//            sum_y+=one_group[j]->y;
+//            sum_z+=one_group[j]->z;
+//        }
+//        vector<float> centers(3,0);
+//        centers[0]=sum_x/one_group.size();
+//        centers[1]=sum_y/one_group.size();
+//        centers[2]=sum_z/one_group.size();
+//        all_centers.push_back(centers);
+//    }
+
+//}
+
+
+//vector<float> spine_fun::ray_shoot_vector(vector<float> one_spine_center,map<V3DLONG,bool> spine_map)
+//{
+//    float dir_vec[48][3]={{0.6667,0.6667,0.3333},{0.2852,0.6886,0.6667},{0.6886,0.2852,0.6667},
+//                        {0.2826,0.2826,0.9167},{-0.6667,0.6667,0.3333},{-0.6886,0.2852,0.6667},
+//                        {-0.2852,0.6886,0.6667},{-0.2826,0.2826,0.9167},{-0.6667,-0.6667,0.3333},
+//                        {-0.2852,-0.6886,0.6667},{-0.6886,-0.2852,0.6667},{-0.2826,-0.2826,0.9167},
+//                        {0.6667,-0.6667,0.3333},{0.6886,-0.2852,0.6667},{0.2852,-0.6886,0.6667},
+//                        {0.2826,-0.2826,0.9167},{0.9428,0.0000,-0.3333},{0.9239,0.3827,0.0000},
+//                        {0.9239,-0.3827,0.0000},{0.9428,0.0000,0.3333},{0.0000,0.9428,-0.3333},
+//                        {-0.3827,0.9239,0.0000},{0.3827,0.9239,0.0000},{0.0000,0.9428,0.3333},
+//                        {-0.9428,0.0000,-0.3333},{-0.9239,-0.3827,0.0000},{-0.9239,0.3827,0.0000},
+//                        {-0.9428,0.0000,0.3333},{0.0000,-0.9428,-0.3333},{0.3827,-0.9239,0.0000},
+//                        {-0.3827,-0.9239,0.0000},{0.0000,-0.9428,0.3333},{0.2826,0.2826,-0.9167},
+//                        {0.2852,0.6886,-0.6667},{0.6886,0.2852,-0.6667},{0.6667,0.6667,-0.3333},
+//                        {-0.2826,0.2826,-0.9167},{-0.6886,0.2852,-0.6667},{-0.2852,0.6886,-0.6667},
+//                        {-0.6667,0.6667,-0.3333},{-0.2826,-0.2826,-0.9167},{-0.2852,-0.6886,-0.6667},
+//                        {-0.6886,-0.2852,-0.6667},{-0.6667,-0.6667,-0.3333},{0.2826,-0.2826,-0.9167},
+//                        {0.6886,-0.2852,-0.6667},{0.2852,-0.6886,-0.6667},{0.6667,-0.6667,-0.3333}};
+
+//    int dir_vec_size=48;
+
+//    float x,y,z;
+//    x=one_spine_center[0]; y=one_spine_center[1]; z=one_spine_center[2];
+//    float v_prev,v_new,x_prev,y_prev,z_prev,x_new,y_new,z_new;
+
+
+//    vector<float> ray(3,0);
+//    vector<float> dis;
+//    vector<vector<float> > bound;
+//    v_prev=data1Dc_float[ind];
+
+//    for (int i=0;i<dir_vec_size;i++)
+//    {
+//        float dx=dir_vec[i][0];
+//        float dy=dir_vec[i][1];
+//        float dz=dir_vec[i][2];
+//        //qDebug()<<"dx,dy,dz:"<<dx<<":"<<dy<<":"<<dz;
+//        x_prev=x;
+//        y_prev=y;
+//        z_prev=z;
+//        v_new=v_prev;
+
+//        while (spine_map[pos]>0)
+//        {
+//            x_new=x_prev+dx;
+//            if (x_new<0 || x_new>sz_image[0]-1)
+//            {
+//                y_new=y_prev+dy;
+//                z_new=z_prev+dz;
+//                //qDebug()<<"x touches edge";
+//                break;
+//            }
+//            y_new=y_prev+dy;
+//            if (y_new<0 || y_new>sz_image[1]-1)
+//            {
+//                z_new=z_prev+dz;
+//                //qDebug()<<"y touches edge";
+//                break;
+//            }
+//            z_new=z_prev+dz;
+//            if (z_new<0 || z_new>sz_image[2]-1)
+//            {
+//                //qDebug()<<"z touches edge";
+//                break;
+//            }
+//            V3DLONG pos=xyz2pos(x_new+0.5,y_new+0.5,z_new+0.5,y_offset,z_offset); //float to int
+//            v_new=data1Dc_float[pos];
+//            x_prev=x_new;
+//            y_prev=y_new;
+//            z_prev=z_new;
+
+//            //qDebug()<<"dir i:"<<i<<" x,y,z:"<<x_prev<<":"<<y_prev<<":"<<":"<<z_prev<<":"<<"intensity:"<<v_new;
+//        }
+
+//        ray[0]=x_new-dx;
+//        ray[1]=y_new-dy;
+//        ray[2]=z_new-dz;
+//        float dis_tmp=(ray[0]-x)*(ray[0]-x)+(ray[1]-y)*(ray[1]-y)+(ray[2]-z)*(ray[2]-z);
+//        dis_tmp=sqrt(dis_tmp);
+//        //qDebug()<<"dis_tmp:"<<dis_tmp;
+//        dis.push_back(dis_tmp);
+//        bound.push_back(ray);
+//    }
+
+    //build a map and sort bound based on length of rays
+    //qDebug()<<"boudnd size:"<<bound.size();
+//    multimap<double, vector<float> > ray_map;
+//    for(V3DLONG i = 0; i < bound.size(); i++)
+//    {
+//        ray_map.insert(pair<double, vector<float> > (dis[i],bound[i]));
+//    }
+//    //put the ordered one in bound
+//    multimap<double, vector<float>>::reverse_iterator it = ray_map.rbegin();
+//    bound.clear();
+//    while(it!= ray_map.rend())
+//    {
+//        bound.push_back(it->second);
+//        //qDebug()<<"dis:"<<it->first<<" xyz:"<<it->second[0]<<":"<<it->second[1]<<":"<<it->second[2];
+//        it++;
+//    }
+
+    //return dis;
+//}

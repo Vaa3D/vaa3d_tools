@@ -62,19 +62,7 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,0);
         manual_dialog->show();
     }
-//    else if (menu_name == tr("skeleton analysis"))
-//	{
-//        PARA_APP2 p;
-//        if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
-//            return;
 
-//        // fetch parameters from dialog
-//        if (!p.app2_dialog())
-//            return;
-
-//        if (!proc_app2(callback, p, versionStr))
-//            return;
-//	}
     else if (menu_name==tr("spine_detector_1.1 (proofread by segment)"))
     {
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);

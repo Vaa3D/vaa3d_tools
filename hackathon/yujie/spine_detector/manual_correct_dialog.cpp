@@ -455,6 +455,9 @@ bool manual_correct_dialog::before_proof_dialog()
          QString info="The spine csv profile is saved at "+ edit_csv->text();
          QMessageBox::information(0,"spine_detector",info,QMessageBox::Ok);
          write_spine_profile("auto_spine_profile.csv");
+         vector<int> dummy;
+         dummy.resize(label_group.size(),1);
+         write_svm_file("predict.txt",dummy);
          open_main_triview();
          callback->setImageName(main_win,"automatic_spine_detector_result");
          callback->setLandmark(main_win,LList_in);
@@ -935,7 +938,8 @@ int manual_correct_dialog::save(QString window_name) //need further work
 
 //    }
 
-
+    vector<int> keep_spine;
+    keep_spine.resize(LList_in.size());
     for (int i=0;i<LList_in.size();i++)
     {
         QString tmp;
@@ -943,6 +947,7 @@ int manual_correct_dialog::save(QString window_name) //need further work
 
         if (tmp.contains("1"))
         {
+            keep_spine[i]=1;
             GOV tmp_group=label_group[i];
             GetColorRGB(rgb,i);
             int sum_x,sum_y,sum_z;
@@ -967,11 +972,13 @@ int manual_correct_dialog::save(QString window_name) //need further work
             LList_new.append(tmp);
         }
         else
-            label_group[i].clear();
+            keep_spine[i]=-1;
+//        else
+//            label_group[i].clear();
     }
 
-    write_spine_profile("auto_proofread_spine_profile.csv");
-
+    //write_spine_profile("auto_proofread_spine_profile.csv");  //for using svm
+    write_svm_file("training.txt",keep_spine);
     //need to close all image windows //check 3D window
     v3dhandleList list_triwin = callback->getImageWindowList();
     for(V3DLONG i=0; i<list_triwin.size(); i++){
@@ -1042,6 +1049,58 @@ bool manual_correct_dialog::maybe_save()
      }
 }
 
+void manual_correct_dialog::write_svm_file(QString filename,vector<int> keep)
+{
+    qDebug()<<"writing svm file";
+    QString outfile=edit_csv->text()+"/"+filename;
+    FILE *fp2=fopen(outfile.toAscii(),"wt");
+    //fprintf(fp2,"volume,max_dis,min_dis,center_dis,center_intensity,ave_nb,ave_intensity\n");
+    qDebug()<<"1"<<"label group size:"<<label_group.size();
+    for (int i=0;i<label_group.size();i++)
+    {
+        GOV tmp=label_group[i];
+        //qDebug()<<"I:"<<i<<"size:"<<tmp.size();
+        if (tmp.size()<=0) continue;
+        fprintf(fp2,"%d ",keep[i]);
+        sort(tmp.begin(),tmp.end(),sortfunc_dst);
+
+        float max_dis=tmp.front()->dst; ///all_para.max_dis;
+        float min_dis=tmp.back()->dst; ///all_para.max_dis;
+        float volume=tmp.size();///4000;
+
+        V3DLONG sum_x,sum_y,sum_z,sum_dis,sum_nb,sum_int;
+        sum_x=sum_y=sum_z=sum_dis=sum_nb=sum_int=0;
+
+        for (int j=0;j<tmp.size();j++)
+        {
+            sum_x+=tmp[j]->x;
+            sum_y+=tmp[j]->y;
+            sum_z+=tmp[j]->z;
+            sum_dis+=tmp[j]->dst;
+            sum_nb+=tmp[j]->neighbors_6.size();
+            sum_int+=image1Dc_spine[tmp[j]->pos];
+        }
+        float center_x=sum_x/tmp.size();
+        float center_y=sum_y/tmp.size();
+        float center_z=sum_z/tmp.size();
+        int center_dis=sum_dis/tmp.size();
+        float nb_ave=sum_nb/(float)tmp.size();
+        int int_ave=sum_int/tmp.size();
+        V3DLONG pos=xyz2pos((V3DLONG)(center_x+0.5),(V3DLONG)(center_y+0.5),(V3DLONG)(center_z+0.5),
+                            sz_img[0],sz_img[0]*sz_img[1]);
+        int intensity=image1Dc_spine[pos];
+
+        fprintf(fp2,"1:%d ",volume);
+        fprintf(fp2,"2:%d ",max_dis);
+        fprintf(fp2,"3:%d ",min_dis);
+        fprintf(fp2,"4:%d ",center_dis);
+        fprintf(fp2,"5:%d ",intensity);
+        fprintf(fp2,"6:%.1f ",nb_ave);
+        fprintf(fp2,"7:%d\n",int_ave);
+    }
+    fclose(fp2);
+    qDebug()<<"finish writing svm file";
+}
 
 void manual_correct_dialog::write_spine_profile(QString filename)
 {
@@ -2483,8 +2542,7 @@ void manual_correct_dialog::big_image_pipeline_start()
         NeuronTree this_tree;
         this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
         //qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
-
-        if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1))
+        if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1,coord[0],coord[1],coord[2],spine_map))
         {
             if (data1d!=0)
             {
@@ -2496,18 +2554,26 @@ void manual_correct_dialog::big_image_pipeline_start()
         {
             delete[] data1d; data1d=0;
         }
-
 //        //need to store the results somewhere...
+        if (cancel_flag)
+            return;
     }
-
-    if (cancel_flag)
-        return;
+    sz_img[3]=1;
     progress.setValue(nt_segs.size());
     QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
+    unsigned char * outfile= new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]];
+    memset(outfile,0,sz_img[0]*sz_img[1]*sz_img[2]);
+    for (QSet <V3DLONG>::Iterator mi=spine_map.begin();mi!=spine_map.end();mi++)
+    {
+        outfile[*mi]=255;
+    }
+    simple_saveimage_wrapper(*callback,"outfile.v3draw",outfile,sz_img,V3D_UINT8);
     return;
 }
 
-bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,int image_id)
+bool manual_correct_dialog::auto_spine_detect_seg_image
+    (unsigned char *data1d, V3DLONG *sz, NeuronTree nt_seg, int image_id,
+     V3DLONG x_start,V3DLONG y_start,V3DLONG z_start,QSet<V3DLONG> &spine_map)
 {
     spine_fun spine_obj(callback,all_para,0);
     if (!spine_obj.pushImageData(data1d,sz))
@@ -2548,6 +2614,11 @@ bool manual_correct_dialog::auto_spine_detect_seg_image(unsigned char *data1d, V
         for (int j=0; j<tmp.size(); j++)
         {
             seg_result[tmp.at(j)->pos+size_page]=255;
+            V3DLONG x=tmp[j]->x+x_start;
+            V3DLONG y=tmp[j]->y+y_start;
+            V3DLONG z=tmp[j]->z+z_start;
+            V3DLONG new_pos=xyz2pos(x,y,z,sz_img[0],sz_img[0]*sz_img[1]);
+            spine_map.insert(new_pos);
         }
     }
     sz[3]=3;
@@ -2761,7 +2832,7 @@ bool manual_correct_dialog::check_image_size()
     sz_img[0]=in_zz[0];
     sz_img[1]=in_zz[1];
     sz_img[2]=in_zz[2];
-    sz_img[3]=1;
+    sz_img[3]=in_zz[3];
     qDebug()<<"size check:"<<sz_img[0]<<":"<<sz_img[1]<<":"<<sz_img[2]<<":"<<sz_img[3];
     return true;
 

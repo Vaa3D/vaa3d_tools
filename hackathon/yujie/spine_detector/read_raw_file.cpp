@@ -236,3 +236,21 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
     return 1;
 
 }
+
+
+bool writeRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLONG * & region_sz,int & datatype,
+      V3DLONG startx, V3DLONG starty, V3DLONG startz,
+      V3DLONG endx, V3DLONG endy, V3DLONG endz)
+{
+    FILE * fid = fopen(filename, "ab");
+
+    if (!fid)
+    {
+        printf("Fail to open file for updating.\n");
+        return 0;
+    }
+
+    fseek (fid, 0, SEEK_END);
+    V3DLONG fileSize = ftell(fid);
+    rewind(fid);
+}

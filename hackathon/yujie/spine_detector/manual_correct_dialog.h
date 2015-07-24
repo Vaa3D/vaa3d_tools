@@ -34,6 +34,7 @@ public:
     int save(QString window_name);
     void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
+    void write_svm_file(QString filename, vector<int> keep);
 private:
     void initDlg();
     bool check_button();
@@ -92,8 +93,8 @@ private:
     vector<V3DLONG> image_seg_plan(vector<int> seg,NeuronTree neuron_tmp);
     void create_big_image();
     NeuronTree prep_seg_neurontree(vector<V3DLONG> coord);
-    bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz,NeuronTree nt_seg,
-                                     int image_id);
+    bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz, NeuronTree nt_seg,
+                                     int image_id, V3DLONG x_start, V3DLONG y_start, V3DLONG z_start, QSet<V3DLONG> &spine_map);
     bool check_image_size();
 
 public slots:
@@ -123,7 +124,6 @@ private:
     LandmarkList LList_in,LList_adj,LList_seg;
     QString folder_output;
     int x_start,y_start,z_start,sel_channel;
-    //ROIList pRoiList;
     vector<GOV> label_group,label_group_copy;
     bool edit_flag,eswc_flag;
     parameters all_para;
@@ -131,14 +131,12 @@ private:
 
     int x_min,y_min,z_min,x_max,y_max,z_max,prev_idx,prev_seg;
     vector<vector<int> > segment_neuronswc;
-    QDialog *seg_dialog;
     QPlainTextEdit *edit_seg;
     QComboBox *segments;
     QListWidget *list_markers;
     bool seg_edit_flag;
-
     QString fname;
-    V3DLONG sz_big_seg[4];
+    QSet<V3DLONG> spine_map;
 
 };
 
