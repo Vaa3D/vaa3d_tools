@@ -45,6 +45,61 @@ static double median(vector<double> x)
     return  x[x.size()/2];
 }
 
+static double mean(vector<double> x)
+{
+     double x_mean  = accumulate( x.begin(), x.end(), 0.0 )/ x.size();
+     return x_mean;
+}
+
+
+static double standard_dev(vector<double> x)
+{
+    double x_mean  = mean(x);
+
+    double sum2 = 0;
+    for ( V3DLONG i = 0; i < x.size(); i++ )
+    {
+        sum2 += pow(x[i]-x_mean,2);
+    }
+    double x_std = sqrt(sum2/(x.size()-1));
+    return x_std;
+}
+
+static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
+{
+    ENSEMBLE_METRICS stats; // average stats over all segments
+    vector <double> cnrs;
+    vector <double> dys;
+    vector <double> tubus;
+    vector <double> bgs;
+    vector <double> fgs;
+
+    for (int i  = 0; i < result_metrics.size() ; i++)
+    {
+        cnrs.push_back( result_metrics[i].cnr);
+        dys.push_back(result_metrics[i].dy);
+        tubus.push_back(result_metrics[i].tubularity);
+        bgs.push_back(result_metrics[i].bg_mean);
+        fgs.push_back(result_metrics[i].fg_mean);
+    }
+
+    stats.mean_cnr = mean(cnrs);
+    stats.mean_dy = mean(dys);
+    stats.mean_tubularity = mean(tubus);
+    stats.mean_bg = mean(bgs);
+    stats.mean_fg = mean(fgs);
+
+
+    stats.std_bg = standard_dev(bgs);
+    stats.std_fg = standard_dev(fgs);
+    stats.std_dy = standard_dev(dys);
+    stats.std_cnr = standard_dev(cnrs);
+    stats.std_tubularity = standard_dev(tubus);
+
+    return stats;
+
+}
+
 static void cutoff_outliers(vector<double> & x)
 {
     //remove the top and bottom 10% data, to be more robust
@@ -55,6 +110,8 @@ static void cutoff_outliers(vector<double> & x)
     x.erase( x.begin(), x.begin()+ num_to_remove);
     x.erase( x.end()-num_to_remove, x.end());
 }
+
+
 
 
 //flip image along the Y direction ( due to the image matrix order convention in Vaa3D)
@@ -121,11 +178,12 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     {
         QTextStream stream (&file);
         stream<< "segment_id,segment_type,dynamic_range,cnr,snr,tubularity,fg_mean,bg_mean,fg_std,bg_std"<<"\n";
+
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << i+1 <<","
                    << result_metrics[i].type       <<","
-                   << result_metrics[i].dy         <<","
+                   << result_metrics[i].dy        <<","
                    << result_metrics[i].cnr        <<","
                    << result_metrics[i].snr        <<","
                    << result_metrics[i].tubularity <<","
@@ -134,8 +192,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
                    << result_metrics[i].fg_std     <<","
                    << result_metrics[i].bg_std     <<"\n";
         }
-
-        file.close();
+    file.close();
     }
     return true;
 
@@ -189,25 +246,19 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     //output
     writeMetrics2CSV(result_metrics, output_csv_file);
 
+    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+
+
     //display metrics to the msg window
     QString disp_text = "";
-    //"Segment ID | Segment Type | Dynamic Range | Contrast-to-Background Ratio |"
-    //                    " Signal-to-Background Ratio | Tubularity |FG_mean | BG_MEAN \n";
-    for (int i  = 0; i < result_metrics.size() ; i++)
-    {
-     disp_text += "Seg ID:"  + QString::number(i+1)+ "            ";
-     disp_text += "Seg Type:"+ QString::number(result_metrics[i].type) + "             ";
-     disp_text += "DR:"      + QString::number(result_metrics[i].dy)   + "             ";
-     disp_text += "CNR:"     + QString::number(result_metrics[i].cnr)  + "                          ";
-    // disp_text += QString::number(result_metrics[i].snr)  + "                          ";
-     disp_text += "Tubularity:" + QString::number(result_metrics[i].tubularity) + "    ";
-     disp_text += "FG Mean:"    + QString::number(result_metrics[i].fg_mean)  + "     ";
-     disp_text += "BG Mean:"    + QString::number(result_metrics[i].bg_mean)  + "     ";
-     disp_text += "FG STD:"     + QString::number(result_metrics[i].fg_std)  + "     ";
-     disp_text += "BG STD:"     + QString::number(result_metrics[i].bg_std)  + "     ";
-     disp_text += "\n";
-    }
-    disp_text +="Output the metrics into:"+ output_csv_file +"\n";
+    disp_text += "Mean FG Intensity = " + QString::number (m_stats.mean_fg)  + ", STD = "    + QString::number(m_stats.std_fg) + ";\n";
+    disp_text += "Mean BG Intensity = " + QString::number(m_stats.mean_bg )  + ", STD = "    + QString::number(m_stats.std_bg) + ";\n";
+    disp_text += "Mean Contrast-to-Background Ratio = " + QString::number(m_stats.mean_cnr)  + ", STD = "    + QString::number(m_stats.std_cnr) + ";\n";
+    disp_text += "Mean Dynamic Range = " + QString::number(m_stats.mean_dy)   + ", STD = "    + QString::number(m_stats.std_dy) + ";\n";
+    disp_text += "Mean Tubularity = " + QString::number(m_stats.mean_tubularity) + ", STD = " + QString::number(m_stats.std_tubularity) + ".\n";
+
+
+    disp_text += "\n  Screening Metrics of each segment can be found in: \n "+ output_csv_file +"\n";
     v3d_msg(disp_text);
 
 
@@ -263,6 +314,14 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
     QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert, callback);
+    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+
+    cout << "Mean BG Intensity:" << m_stats.mean_bg << "with std = "    << m_stats.std_bg << "\n"
+         << "Mean BG Intensity:" << m_stats.mean_fg << "with std = "    << m_stats.std_bg << "\n"
+         << "Mean Contrast-to-Background Ratio:" << m_stats.mean_cnr << "with std = " << m_stats.std_cnr << "\n"
+         << "Mean Dynamic Range:"<< m_stats.mean_dy << "with std = "    << m_stats.std_dy << "\n"
+         << "Mean Tubularity:"   << m_stats.mean_tubularity << "with std = " << m_stats.std_tubularity << "\n"
+         << endl;
 
     if (result_metrics.isEmpty())
     {
@@ -389,12 +448,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
         // for each node
         //label foreground
-        xb = boundValue(node.x - r +0.5, 0,image->getXDim()-1 );
-        xe = boundValue(node.x + r +0.5, 0,image->getXDim()-1 );
-        yb = boundValue(node.y - r +0.5, 0,image->getYDim()-1 );
-        ye = boundValue(node.y + r +0.5, 0,image->getYDim()-1 );
-        zb = boundValue(node.z - r +0.5, 0,image->getZDim()-1 );
-        ze = boundValue(node.z + r +0.5, 0,image->getZDim()-1 );
+        xb = boundValue(node.x - r + 0.5, 0,image->getXDim()-1 );
+        xe = boundValue(node.x + r + 0.5, 0,image->getXDim()-1 );
+        yb = boundValue(node.y - r + 0.5, 0,image->getYDim()-1 );
+        ye = boundValue(node.y + r + 0.5, 0,image->getYDim()-1 );
+        zb = boundValue(node.z - r + 0.5, 0,image->getZDim()-1 );
+        ze = boundValue(node.z + r + 0.5, 0,image->getZDim()-1 );
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -416,12 +475,12 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
         //label fuzzy region (between foreground and background, to avoid including spines, and tolerate underestimated neuron radius
         double fuzzy_r_ratio = 1.5;  //0.5 r
-        xb = boundValue(node.x - fuzzy_r_ratio*r +0.5, 0,image->getXDim()-1 );
-        xe = boundValue(node.x + fuzzy_r_ratio*r +0.5, 0,image->getXDim()-1 );
-        yb = boundValue(node.y - fuzzy_r_ratio*r +0.5, 0,image->getYDim()-1 );
-        ye = boundValue(node.y + fuzzy_r_ratio*r +0.5, 0,image->getYDim()-1 );
-        zb = boundValue(node.z - fuzzy_r_ratio*r +0.5, 0,image->getZDim()-1 );
-        ze = boundValue(node.z + fuzzy_r_ratio*r +0.5, 0,image->getZDim()-1 );
+        xb = boundValue(node.x - fuzzy_r_ratio*r + 0.5, 0,image->getXDim()-1 );
+        xe = boundValue(node.x + fuzzy_r_ratio*r + 0.5, 0,image->getXDim()-1 );
+        yb = boundValue(node.y - fuzzy_r_ratio*r + 0.5, 0,image->getYDim()-1 );
+        ye = boundValue(node.y + fuzzy_r_ratio*r + 0.5, 0,image->getYDim()-1 );
+        zb = boundValue(node.z - fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
+        ze = boundValue(node.z + fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -439,8 +498,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
             }
 
         }
-
-
 
         //label background
         xb = boundValue(node.x - r - dilate_radius + 0.5, 0,image->getXDim()-1 );
@@ -499,28 +556,15 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     double min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
     metrics.dy = fabs(max_fg - min_fg);
 
-    double bg_mean  = accumulate( bg_1d.begin(), bg_1d.end(), 0.0 )/ bg_1d.size();
-    double fg_mean  = accumulate( fg_1d.begin(), fg_1d.end(), 0.0 )/ fg_1d.size();
-    double sum2 = 0;
+    double bg_mean  = mean(bg_1d);
+    double fg_mean  = mean(fg_1d);
 
-    for ( V3DLONG i = 0; i < bg_1d.size(); i++ )
-    {
-        sum2 += pow(bg_1d[i]-bg_mean,2);
-    }
-    double bg_std= sqrt(sum2/(bg_1d.size()-1));
-    metrics.bg_std = bg_std;
+    metrics.bg_std = standard_dev(bg_1d);
+    metrics.fg_std = standard_dev(fg_1d);
 
-    sum2 = 0;
-    for ( V3DLONG i = 0; i < fg_1d.size(); i++ )
-    {
-        sum2 += pow(fg_1d[i]-fg_mean,2);
-    }
-    double fg_std= sqrt(sum2/(fg_1d.size()-1));
-    metrics.fg_std = fg_std;
-
-    if (bg_std != 0.0){
-        metrics.cnr = fabs(fg_mean - bg_mean)/bg_std;
-        metrics.snr = fg_mean/bg_std;
+    if (metrics.bg_std != 0.0){
+        metrics.cnr = fabs(fg_mean - bg_mean)/metrics.bg_std;
+        metrics.snr = fg_mean/metrics.bg_std;
     }
     else {
         metrics.cnr  = INFINITY;
@@ -532,7 +576,9 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
      metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
      metrics.bg_mean = bg_mean;
      metrics.fg_mean = fg_mean;
-    cout<< " dy = "<<metrics.dy
+
+    /*
+     cout<< " dy = "<<metrics.dy
         <<"; fg_mean ="<< fg_mean
         <<"; fg_median =" << median(fg_1d)
         <<"; bg_mean ="<< bg_mean
@@ -542,7 +588,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         <<"; snr = "<< metrics.snr
         <<"; cnr = "<< metrics.cnr
         <<"; tubularity = "<< metrics.tubularity <<"\n"<< endl;
-
+     */
     return metrics;
 
 }
