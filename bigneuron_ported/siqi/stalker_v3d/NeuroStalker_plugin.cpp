@@ -34,15 +34,19 @@ struct input_PARA
     V3DLONG channel;
     int preprocessing; // 2 : downsample the image within 256*256*256; 1: Crop the image; 0: keep the original image
     int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
+    int step;
+    int stepsize;
+    double threshold;
 };
 
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
-unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize);
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize, double threshold);
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold);
 void TraceReal(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
- PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn);
+ PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn,
+ int step, int stepsize);
 
 QStringList NeuroStalker::menulist() const
 {
@@ -67,10 +71,13 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         PARA.channel = 1;
         PARA.preprocessing = 1;
         PARA.unittest = 1;
+        PARA.step = 5;
+        PARA.stepsize = 5;
+        PARA.threshold = 30;
         cout<<"PARA.channel: "<<PARA.channel<<"PARA.preprocessing: "<<PARA.preprocessing<<"PARA.unittest"
             <<PARA.unittest<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
-     //   v3d_msg(tr("This is working or after?"));
+
     }
     else
     {
@@ -107,6 +114,10 @@ bool NeuroStalker::dofunc(const QString & func_name,
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.preprocessing = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.unittest = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.step = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.stepsize = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.threshold = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        cout<<"Input step test: "<<PARA.step<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
     }
     else if (func_name == tr("help"))
@@ -216,13 +227,14 @@ void reconstruction_func(V3DPluginCallback2 &callback,
 
     // ------- Main neuron reconstruction code
 
+
     // Crop The image
     vectype boxlowsize;
     if (PARA.preprocessing & 1)
     {
         cout<<"=============== Cropping the image ==============="<<endl;
         V3DLONG sz_img_crop[4];
-        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize);
+        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize, PARA.threshold);
         cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
         //cout<<"Saving cropped image to downsample.v3draw"<<endl;
         //saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
@@ -235,10 +247,11 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         for (int i=0; i<4; i++){
             in_sz[i] = sz_img_crop[i];
         }
-        cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
+        //cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
 
         cout<<"=============== Image Cropped ==============="<<endl;
     }
+       // Imcreate takes in_sz with int*
 
     // Downsample the image
     if (PARA.preprocessing & 2)
@@ -283,13 +296,50 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     std::cout<<"=== Adjust Seed Points..."<<std::endl;
     IM->SeedAdjustment(10);
     std::cout<<"=== Preprocessing Finished..."<<std::endl;
+    
+    //----------------------------vesselness begin
+/*    V3DLONG l_npixels_vessel;
+    l_npixels_vessel = in_sz_int[0] * in_sz_int[1] * in_sz_int[2];
+    cout<<"l_npixels_vessel"<<l_npixels_vessel<<endl;
+    GradientImageType::IndexType index;*/
+
+    float vp;
+/*    for (int i = 0; i < 10; ++i)
+    {
+        index[0] = 66 + i;
+        index[1] = 208 + i;
+        index[2] = 48 + i;
+        vp = (float) (IM->IVessel)->GetPixel(index);
+        cout<<"vp output: "<<vp<<endl;
+    }*/
+    const int testthreshold = IM->v_threshold;
+    cout<<"testthreshold: "<<testthreshold<<endl;
+/*    unsigned char *p_vessel = new(std::nothrow) unsigned char[l_npixels_vessel]();
+    unsigned char * vp_tmp = p_vessel;
+    for(V3DLONG Z = 0;Z < in_sz[2]; Z++)
+        for(V3DLONG Y = 0;Y < in_sz[1]; Y++)
+            for(V3DLONG X = 0;X < in_sz[0]; X++)
+            {
+                //cout<<"continue";
+                index[0] = X;
+                index[1] = Y;
+                index[2] = Z;
+                vp = (float) (IM->IVessel)->GetPixel(index);
+                *vp_tmp = vp;
+                vp_tmp++;
+            }
+
+    saveImage("test/Vesselness.v3draw", p_vessel, in_sz, V3D_UINT8);*/
+    //---------------------------vesselness end
 
     // Adaptive thresholding here, may replace with graph cut
     //IM->ImComputeInitBackgroundModel(IM->v_threshold);
     //IM->ImComputeInitForegroundModel();
 
     // Get the Binary Image
-    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+    //replace simple threshold by adaptive thresholding
+    //LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, (int) PARA.threshold);
 
     // Save the binary img to visualise the segmentation
     unsigned short int * binaryimgbuffer =  binaryimg->GetBufferPointer();
@@ -313,7 +363,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     if (PARA.unittest & 1) 
     {
         //PressureSampler p(100, 100, IM->I, IM->IGVF, 10);
-        TraceReal(IM->I, IM->IGVF, binaryimg, IM->SeedPt, &xpfinal, &ypfinal, &zpfinal, &pn,  &rfinal, &sn);
+        TraceReal(IM->I, IM->IGVF, binaryimg, IM->SeedPt, &xpfinal, &ypfinal, &zpfinal, &pn,  &rfinal, &sn, PARA.step, PARA.stepsize);
     }
     cout<<"pn size: "<<pn.size()<<" xpoint size: "<<xpfinal.size()<<" ypoint size: "
             <<ypfinal.size()<<" zpoint size: "<<zpfinal.size()<<" rpoint size: "<<rfinal.size()<<endl; 
@@ -445,21 +495,116 @@ unsigned char * downsample(V3DLONG *in_sz,
 }
 
 
-unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize)
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize, double threshold)
 {    
-    printf("1. Find the bounding box and crop image. \n");
-    V3DLONG V3DLONG l_boundbox_min[3], l_boundbox_max[3];//xyz
-    V3DLONG l_npixels_crop;
-    
+    //Otsu threshold to deal with different types of images
+    double histogram[256];
+    double probability[256];
+    float p1; //first value of the probability in Otsu's algorithm with t = 1
+    float q1; //first value of q qith t = 1
+    float q1prev;//previos value of q1
+    float q1next;//next value of q1 , aka q1(t+1)
+    float mu1; //average of first group, before threshold
+    float mu2;//average of second group, after threshold
+    float mu1next;//next value of the mean for group 1(mu1(t+1))
+    float mu2next;//next value of the mean for group 2(mu2(t+1))
+    float mu;//the mean gray level value of the entire image before thresholding
+    float betweenvariance=0;//between group variance
+    float maxbetweenvariance=0;//max between group variance
+    double sum=0;//sum of all histogram values to calculate the mean grey level value of the imagem values before threshholding
+    int pixelvalue=0;//value of a pixel
+    float optimizedthresh=0;//optimized threshold, at the end of otsu's algorithm this will be the threshold with the max between group vairance
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
-
-    if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
+    float maxintensity = 0;
+    float minintensity = 10000;
+    for (int i = 0; i <= 255; ++i)
+    {
+        histogram[i] = 0;
+    }
+    for (int i = 0; i <= 255; ++i)
+    {
+        probability[i] = 0;
+    }
+    //cout<<"probability: "<<probability[0]<<endl;
+        if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
     {
         printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
         if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
     }
+    double histogramcounter = 0;
+    for(V3DLONG X=0;X<in_sz[0];X++)
+        for(V3DLONG Y=0;Y<in_sz[1];Y++)
+            for(V3DLONG Z=0;Z<in_sz[2];Z++)
+                {
+                    pixelvalue =   (int)(p_img8u_3d[Z][Y][X]);
+                    sum += pixelvalue;
+                    histogram[pixelvalue]++;
+                    histogramcounter = histogramcounter + 1;
+                    if (maxintensity < pixelvalue)
+                        {
+                            maxintensity = pixelvalue;
+                        }
+                    if (minintensity > pixelvalue)
+                        {
+                            minintensity = pixelvalue;
+                        }
+                }
+    //cout<<"sum: "<<sum<<"histogramcounter: "<<histogramcounter<<"pixel total: "<<(in_sz[0] * in_sz[1] * in_sz[2])<<endl;
+    cout<<"maxintensity: "<<maxintensity<<"minintensity: "<<minintensity<<endl;
+    double sumprobability = 0;
+    for (int i = 0; i < 256; ++i)
+    {
+        probability[i] = histogram[i] / histogramcounter;
+        sumprobability = sumprobability + probability[i];
+        //cout<<"probability: "<<probability[i]<<endl;
+    }
+    //cout<<"probabilitysum: "<<sumprobability<<endl;
 
+    //Initial probability p1 which is equal to just the probability of the 0 grey value
+    p1 = probability[0];
+    //initial q which is the sum of probabilities before 1, which is equal to p1
+    q1=p1;
+    //initial mean before the 1 has to be 0. mu(1)=0 
+    mu1=0;
+    //initial mean after the 0. Initially set to 0. This gets reset in the algorithm
+    mu2=0;
+    //mean grey level (mu) calculation
+    mu=sum/(in_sz[0] * in_sz[1] * in_sz[2]);
+    cout <<"mean value of threshold: "<<mu<<"\n";
+
+    q1prev=q1;//set previous q1, q1(t), to equal the current q1
+    for (int t = 1;t<255;t++){
+        q1next=q1prev+probability[t+1]; //q1next-q1(t+1)
+        mu1next=(q1prev*mu1+(t+1)*(probability[t+1]))/q1next;//set mu1(t+1)
+        mu2next= (mu-q1next*mu1next)/(1-q1next);//set mu2(t+1)
+        betweenvariance = q1prev*(1-q1prev)*((mu1-mu2)*(mu1-mu2));//calculate between group variance
+        //max between group variance is initially set to 0. Change the max between group variance, and change the optimized threshold to t if the current variance is > max.
+        if (betweenvariance>maxbetweenvariance){
+            maxbetweenvariance=betweenvariance;
+            optimizedthresh=t;//set new optimized threshhold
+            //cout << "Threshold: "<<optimizedthresh;
+
+        }
+        
+        q1prev=q1next;//set q1(t) to be used in the next iteration to be equal to the current q1(t+1) which is q1next
+        mu1=mu1next;//do the same for mu1. set mu1(t) of next iteration to equal the current mu1(t+1)
+        mu2=mu2next;//set mu2(t) of next iteration to equal the current mu2(t+1)
+        
+        if(q1next==0){
+            mu1=0;//this eliminates divide by 0 errors because the calculate of the next mu1 would be undefend if the next value of q1 is 0, according to the otsu recursive algorithm
+        }
+
+    }
+    cout << "Threshold: "<<optimizedthresh<<endl;
+    printf("1. Find the bounding box and crop image. \n");
+    V3DLONG V3DLONG l_boundbox_min[3], l_boundbox_max[3];//xyz
+    V3DLONG l_npixels_crop;
+    optimizedthresh =  30 + optimizedthresh;
+
+
+
+    int counter = 0;
     printf("boundingbox x dimension: %d,y dimension: %d,z dimension: %d.\n", in_sz[0], in_sz[1], in_sz[2]);
     l_boundbox_min[0] = in_sz[0];  l_boundbox_min[1] = in_sz[1];  l_boundbox_min[2] = in_sz[2];
     l_boundbox_max[0] = 0;                l_boundbox_max[1] = 0;                l_boundbox_max[2] = 0;
@@ -467,16 +612,18 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
         for(V3DLONG Y=0;Y<in_sz[1];Y++)
             for(V3DLONG Z=0;Z<in_sz[2];Z++)
             {
-                if(p_img8u_3d[Z][Y][X]>0.1)
+                if( p_img8u_3d[Z][Y][X] > threshold)
                 {
                     if(l_boundbox_min[0] > X) l_boundbox_min[0] = X;    if(l_boundbox_max[0] < X) l_boundbox_max[0] = X;
                     if(l_boundbox_min[1] > Y) l_boundbox_min[1] = Y;    if(l_boundbox_max[1] < Y) l_boundbox_max[1] = Y;
                     if(l_boundbox_min[2] > Z) l_boundbox_min[2] = Z;    if(l_boundbox_max[2] < Z) l_boundbox_max[2] = Z;
                 }
+                //counter = counter +1;
             }
     printf(">>boundingbox: x[%ld~%ld],y[%ld~%ld],z[%ld~%ld]\n",l_boundbox_min[0], l_boundbox_max[0],
                                                                l_boundbox_min[1], l_boundbox_max[1],
                                                                l_boundbox_min[2], l_boundbox_max[2]);
+    //cout<<"counter: "<<counter<<endl;
 
     //crop image
     sz_img_crop[0] = l_boundbox_max[0] - l_boundbox_min[0] + 1;
@@ -554,7 +701,8 @@ LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int thr
 }
 
 void TraceReal(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
- PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn)
+ PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn, 
+ int step, int stepsize)
 {
     #define INF 1E9
     int nseed = seeds.GetLength();
@@ -585,7 +733,6 @@ void TraceReal(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImageP
         {
             seedadjust(&seedx, &seedy, &seedz);
         }
-    int step = 1;
     int ndir = 100;
     char mpfiletitle[80];        
     vectype xpoint, ypoint, zpoint, rpoint;
@@ -599,12 +746,12 @@ void TraceReal(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImageP
                 PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
                 p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
                 //cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
-                for (int i = 1; i < 20; i++)
+                for (int i = 1; i < step; i++)
                     {
                         //cout<<"RandSample stage: "<<endl;
                         p.RandSample();
                         //cout<<"NextMove stage: "<<endl;
-                        p.NextMove(1.1);
+                        p.NextMove(stepsize);
                         //cout<<"push_back stage: "<<endl;
                         wallfilteridx[0] = int (constrain((p.x), 1, M - 1));
                         wallfilteridx[1] = int (constrain((p.y), 1, N - 1));
