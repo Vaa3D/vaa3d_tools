@@ -8,6 +8,8 @@
 #include "neurontracing_region_neuron2_plugin.h"
 #include "stackutil.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+
 
 
 using namespace std;
@@ -477,14 +479,26 @@ void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
         return;
     #endif
 
-   unsigned char * image_region = 0;
+   unsigned char * image_region_load = 0;
    int datatype;
    V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
+   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region_load, in_zz, datatype))
    {
        v3d_msg("Fail to load image");
        return;
    }
+
+   unsigned char* image_region = 0;
+   image_region = new unsigned char [pagesz];
+
+   double min,max;
+   if(datatype !=1)
+       rescale_to_0_255_and_copy((unsigned short int*)image_region_load,pagesz,min,max,image_region);
+   else
+       memcpy(image_region, image_region_load, pagesz);
+
+   if(image_region_load) {delete []image_region_load; image_region_load = 0;}
+
 
    int groupNum = 0;
    for(V3DLONG i = 0; i < pagesz; i++)
@@ -529,8 +543,8 @@ void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
        }
    }
 
-
-   int groupmax = groupNum;
+   datatype = 1;
+   int groupmax = 50;
    vector<MyMarker*> outswc_final;
 
    for(int dd = 0; dd < groupmax; dd++)
