@@ -45,6 +45,13 @@ svn up
 qmake
 make
 
+#smartTrace
+cd ../neurontracing_smarttracing/
+make clean
+svn up
+qmake
+make
+
 #TreMap 
 cd  ../../../hackathon/zhi/neurontracing_mip/
 make clean
@@ -64,13 +71,6 @@ cd ../../../hackathon/zhi/snake_tracing/
 if [ ! -d ITK_include ]; then
 	unzip ITK_include.zip		
 fi	
-make clean
-svn up
-qmake
-make
-
-#smartTrace
-cd ../../../hackathon/hanbo/neurontracing_selfCorrect/
 make clean
 svn up
 qmake
