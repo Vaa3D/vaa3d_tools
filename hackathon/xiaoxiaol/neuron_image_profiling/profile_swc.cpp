@@ -120,7 +120,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id,segment_type,dynamic_range,cnr,snr,tubularity,fg_mean,bg_mean"<<"\n";
+        stream<< "segment_id,segment_type,dynamic_range,cnr,snr,tubularity,fg_mean,bg_mean,fg_std,bg_std"<<"\n";
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << i+1 <<","
@@ -130,7 +130,9 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
                    << result_metrics[i].snr        <<","
                    << result_metrics[i].tubularity <<","
                    << result_metrics[i].fg_mean    <<","
-                   << result_metrics[i].bg_mean    <<"\n";
+                   << result_metrics[i].bg_mean    <<","
+                   << result_metrics[i].fg_std     <<","
+                   << result_metrics[i].bg_std     <<"\n";
         }
 
         file.close();
@@ -293,7 +295,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     V3DLONG min_x = INFINITY, min_y = INFINITY,  min_z = INFINITY, max_x = 0, max_y = 0, max_z= 0;
 
-    //get the  bounding box of ROI include the background defined by the dilate_ratio
+    //get the bounding box of ROI
     for (V3DLONG i =0 ; i < neuronSegment.size() ; i++)
     {
        NeuronSWC node = neuronSegment.at(i);
@@ -358,6 +360,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     unsigned char  * roi_1d_visited = new  unsigned char [size_1d];
     int FG = 255;
     int BG = 100;
+    int FUZZY = 10;
 
 
 
@@ -411,6 +414,34 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
         }
 
+        //label fuzzy region (between foreground and background, to avoid including spines, and tolerate underestimated neuron radius
+        double fuzzy_r_ratio = 1.5;  //0.5 r
+        xb = boundValue(node.x - fuzzy_r_ratio*r +0.5, 0,image->getXDim()-1 );
+        xe = boundValue(node.x + fuzzy_r_ratio*r +0.5, 0,image->getXDim()-1 );
+        yb = boundValue(node.y - fuzzy_r_ratio*r +0.5, 0,image->getYDim()-1 );
+        ye = boundValue(node.y + fuzzy_r_ratio*r +0.5, 0,image->getYDim()-1 );
+        zb = boundValue(node.z - fuzzy_r_ratio*r +0.5, 0,image->getZDim()-1 );
+        ze = boundValue(node.z + fuzzy_r_ratio*r +0.5, 0,image->getZDim()-1 );
+        for (V3DLONG z = zb; z <= ze; z++)
+        {
+            for ( V3DLONG y = yb; y <= ye; y++)
+            {
+                for ( V3DLONG x = xb; x <= xe; x++)
+                {
+                    V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+                    V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+                    if  ( roi_1d_visited[roi_index] != FG )
+                    {
+                        roi_1d_visited[roi_index] = FUZZY;
+                    }
+                }
+
+            }
+
+        }
+
+
+
         //label background
         xb = boundValue(node.x - r - dilate_radius + 0.5, 0,image->getXDim()-1 );
         xe = boundValue(node.x + r + dilate_radius + 0.5, 0,image->getXDim()-1 );
@@ -429,7 +460,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    if  ( roi_1d_visited[roi_index] == 0)
+                    if  ( roi_1d_visited[roi_index] != FG  &&  roi_1d_visited[roi_index] != FUZZY )
                     {
                         roi_1d_visited[roi_index] = BG;
                         bg_1d.push_back(double(image->getRawData()[index_1d]));
