@@ -627,8 +627,6 @@ void manual_correct_dialog::reset_image_data()
 
     sz[3]=3;
 
-    qDebug()<<"halfsize:"<<halfwindowsize<<" x,y,z:"<<x<<":"<<y<<":"<<z;
-    qDebug()<<"sz0,sz1,sz2:"<<sz[0]<<":"<<sz[1]<<":"<<sz[2];
     if (image_trun!=0)
     {
         delete [] image_trun;
@@ -641,6 +639,8 @@ void manual_correct_dialog::reset_image_data()
     x_start=MAX(0,x-halfwindowsize);
     y_start=MAX(0,y-halfwindowsize);
     z_start=MAX(0,z-halfwindowsize);
+    qDebug()<<"halfsize:"<<halfwindowsize<<" x,y,z:"<<x<<":"<<y<<":"<<z;
+    qDebug()<<"sz0,sz1,sz2:"<<sz[0]<<":"<<sz[1]<<":"<<sz[2];
 
     for (V3DLONG dx=x_start;dx<MIN(sz_img[0],x+halfwindowsize+1);dx++){
         for (V3DLONG dy=y_start;dy<MIN(sz_img[1],y+halfwindowsize+1);dy++){
@@ -721,11 +721,11 @@ void manual_correct_dialog::marker_roi()
 
     //Step 5: update marker in 2 tri-view and one 3D
     // if this markers is not determined,Landmark color change
-    if (LList_in[mid].comments.empty())
+    if (QString::fromStdString(LList_in[mid].comments).contains("0"))
     {
-        LList_in[mid].color.r=LList_in[mid].color.b=255;
+        //LList_in[mid].color.r=LList_in[mid].color.b=255;
         LList_adj[mid].color.r=LList_adj[mid].color.b=255;
-        LList_in[mid].color.g=70;
+        //LList_in[mid].color.g=70;
         LList_adj[mid].color.g=70;
     }
     Image4DSimple image4d;
@@ -741,8 +741,8 @@ void manual_correct_dialog::marker_roi()
     callback->setLandmark(main_win,LList_in);
 
     //Step 6: reset marker color back to original color
-    LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
-    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=255;
+    //LList_in[mid].color.r=LList_in[mid].color.b=LList_in[mid].color.g=255;
+    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_in[mid].color.g=0;
     //qDebug()<<"~~~~marker roi finished";
 }
 
@@ -2561,6 +2561,7 @@ void manual_correct_dialog::big_image_pipeline_start()
     sz_img[3]=1;
     progress.setValue(nt_segs.size());
     QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
+
     unsigned char * outfile= new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]];
     memset(outfile,0,sz_img[0]*sz_img[1]*sz_img[2]);
     for (QSet <V3DLONG>::Iterator mi=spine_map.begin();mi!=spine_map.end();mi++)

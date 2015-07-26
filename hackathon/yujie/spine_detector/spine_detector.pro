@@ -31,6 +31,7 @@ unix:!macx {
     LIBS += -fopenmp
 }
 
+HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
 
 HEADERS	+= spine_detector_plugin.h \
     spine_detector_dialog.h \

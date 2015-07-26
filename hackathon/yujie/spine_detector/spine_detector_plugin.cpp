@@ -6,6 +6,7 @@
 #include "spine_detector_plugin.h"
 #include "app2.h"
 #include "manual_correct_dialog.h"
+#include "learning.h"
 
 
 using namespace std;
@@ -20,6 +21,7 @@ QStringList spine_detector::menulist() const
         <<tr("spine_detector_1.0 (proofread by spine)")
         <<tr("spine_detector_1.1 (proofread by segment)")
         <<tr("spine_detector_2.0 (for big images)")
+        <<tr("learning_test")
         <<tr("about");
 }
 
@@ -56,6 +58,17 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
        spine_obj->conn_comp_nb6();
        spine_obj->write_spine_center_profile();
        spine_obj->saveResult();
+    }
+    else if(menu_name==tr("learning_test"))
+    {
+        QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.v3draw";
+        QString out_name="learning_result.v3draw";
+        QString marker_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.marker";
+        learning * learning_obj=new learning(&callback,image_name.toAscii(),marker_name.toAscii(),out_name.toAscii());
+        learning_obj->loadData();
+        learning_obj->loadmarker();
+        learning_obj->wavelet_start();
+        qDebug()<<"the end....";
     }
     else if(menu_name==tr("spine_detector_1.0 (proofread by spine)"))
     {
