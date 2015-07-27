@@ -48,6 +48,15 @@ struct APP1_LS_PARA
 void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 void autotrace_region_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA &p,bool bmenu);
 
+template <class T> void app2_tracing(const T* image_region,
+                                     unsigned char * data1d,
+                                     V3DLONG *in_sz,
+                                     V3DPluginCallback2 &callback,
+                                     QString tmpfolder,
+                                     APP2_LS_PARA &Para,
+                                     bool bmenu);
+
+
 QString getAppPath();
 
  
@@ -479,130 +488,26 @@ void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
         return;
     #endif
 
-   unsigned char * image_region_load = 0;
+   unsigned char * image_region = 0;
    int datatype;
    V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region_load, in_zz, datatype))
+   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
    {
        v3d_msg("Fail to load image");
        return;
    }
 
-   unsigned char* image_region = 0;
-   image_region = new unsigned char [pagesz];
-
-   double min,max;
-   if(datatype !=1)
-       rescale_to_0_255_and_copy((unsigned short int*)image_region_load,pagesz,min,max,image_region);
-   else
-       memcpy(image_region, image_region_load, pagesz);
-
-   if(image_region_load) {delete []image_region_load; image_region_load = 0;}
-
-
-   int groupNum = 0;
-   for(V3DLONG i = 0; i < pagesz; i++)
+   switch (datatype)
    {
-       if(image_region[i] > groupNum)
-           groupNum = image_region[i];
+   case 1: app2_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+   case 2: app2_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+   default: v3d_msg("Invalid data type. Do nothing."); return;
    }
 
-   int *groupArray = new int[groupNum];
-   int *groupIndex = new int[groupNum];
 
-   for(int i = 0; i < groupNum; i++)
-   {
-       groupArray[i] = 0;
-       groupIndex[i] = i+1;
-   }
-
-   for(V3DLONG i = 0; i < pagesz; i++)
-   {
-       if(image_region[i] > 0)
-           groupArray[image_region[i] - 1] += 1;
-   }
-
-   int tmp,tmp_index;
-   for(V3DLONG i = 0; i < groupNum; i++)
-   {
-       if (i > 0)
-       {
-           V3DLONG j = i;
-           while(j > 0 && groupArray[j-1]<groupArray[j])
-           {
-               tmp = groupArray[j];
-               groupArray[j] = groupArray[j-1];
-               groupArray[j-1] = tmp;
-
-               tmp_index = groupIndex[j];
-               groupIndex[j] = groupIndex[j-1];
-               groupIndex[j-1] = tmp_index;
-
-               j--;
-           }
-       }
-   }
-
-   datatype = 1;
-   int groupmax = 50;
-   vector<MyMarker*> outswc_final;
-
-   for(int dd = 0; dd < groupmax; dd++)
-   {
-       unsigned char *image_region_one = new unsigned char [pagesz];
-       V3DLONG group_type = groupIndex[dd];
-
-
-       for(V3DLONG i = 0; i < pagesz*datatype; i++)
-       {
-
-           if(image_region[i] == group_type)
-               image_region_one[int(i/datatype)] = data1d[int(i/datatype)];
-           else
-               image_region_one[int(i/datatype)] = 0;
-       }
-
-
-       QString APP2_image_name = tmpfolder + "/group_one.raw";
-       simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
-       if(image_region_one) {delete []image_region_one; image_region_one = 0;}
-
-       QString APP2_swc =  APP2_image_name + QString("_group_%1.swc").arg(group_type);
-
-
-        #if  defined(Q_OS_LINUX)
-            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
-                    .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
-            system(qPrintable(cmd_APP2));
-        #elif defined(Q_OS_MAC)
-            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
-                    .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
-            system(qPrintable(cmd_APP2));
-        #else
-                 v3d_msg("The OS is not Linux or Mac. Do nothing.");
-                 return;
-        #endif
-
-       vector<MyMarker*> temp_out_swc = readSWC_file(APP2_swc.toStdString());
-
-       for(V3DLONG d = 0; d <temp_out_swc.size(); d++)
-       {
-           outswc_final.push_back(temp_out_swc[d]);
-
-       }
-
-    }
-
-    if(image_region) {delete []image_region; image_region = 0;}
-    if(~bmenu)
-        if(data1d) {delete []data1d; data1d = 0;}
-
-
-    QString final_swc = image_name + "_region_APP2.swc";
-    saveSWC_file(final_swc.toStdString(), outswc_final);
-
-    system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
+   if(image_region) {delete []image_region; image_region = 0;}
+   if(~bmenu)
+       if(data1d) {delete []data1d; data1d = 0;}
 
    return;
 }
@@ -629,4 +534,115 @@ QString getAppPath()
 
     v3dAppPath = testPluginsDir.absolutePath();
     return v3dAppPath;
+}
+
+template <class T> void app2_tracing(const T* image_region,
+                                     unsigned char* data1d,
+                                     V3DLONG *in_sz,
+                                     V3DPluginCallback2 &callback,
+                                     QString tmpfolder,
+                                     APP2_LS_PARA &Para,
+                                     bool bmenu)
+{
+
+    V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+    int groupNum = 0;
+    for(V3DLONG i = 0; i < pagesz; i++)
+    {
+        if((unsigned short int)image_region[i] > groupNum)
+            groupNum = image_region[i];
+    }
+
+    int *groupArray = new int[groupNum];
+    int *groupIndex = new int[groupNum];
+
+    for(int i = 0; i < groupNum; i++)
+    {
+        groupArray[i] = 0;
+        groupIndex[i] = i+1;
+    }
+
+    for(V3DLONG i = 0; i < pagesz; i++)
+    {
+        if((unsigned short int)image_region[i] > 0)
+            groupArray[(unsigned short int)image_region[i] - 1] += 1;
+    }
+
+    int tmp,tmp_index;
+    for(V3DLONG i = 0; i < groupNum; i++)
+    {
+        if (i > 0)
+        {
+            V3DLONG j = i;
+            while(j > 0 && groupArray[j-1]<groupArray[j])
+            {
+                tmp = groupArray[j];
+                groupArray[j] = groupArray[j-1];
+                groupArray[j-1] = tmp;
+
+                tmp_index = groupIndex[j];
+                groupIndex[j] = groupIndex[j-1];
+                groupIndex[j-1] = tmp_index;
+
+                j--;
+            }
+        }
+    }
+
+    int groupmax = 50;
+    if(groupNum <= groupmax) groupmax = groupNum;
+
+    vector<MyMarker*> outswc_final;
+
+    for(int dd = 0; dd < groupmax; dd++)
+    {
+        unsigned char *image_region_one = new unsigned char [pagesz];
+        V3DLONG group_type = groupIndex[dd];
+
+
+        for(V3DLONG i = 0; i < pagesz; i++)
+        {
+
+            if(image_region[i] == group_type)
+                image_region_one[i] = data1d[i];
+            else
+                image_region_one[i] = 0;
+        }
+
+        QString APP2_image_name = tmpfolder + "/group_one.raw";
+        simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
+        if(image_region_one) {delete []image_region_one; image_region_one = 0;}
+
+        QString APP2_swc =  APP2_image_name + QString("_group_%1.swc").arg(group_type);
+
+
+    #if  defined(Q_OS_LINUX)
+        QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
+                .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
+        system(qPrintable(cmd_APP2));
+    #elif defined(Q_OS_MAC)
+        QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
+                .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
+        system(qPrintable(cmd_APP2));
+    #else
+        v3d_msg("The OS is not Linux or Mac. Do nothing.");
+        return;
+    #endif
+
+        vector<MyMarker*> temp_out_swc = readSWC_file(APP2_swc.toStdString());
+
+        for(V3DLONG d = 0; d <temp_out_swc.size(); d++)
+        {
+            outswc_final.push_back(temp_out_swc[d]);
+
+        }
+
+    }
+
+    QString final_swc = Para.inimg_file + "_region_APP2.swc";
+    saveSWC_file(final_swc.toStdString(), outswc_final);
+
+    system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
+
 }
