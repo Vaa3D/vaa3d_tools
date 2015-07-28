@@ -30,6 +30,16 @@ const QString title = QObject::tr("Image Profile with SWC ROI");
 #define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
 #endif
 
+static void cutoff_outliers(vector<double> & x)
+{
+    //remove the top and bottom 10% data, to be more robust
+    sort(x.begin(), x.end());
+    int num_to_remove = x.size()*0.1;
+
+    // erase the top and bottom N elements:
+    x.erase( x.begin(), x.begin()+ num_to_remove);
+    x.erase( x.end()-num_to_remove, x.end());
+}
 
 static V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
 {
@@ -74,6 +84,8 @@ static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
     vector <double> bgs;
     vector <double> fgs;
 
+
+
     for (int i  = 0; i < result_metrics.size() ; i++)
     {
         cnrs.push_back( result_metrics[i].cnr);
@@ -82,6 +94,13 @@ static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
         bgs.push_back(result_metrics[i].bg_mean);
         fgs.push_back(result_metrics[i].fg_mean);
     }
+
+    cutoff_outliers(cnrs);
+    cutoff_outliers(dys);
+    cutoff_outliers(tubus);
+    cutoff_outliers(bgs);
+    cutoff_outliers(fgs);
+
 
     stats.mean_cnr = mean(cnrs);
     stats.mean_dy = mean(dys);
@@ -100,16 +119,7 @@ static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
 
 }
 
-static void cutoff_outliers(vector<double> & x)
-{
-    //remove the top and bottom 10% data, to be more robust
-    sort(x.begin(), x.end());
-    int num_to_remove = x.size()*0.1;
 
-    // erase the top and bottom N elements:
-    x.erase( x.begin(), x.begin()+ num_to_remove);
-    x.erase( x.end()-num_to_remove, x.end());
-}
 
 
 
@@ -408,9 +418,9 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
     int size_1d = width * height *depth;
 
-    cout << "min: "<< min_x<<" "<< min_y <<" " <<min_z<<endl;
-    cout << "max: "<< max_x<<" "<< max_y <<" " <<max_z<<endl;
-    cout << "size:" << width<<" x" <<height <<" x"<<depth<<endl;
+    //cout << "min: "<< min_x<<" "<< min_y <<" " <<min_z<<endl;
+    //cout << "max: "<< max_x<<" "<< max_y <<" " <<max_z<<endl;
+    //cout << "size:" << width<<" x" <<height <<" x"<<depth<<endl;
 
 
     vector <double> fg_1d;
@@ -547,7 +557,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 */
 
     // compute metrics
-    //remove the top and bottom 5% data to be robust
+    // remove the top and bottom 5% data to be robust
     cutoff_outliers(fg_1d);
     cutoff_outliers(bg_1d);
     cutoff_outliers(tubularities);
@@ -595,8 +605,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 
 QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, int invert, V3DPluginCallback2 &callback)
 {
-
-
     if(flip > 0)
     {
       flip_y(image);
@@ -631,12 +639,11 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     QList<NeuronSWC> neuronSegment;
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
-
         if (segment_id[i] != pre_id)
         {
             if (!neuronSegment.empty())
             {
-                cout<<"Segment # :"<<pre_id<<endl;
+                //cout<<"Segment # :"<<pre_id<<endl;
                 IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
                 num_segments++;
                 result_metrics.push_back(metrics);
@@ -653,7 +660,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
     if (!neuronSegment.empty())
     {
-        cout<<"Segment # :"<<pre_id<<endl;
+        //cout<<"Segment # :"<<pre_id<<endl;
         IMAGE_METRICS metrics = compute_metrics( image, neuronSegment,dilate_ratio, callback );
         num_segments++;
         result_metrics.push_back(metrics);
