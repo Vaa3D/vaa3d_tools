@@ -13204,7 +13204,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
    //  cin.get();
 
-   // /*
+   // /*  // load image using loadImage  comment this line to disable loadImage
 
     if (!loadImage(fileName_string, inimg, in_sz, datatype))
     {
@@ -13219,7 +13219,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
 // */
 
-/*
+/*  // load image using simple_loadimage_wrapper , uncomment this line to enable simple_loadimage_wrapper
 
     if (!simple_loadimage_wrapper(callback, fileName_string, inimg, in_sz, datatype))
     {
