@@ -87,7 +87,7 @@ $1 -x CWlab_method1_version1 -f tracing_func -i $2 -p 1
 mv  "$2_Cwlab_ver1.swc" $3
 $1 -x LCM_boost -f LCM_boost -i $2 -o $2_LCMboost.swc 
 mv  "$2_LCMboost.swc" $3
-$1 -x NeuroStalker -f tracing_func -i $2
+$1 -x NeuroStalker -f tracing_func -i $2 -p 1 1 1 5 5 30
 mv  "$2_NeuroStalker.swc" $3
 $1 -x nctuTW -f tracing_func -i $2 -p NULL
 mv  "$2_nctuTW.swc" $3
