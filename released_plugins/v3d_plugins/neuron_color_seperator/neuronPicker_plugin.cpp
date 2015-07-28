@@ -453,6 +453,8 @@ void neuronPickerDialog::creat()
     spin_conviter->setRange(0,100); spin_conviter->setValue(5);
     spin_sizemargin = new QSpinBox();
     spin_sizemargin->setRange(0,100000); spin_sizemargin->setValue(15);
+    spin_rate = new QDoubleSpinBox();
+    spin_rate->setRange(0,100000); spin_rate->setValue(1);
     QLabel* label_0 = new QLabel("background threshold (0~255):");
     gridLayout->addWidget(label_0,6,0,1,2);
     gridLayout->addWidget(spin_bgthr,6,2,1,1);
@@ -465,6 +467,9 @@ void neuronPickerDialog::creat()
     QLabel* label_3 = new QLabel("extract margin size: ");
     gridLayout->addWidget(label_3,7,3,1,2);
     gridLayout->addWidget(spin_sizemargin,7,5,1,1);
+    QLabel* label_4 = new QLabel("output intensity scale: ");
+    gridLayout->addWidget(label_4,8,0,1,2);
+    gridLayout->addWidget(spin_rate,8,2,1,1);
 
     //other
     QFrame *line_2 = new QFrame();
@@ -674,6 +679,7 @@ void neuronPickerDialog::runall()
 
     //extract by markers and save
     V3DLONG success=0;
+    pickerObj.innerScale=spin_rate->value();
     for(int idx_landmark=0; idx_landmark<poss_landmark.size(); idx_landmark++){
         V3DLONG pos_landmark=poss_landmark[idx_landmark];
         pos_out=pos_landmark;
@@ -760,6 +766,7 @@ void neuronPickerDialog::extract()
 
     qDebug()<<"start extracting";
     pos_out=pos_landmark;
+    pickerObj.innerScale = spin_rate->value();
     V3DLONG rsize=pickerObj.extractMargin_uchar(image1Dc_out,sz_out, pos_landmark, spin_conviter->value(), spin_distance->value(), spin_bgthr->value(), spin_sizemargin->value());
     if(rsize>0){
         qDebug()<<"NeuronPicker: push for visualization: "<<image1Dc_out<<":"<<sz_out[0]<<":"<<sz_out[1]<<":"<<sz_out[2]<<":"<<sz_out[3];

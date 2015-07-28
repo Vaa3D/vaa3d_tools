@@ -87,6 +87,7 @@ public:
     QPushButton *btn_update, *btn_extract, *btn_save, *btn_next, *btn_quit, *btn_load, *btn_output, *btn_runall, *btn_autoMarkers;
     QSpinBox *spin_distance, *spin_bgthr, *spin_conviter, *spin_fgthr, *spin_sizethr, *spin_sizemargin;
     QLineEdit *edit_load, *edit_output;
+    QDoubleSpinBox *spin_rate;
 };
 
 
