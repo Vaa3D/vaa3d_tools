@@ -243,9 +243,9 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     }
     else
     {
-        V3DLONG *im_sz = 0;
+        V3DLONG im_sz[4];
         int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
+        if (!simple_loadimage_wrapper(callback,image_name.toStdString().c_str(), data1d, im_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
             return;
@@ -507,7 +507,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    }
 
 
-   int groupmax = 15;
+   int groupmax = 30;
    if(groupNum <= groupmax) groupmax = groupNum;
    vector<MyMarker*> outswc_final;
 
@@ -749,6 +749,10 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                outswc.clear();
            }
        }
+
+//       QString group_swc = tmpfolder + QString("/raw_%1.swc").arg(dd);
+//       saveSWC_file(group_swc.toStdString(), outswc_final);
+//       outswc_final.clear();
     }
 
    QString swc_2D,final_swc;
@@ -887,7 +891,7 @@ void autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2
     }
 
 
-    int groupmax = 15;
+    int groupmax = 5;
     if(groupNum <= groupmax) groupmax = groupNum;
     vector<MyMarker*> outswc_final;
     for(int dd = 0; dd < groupmax; dd++)
@@ -1032,11 +1036,6 @@ void autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
                 smooth_curve(outswc,5);
 
-//                QString APP2_image_name = tmpfolder +  QString("/raw_%1.raw").arg(i);
-//                simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)data1d, im3D_sz, V3D_UINT8);
-//                QString final_swc = tmpfolder + QString("/raw_%1.swc").arg(i);
-//                saveSWC_file(final_swc.toStdString(), outswc);
-
                 for(V3DLONG d = 0; d <outswc.size(); d++)
                 {
                     outswc[d]->radius = 2;
@@ -1101,12 +1100,21 @@ void autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 }
                 if(data1d) {delete []data1d; data1d = 0;}
                 outswc.clear();
+
             }
+//            QString APP2_image_name = tmpfolder +  QString("/raw_%1.raw").arg(i);
+//            simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)data1d, im3D_sz, V3D_UINT8);
+//            QString final_swc = tmpfolder + QString("/raw_%1.swc").arg(i);
+//            saveSWC_file(final_swc.toStdString(), outswc_final);
+//            outswc_final.clear();
+
         }
+  //      return;
+
     }
 
     QString final_swc = image_name + "_raw_3D_TreMap.swc";
-    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+   // system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
     saveSWC_file(final_swc.toStdString(), outswc_final);
 
