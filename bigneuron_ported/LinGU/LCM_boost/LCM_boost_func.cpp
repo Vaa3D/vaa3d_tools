@@ -42,7 +42,7 @@ using namespace cv::ml;
 
 #define checkin 1
 
-#define base_method 2
+#define base_method 1
 
 #define base_line_open 0
 
@@ -1691,7 +1691,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
 
 
-    for(int i_img = 1; i_img < 2014; i_img ++)
+    for(int i_img = 19; i_img < 2014; i_img ++)
     {
 
 
@@ -1738,7 +1738,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         Mat image1;
 
-        if(loadMat(image1, (char*)im_file.c_str()) < 0)
+        if(loadMat(callback,image1, (char*)im_file.c_str()) < 0)
             continue;
 
 
@@ -1765,7 +1765,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         int img_pg = image.size[0] * image.size[1];
 
-         char * tmp_nm = new char[100];
+        char * tmp_nm = new char[100];
 
         if(base_method == 1)
         {
@@ -1798,7 +1798,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
             multiscaleEhance(callback, (char*)roi_fn.c_str(), conf_img);
 
 
-            sprintf(dataset,"OPFmEh");
+            sprintf(dataset,"BigNmEh");
 
 
 
@@ -1831,7 +1831,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
             t2 = 0;
 
-            sprintf(dataset,"OPFFM");
+            sprintf(dataset,"BigNFM");
 
             sprintf(tmp_nm,"tmp_swc.swc");
 
@@ -1867,7 +1867,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
             t2 = 3;
 
-            sprintf(dataset,"OPFtrace");
+            sprintf(dataset,"BigNTrace");
 
             //cin.get();
 
@@ -1894,6 +1894,10 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
         Mat seg_img;
 
         seg_img = image;
+
+       // cout << dataset << endl;
+
+       // cin.get();
 
         LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
 
@@ -1971,7 +1975,7 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     Mat image1;
 
-    loadMat(image1, infile);
+    loadMat(callback,image1, infile);
 
     // shrink the iamge if possible
 
@@ -7697,9 +7701,12 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
  	find_t2_fragments(image, seg_img, t2, 0);
 
- //	retrieve_low_confidence(input_img, image, seg_img, char * dataset);
+ //	cin.get();
+
+ 	//retrieve_low_confidence(input_img, image, seg_img,  dataset);
 
 
+    //cin.get();
 
 
  	cout << "carry out the final filtering" << endl;
@@ -7740,6 +7747,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
        // cin.get();
 
     }
+
 
   //  force_merge1(image,seg_img,50);
 
@@ -8547,6 +8555,8 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << "label image has " << n_t2  << " components" << endl;
 
+	//cin.get();
+
 	//link_ftrs(min_dist1,curvature_l, base_thrs, bnd, frag_p1,base_p1, PixelIdxListx, PixelIdxListy,PixelIdxListz);
 
 	link_ftrs1(min_dist1,curvature_l, base_pl, bnd, frag_p1, base_p1, PList_t2_x, PList_t2_y, PList_t2_z);
@@ -8555,13 +8565,26 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	int cub_page;
 
-	cub_page = (2 * cb_sz[0] + 1) * (2 * cb_sz[1] + 1) * (2 * cb_sz[2] + 1);
+	cub_page = cb_sz[0] * cb_sz[1] * cb_sz[2];
+
 
 	//double feature_cc[max_label][4 + cub_page + hist_page];
 
     Mat feature_cc = Mat(n_t2,6 + cub_page + hist_page,CV_32F);
 
+   // cout << cub_page << endl;
+
+   // cout << hist_page << endl;
+
+   // cout << feature_cc.cols << endl;
+
+   // cin.get();
+
+
 	// fill the features for individual component
+
+   //cin.get();
+
 
 	cout << "start filling" << endl;
 
@@ -8666,7 +8689,6 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 
 
-    //cin.get();
 
 
 
@@ -8675,9 +8697,24 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << "Start classifying" << endl;
 
-    //LCM_classify(feature_cc, resp_tst,dataset);
+    //cin.get();
+
+    LCM_classify(feature_cc, resp_tst,dataset);
 
 	cout << "Complete classifying" << endl;
+
+
+
+	for(int i = 0; i < feature_cc.rows; i++)
+	{
+
+        cout << "Response " << i << " is " << resp_tst[i] << endl;
+
+
+	}
+
+//	cin.get();
+
 
 	//rt_test(feature_cc, resp_tst);
 
@@ -8709,7 +8746,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 		//   cout << "fila_frag " << i << " is " << fila_frag[i] << endl;
 
-		if((resp_tst[i] < 1)&(base_pl[i] < 1))
+		if((resp_tst[i] < 0) & (base_pl[i] < 1) & (feature_cc.at<float>(i,0) < 300))
 		{
 			int n_p = PList_t2_x[i].size();
 
@@ -9789,6 +9826,12 @@ int collect_hog1(Mat label_img,Mat & hist1,int * base_list,vector<vector<int> > 
 
 	    				  hist1.at<int>(g3d) = h_bin;
 
+	    				  //cout << "g3d is " << g3d << endl;
+
+
+
+	    				 // cin.get();
+
 	    				  //hist[g3d[0]][g3d[1]][g3d[2]][l] ++;
 
 
@@ -10112,6 +10155,14 @@ int local_ftrs(Mat image,Mat & centre_cc1,Mat & cub1,vector<vector<int> >  Pixel
 					  v3[1] = cy + j - cb_sz[1];
 
 					  v3[2] = cz + k - cb_sz[2];
+
+
+					  cub1.at<uchar>(vc) = image.at<uchar>(v3);
+
+
+
+
+
 
                   /*
 
@@ -10568,6 +10619,10 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 {
 	int max_label = PixelIdxListx.size();
 
+	int *max_axe_p;
+
+	 int *min_axe_p;
+
 	  for(int k = 0; k < max_label; k++ )
 	  {
 		 int cub_sz[3];
@@ -10578,11 +10633,11 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 
 		 cub_sz[2] = bnd[2 * k + 1 + 4 * max_label] - bnd[2 * k + 4 * max_label];
 
-		 int *max_axe_p = max_element(cub_sz,cub_sz + 3);
+		 max_axe_p = max_element(cub_sz,cub_sz + 3);
 
 		 int max_axe = *max_axe_p;
 
-		 int *min_axe_p = min_element(cub_sz,cub_sz + 3);
+		 min_axe_p = min_element(cub_sz,cub_sz + 3);
 
 		 int min_axe = *min_axe_p;
 
@@ -10594,6 +10649,8 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 
 		 cub_sz[min_axe_idx] = 0;
 
+		 cout << "Complete 10603" << endl;
+
 
 
 		 int mid_axe = *max_element(cub_sz,cub_sz + 3);
@@ -10601,6 +10658,8 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 		 int nPixel = PixelIdxListx[k].size();
 
 		 feature_cc.at<float>(k,0) = (float)nPixel;
+
+
 
 		 feature_cc.at<float>(k,1) = (float)max_axe;
 
@@ -10619,6 +10678,10 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 		 int fi = 0;
 
 		 fi = 0;
+
+
+
+		 cout << "Complete 10632" << endl;
 
 		 for(int l = 0; l < 3; l++)
 		 {
@@ -10645,7 +10708,7 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 
 					 v = hist1.at<int>(vc);
 
-					 feature_cc.at<float>(k,6 + fi) = float(v);
+					 feature_cc.at<float>(k,6 + fi) = (float)v;
 
 					 fi++;
 				 }
@@ -10653,10 +10716,28 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 			 }
 		 }
 
+		 cout << "Complete 10665" << endl;
+
 		// int cb_sz[3];
 
 		// for(int i = 0; i < 3; i++)
 		//	 cb_sz[i] = cub1.size[i];
+
+	//	cout << feature_cc.rows << endl;
+
+
+		//cout << feature_cc.cols << endl;
+
+
+	//	cout << cub1.size[0] << endl;
+
+    //    cout << cub1.size[1] << endl;
+
+       // cout << cub1.size[2] << endl;
+
+
+     //   cin.get();
+
 
 		 for(int l = 0; l < cub1.size[2]; l++)
 		 {
@@ -10664,7 +10745,7 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 			 {
 				 for(int i = 0; i < cub1.size[0]; i++)
 				 {
-					 float v;
+					 uchar v;
 
 					// v = float(cub[i][j][l][k]);
 
@@ -10679,9 +10760,28 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 					 vc[3] = k;
 
 
-					 v = cub1.at<float>(vc);
 
-					 feature_cc.at<float>(k,6 + fi) = v;
+					 //cout << "fi is" <<  fi << endl;
+
+
+                     //cout << "i is " << i << endl;
+
+                     //cout << "j is " << j << endl;
+
+                     //cout << "l is " << l << endl;
+
+
+					 v = cub1.at<uchar>(vc);
+
+                     // cout << "fi is" <<  fi << endl;
+
+					 feature_cc.at<float>(k,6 + fi) = (float)v;
+
+					 cout << "v is " << (double)v << endl;
+
+                      // cout << "fi is" <<  fi << endl;
+
+
 
 					 fi++;
 				 }
@@ -10689,14 +10789,25 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
 			 }
 		 }
 
-      delete max_axe_p;
 
-      delete min_axe_p;
+	//	cout << "max label is " << max_label << endl;
+
+   //     for(int i = 0; i < 60; i++)
+     //       cout << (double)feature_cc.at<float>(k,i) << endl;
+
+
+    //     cin.get();
+
+
+
+		// cin.get();
+
+      cout << "Complete 10707" << endl;
 
 	  }
 
 
-  //  delete max_axe_p;
+   // delete max_axe_p;
 
    // delete min_axe_p;
 
@@ -11391,11 +11502,18 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
     char fn[300];
 
-    sprintf(fn,"/home/gulin/workspace/simple_RF/LCM_trn_data/%sLCM_trn_root.txt",dataset);
+    sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_root.txt",dataset);
 
+ //    cout << fn << endl;
 
+ //    cin.get();
 
     import_matrix_from_txt_file(fn,v,rows,cols);
+
+
+
+
+
 
     int root_node = (int)v.at(0);
 
@@ -11432,17 +11550,31 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
     	vector <double> child_l;
 
-    	sprintf(fn,"/home/gulin/workspace/simple_RF/LCM_trn_data/%sLCM_trn_child_%d.txt",dataset,node);
+    	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_child_%d.txt",dataset,node);
 
         import_matrix_from_txt_file(fn,child_l,rows,cols);
 
     	char rf_name[300];
 
-        sprintf(rf_name,"/home/gulin/workspace/simple_RF/LCM_model/%sLCM_classifier_%d.xml",dataset,node);
+
+        sprintf(rf_name,"/home/gulin/workspace/LCM_boost/LCM_model/%sLCM_classifier_%d.xml",dataset,node);
+
+      //  cin.get();
 
         Ptr<RTrees> rtrees;
 
         rtrees = StatModel::load<RTrees>(rf_name);
+
+       // cout << feature_cc.rows << endl;
+
+
+
+
+      // for(int i = 0; i < feature_cc.cols; i ++)
+        //  cout << "feature " << i << " is " << (double)feature_cc.at<float>(1,i) << endl;
+
+
+        //cin.get();
 
 
         if(child_l[0] > 0)
@@ -11456,7 +11588,12 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
         		if(inter_m[i] == node)
         		{
 
+
+                    cout << " Pass 11548 " << endl;
+
         			float resp_elmt = rtrees->predict(feature_cc.row(i));
+
+        			cout << " Pass 11551 " << endl;
 
         			int child_assign = (int) resp_elmt;
 
@@ -11477,7 +11614,11 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
         		if(inter_m[i] == node)
         		{
 
+                    cout << " Pass 11572 " << endl;
+
         			float resp_elmt = rtrees->predict(feature_cc.row(i));
+
+                    cout << " Pass 11576 " << endl;
 
         			resp_tst[i] = (double) resp_elmt;
 
@@ -12937,7 +13078,7 @@ int multiscaleEhance(V3DPluginCallback2 & callback, char *infile, Mat &conf_img)
     }
 
 
-    loadMat(conf_img, outfile);
+    loadMat(callback,conf_img, outfile);
 
     cout << "Complete loading the image" << endl;
 
@@ -13046,7 +13187,7 @@ int multiscaleEhance1(V3DPluginCallback2 & callback, char *infile, uchar * &conf
 */
 
 
-int loadMat(Mat & image, char * fileName_string)
+int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 {
 
     unsigned char * inimg = NULL;
@@ -13055,14 +13196,44 @@ int loadMat(Mat & image, char * fileName_string)
 
     int datatype;
 
+   // cout << fileName_string << endl;
+
+
+
+    cout << fileName_string << endl;
+
+   //  cin.get();
+
+   // /*
+
     if (!loadImage(fileName_string, inimg, in_sz, datatype))
     {
 
-        cout << "Could not open the vaa3d raw file" << endl;
+       cout << "Could not open the vaa3d raw file" << endl;
+
+      //  cin.get();
 
         return -1;
 
     }
+
+// */
+
+/*
+
+    if (!simple_loadimage_wrapper(callback, fileName_string, inimg, in_sz, datatype))
+    {
+
+        cout << "Could not open the vaa3d raw file" << endl;
+
+        cin.get();
+
+        return -1;
+
+    }
+
+*/
+
 
     int sz[3];
 
@@ -14886,6 +15057,8 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
    //cout << outfile_swc << endl;
 
+   //cin.get();
+
    saveSWC_file(outfile_swc, outswc);
 
 
@@ -15171,7 +15344,7 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
 
     Mat image;
 
-    loadMat(image,infile);
+    loadMat(callback,image,infile);
 
     //conf_img = mat
 
@@ -15795,8 +15968,6 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
     for(int i = 0; i < (int)in_sz[0]; i++)
         xv[i] = 0;
 
-
-
     cout << "Initialise " << endl;
 
     for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
@@ -16060,9 +16231,7 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     //trace_img(seg_img, image, tmp_nm);
 
-
-
-    if(checkin > 0)
+     if(checkin > 0)
         trace_img1(seg_img, image, offset, tmp_nm);
     else
         trace_img(seg_img, image,tmp_nm);
@@ -16070,11 +16239,11 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     delete [] tmp_nm;
 
-    cout << "The traced result has been saved in " <<  swc_name.toStdString().c_str() << endl;
+//    cout << "The traced result has been saved in neuron_swc.swc" << endl;
 
-   // v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
 
-   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()));
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()));
+
 
 
 
@@ -16273,7 +16442,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     Mat image1;
 
-    loadMat(image1, infile);
+    loadMat(callback,image1, infile);
 
     // shrink the iamge if possible
 
@@ -16457,7 +16626,49 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     saveMat(image,tmp_nm);
 
+ /*
+
+
+    loadMat(image1,infile);
+
+    cout << "............................" << endl;
+
+
+    cout << image1.size[0] << endl;
+
+    cout << image.size[0] << endl;
+
+
+    cout << image1.size[1] << endl;
+
+    cout << image.size[1] << endl;
+
+
+    cout << image1.size[2] << endl;
+
+    cout << image.size[2] << endl;
+
+    double sum_value = (double)std::accumulate(image.begin<uchar>(), image.end<uchar>(), 0.0);
+
+    cout << "sum value is " << sum_value << endl;
+
+
+    sum_value = (double)std::accumulate(image1.begin<uchar>(), image1.end<uchar>(), 0.0);
+
+    cout << "sum value is " << sum_value << endl;
+
+
+*/
+
+
     Mat conf_img;
+
+    //uchar * conf_img1;
+
+    //image.release();
+
+    // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
 
     int t1,t2;
 
@@ -16467,6 +16678,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
     cout << "......................" << endl;
 
     cout << "Start the base method" << endl;
+
 
 
     if(bm1 == 1)
@@ -16561,4 +16773,1283 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
 	return true;
 }
+
+
+
+
+// call the function to batch process  the whole data
+bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	unsigned char * inimg1d = 0;
+
+
+	if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+        if (inlist->size() != 1)
+        {
+                cout<<"You must specify 1 input file!"<<endl;
+                return -1;
+        }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+    string base_method_str;
+
+    if(base_method == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(base_method == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+
+    if(base_method == 3)
+    {
+       base_method_str = "tracing_method";
+    }
+
+    base_method_str =  "trn_";
+
+
+    for(int i_img = 1; i_img < 46; i_img ++)
+    {
+
+
+        ostringstream convert;
+
+    	convert << i_img;
+
+    	string im_file = infile;
+
+    	im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + "_" + convert.str() + ".v3draw";
+
+    	//cout << im_file << endl;
+
+    	//cin.get();
+
+    	string roi_fn = infile;
+
+    	roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/Roi/roi_" + roi_fn + "_" + convert.str() + ".v3draw";
+
+    	string roi_offset_fn = infile;
+
+    	roi_offset_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/Roi/roi_" + roi_offset_fn + "_" + convert.str() + ".txt";
+
+
+    	string gt_fn = infile;
+
+    	gt_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/gt/gt_" + gt_fn + "_" + convert.str() + ".v3draw";
+
+    	string gt_swc_fn = infile;
+
+    	gt_swc_fn = "/media/gulin/E402023602020DEC/Data/BigN/" + gt_swc_fn + "_" + convert.str() + ".swc";
+
+
+    	Mat image2;
+
+        if(loadMat(callback,image2, (char*)im_file.c_str()) < 0)
+            continue;
+
+    	for(int i = 0; i < image2.size[0]; i++)
+        {
+
+          for(int j = 0; j < image2.size[1]; j++)
+          {
+
+            for(int k = 0; k < image2.size[2]; k++)
+            {
+
+                int v3[3];
+
+                v3[0] = i;
+
+                v3[1] = j;
+
+                v3[2] = k;
+
+                image2.at<uchar>(v3) = 0;
+
+            }
+
+          }
+
+    	}
+
+    	swc2image(image2,(char*)gt_swc_fn.c_str());
+
+    	saveMat(image2,(char*)gt_fn.c_str());
+
+    	image2.release();
+
+
+
+    	//cin.get();
+
+
+
+
+
+        for(int i_b = 1; i_b < 3; i_b ++)
+        {
+
+            if(i_b == 1)
+            {
+                base_method_str = "multiScale";
+
+            }
+
+            if(i_b == 2)
+            {
+                base_method_str = "fastMarching";
+            }
+
+            string save_seg_fn = infile;
+
+            save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/Seg/" + base_method_str + "/seg_" + save_seg_fn + convert.str() + ".v3draw";
+
+
+            string save_swc_fn1 = infile;
+
+            save_swc_fn1 = "/media/gulin/E402023602020DEC/Data/BigNtrn/SWC/" + base_method_str + "/base_swc_" + save_swc_fn1 + "_" + convert.str() + ".swc";
+
+            string save_swc_fn2 = infile;
+
+            save_swc_fn2 = "/media/gulin/E402023602020DEC/Data/BigNtrn/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn2 + "_" + convert.str() + ".swc";
+
+            string save_conf_fn = infile;
+
+            save_conf_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/Confidence_map/" + base_method_str + "/conf_" + save_conf_fn + "_" + convert.str() + ".v3draw";
+
+            Mat image1;
+
+         //   string imfile1 = "trn_1.v3dpbd";
+
+           // loadMat(image1, (char*)imfile1.c_str());
+
+          //  cout << imfile1 << endl;
+
+         //   cin.get();
+
+            string app2_swc_fn = infile;
+
+            app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/APP2_swc/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+            cout << app2_swc_fn << endl;
+
+           // cin.get();
+
+            app2trace1(callback,(char*)im_file.c_str(),(char*)app2_swc_fn.c_str());
+
+
+            cout << "Start loading the image" << endl;
+
+           // cin.get();
+
+
+            if(loadMat(callback,image1, (char*)im_file.c_str()) < 0)
+                continue;
+
+            cout << "Complete loading the image" << endl;
+
+
+
+        //    app2_trace(image1, (char*)app2_swc_fn.c_str());
+
+
+
+            Mat image;
+
+            int offset[3];
+
+            roi_img1(image,image1,offset);
+
+            image1.release();
+
+            ofstream myfile ((char*)roi_offset_fn.c_str());
+
+        //    cout << roi_offset_fn << endl;
+
+            myfile <<  offset[0] << "\n";
+
+            myfile <<  offset[1] << "\n";
+
+            myfile <<  offset[2] << "\n";
+
+            cout << "offset is " << offset[0] << endl;
+
+            cout << "offset is " << offset[1] << endl;
+
+            cout << "offset is " << offset[2] << endl;
+
+            myfile.close();
+
+            //cout << "offset is shown" << endl;
+
+      //      cin.get();
+
+         //   cout << offset[0] << endl;
+
+            image1.release();
+
+           // cin.get();
+
+            cout << "Start saving the image" << endl;
+
+            saveMat(image,(char*)roi_fn.c_str());
+
+            cout << "Complete saving the image" << endl;
+
+
+            Mat conf_img;
+
+            int t1,t2;
+
+            char * dataset = new char[100];
+
+            cout << "......................" << endl;
+
+            cout << "Start the base method" << endl;
+
+            int img_pg = image.size[0] * image.size[1];
+
+
+            if(i_b == 1)
+            {
+
+                t1 = 10;
+
+                t2 = 2;
+
+                //cin.get();
+
+
+                multiscaleEhance(callback, (char*)roi_fn.c_str(), conf_img);
+
+                saveMat(conf_img,(char*)save_conf_fn.c_str());
+
+                app2trace1(callback,(char*)save_conf_fn.c_str(),(char*)save_swc_fn1.c_str());
+
+              //  swc2image(conf_img,(char*)save_swc_fn1.c_str());
+
+                cout << "Complete the base method" << endl;
+
+
+            }
+
+            if(i_b == 2)
+            {
+
+                t1 = 10;
+
+                t2 = 2;
+
+
+                fastMarch((char*)roi_fn.c_str(), conf_img);
+
+                saveMat(conf_img,(char*)save_conf_fn.c_str());
+
+                app2trace1(callback,(char*)save_conf_fn.c_str(),(char*)save_swc_fn1.c_str());
+
+                //saveMat(conf_img,(char*)save_conf_fn.c_str());
+
+              //  swc2image(conf_img,(char*)save_swc_fn1.c_str());
+
+            //   string app2_swc_fn = infile;
+
+            //    app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtrn/APP2_swc/"  + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+            //    app2_trace(image, (char*)app2_swc_fn.c_str());
+
+
+            }
+
+            //cin.get();
+
+            //image.release();
+
+            //conf_img.release();
+
+
+
+            sprintf(dataset,"BigNtrn");
+
+            cout << "Complete the base method" << endl;
+
+            Mat seg_img;
+
+            seg_img = image;
+
+            LCM_boost(image, conf_img,  seg_img,t1,t2,dataset);
+
+            cout << "complete the LCM " << endl;
+
+            saveMat(seg_img,(char*)save_seg_fn.c_str());
+
+            trace_img(seg_img, conf_img, (char*)save_swc_fn2.c_str());
+
+            seg_img.release();
+
+            image.release();
+
+            conf_img.release();
+
+
+
+     //       cin.get();
+
+
+        }
+
+    }
+
+    return true;
+
+}
+
+int roi_img1(cv::Mat &image,cv::Mat image1, int * offset)
+{
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+    double n_sum = accumulate(xv,xv + image1.size[0],0.0);
+
+    cout << n_sum << endl;
+
+    n_sum = n_sum / (image1.size[0] * image1.size[1] * image1.size[2]);
+
+  //  cin.get();
+
+
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+
+       // cout << i << " is " <<  xv[i] << endl;
+
+        if(n_sum > 1)
+        {
+           xv[i] = xv[i] / (image1.size[1] * image1.size[2]);
+
+            if(xv[i] < 3)
+                xv[i] = 0;
+            else
+                xv[i] = 3;
+
+        }else
+        {
+            if(xv[i] < 1000)
+                xv[i] = 0;
+            else
+                xv[i] = 3;
+
+
+        }
+
+    }
+
+
+   // cout << image1.size[1] << endl;
+
+   // cout << image1.size[2] << endl;
+
+
+
+
+   // cin.get();
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+        if(n_sum > 1)
+        {
+
+            yv[i] = yv[i] / (image1.size[0] * image1.size[2]);
+
+            if(yv[i] < 3)
+                yv[i] = 0;
+            else
+                yv[i] = 3;
+
+
+        }else
+        {
+
+             if(yv[i] < 1000)
+                yv[i] = 0;
+            else
+                yv[i] = 3;
+
+        }
+
+    }
+
+
+
+
+    for(int i = 0; i < image1.size[2]; i++)
+    {
+
+        if(n_sum > 1)
+        {
+
+            zv[i] = zv[i] / (image1.size[0] * image1.size[1]);
+
+            if(zv[i] < 3)
+                zv[i] = 0;
+            else
+                zv[i] = 3;
+
+
+        }else
+        {
+
+            if(zv[i] < 1000)
+                zv[i] = 0;
+            else
+                zv[i] = 3;
+
+        }
+
+    }
+
+
+
+
+    double rng[1] = {3};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    delete [] xv;
+
+    delete [] yv;
+
+    delete [] zv;
+
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+
+    offset[0] = bx[0];
+
+    offset[1] = by[0];
+
+    offset[2] = bz[0];
+
+
+   // cout << "bx is " << bx[0] << " " << bx[1] << endl;
+
+   // cout << "by is " << by[0] << " " << by[1] << endl;
+
+  //  cout << "bz is " << bz[0] << " " << bz[1] << endl;
+
+    image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    return 1;
+
+}
+
+
+int app2trace1(V3DPluginCallback2 & callback, char *infile, char * outfile)
+{
+
+    // call different tracing method
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    string tmp_swc_name;
+
+
+
+    plugin_name = "plugins/neuron_tracing/Vaa3D_Neuron2/libvn2.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+
+    V3DPluginArgItem arg;
+
+    V3DPluginArgItem arg1;
+
+    V3DPluginArgList input;
+
+    V3DPluginArgList output;
+
+
+
+    std::vector<char*> infiles;
+
+    infiles.push_back(infile);
+
+    arg.p =  &infiles;
+
+    input << arg;
+
+
+
+    std::vector<char*> outfiles;
+
+    outfiles.push_back(outfile);
+
+    arg1.p =  & outfiles;
+
+    output<< arg1;
+
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input, output) )
+    {
+
+        v3d_msg("Fail to call the app2 tracer");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the app2 tracer" << endl;
+
+        return 1;
+
+    }
+}
+
+
+int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+
+    if(input.empty()) return false;
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * pref = inlist->at(0);
+
+    cout << "The input is " << pref << endl;
+
+
+	vector <double> v;
+
+	int rows=0;
+
+	int cols=0;
+
+
+	// commence by reading the root node
+
+	char fn[200];
+
+
+
+//	char pref[] = "OPFFM";
+
+	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_root.txt",pref);
+
+	//cout << fn << endl;
+
+	//cin.get();
+
+    import_matrix_from_txt_file(fn,v,rows,cols);
+
+    int root_node = (int)v.at(0);
+
+    v.clear();
+
+  //  cin.get();
+
+
+    //int * stack = new int[1000];
+
+
+    list<int> nlist;
+
+    nlist.push_back(root_node);
+
+    int n_child = 0;
+
+    int child_list[100];
+
+    // travel through the LCM tree
+
+    int n_stack = nlist.size();
+
+    while(n_stack > 0)
+    {
+
+    	int node = nlist.front();
+
+    	nlist.pop_front();
+
+    	//cin.get();
+
+    	train_LCM_node(node,pref);
+
+    	/*
+
+    	if(train_LCM_interm_node(node) < 1)
+    	{
+
+    		n_child[n_child] = node;
+
+    		n_child ++;
+
+    	}
+
+    	*/
+
+
+    	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_child_%d.txt",pref,node);
+
+        import_matrix_from_txt_file(fn,v,rows,cols);
+
+        //cin.get();
+
+
+        /*
+
+        cout << "node is " << node << endl;
+
+        cout << "v is [";
+
+        int nv = v.size();
+
+        for(int i = 0; i < nv ; i++)
+        	cout << v[i] << "  ";
+
+        cout << "]" << endl;
+
+		*/
+
+
+       // cout << v.size() << endl;
+
+        if((rows * cols) > 1)
+        {
+        	int n_child = v.size();
+
+        	for(int i = 0; i < n_child; i++)
+        	nlist.push_back(v[i]);
+
+        }
+
+        v.clear();
+
+        n_stack = nlist.size();
+
+    }
+
+    cout << "Complete learning the LCM model" << endl;
+
+
+}
+
+
+int train_LCM_node(int node,char * pref)
+{
+
+	// setup the Random Forest
+
+	Ptr<RTrees> rtrees = RTrees::create();
+
+	rtrees->setMaxDepth(4);
+
+	rtrees->setMinSampleCount(2);
+
+	rtrees->setRegressionAccuracy(0.f);
+
+	rtrees->setUseSurrogates(false);
+
+	rtrees->setMaxCategories(16);
+
+	rtrees->setPriors(Mat());
+
+	rtrees->setCalculateVarImportance(false);
+
+	rtrees->setActiveVarCount(1);
+
+	rtrees->setTermCriteria(TermCriteria(TermCriteria::MAX_ITER, 5, 0));
+
+	// read the training features
+
+
+	vector <double> v;
+	int rows=0;
+	int cols=0;
+
+
+	char fn[100];
+
+
+   // sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_root.txt",pref);
+
+//	import_matrix_from_txt_file(fn,v,rows,cols);
+
+
+
+
+
+
+
+	//cin.get();
+
+	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_ftrs_%d.txt",pref,node);
+
+	import_matrix_from_txt_file(fn,v,rows,cols);
+
+
+//    cout << " rows is " << rows << endl;
+
+ //   cout << " cols is " << cols << endl;
+
+
+
+   // cin.get();
+
+	Mat trn_ftrs(rows,cols,CV_64F);
+
+	for(int i = 0; i < rows; i ++)
+	{
+		for(int j = 0; j < cols; j++)
+		{
+
+            trn_ftrs.at<double>(i,j) = v.at(i * cols + j);
+
+          //  cout << "trn ftrs is " << trn_ftrs.at<double>(i,j) << endl;
+
+		}
+
+		//cin.get();
+
+	}
+
+	v.clear();
+
+	// read the training labels
+
+	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_label_%d.txt",pref,node);
+
+	import_matrix_from_txt_file(fn,v,rows,cols);
+
+	Mat trn_label(rows,cols,CV_64F);
+
+	for(int i = 0; i <  rows; i ++)
+	{
+		trn_label.at<double>(i,0) = v[i];
+	}
+
+	v.clear();
+
+
+	// read the children nodes
+
+	sprintf(fn,"/home/gulin/workspace/LCM_boost/LCM_trn_data/%sLCM_trn_child_%d.txt",pref,node);
+
+	cout << node << endl;
+
+//	cin.get();
+
+
+
+
+	import_matrix_from_txt_file(fn,v,rows,cols);
+
+	int ischild = 0;
+
+	if((rows * cols) == 1)
+		ischild = 1;
+
+
+	v.clear();
+
+	// load the training features
+
+	Mat samples;
+
+	trn_ftrs.convertTo(samples,CV_32F);
+
+	Mat resp;
+
+	if(ischild)
+		trn_label.convertTo(resp,CV_32F);
+	else
+		trn_label.convertTo(resp,CV_32S);
+
+	Mat weight = Mat(samples.rows,1,CV_32F);
+
+	for(int i = 0; i < samples.rows; i++)
+	{
+		float w = samples.at<float>(i,0);
+
+		weight.at<float>(i,0) = w;
+
+		//cout << "weight is " << w << endl;
+	}
+
+	//cin.get();
+
+    //cout << "row is " << samples.rows << endl;
+
+    //cout << "row is " << samples.cols << endl;
+
+    //cout << resp.rows << endl;
+
+    //cout << resp.cols << endl;
+
+
+	//cin.get();
+
+	Ptr<TrainData> sample_trn = TrainData::create(samples, ROW_SAMPLE, resp,Mat(),Mat(),weight);
+
+//	for(int i = 0; i < samples.cols; i++)
+  //      cout << "feature " << i <<  " is "  << (double)samples.at<float>(12,i) << endl;
+
+
+   // cin.get();
+
+	rtrees->train(sample_trn);
+
+
+
+
+	char rf_name[50];
+
+	sprintf(rf_name,"/home/gulin/workspace/LCM_boost/LCM_model/%sLCM_classifier_%d.xml",pref,node);
+
+	rtrees->save(rf_name);
+
+	return 1;
+
+}
+
+
+// call the function to batch process  the whole data
+bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	unsigned char * inimg1d = 0;
+
+
+	if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+        if (inlist->size() != 1)
+        {
+                cout<<"You must specify 1 input file!"<<endl;
+                return -1;
+        }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+    string base_method_str;
+
+    if(base_method == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(base_method == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+
+    if(base_method == 3)
+    {
+       base_method_str = "tracing_method";
+    }
+
+
+    for(int i_img = 6; i_img < 46; i_img ++)
+    {
+
+        ostringstream convert;
+
+    	convert << i_img;
+
+    	string im_file = infile;
+
+    	im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + "_" + convert.str() + ".v3draw";
+
+    	string roi_fn = infile;
+
+    	roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+
+        string save_seg_fn = infile;
+
+     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Seg/" + base_method_str + "/seg_" + save_seg_fn + convert.str() + ".v3draw";
+
+
+        string save_swc_fn = infile;
+
+     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+
+
+
+
+    //	string base_fn1 = infile;
+
+    //	base_fn1 = "/media/gulin/E402023602020DEC/Data/mE/mE_" + base_fn1 + convert.str() + ".v3draw";
+
+    //	string base_fn2 = infile;
+
+    //	base_fn2 = "/media/gulin/E402023602020DEC/Data/FM/FM_" + base_fn2 + convert.str() + ".v3draw";
+
+    //	string roi_fn = infile;
+
+    //	roi_fn = "/media/gulin/E402023602020DEC/Data/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+
+    //	string sav_mat = infile;
+
+    //	sav_mat = "/media/gulin/E402023602020DEC/Data/Mat_sav/mat_" + sav_mat + convert.str() + ".yml";
+
+
+        Mat image1;
+
+        cout << im_file << endl;
+
+       // cin.get();
+
+        if(loadMat(callback,image1, (char*)im_file.c_str()) < 0)
+            continue;
+
+
+        int offset[3];
+
+        offset[0] = 0;
+
+        offset[1] = 0;
+
+        offset[2] = 0;
+
+
+     	Mat image;
+
+    	roi_img1(image,image1,offset);
+
+        image1.release();
+
+
+        saveMat(image,(char*)roi_fn.c_str());
+
+        Mat conf_img;
+
+        int t1,t2;
+
+        char * dataset = new char[100];
+
+        cout << "......................" << endl;
+
+        cout << "Start the base method" << endl;
+
+        int img_pg = image.size[0] * image.size[1];
+
+        char * tmp_nm = new char[100];
+
+        if(base_method == 1)
+        {
+            if(img_pg > (300 * 250))
+            {
+                t1 = 20;
+
+                t2 = 2;
+
+            }else
+            {
+
+                if(img_pg > (200 * 200))
+                    {
+                        t1 = 10;
+
+                        t2 = 2;
+
+                    }
+                    else
+                    {
+                        t1 = 10;
+
+                        t2 = 2;
+
+                    }
+
+            }
+
+            t1 = 50;
+
+            t2 = 7;
+
+            multiscaleEhance(callback, (char*)roi_fn.c_str(), conf_img);
+
+
+            sprintf(dataset,"BigNmEh");
+
+
+            sprintf(tmp_nm,"tmp_swc.swc");
+
+            string swc_fn = infile;
+
+            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
+
+           // cin.get();
+
+            app2_trace(image, (char*)swc_fn.c_str());
+
+            //cin.get();
+
+            swc2image(conf_img,(char*)swc_fn.c_str());
+
+            if(base_line_open < 1)
+              remove((char*)swc_fn.c_str());
+
+
+            //
+            if(base_line_open)
+            {
+                string app2_swc_fn = infile;
+
+                app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+                app2_trace(conf_img, (char*)app2_swc_fn.c_str());
+
+            }
+
+        }
+
+
+        if(base_method == 2)
+        {
+            fastMarch((char*)roi_fn.c_str(), conf_img);
+
+            t1 = 50;
+
+            t2 = 7;
+
+            sprintf(dataset,"BigNFM");
+
+            string swc_fn = infile;
+
+            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
+
+            app2_trace(image, (char*)swc_fn.c_str());
+
+            swc2image(conf_img,(char*)swc_fn.c_str());
+
+            if(base_line_open < 1)
+              remove((char*)swc_fn.c_str());
+
+
+            if(base_line_open)
+            {
+                string app2_swc_fn = infile;
+
+                app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+
+                app2_trace(conf_img, (char*)app2_swc_fn.c_str());
+
+            }
+
+
+        }
+
+
+
+
+        if(base_method == 3)
+        {
+           // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+            swc2conf(callback,(char*)roi_fn.c_str(),conf_img,1);
+
+            t1 = 7;
+
+            t2 = 3;
+
+            sprintf(dataset,"BigNTrace");
+
+            //cin.get();
+
+            //saveMat(conf_img,"tmp_conf.v3draw");
+
+          //  cin.get();
+
+        }
+
+
+        if(debug_on11 > 0)
+        {
+            sprintf(tmp_nm,"/media/gulin/E402023602020DEC/Cache/BigN/tmp_swc.swc");
+
+            app2_trace(image, tmp_nm);
+
+          //  cin.get();
+
+        }
+
+
+        cout << "Complete the base method" << endl;
+
+        Mat seg_img;
+
+        seg_img = image;
+
+       // cout << dataset << endl;
+
+       // cin.get();
+
+      // cin.get();
+
+        LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+        cout << "complete the LCM " << endl;
+
+        // output the result into the harddisk
+
+        saveMat(seg_img,(char*)save_seg_fn.c_str());
+
+        // trace the image
+
+
+       // cin.get();
+
+
+        if(checkin > 0)
+            trace_img1(seg_img, conf_img, offset, (char*)save_swc_fn.c_str());
+        else
+            trace_img(seg_img, conf_img, (char*)save_swc_fn.c_str());
+
+        seg_img.release();
+
+        image.release();
+
+        conf_img.release();
+
+        delete [] tmp_nm;
+
+       // cin.get();
+
+    }
+
+	return true;
+}
+
 

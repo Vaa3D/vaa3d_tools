@@ -151,7 +151,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
 int multiscaleEhance(V3DPluginCallback2 & callback, char * infile, cv::Mat & conf_img);
 
-int loadMat(cv::Mat & image, char * fileName_string);
+int loadMat(V3DPluginCallback2 &callback,cv::Mat & image, char * fileName_string);
 
 int saveMat(cv::Mat image, char * fileName_string);
 
@@ -373,6 +373,21 @@ int swc2image_score(cv::Mat &image,char * filename , const char * score_name);
 bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1, int bm2);
 
 bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+
+bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+int roi_img1(cv::Mat &image,cv::Mat image1, int * offset);
+
+int app2trace1(V3DPluginCallback2 & callback, char *infile, char * outfile);
+
+int train_LCM_node(int node, char * pref);
+
+
+int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
 
 
 #endif

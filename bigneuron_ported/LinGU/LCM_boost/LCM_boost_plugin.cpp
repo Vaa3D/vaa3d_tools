@@ -104,52 +104,73 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 		return Batch_Process(callback, input, output);
 	}
 
-	if (func_name == tr("MultiScale_Ehancement_based"))
+    if (func_name == tr("PreTraining"))
+	{
+
+		return Batch_Base_Method(callback, input, output);
+	}
+
+    if (func_name == tr("TrainLCM"))
+	{
+
+		return train_LCM(callback, input, output);
+	}
+
+
+    if (func_name == tr("BatchTest"))
+	{
+
+		return Batch_Test(callback, input, output);
+	}
+
+
+
+	if (func_name == tr("LCM_boost_1"))
 	{
 		return General_Boost(callback,input,output,1,0);
 	}
 
-	if (func_name == tr("Fast_Marching_based"))
+	if (func_name == tr("LCM_boost_2"))
 	{
 		return General_Boost(callback,input,output,2,0);
 	}
 
-	if (func_name == tr("mostVesselTracer_based"))
+	if (func_name == tr("LCM_boost_3"))
 	{
 		return General_Boost(callback,input,output,3,1);
 	}
 
-	if (func_name == tr("neuTube_based"))
+	if (func_name == tr("LCM_boost_4"))
 	{
 		return General_Boost(callback,input,output,3,2);
 	}
 
-	if (func_name == tr("SimpleTracing_based"))
+	if (func_name == tr("LCM_boost_5"))
 	{
 		return General_Boost(callback,input,output,3,3);
 	}
 
-	if (func_name == tr("APP2_based"))
+	if (func_name == tr("LCM_boost_6"))
 	{
 		return General_Boost(callback,input,output,3,4);
 	}
 
-	if (func_name == tr("APP1_based"))
+	if (func_name == tr("LCM_boost_7"))
 	{
 		return General_Boost(callback,input,output,3,5);
 	}
 
-	if (func_name == tr("fastmarching_spanningtree_based"))
+	if (func_name == tr("LCM_boost_8"))
 	{
 		return General_Boost(callback,input,output,3,6);
 	}
 
-	if (func_name == tr("NeuroGPSTree_based"))
+	if (func_name == tr("LCM_boost_9"))
 	{
 		return General_Boost(callback,input,output,3,7);
 	}
 
-	if (func_name == tr("neurontracing_mst_based"))
+	if (func_name == tr("LCM_boost_10"))
 	{
 		return General_Boost(callback,input,output,3,8);
 	}
@@ -158,49 +179,19 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	{
 
 		cout << "**** Usage of LCM_boost tracing **** " << endl;
-
-		cout << "The default setting is based on multiscale enhancement " << endl;
-
 		printf("./vaa3d -x LCM_boost -f LCM_boost -i <inimg_file> -o  <outswc_file>\n");
 
-		printf("e.g.    vaa3d -x LCM_boost -f LCM_boost -i B4.v3draw -o tmp_tst.swc \n");
+		printf("e.g.    ./vaa3d -x LCM_boost -f LCM_boost -i B4.v3draw -o tmp_tst.swc \n");
 
 		printf("inimg_file       The input image\n");
 
         printf("outswc_file      The file name of output swc.\n");
 
-        printf("  ");
 
-        cout << " Change the alternative base method by calling base name " << endl;
-
-        printf("e.g.  ./vaa3d -x LCM_boost -f MultiScale_Ehancement_based -i <inimg_file> -o  <outswc_file>\n");
-
-        cout << " MultiScale_Ehancement_based " << endl;
-
-        cout << " Fast_Marching_based " << endl;
-
-        cout << " mostVesselTracer_based " << endl;
-
-        cout << " neuTube_based " << endl;
-
-        cout << " SimpleTracing_based " << endl;
-
-        cout << " APP2_based " << endl;
-
-        cout << " APP1_based " << endl;
-
-        cout << " fastmarching_spanningtree_based " << endl;
-
-        cout << " NeuroGPSTree_based " << endl;
-
-        cout << " neurontracing_mst_based " << endl;
 
 	}
 
 
 
 }
-
-
-
 
