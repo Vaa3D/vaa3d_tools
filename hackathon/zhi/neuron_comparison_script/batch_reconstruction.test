@@ -56,19 +56,19 @@ fi
 
 
 
-#$1 -x Vaa3D_Neuron2 -f app1 -i $2 -p NULL 0 40 0    
-#mv  $2*_app1.swc $3
-#$1 -x Vaa3D_Neuron2 -f app2 -i $2 -p NULL 0 10 1 1 0 0 5 0 0 0  
-#mv  $2*_app2.swc $3
-#rm  "$2_ini.swc"
-#$1 -x MOST -f MOST_trace -i $2 -p 1 40   
-#mv  "$2_MOST.swc" $3
-#$1 -x neuTube -f neutube_trace -i $2 -p 1 1   
-#mv  "$2_neutube.swc" $3
-#$1 -x snake -f snake_trace -i $2 -p 1 
-#mv  "$2_snake.swc" $3
-#$1 -x SimpleTracing -f tracing -i $2 -o $2_simple.swc -p 1 
-#mv  "$2_simple.swc" $3
+$1 -x Vaa3D_Neuron2 -f app1 -i $2 -p NULL 0 40 0    
+mv  $2*_app1.swc $3
+$1 -x Vaa3D_Neuron2 -f app2 -i $2 -p NULL 0 10 1 1 0 0 5 0 0 0  
+mv  $2*_app2.swc $3
+rm  "$2_ini.swc"
+$1 -x MOST -f MOST_trace -i $2 -p 1 40   
+mv  "$2_MOST.swc" $3
+$1 -x neuTube -f neutube_trace -i $2 -p 1 1   
+mv  "$2_neutube.swc" $3
+$1 -x snake -f snake_trace -i $2 -p 1 
+mv  "$2_snake.swc" $3
+$1 -x SimpleTracing -f tracing -i $2 -o $2_simple.swc -p 1 
+mv  "$2_simple.swc" $3
 $1 -x TReMap -f trace_mip -i $2 -p 0 1 10 0 1 0 5
 mv  $2*_TreMap.swc $3
 $1 -x MST_tracing -f trace_mst -i $2 -p 1 5  
