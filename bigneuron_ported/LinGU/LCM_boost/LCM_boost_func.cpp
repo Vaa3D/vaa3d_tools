@@ -13192,7 +13192,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
     unsigned char * inimg = NULL;
 
-    V3DLONG * in_sz = NULL;
+    V3DLONG in_sz[4];
 
     int datatype;
 
@@ -13206,20 +13206,20 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
    // /*  // load image using loadImage  comment this line to disable loadImage
 
-    if (!loadImage(fileName_string, inimg, in_sz, datatype))
-    {
+//    if (!loadImage(fileName_string, inimg, in_sz, datatype))
+//    {
 
-       cout << "Could not open the vaa3d raw file" << endl;
+//       cout << "Could not open the vaa3d raw file" << endl;
 
-      //  cin.get();
+//      //  cin.get();
 
-        return -1;
+//        return -1;
 
-    }
+//    }
 
 // */
 
-/*  // load image using simple_loadimage_wrapper , uncomment this line to enable simple_loadimage_wrapper
+   // load image using simple_loadimage_wrapper , uncomment this line to enable simple_loadimage_wrapper
 
     if (!simple_loadimage_wrapper(callback, fileName_string, inimg, in_sz, datatype))
     {
@@ -13231,8 +13231,6 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
         return -1;
 
     }
-
-*/
 
 
     int sz[3];
@@ -13293,7 +13291,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
 
 
-    delete [] in_sz;
+ //   delete [] in_sz;
 
 
 
