@@ -38,4 +38,4 @@ rm v3d/Mac_Fat/Vaa3d.app/Contents/MacOS/plugins/image_stitching/ifusion/libifusi
 # copy vaa3d executable and plugins to the template package folder
 
 
-
+# rm redundant  plugins in Vaa3d.app
