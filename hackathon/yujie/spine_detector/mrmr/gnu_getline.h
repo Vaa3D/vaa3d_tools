@@ -21,7 +21,9 @@
 // Modified by Hanchuan Peng so that the code can be used for Mac
 // 01/26/2006
 
+#if  defined(Q_OS_MAX)
 typedef int ssize_t;
+#endif
 
 #ifndef _GNU_GETLINE_H_
 # define _GNU_GETLINE_H_ 1

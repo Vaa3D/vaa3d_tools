@@ -911,7 +911,7 @@ void spine_fun::dst_group_check()
 //                        <<" pixels:"<<cur_group_info->layer_voxel_num[j];
 //            fprintf(fp2,"%d,%d,%.1f,%d,%.1f,%d\n",i,j,cur_group_info->layer_length[j],
 //                    cur_group_info->layer_voxel_num[j],cur_group_info->layer_spongeness[j],
-//                    cur_group_info->distance);
+//                    cur_group_info->distance[j);
 //        }
 
 //    }
