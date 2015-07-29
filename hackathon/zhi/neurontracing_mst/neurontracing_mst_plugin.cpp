@@ -213,7 +213,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
-    writeSWC_file("mst.swc",nt_tmp);
+   // writeSWC_file("mst.swc",nt_tmp);
    // return;
     LocationSimple p0;
     vector<LocationSimple> pp;
