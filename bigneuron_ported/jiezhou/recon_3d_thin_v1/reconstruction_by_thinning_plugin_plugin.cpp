@@ -665,17 +665,17 @@ signed short getPixel(itk::Image<signed short, (unsigned)3> *image, int x, int y
 void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVisitNum){
 
 
-       const char *outfilename = qoutputfilename.toStdString().c_str();
-       cout << "filename converted from QString" << outfilename << endl;
+      // const char *outfilename = qoutputfilename.toStdString().c_str();
+       cout << "filename converted from QString" << qoutputfilename.toStdString().c_str() << endl;
 
        ofstream outFile;
        if (startVisitNum == 0) //first tree
        {
-           outFile.open(outfilename, ios::trunc);
+           outFile.open(qoutputfilename.toStdString().c_str(), ios::trunc);
            outFile << "#name reconstruction3d \n#comment \n##n,type,x,y,z,radius,parent\n";
        }
        else //subsequent trees
-           outFile.open(outfilename, ios::app);
+           outFile.open(qoutputfilename.toStdString().c_str(), ios::app);
 
        for (int i = 0; i < Points.size(); i++)
        {
@@ -687,7 +687,7 @@ void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVi
        }
 
         outFile.close();
-        cout << outfilename << " Successfully written to swc file.";
+        cout << qoutputfilename.toStdString().c_str() << " Successfully written to swc file.";
 
 }//end outputSWC
 
