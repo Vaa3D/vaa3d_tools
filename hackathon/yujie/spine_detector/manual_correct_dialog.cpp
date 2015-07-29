@@ -133,7 +133,7 @@ void manual_correct_dialog::create()
     line_3->setFrameShape(QFrame::HLine);
     line_3->setFrameShadow(QFrame::Sunken);
     mygridLayout->addWidget(line_3,17,0,1,8);
-    QString info=">> Spine detector first perform automatic spines detections near dendrites,then allows"
+    QString info=">> SpineDetector first performs automatic spines detections near dendrites,then allows"
             " users to do manual proofreading.<br>";
     info+=">> <b>Background threshold: </b> All voxels above the background threshold are foreground, others are background voxles (voxels not considered spines).<br>";
     info+=">> <b>Max spine volume:</b> Maximum number of voxels allowed for a spine. Groups with larger volumes are considered not spines.<br>";
@@ -149,7 +149,7 @@ void manual_correct_dialog::create()
     mygridLayout->addWidget(text_info,18,0,1,9);
 
     this->setLayout(mygridLayout);
-    this->setWindowTitle("Spine_detector");
+    this->setWindowTitle("SpineDetector");
     this->show();
     if (view_code==1)
         connect(btn_run,SIGNAL(clicked()), this, SLOT(run_view_by_seg()));
@@ -639,12 +639,15 @@ void manual_correct_dialog::reset_image_data()
     x_start=MAX(0,x-halfwindowsize);
     y_start=MAX(0,y-halfwindowsize);
     z_start=MAX(0,z-halfwindowsize);
+    x_end=MIN(sz_img[0],x+halfwindowsize+1);
+    y_end=MIN(sz_img[1],y+halfwindowsize+1);
+    z_end=MIN(sz_img[2],z+halfwindowsize+1);
     qDebug()<<"halfsize:"<<halfwindowsize<<" x,y,z:"<<x<<":"<<y<<":"<<z;
     qDebug()<<"sz0,sz1,sz2:"<<sz[0]<<":"<<sz[1]<<":"<<sz[2];
 
-    for (V3DLONG dx=x_start;dx<MIN(sz_img[0],x+halfwindowsize+1);dx++){
-        for (V3DLONG dy=y_start;dy<MIN(sz_img[1],y+halfwindowsize+1);dy++){
-            for (V3DLONG dz=z_start;dz<MIN(sz_img[2],z+halfwindowsize+1);dz++){
+    for (V3DLONG dx=x_start;dx<x_end;dx++){
+        for (V3DLONG dy=y_start;dy<y_end;dy++){
+            for (V3DLONG dz=z_start;dz<z_end;dz++){
                 V3DLONG pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
                 V3DLONG pos1=xyz2pos(dx-x_start,dy-y_start,dz-z_start,sz[0],sz[0]*sz[1]);
                 image_trun[pos1]=image1Dc_spine[pos];
@@ -971,14 +974,14 @@ int manual_correct_dialog::save(QString window_name) //need further work
             tmp.color.g=255;
             LList_new.append(tmp);
         }
-        else
-            keep_spine[i]=-1;
 //        else
-//            label_group[i].clear();
+//            keep_spine[i]=-1;
+        else
+            label_group[i].clear();
     }
 
-    //write_spine_profile("auto_proofread_spine_profile.csv");  //for using svm
-    write_svm_file("training.txt",keep_spine);
+    write_spine_profile("auto_proofread_spine_profile.csv");  //for using svm
+    //write_svm_file("training.txt",keep_spine);
     //need to close all image windows //check 3D window
     v3dhandleList list_triwin = callback->getImageWindowList();
     for(V3DLONG i=0; i<list_triwin.size(); i++){
@@ -1186,6 +1189,8 @@ void manual_correct_dialog::dilate()
     GOV seeds_next;
 
     int mid=markers->currentIndex();
+    LList_adj[mid].color.r=LList_adj[mid].color.b=255;
+    LList_adj[mid].color.g=70;
     GOV tmp_group = label_group[mid];
 
     for (int sid=0;sid<tmp_group.size();sid++)
@@ -1194,11 +1199,12 @@ void manual_correct_dialog::dilate()
         int label_id=single_voi->intensity_label;
         for (int neid=0; neid<single_voi->neighbors_6.size();neid++)
         {
-            if (image1Dc_spine[single_voi->neighbors_6[neid]->pos]>bg_thr &&
-                    single_voi->neighbors_6[neid]->intensity_label<1)
+            VOI *nb=single_voi->neighbors_6[neid];
+            if (image1Dc_spine[nb->pos]>bg_thr && nb->intensity_label<1&&nb->x>=x_start &&nb->y>=y_start
+                    &&nb->z>=z_start && nb->x<x_end && nb->y<y_end && nb->z<z_end)
             {
-                single_voi->neighbors_6[neid]->intensity_label=label_id;
-                seeds_next.push_back(single_voi->neighbors_6[neid]);
+                nb->intensity_label=label_id;
+                seeds_next.push_back(nb);
             }
         }
     }
@@ -1237,6 +1243,8 @@ void manual_correct_dialog::dilate()
     callback->setLandmark(curwin,LList_adj);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
+
+    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_adj[mid].color.g=0;
 }
 
 void manual_correct_dialog::erode()
@@ -1248,6 +1256,9 @@ void manual_correct_dialog::erode()
 
     int mid=markers->currentIndex();
     GOV tmp_group = label_group[mid];
+
+    LList_adj[mid].color.b=LList_adj[mid].color.r=255;
+    LList_adj[mid].color.g=70;
 
     if (tmp_group.size()==0)
     {
@@ -1303,13 +1314,17 @@ void manual_correct_dialog::erode()
     callback->setLandmark(curwin,LList_adj);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
+    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_adj[mid].color.g=0;
 }
 
 void manual_correct_dialog::reset_edit()
 {
     reset_label_group();
     reset_image_data();
+    int mid=markers->currentIndex();
     edit_flag=false;
+    LList_adj[mid].color.b=LList_adj[mid].color.r=255;
+    LList_adj[mid].color.g=70;
     unsigned char *reset_tmp =new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]];
     memcpy(reset_tmp,image_trun,sz[0]*sz[1]*sz[2]*sz[3]);
     edit_status->setPlainText("Image reset");
@@ -1322,7 +1337,7 @@ void manual_correct_dialog::reset_edit()
     callback->setLandmark(curwin,LList_adj);
     callback->open3DWindow(curwin);
     callback->pushObjectIn3DWindow(curwin);
-
+    LList_adj[mid].color.r=LList_adj[mid].color.b=LList_adj[mid].color.g=0;
 }
 
 
@@ -1621,7 +1636,7 @@ void manual_correct_dialog::set_visualize_image_marker(vector<int> one_seg,int s
 void manual_correct_dialog::standing_segment_dialog()
 {
     mydialog=new QDialog();
-    mydialog->setWindowTitle("spine detector_proofread_by_segment");
+    mydialog->setWindowTitle("spineDetector_proofread_by_segment");
     qDebug()<<"size:"<<mydialog->size();
     mydialog->setFixedWidth(500);
 //    seg_dialog->setFixedHeight();
@@ -1965,7 +1980,7 @@ void manual_correct_dialog::dilate_for_seg_view()
     int mid=list_markers->currentRow();
     list_markers->item(mid)->setText("marker " + QString::number(mid+1));
     LList_seg[mid].color.r=LList_seg[mid].color.b=255;
-    LList_seg[mid].color.g=0;
+    LList_seg[mid].color.g=70;
     QString tmp_name=QString::fromStdString(LList_seg[mid].name);
     int idx=tmp_name.toInt()-1;
 
@@ -2542,6 +2557,7 @@ void manual_correct_dialog::big_image_pipeline_start()
         NeuronTree this_tree;
         this_tree=prep_seg_neurontree(coord);   //adj neuron to segmented view
         //qDebug()<<"loading new nt done:"<<this_tree.listNeuron.size();
+
         if (!auto_spine_detect_seg_image(data1d,in_sz,this_tree,i+1,coord[0],coord[1],coord[2],spine_map))
         {
             if (data1d!=0)
@@ -2550,6 +2566,9 @@ void manual_correct_dialog::big_image_pipeline_start()
             }
             continue;
         }
+
+
+
         if (data1d!=0)
         {
             delete[] data1d; data1d=0;
@@ -2562,13 +2581,13 @@ void manual_correct_dialog::big_image_pipeline_start()
     progress.setValue(nt_segs.size());
     QMessageBox::information(0,"Automatic spine detection finished.","Results are stored at "+folder_output);
 
-    unsigned char * outfile= new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]];
-    memset(outfile,0,sz_img[0]*sz_img[1]*sz_img[2]);
-    for (QSet <V3DLONG>::Iterator mi=spine_map.begin();mi!=spine_map.end();mi++)
-    {
-        outfile[*mi]=255;
-    }
-    simple_saveimage_wrapper(*callback,"outfile.v3draw",outfile,sz_img,V3D_UINT8);
+//    unsigned char * outfile= new unsigned char [sz_img[0]*sz_img[1]*sz_img[2]];
+//    memset(outfile,0,sz_img[0]*sz_img[1]*sz_img[2]);
+//    for (QSet <V3DLONG>::Iterator mi=spine_map.begin();mi!=spine_map.end();mi++)
+//    {
+//        outfile[*mi]=255;
+//    }
+//    simple_saveimage_wrapper(*callback,"outfile.v3draw",outfile,sz_img,V3D_UINT8);
     return;
 }
 
@@ -2605,9 +2624,11 @@ bool manual_correct_dialog::auto_spine_detect_seg_image
 //    label_group_copy=label_group;
 
     V3DLONG size_page=sz[0]*sz[1]*sz[2];
+    unsigned short *seg_label=new unsigned short[size_page*sizeof(unsigned short)];
     unsigned char *seg_result = new unsigned char [size_page*3];
     memset(seg_result,0,size_page*3);
     memcpy(seg_result,data1d,size_page);
+    memset(seg_label,0,size_page*2*sizeof(unsigned short));
 
     for(int i=0; i<label_record.size(); i++)
     {
@@ -2615,17 +2636,25 @@ bool manual_correct_dialog::auto_spine_detect_seg_image
         for (int j=0; j<tmp.size(); j++)
         {
             seg_result[tmp.at(j)->pos+size_page]=255;
+            seg_label[tmp.at(j)->pos]=tmp.at(j)->intensity_label;
+            seg_label[tmp.at(j)->pos+size_page]=tmp.at(j)->dst;
             V3DLONG x=tmp[j]->x+x_start;
             V3DLONG y=tmp[j]->y+y_start;
             V3DLONG z=tmp[j]->z+z_start;
-            V3DLONG new_pos=xyz2pos(x,y,z,sz_img[0],sz_img[0]*sz_img[1]);
-            spine_map.insert(new_pos);
+            //V3DLONG new_pos=xyz2pos(x,y,z,sz_img[0],sz_img[0]*sz_img[1]);
+            //spine_map.insert(new_pos);
         }
     }
     sz[3]=3;
+
     QString fname_out="result_"+ QString::number(image_id)+".v3draw";
     QString img_complete=QDir(folder_output).filePath(fname_out);
     simple_saveimage_wrapper(*callback,img_complete.toStdString().c_str(),seg_result,sz,V3D_UINT8);
+    sz[3]=2;
+    QString fname_label="result_label_"+QString::number(image_id)+".v3draw";
+    QString label_complete=QDir(folder_output).filePath(fname_label);
+    simple_saveimage_wrapper(*callback,label_complete.toStdString().c_str(),(unsigned char *)seg_label,sz,V3D_UINT16);
+
     QString swc_fname=QString::number(image_id)+".swc";
     QString swc_complete=QDir(folder_output).filePath(swc_fname);
     writeSWC_file(swc_complete,nt_seg);

@@ -31,7 +31,6 @@ spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=0)
 {
     p_img1D = 0;
     ppp_img3D = 0;
-
     callback=cb;
 
     //init parameters
@@ -47,6 +46,19 @@ spine_fun::spine_fun(V3DPluginCallback * cb,parameters set_para,int channel=0)
     param.dst_max_pixel=2000;
     sel_channel=channel;
 
+    qDebug()<<"para reset: param bg_thr:"<<param.bgthr<<" channel:"<<sel_channel;
+}
+
+spine_fun::spine_fun(V3DPluginCallback * cb,int channel,int bg_thr,int max_dis,unsigned short *group_label)  //only for initiation in manual proofreading
+{
+    p_img1D = 0;
+    ppp_img3D = 0;
+    callback=cb;
+    //init parameters
+    param.bgthr = bg_thr;
+    param.max_dis = max_dis;
+    sel_channel=channel;
+    known_label=group_label;
     qDebug()<<"para reset: param bg_thr:"<<param.bgthr<<" channel:"<<sel_channel;
 }
 
@@ -160,9 +172,9 @@ bool spine_fun::init()
         VOI * tmp_voxel = new VOI(i,x,y,z);
         tmp_voxel->intensity=p_img1D[i];
         tmp_voxel->dst=(int)sqrt(dst[i]);
-        tmp_voxel->skel_idx=0;
-        tmp_voxel->dst_label=tmp_voxel->dst_layer=-1;
-        tmp_voxel->intensity_label=tmp_voxel->intensity_layer=-1;
+        //tmp_voxel->skel_idx=0;
+        tmp_voxel->dst_label=-1;
+        tmp_voxel->intensity_label=-1;
         voxels_map[i]=tmp_voxel;
     }
 
@@ -211,8 +223,152 @@ bool spine_fun::init()
     return true;
 }
 
+bool spine_fun::init_for_manual_proof()
+{
+    qDebug()<<"~~~~~Spine Detector: init voxels of interest along neuron skeleton";
+
+    V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
+    V3DLONG z_offset=sz_img[0]*sz_img[1];
+    map<V3DLONG, VOI *> voxels_map;
+
+    float * dst = 0;
+    V3DLONG * label = 0;
+
+    try{
+        dst=new float[sz_page];
+        label=new V3DLONG[sz_page];
+    }
+    catch(...){
+        qDebug()<<"ERROR: failed to allocate memory for distance transform";
+        if(dst!=0) delete[] dst;
+        if(label!=0) delete[] label;
+        return false;
+    }
+
+    for(V3DLONG i=0; i<sz_page; i++){
+        dst[i]=INF;
+    }
+
+    //map<V3DLONG,int> nearest_node_map;
+
+    for(V3DLONG nid=0; nid<nt.listNeuron.size(); nid++){
+        V3DLONG nx = nt.listNeuron.at(nid).x;
+        V3DLONG ny = nt.listNeuron.at(nid).y;
+        V3DLONG nz = nt.listNeuron.at(nid).z;
+        if (nx<0 || nx>sz_img[0]-1 || ny<0 ||ny>sz_img[1]-1||nz<0 ||nz>sz_img[2]-1) //swc not in image
+            continue;
+        int disthr_2 = nt.listNeuron.at(nid).radius*nt.listNeuron.at(nid).radius;
+        for(V3DLONG x=MAX(nx-nt.listNeuron.at(nid).radius,0); x<=MIN(nx+nt.listNeuron.at(nid).radius,sz_img[0]-1); x++){
+            for(V3DLONG y=MAX(ny-nt.listNeuron.at(nid).radius,0); y<=MIN(ny+nt.listNeuron.at(nid).radius,sz_img[1]-1); y++){
+                for(V3DLONG z=MAX(nz-nt.listNeuron.at(nid).radius,0); z<=MIN(nz+nt.listNeuron.at(nid).radius,sz_img[2]-1); z++){
+                    if(ppp_img3D[z][y][x]<param.bgthr){ //too dark, skip
+                        continue;
+                    }
+                    int dis=(x-nx)*(x-nx)+(y-ny)*(y-ny)+(z-nz)*(z-nz);
+                    if(dis>disthr_2){ //too far, skip
+                        continue;
+                    }
+                    dst[x+y*sz_img[0]+z*z_offset]=0;
+                }
+            }
+        }
+    }
+    sz_img[3]=1;
+    qDebug()<<"~~~~~Spine Dectector: distance transform";
+    dt3d(dst, label, sz_img);
+    if (label!=0) {delete[] label; label=0;}
+
+//    for(V3DLONG i=0; i<sz_page; i++){
+//        dst[i]=sqrt(dst[i]);
+//    }
+
+//    QString fn="dst.v3draw";
+//    simple_saveimage_wrapper(*callback,fn.toStdString().c_str(),(unsigned char *)dst,
+//                             sz_img,V3D_FLOAT32);
+
+    qDebug()<<"~~~~~Spine Dectector: init voxels";
+    for(V3DLONG i=0; i<sz_page; i++){
+        if(dst[i]>param.max_dis*param.max_dis){ //too far away
+            continue;
+        }
+        if(p_img1D[i]<param.bgthr){ //too dark
+            continue;
+        }
+        if(dst[i]<1e-10){ //skeleton node
+            continue;
+        }
+        V3DLONG x,y,z;
+        ind2sub(x,y,z,i);
+        VOI * tmp_voxel = new VOI(i,x,y,z);
+        tmp_voxel->intensity=p_img1D[i];
+        tmp_voxel->dst=(int)sqrt(dst[i]);
+        //tmp_voxel->skel_idx=0;
+        tmp_voxel->dst_label=-1;
+        if (known_label[i]>0)
+            tmp_voxel->intensity_label=known_label[i];
+        else
+            tmp_voxel->intensity_label=-1;
+        voxels_map[i]=tmp_voxel;
+    }
+
+    delete [] dst;
+    dst=0;
+
+    if (voxels_map.size()<=0)
+    {
+        v3d_msg("no voxels were found. Error!");
+        return false;
+    }
+    qDebug()<<"voxels map size:"<<voxels_map.size();
+    qDebug()<<"~~~~~Spine Dectector: init neighbors";
+    for(map<V3DLONG, VOI *>::iterator iter_map=voxels_map.begin(); iter_map!=voxels_map.end(); iter_map++){
+        if(iter_map->second->dst>=0) //only consider selected skel points
+        {
+            VOI * tmp_voxel =iter_map->second;
+            voxels.push_back(tmp_voxel);
+            //construct neighbors
+            vector<V3DLONG> nb;
+            if (tmp_voxel->pos-1>=0 && tmp_voxel->pos-1<sz_page)
+                nb.push_back(tmp_voxel->pos-1);
+            if (tmp_voxel->pos+1>=0 && tmp_voxel->pos+1<sz_page)
+                nb.push_back(tmp_voxel->pos+1);
+            if (tmp_voxel->pos-sz_img[0]>=0 && tmp_voxel->pos-sz_img[0]<sz_page)
+                nb.push_back(tmp_voxel->pos-sz_img[0]);
+            if (tmp_voxel->pos+sz_img[0]>=0 && tmp_voxel->pos+sz_img[0]<sz_page)
+                nb.push_back(tmp_voxel->pos+sz_img[0]);
+            if (tmp_voxel->pos-z_offset>=0 && tmp_voxel->pos-z_offset<sz_page)
+                nb.push_back(tmp_voxel->pos-z_offset);
+            if (tmp_voxel->pos+z_offset>=0 && tmp_voxel->pos+z_offset<sz_page)
+                nb.push_back(tmp_voxel->pos+z_offset);
+
+            for (int m=0;m<nb.size();m++)
+            {
+                V3DLONG pos=nb[m];
+                if(voxels_map.find(pos) == voxels_map.end()){ //background
+                    continue;
+                }
+                if(voxels_map[pos]->dst<=0){ //skeleton voxels
+                    continue;
+                }
+                tmp_voxel->neighbors_6.push_back(voxels_map[pos]);
+            }
+        }
+    }
+
+    if (voxels.size()<=0)
+    {
+        qDebug()<<"no voxels of interest are found.Please check image and reconstructions";
+        return false;
+    }
+    qDebug()<<"~~~~~Spine Detector: found "<<voxels.size()<<" voxels of interest.";
+    return true;
+}
+
+
 bool spine_fun::init_old()
 {
+    return true;
+    /*
     qDebug()<<"~~~~~Spine Detector: init voxels of interest along neuron skeleton";
     //find the eligible voxels and their parameters
     voxels.clear();
@@ -356,7 +512,7 @@ bool spine_fun::init_old()
 
     qDebug()<<"\n~~~~~Spine Detector: found "<<voxels.size()<<" voxels of interest.";
     delete [] mask; mask=0;
-    return true;
+    return true;*/
 }
 
 
@@ -454,9 +610,9 @@ bool spine_fun::run_dstGroup()
             }
         }
 
-        for(V3DLONG vid=0; vid<cur_layer.size(); vid++){
-            cur_layer[vid]->dst_layer++;
-        }
+//        for(V3DLONG vid=0; vid<cur_layer.size(); vid++){
+//            cur_layer[vid]->dst_layer++;
+//        }
 
         if(FLAG_ISTEST)
             qDebug()<<"dst:"<<dst_floor<<"; group"<<dst_groups.size()<<"; voxels"<<cur_layer.size()<<"; span:"<<vid_begin<<"-"<<vid_end<<"="<<vid_end-vid_begin;
@@ -1305,46 +1461,39 @@ bool spine_fun::run_intensityGroup()
 void spine_fun::saveResult()
 {
     qDebug()<<"~~~save Results";
-    if(FLAG_ISTEST){
-        V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
-        V3DLONG sz_tmp[4]; sz_tmp[0]=sz_img[0]; sz_tmp[1]=sz_img[1]; sz_tmp[2]=sz_img[2]; sz_tmp[3]=3;
-        tmp_out = new unsigned char[sz_page*3];
-        memset(tmp_out,0,sz_page*3);
-        memcpy(tmp_out,p_img1D,sz_page);
-        for(int i=0; i<voxels.size(); i++){
-            if (voxels.at(i)->dst_label==1)
-                tmp_out[voxels.at(i)->pos+2*sz_page]=255;
-//            if (voxels.at(i)->intensity_label>0)
-//                tmp_out[voxels.at(i)->pos+sz_page]=255;
-            tmp_out[voxels.at(i)->pos+sz_page]=255;
 
-        }
+//        V3DLONG sz_tmp[4]; sz_tmp[0]=sz_img[0]; sz_tmp[1]=sz_img[1]; sz_tmp[2]=sz_img[2]; sz_tmp[3]=3;
+//        unsigned char *tmp_out = new unsigned char[sz_page*3];
+//        memset(tmp_out,0,sz_page*3);
+//        memcpy(tmp_out,p_img1D,sz_page);
+//        for(int i=0; i<voxels.size(); i++){
+//            if (voxels.at(i)->dst_label==1)
+//                tmp_out[voxels.at(i)->pos+2*sz_page]=255;
+////            if (voxels.at(i)->intensity_label>0)
+////                tmp_out[voxels.at(i)->pos+sz_page]=255;
+//            tmp_out[voxels.at(i)->pos+sz_page]=255;
+//        }
         QString fname_output = fname_out + "_tmp.v3draw";
-        simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), tmp_out, sz_tmp, 1);
+//        simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), tmp_out, sz_tmp, 1);
 
-        tmp_label = new unsigned short[sz_page];
-        memset(tmp_label,0,sz_page*sizeof(unsigned short));
-        label_sz[0]=sz_img[0];
-        label_sz[1]=sz_img[1];
-        label_sz[2]=sz_img[2];
-        label_sz[3]=1;
-//        QString fname="spine_fun.marker";
-//        FILE *fp1=fopen(fname.toAscii(),"wt");
-//        fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
-        for (V3DLONG i=0;i<voxels.size();i++)
+    V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
+    unsigned short *tmp_label = new unsigned short[sz_page];
+    memset(tmp_label,0,sz_page*sizeof(unsigned short));
+    label_sz[0]=sz_img[0];
+    label_sz[1]=sz_img[1];
+    label_sz[2]=sz_img[2];
+    label_sz[3]=2;
+
+    for (V3DLONG i=0;i<voxels.size();i++)
+    {
+        if (voxels[i]->intensity_label>0)
         {
-            if (voxels[i]->intensity_label>0)
-            {
-                tmp_label[voxels.at(i)->pos]=voxels[i]->intensity_label;
-//                fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",tmp_group[tmp_group.size()/2]->x+1,
-//                        tmp_group[tmp_group.size()/2]->y+1,tmp_group[tmp_group.size()/2]->z+1);
-            }
-
+            tmp_label[voxels.at(i)->pos]=voxels[i]->intensity_label;
+            tmp_label[voxels.at(i)->pos+sz_page]=voxels[i]->dst;
         }
-//        fclose(fp1);
-        fname_output = fname_out + "_tmp_label.v3draw";
-        simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), (unsigned char *)tmp_label, sz_img, 2);
     }
+    simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 2);
+
 }
 
 
@@ -1583,57 +1732,57 @@ void spine_fun::closing(GOV seeds, int id, GOV &new_seeds)
 
 void spine_fun::write_spine_center_profile()
 {
-    qDebug()<<"in write spine center profile";
+//    qDebug()<<"in write spine center profile";
 
-    QString fname="spine_fun.marker";
-    FILE *fp1=fopen(fname.toAscii(),"wt");
-    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+//    QString fname="spine_fun.marker";
+//    FILE *fp1=fopen(fname.toAscii(),"wt");
+//    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
 
-    QString outfile="spine_analysis2.csv";
-    FILE *fp2=fopen(outfile.toAscii(),"wt");
-    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
-    for (int i=0;i<final_groups.size();i++)
-    {
-        GOV tmp=final_groups[i];
-        //qDebug()<<"I:"<<i<<" size:"<<tmp.size();
-        sort(tmp.begin(),tmp.end(),sortfunc_dst);
-        int group_id=tmp.front()->intensity_label;
-        int max_dis=tmp.front()->dst;
-        int min_dis=tmp.back()->dst;
-        int volume=tmp.size();
-        V3DLONG sum_x,sum_y,sum_z,sum_dis;
-        sum_x=sum_y=sum_z=sum_dis=0;
-        for (int j=0;j<tmp.size();j++)
-        {
-            sum_x+=tmp[j]->x;
-            sum_y+=tmp[j]->y;
-            sum_z+=tmp[j]->z;
-            sum_dis+=tmp[j]->dst;
-        }
-        int center_x=sum_x/tmp.size();
-        int center_y=sum_y/tmp.size();
-        int center_z=sum_z/tmp.size();
-        int center_dis=sum_dis/tmp.size();
-        int skel_id=0;
-        for (int j=0;j<tmp.size();j++)
-        {
-            VOI *tmp_voi=tmp[j];
-            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
-            {
-                skel_id=tmp_voi->skel_idx;
-                break;
-            }
-        }
+//    QString outfile="spine_analysis2.csv";
+//    FILE *fp2=fopen(outfile.toAscii(),"wt");
+//    fprintf(fp2,"##id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root\n");
+//    for (int i=0;i<final_groups.size();i++)
+//    {
+//        GOV tmp=final_groups[i];
+//        //qDebug()<<"I:"<<i<<" size:"<<tmp.size();
+//        sort(tmp.begin(),tmp.end(),sortfunc_dst);
+//        int group_id=tmp.front()->intensity_label;
+//        int max_dis=tmp.front()->dst;
+//        int min_dis=tmp.back()->dst;
+//        int volume=tmp.size();
+//        V3DLONG sum_x,sum_y,sum_z,sum_dis;
+//        sum_x=sum_y=sum_z=sum_dis=0;
+//        for (int j=0;j<tmp.size();j++)
+//        {
+//            sum_x+=tmp[j]->x;
+//            sum_y+=tmp[j]->y;
+//            sum_z+=tmp[j]->z;
+//            sum_dis+=tmp[j]->dst;
+//        }
+//        int center_x=sum_x/tmp.size();
+//        int center_y=sum_y/tmp.size();
+//        int center_z=sum_z/tmp.size();
+//        int center_dis=sum_dis/tmp.size();
+//        int skel_id=0;
+//        for (int j=0;j<tmp.size();j++)
+//        {
+//            VOI *tmp_voi=tmp[j];
+//            if ((tmp_voi->x==center_x) && (tmp_voi->y==center_y) && (tmp_voi->z==center_z))
+//            {
+//                skel_id=tmp_voi->skel_idx;
+//                break;
+//            }
+//        }
 
-        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",center_x+1,center_y+1,center_z+1);
+//        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",center_x+1,center_y+1,center_z+1);
 
-        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\n",group_id,volume,max_dis,
-                min_dis,center_dis,center_x,center_y,center_z,skel_id,nt.listNeuron.at(skel_id).type,nt.listNeuron.at(skel_id).seg_id,
-                nt.listNeuron.at(skel_id).level, nt.listNeuron.at(skel_id).fea_val[1]);
+//        fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f\n",group_id,volume,max_dis,
+//                min_dis,center_dis,center_x,center_y,center_z,skel_id,nt.listNeuron.at(skel_id).type,nt.listNeuron.at(skel_id).seg_id,
+//                nt.listNeuron.at(skel_id).level, nt.listNeuron.at(skel_id).fea_val[1]);
 
-    }
-    fclose(fp1);
-    fclose(fp2);
+//    }
+//    fclose(fp1);
+//    fclose(fp2);
 }
 
 LandmarkList spine_fun::get_center_landmarks()

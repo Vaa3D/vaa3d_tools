@@ -26,20 +26,20 @@ struct parameters{
 struct VOI{
     V3DLONG pos; //position of the voxel
     V3DLONG x,y,z;
-    V3DLONG skel_idx; //the index of the corresponding swc node
+    //V3DLONG skel_idx; //the index of the corresponding swc node
     int dst; //dst
     int dst_label; //dst label
-    int dst_layer; //dst layer
+    //int dst_layer; //dst layer
     unsigned short intensity; //voxel intensity
     int intensity_label; //intensity label
-    int intensity_layer; //intensity layer
+    //int intensity_layer; //intensity layer
 
     vector<VOI*> neighbors_26; //26 neighbor
     vector<VOI*> neighbors_6; //6 neighbor
 
-    VOI(){pos=x=y=z=skel_idx=0.0; dst=dst_label=dst_layer=intensity=intensity_label=intensity_layer=-1;}
-    VOI(V3DLONG _pos){pos=_pos; skel_idx=0.0; dst=dst_label=dst_layer=intensity=intensity_label=intensity_layer=-1;}
-    VOI(V3DLONG _pos,V3DLONG _x,V3DLONG _y,V3DLONG _z){pos=_pos;x=_x;y=_y;z=_z; skel_idx=0.0; dst=dst_label=dst_layer=intensity=intensity_label=intensity_layer=-1;}
+    VOI(){pos=x=y=z=0; dst=dst_label=intensity=intensity_label=-1;}
+    VOI(V3DLONG _pos){pos=_pos; dst=dst_label=intensity=intensity_label=-1;}
+    VOI(V3DLONG _pos,V3DLONG _x,V3DLONG _y,V3DLONG _z){pos=_pos;x=_x;y=_y;z=_z;dst=dst_label=intensity=intensity_label=-1;}
 };
 
 struct group_profile{int group_id; int number_of_layer; vector<float> layer_length;
@@ -57,8 +57,10 @@ class spine_fun
 public:
     spine_fun(const char * fname_img, const char* fname_skel, const char* fname_out, V3DPluginCallback * cb);
     spine_fun(V3DPluginCallback * cb, parameters set_para, int channel);
+    spine_fun(V3DPluginCallback * cb,int channel,int bg_thr,int max_dis,unsigned short *group_label);
     int loadData(); //read images and swc files
     bool init(); //init the voxels of interest (within distance and intesnity is above threshold)
+    bool init_for_manual_proof();
     bool run_intensityGroup();
     void saveResult();
     void dst_group_check();
@@ -91,8 +93,8 @@ private:
     QString fname_img;
     QString fname_skel;
     QString fname_out;
-    unsigned char * p_img1D, *tmp_out;
-    unsigned short * tmp_label;
+    unsigned char * p_img1D;
+    //unsigned short * tmp_label;
     unsigned char *** ppp_img3D; //ppp_img3d[z][y][x]
     V3DLONG sz_img[4],label_sz[4];
     int sel_channel;
@@ -103,6 +105,9 @@ private:
     vector<GOV> intensity_groups;
     vector<GOV> final_groups;
     vector<group_profile*> all_group_info;
+
+    //for manual proof initiation
+    unsigned short *known_label;
 
 public:
     bool pushImageData(unsigned char * data1Dc_in, V3DLONG new_sz_img[4])

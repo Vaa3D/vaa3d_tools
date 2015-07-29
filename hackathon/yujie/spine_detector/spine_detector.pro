@@ -31,7 +31,9 @@ unix:!macx {
     LIBS += -fopenmp
 }
 
-HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
+HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h \
+    file_io_dialog.h \
+    manual_proofread_dialog.h
 
 HEADERS	+= spine_detector_plugin.h \
     spine_detector_dialog.h \
@@ -55,7 +57,9 @@ SOURCES	+= spine_detector_plugin.cpp \
     spine_fun.cpp \
     manual_correct_dialog.cpp \
     read_raw_file.cpp \
-    learning.cpp
+    learning.cpp \
+    file_io_dialog.cpp \
+    manual_proofread_dialog.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp \
            $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp \
            $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp \

@@ -100,6 +100,7 @@ private:
 public slots:
     bool get_big_image_name();
     void big_image_pipeline_start();
+    //void learning_pipeline_starts();
 public:
 
 
@@ -107,7 +108,7 @@ private:
     V3DPluginCallback2 *callback;
     int view_code;
     v3dhandle curwin,main_win;
-    QLineEdit *edit_load, *edit_label, *edit_swc,*edit_csv;
+    QLineEdit *edit_load, *edit_swc,*edit_csv;
     QPlainTextEdit *edit_status;
     QString image_load_path,swc_load_path,csv_load_path;
     QDialog *mydialog;
@@ -123,7 +124,7 @@ private:
     NeuronTree neuron,checked_neuron;
     LandmarkList LList_in,LList_adj,LList_seg;
     QString folder_output;
-    int x_start,y_start,z_start,sel_channel;
+    int x_start,y_start,z_start,sel_channel,x_end,y_end,z_end;
     vector<GOV> label_group,label_group_copy;
     bool edit_flag,eswc_flag;
     parameters all_para;
