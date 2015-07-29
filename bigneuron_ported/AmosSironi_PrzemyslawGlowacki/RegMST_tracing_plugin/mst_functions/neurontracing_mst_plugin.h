@@ -17,6 +17,8 @@ struct MST_PARA
     QString inimg_file;
     V3DLONG channel;
     V3DLONG Ws;
+    double th;
+    double pos_thres;
 };
 //#endif
 
@@ -25,7 +27,8 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
-                                      double th);
+                                      double th,
+                                      double thresh_pos);
 
 template <class T> T pow2(T a)
 {

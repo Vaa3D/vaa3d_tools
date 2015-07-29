@@ -16,6 +16,10 @@
 #include "itkBinaryMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
 
+//#include "FL_downSample3D.h"
+
+//#include "itkMultiThreader.h"
+
 
 class SwcFileContent {
 
@@ -93,7 +97,7 @@ template<typename ImageType,typename T>
 typename ImageType::Pointer rawData2ItkImage(T *data1d,const long int *in_sz);
 
 template<typename ITKImageType,typename ImageScalarType>
-typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz);
+typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz,bool transpose_y);
 
 template<typename ITKImageType>
 bool check_range(typename ITKImageType::IndexType pixelIndex,typename ITKImageType::SizeType size);
@@ -107,8 +111,12 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,float *scale_factor);
 
+//template<typename ITKImageType>
+//typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz);
+
 template<typename ITKImageType,typename T>
-typename ITKImageType::Pointer resize_image_v3d(Image4DSimple *inimg,const double * scale_factor, long int * out_sz);
+typename ITKImageType::Pointer resize_image_v3d(Image4DSimple * pred_img_v3d,const double * scale_factor, V3DLONG * out_sz);
+
 
 template<typename ITKImageType>
 typename ITKImageType::Pointer cropItkImage(typename ITKImageType::Pointer &origImg, long int * crop_start_idxs, long int * in_sz_cropped);
@@ -240,7 +248,7 @@ typename ImageType::Pointer rawData2ItkImage(T *data1d,const long int *in_sz){
 
 
 template<typename ITKImageType,typename ImageScalarType>
-typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz){
+typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_sz, bool transpose_y = false){
 
   std::vector< std::string > swcFilePathsVector;
   swcFilePathsVector.push_back(std::string(swc_file));
@@ -276,7 +284,11 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
             );
       for(double i = 0.0; i < 1.0; i += 1.0 / segmentLength) {
         pixelIndex[0] = round(rowi->x + vecX * i);
-        pixelIndex[1] = in_sz[1] -1 -round(rowi->y + vecY * i);//v3d transpose y axis
+        if(transpose_y){
+            pixelIndex[1] = in_sz[1] -1 -round(rowi->y + vecY * i);//v3d transpose y axis
+        }else{
+                pixelIndex[1] =round(rowi->y + vecY * i);
+        }
         pixelIndex[2] = round(rowi->z + vecZ * i);
 
         if(!check_range<ITKImageType>(pixelIndex,size)){
@@ -287,7 +299,11 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
       }
 
       pixelIndex[0] = round(parentRowi->x);
-      pixelIndex[1] = in_sz[1] -1 -round(parentRowi->y);
+      if(transpose_y){
+        pixelIndex[1] = in_sz[1] -1 -round(parentRowi->y);
+      }else{
+           pixelIndex[1] = round(parentRowi->y);
+      }
       pixelIndex[2] = round(parentRowi->z);
 
       if(!check_range<ITKImageType>(pixelIndex,size)){
@@ -298,7 +314,11 @@ typename ITKImageType::Pointer swc2ItkImage(char * swc_file,const long int *in_s
 
 
     pixelIndex[0] = round(rowi->x);
-    pixelIndex[1] = in_sz[1] -1 -round(rowi->y);
+    if(transpose_y){
+        pixelIndex[1] = in_sz[1] -1 -round(rowi->y);
+    }else{
+        pixelIndex[1] = round(rowi->y);
+    }
     pixelIndex[2] = round(rowi->z);
 
     if(!check_range<ITKImageType>(pixelIndex,size)){
@@ -353,49 +373,133 @@ template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,const long int * out_sz){
 
 
-    //resampler type
-    typedef itk::ResampleImageFilter<ITKImageType, ITKImageType> ResampleImageFilterType;
-    typedef itk::IdentityTransform<double, 3> TransformType;
+    //itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
+
+    typedef itk::Image< double, 3 > ImageTypeDouble;
+
+    typedef itk::CastImageFilter< ITKImageType, ImageTypeDouble > CastFilterType;
+    typename  CastFilterType::Pointer castFilter = CastFilterType::New();
+      castFilter->SetInput(origImg);
+
+      std::cout << "casting img "  << std::endl;
 
 
-    //get/set input/output size and spacing
-    typename ITKImageType::SizeType inputSize = origImg->GetLargestPossibleRegion().GetSize();
-    std::cout << "Input size: " << inputSize << std::endl;
+      castFilter->Update();
 
-    typename ITKImageType::SizeType outputSize;
-    outputSize[0] = out_sz[0]; outputSize[1] = out_sz[1]; outputSize[2] = out_sz[2];
+      std::cout << "getting out" << std::endl;
 
 
-    typename ITKImageType::SpacingType outputSpacing;
-      outputSpacing[0] = origImg->GetSpacing()[0] * (static_cast<double>(inputSize[0]) / static_cast<double>(outputSize[0]));
-      outputSpacing[1] = origImg->GetSpacing()[1] * (static_cast<double>(inputSize[1]) / static_cast<double>(outputSize[1]));
-       outputSpacing[2] = origImg->GetSpacing()[2] * (static_cast<double>(inputSize[2]) / static_cast<double>(outputSize[2]));
+ImageTypeDouble::Pointer origImgDouble = castFilter->GetOutput();
 
-      //resample (use defualt linear interpolation)
-      typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
-      resample->SetInput(origImg);
-      resample->SetSize(outputSize);
-      resample->SetOutputSpacing(outputSpacing);
-      TransformType::Pointer transform = TransformType::New();
-      transform->SetIdentity();
-      resample->SetTransform(transform);
-      typedef itk::LinearInterpolateImageFunction<
-                               ITKImageType, double > InterpolatorType;
-      typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
-      resample->SetInterpolator( interpolator );
 
-      resample->SetDefaultPixelValue( 0 ); // value for regions without source
-      resample->SetOutputOrigin( origImg->GetOrigin() );
-      resample->SetOutputDirection( origImg->GetDirection() );
+   typename ImageTypeDouble::SizeType     inputSize     = origImgDouble->GetLargestPossibleRegion().GetSize();
+      std::cout << "Input Size: " << inputSize << std::endl;
 
-      resample->UpdateLargestPossibleRegion();
-//resample->Update();
+    typename  ImageTypeDouble::SpacingType  inputSpacing  = origImgDouble->GetSpacing();
+      std::cout << "Input Spacing: " << inputSpacing << std::endl;
 
-      typename ITKImageType::Pointer output = resample->GetOutput();
+     typename ImageTypeDouble::SpacingType  outputSpacing;
 
-   //   std::cout << "Output size: " << output->GetLargestPossibleRegion().GetSize() << std::endl;
+      typename ImageTypeDouble::SizeType     outputSize;
+      outputSize[0] = out_sz[0];    outputSize[1] = out_sz[1];    outputSize[2] = out_sz[2];
 
-      return output;
+     // for( unsigned int dim = 0; dim < Dimension; dim++ )
+     //   {
+        outputSpacing[0] = static_cast< double >( inputSpacing[0] ) * static_cast< double >( inputSize[0] ) / static_cast< double >( outputSize[0] );
+        outputSpacing[1] = static_cast< double >( inputSpacing[1] ) * static_cast< double >( inputSize[1] ) / static_cast< double >( outputSize[1] );
+        outputSpacing[2] = static_cast< double >( inputSpacing[2] ) * static_cast< double >( inputSize[2] ) / static_cast< double >( outputSize[2] );
+
+        //  }
+
+
+
+      std::cout << "Output Size: " << outputSize << std::endl;
+      std::cout << "Output Spacing: " << outputSpacing << std::endl;
+
+      typedef double TransformPrecisionType;
+      typedef itk::IdentityTransform< TransformPrecisionType, 3 > TransformType;
+      typedef itk::ResampleImageFilter< ImageTypeDouble, ImageTypeDouble > FilterType;
+      typename FilterType::Pointer filter = FilterType::New();
+      filter->SetInput( origImgDouble );
+      filter->SetSize( outputSize );
+      filter->SetOutputSpacing( outputSpacing );
+      filter->SetOutputOrigin( origImgDouble->GetOrigin() );
+      filter->SetTransform( TransformType::New() );
+//filter->SetNumberOfThreads(1);
+
+      filter->Update();
+
+
+      typedef itk::CastImageFilter<ImageTypeDouble, ITKImageType > CastFilterTypeBack;
+      typename  CastFilterTypeBack::Pointer castFilterBack = CastFilterTypeBack::New();
+        castFilterBack->SetInput(filter->GetOutput());
+
+        std::cout << "casting img back"  << std::endl;
+
+
+        castFilterBack->Update();
+
+        std::cout << "getting out back" << std::endl;
+
+
+      return castFilterBack->GetOutput() ;
+
+
+//    //resampler type
+//    typedef itk::ResampleImageFilter<ITKImageType, ITKImageType> ResampleImageFilterType;
+//    typedef itk::IdentityTransform<double, 3> TransformType;
+
+
+//    //get/set input/output size and spacing
+//    typename ITKImageType::SizeType inputSize = origImg->GetLargestPossibleRegion().GetSize();
+//    std::cout << "BB Input size: " << inputSize << std::endl;
+
+//    typename ITKImageType::SizeType outputSize;
+//    outputSize[0] = out_sz[0]; outputSize[1] = out_sz[1]; outputSize[2] = out_sz[2];
+
+
+//    typename ITKImageType::SpacingType outputSpacing;
+//      outputSpacing[0] = origImg->GetSpacing()[0] * (static_cast<double>(inputSize[0]) / static_cast<double>(outputSize[0]));
+//      outputSpacing[1] = origImg->GetSpacing()[1] * (static_cast<double>(inputSize[1]) / static_cast<double>(outputSize[1]));
+//       outputSpacing[2] = origImg->GetSpacing()[2] * (static_cast<double>(inputSize[2]) / static_cast<double>(outputSize[2]));
+
+//       std::cout << "CC "  << std::endl << std::flush;
+
+
+//      //resample (use defualt linear interpolation)
+//      typename ResampleImageFilterType::Pointer resample = ResampleImageFilterType::New();
+//      resample->SetInput(origImg);
+//      resample->SetSize(outputSize);
+//      resample->SetOutputSpacing(outputSpacing);
+//      TransformType::Pointer transform = TransformType::New();
+//      transform->SetIdentity();
+//      resample->SetTransform(transform);
+//      typedef itk::LinearInterpolateImageFunction<
+//                               ITKImageType, double > InterpolatorType;
+//      typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
+//      resample->SetInterpolator( interpolator );
+
+//      std::cout << "CC1 "  << std::endl << std::flush;
+
+
+//      resample->SetDefaultPixelValue( 0 ); // value for regions without source
+//      resample->SetOutputOrigin( origImg->GetOrigin() );
+//      resample->SetOutputDirection( origImg->GetDirection() );
+
+//      std::cout << "CC2 "  << std::endl << std::flush;
+
+
+//      resample->UpdateLargestPossibleRegion();
+////resample->Update();
+
+//      std::cout << "DD "  << std::endl << std::flush;
+
+
+//      typename ITKImageType::Pointer output = resample->GetOutput();
+
+//      std::cout << "EE Output size: " << output->GetLargestPossibleRegion().GetSize() << std::endl;
+
+//      return output;
 
 }
 
@@ -406,7 +510,7 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
     typename ITKImageType::RegionType region = origImg->GetLargestPossibleRegion();
     typename  ITKImageType::SizeType size = region.GetSize();
 
-//     std::cout << "in size: " << size << std::endl;
+     std::cout << "AA in size: " << size << std::endl;
 
 
       long int * out_sz = new long int[3];
@@ -414,12 +518,45 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
       out_sz[1] = (long int)((float)size[1])*scale_factor[1];
       out_sz[2] = (long int)((float)size[2])*scale_factor[2];
 
-//      std::cout << "out size: " << out_sz[0] <<  " "<< out_sz[1] <<" " << out_sz[2] << std::endl;
+     std::cout << "AA out size: " << out_sz[0] <<  " "<< out_sz[1] <<" " << out_sz[2] << std::endl;
 
       typename ITKImageType::Pointer output =  resize_image_itk<ITKImageType>(origImg,out_sz);
       return output;
 
 }
+
+
+
+//template<typename ITKImageType>
+//typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz){
+
+
+//    Image4DSimple * outImg;
+
+//    V3DLONG *szin = new V3DLONG[3];
+//    szin[0] = inimg->getXDim();
+//    szin[1] = inimg->getYDim();
+//    szin[2] = inimg->getZDim();
+
+
+//    float *outdata;
+
+//  //  template <class T> bool downsample3dvol(T ***outdata, T *** indata, V3DLONG *szin, double *dfactor, unsigned char tag)
+//   // bool downsampled  = downsample3dvol<float>(outdata, inimg->getRawDataAtChannel(0),szin,scale_factor, 0);
+//    unsigned char tag = 0;
+//    //template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor, unsigned char tag)
+//    bool downsampled  = downsample3dvol<float>(outdata, (float *)inimg->getRawDataAtChannel(1), out_sz, szin, scale_factor, tag);
+
+//    if(downsampled){
+//        outImg->setData((unsigned char *)(outdata), out_sz[0], out_sz[1], out_sz[2], 1, V3D_FLOAT32);
+//    }else{
+//        std::cout << "could not downsample image !" << std::endl;
+
+//    }
+
+//    return v3d2ItkImage<ITKImageType>(outImg,out_sz);
+
+//}
 
 
 template<typename ITKImageType>
@@ -511,7 +648,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
          labelStatisticsImageFilter->SetLabelInput( labelMapToLabelImageFilter->GetOutput() );
          labelStatisticsImageFilter->SetInput(thresholdFilter->GetOutput());
          labelStatisticsImageFilter->Update();
-         std::cout << "done"<< std::endl<< std::flush;
+       //  std::cout << "done"<< std::endl<< std::flush;
 
 
      //    std::cout << "Number of labels: " << labelStatisticsImageFilter->GetNumberOfLabels() << std::endl;
@@ -533,7 +670,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
 
            bool found_region = false;
 
-           for(ValidLabelValuesType::const_iterator vIt=labelStatisticsImageFilter->GetValidLabelValues().begin();
+           for(ValidLabelValuesType::const_iterator vIt=labelStatisticsImageFilter->GetValidLabelValues().begin()+1;//first label is always background?
                vIt != labelStatisticsImageFilter->GetValidLabelValues().end();
                ++vIt)
              {
@@ -566,7 +703,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
                             crop_end_idxs_temp[2]  = crop_start_idxs_temp[2] +in_sz_cropped_temp[2] -1;
                              found_region = true;
 
-               //              std::cout << "found first region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+//                           std::cout << "found first region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
 
 
                      }else{
@@ -593,7 +730,7 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
                          in_sz_cropped_temp[2] = crop_end_idxs_temp[2] - crop_start_idxs_temp[2] +1;
 
 
-                //         std::cout << "found other region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
+//                        std::cout << "found other region, index:  " << crop_start_idxs_temp <<", region size: " << in_sz_cropped_temp<<"region end: " << crop_end_idxs_temp<< std::endl;
 
 
                      }
@@ -625,9 +762,9 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
            crop_start_idxs[0] = std::max(crop_start_idxs_temp[0]-10, orig_img_origin[0]);
            crop_start_idxs[1] = std::max(crop_start_idxs_temp[1]-10, orig_img_origin[1]);
            crop_start_idxs[2] = std::max(crop_start_idxs_temp[2]-10, orig_img_origin[2]);
-           in_sz_cropped[0] = std::min(in_sz_cropped_temp[0]+2*10, orig_img_size[0]);
-           in_sz_cropped[1] = std::min(in_sz_cropped_temp[1]+2*10, orig_img_size[1]);
-           in_sz_cropped[2] = std::min(in_sz_cropped_temp[2]+2*10, orig_img_size[2]);
+           in_sz_cropped[0] = std::min(in_sz_cropped_temp[0]+2*10, orig_img_size[0] - crop_start_idxs[0]); // - start index
+           in_sz_cropped[1] = std::min(in_sz_cropped_temp[1]+2*10, orig_img_size[1] - crop_start_idxs[1]);
+           in_sz_cropped[2] = std::min(in_sz_cropped_temp[2]+2*10, orig_img_size[2] - crop_start_idxs[2]);
            in_sz_cropped[3] = 1;
 
 
@@ -647,8 +784,8 @@ typename ITKImageType::Pointer cropItkImageUniformBackground(typename ITKImageTy
            }
            /////
 
-
-        //   std::cout << "caliing crop fun:  "<< std::endl << std::flush;
+//           std::cout << "regionto crop : " << region_to_crop << "Size img: " << origImg->GetLargestPossibleRegion().GetSize()<< std::endl << std::flush;
+//           std::cout << "caliing crop fun:  "<< std::endl << std::flush;
 
 
            return cropItkImage<ITKImageType>(origImg,  crop_start_idxs,  in_sz_cropped);

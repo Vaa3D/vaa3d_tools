@@ -15,12 +15,12 @@
 #include "../../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 
 
+
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 #define INF 1E9
 
-unsigned int thresh_pos = 100;
 
 //Q_EXPORT_PLUGIN2(neurontracing_mst, neurontracing_mst);
  
@@ -96,6 +96,8 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c,Ws;
     V3DLONG in_sz[4];
+    double pos_thres;
+
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -141,6 +143,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
                                           10, 1, N, 1, &ok2);
         }
 
+
         if(!ok2)
             return;
 
@@ -151,6 +154,9 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
         in_sz[3] = sc;
 
         PARA.inimg_file = p4DImage->getFileName();
+
+
+         pos_thres = 30;
     }
     else
     {
@@ -167,32 +173,39 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
         sc = in_sz[3];
         c = PARA.channel;
         Ws = PARA.Ws;
+        pos_thres = PARA.pos_thres;
     }
 
 
     V3DLONG pagesz = N*M*P;
-    double th = 0;
+    double th = PARA.th;
     V3DLONG offsetc = (c-1)*pagesz;
 
-//    for(V3DLONG iz = 0; iz < P; iz++)
-//    {
-//        double PixelSum = 0;
-//        V3DLONG offsetk = iz*M*N;
-//        for(V3DLONG iy = 0; iy <  M; iy++)
-//        {
-//            V3DLONG offsetj = iy*N;
-//            for(V3DLONG ix = 0; ix < N; ix++)
-//            {
+    if(th<0){
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                double PixelSum = 0;
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = 0; iy <  M; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
 
-//                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
-//                PixelSum = PixelSum + PixelVaule;
-//            }
-//        }
-//        th += PixelSum/(M*N*P);
-//    }
+                        double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+                        PixelSum = PixelSum + PixelVaule;
+                    }
+                }
+                th += PixelSum/(M*N*P);
+            }
+}
+
+    QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th, pos_thres);
 
 
-    QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
+
+   // std::random_shuffle(nt_seed.begin(), nt_seed.end());
+
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
     writeSWC_file("mst.swc",nt_tmp);
@@ -336,7 +349,11 @@ trace_para.b_estRadii = false;
     nt_final.listNeuron = listNeuron;
     nt_final.hashNeuron = hashNeuron;
 
-    QString swc_name = PARA.inimg_file + "_RegMST_Tracing.swc";
+   // QString swc_name = PARA.inimg_file + sprintf("_MST_Tracing_Ws_%i_th_%i.swc", PARA.Ws, PARA.pos_thres);//+ "_MST_Tracing.swc";
+    QString swc_name = QString("%1_MST_Tracing_Ws_%2_th_%3.swc")
+                     .arg(PARA.inimg_file).arg(PARA.Ws).arg(PARA.pos_thres);
+    //  out_tubularity_filename = PARA.inimg_file + sprintf("_tubularity_%s.v3draw", PARA.regressor_paths.at(PARA.n_ac_iters).toStdString().c_str());
+
 
     //post process
   //   nt_final = post_process(nt_final);
@@ -348,29 +365,43 @@ trace_para.b_estRadii = false;
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
+    if(listNeuron.size()>0){
+
+    //return
+         std::cout << "sorting" <<std::endl << std::flush;
+
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_sort;
+        V3DPluginArgList output;
+
+        arg.type = "random";std::vector<char*> arg_input_resample;
+        std:: string fileName_Qstring(swc_name.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input_resample.push_back(fileName_string);
+        arg.type = "random";std::vector<char*> arg_input_sort;
+        arg_input_sort.push_back(fileName_string);
+        arg.p = (void *) & arg_input_sort; input_sort<< arg;
+        arg.type = "random";std::vector<char*> arg_sort_para;arg.p = (void *) & arg_sort_para; input_sort << arg;
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+        QString full_plugin_name_sort = "sort_neuron_swc";
+        QString func_name_sort = "sort_swc";
+
+        //std::cout << "CALLING sort plugin" <<std::endl << std::flush;
+
+
+        callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
+
+        v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+
+    }else{
+        v3d_msg(QString(" generated swc fle [%1] is empty !.").arg(swc_name.toStdString().c_str()),bmenu);
+
+
+    }
     return;
 
-     std::cout << "sorting" <<std::endl << std::flush;
-
-
-    V3DPluginArgItem arg;
-    V3DPluginArgList input_sort;
-    V3DPluginArgList output;
-
-    arg.type = "random";std::vector<char*> arg_input_resample;
-    std:: string fileName_Qstring(swc_name.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
-    arg_input_resample.push_back(fileName_string);
-    arg.type = "random";std::vector<char*> arg_input_sort;
-    arg_input_sort.push_back(fileName_string);
-    arg.p = (void *) & arg_input_sort; input_sort<< arg;
-    arg.type = "random";std::vector<char*> arg_sort_para;arg.p = (void *) & arg_sort_para; input_sort << arg;
-    arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
-
-    QString full_plugin_name_sort = "sort_neuron_swc";
-    QString func_name_sort = "sort_swc";
-    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
    // return;
     //writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
@@ -445,7 +476,7 @@ trace_para.b_estRadii = false;
     NeuronTree nt_2nd_sorted;
     SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5);
 
-    nt_2nd_sorted.name = "_RegMST_Tracing";
+    nt_2nd_sorted.name = "_MST_Tracing";
     writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
 
 
@@ -457,7 +488,8 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
-                                      double th)
+                                      double th,
+                                      double thresh_pos)
 {
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -471,6 +503,18 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     QList <ImageMarker> seeds;
     QList <ImageMarker> loc_points_list;
 
+    //unsigned int thresh_pos = 160;
+    bool found_seed = false;
+    unsigned int count = 0;
+    unsigned int max_count = 2;
+    unsigned int min_size_seed = 1;
+    unsigned int max_size_seed = pagesz/1e3;
+    max_size_seed = (max_size_seed<1e6)?1e6:max_size_seed;//max_size_seed = max(pagesz/1e3,1e6);
+
+    bool find_center_mass = true; //if false find local max
+
+
+while(!found_seed){
     printf("\nDetecting seed location ...\n");
     for(V3DLONG iz = 0; iz < P; iz = iz + Ws)
     {
@@ -489,7 +533,11 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                 //now get the center of mass
                 double th_local = 0;
                 double xm=0,ym=0,zm=0, s=0, n=0;
+                double local_max = 0;
                 V3DLONG i = 0;
+
+                V3DLONG seed_index;
+
                 for(V3DLONG k=zb; k<=ze; k++)
                 {
                     V3DLONG offsetkl = k*M*N;
@@ -499,60 +547,96 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                         for(V3DLONG i=xb; i<=xe; i++)
                         {
                             w = double(data1d[offsetc+offsetkl + offsetjl + i]) - th;
-                            if (w >0)  //30
-                            {
-                                xm += w*i;
-                                ym += w*j;
-                                zm += w*k;
-                                s += w;
-                                n = n+1;
-                                if(w > th + thresh_pos)
+
+                            if(find_center_mass){
+
+                                if (w >0)  //30
                                 {
-                                    ImageMarker local_point;
-                                    local_point.x = i;
-                                    local_point.y = j;
-                                    local_point.z = k;
-                                    loc_points_list.append(local_point);
+                                    xm += w*i;
+                                    ym += w*j;
+                                    zm += w*k;
+                                    s += w;
+                                    n = n+1;
+                                    if(w > th + thresh_pos)
+                                    {
+                                        ImageMarker local_point;
+                                        local_point.x = i;
+                                        local_point.y = j;
+                                        local_point.z = k;
+                                        loc_points_list.append(local_point);
+                                    }
                                 }
+
+                            }else{//find local max
+                                if(local_max<w){
+                                    local_max = w;
+                                    seed_index = offsetc+offsetkl + offsetjl + i;
+
+                                    xm = i;
+                                    ym = j;
+                                    zm = k;
+
+                                }
+
+
                             }
                         }
                     }
                 }
-                xm /= s; ym /=s; zm /=s;
-                V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                if(s >0 && data1d[seed_index] <= th + thresh_pos && loc_points_list.size()>1) //find medoid point
-                {
-                    double dist_min = INF;
-                    V3DLONG medoid_index = -1;
-                    for(int io = 0; io < loc_points_list.size(); io++)
+
+            //    std::cout << "local max: " <<local_max<< std::endl;
+            //    std::cout << "seed_index: " <<seed_index<< std::endl;
+
+
+                if(find_center_mass){
+                    xm /= s; ym /=s; zm /=s;
+                    seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
+                    if(s >0 && data1d[seed_index] <= th + thresh_pos && loc_points_list.size()>1) //find medoid point
                     {
-                        double dis = 0;
-                        for(int jo = 0; jo < loc_points_list.size(); jo++)
+                        double dist_min = INF;
+                        V3DLONG medoid_index = -1;
+                        for(int io = 0; io < loc_points_list.size(); io++)
                         {
-                            dis += sqrt(pow2(loc_points_list.at(io).x - loc_points_list.at(jo).x) + pow2(pow2(loc_points_list.at(io).y - loc_points_list.at(jo).y) + pow2(pow2(loc_points_list.at(io).z - loc_points_list.at(jo).z))));
+                            double dis = 0;
+                            for(int jo = 0; jo < loc_points_list.size(); jo++)
+                            {
+                                dis += sqrt(pow2(loc_points_list.at(io).x - loc_points_list.at(jo).x) + pow2(pow2(loc_points_list.at(io).y - loc_points_list.at(jo).y) + pow2(pow2(loc_points_list.at(io).z - loc_points_list.at(jo).z))));
+                            }
+                            if(dis < dist_min)
+                            {
+                                dist_min = dis;
+                                medoid_index = io;
+                            }
                         }
-                        if(dis < dist_min)
-                        {
-                            dist_min = dis;
-                            medoid_index = io;
-                        }
+                        seed_index = (int)loc_points_list.at(medoid_index).z*M*N + (int)loc_points_list.at(medoid_index).y*N +(int)loc_points_list.at(medoid_index).x;
+                        xm = loc_points_list.at(medoid_index).x;
+                        ym = loc_points_list.at(medoid_index).y;
+                        zm = loc_points_list.at(medoid_index).z;
+                       // printf("\n(%.4f,%.4f,%.4f)",xm,ym,zm);
+
                     }
-                    seed_index = (int)loc_points_list.at(medoid_index).z*M*N + (int)loc_points_list.at(medoid_index).y*N +(int)loc_points_list.at(medoid_index).x;
-                    xm = loc_points_list.at(medoid_index).x;
-                    ym = loc_points_list.at(medoid_index).y;
-                    zm = loc_points_list.at(medoid_index).z;
-                   // printf("\n(%.4f,%.4f,%.4f)",xm,ym,zm);
+                    loc_points_list.clear();
 
-                }
-                loc_points_list.clear();
+                    if(s >0 && data1d[seed_index] > th + thresh_pos )//&& variance_patch>th_var)
+                    {
+                        ImageMarker MARKER;
+                        MARKER.x = xm;
+                        MARKER.y = ym;
+                        MARKER.z = zm;
+                        seeds.append(MARKER);
+                    }
+                }else{//set seed to max in window
+                    if(data1d[seed_index] > th + thresh_pos )//&& variance_patch>th_var)
+                    {
+                      //  std::cout << "max seeds: " <<data1d[seed_index] << std::endl;
 
-                if(s >0 && data1d[seed_index] > th + thresh_pos)
-                {
-                    ImageMarker MARKER;
-                    MARKER.x = xm;
-                    MARKER.y = ym;
-                    MARKER.z = zm;
-                    seeds.append(MARKER);
+                        ImageMarker MARKER;
+                        MARKER.x = xm;
+                        MARKER.y = ym;
+                        MARKER.z = zm;
+                        seeds.append(MARKER);
+                    }
+
                 }
 
             }
@@ -560,13 +644,35 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     }
 
 
+    if(seeds.size()<min_size_seed){//threshold too high
+        thresh_pos = thresh_pos-20;
+        count++;
+    }else if(seeds.size()>max_size_seed){//threshold too low
+        thresh_pos = thresh_pos+20;
+        count++;
+    }else{
+        found_seed = true;
+    }
+
+    if(count>max_count){
+        found_seed = true;
+    }
+
+
+}//end found seed
+
     printf("\nGenerating Minimum Spanning Tree (MST) for all seed locations ...\n");
 
     V3DLONG marknum = seeds.size();
 
-    //TODO: avoid. if this is zero -> segfault
+    if(marknum<1){
+        std::cout<< "could not find seed points !!!" << std::endl;
+        QList<NeuronSWC> marker_MST_sorted_empty;
+        return marker_MST_sorted_empty;
+    }
+
     std::cout << "marknum: "<<marknum <<std::endl << std::flush;
-    std::cout << "th: "<<th <<std::endl << std::flush;
+    std::cout << "pos th: "<<thresh_pos <<std::endl << std::flush;
 
     double** markEdge = new double*[marknum];
     for(int i = 0; i < marknum; i++)
