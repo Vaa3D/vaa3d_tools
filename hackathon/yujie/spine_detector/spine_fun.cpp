@@ -815,108 +815,108 @@ bool spine_fun::reverse_dst_grow()
 
 void spine_fun::dst_group_check()
 {
-    //construct profile
-    vector<group_profile*> all_group_info;
-    qDebug()<<"dst_group size:"<<dst_groups.size();
-    QString fname="spine_fun.marker";
-    FILE *fp1=fopen(fname.toAscii(),"wt");
-    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
+//    //construct profile
+//    vector<group_profile*> all_group_info;
+//    qDebug()<<"dst_group size:"<<dst_groups.size();
+//    QString fname="spine_fun.marker";
+//    FILE *fp1=fopen(fname.toAscii(),"wt");
+//    fprintf(fp1,"##x,y,z,radius,shape,name,comment,color_r,color_g,color_b\n");
 
-    for (int i=0;i<dst_groups.size();i++)
-    {
-        qDebug()<<"I:"<<i;
-        if(dst_groups[i].size()<=0) continue;
-        GOV tmp_group=dst_groups[i];
-//        if (tmp_group.size()<param.min_pixel){
-//            for (int j=0;j<tmp_group.size();j++)
-//                tmp_group[j]->dst_label=-1;
-//            dst_groups[i].clear();
-//            continue;
-//        }
-        sort (tmp_group.begin(),tmp_group.end(),sortfunc_dst);
-//        if (tmp_group.front()->dst<=2)
+//    for (int i=0;i<dst_groups.size();i++)
+//    {
+//        qDebug()<<"I:"<<i;
+//        if(dst_groups[i].size()<=0) continue;
+//        GOV tmp_group=dst_groups[i];
+////        if (tmp_group.size()<param.min_pixel){
+////            for (int j=0;j<tmp_group.size();j++)
+////                tmp_group[j]->dst_label=-1;
+////            dst_groups[i].clear();
+////            continue;
+////        }
+//        sort (tmp_group.begin(),tmp_group.end(),sortfunc_dst);
+////        if (tmp_group.front()->dst<=2)
+////        {
+////            qDebug()<<"----------------------this group too flat";
+////            continue;
+////        }
+
+//        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",tmp_group.front()->x+1,
+//                tmp_group.front()->y+1,tmp_group.front()->z+1);
+//        int number_of_layer=tmp_group.front()->dst-tmp_group.back()->dst+1;
+//        qDebug()<<"------group: "<<i<<" number of layer:"<<number_of_layer;
+//        float sum_x,sum_y,sum_z,sum_nb,center_x,center_y,center_z,ave_nb;
+//        int tmp_dis_floor=tmp_group.front()->dst;
+//        GOV cur_layer;
+
+//        group_profile *cur_group_info=new group_profile;
+//        cur_group_info->number_of_layer=number_of_layer;
+//        cur_group_info->group_id=i;
+//        //cur_group_info->distance=tmp_group.front()->dst;
+//        while (tmp_dis_floor>=tmp_group.back()->dst)
 //        {
-//            qDebug()<<"----------------------this group too flat";
-//            continue;
+//            qDebug()<<"tmp_dis_floor:"<<tmp_dis_floor;
+//            sum_x=sum_y=sum_z=sum_nb=0;
+//            cur_layer.clear();
+//            for (int j=0;j<tmp_group.size();j++)
+//            {
+//                if (tmp_group[j]->dst==tmp_dis_floor)
+//                {
+//                    sum_x+=tmp_group[j]->x;
+//                    sum_y+=tmp_group[j]->y;
+//                    sum_z+=tmp_group[j]->z;
+//                    sum_nb+=tmp_group[j]->neighbors_26.size();
+//                    cur_layer.push_back(tmp_group[j]);
+//                }
+//            }
+//            center_x=sum_x/cur_layer.size();
+//            center_y=sum_y/cur_layer.size();
+//            center_z=sum_z/cur_layer.size();
+//            ave_nb=sum_nb/cur_layer.size();
+//            float max_dis=0;
+//            for (int k=0;k<cur_layer.size();k++)
+//            {
+//                float dis=(cur_layer[k]->x-center_x)*(cur_layer[k]->x-center_x)+
+//                        (cur_layer[k]->y-center_y)*(cur_layer[k]->y-center_y)+
+//                        (cur_layer[k]->z-center_z)*(cur_layer[k]->z-center_z);
+//                if (dis>max_dis)
+//                    max_dis=dis;
+//            }
+//            max_dis=2*sqrt(max_dis);
+//            cur_group_info->layer_length.push_back(max_dis);
+//            cur_group_info->layer_spongeness.push_back(ave_nb);
+//            cur_group_info->layer_voxel_num.push_back(cur_layer.size());
+//            tmp_dis_floor--;
+//        }
+//        qDebug()<<"cur_group_info layer_length size:"<<cur_group_info->layer_length.size()
+//               <<"cur group info layer number:"<<cur_group_info->number_of_layer;
+//        all_group_info.push_back(cur_group_info);
+
+//    }
+
+//    qDebug()<<"all group info size:"<<all_group_info.size();
+//    //start trimming layers
+
+//    QString outfile="spine_analysis2.csv";
+//    FILE *fp2=fopen(outfile.toAscii(),"wt");
+//    fprintf(fp2,"##id,layer,length,layer_pixels,spongeness,distance\n");
+//    for (int i=0;i<all_group_info.size();i++)
+//    {
+//        group_profile *cur_group_info=all_group_info[i];
+//        for (int j=0;j<cur_group_info->number_of_layer;j++)
+//        {
+////            if(cur_group_info->layer_spongeness<3 ||
+////                    cur_group_info->layer_length>param.width_thr)
+//            qDebug()<<"layer:"<<j<<" length:"<<cur_group_info->layer_length[j]
+//                      <<" spongeness:"<<cur_group_info->layer_spongeness[j]
+//                        <<" pixels:"<<cur_group_info->layer_voxel_num[j];
+//            fprintf(fp2,"%d,%d,%.1f,%d,%.1f,%d\n",i,j,cur_group_info->layer_length[j],
+//                    cur_group_info->layer_voxel_num[j],cur_group_info->layer_spongeness[j],
+//                    cur_group_info->distance);
 //        }
 
-        fprintf(fp1,"%d,%d,%d,1,1,"","",255,255,255\n",tmp_group.front()->x+1,
-                tmp_group.front()->y+1,tmp_group.front()->z+1);
-        int number_of_layer=tmp_group.front()->dst-tmp_group.back()->dst+1;
-        qDebug()<<"------group: "<<i<<" number of layer:"<<number_of_layer;
-        float sum_x,sum_y,sum_z,sum_nb,center_x,center_y,center_z,ave_nb;
-        int tmp_dis_floor=tmp_group.front()->dst;
-        GOV cur_layer;
-
-        group_profile *cur_group_info=new group_profile;
-        cur_group_info->number_of_layer=number_of_layer;
-        cur_group_info->group_id=i;
-        //cur_group_info->distance=tmp_group.front()->dst;
-        while (tmp_dis_floor>=tmp_group.back()->dst)
-        {
-            qDebug()<<"tmp_dis_floor:"<<tmp_dis_floor;
-            sum_x=sum_y=sum_z=sum_nb=0;
-            cur_layer.clear();
-            for (int j=0;j<tmp_group.size();j++)
-            {
-                if (tmp_group[j]->dst==tmp_dis_floor)
-                {
-                    sum_x+=tmp_group[j]->x;
-                    sum_y+=tmp_group[j]->y;
-                    sum_z+=tmp_group[j]->z;
-                    sum_nb+=tmp_group[j]->neighbors_26.size();
-                    cur_layer.push_back(tmp_group[j]);
-                }
-            }
-            center_x=sum_x/cur_layer.size();
-            center_y=sum_y/cur_layer.size();
-            center_z=sum_z/cur_layer.size();
-            ave_nb=sum_nb/cur_layer.size();
-            float max_dis=0;
-            for (int k=0;k<cur_layer.size();k++)
-            {
-                float dis=(cur_layer[k]->x-center_x)*(cur_layer[k]->x-center_x)+
-                        (cur_layer[k]->y-center_y)*(cur_layer[k]->y-center_y)+
-                        (cur_layer[k]->z-center_z)*(cur_layer[k]->z-center_z);
-                if (dis>max_dis)
-                    max_dis=dis;
-            }
-            max_dis=2*sqrt(max_dis);
-            cur_group_info->layer_length.push_back(max_dis);
-            cur_group_info->layer_spongeness.push_back(ave_nb);
-            cur_group_info->layer_voxel_num.push_back(cur_layer.size());
-            tmp_dis_floor--;
-        }
-        qDebug()<<"cur_group_info layer_length size:"<<cur_group_info->layer_length.size()
-               <<"cur group info layer number:"<<cur_group_info->number_of_layer;
-        all_group_info.push_back(cur_group_info);
-
-    }
-
-    qDebug()<<"all group info size:"<<all_group_info.size();
-    //start trimming layers
-
-    QString outfile="spine_analysis2.csv";
-    FILE *fp2=fopen(outfile.toAscii(),"wt");
-    fprintf(fp2,"##id,layer,length,layer_pixels,spongeness,distance\n");
-    for (int i=0;i<all_group_info.size();i++)
-    {
-        group_profile *cur_group_info=all_group_info[i];
-        for (int j=0;j<cur_group_info->number_of_layer;j++)
-        {
-//            if(cur_group_info->layer_spongeness<3 ||
-//                    cur_group_info->layer_length>param.width_thr)
-            qDebug()<<"layer:"<<j<<" length:"<<cur_group_info->layer_length[j]
-                      <<" spongeness:"<<cur_group_info->layer_spongeness[j]
-                        <<" pixels:"<<cur_group_info->layer_voxel_num[j];
-            fprintf(fp2,"%d,%d,%.1f,%d,%.1f,%d\n",i,j,cur_group_info->layer_length[j],
-                    cur_group_info->layer_voxel_num[j],cur_group_info->layer_spongeness[j],
-                    cur_group_info->distance);
-        }
-
-    }
-    fclose(fp1);
-    fclose(fp2);
+//    }
+//    fclose(fp1);
+//    fclose(fp2);
 }
 
 //LandmarkList spine_fun::construct_group_profile()
