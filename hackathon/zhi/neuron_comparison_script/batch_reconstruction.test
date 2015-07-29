@@ -81,8 +81,8 @@ $1 -x NeuroGPSTree -f tracing_func -i $2 -p 1 1 1 10
 mv  "$2_NeuroGPSTree.swc" $3
 $1 -x fastmarching_spanningtree -f tracing_func -i $2
 mv  "$2_fastmarching_spanningtree.swc" $3
-#$1 -x BJUT_meanshift -f meanshift -i $2
-#mv  "$2_fastmarching_meanshift.swc" $3
+$1 -x BJUT_meanshift -f meanshift -i $2
+mv  "$2_meanshift.swc" $3
 $1 -x CWlab_method1_version1 -f tracing_func -i $2 -p 1
 mv  "$2_Cwlab_ver1.swc" $3
 $1 -x LCM_boost -f LCM_boost -i $2 -o $2_LCMboost.swc 
