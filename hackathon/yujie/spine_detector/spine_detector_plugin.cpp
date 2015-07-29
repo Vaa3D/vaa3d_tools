@@ -22,7 +22,7 @@ QStringList spine_detector::menulist() const
 //        <<tr("skeleton analysis")
         <<tr("spine_detector_1.0 (proofread by spine)")
         <<tr("spine_detector_1.1 (proofread by segment)")
-        <<tr("spine_detector_2.0 (for big images)")
+//        <<tr("spine_detector_2.0 (for big images)")
 //        <<tr("learning_test")
 //       <<tr("test")
         <<tr("about");

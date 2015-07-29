@@ -2727,7 +2727,7 @@ bool manual_correct_dialog::get_big_image_name()
 
 vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img_eswc()
 {
-    float distance_thresh=all_para.max_dis*5;
+    float distance_thresh=all_para.max_dis*7;
     qDebug()<<"in nt_divide_big_img"<<distance_thresh;
     vector<int> leaf_nodes_id;
     vector<vector <int> > parent_LUT = build_parent_LUT(neuron);
