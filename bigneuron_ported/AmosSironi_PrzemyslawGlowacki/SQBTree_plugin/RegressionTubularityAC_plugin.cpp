@@ -148,7 +148,7 @@ const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi
 bool crop_images = true;
 double uniform_thresh = 0.1; //to crop images
 bool transpose_swc_y = false; // if true transpose Y axis when reading swc gt file
-
+double max_pixels_predict = 0.5*1e8; //if image too large try to downsample it (otherwise out of memory)
 
 
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -645,6 +645,26 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
          cout<<"size image cropped: " << in_sz_cropped[0]<< " ;"<<in_sz_cropped[1]<<  " ;"<<in_sz_cropped[2]<<endl << std::flush;
 
 
+         //TODO: what if image cropped is empty?
+
+         if(in_sz_cropped[0]*in_sz_cropped[1]*in_sz_cropped[2]<1){
+
+             cout << "Cropped image is empty! " <<endl;
+
+             Image4DSimple outimg_final_emty;
+             unsigned char* out_data_zero = new unsigned char[n_pixels];
+             for(unsigned int i_pix = 0; i_pix < n_pixels; i_pix++){
+                      out_data_zero[i_pix] = 0;
+             }
+
+             outimg_final_emty.setData((unsigned char *)(out_data_zero), in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+             callback.saveImage(&outimg_final_emty, outimg_file);
+             cout << "Saved final result to: " << outimg_file<<endl;
+             return true;
+
+         }
+
+
        //  std::cout << "image origin" << I_cropped->GetOrigin() <<std::endl;
 
   //       Image4DSimple input_cropped_image = itk2v3dImage<ITKImageType>(I_cropped);
@@ -705,6 +725,9 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     }else{
          scales = VectorTypeFloat::Ones(1);
     }
+
+
+    double *dfactor_down = new double[3];
     unsigned int n_scales = scales.size();
     for(unsigned int i_scale=0; i_scale<n_scales; i_scale++){
 
@@ -732,9 +755,77 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
         size_img_scaled = I_resized->GetLargestPossibleRegion().GetSize();
         V3DLONG n_pixels_scaleed = size_img_scaled[0]*size_img_scaled[1]*size_img_scaled[2];
 
-//        std::cout << "size img cropped: " << size_img_scaled << std::endl << std::flush;
+        std::cout << "size img cropped: " << size_img_scaled << std::endl << std::flush;
 
-    MatrixTypeFloat nonsep_features_all;
+
+        bool downsampled = false;
+        if(n_pixels_scaleed>max_pixels_predict){
+
+            downsampled = true;
+
+            Image4DSimple img_cropped_v3d = itk2v3dImage<ITKImageType>(I_resized);
+
+            V3DLONG *out_sz_down= new V3DLONG[4];
+
+            double dfactor =  ceil(std::pow(n_pixels_scaleed/(max_pixels_predict),1/3));
+
+            std::cout << "Image too large! trying to dowsample it. Factor: " << dfactor<< std::endl << std::flush;
+
+
+            dfactor_down[0] =dfactor; dfactor_down[1] = dfactor;  dfactor_down[2] =dfactor;
+
+            I_resized = downsample_image_v3d<ITKImageType,float>(&img_cropped_v3d,dfactor_down,out_sz_down);
+
+            size_img_scaled[0]=out_sz_down[0];
+            size_img_scaled[1]=out_sz_down[1];
+            size_img_scaled[2]=out_sz_down[2];
+            n_pixels_scaleed = size_img_scaled[0]*size_img_scaled[1]*size_img_scaled[2];
+
+            std::cout << "size img downsampled: " << size_img_scaled << std::endl << std::flush;
+
+
+        }
+
+        //// DEBUG
+/*
+        V3DLONG *out_sz_res_debug= new V3DLONG[4];
+        double *dfactor_debig = new double[3];
+        dfactor_debig[0] = 2.0; dfactor_debig[1] = 2.0;  dfactor_debig[2] =2.0;
+        ITKImageType::Pointer I_down_debug = downsample_image_v3d<ITKImageType,unsigned char>(inimg,dfactor_debig,out_sz_res_debug);
+
+        std::cout << "size img down: " << out_sz_res_debug << std::endl << std::flush;
+
+        Image4DSimple img_down_v3d_debug = itk2v3dImage<ITKImageType>(I_down_debug);
+
+        char outimg_file_debug [500];
+
+            sprintf (outimg_file_debug, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_downsampled.v3draw");
+
+            cout << "saving debug results: " << outimg_file_debug<<endl;
+          callback.saveImage(&img_down_v3d_debug, outimg_file_debug);
+
+          //upsample back
+
+          V3DLONG *out_sz_res_debug_up= new V3DLONG[4];
+          double *dfactor_debig_up = new double[3];
+          dfactor_debig_up[0] = dfactor_debig[0]; dfactor_debig_up[1] = dfactor_debig[0];  dfactor_debig_up[2] =dfactor_debig[0];
+           ITKImageType::Pointer I_up_debug = upsample_image_v3d<ITKImageType,float>(&img_down_v3d_debug,dfactor_debig_up,out_sz_res_debug_up);
+
+
+           Image4DSimple img_down_v3d_debug_up = itk2v3dImage<ITKImageType>(I_up_debug);
+
+           char outimg_file_debug_up [500];
+
+               sprintf (outimg_file_debug_up, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_upsampled.v3draw");
+
+               cout << "saving debug results: " << outimg_file_debug_up<<endl;
+             callback.saveImage(&img_down_v3d_debug_up, outimg_file_debug_up);
+
+        ////
+
+*/
+
+        MatrixTypeFloat nonsep_features_all;
    std::cout << "Computing features..."<<std::endl<< std::flush;
     computeFeaturesSepComb<ITKImageType,MatrixTypeFloat,VectorTypeFloat>(nonsep_features_all,I_resized,sep_filters_float,weights_float, scale_factor);
 std::cout << "Computing features...Done."<<std::endl<< std::flush;
@@ -792,8 +883,33 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
             if(i_ac==n_ac_iters){
 
-                if(scales(i_scale) ==1){
+                if(scales(i_scale) ==1 && !downsampled){
                     newScores_original_size = newScores;
+                }else if(downsampled){
+
+                    std::cout << "Upsampling score back." <<std::endl;
+
+
+                        ITKImageType::SizeType size_down_crop;
+                        size_down_crop[0] = size_img_scaled[0]; size_down_crop[1] = size_img_scaled[1]; size_down_crop[2] = size_img_scaled[2];
+                       pred_img_itk =  eigenVector2itkImage<ITKImageType,TreeBoosterType::ResponseArrayType>(newScores, size_down_crop);
+                       Image4DSimple pred_img_v3d =  itk2v3dImage<ITKImageType>(pred_img_itk);
+
+
+                       V3DLONG *out_sz_res_up= new V3DLONG[4];
+                      // double *dfactor_debig_up = new double[3];
+                      // dfactor_debig_up[0] = dfactor_debig[0]; dfactor_debig_up[1] = dfactor_debig[0];  dfactor_debig_up[2] =dfactor_debig[0];
+                      predImg_scaled_original_size = upsample_image_v3d<ITKImageType,float>(&pred_img_v3d,dfactor_down,out_sz_res_up);
+
+
+                      newScores_original_size = itkImage2EigenVector<ITKImageType,TreeBoosterType::ResponseArrayType>(predImg_scaled_original_size,n_pixels_cropped,n_pixels_cropped);
+                       std::cout << "Resampling output Done." <<std::endl;
+
+                        std::cout << "size resampled image: " <<out_sz_res_up<<std::endl;
+
+
+
+
                 }else{
 
                     std::cout << "Resampling output to orignal size" <<std::endl;
@@ -849,9 +965,14 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
   }// end auto-context for loop
 
 
+
+
   }//end scale for loop
 
     finalScores /= n_scales;
+
+
+
 
 
   //  std::cout << "max score: "<< finalScores.maxCoeff() << "min score: "<< finalScores.minCoeff()    << endl;

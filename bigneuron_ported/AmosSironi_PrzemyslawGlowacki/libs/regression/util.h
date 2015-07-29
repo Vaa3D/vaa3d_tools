@@ -16,6 +16,8 @@
 #include "itkBinaryMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
 
+#include "FL_interpolateCoordLinear3D.h"
+
 //#include "FL_downSample3D.h"
 
 //#include "itkMultiThreader.h"
@@ -111,8 +113,11 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 template<typename ITKImageType>
 typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer origImg,float *scale_factor);
 
-//template<typename ITKImageType>
-//typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz);
+template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * dfactor, V3DLONG * szout);
+
+template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer upsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz);
 
 template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer resize_image_v3d(Image4DSimple * pred_img_v3d,const double * scale_factor, V3DLONG * out_sz);
@@ -525,6 +530,223 @@ typename ITKImageType::Pointer resize_image_itk(typename ITKImageType::Pointer o
 
 }
 
+
+
+template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * dfactor, V3DLONG * szout){
+
+
+   // typename ITKImageType::Pointer output = ITKImageType::New();
+        //Image4DSimple * outImg;
+
+        V3DLONG *szin = new V3DLONG[3];
+        szin[0] = inimg->getXDim();
+        szin[1] = inimg->getYDim();
+        szin[2] = inimg->getZDim();
+
+        for (V3DLONG i=0; i<3; i++)
+        {
+            szout[i] = (V3DLONG)(floor(double(szin[i]) / double(dfactor[i])));
+        }
+
+
+
+        T *indata = (T *)inimg->getRawDataAtChannel(0);
+        T *outdata = new T [szout[0]*szout[1]*szout[2]];
+
+        long szout_01 = szout[0]*szout[1];
+        long szin_01 = szin[0]*szin[1];
+
+        unsigned char tag = 0; //average for downsampling
+        if (tag == 0)
+        {
+            for (V3DLONG k=0;k<szout[2];k++)
+            {
+                long tt1 = k*szout_01;
+
+                V3DLONG k2low=V3DLONG(floor(k*dfactor[2])), k2high=V3DLONG(floor((k+1)*dfactor[2]-1));
+                if (k2high>szin[2]) k2high = szin[2];
+                V3DLONG kw = k2high - k2low + 1;
+
+                for (V3DLONG j=0;j<szout[1];j++)
+                {
+                    long tt2 = j*szout[0];
+
+                    V3DLONG j2low=V3DLONG(floor(j*dfactor[1])), j2high=V3DLONG(floor((j+1)*dfactor[1]-1));
+                    if (j2high>szin[1]) j2high = szin[1];
+                    V3DLONG jw = j2high - j2low + 1;
+
+                    for (V3DLONG i=0;i<szout[0];i++)
+                    {
+                        long idx_out = tt1 + tt2 + i;
+
+                        V3DLONG i2low=V3DLONG(floor(i*dfactor[0])), i2high=V3DLONG(floor((i+1)*dfactor[0]-1));
+                        if (i2high>szin[0]) i2high = szin[0];
+                        V3DLONG iw = i2high - i2low + 1;
+
+                        double cubevolume = double(kw) * jw * iw;
+                    //    cout<<cubevolume <<" ";
+
+    //printf("%ld,%ld, %ld\n", i,j,k);
+                        double s=0.0;
+                        for (V3DLONG k1=k2low;k1<=k2high;k1++)
+                        {
+                            long tmp1 = k1*szin_01;
+
+                            for (V3DLONG j1=j2low;j1<=j2high;j1++)
+                            {
+                                long tmp2 = j1*szin[0];
+
+                                for (V3DLONG i1=i2low;i1<=i2high;i1++)
+                                {
+                                    long idx_in = tmp1+ tmp2 + i1;
+
+                                   // if(idx_in < n_pix)
+                                        s += (T)indata[idx_in];
+                                   // else
+                                   //     printf("OUT OF RANGE: %d, %d, %d, %d, %d, %d,%d,%d\n", k, j, i, k1, j1, i1,idx_in,n_pix);
+                               //     if (indata[idx_in]>0)
+                               //         printf("%d, %d, %d, %d, %d, %d, %d\n", k, j, i, k1, j1, i1, indata[idx_in]);
+                                }
+                            }
+                        }
+
+                        outdata[idx_out] = (T)(s/cubevolume);
+                      //  if (outdata[idx_out]>0)
+                      //      printf("*******%f\n", s/cubevolume);
+                    }
+                }
+            }
+        }
+//        else
+//        {
+//            for (V3DLONG k=0;k<szout[2]; k++)
+//            {
+
+//                long tt1 = k*szout_01;
+
+//                V3DLONG k2=V3DLONG(floor(k*dfactor[2])); //20110128
+
+//    //			V3DLONG k2low=V3DLONG(floor(k*dfactor[2])), k2high=V3DLONG(floor((k+1)*dfactor[2]-1));
+//    //			if (k2high>szin[2]) k2high = szin[2];
+//    //			V3DLONG kw = k2high - k2low + 1;
+
+//                for (V3DLONG j=0;j<szout[1];j++)
+//                {
+
+//                    long tt2 = j*szout[0];
+
+//                    V3DLONG j2=V3DLONG(floor(j*dfactor[1])); //20110128
+
+//    //				V3DLONG j2low=V3DLONG(floor(j*dfactor[1])), j2high=V3DLONG(floor((j+1)*dfactor[1]-1));
+//    //				if (j2high>szin[1]) j2high = szin[1];
+//    //				V3DLONG jw = j2high - j2low + 1;
+
+//                    for (V3DLONG i=0;i<szout[0];i++)
+//                    {
+
+//                        long idx_out = tt1 + tt2 + i;
+
+//                        V3DLONG i2=V3DLONG(floor(i*dfactor[0]));
+
+//                        long idx_in = k2*szin_01 + j2*szin[0] + i2;
+
+//    //					V3DLONG i2low=V3DLONG(floor(i*dfactor[0])), i2high=V3DLONG(floor((i+1)*dfactor[0]-1));
+//    //					if (i2high>szin[0]) i2high = szin[0];
+//    //					V3DLONG iw = i2high - i2low + 1;
+
+//    //					outdata[k][j][i] = indata[int((k2low+k2high)/2)][int((j2low+j2high)/2)][int((i2low+i2high)/2)];
+
+//                        outdata[idx_out] = indata[idx_in];
+//                    }
+//                }
+//            }
+//        }
+
+         typename ITKImageType::Pointer outputItkImage = rawData2ItkImage<ITKImageType,T>(outdata,szout);
+
+        return outputItkImage;
+
+
+}
+
+
+template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer upsample_image_v3d(Image4DSimple *inimg,const double * dfactor, V3DLONG * szout){
+
+
+
+     T *indata = (T *)inimg->getRawDataAtChannel(0);
+
+    V3DLONG *szin = new V3DLONG[3];
+    szin[0] = inimg->getXDim();
+    szin[1] = inimg->getYDim();
+    szin[2] = inimg->getZDim();
+
+
+    szout[0] = (V3DLONG)(ceil(dfactor[0]*szin[0]));
+    szout[1] = (V3DLONG)(ceil(dfactor[1]*szin[1]));
+    szout[2] = (V3DLONG)(ceil(dfactor[2]*szin[2]));
+
+
+    V3DLONG totallen = szout[0] * szout[1] * szout[2];
+    Coord3D * c = new Coord3D [totallen];
+    T * v = new T [totallen];
+
+    T *outdata = new T [totallen];
+
+
+    if (!c || !v)
+    {
+        fprintf(stderr, "Fail to allocate memory. [%s][%d]\n", __FILE__, __LINE__);
+        if (c) {delete []c; c=0;}
+        if (v) {delete []v; v=0;}
+        return false;
+    }
+
+    //computation
+    V3DLONG i,j,k, ind;
+    ind=0;
+
+    for (k=0;k<szout[2];k++)
+    {
+        for (j=0;j<szout[1];j++)
+        {
+            for (i=0;i<szout[0];i++)
+            {
+                c[ind].x = double(i)/dfactor[0];
+//#ifndef POSITIVE_Y_COORDINATE
+//				c[ind].y = double(szout[1]-1-j)/dfactor[1];
+//#else
+                c[ind].y = double(j)/dfactor[1];
+//#endif
+                c[ind].z = double(k)/dfactor[2];
+                v[ind] = -1; //set as a special value
+                ind++;
+            }
+        }
+    }
+
+    interpolate_coord_linear(v, c, totallen, indata, szin[0], szin[1], szin[2], 0, szin[0]-1, 0, szin[1]-1, 0, szin[2]-1);
+
+    ind=0;
+
+
+    for (i=0; i<totallen; i++)
+        outdata[i] = (T)(v[i]);
+
+    // free temporary memory
+    if (c) {delete []c; c=0;}
+    if (v) {delete []v; v=0;}
+   // return true;
+
+
+    typename ITKImageType::Pointer outputItkImage = rawData2ItkImage<ITKImageType,T>(outdata,szout);
+
+   return outputItkImage;
+
+
+}
 
 
 //template<typename ITKImageType>
