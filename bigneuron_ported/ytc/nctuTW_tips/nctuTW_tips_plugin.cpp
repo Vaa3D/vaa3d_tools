@@ -195,7 +195,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     findingtipsmain();
 
     QList <ImageMarker> file_inmarkers;
-    QString markerfile = "EndPoints3D.marker";
+    QString markerfile = QString(g_sAppDir.data()) + "EndPoints3D.marker";
     file_inmarkers = readMarker_file(markerfile);
     //GD_tracing
     LocationSimple p0;

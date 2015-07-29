@@ -519,7 +519,7 @@ void DT_Tracing_Ver2(unsigned char* inBuf, unsigned char* skeleBuf, unsigned cha
 					 const int width, const int height, const int zSize, 
 					 const int SrcX, const int SrcY, const int SrcZ, 
 					 const double avgR, 
-					 char* filename = NULL,
+                     const char* filename = NULL,
 					 const double R = 1.0, const double Ita = 10.0,  const double REMOVE_RATIO = 0.2,
 					 const double CONNECT_R_3D = 1.0, const double CONNECT_R_2D = 0.75
 					 )
@@ -1404,7 +1404,11 @@ void do_EndPoints3D()
 	char* filename;
 
 	filename = new char [256];
+
     strcpy(filename,"EndPoints3D.marker");
+
+    std::string sFileName = g_sAppDir + filename;
+
 	//strcat(/,"_Reconstruction");
 
 //	std::cout<<filename<<'\n';
@@ -1424,7 +1428,7 @@ void do_EndPoints3D()
 	//											//
 	//==========================================//
 
-	DT_Tracing_Ver2( inBuf, skeleBuf, repairedBuf, CostDT, width, height, zSize, SrcX, SrcY, SrcZ, avgR, filename);
+    DT_Tracing_Ver2( inBuf, skeleBuf, repairedBuf, CostDT, width, height, zSize, SrcX, SrcY, SrcZ, avgR, sFileName.data());
 	
 	time(&total_end);
 //	std::cout<<"total time: "<<difftime(total_end, total_start)<<'\n';

@@ -110,6 +110,6 @@ SOURCES += $$VAA3DPATH/basic_c_fun/mg_utilities.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculate_cover_scores.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.cpp \
 
-TARGET	= $$qtLibraryTarget(nctuTW_GD)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/bigneuronhackathon/nctuTW_GD/
+TARGET	= $$qtLibraryTarget(tips_GD)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/bigneuronhackathon/tips_GD/
 
