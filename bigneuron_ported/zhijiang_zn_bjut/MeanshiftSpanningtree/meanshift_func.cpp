@@ -1896,17 +1896,6 @@ void change_NeuronSWCTo_MyMarker(QList<NeuronSWC> swc_tree, vector<MyMarker*> &t
 
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu)
 {
-	/////////////////////////////////////////////////////////
-	v3dhandle curwin = callback.currentImageWindow();
-	if(!curwin)
-	{
-		v3d_msg("No image is open.");
-		return 1;
-	}
-
-	Image4DSimple *p4d = callback.getImage(curwin);
-	unsigned char* img2d = p4d->getRawDataAtChannel(1);//used for keeping the Gauss denoising result
-
 	////////////////////////////////////////////////////////////
 	//这里需要进行第一次去噪，去掉一些像素小的点，但其他点的像素基本上不改变
 	V3DLONG sz_x = in_sz[0];
@@ -2240,7 +2229,7 @@ void merge_rootnode(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz
 	}
 
 
-	printSwcByMap(root,"C:\\Vaa3D\\finalroot.swc");
+//	printSwcByMap(root,"C:\\Vaa3D\\finalroot.swc");
 
 
 }
@@ -2588,93 +2577,13 @@ void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG 
 
 }
 
-int meanshift_plugin(const V3DPluginArgList & input, V3DPluginArgList & output)
-{
-	cout<<"Welcome to image_threshold function"<<endl;
-	if(input.size() != 2 || output.size() != 1) 
-	{
-		cout<<"illegal input!"<<endl;
-		printHelp();
-		return -1;
-	}
-
-
-	// 1 - Read input image
-	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-	if (inlist->size() != 1)
-	{
-		cout<<"You must specify 1 input file!"<<endl;
-		return -1;
-	}
-	char * infile = inlist->at(0);
-	cout<<"input file: "<<infile<<endl;
-	unsigned char * inimg1d = NULL;
-	V3DLONG * sz = NULL;
-	int datatype;
-	if (!loadImage(infile, inimg1d, sz, datatype)) return -1;
-
-
-	// 2 - Read color channel and threshold parameter
-	vector<char*>* paralist = (vector<char*>*)(input.at(1).p);
-	if (paralist->size() != 2)
-	{
-		cout<<"Illegal parameter!"<<endl;
-		printHelp();
-		return -1;
-	}
-	int c = atoi(paralist->at(0));
-	int thres = atoi(paralist->at(1));
-	cout<<"color channel: "<<c<<endl;
-	cout<<"threshold : "<<thres<<endl;
-	if (c < 0 || c>=sz[3])
-	{
-		cout<<"The color channel does not exist!"<<endl;
-		return -1;
-	}
-	loadImage(infile, inimg1d, sz, datatype, c);
-
-
-	// 3 - Read output fileName
-	vector<char*>* outlist = (vector<char*>*)(output.at(0).p);
-	if (outlist->size() != 1)
-	{
-		cout<<"You must specify 1 output file!"<<endl;
-		return -1;
-	}
-	char * outfile = outlist->at(0);
-	cout<<"output file: "<<outfile<<endl;
-
-	// 4 - Do binary segmentation
-	V3DLONG tb = sz[0]*sz[1]*sz[2]*datatype;
-	unsigned char * nm = NULL;
-	try {
-		nm = new unsigned char [tb];
-	} catch (...) {
-		throw("Fail to allocate memory in Image Thresholding plugin.");
-	}
-	for (V3DLONG i=0;i<tb;i++)
-	{
-		if (inimg1d[i]>=thres) nm[i] = 255;
-		else nm[i] = 0;
-	}
-
-	// 5 - Save file and free memory
-	sz[3] = 1;
-	saveImage(outfile, nm, sz, datatype);
-	if (nm) {delete []nm; nm=NULL;}
-
-	return 1;
-}
-
 void printHelp()
 {
-	cout<<"\nThis is a demo plugin to perform binary thresholding in an image. by Yinan Wan 2012-02"<<endl;
-	cout<<"\nUsage: v3d -x <example_plugin_name> -f image_thresholding -i <input_image_file> -o <output_image_file> -p <subject_color_channel> <threshold>"<<endl;
-	cout<<"\t -i <input_image_file>                      input 3D image (tif, raw or lsm)"<<endl;
-	cout<<"\t -o <output_image_file>                     output image of the thresholded subject channel"<<endl;
-	cout<<"\t -p <subject_color_channel> <threshold>     the channel you want to perform thresholding and the threshold"<<endl;
-	cout<<"\t                                            the 2 paras must come in this order"<<endl;
-	cout<<"\nDemo: v3d -x libexample_debug.dylib -f image_thresholding -i input.tif -o output.tif -p 0 100\n"<<endl;
+    cout<<"\n**** Usage of meanshift tracing ****"<<endl;
+    cout<<"\nvaa3d -x BJUT_meanshift -f meanshift -i <inimg_file> -p <channel>"<<endl;
+    cout<<"inimg_file       The input image"<<endl;
+    cout<<"channel          Data channel for tracing. Start from 1 (default 1)."<<endl;
+    cout<<"outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n"<<endl;
 	return;
 }
 

@@ -116,21 +116,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
     meanshift_plugin_vn4(callback,parent,data1d, in_sz,image_name,bmenu);
 
-    //Output
-
-      QString swc_name = PARA.inimg_file + "_fastmarching_spanningtree.swc";
-//    NeuronTree nt;
-//    nt.name = "tracing method";
-//    writeSWC_file(swc_name.toStdString().c_str(),nt);
-
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-
-    return;
+   return;
 }
 
 
