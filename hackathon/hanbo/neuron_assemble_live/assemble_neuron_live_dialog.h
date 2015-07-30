@@ -34,6 +34,7 @@ public:
 private:
     V3DPluginCallback2 * callback;
     NeuronTree nt;
+    V3DLONG prev_root;
     QHash<V3DLONG, NOI*> nodes;
     int coffset;
     V3DLONG noffset;
@@ -55,6 +56,7 @@ public slots:
     void delPair();
     void connectPair();
     void searchPair();
+    void sortsaveSWC();
     void highlightPair();
     void highlightMarker();
 
@@ -112,6 +114,16 @@ public:
     QTextEdit* text_info;
 };
 
+class sort_neuron_dialog : public QDialog
+{
+    Q_OBJECT
+public:
+    sort_neuron_dialog(LandmarkList * mList, V3DLONG prev_root, V3DLONG type1_root, QWidget *parent = 0);
+    QComboBox * cb_marker;
+    QPushButton * btn_yes, *btn_no;
+    QRadioButton *radio_marker, *radio_type, *radio_prev;
+};
+
 #define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
 #define NTNORM(a) (sqrt((a).x*(a).x+(a).y*(a).y+(a).z*(a).z))
@@ -120,5 +132,7 @@ void update_marker_info(const LocationSimple& mk, QList<int>& info); //info[0]=p
 void update_marker_info(const LocationSimple& mk, QList<int>& info, int* color);
 void set_marker_color(const LocationSimple& mk, RGB8 color);
 bool get_marker_info(const LocationSimple& mk, QList<int>& info);
+QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_root);
+bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif // ASSEMBEL_NEURON_LIVE_DIALOG_H

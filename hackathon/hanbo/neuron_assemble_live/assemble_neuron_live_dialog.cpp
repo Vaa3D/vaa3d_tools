@@ -91,6 +91,9 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     layout->addWidget(btn_save,6,0,1,1);
     layout->addWidget(btn_quit,6,1,1,1);
 
+    connect(btn_save,SIGNAL(clicked()),this,SLOT(sortsaveSWC()));
+    connect(btn_quit,SIGNAL(clicked()),this,SLOT(reject()));
+
     setLayout(layout);
 }
 
@@ -99,11 +102,15 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
     V3DLONG nmax=0;
     noffset=0;
     QMultiHash<NOI*,V3DLONG> parents;
+    prev_root=-1;
     //init nodes
     nodes.clear();
     for(int i=0; i<ntList.size(); i++){
         for(int j=0; j<ntList.at(i).listNeuron.size(); j++){
             V3DLONG n=ntList.at(i).listNeuron.at(j).n+noffset;
+            if(prev_root<0 && ntList.at(i).listNeuron.at(j).pn<0){
+                prev_root=n;
+            }
             NOI* node;
             if(!nodes.contains(n)){
                 node = new NOI();
@@ -570,6 +577,57 @@ void assemble_neuron_live_dialog::connectPair()
     }
     //remove the pair from the list
     delPair();
+}
+
+void assemble_neuron_live_dialog::sortsaveSWC()
+{
+    //get root ids
+    V3DLONG type1_root=-1;
+    for(NodeIter iter=nodes.begin(); iter!=nodes.end(); iter++){
+        if(iter.value()->type==1){
+            type1_root=iter.value()->n;
+            break;
+        }
+    }
+
+    LandmarkList * mList = getMarkerList();
+
+    sort_neuron_dialog sortDlg(mList, prev_root, type1_root, this);
+    if(!sortDlg.exec())
+        return;
+
+    V3DLONG n_root=-1;
+    if(sortDlg.radio_marker->isChecked()){
+        QList<int> info;
+        int i=sortDlg.cb_marker->currentIndex();
+        get_marker_info(mList->at(i), info);
+        n_root=info.at(0);
+    }else if(sortDlg.radio_prev->isChecked()){
+        n_root=prev_root;
+    }else if(sortDlg.radio_type->isChecked()){
+        n_root=type1_root;
+    }
+
+    if(!nodes.contains(n_root)){
+        v3d_msg("Invalide root node selected.");
+        return;
+    }
+
+    //generate swc file
+    QList<NeuronSWC> NeuronList = generate_swc_typesort(nodes, n_root);
+
+    //save file
+    QString fname_output = nt.file + ".assembled.swc";
+    fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                fname_output,
+            QObject::tr("Supported file (*.swc *.eswc)"
+                ";;Neuron structure	(*.swc)"
+                ";;Extended neuron structure (*.eswc)"
+                ));
+    if(fname_output.isEmpty()){
+        return;
+    }
+    export_list2file(NeuronList, fname_output);
 }
 
 void assemble_neuron_live_dialog::syncMarker()
@@ -1120,6 +1178,54 @@ pair_marker_dialog::pair_marker_dialog(LandmarkList * mList,QWidget *parent)
     connect(btn_no,SIGNAL(clicked()),this,SLOT(reject()));
 }
 
+//~~~~~~~~~~sort param dialog~~~~~~~~~~~
+sort_neuron_dialog::sort_neuron_dialog(LandmarkList * mList, V3DLONG prev_root, V3DLONG type1_root, QWidget *parent)
+{
+    QGridLayout * layout = new QGridLayout(this);
+
+    QGroupBox *group_root = new QGroupBox("Define root");
+    radio_marker = new QRadioButton("Select a marker as root: ");
+    radio_type = new QRadioButton("Pick a node with type 1 (soma) as root (Node " + QString::number(type1_root) + ")" );
+    radio_prev = new QRadioButton("Use the first root in original input SWC file (Node " + QString::number(prev_root) + ")");
+    cb_marker = new QComboBox();
+    QGridLayout * grouplayout = new QGridLayout();
+    grouplayout->addWidget(radio_marker, 0, 0, 1, 1);
+    grouplayout->addWidget(cb_marker, 0, 1, 1, 1);
+    grouplayout->addWidget(radio_type, 1, 0, 1, 2);
+    grouplayout->addWidget(radio_prev, 2, 0, 1, 2);
+    group_root->setLayout(grouplayout);
+    layout->addWidget(group_root, 1, 0, 1, 2);
+
+    btn_yes = new QPushButton("Start Sort");
+    btn_no = new QPushButton("Cancel");
+    layout->addWidget(btn_yes, 2,0,1,1);
+    layout->addWidget(btn_no, 2,1,1,1);
+
+    for(V3DLONG i=0; i<mList->size(); i++){
+        QList<int> info;
+        get_marker_info(mList->at(i), info);
+        QString tmp="Marker "+QString::number(i+1)+"; Node "+QString::number(info.at(0));
+        cb_marker->addItem(tmp);
+    }
+    if(mList->size()>0){
+        cb_marker->setCurrentIndex(0);
+    }else{
+        cb_marker->setEnabled(false);
+        radio_marker->setEnabled(false);
+    }
+
+    if(prev_root<0){
+        radio_prev->setEnabled(false);
+    }
+
+    if(type1_root<0){
+        radio_type->setEnabled(false);
+    }
+
+    connect(btn_yes,SIGNAL(clicked()),this,SLOT(accept()));
+    connect(btn_no,SIGNAL(clicked()),this,SLOT(reject()));
+}
+
 //~~~~~~~~~~connect param dialog~~
 
 connect_param_dialog::connect_param_dialog()
@@ -1340,5 +1446,131 @@ bool get_marker_info(const LocationSimple& mk, QList<int> & info) //info[0]=neur
             info.push_back(val);
     }
 
+    return true;
+}
+
+QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_root)
+{
+    //init components root
+    QList<int> components;
+    QList<V3DLONG> c_roots;
+    components.push_back(nodes[n_root]->cid);
+    c_roots.push_back(n_root);
+    for(NodeIter iter=nodes.begin(); iter!=nodes.end(); iter++){
+        if(!components.contains(iter.value()->cid)){
+            components.push_back(iter.value()->cid);
+            c_roots.push_back(iter.value()->n);
+        }else if(iter.value()->type==1){
+            c_roots[components.indexOf(iter.value()->cid)]=iter.value()->n;
+        }
+    }
+
+    //put the root nodes on the top of the SWC
+    QHash<V3DLONG, V3DLONG> hash_old_new;
+    QList<NeuronSWC> neuronList;
+    for(int i=0; i<c_roots.size(); i++){
+        hash_old_new.insert(c_roots.at(i),neuronList.size()+1);
+        NeuronSWC S;
+        S.n=neuronList.size()+1;
+        S.x=nodes[c_roots.at(i)]->x;
+        S.y=nodes[c_roots.at(i)]->y;
+        S.z=nodes[c_roots.at(i)]->z;
+        S.type=nodes[c_roots.at(i)]->type;
+        S.r=nodes[c_roots.at(i)]->r;
+        S.pn=-1;
+        neuronList.push_back(S);
+    }
+
+    //start grow from each node by type
+    QQueue<NOI*> seeds_cur;
+    QList<QQueue<QPair<NOI*,V3DLONG> > > seeds_next;
+    for(int i=0; i<c_roots.size(); i++){
+        QQueue<QPair<NOI*,V3DLONG> > seeds_tmp;
+        seeds_tmp.append(QPair<NOI*,V3DLONG>(nodes[c_roots.at(i)],-1));
+        seeds_next.push_back(seeds_tmp);
+    }
+    for(int type=1; type<20; type++){ //sort with type priority
+        int emptycount=0;
+        for(int cidx=0; cidx<seeds_next.size(); cidx++){
+            QQueue<QPair<NOI*,V3DLONG> > seeds_pre=seeds_next[cidx];
+            seeds_next[cidx].clear();
+            if(seeds_pre.isEmpty()){
+                emptycount++;
+                continue;
+            }
+            seeds_cur.clear();
+            while(!seeds_pre.isEmpty()){
+                QPair<NOI*,V3DLONG> pair_cur = seeds_pre.dequeue();
+                if(pair_cur.first->type > type){
+                    seeds_next[cidx].append(pair_cur);
+                    continue;
+                }
+                if(!hash_old_new.contains(pair_cur.first->n)){
+                    hash_old_new.insert(pair_cur.first->n,neuronList.size()+1);
+                    NeuronSWC S;
+                    S.n=neuronList.size()+1;
+                    S.x=pair_cur.first->x;
+                    S.y=pair_cur.first->y;
+                    S.z=pair_cur.first->z;
+                    S.type=pair_cur.first->type;
+                    S.r=pair_cur.first->r;
+                    S.pn=pair_cur.second;
+                    neuronList.push_back(S);
+                }
+                seeds_cur.append(pair_cur.first);
+            }
+
+            if(cidx==0){
+                qDebug()<<"~"<<seeds_next.at(cidx).size()<<" ~ "<<seeds_cur.size();
+            }
+
+            while(!seeds_cur.isEmpty()){
+                NOI* node_cur=seeds_cur.dequeue();
+                for(QSet<NOI*>::Iterator niter=node_cur->conn.begin(); niter!=node_cur->conn.end(); niter++){
+                    if(hash_old_new.contains((*niter)->n))
+                        continue;
+                    if((*niter)->type<=type){
+                        hash_old_new.insert((*niter)->n,neuronList.size()+1);
+                        NeuronSWC S;
+                        S.n=neuronList.size()+1;
+                        S.x=(*niter)->x;
+                        S.y=(*niter)->y;
+                        S.z=(*niter)->z;
+                        S.type=(*niter)->type;
+                        S.r=(*niter)->r;
+                        S.pn=hash_old_new[node_cur->n];
+                        neuronList.push_back(S);
+                        seeds_cur.push_back(*niter);
+                    }else{
+                        QPair<NOI*,V3DLONG> pair_cur(*niter, hash_old_new[node_cur->n]);
+                        seeds_next[cidx].append(pair_cur);
+                    }
+                }
+            }
+        }
+        if(emptycount>=seeds_next.size()){
+            break;
+        }
+
+        //for test
+        qDebug()<<"iter: "<<type<<";"<<emptycount<<";"<<neuronList.size();
+    }
+
+    return neuronList;
+}
+
+bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+    myfile<<"# generated by Vaa3D Plugin assemble_neuron_live"<<endl;
+    myfile<<"# date "<<QDate::currentDate().toString("yyyy.MM.dd")<<endl;
+    myfile<<"# id,type,x,y,z,r,pid"<<endl;
+    for (V3DLONG i=0;i<lN.size();i++)
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+
+    file.close();
     return true;
 }

@@ -48,7 +48,11 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
     tabWidget->addTab(open3DDlg1, tr("Open All SWCs in 3D Viewer"));
 
 	//page open from file
-	QFileDialog * fileDlg = new QFileDialog(tabWidget, tr("Open File"), "",
+    QSettings settings("V3D plugin","neuron_live_assembler");
+    QString prevFile = "";
+    if(settings.contains("fname_input"))
+        prevFile = settings.value("fname_input").toString();
+    QFileDialog * fileDlg = new QFileDialog(tabWidget, tr("Open File"), prevFile,
                 QObject::tr("Supported file (*.swc *eswc *.ano)"
                     ";;Neuron structure	(*.swc *eswc)"
                     ";;Linker file (*.ano)"
@@ -164,6 +168,9 @@ bool OpenSWCDialog::setTree(const QString & file)
     }
 	file_name = file;
 
+    QSettings settings("V3D plugin","neuron_live_assembler");
+    settings.setValue("fname_input",file);
+
     getImage();
 
 	accept();
@@ -183,8 +190,14 @@ void OpenSWCDialog::getImage()
     if(reply == QMessageBox::Yes){
         QString fname_input;
         while(1){
+            QSettings settings("V3D plugin","neuron_live_assembler");
+            QString prevFile = "";
+            if(settings.contains("fname_img"))
+                prevFile = settings.value("fname_img").toString();
+            else
+                prevFile = fileinfo.dir().path();
             fname_input = QFileDialog::getOpenFileName(this, QObject::tr("Choose the Image of Bottom Section "),
-                                                       fileinfo.dir().path(),
+                                                       prevFile,
                                                        QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
             if(!fname_input.isEmpty()){
                 unsigned char * p_data = 0;
@@ -196,6 +209,7 @@ void OpenSWCDialog::getImage()
                     p_img4d = new Image4DSimple();
                     p_img4d->setFileName(fname_input.toStdString().c_str());
                     p_img4d->setData(p_data, sz_img[0], sz_img[1], sz_img[2], sz_img[3], (ImagePixelType)type_img);
+                    settings.setValue("fname_img",fname_input);
                     break;
                 }
             }else{
