@@ -388,7 +388,7 @@ int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3D
 
 bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
-
+int trace_img2(cv::Mat seg_img, cv::Mat image, int offset[], int t2i, char * outfile_swc);
 
 #endif
 
