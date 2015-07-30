@@ -4,7 +4,7 @@
 # The plugin under ./RegMST_tracing_plugin will be used in the BigNeuron bench-testing [3]
  
 
-# (TODO try using static libs) ***1. compile dependent libraries ***
+#  ***1. compile dependent libraries ( static libs included for Linux 64 bits) ***
 # cd ./libs/libconfig-1.4.9
 #  ./configure && make
 #

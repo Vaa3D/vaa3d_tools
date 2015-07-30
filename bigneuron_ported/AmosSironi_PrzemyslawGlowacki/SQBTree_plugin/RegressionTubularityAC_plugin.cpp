@@ -817,13 +817,13 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
 
 ////debug
-        Image4DSimple img_down_v3d_debug = itk2v3dImage<ITKImageType>(I_resized);
-            char outimg_file_debug [500];
+//        Image4DSimple img_down_v3d_debug = itk2v3dImage<ITKImageType>(I_resized);
+//            char outimg_file_debug [500];
 
-                sprintf (outimg_file_debug, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_downsampled.v3draw");
+//                sprintf (outimg_file_debug, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_downsampled.v3draw");
 
-                cout << "saving debug results: " << outimg_file_debug<<endl;
-              callback.saveImage(&img_down_v3d_debug, outimg_file_debug);
+//                cout << "saving debug results: " << outimg_file_debug<<endl;
+//              callback.saveImage(&img_down_v3d_debug, outimg_file_debug);
 
 ////
         }
@@ -954,26 +954,26 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
                       newScores_original_size = itkImage2EigenVector<ITKImageType,TreeBoosterType::ResponseArrayType>(predImg_scaled_original_size,n_pixels_cropped,n_pixels_cropped);
                        std::cout << "Resampling output Done." <<std::endl;
 
-                        std::cout << "size resampled image: " <<out_sz_res_up<<std::endl;
+                        std::cout << "size resampled image: " <<out_sz_res_up[0] <<out_sz_res_up[1] <<out_sz_res_up[2]<<std::endl;
 
 
 
                         ////debug
 
-                        Image4DSimple img_down_v3d_up = itk2v3dImage<ITKImageType>(predImg_scaled_original_size);
-                            char outimg_file_debug_up [500];
+//                        Image4DSimple img_down_v3d_up = itk2v3dImage<ITKImageType>(predImg_scaled_original_size);
+//                            char outimg_file_debug_up [500];
 
-                                sprintf (outimg_file_debug_up, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_upsampled.v3draw");
+//                                sprintf (outimg_file_debug_up, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_upsampled.v3draw");
 
-                                cout << "saving debug results: " << outimg_file_debug_up<<endl;
-                              callback.saveImage(&img_down_v3d_up, outimg_file_debug_up);
+//                                cout << "saving debug results: " << outimg_file_debug_up<<endl;
+//                              callback.saveImage(&img_down_v3d_up, outimg_file_debug_up);
 
-                              char outimg_file_debug_up_before [500];
+//                              char outimg_file_debug_up_before [500];
 
-                                  sprintf (outimg_file_debug_up_before, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_before_upsampled.v3draw");
+//                                  sprintf (outimg_file_debug_up_before, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_before_upsampled.v3draw");
 
-                                  cout << "saving debug results: " << outimg_file_debug_up_before<<endl;
-                                callback.saveImage(&pred_img_v3d, outimg_file_debug_up_before);
+//                                  cout << "saving debug results: " << outimg_file_debug_up_before<<endl;
+//                                callback.saveImage(&pred_img_v3d, outimg_file_debug_up_before);
 
                         ////
 
