@@ -289,6 +289,19 @@ bool manual_correct_dialog::csv_out()
     if(fileSaveDir.isEmpty())
         return false;
 
+#if defined(Q_OS_MAC)
+        //detect if there is a Qt redundant folder bug, if yes, then make a correction
+        // This fix is done by PHC, 2015May14. This should work in most cases. However
+        //if a user choose a strange tmp folder with the name "/abc/abc/abc" then this fix
+        //will wrongly go to the parent folder "abc/abc".
+        QDir tmp1(fileSaveDir);
+        QString tmp2 = tmp1.dirName();
+        if (fileSaveDir.endsWith(tmp2+'/'+tmp2))
+        {
+            fileSaveDir = fileSaveDir.left(fileSaveDir.size() - tmp2.size() - 1);
+        }
+#endif
+
     folder_output = fileSaveDir;
 
     //fname_output = QDir(folder_output).filePath("spine_profile.csv");
