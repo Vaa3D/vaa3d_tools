@@ -13219,6 +13219,8 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
 // */
 
+    //cin.get();
+
    // load image using simple_loadimage_wrapper , uncomment this line to enable simple_loadimage_wrapper
 
     if (!simple_loadimage_wrapper(callback, fileName_string, inimg, in_sz, datatype))
