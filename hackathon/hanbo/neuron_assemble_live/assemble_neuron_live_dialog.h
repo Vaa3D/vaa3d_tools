@@ -39,12 +39,14 @@ private:
     int coffset;
     V3DLONG noffset;
     Image4DSimple * p_img4d;
+
+    QString winname_main, winname_3d, winname_roi;
     
-    QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect,
-        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, * btn_colorloop;
+    QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
+        *btn_syncmarker, *btn_break, * btn_save, * btn_quit;
     QTabWidget * tab;
-    QListWidget * list_marker, * list_link;
-    QComboBox * cb_loop, * cb_color;
+    QListWidget * list_edge, * list_link;
+    QComboBox * cb_color;
     QCheckBox * check_loop;
 
 signals:
@@ -55,20 +57,23 @@ public slots:
     void pairMarker();
     void delPair();
     void connectPair();
+    void connectAll();
+    void breakEdge();
     void searchPair();
+    void searchLoop();
     void sortsaveSWC();
     void highlightPair();
-    void highlightMarker();
+    void highlightEdge();
 
 private:
     void creat(QWidget *parent);
     void initNeuron(QList<NeuronTree> &ntList_in);
     bool connectNode(V3DLONG pid1, V3DLONG pid2);
+    bool breakNode(V3DLONG pid1, V3DLONG pid2);
     QSet<QPair<V3DLONG, V3DLONG> > searchConnection(double xscale, double yscale, double zscale,
                                                     double angThr, double disThr, int matchType,
                                                     bool b_minusradius);
     double getNeuronDiameter();
-
     LandmarkList * getMarkerList();
     void updateDisplay(); //deep refresh everything
     void update3DView(); //light refresh 3D window
@@ -134,5 +139,6 @@ void set_marker_color(const LocationSimple& mk, RGB8 color);
 bool get_marker_info(const LocationSimple& mk, QList<int>& info);
 QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_root);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
+QList<NOI *> search_loop(QHash<V3DLONG, NOI*>& nodes);
 
 #endif // ASSEMBEL_NEURON_LIVE_DIALOG_H
