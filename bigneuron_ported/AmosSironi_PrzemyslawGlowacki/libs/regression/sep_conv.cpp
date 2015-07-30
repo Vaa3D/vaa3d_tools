@@ -516,7 +516,7 @@ void computeFeaturesSepComb(MatrixType &nonsep_features_all, typename ImageType:
 
 
 
- //   itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
+//    itk::MultiThreader::SetGlobalMaximumNumberOfThreads(1);
 
 
         typename ImageType::SizeType size_image = input_img->GetLargestPossibleRegion().GetSize();

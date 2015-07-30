@@ -72,12 +72,13 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
         v3d_msg("To be implemented. Please call this plugin from command line.\n "
                 "\n"
                 "***Usage of RegMST tracing***\n"
-                "vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>\n"
-                "inimg_file                                The input image\n"
+                "vaa3d -x RegMST -f tracing_func -i <inimg_file_1> ... <inimg_file_N> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size> <threshold>\n"
+                "inimg_file_1 ... inimg_file_N             The input images (Uint8)\n"
                 "channel                                   Data channel for tracing. Start from 1 (default 1)\n"
-                "n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n"
+                "n_AC                                      Number of auto-context iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n"
                 "reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC\n"
                 "window size                               Window size for seed detection in MST. (default 10)\n"
+                "threshold                                 Threshold for seed detection in MST. (default 30)\n"
                 "outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
 
         // input_PARA PARA;
@@ -150,12 +151,13 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
 
 
 		printf("**** Usage of RegMST tracing **** \n");
-        printf("vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>\n");
+        printf("vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size> <threshold>\n");
         printf("inimg_file                                The input image\n");
         printf("channel                                   Data channel for tracing. Start from 1 (default 1).\n");
         printf("n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n");
         printf("reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC.\n");
         printf("window size                               Window size for seed detection in MST. (default 10)\n");
+        printf("threshold                                 Threshold for seed detection in MST. (default 30)\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -347,7 +349,7 @@ if((PARA.n_ac_iters>0)){//compute regression tubularity
 
 }else{//use original image for tracing
     mst_PARA.inimg_file = PARA.inimg_file;
-    mst_PARA.th = -1; // -1 computed automatically
+    mst_PARA.th = 0; // -1 computed automatically
 
     std::cout << "no Regressor passed as input. n_ac_iters =   " <<PARA.n_ac_iters<<std::endl<< std::flush;
     std::cout << "Applying MST to original image." <<std::endl<< std::flush;;

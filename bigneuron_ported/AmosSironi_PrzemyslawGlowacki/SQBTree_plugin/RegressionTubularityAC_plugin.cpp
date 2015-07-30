@@ -137,18 +137,30 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 
 //filter banks to compute features (use hand-crafter filters)
 //image features
-const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+//const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+//const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
 //auto-context features
 const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
 const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+//inv filters
+//const char *weight_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+//const char *sep_filters_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+////auto-context features
+//const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+//const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+
+const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
+const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
+
 
 //crop images train/test
 //bool crop_images = false;
 bool crop_images = true;
 double uniform_thresh = 0.1; //to crop images
 bool transpose_swc_y = false; // if true transpose Y axis when reading swc gt file
-double max_pixels_predict = 0.5*1e8; //if image too large try to downsample it (otherwise out of memory)
+double max_pixels_predict = 0.5*1e8; //if image too large try to downsample it (otherwise might go out of memory)
 
 
 bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -635,12 +647,17 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     V3DLONG n_pixels_cropped;
     Image4DSimple *inimg_cropped;
     if(crop_images){
+
+        cout << "Cropping image... " <<endl << std::flush;
+
         //I_cropped =  ITKImageType::New();
         crop_start_idxs = new long int[3];
         in_sz_cropped = new long int[4];
         I_cropped = cropItkImageUniformBackground<ITKImageType>(I,crop_start_idxs,in_sz_cropped,uniform_thresh);
          n_pixels_cropped = in_sz_cropped[0]*in_sz_cropped[1]*in_sz_cropped[2];
          inimg_cropped = 0;
+         cout << "Cropping image...Done. " <<endl << std::flush;
+
 
          cout<<"size image cropped: " << in_sz_cropped[0]<< " ;"<<in_sz_cropped[1]<<  " ;"<<in_sz_cropped[2]<<endl << std::flush;
 
@@ -767,9 +784,24 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
             V3DLONG *out_sz_down= new V3DLONG[4];
 
-            double dfactor =  ceil(std::pow(n_pixels_scaleed/(max_pixels_predict),1/3));
+         //   double dfactor =  ceil(std::pow(((double)(n_pixels_scaleed)/(max_pixels_predict)),1/3));
 
+            double dfactor = 2.0;
             std::cout << "Image too large! trying to dowsample it. Factor: " << dfactor<< std::endl << std::flush;
+
+
+            while(n_pixels_scaleed/(dfactor*dfactor*dfactor) > max_pixels_predict){
+
+                dfactor = dfactor*2.0;
+                std::cout << "Image too large! trying to dowsample it. Factor: " << dfactor<< std::endl << std::flush;
+
+            }
+
+//            if(dfactor<2.0){
+//                dfactor = 2.0;
+
+//            }
+
 
 
             dfactor_down[0] =dfactor; dfactor_down[1] = dfactor;  dfactor_down[2] =dfactor;
@@ -784,6 +816,16 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
             std::cout << "size img downsampled: " << size_img_scaled << std::endl << std::flush;
 
 
+////debug
+        Image4DSimple img_down_v3d_debug = itk2v3dImage<ITKImageType>(I_resized);
+            char outimg_file_debug [500];
+
+                sprintf (outimg_file_debug, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_downsampled.v3draw");
+
+                cout << "saving debug results: " << outimg_file_debug<<endl;
+              callback.saveImage(&img_down_v3d_debug, outimg_file_debug);
+
+////
         }
 
         //// DEBUG
@@ -896,11 +938,18 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
                        Image4DSimple pred_img_v3d =  itk2v3dImage<ITKImageType>(pred_img_itk);
 
 
-                       V3DLONG *out_sz_res_up= new V3DLONG[4];
-                      // double *dfactor_debig_up = new double[3];
-                      // dfactor_debig_up[0] = dfactor_debig[0]; dfactor_debig_up[1] = dfactor_debig[0];  dfactor_debig_up[2] =dfactor_debig[0];
-                      predImg_scaled_original_size = upsample_image_v3d<ITKImageType,float>(&pred_img_v3d,dfactor_down,out_sz_res_up);
+                       V3DLONG *out_sz_res_up= new V3DLONG[3];
+                        out_sz_res_up[0] = in_sz_cropped[0];
+                        out_sz_res_up[1] = in_sz_cropped[1];
+                        out_sz_res_up[2] = in_sz_cropped[2];
+//                       double *dfactor_up = new double[3];
+//                       dfactor_up[0] = dfactor_down[0]; dfactor_up[1] = dfactor_down[0];  dfactor_up[2] =dfactor_down[0];
 
+
+
+                     //  predImg_scaled_original_size = upsample_image_v3d<ITKImageType,float>(&pred_img_v3d,dfactor_up,out_sz_res_up);
+
+                      predImg_scaled_original_size = upsample_image_v3d_size<ITKImageType,float>(&pred_img_v3d,out_sz_res_up);
 
                       newScores_original_size = itkImage2EigenVector<ITKImageType,TreeBoosterType::ResponseArrayType>(predImg_scaled_original_size,n_pixels_cropped,n_pixels_cropped);
                        std::cout << "Resampling output Done." <<std::endl;
@@ -908,6 +957,25 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
                         std::cout << "size resampled image: " <<out_sz_res_up<<std::endl;
 
 
+
+                        ////debug
+
+                        Image4DSimple img_down_v3d_up = itk2v3dImage<ITKImageType>(predImg_scaled_original_size);
+                            char outimg_file_debug_up [500];
+
+                                sprintf (outimg_file_debug_up, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_upsampled.v3draw");
+
+                                cout << "saving debug results: " << outimg_file_debug_up<<endl;
+                              callback.saveImage(&img_down_v3d_up, outimg_file_debug_up);
+
+                              char outimg_file_debug_up_before [500];
+
+                                  sprintf (outimg_file_debug_up_before, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/image_before_upsampled.v3draw");
+
+                                  cout << "saving debug results: " << outimg_file_debug_up_before<<endl;
+                                callback.saveImage(&pred_img_v3d, outimg_file_debug_up_before);
+
+                        ////
 
 
                 }else{

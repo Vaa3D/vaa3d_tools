@@ -120,6 +120,9 @@ template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer upsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz);
 
 template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer upsample_image_v3d_size(Image4DSimple *inimg,V3DLONG * szout);
+
+template<typename ITKImageType,typename T>
 typename ITKImageType::Pointer resize_image_v3d(Image4DSimple * pred_img_v3d,const double * scale_factor, V3DLONG * out_sz);
 
 
@@ -684,9 +687,9 @@ typename ITKImageType::Pointer upsample_image_v3d(Image4DSimple *inimg,const dou
     szin[2] = inimg->getZDim();
 
 
-    szout[0] = (V3DLONG)(ceil(dfactor[0]*szin[0]));
-    szout[1] = (V3DLONG)(ceil(dfactor[1]*szin[1]));
-    szout[2] = (V3DLONG)(ceil(dfactor[2]*szin[2]));
+    szout[0] = (V3DLONG)(ceil(dfactor[0]*((double)szin[0])));
+    szout[1] = (V3DLONG)(ceil(dfactor[1]*((double)szin[1])));
+    szout[2] = (V3DLONG)(ceil(dfactor[2]*((double)szin[2])));
 
 
     V3DLONG totallen = szout[0] * szout[1] * szout[2];
@@ -748,6 +751,112 @@ typename ITKImageType::Pointer upsample_image_v3d(Image4DSimple *inimg,const dou
 
 }
 
+
+
+template<typename ITKImageType,typename T>
+typename ITKImageType::Pointer upsample_image_v3d_size(Image4DSimple *inimg,V3DLONG * szout){
+
+
+    T *indata = (T *)inimg->getRawDataAtChannel(0);
+
+
+    V3DLONG *szin = new V3DLONG[3];
+    szin[0] = inimg->getXDim();
+    szin[1] = inimg->getYDim();
+    szin[2] = inimg->getZDim();
+
+    double *dfactor = new double[3];
+
+    dfactor[0] = ((double)(szout[0])/(double)(szin[0]));
+    dfactor[1] = ((double)(szout[1])/(double)(szin[1]));
+    dfactor[2] = ((double)(szout[2])/(double)(szin[2]));
+
+
+
+    //szout[0] = (V3DLONG)(ceil(dfactor[0]*szin[0]));
+    //szout[1] = (V3DLONG)(ceil(dfactor[1]*szin[1]));
+    //szout[2] = (V3DLONG)(ceil(dfactor[2]*szin[2]));
+
+
+    V3DLONG totallen = szout[0] * szout[1] * szout[2];
+    Coord3D * c = new Coord3D [totallen];
+    T * v = new T [totallen];
+
+    T *outdata = new T [totallen];
+
+
+    if (!c || !v)
+    {
+        fprintf(stderr, "Fail to allocate memory. [%s][%d]\n", __FILE__, __LINE__);
+        if (c) {delete []c; c=0;}
+        if (v) {delete []v; v=0;}
+        return false;
+    }
+
+    //computation
+    V3DLONG i,j,k, ind;
+    ind=0;
+
+    for (k=0;k<szout[2];k++)
+    {
+        for (j=0;j<szout[1];j++)
+        {
+            for (i=0;i<szout[0];i++)
+            {
+                c[ind].x = double(i)/dfactor[0];
+//#ifndef POSITIVE_Y_COORDINATE
+//				c[ind].y = double(szout[1]-1-j)/dfactor[1];
+//#else
+                c[ind].y = double(j)/dfactor[1];
+//#endif
+                c[ind].z = double(k)/dfactor[2];
+                v[ind] = -1; //set as a special value
+                ind++;
+            }
+        }
+    }
+
+    std::cout << "interpolating..." << std::endl << std::flush;
+
+    interpolate_coord_linear(v, c, totallen, indata, szin[0], szin[1], szin[2], 0, szin[0]-1, 0, szin[1]-1, 0, szin[2]-1);
+    std::cout << "interpolating..Done.." << std::endl << std::flush;
+
+
+    ind=0;
+
+
+    for (i=0; i<totallen; i++)
+        outdata[i] = (T)(v[i]);
+
+    // free temporary memory
+    if (c) {delete []c; c=0;}
+    if (v) {delete []v; v=0;}
+   // return true;
+
+
+    typename ITKImageType::Pointer outputItkImage = rawData2ItkImage<ITKImageType,T>(outdata,szout);
+
+   return outputItkImage;
+
+
+
+
+
+//     V3DLONG *szout_1 = new V3DLONG[3];
+
+//    typename ITKImageType::Pointer outputItkImage = upsample_image_v3d<ITKImageType,T>(inimg,dfactor,szout_1);
+
+//    if( szout_1[0]!= szout[0] || szout_1[1]!= szout[1] || szout_1[2]!=szout[2]){
+
+//        std::cout << "Could not resize image to desired size: " << std::endl;
+//         std::cout << "desired size: " <<szout[0] <<", "<<szout[1] <<", "<<szout[2] << std::endl;
+//          std::cout << "output size: " <<szout_1[0] <<", "<<szout_1[1] <<", "<<szout_1[2] << std::endl;
+
+//    }
+
+//    return outputItkImage;
+
+}
 
 //template<typename ITKImageType>
 //typename ITKImageType::Pointer downsample_image_v3d(Image4DSimple *inimg,const double * scale_factor, V3DLONG * out_sz){
