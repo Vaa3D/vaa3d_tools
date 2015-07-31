@@ -187,11 +187,36 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
         printf("outswc_file      The file name of output swc.\n");
 
+        printf("The default base method is multiScale enhancement. Users could also denote alternative base method \n");
 
+        printf(" The function name LCM_boost_x (x = 1,.., 10) correponds to different base method.\n");
+
+        printf(" The function name LCM_boost_1 corresponds to multiScale enhancement base method (default). \n");
+
+        printf(" The function name LCM_boost_2 corresponds to fast marching base method. \n");
+
+        printf(" The function name LCM_boost_3 corresponds to mostVesselTracer base method. \n");
+
+        printf(" The function name LCM_boost_4 corresponds to neuTube base method. \n");
+
+        printf(" The function name LCM_boost_5 corresponds to SimpleTracing base method. \n");
+
+        printf(" The function name LCM_boost_6 corresponds to APP2 base method. \n");
+
+        printf(" The function name LCM_boost_7 corresponds to APP1 base method. \n");
+
+        printf(" The function name LCM_boost_8 corresponds to fastmarching_spanningtree base method. \n");
+
+        printf(" The function name LCM_boost_9 corresponds to NeuroGPSTree base method. \n");
+
+        printf(" The function name LCM_boost_10 corresponds to neurontracing_mst base method. \n");
 
 	}
 
 
 
 }
+
+
+
 
