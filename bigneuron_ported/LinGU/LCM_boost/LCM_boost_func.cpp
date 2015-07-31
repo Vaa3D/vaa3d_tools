@@ -7724,8 +7724,12 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 
     if(strcmp(key,dataset) != 0)
+    {
+      //  cin.get();
+
       	retrieve_low_confidence(input_img, image, seg_img,  dataset);
 
+    }
 
     //cin.get();
 
