@@ -34,17 +34,26 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
 
     btn_link = new QPushButton("search connections");
     btn_loop = new QPushButton("check circle");
-    layout->addWidget(btn_link,1,0,1,1);
-    layout->addWidget(btn_loop,1,1,1,1);
+    layout->addWidget(btn_link,1,0,1,2);
+    layout->addWidget(btn_loop,1,2,1,2);
+    check_zoomin = new QCheckBox("auto sync zoomin view");
+    spin_zoomin = new QSpinBox; spin_zoomin->setValue(30); spin_zoomin->setRange(0,10000000);
+    btn_zoomin = new QPushButton("sync zoomin view");
     cb_color = new QComboBox();
     cb_color->addItem("color by type");
     cb_color->addItem("color by segment");
     cb_color->setCurrentIndex(1);
-    layout->addWidget(cb_color,2,1,1,1);
+    layout->addWidget(check_zoomin,2,0,1,2);
+    layout->addWidget(cb_color,2,2,1,2);
+    layout->addWidget(btn_zoomin,3,0,1,2);
+    QLabel * label_zoomin = new QLabel("window margin:");
+    layout->addWidget(label_zoomin,3,2,1,1, Qt::AlignRight);
+    layout->addWidget(spin_zoomin,3,3,1,1);
 
     connect(btn_link, SIGNAL(clicked()), this, SLOT(searchPair()));
     connect(btn_loop, SIGNAL(clicked()), this, SLOT(searchLoop()));
     connect(cb_color, SIGNAL(currentIndexChanged(int)), this, SLOT(setColor(int)));
+    connect(btn_zoomin, SIGNAL(clicked()), this, SLOT(zoomin()));
 
     tab = new QTabWidget(this);
     //neuron connector
@@ -88,13 +97,13 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     connect(btn_break,SIGNAL(clicked()),this,SLOT(breakEdge()));
     connect(list_edge, SIGNAL(currentRowChanged(int)), this, SLOT(highlightEdge()));
 
-    layout->addWidget(tab,3,0,1,2);
+    layout->addWidget(tab,4,0,1,4);
 
     //save, quit
     btn_save = new QPushButton("sort and save");
     btn_quit = new QPushButton("quit");
-    layout->addWidget(btn_save,6,0,1,1);
-    layout->addWidget(btn_quit,6,1,1,1);
+    layout->addWidget(btn_save,6,0,1,2);
+    layout->addWidget(btn_quit,6,2,1,2);
 
     connect(btn_save,SIGNAL(clicked()),this,SLOT(sortsaveSWC()));
     connect(btn_quit,SIGNAL(clicked()),this,SLOT(reject()));
@@ -255,7 +264,13 @@ void assemble_neuron_live_dialog::searchLoop()
         }
         callback->update_3DViewer(_3dwin);
     }
-    qDebug()<<"done loop color update";
+    if(check_zoomin->isChecked()){
+        QList<V3DLONG> pids;
+        for(int i=0; i<loop.size(); i++){
+            pids.push_back(loop.at(i)->n);
+        }
+        updateROIWindow(pids);
+    }
 
     v3d_msg("A circle identified and highlighted in magenta. Please break the loop and search again.");
 
@@ -688,6 +703,23 @@ void assemble_neuron_live_dialog::breakEdge()
     }
     //remove the edge from the list
     list_edge->takeItem(list_edge->currentRow());
+    //update the marker and the zoomin view if it is the last pair to connect
+    if(list_edge->count()<=0){
+        LandmarkList* mList=getMarkerList();
+        RGB8 color1; color1.r=color1.b=0; color1.g=128;
+        for(int i=0; i<mList->size(); i++){
+            set_marker_color(mList->at(i),color1);
+        }
+
+        update3DView();
+
+        if(check_zoomin->isChecked()){
+            QList<V3DLONG> pids;
+            pids.push_back(pid1);
+            pids.push_back(pid2);
+            updateROIWindow(pids);
+        }
+    }
 }
 
 void assemble_neuron_live_dialog::connectPair()
@@ -729,6 +761,23 @@ void assemble_neuron_live_dialog::connectPair()
     }
     //remove the pair from the list
     delPair();
+    //update the marker and the zoomin view if it is the last pair to connect
+    if(list_link->count()<=0){
+        LandmarkList* mList=getMarkerList();
+        RGB8 color1; color1.r=color1.b=0; color1.g=128;
+        for(int i=0; i<mList->size(); i++){
+            set_marker_color(mList->at(i),color1);
+        }
+
+        update3DView();
+
+        if(check_zoomin->isChecked()){
+            QList<V3DLONG> pids;
+            pids.push_back(pid1);
+            pids.push_back(pid2);
+            updateROIWindow(pids);
+        }
+    }
 }
 
 void assemble_neuron_live_dialog::connectAll()
@@ -1143,7 +1192,8 @@ void assemble_neuron_live_dialog::updateDisplay()
 {
     if(p_img4d!=0){
         updateImageWindow();
-        updateROIWindow();
+        if(check_zoomin->isChecked())
+            zoomin();
     }
 
     update3DWindow();
@@ -1240,8 +1290,9 @@ V3dR_MainWindow * assemble_neuron_live_dialog::update3DWindow()
             _3dwin = callback->createEmpty3DViewer();
             callback->setWindowDataTitle(_3dwin, WINNAME_ASSEM);
 
+            winname_main = WINNAME_ASSEM; winname_main+="_processed";
             winname_3d = "3D View ["; winname_3d+=WINNAME_ASSEM; winname_3d+="]";
-            winname_roi = WINNAME_ASSEM; winname_roi+="_processed";
+            winname_roi = "3D View [" + winname_main + "]";
         }
     }
     QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
@@ -1278,8 +1329,9 @@ V3dR_MainWindow * assemble_neuron_live_dialog::check3DWindow()
             callback->update_3DViewer(_3dwin);
             callback->update_NeuronBoundingBox(_3dwin);
 
+            winname_main = WINNAME_ASSEM; winname_main+="_processed";
             winname_3d = "3D View ["; winname_3d+=WINNAME_ASSEM; winname_3d+="]";
-            winname_roi = WINNAME_ASSEM; winname_roi+="_processed";
+            winname_roi = "3D View [" + winname_main + "]";
         }
     }
 
@@ -1296,6 +1348,9 @@ V3dR_MainWindow * assemble_neuron_live_dialog::get3DWindow()
             _3dwin = list_3dwin[i];
         }
     }
+
+    //test
+    qDebug()<<"searching for: "<<winname_3d;
 
     return _3dwin;
 }
@@ -1364,6 +1419,10 @@ void assemble_neuron_live_dialog::highlightPair()
     }
 
     update3DView();
+
+    if(check_zoomin->isChecked()){
+        zoomin();
+    }
 }
 
 void assemble_neuron_live_dialog::highlightEdge()
@@ -1391,11 +1450,239 @@ void assemble_neuron_live_dialog::highlightEdge()
     }
 
     update3DView();
+
+    if(check_zoomin->isChecked()){
+        zoomin();
+    }
 }
 
-void assemble_neuron_live_dialog::updateROIWindow()
+void assemble_neuron_live_dialog::zoomin()
 {
+    V3DLONG pid1=-1, pid2=-1;
+    QString tmp="";
+    //get the node to zoomin
+    if(tab->currentIndex()==0){
+        int idx=list_link->currentRow();
+        if(idx<0){
+            v3d_msg("Please select the pair of node to zoomin. You can: a) search connection; or b) manually define markers on reconstruction and link them.");
+            return;
+        }
+        tmp=list_link->currentItem()->text();
+    }else{
+        int idx=list_edge->currentRow();
+        if(idx<0){
+            v3d_msg("Please select the edge to zoomin. You can manually define markers on both side of the edge and then click load_edge button.");
+            return;
+        }
+        tmp=list_edge->currentItem()->text();
+    }
+    QStringList items = tmp.split(" ", QString::SkipEmptyParts);
+    if(items.size()>8){
+        bool check;
+        pid1=items.at(5).toInt(&check);
+        if(!check || !nodes.contains(pid1)){
+            v3d_msg("Encounter unexpected error 4. Plase contact developer.");
+            return;
+        }
+        pid2=items.at(7).toInt(&check);
+        if(!check || !nodes.contains(pid2)){
+            v3d_msg("Encounter unexpected error 4. Plase contact developer.");
+            return;
+        }
+    }
+    if(pid1<0 || pid2<0){
+        v3d_msg("Please select the pair of node to zoomin.");
+        return;
+    }
+    QList<V3DLONG> pids;
+    pids.push_back(pid1);
+    pids.push_back(pid2);
 
+    //zoom in
+    updateROIWindow(pids);
+}
+
+void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
+{
+    if(pids.size()<=0)
+        return;
+    //find the ROI window
+    V3DLONG x_min, x_max, y_min, y_max, z_min, z_max;
+    x_min=x_max=nodes[pids.at(0)]->x;
+    y_min=y_max=nodes[pids.at(0)]->y;
+    z_min=z_max=nodes[pids.at(0)]->z;
+    for(int i=1; i<pids.size(); i++){
+        x_min=MIN(x_min,nodes[pids.at(i)]->x);
+        y_min=MIN(y_min,nodes[pids.at(i)]->y);
+        z_min=MIN(z_min,nodes[pids.at(i)]->z);
+        x_max=MAX(x_max,nodes[pids.at(i)]->x);
+        y_max=MAX(y_max,nodes[pids.at(i)]->y);
+        z_max=MAX(z_max,nodes[pids.at(i)]->z);
+    }
+    x_min=x_min-spin_zoomin->value();
+    y_min=y_min-spin_zoomin->value();
+    z_min=z_min-spin_zoomin->value();
+    x_max=x_max+spin_zoomin->value();
+    y_max=y_max+spin_zoomin->value();
+    z_max=z_max+spin_zoomin->value();
+    if(p_img4d!=0){
+        v3dhandle winhandle = getImageWindow();
+        if(winhandle==0){
+            winhandle = checkImageWindow();
+        }
+        //reset ROI
+        ROIList pRoiList=callback->getROI(winhandle);
+        for(int j=0;j<3;j++){
+            pRoiList[j].clear();
+        }
+        pRoiList[0] << QPoint(x_min,y_min);
+        pRoiList[0] << QPoint(x_max,y_min);
+        pRoiList[0] << QPoint(x_max,y_max);
+        pRoiList[0] << QPoint(x_min,y_max);
+        pRoiList[1] << QPoint(z_min,y_min);
+        pRoiList[1] << QPoint(z_max,y_min);
+        pRoiList[1] << QPoint(z_max,y_max);
+        pRoiList[1] << QPoint(z_min,y_max);
+        pRoiList[2] << QPoint(x_min,z_min);
+        pRoiList[2] << QPoint(x_max,z_min);
+        pRoiList[2] << QPoint(x_max,z_max);
+        pRoiList[2] << QPoint(x_min,z_max);
+
+        if(callback->setROI(winhandle,pRoiList)){
+            callback->updateImageWindow(winhandle);
+        }else{
+            qDebug()<<"error: failed to set ROI";
+            return;
+        }
+        callback->closeROI3DWindow(winhandle);
+        callback->openROI3DWindow(winhandle);
+
+        V3dR_MainWindow * mainwin_roi = 0;
+        //qDebug()<<"===========ROI============= searching: "<<winname_roi;
+        QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
+        for(int j=0; j<tmpwinlist.size(); j++){
+            //qDebug()<<"===========ROI============= "<<callback->getImageName(tmpwinlist[j]);
+            if(callback->getImageName(tmpwinlist[j])==winname_roi){
+                mainwin_roi = tmpwinlist[j];
+                break;
+            }
+        }
+        if(!mainwin_roi){
+            v3d_msg("Error: failed open ROI window");
+            return;
+        }
+
+        //qDebug()<<"===========ROI============= update ROI window with triview";
+        View3DControl * v3dlocalcontrol = callback->getLocalView3DControl(winhandle);
+        v3dlocalcontrol->updateLandmark();
+
+        QList <NeuronTree> * p_nttmp = callback->getHandleNeuronTrees_Any3DViewer(mainwin_roi);
+        if(p_nttmp->size()<=0 || p_nttmp->at(0).listNeuron.size()!=nt.listNeuron.size()){
+            //qDebug()<<"===========ROI============= copy neuron tree to 3Dview";
+            p_nttmp->clear();
+            p_nttmp->push_back(nt);
+            callback->update_NeuronBoundingBox(mainwin_roi);
+        }else{
+            //qDebug()<<"===========ROI============= copy neuron tree type to 3Dview";
+            for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+                (*p_nttmp)[0].listNeuron[i].type = nt.listNeuron.at(i).type;
+            }
+        }
+        callback->update_3DViewer(mainwin_roi);
+    }else{
+        qDebug()<<"===========ROI============= init data";
+        V3DLONG winsize[4];
+        winsize[0]=x_max-x_min;
+        winsize[1]=y_max-y_min;
+        winsize[2]=z_max-z_min;
+        winsize[3]=1;
+        //image
+        Image4DSimple * tmp_image = new Image4DSimple();
+        unsigned char * p_img = new unsigned char[winsize[0]*winsize[1]*winsize[2]*winsize[3]];
+        memset(p_img,0,winsize[0]*winsize[1]*winsize[2]*winsize[3]);
+        tmp_image->setFileName(WINNAME_ASSEM);
+        tmp_image->setData(p_img, winsize[0], winsize[1], winsize[2], winsize[3], (ImagePixelType)1);
+        //neuron SWC
+        NeuronTree local_nt;
+        local_nt.editable=nt.editable;
+        local_nt.file=nt.file;
+        local_nt.linemode=nt.linemode;
+        local_nt.n=nt.n;
+        local_nt.on=nt.on;
+        local_nt.selected=nt.selected;
+        local_nt.name=WINNAME_ASSEM;
+        local_nt.listNeuron.clear();
+        local_nt.hashNeuron.clear();
+        local_nt.color.r = local_nt.color.g = local_nt.color.b = local_nt.color.a = 0;
+        for(int i=0; i<nt.listNeuron.size(); i++){
+            NeuronSWC S;
+            S.n = nt.listNeuron[i].n;
+            S.type = nt.listNeuron[i].type;
+            S.x = nt.listNeuron[i].x-x_min-1;
+            S.y = nt.listNeuron[i].y-y_min-1;
+            S.z = nt.listNeuron[i].z-z_min-1;
+            S.r = nt.listNeuron[i].r;
+            S.pn = nt.listNeuron[i].pn;
+            local_nt.listNeuron.append(S);
+            local_nt.hashNeuron.insert(S.n, local_nt.listNeuron.size()-1);
+        }
+        //markers
+        LandmarkList local_landmark;
+        LandmarkList* mList = getMarkerList();
+        for(int i=0; i<mList->size(); i++){
+            LocationSimple SP;
+            SP.x=mList->at(i).x-x_min;
+            SP.y=mList->at(i).y-y_min;
+            SP.z=mList->at(i).z-z_min;
+            SP.color.r=mList->at(i).color.r;
+            SP.color.g=mList->at(i).color.g;
+            SP.color.b=mList->at(i).color.b;
+            SP.color.a=mList->at(i).color.a;
+            SP.comments=mList->at(i).comments;
+            SP.name=mList->at(i).name;
+            local_landmark.append(SP);
+        }
+        //push object into the window
+        //locate 3d window
+        v3dhandleList allWindowList = callback->getImageWindowList();
+        v3dhandle localwin = 0;
+        for (V3DLONG i=0;i<allWindowList.size();i++)
+        {
+            if(callback->getImageName(allWindowList.at(i))==winname_main){
+                localwin = allWindowList[i];
+                break;
+            }
+        }
+        if(localwin == 0){
+            localwin = callback->newImageWindow(WINNAME_ASSEM);
+            callback->setImage(localwin, tmp_image);
+            callback->setLandmark(localwin, local_landmark);
+            callback->updateImageWindow(localwin);
+            callback->open3DWindow(localwin);
+            callback->pushObjectIn3DWindow(localwin);
+
+            QList<NeuronTree> * local_ntList = callback->getHandleNeuronTrees_3DGlobalViewer(localwin);
+            local_ntList->clear();
+            local_ntList->push_back(local_nt);
+            V3dR_MainWindow * local3dwin = callback->find3DViewerByName(winname_roi);
+            if(local3dwin)
+                callback->update_3DViewer(local3dwin);
+        }else{
+            callback->setImage(localwin, tmp_image);
+            callback->setLandmark(localwin, local_landmark);
+            callback->updateImageWindow(localwin);
+            callback->open3DWindow(localwin);
+            callback->pushImageIn3DWindow(localwin);
+            callback->pushObjectIn3DWindow(localwin);
+
+            QList<NeuronTree> * local_ntList = callback->getHandleNeuronTrees_3DGlobalViewer(localwin);
+            local_ntList->clear();
+            local_ntList->push_back(local_nt);
+            V3dR_MainWindow * local3dwin = callback->find3DViewerByName(winname_roi);
+            if(local3dwin)
+                callback->update_3DViewer(local3dwin);
+        }
+    }
 }
 
 double assemble_neuron_live_dialog::getNeuronDiameter()

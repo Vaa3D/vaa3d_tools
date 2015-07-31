@@ -43,11 +43,12 @@ private:
     QString winname_main, winname_3d, winname_roi;
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
-        *btn_syncmarker, *btn_break, * btn_save, * btn_quit;
+        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin;
     QTabWidget * tab;
     QListWidget * list_edge, * list_link;
     QComboBox * cb_color;
-    QCheckBox * check_loop;
+    QCheckBox * check_loop, * check_zoomin;
+    QSpinBox * spin_zoomin;
 
 signals:
     
@@ -64,6 +65,7 @@ public slots:
     void sortsaveSWC();
     void highlightPair();
     void highlightEdge();
+    void zoomin();
 
 private:
     void creat(QWidget *parent);
@@ -83,7 +85,7 @@ private:
     V3dR_MainWindow * get3DWindow(); //return the handle if window is open, otherwise 0
     V3dR_MainWindow * check3DWindow(); //if window not opened, open it. return the handle
     V3dR_MainWindow * update3DWindow(); //deep refresh 3D window
-    void updateROIWindow(); //to-do
+    void updateROIWindow(const QList<V3DLONG>& pids);
     void updateColor(); //update the neuron type, will sync neuron if changed
 };
 
