@@ -40,7 +40,7 @@ using namespace cv::ml;
 #define debug_on13 0
 
 
-#define checkin 0
+#define checkin 1
 
 #define base_method 1
 
@@ -18006,7 +18006,4 @@ int trace_img2(Mat seg_img, Mat image, int offset[], int t2i, char * outfile_swc
     return 1;
 
 }
-
-
-
 
