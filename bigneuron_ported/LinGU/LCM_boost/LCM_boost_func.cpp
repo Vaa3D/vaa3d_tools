@@ -40,7 +40,7 @@ using namespace cv::ml;
 #define debug_on13 0
 
 
-#define checkin 1
+#define checkin 0
 
 #define base_method 1
 
@@ -169,9 +169,7 @@ int swc2image(cv::Mat &image,char * filename)
 
     if(pImMask)
         delete [] pImMask;
-
     //cin.get();
-
 }
 
 
