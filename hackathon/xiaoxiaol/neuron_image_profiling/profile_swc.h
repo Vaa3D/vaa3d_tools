@@ -8,15 +8,16 @@
 #include <v3d_interface.h>
 
 struct IMAGE_METRICS {
-    int type; // segment type: 0-- soma;  1 -- dendrite;2--axon
+    int type; // segment type: 2-- soma;  2 -- dendrite;3--axon ;4--apical dendrite;  -1 --- not-defined/all types
     double cnr;
     double snr;
     double dy;  //dynamic range
-    double tubularity;
+    double tubularity_mean;
     double fg_mean;
     double bg_mean;
     double fg_std;
     double bg_std;
+    double tubularity_std;
 };
 
 

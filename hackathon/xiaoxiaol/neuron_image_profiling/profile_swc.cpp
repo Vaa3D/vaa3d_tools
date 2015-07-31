@@ -71,12 +71,12 @@ static double standard_dev(vector<double> x)
     {
         sum2 += pow(x[i]-x_mean,2);
     }
-    double x_std = sqrt(sum2/(x.size()-1));
+    double x_std = sqrt(sum2/x.size());
     return x_std;
 }
 
 static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
-{
+{  // aggregate all segment stats into one stats
     ENSEMBLE_METRICS stats; // average stats over all segments
     vector <double> cnrs;
     vector <double> dys;
@@ -90,7 +90,7 @@ static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
     {
         cnrs.push_back( result_metrics[i].cnr);
         dys.push_back(result_metrics[i].dy);
-        tubus.push_back(result_metrics[i].tubularity);
+        tubus.push_back(result_metrics[i].tubularity_mean);
         bgs.push_back(result_metrics[i].bg_mean);
         fgs.push_back(result_metrics[i].fg_mean);
     }
@@ -187,19 +187,19 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_id,segment_type,dynamic_range,cnr,snr,tubularity,fg_mean,bg_mean,fg_std,bg_std"<<"\n";
+        stream<< "segment_type,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,bg_mean,bg_std"<<"\n";
 
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
-            stream << i+1 <<","
-                   << result_metrics[i].type       <<","
-                   << result_metrics[i].dy        <<","
+            stream << result_metrics[i].type       <<","
+                   << result_metrics[i].dy         <<","
                    << result_metrics[i].cnr        <<","
                    << result_metrics[i].snr        <<","
-                   << result_metrics[i].tubularity <<","
+                   << result_metrics[i].tubularity_mean <<","
+                   << result_metrics[i].tubularity_std <<","
                    << result_metrics[i].fg_mean    <<","
-                   << result_metrics[i].bg_mean    <<","
                    << result_metrics[i].fg_std     <<","
+                   << result_metrics[i].bg_mean    <<","
                    << result_metrics[i].bg_std     <<"\n";
         }
     file.close();
@@ -255,7 +255,21 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     //output
     writeMetrics2CSV(result_metrics, output_csv_file);
+    IMAGE_METRICS m_stats = result_metrics[0];
 
+
+    QString disp_text = "";
+    disp_text += "Contrast-to-Background Ratio = " + QString::number(m_stats.cnr) + ";\n";
+    disp_text += "Dynamic Range = " + QString::number(m_stats.dy) + ";\n";
+    disp_text += "Mean FG Intensity = " + QString::number (m_stats.fg_mean)  + ", STD = "    + QString::number(m_stats.fg_std) + ";\n";
+    disp_text += "Mean BG Intensity = " + QString::number (m_stats.bg_mean)  + ", STD = "    + QString::number(m_stats.bg_std) + ";\n";
+    disp_text += "Mean Tubularity = " + QString::number(m_stats.tubularity_mean) + ", STD = " + QString::number(m_stats.tubularity_std) + ".\n";
+
+
+    disp_text += "\n Segment type-specific screening metrics are exported in: \n "+ output_csv_file +"\n";
+
+
+    /*
     ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
 
 
@@ -269,6 +283,9 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     disp_text += "\n  Screening Metrics of each segment can be found in: \n "+ output_csv_file +"\n";
+    */
+
+
     v3d_msg(disp_text);
 
 
@@ -324,13 +341,17 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
 
     QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert, callback);
-    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+    IMAGE_METRICS m_stats = result_metrics[0];
 
-    cout << "Mean BG Intensity:" << m_stats.mean_bg << "with std = "    << m_stats.std_bg << "\n"
-         << "Mean BG Intensity:" << m_stats.mean_fg << "with std = "    << m_stats.std_bg << "\n"
-         << "Mean Contrast-to-Background Ratio:" << m_stats.mean_cnr << "with std = " << m_stats.std_cnr << "\n"
-         << "Mean Dynamic Range:"<< m_stats.mean_dy << "with std = "    << m_stats.std_dy << "\n"
-         << "Mean Tubularity:"   << m_stats.mean_tubularity << "with std = " << m_stats.std_tubularity << "\n"
+    /*
+    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+    */
+
+    cout << "Overall Contrast-to-Background Ratio:" << m_stats.cnr << "\n"
+         << "Overall Dynamic Range:"<< m_stats.dy << "\n"
+         << "Mean BG Intensity:" << m_stats.bg_mean << ", with std = "    << m_stats.bg_std << "\n"
+         << "Mean FG Intensity:" << m_stats.fg_mean << ", with std = "    << m_stats.fg_std << "\n"
+         << "Mean Tubularity:"   << m_stats.tubularity_mean << ", with std = " << m_stats.tubularity_std << "\n"
          << endl;
 
     if (result_metrics.isEmpty())
@@ -344,7 +365,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
             cout<< "error in writeMetrics2CSV()" <<endl;
         }
     }
-
+    cout << "Segment type-specific screening metrics are exported in:  " << output_csv_file.toStdString() <<endl;
 
 	return true;
 
@@ -356,11 +377,16 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
 {
 
     IMAGE_METRICS metrics;
-    metrics.type = neuronSegment.at(0).type; // one segment is one type ( all it's nodes should have the same type)
+    metrics.type = neuronSegment.at(0).type;
     metrics.cnr = 0.0;
     metrics.snr = 0.0;
     metrics.dy = 0.0;
-    metrics.tubularity = 0.0;
+    metrics.tubularity_mean = 0.0;
+    metrics.fg_mean = 0.0;
+    metrics.bg_mean = 0.0;
+    metrics.tubularity_std = 0.0;
+    metrics.fg_std = 0.0;
+    metrics.bg_std = 0.0;
 
     V3DLONG min_x = INFINITY, min_y = INFINITY,  min_z = INFINITY, max_x = 0, max_y = 0, max_z= 0;
 
@@ -569,8 +595,10 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     double bg_mean  = mean(bg_1d);
     double fg_mean  = mean(fg_1d);
 
+
     metrics.bg_std = standard_dev(bg_1d);
     metrics.fg_std = standard_dev(fg_1d);
+    metrics.tubularity_std  = standard_dev(tubularities);
 
     if (metrics.bg_std != 0.0){
         metrics.cnr = fabs(fg_mean - bg_mean)/metrics.bg_std;
@@ -583,7 +611,7 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
     }
 
     //average tubularity
-     metrics.tubularity = accumulate( tubularities.begin(), tubularities.end(), 0.0 )/ tubularities.size();
+     metrics.tubularity_mean = mean(tubularities);
      metrics.bg_mean = bg_mean;
      metrics.fg_mean = fg_mean;
 
@@ -617,15 +645,50 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
         cout<<"warning: the image is flipped in Y by default, to be consistent with other image readers, e.g. ImageJ."<<endl;
     }
 
-    QList<IMAGE_METRICS> result_metrics;
-    result_metrics.clear();
 
-    if (image->getDatatype() != V3D_UINT8)
+    QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
+
+    QList<IMAGE_METRICS> result_metrics;
+    // all types
+    IMAGE_METRICS metrics= compute_metrics( image, neuronSWCs,dilate_ratio, callback );
+    metrics.type = -1;  //all types
+    result_metrics.push_back(metrics);
+
+
+    // pool neuron nodes by segment types
+    int pre_type = neuronSWCs[0].type;
+    QList<int> segment_types;
+    segment_types.push_back(pre_type);
+
+    QList<NeuronSWC>  neuronSWC_lists[5];
+    for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
-        cout << "This plugin only support 8 bit images." <<endl;
-        return result_metrics;
+         int j = neuronSWCs[i].type;
+         if (j < 5)
+         {
+             neuronSWC_lists[j].push_back(neuronSWCs.at(i));
+         }
+         else
+         {
+             cout<<"error"<<endl;
+         }
+     }
+
+    for (int j = 0; j <5; j++)
+    {
+        if (!neuronSWC_lists[j].isEmpty() )
+        {
+            IMAGE_METRICS metrics = compute_metrics( image, neuronSWC_lists[j] ,dilate_ratio, callback );
+            result_metrics.push_back(metrics);
+        }
+
     }
 
+
+
+
+     /*  Segment by segment stats is not really necessary
+    //profile segment by segment
     //parse swc, divide into segments
     vector<V3DLONG> segment_id;
     vector<V3DLONG> segment_layer; //not used
@@ -634,7 +697,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
     V3DLONG num_segments = 0 ;
 
-    QList<NeuronSWC> neuronSWCs =  neuronTree.listNeuron;
+
     V3DLONG pre_id = segment_id.at(0); // segment id may not in order
     QList<NeuronSWC> neuronSegment;
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
@@ -667,6 +730,8 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     }
 
     cout <<"total number of segments = " << num_segments <<endl;
+     */
+
     return result_metrics;
 }
 
