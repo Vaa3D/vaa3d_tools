@@ -15636,6 +15636,14 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     trace_img2(seg_img, conf_img, offset, t1, (char*)swc_name.toStdString().c_str());
 
+    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+    ifstream infile_cache(tmp_nm);
+
+    if(infile_cache.good())
+        remove(tmp_nm);
+
+
 
     delete [] tmp_nm;
 
@@ -16184,6 +16192,14 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
 
     trace_img2(seg_img, conf_img, offset, t1, outfile_swc);
+
+    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+    ifstream infile_cache(tmp_nm);
+
+    if(infile_cache.good())
+        remove(tmp_nm);
+
 
 
     delete [] dataset;
