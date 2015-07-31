@@ -2031,7 +2031,7 @@ bool get_marker_info(const LocationSimple& mk, QList<int> & info) //info[0]=neur
     return true;
 }
 
-QList<NOI*> search_loop(QHash<long, NOI *> &nodes)
+QList<NOI*> search_loop(QHash<V3DLONG, NOI *> &nodes)
 {
     QList<NOI*> loop;
     QHash<NOI*, NOI*> hash_child_parent;
