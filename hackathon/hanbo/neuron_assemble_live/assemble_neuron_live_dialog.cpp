@@ -144,7 +144,8 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
             if(ntList.at(i).listNeuron.at(j).pn>=0){
                 parents.insert(node, ntList.at(i).listNeuron.at(j).pn+noffset);
             }
-            nmax=MAX(nmax,ntList.at(i).listNeuron.at(j).n);
+            nmax=MAX(nmax,node->n);
+            nmax=MAX(nmax,ntList.at(i).listNeuron.at(j).pn+noffset);
         }
         noffset=nmax+1;
     }
