@@ -650,31 +650,45 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
     QList<IMAGE_METRICS> result_metrics;
     // all types
-    IMAGE_METRICS metrics= compute_metrics( image, neuronSWCs,dilate_ratio, callback );
+    IMAGE_METRICS metrics = compute_metrics( image, neuronSWCs,dilate_ratio, callback );
     metrics.type = -1;  //all types
     result_metrics.push_back(metrics);
 
-
+/* need more debugging
     // pool neuron nodes by segment types
-    int pre_type = neuronSWCs[0].type;
-    QList<int> segment_types;
-    segment_types.push_back(pre_type);
 
-    QList<NeuronSWC>  neuronSWC_lists[5];
+    QList<NeuronSWC> neuronSWC_sameType;
+    QList <QList<NeuronSWC> > neuronSWC_lists;
+    std::map<int,int> mapTypeToId;
+    int pre_type = neuronSWCs[0].type;
+    mapTypeToId[pre_type] = 0;
+    int count = 0;
+
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
          int j = neuronSWCs[i].type;
-         if (j < 5)
-         {
-             neuronSWC_lists[j].push_back(neuronSWCs.at(i));
+
+         if (j != pre_type ){
+             if ( !mapTypeToId[j] )
+             {
+                 neuronSWC_lists.push_back(neuronSWC_sameType);
+                 count++;
+                 mapTypeToId[j] = count;
+
+             }
+             else
+             {  if (mapTypeToId[j] <= count)
+                 {
+                  int jj = mapTypeToId[j];
+                 neuronSWC_lists[jj].append( neuronSWC_sameType);
+                 }
+             }
+             neuronSWC_sameType.clear();
          }
-         else
-         {
-             cout<<"error"<<endl;
-         }
+         neuronSWC_sameType.push_back(neuronSWCs.at(i));
      }
 
-    for (int j = 0; j <5; j++)
+    for (int j = 0; j < count; j++)
     {
         if (!neuronSWC_lists[j].isEmpty() )
         {
@@ -685,7 +699,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     }
 
 
-
+*/
 
      /*  Segment by segment stats is not really necessary
     //profile segment by segment
