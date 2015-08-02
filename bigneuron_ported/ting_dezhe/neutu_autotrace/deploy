@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp NeuTuAuto.Params.dat $1
+ 
