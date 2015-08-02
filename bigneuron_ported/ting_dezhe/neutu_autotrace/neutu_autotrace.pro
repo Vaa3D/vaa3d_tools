@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 
 #CONFIG	+= x86_64
-VAA3DPATH = ../../../v3d_external
+VAA3DPATH = ../../../../v3d_external
 
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
