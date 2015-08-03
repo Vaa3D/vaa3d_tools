@@ -501,7 +501,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                     if  ( roi_1d_visited[roi_index] != FG )
                     {
                         roi_1d_visited[roi_index] = FG;
-                        fg_1d.push_back(double(image->getRawData()[index_1d]));
                     }
                 }
 
@@ -556,7 +555,6 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
                     if  ( roi_1d_visited[roi_index] != FG  &&  roi_1d_visited[roi_index] != FUZZY )
                     {
                         roi_1d_visited[roi_index] = BG;
-                        bg_1d.push_back(double(image->getRawData()[index_1d]));
                     }
                 }
 
@@ -570,8 +568,31 @@ IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSeg
         double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 0, xx,yy,zz, r + dilate_radius);
 
         tubularities.push_back(tubuV);
+    }
+
+    //collect labled pixel data into bg and fg vectors
+    for (V3DLONG i = 0; i < size_1d ; i++)
+    {
+        V3DLONG roi_index = i;
+
+        V3DLONG z = roi_index/(width*height);
+        V3DLONG y = (roi_index - z* (width*height) )/width;
+        V3DLONG x = roi_index - z* (width*height)  - y*width;
+        z += min_z;
+        y += min_y;
+        x += min_x;
+        V3DLONG index_1d =  z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
+
+        if (roi_1d_visited[roi_index] == FG ){
+            fg_1d.push_back(double(image->getRawData()[index_1d]));
+        }
+        if (roi_1d_visited[roi_index] == BG ){
+            bg_1d.push_back(double(image->getRawData()[index_1d]));
+        }
 
     }
+    cout << "number of fg pixels:" << fg_1d.size() <<endl;
+    cout << "number of bg pixels:" << bg_1d.size() <<endl;
 
    /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
