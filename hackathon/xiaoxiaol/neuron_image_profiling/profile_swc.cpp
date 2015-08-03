@@ -236,7 +236,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
                                  "Enter dialte ratio:",
-                                 4.0, 1.0, 100.0);
+                                 3.0, 1.0, 100.0);
     int flip = QInputDialog::getInteger(parent, "flip in y ?",
                                  "Flip in Y (0/1):",
                                  0, 0, 1);
@@ -315,7 +315,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     else
         output_csv_file = swcFileName + ".csv";
 
-    float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 4.0;
+    float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
     int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
     int  invert = (inparas.size() >= 3) ? atoi(inparas[2]) : 1;
 
