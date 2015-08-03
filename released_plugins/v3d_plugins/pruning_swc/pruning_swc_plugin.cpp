@@ -147,6 +147,9 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                             parent_tip = getParent(parent_tip,nt);
 
+                            if(parent_tip == 1000000000)
+                                break;
+
                          }
 
                         int parent_index = parent_tip;
@@ -163,6 +166,8 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                                 segment_length[parent_tip] = index_tip;
                                 parent_id[parent_tip] = parent_index;
                                 parent_tip = getParent(parent_tip,nt);
+                                if(parent_tip == 1000000000)
+                                    break;
                             }
                             if(segment_length[parent_tip] > index_tip)
                                 segment_length[parent_tip]  = index_tip;
