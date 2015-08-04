@@ -681,43 +681,60 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     QList <QList<NeuronSWC> > neuronSWC_lists;
     std::map<int,int> mapTypeToId;
     int pre_type = neuronSWCs[0].type;
-    mapTypeToId[pre_type] = 0;
     int count = 0;
-
+    int j = pre_type;
     for (V3DLONG i = 0 ; i < neuronSWCs.size() ; i++)
     {
-         int j = neuronSWCs[i].type;
+        j = neuronSWCs[i].type;
 
-         if (j != pre_type )
-         {
-             if ( mapTypeToId.find(j) == mapTypeToId.end() )
-             {// not in map yet, add into map
-                 neuronSWC_lists.push_back(neuronSWC_sameType);
-                 count++;
-                 mapTypeToId[j] = count;
-                 cout<<"map "<<j<<" to "<<count<<endl;
-                 pre_type = j;
-                 neuronSWC_sameType.clear();
-             }
-             else
-             {
-                 if (mapTypeToId[j] <= count)
-                 { //in the map, append
-                     int jj = mapTypeToId[j];
-                     neuronSWC_sameType = neuronSWC_lists.at(jj);
-                 }
-                 else {
-                     cout<< "mapping error!" <<endl;
-                 }
-             }
+        if (j != pre_type)
+        {// not in map yet, add into map
+            if (!neuronSWC_sameType.isEmpty()){
+                if ( mapTypeToId.count(j) == 0   )
+                {
+                    neuronSWC_lists.push_back(neuronSWC_sameType);
+                    mapTypeToId[pre_type] = count;
+                    //cout<<"map "<<pre_type<<" to "<<count<<endl;
+                    count++;
 
-         }
-         neuronSWC_sameType.push_back(neuronSWCs.at(i));
-     }
+                }
+                else
+                {
+                    int jj = mapTypeToId[j];
+
+                    neuronSWC_lists[jj].append(neuronSWC_sameType);;
+                }
+                neuronSWC_sameType.clear();
+            }
+
+            pre_type = j;
+
+        }
+
+        neuronSWC_sameType.push_back(neuronSWCs.at(i));
+
+    }
+
+
+    //at the end
+    if (!neuronSWC_sameType.isEmpty()){
+        if ( mapTypeToId.count(j) == 0)
+        {
+            neuronSWC_lists.push_back(neuronSWC_sameType);
+            mapTypeToId[j] = count;
+           // cout<<"last: map "<<j<<" to "<<count<<endl;
+            count++ ;
+        }
+        else
+        {
+            int jj = mapTypeToId[j];
+            neuronSWC_lists[jj].append(neuronSWC_sameType);;
+        }
+    }
 
     //collect metrics
     cout<< "Profile " << count<< " different segment types" <<endl;
-    for (int j = 0; j < count; j++)
+    for (j = 0; j < count; j++)
     {
         if (!neuronSWC_lists[j].isEmpty() )
         {
