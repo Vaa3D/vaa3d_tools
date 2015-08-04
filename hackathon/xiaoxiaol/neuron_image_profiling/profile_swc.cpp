@@ -373,7 +373,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 
 
-IMAGE_METRICS  compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback)
+IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback)
 {
 
     IMAGE_METRICS metrics;
@@ -675,7 +675,6 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     metrics.type = -1;  //all types
     result_metrics.push_back(metrics);
 
-/* need more debugging
     // pool neuron nodes by segment types
 
     QList<NeuronSWC> neuronSWC_sameType;
@@ -689,26 +688,35 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     {
          int j = neuronSWCs[i].type;
 
-         if (j != pre_type ){
-             if ( !mapTypeToId[j] )
-             {
+         if (j != pre_type )
+         {
+             if ( mapTypeToId.find(j) == mapTypeToId.end() )
+             {// not in map yet, add into map
                  neuronSWC_lists.push_back(neuronSWC_sameType);
                  count++;
                  mapTypeToId[j] = count;
-
+                 cout<<"map "<<j<<" to "<<count<<endl;
+                 pre_type = j;
+                 neuronSWC_sameType.clear();
              }
              else
-             {  if (mapTypeToId[j] <= count)
-                 {
-                  int jj = mapTypeToId[j];
-                 neuronSWC_lists[jj].append( neuronSWC_sameType);
+             {
+                 if (mapTypeToId[j] <= count)
+                 { //in the map, append
+                     int jj = mapTypeToId[j];
+                     neuronSWC_sameType = neuronSWC_lists.at(jj);
+                 }
+                 else {
+                     cout<< "mapping error!" <<endl;
                  }
              }
-             neuronSWC_sameType.clear();
+
          }
          neuronSWC_sameType.push_back(neuronSWCs.at(i));
      }
 
+    //collect metrics
+    cout<< "Profile " << count<< " different segment types" <<endl;
     for (int j = 0; j < count; j++)
     {
         if (!neuronSWC_lists[j].isEmpty() )
@@ -720,7 +728,6 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     }
 
 
-*/
 
      /*  Segment by segment stats is not really necessary
     //profile segment by segment
