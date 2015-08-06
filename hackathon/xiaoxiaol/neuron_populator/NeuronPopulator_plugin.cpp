@@ -63,6 +63,9 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
      float maxRotation = QInputDialog::getDouble(parent, "max rotation",
                                           "Enter max rotation degrees:",
                                           15.0, 1.0, 360.0);
+     int  num_neurons = QInputDialog::getInteger(parent, "number of neurons",
+                                          "Enter the number of neurons you want to populate:",
+                                          10, 1, 10000);
 
      int  siz_x = QInputDialog::getInteger(parent, "bounding box size in x-axis",
                                           "Enter bounding box size in x-axis:",
@@ -78,7 +81,7 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
 
 
      //----------------
-     QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron,  maxRotation,  siz_x,  siz_y,  siz_z);
+     QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron, num_neurons, maxRotation,  siz_x,  siz_y,  siz_z);
 
 
      //visualize neuronTreeList
@@ -187,9 +190,10 @@ bool NeuronPopulator::func_populate(const V3DPluginArgList & input, V3DPluginArg
     QString swc_file_name = QString(infiles[0]);
 
     float  maxRotation = (inparas.size() >= 1) ? atof(inparas[0]) : 15;
-    int  siz_x = (inparas.size() >= 2) ? atoi(inparas[1]) : 100;
-    int  siz_y = (inparas.size() >= 3) ? atoi(inparas[2]) : 100;
-    int  siz_z = (inparas.size() >= 4) ? atoi(inparas[3]) : 100;
+    int  num_neurons = (inparas.size() >= 2) ? atoi(inparas[1]) : 10;
+    int  siz_x = (inparas.size() >= 3) ? atoi(inparas[2]) : 100;
+    int  siz_y = (inparas.size() >= 4) ? atoi(inparas[3]) : 100;
+    int  siz_z = (inparas.size() >= 5) ? atoi(inparas[4]) : 100;
 
     cout<< "max rotation = " << maxRotation << endl;
     cout<< "siz_x =:" << siz_x << endl;
@@ -207,7 +211,7 @@ bool NeuronPopulator::func_populate(const V3DPluginArgList & input, V3DPluginArg
     NeuronTree sampleNeuron =  readSWC_file(swc_file_name);
 
     //----------------
-    QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron,  maxRotation,  siz_x,  siz_y,  siz_z);
+    QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron, num_neurons, maxRotation,  siz_x,  siz_y,  siz_z);
 
     QStringList swc_file_list;
     for (int i = 0; i< neuronTreeList.size(); i++)
