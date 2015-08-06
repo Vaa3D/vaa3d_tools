@@ -8,6 +8,7 @@
 #include "NeuronPopulator_plugin.h"
 #include "populate_neurons.h"
 #include <iostream>
+#include "../neuron_image_profiling/openSWCDialog.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(NeuronPopulator, NeuronPopulator);
@@ -35,11 +36,11 @@ void NeuronPopulator::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 {
 	if (menu_name == tr("populate"))
 	{
-		v3d_msg("To be implemented.");
+        menu_populate(callback,parent);
 	}
 	else if (menu_name == tr("detect"))
 	{
-		v3d_msg("To be implemented.");
+        menu_detect(callback,parent);
 	}
 	else
 	{
@@ -47,6 +48,91 @@ void NeuronPopulator::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 			"Developed by Xiaoxiao Liu, 2015-8-5"));
 	}
 }
+
+void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *parent)
+{
+
+
+    OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+    if (!openDlg->exec())
+        return;
+
+     QString swc_file_name = openDlg->file_name;
+     NeuronTree sampleNeuron = openDlg->nt;
+
+     float maxRotation = QInputDialog::getDouble(parent, "max rotation",
+                                          "Enter max rotation degrees:",
+                                          15.0, 1.0, 360.0);
+
+     int  siz_x = QInputDialog::getInteger(parent, "bounding box size in x-axis",
+                                          "Enter bounding box size in x-axis:",
+                                          100, 10, 10000);
+
+     int  siz_y = QInputDialog::getInteger(parent, "bounding box size in y-axis",
+                                          "Enter bounding box size in y-axis:",
+                                          100, 10, 10000);
+
+     int  siz_z = QInputDialog::getInteger(parent, "bounding box size in z-axis",
+                                          "Enter bounding box size in z-axis:",
+                                          100, 10, 10000);
+
+
+     //----------------
+     QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron,  maxRotation,  siz_x,  siz_y,  siz_z);
+
+
+     //visualize neuronTreeList
+
+     //------------------------
+
+     QString  output_ano_file = swc_file_name.left(swc_file_name.size()-4)+'.ano';
+     v3d_msg("output ano file can be found at:" + output_ano_file);
+
+     QStringList swc_file_list;
+     for (int i = 0; i< neuronTreeList.size(); i++)
+     {
+         QString fn = swc_file_name.left(swc_file_name.size()-4)+'_' + QString::number(i) +'.swc';
+         writeSWC_file(fn, neuronTreeList[i]);
+         swc_file_list.push_back(fn);
+     }
+
+     P_ObjectFileType fnList;
+     fnList.swc_file_list = swc_file_list;
+     saveAnoFile(output_ano_file,fnList);
+
+}
+
+
+
+void NeuronPopulator::menu_detect(V3DPluginCallback2 &callback, QWidget *parent)
+{
+   //To be implemented
+
+    /*OpenANODialog * openDlg = new OpenANODialog(0, &callback);
+    if (!openDlg->exec())
+        return;
+
+     QList<NeuronTree> neuronTreeList = openDlg->nts;
+     QString ano_file_name = openDlg->fn;
+
+
+     //----------------
+     QList<ImageMarker> markers =  detect_contacts(neuronTreeList, 2, 3);  // 2--axon  3--dendrite
+
+
+     //Visualize markers
+
+
+     //------------------------
+
+     QString  output_marker_file = ano_file_name.left(ano_file_name.size()-4)+'.marker';
+     writeMarker_file(output_marker_file, markers);
+
+     v3d_message("output contacts(landmarks) into:" + output_marker_file);*/
+}
+
+
+
 
 bool NeuronPopulator::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {

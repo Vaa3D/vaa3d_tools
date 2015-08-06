@@ -9,9 +9,11 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 
 HEADERS	+= NeuronPopulator_plugin.h \
-    populate_neurons.h
+    populate_neurons.h \
+    ../neuron_image_profiling/openSWCDialog.h
 SOURCES	+= NeuronPopulator_plugin.cpp \
-    populate_neurons.cpp
+    populate_neurons.cpp \
+    ../neuron_image_profiling/openSWCDialog.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 
