@@ -1,0 +1,26 @@
+This pre-built Vaa3D is used to bench test 21 neuron tracing algorithms for BigNeuron project on mindscope. Please use the command line to generate job scripts: 
+
+sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>
+
+<tracing algorithm number>:  from 1 to 21.
+<input image path>: the testing image path
+<output folder path>: the output folder which is used to save the final tracing results
+<Vaa3D executable folder path>: the pre-built Vaa3D folder
+
+Here is one example to generate all 21 job scripts for 21 different tracing algorithms:
+
+for i in {1..21}
+do	
+	sh gen_bench_job_scripts.sh $i /testing_data/images/test1/00038.FruMARCM-M002234_seg001.lsm.tif.c3.v3draw.uint8.v3draw /testing_data/reconstructions/test1/ ./Vaa3D_BigNeuron_version1/
+done
+
+Please note:
+1. All job scripts are saved in the same folder with the testing image.
+
+2. NeuroGPSTree tracing algorithm (tracing algorithm number = 11) is compiled using gcc 4.8.x. It may cause some potential problems. For instance, this is the error on the cluster from Allen Institute for Brain Science's mindscope cluster. 
+
+/usr/lib64/libstdc++.so.6: version `GLIBCXX_3.4.15' not found (required by /data/mat/zhi/BigNeuron/Vaa3D_BigNeuron_version1/plugins/neuron_tracing/HUST_NeuroGPSTree/libNeuroGPSTree.so
+
+
+note added by Zhi Zhou, 08/03/2015
+
