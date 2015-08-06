@@ -82,19 +82,22 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
 
      //----------------
      QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron, num_neurons, maxRotation,  siz_x,  siz_y,  siz_z);
-
-
+     if (neuronTreeList.isEmpty())
+      {
+           cout <<"error: empty list of neurons" <<endl;
+           return;
+      }
      //visualize neuronTreeList
 
      //------------------------
 
-     QString  output_ano_file = swc_file_name.left(swc_file_name.size()-4)+'.ano';
+     QString  output_ano_file = swc_file_name.left(swc_file_name.size()-4)+".ano";
      v3d_msg("output ano file can be found at:" + output_ano_file);
 
      QStringList swc_file_list;
      for (int i = 0; i< neuronTreeList.size(); i++)
      {
-         QString fn = swc_file_name.left(swc_file_name.size()-4)+'_' + QString::number(i) +'.swc';
+         QString fn = swc_file_name.left(swc_file_name.size()-4)+"_" + QString::number(i) +".swc";
          writeSWC_file(fn, neuronTreeList[i]);
          swc_file_list.push_back(fn);
      }
@@ -128,7 +131,7 @@ void NeuronPopulator::menu_detect(V3DPluginCallback2 &callback, QWidget *parent)
 
      //------------------------
 
-     QString  output_marker_file = ano_file_name.left(ano_file_name.size()-4)+'.marker';
+     QString  output_marker_file = ano_file_name.left(ano_file_name.size()-4)+".marker";
      writeMarker_file(output_marker_file, markers);
 
      v3d_message("output contacts(landmarks) into:" + output_marker_file);*/
@@ -212,11 +215,12 @@ bool NeuronPopulator::func_populate(const V3DPluginArgList & input, V3DPluginArg
 
     //----------------
     QList<NeuronTree> neuronTreeList = populate_neurons( sampleNeuron, num_neurons, maxRotation,  siz_x,  siz_y,  siz_z);
+    cout << "number of neuron tree populated: " << neuronTreeList.size() << endl;
 
     QStringList swc_file_list;
     for (int i = 0; i< neuronTreeList.size(); i++)
     {
-        QString fn = swc_file_name.left(swc_file_name.size()-4)+'_' + QString::number(i) +'.swc';
+        QString fn = swc_file_name.left(swc_file_name.size()-4)+'_' + QString::number(i) +".swc";
         writeSWC_file(fn, neuronTreeList[i]);
         swc_file_list.push_back(fn);
     }
