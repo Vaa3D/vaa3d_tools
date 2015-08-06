@@ -1,0 +1,23 @@
+This pre-built Vaa3D is used to bench test 21 neuron tracing algorithms for BigNeuron project on hopper and edison at Lawrence Berkeley National Laboratory. Please use the command line to generate job scripts: 
+
+sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>
+
+<tracing algorithm number>:  from 1 to 21.
+<input image path>: the testing image path
+<output folder path>: the output folder which is used to save the final tracing results
+<Vaa3D executable folder path>: the pre-built Vaa3D folder
+
+Here is one example to generate all 21 job scripts for 21 different tracing algorithms:
+
+for i in {1..21}
+do	
+	sh gen_bench_job_scripts.sh $i /testing_data/images/test1/00038.FruMARCM-M002234_seg001.lsm.tif.c3.v3draw.uint8.v3draw /testing_data/reconstructions/test1/ ./Vaa3D_BigNeuron_version1/
+done
+
+Please note:
+1. All job scripts are saved in the same folder with the testing image.
+
+2. This script cannot be used for larges-scale testing since the script is using the MOM node, which is shared node."aprun" command should be added in the script....
+
+note added by Zhi Zhou, 08/06/2015
+
