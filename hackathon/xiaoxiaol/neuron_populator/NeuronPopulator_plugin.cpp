@@ -38,10 +38,14 @@ void NeuronPopulator::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	{
         menu_populate(callback,parent);
 	}
-	else if (menu_name == tr("detect"))
+    else if (menu_name == tr("prune"))
 	{
-        menu_detect(callback,parent);
+        menu_prune(callback,parent);
 	}
+    else if (menu_name == tr("detect"))
+    {
+        menu_detect(callback,parent);
+    }
 	else
 	{
         v3d_msg(tr("Use this plugin to simulate a group of neurons with desired density. This simulator also detects and counts the contacts between axons and dendrites."
@@ -108,7 +112,11 @@ void NeuronPopulator::menu_populate( V3DPluginCallback2 &callback, QWidget *pare
 
 }
 
+void NeuronPopulator::menu_prune(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //To be implemented
 
+}
 
 void NeuronPopulator::menu_detect(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -149,10 +157,14 @@ bool NeuronPopulator::dofunc(const QString & func_name, const V3DPluginArgList &
         func_populate( input, output,callback);
 
 	}
-	else if (func_name == tr("detect"))
+    else if (func_name == tr("prune"))
 	{
-        func_detect( input, output,callback);
+        func_prune( input, output,callback);
 	}
+    else if (func_name == tr("detect"))
+    {
+        func_detect( input, output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
         cout <<"This plugin is used for 1) populate neurons with specified density ( number of neurons, and bounding box size). 2) detect axon and dendrite contacts.\n";
@@ -165,6 +177,15 @@ bool NeuronPopulator::dofunc(const QString & func_name, const V3DPluginArgList &
         cout<<"size_y:\t\t bounding box size in y\n";
         cout<<"size_z:\t\t bounding box size in z\n";
         cout <<"\n\n\n";
+
+        cout<<"v3d -x neuron_populator -f prune -i <in_swc_ano_file> -o <out_swc_ano_file> -p  size_x size_y size_z " <<endl;
+        cout<<"in_swc_ano_file:\t\t input ano file that lists simulated swc files\n";
+        cout<<"out_swc_ano_file:\t\t output ano file that lists pruned swc files\n";
+        cout<<"size_x:\t\t bounding box size in x\n";
+        cout<<"size_y:\t\t bounding box size in y\n";
+        cout<<"size_z:\t\t bounding box size in z\n";
+        cout <<"\n\n\n";
+
 
         cout<<"v3d -x neuron_populator -f detect -i <in_swc_ano_file> -o <list_of_landmarks>" <<endl;
         cout<<"in_swc_ano_file:\t\t input ano file that lists simulated swc files\n";
@@ -230,6 +251,56 @@ bool NeuronPopulator::func_populate(const V3DPluginArgList & input, V3DPluginArg
     saveAnoFile(output_ano_file,fnList);
 
     return true;
+
+
+}
+
+
+
+bool NeuronPopulator::func_prune(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if(infiles.size() < 1 )
+    {
+        cerr<<"Invalid input"<<endl;
+        return false;
+    }
+    QString in_ano_file_name = QString(infiles[0]);
+    QString out_ano_file_name = QString(outfiles[0]);
+    int  siz_x = (inparas.size() >= 1) ? atoi(inparas[0]) : 100;
+    int  siz_y = (inparas.size() >= 2) ? atoi(inparas[1]) : 100;
+    int  siz_z = (inparas.size() >= 3) ? atoi(inparas[2]) : 100;
+
+
+    if(!outfiles.empty()){
+        out_ano_file_name = QString(outfiles[0]);}
+    else{
+        out_ano_file_name = in_ano_file_name.left(in_ano_file_name.size()-4) + "_pruned.ano";
+    }
+
+    P_ObjectFileType fnList;
+    loadAnoFile(in_ano_file_name,fnList);
+    QStringList swc_file_list = fnList.swc_file_list;
+    QStringList pruned_swc_file_list;
+    QList<NeuronTree> neuronTreeList;
+
+    for (int i = 0; i< swc_file_list.size(); i++)
+    {   QString swc_file_name = swc_file_list[i];
+        NeuronTree neuronTree = readSWC_file(swc_file_name);
+        NeuronTree prunedNeuronTree =  prune_by_boundingbox (neuronTree,  siz_x,   siz_y,   siz_z);
+        QString fn = swc_file_name.left(swc_file_name.size()-4)+"_pruned.swc";
+        writeSWC_file(fn, prunedNeuronTree);
+        pruned_swc_file_list.push_back(fn);
+
+    }
+
+
+    fnList.swc_file_list = pruned_swc_file_list;
+    saveAnoFile(out_ano_file_name,fnList);
 
 
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'NeuronPopulator_plugin.h'
 **
-** Created: Thu Aug 6 11:12:19 2015
+** Created: Fri Aug 7 17:14:56 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!

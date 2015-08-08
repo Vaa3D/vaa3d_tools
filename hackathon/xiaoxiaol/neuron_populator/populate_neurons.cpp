@@ -6,23 +6,125 @@
 #include <numeric>
 #include <algorithm>
 
+
+
 V3DLONG randomPosition1D(V3DLONG range){
      return (rand() %range);
 }
 
-double mean(vector<double> x)
+float mean(vector<float> x)
 {
-     double x_mean  = accumulate( x.begin(), x.end(), 0.0 )/ x.size();
+     float x_mean  = accumulate( x.begin(), x.end(), 0.0 )/ x.size();
      return x_mean;
 }
 
 
-double range(vector<double> x)
+float range(vector<float> x)
 {
-    double max_x =  *( max_element(x.begin(), x.end()));
-    double min_x =  *( min_element(x.begin(), x.end()));
+    float max_x =  *( max_element(x.begin(), x.end()));
+    float min_x =  *( min_element(x.begin(), x.end()));
     return fabs(max_x - min_x);
 
+}
+
+struct Point3D{
+  float x;
+  float y;
+  float z;
+};
+
+struct NeuronSize{
+  float x;
+  float y;
+  float z;
+};
+
+struct MyBoundingBox{
+  float min_x;
+  float min_y;
+  float min_z;
+  float max_x;
+  float max_y;
+  float max_z;
+};
+
+
+MyBoundingBox neuron_tree_bb(NeuronTree nt){
+    vector<float>  x_values;
+    vector<float>  y_values;
+    vector<float>  z_values;
+
+    for (int i =0; i < nt.listNeuron.size(); i++)
+    {
+        NeuronSWC a = nt.listNeuron.at(i);
+        x_values.push_back( a.x);
+        y_values.push_back( a.y);
+        z_values.push_back( a.z);
+    }
+
+    MyBoundingBox bb ={0,0,0,0,0,0};
+    bb.min_x = *( min_element(x_values.begin(), x_values.end()));
+    bb.min_y = *( min_element(y_values.begin(), y_values.end()));
+    bb.min_z = *( min_element(z_values.begin(), z_values.end()));
+    bb.max_x = *( max_element(x_values.begin(), x_values.end()));
+    bb.max_y = *( max_element(y_values.begin(), y_values.end()));
+    bb.max_z = *( max_element(z_values.begin(), z_values.end()));
+
+    return bb;
+}
+
+
+bool IsInside(Point3D p, MyBoundingBox bb){
+
+       if ( p.x >= bb.min_x  &&  p.x <= bb.max_x
+       &&   p.y >= bb.min_y  &&  p.y <= bb.max_y
+       &&   p.z >= bb.min_z  &&  p.z <= bb.max_z )
+            return true;
+       else
+            return false;
+}
+
+
+NeuronSize neuron_tree_size(NeuronTree nt){
+    vector<float>  x_values;
+    vector<float>  y_values;
+    vector<float>  z_values;
+
+    for (int i =0; i < nt.listNeuron.size(); i++)
+    {
+        NeuronSWC a = nt.listNeuron[i];
+        x_values.push_back( a.x);
+        y_values.push_back( a.y);
+        z_values.push_back( a.z);
+    }
+
+    NeuronSize siz;
+    siz.x=range(x_values);
+    siz.y=range(x_values);
+    siz.z=range(x_values);
+    return siz;
+}
+
+
+
+Point3D neuron_tree_center(NeuronTree nt){
+    vector<float>  x_values;
+    vector<float>  y_values;
+    vector<float>  z_values;
+
+    for (int i =0; i < nt.listNeuron.size(); i++)
+    {
+        NeuronSWC a = nt.listNeuron[i];
+        x_values.push_back( a.x);
+        y_values.push_back( a.y);
+        z_values.push_back( a.z);
+    }
+
+    Point3D center;
+    center.x= mean(x_values);
+    center.y= mean(x_values);
+    center.z= mean(x_values);
+    return center;
 }
 
 
@@ -31,26 +133,10 @@ NeuronTree populate_transform (NeuronTree sampleNeuron,
                                V3DLONG x, V3DLONG y, V3DLONG z, float rotation_z )
 {
 
-    vector<double>  x_values;
-    vector<double>  y_values;
-    vector<double>  z_values;
+    Point3D center = neuron_tree_center(sampleNeuron);
+    //NeuronSize size = neuron_tree_size(sampleNeuron);
 
-    for (int i =0; i < sampleNeuron.listNeuron.size(); i++)
-    {
-        NeuronSWC a = sampleNeuron.listNeuron[i];
-        x_values.push_back( a.x);
-        y_values.push_back( a.y);
-        z_values.push_back( a.z);
-    }
-
-    int center_x = mean(x_values);
-    int center_y = mean(y_values);
-    int center_z = mean(z_values);
-
-    cout << "size: x="<<range(x_values)<<", y="<<range(y_values) <<", z="<<range(z_values)<<endl;
-    cout << "center: x="<<center_x<<", y="<<center_y <<", z="<<center_z<<endl;
-
-    Matrix translateMatrix3by4 = translate_matrix(-center_x, -center_y, -center_z);
+    Matrix translateMatrix3by4 = translate_matrix(-center.x, -center.y, -center.z);
     NeuronTree sampleNeuronOffset = apply_transform(&sampleNeuron,translateMatrix3by4);
 
 
@@ -87,25 +173,54 @@ QList<NeuronTree> populate_neurons(NeuronTree sampleNeuron, int num_neurons,
         NeuronTree  new_neuron = populate_transform (sampleNeuron, x,y,z,rotation_angle );
 
         neurons.push_back( new_neuron);
-
     }
 
     cout << "populated nuerons size = " << neurons.size()<<endl;
-
-
-
-
     return neurons;
+}
+
+
+NeuronTree prune_by_boundingbox (NeuronTree nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLONG siz_z)
+{ // prune segments that exceed the bounding box specified by siz_x/y/z
+    NeuronTree prunedTree;
+    MyBoundingBox bb = neuron_tree_bb(nt);
+
+
+    if (bb.min_x > 0 && bb.max_x < siz_x  &&  bb.min_y >0  &&  bb.max_y < siz_y && bb.min_z>0 && bb.max_z < siz_z)
+    {  // if it is entirely within the big bb
+        // skip prunning
+        cout <<"yes"<<endl;
+        return nt;
+    }
+    // check each node and remove the
+    // chidren branch when found outside of the bb;
+    // note soma are always in the bounding box in the pupulating process,
+    // so we can search from the soma node,
+    bb = {0,0,0,float(siz_x),float(siz_y),float(siz_z)};
+    for (int i  =0; i < nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron[i];
+        Point3D p ={node.x, node.y,node.z};
+        if (! IsInside(p,bb)){
+            //remove children,  update pruned tree
+            // cout<<"ouside!"<<endl;
+
+        }
+
+
+    }
+
+    return prunedTree;
 }
 
 
 
 
-
-
-QList<ImageMarker> detect_contacts(QList<NeuronTree*> neuronTreeList, int type1, int type2)
+QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2)
 {
     QList<ImageMarker> contacts;
+
+
+
 
     return contacts;
 }

@@ -24,10 +24,12 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
     bool func_populate( const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback);
+    bool func_prune ( const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback);
     bool func_detect( const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback);
 
 
     void menu_populate( V3DPluginCallback2 &callback, QWidget *parent);
+    void menu_prune( V3DPluginCallback2 &callback, QWidget *parent);
     void menu_detect( V3DPluginCallback2 &callback, QWidget *parent);
 };
 
