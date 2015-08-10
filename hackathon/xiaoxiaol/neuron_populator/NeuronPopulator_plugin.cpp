@@ -291,9 +291,9 @@ bool NeuronPopulator::func_prune(const V3DPluginArgList & input, V3DPluginArgLis
     for (int i = 0; i< swc_file_list.size(); i++)
     {   QString swc_file_name = swc_file_list[i];
         NeuronTree neuronTree = readSWC_file(swc_file_name);
-        NeuronTree prunedNeuronTree =  prune_by_boundingbox (neuronTree,  siz_x,   siz_y,   siz_z);
+        prune_by_boundingbox (neuronTree,  siz_x,   siz_y,   siz_z);
         QString fn = swc_file_name.left(swc_file_name.size()-4)+"_pruned.swc";
-        writeSWC_file(fn, prunedNeuronTree);
+        writeSWC_file(fn, neuronTree);
         pruned_swc_file_list.push_back(fn);
 
     }

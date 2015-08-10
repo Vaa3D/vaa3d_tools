@@ -23,11 +23,13 @@ unix:!macx {
 HEADERS	+= NeuronPopulator_plugin.h \
     populate_neurons.h \
     ../neuron_image_profiling/openSWCDialog.h \
-    ../affine_transform_swc/apply_transform_func.h
+    ../affine_transform_swc/apply_transform_func.h \
+    simple_tree.h
 SOURCES	+= NeuronPopulator_plugin.cpp \
     populate_neurons.cpp \
     ../neuron_image_profiling/openSWCDialog.cpp \
-    ../affine_transform_swc/apply_transform_func.cpp
+    ../affine_transform_swc/apply_transform_func.cpp \
+    simple_tree.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 

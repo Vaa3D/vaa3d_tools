@@ -5,7 +5,7 @@
 #include <iostream>
 #include <numeric>
 #include <algorithm>
-
+#include "QMutableListIterator"
 
 
 V3DLONG randomPosition1D(V3DLONG range){
@@ -174,44 +174,98 @@ QList<NeuronTree> populate_neurons(NeuronTree sampleNeuron, int num_neurons,
 
         neurons.push_back( new_neuron);
     }
-
     cout << "populated nuerons size = " << neurons.size()<<endl;
     return neurons;
 }
 
+/*
 
-NeuronTree prune_by_boundingbox (NeuronTree nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLONG siz_z)
+void removeSubTree( QMutableListIterator<NeuronSWC> iter, int &currentIdx )
+{
+        while( iter.hasNext())
+    {
+        int pid = currentIdx;
+        NeuronSWC node = iter.next(); // recusive remove the child tree
+        currentIdx ++;
+        if (node.parent == pid) {
+            removeSubtree(iter, currentIdx);
+        }
+        else{
+            iter.previous(); //remove the current node
+            iter.remove();
+        }
+    }
+
+}
+*/
+
+void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLONG siz_z)
 { // prune segments that exceed the bounding box specified by siz_x/y/z
-    NeuronTree prunedTree;
-    MyBoundingBox bb = neuron_tree_bb(nt);
 
+    MyBoundingBox bb = neuron_tree_bb(nt);
 
     if (bb.min_x > 0 && bb.max_x < siz_x  &&  bb.min_y >0  &&  bb.max_y < siz_y && bb.min_z>0 && bb.max_z < siz_z)
     {  // if it is entirely within the big bb
         // skip prunning
         cout <<"yes"<<endl;
-        return nt;
     }
     // check each node and remove the
     // chidren branch when found outside of the bb;
-    // note soma are always in the bounding box in the pupulating process,
+    // Soma are assumed to be always in the bounding box in the pupulating process,
     // so we can search from the soma node,
     bb = {0,0,0,float(siz_x),float(siz_y),float(siz_z)};
-    for (int i  =0; i < nt.listNeuron.size(); i++){
-        NeuronSWC node = nt.listNeuron[i];
+
+
+    //method
+    /*
+    QMutableListIterator<NeuronSWC> iter(nt.listNeuron);
+    int currentId = -1 ;
+    while (iter.hasNext()) {
+        NeuronSWC node = iter.next();
+        currentId ++;
         Point3D p ={node.x, node.y,node.z};
-        if (! IsInside(p,bb)){
-            //remove children,  update pruned tree
-            // cout<<"ouside!"<<endl;
+        if (! IsInside(p,bb))
+            removeSubTree(iter,currentId);
+    }*/
 
+
+    // tag the subtree  that are outside of bounding box with type =-1
+    for (int i  = 0; i < nt.listNeuron.size(); i++)
+    {
+        NeuronSWC * node = &(nt.listNeuron[i]);
+
+        if (node->type >= 0){
+            Point3D p ={node->x, node->y,node->z};
+            if (! IsInside(p,bb)){ // outside of bounding box
+                // assumption: the tree is pre-sorted
+                node->type = -1 ;//tag remove
+                for (int j = i +1 ; j < nt.listNeuron.size(); j++)
+                {
+                    int parent_id =  nt.listNeuron[j].parent;
+                    if (parent_id == -1 )
+                       { cout <<"\n warning!  soma is outside of the bundong box, the whole tree is deleted."<<endl;}
+                    if ( nt.listNeuron.at(parent_id-1).type == -1) //parent_id starts from 1
+                    {
+                        (&nt.listNeuron[j])->type = -1 ;
+                    }
+                }
+            }
         }
-
 
     }
 
-    return prunedTree;
-}
+    writeSWC_file("./test_type.swc",nt);
 
+    // removed tagged
+    QMutableListIterator<NeuronSWC> iter(nt.listNeuron);
+    while (iter.hasNext())
+    {
+        NeuronSWC node = iter.next();
+        if (node.type == -1){
+            iter.remove();
+        }
+     }
+}
 
 
 
