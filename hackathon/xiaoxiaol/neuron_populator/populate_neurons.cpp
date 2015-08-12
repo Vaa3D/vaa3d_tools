@@ -174,13 +174,19 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
     if (bb.min_x > 0 && bb.max_x < siz_x  &&  bb.min_y >0  &&  bb.max_y < siz_y && bb.min_z>0 && bb.max_z < siz_z)
     {  // if it is entirely within the big bb
         // skip prunning
-        cout <<"yes"<<endl;
+        cout <<"Completely inside the specified space range."<<endl;
+        return;
     }
     // check each node and remove the
     // chidren branch when found outside of the bb;
     // Soma are assumed to be always in the bounding box in the pupulating process,
     // so we can search from the soma node,
-    bb = {0,0,0,float(siz_x),float(siz_y),float(siz_z)};
+    bb.min_x = 0;
+    bb.min_y = 0;
+    bb.min_z = 0;
+    bb.max_x = siz_x-1;
+    bb.max_y = siz_y-1;
+    bb.max_z = siz_z-1;
 
 
     // tag the subtree  that are outside of bounding box with type =-1
