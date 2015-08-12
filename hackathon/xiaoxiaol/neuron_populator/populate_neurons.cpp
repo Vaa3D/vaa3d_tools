@@ -87,8 +87,8 @@ NeuronSize neuron_tree_size(NeuronTree nt){
 
     NeuronSize siz;
     siz.x=range(x_values);
-    siz.y=range(x_values);
-    siz.z=range(x_values);
+    siz.y=range(y_values);
+    siz.z=range(z_values);
     return siz;
 }
 
@@ -109,15 +109,15 @@ Point3D neuron_tree_center(const NeuronTree nt){
 
     Point3D center;
     center.x = mean(x_values);
-    center.y = mean(x_values);
-    center.z = mean(x_values);
+    center.y = mean(y_values);
+    center.z = mean(z_values);
     return center;
 }
 
 
 
 NeuronTree populate_transform (NeuronTree sampleNeuron,
-                               V3DLONG x, V3DLONG y, V3DLONG z, float rotation_z )
+                               V3DLONG x, V3DLONG y, V3DLONG z, float rotation_y )
 {
 
     Point3D center = neuron_tree_center(sampleNeuron);
@@ -131,7 +131,7 @@ NeuronTree populate_transform (NeuronTree sampleNeuron,
     y_axis.x = 0;
     y_axis.y = 1;
     y_axis.z = 0;
-    Matrix affineMatrix3by4 = affine_matrix(y_axis,rotation_z, x, y, z);
+    Matrix affineMatrix3by4 = affine_matrix(y_axis,rotation_y, x, y, z);
     NeuronTree new_neuron = apply_transform(&sampleNeuronOffset,affineMatrix3by4);
 
     if (new_neuron.listNeuron.size() == 0 )
@@ -214,7 +214,7 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
     }
 
     //debug
-    //writeSWC_file("./test_type.swc",nt);
+    writeSWC_file("./test_type.swc",nt);
 
     // removed tagged
     QMutableListIterator<NeuronSWC> iter(nt.listNeuron);
@@ -252,7 +252,6 @@ void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3D
                 img1d[idx] = typeValue;
             }
             else{
-
                 cout<< "error:"<< idx<<endl;
                 cout << type<<" set at:" << id_x <<" " << id_y <<" "<< id_z<<endl;
             }
