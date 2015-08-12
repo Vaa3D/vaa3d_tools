@@ -33,29 +33,10 @@ float range(vector<float> x)
 
 }
 
-struct Point3D{
-    float x;
-    float y;
-    float z;
-};
-
-struct NeuronSize{
-    float x;
-    float y;
-    float z;
-};
-
-struct MyBoundingBox{
-    float min_x;
-    float min_y;
-    float min_z;
-    float max_x;
-    float max_y;
-    float max_z;
-};
 
 
-MyBoundingBox neuron_tree_bb(NeuronTree nt){
+
+MyBoundingBox neuron_tree_bb(const NeuronTree nt){
     vector<float>  x_values;
     vector<float>  y_values;
     vector<float>  z_values;
@@ -113,7 +94,7 @@ NeuronSize neuron_tree_size(NeuronTree nt){
 
 
 
-Point3D neuron_tree_center(NeuronTree nt){
+Point3D neuron_tree_center(const NeuronTree nt){
     vector<float>  x_values;
     vector<float>  y_values;
     vector<float>  z_values;
@@ -242,28 +223,50 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
 
 
 void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,
-                         Point3D offset, NeuronTree nt, int type,  int typeValue)
+                         Point3D offset, NeuronTree nt, int type,  int typeValue, float closeness)
 {
+    if (!img1d )
+    {
+        cout<<"error in label_image_by_type(): Null 1d image pointer!" <<endl;
+        return;
 
+    }
     for (int i = 0; i < nt.listNeuron.size(); i++)
     {
         NeuronSWC node = nt.listNeuron.at(i);
-        V3DLONG id_x = round(node.x-offset.x) ;
-        V3DLONG id_y = round(node.y-offset.y);
-        V3DLONG id_z = round(node.x-offset.z);
+        V3DLONG id_x = (node.x-offset.x)/closeness -1 +0.5; //round up
+        V3DLONG id_y = (node.y-offset.y)/closeness -1 +0.5;
+        V3DLONG id_z = (node.z-offset.z)/closeness -1 +0.5;
+
         if (node.type == type){
             V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
-            img1d[idx] = typeValue;
+
+            if (idx < tol_sz)
+            {
+                img1d[idx] = typeValue;
+            }
+            else{
+
+                cout<< "error:"<< idx<<endl;
+                cout << type<<" set at:" << id_x <<" " << id_y <<" "<< id_z<<endl;
+            }
         }
 
     }
+
 }
 
 
 
-QList<ImageMarker> detect_pairwise_contacts(NeuronTree treeA, NeuronTree treeB, int type1, int type2, double closeness)
+QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const NeuronTree treeB, int type1, int type2, float closeness)
 {
     QList<ImageMarker> pair_contacts;
+    if (treeA.listNeuron.isEmpty() || treeB.listNeuron.isEmpty() ){
+        cout << "Error: Empty Tree detected." << endl;
+        return pair_contacts;
+    }
+
+
     int A1 = 1;
     int A2 = 2;
     int B1 = 3;
@@ -283,70 +286,73 @@ QList<ImageMarker> detect_pairwise_contacts(NeuronTree treeA, NeuronTree treeB, 
 
     //if bbA does not corss bbB , return
     Point3D offset = {bbUnion.min_x ,bbUnion.min_y ,bbUnion.min_z };
-    V3DLONG  sz_x = bbUnion.max_x - bbUnion.min_x;
-    V3DLONG  sz_y = bbUnion.max_y - bbUnion.min_y;
-    V3DLONG  sz_z = bbUnion.max_x - bbUnion.min_z;
-    V3DLONG  tol_sz = sz_x *sz_y*sz_z;
+    V3DLONG  sz_x = (bbUnion.max_x - bbUnion.min_x +1)/closeness +0.5 ;
+    V3DLONG  sz_y = (bbUnion.max_y - bbUnion.min_y +1)/closeness +0.5 ;
+    V3DLONG  sz_z = (bbUnion.max_z - bbUnion.min_z +1)/closeness +0.5 ;
+    V3DLONG  tol_sz = sz_x * sz_y * sz_z;
     //else
 
-    cout << "image size = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+    // cout << "image size = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+
     //mask A
-    //Image4DSimple * imageA = new Image4DSimple();
-    unsigned char *  img1d_A = new unsigned char[tol_sz];
+    unsigned char * img1d_A = new unsigned char[tol_sz];
     for(V3DLONG i = 0; i < tol_sz; i++) img1d_A[i] = 0;
-    label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z,offset,treeA,type1,A1);
-    label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z,offset,treeA,type2,A2);
+    label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z, offset, treeA,type1,A1,closeness);
+    label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z, offset, treeA,type2,A2,closeness);
 
     //mask B
-    //Image4DSimple * imageB = new Image4DSimple();
-    unsigned char *  img1d_B = new unsigned char[tol_sz];
+    unsigned char * img1d_B= new unsigned char[tol_sz];
     for(V3DLONG i = 0; i < tol_sz; i++) img1d_B[i] = 0;
-    label_image_by_type (img1d_B, tol_sz, sz_x, sz_y,sz_z,offset,treeB,type1,B1);
-    label_image_by_type (img1d_B, tol_sz, sz_x, sz_y,sz_z,offset,treeB,type2,B2);
+    label_image_by_type (img1d_B,tol_sz,sz_x, sz_y,sz_z,offset,treeB,type1,B1,closeness);
+    label_image_by_type (img1d_B,tol_sz,sz_x, sz_y,sz_z,offset,treeB,type2,B2,closeness);
 
+
+    //cout << "Done tagging." <<endl;
     //add
-    unsigned char *  img1d = new unsigned char[tol_sz];
+
     for(V3DLONG i = 0; i < tol_sz; i++) {
-        img1d[i] = img1d_A[i] + img1d_B[i];
-        if (img1d[i] == 5){
+        img1d_A[i] = img1d_A[i] + img1d_B[i];
+        if (img1d_A[i] == 5){
             ImageMarker mark;
-            mark.z = i / (sz_x*sz_y)                       + offset.z;
-            mark.y = (i - mark.z *(sz_x*sz_y) ) / sz_x     + offset.y;
-            mark.x = i - mark.z *(sz_x*sz_y) - mark.y*sz_x + offset.x;
-            cout << "!Find contact" <<endl;
+            V3DLONG z = i / (sz_x*sz_y)            ;
+            V3DLONG y = (i -z *(sz_x*sz_y) ) / sz_x   ;
+            V3DLONG x = i - z *(sz_x*sz_y) - y*sz_x   ;
+             //cout << "Find contact at:" << x <<" " << y <<" "<< z<<endl;
+            mark.x = (x +0.5 )*closeness  + offset.x + 1;
+            mark.y = (y +0.5)*closeness  + offset.y + 1;
+            mark.z = (z +0.5)*closeness  + offset.z + 1;
+            //  cout << "converted to :" << mark.x <<" " <<mark.y <<" "<< mark.z<<endl;
+
             pair_contacts.push_back(mark);
         }
     }
 
 
     // image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-    delete img1d_A;
-    delete img1d_B;
-    delete img1d;
-
+    delete[] img1d_A;
+    delete[] img1d_B;
     return pair_contacts;
 
 }
 
 
-QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2 , double closeness)
+QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2 , float closeness)
 {
     QList<ImageMarker> contacts;
     for (int i = 0; i < neuronTreeList.size()-1 ; i++)
     {
-        for (int j = i+1; j <neuronTreeList.size() ; j++)
+        for (int j = i+1; j < neuronTreeList.size() ; j++)
         {
-            NeuronTree treeA = neuronTreeList.at(i);
-            NeuronTree treeB = neuronTreeList.at(j);
-            QList<ImageMarker>  pair_contacts = detect_pairwise_contacts(treeA, treeB, type1, type2, closeness);
+
+            QList<ImageMarker>  pair_contacts = detect_pairwise_contacts(neuronTreeList.at(i), neuronTreeList.at(j),
+                                                                         type1, type2, closeness);
             if (!pair_contacts.isEmpty())
             {
-                contacts.append(pair_contacts);
-
-                cout << "number of contacts between tree 1 and tree2 :"<<pair_contacts.size()<<endl;
+                contacts += pair_contacts;
+                cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: "<<pair_contacts.size()<<endl;
             }
             else{
-                cout << "no contacts" <<endl;
+                 cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: 0" <<endl;
             }
         }
     }

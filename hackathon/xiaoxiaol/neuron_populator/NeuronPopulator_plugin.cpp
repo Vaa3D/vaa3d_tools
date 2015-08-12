@@ -187,9 +187,10 @@ bool NeuronPopulator::dofunc(const QString & func_name, const V3DPluginArgList &
         cout <<"\n\n\n";
 
 
-        cout<<"v3d -x neuron_populator -f detect -i <in_swc_ano_file> -o <list_of_landmarks>" <<endl;
+        cout<<"v3d -x neuron_populator -f detect -i <in_swc_ano_file> -o <list_of_landmarks> -p <closeness>" <<endl;
         cout<<"in_swc_ano_file:\t\t input ano file that lists simulated swc files\n";
         cout<<"list_of_landmarks:\t\t output axon and dendrite contacting landmarks into a file\n";
+        cout<<"closeness:\t\t the closeness threshold to define a contact, in voxel unit \n";
 
 	}
 	else return false;
@@ -326,6 +327,16 @@ bool NeuronPopulator::func_detect(const V3DPluginArgList & input, V3DPluginArgLi
     else
         output_marker_file = anoFileName + ".marker";
 
+
+    float closeness_thre;
+    if(!inparas.empty())
+        closeness_thre = atof(inparas[0]);
+    else
+        closeness_thre = 10; // in voxel unit
+
+
+
+
     P_ObjectFileType fnList;
     loadAnoFile(anoFileName,fnList);
     QStringList swc_file_list = fnList.swc_file_list;
@@ -339,7 +350,7 @@ bool NeuronPopulator::func_detect(const V3DPluginArgList & input, V3DPluginArgLi
     }
 
     //----------------
-    QList<ImageMarker> markers =  detect_contacts(neuronTreeList, 2, 3, 5);  // 2--axon  3--dendrite   closeness = 5 um
+    QList<ImageMarker> markers =  detect_contacts(neuronTreeList, 2, 3, closeness_thre);  // 2--axon  3--dendrite   closeness = 5 um
 
     if (!markers.isEmpty() )
          writeMarker_file(output_marker_file, markers);
