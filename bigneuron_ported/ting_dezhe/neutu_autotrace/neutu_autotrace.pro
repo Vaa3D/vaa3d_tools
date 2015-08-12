@@ -18,11 +18,13 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(neutu_autotrace)
 PLUGIN_DIR = plugins/neuron_tracing/neutu_autotrace
-DESTDIR	= $$VAA3DPATH/bin/$$PLUGIN_DIR
+PARAMDIR = bin
+BINDIR	= $$VAA3DPATH/$$PARAMDIR
+DESTDIR	= $$BINDIR/$$PLUGIN_DIR
 
-DEFINES += PLUGIN_DIR=\"\\\"$$PLUGIN_DIR\\\"\"
+DEFINES += NEUTU_PARAM_DIR=\"\\\"$$PARAMDIR\\\"\"
 unix {
-DEPLOY_COMMAND = "$$PWD/deploy $$DESTDIR"
+DEPLOY_COMMAND = "$$PWD/deploy $$BINDIR"
 QMAKE_POST_LINK += $$DEPLOY_COMMAND
 }
 unix:macx {

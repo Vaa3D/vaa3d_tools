@@ -212,16 +212,19 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
       im3d[i] = (maxI - im3d[i])/(maxI - minI + 1e-10); 
     }
     QString swc_name = PARA.inimg_file + "_neutu_autotrace.swc";
+
 #if defined(_MAC_APPLICATION_)
-    std::string pluginPath = QApplication::applicationDirPath().toStdString() +       "/../../../" + PLUGIN_DIR;
+    std::string paramDir = QApplication::applicationDirPath().toStdString() +       "/../../../../" + NEUTU_PARAM_DIR;
 #else
-    std::string pluginPath = QApplication::applicationDirPath().toStdString() +       "/" + PLUGIN_DIR;
+    std::string paramDir = QApplication::applicationDirPath().toStdString() +       "/../" + NEUTU_PARAM_DIR;
 #endif
-    std::string paramFile = pluginPath + "/NeuTuAuto.Params.dat";
+
+    std::string paramFile = paramDir + "/NeuTuAuto.Params.dat";
+    std::cout << paramFile << std::endl;
+
     NeuTuAutoTraceOneStack(im3d, M, N, P, paramFile.c_str(), 
        swc_name.toStdString().c_str());
 
-    std::cout << pluginPath << std::endl;
 
     delete []im3d;
 
