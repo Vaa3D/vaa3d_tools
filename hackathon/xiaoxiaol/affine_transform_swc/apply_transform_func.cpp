@@ -7,21 +7,83 @@
 
 using namespace std;
 
+#define PI 3.14159265
+
+Matrix affine_matrix(unit_vector u, double angle, double shift_x, double shift_y, double shift_z)
+{
+
+
+    double radians = angle * PI / 180.0 ;  // from degree to radian
+
+
+    double c = cos( radians ) ;
+    double l_c = 1 - c ;
+    double s = sin( radians ) ;
+
+    Matrix affineMatrix3by4(3,4);
+
+
+    affineMatrix3by4(1,1) = u.x*u.x + (1 - u.x*u.x)*c ;
+    affineMatrix3by4(1,2) = u.x*u.y*l_c - u.z*s;
+    affineMatrix3by4(1,3) = u.x*u.z*l_c + u.y*s;
+    affineMatrix3by4(1,4) = shift_x;
+    affineMatrix3by4(2,1) = u.x*u.y*l_c + u.z*s;
+    affineMatrix3by4(2,2) = u.y*u.y+(1 - u.y*u.y)*c ;
+    affineMatrix3by4(2,3) = u.y*u.z*l_c - u.x*s ;
+    affineMatrix3by4(2,4) = shift_y ;
+    affineMatrix3by4(3,1) = u.x*u.z*l_c - u.y*s ;
+    affineMatrix3by4(3,2) = u.y*u.z*l_c + u.x*s;
+    affineMatrix3by4(3,3) = u.z*u.z + (1 - u.z*u.z)*c ;
+    affineMatrix3by4(3,4) = shift_z ;
+
+
+    return affineMatrix3by4;
+
+}
+
+
+
+Matrix translate_matrix(double shift_x, double shift_y, double shift_z)
+{
+
+
+    Matrix affineMatrix3by4(3,4);
+
+
+    affineMatrix3by4(1,1) = 1;
+    affineMatrix3by4(1,2) = 0;
+    affineMatrix3by4(1,3) = 0;
+    affineMatrix3by4(1,4) = shift_x;
+    affineMatrix3by4(2,1) = 0;
+    affineMatrix3by4(2,2) = 1;
+    affineMatrix3by4(2,3) = 0;
+    affineMatrix3by4(2,4) = shift_y;
+    affineMatrix3by4(3,1) = 0;
+    affineMatrix3by4(3,2) = 0;
+    affineMatrix3by4(3,3) = 1;
+    affineMatrix3by4(3,4) = shift_z;
+
+    return affineMatrix3by4;
+
+}
+
+
 NeuronTree apply_transform(NeuronTree * nt, Matrix  trans )
 {
-        NeuronTree result;
-	V3DLONG size = nt->listNeuron.size();
-	for (V3DLONG i = 0;i < size;i++)		
-        {
-                NeuronSWC s = nt->listNeuron[i];
-		NeuronSWC p = s;
-                // apply the 3x4 transform matrix
+    NeuronTree result;
+    V3DLONG size = nt->listNeuron.size();
+    cout<<"size="<<size<<endl;
+    for (V3DLONG i = 0;i < size;i++)
+    {
+        NeuronSWC s = nt->listNeuron[i];
+        NeuronSWC p = s;
+        // apply the 3x4 transform matrix
 
 
-		p.x = trans(1,1) * s.x + trans(1,2) * s.y + trans(1,3) * s.z + trans(1,4) ;
-		p.y = trans(2,1) * s.x + trans(2,2) * s.y + trans(2,3) * s.z + trans(2,4) ;
-                p.z = trans(3,1) * s.x + trans(3,2) * s.y + trans(3,3) * s.z + trans(3,4) ;
-                
+        p.x = trans(1,1) * s.x + trans(1,2) * s.y + trans(1,3) * s.z + trans(1,4) ;
+        p.y = trans(2,1) * s.x + trans(2,2) * s.y + trans(2,3) * s.z + trans(2,4) ;
+        p.z = trans(3,1) * s.x + trans(3,2) * s.y + trans(3,3) * s.z + trans(3,4) ;
+
                 
 		result.listNeuron.push_back(p);
 	}

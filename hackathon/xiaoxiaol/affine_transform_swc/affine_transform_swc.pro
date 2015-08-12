@@ -6,7 +6,19 @@ V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
 
-LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+macx{
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+#    CONFIG += x86_64
+}
+
+win32{
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
+}
+
+unix:!macx {
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+}
+
 
 HEADERS	+= affine_transform_swc_plugin.h
 HEADERS	+= apply_transform_func.h
