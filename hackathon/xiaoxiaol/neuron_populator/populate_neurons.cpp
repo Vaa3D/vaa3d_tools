@@ -36,6 +36,15 @@ float range(vector<float> x)
 
 
 
+V3DLONG boundValue(V3DLONG x, V3DLONG m_min, V3DLONG m_max)
+{
+    x = MAX(x, m_min);
+    x = MIN(x, m_max);
+    return x;
+
+}
+
+
 
 MyBoundingBox neuron_tree_bb(const NeuronTree nt){
     vector<float>  x_values;
@@ -233,6 +242,28 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
     }
 }
 
+void label_neighborhood(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,
+                         Point3D center, int typeValue, float closeness)
+
+{
+    V3DLONG id_x,id_y,id_z;
+
+
+
+    for (id_x = MAX(0,center.x - closeness); id_x <=  MIN(sz_x-1,center.x + closeness ); id_x++)
+        for (id_y = MAX(0,center.y - closeness); id_y <= MIN(sz_y-1,center.y + closeness) ; id_y++)
+            for (id_z = MAX(0, center.z - closeness); id_z <= MIN(sz_z-1,center.z + closeness) ; id_z++)
+            {
+                V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
+
+                    img1d[idx] = typeValue;
+                    //tag neighborhood region defined by r= closeness with the same value
+
+            }
+
+
+
+}
 
 void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,
                          Point3D offset, NeuronTree nt, int type,  int typeValue, float closeness)
@@ -241,27 +272,22 @@ void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3D
     {
         cout<<"error in label_image_by_type(): Null 1d image pointer!" <<endl;
         return;
-
     }
+
     for (int i = 0; i < nt.listNeuron.size(); i++)
     {
         NeuronSWC node = nt.listNeuron.at(i);
-        V3DLONG id_x = (node.x-offset.x)/closeness -1 +0.5; //round up
-        V3DLONG id_y = (node.y-offset.y)/closeness -1 +0.5;
-        V3DLONG id_z = (node.z-offset.z)/closeness -1 +0.5;
+        V3DLONG id_x = (node.x-offset.x) +0.5; //round up
+        V3DLONG id_y = (node.y-offset.y) +0.5;
+        V3DLONG id_z = (node.z-offset.z) +0.5;
 
         if (node.type == type)
         {
-            V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
-
-            if (idx < tol_sz)
-            {
-                img1d[idx] = typeValue;
-            }
-            else{
-                cout<< "error:"<< idx<<endl;
-                cout << type<<" set at:" << id_x <<" " << id_y <<" "<< id_z<<endl;
-            }
+           Point3D center;
+           center.x = id_x;
+           center.y = id_y;
+           center.z = id_z;
+           label_neighborhood(img1d,tol_sz,sz_x,sz_y,sz_z,center,typeValue,closeness);
         }
 
     }
@@ -280,10 +306,10 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
     }
 
 
-    int A1 = 1;
-    int A2 = 2;
-    int B1 = 3;
-    int B2 = 4;
+    int A1 = 30*1;
+    int A2 = 30*2;
+    int B1 = 30*3;
+    int B2 = 30*4;
     //A1B2 = 5;
     //A2B1 = 5
     MyBoundingBox bbA = neuron_tree_bb(treeA);
@@ -299,19 +325,27 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
 
     //if bbA does not corss bbB , return
     Point3D offset = {bbUnion.min_x ,bbUnion.min_y ,bbUnion.min_z };
-    V3DLONG  sz_x = (bbUnion.max_x - bbUnion.min_x +1)/closeness +0.5 ;
-    V3DLONG  sz_y = (bbUnion.max_y - bbUnion.min_y +1)/closeness +0.5 ;
-    V3DLONG  sz_z = (bbUnion.max_z - bbUnion.min_z +1)/closeness +0.5 ;
+    V3DLONG  sz_x = (bbUnion.max_x - bbUnion.min_x ) +0.5 ; //+0.5 to round up from float to V3DLONG
+    V3DLONG  sz_y = (bbUnion.max_y - bbUnion.min_y ) +0.5 ;
+    V3DLONG  sz_z = (bbUnion.max_z - bbUnion.min_z ) +0.5 ;
     V3DLONG  tol_sz = sz_x * sz_y * sz_z;
     //else
 
     // cout << "image size = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+
+
+
 
     //mask A
     unsigned char * img1d_A = new unsigned char[tol_sz];
     for(V3DLONG i = 0; i < tol_sz; i++) img1d_A[i] = 0;
     label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z, offset, treeA,type1,A1,closeness);
     label_image_by_type (img1d_A, tol_sz, sz_x, sz_y,sz_z, offset, treeA,type2,A2,closeness);
+
+
+    Image4DSimple *image = new Image4DSimple();
+    image->setData(img1d_A, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+    callback.saveImage(image, "./test_maskA.v3draw");
 
     //mask B
     unsigned char * img1d_B= new unsigned char[tol_sz];
@@ -322,27 +356,25 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
 
     //cout << "Done tagging." <<endl;
     //add
-
     for(V3DLONG i = 0; i < tol_sz; i++) {
         img1d_A[i] = img1d_A[i] + img1d_B[i];
-        if (img1d_A[i] == 5){
+        if (img1d_A[i] == (A1+B2)){
             ImageMarker mark;
             V3DLONG z = i / (sz_x*sz_y)            ;
             V3DLONG y = (i -z *(sz_x*sz_y) ) / sz_x   ;
             V3DLONG x = i - z *(sz_x*sz_y) - y*sz_x   ;
              //cout << "Find contact at:" << x <<" " << y <<" "<< z<<endl;
-            mark.x = (x +0.5 )*closeness  + offset.x + 1;
-            mark.y = (y +0.5)*closeness  + offset.y + 1;
-            mark.z = (z +0.5)*closeness  + offset.z + 1;
+            mark.x = (x +0.5)   + offset.x ;
+            mark.y = (y +0.5)   + offset.y ;
+            mark.z = (z +0.5)   + offset.z ;  // +1 landmarks are 1-based in vaa3d
             //  cout << "converted to :" << mark.x <<" " <<mark.y <<" "<< mark.z<<endl;
 
             pair_contacts.push_back(mark);
         }
     }
 
-    Image4DSimple *image = new Image4DSimple();
-    image->setData(img1d_A, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-    callback.saveImage(image, "./test.v3draw");
+    //image->setData(img1d_A, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+    callback.saveImage(image, "./test_Add.v3draw");
 
     delete[] img1d_A;
     delete[] img1d_B;
