@@ -15309,6 +15309,9 @@ bool Opencv_example(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
 bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm2)
 {
+
+    //cin.get();
+
 	if(callback.getImageWindowList().empty()) return QMessageBox::information(0, title, QObject::tr("No image is open."));
 
 	unsigned char * data1d = 0;
@@ -15518,9 +15521,20 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     char *tmp_nm = new char[100];
 
+
+    QString image_name = callback.getImageName(curwin);
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+    string tmp_file = img_folder.toStdString() + "tmp_cache_img.v3draw";
+
+    //sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+    saveMat(image,(char*)tmp_file.c_str());
+
     sprintf(tmp_nm,"tmp_cache_img.v3draw");
 
-    saveMat(image,tmp_nm);
+   // saveMat(image,tmp_nm);
 
     Mat conf_img;
 
@@ -15545,7 +15559,7 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     if(bm1 == 1)
     {
-        multiscaleEhance(callback, tmp_nm, conf_img);
+        multiscaleEhance(callback, (char*)tmp_file.c_str(), conf_img);
 
         t1 = 50;
 
@@ -15553,21 +15567,23 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
         sprintf(dataset,"BigNmEh");
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
+
+        tmp_file = img_folder.toStdString() + "tmp_swc.swc";
 
         sprintf(tmp_nm,"tmp_swc.swc");
 
-        app2_trace(image, tmp_nm);
+        app2_trace(image, (char*)tmp_file.c_str());
 
-        swc2image(conf_img,tmp_nm);
+        swc2image(conf_img,(char*)tmp_file.c_str());
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
     }
 
     if(bm1 == 2)
     {
-        fastMarch(tmp_nm, conf_img);
+        fastMarch((char*)tmp_file.c_str(), conf_img);
 
         t1 = 10;
 
@@ -15575,15 +15591,15 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
         sprintf(dataset,"BigNFM");
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
         sprintf(tmp_nm,"tmp_swc.swc");
 
-        app2_trace(image, tmp_nm);
+        app2_trace(image, (char*)tmp_file.c_str());
 
-        swc2image(conf_img,tmp_nm);
+        swc2image(conf_img,(char*)tmp_file.c_str());
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
 
     }
@@ -15595,7 +15611,7 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
     {
         // swc2conf((char*)roi_fn.c_str(), conf_img);
 
-        swc2conf(callback,tmp_nm,conf_img,bm2);
+        swc2conf(callback,(char*)tmp_file.c_str(),conf_img,bm2);
 
         t1 = 20;
 
@@ -15623,7 +15639,11 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     QString swc_name = 	callback.getImageName(curwin) + "_LCMboost.swc";
 
-    sprintf(tmp_nm,swc_name.toStdString().c_str());
+    //sprintf(tmp_nm,swc_name.toStdString().c_str());
+
+    tmp_file = img_folder.toStdString() + "tmp_swc.swc";
+
+    saveMat(seg_img,(char*)tmp_file.c_str());
 
     //saveMat(seg_img,tmp_nm);
 
@@ -15636,12 +15656,14 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     trace_img2(seg_img, conf_img, offset, t1, (char*)swc_name.toStdString().c_str());
 
-    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+  //  sprintf((char*)tmp_file.c_str(),"tmp_cache_img.v3draw");
 
-    ifstream infile_cache(tmp_nm);
+  tmp_file = img_folder.toStdString() + "tmp_cache_img.v3draw";
+
+    ifstream infile_cache((char*)tmp_file.c_str());
 
     if(infile_cache.good())
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
 
 
@@ -15850,6 +15872,19 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     Mat image1;
 
+
+
+
+
+
+  //  cout << tmpfolder.toStdString().c_str() << endl;
+
+  //  cin.get();
+
+
+
+
+
     loadMat(callback,image1, infile);
 
     // shrink the iamge if possible
@@ -16044,10 +16079,17 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     char *tmp_nm = new char[100];
 
-    sprintf(tmp_nm,"tmp_cache_img.v3draw");
 
 
-    saveMat(image,tmp_nm);
+    QString image_name = infile;
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+    string tmp_file = img_folder.toStdString() + "tmp_cache_img.v3draw";
+
+    //sprintf(tmp_nm,"tmp_cache_img.v3draw");
+
+    saveMat(image,(char*)tmp_file.c_str());
 
  /*
 
@@ -16106,7 +16148,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     if(bm1 == 1)
     {
-        multiscaleEhance(callback, tmp_nm, conf_img);
+        multiscaleEhance(callback, (char*)tmp_file.c_str(), conf_img);
 
         t1 = 50;
 
@@ -16114,15 +16156,17 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         sprintf(dataset,"BigNmEh");
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
-        sprintf(tmp_nm,"tmp_swc.swc");
+        tmp_file = img_folder.toStdString() + "tmp_swc.swc";
 
-        app2_trace(image, tmp_nm);
+     //   sprintf(tmp_nm,"tmp_swc.swc");
 
-        swc2image(conf_img,tmp_nm);
+        app2_trace(image, (char*)tmp_file.c_str());
 
-        remove(tmp_nm);
+        swc2image(conf_img,(char*)tmp_file.c_str());
+
+        remove((char*)tmp_file.c_str());
 
 
     }
@@ -16130,7 +16174,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     if(bm1 == 2)
     {
-        fastMarch(tmp_nm, conf_img);
+        fastMarch((char*)tmp_file.c_str(), conf_img);
 
         t1 = 20;
 
@@ -16138,17 +16182,15 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         sprintf(dataset,"BigNFM");
 
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
-        sprintf(tmp_nm,"tmp_swc.swc");
+        tmp_file = img_folder.toStdString() + "tmp_swc.swc";
 
-        app2_trace(image, tmp_nm);
+        app2_trace(image, (char*)tmp_file.c_str());
 
-        swc2image(conf_img,tmp_nm);
+        swc2image(conf_img,(char*)tmp_file.c_str());
 
-        remove(tmp_nm);
-
-
+        remove((char*)tmp_file.c_str());
     }
 
 
@@ -16156,7 +16198,7 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
     {
         // swc2conf((char*)roi_fn.c_str(), conf_img);
 
-        swc2conf(callback,tmp_nm,conf_img,bm2);
+        swc2conf(callback,(char*)tmp_file.c_str(),conf_img,bm2);
 
         t1 = 20;
 
@@ -16193,12 +16235,14 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     trace_img2(seg_img, conf_img, offset, t1, outfile_swc);
 
-    sprintf(tmp_nm,"tmp_cache_img.v3draw");
+ //   sprintf(tmp_nm,"tmp_cache_img.v3draw");
 
-    ifstream infile_cache(tmp_nm);
+    tmp_file = img_folder.toStdString() + "tmp_cache_img.v3draw";
+
+    ifstream infile_cache((char*)tmp_file.c_str());
 
     if(infile_cache.good())
-        remove(tmp_nm);
+        remove((char*)tmp_file.c_str());
 
 
 
@@ -17298,6 +17342,12 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
         string save_swc_fn = infile;
 
      	save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+
+
+
+
+
+
 
 
 

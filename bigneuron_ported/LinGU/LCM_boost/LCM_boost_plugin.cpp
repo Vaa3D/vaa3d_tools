@@ -34,6 +34,13 @@ QStringList LoadImageAndSWCPlugin::funclist() const
 
 void LoadImageAndSWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
+
+
+
+  //  cout << menu_name.toStdString() << endl;
+
+    //   cin.get();
+
 	if (menu_name == tr("LCM_boost(MultiScale Ehancement based)"))
 	{
 		General_Boost(callback,parent,1,0);
