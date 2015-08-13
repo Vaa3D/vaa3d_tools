@@ -6,6 +6,7 @@
 #include <numeric>
 #include <algorithm>
 #include "QMutableListIterator"
+#include "basic_4dimage.h"
 
 #ifndef MIN
 #define MIN(a, b)  ( ((a)<(b))? (a) : (b) )
@@ -120,10 +121,15 @@ NeuronTree populate_transform (NeuronTree sampleNeuron,
                                V3DLONG x, V3DLONG y, V3DLONG z, float rotation_y )
 {
 
-    Point3D center = neuron_tree_center(sampleNeuron);
-    //NeuronSize size = neuron_tree_size(sampleNeuron);
+    //Point3D center = neuron_tree_center(sampleNeuron);
 
-    Matrix translateMatrix3by4 = translate_matrix(-center.x, -center.y, -center.z);
+    //make sure soma point is within the specified space
+    Point3D somaPoint;
+    somaPoint.x= sampleNeuron.listNeuron[0].x;
+    somaPoint.y= sampleNeuron.listNeuron[0].y;
+    somaPoint.z= sampleNeuron.listNeuron[0].z;
+
+    Matrix translateMatrix3by4 = translate_matrix(-somaPoint.x, -somaPoint.y, -somaPoint.z);
     NeuronTree sampleNeuronOffset = apply_transform(&sampleNeuron,translateMatrix3by4);
 
 
@@ -214,7 +220,7 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
     }
 
     //debug
-    writeSWC_file("./test_type.swc",nt);
+    // writeSWC_file("./test_type.swc",nt);
 
     // removed tagged
     QMutableListIterator<NeuronSWC> iter(nt.listNeuron);
@@ -244,7 +250,8 @@ void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3D
         V3DLONG id_y = (node.y-offset.y)/closeness -1 +0.5;
         V3DLONG id_z = (node.z-offset.z)/closeness -1 +0.5;
 
-        if (node.type == type){
+        if (node.type == type)
+        {
             V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
 
             if (idx < tol_sz)
@@ -263,7 +270,8 @@ void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3D
 
 
 
-QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const NeuronTree treeB, int type1, int type2, float closeness)
+QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const NeuronTree treeB, int type1, int type2,
+                                            float closeness,V3DPluginCallback2 &callback)
 {
     QList<ImageMarker> pair_contacts;
     if (treeA.listNeuron.isEmpty() || treeB.listNeuron.isEmpty() ){
@@ -332,8 +340,10 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
         }
     }
 
+    Image4DSimple *image = new Image4DSimple();
+    image->setData(img1d_A, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+    callback.saveImage(image, "./test.v3draw");
 
-    // image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
     delete[] img1d_A;
     delete[] img1d_B;
     return pair_contacts;
@@ -341,23 +351,28 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
 }
 
 
-QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2 , float closeness)
+QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2 , float closeness,
+                                   V3DPluginCallback2 &callback)
 {
     QList<ImageMarker> contacts;
+
+    cout <<"neuron_A,neuron_B, num_contacts"<<endl;
     for (int i = 0; i < neuronTreeList.size()-1 ; i++)
     {
         for (int j = i+1; j < neuronTreeList.size() ; j++)
         {
 
             QList<ImageMarker>  pair_contacts = detect_pairwise_contacts(neuronTreeList.at(i), neuronTreeList.at(j),
-                                                                         type1, type2, closeness);
+                                                                         type1, type2, closeness, callback);
             if (!pair_contacts.isEmpty())
             {
                 contacts += pair_contacts;
-                cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: "<<pair_contacts.size()<<endl;
+                //cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: "<<pair_contacts.size()<<endl;
+                 cout <<i<<","<<j<<","<<pair_contacts.size()<<endl;
             }
             else{
-                 cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: 0" <<endl;
+                 //cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: 0" <<endl;
+                 cout <<i<<","<<j<<","<< 0<<endl;
             }
         }
     }

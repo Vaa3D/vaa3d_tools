@@ -350,7 +350,7 @@ bool NeuronPopulator::func_detect(const V3DPluginArgList & input, V3DPluginArgLi
     }
 
     //----------------
-    QList<ImageMarker> markers =  detect_contacts(neuronTreeList, 2, 3, closeness_thre);  // 2--axon  3--dendrite   closeness = 5 um
+    QList<ImageMarker> markers =  detect_contacts(neuronTreeList, 2, 3, closeness_thre,callback);  // 2--axon  3--dendrite   closeness = 5 um
 
     if (!markers.isEmpty() )
          writeMarker_file(output_marker_file, markers);
