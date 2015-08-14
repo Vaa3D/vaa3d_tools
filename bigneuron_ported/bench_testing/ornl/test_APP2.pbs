@@ -1,0 +1,8 @@
+#PBS -l walltime=1:00:00
+#PBS -l nodes=500
+#PBS -A nro101
+#PBS -q batch 
+
+cd /lustre/atlas/proj-shared/nro101/BigNeuron/
+aprun -n 2000  ./runVAA3D_APP2.exe
+
