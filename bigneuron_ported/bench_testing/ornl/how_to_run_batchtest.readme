@@ -1,0 +1,14 @@
+This following is an example based on Zhi's email on Aug 14.
+
+1. Using the script "/lustre/atlas/proj-shared/nro101/BigNeuron/batch_txt_first2000_APP2.sh" to generate all job text files (each image with the tracing method is a single text file). In this example script, all job text files are generated under /lustre/atlas/proj-shared/nro101/BigNeuron/APP2_jobs/ folder with name 0.txt, 1.txt,2.txt . . . . .
+Please note: there are 21 tracing methods now in the Vaa3D. The number "2" in the script indicates APP2 method. All tracing method numbers can be found at /lustre/atlas/proj-shared/nro101/BigNeuron/
+lustre/atlas/proj-shared/nro101/BigNeuron/APP2_jobs.
+
+2. After generating these individual job text files, please change the txt_string in /lustre/atlas/proj-shared/nro101/BigNeuron/runVAA3D_APP2.c to be the folder which includes these text files.
+
+3. run "cc runVAA3D_APP2.c -o runVAA3D_APP2.exe" to get the executable file "runVAA3D_APP2.exe'.
+
+4. In job script  /lustre/atlas/proj-shared/nro101/BigNeuron/test_APP2.pbs, please change the job number after "aprun -n " to be the total number of job text files generated in step 1, and change the node number "#PBS -l nodes=" to be the job number/6.
+
+5. run "qsub test_APP2.pbs"
+
