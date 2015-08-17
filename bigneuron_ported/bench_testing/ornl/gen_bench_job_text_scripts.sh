@@ -2,6 +2,8 @@
 #
 #This is a shell program to batch reconstruct images using 21 different methods.
 #
+# Last change: 2015-08-17. by Hanchuan Peng adding the anisotropic filtering. 
+#
 
 function write_neuron_tracing_command {
 
@@ -17,6 +19,12 @@ function write_neuron_tracing_command {
 
   if [ $METHOD == "smooth" ]; then
    echo "./start_vaa3d.sh -x gaussian -f gf -i $inimgfileTracing -o $smooth_inimgfileTracing -p 7 7 2 1 2;./start_vaa3d.sh -x datatypeconvert -f dtc -i $smooth_inimgfileTracing -o $smooth_inimgfileTracing -p 1 ;mv  $smooth_inimgfileTracing $finalfileFolder" >> $outputScript;
+  fi;
+
+#anisotropic filtering using littlequick version of Lei's plugin 
+
+  if [ $METHOD == "aniso" ]; then
+   echo "./start_vaa3d.sh -x anisodiff_littlequick -f anisodiff_littlequick_func -i $inimgfileTracing;mv  $inimgfileTracing*_anisodiff.raw $finalfileFolder" >> $outputScript;
   fi;
 
 #APP1
