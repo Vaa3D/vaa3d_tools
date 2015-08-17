@@ -61,7 +61,7 @@ void AnisoDiffPlugin_littlequick::domenu(const QString &menu_name, V3DPluginCall
 }
 bool AnisoDiffPlugin_littlequick::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("anisodiff_littlequick_menu"))
+    if (func_name == tr("anisodiff_littlequick_func"))
 	{
 		cout<<"============== Welcome to anisodiff function ================="<<endl;
 
@@ -78,7 +78,7 @@ bool AnisoDiffPlugin_littlequick::dofunc(const QString & func_name, const V3DPlu
 		}
 		else
 			PARA.inimg_file = infiles[0];
-
+        PARA.channel = 1;
 		anisodiff_func(callback,parent,PARA,bmenu);
 	}
 	else
@@ -310,7 +310,7 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 void printHelp()
 {
 	printf("**** Usage of anisodiff  **** \n");
-	printf("\nUsage: v3d -x <anisodiff> -f anisodiff_littlequick_menu -i <inimg_file> \n");
+    printf("\nUsage: v3d -x <anisodiff> -f anisodiff_littlequick_func -i <inimg_file> \n");
 	printf("inimg_file       The input image path (input image need to be uint8 single channel)\n");
 
 	printf("outimg_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
