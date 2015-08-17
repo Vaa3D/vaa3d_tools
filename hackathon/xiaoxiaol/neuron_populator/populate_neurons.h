@@ -44,7 +44,7 @@ QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, 
 void label_neighborhood(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,
                          Point3D center, int typeValue, float closeness);
 void label_image_by_type(unsigned char * img1d, V3DLONG tol_sz, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,
-                         Point3D offset, NeuronTree nt, int type,  int typeValue);
+                        Point3D offset, NeuronTree nt, int type,  int typeValue);
 
 
 #endif // _POPULATE_NEURON_H_
