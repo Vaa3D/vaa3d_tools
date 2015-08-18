@@ -388,7 +388,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     metrics.fg_std = 0.0;
     metrics.bg_std = 0.0;
 
-    V3DLONG min_x = INFINITY, min_y = INFINITY,  min_z = INFINITY, max_x = 0, max_y = 0, max_z= 0;
+    V3DLONG min_x = image->getXDim() , min_y = image->getYDim() ,  min_z = image->getZDim() , max_x = 0, max_y = 0, max_z= 0;
 
     //get the bounding box of ROI
     for (V3DLONG i =0 ; i < neuronSegment.size() ; i++)
