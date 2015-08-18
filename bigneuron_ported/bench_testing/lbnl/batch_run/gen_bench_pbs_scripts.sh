@@ -8,9 +8,10 @@ function write_psb_script {
   outputScript=$1;
   inputfolder=$2;
   exefilename=$3;
-  jobnumbers=$4;	
+  jobnumbers=$4;
+  nodenumbers=$5;	
   echo "#PBS -l walltime=3:00:00" >> $outputScript;
-  echo "#PBS -l nodes=30" >> $outputScript;
+  echo "#PBS -l nodes=$nodenumbers" >> $outputScript;
   echo "#PBS -q regular" >> $outputScript;
 
   echo "cd $inputfolder" >>  $outputScript;
@@ -20,9 +21,10 @@ function write_psb_script {
 				
 #copy the names
 jobnumbers=$1
-jobScriptFile=$2
-inputexefolder=$3
-exefilename=$4
+nodenumbers=$2
+jobScriptFile=$3
+inputexefolder=$4
+exefilename=$5
 
 
 
@@ -31,5 +33,5 @@ if [ -f $jobScriptFile ]; then
   rm $jobScriptFile;
 fi;
 
-write_psb_script $jobScriptFile $inputexefolder $exefilename $jobnumbers
+write_psb_script $jobScriptFile $inputexefolder $exefilename $jobnumbers $nodenumbers
 
