@@ -229,7 +229,7 @@ void prune_by_boundingbox (NeuronTree &nt, V3DLONG siz_x,  V3DLONG siz_y,  V3DLO
     }
 
     //debug
-    // writeSWC_file("./test_type.swc",nt);
+     writeSWC_file("./test_type.swc",nt);
 
     // removed tagged
     QMutableListIterator<NeuronSWC> iter(nt.listNeuron);
@@ -334,7 +334,6 @@ void label_image_by_type(unsigned char * img1d,V3DLONG tol_sz, V3DLONG sz_x, V3D
 QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const NeuronTree treeB, int type1, int type2,
                                             float closeness,V3DPluginCallback2 &callback)
 {
-
     QList<ImageMarker> pair_contacts;
     if (treeA.listNeuron.isEmpty() || treeB.listNeuron.isEmpty() ){
         cout << "Error: Empty Tree detected." << endl;
@@ -344,34 +343,48 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
     for (int i = 0; i < treeA.listNeuron.size(); i++)
     {
         NeuronSWC nodeA = treeA.listNeuron.at(i);
+
+        double min_dis = 1000000.00; // a big enough number
+        NeuronSWC min_node;
         for (int j = 0; j < treeB.listNeuron.size(); j++)
         {
             NeuronSWC nodeB = treeB.listNeuron.at(j);
             if ( (nodeA.type == type1 && nodeB.type == type2)  ||  (nodeA.type == type2 && nodeB.type == type1) )
-                if ( ( pow((nodeA.x - nodeB.x), 2.0) + pow((nodeA.y-nodeB.y), 2.0) + pow((nodeA.z-nodeB.z),2.0)) <= pow(closeness,2.0) )
+            {
+                double dis_square = pow((nodeA.x - nodeB.x), 2.0) + pow((nodeA.y-nodeB.y), 2.0) + pow((nodeA.z-nodeB.z),2.0);
+
+                if(dis_square <= pow(closeness,2.0) )
                 {
-                    ImageMarker marker;
-                    //A
-                    /*
-                    marker.x = nodeA.x+1;
-                    marker.y = nodeA.y+1;
-                    marker.z = nodeA.z+1;
-                    pair_contacts.push_back(marker);
-                    */
-                    marker.x = (nodeA.x+nodeB.x)/2+1;  // +1 due to vaa3d convention: landmarkers are 1-based
-                    marker.y = (nodeA.y+nodeB.y)/2+1;
-                    marker.z = (nodeA.z+nodeB.z)/2+1;
-                    pair_contacts.push_back(marker);
-
-
-                    //B
-                    /*
-                    marker.x = nodeB.x+1;
-                    marker.y = nodeB.y+1;
-                    marker.z = nodeB.z+1;
-                    pair_contacts.push_back(marker);
-                    */
+                    if (dis_square < min_dis)
+                    {
+                        min_node = nodeB;
+                        min_dis = MIN(min_dis, dis_square);
+                    }
                 }
+            }
+        }
+
+        if (min_dis != 1000000.00){
+            ImageMarker marker;
+            //A
+            /*
+    marker.x = nodeA.x+1;
+    marker.y = nodeA.y+1;
+    marker.z = nodeA.z+1;
+    pair_contacts.push_back(marker);
+    */
+            marker.x = (nodeA.x+min_node.x)/2+1;  // +1 due to vaa3d convention: landmarkers are 1-based
+            marker.y = (nodeA.y+min_node.y)/2+1;
+            marker.z = (nodeA.z+min_node.z)/2+1;
+            pair_contacts.push_back(marker);
+            //B
+            /*
+    marker.x = min_node.x+1;
+    marker.y = min_node.y+1;
+    marker.z = min_node.z+1;
+    pair_contacts.push_back(marker);
+    */
+        i = i + closeness; // to space the nodes around to avoid too many contacts within a small region defined by closeness, assuming the step size of the swc nodes  is 1
         }
     }
     return pair_contacts;
@@ -381,7 +394,7 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
 
 /*
 QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const NeuronTree treeB, int type1, int type2,
-                        float closeness,V3DPluginCallback2 &callback)
+    float closeness,V3DPluginCallback2 &callback)
 {
     QList<ImageMarker> pair_contacts;
     if (treeA.listNeuron.isEmpty() || treeB.listNeuron.isEmpty() ){
@@ -442,17 +455,17 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
     for(V3DLONG i = 0; i < tol_sz; i++) {
     img1d_A[i] = img1d_A[i] + img1d_B[i];
     if (img1d_A[i] == (A1+B2)){
-        ImageMarker mark;
-        V3DLONG z = i / (sz_x*sz_y)            ;
-        V3DLONG y = (i -z *(sz_x*sz_y) ) / sz_x   ;
-        V3DLONG x = i - z *(sz_x*sz_y) - y*sz_x   ;
-        //cout << "Find contact at:" << x <<" " << y <<" "<< z<<endl;
-        mark.x = (x +0.5) * closeness   + offset.x ;
-        mark.y = (y +0.5) * closeness  + offset.y ;
-        mark.z = (z +0.5) * closeness  + offset.z ;  // +1 landmarks are 1-based in vaa3d
-        //  cout << "converted to :" << mark.x <<" " <<mark.y <<" "<< mark.z<<endl;
+    ImageMarker mark;
+    V3DLONG z = i / (sz_x*sz_y)            ;
+    V3DLONG y = (i -z *(sz_x*sz_y) ) / sz_x   ;
+    V3DLONG x = i - z *(sz_x*sz_y) - y*sz_x   ;
+    //cout << "Find contact at:" << x <<" " << y <<" "<< z<<endl;
+    mark.x = (x +0.5) * closeness   + offset.x ;
+    mark.y = (y +0.5) * closeness  + offset.y ;
+    mark.z = (z +0.5) * closeness  + offset.z ;  // +1 landmarks are 1-based in vaa3d
+    //  cout << "converted to :" << mark.x <<" " <<mark.y <<" "<< mark.z<<endl;
 
-        pair_contacts.push_back(mark);
+    pair_contacts.push_back(mark);
     }
     }
 
@@ -491,5 +504,6 @@ QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, 
             }
         }
     }
+    cout <<"total contacts number:"<<contacts.size()<<endl;
     return contacts;
 }
