@@ -384,7 +384,6 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
     marker.z = min_node.z+1;
     pair_contacts.push_back(marker);
     */
-        i = i + closeness; // to space the nodes around to avoid too many contacts within a small region defined by closeness, assuming the step size of the swc nodes  is 1
         }
     }
     return pair_contacts;
@@ -479,6 +478,67 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
 }
 */
 
+QList<ImageMarker> merge_contacts (const NeuronTree treeA, const NeuronTree treeB, QList<ImageMarker> detected_contacts,
+                 float closeness,V3DPluginCallback2 &callback)
+{
+    if (detected_contacts.isEmpty())
+            return detected_contacts;
+
+    MyBoundingBox bbA = neuron_tree_bb(treeA);
+    MyBoundingBox bbB = neuron_tree_bb(treeB);
+
+    MyBoundingBox bbUnion;
+    bbUnion.min_x = MIN(bbA.min_x, bbB.min_x);
+    bbUnion.min_y = MIN(bbA.min_y, bbB.min_y);
+    bbUnion.min_z = MIN(bbA.min_z, bbB.min_z);
+    bbUnion.max_x = MAX(bbA.max_x, bbB.max_x);
+    bbUnion.max_y = MAX(bbA.max_y, bbB.max_y);
+    bbUnion.max_z = MAX(bbA.max_z, bbB.max_z);
+
+    //if bbA does not corss bbB , return
+    Point3D offset = {bbUnion.min_x ,bbUnion.min_y ,bbUnion.min_z };
+    V3DLONG  sz_x = ceil((bbUnion.max_x - bbUnion.min_x ) / closeness); //+0.5 to round up from float to V3DLONG
+    V3DLONG  sz_y = ceil((bbUnion.max_y - bbUnion.min_y ) / closeness);
+    V3DLONG  sz_z = ceil((bbUnion.max_z - bbUnion.min_z ) / closeness);
+    V3DLONG  tol_sz = sz_x * sz_y * sz_z;
+
+    // consolidate contacts within "closeness" range
+    QList<ImageMarker> reduced_contacts;
+    unsigned char * img1d = new unsigned char[tol_sz];
+    for(V3DLONG i = 0; i < tol_sz; i++)
+        img1d[i] = 0;
+
+    //tag image vol
+    for(int j = 0;j< detected_contacts.size();j++){
+        ImageMarker curMarker = detected_contacts[j];
+        V3DLONG id_x = (curMarker.x-1-offset.x)/closeness +0.5; //round up
+        V3DLONG id_y = (curMarker.y-1-offset.y)/closeness +0.5;
+        V3DLONG id_z = (curMarker.z-1-offset.z)/closeness +0.5;
+
+        V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
+        img1d[idx] = 255;
+    }
+
+    //recover
+    for(int jj =0; jj<tol_sz;jj++){
+        if (img1d[jj]>0){
+            ImageMarker mark;
+            V3DLONG z = jj/ (sz_x*sz_y)            ;
+            V3DLONG y = (jj -z *(sz_x*sz_y) ) / sz_x   ;
+            V3DLONG x = jj - z *(sz_x*sz_y) - y*sz_x   ;
+            //cout << "Find contact at:" << x <<" " << y <<" "<< z<<endl;
+            mark.x = (x +0.5) * closeness  + offset.x ;
+            mark.y = (y +0.5) * closeness  + offset.y ;
+            mark.z = (z +0.5) * closeness  + offset.z ;
+            reduced_contacts.push_back(mark);
+        }
+    }
+    return reduced_contacts;
+
+
+}
+
+
 QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, int type2 , float closeness,
                                    V3DPluginCallback2 &callback)
 {
@@ -492,11 +552,12 @@ QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, 
 
             QList<ImageMarker>  pair_contacts = detect_pairwise_contacts(neuronTreeList.at(i), neuronTreeList.at(j),
                                                                          type1, type2, closeness, callback);
-            if (!pair_contacts.isEmpty())
+            QList<ImageMarker>  reduced_pair_contacts =  merge_contacts(neuronTreeList.at(i), neuronTreeList.at(j),pair_contacts,closeness, callback);
+            if (!reduced_pair_contacts.isEmpty())
             {
-                contacts += pair_contacts;
+                contacts += reduced_pair_contacts;
                 //cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: "<<pair_contacts.size()<<endl;
-                cout <<i<<","<<j<<","<<pair_contacts.size()<<endl;
+                cout <<i<<","<<j<<","<<reduced_pair_contacts.size()<<endl;
             }
             else{
                 //cout << "Number of contacts between tree ["<<i<<"] and tree ["<<j<<"]: 0" <<endl;
@@ -504,6 +565,8 @@ QList<ImageMarker> detect_contacts(QList<NeuronTree> neuronTreeList, int type1, 
             }
         }
     }
+
+
     cout <<"total contacts number:"<<contacts.size()<<endl;
     return contacts;
 }

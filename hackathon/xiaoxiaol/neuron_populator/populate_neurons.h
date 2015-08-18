@@ -47,6 +47,8 @@ void label_image_by_type(unsigned char * img1d, V3DLONG tol_sz, V3DLONG sz_x, V3
                         Point3D offset, NeuronTree nt, int type,  int typeValue);
 
 
+QList<ImageMarker> merge_contacts (const NeuronTree treeA, const NeuronTree treeB, QList<ImageMarker> detected_contacts,
+                 float closeness,V3DPluginCallback2 &callback);
 #endif // _POPULATE_NEURON_H_
 
 
