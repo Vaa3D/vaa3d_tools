@@ -44,7 +44,7 @@ function write_c_exe_script {
 
 #copy the names
 cFile=$1
-inputexefolder=$2
+inputxtfolder=$2
 Vaa3Dfolder=$3
 
 
@@ -54,5 +54,9 @@ if [ -f $cFile ]; then
 rm $cFile;
 fi;
 
-write_c_exe_script $cFile  $inputexefolder $Vaa3Dfolder
+write_c_exe_script $cFile  $inputxtfolder $Vaa3Dfolder
+
+cc $cFile -o  ${cFile%.c}.exe
+
+
 
