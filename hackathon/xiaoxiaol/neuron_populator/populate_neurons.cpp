@@ -475,6 +475,10 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
     delete[] img1d_B;
     return pair_contacts;
 
+
+
+
+
 }
 */
 
@@ -511,12 +515,19 @@ QList<ImageMarker> merge_contacts (const NeuronTree treeA, const NeuronTree tree
     //tag image vol
     for(int j = 0;j< detected_contacts.size();j++){
         ImageMarker curMarker = detected_contacts[j];
-        V3DLONG id_x = (curMarker.x-1-offset.x)/closeness +0.5; //round up
-        V3DLONG id_y = (curMarker.y-1-offset.y)/closeness +0.5;
-        V3DLONG id_z = (curMarker.z-1-offset.z)/closeness +0.5;
+        V3DLONG id_x = (curMarker.x-1-offset.x)/closeness +0.5-1; //round up
+        V3DLONG id_y = (curMarker.y-1-offset.y)/closeness +0.5-1;
+        V3DLONG id_z = (curMarker.z-1-offset.z)/closeness +0.5-1;
 
         V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
-        img1d[idx] = 255;
+        if (idx < tol_sz)
+        {
+            img1d[idx] = 255;
+        }
+        else{
+            cout<<"error in indexing:[" <<id_x <<" "<<id_y<<" "<<id_z<<"]"<<endl;
+            cout <<"size:[" <<sz_x  <<" " << sz_y<<" "<< sz_z <<"]"<<endl;
+        }
     }
 
     //recover
@@ -533,6 +544,8 @@ QList<ImageMarker> merge_contacts (const NeuronTree treeA, const NeuronTree tree
             reduced_contacts.push_back(mark);
         }
     }
+
+    delete []img1d;
     return reduced_contacts;
 
 
