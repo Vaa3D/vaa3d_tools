@@ -351,9 +351,9 @@ QList<ImageMarker> detect_pairwise_contacts(const NeuronTree treeA, const Neuron
             NeuronSWC nodeB = treeB.listNeuron.at(j);
             if ( (nodeA.type == type1 && nodeB.type == type2)  ||  (nodeA.type == type2 && nodeB.type == type1) )
             {
-                double dis_square = pow((nodeA.x - nodeB.x), 2.0) + pow((nodeA.y-nodeB.y), 2.0) + pow((nodeA.z-nodeB.z),2.0);
+                double dis_square = pow(double(nodeA.x - nodeB.x), double(2.0)) + pow(double(nodeA.y-nodeB.y),double( 2.0)) + pow(double(nodeA.z-nodeB.z),double(2.0));
 
-                if(dis_square <= pow(closeness,2.0) )
+                if(dis_square <= pow(double(closeness),double(2.0) ))
                 {
                     if (dis_square < min_dis)
                     {
