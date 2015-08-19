@@ -38,11 +38,11 @@ using namespace std;
 static long     channel = 1;
 static int      scal    = 12;
 static int      perc    = 90;
-static float    znccTh  = 0.70;
+static float    znccTh  = 0.60;
 static int      Ndir    = 13;
 static float    angSig  = 60;
 //static float    gcsSig  = 3;
-static int      Ni      = 20; // trace length will go up to Ni*scal
+static int      Ni      = 30; // trace length will go up to Ni*scal
 static int      Ns      = 5; // nr. states
 static float    zDist   = 1.0;
 static int      saveMidres = 0;
@@ -50,7 +50,7 @@ static int      saveMidres = 0;
 static int nrInputParams = 10; // to constrain number of arguments
 
 // not necessary to tune
-static unsigned char lowmargin = 1; // margin towards low end of the intensity range
+static unsigned char lowmargin = 2; // margin towards low end of the intensity range
 //static int prune_len = 4;   // those that reach endpoint after 1 step are removed from the reconstrction to clean the tree
 static int GRAYLEVEL = 256; // plugin works with 8 bit images
 static int Kskip = 3; // subsampling factor (useful for large stacks to reduce unnecessary computation)
@@ -727,22 +727,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //    delete labimg; labimg = 0;
 
     if (PARA.saveMidres) {
-        // save int* tagmap as set of .txt images (uint8 is not enough to save the range and saving float image regular way did not work)
-        cout << "exporting tagmap (1: blob+fgbg): ";
-        for (int zz = 0; zz < P; ++zz) {
-            cout << zz << ", "<<flush;
-            QString of = PARA.inimg_file + "_tagmap_soma_and_fgbg_"+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
-            ofstream myfile;
-            myfile.open (of.toStdString().c_str());
-            for (int yy = 0; yy < M; ++yy) {
-                for (int xx = 0; xx < N; ++xx) {
-                    myfile << tagmap[zz*(N*M)+yy*N+xx] << " ";
-                }
-                myfile << endl;
-            }
-            myfile.close();
-        }
-        cout << "done exporting." << endl;
+        float * tagmapcopy = new float[size];
+        for (long i = 0; i < size; ++i)
+            tagmapcopy[i] = tagmap[i];
+
+        QString of = PARA.inimg_file + "_tagmap_blob_and_fgbg.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+        char * of1 = new char[of.length()+1];
+        strcpy(of1, of.toLatin1().constData());
+        Image4DSimple outimg1;
+        outimg1.setData((unsigned char *)tagmapcopy, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+        callback.saveImage(&outimg1, of1);
+        tagmapcopy = 0;
+        delete of1; of1 = 0;
     }
 
     ////////////////////////////////////////
@@ -806,11 +802,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     Node dummynode(0,0,0,0,Node::UNDEFINED);//
     nodelist.push_back(dummynode); // nodes start from index 1 (index 0 would mix with background tag)
 
-
     // add nodes that correspond to somas
 
     for (int i = 0; i < xc.size(); ++i) {
-        Node gpntnode(xc[i], yc[i], zc[i], rc[i], Node::SOMA);
+        Node gpntnode(xc[i], yc[i], zc[i], rc[i]/btrcr.gcsstd2rad, Node::SOMA);
         nodelist.push_back(gpntnode);
     }
 
@@ -1116,22 +1111,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     ////////////////////////////////////////
 
     if (PARA.saveMidres) {
-        // save int* tagmap as set of .txt images (uint8 is not enough to save the range and saving float image regular way did not work)
-        cout << "exporting tagmap (2: gpnts): ";
-        for (int zz = 0; zz < P; ++zz) {
-            cout << zz << ", "<<flush;
-            QString of = PARA.inimg_file + "_tagmap_gpnts_"+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
-            ofstream myfile;
-            myfile.open (of.toStdString().c_str());
-            for (int yy = 0; yy < M; ++yy) {
-                for (int xx = 0; xx < N; ++xx) {
-                    myfile << tagmap[zz*(N*M)+yy*N+xx] << " ";
-                }
-                myfile << endl;
-            }
-            myfile.close();
-        }
-        cout << "done exporting." << endl;
+        float * tagmapcopy = new float[size];
+        for (long i = 0; i < size; ++i)
+            tagmapcopy[i] = tagmap[i];
+
+        QString of = PARA.inimg_file + "_tagmap_gpnts.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+        char * of1 = new char[of.length()+1];
+        strcpy(of1, of.toLatin1().constData());
+        Image4DSimple outimg1;
+        outimg1.setData((unsigned char *)tagmapcopy, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+        callback.saveImage(&outimg1, of1);
+        tagmapcopy = 0;
+        delete of1; of1 = 0;
     }
 
     if (PARA.saveMidres) { // save guidepoint nodes into swc
@@ -1401,22 +1392,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     if (PARA.saveMidres) {
-        // save int* tagmap as set of .txt images (uint8 is not enough to save the range and saving float image regular way did not work)
-        cout << "exporting tagmap (3: chases): ";
-        for (int zz = 0; zz < P; ++zz) {
-            cout << zz << ", "<<flush;
-            QString of = PARA.inimg_file + "_tagmap_chases_"+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
-            ofstream myfile;
-            myfile.open (of.toStdString().c_str());
-            for (int yy = 0; yy < M; ++yy) {
-                for (int xx = 0; xx < N; ++xx) {
-                    myfile << tagmap[zz*(N*M)+yy*N+xx] << " ";
-                }
-                myfile << endl;
-            }
-            myfile.close();
-        }
-        cout << "done exporting." << endl;
+        float * tagmapcopy = new float[size];
+        for (long i = 0; i < size; ++i)
+            tagmapcopy[i] = tagmap[i];
+
+        QString of = PARA.inimg_file + "_tagmap_chases.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+        char * of1 = new char[of.length()+1];
+        strcpy(of1, of.toLatin1().constData());
+        Image4DSimple outimg1;
+        outimg1.setData((unsigned char *)tagmapcopy, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
+        callback.saveImage(&outimg1, of1);
+        tagmapcopy = 0;
+        delete of1; of1 = 0;
     }
 
     delete tagmap; tagmap = 0;
