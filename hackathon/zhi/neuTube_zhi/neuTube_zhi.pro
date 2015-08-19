@@ -5,6 +5,7 @@ CONFIG	+= qt plugin warn_off
 CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
+INCLUDEPATH	+= $$VAA3DPATH/common_lib/lib
 SRCNEUTUBEPATH = ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube
 
 INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/lib/libpng-1.6.7 $$SRCNEUTUBEPATH/neurolabi/lib/jansson/include
@@ -32,8 +33,8 @@ macx{
 }
 
 unix:!macx {
-    LIBS += -L$$SRCNEUTUBEPATH/neurolabi/c/lib -lneurolabi_debug
     QMAKE_POST_LINK = cp $$SRCNEUTUBEPATH/neurolabi/c/lib/libneurolabi_debug.so $$VAA3DPATH/common_lib/lib/
+    LIBS += -L$$SRCNEUTUBEPATH/neurolabi/c/lib -lneurolabi_debug
 }
 
 LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/xml/lib -lxml2
