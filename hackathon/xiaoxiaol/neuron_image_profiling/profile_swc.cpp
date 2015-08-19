@@ -626,8 +626,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         metrics.snr = fg_mean/metrics.bg_std;
     }
     else {
-        metrics.cnr  = INFINITY;
-        metrics.snr = INFINITY;
+        metrics.cnr  = 10000;
+        metrics.snr =  10000;
         cout<<"warning! background deviation is zero"<<endl;
     }
 
