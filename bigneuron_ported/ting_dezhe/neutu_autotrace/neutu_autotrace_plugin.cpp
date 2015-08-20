@@ -216,7 +216,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 #if defined(_MAC_APPLICATION_)
     std::string paramDir = QApplication::applicationDirPath().toStdString() +       "/../../../../" + NEUTU_PARAM_DIR;
 #else
-    std::string paramDir = QApplication::applicationDirPath().toStdString() +       "/../" + NEUTU_PARAM_DIR;
+    std::string paramDir = QApplication::applicationDirPath().toStdString();
 #endif
 
     std::string paramFile = paramDir + "/NeuTuAuto.Params.dat";
