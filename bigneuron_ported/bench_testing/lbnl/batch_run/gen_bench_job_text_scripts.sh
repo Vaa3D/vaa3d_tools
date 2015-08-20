@@ -30,7 +30,7 @@ function write_neuron_tracing_command {
 #APP1
 
   if [ $METHOD == "1" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0;mv  $inimgfileTracing*_app1.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 1;mv  $inimgfileTracing*_app1.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #APP2
