@@ -1,7 +1,11 @@
-Parameter set:
+Parameter configurations, basic info, terminal calls with parameter configurations.
 
+
+############################################
+####            Neuronchaser            ####
+############################################
 vaa3d -x NeuronChaser -f help
-
+############################################
 **** Usage of NeuronChaser tracing **** 
 vaa3d -x NeuronChaser -f nc_func -i <inimg_file> -p <channel> <scal perc znccTh Ndir angSig Ni Ns zDist saveMidres>
 inimg_file          The input image\n");
@@ -16,8 +20,7 @@ Ns                  nr. states [1, 20].
 zDist               z layer dist [1, 4] pix.
 saveMidres          Save midresults 0-no, 1 -yes.
 outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.
-
-# NeuronChaser terminal calls
+############################################
 vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 90 0.6 15 60 30 5 1 0
 vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 95 0.6 15 60 30 5 1 0
 vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 99 0.6 15 60 30 5 1 0
@@ -25,10 +28,14 @@ vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 90 0.6 15 60 30 5 1 0
 vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 95 0.6 15 60 30 5 1 0
 vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 99 0.6 15 60 30 5 1 0
 
-vaa3d -x NeuronChaserX -f help
 
-**** Usage of NeuronChaserX **** 
-vaa3d -x NeuronChaserX -f ncx_func -i <inimg_file> -p <scal perc znccTh Ndir angSig Ni Ns zDist>
+############################################
+####              Advantra              ####
+############################################
+vaa3d -x Advantra -f help
+############################################
+**** Usage of Advantra tracing **** 
+vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio perc znccTh Ndir angSig Ni Ns zDist>
 inimg_file          The input image
 scal                Scale (5, 20] pix.
 bratio              Background ratio (0, 1].
@@ -40,8 +47,36 @@ Ni                  nr. iterations [2, 50].
 Ns                  nr. states [1, 20].
 zDist               z layer dist [1, 4] pix.
 outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.
+############################################
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.3 95 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.3 99 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.8 95 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.8 99 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.3 95 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.3 99 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.8 95 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.8 99 0.6 15 60 30 5 1
 
-# NeuronChaserX terminal calls
+
+############################################
+####           NeuronChaserX            ####
+############################################
+vaa3d -x NeuronChaserX -f help
+############################################
+**** Usage of NeuronChaserX **** 
+vaa3d -x NeuronChaserX -f ncx_func -i <inimg_file> -p <scal bratio perc znccTh Ndir angSig Ni Ns zDist>
+inimg_file          The input image
+scal                Scale (5, 20] pix.
+bratio              Background ratio (0, 1].
+perc                Percentile [50, 100].
+znccTh              Correlation threshold [0.5, 1.0).
+Ndir                nr. directions [5, 20].
+angSig              Angular sigma [20,90] degs.
+Ni                  nr. iterations [2, 50].
+Ns                  nr. states [1, 20].
+zDist               z layer dist [1, 4] pix.
+outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.
+############################################
 vaa3d -x NeuronChaserX -f ncx_func -i image.tif -p 10 0.3 95 0.6 15 60 30 5 1
 vaa3d -x NeuronChaserX -f ncx_func -i image.tif -p 10 0.3 99 0.6 15 60 30 5 1
 vaa3d -x NeuronChaserX -f ncx_func -i image.tif -p 10 0.8 95 0.6 15 60 30 5 1

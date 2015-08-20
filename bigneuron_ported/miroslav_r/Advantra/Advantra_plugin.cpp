@@ -1,4 +1,7 @@
-/*
+/* Advantra_plugin.cpp
+ * Tool for automatic neuron reconstruction from microscopy image stacks.
+ * 2015-8-19 : by Miroslav Radojevic
+
 Copyright (C) Erasmus MC. Permission to use this software and corresponding documentation for educational, research, and not-for-profit purposes, without a fee and without a signed licensing agreement, is granted, subject to the following terms and conditions.
 
 IT IS NOT ALLOWED TO REDISTRIBUTE, SELL, OR LEASE THIS SOFTWARE, OR DERIVATIVE WORKS THEREOF, WITHOUT PERMISSION IN WRITING FROM THE COPYRIGHT HOLDER. THE COPYRIGHT HOLDER IS FREE TO MAKE VERSIONS OF THE SOFTWARE AVAILABLE FOR A FEE OR COMMERCIALLY ONLY.
@@ -7,7 +10,7 @@ IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE TO ANY PARTY FOR DIRECT, INDIRE
 
 THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE EXPRESS OR IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE AND CORRESPONDING DOCUMENTATION IS PROVIDED "AS IS". THE COPYRIGHT HOLDER HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
-
+ 
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
@@ -27,8 +30,8 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 #include <climits>
 #include <iomanip>
 
-#include "NeuronChaserX_plugin.h"
-Q_EXPORT_PLUGIN2(NeuronChaserX, NeuronChaserX);
+#include "Advantra_plugin.h"
+Q_EXPORT_PLUGIN2(Advantra, Advantra);
 
 using namespace std;
 
@@ -98,25 +101,25 @@ int get_undiscovered(bool * disc, int nrnodes) {
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
  
-QStringList NeuronChaserX::menulist() const
+QStringList Advantra::menulist() const
 {
 	return QStringList() 
-		<<tr("ncx_menu")
+		<<tr("advantra_menu")
 		<<tr("about");
 }
 
-QStringList NeuronChaserX::funclist() const
+QStringList Advantra::funclist() const
 {
 	return QStringList()
-		<<tr("ncx_func")
+		<<tr("advantra_func")
 		<<tr("help");
 }
 
-const QString title = QObject::tr("NeuronChaserX Plugin");
+const QString title = QObject::tr("Advantra Plugin");
 
-void NeuronChaserX::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("ncx_menu"))
+	if (menu_name == tr("advantra_menu"))
 	{
         bool bmenu = true;
         input_PARA PARA;
@@ -190,14 +193,14 @@ void NeuronChaserX::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 	else
 	{
-		v3d_msg(tr("Plugin for neuron reconstruction.. "
-			"Developed by Miroslav Radojevic, 2015-7-23"));
+		v3d_msg(tr("Tool for automatic neuron reconstruction from microscopy image stacks.. "
+			"Developed by Miroslav Radojevic, 2015-8-19"));
 	}
 }
 
 void print_help(){
-    printf("**** Usage of NeuronChaserX **** \n");
-    printf("vaa3d -x NeuronChaserX -f ncx_func -i <inimg_file> -p <scal perc znccTh Ndir angSig Ni Ns zDist>\n");
+    printf("**** Usage of Advantra tracing **** \n");
+    printf("vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio perc znccTh Ndir angSig Ni Ns zDist>\n");
     printf("inimg_file          The input image\n");
     printf("scal                Scale (5, 20] pix.\n");
     printf("bratio              Background ratio (0, 1].\n");
@@ -211,9 +214,9 @@ void print_help(){
     printf("outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 }
 
-bool NeuronChaserX::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool Advantra::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("ncx_func"))
+	if (func_name == tr("advantra_func"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -382,7 +385,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
 
-    cout<<"----------  NeuronChaserX  ----------"   <<endl;
+    cout<<"----------  Advantra  ----------"   <<endl;
     cout<<"channel = "  <<PARA.channel              <<endl;
     cout<<"scal = "     <<PARA.scal                 <<endl;
     cout<<"bratio = "   <<PARA.bratio               <<endl;
@@ -727,7 +730,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
             cnt_fg++;
         }
-    }
+    }       
 
     cout << "\ngpnt calculation..." << endl;
     clock_t time1 = clock();
@@ -1126,7 +1129,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         recnodesswc.name = "ReconstructionNodes";
         writeSWC_file(recnodesswc_name.toStdString().c_str(), recnodesswc);
 
-    }
+    }                  
 
     if (PARA.saveMidres) {
 
@@ -1228,7 +1231,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
         NeuronTree ntcurr;
         ntcurr.name =
-                "NeuronChaserX\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
+                "Advantra\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
                     "\n#scal="+QString("%1").arg(PARA.scal)+
                     "\n#perc="+QString("%1").arg(PARA.perc)+
                     "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
@@ -1319,7 +1322,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             
         if (PARA.saveMidres) { // can be enabled to save the rest
             
-            QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaserX_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+            QString ntcurrswc_name = PARA.inimg_file+"_Advantra_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
                 
             writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
         }
@@ -1328,13 +1331,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     cout << "\ntree with " << nt.listNeuron.size() << " nodes selected.\n" << endl;
 
-    QString swc_name = PARA.inimg_file + "_NeuronChaserX.swc";
+    QString swc_name = PARA.inimg_file + "_Advantra.swc";
     writeSWC_file(swc_name.toStdString().c_str(), nt);
 
 //    //Output
 //    NeuronTree nt;
-//	QString swc_name = PARA.inimg_file + "_NeuronChaserX.swc";
-//	nt.name = "NeuronChaserX";
+//	QString swc_name = PARA.inimg_file + "_Advantra.swc";
+//	nt.name = "Advantra";
 //    writeSWC_file(swc_name.toStdString().c_str(),nt);
 
     if(!bmenu)
