@@ -140,7 +140,7 @@ function write_neuron_tracing_command {
 #NeuronChaser
 
   if [ $METHOD == "20" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronChaser -f nc_func -i $inimgfileTracing -p 1 10 80 0.75 10 60 30 10 1 0;mv  $inimgfileTracing*_NeuronChaser.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronChaser -f nc_func -i $inimgfileTracing -p 1 10 90 0.6 15 60 30 5 1 0;mv  $inimgfileTracing*_NeuronChaser.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #smartTracing
@@ -154,6 +154,12 @@ function write_neuron_tracing_command {
   if [ $METHOD == "22" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x neutu_autotrace -f tracing -i $inimgfileTracing ;mv  $inimgfileTracing*_neutu_autotrace.swc $finalfileFolder" >> $outputScript;
   fi;
+
+#Advantra
+
+  if [ $METHOD == "23" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x Advantra -f advantra_func -i $inimgfileTracing -p 10 0.3 95 0.6 15 60 30 5 1;mv  $inimgfileTracing*_Advantra.swc $finalfileFolder" >> $outputScript;
+  fi;
 }
 
 if [ ! $# -ge 1 ]; then
@@ -161,15 +167,15 @@ if [ ! $# -ge 1 ]; then
 	exit
 fi
 
-if [ $# -ge 2 ]; then
-	if [ ! -f $2 ]; then
-		echo "Can not find file [$2]"
-		exit
-	fi
-else
-	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-	exit
-fi
+#if [ $# -ge 2 ]; then
+#	if [ ! -f $2 ]; then
+#		echo "Can not find file [$2]"
+#		exit
+#	fi
+#else
+#	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#	exit
+#fi
 
 if [ $# -ge 3 ]; then
 	if [ ! -d $3 ]; then
