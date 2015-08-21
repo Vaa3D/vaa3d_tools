@@ -74,7 +74,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	int skip_rotation = 1;
 	
 	int c;
-	static char optstring[]="i:o:s:";
+    static char optstring[]="i:o:s:r:";
 	extern char * optarg;
 	extern int optind, opterr;
 		

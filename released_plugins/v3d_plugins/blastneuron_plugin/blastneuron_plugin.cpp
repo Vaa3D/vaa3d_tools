@@ -68,11 +68,13 @@ bool BlastNeuronPlugin::dofunc(const QString & func_name, const V3DPluginArgList
 
 		printf("\nBlastNeuron Plugin: rapid global retrieval and local alignent of 3D neuron morphologies. This plugin also includes pre-processing, inverse projection and batch feature computation. by Yinan Wan.\n\n");
 		printf("Functions:\n");
+		printf("\t pre_processing          prune, resample and align neuron swcs.\n");
 		printf("\t global_retrieve         given a query neuron, retrieve morphologically similar neurons from a neuron feature database.\n");
 		printf("\t local_alignment         point to point alignment of two morphologically similar neurosn.\n");
 		printf("\t batch_compute           generate neuron feature database (.nfb) file first to speed up neuron retrieve\n");
 		printf("\t invert_projection       find an optimal affine transform between neuron structures regardless of topology.\n\n");
 		printf("Example: \n");
+		printf("\t vaa3d -x blastneuron -f pre_processing -p  \"#i input.swc #o result.swc #s 2 #r 1 \"\n");
 		printf("\t vaa3d -x blastneuron -f batch_compute -p \"#i mydatabase.ano #o features.nfb\"\n");
 		printf("\t vaa3d -x blastneuron -f global_retrieve -p \"#d features.nfb #q query.swc #n 10 #m 1,2,4 #o retrieve.ano\"\n");
 		printf("\t vaa3d -x blastneuron -f local_alignment -p \"#t target.swc #s subject.swc #o match.swc\"\n");

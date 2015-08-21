@@ -133,11 +133,12 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 			NeuronTree tmp = readSWC_file(nameList.at(i));
 			printf(qPrintable("calculating features for" + tmp.file +".\n"));
 			filePathList.append(tmp.file);
-			NeuronTree tmp_preprocessed = pre_process(tmp, step_size);
+            // it makes more sense to run pre_processing seperately, so that the pre_processed steps can be adjusted (tuning step size), saved and verified.
+            //NeuronTree tmp_preprocessed = pre_process(tmp, step_size);
 			double * feature_morph = new double[21];
 			double * feature_gmi = new double[14];
-			computeFeature(tmp_preprocessed, feature_morph);
-			computeGMI(tmp_preprocessed, feature_gmi);
+            computeFeature(tmp, feature_morph);
+            computeGMI(tmp, feature_gmi);
 			morph_list.append(feature_morph);
 			gmi_list.append(feature_gmi);
 		}
