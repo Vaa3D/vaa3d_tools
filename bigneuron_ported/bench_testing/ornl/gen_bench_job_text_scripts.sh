@@ -156,39 +156,39 @@ function write_neuron_tracing_command {
   fi;
 }
 
-if [ ! $# -ge 1 ]; then
-	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-	exit
-fi
+#if [ ! $# -ge 1 ]; then
+#	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#	exit
+#fi
 
-if [ $# -ge 2 ]; then
-	if [ ! -f $2 ]; then
-		echo "Can not find file [$2]"
-		exit
-	fi
-else
-	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-	exit
-fi
+#if [ $# -ge 2 ]; then
+#	if [ ! -f $2 ]; then
+#		echo "Can not find file [$2]"
+#		exit
+#	fi
+#else
+#	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#	exit
+#fi
 
-if [ $# -ge 3 ]; then
-	if [ ! -d $3 ]; then
-		mkdir $3
-	fi
-else
-	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-	exit
-fi
+#if [ $# -ge 3 ]; then
+#	if [ ! -d $3 ]; then
+#		mkdir $3
+#	fi
+#else
+#	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#	exit
+#fi
 
-if [ $# -ge 4 ]; then
-        if [ ! -d $4 ]; then
-                echo "Can not find Vaa3D executable folder [$4]"
-                exit
-        fi
-else
-        echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-        exit
-fi
+#if [ $# -ge 4 ]; then
+#        if [ ! -d $4 ]; then
+#                echo "Can not find Vaa3D executable folder [$4]"
+#                exit
+#        fi
+#else
+#        echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#        exit
+#fi
 
 
 #copy the names
