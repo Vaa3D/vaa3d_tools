@@ -263,14 +263,14 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
         // set here to 2 so that the radiuses are 2,3,4,5,6,7...
         // gcsstd2rad can cause check spheres to be too large to check
         rx = ry = round(2 * gcsstd[i]);
-        rz =      round(2 * gcsstd[i] / zDist);
+        rz =   (is2D)? 0 : round(2 * gcsstd[i] / zDist);
 
         // loop offsets from the centre outwards so that those closer to the center are the first in the list
         int cnt = 0;
         for (int dx = -rx; dx <= rx; ++dx) {
             for (int dy = -ry; dy <= ry; ++dy) {
                 for (int dz = -rz; dz <= rz; ++dz) {
-                    bool insph = (dx*dx)/(float)(rx*rx)+(dy*dy)/(float)(ry*ry)+(dz*dz)/(float)(rz*rz)<=1;
+                    bool insph = (dx*dx)/(float)(rx*rx)+(dy*dy)/(float)(ry*ry)+((is2D)?0:(dz*dz)/(float)(rz*rz))<=1;
                     if (insph) {
                         ttx.push_back(dx);
                         tty.push_back(dy);
