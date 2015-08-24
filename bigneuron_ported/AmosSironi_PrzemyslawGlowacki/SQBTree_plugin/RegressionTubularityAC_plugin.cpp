@@ -135,25 +135,24 @@ bool RegressionTubularityACPlugin::dofunc(const QString & func_name, const V3DPl
 }
 
 
-//filter banks to compute features (use hand-crafter filters)
-//image features
-//const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-//const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
-//auto-context features
-const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
-
-//inv filters
-//const char *weight_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
-//const char *sep_filters_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+////filter banks to compute features (use hand-crafter filters)
+////image features
+////const char *weight_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+////const char *sep_filters_file_im ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
 ////auto-context features
-//const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
-//const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+//const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+//const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+////inv filters
+////const char *weight_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_weigths_cpd_rank_49.txt";
+////const char *sep_filters_file_ac ="../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_8_size_21_sep_cpd_rank_49.txt";
+//////auto-context features
+////const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+////const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
 
 
-const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
-const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
-
+//const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
+//const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
 
 //crop images train/test
 //bool crop_images = false;
@@ -201,18 +200,31 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
             trainGtSwcPaths.at(i_swc) =  parameters->at(i_swc);
         }
 
+        ////filters parameters
+        //const char *weight_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+        //const char *sep_filters_file_ac = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+        //const char *sep_filters_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
+        //const char *weight_file_im = "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
+
+        const char *sep_filters_file_im = parameters->at(n_train_images);
+        const char *weight_file_im = parameters->at(n_train_images+1);
+        const char *sep_filters_file_ac = parameters->at(n_train_images+2);
+        const char *weight_file_ac = parameters->at(n_train_images+3);
+
+
+
         ////Auto-Context params
         unsigned int n_ac_iters = 1;
-        if(parameters->size()>n_train_images){
-            n_ac_iters = atoi(parameters->at(n_train_images));
+        if(parameters->size()>n_train_images+4){
+            n_ac_iters = atoi(parameters->at(n_train_images+4));
         }
         unsigned int n_pos_samples_tot =50000;
         unsigned int n_neg_samples_tot =50000;
         unsigned int n_samples_tot =n_pos_samples_tot+ n_neg_samples_tot;
 
 
-        if(parameters->size()>n_train_images+1){
-            n_samples_tot= atoi(parameters->at(n_train_images+1));
+        if(parameters->size()>n_train_images+1+4){
+            n_samples_tot= atoi(parameters->at(n_train_images+1+4));
             n_samples_tot = 2*(n_samples_tot/2);//ensure it is even
             n_pos_samples_tot = n_samples_tot/2;
             n_neg_samples_tot = n_samples_tot/2;
@@ -223,16 +235,16 @@ bool trainTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList &
      unsigned max_depth_wl_tree = 2;
      double shrink_factor = 0.1;
     unsigned int m_try =0;
-    if(parameters->size()>n_train_images+2){
-        max_boost_iters = atoi(parameters->at(n_train_images+2));
+    if(parameters->size()>n_train_images+2+4){
+        max_boost_iters = atoi(parameters->at(n_train_images+2+4));
     }
-    if(parameters->size()>n_train_images+3){
-        max_depth_wl_tree = atoi(parameters->at(n_train_images+3));
+    if(parameters->size()>n_train_images+3+4){
+        max_depth_wl_tree = atoi(parameters->at(n_train_images+3+4));
     }
-    if(parameters->size()>n_train_images+4){
-        shrink_factor = atof(parameters->at(n_train_images+4));
-    }if(parameters->size()>n_train_images+5){
-        m_try = atoi(parameters->at(n_train_images+5));
+    if(parameters->size()>n_train_images+4+4){
+        shrink_factor = atof(parameters->at(n_train_images+4+4));
+    }if(parameters->size()>n_train_images+5+4){
+        m_try = atoi(parameters->at(n_train_images+5+4));
     }
     char * loss_type = "squaredloss";
 
@@ -594,9 +606,22 @@ bool testTubularityImage(V3DPluginCallback2 &callback, const V3DPluginArgList & 
    // do nothing
   }
 
-  unsigned int n_ac_iters = paras.size()-1;
+  unsigned int n_ac_iters = paras.size()-1-4;
   bool multiscale_pred = false; //todo: pass as arguments
 //  bool multiscale_pred = true; //todo: pass as arguments
+
+  const char *sep_filters_file_im = (paras.at(0));//"../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
+  const char *weight_file_im = (paras.at(1));//"../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
+
+  const char *sep_filters_file_ac = (paras.at(2));// "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+  const char *weight_file_ac = (paras.at(3));//"../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/data/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+
+
+//  std::cout << "sep filt img: " << sep_filters_file_im << std::endl;
+//  std::cout << "wei filt img: " << weight_file_im << std::endl;
+//  std::cout << "sep filt ac: " << sep_filters_file_ac << std::endl;
+//  std::cout << "wei filt ac: " << weight_file_ac << std::endl;
 
 
   for(unsigned int imgInd = 0; imgInd < inputImagePaths->size(); imgInd++) {
@@ -887,7 +912,7 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
       for(unsigned int i_ac=0; i_ac<=n_ac_iters; i_ac++){
 
            cout<<"Auto-Context Iter "<< i_ac<< "/" <<n_ac_iters<< endl;
-          regressor_filename = (paras.at(i_ac));
+          regressor_filename = (paras.at(i_ac+4));
 
           //MatrixTypeFloat features_image_and_ac;
 //          if(i_ac>0){

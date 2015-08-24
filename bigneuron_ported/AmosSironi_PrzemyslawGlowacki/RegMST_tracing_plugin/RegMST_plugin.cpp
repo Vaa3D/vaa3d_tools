@@ -36,6 +36,12 @@ using namespace std;
 //parameters used by tubularity plugin
 struct input_PARA
 {
+
+    QString sep_filters_file_im;
+    QString weight_file_im;
+    QString sep_filters_file_ac;
+    QString weight_file_ac;
+
     QString inimg_file;
     V3DLONG channel;
     V3DLONG n_ac_iters;
@@ -120,6 +126,11 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
 
                 PARA.inimg_file = infiles[i_img];
                 int k=0;
+                PARA.sep_filters_file_im =  (paras[k]);  k++;
+                PARA.weight_file_im =  (paras[k]);  k++;
+                PARA.sep_filters_file_ac =  (paras[k]);  k++;
+                PARA.weight_file_ac =  (paras[k]);  k++;
+
                 PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
                 PARA.n_ac_iters = (paras.size() >= k+1) ? atoi(paras[k]) : -1;  k++;
                 for(unsigned int i_ac =0; i_ac < PARA.n_ac_iters; i_ac++,k++){
@@ -305,7 +316,27 @@ output.append(name_output_v3d);
 
 
 
-vector<char*> *buf_para_vec= new vector<char*>[PARA.n_ac_iters];
+vector<char*> *buf_para_vec= new vector<char*>[PARA.n_ac_iters+4];
+
+//input filters params
+    char *buf_para_si = new char[PARA.sep_filters_file_im.toStdString().size()+1];
+    strcpy(buf_para_si, PARA.sep_filters_file_im.toStdString().c_str());
+    buf_para_vec->push_back(buf_para_si);
+
+    char *buf_para_wi = new char[PARA.weight_file_im.toStdString().size()+1];
+    strcpy(buf_para_wi, PARA.weight_file_im.toStdString().c_str());
+    buf_para_vec->push_back(buf_para_wi);
+
+    char *buf_para_sa = new char[PARA.sep_filters_file_ac.toStdString().size()+1];
+    strcpy(buf_para_sa, PARA.sep_filters_file_ac.toStdString().c_str());
+    buf_para_vec->push_back(buf_para_sa);
+
+    char *buf_para_wa = new char[PARA.weight_file_ac.toStdString().size()+1];
+    strcpy(buf_para_wa, PARA.weight_file_ac.toStdString().c_str());
+    buf_para_vec->push_back(buf_para_wa);
+
+
+
 
 for(unsigned int i_ac = 0; i_ac < PARA.n_ac_iters; i_ac++){
 
