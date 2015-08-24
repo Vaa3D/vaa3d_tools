@@ -160,6 +160,12 @@ function write_neuron_tracing_command {
   if [ $METHOD == "23" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x Advantra -f advantra_func -i $inimgfileTracing -p 10 0.3 95 0.6 15 60 30 5 1;mv  $inimgfileTracing*_Advantra.swc $finalfileFolder" >> $outputScript;
   fi;
+
+#RegMST
+
+  if [ $METHOD == "24" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x RegMST -f tracing_func -i $inimgfileTracing -p $vaa3dProgramPath/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt $vaa3dProgramPath/filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt $vaa3dProgramPath/filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt $vaa3dProgramPath/filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt 1 2$vaa3dProgramPath/trained_models/model_S/Regressor_ac_0.cfg $vaa3dProgramPath/trained_models/model_S/Regressor_ac_1.cfg 21 200 ;mv  $inimgfileTracing*_tubularity_model_S.v3draw_MST_Tracing_Ws_21_th_200.swc $finalfileFolder ;rm  $inimgfileTracing*_tubularity_model_S.v3draw" >> $outputScript; 
+  fi;
 }
 
 if [ ! $# -ge 1 ]; then
