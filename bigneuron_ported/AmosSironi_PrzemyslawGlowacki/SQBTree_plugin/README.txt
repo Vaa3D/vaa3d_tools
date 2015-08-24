@@ -7,12 +7,15 @@
      -i <Train_Img1.tif> <Train_Img2.tif> ... <Train_ImgN.tif>
      -o <Output_Results_Dir>
      -p <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc>
+   	<Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt>
         <N_Autocontext_Iters> <N_Train_Samples> <N_boosting_Iters> <Tree_Depth> <Shrinkage_factor> <m_try>
 
 Input: Supported formats: Tiff and vaa3d raw UINT8 3d volumes
 Output: The trained models will be saved in <Output_Results_Dir> under the names Regressor_ac_0.cfg, Regressor_ac_1.cfg, ..., Regressor_ac_<N_Autocontext_Iters>.cfg
 Parameters: <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> swc files contining ground truth. Must be same number of input images.
 											 N.B. It Assumes swc files are in image coordinate !
+<Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt> text files containing separable filter banks and weights to extract features from the image and the tubularity score respectively. You can use the filters provided under the ../data/filter_banks directory
+
             <N_Autocontext_Iters> number of Auto-context iterations (set to 0 in order not to use Auto-context). Default 1.
             <N_Train_Samples> number of training samples. Default 100000.
             <N_boosting_Iters> number of boosting iterations. Default 200.
@@ -25,11 +28,14 @@ Parameters: <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.
 ./vaa3d -x RegressionTubularityAC -f test
      -i <Test_Img1.tif> <Test_Img2.tif> ... <Test_ImgN.tif>
      -o  <Tubularity_img1.raw> <Tubularity_Img2.raw> ... <Tubularity_ImgN.v3draw>
-     -p <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>
+     -p <Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt>
+	<Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>
 
 Input: Supported formats: Tiff and vaa3d raw UINT8 3d volumes
 Output: format: vaa3d raw FLOAT32 3d volumes
-Parameters: <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg> correspond to M+1 trained models, one for each Auto-context iteration.
+Parameters: <Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt> text files containing separable filter banks and weights to extract features from the image and the tubularity score respectively. You can use the filters provided under the ../data/filter_banks directory
+
+<Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg> correspond to M+1 trained models, one for each Auto-context iteration.
     When M>0, results for the different Auto-context iterations will be saved in the /temp_results directory
 
 

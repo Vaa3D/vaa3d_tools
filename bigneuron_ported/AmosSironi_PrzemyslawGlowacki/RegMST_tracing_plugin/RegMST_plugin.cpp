@@ -80,6 +80,8 @@ void RegMST::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
                 "***Usage of RegMST tracing***\n"
                 "vaa3d -x RegMST -f tracing_func -i <inimg_file_1> ... <inimg_file_N> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size> <threshold>\n"
                 "inimg_file_1 ... inimg_file_N             The input images (Uint8)\n"
+                "fb_image weights_img                      Path to the separable filter bank and weight matrix used to extract features from the image\n"
+                "fb_ac weights_ac                          Path to the separable filter bank and weight matrix used to extract features from the tubularity score\n"
                 "channel                                   Data channel for tracing. Start from 1 (default 1)\n"
                 "n_AC                                      Number of auto-context iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)\n"
                 "reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC\n"
@@ -132,7 +134,7 @@ bool RegMST::dofunc(const QString & func_name, const V3DPluginArgList & input, V
                 PARA.weight_file_ac =  (paras[k]);  k++;
 
                 PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-                PARA.n_ac_iters = (paras.size() >= k+1) ? atoi(paras[k]) : -1;  k++;
+                PARA.n_ac_iters = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
                 for(unsigned int i_ac =0; i_ac < PARA.n_ac_iters; i_ac++,k++){
                     PARA.regressor_paths.append(paras[k]);
                 }

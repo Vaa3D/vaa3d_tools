@@ -87,7 +87,8 @@ void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCal
             "Example call: ./vaa3d -x RegressionTubularityAC -f test   \n "
             "-i <Test_Img1.tif> <Test_Img2.tif> ... <Test_ImgN.tif> \n"
             "-o  <Tubularity_img1.raw> <Tubularity_Img2.raw> ... <Tubularity_ImgN.v3draw> \n"
-            "-p <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>\n");
+            "-p  <Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt>\n"
+            "    <Path_to_Regressor_ac_0.cfg> <Path_to_Regressor_ac_1.cfg> ... <Path_to_Regressor_ac_M.cfg>\n");
   }
   else if (menu_name == tr("train"))
   {
@@ -96,6 +97,7 @@ void RegressionTubularityACPlugin::domenu(const QString &menu_name, V3DPluginCal
               "-i <Train_Img1.tif> <Train_Img2.tif> ... <Train_ImgN.tif> \n"
               "-o <Output_Results_Dir> \n"
               "-p <GroundTruth_Img1.swc> <GroundTruth_Img2.swc> ... <GroundTruth_imgN.swc> \n"
+              "   <Path_to_sep_filters_file_im.txt> <Path_to_weights_file_im.txt> <Path_to_sep_filters_file_ac.txt> <Path_to_seigths_file_ac.txt>\n"
               "   <N_Autocontext_Iters> <N_Train_Samples> <N_boosting_Iters> <Tree_Depth> <Shrinkage_factor> <m_try>\n");
   }
   else

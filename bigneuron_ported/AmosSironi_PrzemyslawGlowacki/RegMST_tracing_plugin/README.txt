@@ -6,6 +6,8 @@
       ./vaa3d -x RegMST -f tracing_func -i <inimg_file> -p <channel> <n_AC> <reg_path_1.cfg> ... <reg_path_n_AC.cfg> <window size>
 
              inimg_file                                The input image
+	     fb_image weights_img                      Path to the separable filter bank and weight matrix used to extract features from the image
+             fb_ac weights_ac                          Path to the separable filter bank and weight matrix used to extract features from the tubularity score
              channel                                   Data channel for tracing. Start from 1 (default 1)
              n_AC                                      Number of autoncontext iterations to compute tubularity. 1 = one regressor i.e. no auto-context; 0 = apply MST on original image (default 0)
              reg_path_1.cfg ... reg_path_n_AC.cfg      Path to regressors (generated using RegressionTubularityAC plugin). Number of files must be equal to n_AC.
