@@ -694,7 +694,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     // initialize tracer
     BTracer btrcr(PARA.Ni, PARA.Ns, PARA.scal, P==1, PARA.zDist);
-
+//if(1) {cout<<"TEST";return;}
     if (PARA.saveMidres) {
         btrcr.save_templates(callback, PARA.inimg_file); // templates used for zncc()
     }
@@ -929,7 +929,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 // fill the tags associated with the scale
                 // tag offsets are ready in the btracer class, can be indexed
 
-                for (int k = 0; k < btrcr.offx[gpntr_idx].size(); ++k) {
+                for (int k = 0; k < btrcr.offx[gpntr_idx].size(); ++k) { // use offsets for tag fill up
 
                     int xnn = gpntx + btrcr.offx[gpntr_idx][k];
                     int ynn = gpnty + btrcr.offy[gpntr_idx][k];
@@ -968,7 +968,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (tagmap_temp[z*N*M+y*N+x]==0)
             continue; // skip those that are zero
 
-        for (int k = 0; k < btrcr.offx[0].size(); ++k) {
+        for (int k = 0; k < btrcr.offx[0].size(); ++k) { // use offsets for tag fill up
 
             int xi = x + btrcr.offx[0][k];
             int yi = y + btrcr.offy[0][k];

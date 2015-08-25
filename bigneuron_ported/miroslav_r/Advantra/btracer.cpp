@@ -658,7 +658,7 @@ bool BTracer::traceoverlap(
     vector<int> ttags;
     vector<int> ntags;
 
-    for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+    for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offsets to find overlapping tags
 
         xs = atx + offx[offset_idx][oi];
         ys = aty + offy[offset_idx][oi];
@@ -676,10 +676,10 @@ bool BTracer::traceoverlap(
             }
 
         }
-        else {
-            cout << "out of img. boundaries." << endl;
-            return true;
-        }
+//        else {
+//            cout << "out of img. boundaries." << endl;
+//            return true;
+//        }
 
     }
 
@@ -690,17 +690,19 @@ bool BTracer::traceoverlap(
         int ttagFill = ttags[0]; // take the one closest to the center
         int ntagFill = ntags[0]; // and it's corresponding node
 
-        for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+        for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offsets for tag fill up
 
             xs = atx + offx[offset_idx][oi];
             ys = aty + offy[offset_idx][oi];
             zs = atz + offz[offset_idx][oi];
 
-            int iaux = zs*(img_width*img_height)+ys*img_width+xs;
+            if (xs>=0 && xs<img_width && ys>=0 && ys<img_height && zs>=0 && zs<img_length) {
+                int iaux = zs*(img_width*img_height)+ys*img_width+xs;
 
-            if (trace_map[iaux]<=0) {
-                trace_map[iaux] = ttagFill;
-                node_map[iaux]  = ntagFill;
+                if (trace_map[iaux]<=0) {
+                    trace_map[iaux] = ttagFill;
+                    node_map[iaux]  = ntagFill;
+                }
             }
 
         }
@@ -726,7 +728,7 @@ bool BTracer::traceoverlap(
         return true; // it overlaps, this will block tracing late on
     }
     else
-        return false;
+        return false; // there will be trace from this guidepoint
 
 }
 
@@ -791,6 +793,7 @@ void BTracer::traceX(
 //    int  ttagPrev, ttagCurr;
 
     int  cntbckg = 0;
+    int  cnttotl = 0;
     int  xs, ys, zs, atx, aty, atz;
 
     vector<int> ttags;
@@ -798,8 +801,6 @@ void BTracer::traceX(
     vector<int> nlist;
 
     int offset_idx = get_gcsstd_idx(r); // scale index closest to current radius
-
-    cntbckg = 0;  // nr. of those in the background
 
     atx = round(x);
     aty = round(y);
@@ -817,7 +818,7 @@ void BTracer::traceX(
         curr_tt = node_list.size()-1;
 
         // tag fill
-        for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+        for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offsets for tag fill at first node (guaranteed nonoverlapping)
 
             xs = atx + offx[offset_idx][oi];
             ys = aty + offy[offset_idx][oi];
@@ -832,10 +833,10 @@ void BTracer::traceX(
                     node_tag_map[iaux]      = curr_tt;
                 }
             }
-            else {
-                cout<<"first out of img. boundary"<<endl;
-                return;
-            }
+//            else {
+//                cout<<"first out of img. boundary"<<endl;
+//                return;
+//            }
 
         }
 
@@ -963,18 +964,27 @@ void BTracer::traceX(
             // ------------------------------------
             // ** trace estimates are calculated **
             // ------------------------------------
-            offset_idx = get_gcsstd_idx(rc[node_cnt]);
-            cntbckg = 0;
 
-            ntags.clear();
-            ttags.clear();
-
+            // check offsets for overlap and connecting
             atx = round(xc[node_cnt]);
             aty = round(yc[node_cnt]);
             atz = round(zc[node_cnt]);
 
+            // stop if it is out of image boundaries without chacking the offsets
+            if (atx<0 || atx>=img_width || aty<0 || aty>=img_height || atz<0 || atz>=img_length) {
+                cout << "out of img. boundaries" << endl;
+                return;
+            }
+
+            offset_idx = get_gcsstd_idx(rc[node_cnt]);
+            cntbckg = 0;
+            cnttotl = 0;
+
+            ntags.clear();
+            ttags.clear();
+
             // check the overlap or whether it is necessary to stop
-            for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+            for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offset to check the tags for background overlap or connecting with other tags
 
                 xs = atx + offx[offset_idx][oi];
                 ys = aty + offy[offset_idx][oi];
@@ -984,11 +994,10 @@ void BTracer::traceX(
 
                     int iaux = zs*(img_width*img_height)+ys*img_width+xs;
 
+                    cnttotl++;
+
                     if (trace_tag_map[iaux]==0) {
-                        if (++cntbckg/(float)offx[offset_idx].size()>=bgratio) {
-//                            cout << "|" << endl;
-                            return;
-                        }
+                        cntbckg++;
                     }
                     else if (trace_tag_map[iaux]>0 && trace_tag_map[iaux]!=curr_tt) {
 //                        if (trace_tag_map[iaux]==1) cout << "here!! " << node_tag_map[iaux] << endl;
@@ -997,10 +1006,10 @@ void BTracer::traceX(
                     }
 
                 }
-                else {
-                    cout << "out of img. boundaries" << endl;
-                    return;
-                }
+//                else {
+//                    cout << "out of img. boundaries" << endl;
+//                    return;
+//                }
             }
 
             ovlpPrev = ovlpCurr;
@@ -1010,6 +1019,27 @@ void BTracer::traceX(
 
 //            if(ovlpCurr) cout << "x" << flush;
 //            else cout << curr_tt << " " << flush;
+
+            // cases
+            if ((float)cntbckg/(float)cnttotl>=bgratio) {
+
+                // tagmap fill
+                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offset for tag fill (stop)
+
+                    xs = atx + offx[offset_idx][oi];
+                    ys = aty + offy[offset_idx][oi];
+                    zs = atz + offz[offset_idx][oi];
+
+                    if (xs>=0 && xs<img_width && ys>=0 && ys<img_height && zs>=0 && zs<img_length) {
+                        int iaux = zs*(img_width*img_height)+ys*img_width+xs;
+                        if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagPrev;
+                        if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    }
+
+                }
+//              cout << "|" << endl;
+                return;
+            }
 
             // cases:
             if (!ovlpPrev && !ovlpCurr) {
@@ -1026,15 +1056,18 @@ void BTracer::traceX(
                 // 3. set trace tag
 
                 // 4. tagmap fill
-                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offset for tag fill (F->F)
 
                     xs = atx + offx[offset_idx][oi];
                     ys = aty + offy[offset_idx][oi];
                     zs = atz + offz[offset_idx][oi];
 
-                    int iaux = zs*(img_width*img_height)+ys*img_width+xs;
-                    if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagCurr;
-                    if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    if (xs>=0 && xs<img_width && ys>=0 && ys<img_height && zs>=0 && zs<img_length) {
+                        int iaux = zs*(img_width*img_height)+ys*img_width+xs;
+                        if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagCurr;
+                        if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    }
+
                 }
 
                 // 5. linking
@@ -1054,15 +1087,18 @@ void BTracer::traceX(
                 // 3. set trace tag
 
                 // 4. tagmap fill
-                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offset for tag fill (F->T)
 
                     xs = atx + offx[offset_idx][oi];
                     ys = aty + offy[offset_idx][oi];
                     zs = atz + offz[offset_idx][oi];
 
-                    int iaux = zs*(img_width*img_height)+ys*img_width+xs;
-                    if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagPrev;
-                    if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    if (xs>=0 && xs<img_width && ys>=0 && ys<img_height && zs>=0 && zs<img_length) {
+                        int iaux = zs*(img_width*img_height)+ys*img_width+xs;
+                        if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagPrev;
+                        if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    }
+
                 }
 
                 // 5. linking
@@ -1091,15 +1127,18 @@ void BTracer::traceX(
                 curr_tt = ntagCurr;
 
                 // 4. tagmap fill
-                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) {
+                for (int oi = 0; oi < offx[offset_idx].size(); ++oi) { // use offset for tag fill (T->F)
 
                     xs = atx + offx[offset_idx][oi];
                     ys = aty + offy[offset_idx][oi];
                     zs = atz + offz[offset_idx][oi];
 
-                    int iaux = zs*(img_width*img_height)+ys*img_width+xs;
-                    if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagCurr;
-                    if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    if (xs>=0 && xs<img_width && ys>=0 && ys<img_height && zs>=0 && zs<img_length) {
+                        int iaux = zs*(img_width*img_height)+ys*img_width+xs;
+                        if (node_tag_map[iaux]<0)   node_tag_map[iaux] = ntagCurr;
+                        if (trace_tag_map[iaux]<0)  trace_tag_map[iaux] = curr_tt;
+                    }
+
                 }
 
                 // 5. linking
