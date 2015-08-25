@@ -1034,27 +1034,27 @@ std::cout << "Computing features...Done."<<std::endl<< std::flush;
 
             }
 
-                ////save image
-                cout<<"saving image"<<endl;
+//                ////save image
+//                cout<<"saving image"<<endl;
 
-                //copy data to save with v3d format
-               // V3DLONG n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
-               float* out_data_copy = new float[n_pixels_scaleed];
-             for(unsigned int i_pix = 0; i_pix < n_pixels_scaleed; i_pix++){
-                    out_data_copy[i_pix] = (float)newScores(i_pix);
-               }
-
-
-         outimg1.setData((unsigned char *)(out_data_copy), size_img_scaled[0], size_img_scaled[1], size_img_scaled[2], 1, V3D_FLOAT32);
+//                //copy data to save with v3d format
+//               // V3DLONG n_pixels = in_sz[0]*in_sz[1]*in_sz[2];
+//               float* out_data_copy = new float[n_pixels_scaleed];
+//             for(unsigned int i_pix = 0; i_pix < n_pixels_scaleed; i_pix++){
+//                    out_data_copy[i_pix] = (float)newScores(i_pix);
+//               }
 
 
+//         outimg1.setData((unsigned char *)(out_data_copy), size_img_scaled[0], size_img_scaled[1], size_img_scaled[2], 1, V3D_FLOAT32);
 
-                char outimg_file_ac [500];
 
-                    sprintf (outimg_file_ac, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
 
-                    cout << "saving temp results: " << outimg_file_ac<<endl;
-                  callback.saveImage(&outimg1, outimg_file_ac);
+//                char outimg_file_ac [500];
+
+//                    sprintf (outimg_file_ac, "../../vaa3d_tools/bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/temp_results/score_img_%i_ac_%i_scale_%i.v3draw",imgInd,i_ac,i_scale);
+
+//                    cout << "saving temp results: " << outimg_file_ac<<endl;
+//                  callback.saveImage(&outimg1, outimg_file_ac);
 
 
   }// end auto-context for loop
