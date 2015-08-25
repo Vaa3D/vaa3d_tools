@@ -38,6 +38,7 @@
 # define HALVE_BY_MAX  2
 
 #include <string>
+#include <algorithm>
 
 #include "IM_config.h"
 

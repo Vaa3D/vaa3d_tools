@@ -32,15 +32,15 @@
 * General information
 *
 * Different plugins are available for managing 2D image formats and 3D image formats. 
-* Nevertheless 3D plugins may occasionally manage images that which third dimension is a 
+* Nevertheless 3D plugins may occasionally manage images which third dimension is a 
 * singleton.
 *
 * All plugins are assumed to manage images that can be in compressed format. 
 * In case of 3D plugins it is assumed that the image format can extract efficiently 2D slices 
-* form files containing 3D images (e.g. multipage tiff format).
+* from files containing 3D images (e.g. multi-page tiff format).
 *
 * Plugins can manage multi-channel images in two ways: interleaving channels (i.e. channels are 
-* the first dimension or splitting channels (i.e. channels are the last dimension). 
+* the first dimension) or splitting channels (i.e. channels are the last dimension). 
 * Plugins inform client code on how channels are managed through the method 'isChansInterleaved',
 * returning true if channels are interleaved, false if they are splitted.
 * Client code must check which representation is used and correctly process image data returned 
@@ -82,7 +82,7 @@ class iomanager::IOPlugin2D : public iomanager::IOPlugin
 	public:
 
 		/************************************************************************************************
-		* Read image metadata from a 3D file
+		* Read image metadata from a 2D file
 		*************************************************************************************************/
 		virtual void 
 			readMetadata(
@@ -131,10 +131,10 @@ class iomanager::IOPlugin2D : public iomanager::IOPlugin
 			int img_width,					// (INPUT)	image width
 			int img_bytes_x_chan,			// (INPUT)  number of bytes per channel
 			int img_chans,					// (INPUT)	number of channels
-			int y0 = -1,						// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
-			int y1 = -1,						// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
-			int x0 = -1,						// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
-			int x1 = -1,						// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+			int y0 = -1,					// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+			int y1 = -1,					// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+			int x0 = -1,					// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
+			int x1 = -1,					// (INPUT)	region of interest [x0,x1][y0,y1] to be set on the image
 			const std::string & params = iom::IMOUT_PLUGIN_PARAMS)	// (INPUT) additional parameters <param1=val, param2=val, ...> 
 		throw (iom::exception) = 0;
 
@@ -227,8 +227,8 @@ class iomanager::IOPlugin3D : public iomanager::IOPlugin
 			int & img_bytes_x_chan,			// (INPUT/OUTPUT) number of bytes per channel
 			int & img_chans,				// (INPUT/OUTPUT) number of channels to be read
 			unsigned char *data = 0,		// (INPUT) image data
-			int z0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int z1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int z0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int z1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
 			const std::string & params = iom::IMIN_PLUGIN_PARAMS)	// (INPUT) additional parameters <param1=val, param2=val, ...> 
 		throw (iom::exception) = 0;
 
@@ -250,12 +250,12 @@ class iomanager::IOPlugin3D : public iomanager::IOPlugin
 			int img_depth,					// (INPUT)  image depth (in pixels)
 			int img_bytes_x_chan,			// (INPUT)  number of bytes per channel
 			int img_chans,					// (INPUT)	number of channels
-			int z0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int z1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int y0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int y1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int x0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
-			int x1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int z0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int z1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int y0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int y1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int x0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
+			int x1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1)[z0,z1) to be set on the image
 			const std::string & params = iom::IMOUT_PLUGIN_PARAMS)	// (INPUT) additional parameters <param1=val, param2=val, ...> 
 		throw (iom::exception) = 0;
 
@@ -263,6 +263,7 @@ class iomanager::IOPlugin3D : public iomanager::IOPlugin
 		* Create an empty 3D image 
 		* Initialize a file that has to contain a 3D image. The newly created file is initially empty 
 		* and it has to be filled adding slices with method 'appendSlice'.
+		* WARNING: exactly 'img_depth' slices have to be written in the newly created file before it can be read.
 		*************************************************************************************************/
         virtual void 
 			create3Dimage(
@@ -283,6 +284,8 @@ class iomanager::IOPlugin3D : public iomanager::IOPlugin
 		* Default values for ROI limits correspond to the whole buffer.
 		* If the value of parameter slice is not the default value, its value must be equal to the 
 		* number of slices already stored into the file.
+		* WARNING: if more slices than were specified when the file was created (see 'create3Dimage'), 
+		* the file might be corrupted.
 		*************************************************************************************************/
         virtual void 
 			appendSlice(
@@ -292,10 +295,10 @@ class iomanager::IOPlugin3D : public iomanager::IOPlugin
 			int img_width,					// (INPUT)	slice width (in pixels)
 			int img_bytes_x_chan,			// (INPUT)  number of bytes per channel
 			int img_chans,					// (INPUT)	number of channels
-			int y0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
-			int y1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
-			int x0 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
-			int x1 = -1,						// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
+			int y0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
+			int y1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
+			int x0 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
+			int x1 = -1,					// (INPUT)	region of interest [x0,x1)[y0,y1) to be set on the image
 			int slice = -1,					// (INPUT)  slice index 
 			const std::string & params = iom::IMOUT_PLUGIN_PARAMS)	// (INPUT) additional parameters <param1=val, param2=val, ...> 
 		throw (iom::exception) = 0;
@@ -369,20 +372,12 @@ class iomanager::IOPluginFactory
 		// plugin instantiation
 		static IOPlugin2D* getPlugin2D(std::string id) throw (iom::exception)
 		{ 
-            // 2015-04-15. Alessandro. @FIXED (temporary) tiff2D/tiff3D mismatch
-            if(id.compare("tiff3D") == 0)
-                id = "tiff2D";
-
 			if(instance()->registry2D.find(id) == instance()->registry2D.end())
 				throw iom::exception(iom::strprintf("Cannot find 2D I/O plugin \"%s\" or it is not a 2D I/O plugin", id.c_str()).c_str());
 			return (instance()->registry2D[id])(); 
 		}
 		static IOPlugin3D* getPlugin3D(std::string id) throw (iom::exception)
 		{ 
-            // 2015-04-15. Alessandro. @FIXED (temporary) tiff2D/tiff3D mismatch
-            if(id.compare("tiff2D") == 0)
-                id = "tiff3D";
-
 			if(instance()->registry3D.find(id) == instance()->registry3D.end())
 				throw iom::exception(iom::strprintf("Cannot find 3D I/O plugin \"%s\" or it is not a 3D I/O plugin", id.c_str()).c_str());
 			return (instance()->registry3D[id])(); 

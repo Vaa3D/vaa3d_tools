@@ -25,6 +25,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-20. Giulio.     @ADDED in struct NCC_parms_t: wRangeThr has been splitted into three parameters (for V, H and D direntions)
+*/
+
 /*
  * Alignements.h
  *
@@ -60,8 +66,11 @@ typedef struct {
 	int maxIter;
 	iom::real_t maxThr;    // threshold for NCC maximum (below this threshold the NCC is considered unreliable)
 	iom::real_t widthThr;  // fraction of maximum used to evaluate the maximum width (belongs to [0,1])
-	int wRangeThr;    // range used to evaluate maximum width (when maximum width is greater or equal to 
-	                  // this value, width is set to INF_W
+	//int wRangeThr;  
+	// ranges used to evaluate maximum width (when maximum width is greater or equal to this value, width is set to INF_W
+	int wRangeThr_i;  // along V (rows)
+	int wRangeThr_j;  // along H (columns)
+	int wRangeThr_k;  // along D (slices)
 	iom::real_t UNR_NCC;   // unreliable NCC peak value
 	int INF_W;        // infinite NCC peak width
 	int INV_COORD;    // invalid alignment

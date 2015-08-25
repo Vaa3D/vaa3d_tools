@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-06-12. Giulio      @ADDED 'check' method to check completeness and coherence of a volume
+* 2015-02-26. Giulio.     @ADDED initChannels private method to initialize fields DIM_C and BYTESxCHAN
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
 * 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
 * 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
@@ -47,28 +49,25 @@
 #include <limits>
 #include <cstring>
 
-//FORWARD-DECLARATIONS
-class VirtualStack;
-class Stack;
 
-
-class StackedVolume : public volumemanager::VirtualVolume
+class vm::StackedVolume : public vm::VirtualVolume
 {
 	private:
 
 		// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
 		static const std::string creator_id1, creator_id2;							
-        static VirtualVolume* createFromXML(const char* xml_path, bool ow_mdata) { return new StackedVolume(xml_path, ow_mdata); }
-		static VirtualVolume* createFromData(const char* data_path, vm::ref_sys ref, float vxl1, float vxl2, float vxl3, bool ow_mdata) { 
+        static vm::VirtualVolume* createFromXML(const char* xml_path, bool ow_mdata) { return new StackedVolume(xml_path, ow_mdata); }
+		static vm::VirtualVolume* createFromData(const char* data_path, vm::ref_sys ref, float vxl1, float vxl2, float vxl3, bool ow_mdata) { 
 			return new StackedVolume(data_path, ref, vxl1, vxl2, vxl3, ow_mdata); 
 		}
 
 
 		//******OBJECT ATTRIBUTES******
-		Stack ***STACKS;					//2-D array of <Stack*>	
+		vm::Stack ***STACKS;					//2-D array of <Stack*>	
 
 		//initialization methods
 		void init() throw (iom::exception);
+        void initChannels() throw (iom::exception);
 		void applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception);
 
 		//binary metadata load/save methods
@@ -90,7 +89,7 @@ class StackedVolume : public volumemanager::VirtualVolume
 		static const std::string id;	
 
 		//CONSTRUCTORS-DECONSTRUCTOR
-		StackedVolume() : VirtualVolume(){}
+		StackedVolume() : vm::VirtualVolume(){}
         StackedVolume(const char* _stacks_dir, vm::ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false) throw (iom::exception);
         StackedVolume(const char *xml_filepath, bool overwrite_mdata=false) throw (iom::exception);
 		~StackedVolume();
@@ -98,7 +97,7 @@ class StackedVolume : public volumemanager::VirtualVolume
 		// ******GET METHODS******
 		int		 getStacksHeight();
 		int		 getStacksWidth();
-		VirtualStack*** getSTACKS();
+		vm::VirtualStack*** getSTACKS();
 
 		//loads/saves metadata from/in the given xml filename
 		void loadXML(const char *xml_filename) throw (iom::exception);
@@ -109,6 +108,10 @@ class StackedVolume : public volumemanager::VirtualVolume
         /**********************************************************************************
         * UTILITY methods
         ***********************************************************************************/
+
+        //check if volume is complete and coherent; return true if the volume is ok, false otherwise
+		//if a file name is passed and thevolume is not ok an error log file is generated
+		bool check(const char *errlogFileName = 0) throw (iom::exception);
 
         //counts the total number of displacements and the number of displacements per pair of adjacent stacks
         void countDisplacements(int& total, float& per_stack_pair);
@@ -124,7 +127,7 @@ class StackedVolume : public volumemanager::VirtualVolume
 };
 
 namespace{																
-	const StackedVolume* objectStackedVolume = new StackedVolume();
+	const vm::StackedVolume* objectStackedVolume = new vm::StackedVolume();
 } 
 
 

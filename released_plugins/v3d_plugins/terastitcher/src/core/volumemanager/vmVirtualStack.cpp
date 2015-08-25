@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-02-28. Giulio.     @ADDED initialization of fields N_CHANS and N_BYTESxCHAN
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
 * 2014-08-30. Alessandro. @REMOVED 'show()' method (obsolete).
@@ -38,11 +39,15 @@
 
 #include "vmVirtualStack.h"
 
+using namespace vm;
+
 VirtualStack::VirtualStack()
 {
     FILENAMES = 0;
     HEIGHT = WIDTH = DEPTH = -1;
     ROW_INDEX = COL_INDEX = -1;
+	N_CHANS = 0;
+	N_BYTESxCHAN = 0;
     DIR_NAME = 0;
     stitchable = false;
     ABS_V = ABS_H = ABS_D = -1;

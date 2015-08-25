@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-02-28. Giulio.     @ADDED fields N_CHANS and BYTESxCHAN
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
@@ -50,14 +51,16 @@
 
 //class Displacement;
 
-class VirtualStack
+class vm::VirtualStack
 {
     protected:
 
-        char** FILENAMES;							//1D dynamic array of <char>  pointers to images filenames
+		char*  DIR_NAME;							//string containing current stack directory
+		char** FILENAMES;							//1D dynamic array of <char>  pointers to images filenames
         int	   HEIGHT, WIDTH, DEPTH;				//VHD (Vertical, Horizontal, Depth) dimensions of current stack
         int	   ROW_INDEX,  COL_INDEX;				//row and col index relative to stack matrix
-        char*  DIR_NAME;							//string containing current stack directory
+		int    N_CHANS;                             //number of channels
+		int    N_BYTESxCHAN;                        //number of bytes per channel
         bool   stitchable;							//true if current Stack is stitchable with adjacent ones
         int    ABS_V, ABS_H, ABS_D;					//absolute VHD voxel coordinates of current stack
         iom::real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
@@ -84,12 +87,14 @@ class VirtualStack
 
 		//GET methods
 		char* getDIR_NAME()			{return DIR_NAME;}
+		char** getFILENAMES()		{return FILENAMES;}		
 		int getROW_INDEX()			{return ROW_INDEX;}
 		int getCOL_INDEX()			{return COL_INDEX;}
 		int getHEIGHT()				{return HEIGHT;}//Onofri: type changed
 		int getWIDTH()				{return WIDTH;}	//Onofri: type changed
 		int getDEPTH()				{return DEPTH;}	//Onofri: type changed
-		char** getFILENAMES()		{return FILENAMES;}		
+		int getN_CHANS()			{return N_CHANS;}
+		int getN_BYTESxCHAN()		{return N_BYTESxCHAN;}
 		int getABS_V()				{return ABS_V;}
 		int getABS_H()				{return ABS_H;}
 		int getABS_D()				{return ABS_D;}

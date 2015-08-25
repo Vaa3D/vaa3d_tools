@@ -25,6 +25,13 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-20. Giulio.     @CHANGED different dimensions for the new NCC to be computed are passed to compute_Neighborhood
+* 2015-03-20. Giulio.     @CHANGED newu and newv have been moved as parameters in compute_Neighborhood
+*/
+
 /*
  * libcrossmips.cpp
  *
@@ -183,23 +190,17 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 	//	DISPLAY_ERROR(err_msg);
 	//}
 	
-	// Alessandro - 31/05/2013 - the right check is on MIN(delayi, delayj, delayk), not or MAX(delayi, delayj, delayk),
-	// as confirmed by the lines (in compute_funcs.cpp):
+	// These checks are required by the lines (in compute_funcs.cpp):
 	// 	  initu = MIN(MAX(0,ind_max/(2*delayv+1) - newu),2*(delayu - newu));
 	//    initv = MIN(MAX(0,ind_max%(2*delayv+1) - newv),2*(delayv - newv));
 	// where newu = newv = NCC_params->wRangeThr and initu, initv must be positive integers
-	if ( NCC_params->wRangeThr > MIN(delayi,MIN(delayj,delayk)))
+	if ( NCC_params->wRangeThr_i > delayi  || NCC_params->wRangeThr_j > delayj || NCC_params->wRangeThr_k > delayk )
 	{
 		// Alessandro - 31/05/2013 - throwing an exception instead of automatically correcting parameters
 		char err_msg[1000];
-		sprintf(err_msg, "CrossMIPs: parameter wRangeThr[=%d] is too large with respect to MIN(delayi, delayj, delayik)[=%d]", NCC_params->wRangeThr, MIN(delayi,MIN(delayj,delayk)));
+		sprintf(err_msg, "CrossMIPs: one or more parameters: wRangeThr_i[=%d], wRangeThr_j[=%d], wRangeThr_k[=%d] are too large with respect to: delayi[=%d], delayj[=%d], delayik[=%d]", 
+			NCC_params->wRangeThr_i, NCC_params->wRangeThr_j, NCC_params->wRangeThr_k, delayi, delayj ,delayk);
 		throw iom::exception(err_msg);
-		
-		// Alessandro - 23/03/2013 - parameters are automatically corrected
-		// Alessandro - 31/05/2013 - throwing an exception instead of automatically correcting parameters
-		//delayi = MAX(delayi, NCC_params->wRangeThr);
-		//delayj = MAX(delayj, NCC_params->wRangeThr);
-		//delayk = MAX(delayk, NCC_params->wRangeThr);
 	}
 
     // skipping check for 2D images: see Alessandro's comment in PDAlgoMIPNCC.cpp on 21/08/2013
@@ -346,30 +347,30 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 	ind_yz = compute_MAX_ind(NCC_yz,((2*delayj+1)*(2*delayk+1)));
 
 	// NCC_xy: check neighborhood of maxima and search for better maxima if any
-	temp = new iom::real_t[(2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)];;
-	for ( i=0; i<((2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)); i++ )
+	temp = new iom::real_t[(2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_j+1)];;
+	for ( i=0; i<((2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_j+1)); i++ )
 		temp[i] = 0;
-	compute_Neighborhood(NCC_params,NCC_xy,delayi,delayj,ind_xy,MIP_xy1,MIP_xy2,dimi_v,dimj_v,temp,dx1,dy1, failed_xy);
+	compute_Neighborhood(NCC_params,NCC_xy,delayi,delayj,NCC_params->wRangeThr_i,NCC_params->wRangeThr_j,ind_xy,MIP_xy1,MIP_xy2,dimi_v,dimj_v,temp,dx1,dy1, failed_xy);
 	// substitute NCC map and delete the old one
 	delete NCC_xy;
 	NCC_xy = temp;
 	temp = (iom::real_t *)0;
 
 	// NCC_xz: check neighborhood of maxima and search for better maxima if any
-	temp = new iom::real_t[(2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)];;
-	for ( i=0; i<((2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)); i++ )
+	temp = new iom::real_t[(2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_k+1)];;
+	for ( i=0; i<((2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_k+1)); i++ )
 		temp[i] = 0;
-	compute_Neighborhood(NCC_params,NCC_xz,delayi,delayk,ind_xz,MIP_xz1,MIP_xz2,dimi_v,dimk_v,temp,dx2,dz1, failed_xz);
+	compute_Neighborhood(NCC_params,NCC_xz,delayi,delayk,NCC_params->wRangeThr_i,NCC_params->wRangeThr_k,ind_xz,MIP_xz1,MIP_xz2,dimi_v,dimk_v,temp,dx2,dz1, failed_xz);
 	// substitute NCC map and delete the old one
 	delete NCC_xz;
 	NCC_xz = temp;
 	temp = (iom::real_t *)0;
 
 	// NCC_yz: check neighborhood of maxima and search for better maxima if any
-	temp = new iom::real_t[(2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)];;
-	for ( i=0; i<((2*NCC_params->wRangeThr+1)*(2*NCC_params->wRangeThr+1)); i++ )
+	temp = new iom::real_t[(2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_k+1)];;
+	for ( i=0; i<((2*NCC_params->wRangeThr_i+1)*(2*NCC_params->wRangeThr_k+1)); i++ )
 		temp[i] = 0;
-	compute_Neighborhood(NCC_params,NCC_yz,delayj,delayk,ind_yz,MIP_yz1,MIP_yz2,dimj_v,dimk_v,temp,dy2,dz2, failed_yz);
+	compute_Neighborhood(NCC_params,NCC_yz,delayj,delayk,NCC_params->wRangeThr_i,NCC_params->wRangeThr_k,ind_yz,MIP_yz1,MIP_yz2,dimj_v,dimk_v,temp,dy2,dz2, failed_yz);
 	// substitute NCC map and delete the old one
 	delete NCC_yz;
 	NCC_yz = temp;
@@ -378,7 +379,7 @@ NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B,
 	//compute_Alignment(NCC_params,NCC_xy,NCC_xz,NCC_yz,delayi,delayj,delayk,ind_xy,ind_xz,ind_yz,result);
 	
 	compute_Alignment(NCC_params,NCC_xy,NCC_xz,NCC_yz,
-		NCC_params->wRangeThr,NCC_params->wRangeThr,NCC_params->wRangeThr,dx1,dx2,dy1,dy2,dz1,dz2,failed_xy, failed_xz, failed_yz, result);
+		NCC_params->wRangeThr_i,NCC_params->wRangeThr_j,NCC_params->wRangeThr_k,dx1,dx2,dy1,dy2,dz1,dz2,failed_xy, failed_xz, failed_yz, result);
 
 	if ( side == NORTH_SOUTH ) 
 		result->coord[0] += ni;

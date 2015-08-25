@@ -255,7 +255,7 @@ void StackRaw::init()
     {
         tmp = entry_lev3->d_name;
         if(tmp.compare(".") != 0 && tmp.compare("..") != 0 &&
-           (tmp.find(".raw") != string::npos || tmp.find(".RAW") != string::npos) || tmp.find(".v3draw") != string::npos || tmp.find(".V3DRAW") != string::npos)
+           (tmp.find(".raw") != string::npos || tmp.find(".RAW") != string::npos || tmp.find(".v3draw") != string::npos || tmp.find(".V3DRAW") != string::npos)) // 2015-06-12 Giulio. f@FIXED bad parenthesis position
             entries_lev3.push_back(tmp);
     }
     entries_lev3.sort();

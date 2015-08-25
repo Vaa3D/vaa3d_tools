@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-06-12. Giulio      @ADDED 'check' method to check completeness and coherence of a volume
+* 2015-02-26. Giulio.     @ADDED implementation of initChannels private method to initialize fields DIM_C and BYTESxCHAN
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-11-06. Giulio.     @ADDED saved reference system into XML file
 * 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
@@ -47,21 +49,21 @@
 */
 
 
-#include <iostream>
-#include <typeinfo>
-#include "vmStackedVolume.h"
-#include "S_config.h"
-#include "tinyxml.h"
-#include <fstream>
-#include <sstream>
 #ifdef _WIN32
 #include "dirent_win.h"
 #else
 #include <dirent.h>
 #endif
+#include <iostream>
+#include <typeinfo>
 #include <limits>
 #include <list>
 #include <set>
+#include <fstream>
+#include <sstream>
+#include "vmStackedVolume.h"
+#include "S_config.h"
+#include "tinyxml.h"
 #include "vmStack.h"
 #include "Displacement.h"
 
@@ -75,6 +77,7 @@
 
 using namespace std;
 using namespace iom;
+using namespace vm;
 
 // 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
 const std::string StackedVolume::id = "TiledXY|2Dseries";
@@ -104,6 +107,8 @@ StackedVolume::StackedVolume(const char* _stacks_dir, vm::ref_sys _reference_sys
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
 		saveBinaryMetadata(mdata_filepath);
 	}
+
+	initChannels();
 	
 	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
 	// 2014-09-05. Alessandro. @FIXED to support sparse data.
@@ -161,6 +166,8 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool overwrite_mdata) thr
 		saveBinaryMetadata(mdata_filepath);
 	}
 
+	initChannels();
+	
 	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
 	// 2014-09-05. Alessandro. @FIXED to support sparse data.
 	if(!vm::SPARSE_DATA)
@@ -216,7 +223,7 @@ int		StackedVolume::getStacksWidth()				{return STACKS[0][0]->getWIDTH();}
 //int		StackedVolume::getN_ROWS()					{return this->N_ROWS;}
 //int		StackedVolume::getN_COLS()					{return this->N_COLS;}
 //int		StackedVolume::getN_SLICES()				{return this->N_SLICES;}
-VirtualStack***StackedVolume::getSTACKS()					{return (VirtualStack***)this->STACKS;}
+VirtualStack*** StackedVolume::getSTACKS()					{return (VirtualStack***)this->STACKS;}
 //char*   StackedVolume::getSTACKS_DIR()				{return this->stacks_dir;}
 //int		StackedVolume::getOVERLAP_V()				{return (int)(getStacksHeight() - MEC_V/VXL_V);}
 //int		StackedVolume::getOVERLAP_H()				{return (int)(getStacksWidth() -  MEC_H/VXL_H);}
@@ -338,6 +345,12 @@ void StackedVolume::init() throw (iom::exception)
 
 	// check stacks have the same width and height
 	normalize_stacks_attributes();
+}
+
+void StackedVolume::initChannels()  throw (iom::exception) 
+{
+	DIM_C = STACKS[0][0]->getN_CHANS();
+	BYTESxCHAN = STACKS[0][0]->getN_BYTESxCHAN();
 }
 
 void StackedVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception)
@@ -1110,6 +1123,45 @@ void StackedVolume::mirror(vm::axis mrr_axis) throw (iom::exception)
 
 	STACKS = new_STACK_2D_ARRAY;
 }
+
+
+//check if volume is complete and coherent
+bool StackedVolume::check(const char *errlogFileName) throw (iom::exception)
+{
+	bool ok = true;
+	FILE *errlogf;
+
+	int depth = STACKS[0][0]->getDEPTH();
+
+	for ( int i=0; i<N_ROWS; i++ ) {
+		for ( int j=0; j<N_COLS; j++ ) {
+			if ( depth != STACKS[i][j]->getDEPTH() ) {
+				if ( ok ) { // first anomaly: open and initialize the errlog file
+					if ( errlogFileName ) {
+						if ( (errlogf = fopen(errlogFileName,"w")) == 0 ) {
+							char errMsg[2000];
+							sprintf(errMsg,"in StackedVolume::check(errlogFileName = \"%s\") : unable to open log file", errlogFileName);
+							throw iom::exception(errMsg);
+						}
+
+						fprintf(errlogf,"errlog file of volume (BlockVolume): \"%s\"\n",stacks_dir);
+						fprintf(errlogf,"\tdepth: %d\n",depth);
+					}
+
+					ok = false;
+				}
+				if ( errlogFileName ) 
+					fprintf(errlogf,"\trow=%d, col=%d, depth=%d\n",i,j,STACKS[i][j]->getDEPTH());
+			}
+		}
+	}
+
+	if ( errlogFileName && !ok ) // there are anomalies: close the errlog file
+		fclose(errlogf);
+
+	return ok;
+}
+
 
 //counts the total number of displacements and the number of displacements per stack
 void StackedVolume::countDisplacements(int& total, float& per_stack_pair)

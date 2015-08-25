@@ -72,6 +72,7 @@ void CMergeTiles::run()
         if(!volume)
             throw iom::exception("Unable to start this step. A volume must be properly imported first.");
 
+        V3DPluginCallback* V3D_env = 0;
         if(pMergeTiles != 0)
         {
             // retrieve user's input
@@ -92,14 +93,15 @@ void CMergeTiles::run()
             int blending_algo = pMergeTiles->blendingalbo_cbox->currentIndex();
             std::string img_format = pMergeTiles->img_format_cbox->currentText().toStdString().c_str();
             int img_depth = pMergeTiles->imgdepth_cbox->currentText().section(" ", 0, 0).toInt();
+            V3D_env = pMergeTiles->V3D_env;
 
             // launch merging
-            if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(BlockVolume::id)==0 )
+            if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(vm::BlockVolume::id)==0 )
                 stitcher.mergeTilesVaa3DRaw(volumedir, sliceheight, slicewidth, slicedepth, resolutions,excludenonstitchables, row0, row1, col0, col1,
-                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
-            else if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(StackedVolume::id)==0 )
+                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, HALVE_BY_MEAN, false, false, true, img_format.c_str(), img_depth, false );
+            else if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(vm::StackedVolume::id)==0 )
                 stitcher.mergeTiles(volumedir, sliceheight, slicewidth, resolutions,excludenonstitchables, row0, row1, col0, col1,
-                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
+                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, HALVE_BY_MEAN, false, true, img_format.c_str(), img_depth );
             else
                 throw iom::exception(vm::strprintf("Unsupported output volume format plugin \"%s\"", vm::VOLUME_OUTPUT_FORMAT_PLUGIN.c_str()).c_str());
 
@@ -132,10 +134,7 @@ void CMergeTiles::run()
                 // use Vaa3D to load all slices
                 std::vector<Image4DSimple*> slices;
                 for (int k = 0; k < slices_list.size(); k++)
-                {
-                    slices.push_back(new Image4DSimple());
-                    slices.back()->loadImage(const_cast<char*>(QString(voldir.path().append("/").append(slices_list.at(k).toLocal8Bit().constData())).toStdString().c_str()), false);
-                }
+                    slices.push_back(V3D_env->loadImage(const_cast<char*>(QString(voldir.path().append("/").append(slices_list.at(k).toLocal8Bit().constData())).toStdString().c_str())));
 
                 // allocate image data assuming all slices have the same X, Y, C dimensions and bitdepth
                 img = new Image4DSimple();

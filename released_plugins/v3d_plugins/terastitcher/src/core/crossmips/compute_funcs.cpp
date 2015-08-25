@@ -25,6 +25,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-04-06. Giulio.     @CHANGED corrected compute_NCC_alignment to deal with the case widthX = 1 which likely to be an anomaly
+* 2015-03-20. Giulio.     @CHANGED newu and newv have been moved as parameters in compute_Neighborhood
+* 2014-10-31. Giulio.     @CHANGED computations in compute_NCC are performed in double precision (and not in single precision) to avoit roundoff errors
+*/
+
 /*
  * compute_funcs.cpp
  *
@@ -33,12 +41,6 @@
  *
  *  Last revision: May, 31 2011
  */
-
-/******************
-*    CHANGELOG    *
-*******************
-* 2014-10-31. Giulio.     @CHANGED computations in compute_NCC are performed in double precision (and not in single precision) to avoit roundoff errors
-*/
 
 # include <math.h>
 # include <stdio.h>
@@ -81,13 +83,14 @@ void binary_search ( iom::real_t *a, int n, iom::real_t x, bool &found, int &pos
 	return;
 }
 
-/* given general parameters, the NCC map, its second dimension dimj and the index of NCC maximum
- * returns a measure of the horizontal (width1) and vertical (width2) half widths of the NCC peak 
+/* given general parameters, the NCC map, its second dimension dimj, the index of NCC maximum
+ * and the extension of the map along the vertical (wRangeThr1) and horizontal (wRangeThr2) directions
+ * returns a measure of the vertical (width1) and horizontal (width2) half widths of the NCC peak 
  * (i.e. the largest distance of the pixel equal to a given fraction of the maximum and the 
  * maximum itself)
  */
 static
-void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, int ind, bool failed, int &width1, int &width2 ) {
+void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, int ind, int wRangeThr1, int wRangeThr2, bool failed, int &width1, int &width2 ) {
 	bool found;
 
 	iom::real_t thr = NCC_params->widthThr * NCC[ind];
@@ -101,13 +104,13 @@ void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, in
 		// evaluates first maximum width parallel to second dimension (horizontal)
 		found = false;
 		width2 = 1;
-		while ( width2<=NCC_params->wRangeThr && !found )
+		while ( width2<=wRangeThr2 && !found )
 			if ( NCC[ind-width2] <= thr )
 				found = true;
 			else
 				width2++;
 		found = false;
-		while ( width2<=NCC_params->wRangeThr && !found )
+		while ( width2<=wRangeThr2 && !found )
 			if ( NCC[ind+width2] <= thr )
 				found = true;
 			else
@@ -115,16 +118,16 @@ void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, in
 		if ( !found )
 			width2 = NCC_params->INF_W;
 
-		// evaluates maximum width parallel to first dimension (horizontal)
+		// evaluates maximum width parallel to first dimension (vertical)
 		found = false;
 		width1 = 1;
-		while ( width1<=NCC_params->wRangeThr && !found )
+		while ( width1<=wRangeThr1 && !found )
 			if ( NCC[ind-width1*dimj] <= thr )
 				found = true;
 			else
 				width1++;
 		found = false;
-		while ( width1<=NCC_params->wRangeThr && !found )
+		while ( width1<=wRangeThr1 && !found )
 			if ( NCC[ind+width1*dimj] <= thr )
 				found = true;
 			else
@@ -141,10 +144,21 @@ void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, in
  * and 2 for depth), and two alignments d1 and d2 with the corresponding NCC maxima (peak_val1
  * and peak_val2) and half widths (width1 and width2), returns in result the aligment for that 
  * with a measure of its reliability and potential error 
+ *
+ * 2015-04-06. Giulio. The algorithm has been vcorrected as follows:
+ * when widthX is 1 the alignment is unreliable since it is very likely that it is due to
+ * a spike or a too little NCC map (e.g. because the stack is very thin); for this reason
+ * parametes width1 and width2 are first checked and changes if equal to 1
  */
 static
 void compute_NCC_alignment ( NCC_parms_t *NCC_params, NCC_descr_t *result, int i,
 							int d1, iom::real_t peak_val1, int width1, int d2, iom::real_t peak_val2, int width2 ) {
+
+	// check width1 and widthw
+	if ( width1 == 1 ) // alignment 1 is unreliable
+		width1 = NCC_params->INF_W;
+	if ( width2 == 1 ) // alignment 1 is unreliable
+		width2 = NCC_params->INF_W;
 
 	// check how many values contribute to final alignment
 	if ( peak_val1 >= NCC_params->maxThr && width1 < NCC_params->INF_W ) // first value may be considered
@@ -559,7 +573,7 @@ int compute_MAX_ind ( iom::real_t *vect, int len ) {
 }
 
 
-void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int ind_max, 
+void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int newu, int newv, int ind_max, 
 						   iom::real_t *MIP_1, iom::real_t *MIP_2, int dimu, int dimv, iom::real_t *NCCnew, int &du, int &dv, bool &failed) throw (iom::exception){
 
 	// suffixes u and v denote the vertical and the horizontal dimensions, respectively
@@ -567,8 +581,9 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delay
 
 	int u, v, i, d; // for variables
 
-	int newu = NCC_params->wRangeThr; // vertical half dimension of NCCnew 
-	int newv = NCC_params->wRangeThr; // horizontal half dimension of NCCnew
+	// 2015-03-20. Giulio. @CHANGED newu and newv are moved as parameters
+	//int newu = NCC_params->wRangeThr; // vertical half dimension of NCCnew 
+	//int newv = NCC_params->wRangeThr; // horizontal half dimension of NCCnew
 
 	int ind_ref; // index of the center of NCCnew
 
@@ -718,9 +733,9 @@ void compute_Alignment( NCC_parms_t *NCC_params, iom::real_t *NCC_xy, iom::real_
 
 	int w1x, w2x, w1y, w2y, w1z, w2z;
 
-	compute_NCC_width(NCC_params,NCC_xy,(2*dimj+1),(dimi*(2*dimj+1)+dimj),failed_xy, w1y,w1x);
-	compute_NCC_width(NCC_params,NCC_xz,(2*dimk+1),(dimi*(2*dimk+1)+dimk),failed_xz, w1z,w2x);
-	compute_NCC_width(NCC_params,NCC_yz,(2*dimk+1),(dimj*(2*dimk+1)+dimk),failed_yz, w2z,w2y);
+	compute_NCC_width(NCC_params,NCC_xy,(2*dimj+1),(dimi*(2*dimj+1)+dimj),NCC_params->wRangeThr_i,NCC_params->wRangeThr_j,failed_xy, w1x,w1y);
+	compute_NCC_width(NCC_params,NCC_xz,(2*dimk+1),(dimi*(2*dimk+1)+dimk),NCC_params->wRangeThr_i,NCC_params->wRangeThr_k,failed_xz, w2x,w1z);
+	compute_NCC_width(NCC_params,NCC_yz,(2*dimk+1),(dimj*(2*dimk+1)+dimk),NCC_params->wRangeThr_j,NCC_params->wRangeThr_k,failed_yz, w2y,w2z);
 
 	compute_NCC_alignment(NCC_params,result,0,dx1,NCC_xy[(dimi*(2*dimj+1)+dimj)],w1x,dx2,NCC_xz[(dimi*(2*dimk+1)+dimk)],w2x);
 	compute_NCC_alignment(NCC_params,result,1,dy1,NCC_xy[(dimi*(2*dimj+1)+dimj)],w1y,dy2,NCC_yz[(dimj*(2*dimk+1)+dimk)],w2y);

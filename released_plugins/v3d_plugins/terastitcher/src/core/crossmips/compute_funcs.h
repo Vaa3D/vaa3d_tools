@@ -25,6 +25,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-20. Giulio.     @CHANGED newu and newv have been moved as parameters in compute_Neighborhood
+*/
+
 /*
  * compute_funcs.h
  *
@@ -59,10 +65,10 @@ iom::real_t compute_NCC ( iom::real_t *im1, iom::real_t *im2, int dimi, int dimj
 
 int compute_MAX_ind ( iom::real_t *vect, int len );
 
-void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int ind, 
+void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int newu, int newv, int ind, 
 						    iom::real_t *MIP_1, iom::real_t *MIP_2, int dimu, int dimv, iom::real_t *NCCnew, int &du, int &dv, bool &failed)  throw (iom::exception);
-/* given an NCC map with dimensions delayu x delayv around the initial alignment, the index ind of its maximum
- * and an empty NCC map NCCnew with dimensions NCC_params->wRangeThr x NCC_params->wRangeThr,
+/* given an NCC map with dimensions delayu x delayv around the initial alignment, extensions newu and newu
+ * of the new NCC map, the index ind of its maximum and an empty NCC map NCCnew with dimensions NCC_params->wRangeThr x NCC_params->wRangeThr,
  * returns in NCCnew the NCC map with center in the NCC maximum of MIPs MIP_1 and MIP_2, with dimensions dimu x dimv;
  * also returns the position (du,dv) of this maximum, relative to the initial alignment
  */

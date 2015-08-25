@@ -65,6 +65,11 @@ namespace volumemanager
     ---------------------------------------------------------------------------------------------------------------------------*/
     class VirtualVolume;
 	class VirtualVolumeFactory;
+	class VirtualStack;
+	class StackedVolume;
+	class BlockVolume;
+	class Stack;
+	class Block;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 

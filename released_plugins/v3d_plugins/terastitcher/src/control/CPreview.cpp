@@ -71,12 +71,14 @@ void CPreview::run()
         // stitch selected slice
         /**/tsp::debug(tsp::LEV_MAX, strprintf("stitch slice %d", slice_index).c_str(), __tsp__current__function__);
         stitcher.mergeTiles("", -1, -1, 0, false, -1, -1, -1, -1, slice_index, slice_index+1,
-                            false, false, S_SHOW_STACK_MARGIN, true, false, "tif", bitdepth);
+                            false, false, S_SHOW_STACK_MARGIN, HALVE_BY_MEAN, true, false, "tif", bitdepth);
 
         // load slice image with Vaa3D
         /**/tsp::debug(tsp::LEV_MAX, "load slice", __tsp__current__function__);
-        Image4DSimple* img = new Image4DSimple();
-        img->loadImage(const_cast<char*>(iom::strprintf("%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR()).c_str()));
+
+        Image4DSimple *img = V3D_env->loadImage(const_cast<char*>(iom::strprintf("%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR()).c_str()));
+        //Image4DSimple* img = new Image4DSimple();
+        //img->loadImage(const_cast<char*>(iom::strprintf("%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR()).c_str()));
 
         //everything went OK
         emit sendOperationOutcome(0, img);

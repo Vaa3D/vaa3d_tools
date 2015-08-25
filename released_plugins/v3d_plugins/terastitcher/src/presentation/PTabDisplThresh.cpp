@@ -170,7 +170,7 @@ void PTabDisplThresh::start()
             throw iom::exception("A volume must be properly imported first. Please perform the Import step.");
 
         //asking confirmation to continue when overwriting existing XML file
-        if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
+        if( vm::StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
             PMain::instance()->modeAdvancedAction->isChecked() &&
               QMessageBox::information(this, "Warning", "An XML file with the same name was found and it will be overwritten.", "Continue", "Cancel"))
         {

@@ -120,7 +120,7 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     tabDisplThres->setEnabled(false);
     tabPlaceTiles = PTabPlaceTiles::instance(tabs, 4);
     tabPlaceTiles->setEnabled(false);
-    tabMergeTiles = PTabMergeTiles::instance(tabs, 5);
+    tabMergeTiles = PTabMergeTiles::instance(tabs, 5, V3D_env);
     tabMergeTiles->setEnabled(false);
     tabs->addTab(tabImport, tr("Importing"));
     tabs->addTab(tabDisplComp, tr("Aligning"));

@@ -28,7 +28,10 @@
 /******************
 *    CHANGELOG    *
 *******************
-* 2014-12-06. Giulio    . @ADDED createDirectoryHiererchy method.
+* 2015-08-16. Giulio.     @ADDED method for halvesampling only V and H dimensions
+* 2015-02-26. Giulio.     @ADDED a destructor to class StackStitcher
+* 2015-02-18. Giulio.     @ADDED declared class UnstitchedVolume as a friend of class StackStitcher
+* 2014-12-06. Giulio.     @ADDED createDirectoryHiererchy method.
 * 2014-09-12. Alessandro. @ADDED [z0, z1] subdata selection along Z in the 'computeDisplacements()' method.
 * 2014-09-09. Alessandro. @CHANGED. Black pixels (=0) are ignored in 'sinusoidal_blending()' function (especially useful in 'sparse data' mode).
 * 2014-09-02. Alessandro. @FIXED major bug in 'getStripe()' method. Argument 2 ('d_index') has 'short' type, but it should have at least 'int'.
@@ -36,6 +39,7 @@
 
 #ifndef STACK_STITCHER_H
 #define STACK_STITCHER_H
+
 
 #include <math.h>
 #include "S_config.h"
@@ -60,6 +64,8 @@ class StackRestorer;
 
 class StackStitcher
 {
+	friend class UnstitchedVolume; // 2015-02-18. Giulio. added unstitched volume
+
 	private:
 
 		/******OBJECT MEMBERS******/
@@ -148,11 +154,20 @@ class StackStitcher
 		* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 		* to store its halvesampled version without allocating any additional resources.
 		**************************************************************************************************************/
-		static void halveSample(iom::real_t* img, int height, int width, int depth);
+		static void halveSample(iom::real_t* img, int height, int width, int depth, int method = HALVE_BY_MEAN );
+
+		/*************************************************************************************************************
+		* Performs downsampling at a halved frequency on the given 3D image along V and H dimensions only.  The given 
+		* image is overwritten in order to store its halvesampled version without allocating any additional resources.
+		**************************************************************************************************************/
+		static void halveSample2D(iom::real_t* img, int height, int width, int depth, int method = HALVE_BY_MEAN );
 
 	public:
 
         StackStitcher(volumemanager::VirtualVolume* _volume);
+
+		// WARNING: the distructor does not deallocate the 'volume' field
+		~StackStitcher(void);
 
 		// compute pairwise displacements
 		// 2014-09-12. Alessandro. @ADDED [z0, z1] subdata selection along Z in the 'computeDisplacements()' method.
@@ -238,7 +253,7 @@ class StackStitcher
 		void mergeTiles(std::string output_path, int slice_height = -1, int slice_width = -1, bool* resolutions = NULL, 
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
-						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+						int blending_algo=S_SINUSOIDAL_BLENDING, int method = HALVE_BY_MEAN, bool test_mode=false, bool show_progress_bar= true,
 						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
 		
 
@@ -303,7 +318,7 @@ class StackStitcher
 		void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
 								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
-								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								int blending_algo=S_SINUSOIDAL_BLENDING, int method = HALVE_BY_MEAN, bool isotropic=false, bool test_mode=false, bool show_progress_bar= true,
 								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
 
 
@@ -315,7 +330,7 @@ class StackStitcher
 		void createDirectoryHierarchy (std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
 								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
-								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								int blending_algo=S_SINUSOIDAL_BLENDING, int method = HALVE_BY_MEAN, bool isotropic=false, bool test_mode=false, bool show_progress_bar= true,
 								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
 
 		/*************************************************************************************************************
@@ -326,7 +341,7 @@ class StackStitcher
 		void mdataGenerator (std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
 								bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 								int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
-								int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+								int blending_algo=S_SINUSOIDAL_BLENDING, int method = HALVE_BY_MEAN, bool isotropic=false, bool test_mode=false, bool show_progress_bar= true,
 								const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP, bool par_mode=false) throw (iom::exception);
 };
 

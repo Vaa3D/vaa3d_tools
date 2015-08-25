@@ -53,11 +53,13 @@ void PTabMergeTiles::uninstance()
     }
 }
 
-PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidget(), container(_container), tab_index(_tab_index)
+PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index, V3DPluginCallback *_V3D_env) : QWidget(), container(_container), tab_index(_tab_index)
 {
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabMergeTiles created\n", this->thread()->currentThreadId());
     #endif
+
+    V3D_env = _V3D_env;
 
     //basic panel widgets
     basic_panel = new QWidget();
@@ -835,7 +837,7 @@ void PTabMergeTiles::volumeformat_changed(QString str)
 {
     if(str.compare("2Dseries") == 0)
     {
-        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = StackedVolume::id;
+        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = vm::StackedVolume::id;
         block_height_field->setEnabled(false);
         block_height_field->setValue(-1);
         block_width_field->setEnabled(false);
@@ -845,7 +847,7 @@ void PTabMergeTiles::volumeformat_changed(QString str)
     }
     else if(str.compare("3Dseries") == 0)
     {
-        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = BlockVolume::id;
+        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = vm::BlockVolume::id;
         block_height_field->setEnabled(false);
         block_height_field->setValue(-1);
         block_width_field->setEnabled(false);
@@ -853,9 +855,9 @@ void PTabMergeTiles::volumeformat_changed(QString str)
         block_depth_field->setEnabled(true);
         block_depth_field->setValue(256);
     }
-    else if(str.compare(StackedVolume::id.c_str()) == 0)
+    else if(str.compare(vm::StackedVolume::id.c_str()) == 0)
     {
-        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = StackedVolume::id;
+        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = vm::StackedVolume::id;
         block_height_field->setEnabled(true);
         block_height_field->setValue(512);
         block_width_field->setEnabled(true);
@@ -863,9 +865,9 @@ void PTabMergeTiles::volumeformat_changed(QString str)
         block_depth_field->setEnabled(false);
         block_depth_field->setValue(-1);
     }
-    else if(str.compare(BlockVolume::id.c_str()) == 0)
+    else if(str.compare(vm::BlockVolume::id.c_str()) == 0)
     {
-        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = BlockVolume::id;
+        vm::VOLUME_OUTPUT_FORMAT_PLUGIN = vm::BlockVolume::id;
         block_height_field->setEnabled(true);
         block_height_field->setValue(512);
         block_width_field->setEnabled(true);

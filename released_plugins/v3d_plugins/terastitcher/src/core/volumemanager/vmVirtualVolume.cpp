@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-02-26. Giulio.     @ADDED dummy initialization of fields DIM_C and BYTESxCHAN in constructor
 * 2014-09-10. Alessandro. @ADDED 'getVolumeFormat' method to be applied on xml file.
 * 2014-09-01. Alessandro. @FIXED 'extractCoordinates()' method to deal with sparse tiles w/o causing crashes.
 * 2014-09-01. Alessandro. @ADDED 'name2coordZ()' utility method to extract the z-coordinate substring from a given filename.
@@ -46,8 +47,6 @@
 using namespace std;
 using namespace vm;
 
-class VirtualStack;
-
 float	VirtualVolume::getORG_V()					{return ORG_V;}
 float	VirtualVolume::getORG_H()					{return ORG_H;}
 float	VirtualVolume::getORG_D()					{return ORG_D;}
@@ -62,6 +61,8 @@ float	VirtualVolume::getMEC_H()					{return MEC_H;}
 int		VirtualVolume::getN_ROWS()					{return this->N_ROWS;}
 int		VirtualVolume::getN_COLS()					{return this->N_COLS;}
 int		VirtualVolume::getN_SLICES()				{return this->N_SLICES;}
+int		VirtualVolume::getDIM_C()					{return this->DIM_C;}
+int		VirtualVolume::getBYTESxCHAN()				{return this->BYTESxCHAN;}
 //char*   VirtualVolume::getSTACKS_DIR()				{return this->stacks_dir;}
 int		VirtualVolume::getOVERLAP_V()				{return (int)(getStacksHeight() - MEC_V/VXL_V);}
 int		VirtualVolume::getOVERLAP_H()				{return (int)(getStacksWidth() -  MEC_H/VXL_H);}
@@ -84,6 +85,9 @@ void VirtualVolume::init() throw (iom::exception)
 
 	N_ROWS = N_COLS = 0;
 	N_SLICES = 0;
+
+	DIM_C = 0;
+	BYTESxCHAN = 0;
 }
 
 //returns true if file exists at the given filepath

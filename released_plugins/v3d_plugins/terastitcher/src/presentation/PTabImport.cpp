@@ -536,7 +536,7 @@ void PTabImport::preview_button_clicked()
     int bitdepth = 8;
     if(imgdepth_cbox->currentText().compare("16 bits") == 0)
         bitdepth = 16;
-    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_spinbox->value()-1, bitdepth);
+    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_spinbox->value()-1, bitdepth, PMain::instance()->V3D_env);
     CPreview::instance()->start();
 
 }
@@ -559,7 +559,7 @@ void PTabImport::start()
 
         // check the inserted path exists
         string import_path = path_field->text().toStdString();
-        if(!StackedVolume::fileExists(import_path.c_str()))
+        if(!vm::StackedVolume::fileExists(import_path.c_str()))
             throw iom::exception("The inserted path does not exist!");
 
         // check user input
@@ -760,14 +760,14 @@ void PTabImport::volumePathChanged(QString path)
 //                vol_format_cbox->setVisible(true);
 
             // ...and suggest an i/o plugin
-            if(vformat.compare(StackedVolume::id) == 0)
+            if(vformat.compare(vm::StackedVolume::id) == 0)
             {
                 index = imin_plugin_cbox->findText("tiff2D");
                 if ( index != -1 ) { // -1 for not found
                    imin_plugin_cbox->setCurrentIndex(index);
                 }
             }
-            else if(vformat.compare(BlockVolume::id) == 0)
+            else if(vformat.compare(vm::BlockVolume::id) == 0)
             {
                 index = imin_plugin_cbox->findText("tiff3D");
                 if ( index != -1 ) { // -1 for not found
@@ -876,14 +876,14 @@ void PTabImport::volformatChanged(QString str)
 
     // suggest image plugin
     int index = 0;
-    if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(StackedVolume::id) == 0)
+    if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(vm::StackedVolume::id) == 0)
     {
         index = imin_plugin_cbox->findText("tiff2D");
         if ( index != -1 ) { // -1 for not found
            imin_plugin_cbox->setCurrentIndex(index);
         }
     }
-    else if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(BlockVolume::id) == 0)
+    else if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(vm::BlockVolume::id) == 0)
     {
         index = imin_plugin_cbox->findText("tiff3D");
         if ( index != -1 ) { // -1 for not found

@@ -44,11 +44,12 @@ class terastitcher::PTabMergeTiles : public QWidget
     * instantiated by calling static method "istance(...)"
     **********************************************************************************/
     static PTabMergeTiles* uniqueInstance;
-    PTabMergeTiles(QMyTabWidget* _container, int _tab_index);
+    PTabMergeTiles(QMyTabWidget* _container, int _tab_index, V3DPluginCallback* _V3D_env);
 
     //members
     QMyTabWidget* container;        //tabs container
     int tab_index;                  //tab index
+    V3DPluginCallback* V3D_env;
 
     //basic settings panel widgets
     QWidget* basic_panel;
@@ -101,10 +102,10 @@ public:
     * Singleton design pattern: this class can have one instance only,  which must be
     * instantiated by calling static method "istance(...)"
     ***********************************************************************************/
-    static PTabMergeTiles* instance(QMyTabWidget* _container, int _tab_index)
+    static PTabMergeTiles* instance(QMyTabWidget* _container, int _tab_index, V3DPluginCallback* _V3D_env)
     {
-        if (uniqueInstance == NULL)
-            uniqueInstance = new PTabMergeTiles(_container, _tab_index);
+        if (uniqueInstance == 0)
+            uniqueInstance = new PTabMergeTiles(_container, _tab_index, _V3D_env);
         return uniqueInstance;
     }
     static PTabMergeTiles* getInstance(){return uniqueInstance;}

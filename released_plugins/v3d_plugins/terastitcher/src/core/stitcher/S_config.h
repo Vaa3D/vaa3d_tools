@@ -44,6 +44,8 @@
 #define S_SUBVOL_DIM_D_DEFAULT 200
 #define S_OVERLAP_MIN 40
 #define S_SUBVOL_DIM_D_MIN 50
+# define HALVE_BY_MEAN 1
+# define HALVE_BY_MAX  2
 
 //*** FINDING ABSOLUTE TILE POSITIONS PHASE***
 #define S_FATPM_SP_TREE 0				//spanning tree modality for finding absolute tile positions

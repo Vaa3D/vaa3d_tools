@@ -910,7 +910,7 @@ VirtualVolume* VirtualVolume::instance_format(const char* path, std::string form
     // directory formats
     if(isDirectory(path))
     {
-        if(format.compare(TILED_MC_FORMAT) == 0)
+        if((format.compare(TILED_MC_FORMAT) == 0) || (format.compare(TILED_MC_TIF3D_FORMAT) == 0))
             volume = new TiledMCVolume(path);
         else if(format.compare(STACKED_FORMAT) == 0)
             volume = new StackedVolume(path);

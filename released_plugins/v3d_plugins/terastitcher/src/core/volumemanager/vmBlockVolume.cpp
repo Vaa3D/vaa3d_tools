@@ -25,6 +25,11 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-07-30. Giluio.     @FIXED bug in applyReference system.
+* 2015-07-30. Giluio.     @FIXED bug in extractCoordinates.
+* 2015-07-22. Giluio.     @ADDED support for spase data (see comments below).
+* 2015-06-12. Giulio      @ADDED 'check' method to check completeness and coherence of a volume
+* 2015-02-26. Giulio.     @ADDED implementation of initChannels private method to initialize fields DIM_C and BYTESxCHAN
 * 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in loadXML and initFromXML methods.
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-11-06. Giulio.     @ADDED saved reference system into XML file
@@ -37,10 +42,20 @@
 * 2014-09-02. Alessandro. @FIXED both 'loadBinaryMetadata()' and 'saveBinaryMetadata()' as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
 */
 
- 
-#include "vmBlockVolume.h"
-#include "S_config.h"
-//#include <string>
+/****************************
+* Management of sparse data *
+*****************************
+*
+* If --sparse_data flag is set, in the import step, after reading files names missing blocks are detected
+*
+* Each tile is a list of blocks some of which may be empty
+* empty blocks have a null pointer as file name, but have first index and size correctly set
+* this structure is binarized into the mdata.bin file
+* the z_ranges variable store for each tile the intervals corresponding to exisiting blocks
+* thi information is stored into the xml file
+* both internal tile structure and z_ranges field are set every time the volume is created 
+*/
+
 #ifdef _WIN32
 #include "dirent_win.h"
 #else
@@ -50,14 +65,19 @@
 #include <fstream>
 #include <sstream>
 #include <set>
+#include "vmBlockVolume.h"
+#include "S_config.h"
+//#include <string>
+
+using namespace std;
+using namespace iom;
+using namespace vm;
 
 // 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
 const std::string BlockVolume::id = "TiledXY|3Dseries";
 const std::string BlockVolume::creator_id1 = volumemanager::VirtualVolumeFactory::registerPluginCreatorXML(&createFromXML, BlockVolume::id);
 const std::string BlockVolume::creator_id2 = volumemanager::VirtualVolumeFactory::registerPluginCreatorData(&createFromData, BlockVolume::id);
 
-using namespace std;
-using namespace iom;
 
 BlockVolume::BlockVolume(const char* _stacks_dir, vm::ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata) throw (iom::exception)
 	: VirtualVolume(_stacks_dir, _reference_system, VXL_1, VXL_2, VXL_3)
@@ -81,6 +101,23 @@ BlockVolume::BlockVolume(const char* _stacks_dir, vm::ref_sys _reference_system,
 		init();
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
 		saveBinaryMetadata(mdata_filepath);
+	}
+
+	initChannels();
+
+	// check all stacks have the same number of slices (@ADDED by Giulio on 2015-07-22)
+	if(!vm::SPARSE_DATA)
+	{
+		for(int i=0; i<N_ROWS; i++)
+			for(int j=0; j<N_COLS; j++)
+			{
+				if(BLOCKS[i][j]->getDEPTH() != N_SLICES)
+				{
+					throw iom::exception(iom::strprintf("in BlockVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d. "
+						"Please activate the sparse data option if stacks are not complete",
+						BLOCKS[0][0]->getDIR_NAME(), BLOCKS[0][0]->getDEPTH(), BLOCKS[i][j]->getDIR_NAME(), BLOCKS[i][j]->getDEPTH()).c_str());
+				}
+			}
 	}
 }
 
@@ -120,6 +157,23 @@ BlockVolume::BlockVolume(const char *xml_filepath, bool overwrite_mdata) throw (
 		// load xml content and generate mdata.bin
 		initFromXML(xml_filepath);
 		saveBinaryMetadata(mdata_filepath);
+	}
+
+	initChannels();
+
+	// check all stacks have the same number of slices (@ADDED by Giulio on 2015-07-22)
+	if(!vm::SPARSE_DATA)
+	{
+		for(int i=0; i<N_ROWS; i++)
+			for(int j=0; j<N_COLS; j++)
+			{
+				if(BLOCKS[i][j]->getDEPTH() != N_SLICES)
+				{
+					throw iom::exception(iom::strprintf("in BlockVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d. "
+						"Please activate the sparse data option if stacks are not complete",
+						BLOCKS[0][0]->getDIR_NAME(), BLOCKS[0][0]->getDEPTH(), BLOCKS[i][j]->getDIR_NAME(), BLOCKS[i][j]->getDEPTH()).c_str());
+				}
+			}
 	}
 }
 
@@ -232,6 +286,46 @@ void BlockVolume::init() throw (iom::exception)
 	if(N_ROWS == 0 || N_COLS == 0)
 		throw iom::exception("in BlockVolume::init(...): Unable to find stacks in the given directory");
 
+	// 2015-07-22. Giulio. @ADDED sparse data support
+	// precondition: files must be named according to one of the two formats supported (see 'name2coordZ()')
+	if(SPARSE_DATA)
+	{
+		// compute N_SLICES as the cardinality of the set of all Z-coordinates extracted from the filenames of the entire volume
+		int start_z = 999999; //atoi(name2coordZ(stacks_list.front()->FILENAMES[0]).c_str());
+		int end_z = 0;
+		int start_cur, end_cur;
+		N_SLICES = 0;
+		for(list<Block*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++) {
+			if ( (*i)->N_BLOCKS ) {
+				start_cur = atoi(name2coordZ((*i)->FILENAMES[0]).c_str());
+				if ( start_cur < start_z )
+					start_z = start_cur;
+				end_cur = atoi(name2coordZ((*i)->FILENAMES[(*i)->N_BLOCKS-1]).c_str()) + (int)floor((*i)->BLOCK_SIZE[(*i)->N_BLOCKS-1] * 10 * VXL_D + 0.5);
+				if ( end_cur > end_z )
+					end_z = end_cur;
+				if ( N_SLICES < (*i)->DEPTH )
+					N_SLICES = (*i)->DEPTH;
+			}
+		}
+		// check if no stacks are complete
+		// WARNING: VXL_D is assumed positive, it should be used the absolute value
+		if ( N_SLICES < ((int)floor((float)(end_z - start_z) / (10 * VXL_D) + 0.5)) )
+			N_SLICES = (int)floor((float)(end_z - start_z) / (10 * VXL_D) + 0.5);
+
+		// check non-zero N_SLICES
+		if (N_SLICES == 0)
+			throw iom::exception("in BlockVolume::init(...): Unable to find image files in the given directory");
+
+		// set the origin along D direction to overcome the possible incompleteness of first block
+		ORG_D = start_z/10000.0F;
+
+		// for each tile, compute the range of available slices
+		std::pair<int,int> z_coords(start_z,end_z);
+		for(list<Block*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++) {
+			(*i)->compute_z_ranges(&z_coords);
+		}
+	}
+
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
 	BLOCKS = new Block**[N_ROWS];
 	for(int row=0; row < N_ROWS; row++)
@@ -242,6 +336,12 @@ void BlockVolume::init() throw (iom::exception)
 	// 2014-09-09. Alessandro. @FIXED both 'init()' and 'initFromXML()' methods to deal with empty stacks. Added call of 'normalize_stacks_attributes()' method.
 	// make stacks have the same attributes
 	normalize_stacks_attributes();
+}
+
+void BlockVolume::initChannels()  throw (iom::exception) 
+{
+	DIM_C = BLOCKS[0][0]->getN_CHANS();
+	BYTESxCHAN = BLOCKS[0][0]->getN_BYTESxCHAN();
 }
 
 void BlockVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception)
@@ -277,10 +377,22 @@ void BlockVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1
 			this->mirror(vm::axis(1));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
-		extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
-		ORG_V = computed_ORG_2/10000.0F;
+
+		// 2015-07-30. Giulio. @FIXED bug: sparse data support
+		if(SPARSE_DATA)
+		{
+			extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2);
+		}
+		else {
+			// 2014-09-01. Alessandro. @FIXED: check that this tile has a slice at z=0. Otherwise it's not possible to compute the origin.
+			if(BLOCKS[0][0]->isComplete(0,0) == false)
+				throw iom::exception(vm::strprintf("in StackedVolume::applyReferenceSystem(): cannot compute origin. Tile (0,0) [%s] has no slice at z=0", BLOCKS[0][0]->getDIR_NAME()).c_str());
+
+			extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
+			ORG_D = computed_ORG_3/10000.0F;
+		}
+		ORG_V = computed_ORG_2/10000.0F; // 2015-08-03. Giulio. @FIXED bug
 		ORG_H = computed_ORG_1/10000.0F;
-		ORG_D = computed_ORG_3/10000.0F;
 		VXL_V = VXL_2 ;
 		VXL_H = VXL_1 ; 
 		VXL_D = VXL_3 ;
@@ -311,10 +423,22 @@ void BlockVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1
 			this->mirror(vm::axis(2));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
-		extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
+		
+		// 2015-07-22. Giulio. @ADDED sparse data support
+		if(SPARSE_DATA)
+		{
+			extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2);
+		}
+		else {
+			// 2014-09-01. Alessandro. @FIXED: check that this tile has a slice at z=0. Otherwise it's not possible to compute the origin.
+			if(BLOCKS[0][0]->isComplete(0,0) == false)
+				throw iom::exception(vm::strprintf("in StackedVolume::applyReferenceSystem(): cannot compute origin. Tile (0,0) [%s] has no slice at z=0", BLOCKS[0][0]->getDIR_NAME()).c_str());
+
+			extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
+			ORG_D = computed_ORG_3/10000.0F;
+		}
 		ORG_V = computed_ORG_1/10000.0F;
 		ORG_H = computed_ORG_2/10000.0F;
-		ORG_D = computed_ORG_3/10000.0F;	
 		VXL_V = VXL_1;
 		VXL_H = VXL_2;
 		VXL_D = VXL_3;
@@ -688,6 +812,45 @@ void BlockVolume::mirror(vm::axis mrr_axis)
 
 	BLOCKS = new_STACK_2D_ARRAY;
 }
+
+
+//check if volume is complete and coherent
+bool BlockVolume::check(const char *errlogFileName) throw (iom::exception)
+{
+	bool ok = true;
+	FILE *errlogf;
+
+	int depth = BLOCKS[0][0]->getDEPTH();
+
+	for ( int i=0; i<N_ROWS; i++ ) {
+		for ( int j=0; j<N_COLS; j++ ) {
+			if ( depth != BLOCKS[i][j]->getDEPTH() ) {
+				if ( ok ) { // first anomaly: open and initialize the errlog file
+					if ( errlogFileName ) {
+						if ( (errlogf = fopen(errlogFileName,"w")) == 0 ) {
+							char errMsg[2000];
+							sprintf(errMsg,"in BlockVolume::check(errlogFileName = \"%s\") : unable to open log file", errlogFileName);
+							throw iom::exception(errMsg);
+						}
+
+						fprintf(errlogf,"errlog file of volume (BlockVolume): \"%s\"\n",stacks_dir);
+						fprintf(errlogf,"\tdepth: %d\n",depth);
+					}
+
+					ok = false;
+				}
+				if ( errlogFileName ) 
+					fprintf(errlogf,"\trow=%d, col=%d, depth=%d\n",i,j,BLOCKS[i][j]->getDEPTH());
+			}
+		}
+	}
+
+	if ( errlogFileName && !ok ) // there are anomalies: close the errlog file
+		fclose(errlogf);
+
+	return ok;
+}
+
 
 void BlockVolume::loadXML(const char *xml_filepath) throw (iom::exception)
 {

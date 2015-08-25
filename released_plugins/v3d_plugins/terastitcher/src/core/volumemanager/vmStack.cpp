@@ -28,6 +28,9 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-08-24. Giulio.     @FIXED memory leak in loadImageStack
+* 2015-02-28. Giulio.     @ADDED saving of fields N_CHANS and N_BYTESxCHAN in the xml files
+* 2015-02-26. Giulio.     @ADDED initialization of fields N_CHANS and N_BYTESxCHAN in constructor; this information is NOT saved in mdata.bin and xml files
 * 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
 * 2015-01-17. Alessandro. @ADDED support for all-in-one-folder data (import from xml only).
 * 2014-09-12. Alessandro. @FIXED 'init()' method to deal with non-empty tiles.
@@ -55,7 +58,7 @@
 #include "IOPluginAPI.h"
 
 using namespace std;
-using namespace volumemanager;
+using namespace vm;
 using namespace iom;
 
 //CONSTRUCTOR WITH ARGUMENTS
@@ -120,6 +123,30 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 	COL_INDEX = _COL_INDEX;
 
 	unBinarizeFrom(bin_file);
+}
+
+Stack::~Stack()
+{
+	#if VM_VERBOSE > 3
+	printf("\t\t\t\tin Stack[%d,%d]::~Stack()\n",ROW_INDEX, COL_INDEX);
+	#endif
+
+	NORTH.clear();
+	EAST.clear();
+	SOUTH.clear();
+	WEST.clear();
+
+    if(FILENAMES)
+    {
+		for(int z=0; z<DEPTH; z++)
+			if(FILENAMES[z])
+				delete[] FILENAMES[z];
+		delete[] FILENAMES;
+	}
+	if(STACKED_IMAGE)
+		delete[] STACKED_IMAGE;
+	if(DIR_NAME)
+		delete[] DIR_NAME;
 }
 
 void Stack::init() throw (iom::exception)
@@ -200,37 +227,12 @@ void Stack::init() throw (iom::exception)
     entries_lev3.clear();
 
     // extract HEIGHT and WIDTH attributes from first slice
-	int n_bytes_x_chan=0, n_chans=0;
-	iom::IOPluginFactory::getPlugin2D(iom::IMIN_PLUGIN)->readMetadata(vm::strprintf("%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[0]), WIDTH, HEIGHT, n_bytes_x_chan, n_chans);
+	iom::IOPluginFactory::getPlugin2D(iom::IMIN_PLUGIN)->readMetadata(vm::strprintf("%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[0]), WIDTH, HEIGHT, N_BYTESxCHAN, N_CHANS);
 
 	// 2014-09-12. Alessandro. @FIXED 'init()' method to deal with non-empty tiles.
 	// add to 'z_ranges' the full range
 	z_ranges.clear();
 	z_ranges.push_back(vm::interval<int>(0, DEPTH));
-}
-
-Stack::~Stack()
-{
-	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::~Stack()\n",ROW_INDEX, COL_INDEX);
-	#endif
-
-	NORTH.clear();
-	EAST.clear();
-	SOUTH.clear();
-	WEST.clear();
-
-    if(FILENAMES)
-    {
-		for(int z=0; z<DEPTH; z++)
-			if(FILENAMES[z])
-				delete[] FILENAMES[z];
-		delete[] FILENAMES;
-	}
-	if(STACKED_IMAGE)
-		delete[] STACKED_IMAGE;
-	if(DIR_NAME)
-		delete[] DIR_NAME;
 }
 
 //binarizing-unbinarizing methods
@@ -344,6 +346,8 @@ TiXmlElement* Stack::getXML()
 	#endif
 
 	TiXmlElement *xml_representation = new TiXmlElement("Stack");
+	xml_representation->SetAttribute("N_CHANS",N_CHANS);
+	xml_representation->SetAttribute("N_BYTESxCHAN",N_BYTESxCHAN);
 	xml_representation->SetAttribute("ROW",ROW_INDEX);
 	xml_representation->SetAttribute("COL",COL_INDEX);
 	xml_representation->SetAttribute("ABS_V",ABS_V);
@@ -389,6 +393,15 @@ throw (iom::exception)
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack[%d,%d]::loadXML(TiXmlElement *stack_node)\n",ROW_INDEX, COL_INDEX);
 	#endif
+
+	stack_node->QueryIntAttribute("N_CHANS",&N_CHANS);
+	stack_node->QueryIntAttribute("N_BYTESxCHAN",&N_BYTESxCHAN);
+	if ( N_CHANS == -1 ||N_BYTESxCHAN == -1 ) {
+		iom::warning(iom::strprintf("old xml file: missing N_CHANS and N_BYTESxCHAN tags; class data members set to 1.").c_str(), __iom__current__function__);
+		// data members set to 1 assuming that there is only one 8bits channel
+		N_CHANS = 1;
+		N_BYTESxCHAN = 1;
+	}
 
 	stack_node->QueryIntAttribute("ABS_V", &ABS_V);
 	stack_node->QueryIntAttribute("ABS_H", &ABS_H);
@@ -674,6 +687,9 @@ iom::real_t* Stack::loadImageStack(int first_file, int last_file) throw (iom::ex
 			}
 		}
 	}
+
+	// 2015-08-24. Giulio. data must be released
+	delete [] data;
 
 	return STACKED_IMAGE;
 }

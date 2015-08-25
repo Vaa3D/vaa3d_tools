@@ -60,9 +60,12 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
-SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
+#SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 #SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+
+#SOURCES += $$V3DMAINPATH/io/v3d_nrrd.cpp
+#LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -lteem
 
 #LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
 #            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib

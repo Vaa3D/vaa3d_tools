@@ -59,6 +59,7 @@ class terastitcher::CPreview : public QThread
         vm::VirtualVolume *volume;
         int slice_index;
         int bitdepth;
+        V3DPluginCallback* V3D_env;
 
     public:
 
@@ -76,7 +77,9 @@ class terastitcher::CPreview : public QThread
         ~CPreview();
 
         //SET methods
-        void setMembers(vm::VirtualVolume* _volume, int _slice_index, int _bitdepth){volume=_volume; slice_index=_slice_index; bitdepth = _bitdepth;}
+        void setMembers(vm::VirtualVolume* _volume, int _slice_index, int _bitdepth, V3DPluginCallback* _V3D_env){
+            volume=_volume; slice_index=_slice_index; bitdepth = _bitdepth; V3D_env = _V3D_env;
+        }
 
         //reset method
         void reset(){volume=0; slice_index=0;}

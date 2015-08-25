@@ -25,6 +25,12 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2015-03-20. Giulio.     @ADDED intialization of new fields wRangeThr_i, wRangeThr_j, wRangeThr_k of struct NCC_parms_t in execute
+*/
+
 #include "PDAlgoMIPNCC.h"
 #include "CrossMIPs.h"
 #include "DisplacementMIPNCC.h"
@@ -74,8 +80,11 @@ Displacement* PDAlgoMIPNCC::execute(iom::real_t *stk_A, uint32 A_dim_V, uint32 A
 	params.maxIter		= 2;
 	params.maxThr       = 0.10f;
 	params.UNR_NCC      = S_NCC_PEAK_MIN;
-    params.wRangeThr    = MIN(std::min(std::min(displ_max_V, displ_max_H), displ_max_D), S_NCC_WIDTH_MAX-1);
-	params.INF_W        = params.wRangeThr + 1;
+    //params.wRangeThr    = MIN(std::min(std::min(displ_max_V, displ_max_H), displ_max_D), S_NCC_WIDTH_MAX-1);
+    params.wRangeThr_i  = MIN(displ_max_V, S_NCC_WIDTH_MAX-1);
+    params.wRangeThr_j  = MIN(displ_max_H, S_NCC_WIDTH_MAX-1);
+    params.wRangeThr_k  = MIN(displ_max_D, S_NCC_WIDTH_MAX-1);
+	params.INF_W        = MAX(params.wRangeThr_i,MAX(params.wRangeThr_j,params.wRangeThr_k)) + 1;
 	params.widthThr     = 0.75f;
 	params.INV_COORD    = 0;
 
@@ -87,9 +96,9 @@ Displacement* PDAlgoMIPNCC::execute(iom::real_t *stk_A, uint32 A_dim_V, uint32 A
 	displ->delays[0]  = displ_max_V;
 	displ->delays[1]  = displ_max_H;
 	displ->delays[2]  = displ_max_D;
-    displ->wRangeThrs[0] = params.wRangeThr;
-    displ->wRangeThrs[1] = params.wRangeThr;
-    displ->wRangeThrs[2] = params.wRangeThr;
+    displ->wRangeThrs[0] = params.wRangeThr_i;
+    displ->wRangeThrs[1] = params.wRangeThr_j;
+    displ->wRangeThrs[2] = params.wRangeThr_k;
     displ->invWidths[0]  = params.INF_W;
     displ->invWidths[1]  = params.INF_W;
     displ->invWidths[2]  = params.INF_W;

@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-07-22. Giluio.     @ADDED supporto for spase data.
 * 2015-01-17. Alessandro. @ADDED constructor for initialization from XML.
 * 2015-01-17. Alessandro. @FIXED missing throw(iom::exception) declaration in many methods.
 * 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
@@ -34,11 +35,15 @@
 #ifndef _VM_BLOCK_H
 #define _VM_BLOCK_H
 
+#include <set>
+
+#include "volumemanager.config.h"
 #include "iomanager.config.h"
 #include "tinyxml.h"
-#include "vmVirtualStack.h" 
+#include "vmVirtualStack.h"
 
-class BlockVolume;
+
+
 class Displacement;
 
 //TYPE DEFINITIONS
@@ -46,16 +51,14 @@ class Displacement;
 //D0: first slice, D1: last slice, ind0: index of 1st block (containing D0), ind1: index of last block (containing D1) 
 typedef struct {int D0, D1, ind0, ind1;} Segm_t;
 
-class Block : public VirtualStack
+class vm::Block : public vm::VirtualStack
 {
 	private:
 
-		BlockVolume* CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
+		vm::BlockVolume* CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		int          N_BLOCKS;                   //number of blocks along z
 		int         *BLOCK_SIZE;                 //dimensions of blocks along z
 		int         *BLOCK_ABS_D;                //absolute D voxel coordinates of blocks
-		int          N_CHANS;                    //number of channels
-		int          N_BYTESxCHAN;               //number of bytes per channel
 
 		//******** OBJECT PRIVATE METHODS *********
         Block(void){}
@@ -67,6 +70,12 @@ class Block : public VirtualStack
 		void binarizeInto(FILE* file) throw (iom::exception);
 		void unBinarizeFrom(FILE* file) throw (iom::exception);
 
+		// compute 'z_ranges'
+		void 
+			compute_z_ranges(
+			std::pair<int,int> const * z_coords = 0)		// set of z-coordinates where at least one slice (of a certain stack) is available
+		throw (iom::exception);								// if null, 'z_ranges' will be compute based on 'FILENAMES' vector
+
 		//returns a pointer to the intersection segment (along D) if the given segment (D0,D1-1) intersects current stack, otherwise returns NULL
 		//D0 first index of the segment
 		//D1 last index of the segment + 1
@@ -74,19 +83,17 @@ class Block : public VirtualStack
 
 		//******** FRIEND CLASS DECLARATION *********
 		//BlockVolume can access Block private members and methods
-		friend class BlockVolume;
+		friend class vm::BlockVolume;
 	
 	public:
 		//CONSTRUCTORS
-		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);				// build from scratch
-		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);						// build from mdata.bin
-		Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception);	// build from XML
+		Block(vm::BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);				// build from scratch
+		Block(vm::BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);						// build from mdata.bin
+		Block(vm::BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, TiXmlElement* stack_node, int z_end) throw (iom::exception);	// build from XML
 		~Block(void);
 
 		//GET methods
 		int  getN_BLOCKS()		{return N_BLOCKS;}
-		int  getN_CHANS()		{return N_CHANS;}
-		int  getN_BYTESxCHAN()	{return N_BYTESxCHAN;}
 
 		int  *getBLOCK_SIZE()   {return BLOCK_SIZE;}
 		int  *getBLOCK_ABS_D()  {return BLOCK_ABS_D;}
