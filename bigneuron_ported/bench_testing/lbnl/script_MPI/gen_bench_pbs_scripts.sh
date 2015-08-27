@@ -10,12 +10,13 @@ function write_psb_script {
   exefilename=$3;
   jobnumbers=$4;
   nodenumbers=$5;	
-  echo "#PBS -l walltime=3:00:00" >> $outputScript;
+  echo "#PBS -l walltime=1:00:00" >> $outputScript;
   echo "#PBS -l nodes=$nodenumbers" >> $outputScript;
+ # echo "#PBS -l mppwidth=1920" >> $outputScript;
   echo "#PBS -q regular" >> $outputScript;
 
   echo "cd $inputfolder" >>  $outputScript;
-  echo "aprun -n $jobnumbers  ./$exefilename" >>  $outputScript;
+  echo "aprun -n $jobnumbers ./$exefilename" >>  $outputScript;
 }
 
 				
