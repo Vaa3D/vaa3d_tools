@@ -809,18 +809,6 @@ unsigned char* binarization_method (unsigned char* image, V3DLONG size, input_PA
 			else
 				img[r] = 0;
     }
-
-	char b[4];//限制序號為3位數以內[0, 999]
-    itoa(binary_threshold, b, 10);//將i(int)以10為基底轉換成c(char)
-	QString nama5 = PARA.inimg_file + "-binary-distribution" + b + ".txt";
-	QByteArray name5 = nama5.toLatin1();
-	char* path5data = name5.data();
-	ofstream path5(path5data);
-	
-	path5 << "nonzero = " << nonzero << ", binary_threshold = " <<binary_threshold << endl;
-	for (int i = 0; i< 256; i++){
-		path5 << i << ": " << distribution[i] << ", " << histNormalized[i] << endl; 
-	}
 	
 	for (V3DLONG i=0;i<size;i++) image[i] = img[i];
 	
@@ -894,18 +882,6 @@ unsigned char* binarization_method2 (unsigned char* image, V3DLONG size, input_P
 				img[r] = 0;
     }
 
-	char b[4];//限制序號為3位數以內[0, 999]
-    //itoa(binary_threshold, b, 10);//將i(int)以10為基底轉換成c(char)
-	//QString nama5 = PARA.inimg_file + "-binary-Phansalkar-" + b + ".txt";
-	QString nama5 = PARA.inimg_file + "-binary-Phansalkar-.txt";
-	QByteArray name5 = nama5.toLatin1();
-	char* path5data = name5.data();
-	ofstream path5(path5data);
-	
-	path5 << "nonzero = " << nonzero << ", binary_threshold = " << binary_threshold << ", imagemean = " << imagemean << ", deviation = " << deviation  << endl;
-	for (int i = 0; i< 256; i++){
-		path5 << i << ": " << distribution[i] << ", " << histNormalized[i] << endl; 
-	}
 	for (V3DLONG i=0;i<size;i++) image[i] = img[i];
 	
 	return image;
@@ -978,18 +954,6 @@ unsigned char* binarization_method3 (unsigned char* image, V3DLONG size, input_P
 				img[r] = 0;
     }
 
-	char b[4];//限制序號為3位數以內[0, 999]
-    //itoa(binary_threshold, b, 10);//將i(int)以10為基底轉換成c(char)
-	//QString nama5 = PARA.inimg_file + "-binary-Phansalkar-" + b + ".txt";
-//	QString nama5 = PARA.inimg_file + "-binary-Sauvola-.txt";
-//	QByteArray name5 = nama5.toLatin1();
-//	char* path5data = name5.data();
-//	ofstream path5(path5data);
-	
-//	path5 << "nonzero = " << nonzero << ", binary_threshold = " << binary_threshold << ", imagemean = " << imagemean << ", deviation = " << deviation  << endl;
-//	for (int i = 0; i< 256; i++){
-//		path5 << i << ": " << distribution[i] << ", " << histNormalized[i] << endl; 
-//	}
 	for (V3DLONG i=0;i<size;i++) image[i] = img[i];
 	
 	return image;
@@ -1062,18 +1026,6 @@ unsigned char* binarization_method4 (unsigned char* image, V3DLONG size, input_P
 				img[r] = 0;
     }
 
-	char b[4];//限制序號為3位數以內[0, 999]
-    //itoa(binary_threshold, b, 10);//將i(int)以10為基底轉換成c(char)
-	//QString nama5 = PARA.inimg_file + "-binary-Phansalkar-" + b + ".txt";
-	QString nama5 = PARA.inimg_file + "-binary-Niblack-.txt";
-	QByteArray name5 = nama5.toLatin1();
-	char* path5data = name5.data();
-	ofstream path5(path5data);
-	
-	path5 << "nonzero = " << nonzero << ", binary_threshold = " << binary_threshold << ", imagemean = " << imagemean << ", deviation = " << deviation  << endl;
-	for (int i = 0; i< 256; i++){
-		path5 << i << ": " << distribution[i] << ", " << histNormalized[i] << endl; 
-	}
 	for (V3DLONG i=0;i<size;i++) image[i] = img[i];
 	
 	return image;
