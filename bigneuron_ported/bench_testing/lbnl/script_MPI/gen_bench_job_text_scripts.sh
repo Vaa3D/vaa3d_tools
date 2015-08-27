@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#This is a shell program to batch reconstruct images using 22 different methods.
+#This is a shell program to batch reconstruct images using 24 different methods.
 #
 # Last change: 2015-08-17. by Hanchuan Peng adding the anisotropic filtering. 
 #

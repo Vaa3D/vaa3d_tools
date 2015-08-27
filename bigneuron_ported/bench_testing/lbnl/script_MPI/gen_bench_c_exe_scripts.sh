@@ -8,6 +8,7 @@ function write_c_exe_script {
 	outputScript=$1;
 	inputfolder=$2;
 	Vaa3Dfolder=$3;
+	shiftnumber=$4;
 
 	echo "#include <stdio.h>" >> $outputScript;
 	echo "#include <unistd.h>" >> $outputScript;
@@ -21,7 +22,7 @@ function write_c_exe_script {
 	echo "	MPI_Init(&argc,&argv);" >> $outputScript;
 	echo "	int my_id, num_procs;" >> $outputScript;
 	echo "	MPI_Comm_rank(MPI_COMM_WORLD, &my_id);" >> $outputScript;
-	echo "	sprintf(txt_string,\"$inputfolder/%d.txt\",my_id);" >> $outputScript;
+	echo "	sprintf(txt_string,\"$inputfolder/%d.txt\",my_id+$shiftnumber);" >> $outputScript;
 	echo "	FILE* file = fopen(txt_string, \"r\");" >> $outputScript;
 	echo "	size_t len = 0;" >> $outputScript;
 	echo "	int read;" >> $outputScript;
@@ -46,6 +47,7 @@ function write_c_exe_script {
 cFile=$1
 inputxtfolder=$2
 Vaa3Dfolder=$3
+shiftnumber=$4
 
 
 
@@ -54,7 +56,7 @@ if [ -f $cFile ]; then
 rm $cFile;
 fi;
 
-write_c_exe_script $cFile  $inputxtfolder $Vaa3Dfolder
+write_c_exe_script $cFile  $inputxtfolder $Vaa3Dfolder $shiftnumber
 
 cc $cFile -o  ${cFile%.c}.exe
 
