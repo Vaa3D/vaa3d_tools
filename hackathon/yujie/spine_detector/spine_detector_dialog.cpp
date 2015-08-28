@@ -1,12 +1,12 @@
 #include "spine_detector_dialog.h"
 #include "v3d_message.h"
-#include <vector>
+//#include <vector>
 #include "string"
 #include <iostream>
 #include <cstdlib>
-#include <algorithm>
+//#include <algorithm>
 #include <basic_landmark.h>
-
+#include "common.h"
 
 spine_detector_dialog::spine_detector_dialog(V3DPluginCallback2 *cb)
 {
@@ -961,57 +961,57 @@ bool spine_detector_dialog::load_image()
 
 
 
-void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
-{
-    unsigned short* pPre = (unsigned short*)pre1d;
-    unsigned short max_v=0, min_v = 255;
-    for(V3DLONG i=0; i<imsz; i++)
-    {
-        if(max_v<pPre[i]) max_v = pPre[i];
-        if(min_v>pPre[i]) min_v = pPre[i];
-    }
-    max_v -= min_v;
-    if(max_v>0)
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
-        }
-    }
-    else
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) pPre[i];
-        }
-    }
-}
+//void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+//{
+//    unsigned short* pPre = (unsigned short*)pre1d;
+//    unsigned short max_v=0, min_v = 255;
+//    for(V3DLONG i=0; i<imsz; i++)
+//    {
+//        if(max_v<pPre[i]) max_v = pPre[i];
+//        if(min_v>pPre[i]) min_v = pPre[i];
+//    }
+//    max_v -= min_v;
+//    if(max_v>0)
+//    {
+//        for(V3DLONG i=0; i<imsz; i++)
+//        {
+//            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+//        }
+//    }
+//    else
+//    {
+//        for(V3DLONG i=0; i<imsz; i++)
+//        {
+//            pPost[i] = (unsigned char) pPre[i];
+//        }
+//    }
+//}
 
-void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
-{
-    float* pPre = (float*)pre1d;
-    float max_v=0, min_v = 65535;
-    for(V3DLONG i=0; i<imsz; i++)
-    {
-        if(max_v<pPre[i]) max_v = pPre[i];
-        if(min_v>pPre[i]) min_v = pPre[i];
-    }
-    max_v -= min_v;
-    if(max_v>0)
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
-        }
-    }
-    else
-    {
-        for(V3DLONG i=0; i<imsz; i++)
-        {
-            pPost[i] = (unsigned char) pPre[i];
-        }
-    }
-}
+//void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+//{
+//    float* pPre = (float*)pre1d;
+//    float max_v=0, min_v = 65535;
+//    for(V3DLONG i=0; i<imsz; i++)
+//    {
+//        if(max_v<pPre[i]) max_v = pPre[i];
+//        if(min_v>pPre[i]) min_v = pPre[i];
+//    }
+//    max_v -= min_v;
+//    if(max_v>0)
+//    {
+//        for(V3DLONG i=0; i<imsz; i++)
+//        {
+//            pPost[i] = (unsigned char) 255*(double)(pPre[i] - min_v)/max_v;
+//        }
+//    }
+//    else
+//    {
+//        for(V3DLONG i=0; i<imsz; i++)
+//        {
+//            pPost[i] = (unsigned char) pPre[i];
+//        }
+//    }
+//}
 
 void spine_detector_dialog::core()
 {

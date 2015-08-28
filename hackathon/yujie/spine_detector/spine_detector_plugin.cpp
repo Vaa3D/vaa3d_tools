@@ -4,27 +4,28 @@
  */
  
 #include "spine_detector_plugin.h"
-#include "app2.h"
 #include "manual_correct_dialog.h"
 #include "learning.h"
 #include "file_io_dialog.h"
 #include "manual_proofread_dialog.h"
+#include "spine_detector_dialog.h"
 
 
 using namespace std;
 Q_EXPORT_PLUGIN2(spine_detector, spine_detector);
-static spine_detector *dialog=0;
 
 QStringList spine_detector::menulist() const
 {
 	return QStringList() 
 //        <<tr("spine_detector_1")
 //        <<tr("skeleton analysis")
-        <<tr("spine_detector_1.0 (proofread by spine)")
-        <<tr("spine_detector_1.1 (proofread by segment)")
+//        <<tr("spine_detector_1.0 (proofread by spine)")
+//        <<tr("spine_detector_1.1 (proofread by segment)")
 //        <<tr("spine_detector_2.0 (for big images)")
 //        <<tr("learning_test")
-//       <<tr("test")
+        <<tr("SpineDetector_NewProject")
+        <<tr("SpineDetector_ExistingProject")
+        <<tr("IS_Quantifier")
         <<tr("about");
 }
 
@@ -89,14 +90,22 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
         manual_dialog->show();
     }
-    else if (menu_name==tr("test"))
+    else if (menu_name==tr("SpineDetector_NewProject"))
     {
-//        file_io_dialog *file_dialog= new file_io_dialog(&callback);
-//        file_dialog->show();
-        manual_proofread_dialog *proof_dialog=new manual_proofread_dialog(&callback);
-        proof_dialog->show();
+        file_io_dialog *file_dialog= new file_io_dialog(&callback,1);
+        file_dialog->show();
     }
 
+    else if (menu_name==tr("SpineDetector_ExistingProject"))
+    {
+        manual_proofread_dialog *proof_dialog=new manual_proofread_dialog(&callback,true);
+        proof_dialog->show();
+    }
+    else if (menu_name==tr("IS_Quantifier"))
+    {
+        file_io_dialog *dialog=new file_io_dialog(&callback,2);
+        dialog->show();
+    }
     else
         v3d_msg(tr("This tool is designed for spine morphology reconstructions. "
             "Developed by Yujie Li, 2015-3-11"));

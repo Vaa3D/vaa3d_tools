@@ -3,10 +3,7 @@
 #include <QtGui>
 #include "v3d_interface.h"
 #include <vector>
-#include <map>
 #include <algorithm>
-#include <iostream>
-#include <set>
 
 using namespace std;
 
@@ -60,7 +57,7 @@ public:
     spine_fun(V3DPluginCallback * cb,int channel,int bg_thr,int max_dis,unsigned short *group_label);
     int loadData(); //read images and swc files
     bool init(); //init the voxels of interest (within distance and intesnity is above threshold)
-    bool init_for_manual_proof();
+    bool init_for_manual_proof(vector<GOV> &label_record);
     bool run_intensityGroup();
     void saveResult();
     void dst_group_check();

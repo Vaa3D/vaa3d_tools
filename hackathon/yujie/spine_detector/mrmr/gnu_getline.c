@@ -35,74 +35,74 @@
 
 #include "gnu_getline.h"
 
-ssize_t
-gnu_getline (char **lineptr, size_t *n, FILE *stream)
-{
-  return gnu_getdelim (lineptr, n, '\n', stream);
-}
+//ssize_t
+//gnu_getline (char **lineptr, size_t *n, FILE *stream)
+//{
+//  return gnu_getdelim (lineptr, n, '\n', stream);
+//}
 
-#ifndef HAVE_GETDELIM
+//#ifndef HAVE_GETDELIM
 
-/* Default value for line length.  */
-static const int line_size = 128;
+///* Default value for line length.  */
+//static const int line_size = 128;
 
-ssize_t
-gnu_getdelim (char **lineptr, size_t *n, int delim, FILE *stream)
-{
-  int indx = 0;
-  int c;
+//ssize_t
+//gnu_getdelim (char **lineptr, size_t *n, int delim, FILE *stream)
+//{
+//  int indx = 0;
+//  int c;
 
-  /* Sanity checks.  */
-  if (lineptr == NULL || n == NULL || stream == NULL)
-    return -1;
+//  /* Sanity checks.  */
+//  if (lineptr == NULL || n == NULL || stream == NULL)
+//    return -1;
 
-  /* Allocate the line the first time.  */
-  if (*lineptr == NULL)
-    {
-      *lineptr = (char *)malloc (line_size);
-      if (*lineptr == NULL)
-	return -1;
-      *n = line_size;
-    }
+//  /* Allocate the line the first time.  */
+//  if (*lineptr == NULL)
+//    {
+//      *lineptr = (char *)malloc (line_size);
+//      if (*lineptr == NULL)
+//	return -1;
+//      *n = line_size;
+//    }
 
-  while ((c = getc (stream)) != EOF)
-    {
-      /* Check if more memory is needed.  */
-      if (indx >= *n)
-	{
-	  *lineptr = (char *)realloc (*lineptr, *n + line_size);
-	  if (*lineptr == NULL)
-	    return -1;
-	  *n += line_size;
-	}
+//  while ((c = getc (stream)) != EOF)
+//    {
+//      /* Check if more memory is needed.  */
+//      if (indx >= *n)
+//	{
+//	  *lineptr = (char *)realloc (*lineptr, *n + line_size);
+//	  if (*lineptr == NULL)
+//	    return -1;
+//	  *n += line_size;
+//	}
 
-      /* Push the result in the line.  */
-      (*lineptr)[indx++] = c;
+//      /* Push the result in the line.  */
+//      (*lineptr)[indx++] = c;
 
-      /* Bail out.  */
-      if (c == delim)
-	break;
-    }
+//      /* Bail out.  */
+//      if (c == delim)
+//	break;
+//    }
 
-  /* Make room for the null character.  */
-  if (indx >= *n)
-    {
-      *lineptr = (char *)realloc (*lineptr, *n + line_size);
-      if (*lineptr == NULL)
-       return -1;
-      *n += line_size;
-    }
+//  /* Make room for the null character.  */
+//  if (indx >= *n)
+//    {
+//      *lineptr = (char *)realloc (*lineptr, *n + line_size);
+//      if (*lineptr == NULL)
+//       return -1;
+//      *n += line_size;
+//    }
 
-  /* Null terminate the buffer.  */
-  (*lineptr)[indx++] = 0;
+//  /* Null terminate the buffer.  */
+//  (*lineptr)[indx++] = 0;
 
-  /* The last line may not have the delimiter, we have to
-   * return what we got and the error will be seen on the
-   * next iteration.  */
-  return (c == EOF && (indx - 1) == 0) ? -1 : indx - 1;
-}
+//  /* The last line may not have the delimiter, we have to
+//   * return what we got and the error will be seen on the
+//   * next iteration.  */
+//  return (c == EOF && (indx - 1) == 0) ? -1 : indx - 1;
+//}
 
-#endif /* HAVE_GETDELIM */
+//#endif /* HAVE_GETDELIM */
 
 
 #ifdef STANDALONE

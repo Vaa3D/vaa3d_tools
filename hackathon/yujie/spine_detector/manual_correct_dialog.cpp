@@ -1,4 +1,6 @@
 #include "manual_correct_dialog.h"
+#include "common.h"
+
 #define main_win_name "spine_detector_result"
 #define fname_image "truncated_view"
 #define fname_image_seg "segmented view"
@@ -211,7 +213,7 @@ void manual_correct_dialog::run_view_by_seg()
     if(before_proof_dialog())
     {
         check_neuron_tree();  //get ready checked_neurontree,weed out nodes outside image
-        segment_neuronswc=neurontree_divide_swc(checked_neuron);
+        segment_neuronswc=neurontree_divide_swc(&checked_neuron,all_para.max_dis*6);
         standing_segment_dialog();
     }
     else
@@ -688,7 +690,6 @@ void manual_correct_dialog::reset_label_group()
     label_group[mid].clear();
     label_group[mid]=tmp_group;
     //need to update the intensity label???
-
 }
 
 void manual_correct_dialog::adjust_LList_to_imagetrun()
@@ -1123,7 +1124,8 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     qDebug()<<"in write spine center profile"<<"eswc flag:"<<eswc_flag;
 
     QString outfile=edit_csv->text()+"/"+filename;
-    FILE *fp2=fopen(outfile.toAscii(),"wt");
+
+    FILE *fp2=fopen(outfile.toStdString().c_str(),"wt");
     if (eswc_flag)
         fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
     else
@@ -1156,7 +1158,7 @@ void manual_correct_dialog::write_spine_profile(QString filename)
         int center_dis=sum_dis/tmp.size();
         //qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
 
-        int skel_id=calc_nearest_node(center_x,center_y,center_z);
+        int skel_id=calc_nearest_node(neuron,center_x,center_y,center_z);
         //qDebug()<<"skel_id_size:"<<skel_id_size<<" skel_id:"<<skel_id;
         if (eswc_flag)
         {
@@ -1174,23 +1176,23 @@ void manual_correct_dialog::write_spine_profile(QString filename)
     qDebug()<<"file complete wrriting, outfile path:"<<outfile;
 }
 
-int manual_correct_dialog::calc_nearest_node(float center_x,float center_y,float center_z)
-{
-    float distance=1e6;
-    int nearest_node_id=0;
-    for (int i=0;i<neuron.listNeuron.size();i++)
-    {
-        float tmp_dis=(center_x-neuron.listNeuron[i].x)*(center_x-neuron.listNeuron[i].x)+
-           (center_y-neuron.listNeuron[i].y)*(center_y-neuron.listNeuron[i].y)+
-                (center_z-neuron.listNeuron[i].z)*(center_z-neuron.listNeuron[i].z);
-        if (tmp_dis<distance)
-        {
-            distance=tmp_dis;
-            nearest_node_id=i;
-        }
-    }
-    return nearest_node_id;
-}
+//int manual_correct_dialog::calc_nearest_node(float center_x,float center_y,float center_z)
+//{
+//    float distance=1e6;
+//    int nearest_node_id=0;
+//    for (int i=0;i<neuron.listNeuron.size();i++)
+//    {
+//        float tmp_dis=(center_x-neuron.listNeuron[i].x)*(center_x-neuron.listNeuron[i].x)+
+//           (center_y-neuron.listNeuron[i].y)*(center_y-neuron.listNeuron[i].y)+
+//                (center_z-neuron.listNeuron[i].z)*(center_z-neuron.listNeuron[i].z);
+//        if (tmp_dis<distance)
+//        {
+//            distance=tmp_dis;
+//            nearest_node_id=i;
+//        }
+//    }
+//    return nearest_node_id;
+//}
 
 void manual_correct_dialog::dilate()
 {
@@ -1436,109 +1438,109 @@ void manual_correct_dialog::check_neuron_tree()
     return;
 }
 
-vector<vector<int> > manual_correct_dialog::build_parent_LUT(NeuronTree neuron_tmp)
-{
-    int size=neuron_tmp.listNeuron.size();
-    vector<vector<int> > parent_LUT;
-    parent_LUT.clear();
-    parent_LUT.resize(size);
-    for (int i=0;i<size;i++)
-    {
-        int parent=neuron_tmp.listNeuron.at(i).parent;
-        if (parent==-1)
-        {
-            continue;
-        }
-        parent_LUT[neuron_tmp.hashNeuron.value(parent)].push_back(i);
-    }
-
-    qDebug()<<"building new parnet LUT";
-//    for (int i=0;i<parent_LUT.size();i++)
+//vector<vector<int> > manual_correct_dialog::build_parent_LUT(NeuronTree neuron_tmp)
+//{
+//    int size=neuron_tmp.listNeuron.size();
+//    vector<vector<int> > parent_LUT;
+//    parent_LUT.clear();
+//    parent_LUT.resize(size);
+//    for (int i=0;i<size;i++)
 //    {
-//        qDebug()<<"parent_LUT size:"<<i<<":"<<parent_LUT[i].size();
+//        int parent=neuron_tmp.listNeuron.at(i).parent;
+//        if (parent==-1)
+//        {
+//            continue;
+//        }
+//        parent_LUT[neuron_tmp.hashNeuron.value(parent)].push_back(i);
 //    }
-    return parent_LUT;
-}
 
-vector<vector<int> > manual_correct_dialog::neurontree_divide_swc(NeuronTree neuron_tmp)
-{
-    float distance_thresh=all_para.max_dis*5;
-    qDebug()<<"in swc divide"<<distance_thresh;
-    vector<int> leaf_nodes_id;
-    vector<vector <int> > parent_LUT = build_parent_LUT(neuron_tmp);
-    for (int i=0;i<neuron_tmp.listNeuron.size();i++)
-    {
-        if (parent_LUT[i].size()==0)
-        {
-           leaf_nodes_id.push_back(i);
-        }
-    }
-    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
-    map<int,bool> used_flag; //use the idex starting from 0
-    vector<vector<int> > nt_seg;
+//    qDebug()<<"building new parnet LUT";
+////    for (int i=0;i<parent_LUT.size();i++)
+////    {
+////        qDebug()<<"parent_LUT size:"<<i<<":"<<parent_LUT[i].size();
+////    }
+//    return parent_LUT;
+//}
 
-    for (int i=0;i<leaf_nodes_id.size();i++)
-    {
-        //qDebug()<<"i:"<<i;
-
-        float between_distance,accu_distance;
-        int start_node,parent_node,parent,next_parent_node;
-
-        start_node=leaf_nodes_id[i];
-        parent=neuron_tmp.listNeuron[start_node].parent;
-        parent_node=neuron_tmp.hashNeuron.value(parent);
-        used_flag[start_node]=1;
-        vector<int> one_nt;
-        one_nt.push_back(start_node);
-        accu_distance=between_distance=calc_between_dis(start_node,parent_node);
-
-        while (true)
-        {
-            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
-            {
-                one_nt.push_back(parent_node);
-                used_flag[parent_node]=1;
-                parent=neuron_tmp.listNeuron[parent_node].parent;
-                next_parent_node=neuron_tmp.hashNeuron.value(parent);
-                between_distance=calc_between_dis(parent_node,next_parent_node);
-                accu_distance+=between_distance;
-                parent_node=next_parent_node;
-
-//                if (nt_seg.size()==5)
-//                    qDebug()<<"5:accu_distance:"<<accu_distance<<"start_node:"<<start_node
-//                     <<"x:"<<neuron.listNeuron[start_node].x<<"parent node:"<<parent_node<<"x:"<<neuron.listNeuron[parent_node].x;
-            }
-            if (parent==-1||used_flag[parent_node]>0)
-            {
-               nt_seg.push_back(one_nt);
-               break;
-            }
-            else
-            {
-               nt_seg.push_back(one_nt);
-               one_nt.clear();
-               start_node=parent_node;
-               one_nt.push_back(start_node);
-               used_flag[start_node]=1;
-               parent=neuron_tmp.listNeuron[start_node].parent;
-               parent_node=neuron_tmp.hashNeuron.value(parent);
-               accu_distance=between_distance=calc_between_dis(start_node,parent_node);
-            }
-        }
-           //qDebug()<<"nt_seg size:"<<nt_seg.size();
-    }
-    qDebug()<<"After division swc. We have "<<nt_seg.size() <<" windows!";
-//    for (int i=0;i<nt_seg.size();i++)
+//vector<vector<int> > manual_correct_dialog::neurontree_divide_swc(NeuronTree neuron_tmp)
+//{
+//    float distance_thresh=all_para.max_dis*5;
+//    qDebug()<<"in swc divide"<<distance_thresh;
+//    vector<int> leaf_nodes_id;
+//    vector<vector <int> > parent_LUT = build_parent_LUT(neuron_tmp);
+//    for (int i=0;i<neuron_tmp.listNeuron.size();i++)
 //    {
-//        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()<<"x:"<<neuron_tmp.listNeuron.at(nt_seg[i].front()).x-neuron_tmp.listNeuron.at(nt_seg[i].front()).r<<
-//                 " end:"<<nt_seg[i].back()<<"x:"<<neuron_tmp.listNeuron.at(nt_seg[i].back()).x+neuron_tmp.listNeuron.at(nt_seg[i].back()).r;
-//        vector<V3DLONG> coord(6,0);
-//        coord=image_seg_plan(nt_seg[i],neuron_tmp);
-//        qDebug()<<"xyz min:"<<coord[0]<<":"<<coord[1]<<":"<<coord[2]<<"xyz max:"<<coord[3]<<":"
-//               <<coord[4]<<":"<<coord[5];
+//        if (parent_LUT[i].size()==0)
+//        {
+//           leaf_nodes_id.push_back(i);
+//        }
 //    }
-    return nt_seg;
-}
+//    qDebug()<<"leaf nodes:"<<leaf_nodes_id.size();
+//    map<int,bool> used_flag; //use the idex starting from 0
+//    vector<vector<int> > nt_seg;
+
+//    for (int i=0;i<leaf_nodes_id.size();i++)
+//    {
+//        //qDebug()<<"i:"<<i;
+
+//        float between_distance,accu_distance;
+//        int start_node,parent_node,parent,next_parent_node;
+
+//        start_node=leaf_nodes_id[i];
+//        parent=neuron_tmp.listNeuron[start_node].parent;
+//        parent_node=neuron_tmp.hashNeuron.value(parent);
+//        used_flag[start_node]=1;
+//        vector<int> one_nt;
+//        one_nt.push_back(start_node);
+//        accu_distance=between_distance=calc_between_dis(start_node,parent_node);
+
+//        while (true)
+//        {
+//            while(accu_distance<distance_thresh && parent!=-1 && used_flag[parent_node]<=0)
+//            {
+//                one_nt.push_back(parent_node);
+//                used_flag[parent_node]=1;
+//                parent=neuron_tmp.listNeuron[parent_node].parent;
+//                next_parent_node=neuron_tmp.hashNeuron.value(parent);
+//                between_distance=calc_between_dis(parent_node,next_parent_node);
+//                accu_distance+=between_distance;
+//                parent_node=next_parent_node;
+
+////                if (nt_seg.size()==5)
+////                    qDebug()<<"5:accu_distance:"<<accu_distance<<"start_node:"<<start_node
+////                     <<"x:"<<neuron.listNeuron[start_node].x<<"parent node:"<<parent_node<<"x:"<<neuron.listNeuron[parent_node].x;
+//            }
+//            if (parent==-1||used_flag[parent_node]>0)
+//            {
+//               nt_seg.push_back(one_nt);
+//               break;
+//            }
+//            else
+//            {
+//               nt_seg.push_back(one_nt);
+//               one_nt.clear();
+//               start_node=parent_node;
+//               one_nt.push_back(start_node);
+//               used_flag[start_node]=1;
+//               parent=neuron_tmp.listNeuron[start_node].parent;
+//               parent_node=neuron_tmp.hashNeuron.value(parent);
+//               accu_distance=between_distance=calc_between_dis(start_node,parent_node);
+//            }
+//        }
+//           //qDebug()<<"nt_seg size:"<<nt_seg.size();
+//    }
+//    qDebug()<<"After division swc. We have "<<nt_seg.size() <<" windows!";
+////    for (int i=0;i<nt_seg.size();i++)
+////    {
+////        qDebug()<<"size:"<<nt_seg[i].size()<<" start:"<<nt_seg[i].front()<<"x:"<<neuron_tmp.listNeuron.at(nt_seg[i].front()).x-neuron_tmp.listNeuron.at(nt_seg[i].front()).r<<
+////                 " end:"<<nt_seg[i].back()<<"x:"<<neuron_tmp.listNeuron.at(nt_seg[i].back()).x+neuron_tmp.listNeuron.at(nt_seg[i].back()).r;
+////        vector<V3DLONG> coord(6,0);
+////        coord=image_seg_plan(nt_seg[i],neuron_tmp);
+////        qDebug()<<"xyz min:"<<coord[0]<<":"<<coord[1]<<":"<<coord[2]<<"xyz max:"<<coord[3]<<":"
+////               <<coord[4]<<":"<<coord[5];
+////    }
+//    return nt_seg;
+//}
 
 float manual_correct_dialog::calc_between_dis(int node1_id,int node2_id)
 {
@@ -1652,7 +1654,6 @@ void manual_correct_dialog::standing_segment_dialog()
     mydialog->setWindowTitle("spineDetector_proofread_by_segment");
     qDebug()<<"size:"<<mydialog->size();
     mydialog->setFixedWidth(500);
-//    seg_dialog->setFixedHeight();
     QGridLayout *layout2=new QGridLayout;
 
     segments=new QComboBox;
@@ -2372,150 +2373,150 @@ void manual_correct_dialog::reset_segment()
 }
 
 
-void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
-{
-    idx=idx+1;
-    if(idx>=0){
-    idx = idx > 0 ? idx % 128 : 128 - abs(idx % 128);
-    int colorLib[128][3] = {
-            {39,16,2}, //{55, 173, 188},
-            {3, 91, 61},
-            {237, 195, 97},
-            {175, 178, 151},
-            {245, 199, 137},
-            {24, 226, 66},
-            {118, 84, 193},
-            {205, 205, 224},
-            {22, 170, 128},
-            {86, 150, 90},
-            {53, 67, 25},
-            {38, 82, 152},
-            {55,173,188}, //{39, 16, 2},
-            {197, 174, 31},
-            {183, 41, 31},
-            {174, 37, 15},
-            {34, 4, 48},
-            {18, 10, 79},
-            {132, 100, 254},
-            {112, 39, 198},
-            {189, 22, 120},
-            {75, 104, 110},
-            {222, 180, 4},
-            {6, 60, 153},
-            {236, 85, 113},
-            {25, 182, 184},
-            {200, 240, 12},
-            {204, 119, 71},
-            {11, 201, 229},
-            {198, 214, 88},
-            {49, 97, 65},
-            {5, 75, 61},
-            {52, 89, 137},
-            {32, 49, 125},
-            {104, 187, 76},
-            {206, 233, 195},
-            {85, 183, 9},
-            {157, 29, 13},
-            {14, 7, 244},
-            {134, 193, 150},
-            {188, 81, 216},
-            {126, 29, 207},
-            {170, 97, 183},
-            {107, 14, 149},
-            {76, 104, 149},
-            {80, 38, 253},
-            {27, 85, 10},
-            {235, 95, 252},
-            {139, 144, 48},
-            {55, 124, 56},
-            {239, 71, 243},
-            {208, 89, 6},
-            {87, 98, 24},
-            {247, 48, 42},
-            {129, 130, 13},
-            {94, 149, 254},
-            {111, 177, 4},
-            {39, 229, 12},
-            {7, 146, 87},
-            {56, 231, 174},
-            {95, 102, 52},
-            {61, 226, 235},
-            {199, 62, 149},
-            {51, 32, 175},
-            {232, 191, 210},
-            {57, 99, 107},
-            {239, 27, 135},
-            {158, 71, 50},
-            {104, 92, 41},
-            {228, 112, 171},
-            {54, 120, 13},
-            {126, 69, 174},
-            {191, 100, 143},
-            {187, 156, 148},
-            {18, 95, 9},
-            {104, 168, 147},
-            {249, 113, 198},
-            {145, 5, 131},
-            {104, 56, 59},
-            {112, 235, 81},
-            {73, 93, 127},
-            {207, 60, 6},
-            {77, 76, 211},
-            {35, 208, 220},
-            {141, 5, 129},
-            {182, 178, 228},
-            {179, 239, 3},
-            {209, 9, 132},
-            {167, 192, 71},
-            {154, 227, 164},
-            {200, 125, 103},
-            {224, 181, 211},
-            {3, 24, 139},
-            {218, 67, 198},
-            {163, 185, 228},
-            {196, 53, 11},
-            {39, 183, 33},
-            {56, 116, 119},
-            {23, 129, 20},
-            {42, 191, 85},
-            {78, 209, 250},
-            {247, 147, 60},
-            {74, 172, 146},
-            {51, 244, 86},
-            {38, 84, 29},
-            {197, 202, 150},
-            {20, 49, 198},
-            {90, 214, 34},
-            {178, 49, 101},
-            {86, 235, 214},
-            {161, 221, 55},
-            {17, 173, 136},
-            {132, 65, 217},
-            {210, 4, 121},
-            {241, 117, 217},
-            {137, 111, 6},
-            {129, 224, 232},
-            {73, 34, 0},
-            {81, 135, 211},
-            {172, 233, 193},
-            {43, 246, 89},
-            {153, 187, 222},
-            {85, 118, 43},
-            {119, 116, 33},
-            {163, 229, 109},
-            {45, 75, 15},
-            {15, 7, 140},
-            {144, 78, 192}
-    };
-    for(int k = 0; k < 3; k++)
-        rgb[k] = colorLib[idx][k];
-    }
-    else{
-        rgb[0]=0;
-        rgb[1]=0;
-        rgb[2]=0;
-    }
-}
+//void manual_correct_dialog::GetColorRGB(int* rgb, int idx)
+//{
+//    idx=idx+1;
+//    if(idx>=0){
+//    idx = idx > 0 ? idx % 128 : 128 - abs(idx % 128);
+//    int colorLib[128][3] = {
+//            {39,16,2}, //{55, 173, 188},
+//            {3, 91, 61},
+//            {237, 195, 97},
+//            {175, 178, 151},
+//            {245, 199, 137},
+//            {24, 226, 66},
+//            {118, 84, 193},
+//            {205, 205, 224},
+//            {22, 170, 128},
+//            {86, 150, 90},
+//            {53, 67, 25},
+//            {38, 82, 152},
+//            {55,173,188}, //{39, 16, 2},
+//            {197, 174, 31},
+//            {183, 41, 31},
+//            {174, 37, 15},
+//            {34, 4, 48},
+//            {18, 10, 79},
+//            {132, 100, 254},
+//            {112, 39, 198},
+//            {189, 22, 120},
+//            {75, 104, 110},
+//            {222, 180, 4},
+//            {6, 60, 153},
+//            {236, 85, 113},
+//            {25, 182, 184},
+//            {200, 240, 12},
+//            {204, 119, 71},
+//            {11, 201, 229},
+//            {198, 214, 88},
+//            {49, 97, 65},
+//            {5, 75, 61},
+//            {52, 89, 137},
+//            {32, 49, 125},
+//            {104, 187, 76},
+//            {206, 233, 195},
+//            {85, 183, 9},
+//            {157, 29, 13},
+//            {14, 7, 244},
+//            {134, 193, 150},
+//            {188, 81, 216},
+//            {126, 29, 207},
+//            {170, 97, 183},
+//            {107, 14, 149},
+//            {76, 104, 149},
+//            {80, 38, 253},
+//            {27, 85, 10},
+//            {235, 95, 252},
+//            {139, 144, 48},
+//            {55, 124, 56},
+//            {239, 71, 243},
+//            {208, 89, 6},
+//            {87, 98, 24},
+//            {247, 48, 42},
+//            {129, 130, 13},
+//            {94, 149, 254},
+//            {111, 177, 4},
+//            {39, 229, 12},
+//            {7, 146, 87},
+//            {56, 231, 174},
+//            {95, 102, 52},
+//            {61, 226, 235},
+//            {199, 62, 149},
+//            {51, 32, 175},
+//            {232, 191, 210},
+//            {57, 99, 107},
+//            {239, 27, 135},
+//            {158, 71, 50},
+//            {104, 92, 41},
+//            {228, 112, 171},
+//            {54, 120, 13},
+//            {126, 69, 174},
+//            {191, 100, 143},
+//            {187, 156, 148},
+//            {18, 95, 9},
+//            {104, 168, 147},
+//            {249, 113, 198},
+//            {145, 5, 131},
+//            {104, 56, 59},
+//            {112, 235, 81},
+//            {73, 93, 127},
+//            {207, 60, 6},
+//            {77, 76, 211},
+//            {35, 208, 220},
+//            {141, 5, 129},
+//            {182, 178, 228},
+//            {179, 239, 3},
+//            {209, 9, 132},
+//            {167, 192, 71},
+//            {154, 227, 164},
+//            {200, 125, 103},
+//            {224, 181, 211},
+//            {3, 24, 139},
+//            {218, 67, 198},
+//            {163, 185, 228},
+//            {196, 53, 11},
+//            {39, 183, 33},
+//            {56, 116, 119},
+//            {23, 129, 20},
+//            {42, 191, 85},
+//            {78, 209, 250},
+//            {247, 147, 60},
+//            {74, 172, 146},
+//            {51, 244, 86},
+//            {38, 84, 29},
+//            {197, 202, 150},
+//            {20, 49, 198},
+//            {90, 214, 34},
+//            {178, 49, 101},
+//            {86, 235, 214},
+//            {161, 221, 55},
+//            {17, 173, 136},
+//            {132, 65, 217},
+//            {210, 4, 121},
+//            {241, 117, 217},
+//            {137, 111, 6},
+//            {129, 224, 232},
+//            {73, 34, 0},
+//            {81, 135, 211},
+//            {172, 233, 193},
+//            {43, 246, 89},
+//            {153, 187, 222},
+//            {85, 118, 43},
+//            {119, 116, 33},
+//            {163, 229, 109},
+//            {45, 75, 15},
+//            {15, 7, 140},
+//            {144, 78, 192}
+//    };
+//    for(int k = 0; k < 3; k++)
+//        rgb[k] = colorLib[idx][k];
+//    }
+//    else{
+//        rgb[0]=0;
+//        rgb[1]=0;
+//        rgb[2]=0;
+//    }
+//}
 
 
 
@@ -2525,7 +2526,7 @@ void manual_correct_dialog::big_image_pipeline_start()
     get_para();
     check_neuron_tree();
     vector<vector <int> > nt_segs;
-    nt_segs=neurontree_divide_swc(checked_neuron);
+    nt_segs=neurontree_divide_swc(&checked_neuron,all_para.max_dis*6);
     if(!check_image_size())
         return;
 
@@ -2579,8 +2580,6 @@ void manual_correct_dialog::big_image_pipeline_start()
             }
             continue;
         }
-
-
 
         if (data1d!=0)
         {
@@ -2740,10 +2739,10 @@ bool manual_correct_dialog::get_big_image_name()
 
 vector<vector<int> > manual_correct_dialog::neurontree_divide_big_img_eswc()
 {
-    float distance_thresh=all_para.max_dis*7;
+    float distance_thresh=all_para.max_dis*5;
     qDebug()<<"in nt_divide_big_img"<<distance_thresh;
     vector<int> leaf_nodes_id;
-    vector<vector <int> > parent_LUT = build_parent_LUT(neuron);
+    vector<vector <int> > parent_LUT = build_parent_LUT(&neuron);
     for (int i=0;i<neuron.listNeuron.size();i++)
     {
         if (parent_LUT[i].size()==0)

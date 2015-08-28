@@ -22,9 +22,9 @@ unsigned char * memory_allocate_uchar1D(const V3DLONG i_size);
 void memory_free_uchar1D(unsigned char *ptr_input);
 float * memory_allocate_float1D(const V3DLONG i_size);
 void memory_free_float1D(float *ptr_input);
-vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
-V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z,
-                const V3DLONG _offset_Y, const V3DLONG _offset_Z);
+//vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
+//V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z,
+//                const V3DLONG _offset_Y, const V3DLONG _offset_Z);
 void write_swc(vector<MyMarker> vp, QString filename);
 void write_csv(vector<MyMarker> vp,QString filename);
 V3DLONG landMark2pos(LocationSimple Landmark_input, V3DLONG _offset_Y, V3DLONG _offset_Z);
@@ -33,7 +33,7 @@ vector<V3DLONG> landMarkList2poss(LandmarkList LandmarkList_input, V3DLONG _offs
 vector<vector<float> > get_dir_vec(NeuronSWC p, NeuronSWC p0);
 vector<float> normalize_vec(vector<float> m);
 void writer_swc(vector<vector<float> > new_dir_vec, QString filename, NeuronSWC p0);
-void GetColorRGB(int* rgb, int idx);
+//void GetColorRGB(int* rgb, int idx);
 vector<V3DLONG> get_mass_center(vector<V3DLONG> x_all, vector<V3DLONG> y_all,
                                              vector<V3DLONG> z_all);
 

@@ -1,10 +1,16 @@
 #include "file_io_dialog.h"
+#include "common.h"
+#include "manual_proofread_dialog.h"
+#define WINTITLE "SpineDetector_Automatic"
 
-file_io_dialog::file_io_dialog(V3DPluginCallback2 *cb)
+file_io_dialog::file_io_dialog(V3DPluginCallback2 *cb, int code)
 {
     callback=cb;
     image1Dc_in=0;
-    create();
+    if (code==1)
+        create();
+    else
+        create_is();
     initDlg();
     check_button();
 }
@@ -37,30 +43,35 @@ void file_io_dialog::create()
     btn_csv = new QPushButton("...");
     mygridLayout->addWidget(btn_csv,2,7,1,1);
 
+//    QLabel *label_project=new QLabel(QObject::tr("Project name:(No space)"));
+//    mygridLayout->addWidget(label_project,3,0,1,1);
+//    edit_project=new QLineEdit(tr("project1"));
+//    mygridLayout->addWidget(edit_project,3,1,1,7);
+
     QLabel *channel = new QLabel(tr("Which channel to use?"));
     channel_menu = new QComboBox;
     channel_menu->addItem("red");
     channel_menu->addItem("green");
     channel_menu->addItem("blue");
-    mygridLayout->addWidget(channel,3,0,1,2);
-    mygridLayout->addWidget(channel_menu,3,3,1,5);
+    mygridLayout->addWidget(channel,4,0,1,2);
+    mygridLayout->addWidget(channel_menu,4,3,1,5);
 
     //para setting
     QFrame *line_1 = new QFrame();
     line_1->setFrameShape(QFrame::HLine);
     line_1->setFrameShadow(QFrame::Sunken);
-    mygridLayout->addWidget(line_1,4,0,1,8);
+    mygridLayout->addWidget(line_1,5,0,1,8);
 
     QLabel *bg_thr = new QLabel(tr("Background threshold:"));
-    mygridLayout->addWidget(bg_thr,5,0,1,6);
+    mygridLayout->addWidget(bg_thr,6,0,1,6);
     QLabel *max_pixel=new QLabel (tr("Max spine volume:"));
-    mygridLayout->addWidget(max_pixel,6,0,1,6);
+    mygridLayout->addWidget(max_pixel,7,0,1,6);
     QLabel *min_pixel=new QLabel (tr("Min spine volume:"));
-    mygridLayout->addWidget(min_pixel,7,0,1,6);
+    mygridLayout->addWidget(min_pixel,8,0,1,6);
     QLabel *max_dis=new QLabel(tr("Max spine distance to surface:"));
-    mygridLayout->addWidget(max_dis,8,0,1,6);
+    mygridLayout->addWidget(max_dis,9,0,1,6);
     QLabel *width_thr=new QLabel(tr("Max spine width:"));
-    mygridLayout->addWidget(width_thr,9,0,1,6);
+    mygridLayout->addWidget(width_thr,10,0,1,6);
 
     spin_max_dis=new QSpinBox;
     spin_max_dis->setRange(5,80);
@@ -77,11 +88,11 @@ void file_io_dialog::create()
     spin_width_thr=new QSpinBox;
     spin_width_thr->setRange(10,100);
     spin_width_thr->setValue(35);
-    mygridLayout->addWidget(spin_bg_thr,5,6,1,2);
-    mygridLayout->addWidget(spin_max_pixel,6,6,1,2);
-    mygridLayout->addWidget(spin_min_pixel,7,6,1,2);
-    mygridLayout->addWidget(spin_max_dis,8,6,1,2);
-    mygridLayout->addWidget(spin_width_thr,9,6,1,2);
+    mygridLayout->addWidget(spin_bg_thr,6,6,1,2);
+    mygridLayout->addWidget(spin_max_pixel,7,6,1,2);
+    mygridLayout->addWidget(spin_min_pixel,8,6,1,2);
+    mygridLayout->addWidget(spin_max_dis,9,6,1,2);
+    mygridLayout->addWidget(spin_width_thr,10,6,1,2);
 
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
@@ -113,11 +124,8 @@ void file_io_dialog::create()
     mygridLayout->addWidget(text_info,18,0,1,9);
 
     this->setLayout(mygridLayout);
-    this->setWindowTitle("SpineDetector_AutomaticDetection");
+    this->setWindowTitle(WINTITLE);
     this->show();
-//    if (view_code==1)
-//        connect(btn_run,SIGNAL(clicked()), this, SLOT(run_view_by_seg()));
-//    else if(view_code==0)
     connect(btn_run,SIGNAL(clicked()), this, SLOT(run()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(btn_load, SIGNAL(clicked()), this, SLOT(get_image_name()));
@@ -131,6 +139,7 @@ void file_io_dialog::run()
         v3d_msg("You have not provided valid input/output");
         return;
     }
+    folder_output=edit_csv->text();
     this->accept();
     qDebug()<<"load and initialize";
     if (!load_image())
@@ -150,9 +159,18 @@ void file_io_dialog::run()
         v3d_msg("Errors with automatic detection");
         return;
     }
-    if (!save_auto_detect_result())
+    int ret=maybe_proofread();
+    if (ret==1 ||ret ==2)
     {
-        v3d_msg("Errors with saving the data");
+        manual_proofread_dialog *dialog=new manual_proofread_dialog(callback,false);
+        dialog->run_interface_with_auto(ret,neuron,eswc_flag,LList_in,label_group,image1Dc_in,sz_img
+         ,all_para.bgthr,all_para.max_dis,sel_channel,input_swc_name,input_image_name,folder_output);
+
+
+    }
+    else if (ret==4)
+    {
+        qDebug()<<"discard or error";
         return;
     }
 }
@@ -189,7 +207,7 @@ bool file_io_dialog::auto_spine_detect_invoke()
     progress.setValue(++progress_id);//9
     spine_obj.conn_comp_nb6();
     progress.setValue(++progress_id);//10
-    //LList_in = spine_obj.get_center_landmarks();
+    LList_in = spine_obj.get_center_landmarks();
     label_group = spine_obj.get_group_label();
     //spine_obj.saveResult();
 
@@ -256,8 +274,21 @@ bool file_io_dialog::csv_out()  //need to create a dir for project
     QString fileOpenName=this->edit_csv->text();
     QString tmp_dir = QFileDialog::getExistingDirectory(0, QObject::tr("Select Directory to Save Results"),
             fileOpenName,QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-    if(tmp_dir.isEmpty())
-        return false;
+
+#if defined(Q_OS_MAC)
+        //detect if there is a Qt redundant folder bug, if yes, then make a correction
+        // This fix is done by PHC, 2015May14. This should work in most cases. However
+        //if a user choose a strange tmp folder with the name "/abc/abc/abc" then this fix
+        //will wrongly go to the parent folder "abc/abc".
+        QDir tmp1(fileSaveDir);
+        QString tmp2 = tmp1.dirName();
+        if (fileSaveDir.endsWith(tmp2+'/'+tmp2))
+        {
+            fileSaveDir = fileSaveDir.left(fileSaveDir.size() - tmp2.size() - 1);
+        }
+#endif
+        if(tmp_dir.isEmpty())
+            return false;
     else{
         folder_output=tmp_dir;
         qDebug()<<"folder_output:"<<folder_output;
@@ -375,125 +406,216 @@ void file_io_dialog::get_para()
     all_para.dst_max_pixel=2000;
 }
 
-bool file_io_dialog::save_auto_detect_result()
+bool file_io_dialog::save_project()
 {
-    qDebug()<<"saving profiles " <<"eswc flag:"<<eswc_flag;
-    //save label image
-    V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
-    V3DLONG label_sz[4];
-    label_sz[0]=sz_img[0];
-    label_sz[1]=sz_img[1];
-    label_sz[2]=sz_img[2];
-    label_sz[3]=2;
-    unsigned short *tmp_label = new unsigned short[size_page*2];
-    memset(tmp_label,0,size_page*sizeof(unsigned short));
-
-//    image1Dc_spine = new unsigned char [size_page*3];
-//    memset(image1Dc_spine,0,size_page*3);
-//    memcpy(image1Dc_spine,image1Dc_in,size_page);
-
-    for(int i=0; i<label_group.size(); i++)
+    QString output_label_name="auto_label.v3draw";
+    QString output_marker_name="auto.marker";
+    QString output_csv_name="auto.csv";
+    if (!save_project_results(callback,sz_img,label_group,folder_output,input_swc_name,input_image_name,eswc_flag,neuron,
+                                 LList_in,sel_channel,all_para.bgthr,all_para.max_dis,0,0,output_label_name,
+                              output_marker_name,output_csv_name))
     {
-        GOV tmp = label_group[i];
-        for (int j=0; j<tmp.size(); j++)
-        {
-            tmp_label[tmp.at(j)->pos]=tmp.at(j)->intensity_label;
-            tmp_label[tmp.at(j)->pos+size_page]=tmp.at(j)->dst;
-        }
-    }
-    //maybe not to save dst...too large memory cost
-    QString tmp_name="auto_label.v3draw";
-    QString fname_output = QDir(folder_output).filePath(tmp_name);
-    if (!simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 2))
-        return false;
-
-    //save csv file
-    tmp_name="auto.csv";
-    QString csv_file=QDir(folder_output).filePath(tmp_name);
-    FILE *fp2=fopen(csv_file.toAscii(),"wt");
-    if (eswc_flag)
-        fprintf(fp2,"##yes/no_spine,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
-    else
-        fprintf(fp2,"##yes/no_spine,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node\n");
-
-    for (int i=0;i<label_group.size();i++)
-    {
-        GOV tmp=label_group[i];
-        if (tmp.size()<=0) continue;
-        sort(tmp.begin(),tmp.end(),sortfunc_dst);
-        int group_id=tmp.front()->intensity_label;
-        int max_dis=tmp.front()->dst;
-        int min_dis=tmp.back()->dst;
-        int volume=tmp.size();
-
-        V3DLONG sum_x,sum_y,sum_z,sum_dis;
-        sum_x=sum_y=sum_z=sum_dis=0;
-
-        for (int j=0;j<tmp.size();j++)
-        {
-            sum_x+=tmp[j]->x;
-            sum_y+=tmp[j]->y;
-            sum_z+=tmp[j]->z;
-            sum_dis+=tmp[j]->dst;
-        }
-        int center_x=sum_x/tmp.size();
-        int center_y=sum_y/tmp.size();
-        int center_z=sum_z/tmp.size();
-        int center_dis=sum_dis/tmp.size();
-
-        //qDebug()<<"size:"<<tmp.size()<<" skel_id size:"<<skel_id_vector.size();
-
-        int skel_id=calc_nearest_node(center_x,center_y,center_z);
-        //qDebug()<<"skel_id_size:"<<skel_id_size<<" skel_id:"<<skel_id;
-        if (eswc_flag)
-        {
-            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",0,group_id,volume,max_dis,
-                    min_dis,center_dis,(int)center_x,(int)center_y,(int)center_z,skel_id,
-                    neuron.listNeuron.at(skel_id).type,(int)neuron.listNeuron.at(skel_id).seg_id,
-                    (int)neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
-                    (int)neuron.listNeuron.at(skel_id).fea_val[0]);
-        }
-        else
-            fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",0,group_id,volume,max_dis,min_dis
-                    ,center_dis,(int)center_x,(int)center_y,(int)center_z,skel_id);
-    }
-    fclose(fp2);
-
-    //get the project profile txt
-    tmp_name="project.txt";
-    fname_output=QDir(folder_output).filePath(tmp_name);
-    QFile qfile(fname_output);
-    if (!qfile.open(QIODevice::WriteOnly))
-    {
-        v3d_msg("Cannot open txt file for writing!");
         return false;
     }
-    QTextStream out(&qfile);
-    out<<"RAWIMG="<<input_image_name<<endl;
-    out<<"SWCFILE="<<input_swc_name<<endl;
-    out<<"MASKIMG="<<fname_output<<endl;
-    out<<"CSV="<<csv_file<<endl;
-    out<<"PARA_BG="<<all_para.bgthr<<endl;
-    out<<"PARA_MAXDIS="<<all_para.max_dis<<endl;
-    out<<"PARA_CHANNEL"<<sel_channel<<endl;
-    qfile.close();
-    qDebug()<<"file complete wrriting";
+    return true;
 }
 
-int file_io_dialog::calc_nearest_node(float center_x,float center_y,float center_z)
+
+int file_io_dialog::maybe_proofread()
 {
-    float distance=1e6;
-    int nearest_node_id=0;
-    for (int i=0;i<neuron.listNeuron.size();i++)
+    qDebug()<<"in maybe proofread dialog";
+    QMessageBox mybox;
+    int size=label_group.size();
+    mybox.setWindowTitle(WINTITLE);
+    mybox.setText("SpineDetector automatic detection completes");
+    QString info="The automatic spine detector finds "+ QString::number(size)+" spines."+
+            "Would you like to start proofreading?";
+    mybox.setText(info);
+    QPushButton *seg_view=mybox.addButton(tr("Proofread by segment"),QMessageBox::ActionRole);
+    QPushButton *spine_view=mybox.addButton(tr("Proofread by spine"),QMessageBox::ActionRole);
+    //QPushButton *save_do_later=mybox.addButton(tr("Save for later"),QMessageBox::ActionRole);
+    QPushButton *exit_button=mybox.addButton(tr("Exit without saving"),QMessageBox::ActionRole);
+
+    mybox.setDefaultButton(seg_view);
+    mybox.exec();
+    if (mybox.clickedButton() == seg_view) {
+        return 1;  //invoke manual proofread....
+    }else if (mybox.clickedButton()==spine_view)
     {
-        float tmp_dis=(center_x-neuron.listNeuron[i].x)*(center_x-neuron.listNeuron[i].x)+
-           (center_y-neuron.listNeuron[i].y)*(center_y-neuron.listNeuron[i].y)+
-                (center_z-neuron.listNeuron[i].z)*(center_z-neuron.listNeuron[i].z);
-        if (tmp_dis<distance)
-        {
-            distance=tmp_dis;
-            nearest_node_id=i;
-        }
+        return 2; //invoke manual proofread
     }
-    return nearest_node_id;
+//    else if (mybox.clickedButton() == save_do_later) {
+//        if (!save_project())
+//        {
+//            v3d_msg("Errors with saving the data");
+//            return 4;
+//        }
+//        QString info="The spine project profile is saved at "+ edit_csv->text();
+//        QMessageBox::information(0,"spine_detector",info,QMessageBox::Ok);
+
+//        //prepare image
+//        V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
+//        unsigned char *image_input = new unsigned char[size_page*3];
+//        memset(image_input,0,size_page*3);
+//        memcpy(image_input,image1Dc_in,size_page);
+//        for(int i=0; i<label_group.size(); i++)
+//        {
+//            for (int j=0; j<label_group[i].size(); j++)
+//                image_input[label_group[i][j]->pos+size_page] = 255;
+//        }
+//        Image4DSimple image4d;
+//        image4d.setData(image_input,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
+//        v3dhandle new_win=callback->newImageWindow(WINTITLE);
+//        callback->setImage(new_win,&image4d);
+//        callback->setLandmark(new_win,LList_in);
+//        callback->open3DWindow(new_win);
+//        callback->pushObjectIn3DWindow(new_win);
+//        return 3;
+//    }
+    else if (mybox.clickedButton()==exit_button)
+    {
+        return 4;
+    }
+}
+
+void file_io_dialog::create_is()
+{
+    QGridLayout *mygridLayout = new QGridLayout;
+    QLabel* label_load = new QLabel(QObject::tr("Load Image:"));
+    mygridLayout->addWidget(label_load,0,0,1,1);
+    edit_load = new QLineEdit;
+    edit_load->setText(""); edit_load->setReadOnly(true);
+    mygridLayout->addWidget(edit_load,0,1,1,6);
+    btn_load = new QPushButton("...");
+    mygridLayout->addWidget(btn_load,0,7,1,1);
+
+    QLabel* label_swc = new QLabel(QObject::tr("Load swc:"));
+    mygridLayout->addWidget(label_swc,1,0,1,1);
+    edit_swc = new QLineEdit;
+    edit_swc->setText(""); edit_swc->setReadOnly(true);
+    mygridLayout->addWidget(edit_swc,1,1,1,6);
+    btn_swc = new QPushButton("...");
+    mygridLayout->addWidget(btn_swc,1,7,1,1);
+
+    QLabel* label_csv = new QLabel(QObject::tr("Output directory:"));
+    mygridLayout->addWidget(label_csv,2,0,1,1);
+    edit_csv = new QLineEdit;
+    edit_csv->setText(""); edit_csv->setReadOnly(true);
+    mygridLayout->addWidget(edit_csv,2,1,1,6);
+    btn_csv = new QPushButton("...");
+    mygridLayout->addWidget(btn_csv,2,7,1,1);
+
+    QLabel *channel_cell = new QLabel(tr("Cell channel:"));
+    channel_menu = new QComboBox;
+    channel_menu->addItem("red");
+    channel_menu->addItem("green");
+    channel_menu->addItem("blue");
+    channel_menu->setCurrentIndex(0);
+    mygridLayout->addWidget(channel_cell,3,0,1,2);
+    mygridLayout->addWidget(channel_menu,3,3,1,5);
+
+    QLabel *channel_is =new QLabel(tr("Inhibitory Synapses(IS) channel:"));
+    channel_is_menu = new QComboBox;
+    channel_is_menu->addItem("red");
+    channel_is_menu->addItem("green");
+    channel_is_menu->addItem("blue");
+    channel_is_menu->setCurrentIndex(1);
+    mygridLayout->addWidget(channel_is,4,0,1,2);
+    mygridLayout->addWidget(channel_is_menu,4,3,1,5);
+
+    //para setting
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    mygridLayout->addWidget(line_1,5,0,1,8);
+
+    QLabel *para_label=new QLabel(tr("Parameter setting:"));
+    mygridLayout->addWidget(para_label,6,0,1,2);
+    QLabel *cell_bgthr = new QLabel(tr("Cell channel background threshold:"));
+    mygridLayout->addWidget(cell_bgthr,8,0,1,6);
+    QLabel *is_bgthr=new QLabel (tr("IS channel background threshold:"));
+    mygridLayout->addWidget(is_bgthr,9,0,1,6);
+    QLabel *min_pixel=new QLabel (tr("Min IS volume:"));
+    mygridLayout->addWidget(min_pixel,10,0,1,6);
+    QLabel *max_dis=new QLabel(tr("Max search distance to surface:"));
+    mygridLayout->addWidget(max_dis,11,0,1,6);
+
+    spin_max_dis=new QSpinBox;
+    spin_max_dis->setRange(5,80);
+    spin_max_dis->setValue(40);
+    spin_min_pixel=new QSpinBox;
+    spin_min_pixel->setRange(1,30);
+    spin_min_pixel->setValue(5);
+    spin_bg_thr=new QSpinBox;  //cell channel
+    spin_bg_thr->setRange(1,255);
+    spin_bg_thr->setValue(90);
+    spin_bg_thr2=new QSpinBox; //IS channel
+    spin_bg_thr2->setRange(1,255);
+    spin_bg_thr2->setValue(70);
+
+    mygridLayout->addWidget(spin_bg_thr,8,6,1,2);
+    mygridLayout->addWidget(spin_bg_thr2,9,6,1,2);
+    mygridLayout->addWidget(spin_min_pixel,10,6,1,2);
+    mygridLayout->addWidget(spin_max_dis,11,6,1,2);
+
+    QFrame *line_2 = new QFrame();
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+    mygridLayout->addWidget(line_2,15,0,1,8);
+
+    btn_run    = new QPushButton("Run");
+    QPushButton *cancel = new QPushButton("Cancel");
+    mygridLayout->addWidget(btn_run,16,1,1,2);
+    mygridLayout->addWidget(cancel,16,5,1,2);
+
+    this->setLayout(mygridLayout);
+    this->setWindowTitle("Inhibitory synapses detection");
+    this->show();
+    connect(btn_run,SIGNAL(clicked()), this, SLOT(run_is()));
+    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(btn_load, SIGNAL(clicked()), this, SLOT(get_image_name()));
+    connect(btn_swc,SIGNAL(clicked()),this,SLOT(get_swc_name()));
+    connect(btn_csv,SIGNAL(clicked()),this,SLOT(csv_out()));
+}
+
+void file_io_dialog::run_is()
+{
+    if(!check_button()){
+        v3d_msg("You have not provided valid input/output");
+        return;
+    }
+    folder_output=edit_csv->text();
+    this->accept();
+    qDebug()<<"load and initialize";
+    if (!load_image())
+    {
+        v3d_msg("Loading image error");
+        return;
+    }
+    if (!load_swc())
+    {
+        v3d_msg("Loading swc error");
+        return;
+    }
+    if (!is_detect_invoke())
+    {
+        v3d_msg("IS detection error");
+        return;
+    }
+    qDebug()<<"run is finished";
+
+}
+
+bool file_io_dialog::is_detect_invoke()
+{
+    QStringList name_list;
+    name_list<<input_image_name<<input_swc_name<<folder_output;
+    is_analysis_fun* is_obj = new is_analysis_fun(callback,name_list);
+    qDebug()<<"name list size:"<<name_list.size();
+    if (!is_obj->pushImageData(image1Dc_in,sz_img))
+        return false;
+    is_obj->pushSWCData(neuron);
+    is_obj->run();
+    is_obj->show();
+    return true;
 }

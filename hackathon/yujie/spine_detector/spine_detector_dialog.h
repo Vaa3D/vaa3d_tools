@@ -5,8 +5,8 @@
 #include "v3d_interface.h"
 
 using namespace std;
-void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
-void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+//void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+//void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 class spine_detector_dialog:public QDialog
 {

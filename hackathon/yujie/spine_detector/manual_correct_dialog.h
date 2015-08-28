@@ -3,9 +3,9 @@
 
 //#include "detect_fun.h"
 #include "v3d_interface.h"
-#include "spine_detector_dialog.h"
 #include "spine_fun.h"
 #include "read_raw_file.h"
+
 using namespace std;
 
 //inline bool sortfunc_x_decend(simple_neuronswc *a,simple_neuronswc *b){return (a->x)>(b->x);}
@@ -32,15 +32,15 @@ public:
     void reset_label_group();
     void get_para();
     int save(QString window_name);
-    void GetColorRGB(int* rgb, int idx);
+    //void GetColorRGB(int* rgb, int idx);
     void write_spine_profile(QString filename);
     void write_svm_file(QString filename, vector<int> keep);
 private:
     void initDlg();
     bool check_button();
-    vector<vector<int> > build_parent_LUT(NeuronTree neuron_tmp);
-    int calc_nearest_node(float center_x,float center_y,float center_z);
-    vector<vector<int> > neurontree_divide_swc(NeuronTree neuron_tmp);
+    //vector<vector<int> > build_parent_LUT(NeuronTree neuron_tmp);
+    //int calc_nearest_node(float center_x,float center_y,float center_z);
+    //vector<vector<int> > neurontree_divide_swc(NeuronTree neuron_tmp);
     void set_visualize_image_marker(vector<int> one_seg, int seg_id);
     float calc_between_dis(int node1_id,int node2_id);
 
@@ -89,13 +89,16 @@ public slots:
 
 //for big image handlinng
 private:
-    vector<vector<int> > neurontree_divide_big_img_eswc();
+
     vector<V3DLONG> image_seg_plan(vector<int> seg,NeuronTree neuron_tmp);
     void create_big_image();
     NeuronTree prep_seg_neurontree(vector<V3DLONG> coord);
     bool auto_spine_detect_seg_image(unsigned char *data1d, V3DLONG *sz, NeuronTree nt_seg,
                                      int image_id, V3DLONG x_start, V3DLONG y_start, V3DLONG z_start, QSet<V3DLONG> &spine_map);
     bool check_image_size();
+
+    //not used
+    vector<vector<int> > neurontree_divide_big_img_eswc();
 
 public slots:
     bool get_big_image_name();
