@@ -39,7 +39,7 @@ static long     channel = 1;
 static int      scal    = 12;
 static int      perc    = 90;
 static float    znccTh  = 0.60;
-static int      Ndir    = 13;
+static int      Ndir    = 15;
 static float    angSig  = 60;
 //static float    gcsSig  = 3;
 static int      Ni      = 30; // trace length will go up to Ni*scal
@@ -56,6 +56,37 @@ static int GRAYLEVEL = 256; // plugin works with 8 bit images
 static int Kskip = 3; // subsampling factor (useful for large stacks to reduce unnecessary computation)
 static int maxBlobCount = 5; // max nr. somas
 static int minSomaSize  = 1; // in voxels
+static bool enforceSingleTree = true; // do not allow more than one tree in the reconstruction
+// so far the strategy was to pick extracted blobs as seeds and grow a tree which (presume) leads to better trace coverage
+// however some metrics need exaclty 1 tree - can happen that after growing from several seeds that tree turns out to be a disconnected trace, discarding the rest of the reconstruciton
+
+//------------------
+// Bfs(seed nodes)
+//
+//------------------ sequential extraction ------------------
+// method:
+// enforceSingleTree = FALSE:
+// if (nr blobs>0)
+//      BFS(all blobs together)  // can have disconnected traces (bad for metrics that use 1 tree for evaluation) ----> T1
+// (don't reset discovered list)
+// BFS(undiscovered node with largest corr) ----> T2, T3...
+// pick T with largest number of nodes
+// main problem was the BFS that created disconnected trees
+//------------------ paralel extraction ------------------
+//
+// enforceSingleTree=TRUE:
+// expand the tree from each of the blobs - reinforcing 1 seed (hence 1 tree) - and pick the tree that grew largest as representative.
+// method:
+// if (nr blobs>0)
+//      for i in 1, nr blobs,
+//          BFS(blob i); ----> Ti; reset BFS;
+//      end
+//      pick T with largest number of nodes
+// else
+//      BFS(node with largest corr); ----> T1, will be the output also
+//
+//
+//
 
 struct input_PARA
 {
@@ -680,10 +711,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // 0    : background
     // -1   : foreground
     // -2   : mask this foreground location from calculating
-    // 1    : node<1>   (soma)
-    // 2    : node<2>   (soma)
+    // 1    : node<1>   (blob)
+    // 2    : node<2>   (blob)
     // ...
-    // A    : node<A>   (gpnt)
+    // A    : node<A>   (gpnt) // so the gpnts are automatically in the reconstruction which Advantra will try to avoid
     // A+1  : node<A+1> (gpnt)
     // ...
     // B    : node<B>   (trc)
@@ -1443,12 +1474,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // ...
     // nodelist[N].nbr will be a list of nodelist indexes of adjacent nodes
 
-
     bool        D[nodelist.size()]; // for book-keeping the discovered nodes
     int         L[nodelist.size()]; // len store the distance to backtrack towards nearest CP
     int         I2Swc[nodelist.size()];// map node index with corresponding swc index
 
-    // initialize
+    // reset BFS
     for (int i = 0; i < nodelist.size(); ++i) {
         D[i]        = (i==0)?true:false;
         I2Swc[i]    = -1; // undefined
@@ -1457,127 +1487,325 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     NeuronTree nt; // selected output tree
     int maxtreenodes = -1;
-    int seedidx;
-    bool fisrttime = true; // first time seed from blobs
+    QString signature =
+            "NeuronChaser\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
+            "\n#scal="+QString("%1").arg(PARA.scal)+
+            "\n#perc="+QString("%1").arg(PARA.perc)+
+            "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
+            "\n#Ndir="+QString("%1").arg(PARA.Ndir)+
+            "\n#angSig="+QString("%1").arg(PARA.angSig)+
+            "\n#Ni="+QString("%1").arg(PARA.Ni)+
+            "\n#Ns="+QString("%1").arg(PARA.Ns)+
+            "\n#zDist="+QString("%1").arg(PARA.zDist)+
+            "\n#---------------------\n#Kskip="+QString("%1").arg(Kskip)+
+            "\n#enforceSingleTree="+QString("%1").arg(enforceSingleTree)+
+            "\n#maxBlobCount="+QString("%1").arg(maxBlobCount)+
+            "\n#minSomaSize="+QString("%1").arg(minSomaSize);;
 
-    while ((seedidx = get_undiscovered(indices, D))!=-1) {
+    // two strategies for tree extraction - one will be deprecated
+    if (!enforceSingleTree) {
 
-        BfsQueue< vector<int> > boob; // queue for the BFS
+        // this is something that was originally designed to capture as many nodes
+        // but the error was in having several trees instead of only one
+        // plan is to have this case removed in future
 
-        vector<int> seed; // seed indexeses of nodes that will initialize the tree genesis
-        if (fisrttime && xc.size()>=1) { // if it's first time and soma regions exist
-            // take soma regions as seeds (seedidx won't be used)
-            for (int si = 1; si <= xc.size(); ++si)
-                seed.push_back(si);
-        }
-        else
-            seed.push_back(seedidx); // yet undiscovered with highest corr.
+        int seedidx;
+        bool fisrttime = true; // first time seed from blobs
 
-        fisrttime = false;
+            while ((seedidx = get_undiscovered(indices, D))!=-1) {
 
-        NeuronTree ntcurr;
-        ntcurr.name =
-                "NeuronChaser\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
-                "\n#scal="+QString("%1").arg(PARA.scal)+
-                "\n#perc="+QString("%1").arg(PARA.perc)+
-                "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
-                "\n#Ndir="+QString("%1").arg(PARA.Ndir)+
-                "\n#angSig="+QString("%1").arg(PARA.angSig)+
-                "\n#Ni="+QString("%1").arg(PARA.Ni)+
-                "\n#Ns="+QString("%1").arg(PARA.Ns)+
-                "\n#zDist="+QString("%1").arg(PARA.zDist)+
-                "\n#---------------------\n#Kskip="+QString("%1").arg(Kskip)+
-//                "\n#prune_len="+QString("%1").arg(prune_len)+
-                "\n#maxBlobCount="+QString("%1").arg(maxBlobCount)+
-                "\n#minSomaSize="+QString("%1").arg(minSomaSize);
+            BfsQueue< vector<int> > boob; // queue for the BFS
 
-        for (int i = 0; i < seed.size(); i++) {
-            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-            vector<int> lnk(2);
-            lnk[0] = -1;
-            lnk[1] = seed[i];
-            boob.enqueue(lnk);
+            vector<int> seed; // seed indexeses of nodes that will initialize the tree genesis
+            if (fisrttime && xc.size()>=1) { // if it's first time and soma regions exist
+                for (int si = 1; si <= xc.size(); ++si)
+                    seed.push_back(si);
+            }
+            else
+                seed.push_back(seedidx); // yet undiscovered with highest corr.
 
-            D[seed[i]] = true; // mark as discovered
-            L[seed[i]] = 0; // information on length toowards CP
-            // I2Swc will be filled at the dequeue moment
-        }
+            fisrttime = false;
 
-        while (boob.hasItems()) { // while queue is not empty
+            NeuronTree ntcurr;
+            ntcurr.name = signature;
 
-            // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-            vector<int> tt = boob.dequeue();
-            int prev = tt[0];
-            int curr = tt[1];
+            for (int i = 0; i < seed.size(); i++) {
+                // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+                vector<int> lnk(2);
+                lnk[0] = -1;
+                lnk[1] = seed[i];
+                boob.enqueue(lnk);
 
-            I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
+                D[seed[i]] = true; // mark as discovered
+                L[seed[i]] = 0; // information on length toowards CP
+                // I2Swc will be filled at the dequeue moment
+            }
 
-            // add to swc
-            NeuronSWC n0;
-            n0.n = n0.nodeinseg_id = I2Swc[curr];
-            n0.type = Node::AXON;
-            n0.x = nodelist[curr].x;
-            n0.y = nodelist[curr].y;
-            n0.z = nodelist[curr].z;
-            n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
-            n0.parent = (prev==-1)? -1 : I2Swc[prev];
-            ntcurr.listNeuron.append(n0);
+            while (boob.hasItems()) { // while queue is not empty
 
-            vector<int> nextlist;
-            nextlist.empty();
+                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+                vector<int> tt = boob.dequeue();
+                int prev = tt[0];
+                int curr = tt[1];
 
-            for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
-                int next = nodelist[curr].nbr[k];
-                if (!D[next]) {
+                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
 
-                    vector<int> lnk(2);
-                    lnk[0] = curr;
-                    lnk[1] = next;
-                    boob.enqueue(lnk);
+                // add to swc
+                NeuronSWC n0;
+                n0.n = n0.nodeinseg_id = I2Swc[curr];
+                n0.type = Node::AXON;
+                n0.x = nodelist[curr].x;
+                n0.y = nodelist[curr].y;
+                n0.z = nodelist[curr].z;
+                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
+                n0.parent = (prev==-1)? -1 : I2Swc[prev];
+                ntcurr.listNeuron.append(n0);
 
-                    D[next] = true;
-                    L[next] = L[curr] + 1;
+                vector<int> nextlist;
+                nextlist.empty();
 
-                    nextlist.push_back(next);
+                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
+                    int next = nodelist[curr].nbr[k];
+                    if (!D[next]) {
 
+                        vector<int> lnk(2);
+                        lnk[0] = curr;
+                        lnk[1] = next;
+                        boob.enqueue(lnk);
+
+                        D[next] = true;
+                        L[next] = L[curr] + 1;
+
+                        nextlist.push_back(next);
+
+                    }
                 }
+                // termination in tree search (to reduce number of idle ends)
+                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
+    //                ntcurr.listNeuron.last().type = Node::END;
+    //                for (int k = 0; k < L[curr]; ++k)
+                        ntcurr.listNeuron.removeLast();
+                }
+//                else if (nextlist.size()>1) {
+    //                for (int k = 0; k < nextlist.size(); ++k)
+    //                    L[nextlist[k]] = 1; // reset if they are expanding from CP
+//                }
             }
 
-            if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) { // termination in tree search
-//                ntcurr.listNeuron.last().type = Node::END;
-//                for (int k = 0; k < L[curr]; ++k)
-                    ntcurr.listNeuron.removeLast();
-            }
-            else if (nextlist.size()>1) {
-//                for (int k = 0; k < nextlist.size(); ++k)
-//                    L[nextlist[k]] = 1; // reset if they are expanding from CP
-            }
-        }
+            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
 
-        cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
-
-        if (ntcurr.listNeuron.size()>maxtreenodes) {
-            maxtreenodes = ntcurr.listNeuron.size();
-            nt = ntcurr; // keep the one with highest number of nodes in nt
-        }
-        if (false) { // can be enabled to save the rest
-            QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+            if (ntcurr.listNeuron.size()>maxtreenodes) {
+                maxtreenodes = ntcurr.listNeuron.size();
+                nt = ntcurr; // keep the one with highest number of nodes in nt
+            }
+            if (PARA.saveMidres) { // can be enabled to save the rest
+                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
                 writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
+            }
+
         }
 
     }
+    else {
 
-    cout << "\ntree with " << nt.listNeuron.size() << " nodes selected.\n" << endl;
+        cout << "ENFORCE SINGLE TREE." << endl;
+        // this is tree extraction that enables having only one tree - structural metrics needs 1 tree and neuron reconstruction is defined as 1 tree task
 
-    QString ntswc_name = PARA.inimg_file + "_NeuronChaser.swc";
-    writeSWC_file(ntswc_name.toStdString().c_str(), nt);
+        // 1. seed from the highest correlation node and pull out largest tree out
+
+        // reset BFS
+        for (int i = 0; i < nodelist.size(); ++i) {
+            D[i]        = (i==0)?true:false;
+            I2Swc[i]    = -1; // undefined
+            L[i]        = -1; // undefined
+        }
+
+        int seedidx;
+        int couttrials = 0;
+
+        while ((seedidx = get_undiscovered(indices, D))!=-1) {
+
+            cout << "seedidx = " << seedidx << " ... " << flush;
+
+            NeuronTree ntcurr;
+            ntcurr.name = signature;
+
+            BfsQueue< vector<int> > boob; // queue for the BFS
+
+            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+            vector<int> lnk(2);
+            lnk[0] = -1;
+            lnk[1] = seedidx;
+            boob.enqueue(lnk);
+
+            D[seedidx] = true; // mark as discovered
+            L[seedidx] = 0; // information on length toowards CP
+            // I2Swc will be filled at the dequeue moment
+
+            while (boob.hasItems()) { // while queue is not empty
+
+                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+                vector<int> tt = boob.dequeue();
+                int prev = tt[0];
+                int curr = tt[1];
+
+                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
+
+                // add to swc
+                NeuronSWC n0;
+                n0.n = n0.nodeinseg_id = I2Swc[curr];
+                n0.type = Node::AXON;
+                n0.x = nodelist[curr].x;
+                n0.y = nodelist[curr].y;
+                n0.z = nodelist[curr].z;
+                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
+                n0.parent = (prev==-1)? -1 : I2Swc[prev];
+                ntcurr.listNeuron.append(n0);
+
+                vector<int> nextlist;
+                nextlist.empty();
+
+                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
+                    int next = nodelist[curr].nbr[k];
+                    if (!D[next]) {
+
+                        vector<int> lnk(2);
+                        lnk[0] = curr;
+                        lnk[1] = next;
+                        boob.enqueue(lnk);
+
+                        D[next] = true;
+                        L[next] = L[curr] + 1;
+
+                        nextlist.push_back(next);
+
+                    }
+                }
+                // termination in tree search (to reduce number of idle ends)
+                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
+    //                ntcurr.listNeuron.last().type = Node::END;
+    //                for (int k = 0; k < L[curr]; ++k)
+                        ntcurr.listNeuron.removeLast();
+                }
+            }
+
+            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
+
+            if (ntcurr.listNeuron.size()>maxtreenodes) {
+                cout << " *add it* " << endl;
+                maxtreenodes = ntcurr.listNeuron.size();
+                nt = ntcurr; // keep the one with highest number of nodes in nt
+            }
+            if (PARA.saveMidres) { // can be enabled to save the rest
+                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(couttrials++,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+                writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
+            }
+
+        }
+
+        // 2. seed from the blobs if they exist (pick largest)
+        cout << " *** seed from blob *** " << xc.size() << endl;
+
+        for (int seedi = 1; seedi <= xc.size(); ++seedi) {
+
+            cout << seedi << " :\t" << flush;
+
+            // reset BFS before each tree is built from the beginning
+            for (int i = 0; i < nodelist.size(); ++i) {
+                D[i]        = (i==0)?true:false;
+                I2Swc[i]    = -1; // undefined
+                L[i]        = -1; // undefined
+            }
+
+            NeuronTree ntcurr;
+            ntcurr.name = signature;
+
+            BfsQueue< vector<int> > boob; // queue for the BFS
+
+            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+            vector<int> lnk(2);
+            lnk[0] = -1;
+            lnk[1] = seedi;
+            boob.enqueue(lnk);
+
+            D[seedi] = true; // mark as discovered
+            L[seedi] = 0; // information on length toowards CP
+            // I2Swc will be filled at the dequeue moment
+
+            while (boob.hasItems()) { // while queue is not empty
+
+                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
+                vector<int> tt = boob.dequeue();
+                int prev = tt[0];
+                int curr = tt[1];
+
+                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
+
+                // add to swc
+                NeuronSWC n0;
+                n0.n = n0.nodeinseg_id = I2Swc[curr];
+                n0.type = Node::AXON;
+                n0.x = nodelist[curr].x;
+                n0.y = nodelist[curr].y;
+                n0.z = nodelist[curr].z;
+                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
+                n0.parent = (prev==-1)? -1 : I2Swc[prev];
+                ntcurr.listNeuron.append(n0);
+
+                vector<int> nextlist;
+                nextlist.empty();
+
+                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
+                    int next = nodelist[curr].nbr[k];
+                    if (!D[next]) {
+
+                        vector<int> lnk(2);
+                        lnk[0] = curr;
+                        lnk[1] = next;
+                        boob.enqueue(lnk);
+
+                        D[next] = true;
+                        L[next] = L[curr] + 1;
+
+                        nextlist.push_back(next);
+
+                    }
+                }
+                // termination in tree search (to reduce number of idle ends)
+                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
+    //                ntcurr.listNeuron.last().type = Node::END;
+    //                for (int k = 0; k < L[curr]; ++k)
+                        ntcurr.listNeuron.removeLast();
+                }
+            }
+
+            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
+
+            if (ntcurr.listNeuron.size()>=maxtreenodes) {
+                maxtreenodes = ntcurr.listNeuron.size();
+                nt = ntcurr; // keep the one with highest number of nodes in nt
+            }
+
+            if (PARA.saveMidres) { // can be enabled to save the rest
+                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(couttrials++,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+                writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
+            }
+
+        }
+
+    } // case when 1 tree is enforced
+
+    cout << "\n\n\nTREE -> " << nt.listNeuron.size() << " NODES.\n\n" << endl;
+
+    QString swc_name = PARA.inimg_file + "_NeuronChaser.swc";
+    writeSWC_file(swc_name.toStdString().c_str(), nt);
 
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(ntswc_name.toStdString().c_str()),bmenu);
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
 }
