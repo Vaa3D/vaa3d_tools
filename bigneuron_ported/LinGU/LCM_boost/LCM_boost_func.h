@@ -391,5 +391,39 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 int trace_img2(cv::Mat seg_img, cv::Mat image, int offset[], int t2i, char * outfile_swc);
 
 
+
+bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int bm1, int bm2);
+
+bool General_Boost1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+int swc2conf1(V3DPluginCallback2 & callback, char *infile, cv::Mat &conf_img,int base_swc);
+
+
+bool Batch_Test2000(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+int LCM_classify_CF(cv::Mat feature_cc, double * resp_tst, int * node_tst,char * dataset);
+
+int LCM_boost1(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img, int t1, int t2,char * dataset);
+
+
+int trace_img3(V3DPluginCallback2 & callback,cv::Mat seg_img, cv::Mat image, int offset[], int t2i, char * outfile_swc);
+
+int trace_diadiem(cv::Mat seg_img, cv::Mat image, int offset[], double soma_x, double soma_y, double soma_z, int t2i, char * outfile_swc);
+
+bool Call_General_Boost_Diadiem(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int bm1, int bm2, double soma_xyz[]);
+
+int trace_img3_diadiem(V3DPluginCallback2 & callback, cv::Mat seg_img, cv::Mat image, int offset[], int t2i, char * mark_fn, char * outfile_swc);
+
+int trace_img_diadiem(V3DPluginCallback2 & callback, cv::Mat image, int offset[], char * mark_fn, char * outfile_swc);
+
+int  app2trace_marker(V3DPluginCallback2 & callback, char *infile, char * marker_fn, char * outfile);
+
+bool General_Boost1(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm2);
+
+
 #endif
 

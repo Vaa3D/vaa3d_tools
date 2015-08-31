@@ -43,53 +43,53 @@ void LoadImageAndSWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 
 	if (menu_name == tr("LCM_boost(MultiScale Ehancement based)"))
 	{
-		General_Boost(callback,parent,1,0);
+		(callback,parent,1,0);
 	}
 
 	if (menu_name == tr("LCM_boost(Fast Marching based)"))
 	{
-		General_Boost(callback,parent,2,0);
+		General_Boost1(callback,parent,2,0);
 	}
 
 	if (menu_name == tr("LCM_boost(mostVesselTracer based)"))
 	{
-		General_Boost(callback,parent,3,1);
+		General_Boost1(callback,parent,3,1);
 	}
 
 	if (menu_name == tr("LCM_boost(neuTube based)"))
 	{
-		General_Boost(callback,parent,3,2);
+		General_Boost1(callback,parent,3,2);
 	}
 
 	if (menu_name == tr("LCM_boost(SimpleTracing based)"))
 	{
-		General_Boost(callback,parent,3,3);
+		General_Boost1(callback,parent,3,3);
 	}
 
 	if (menu_name == tr("LCM_boost(APP2 based)"))
 	{
-		General_Boost(callback,parent,3,4);
+		General_Boost1(callback,parent,3,4);
 	}
 
 	if (menu_name == tr("LCM_boost(APP1 based)"))
 	{
-		General_Boost(callback,parent,3,5);
+		General_Boost1(callback,parent,3,5);
 	}
 
 	if (menu_name == tr("LCM_boost(fastmarching_spanningtree based)"))
 	{
-		General_Boost(callback,parent,3,6);
+		General_Boost1(callback,parent,3,6);
 	}
 
 	if (menu_name == tr("LCM_boost(NeuroGPSTree based)"))
 	{
-		General_Boost(callback,parent,3,7);
+		General_Boost1(callback,parent,3,7);
 	}
 
 
 	if (menu_name == tr("LCM_boost(neurontracing_mst based)"))
 	{
-		General_Boost(callback,parent,3,8);
+		General_Boost1(callback,parent,3,8);
 	}
 
 
@@ -103,7 +103,7 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 {
 	if (func_name == tr("LCM_boost"))
 	{
-		return General_Boost(callback,input,output,1,0);
+		return General_Boost1(callback,input,output,1,0);
 	}
 
 	if (func_name == tr("Batch"))
@@ -127,59 +127,77 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
     if (func_name == tr("BatchTest"))
 	{
 
-		return Batch_Test(callback, input, output);
+       Batch_Test1(callback, input, output,1,0);
+
+       return Batch_Test1(callback, input, output,2,0);
+
+     //  return Batch_Test2000(callback, input, output,1,0);
 	}
 
+    if (func_name == tr("BatchTest2000"))
+	{
+
+		return Batch_Test2000(callback, input, output,1,0);
+	}
+
+
+
+
+//    if (func_name == tr("BatchTest1"))
+//	{
+
+//		return Batch_Test1(callback, input, output);
+//	}
 
 
 	if (func_name == tr("LCM_boost_1"))
 	{
-		return General_Boost(callback,input,output,1,0);
+		return General_Boost1(callback,input,output,1,0);
 	}
 
 	if (func_name == tr("LCM_boost_2"))
 	{
-		return General_Boost(callback,input,output,2,0);
+		return General_Boost1(callback,input,output,2,0);
 	}
 
 	if (func_name == tr("LCM_boost_3"))
 	{
-		return General_Boost(callback,input,output,3,1);
+		return General_Boost1(callback,input,output,3,1);
 	}
 
 	if (func_name == tr("LCM_boost_4"))
 	{
-		return General_Boost(callback,input,output,3,2);
+		return General_Boost1(callback,input,output,3,2);
 	}
 
 	if (func_name == tr("LCM_boost_5"))
 	{
-		return General_Boost(callback,input,output,3,3);
+		return General_Boost1(callback,input,output,3,3);
 	}
 
 	if (func_name == tr("LCM_boost_6"))
 	{
-		return General_Boost(callback,input,output,3,4);
+		return General_Boost1(callback,input,output,3,4);
 	}
 
 	if (func_name == tr("LCM_boost_7"))
 	{
-		return General_Boost(callback,input,output,3,5);
+		return General_Boost1(callback,input,output,3,5);
 	}
 
 	if (func_name == tr("LCM_boost_8"))
 	{
-		return General_Boost(callback,input,output,3,6);
+		return General_Boost1(callback,input,output,3,6);
 	}
 
 	if (func_name == tr("LCM_boost_9"))
 	{
-		return General_Boost(callback,input,output,3,7);
+		return General_Boost1(callback,input,output,3,7);
 	}
 
 	if (func_name == tr("LCM_boost_10"))
 	{
-		return General_Boost(callback,input,output,3,8);
+		return General_Boost1(callback,input,output,3,8);
 	}
 
 		if (func_name == tr("help"))
