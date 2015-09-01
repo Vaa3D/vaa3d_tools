@@ -140,24 +140,32 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		outlist = (vector<char*>*)(output.at(0).p);
 	}
 
-
+	V3DLONG rootid = VOID;
 	if (hasPara)
 	{
 		if (paralist->size()==0)
 		{
-			cout<<"Threshold not set. All points will connected automatically."<<endl;
+			cout<< "Threshold not set: All points will connected automatically." << endl;
+			cout<<"No root ID is specified: by default will use the first root in the file."  <<endl;
+			rootid = VOID;
 			thres = VOID;
 		}
-		else if (paralist->size()==1)
+		else if (paralist->size() >= 1)
 		{
 			thres = atof(paralist->at(0));
 			cout<<"threshold: "<<thres<<endl;
+			if (paralist->size() ==2 )
+			{
+				rootid = atoi(paralist->at(1));
+				cout<<"root id: "<<rootid<<endl;
+			}
+			else if (paralist->size() >2)
+			{
+				cout<<"Illegal parameter list."<<endl;
+				return false;
+			}
 		}
-		else
-		{
-			cout<<"Illegal parameter list."<<endl;
-			return false;
-		}
+
 	}
 
 
@@ -203,7 +211,7 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		return false;
 	}
 
-	if (!SortSWC(neuron, result , VOID, thres))
+	if (!SortSWC(neuron, result , rootid, thres))
 	{
 		cout<<"Error in sorting swc"<<endl;
 		return false;
@@ -228,8 +236,9 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"-f<func name>:\t\t sort_swc\n";
 	cout<<"-i<file name>:\t\t input .swc or .ano file\n";
 	cout<<"-o<file name>:\t\t (not required) output sorted swc file. DEFAUTL: 'inputName_sorted.swc'\n";
-	cout<<"-p<link threshold>:\t (not required) the threshold of link you want the plugin to generate in case the input swc(s) are broken. if you set thres=0, no new link will be generated. DEFAULT: Infinity (all points will be connected automatically).\n";
-	cout<<"Demo:\t ./v3d -x plugins/neuron_uitilities/sort_a_swc/libsort_neuron_swc.so -f sort_swc -i test.swc -o test_sorted.swc -p 1\n";
+	cout<<"-p<link threshold, root id>:\t (not required) the threshold of link you want the plugin to generate in case the input swc(s) are broken. if you set thres=0, no new link will be generated. DEFAULT: Infinity (all points will be connected automatically); The node id of the root you would like to specify, by default, the first root's id  in the swc will be used.\n";
+	cout<<"Demo1:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc -p 100000.0  1  \n";
+	cout<<"Demo2:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc  (no new links, use the default first root as the root id) \n";
 
 }
 
