@@ -1,0 +1,7 @@
+libvaa_port_testInitialize
+libvaa_port_testInitializeWithHandlers
+libvaa_port_testTerminate
+libvaa_port_testPrintStackTrace
+mlxVaa3d_trace3D
+mlfVaa3d_trace3D
+
