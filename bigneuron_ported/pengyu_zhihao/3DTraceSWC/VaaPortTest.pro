@@ -2,12 +2,14 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /home/g/grad/zhihaozh/bigneuron/vaa3d_source/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += /usr/local/MATLAB/R2015a/extern/include
-INCLUDEPATH     += /home/g/grad/zhihaozh/bigneuron/VaaTrace3DMatlab
+#INCLUDEPATH     += /home/g/grad/zhihaozh/bigneuron/VaaTrace3DMatlab
+INCLUDEPATH     += matlab_lib
 
-LIBS    += -L/home/g/grad/zhihaozh/bigneuron/VaaTrace3DMatlab -lvaa_port_test
+#LIBS    += -L/home/g/grad/zhihaozh/bigneuron/VaaTrace3DMatlab -lvaa_port_test
+LIBS    += -L matlab_lib -lvaa_port_test
 LIBS    += -L/usr/local/MATLAB/R2015a/runtime/glnxa64 -lmwmclmcrrt
 LIBS    += -L/usr/local/MATLAB/R2015a/sys/os/glnxa64 -lstdc++
 
@@ -20,4 +22,4 @@ SOURCES += func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(VaaPortTest)
-DESTDIR = /home/g/grad/zhihaozh/bigneuron/vaa3d_redhat_fedora_ubuntu_64bit_v2.921/plugins/aVaaTrace3D/
+DESTDIR = A3DPATH/bin/plugins/aVaaTrace3D/
