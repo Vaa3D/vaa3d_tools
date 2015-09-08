@@ -170,7 +170,7 @@ function write_neuron_tracing_command {
 #EnsembleNeuronTracer
 
   if [ $METHOD == "25" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x EnsembleNeuronTracer/ -f tracing_func -i $inimgfileTracing ;mv  $inimgfileTracing*_EnsembleNeuronTracer.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x EnsembleNeuronTracerBasic -f tracing_func -i $inimgfileTracing ;mv  $inimgfileTracing*_EnsembleNeuronTracerBasic.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #EnsembleNeuronTracerV2n
