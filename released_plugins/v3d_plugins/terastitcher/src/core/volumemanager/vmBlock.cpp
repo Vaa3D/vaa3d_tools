@@ -909,6 +909,7 @@ void
 		int z = z_coords->first; // current D coordinate 
 		for ( int i=0; i<N_BLOCKS; i++ ) {
 			z_next = atoi(VirtualVolume::name2coordZ(FILENAMES[i]).c_str());
+			// 2015-08-29. Giulio. Do not check here if there is incorrect overlap along D between blocks, check is performed in method 'check' of BlockVolume
 			if ( z_next > z ) {
 				FILENAMES_temp[n_blocks]   = 0;
 				BLOCK_SIZE_temp[n_blocks]  = (int) floor((float)(z_next - z)/(10 * CONTAINER->getVXL_D())); // 2015-08-01. Giulio. floor is used to avoid the introduction of one more empty slice; if some slice is missing it will be added at the bottom of the stack

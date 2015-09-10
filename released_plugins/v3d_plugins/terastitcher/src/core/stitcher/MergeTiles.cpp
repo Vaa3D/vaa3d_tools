@@ -28,6 +28,8 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-08-28. Giulio.     @FIXED reference system of the generated image has always V as a first axis and H as a second axis
+* 2015-08-26. Giulio.     @ADDED stop and resume facility in par mode
 * 2015-08-16. Giulio.     @ADDED the 'isotropi' parameter (flag) to all methods and the halve_pow2 array to control the halving at different resolutions
 * 2015.08.14. Giulio.     @FIXED a a bug on the depth used to create directories in the casethe  --parallel option is used
 * 2015.08.14. Giulio.     @ADDED a check on block_depth when the --makedirs and --parallel options are used
@@ -125,6 +127,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	iom::real_t *buffer_ptr, *ustripe_ptr, *dstripe_ptr;	
 	iom::real_t (*blending)(double& angle, iom::real_t& pixel1, iom::real_t& pixel2);
 
+	std::stringstream output_path_par; // used if parallel option is set
 	int halve_pow2[S_MAX_MULTIRES];
 	std::stringstream file_path[S_MAX_MULTIRES];
 
@@ -402,22 +405,42 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	sint64 z_parts;
 
 	// 2014-11-03. Giulio. @FIXED stop and resume facility should inactive in test mode
+	// 2015-08-26. Giulio. @ADDED stop and resume facility in par mode
 	if ( !test_mode ) {
 		// WARNING: uses saved_img_format to check that the operation has been resumed withe the sae parameters
-		// resume option not used in parallel mode
-		if ( !par_mode && initResumer(saved_img_format,output_path.c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) { // *check if halve_pow2 should be saved*
-			readResumerState(fhandle,output_path.c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts); // *check if halve_pow2 should be saved*
-		}
-		else {
-			//slice_start and slice_end of current block depend on the resolution
-			for(int res_i=0; res_i< resolutions_size; res_i++) {
-				stack_block[res_i] = 0;
-				slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
-				slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+		if ( par_mode ) {
+			output_path_par << output_path << "/" << "D_" << _D0 << "_" << _D1;
+			make_dir(output_path_par.str().c_str());  // the directory has been created
+			if ( initResumer(saved_img_format,output_path_par.str().c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) { // halve_pow2 is not saved
+					readResumerState(fhandle,output_path_par.str().c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts); // halve_pow2 is not saved
 			}
-			// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
-			z = this->D0;
-			z_parts = 1;
+			else { // halve_pow2 is not saved: start form the firs slice
+				//slice_start and slice_end of current block depend on the resolution
+				for(int res_i=0; res_i< resolutions_size; res_i++) {
+					stack_block[res_i] = 0;
+					slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
+					slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+				}
+				// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
+				z = this->D0;
+				z_parts = 1;
+			}
+		}
+		else { // not in parallel mode: use output_path to maintain resume status
+			if ( initResumer(saved_img_format,output_path.c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) { // halve_pow2 is not saved
+				readResumerState(fhandle,output_path.c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts); // halve_pow2 is not saved
+			}
+			else { // halve_pow2 is not saved: start from first slice
+				//slice_start and slice_end of current block depend on the resolution
+				for(int res_i=0; res_i< resolutions_size; res_i++) {
+					stack_block[res_i] = 0;
+					slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
+					slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+				}
+				// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
+				z = this->D0;
+				z_parts = 1;
+			}
 		}
 	}
 	else { // test mode
@@ -788,7 +811,8 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 		}
 
 		// 2014-10-29. Giulio. @ADDED save next group data
-		if ( !test_mode && !par_mode )
+		if ( !test_mode )
+			// fhandle is correctly set both in non parallel and in parallel mode
 			saveResumerState(fhandle,resolutions_size,stack_block,slice_start,slice_end,z+z_max_res,z_parts+1);
 	}
 
@@ -801,13 +825,19 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
 		iim::ref_sys reference = *((iim::ref_sys *) &temp); // the cast is needed because there are two ref_sys in different name spaces
+		// 2015-08-28. Giulio. the generated volume has always V coordinates at the first directory level and H coordinates at the second directory level
+		if ( reference.first == iim::horizontal || reference.first == iim::inv_horizontal ) {
+			iim::axis temp = reference.first;
+			reference.first = reference.second;
+			reference.second = reference.first;
+		}
 		for(int res_i=0; res_i< resolutions_size; res_i++)
 		{
 			if(resolutions[res_i])
 			{
 				//---- Alessandro 2013-04-22 partial fix: wrong voxel size computation. In addition, the predefined reference system {1,2,3} may not be the right
-				//one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
-				//is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
+				//one when dealing with CLSM data. The right reference system is stored in the <BlockVolume> object. A possible solution to implement
+				//is to check whether <volume> is a pointer to a <BlockVolume> object, then specialize it to <BlockVolume*> and get its reference
 				//system.
 				try 
 				{
@@ -827,6 +857,12 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				}
 			}
 		}
+	}
+	else if ( par_mode ) {
+		// 2015-08-26. Giulio. @ADDED close resume in par mode
+		closeResumer(fhandle,output_path_par.str().c_str());
+		// WARNINIG --- the directory should be removed
+		bool res = remove_dir(output_path_par.str().c_str());
 	}
 
 	// deallocate memory
@@ -1157,13 +1193,19 @@ void StackStitcher::mdataGenerator (std::string output_path, int block_height, i
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
 		iim::ref_sys reference = *((iim::ref_sys *) &temp); // the cast is needed because there are two ref_sys in different name spaces
+		// 2015-08-28. Giulio. the generated volume has always V coordinates at the first directory level and H coordinates at the second directory level
+		if ( reference.first == iim::horizontal || reference.first == iim::inv_horizontal ) {
+			iim::axis temp = reference.first;
+			reference.first = reference.second;
+			reference.second = reference.first;
+		}
 		for(int res_i=0; res_i< resolutions_size; res_i++)
 		{
 			if(resolutions[res_i])
 			{
 				//---- Alessandro 2013-04-22 partial fix: wrong voxel size computation. In addition, the predefined reference system {1,2,3} may not be the right
-				//one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
-				//is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
+				//one when dealing with CLSM data. The right reference system is stored in the <BlockVolume> object. A possible solution to implement
+				//is to check whether <volume> is a pointer to a <BlockVolume> object, then specialize it to <BlockVolume*> and get its reference
 				//system.
 				try 
 				{

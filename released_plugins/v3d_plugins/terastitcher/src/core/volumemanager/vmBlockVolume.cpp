@@ -25,6 +25,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-08-27. Giluio.     @ADDED control on coherence between block lenghts and filenames in 'check' method 
 * 2015-07-30. Giluio.     @FIXED bug in applyReference system.
 * 2015-07-30. Giluio.     @FIXED bug in extractCoordinates.
 * 2015-07-22. Giluio.     @ADDED support for spase data (see comments below).
@@ -824,7 +825,20 @@ bool BlockVolume::check(const char *errlogFileName) throw (iom::exception)
 
 	for ( int i=0; i<N_ROWS; i++ ) {
 		for ( int j=0; j<N_COLS; j++ ) {
-			if ( depth != BLOCKS[i][j]->getDEPTH() ) {
+			// 2015-08-27. Giuio. check if stack [i,j] is coherent and complete
+			int f_slice, l_slice; 
+			Block *current = BLOCKS[i][j];
+			bool coherent = true;
+			int k = 0;
+			while ( k<(current->getN_BLOCKS()-1) && coherent ) {
+				if ( current->getFILENAMES()[k] && current->getFILENAMES()[k+1] ) { // block is not empty and it is immediately followed by a non empty block
+					f_slice = atoi(name2coordZ(current->getFILENAMES()[k]).c_str());
+					l_slice = atoi(name2coordZ(current->getFILENAMES()[k+1]).c_str());
+					coherent = ( current->getBLOCK_SIZE()[k] == (int)floor( ((l_slice - f_slice) / (this->VXL_D * 10)) + 0.5 ) );
+				}
+				k++;
+			}
+			if ( !coherent || (depth != BLOCKS[i][j]->getDEPTH()) ) {
 				if ( ok ) { // first anomaly: open and initialize the errlog file
 					if ( errlogFileName ) {
 						if ( (errlogf = fopen(errlogFileName,"w")) == 0 ) {
@@ -839,8 +853,10 @@ bool BlockVolume::check(const char *errlogFileName) throw (iom::exception)
 
 					ok = false;
 				}
-				if ( errlogFileName ) 
+				if ( errlogFileName && depth != BLOCKS[i][j]->getDEPTH() ) // reports error on stack depth
 					fprintf(errlogf,"\trow=%d, col=%d, depth=%d\n",i,j,BLOCKS[i][j]->getDEPTH());
+				if ( errlogFileName && !coherent ) // reports error on coherence between block lenghts and filenames
+					fprintf(errlogf,"\trow=%d, col=%d, block lengths and filenames are not coherent\n",i,j);
 			}
 		}
 	}

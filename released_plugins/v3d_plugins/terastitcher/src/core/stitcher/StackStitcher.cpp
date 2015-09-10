@@ -28,6 +28,7 @@
 /******************
 *    CHANGELOG    *
 *******************
+* 2015-08-28. Giulio.     @FIXED reference system of the generated image has always V as a first axis and H as a second axis
 * 2015-08-16. Giulio.     @ADDED method for halvesampling only V and H dimensions
 * 2015-07-12. Giulio.     @ADDED a halving method parameter to MergeTilesVaa3DRaw
 * 2015-07-12. Giulio.     @FIXED a bug on an int index in MergeTiles that should have been sint64
@@ -1254,6 +1255,12 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
 		iim::ref_sys reference = *((iim::ref_sys *) &temp); // the cast is needed because there are two ref_sys in different name spaces
+		// 2015-08-28. Giulio. the generated volume has always V coordinates at the first directory level and H coordinates at the second directory level
+		if ( reference.first == iim::horizontal || reference.first == iim::inv_horizontal ) {
+			iim::axis temp = reference.first;
+			reference.first = reference.second;
+			reference.second = reference.first;
+		}
 		for(int res_i=0; res_i< resolutions_size; res_i++) {
 			if(resolutions[res_i])
         	{
