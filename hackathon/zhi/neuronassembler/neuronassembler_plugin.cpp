@@ -711,6 +711,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             if(curr.x < 0.05* P.block_size && left == 0 && walker->direction !=2)
             {
 
+                if(walker->end[0] == vim.sz[0] - 1 || walker->start[0] == 0)       continue;
                 newNode->start[0] = walker->start[0] - P.block_size;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
@@ -736,6 +737,8 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             }
             else if(curr.x > 0.95 * P.block_size && right == 0 && walker->direction !=1)
             {
+                if(walker->end[0] == vim.sz[0] - 1 || walker->start[0] == 0)       continue;
+
                 newNode->start[0] = walker->start[0] + P.block_size;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
@@ -764,6 +767,8 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             }
             else if(curr.y < 0.05* P.block_size && up == 0 && walker->direction !=4)
             {
+                if(walker->end[1] == vim.sz[1] - 1 || walker->start[1] == 0)       continue;
+
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1] - P.block_size;
                 newNode->start[2] = walker->start[2];
@@ -790,6 +795,8 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             }
             else if(curr.y > 0.95 * P.block_size && down == 0 && walker->direction !=3)
             {
+                if(walker->end[1] == vim.sz[1] - 1 || walker->start[1] == 0)       continue;
+
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1]  + P.block_size;
                 newNode->start[2] = walker->start[2];
@@ -1105,6 +1112,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             if(curr.x < 0.05* P.block_size && left == 0 && walker->direction !=2)
             {
 
+                if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)       continue;
+
                 newNode->start[0] = walker->start[0] - P.block_size;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
@@ -1130,6 +1139,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             }
             else if(curr.x > 0.95 * P.block_size && right == 0 && walker->direction !=1)
             {
+                if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)      continue;
+
                 newNode->start[0] = walker->start[0] + P.block_size;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
@@ -1158,6 +1169,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             }
             else if(curr.y < 0.05* P.block_size && up == 0 && walker->direction !=4)
             {
+                if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1] - P.block_size;
                 newNode->start[2] = walker->start[2];
@@ -1184,6 +1197,8 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             }
             else if(curr.y > 0.95 * P.block_size && down == 0 && walker->direction !=3)
             {
+                if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1]  + P.block_size;
                 newNode->start[2] = walker->start[2];
