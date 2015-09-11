@@ -23,7 +23,7 @@ int simple_func(){
 	std::cerr << "Hello" << std::endl;
 	return 1;
 }
-bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_bytes, V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG t,int paran, double* para){
+bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_bytes, V3DLONG x, V3DLONG y, V3DLONG z, V3DLONG t,int paran, double* para,std::string fileDir){
 	
 	std::cerr << "Matlab Part Start." << std::endl;
 
@@ -48,7 +48,7 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 	size_t dim_para[1];
 	dim_para[0] = paran;
 
-	mxArray *mx_raw, *mx_unit_bytes, *mx_x, *mx_y, *mx_z, *mx_t, *mx_para;
+	mxArray *mx_raw, *mx_unit_bytes, *mx_x, *mx_y, *mx_z, *mx_t, *mx_para,*mx_fileDir;
 	int pause;
 	unsigned char *dynamic_raw = (unsigned char *)mxCalloc(total_bytes, sizeof(UINT8_T));
 	for (V3DLONG i = 0; i < total_bytes; i++){
@@ -88,8 +88,10 @@ bool* shared_lib_func(unsigned char* raw, V3DLONG total_bytes, V3DLONG unit_byte
 	}
 	mx_para = mxCreateUninitNumericArray(1, dim_para, mxDOUBLE_CLASS, mxREAL);
 	mxSetData(mx_para, dynamic_para);
+
+        mx_fileDir = mxCreateString(fileDir.c_str());
 	std::cout << "Assignment Finished\n";
-	mlfVaa3d_trace3D(1, &mx_output, mx_raw, mx_unit_bytes, mx_x, mx_y, mx_z, mx_t, mx_para);
+	mlfVaa3d_trace3D(1, &mx_output, mx_raw, mx_unit_bytes, mx_x, mx_y, mx_z, mx_t, mx_para,mx_fileDir);
 	//y = (double*)mxGetPr(y_ptr);
 	//std::cout << "answer:" << *y << '\n';
 	// Shut down the library and the application global state.
