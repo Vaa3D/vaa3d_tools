@@ -12,9 +12,10 @@
 #include "consensus_skeleton.h"
 #include "kcentroid_cluster.h"
 #include "mst_dij.h"
-#include "mst_prim.h"
+//#include "mst_prim.h"
 #include <QtGlobal>
 #include <math.h>
+#include <iostream>
 
 using namespace std;
 
@@ -35,47 +36,49 @@ void remove_outliers(vector<NeuronTree> & nt_list)
 }
 
 
-bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code)
+bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result,V3DLONG n_sampling, int method_code)
 {
     //potentially, there are invalide neuron trees (massive node points, no node points, looping)
-    remove_outliers(vector<NeuronTree> & nt_list);
+    remove_outliers(nt_list);
 
 
     int neuronNum = nt_list.size();
 
     printf("(1). clustering over all the nodes.\n");
-    V3DLONG n_sampling = 0 ;
-    //initial cluster number is the median size of all input trees
-    vector <V3DLONG> n_sampling_list;
-    {
-        for (int i=0;i<neuronNum;i++)
-        {
-            n_sampling_list.append( nt_list[i].listNeuron.size());
-        }
-    }
-    n_sampling = median(n_sampling_list);
-    cout << "number of nodes (in the output consensus skeleton) is :" << n_sampling <<" (the median of the population)" <<end;
 
+    if ( n_sampling <=0)
+    {
+        //initial cluster number is the median size of all input trees
+        vector <V3DLONG> n_sampling_list;
+        {
+            for (int i=0;i<neuronNum;i++)
+            {
+                n_sampling_list.push_back( nt_list[i].listNeuron.size());
+            }
+        }
+        n_sampling = median(n_sampling_list);
+        cout << "number of nodes (in the output consensus skeleton) is :" << n_sampling <<" (the median of the population)" <<endl;
+    }
     vector<vector<double> > feature;
     QHash<V3DLONG, pair<V3DLONG,V3DLONG> > feaMap;//map the feature space to original nodes
     //	double bandwidth = 0; //bw equals to average link length
     //	V3DLONG linkNum = 0;
     for (int i=0;i<neuronNum;i++)
-        for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
-        {
-            NeuronSWC s = nt_list[i].listNeuron.at(j);
-            vector<double> cur(3,0);
-            cur[0] = s.x;
-            cur[1] = s.y;
-            cur[2] = s.z;
-            feature.push_back(cur);
-            pair<V3DLONG,V3DLONG> idx(i,j);
-            feaMap.insert(feature.size()-1, idx);
-            //			if (s.pn<0) continue;
-            //			NeuronSWC s_par = nt_list[i].listNeuron.at(s.pn-1);
-            //			bandwidth += sqrt((s.x-s_par.x)*(s.x-s_par.x)+(s.y-s_par.y)*(s.y-s_par.y)+(s.z-s_par.z)*(s.z-s_par.z));
-            //			linkNum++;
-        }
+    for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
+    {
+        NeuronSWC s = nt_list[i].listNeuron.at(j);
+        vector<double> cur(3,0);
+        cur[0] = s.x;
+        cur[1] = s.y;
+        cur[2] = s.z;
+        feature.push_back(cur);
+        pair<V3DLONG,V3DLONG> idx(i,j);
+        feaMap.insert(feature.size()-1, idx);
+        //			if (s.pn<0) continue;
+        //			NeuronSWC s_par = nt_list[i].listNeuron.at(s.pn-1);
+        //			bandwidth += sqrt((s.x-s_par.x)*(s.x-s_par.x)+(s.y-s_par.y)*(s.y-s_par.y)+(s.z-s_par.z)*(s.z-s_par.z));
+        //			linkNum++;
+    }
 
     V3DLONG pntNum = feature.size();
     vector<V3DLONG> clusterTag, clusterCen;
@@ -115,16 +118,16 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     V3DLONG * parent_list;
     //	n_sampling = clusterCen.size();
     try{
-        adjMatrix = new double[n_sampling*n_sampling];
-        parent_list = new V3DLONG[n_sampling];
-        for (V3DLONG i=0;i<n_sampling*n_sampling;i++) adjMatrix[i] = 0;
+    adjMatrix = new double[n_sampling*n_sampling];
+    parent_list = new V3DLONG[n_sampling];
+    for (V3DLONG i=0;i<n_sampling*n_sampling;i++) adjMatrix[i] = 0;
     }
     catch (...)
-    {
-        fprintf(stderr,"fail to allocate memory.\n");
-        if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
-        if (parent_list) {delete[] parent_list; parent_list=0;}
-        return false;
+{
+    fprintf(stderr,"fail to allocate memory.\n");
+    if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
+    if (parent_list) {delete[] parent_list; parent_list=0;}
+    return false;
     }
 
     vector<V3DLONG> clusterSize(n_sampling, 0);
@@ -168,8 +171,8 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
             return false;
         }
     }
-    else if (method_code==1)
-        mst_prim(adjMatrix, n_sampling,parent_list,0);
+    //else if (method_code==1)
+        //mst_prim(adjMatrix, n_sampling,parent_list,0);
 
     merge_result.clear();
     for (V3DLONG i=0;i<n_sampling;i++)

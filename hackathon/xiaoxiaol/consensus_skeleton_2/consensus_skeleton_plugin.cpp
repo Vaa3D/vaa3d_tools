@@ -28,17 +28,15 @@ void ConsSkelPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 {
 	if (menu_name == tr("consensus_skeleton"))
 	{
-		consensus_skeleton_io(callback,parent);
+        consensus_skeleton_io(callback, parent);
 	}
 	else if (menu_name == tr("help"))
 	{
-		v3d_msg(tr("a plugin to merge multiple neurons by generating a consensus skeleton. "
-			"Developed by Yinan Wan, 2012-05-02"));
+		v3d_msg(tr("a plugin to merge multiple neurons by generating a consensus skeleton. "));
 	}
 	else
 	{
-		v3d_msg(tr("a plugin to merge multiple neurons by generating a consensus skeleton. "
-			"Developed by Yinan Wan, 2012-05-02"));
+        v3d_msg(tr("a plugin to merge multiple neurons by generating a consensus skeleton. "));
 	}
 }
 
