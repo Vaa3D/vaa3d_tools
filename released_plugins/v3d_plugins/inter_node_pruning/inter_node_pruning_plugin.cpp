@@ -94,6 +94,9 @@ void inter_node_pruning::domenu(const QString &menu_name, V3DPluginCallback2 &ca
                         final_out_swc_updated.push_back(final_out_swc[j]);
                     }
                 }
+                else
+                    final_out_swc_updated.push_back(final_out_swc[j]);
+
             }
 
 
