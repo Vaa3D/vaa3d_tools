@@ -68,28 +68,31 @@ void inter_node_pruning::domenu(const QString &menu_name, V3DPluginCallback2 &ca
             final_out_swc_updated.push_back(final_out_swc[0]);
 
 
-            for(int j = 1; j < final_out_swc.size(); j++)
+            for(int j = 0; j < final_out_swc.size(); j++)
             {
-                int flag_prun = 0;
-                int par_x = final_out_swc[j]->parent->x;
-                int par_y = final_out_swc[j]->parent->y;
-                int par_z = final_out_swc[j]->parent->z;
-                int par_r = final_out_swc[j]->parent->radius;
-
-                int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
-                if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+                if(final_out_swc[j]->parent != 0)
                 {
-                    if(childs[j].size() > 0)
+                    int flag_prun = 0;
+                    int par_x = final_out_swc[j]->parent->x;
+                    int par_y = final_out_swc[j]->parent->y;
+                    int par_z = final_out_swc[j]->parent->z;
+                    int par_r = final_out_swc[j]->parent->radius;
+
+                    int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
+                    if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
                     {
-                        for(int jj = 0; jj < childs[j].size(); jj++)
-                        final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
+                        if(childs[j].size() > 0)
+                        {
+                            for(int jj = 0; jj < childs[j].size(); jj++)
+                                final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
+                        }
+                        flag_prun = 1;
                     }
-                    flag_prun = 1;
-                }
 
-                if(flag_prun == 0)
-                {
-                   final_out_swc_updated.push_back(final_out_swc[j]);
+                    if(flag_prun == 0)
+                    {
+                        final_out_swc_updated.push_back(final_out_swc[j]);
+                    }
                 }
             }
 
