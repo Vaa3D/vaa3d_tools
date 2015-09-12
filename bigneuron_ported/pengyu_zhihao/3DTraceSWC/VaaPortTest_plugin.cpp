@@ -112,12 +112,12 @@ bool VaaPortTest::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 	if (func_name == tr("func1"))
 	{
-		printf("start %s\n",inparas[0]);
-		QString paraStr = tr(inparas[0]);
-		QStringList listStr = paraStr.split(' ');
-		para[0] = listStr[0].toDouble();
-                para[1] = listStr[1].toDouble();
-                para[2] = listStr[2].toDouble();
+		printf("start %s,%s,%s\n",inparas[0],inparas[1],inparas[2]);
+		//QString paraStr = tr(inparas[0]);
+		//QStringList listStr = paraStr.split(' ');
+		para[0] = tr(inparas[0]).toDouble();
+                para[1] = tr(inparas[1]).toDouble();
+                para[2] = tr(inparas[2]).toDouble();
 		// 1 - Obtain the current 4D image pointer
 		//if (input.size()>=2)
     		//{
@@ -177,7 +177,10 @@ bool VaaPortTest::dofunc(const QString & func_name, const V3DPluginArgList & inp
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+		printf("====Usage====");
+                printf("./start_vaa3d.sh -x aVaaTrace3D -f func1 -p \"min_soma_size max_neurite_width neurite_width_multiplier\" -i input_image");
+                printf("Sample usage: ./start_vaa3d.sh -x aVaaTrace3D -f func1 -p \"100 5 2\" -i input_image");
+                printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 	}
 	else return false;
 
