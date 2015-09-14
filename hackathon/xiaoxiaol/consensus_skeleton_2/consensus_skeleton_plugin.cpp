@@ -44,7 +44,7 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 {
 	if (func_name == tr("consensus_skeleton"))
 	{
-		return consensus_skeleton_io(input, output);
+        return consensus_skeleton_io(input, output, callback);
 	}
 	else if (func_name == tr("help"))
 	{

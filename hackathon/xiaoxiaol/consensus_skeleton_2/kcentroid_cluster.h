@@ -6,10 +6,11 @@
 using namespace std;
 
 #include <climits>
-
+#include <cfloat>
 //K-centroid clustering
 //by Y. Wan
 //11-10-14
+
 
 double computeDist2(vector<double> & v1, vector<double> & v2)
 {
@@ -73,7 +74,7 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 //			V3DLONG newMember;
 //			for (V3DLONG j=0;j<pntNum;j++)
 //			{
-//				double minCenDist2 = INF;
+//				double minCenDist2 = DBL_MAX;
 //				for (V3DLONG i=0;i<clusterSet;i++)
 //					if (computeDist2(feature[clusterCen[i]],feature[j])<minCenDist2) minCenDist2 = computeDist2(feature[clusterCen[i]],feature[j]);
 //				if (minCenDist2>maxDist2)
@@ -94,7 +95,7 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 	double clusterChange = 1;
 	V3DLONG iter = 0;
 	bool validClusters;
-	while (clusterChange>1e-6 && iter<INF)
+    while (clusterChange>1e-6 && iter<DBL_MAX)
 	{
 		iter++;
 		validClusters = true;
@@ -104,7 +105,7 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 		vector<vector<V3DLONG> > clusters(clusterNum,vector<V3DLONG>());
 		for (V3DLONG i=0;i<pntNum;i++)
 		{
-			double minDist2 = INF;
+            double minDist2 = DBL_MAX;
 			for (V3DLONG j=0;j<clusterNum;j++)
 			{
 				double dist2 = computeDist2(feature[i],feature[clusterCen[j]]);

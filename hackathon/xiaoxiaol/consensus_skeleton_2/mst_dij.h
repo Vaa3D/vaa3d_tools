@@ -60,17 +60,20 @@ bool mst_dij(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnod
 		}
 				
 	}
+    /*
 	for (V3DLONG i=0;i<n_node;i++)
 	{
 		if (i==rootnode) continue;
 		if (plist[i]<0)
 		{
 			fprintf(stderr,"The graph is not connected.\n");
-			return false;
-			//printf("%d does not have parent\n", i);
+            fprintf(stderr,"%d  parentid is %d \n", i,plist[i]);
+
+            return false;
+
 		}
 	}
-
+*/
 	//free memory and return
 	if (adjMatrix2d) {delete []adjMatrix2d; adjMatrix2d=NULL;}
 	if (visited) {delete []visited; visited=NULL;}

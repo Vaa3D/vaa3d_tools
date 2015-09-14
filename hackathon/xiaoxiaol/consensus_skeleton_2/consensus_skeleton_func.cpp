@@ -55,7 +55,7 @@ int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent)
 	
 
 	QList<NeuronSWC> result_lN;
-	if (!consensus_skeleton(nt_list, result_lN, n_sampling, 0))
+    if (!consensus_skeleton(nt_list, result_lN, 0,callback))
 	{
 		v3d_msg("Error in consensus skeleton!");
 		return -1;
@@ -77,7 +77,7 @@ int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent)
 	return 1;
 }
 
-bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
 	cout<<"Welcome to consensus_skeleton"<<endl;
 	if(input.size()==0 || output.size() != 1) return true;
@@ -130,7 +130,7 @@ bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & ou
 		{
 			cout<<"(0). reading a linker file."<<endl;
 			P_ObjectFileType linker_object;
-			if (!loadAnoFile(qs_linker,linker_object))
+            if (!loadAnoFile(qs_linker,linker_object))
 			{
 				fprintf(stderr,"Error in reading the linker file.\n");
 				return 1;
@@ -164,7 +164,7 @@ bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & ou
 		outfileName = QString(outlist->at(0));
 
 	QList<NeuronSWC> merge_result;
-	if (!consensus_skeleton(nt_list, merge_result, n_sampling, method_code))
+    if (!consensus_skeleton(nt_list, merge_result, method_code, callback))
 	{
 		cerr<<"error in consensus_skeleton"<<endl;
 		return false;

@@ -9,7 +9,7 @@
 #include <v3d_interface.h>
 
 int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent);
-bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 void printHelp();
 
 #endif
