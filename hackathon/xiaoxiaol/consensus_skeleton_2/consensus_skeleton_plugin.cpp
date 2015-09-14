@@ -46,7 +46,15 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 	{
         return consensus_skeleton_io(input, output, callback);
 	}
-	else if (func_name == tr("help"))
+    if (func_name == tr("median_swc"))
+    {
+        return median_swc_func(input, output);
+    }
+    if (func_name == tr("average_node_position"))
+    {
+        return average_node_position_func(input, output);
+    }
+    else if (func_name == tr("help"))
 	{
 		printHelp();
 	}
