@@ -342,7 +342,9 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
                     P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
                     P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
                     break;
-            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++; break;
+            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+                    P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 6000;  k++;
+                    break;
             case 6: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
                     P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
                     P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
@@ -401,13 +403,15 @@ bool neuronassembler::dofunc(const QString & func_name, const V3DPluginArgList &
                     P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;;
                     P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;;
                     break;
-            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++; break;
+            case 5: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+                    P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 6000;  k++;
+                    break;
             case 6: P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-                P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-                P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-                P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
-                P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 6000;  k++;
-                break;
+                    P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+                    P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+                    P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
+                    P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 6000;  k++;
+                    break;
 
         }
 
@@ -568,7 +572,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
         case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
         case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
+        case 5: swcfilename =  walker->tilename + QString("_region_APP1.swc"); break;
         case 6: swcfilename =  walker->tilename + QString("_region_APP2.swc"); break;
         }
 
@@ -608,7 +612,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
 
         //APP1
-        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
+       // if(P.tracing_method == 5) channel = '0' + P.channel - 1;
 
         //APP2
         string region_number_string = boost::lexical_cast<string>(P.region_number);char* region_number_char =  new char[region_number_string.length() + 1]; strcpy(region_number_char, region_number_string.c_str());
@@ -630,12 +634,12 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
             case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "TReMap"; func_name = "trace_mip";break;
-            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
+            case 5: arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(region_number_char);
                     arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
+                    full_plugin_name = "Region_Neuron2"; func_name = "trace_app1";break;
             case 6: arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);arg_para.push_back(region_number_char);
                     arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "region_app2"; func_name = "trace";break;
+                    full_plugin_name = "Region_Neuron2"; func_name = "trace_app2";break;
 //            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
 //                    arg.p = (void *) & arg_para; input << arg;
 //                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
@@ -994,7 +998,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         case 2: swcfilename =  walker->tilename + QString("_neutube.swc"); break;
         case 3: swcfilename =  walker->tilename + QString("_snake.swc"); break;
         case 4: swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc"); break;
-        case 5: swcfilename =  walker->tilename + QString("_APP1.swc"); break;
+        case 5: swcfilename =  walker->tilename + QString("_region_APP1.swc"); break;
         case 6: swcfilename =  walker->tilename + QString("_region_APP2.swc"); break;
 
 
@@ -1035,7 +1039,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         string win_size_string = boost::lexical_cast<string>(P.win_size);char* win_size_char =  new char[win_size_string.length() + 1]; strcpy(win_size_char, win_size_string.c_str());
 
         //APP1
-        if(P.tracing_method == 5) channel = '0' + P.channel - 1;
+       // if(P.tracing_method == 5) channel = '0' + P.channel - 1;
 
         //APP2
         string region_number_string = boost::lexical_cast<string>(P.region_number);char* region_number_char =  new char[region_number_string.length() + 1]; strcpy(region_number_char, region_number_string.c_str());
@@ -1057,12 +1061,12 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             case 4: arg_para.push_back(mip_plane_char);arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);
                     arg.p = (void *) & arg_para; input << arg;
                     full_plugin_name = "TReMap"; func_name = "trace_mip";break;
-            case 5: arg_para.push_back("NULL");arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);
+            case 5: arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(region_number_char);
                     arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "Vaa3D_Neuron2"; func_name = "app1";break;
+                    full_plugin_name = "Region_Neuron2"; func_name = "trace_app1";break;
             case 6: arg_para.push_back(&channel);arg_para.push_back(Th);arg_para.push_back(b_256cube_char);arg_para.push_back(is_gsdt_char);arg_para.push_back(is_break_accept_char);arg_para.push_back(length_thresh_char);arg_para.push_back(region_number_char);
                     arg.p = (void *) & arg_para; input << arg;
-                    full_plugin_name = "region_app2"; func_name = "trace";break;
+                    full_plugin_name = "Region_Neuron2"; func_name = "trace_app2";break;
 //            case 6: arg_para.push_back(&channel);arg_para.push_back(win_size_char);
 //                    arg.p = (void *) & arg_para; input << arg;
 //                    full_plugin_name = "MST_tracing"; func_name = "trace_mst";break;
