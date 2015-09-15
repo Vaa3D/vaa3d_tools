@@ -22,7 +22,6 @@ int median_swc(vector<NeuronTree> nt_list){
     for (int i = 0; i < nt_list.size()-1; i++){
         for (int j = i+1; j < nt_list.size(); j++)
         {
-
             NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt_list[i], &nt_list[j],false);
             cout <<"\n\nComputing neuron distance between " <<i<<"  and "<<j <<":"<<endl;
             cout<<"entire-structure-average = "<<tmp_score.dist_allnodes <<endl;
@@ -112,6 +111,7 @@ NeuronTree average_node_position( NeuronTree median_neuron,vector<NeuronTree> nt
         if (cluster.size() >0)
         {
             Point3D average_p =  average_point(cluster);
+
             NeuronSWC * s_adjusted = &(median_adjusted.listNeuron[i]);
             s_adjusted->x = average_p.x;
             s_adjusted->y = average_p.y;

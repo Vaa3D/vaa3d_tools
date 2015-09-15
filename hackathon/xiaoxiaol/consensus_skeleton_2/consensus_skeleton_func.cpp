@@ -236,19 +236,12 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-
-    if(input.size()<2 || output.size() != 1) return true;
-
     //parsing input
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
-    if (inlist->size()==0)
+    cout<<"\n\n  inlist.size = "<<inlist->size()<<endl;
+    if ( inlist->size() <2 )
     {
         cerr<<"You must specify inputs: median swc file and the linker file"<<endl;
-        return false;
-    }
-    if (inlist->size()==1)
-    {
-        cerr<<"You must specify input median swc and the linker files"<<endl;
         return false;
     }
 
@@ -262,19 +255,16 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
 
     //parsing parameters
     V3DLONG distance_threshold= 0;
-    if (input.size()==2)
+    vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+    if (paras->size()==1)
     {
-        vector<char*> * paras = (vector<char*> *)(input.at(2).p);
-        if (paras->size()==1)
-        {
-            distance_threshold = atoi(paras->at(0));
-            cout<<"distance_threshold = "<<distance_threshold<<endl;
-        }
-        else
-        {
-            cerr<<"Too many parameters"<<endl;
-            return false;
-        }
+        distance_threshold = atoi(paras->at(0));
+        cout<<"distance_threshold = "<<distance_threshold<<endl;
+    }
+    else
+    {
+        cerr<<"Too many parameters"<<endl;
+        return false;
     }
 
     vector<NeuronTree> nt_list;
@@ -284,31 +274,39 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
     V3DLONG neuronNum = 0;
     NeuronTree median_neuron;
 
-    for (int i=0;i<inlist->size();i++)
+    qs_linker = QString(inlist->at(0));
+    if (qs_linker.toUpper().endsWith(".SWC"))
     {
-        qs_linker = QString(inlist->at(i));
-        if (qs_linker.toUpper().endsWith(".SWC"))
+        cout<<"(0). reading an swc file"<<endl;
+        median_neuron= readSWC_file(qs_linker);
+    }
+    else{
+        cout <<" The first input should be a swc file ( median neuron)." <<endl;
+        return false;
+    }
+
+
+    qs_linker = QString(inlist->at(1));
+    if (qs_linker.toUpper().endsWith(".ANO"))
+    {
+        cout<<"(0). reading a linker file."<<endl;
+        P_ObjectFileType linker_object;
+        if (!loadAnoFile(qs_linker,linker_object))
         {
-            cout<<"(0). reading an swc file"<<endl;
-            median_neuron= readSWC_file(qs_linker);
+            fprintf(stderr,"Error in reading the linker file.\n");
+            return 1;
         }
-        else if (qs_linker.toUpper().endsWith(".ANO"))
+        nameList = linker_object.swc_file_list;
+        neuronNum += nameList.size();
+        for (V3DLONG i=0;i<neuronNum;i++)
         {
-            cout<<"(0). reading a linker file."<<endl;
-            P_ObjectFileType linker_object;
-            if (!loadAnoFile(qs_linker,linker_object))
-            {
-                fprintf(stderr,"Error in reading the linker file.\n");
-                return 1;
-            }
-            nameList = linker_object.swc_file_list;
-            neuronNum += nameList.size();
-            for (V3DLONG i=0;i<neuronNum;i++)
-            {
-                NeuronTree tmp = readSWC_file(nameList.at(i));
-                nt_list.push_back(tmp);
-            }
+            NeuronTree tmp = readSWC_file(nameList.at(i));
+            nt_list.push_back(tmp);
         }
+    }
+    else
+    {
+        cout <<" The second input should be a ANO file ( the group of neurons)." <<endl;
     }
 
     QString outfileName;
