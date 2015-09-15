@@ -7,7 +7,7 @@
 
 
 #include "consensus_skeleton.h"
-#include "kcentroid_cluster.h"
+//#include "kcentroid_cluster.h"
 #include "mst_dij.h"
 #include <QtGlobal>
 #include <math.h>
@@ -26,6 +26,12 @@ using namespace std;
 #endif
 
 
+struct NeuronSize{
+    float x;
+    float y;
+    float z;
+};
+
 
 V3DLONG median(vector<V3DLONG> x)
 {
@@ -34,10 +40,6 @@ V3DLONG median(vector<V3DLONG> x)
 }
 
 
-double PointDistance (Point3D A, Point3D B){
-   return  (pow(A.x - B.x,2)+ pow(A.y - B.y,2)  + pow(A.z - B.z,2))  ;
-
-}
 
 void remove_outliers(vector<NeuronTree> & nt_list)
 {  //validate each tree (remove empty tree and extreame big trees, trees that contain straight lines)
@@ -185,15 +187,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     callback.saveImage(image, "./vote_count_image.v3draw");
 
     //non max suppresion
-
      vector<Point3D>  node_list;
      vector<unsigned char>  vote_list;
      non_max_suppresion (img1d,sz_x,sz_y,sz_z,offset,node_list,vote_list,3);
      cout << "number of nodes:"<<node_list.size()<<endl;
 
-
      image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-
 
      // minmum spanning tree , carrying the condifence value
      // adjMatrix
@@ -289,9 +288,6 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
     if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
     if (plist) {delete[] plist; plist=0;}
-    return true;
-
-
 
 /*    if ( num_nodes <=0)
     {
@@ -308,8 +304,8 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     }
 */
     return true;
-
 }
+
 bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 {
     FILE * fp;
@@ -328,4 +324,3 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
     fclose(fp);
     return true;
 }
-

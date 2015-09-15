@@ -317,7 +317,7 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
     else
         outfileName = QString(outlist->at(0));
 
-    NeuronTree median_adjusted = average_node_position(median_neuron, nt_list );
+    NeuronTree median_adjusted = average_node_position(median_neuron, nt_list, distance_threshold );
     if (median_adjusted.listNeuron.size() == 0 ){
 
         cerr<<"error in average_node_position()"<<endl;

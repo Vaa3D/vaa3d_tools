@@ -2,6 +2,8 @@
 #include  "neuron_sim_scores.h"
 #include "cfloat"
 #include  <iostream>
+#include "point3d_util.h"
+
 
 int median_swc(vector<NeuronTree> nt_list){
     int idx1 = -1;
@@ -42,21 +44,21 @@ int median_swc(vector<NeuronTree> nt_list){
     double min_dis_sum_2 = DBL_MAX;
     double min_dis_sum_3 = DBL_MAX;
     for (int i = 0; i < nt_list.size(); i++){
-       if (dis_sum_1[i] < min_dis_sum_1)
-       {
-               idx1 = i;
-               min_dis_sum_1 = dis_sum_1[i];
-       }
-       if (dis_sum_2[i] < min_dis_sum_2)
-       {
-               idx2 = i;
-               min_dis_sum_2 = dis_sum_2[i];
-       }
-       if (dis_sum_3[i] < min_dis_sum_3)
-       {
-               idx3 = i;
-               min_dis_sum_3 = dis_sum_3[i];
-       }
+        if (dis_sum_1[i] < min_dis_sum_1)
+        {
+            idx1 = i;
+            min_dis_sum_1 = dis_sum_1[i];
+        }
+        if (dis_sum_2[i] < min_dis_sum_2)
+        {
+            idx2 = i;
+            min_dis_sum_2 = dis_sum_2[i];
+        }
+        if (dis_sum_3[i] < min_dis_sum_3)
+        {
+            idx3 = i;
+            min_dis_sum_3 = dis_sum_3[i];
+        }
 
     }
     cout<<"Min total entire-structure-average = "<< min_dis_sum_1<< ", median swc id:" <<idx1 << endl;
@@ -69,12 +71,54 @@ int median_swc(vector<NeuronTree> nt_list){
 
 
 
-NeuronTree average_node_position( NeuronTree median_neuron,vector<NeuronTree> nt_list)
+NeuronTree average_node_position( NeuronTree median_neuron,vector<NeuronTree> nt_list, double distance_threshold)
 {
-     NeuronTree median_adjusted;
-     //for (int i = 0; i <median_neurn)
+    NeuronTree median_adjusted = median_neuron;
+    for (int i = 0; i <median_neuron.listNeuron.size(); i++)
+    {
+        NeuronSWC s = median_neuron.listNeuron.at(i);
+        Point3D cur;
+        cur.x = s.x;
+        cur.y = s.y;
+        cur.z = s.z;
 
+        vector<Point3D> cluster;
+        for (int ii = 0; ii < nt_list.size(); ii++)
+        {
+            double min_dis = DBL_MAX;
+            Point3D closest_p;
+            for (V3DLONG j = 0; j < nt_list[ii].listNeuron.size(); j++)
+            {
+                //find its nearest node from tree ii
+                Point3D p;
+                NeuronSWC ns = nt_list[ii].listNeuron.at(j);
+                p.x = ns.x;
+                p.y = ns.y;
+                p.z = ns.z;
+                double dis = PointDistance(p,cur);
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    closest_p = p;
+                }
+            }
+            if (min_dis < distance_threshold)
+            {//if min_dis > distance_threshold,too far away, won't count to average
+                cluster.push_back(closest_p);
+            }
+        }
+        //average over the clustered location p
 
+        if (cluster.size() >0)
+        {
+            Point3D average_p =  average_point(cluster);
+            NeuronSWC * s_adjusted = &(median_adjusted.listNeuron[i]);
+            s_adjusted->x = average_p.x;
+            s_adjusted->y = average_p.y;
+            s_adjusted->z = average_p.z;
+        }
 
-     return median_adjusted;
+    }
+
+    return median_adjusted;
 }
