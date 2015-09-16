@@ -75,11 +75,12 @@ private slots:
     void _slot_show_item(QListWidgetItem *item);
     void _slot_show();
     void _slot_delete();
-    void _slot_upload();
     void _slot_save();
     void _slot_load();
     void _slot_up();
     void _slot_down();
+    void _slot_batch();
+
 };
 
 bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append);

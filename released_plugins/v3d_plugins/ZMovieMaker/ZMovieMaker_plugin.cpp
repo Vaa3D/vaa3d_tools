@@ -24,7 +24,13 @@ controlPanel* controlPanel::panel = 0;
 //#define __ZMAKE_DEBUG__ 1
 #define MYFLOAT double
 
+struct ZMovieFileType
+{
+    QString anchor_file_path;
+    QString frame_folder_path;
+};
 
+bool loadZMovieAnoFile(QString openFileNameLabel, ZMovieFileType & cc);
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
 void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT alpha,MYFLOAT q_sample[]);
@@ -338,7 +344,7 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
       //      panel->setAttribute(Qt::WA_DeleteOnClose);
             p->show();
             p->raise();
-            p->move(50,50);
+            p->move(2000,50);
             p->activateWindow();
         }
     }
@@ -415,7 +421,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_Preview = new QPushButton("Preview and Save Movie");
     QPushButton* btn_Show = new QPushButton("Show Selected Anchor Point");
     QPushButton* btn_Delete = new QPushButton("Delete Selected Anchor Point");
-    QPushButton* btn_Upload = new QPushButton("Upload to Youtube");
+    QPushButton* btn_Batch = new QPushButton("Batch Process");
     QPushButton* btn_Save = new QPushButton("Save Anchor-point file");
     QPushButton* btn_Load = new QPushButton("Load Anchor-point file");
     QPushButton* btn_Up = new QPushButton("Move Up");
@@ -444,7 +450,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(btn_Delete,9,0,1,2);
     gridLayout->addWidget(btn_Save,9,2,1,3);
     gridLayout->addWidget(btn_Load,10,2,1,3);
-    gridLayout->addWidget(btn_Upload,11,0,1,5);
+    gridLayout->addWidget(btn_Batch,11,0,1,5);
+
     gridLayout->addWidget(SampleName, 4,6,1,1);
     gridLayout->addWidget(box_SampleRate, 4,7,1,2);
 
@@ -464,7 +471,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(btn_Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
     connect(btn_Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
     connect(btn_Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
-    connect(btn_Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
+    connect(btn_Batch, SIGNAL(clicked()), this, SLOT(_slot_batch()));
     connect(box_SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
     connect(btn_Up, SIGNAL(clicked()), this, SLOT(_slot_up()));
     connect(btn_Down, SIGNAL(clicked()), this, SLOT(_slot_down()));
@@ -747,9 +754,158 @@ void controlPanel::_slot_show()
         return;
 }
 
-void controlPanel::_slot_upload()
+void controlPanel::_slot_batch()
 {
-    v3d_msg("To be implemented!");
+    QString qs_dir_swc;
+    qs_dir_swc=QFileDialog::getExistingDirectory(this,QString(QObject::tr("Choose the directory that contains all linker files")));
+    QDir dir(qs_dir_swc);
+    QStringList qsl_filelist;
+    QStringList qsl_filters;
+    qsl_filters+="*.ano";
+
+    foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
+    {
+        qsl_filelist+=file;
+    }
+
+    if(qsl_filelist.size()==0)
+    {
+        v3d_msg("Cannot find the linker files in the given directory!\nTry another diretory");
+        return;
+    }
+    for(int i = 0; i <qsl_filelist.size(); i++)
+    {
+        QString ano_path = qs_dir_swc + "/" + qsl_filelist.at(i);
+        m_v3d.open3DViewerForLinkerFile(ano_path);
+        ZMovieFileType cc;
+        loadZMovieAnoFile(ano_path, cc);
+
+        QString fileOpenName = cc.anchor_file_path;
+        QString selectedFile = cc.frame_folder_path;
+
+        view=0;curwin=0;
+        list_3dviewer = m_v3d.getListAll3DViewers();
+        for (i=0; i<list_3dviewer.count(); i++)
+        {
+            QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
+            if (curname==ano_path)
+            {
+                surface_win = list_3dviewer[i];
+                break;
+            }
+        }
+        view = m_v3d.getView3DControl_Any3DViewer(surface_win);
+
+        list_anchors->clear();
+        ifstream ifs(fileOpenName.toLatin1());
+        string points;
+
+        MYFLOAT xRot, yRot, zRot,
+                xShift, yShift, zShift,
+                zoom,
+                xCut0, xCut1,
+                yCut0, yCut1,
+                zCut0, zCut1,
+                frontCut;
+        int showSurf, showSurf_last,
+            timePoint,timePoint_last;
+        bool channelR, channelG, channelB,
+                channelR_last, channelG_last, channelB_last;
+        MYFLOAT xRot_last, yRot_last,zRot_last,
+                xShift_last,yShift_last,zShift_last,
+                zoom_last,
+                xCut0_last,xCut1_last,
+                yCut0_last,yCut1_last,
+                zCut0_last,zCut1_last,
+                frontCut_last;
+        int xClip0,xClip1,yClip0,
+                yClip1,zClip0,zClip1;
+        int xClip0_last,xClip1_last,
+                yClip0_last,yClip1_last,
+                zClip0_last,zClip1_last;
+
+        MYFLOAT xShift_current;
+        MYFLOAT yShift_current;
+        MYFLOAT zShift_current;
+        MYFLOAT zoom_current;
+        MYFLOAT channel_current;
+        MYFLOAT xClip0_current;
+        MYFLOAT xClip1_current;
+        MYFLOAT yClip0_current;
+        MYFLOAT yClip1_current;
+        MYFLOAT zClip0_current;
+        MYFLOAT zClip1_current;
+        MYFLOAT xCut0_current;
+        MYFLOAT xCut1_current;
+        MYFLOAT yCut0_current;
+        MYFLOAT yCut1_current;
+        MYFLOAT zCut0_current;
+        MYFLOAT zCut1_current;
+        MYFLOAT frontCut_current;
+        MYFLOAT timePoint_current;
+        //
+
+        MYFLOAT q1[4],q2[4],q_sample[4];
+        MYFLOAT Rot_current[3];
+
+        while(ifs && getline(ifs, points))
+        {
+            std::istringstream iss(points);
+            iss >> xRot >> yRot >> zRot >>
+                   xShift >> yShift >> zShift >>
+                   zoom >>
+                   xCut0 >> xCut1 >>
+                   yCut0 >> yCut1 >>
+                   zCut0 >> zCut1 >>
+                   channelR >> channelG >> channelB >>
+                   showSurf >>
+                   xClip0 >> xClip1 >> yClip0 >>
+                   yClip1 >> zClip0 >> zClip1 >>
+                   frontCut >>
+                   timePoint;
+            QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
+            curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
+            curstr = curstr.append(" ]");
+            list_anchors->addItem(new QListWidgetItem(curstr));
+        }
+
+        int  N = box_SampleRate->text().toInt();
+
+        QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+
+        //CHECK_WINDOWS
+
+        int framenum = 0;
+        for(int row = 0; row < list_anchors->count(); row++)
+        {
+            QString currentPoint = list_anchors->item(row)->text();
+            QStringList currentParas = currentPoint.split(rx);
+
+            GET_PARA;
+
+            if (row==0)
+            {
+                SET_3DVIEW;
+
+               SCREENSHOT_SAVEFRAMES;
+            }
+            else
+            {
+                for (int i=1; i<=N; i++)
+                {
+                    INTERPOLATION_PARA;
+
+                    SCREENSHOT_SAVEFRAMES;
+                }
+            }
+
+            UPDATE_PARA;
+
+        }
+
+        m_v3d.close3DWindow(curwin);
+
+    }
 }
 
 bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
@@ -1153,7 +1309,65 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[])
     return result/sqrt(r1*r2);
 }
 
+bool loadZMovieAnoFile(QString openFileNameLabel, ZMovieFileType & cc)
+{
+    QFile file(openFileNameLabel);
+    QString baseName = openFileNameLabel.section('/', -1);
+    QString baseDir = openFileNameLabel;
+    baseDir.chop(baseName.size());
 
+    file.open(QIODevice::ReadOnly);
+    QString tmp = file.readAll();
+    file.close();
+
+    if (tmp.isEmpty())
+        return false;
+
+    QStringList tmpList = tmp.split(QString("\n"));
+    if (tmpList.size()<=0)
+    {
+        return false; //must not be a valid file
+    }
+
+    for (int i=0;i<tmpList.size(); i++)
+    {
+        QStringList itemList;
+
+        if (tmpList.at(i).isEmpty() || tmpList.at(i).at(0)=='#') //a comment line, do nothing
+            continue;
+
+        itemList = tmpList.at(i).split("=");
+        if (itemList.size()==2)
+        {
+            QString tss = itemList.at(0).trimmed().toUpper();
+            QString tvv = itemList.at(1).trimmed();
+            QDir tmpdir;
+
+            tvv = baseDir+tvv;
+            printf("Locating file under the basedir [%s]... \n", tvv.toLatin1().data());
+            if (tmpdir.exists(tvv)==false)
+            {
+                tvv = itemList.at(1).trimmed();;
+                printf("!!! Did not find the file under the basedir. Re-Locating file using the directly supplied name [%s]... \n", tvv.toLatin1().data());
+                if (tmpdir.exists(tvv)==false)
+                {
+                    v3d_msg(QString("The specified file is not found. Do nothing.\n[%1]\n").arg(tvv));	//modified by Lei Qu 2009/11/16: show non-exist file's name
+                    return false;
+                }
+            }
+            if(tss=="ANCHORFILE")
+            {
+                cc.anchor_file_path = tvv;
+            }
+            else if (tss=="OUTFOLDER")
+            {
+                cc.frame_folder_path = tvv;
+            }
+        }
+
+    }
+
+}
 
 
 
