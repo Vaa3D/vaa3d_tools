@@ -14,6 +14,7 @@
 #include <iostream>
 #include <climits>
 #include "basic_4dimage.h"
+#include "algorithm"
 
 using namespace std;
 
