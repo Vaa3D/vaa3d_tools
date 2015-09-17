@@ -75,7 +75,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
             if(paras.size() >= 1) check_ffmpeg = paras[0];
             if(check_ffmpeg == "NULL")
             {
-                #if  defined(Q_OS_MAX)
+                #if  defined(Q_OS_MAC)
                     ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
                 #elif defined(Q_OS_LINUX)
                     ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
