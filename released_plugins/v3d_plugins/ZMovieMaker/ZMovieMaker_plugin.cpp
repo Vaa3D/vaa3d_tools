@@ -757,7 +757,7 @@ void controlPanel::_slot_show()
 void controlPanel::_slot_batch()
 {
     QString qs_dir_swc;
-    qs_dir_swc=QFileDialog::getExistingDirectory(this,QString(QObject::tr("Choose the directory that contains all linker files")));
+    qs_dir_swc=QFileDialog::getExistingDirectory(this,QString(QObject::tr("Choose the directory that contains all linker (.ano) files")));
     QDir dir(qs_dir_swc);
     QStringList qsl_filelist;
     QStringList qsl_filters;
@@ -776,135 +776,133 @@ void controlPanel::_slot_batch()
     for(int i = 0; i <qsl_filelist.size(); i++)
     {
         QString ano_path = qs_dir_swc + "/" + qsl_filelist.at(i);
-        m_v3d.open3DViewerForLinkerFile(ano_path);
         ZMovieFileType cc;
-        loadZMovieAnoFile(ano_path, cc);
-
-        QString fileOpenName = cc.anchor_file_path;
-        QString selectedFile = cc.frame_folder_path;
-
-        view=0;curwin=0;
-        list_3dviewer = m_v3d.getListAll3DViewers();
-        for (i=0; i<list_3dviewer.count(); i++)
+        if(loadZMovieAnoFile(ano_path, cc))
         {
-            QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
-            if (curname==ano_path)
+            QString fileOpenName = cc.anchor_file_path;
+            QString selectedFile = cc.frame_folder_path;
+
+            m_v3d.open3DViewerForLinkerFile(ano_path);
+            view=0;curwin=0;
+            list_3dviewer = m_v3d.getListAll3DViewers();
+            for (int j=0; j<list_3dviewer.count(); j++)
             {
-                surface_win = list_3dviewer[i];
-                break;
-            }
-        }
-        view = m_v3d.getView3DControl_Any3DViewer(surface_win);
-
-        list_anchors->clear();
-        ifstream ifs(fileOpenName.toLatin1());
-        string points;
-
-        MYFLOAT xRot, yRot, zRot,
-                xShift, yShift, zShift,
-                zoom,
-                xCut0, xCut1,
-                yCut0, yCut1,
-                zCut0, zCut1,
-                frontCut;
-        int showSurf, showSurf_last,
-            timePoint,timePoint_last;
-        bool channelR, channelG, channelB,
-                channelR_last, channelG_last, channelB_last;
-        MYFLOAT xRot_last, yRot_last,zRot_last,
-                xShift_last,yShift_last,zShift_last,
-                zoom_last,
-                xCut0_last,xCut1_last,
-                yCut0_last,yCut1_last,
-                zCut0_last,zCut1_last,
-                frontCut_last;
-        int xClip0,xClip1,yClip0,
-                yClip1,zClip0,zClip1;
-        int xClip0_last,xClip1_last,
-                yClip0_last,yClip1_last,
-                zClip0_last,zClip1_last;
-
-        MYFLOAT xShift_current;
-        MYFLOAT yShift_current;
-        MYFLOAT zShift_current;
-        MYFLOAT zoom_current;
-        MYFLOAT channel_current;
-        MYFLOAT xClip0_current;
-        MYFLOAT xClip1_current;
-        MYFLOAT yClip0_current;
-        MYFLOAT yClip1_current;
-        MYFLOAT zClip0_current;
-        MYFLOAT zClip1_current;
-        MYFLOAT xCut0_current;
-        MYFLOAT xCut1_current;
-        MYFLOAT yCut0_current;
-        MYFLOAT yCut1_current;
-        MYFLOAT zCut0_current;
-        MYFLOAT zCut1_current;
-        MYFLOAT frontCut_current;
-        MYFLOAT timePoint_current;
-        //
-
-        MYFLOAT q1[4],q2[4],q_sample[4];
-        MYFLOAT Rot_current[3];
-
-        while(ifs && getline(ifs, points))
-        {
-            std::istringstream iss(points);
-            iss >> xRot >> yRot >> zRot >>
-                   xShift >> yShift >> zShift >>
-                   zoom >>
-                   xCut0 >> xCut1 >>
-                   yCut0 >> yCut1 >>
-                   zCut0 >> zCut1 >>
-                   channelR >> channelG >> channelB >>
-                   showSurf >>
-                   xClip0 >> xClip1 >> yClip0 >>
-                   yClip1 >> zClip0 >> zClip1 >>
-                   frontCut >>
-                   timePoint;
-            QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
-            curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
-            curstr = curstr.append(" ]");
-            list_anchors->addItem(new QListWidgetItem(curstr));
-        }
-
-        int  N = box_SampleRate->text().toInt();
-
-        QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
-
-        //CHECK_WINDOWS
-
-        int framenum = 0;
-        for(int row = 0; row < list_anchors->count(); row++)
-        {
-            QString currentPoint = list_anchors->item(row)->text();
-            QStringList currentParas = currentPoint.split(rx);
-
-            GET_PARA;
-
-            if (row==0)
-            {
-                SET_3DVIEW;
-
-               SCREENSHOT_SAVEFRAMES;
-            }
-            else
-            {
-                for (int i=1; i<=N; i++)
+                QString curname = m_v3d.getImageName(list_3dviewer[j]).remove("3D View [").remove("]");
+                if (curname==ano_path)
                 {
-                    INTERPOLATION_PARA;
+                    surface_win = list_3dviewer[j];
+                    break;
+                }
+            }
+            view = m_v3d.getView3DControl_Any3DViewer(surface_win);
+
+            list_anchors->clear();
+            ifstream ifs(fileOpenName.toLatin1());
+            string points;
+
+            MYFLOAT xRot, yRot, zRot,
+                    xShift, yShift, zShift,
+                    zoom,
+                    xCut0, xCut1,
+                    yCut0, yCut1,
+                    zCut0, zCut1,
+                    frontCut;
+            int showSurf, showSurf_last,
+                    timePoint,timePoint_last;
+            bool channelR, channelG, channelB,
+                    channelR_last, channelG_last, channelB_last;
+            MYFLOAT xRot_last, yRot_last,zRot_last,
+                    xShift_last,yShift_last,zShift_last,
+                    zoom_last,
+                    xCut0_last,xCut1_last,
+                    yCut0_last,yCut1_last,
+                    zCut0_last,zCut1_last,
+                    frontCut_last;
+            int xClip0,xClip1,yClip0,
+                    yClip1,zClip0,zClip1;
+            int xClip0_last,xClip1_last,
+                    yClip0_last,yClip1_last,
+                    zClip0_last,zClip1_last;
+
+            MYFLOAT xShift_current;
+            MYFLOAT yShift_current;
+            MYFLOAT zShift_current;
+            MYFLOAT zoom_current;
+            MYFLOAT channel_current;
+            MYFLOAT xClip0_current;
+            MYFLOAT xClip1_current;
+            MYFLOAT yClip0_current;
+            MYFLOAT yClip1_current;
+            MYFLOAT zClip0_current;
+            MYFLOAT zClip1_current;
+            MYFLOAT xCut0_current;
+            MYFLOAT xCut1_current;
+            MYFLOAT yCut0_current;
+            MYFLOAT yCut1_current;
+            MYFLOAT zCut0_current;
+            MYFLOAT zCut1_current;
+            MYFLOAT frontCut_current;
+            MYFLOAT timePoint_current;
+            //
+
+            MYFLOAT q1[4],q2[4],q_sample[4];
+            MYFLOAT Rot_current[3];
+
+            while(ifs && getline(ifs, points))
+            {
+                std::istringstream iss(points);
+                iss >> xRot >> yRot >> zRot >>
+                       xShift >> yShift >> zShift >>
+                       zoom >>
+                       xCut0 >> xCut1 >>
+                       yCut0 >> yCut1 >>
+                       zCut0 >> zCut1 >>
+                       channelR >> channelG >> channelB >>
+                       showSurf >>
+                       xClip0 >> xClip1 >> yClip0 >>
+                       yClip1 >> zClip0 >> zClip1 >>
+                       frontCut >>
+                       timePoint;
+                QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
+                curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
+                curstr = curstr.append(" ]");
+                list_anchors->addItem(new QListWidgetItem(curstr));
+            }
+
+            int  N = box_SampleRate->text().toInt();
+
+            QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+
+            //CHECK_WINDOWS
+
+            int framenum = 0;
+            for(int row = 0; row < list_anchors->count(); row++)
+            {
+                QString currentPoint = list_anchors->item(row)->text();
+                QStringList currentParas = currentPoint.split(rx);
+
+                GET_PARA;
+
+                if (row==0)
+                {
+                    SET_3DVIEW;
 
                     SCREENSHOT_SAVEFRAMES;
                 }
+                else
+                {
+                    for (int i=1; i<=N; i++)
+                    {
+                        INTERPOLATION_PARA;
+
+                        SCREENSHOT_SAVEFRAMES;
+                    }
+                }
+
+                UPDATE_PARA;
+
             }
-
-            UPDATE_PARA;
-
         }
-
-        m_v3d.close3DWindow(curwin);
-
 
     }
 }
@@ -1330,6 +1328,8 @@ bool loadZMovieAnoFile(QString openFileNameLabel, ZMovieFileType & cc)
         return false; //must not be a valid file
     }
 
+    int cnt=0;
+
     for (int i=0;i<tmpList.size(); i++)
     {
         QStringList itemList;
@@ -1359,14 +1359,20 @@ bool loadZMovieAnoFile(QString openFileNameLabel, ZMovieFileType & cc)
             if(tss=="ANCHORFILE")
             {
                 cc.anchor_file_path = tvv;
+                cnt++;
+                continue;
             }
             else if (tss=="OUTFOLDER")
             {
                 cc.frame_folder_path = tvv;
+                cnt++;
+                continue;
             }
         }
 
     }
+    return (cnt==2) ? true : false;
+    v3d_msg(QString("count is%1").arg(cnt));
 
 }
 
