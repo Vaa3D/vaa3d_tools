@@ -59,30 +59,36 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         cout<<"Welcome to movie converter"<<endl;
 
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-        const char * ffmpeg_file;
-        #if  defined(Q_OS_MAX)
-            ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
-        #elif defined(Q_OS_LINUX)
-            ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
-        #elif defined(Q_OS_WIN32)
-            ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
-        #else
-            v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
-            return false;
-        #endif
-
         QString check_ffmpeg;
-        char * inimg_format = "file_[NUM].BMP";
+        const char * ffmpeg_file;
+
+        char * inimg_format = "a[NUM].BMP";
         char * output_fps = "14";
         char * output_Type = "avi";
         unsigned int  c = 1;
+
         if (input.size()>=2)
         {
 
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
             cout<<paras.size()<<endl;
             if(paras.size() >= 1) check_ffmpeg = paras[0];
-            if(check_ffmpeg != "NULL") ffmpeg_file = paras[0] ;
+            if(check_ffmpeg == "NULL")
+            {
+                #if  defined(Q_OS_MAX)
+                    ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
+                #elif defined(Q_OS_LINUX)
+                    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+                #elif defined(Q_OS_WIN32)
+                    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+                #else
+                    v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
+                    return false;
+                #endif
+            }else
+            {
+                ffmpeg_file = paras[0] ;
+            }
             if(paras.size() >= 2) inimg_format = paras[1];
             if(paras.size() >= 3) output_fps = paras[2];
             if(paras.size() >= 4) output_Type = paras.at(3);
@@ -160,7 +166,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         printf("vaa3d -x plugin_name -f convert_frames_to_movie -i <inimg_folder> -p <converter_path> <frame_format> <output_fps> <video_type> <is_compress>\n");
         printf("inimg_folder     the video frame folder path \n");
         printf("converter_path   the movie converter(ffmpeg) path. If do not know, please set this para to NULL and the default path will be the vaa3d main path.\n");
-        printf("frame_format     the format of video frames,e.g. for aaa_1.BMP, please set this para to be aaa_[NUM].BMP\n");
+        printf("frame_format     the format of video frames,e.g. for a1.BMP, please set this para to be a[NUM].BMP\n");
         printf("output_fps       the fps for the output video. Default 14\n");
         printf("video_type       the output video type (avi, mpg, or mp4). Default avi.\n");
         printf("is_compress      if compress the video (1 for yes and 0 for no). Default 1.\n");
