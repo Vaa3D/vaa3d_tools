@@ -62,6 +62,17 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         QString check_ffmpeg;
         const char * ffmpeg_file;
 
+#if  defined(Q_OS_MAC)
+    ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
+#elif defined(Q_OS_LINUX)
+    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+#elif defined(Q_OS_WIN32)
+    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+#else
+    v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
+    return false;
+#endif
+
         char * inimg_format = "a[NUM].BMP";
         char * output_fps = "14";
         char * output_Type = "avi";
@@ -73,22 +84,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
             cout<<paras.size()<<endl;
             if(paras.size() >= 1) check_ffmpeg = paras[0];
-            if(check_ffmpeg == "NULL")
-            {
-                #if  defined(Q_OS_MAC)
-                    ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
-                #elif defined(Q_OS_LINUX)
-                    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
-                #elif defined(Q_OS_WIN32)
-                    ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
-                #else
-                    v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
-                    return false;
-                #endif
-            }else
-            {
-                ffmpeg_file = paras[0] ;
-            }
+            if(check_ffmpeg != "NULL") ffmpeg_file = paras[0] ;
             if(paras.size() >= 2) inimg_format = paras[1];
             if(paras.size() >= 3) output_fps = paras[2];
             if(paras.size() >= 4) output_Type = paras.at(3);
