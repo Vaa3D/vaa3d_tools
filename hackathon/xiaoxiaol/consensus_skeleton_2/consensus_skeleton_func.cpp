@@ -331,7 +331,7 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
 int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     QString fileOpenName1;
-    fileOpenName1 = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+    fileOpenName1 = QFileDialog::getOpenFileName(0, QObject::tr("Open the median SWC File"),
             "",
             QObject::tr("Supported file (*.swc)"
                 ));
@@ -339,7 +339,7 @@ int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
         return -1;
     NeuronTree median_neuron = readSWC_file(fileOpenName1);
 
-     QString fileOpenName2 = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+     QString fileOpenName2 = QFileDialog::getOpenFileName(0, QObject::tr("Open the ano File that contains all input SWCs"),
             "",
             QObject::tr("Supported file (*.ano)"
                 ";;Neuron structure	(*.ano)"
@@ -380,7 +380,7 @@ int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     QString fileSaveName;
     QString defaultSaveName = fileOpenName1 + "_adjusted.swc";
-    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
+    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save adjusted median neuron to file:"),
             defaultSaveName,
             QObject::tr("Supported file (*.swc)"
                 ";;Neuron structure	(*.swc)"
@@ -398,7 +398,7 @@ int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
 int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open the ANO File that contains all input SWC files"),
             "",
             QObject::tr("Supported file (*.ano)"
                 ";;Neuron structure	(*.ano)"
@@ -423,6 +423,8 @@ int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
         nt_list.push_back(tmp);
     }
 
+    v3d_msg( QString("It may take a while to compute pair-wise neuron distances. Please watch the output console for "
+                     "computed metrics." ));
     int id = median_swc( nt_list);
     if (id >=0 )
     {
