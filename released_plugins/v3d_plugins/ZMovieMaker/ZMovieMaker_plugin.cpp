@@ -905,6 +905,7 @@ void controlPanel::_slot_batch()
 
         m_v3d.close3DWindow(curwin);
 
+
     }
 }
 
