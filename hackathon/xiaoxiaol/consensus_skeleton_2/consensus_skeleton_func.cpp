@@ -328,19 +328,156 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
     return true;
 }
 
+int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString fileOpenName1;
+    fileOpenName1 = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.swc)"
+                ));
+    if(fileOpenName1.isEmpty())
+        return -1;
+    NeuronTree median_neuron = readSWC_file(fileOpenName1);
+
+     QString fileOpenName2 = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.ano)"
+                ";;Neuron structure	(*.ano)"
+                ));
+    if(fileOpenName2.isEmpty())
+        return -1;
+
+    P_ObjectFileType linker_object;
+    if (!loadAnoFile(fileOpenName2,linker_object))
+    {
+        fprintf(stderr,"Error in reading the linker file.\n");
+        return -1;
+    }
+
+    QStringList nameList = linker_object.swc_file_list;
+    V3DLONG neuronNum = nameList.size();
+    V3DLONG avg_node_num = 0;
+    V3DLONG max_node_num = -1;
+    vector<NeuronTree> nt_list;
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        NeuronTree tmp = readSWC_file(nameList.at(i));
+        nt_list.push_back(tmp);
+        avg_node_num += tmp.listNeuron.size();
+        if (tmp.listNeuron.size()>max_node_num) max_node_num = tmp.listNeuron.size();
+    }
+    avg_node_num /= neuronNum;
+
+    bool ok;
+    double distance_threshold= QInputDialog::getDouble(parent, "distance threshold",
+              "Please specify the maximum distance allowed to search for maching nodes in all input neurons: ",8, 1, 100, 1, &ok );
+
+    if (!ok)
+        return 0;
+
+    NeuronTree median_adjusted =  average_node_position(median_neuron, nt_list, distance_threshold);
+
+    QString fileSaveName;
+    QString defaultSaveName = fileOpenName1 + "_adjusted.swc";
+    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
+            defaultSaveName,
+            QObject::tr("Supported file (*.swc)"
+                ";;Neuron structure	(*.swc)"
+                ));
+    if (!writeSWC_file(qPrintable(fileSaveName),median_adjusted))
+    {
+        v3d_msg("Unable to save file");
+        return -1;
+    }
+
+    return 1;
+}
+
+
+int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.ano)"
+                ";;Neuron structure	(*.ano)"
+                ));
+    if(fileOpenName.isEmpty())
+        return -1;
+
+    P_ObjectFileType linker_object;
+    if (!loadAnoFile(fileOpenName,linker_object))
+    {
+        fprintf(stderr,"Error in reading the linker file.\n");
+        return -1;
+    }
+
+    QStringList nameList = linker_object.swc_file_list;
+    V3DLONG neuronNum = nameList.size();
+    vector<NeuronTree> nt_list;
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        NeuronTree tmp = readSWC_file(nameList.at(i));
+        nt_list.push_back(tmp);
+    }
+
+    int id = median_swc( nt_list);
+    if (id >=0 )
+    {
+        v3d_msg( QString("The median swc is : %1").arg( nameList.at(id)) );
+    }
+
+    /*
+    QString fileSaveName;
+    QString defaultSaveName = fileOpenName + "_consensus.swc";
+    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
+            defaultSaveName,
+            QObject::tr("Supported file (*.swc)"
+                ";;Neuron structure	(*.swc)"
+                ));
+    if ( !writeSWC_file(fiveSaveName, median_neuron))
+    {
+        v3d_msg("Unable to save file");
+        return -1;
+    }
+
+    */
+    return 1;
+}
+
 void printHelp()
 {
-    cout<<"\nConsensus Skeleton: a plugin to merge multiple neurons by generating a consensus skeleton."<<endl;
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f median_swc -i <input ANO linker file> "<<endl;
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;
+    cout<<"\nConsensus Skeleton: This plugin has the following three functions:"<<endl;
+    cout<<"\n  1) Pick the median neuron tree from a group of input neuron tress."<<endl;
+    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f median_swc -i <input ANO linker file> [-o <output swc file>] "<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  median_swc"<<endl;
+    cout<<"\t-i <input_file(s)>:  input linker file (.ano) "<<endl;
+    cout<<"\t-o <output_file>:  output median swc file name, this parameter is optional. "
+          "When not specified, no median swc file will be generated (duplicate of the corresponding median case)."
+          " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
+    cout<<"Example: v3d -x consensus_skeleton_2 -f median_swc -i mylinker.ano  [-o median.swc] \n"<<endl;
 
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f consensus_skeleton -i <input_file(s)> -o <output_file> "<<endl;
+    cout<<"\n  2) Adjust input neuron node locations by averaging over the matching nodes from the input group of neurons tree."<<endl;
+    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  average_node_position"<<endl;
+    cout<<"\t-i    <median swc>:  input median swc file (generated from median_swc function)"<<endl;
+    cout<<"\t <linker ANO file>:  input linker file (.ano)"<<endl;
+    cout<<"\t -p <distance_threshold>:  nodes that have distances larger than this threshold will "
+          "not be considered matching for averaging." <<endl;
+    cout<<"\t        -o <output_file>:  output file name." <<endl;
+    cout<<"Example: v3d -x consensus_skeleton_2 -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
+
+    cout<<"\n  3) Generate a consensus neuron skeleton (swc file) from a group of neurons ( radii are ignored)."<<endl;
+    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f consensus_skeleton -i <input> -o <output_file> "<<endl;
     cout<<"Parameters:"<<endl;
 	cout<<"\t-f <function_name>:  consensus_skeleton"<<endl;
-	cout<<"\t-i <input_file(s)>:  input linker file (.ano) or file name list(\"a.swc b.swc\")"<<endl;
-	cout<<"\t[-o] <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
+    cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
+    cout<<"\t-o   <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
 	cout<<"\t                     default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-	cout<<"\t[-p] <node_number>:  set sampling node number, final output tree is of this size"<<endl;
-	cout<<"Example: v3d -x consensus_skeleton -h consensus_skeleton -i mylinker.ano -p 200 -o consensus_skeleton.swc\n"<<endl;
+    cout<<"Example: v3d -x consensus_skeleton -f consensus_skeleton -i mylinker.ano -p 200 -o consensus_skeleton.swc\n"<<endl;
 }
 
