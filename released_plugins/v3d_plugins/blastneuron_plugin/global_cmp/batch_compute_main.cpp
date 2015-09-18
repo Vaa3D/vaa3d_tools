@@ -35,12 +35,12 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	paralist = (vector<char*>*)(input.at(1).p);
 
 
-	if (paralist->size()!=1)
-	{
-		printf("Please specify all paramters in one text string.\n");
-		printHelp_batch_compute();
-		return false;
-	}
+    if (paralist->size()!=1)
+    {
+        printf("Please specify all paramters in one text string.\n");
+        printHelp_batch_compute();
+        return false;
+    }
 	
 	
 	char * paras = paralist->at(0);
@@ -76,7 +76,7 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	double step_size = 2;
 
 	int c;
-	static char optstring[] = "hi:o:";
+    static char optstring[] = "h:i:o:";
 	opterr = 0;
 	while ((c = getopt(argc, argv, optstring))!=-1)
 	{
@@ -178,7 +178,7 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		if (gmi_list[i]) {delete []gmi_list[i]; gmi_list[i]=NULL;}
 	}
 
-	return 0;
+	return true;
 }
 
 
