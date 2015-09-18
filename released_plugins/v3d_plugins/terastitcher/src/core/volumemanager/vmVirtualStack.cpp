@@ -52,6 +52,7 @@ VirtualStack::VirtualStack()
     stitchable = false;
     ABS_V = ABS_H = ABS_D = -1;
     STACKED_IMAGE = 0;
+    img_regex = vm::IMG_FILTER_REGEX;
 }
 
 // return true if the given range [z0,z1] does not contain missing slices/blocks
