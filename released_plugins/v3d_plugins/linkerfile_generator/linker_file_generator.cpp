@@ -155,12 +155,14 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 			break;
 		case 5:
 			qsl_filters+="*.raw";
+            qsl_filters+="*.v3draw";
 			break;
 		case 6:
 			qsl_filters+="*.tif";
 			qsl_filters+="*.tiff";
 			qsl_filters+="*.lsm";
 			qsl_filters+="*.raw";
+            qsl_filters+="*.v3draw";
 			break;
 		case 7:
 			qsl_filters+="*.tif";
@@ -171,6 +173,7 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 			qsl_filters+="*.apo";
 			qsl_filters+="*.v3ds";
 			qsl_filters+="*.obj";
+            qsl_filters+="*.v3draw";
 			break;
 		default:
 			v3d_msg("You should never see this, - check with the developer of this plugin.");
@@ -226,6 +229,8 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 			temp = qsl_filelist[i].prepend("RAWIMG=");
 		else if (curfile_info.suffix().toUpper()=="LSM")
 			temp = qsl_filelist[i].prepend("RAWIMG=");
+        else if (curfile_info.suffix().toUpper()=="V3DRAW")
+            temp = qsl_filelist[i].prepend("RAWIMG=");
 		else
 			v3d_msg("You should never see this, - check with the developer of this plugin.");
 
