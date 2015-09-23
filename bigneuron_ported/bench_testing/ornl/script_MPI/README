@@ -1,4 +1,4 @@
-This is the instruction used to bench test 27 neuron tracing algorithms for BigNeuron project on hopper and edison at Lawrence Berkeley National Laboratory using MPI. Please use the command line to generate job scripts:
+This is the instruction used to bench test 27 neuron tracing algorithms for BigNeuron project on titan at Oak Ridge National Laboratory using MPI. Please use the command line to generate job scripts:
 
 1. sh gen_bench_job_text_scripts.sh <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path> <output txt file path>
 <tracing algorithm number>:  from 1 to 27.
