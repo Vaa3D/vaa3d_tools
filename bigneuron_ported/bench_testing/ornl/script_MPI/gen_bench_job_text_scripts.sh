@@ -191,15 +191,15 @@ if [ ! $# -ge 1 ]; then
 	exit
 fi
 
-if [ $# -ge 2 ]; then
-	if [ ! -f $2 ]; then
-		echo "Can not find file [$2]"
-		exit
-	fi
-else
-	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
-	exit
-fi
+#if [ $# -ge 2 ]; then
+#	if [ ! -f $2 ]; then
+#		echo "Can not find file [$2]"
+#		exit
+#	fi
+#else
+#	echo "sh gen_bench_job_scripts.sh  <tracing algorithm number> <input image path> <output folder path> <Vaa3D executable folder path>"
+#	exit
+#fi
 
 if [ $# -ge 3 ]; then
 	if [ ! -d $3 ]; then
