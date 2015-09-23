@@ -77,6 +77,8 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
         if (output.size() != 1) return false;
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
         char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        int invert = 1;
+        if(inparas.size() >= 1) invert = atoi(inparas.at(0));
 
         QString m_InputfolderName(inimg_file);
 
@@ -153,7 +155,10 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
 
             for(V3DLONG j = 0; j < pagesz_one; j++)
             {
-                 im_imported[i] = 255 - data1d[j];
+                if(invert)
+                    im_imported[i] = 255 - data1d[j];
+                else
+                    im_imported[i] = data1d[j];
                  i++;
             }
             if(data1d) {delete []data1d; data1d = 0;}
@@ -165,7 +170,7 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
 	}
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x dllname -f import -i <inimg_folder> -o <outimg_file>"<<endl;
+        cout<<"Usage : v3d -x dllname -f import -i <inimg_folder> -o <outimg_file> -p <invert>"<<endl;
         cout<<endl;
     }
     else return false;;
