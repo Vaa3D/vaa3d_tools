@@ -67,12 +67,38 @@ Matrix translate_matrix(double shift_x, double shift_y, double shift_z)
 
 }
 
+double get_scale_from_trans(Matrix trans){
+
+   //extract the sale parameter from rotation matrix
+    Matrix rMatrix3by3(3,3);
+   rMatrix3by3(1,1) = trans(1,1);
+   rMatrix3by3(1,2) = trans(1,2);
+   rMatrix3by3(1,3) = trans(1,3);
+
+   rMatrix3by3(2,1) = trans(2,1);
+   rMatrix3by3(2,2) = trans(2,2);
+   rMatrix3by3(2,3) = trans(2,3);
+
+   rMatrix3by3(3,1) = trans(3,1);
+   rMatrix3by3(3,2) = trans(3,2);
+   rMatrix3by3(3,3) = trans(3,3);
+
+
+   double det = rMatrix3by3.determinant();
+
+   double s = pow(det, 1.0/3.0);
+   return s;
+}
+
 
 NeuronTree apply_transform(NeuronTree * nt, Matrix  trans )
 {
     NeuronTree result;
     V3DLONG size = nt->listNeuron.size();
-    cout<<"size="<<size<<endl;
+    //cout<<"size="<<size<<endl;
+
+    double scale = get_scale_from_trans(trans);
+
     for (V3DLONG i = 0;i < size;i++)
     {
         NeuronSWC s = nt->listNeuron[i];
@@ -83,6 +109,8 @@ NeuronTree apply_transform(NeuronTree * nt, Matrix  trans )
         p.x = trans(1,1) * s.x + trans(1,2) * s.y + trans(1,3) * s.z + trans(1,4) ;
         p.y = trans(2,1) * s.x + trans(2,2) * s.y + trans(2,3) * s.z + trans(2,4) ;
         p.z = trans(3,1) * s.x + trans(3,2) * s.y + trans(3,3) * s.z + trans(3,4) ;
+      
+        p.r = s.r *scale;
 
                 
 		result.listNeuron.push_back(p);
