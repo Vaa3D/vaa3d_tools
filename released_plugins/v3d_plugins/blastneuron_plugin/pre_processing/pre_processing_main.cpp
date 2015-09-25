@@ -160,7 +160,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
 		printf("\t %s has been generated successfully.\n",qPrintable(outfileName));
 
-	return 0;
+	return 1;
 }
 
 void printHelp_pre_processing()
@@ -171,7 +171,7 @@ void printHelp_pre_processing()
 	printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
 	printf("\t                         if not specified, use 2\n");
-	printf("\t#r <rotation_flag>   :   whether or not use PCA for rotation.\n");
+	printf("\t#r <skip_rotation_flag = 1>   :   whether or not use PCA for rotation.\n");
 	printf("\t                         if not specified, rotation is not perfored\n");
-	printf("Usage: vaa3d -x pre_processing -p \"#i input.swc #o result.swc #s 2 #r 1\"\n");
+    printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #s 2 #r 0\"\n");
 }

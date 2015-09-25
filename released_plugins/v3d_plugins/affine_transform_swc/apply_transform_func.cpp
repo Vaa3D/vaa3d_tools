@@ -85,8 +85,10 @@ double get_scale_from_trans(Matrix trans){
 
 
    double det = rMatrix3by3.determinant();
+   printf("det = %f\n", det);
 
-   double s = pow(det, 1.0/3.0);
+   double s = pow(fabs(det), 1.0/3.0);
+   printf("scale = %f\n", s);
    return s;
 }
 
