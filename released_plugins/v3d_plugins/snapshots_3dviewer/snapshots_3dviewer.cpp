@@ -1,17 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 
+#include "basic_surf_objs.h"
 #include "snapshots_3dviewer.h"
 
+using namespace std;
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(snapshots_3dviewer, SnapShots_3Dviewer)
 
 
-void snap_Shots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent);
+void snapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent);
 
 //plugin funcs
-const QString title = "Movie From 3D Viewer";
+const QString title = "Saving Snapshots From 3D Viewer";
 controlPanel* controlPanel::m_pLookPanel = 0;
 QStringList SnapShots_3Dviewer::menulist() const
 {
@@ -23,28 +24,12 @@ void SnapShots_3Dviewer::domenu(const QString & menu_name,	V3DPluginCallback2 & 
 {
     if (menu_name == tr("take a snapshot of 3D viewer"))
 	{
-        SnapShots3Dviewer(v3d, parent);
+        snapShots3Dviewer(v3d, parent);
 	}
 }
 
 void SnapShots_3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
 {
-	v3dhandle curwin = v3d.currentImageWindow();
-	if (!curwin)
-	{
-		v3d_msg("You don't have any image open in the main window.");
-		return;
-	}
-	v3d.open3DWindow(curwin);
-
-	if (controlPanel::m_pLookPanel)
-	{
-		controlPanel::m_pLookPanel->show();
-		return;
-	}
-
-	controlPanel* p = new controlPanel(v3d, parent);
-	if (p)	p->show();
 }
 
 controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
@@ -121,79 +106,50 @@ void controlPanel::_slot_timerupdate()
 	m_lframeind++;
 }
 
-void SnapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
+void snapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
 {
-    QString qs_dir_swc;
-    qs_dir_swc=QFileDialog::getExistingDirectory(this,QString(QObject::tr("Choose the directory that contains all linker (.ano) files")));
-    QDir dir(qs_dir_swc);
-    QStringList qsl_filelist;
-    QStringList qsl_filters;
-    qsl_filters+="*.ano";
+    QFileDialog inANO_d(parent);
+    inANO_d.setWindowTitle(QObject::tr("Choose input ano filename"));
+    inANO_d.setAcceptMode(QFileDialog::AcceptOpen);
+    if (!inANO_d.exec()) return;
+    QString inANO_fn = (inANO_d.selectedFiles())[0];
 
-    foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
-    {
-        qsl_filelist+=file;
-    }
-
-    if(qsl_filelist.size()==0)
-    {
-        v3d_msg("Cannot find the linker files in the given directory!\nTry another diretory");
+    P_ObjectFileType cc;
+    if(! loadAnoFile(inANO_fn,cc)){
+        cout <<"Fail to load ano file" <<endl;
         return;
     }
 
 
-    QFileDialog d(parent);
-    d.setWindowTitle(QObject::tr("Choose output snapshot filename"));
-    d.setAcceptMode(QFileDialog::AcceptSave);
-    if (!d.exec()) return;
+    QString output_d=QFileDialog::getExistingDirectory(parent,
+    QString(QObject::tr("Choose the outpu directory, where the snapshots would be saved.")));
+    QDir output_dir = QFileInfo(output_d).absoluteDir();
 
 
-    for(int i = 0; i <qsl_filelist.size(); i++)
+    float x_rot = 90;
+    float y_rot = 0 ;
+    float z_rot = 90;
+
+    for(int i = 0; i <cc.swc_file_list.size(); i++)
     {
-        QString ano_path = qs_dir_swc + "/" + qsl_filelist.at(i);
-        ZMovieFileType cc;
-        if(loadAnoFile(ano_path, cc))
+        QString swc_file = cc.swc_file_list[i];
+
+        v3d.open3DViewerForSingleSurfaceFile(swc_file);
+
+        QList<V3dR_MainWindow * > list_3dviewer = v3d.getListAll3DViewers();
+        V3dR_MainWindow * surface_win = list_3dviewer[i];
+        if (!surface_win)
         {
-            QString fileOpenName = cc.anchor_file_path;
-            QString selectedFile = cc.frame_folder_path;
-
-            m_v3d.open3DViewerForLinkerFile(ano_path);
-            view=0;curwin=0;
-            list_3dviewer = m_v3d.getListAll3DViewers();
-            for (int j=0; j<list_3dviewer.count(); j++)
-            {
-                QString curname = m_v3d.getImageName(list_3dviewer[j]).remove("3D View [").remove("]");
-                if (curname==ano_path)
-                {
-                    surface_win = list_3dviewer[j];
-                    break;
-                }
-            }
-            view = m_v3d.getView3DControl_Any3DViewer(surface_win);
-
-
-            QString BMPfilename = (d.selectedFiles())[0];
-            if (BMPfilename.endsWith(".BMP", Qt::CaseInsensitive))
-                BMPfilename.resize(BMPfilename.length()-4); //by PHC
-            v3d.screenShot3DWindow(curwin, BMPfilename);
-            QMessageBox::information(0, title, QString("Snapshot was saved to: %1.BMP\n").arg(BMPfilename));
-
-
-
-
+            cout << "surface_win is empty"<<endl;
         }
+        View3DControl  *view = v3d.getView3DControl_Any3DViewer(surface_win);
+
+        view->doAbsoluteRot(x_rot,y_rot,z_rot);
+        swc_file = QFileInfo(swc_file).fileName();
+        QString BMPfilename = output_dir.absolutePath()+ '/'+swc_file;
+        //v3d_msg(BMPfilename);
+        v3d.screenShot_Any3DViewer(surface_win, BMPfilename);
+        //surface_win->close();
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
