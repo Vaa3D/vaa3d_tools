@@ -122,8 +122,7 @@ void snapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
 
 
     QString output_d=QFileDialog::getExistingDirectory(parent,
-    QString(QObject::tr("Choose the outpu directory, where the snapshots would be saved.")));
-    QDir output_dir = QFileInfo(output_d).absoluteDir();
+    QString(QObject::tr("Choose the output directory, where the snapshots would be saved.")));
 
 
     float x_rot = 90;
@@ -143,13 +142,14 @@ void snapShots3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
             cout << "surface_win is empty"<<endl;
         }
         View3DControl  *view = v3d.getView3DControl_Any3DViewer(surface_win);
-
         view->doAbsoluteRot(x_rot,y_rot,z_rot);
         swc_file = QFileInfo(swc_file).fileName();
-        QString BMPfilename = output_dir.absolutePath()+ '/'+swc_file;
-        //v3d_msg(BMPfilename);
+        QString BMPfilename = QDir(output_d).absolutePath()+ '/'+swc_file;
+       // v3d_msg(BMPfilename);
+        v3d.update_3DViewer(surface_win);
         v3d.screenShot_Any3DViewer(surface_win, BMPfilename);
-        //surface_win->close();
+
+        v3d.close3DWindow(surface_win);
     }
 
 }
