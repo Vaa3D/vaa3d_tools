@@ -323,6 +323,8 @@ void create_plugin_cpp(PluginTemplate & pt)
         }
 
         ofs<<"\tQString finalswcfilename = fileOpenName + rootposstr + \"_"<< pt.PLUGIN_NAME <<".swc\";"<<endl;
+        ofs<<"\tQString tmpfolder = QFileInfo(tcfile).path()+(\"/tmp_"<< pt.PLUGIN_NAME <<"\");"<<endl;
+        ofs<<"\thead->tilename = QFileInfo(tcfile).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
 
 
         for(int i = 430;i< 455; i++)
@@ -360,13 +362,51 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
 
-        for(int i = 475;i< 746; i++)
+        for(int i = 475;i< 542; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
 
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+        for(int i = 542;i< 569; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+        for(int i = 569;i< 596; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+        for(int i = 596;i< 622; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+        for(int i = 622;i< 746; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+
+
+
         ofs<<"\tQString finalswcfilename = fileOpenName + rootposstr + \"_"<< pt.PLUGIN_NAME <<".swc\";"<<endl;
+        ofs<<"\tQString tmpfolder = QFileInfo(fileOpenName).path()+(\"/tmp_"<< pt.PLUGIN_NAME <<"\");"<<endl;
+        ofs<<"\thead->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
 
         for(int i = 746;i< 785; i++)
         {
@@ -404,11 +444,50 @@ void create_plugin_cpp(PluginTemplate & pt)
 
         ofs<<"\t\tfull_plugin_name = \""<<pt.TRACINGPLUGIN_NAME <<"\";  func_name =  \"" <<pt.FUNC_NAME<<"\";"<<endl;
 
-        for(int i = 805;i< 1250; i++)
+        for(int i = 805;i< 872; i++)
         {
             getline (templatefile,line);
             ofs<<line<<endl;
         }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+
+        for(int i = 872;i< 899; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+
+        for(int i = 899;i< 926; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+
+        for(int i = 926;i< 952; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<"\t\t\t\tnewNode->tilename = QFileInfo(fileOpenName).path().append(\"/tmp_"<< pt.PLUGIN_NAME <<"/\").append(QString(region_name));"<<endl;
+
+
+        for(int i = 952;i< 1250; i++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+
         templatefile.close();
 
     }

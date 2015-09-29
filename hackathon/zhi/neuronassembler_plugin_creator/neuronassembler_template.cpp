@@ -405,7 +405,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
     head->root_z = vim.lut[soma_index].start_pos[2] - vim.min_vim[2] + P.root_1st[2] ;
 
     head->tc_index = soma_index;
-    head->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
+   // head->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
     head->ref_index = -1;
 
     head->start[0] = start[0];
@@ -427,7 +427,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
-    QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
+   // QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -539,7 +539,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+               // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 2;
@@ -566,7 +566,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+              //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 1;
@@ -593,7 +593,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+               // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 4;
@@ -619,7 +619,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+             //   newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 3;
@@ -722,7 +722,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     head->root_y = int(P.block_size/2);
     head->root_z = P.root_1st[2] ;
 
-    head->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+    //head->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
     head->ref_index = -1;
 
     head->start[0] = start[0];
@@ -744,7 +744,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+   // QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -869,7 +869,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+            //    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 2;
@@ -896,7 +896,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+              //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 1;
@@ -923,7 +923,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+              //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 4;
@@ -949,7 +949,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+               // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
                 newNode->direction = 3;
