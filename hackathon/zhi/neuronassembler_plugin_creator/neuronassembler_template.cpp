@@ -671,10 +671,10 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
     }
 
-    NeuronTree final_swc = readSWC_file(finalswcfilename);
-    NeuronTree final_swc_sorted;
-    SortSWC(final_swc.listNeuron, final_swc_sorted.listNeuron,1, 30);
-    writeSWC_file(finalswcfilename, final_swc_sorted);
+//    NeuronTree final_swc = readSWC_file(finalswcfilename);
+//    NeuronTree final_swc_sorted;
+//    SortSWC(final_swc.listNeuron, final_swc_sorted.listNeuron,1, 30);
+//    writeSWC_file(finalswcfilename, final_swc_sorted);
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
 
@@ -1001,10 +1001,10 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 
     }
 
-    NeuronTree final_swc = readSWC_file(finalswcfilename);
-    NeuronTree final_swc_sorted;
-    SortSWC(final_swc.listNeuron, final_swc_sorted.listNeuron,1, 30);
-    writeSWC_file(finalswcfilename, final_swc_sorted);
+//    NeuronTree final_swc = readSWC_file(finalswcfilename);
+//    NeuronTree final_swc_sorted;
+//    SortSWC(final_swc.listNeuron, final_swc_sorted.listNeuron,1, 30);
+//    writeSWC_file(finalswcfilename, final_swc_sorted);
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename),bmenu);
 
