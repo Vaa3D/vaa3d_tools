@@ -5,12 +5,12 @@
 
 
 using namespace std;
-#include "NeuronAssembler_NeuTube_plugin.h"
+#include "NeuronAssembler_neuroGPSTree_plugin.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
-Q_EXPORT_PLUGIN2(NeuronAssembler_NeuTube, NeuronAssembler_NeuTube);
+Q_EXPORT_PLUGIN2(NeuronAssembler_neuroGPSTree, NeuronAssembler_neuroGPSTree);
 //Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
 
 struct root_node
@@ -35,8 +35,10 @@ struct NA_PARA
 {
   //  int  bkg_thresh;
     int is_entire;
-	int ch;
-	int merge;
+	int xR;
+	int yR;
+	int zR;
+	int th;
     int block_size;
     int root_1st[3];
 
@@ -120,7 +122,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
 NeuronTree eliminate(NeuronTree input, double length);
  
 //QStringList neuronassembler::menulist() const
-QStringList NeuronAssembler_NeuTube::menulist() const
+QStringList NeuronAssembler_neuroGPSTree::menulist() const
 {
 	return QStringList() 
 		<<tr("trace_tc")
@@ -129,7 +131,7 @@ QStringList NeuronAssembler_NeuTube::menulist() const
 }
 
 //QStringList neuronassembler::funclist() const
-QStringList NeuronAssembler_NeuTube::funclist() const
+QStringList NeuronAssembler_neuroGPSTree::funclist() const
 {
 	return QStringList()
 		<<tr("trace_tc")
@@ -137,7 +139,7 @@ QStringList NeuronAssembler_NeuTube::funclist() const
 		<<tr("help");
 }
 
-void NeuronAssembler_NeuTube::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void NeuronAssembler_neuroGPSTree::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 //void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("trace_tc"))
@@ -163,8 +165,10 @@ void NeuronAssembler_NeuTube::domenu(const QString &menu_name, V3DPluginCallback
         }
 
    //     P.bkg_thresh = dialog.bkg_thresh;
-		P.ch = dialog.ch;
-		P.merge = dialog.merge;
+		P.xR = dialog.xR;
+		P.yR = dialog.yR;
+		P.zR = dialog.zR;
+		P.th = dialog.th;
    //     P.channel = dialog.channel;
         P.block_size = dialog.block_size;
         LocationSimple tmpLocation(0,0,0);
@@ -204,8 +208,10 @@ void NeuronAssembler_NeuTube::domenu(const QString &menu_name, V3DPluginCallback
             P.root_1st[2] = file_inmarkers[0].z;
         }
 
-		P.ch = dialog.ch;
-		P.merge = dialog.merge;
+		P.xR = dialog.xR;
+		P.yR = dialog.yR;
+		P.zR = dialog.zR;
+		P.th = dialog.th;
         P.block_size = dialog.block_size;
         P.inimg_file = dialog.rawfilename;
         P.is_entire = dialog.is_entire;
@@ -215,11 +221,11 @@ void NeuronAssembler_NeuTube::domenu(const QString &menu_name, V3DPluginCallback
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2015-09-29"));
+			"Developed by Zhi Zhou, 2015-09-30"));
 	}
 }
 
-bool NeuronAssembler_NeuTube::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool NeuronAssembler_neuroGPSTree::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 //        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 //            "Developed by Zhi Zhou, 2014-11-09"));
 //    }
@@ -292,8 +298,10 @@ bool NeuronAssembler_NeuTube::dofunc(const QString & func_name, const V3DPluginA
     //    P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
     //    P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
-		P.ch = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
-		P.merge = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.xR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.yR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.zR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.th = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
         assembler_tc(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("trace_raw"))
@@ -333,34 +341,40 @@ bool NeuronAssembler_NeuTube::dofunc(const QString & func_name, const V3DPluginA
 
 
 
-		P.ch = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
-		P.merge = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.xR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.yR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.zR = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.th = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
         assembler_raw(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("help"))
 	{
         printf("\n**** Usage of Neuron Assembler ****\n");
 //        printf("vaa3d -x plugin_name -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
-		printf("vaa3d -x NeuronAssembler_NeuTube -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size> <ch> <merge>\n");
+		printf("vaa3d -x NeuronAssembler_neuroGPSTree -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size> <xR> <yR> <zR> <th>\n");
 		printf("inimg_file		Should be 8 bit image\n");
 		printf("inmarker_file		Please specify the path of the marker file\n");
 		printf("tc_file			Please specify the path of the tc file\n");
 		printf("block size		Default 1024\n");
 
-		printf("ch			Required by the tracing algorithm. Default value is 1\n");
-		printf("merge			Required by the tracing algorithm. Default value is 1\n");
+		printf("xR			Required by the tracing algorithm. Default value is 1\n");
+		printf("yR			Required by the tracing algorithm. Default value is 1\n");
+		printf("zR			Required by the tracing algorithm. Default value is 1\n");
+		printf("th			Required by the tracing algorithm. Default value is 10\n");
 
 		printf("outswc_file		Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 
-		printf("vaa3d -x NeuronAssembler_NeuTube -f trace_raw -i <inimg_file> -p <inmarker_file> <block size> <tracing_entire_image> <ch> <merge>\n");
+		printf("vaa3d -x NeuronAssembler_neuroGPSTree -f trace_raw -i <inimg_file> -p <inmarker_file> <block size> <tracing_entire_image> <xR> <yR> <zR> <th>\n");
 		printf("inimg_file		Should be 8 bit v3draw/raw image\n");
 		printf("inmarker_file		Please specify the path of the marker file, Default value is NULL\n");
 		printf("block size		Default 1024\n");
 		printf("tracing_entire_image	YES:1, NO:0. Default value is 0\n");
 
-		printf("ch			Required by the tracing algorithm. Default value is 1\n");
-		printf("merge			Required by the tracing algorithm. Default value is 1\n");
+		printf("xR			Required by the tracing algorithm. Default value is 1\n");
+		printf("yR			Required by the tracing algorithm. Default value is 1\n");
+		printf("zR			Required by the tracing algorithm. Default value is 1\n");
+		printf("th			Required by the tracing algorithm. Default value is 10\n");
 
 		printf("outswc_file		Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -476,9 +490,9 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
-	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc";
-	QString tmpfolder = QFileInfo(tcfile).path()+("/tmp_NeuronAssembler_NeuTube");
-	head->tilename = QFileInfo(tcfile).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_neuroGPSTree.swc";
+	QString tmpfolder = QFileInfo(tcfile).path()+("/tmp_NeuronAssembler_neuroGPSTree");
+	head->tilename = QFileInfo(tcfile).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
    // QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -504,7 +518,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
 
       //  QString swcfilename =  walker->tilename + QString("_MOST.swc");
-		QString swcfilename =  walker->tilename + QString("_neutube.swc");
+		QString swcfilename =  walker->tilename + QString("_NeuroGPSTree.swc");
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -525,17 +539,27 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         arg.type = "random";
         std::vector<char*> arg_para;
 //        char channel = '0' + P.channel;
-		string S_ch = boost::lexical_cast<string>(P.ch);
-		char* C_ch = new char[S_ch.length() + 1];
-		strcpy(C_ch,S_ch.c_str());
-		arg_para.push_back(C_ch);
+		string S_xR = boost::lexical_cast<string>(P.xR);
+		char* C_xR = new char[S_xR.length() + 1];
+		strcpy(C_xR,S_xR.c_str());
+		arg_para.push_back(C_xR);
 
-		string S_merge = boost::lexical_cast<string>(P.merge);
-		char* C_merge = new char[S_merge.length() + 1];
-		strcpy(C_merge,S_merge.c_str());
-		arg_para.push_back(C_merge);
+		string S_yR = boost::lexical_cast<string>(P.yR);
+		char* C_yR = new char[S_yR.length() + 1];
+		strcpy(C_yR,S_yR.c_str());
+		arg_para.push_back(C_yR);
 
-		full_plugin_name = "neuTube";  func_name =  "neutube_trace";
+		string S_zR = boost::lexical_cast<string>(P.zR);
+		char* C_zR = new char[S_zR.length() + 1];
+		strcpy(C_zR,S_zR.c_str());
+		arg_para.push_back(C_zR);
+
+		string S_th = boost::lexical_cast<string>(P.th);
+		char* C_th = new char[S_th.length() + 1];
+		strcpy(C_th,S_th.c_str());
+		arg_para.push_back(C_th);
+
+		full_plugin_name = "NeuroGPSTree";  func_name =  "tracing_func";
 //        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
 //        char* Th =  new char[T_background.length() + 1];
 //        strcpy(Th, T_background.c_str());
@@ -603,7 +627,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -631,7 +655,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -659,7 +683,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -686,7 +710,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
              //   newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -811,9 +835,9 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
-	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_NeuTube.swc";
-	QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronAssembler_NeuTube");
-	head->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_neuroGPSTree.swc";
+	QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronAssembler_neuroGPSTree");
+	head->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
 
    // QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -853,7 +877,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             continue;
         }
 
-		QString swcfilename =  walker->tilename + QString("_neutube.swc");
+		QString swcfilename =  walker->tilename + QString("_NeuroGPSTree.swc");
        // QString swcfilename =  walker->tilename + QString("_MOST.swc");;
 
         V3DPluginArgItem arg;
@@ -874,17 +898,27 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         arg.type = "random";
         std::vector<char*> arg_para;
 //        char channel = '0' + P.channel;
-		string S_ch = boost::lexical_cast<string>(P.ch);
-		char* C_ch = new char[S_ch.length() + 1];
-		strcpy(C_ch,S_ch.c_str());
-		arg_para.push_back(C_ch);
+		string S_xR = boost::lexical_cast<string>(P.xR);
+		char* C_xR = new char[S_xR.length() + 1];
+		strcpy(C_xR,S_xR.c_str());
+		arg_para.push_back(C_xR);
 
-		string S_merge = boost::lexical_cast<string>(P.merge);
-		char* C_merge = new char[S_merge.length() + 1];
-		strcpy(C_merge,S_merge.c_str());
-		arg_para.push_back(C_merge);
+		string S_yR = boost::lexical_cast<string>(P.yR);
+		char* C_yR = new char[S_yR.length() + 1];
+		strcpy(C_yR,S_yR.c_str());
+		arg_para.push_back(C_yR);
 
-		full_plugin_name = "neuTube";  func_name =  "neutube_trace";
+		string S_zR = boost::lexical_cast<string>(P.zR);
+		char* C_zR = new char[S_zR.length() + 1];
+		strcpy(C_zR,S_zR.c_str());
+		arg_para.push_back(C_zR);
+
+		string S_th = boost::lexical_cast<string>(P.th);
+		char* C_th = new char[S_th.length() + 1];
+		strcpy(C_th,S_th.c_str());
+		arg_para.push_back(C_th);
+
+		full_plugin_name = "NeuroGPSTree";  func_name =  "tracing_func";
 //        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
 //        char* Th =  new char[T_background.length() + 1];
 //        strcpy(Th, T_background.c_str());
@@ -952,7 +986,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
             //    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -980,7 +1014,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -1008,7 +1042,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -1035,7 +1069,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_neuroGPSTree/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
