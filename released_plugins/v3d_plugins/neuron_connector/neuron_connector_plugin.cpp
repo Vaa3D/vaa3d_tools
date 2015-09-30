@@ -112,7 +112,7 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
             }
             if(paras.size()>5){
                 int tmp=atoi(paras.at(5));
-                if(tmp>-1 && tmp<3)
+                if(tmp>-1 && tmp<4)
                     matchtype=tmp;
                 else
                     cerr<<"error: unknow match type: "<<tmp<<"; use default type: "<<matchtype;
@@ -129,6 +129,8 @@ bool neuron_connector_swc::dofunc(const QString & func_name, const V3DPluginArgL
         cout<<"rootid="<<rootid<<"; angthr="<<angthr<<"; disthr="<<disthr<<"; xscale="<<xscale<<"; yscale="<<yscale<<"; zscale="<<zscale<<endl;
         if(matchtype==1) cout<<"Only branch with the same type will be matched"<<endl;
         if(matchtype==2) cout<<"Topology constrain will be applied for connections."<<endl;
+        if(matchtype==3) cout<<"Only branch with the different type will be matched"<<endl;
+
         cout<<"Distance between "; b_minusradius ? cout<<"skeleton" : cout<<"surface"; cout<<" will be calculate to match"<<endl;
         if(angthr>0.00001) cout<<"Will first search for connections between tips with angle smaller than "<< angthr << " degree within disthr. Then will search for tip to segment connections."<<endl;
         if(disthr<0){
@@ -165,6 +167,7 @@ void printHelp()
     cout<<"matchtype: \t0: no constrain;"<<endl;
     cout<<"\t\t1: only branch with the same type will be connected."<<endl;
     cout<<"\t\t2: only branch with the same type will be connected except soma (type 1). And only one connection between axon (2) and soma (1) can be made."<<endl;
+    cout<<"\t\t3: only branch with the different type will be connected."<<endl;
     cout<<"surfacedis: when set to true, the radius will be deducted when computing distance."<<endl;
     cout<<"\n";
 }
@@ -620,6 +623,12 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                 if(matchType==2){ //must be the same type except soma
                     if(nt->listNeuron.at(id).type!=nt->listNeuron.at(tidx).type &&
                             nt->listNeuron.at(id).type!=1 && nt->listNeuron.at(tidx).type!=1){
+                        id=components.indexOf(cid, id+1);
+                        continue;
+                    }
+                }
+                if(matchType==3){ //must be the different type to connect
+                    if(nt->listNeuron.at(id).type==nt->listNeuron.at(tidx).type){
                         id=components.indexOf(cid, id+1);
                         continue;
                     }
