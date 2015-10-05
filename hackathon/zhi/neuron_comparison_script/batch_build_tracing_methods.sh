@@ -223,3 +223,14 @@ cd ../../../../hackathon/zhi/neuTube_zhi/
 
 qmake
 make
+
+mv ../../../../v3d_external/bin/plugins/NeuroStalker ../../../../v3d_external/bin/plugins/neuron_tracing/
+mv ../../../../v3d_external/bin/plugins/LCM_boost ../../../../v3d_external/bin/plugins/neuron_tracing/
+mv ../../../../v3d_external/bin/plugins/bigneuron_ported/* ../../../../v3d_external/bin/plugins/neuron_tracing/
+rm -rf ../../../../v3d_external/bin/plugins/bigneuron_ported/
+mv ../../../../v3d_external/bin/plugins/bigneuronhackathon/* ../../../../v3d_external/bin/plugins/neuron_tracing/
+rm -rf ../../../../v3d_external/bin/plugins/bigneuronhackathon/
+
+
+
+
