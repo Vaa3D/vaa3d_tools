@@ -15,6 +15,7 @@ else{
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
+
 #INCLUDEPATH += ../libs/liblbfgs-1.10/include
 INCLUDEPATH += ../libs/liblbfgs-1.10_include
 INCLUDEPATH += ../libs/sqb_0.1/include
@@ -24,16 +25,21 @@ INCLUDEPATH += ../libs/ITK_include
 INCLUDEPATH += ../libs/regression
 INCLUDEPATH += ../libs/sqb_0.1/src/MatrixSQB
 INCLUDEPATH += ../libs/boost_1_58_0
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
+
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
+
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
+
 
 
 LIBS += -L"../libs/liblbfgs-1.10/lib/.libs"
 #LIBS += -L"../libs/liblbfgs-1.10_Linux"
 LIBS += -llbfgs
 
-LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
+LIBS += -L"../libs/libconfig-1.4.9_old/lib/.libs"
 #LIBS += -L"../libs/libconfig-1.4.9_Linux"
 LIBS += -lconfig++
 
