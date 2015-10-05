@@ -12,7 +12,7 @@ INCLUDEPATH     += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 
 win32{
-    LIBS +=  -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    LIBS +=  -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
 }
 
 macx {
@@ -47,5 +47,5 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_
 
 #specify target name and directory
 TARGET  = $$qtLibraryTarget(meanshift)
-DESTDIR = $$V3DMAINPATH/../bin/plugins/bigneuronhackathon/BJUT_meanshift/
+DESTDIR = $$V3DMAINPATH/../bin/plugins/neuron_tracing/BJUT_meanshift/
 
