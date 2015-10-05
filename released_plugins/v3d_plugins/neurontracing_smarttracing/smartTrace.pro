@@ -10,7 +10,7 @@ INCLUDEPATH	+= $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 
 TARGET	= $$qtLibraryTarget(smartTrace)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/smartTrace/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/smartTrace/
 
 macx{
     LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
