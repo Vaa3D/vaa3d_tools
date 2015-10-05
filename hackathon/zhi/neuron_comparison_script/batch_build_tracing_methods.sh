@@ -1,27 +1,32 @@
 #!/bin/bash
 #THis is a shell progrem to batch build tracing methods plugins, including: 
-#1.	All-path-pruning 1 (bottom-up pruning)
-#2.	All-path-pruning 2 (top-down pruning)
-#3.	MOST
-#4.	FarSight-Snake
-#5.	NeuTube
-#6.	MST-Tracing
-#7.	TreMap
-#8.	SimpleTracing-dt
-#9.	Simple-RollingBall
-#10.	Simple-RayCasting
-#11.	NeuronGPSTree(HUST)
-#12.	MeanshiftSpanningtree(BJUT)
-#13.	fastmarching_spanningtree(BJUT)
-#14.	CWlab_method1_version1(NTUST)
-#15.	LCM_boost (A-STAR)
-#16.	NeuroStalker (Sydney)
-#17.	RegMST (EPFL)
-#18.	nctuTW(NCTUTW)
-#19.	GD_nctuTW (ALLEN + NCTUTW)
-#20.	SimpleAxisAnalyzer (NIU)
-#21.	smartTrace (ALLEN)
-#22.	NeuronChaser (Erasmus)
+#1.	All-path-pruning 1 (bottom-up pruning) @
+#2.	All-path-pruning 2 (top-down pruning)  @ 
+#3.	MOST  @
+#4.	NeuTube
+#5.	FarSight-Snake   @
+#6.	SimpleTracing-dt  @
+#7.	Simple-RayCasting @ 
+#8.	Simple-RollingBall @
+#9.	TreMap   @
+#10.	MST-Tracing  @
+#11.	NeuronGPSTree(HUST)   @
+#12.	fastmarching_spanningtree(BJUT)  @
+#13.	MeanshiftSpanningtree(BJUT)  @
+#14.	CWlab_method1_version1(NTUST)  @
+#15.	LCM_boost (A-STAR)   @ 
+#16.	NeuroStalker (Sydney)  @
+#17.	nctuTW(NCTUTW)  @
+#18.	GD_nctuTW (ALLEN + NCTUTW)  @
+#19.	SimpleAxisAnalyzer (NIU)  @
+#20.	NeuronChaser(Erasmus)   @
+#21.	smartTrace (ALLEN) @
+#22.	neutu_autotrace (Janelia + PSU)  @
+#23.	Advantra (Erasmus) @
+#24.	RegMST (EPFL) @
+#25.	EnsembleNeuronTracerBasic(NTUST)
+#26.	EnsembleNeuronTracerV2n(NTUST)
+#27.	EnsembleNeuronTracerV2s(NTUST)
 
 
 #APP1 and APP2 
@@ -121,13 +126,6 @@ svn up
 qmake
 make
 
-#RegMST 
-#cd ../../../bigneuron_ported/AmosSironi_PrzemyslawGlowacki/RegMST_tracing_plugin/
-#make clean
-#svn up
-#qmake
-#make
-
 #nctuTW 
 cd ../../../bigneuron_ported/ytc/nctuTW/
 make clean
@@ -155,6 +153,55 @@ make clean
 svn up
 qmake
 make
+
+#Advantra
+cd ../../../bigneuron_ported/miroslav_r/Advantra/
+make clean
+svn up
+qmake
+make
+
+#neutu_autotrace
+cd ../../../bigneuron_ported/ting_dezhe/neutu_autotrace/
+make clean
+svn up
+qmake
+make
+
+#RegMST
+cd ../../../bigneuron_ported/AmosSironi_PrzemyslawGlowacki/RegMST_tracing_plugin/
+make clean
+svn up
+qmake
+make
+
+cd ../../../bigneuron_ported/AmosSironi_PrzemyslawGlowacki/SQBTree_plugin/
+make clean
+svn up
+qmake
+make
+
+#EnsembleNeuronTracerBasic
+cd ../../../bigneuron_ported/chingwei/EnsembleNeuronTracerBasic/
+make clean
+svn up
+qmake
+make
+
+#EnsembleNeuronTracerV2n
+cd ../../../bigneuron_ported/chingwei/EnsembleNeuronTracerV2n/
+make clean
+svn up
+qmake
+make
+
+#EnsembleNeuronTracerV2s
+cd ../../../bigneuron_ported/chingwei/EnsembleNeuronTracerV2s/
+make clean
+svn up
+qmake
+make
+
 
 #neuTube 
 cd ../../../hackathon/zhi/neuTube_zhi/
