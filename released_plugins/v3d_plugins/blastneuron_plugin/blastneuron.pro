@@ -5,6 +5,7 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/newmat11
+INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS	+= blastneuron_plugin.h
 SOURCES	+= blastneuron_plugin.cpp
