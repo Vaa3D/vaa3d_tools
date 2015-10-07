@@ -11,6 +11,10 @@
 #include <map>
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "my_surf_objs.h"
+#include "../neurontracing_mip/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/neuron_radius/hierarchy_prune.h"
+
+
 
 using namespace std;
 
@@ -78,12 +82,46 @@ QStringList importSWCFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
+bool saveSWC_file_TreMap(string swc_file, vector<MyMarker*> & outmarkers)
+{
+    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
+
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    map<MyMarker*, int> ind;
+    ofstream ofs(swc_file.c_str());
+
+    if(ofs.fail())
+    {
+        cout<<"open swc file error"<<endl;
+        return false;
+    }
+    ofs<<"#name "<<"TreMap_Tracing"<<endl;
+    ofs<<"#comment "<<endl;
+
+    ofs<<"##n,type,x,y,z,radius,parent"<<endl;
+    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+
+    for(int i = 0; i < outmarkers.size(); i++)
+    {
+        MyMarker * marker = outmarkers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        if(parent_id == 0)  parent_id = -1;
+        ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
+    }
+    ofs.close();
+    return true;
+}
+
+
 Q_EXPORT_PLUGIN2(eliminate_swc, eliminate_swc);
  
 QStringList eliminate_swc::menulist() const
 {
 	return QStringList() 
         <<tr("eliminate_swc")
+        <<tr("smooth_swc")
         <<tr("combine_swc_group")
         <<tr("combine_swc_pair")
         <<tr("align_swc")
@@ -110,6 +148,9 @@ void prunSWC(V3DPluginCallback2 &callback, QWidget *parent);
 void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
 void qsublist(V3DPluginCallback2 &callback, QWidget *parent);
 void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent);
+NeuronTree smooth_swc(NeuronTree input, double length);
+
+
 
 char checkMachineEndian();
 void swap2bytes(void *targetp);
@@ -189,6 +230,57 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 
 	}
+    else if (menu_name == tr("smooth_swc"))
+    {
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(fileOpenName.isEmpty())
+            return;
+        double length = 0;
+        vector<MyMarker*> inswc;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+        {
+            bool ok;
+            inswc = readSWC_file(fileOpenName.toStdString());
+
+            length = QInputDialog::getDouble(parent, "Please specify the smooth step size","step size:",1,0,2147483647,0.1,&ok);
+            if (!ok)
+                return;
+        }
+
+        unsigned char* inimg1d = 0;
+        vector<HierarchySegment*> topo_segs;
+        swc2topo_segs(inswc, topo_segs, 1, inimg1d, 0, 0, 0);
+
+        cout<<"Smooth the final curve"<<endl;
+        for(int i = 0; i < topo_segs.size(); i++)
+        {
+            HierarchySegment * seg = topo_segs[i];
+            MyMarker * leaf_marker = seg->leaf_marker;
+            MyMarker * root_marker = seg->root_marker;
+            vector<MyMarker*> seg_markers;
+            MyMarker * p = leaf_marker;
+            while(p != root_marker)
+            {
+                seg_markers.push_back(p);
+                p = p->parent;
+            }
+            seg_markers.push_back(root_marker);
+            smooth_curve(seg_markers, length);
+        }
+        inswc.clear();
+
+        QString outswc_file = fileOpenName + "_smoothed.swc";
+        topo_segs2swc(topo_segs, inswc, 0);
+        saveSWC_file(outswc_file.toStdString(), inswc);
+        for(int i = 0; i < inswc.size(); i++) delete inswc[i];
+
+    }
     else if(menu_name == tr("combine_swc_group"))
     {
          combineSWC_group_dupcheck(callback, parent);
