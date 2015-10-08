@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#This is a shell program to batch reconstruct images using 24 different methods.
+#This is a shell program to batch reconstruct images using 28 different methods.
 #
 # Last change: 2015-08-17. by Hanchuan Peng adding the anisotropic filtering. 
 #
@@ -183,6 +183,12 @@ function write_neuron_tracing_command {
 
   if [ $METHOD == "27" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x EnsembleNeuronTracerV2s -f tracing_func -i $inimgfileTracing ;chmod -R 777 $inimgfileTracing*_EnsembleNeuronTracerV2s.swc;mv  $inimgfileTracing*_EnsembleNeuronTracerV2s.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#3DTraceSWC
+
+  if [ $METHOD == "28" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 20 2 2.5;chmod -R 777 $inimgfileTracing*_pyzh.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
   fi;
 }
 
