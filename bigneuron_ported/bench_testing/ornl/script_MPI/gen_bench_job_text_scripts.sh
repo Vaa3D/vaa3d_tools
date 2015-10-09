@@ -189,7 +189,7 @@ function write_neuron_tracing_command {
 
   if [ $METHOD == "28" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 20 2 2.5;chmod -R 777 $inimgfileTracing*_pyzh.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
-  fi;ss
+  fi;
 }
 
 if [ ! $# -ge 1 ]; then
