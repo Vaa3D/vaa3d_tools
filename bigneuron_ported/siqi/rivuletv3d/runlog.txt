@@ -1,0 +1,72 @@
+[/home/siqi/v3d_external/bin/vaa3d]
+[-x]
+[Rivulet]
+[-f]
+[tracing_func]
+[-i]
+[test/2000-1.v3draw]
+[-p]
+[1]
+[0]
+[1]
+[40]
+[0]
+[2]
+[0.98]
+Current canonical path = [Rivulet]
+plugins
+The current input file has the suffix [v3draw]
+The data does not have supported image file suffix, -- now this program assumes it is Vaa3D's RAW format and tries to load it... 
+
+size of [V3DLONG]=[8], [V3DLONG]=[8] [int]=[4], [short int]=[2], [double]=[8], [float]=[4]
+The data endian code is [L]
+The machine endian code is [L]
+machine endian=[L] data endian=[L] b_swap=0
+
+Just read 7451136 units, each unit has the size = 1
+Finish reading 100% 
+No swapping of data. 
+Start Rivulet
+Image Size: 288, 294, 88
+DT...
+
+bkg_count = 7433323 (0.997609)
+bdr_count = 15484 (0.00207807)
+elems.size() = 15484
+99.76%99.86%99.96%Calculating Gradient
+Start Tracing
+        '.,
+          'b      *
+           '$    #.
+            $:   #:
+            *#  @):
+            :@,@):   ,.**:'
+  ,         :@@*: ..**'
+   '#o.    .:(@'.@*"'
+      'bq,..:,@@*'   ,*
+      ,p$q8,:@)'  .p*'
+     '    '@@Pp@@*'
+           Y7'.'
+          :@):.
+         .:@:'.
+       .::(@:.  
+
+Tracing took 7.95055 seconds
+done with saving file: test/2000-1.v3draw_Rivulet.swc
+　　　　　　o　　　o
+　　　　o　＼　　o　　／　o　　　　Boom！
+　　　o　　 o　　 l　　　o　　 o
+　　　　　o-　　 ○　　-o
+　　　o　　 o　　 l　　　o　　 o　　　　　　　　Boom！
+　　　　o　　　/ o　　　　o
+　　　　　／ o　　　o　＼　　　　Boom！
+
+　　　　　　　　 （
+　　　　　　　　　）
+　　　　　　　　 （
+　　　　　　　　 （
+　　　　　　　　　）
+　　　　　　　　 （
+δὶς ἐς τὸν αὐτὸν ποταμὸν οὐκ ἂν ἐμβαίης. -- Ἡράκλειτος
+Starting Vaa3D version checker...
+http://home.penglab.com/proj/vaa3d/current_release/vaa3d_version.xml
