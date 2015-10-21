@@ -51,7 +51,22 @@ void N3DfixPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                    "\t\t    Eduardo Conde-Sousa                    \n"
                    "\t\t[econdesousa@gmail.com]                  \n\n"
                    "to visualize and remove artifacts resulting from the 3D reconstruction of dendrites/axons.\n"
-                   "\n\n===========================================================\n\n"));
+                   "\n\n===========================================================\n\n"
+                   "    Copyright (C) <2015>  <Eduardo Conde-Sousa>\n"
+                   "\n"
+                   "\n   N3DFix is free software: you can redistribute it and/or modify"
+                   "\n   it under the terms of the GNU General Public License as published by"
+                   "\n   the Free Software Foundation, either version 3 of the License, or"
+                   "\n   any later version."
+                   "\n"
+                   "\n   N3DFix is distributed in the hope that it will be useful,"
+                   "\n   but WITHOUT ANY WARRANTY; without even the implied warranty of"
+                   "\n   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+                   "\n   GNU General Public License for more details."
+                   "\n"
+                   "\n   You can view a copy of the GNU General Public License at"
+                   "\n   <http://www.gnu.org/licenses/>."
+                   ));
     }
 }
 
