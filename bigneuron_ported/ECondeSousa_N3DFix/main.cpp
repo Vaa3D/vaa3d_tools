@@ -30,11 +30,11 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
     /////////////////////////////////////////////////////////////////////////////////////////
     //	Set up global parameters and functions
     /////////////////////////////////////////////////////////////////////////////////////////
-    double max_dist = 40;	// distance in um
+    double max_dist = 35;	// distance in um
 
-    double thresh =0.3;		// between 0 and 1
+    double thresh =0.08;	// between 0 and 1
 
-    double step_min = 0.3; 	// adding to the THRESHOLD, this parameter sets the necessity of the artifact to differ by STEP_MIN %
+    double step_min = 0.02; // adding to the THRESHOLD, this parameter sets the necessity of the artifact to differ by STEP_MIN %
     // from the original diameter (to prevent the existence of two very close spots with different diameters)
 
 
@@ -142,14 +142,14 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
     std::cout<<"    Eduardo Conde-Sousa        [econdesousa@gmail.com]"<<std::endl;
     std::cout<<"                                                      "<<std::endl;
     std::cout<<"                                                      "<<std::endl;
-    std::cout<<"                           and                        "<<std::endl;
-    std::cout<<"                                                      "<<std::endl;
-    std::cout<<"                                                      "<<std::endl;
-    std::cout<<"    Paulo de Castro Aguiar    [pauloaguiar@ineb.up.pt]"<<std::endl;
-    std::cout<<"                                                      "<<std::endl;
-    std::cout<<"                                                      "<<std::endl;
     std::cout<<" to visualize and remove artifacts resulting          "<<std::endl;
     std::cout<<" from the 3D reconstruction of dendrites / axons      "<<std::endl;
+    std::cout<<"                                                      "<<std::endl;
+    std::cout<<"                                                      "<<std::endl;
+    std::cout<<"======================================================"<<std::endl;
+    std::cout<<"                                                      "<<std::endl;
+    std::cout<<"                                                      "<<std::endl;
+    std::cout<<"    Copyright (C) <2015>  <Eduardo Conde-Sousa>       "<<std::endl;
     std::cout<<"                                                      "<<std::endl;
     std::cout<<"                                                      "<<std::endl;
     std::cout<<"======================================================"<<std::endl;
@@ -158,15 +158,16 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
 
 
 
+
     std::vector<char*>* inlist = (std::vector<char*>*)(input.at(0).p);
     std::vector<char*>* outlist = NULL;
     std::vector<char*>* paralist = NULL;
 
-    double max_dist = 40;	// distance in um
+    double max_dist = 35;	// distance in um
 
-    double thresh =0.3;		// between 0 and 1
+    double thresh =0.08;		// between 0 and 1
 
-    double step_min = 0.3; 	// adding to the THRESHOLD, this parameter sets the necessity of the artifact to differ by STEP_MIN %
+    double step_min = 0.02; 	// adding to the THRESHOLD, this parameter sets the necessity of the artifact to differ by STEP_MIN %
     // from the original diameter (to prevent the existence of two very close spots with different diameters)
 
 
@@ -244,9 +245,9 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
     {
         if (paralist->size()<=2)
         {
-            max_dist = 40;
-            thresh =0.3;
-            step_min = 0.3;
+            max_dist = 35;
+            thresh =0.08;
+            step_min = 0.02;
         }
         else if (paralist->size()==3)
         {
@@ -345,18 +346,31 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
 }
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output){
-    std::cout<<"\n\n\n=================================================================================="<<std::endl;
+    std::cout<<"\n\n\n\n\n\n\n\n\n\n\n\n                                                          "<<std::endl;
     std::cout<<"=================================================================================="<<std::endl;
     std::cout<<"=================================================================================="<<std::endl;
+    std::cout<<"=================================================================================="<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"===================================== N3DFix ====================================="<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"=================================================================================="<<std::endl;
+    std::cout<<"=================================================================================="<<std::endl;
+    std::cout<<"=================================================================================="<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
+    std::cout<<"                                                                                  "<<std::endl;
     std::cout<<"\n\nRemove artifacts resulting from the 3D reconstruction of dendrites/axons."<<std::endl;
     std::cout<<"\n\n\t Eduardo Conde-Sousa (econdesousa@gmail.com) \n\n"<<std::endl;
+    std::cout<<"       Copyright (C) <2015>  <Eduardo Conde-Sousa>   \n\n\n\n"<<std::endl;
     std::cout<<"* USAGE:\n";
     std::cout<<"-f <func name> :    N3DFix\n";
     std::cout<<"-i <file name> :    input *.swc file\n";
     std::cout<<"-o <file name> :    (not required) output *.swc file. DEFAUTL: 'inputName_N3DFix.swc'\n";
-    std::cout<<"-p <parameters>:    (not required) Artifact Size: maximum size distance (through the fiber) between the first and the last points on the artifact to fix.  DEFAUTL: 40\n";
-    std::cout<<"                                   Slope Threshold: the slope of the first point to be considered in the artifact  DEFAUTL: 0.3\n";
-    std::cout<<"                                   Step Size: the minimum increase in height.  DEFAUTL: 0.3\n\n\n";
+    std::cout<<"-p <parameters>:    (not required) Artifact Size: maximum size distance (through the fiber) between the first and the last points on the artifact to fix.  DEFAUTL: 35\n";
+    std::cout<<"                                   Slope Threshold: the slope of the first point to be considered in the artifact  DEFAUTL: 0.08\n";
+    std::cout<<"                                   Step Size: the minimum increase in height.  DEFAUTL: 0.02\n\n\n";
     std::cout<<"=================================================================================="<<std::endl;
     std::cout<<"=================================================================================="<<std::endl;
     std::cout<<"==================================================================================\n\n\n"<<std::endl;
