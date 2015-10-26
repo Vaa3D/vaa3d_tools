@@ -28,5 +28,5 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.cpp
 
-TARGET	= $$qtLibraryTarget(consensus_skeleton_2)
-DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/consensus_skeleton_2/
+TARGET	= $$qtLibraryTarget(consensus_swc)
+DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/consensus_swc/
