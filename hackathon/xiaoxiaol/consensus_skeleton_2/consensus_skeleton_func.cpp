@@ -15,7 +15,7 @@ using namespace std;
 
 const QString title = QObject::tr("Consensus Skeleton");
 
-int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent)
+int consensus_swc_menu_io(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	QString fileOpenName;
 	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
@@ -78,7 +78,7 @@ int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent)
 	return 1;
 }
 
-bool consensus_skeleton_io(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool consensus_swc_io(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
 	if(input.size()==0 || output.size() != 1) return true;
 	char * paras = NULL;

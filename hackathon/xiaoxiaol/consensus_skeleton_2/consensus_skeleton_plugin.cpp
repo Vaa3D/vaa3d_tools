@@ -28,7 +28,7 @@ void ConsSkelPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 {
 	if (menu_name == tr("consensus_skeleton"))
 	{
-		consensus_skeleton_io(callback,parent);
+		consensus_swc_menu_io(callback,parent);
 	}
 	else if (menu_name == tr("help"))
 	{
@@ -42,9 +42,9 @@ void ConsSkelPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 
 bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("consensus_skeleton"))
+	if (func_name == tr("consensus_swc"))
 	{
-		return consensus_skeleton_io(input, output);
+		return consensus_swc_io(input, output, callback);
 	}
 	else if (func_name == tr("help"))
 	{
