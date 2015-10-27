@@ -15,7 +15,7 @@ using namespace std;
 
 const QString title = QObject::tr("Consensus Skeleton");
 
-int consensus_swc_menu_io(V3DPluginCallback2 &callback, QWidget *parent)
+int consensus_swc_io_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	QString fileOpenName;
 	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
@@ -78,7 +78,7 @@ int consensus_swc_menu_io(V3DPluginCallback2 &callback, QWidget *parent)
 	return 1;
 }
 
-bool consensus_swc_io(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool consensus_swc_io_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
 	if(input.size()==0 || output.size() != 1) return true;
 	char * paras = NULL;
@@ -453,32 +453,32 @@ void printHelp()
 {
     cout<<"\nConsensus Skeleton: This plugin has the following three functions:"<<endl;
     cout<<"\n  1) Pick the median neuron tree from a group of input neuron tress."<<endl;
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f median_swc -i <input ANO linker file> [-o <output swc file>] "<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f median_swc -i <input ANO linker file> [-o <output swc file>] "<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  median_swc"<<endl;
     cout<<"\t-i <input_file(s)>:  input linker file (.ano) "<<endl;
     cout<<"\t-o <output_file>:  output median swc file name, this parameter is optional. "
-          "When not specified, no median swc file will be generated (duplicate of the corresponding median case)."
-          " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
-    cout<<"Example: v3d -x consensus_skeleton_2 -f median_swc -i mylinker.ano  [-o median.swc] \n"<<endl;
+          "When not specified, no median swc file will be generated (duplicate of the corresponding median case)."<<endl;
+    cout<< " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
+    cout<<"Example: v3d -x consensus_swc -f median_swc -i mylinker.ano  [-o median.swc] \n"<<endl;
 
     cout<<"\n  2) Adjust input neuron node locations by averaging over the matching nodes from the input group of neurons tree."<<endl;
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  average_node_position"<<endl;
     cout<<"\t-i    <median swc>:  input median swc file (generated from median_swc function)"<<endl;
     cout<<"\t <linker ANO file>:  input linker file (.ano)"<<endl;
     cout<<"\t -p <distance_threshold>:  nodes that have distances larger than this threshold will "
           "not be considered matching for averaging." <<endl;
-    cout<<"\t        -o <output_file>:  output file name." <<endl;
-    cout<<"Example: v3d -x consensus_skeleton_2 -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
+    cout<<"\t -o <output_file>:  output file name." <<endl;
+    cout<<"Example: v3d -x consensus_swc -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
 
     cout<<"\n  3) Generate a consensus neuron skeleton (swc file) from a group of neurons ( radii are ignored)."<<endl;
-    cout<<"\nUsage: v3d -x consensus_skeleton_2 -f consensus_skeleton -i <input> -o <output_file> "<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f consensus_skeleton -i <input> -o <output_file> "<<endl;
     cout<<"Parameters:"<<endl;
 	cout<<"\t-f <function_name>:  consensus_skeleton"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
-    cout<<"\t-o   <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
+    cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
 	cout<<"\t                     default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
     cout<<"Example: v3d -x consensus_skeleton -f consensus_skeleton -i mylinker.ano -p 200 -o consensus_skeleton.swc\n"<<endl;
 }
