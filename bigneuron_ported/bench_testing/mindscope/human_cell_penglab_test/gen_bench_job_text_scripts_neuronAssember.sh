@@ -14,6 +14,13 @@ function write_neuron_tracing_command {
 
   smooth_inimgfileTracing=${inimgfileTracing}.g.v3draw;
 
+#MOST
+
+  if [ $METHOD == "3" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_MostVesselTracer -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc;mv  $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+
 #NEUTUBE
 
   if [ $METHOD == "4" -o $METHOD == "-1" ]; then
