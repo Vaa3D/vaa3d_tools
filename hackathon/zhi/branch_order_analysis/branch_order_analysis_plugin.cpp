@@ -289,7 +289,7 @@ bool analysis_swc(QString fileOpenName ,bool bmenu)
 
     stream << "Branch order (basal) vs. average diameters"<<"\n";
 
-    for (int j = 0; j < branchOrder_apical; j++)
+    for (int j = 0; j < branchOrder_basal; j++)
     {
         stream << j+1   <<",";
         stream << branchbasal_mean[j]  <<",\n";
