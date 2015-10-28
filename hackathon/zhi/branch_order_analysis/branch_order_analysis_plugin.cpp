@@ -85,7 +85,7 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
                     ));
         if(fileOpenName.isEmpty())
             return;
-        double length = 0;
+
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
@@ -141,8 +141,20 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
         disp_text += "branch orders vs. diameters (apical)\n\n";
         int count_apical = 0;
 
+        QString output_csv_apical_file = fileOpenName + ".csv";
+        QFile file(output_csv_apical_file);
+        if (!file.open(QFile::WriteOnly|QFile::Truncate))
+        {
+            cout <<"Error opening the file "<<output_csv_apical_file.toStdString().c_str() << endl;
+        }
+
+        QTextStream stream (&file);
+        stream << "Branch order (apical) vs. diameters"<<"\n";
+
         for (int j = 0; j < branchOrder_apical; j++)
         {
+
+            stream << j+1 <<",";
             int count = 0;
             double radius_sum = 0;
             for (int i = 0;i < list.size();i++)
@@ -155,8 +167,10 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
                     branchapical_x+= j+1;
                     count++;
                     count_apical++;
+                    stream << radius_node      <<",";
                 }
             }
+            stream << "\n";
             branchapical_mean[j] = 2*radius_sum/count;
             disp_text += "Branch order = " + QString::number (j+1)  + ", average diameter = "    + QString::number(branchapical_mean[j]) + ";\n";
         }
@@ -166,9 +180,13 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
         double Sxy_apical = 0;
         double Sxx_apical = 0;
 
+        stream << "Branch order (apical) vs. average diameters"<<"\n";
+
 
         for (int j = 0; j < branchOrder_apical; j++)
         {
+            stream << j+1   <<",";
+            stream << branchapical_mean[j]  <<",\n";
             for (int i = 0;i < list.size();i++)
             {
                 if(list.at(i).type == 4 &&  swc_file[i]->type == j+1)
@@ -181,6 +199,7 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
 
         double  branchapical_slope = Sxy_apical/Sxx_apical;
         disp_text += "Slope = " + QString::number (branchapical_slope) + ";\n";
+        stream << "Slope"  <<"," << branchapical_slope <<"\n\n";
 
 
         double *branchbasal_mean = new double[branchOrder_basal];
@@ -188,9 +207,11 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
         double branchbasal_x = 0;
         disp_text += "\n\n\nbranch orders vs. diameters (basal)\n\n";
         int count_basal = 0;
+        stream << "Branch order (basal) vs. diameters"<<"\n";
 
         for (int j = 0; j < branchOrder_basal; j++)
         {
+            stream << j+1 <<",";
             int count = 0;
             double radius_sum = 0;
             for (int i = 0;i < list.size();i++)
@@ -203,9 +224,12 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
                     branchbasal_x+= j+1;
                     count++;
                     count_basal++;
+                    stream << radius_node      <<",";
 
                 }
             }
+            stream << "\n";
+
             branchbasal_mean[j] = 2*radius_sum/count;
             disp_text += "Branch order = " + QString::number (j+1)  + ", average diameter = "    + QString::number(branchbasal_mean[j]) + ";\n";
         }
@@ -215,9 +239,12 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
         double Sxy_basal = 0;
         double Sxx_basal = 0;
 
+        stream << "Branch order (basal) vs. average diameters"<<"\n";
 
         for (int j = 0; j < branchOrder_apical; j++)
         {
+            stream << j+1   <<",";
+            stream << branchbasal_mean[j]  <<",\n";
             for (int i = 0;i < list.size();i++)
             {
                 if(list.at(i).type == 3 &&  swc_file[i]->type == j+1)
@@ -230,6 +257,11 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
 
         double  branchbasal_slope = Sxy_basal/Sxx_basal;
         disp_text += "Slope = " + QString::number (branchbasal_slope) + ";\n";
+
+        stream << "Slope"  <<"," << branchbasal_slope <<"\n\n";
+
+        file.close();
+
 
         v3d_msg(disp_text);
 
