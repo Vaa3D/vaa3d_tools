@@ -9,6 +9,7 @@
 #include "consensus_skeleton.h"
 //#include "kcentroid_cluster.h"
 #include "mst_dij.h"
+#include "mst_prim.h"
 #include <QtGlobal>
 #include <math.h>
 #include <iostream>
@@ -34,12 +35,25 @@ struct NeuronSize{
 };
 
 
+
+unsigned int v_min(vector<unsigned int> x)
+{
+    sort(x.begin(), x.end());
+    return  x[0];
+}
+
+unsigned int v_max(vector<unsigned int> x)
+{
+    sort(x.begin(), x.end());
+    return  x[x.size()-1];
+}
+
+
 V3DLONG median(vector<V3DLONG> x)
 {
     sort(x.begin(), x.end());
     return  x[x.size()/2];
 }
-
 
 
 void remove_outliers(vector<NeuronTree> & nt_list)
@@ -88,8 +102,9 @@ MyBoundingBox neuron_trees_bb(const vector<NeuronTree>  nt_list)
 }
 
 void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z, Point3D offset,
-                         vector<Point3D> &node_list,  vector<unsigned char> &vote_list,unsigned int win_size)
-{
+                         vector<Point3D> &node_list,  vector<unsigned int> &vote_list,unsigned int win_size)
+{ // extract the local maximum voted skelenton node locations : node_list
+  // the corresponding votes are collected in: vote_list
     V3DLONG num_nodes =0;
     for (V3DLONG id_x = 0 + win_size/2; id_x <  sz_x- win_size/2; id_x++)
         for (V3DLONG id_y = 0 + win_size/2; id_y <  sz_y- win_size/2; id_y++)
@@ -187,20 +202,44 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
     callback.saveImage(image, "./vote_count_image.v3draw");
 
-    //non max suppresion
+    //non-maximum suppresion
      vector<Point3D>  node_list;
-     vector<unsigned char>  vote_list;
+     vector<unsigned int>  vote_list;
      non_max_suppresion (img1d,sz_x,sz_y,sz_z,offset,node_list,vote_list,3);
-     cout << "number of nodes:"<<node_list.size()<<endl;
+     cout << "After non_max supression:"<< endl;
+     cout << "number of nodes:"<< node_list.size() << endl;
+     cout << "maximum votes:" << v_min(vote_list) << endl;
+     cout << "minimum votes:" << v_max(vote_list) << endl;
 
-     image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+     Image4DSimple *image2 = new Image4DSimple();
+     image2->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+     callback.saveImage(image2, "./nms_image.v3draw");
 
-     // minmum spanning tree , carrying the condifence value
-     // adjMatrix
 
-    printf("(2). generating confidence graph.\n");
+     // for debug: save node_list to check locations
+     QList<NeuronSWC> locationTree;
+     for (int i=0;i<node_list.size();i++)
+     {
+         NeuronSWC tmp;
+         tmp.x = node_list[i].x;
+         tmp.y = node_list[i].y;
+         tmp.z = node_list[i].z;
 
-    QHash<V3DLONG, pair<V3DLONG,V3DLONG> > nodeMap;//map  original nodes (i,j)   to consensus nodes  (node_id)
+         tmp.type = 2; //edge votes
+         tmp.pn = -1;  //parent id, form the edge
+         tmp.r = double(vote_list[i])/neuronNum*3; //*3 for visulaization
+         tmp.n = i+1;
+
+         locationTree.append(tmp);
+     }
+    export_listNeuron_2swc(locationTree, "./testlocation.swc");
+
+    printf("(2). compute adjacency matrix (vote for edges).\n");
+
+
+
+    //map  consensus nodes  (node_id) to  original node j in neuron tree i  (i,j)
+    QHash<V3DLONG, pair<V3DLONG,V3DLONG> > nodeMap;
     for (int i=0;i<neuronNum;i++)
         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
         {
@@ -211,9 +250,9 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
             cur.z = s.z;
 
             //find its nearest node
-            V3DLONG node_id = 0;
-            double min_dis = 0;
-            for (V3DLONG ni = 0; ni<node_list.size(); ni++)
+            V3DLONG node_id = -1;// this node does not exist
+            double min_dis = 30; //threshold to ignore mapping  (too far away)
+            for (V3DLONG ni = 0; ni <node_list.size(); ni++)
             {
                 Point3D p = node_list[ni];
                 double dis = PointDistance(p,cur);
@@ -243,51 +282,111 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
         return false;
     }
 
+
     for (int i=0;i<neuronNum;i++)
     {
         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
         {
             NeuronSWC cur = nt_list[i].listNeuron[j];
-            if (cur.pn<0) continue;
+            // if (cur.pn<0) continue;
             V3DLONG col,row;
             col = nodeMap.key(pair<V3DLONG,V3DLONG>(i,j));
-            V3DLONG pid=nt_list[i].hashNeuron.value(cur.pn);
-            row = nodeMap.key(pair<V3DLONG,V3DLONG>(i,pid));
-            adjMatrix[col*num_nodes+row]++;
-            adjMatrix[row*num_nodes+col]++;
+            if (col > 0){
+                V3DLONG pid = nt_list[i].hashNeuron.value(cur.pn);
+                row = nodeMap.key(pair<V3DLONG,V3DLONG>(i,pid));
+                if (row > 0){
+                    adjMatrix[col*num_nodes+row] += 1;
+                    adjMatrix[row*num_nodes+col] += 1;
+                    cout<<adjMatrix[col*num_nodes+row] <<endl;
+
+                }
+            }
         }
     }
 
-    long rootid = 100;
-    printf("(3). computing minimum-spanning tree.\n");
-    if (method_code==0)
-    {
-        if (!mst_dij(adjMatrix, num_nodes, plist, rootid))
-        {
-            fprintf(stderr,"Error in minimum spanning tree!\n");
-            return false;
-        }
-    }
-//    else if (method_code==1)
-//        mst_prim(adjMatrix, num_nodes,plist,0);
+//    long rootnode =100;
+//    printf("(3). computing minimum-spanning tree.\n");
 
-    merge_result.clear();
+//    //if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
+//    if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
+
+//        {
+//            fprintf(stderr,"Error in minimum spanning tree!\n");
+//            return false;
+//        }
+
+//    printf("(3). genearate consensus graph swc file by assign parents (form edges).\n");
+
+    //code the edge votes into type for visualization
+    //graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
+//    merge_result.clear();
+
+
+
+
+//    for (V3DLONG i = 0;i <num_nodes;i ++)
+//    {
+//        V3DLONG p = plist[i];
+//        cout <<p<<endl;
+//        unsigned int edgeVote = adjMatrix[i*num_nodes + p];
+
+//        NeuronSWC tmp;
+//        tmp.x = node_list[i].x;
+//        tmp.y = node_list[i].y;
+//        tmp.z = node_list[i].z;
+
+//        tmp.type = edgeVote; //edge votes
+//        tmp.pn = p + 1;  //parent id, form the edge
+//        tmp.r = double(vote_list[i])/double(neuronNum);
+//        tmp.n = i+1;
+
+//        merge_result.append(tmp);
+
+//    }
+
+
+//output vertices ( node lcoations)
+    V3DLONG count = 0;
     for (V3DLONG i=0;i<num_nodes;i++)
     {
-        NeuronSWC tmp;
-        tmp.x = node_list[i].x;
-        tmp.y = node_list[i].y;
-        tmp.z = node_list[i].z;
-        tmp.type = 2; //dendrite
-        tmp.fea_val.push_back(vote_list[i]);
-        tmp.r = 0.5; //only skeleton
-        tmp.n = i+1;
-        tmp.pn = plist[i]+1;
-        if (tmp.pn<=0) tmp.pn = -1;
-        merge_result.append(tmp);
+            NeuronSWC tmp;
+            tmp.x = node_list[i].x;
+            tmp.y = node_list[i].y;
+            tmp.z = node_list[i].z;
+           // tmp.fea_val.push_back(vote_list[i]);  //location votes are coded into radius
+
+            tmp.type = 0; //vertices (soma)
+            tmp.pn = -1;  //parent id, no edge
+            tmp.r = double(vote_list[i])/double(neuronNum); //location votes are coded into radius
+            tmp.n = count +1; //id start from 1
+            merge_result.append(tmp);
+            count++;
     }
 
-    if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
+    //output edges, go through half of the symmetric matrix, not directed graph
+    for (V3DLONG row = 0;row <num_nodes;row ++)
+    {
+        for (V3DLONG col = row+1;col < num_nodes;col++){
+            unsigned int edgeVote = adjMatrix[row*num_nodes + col];
+            if (edgeVote > 0)
+            {
+                NeuronSWC tmp;
+                tmp.x = node_list[row].x;
+                tmp.y = node_list[row].y;
+                tmp.z = node_list[row].z;
+
+                tmp.type = edgeVote; //edge votes
+                tmp.pn = col + 1;  //parent id  , form the edge
+                tmp.r = double(vote_list[row])/double(neuronNum);
+                tmp.n = count+1;
+
+                merge_result.append(tmp);
+                count++;
+            }
+        }
+    }
+
+    if (adjMatrix) {delete[] adjMatrix; adjMatrix = 0;}
     if (plist) {delete[] plist; plist=0;}
 
 /*    if ( num_nodes <=0)
@@ -316,11 +415,11 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
         fprintf(stderr,"ERROR: %s: failed to open file to write!\n",filename);
         return false;
     }
-    fprintf(fp,"##n,type,x,y,z,radius,parent,vote\n");
+    fprintf(fp,"##n,type,x,y,z,radius,parent\n");   //,vote\n");
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
-        fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d %d\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn,curr.fea_val[0]);
+        fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn);//,curr.fea_val[0]);
     }
     fclose(fp);
     return true;

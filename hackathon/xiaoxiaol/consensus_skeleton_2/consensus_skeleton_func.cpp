@@ -15,7 +15,7 @@ using namespace std;
 
 const QString title = QObject::tr("Consensus Skeleton");
 
-int consensus_swc_io_menu(V3DPluginCallback2 &callback, QWidget *parent)
+int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	QString fileOpenName;
 	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
@@ -78,7 +78,7 @@ int consensus_swc_io_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	return 1;
 }
 
-bool consensus_swc_io_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
 	if(input.size()==0 || output.size() != 1) return true;
 	char * paras = NULL;
@@ -95,7 +95,7 @@ bool consensus_swc_io_func(const V3DPluginArgList & input, V3DPluginArgList & ou
 	vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
 	if (outlist->size()>1)
 	{
-		cerr<<"You cannot specify more than 1 output files"<<endl;
+        cerr << "You cannot specify more than 1 output files"<<endl;
 		return false;
 	}
 
@@ -474,12 +474,12 @@ void printHelp()
     cout<<"Example: v3d -x consensus_swc -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
 
     cout<<"\n  3) Generate a consensus neuron skeleton (swc file) from a group of neurons ( radii are ignored)."<<endl;
-    cout<<"\nUsage: v3d -x consensus_swc -f consensus_skeleton -i <input> -o <output_file> "<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <input> -o <output_file> "<<endl;
     cout<<"Parameters:"<<endl;
-	cout<<"\t-f <function_name>:  consensus_skeleton"<<endl;
+    cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
 	cout<<"\t                     default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-    cout<<"Example: v3d -x consensus_skeleton -f consensus_skeleton -i mylinker.ano -p 200 -o consensus_skeleton.swc\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc\n"<<endl;
 }
 

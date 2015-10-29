@@ -144,7 +144,7 @@ void PrimMSTClass::delocatememory()
 
 //main program
 
-void mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnode)
+bool mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnode)
 {
 	//copy data
 
@@ -170,6 +170,6 @@ void mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootno
 	//free memory and return
 
 	if (pMST) {delete pMST;}
-	return;
+    return true;
 }
 #endif

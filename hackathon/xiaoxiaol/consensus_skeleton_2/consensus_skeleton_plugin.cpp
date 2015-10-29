@@ -13,14 +13,14 @@ Q_EXPORT_PLUGIN2(consensus_skeleton, ConsSkelPlugin);
 QStringList ConsSkelPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("consensus_skeleton")
+        <<tr("consensus_swc")
 		<<tr("about");
 }
 
 QStringList ConsSkelPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("consensus_skeleton")
+        <<tr("consensus_swc")
         <<tr("median_swc")
         <<tr("average_node_position")
 		<<tr("help");
@@ -28,9 +28,9 @@ QStringList ConsSkelPlugin::funclist() const
 
 void ConsSkelPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("consensus_skeleton"))
+    if (menu_name == tr("consensus_swc"))
 	{
-        consensus_swc_io_menu(callback,parent);
+        consensus_swc_menu(callback,parent);
 	}
 	else if (menu_name == tr("help"))
 	{
@@ -46,7 +46,7 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 {
 	if (func_name == tr("consensus_swc"))
 	{
-        return consensus_swc_io_func(input, output, callback);
+        return consensus_swc_func(input, output, callback);
 	}
     if (func_name == tr("median_swc"))
     {
