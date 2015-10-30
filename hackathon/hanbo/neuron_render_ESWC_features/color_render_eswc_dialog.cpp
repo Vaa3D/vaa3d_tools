@@ -23,14 +23,19 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
     cb_feature = new QComboBox();
     for(int i=0; i<feaNum; i++)
         cb_feature->addItem(QString::number(i+1));
+
+    cb_colormap= new QComboBox();
+    cb_colormap->addItem(QString("rainbow"));
+    cb_colormap->addItem(QString("heatmap"));
+
     spin_min = new QDoubleSpinBox();
     spin_max = new QDoubleSpinBox();
     spin_black = new QDoubleSpinBox();
     spin_white = new QDoubleSpinBox();
     spin_meg = new QDoubleSpinBox();
-    check_black = new QCheckBox("black");
-    check_white = new QCheckBox("white");
-    check_meg = new QCheckBox("magenta");
+    check_black = new QCheckBox("black threshold (<=)");
+    check_white = new QCheckBox("white threshold (<=)");
+    check_meg = new QCheckBox("magenta threshold (>=)");
     btn_update = new QPushButton("update");
     btn_quit = new QPushButton("quit");
     btn_reset = new QPushButton("reset");
@@ -42,33 +47,41 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
     connect(btn_quit, SIGNAL(clicked()),this,SLOT(reject()));
     connect(btn_reset, SIGNAL(clicked()),this,SLOT(reset()));
     connect(cb_feature, SIGNAL(currentIndexChanged(int)),this,SLOT(set_span()));
+    connect(cb_colormap, SIGNAL(currentIndexChanged(int)),this,SLOT(set_colormap()));
 
     //layout
     QGridLayout * gridLayout = new QGridLayout();
+
     QLabel* label_feature = new QLabel("feature id:");
     gridLayout->addWidget(label_feature,1,0,1,2);
     gridLayout->addWidget(cb_feature,1,2,1,1);
-    QLabel* label_min = new QLabel("lower span (blue):");
-    gridLayout->addWidget(label_min,2,0,1,2);
-    gridLayout->addWidget(spin_min,2,2,1,1);
-    QLabel* label_max = new QLabel("upper span (red):");
-    gridLayout->addWidget(label_max,3,0,1,2);
-    gridLayout->addWidget(spin_max,3,2,1,1);
+
+    QLabel* label_colormap= new QLabel("colormap:");
+    gridLayout->addWidget(label_colormap,2,0,1,2);
+    gridLayout->addWidget(cb_colormap,2,2,1,1);
+
+    QLabel* label_min = new QLabel("color bar low:");
+    gridLayout->addWidget(label_min,3,0,1,2);
+    gridLayout->addWidget(spin_min,3,2,1,1);
+
+    QLabel* label_max = new QLabel("color bar high:");
+    gridLayout->addWidget(label_max,4,0,1,2);
+    gridLayout->addWidget(spin_max,4,2,1,1);
 
     QFrame *line_2 = new QFrame();
     line_2->setFrameShape(QFrame::HLine);
     line_2->setFrameShadow(QFrame::Sunken);
-    gridLayout->addWidget(line_2,4,0,1,3);
+    gridLayout->addWidget(line_2,5,0,1,3);
     QLabel* label_color = new QLabel("special color");
     QLabel* label_val = new QLabel("value");
-    gridLayout->addWidget(label_color,5,0,1,2);
-    gridLayout->addWidget(label_val,5,2,1,1);
-    gridLayout->addWidget(check_black,6,0,1,2);
-    gridLayout->addWidget(spin_black,6,2,1,1);
-    gridLayout->addWidget(check_white,7,0,1,2);
-    gridLayout->addWidget(spin_white,7,2,1,1);
-    gridLayout->addWidget(check_meg,8,0,1,2);
-    gridLayout->addWidget(spin_meg,8,2,1,1);
+    gridLayout->addWidget(label_color,6,0,1,2);
+    gridLayout->addWidget(label_val,6,2,1,1);
+    gridLayout->addWidget(check_black,7,0,1,2);
+    gridLayout->addWidget(spin_black,7,2,1,1);
+    gridLayout->addWidget(check_white,8,0,1,2);
+    gridLayout->addWidget(spin_white,8,2,1,1);
+    gridLayout->addWidget(check_meg,9,0,1,2);
+    gridLayout->addWidget(spin_meg,9,2,1,1);
 
     QFrame *line_3 = new QFrame();
     line_3->setFrameShape(QFrame::HLine);
@@ -84,6 +97,7 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
     set_white();
     set_magenta();
     set_span();
+    set_colormap();
 }
 
 void color_render_ESWC_dialog::enterEvent(QEvent *e)
@@ -91,6 +105,11 @@ void color_render_ESWC_dialog::enterEvent(QEvent *e)
     checkwindow();
 
     QDialog::enterEvent(e);
+}
+
+void color_render_ESWC_dialog::set_colormap()
+{
+    checkwindow();
 }
 
 void color_render_ESWC_dialog::set_span()
@@ -105,8 +124,8 @@ void color_render_ESWC_dialog::set_span()
         upper=MAX(upper, nt->listNeuron.at(nid).fea_val.at(feaId));
     }
     spin_max->setMinimum(lower);
-    spin_max->setMaximum(upper);
-    spin_min->setMinimum(lower);
+    spin_max->setMaximum(255);
+    spin_min->setMinimum(0);
     spin_min->setMaximum(upper);
     spin_max->setValue(upper);
     spin_min->setValue(lower);
@@ -127,21 +146,26 @@ void color_render_ESWC_dialog::update()
     float upper=spin_max->value();
     float scale=upper-lower;
     int feaId=cb_feature->currentIndex();
+    int colormapId=cb_colormap->currentIndex();
     for(V3DLONG nid=0; nid<nt->listNeuron.size(); nid++){
         float tmp=0;
         if(nt->listNeuron.at(nid).fea_val.size()>feaId){
-            if(check_black->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)==spin_black->value()){
+            if(check_black->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)<=spin_black->value()){
                 tmp=1;
-            }else if(check_white->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)==spin_white->value()){
+            }else if(check_white->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)<=spin_white->value()){
                 tmp=0;
-            }else if(check_meg->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)==spin_meg->value()){
+            }else if(check_meg->isChecked() && nt->listNeuron.at(nid).fea_val.at(feaId)>=spin_meg->value()){
                 tmp=4;
             }else{
                 tmp=(nt->listNeuron.at(nid).fea_val.at(feaId)-lower)/scale;
                 if(tmp<0) tmp=0;
                 if(tmp>1) tmp=1;
-                tmp=tmp*235+20;
-            }
+		if (colormapId == 0 ){
+			tmp=tmp*235+20; // 0~20 are reserved for dendrite types, the real color range is from 20~255  (235 colors from blue to red)
+		}else{
+			tmp=tmp*255+300; //300-555 are reserved for heat colors
+		}
+      }
         }
         nt->listNeuron[nid].type=tmp;
     }

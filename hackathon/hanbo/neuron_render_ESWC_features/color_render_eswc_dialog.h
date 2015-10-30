@@ -25,12 +25,13 @@ public slots:
     void set_white();
     void set_magenta();
     void set_span();
+    void set_colormap();
 
 protected:
     void checkwindow();
 
 public:
-    QComboBox *cb_feature;
+    QComboBox *cb_feature, *cb_colormap;
     QDoubleSpinBox *spin_min, *spin_max, *spin_black, *spin_white, *spin_meg;
     QCheckBox *check_black, *check_white, *check_meg;
     QPushButton *btn_update, *btn_quit, *btn_reset;
