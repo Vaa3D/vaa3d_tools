@@ -161,6 +161,9 @@ return;
 
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,V3DPluginCallback2 &callback)
 {
+
+
+    double CLUSTERING_RANGE =10;
     //potentially, there are invalid neuron trees (massive node points, no node points, looping)
     remove_outliers(nt_list);
     int neuronNum = nt_list.size();
@@ -237,35 +240,6 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     printf("(2). compute adjacency matrix (vote for edges).\n");
 
 
-
-    //map  consensus nodes  (node_id) to  original node j in neuron tree i  (i,j)
-    QHash<V3DLONG, pair<V3DLONG,V3DLONG> > nodeMap;
-    for (int i=0;i<neuronNum;i++)
-        for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
-        {
-            NeuronSWC s = nt_list[i].listNeuron.at(j);
-            Point3D cur;
-            cur.x = s.x;
-            cur.y = s.y;
-            cur.z = s.z;
-
-            //find its nearest node
-            V3DLONG node_id = -1;// this node does not exist
-            double min_dis = 30; //threshold to ignore mapping  (too far away)
-            for (V3DLONG ni = 0; ni <node_list.size(); ni++)
-            {
-                Point3D p = node_list[ni];
-                double dis = PointDistance(p,cur);
-                if (dis < min_dis){
-                     min_dis = dis;
-                     node_id = ni;
-                }
-            }
-
-            pair<V3DLONG,V3DLONG> idx(i,j);
-            nodeMap.insert(node_id, idx);
-        }
-
     double * adjMatrix;
     V3DLONG * plist;
     V3DLONG num_nodes = node_list.size();
@@ -285,124 +259,195 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
     for (int i=0;i<neuronNum;i++)
     {
+        QHash<V3DLONG, V3DLONG > nodeMap;
+        for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
+        {
+            NeuronSWC s = nt_list[i].listNeuron.at(j);
+            Point3D cur;
+            cur.x = s.x;
+            cur.y = s.y;
+            cur.z = s.z;
+
+            //find its nearest node
+            V3DLONG node_id = -1;// this node does not exist
+            double min_dis = CLUSTERING_RANGE; //threshold to ignore mapping  (too far away)
+            for (V3DLONG ni = 0; ni <node_list.size(); ni++)
+            {
+                Point3D p = node_list[ni];
+                double dis = PointDistance(p,cur);
+
+                if (dis < min_dis){
+                    min_dis = dis;
+                    node_id = ni;
+                }
+            }
+            if (node_id > -1){
+                nodeMap.insert( j, node_id);
+            }
+        }
+        //maps.push_back(nodeMap);
+
+
         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
         {
             NeuronSWC cur = nt_list[i].listNeuron[j];
             // if (cur.pn<0) continue;
-            V3DLONG col,row;
-            col = nodeMap.key(pair<V3DLONG,V3DLONG>(i,j));
-            if (col > 0){
-                V3DLONG pid = nt_list[i].hashNeuron.value(cur.pn);
-                row = nodeMap.key(pair<V3DLONG,V3DLONG>(i,pid));
-                if (row > 0){
-                    adjMatrix[col*num_nodes+row] += 1;
-                    adjMatrix[row*num_nodes+col] += 1;
-                    cout<<adjMatrix[col*num_nodes+row] <<endl;
+            V3DLONG n_id,pn_id;
+            n_id = nodeMap[j];
+            if (n_id > 0){
+                V3DLONG pidx = cur.pn-1;//nt_list[i].hashNeuron.value(cur.pn);  // find the index in nueon_list
+
+                pn_id = nodeMap[pidx];
+                if (pn_id > 0){
+                    adjMatrix[n_id*num_nodes + pn_id] += 1;
+                    adjMatrix[pn_id*num_nodes + n_id] += 1;
+                    //cout<<adjMatrix[n_id*num_nodes + pn_id] <<endl;
 
                 }
             }
         }
+
     }
 
-//    long rootnode =100;
-//    printf("(3). computing minimum-spanning tree.\n");
 
-//    //if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
-//    if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
+    if (method_code ==0 ){
+        long rootnode =100;
+        printf("(3). computing minimum-spanning tree.\n");
 
-//        {
-//            fprintf(stderr,"Error in minimum spanning tree!\n");
-//            return false;
-//        }
+        //if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
+        if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
 
-//    printf("(3). genearate consensus graph swc file by assign parents (form edges).\n");
+        {
+            fprintf(stderr,"Error in minimum spanning tree!\n");
+            return false;
+        }
 
-    //code the edge votes into type for visualization
-    //graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
-//    merge_result.clear();
+        printf("(3). genearate consensus graph swc file by assign parents (form edges).\n");
 
+       // code the edge votes into type for visualization
+       //         graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
+        merge_result.clear();
+        for (V3DLONG i = 0;i <num_nodes;i ++)
+        {
+            V3DLONG p = plist[i];
+            //cout <<p<<endl;
+            unsigned int edgeVote = adjMatrix[i*num_nodes + p];
 
-
-
-//    for (V3DLONG i = 0;i <num_nodes;i ++)
-//    {
-//        V3DLONG p = plist[i];
-//        cout <<p<<endl;
-//        unsigned int edgeVote = adjMatrix[i*num_nodes + p];
-
-//        NeuronSWC tmp;
-//        tmp.x = node_list[i].x;
-//        tmp.y = node_list[i].y;
-//        tmp.z = node_list[i].z;
-
-//        tmp.type = edgeVote; //edge votes
-//        tmp.pn = p + 1;  //parent id, form the edge
-//        tmp.r = double(vote_list[i])/double(neuronNum);
-//        tmp.n = i+1;
-
-//        merge_result.append(tmp);
-
-//    }
-
-
-//output vertices ( node lcoations)
-    V3DLONG count = 0;
-    for (V3DLONG i=0;i<num_nodes;i++)
-    {
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
             tmp.y = node_list[i].y;
             tmp.z = node_list[i].z;
-           // tmp.fea_val.push_back(vote_list[i]);  //location votes are coded into radius
 
-            tmp.type = 0; //vertices (soma)
-            tmp.pn = -1;  //parent id, no edge
-            tmp.r = double(vote_list[i])/double(neuronNum); //location votes are coded into radius
-            tmp.n = count +1; //id start from 1
+            tmp.type = edgeVote; //edge votes
+            tmp.pn = p + 1;  //parent id, form the edge
+            tmp.r = double(vote_list[i])/double(neuronNum);
+            tmp.n = i+1;
+
             merge_result.append(tmp);
-            count++;
-    }
 
-    //output edges, go through half of the symmetric matrix, not directed graph
-    for (V3DLONG row = 0;row <num_nodes;row ++)
-    {
-        for (V3DLONG col = row+1;col < num_nodes;col++){
-            unsigned int edgeVote = adjMatrix[row*num_nodes + col];
-            if (edgeVote > 0)
-            {
-                NeuronSWC tmp;
-                tmp.x = node_list[row].x;
-                tmp.y = node_list[row].y;
-                tmp.z = node_list[row].z;
-
-                tmp.type = edgeVote; //edge votes
-                tmp.pn = col + 1;  //parent id  , form the edge
-                tmp.r = double(vote_list[row])/double(neuronNum);
-                tmp.n = count+1;
-
-                merge_result.append(tmp);
-                count++;
-            }
         }
     }
 
+//### output vertices ( node lcoations)
+//    V3DLONG count = 0;
+//    for (V3DLONG i=0;i<num_nodes;i++)
+//    {
+//            NeuronSWC tmp;
+//            tmp.x = node_list[i].x;
+//            tmp.y = node_list[i].y;
+//            tmp.z = node_list[i].z;
+//           // tmp.fea_val.push_back(vote_list[i]);  //location votes are coded into radius
+
+//            tmp.type = 0; //vertices (soma)
+//            tmp.pn = -1;  //parent id, no edge
+//            tmp.r = double(vote_list[i])/double(neuronNum); //location votes are coded into radius
+//            tmp.n = count +1; //id start from 1
+//            merge_result.append(tmp);
+//            count++;
+//    }
+
+//    //output edges, go through half of the symmetric matrix, not directed graph
+//    for (V3DLONG row = 0;row <num_nodes;row ++)
+//    {
+//        for (V3DLONG col = row+1;col < num_nodes;col++){
+//            unsigned int edgeVote = adjMatrix[row*num_nodes + col];
+//            if (edgeVote > 1)
+//            {
+//                NeuronSWC tmp;
+//                tmp.x = node_list[row].x;
+//                tmp.y = node_list[row].y;
+//                tmp.z = node_list[row].z;
+
+//                tmp.type = edgeVote; //edge votes
+//                tmp.pn = col + 1;  //parent id  , form the edge
+//                tmp.r = double(vote_list[row])/double(neuronNum);
+//                tmp.n = count+1;
+
+//                merge_result.append(tmp);
+//                count++;
+//            }
+//        }
+//    }
+
+    // alternative
+  if  (method_code == 1){
+        merge_result.clear();
+        V3DLONG count = 0;
+        for (V3DLONG i=0;i<num_nodes;i++)
+        {
+                NeuronSWC tmp;
+                tmp.x = node_list[i].x;
+                tmp.y = node_list[i].y;
+                tmp.z = node_list[i].z;
+               // tmp.fea_val.push_back(vote_list[i]);  //location votes are coded into radius
+
+                tmp.type = 0; //vertices (soma)
+                tmp.pn = -1;  //parent id, no edge
+                tmp.r = double(vote_list[i])/double(neuronNum); //location votes are coded into radius
+                tmp.n = count +1; //id start from 1
+                merge_result.append(tmp);
+                count++;
+        }
+
+        //output edges, go through half of the symmetric matrix, not directed graph
+        for (V3DLONG row = 0;row <num_nodes;row ++)
+        {
+            for (V3DLONG col = row+1;col < num_nodes;col++){
+                unsigned int edgeVote = adjMatrix[row*num_nodes + col];
+                if (edgeVote > 0)
+                {
+                    if (merge_result[row].pn == -1)
+                    {//exsiting isolated vertex, modify parent id
+                        merge_result[row].type = edgeVote; //edge votes
+                        merge_result[row].pn = col + 1;  //parent id  , form the edge
+                        merge_result[row].r = double(vote_list[row])/double(neuronNum);
+                    }
+                    else{
+                      //add new edge  , via duplication nodes with different parent id and edge votes
+                        NeuronSWC tmp;
+                        tmp.x = node_list[row].x;
+                        tmp.y = node_list[row].y;
+                        tmp.z = node_list[row].z;
+
+                        tmp.type = edgeVote; //edge votes
+                        tmp.pn = col + 1;  //parent id  , form the edge
+                        tmp.r = double(vote_list[row])/double(neuronNum);
+                        tmp.n = count+1;
+
+                        merge_result.append(tmp);
+                        count++;
+                    }
+
+                }
+            }
+        }
+
+
+}
     if (adjMatrix) {delete[] adjMatrix; adjMatrix = 0;}
     if (plist) {delete[] plist; plist=0;}
 
-/*    if ( num_nodes <=0)
-    {
-        //initial cluster number is the median size of all input trees
-        vector <V3DLONG> num_nodes_list;
-        {
-            for (int i=0;i<neuronNum;i++)
-            {
-                num_nodes_list.push_back( nt_list[i].listNeuron.size());
-            }
-        }
-        num_nodes = median(num_nodes_list);
-        cout << "number of nodes (in the output consensus skeleton) is :" << num_nodes <<" (the median of the population)" <<endl;
-    }
-*/
+
     return true;
 }
 
@@ -415,11 +460,11 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
         fprintf(stderr,"ERROR: %s: failed to open file to write!\n",filename);
         return false;
     }
-    fprintf(fp,"##n,type,x,y,z,radius,parent\n");   //,vote\n");
+    fprintf(fp,"##n,type,x,y,z,radius,parent,seg_id, level, edge_vote\n");   //,vote\n");
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
-        fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn);//,curr.fea_val[0]);
+        fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d 0 0 %d\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn, curr.type);//,curr.fea_val[0]);
     }
     fclose(fp);
     return true;

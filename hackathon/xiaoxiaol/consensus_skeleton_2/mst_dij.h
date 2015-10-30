@@ -60,7 +60,7 @@ bool mst_dij(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnod
 		}
 				
 	}
-    /*
+
 	for (V3DLONG i=0;i<n_node;i++)
 	{
 		if (i==rootnode) continue;
@@ -73,7 +73,7 @@ bool mst_dij(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnod
 
 		}
 	}
-*/
+
 	//free memory and return
 	if (adjMatrix2d) {delete []adjMatrix2d; adjMatrix2d=NULL;}
 	if (visited) {delete []visited; visited=NULL;}

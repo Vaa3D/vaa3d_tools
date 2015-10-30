@@ -100,15 +100,15 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	}
 
 	//parsing parameters
-	V3DLONG n_sampling = 0;
-	int method_code = 0;
+
+    int method_code = 1; //adj matrix
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
 		if (paras->size()==1)
 		{
-			n_sampling = atoi(paras->at(0));
-			cout<<"n_sampling = "<<n_sampling<<endl;
+            method_code = atoi(paras->at(0));
+            cout<<"method_code = "<<method_code<<endl;
 		}
 		else
 		{
@@ -478,6 +478,7 @@ void printHelp()
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
+    cout<<"\t-p <method_code>:  graphy connection method, given the nodes extracted from the confidence map. 1(default): by edge voting  0: minimum spanning tree connection" <<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
 	cout<<"\t                     default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
     cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc\n"<<endl;

@@ -7,7 +7,7 @@
 
 
 double PointDistance (Point3D A, Point3D B){
-   return  (pow(A.x - B.x,2)+ pow(A.y - B.y,2)  + pow(A.z - B.z,2))  ;
+   return sqrt( (pow(A.x - B.x,2)+ pow(A.y - B.y,2)  + pow(A.z - B.z,2)) ) ;
 }
 
 Point3D average_point(vector<Point3D> points)
