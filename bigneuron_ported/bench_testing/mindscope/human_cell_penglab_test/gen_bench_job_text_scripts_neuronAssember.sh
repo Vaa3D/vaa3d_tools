@@ -33,6 +33,14 @@ function write_neuron_tracing_command {
     echo "./start_vaa3d.sh -x NeuronAssembler_Snake -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_Snake.swc;mv  $inimgfileTracing*_NeuronAssembler_Snake.swc $finalfileFolder" >> $outputScript;
   fi;
 
+
+#TreMap
+
+  if [ $METHOD == "9" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_tReMap -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_tReMap.swc;mv  $inimgfileTracing*_NeuronAssembler_tReMap.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+
 #NeuroGPSTree
 
   if [ $METHOD == "11" -o $METHOD == "-1" ]; then
