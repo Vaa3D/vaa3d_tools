@@ -539,7 +539,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
 
       //  QString swcfilename =  walker->tilename + QString("_MOST.swc");
-		QString swcfilename =  walker->tilename + QString("_TreMap.swc");
+        QString swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc");
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -913,7 +913,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             continue;
         }
 
-		QString swcfilename =  walker->tilename + QString("_TreMap.swc");
+        QString swcfilename =  walker->tilename + QString("_XY_3D_TreMap.swc");
        // QString swcfilename =  walker->tilename + QString("_MOST.swc");;
 
         V3DPluginArgItem arg;
