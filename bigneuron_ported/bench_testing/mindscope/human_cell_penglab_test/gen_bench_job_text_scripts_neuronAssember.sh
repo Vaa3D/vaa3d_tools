@@ -14,12 +14,11 @@ function write_neuron_tracing_command {
 
   smooth_inimgfileTracing=${inimgfileTracing}.g.v3draw;
 
-#MOST
+#APP1
 
-  if [ $METHOD == "3" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_MostVesselTracer -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc;mv  $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc $finalfileFolder" >> $outputScript;
+  if [ $METHOD == "1" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_region_Neuron2 -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_Neuron2.swc;mv  $inimgfileTracing*_NeuronAssembler_region_Neuron2.swc $finalfileFolder" >> $outputScript;
   fi;
-
 
 #NEUTUBE
 
@@ -43,7 +42,7 @@ function write_neuron_tracing_command {
 #MST
 
   if [ $METHOD == "10" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_mST_tracing -f trace_raw -i $inimgfileTracing -p 1 5;chmod -R 777 $inimgfileTracing*_NeuronAssembler_mST_tracing;mv  $inimgfileTracing*_NeuronAssembler_mST_tracing.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronAssembler_mST_tracing -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_mST_tracing;mv  $inimgfileTracing*_NeuronAssembler_mST_tracing.swc $finalfileFolder" >> $outputScript;
   fi;
 
 
