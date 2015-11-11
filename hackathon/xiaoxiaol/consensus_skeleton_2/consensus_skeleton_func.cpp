@@ -35,32 +35,26 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	
 	QStringList nameList = linker_object.swc_file_list;
 	V3DLONG neuronNum = nameList.size();
-	V3DLONG avg_node_num = 0;
-	V3DLONG max_node_num = -1;
 	vector<NeuronTree> nt_list;
 	
 	for (V3DLONG i=0;i<neuronNum;i++)
 	{
 		NeuronTree tmp = readSWC_file(nameList.at(i));
 		nt_list.push_back(tmp);
-		avg_node_num += tmp.listNeuron.size();
-		if (tmp.listNeuron.size()>max_node_num) max_node_num = tmp.listNeuron.size();
 	}
-	avg_node_num /= neuronNum;
 
 	bool ok;
-	V3DLONG n_sampling = QInputDialog::getInt(parent, "sample number", "Please specify the node number of your merged skeleton:", avg_node_num, 1, max_node_num, 1, &ok);
+    int method_code = QInputDialog::getInt(parent, "method", "0:direct vote; 1: maximum spanning tree", 0, 1, 1, 1, &ok);
 	
 	if (!ok)
 		return 0;
 	
-
-	QList<NeuronSWC> result_lN;
-    if (!consensus_skeleton(nt_list, result_lN, 0,callback))
-	{
-		v3d_msg("Error in consensus skeleton!");
-		return -1;
-	}
+    QList<NeuronSWC> merge_result;
+    if (!consensus_skeleton(nt_list, merge_result, method_code, callback))
+    {
+        v3d_msg("Error in consensus swc!");
+        return -1;
+    }
 
 	QString fileSaveName;
 	QString defaultSaveName = fileOpenName + "_consensus.swc";
@@ -69,7 +63,7 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 			QObject::tr("Supported file (*.swc)"
 				";;Neuron structure	(*.swc)"
 				));
-	if (!export_listNeuron_2swc(result_lN,qPrintable(fileSaveName)))
+    if (!export_listNeuron_2swc(merge_result,qPrintable(fileSaveName)))
 	{
 		v3d_msg("Unable to save file");
 		return -1;

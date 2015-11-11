@@ -185,6 +185,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     //count
     for (int j =0; j < nt_list.size(); j++){
         NeuronTree nt = nt_list[j];
+        bool idx_VOTED = false;
         for (int i =0; i < nt.listNeuron.size(); i++)
         {
             NeuronSWC node = nt.listNeuron.at(i);
@@ -192,7 +193,8 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
             V3DLONG id_y = (node.y-offset.y) +0.5;
             V3DLONG id_z = (node.z-offset.z) +0.5;
             V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
-            if (idx <tol_sz ){
+
+            if (idx <tol_sz &&  !idx_VOTED[idx] ){
                 img1d[idx] ++ ;}
             else{
                 cout <<"error idx" <<endl;
@@ -312,7 +314,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
     if (method_code ==0 ){
         long rootnode =100;
-        printf("(3). computing minimum-spanning tree.\n");
+        printf("(3). computing max-spanning tree.\n");
 
         //if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
         if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
