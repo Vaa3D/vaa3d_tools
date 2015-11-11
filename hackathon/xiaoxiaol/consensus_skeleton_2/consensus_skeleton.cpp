@@ -182,10 +182,16 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     unsigned char * img1d = new unsigned char[tol_sz];
     for(V3DLONG i = 0; i < tol_sz; i++) img1d[i] = 0;
 
+
+    unsigned char * VOTED = new unsigned char[tol_sz];
+    for(V3DLONG i = 0; i < tol_sz; i++) VOTED[i] = 0;
+
     //count
     for (int j =0; j < nt_list.size(); j++){
         NeuronTree nt = nt_list[j];
-        bool idx_VOTED = false;
+        //keep a record which idx have been voted by previous nodes in the same tree
+        for(V3DLONG i = 0; i < tol_sz; i++) VOTED[i] = 0;
+
         for (int i =0; i < nt.listNeuron.size(); i++)
         {
             NeuronSWC node = nt.listNeuron.at(i);
@@ -194,8 +200,10 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
             V3DLONG id_z = (node.z-offset.z) +0.5;
             V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
 
-            if (idx <tol_sz &&  !idx_VOTED[idx] ){
-                img1d[idx] ++ ;}
+            if (idx <tol_sz &&  VOTED[idx] == 0 ){
+                img1d[idx] ++ ;
+                VOTED[idx] = 1;
+            }
             else{
                 cout <<"error idx" <<endl;
             }
@@ -203,9 +211,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     }
 
     //for debug only
+    /*
     Image4DSimple *image = new Image4DSimple();
     image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
     callback.saveImage(image, "./vote_count_image.v3draw");
+    */
 
     //non-maximum suppresion
      vector<Point3D>  node_list;
@@ -216,10 +226,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
      cout << "maximum votes:" << v_min(vote_list) << endl;
      cout << "minimum votes:" << v_max(vote_list) << endl;
 
+     //for debug only
+     /*
      Image4DSimple *image2 = new Image4DSimple();
      image2->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
      callback.saveImage(image2, "./nms_image.v3draw");
-
+     */
 
      // for debug: save node_list to check locations
      QList<NeuronSWC> locationTree;
