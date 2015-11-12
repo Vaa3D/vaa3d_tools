@@ -190,7 +190,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     for (int j =0; j < nt_list.size(); j++){
         NeuronTree nt = nt_list[j];
         //keep a record which idx have been voted by previous nodes in the same tree
-        for(V3DLONG i = 0; i < tol_sz; i++) VOTED[i] = 0;
+        for(V3DLONG ii = 0; ii< tol_sz; ii++) VOTED[ii] = 0;
 
         for (int i =0; i < nt.listNeuron.size(); i++)
         {
@@ -204,9 +204,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
                 img1d[idx] ++ ;
                 VOTED[idx] = 1;
             }
-            else{
+           /*
+             else{
                 cout <<"error idx" <<endl;
             }
+            */
         }
     }
 
@@ -271,9 +273,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     }
 
 
+    int * EDGE_VOTED = new int[num_nodes*num_nodes];
+
+
     for (int i=0;i<neuronNum;i++)
     {
-        QHash<V3DLONG, V3DLONG > nodeMap;
+        QHash<V3DLONG, V3DLONG > nodeMap; //maps j node of tree i to consensus node(node_id)
         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
         {
             NeuronSWC s = nt_list[i].listNeuron.at(j);
@@ -301,6 +306,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
         }
         //maps.push_back(nodeMap);
 
+        for (V3DLONG ii=0;ii<num_nodes*num_nodes;ii++) EDGE_VOTED[ii] = 0;
 
         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
         {
@@ -312,10 +318,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
                 V3DLONG pidx = cur.pn-1;//nt_list[i].hashNeuron.value(cur.pn);  // find the index in nueon_list
 
                 pn_id = nodeMap[pidx];
-                if (pn_id > 0){
+                if (pn_id > 0  && EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
                     adjMatrix[n_id*num_nodes + pn_id] += 1;
                     adjMatrix[pn_id*num_nodes + n_id] += 1;
                     //cout<<adjMatrix[n_id*num_nodes + pn_id] <<endl;
+                    EDGE_VOTED[n_id*num_nodes + pn_id] = 1;
+                    EDGE_VOTED[pn_id*num_nodes + n_id] = 1;
 
                 }
             }
