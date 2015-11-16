@@ -155,7 +155,38 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		outfile = qs_database + "features.nfb";
 	}
 
+    //if sepcified format is csv file
+    if (outfile.right(4) == ".csv")
+    {
+        FILE * fp;
+        fp = fopen(qPrintable(outfile), "w");
 
+        QString header = "swc_file,num_nodes,soma_surface,num_stems,"
+                         "num_bifurcations,num_branches,num_of_tips,"
+                         "overall_x_span,overall_y_span,overall_z_span,"
+                         "average_diameter,total_length,total_surface,"
+                         "total_volume,max_euclidean_distance,max_path_distance,"
+                         "max_branch_order,average_contraction,average_fragmentation,"
+                         "parent_daughter_ratio,bifurcation_angle_local,"
+                         "bifurcation_angle_remote,"
+                         "moment1,moment2,moment3,moment4,moment5,moment6,"
+                         "moment7,moment8,moment9,moment10,moment11,moment12,"
+                         "moment13,ave_R\n";
+
+        fprintf(fp,qPrintable(header));
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            fprintf(fp, qPrintable(filePathList[i]));
+            for (int j=0;j<21;j++)
+                fprintf(fp,", %.8f", morph_list[i][j]);
+            for (int j=0;j<14;j++)
+                fprintf(fp,", %.8f", gmi_list[i][j]);
+            fprintf(fp,"\n");
+        }
+        fclose(fp);
+    }
+
+    else{
 	//output a neuron featurebase (.nfb) file
 	FILE * fp;
 	fp = fopen(qPrintable(outfile), "w");
@@ -171,6 +202,8 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
+    }
+
 
 	for (V3DLONG i=0;i<neuronNum;i++)
 	{
