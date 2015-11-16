@@ -86,8 +86,8 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok1)
         {
             row = QInputDialog::getInteger(parent, "",
-                                          "number of displayed windows per column:",
-                                          1, 1, 1000, 1, &ok2);
+                                          "display from column:",
+                                          1, 1, col, 1, &ok2);
         }
         else
             return;
@@ -119,9 +119,9 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
             new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
             if( (i%col)*xRez ==0)
                 offsety++;
-            callback.moveWindow(new3DWindow,(i%col)*xRez,offsety*yRez);
+            callback.moveWindow(new3DWindow,(i%col+row-1)*xRez,offsety*yRez);
             callback.resizeWindow(new3DWindow,xRez,yRez);
-//            v3d_msg(QString("offsetx: %1, offsety:%2").arg((i%col)*xRez).arg(offsety*yRez));
+           // v3d_msg(QString("offsetx: %1, offsety:%2").arg((i%col+row-1)*xRez).arg(offsety*yRez));
         }
 
     }
@@ -141,8 +141,8 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok1)
         {
             row = QInputDialog::getInteger(parent, "",
-                                          "number of displayed windows per column:",
-                                          1, 1, 1000, 1, &ok2);
+                                          "display from column:",
+                                          1, 1, col, 1, &ok2);
         }
         else
             return;
@@ -175,7 +175,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
             new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
             if( (i%col)*xRez ==0)
                 offsety++;
-            callback.moveWindow(new3DWindow,(i%col)*xRez,offsety*yRez);
+            callback.moveWindow(new3DWindow,(i%col+row-1)*xRez,offsety*yRez);
             callback.resizeWindow(new3DWindow,xRez,yRez);
         }
 
