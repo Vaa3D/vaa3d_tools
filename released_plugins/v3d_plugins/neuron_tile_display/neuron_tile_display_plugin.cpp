@@ -15,7 +15,7 @@ QStringList neuron_tile_display::menulist() const
 	return QStringList() 
 		<<tr("neuron_tile_display")
         <<tr("neuron_tile_XY")
-        <<tr("tile_multi_windows (seletced swc files)")
+        <<tr("tile_multi_windows (swc files selected)")
         <<tr("tile_multi_windows (swc files under one folder)")
 		<<tr("about");
 }
