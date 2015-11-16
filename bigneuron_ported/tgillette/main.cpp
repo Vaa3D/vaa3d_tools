@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
     // Get directory from arguments
     if (argc < 3){
       //        std::cout << "Usage is: ConsensusBuilder <indir> <outfile>\n"; // Inform the user of how to use the program
-      printf("Usage is: ConsensusBuilder <indir> <outfile>\n"); // Inform the user of how to use the program
+      printf("Usage is: ConsensusBuilder <indir> <outfile> [Debug Level]\n"); // Inform the user of how to use the program
       //        std::cin.get();
         exit(0);
         //return -1;
@@ -33,7 +33,18 @@ int main(int argc, char* argv[]){
     
     printf("Creating ConsenusBuilder\n");
     ConsensusBuilder builder(directory);
+    if (argc > 3){
+        int loglevel = atoi(argv[3]);
+        printf("Setting log level %i\n",loglevel);
+        //builder = ConsensusBuilder(directory,loglevel);
+        builder.set_log_level(loglevel);
+    }else{
+        //builder = ConsensusBuilder(directory);
+    }
+    
+    printf("Created ConsensusBuilder\n");
     builder.set_match_score_threshold(1);
+    
 
     printf("Building consensus\n");
     NeuronSegment * consensus_root = builder.build_consensus();

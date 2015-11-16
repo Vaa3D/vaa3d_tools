@@ -8,6 +8,10 @@
 
 #include "logger.h"
 
+Logger::Logger(){
+    this->level = logERROR;
+    write_level = false;
+}
 Logger::Logger(LogLevel level){
     this->level = level;
     write_level = false;
@@ -19,12 +23,18 @@ Logger::Logger(int level){
 LogLevel Logger::get_level(){
     return level;
 };
+void Logger::set_level(LogLevel level){
+    this->level = level;
+};
+void Logger::set_level(int level){
+    this->level = (LogLevel)level;
+};
 void Logger::log(LogLevel level, std::string message, ...){
     va_list arg_ptr;
     va_start(arg_ptr, message);
     log(level, message, arg_ptr);
     va_end(arg_ptr);
-}
+};
 void Logger::log(LogLevel level, std::string message, va_list arg_ptr){
     if (write_level){
         message = get_level_string(level)+": "+message;
@@ -128,6 +138,9 @@ void Logger::debug4(std::string message, ...){
     log(logDEBUG4,message,arg_ptr);
     va_end(arg_ptr);
 };
+void Logger::new_line(){
+    std::clog << "\n";
+}
 std::string Logger::get_level_string(){
     return get_level_string(level);
 };

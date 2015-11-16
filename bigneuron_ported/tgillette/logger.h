@@ -26,9 +26,12 @@ class Logger{
     bool write_level;
     std::string string_format(std::string fmt_str, va_list arg_ptr);
 public:
-    Logger(LogLevel level=logERROR);
-    Logger(int level=0);
+    Logger();
+    Logger(LogLevel level);
+    Logger(int level);
     LogLevel get_level();
+    void set_level(LogLevel level);
+    void set_level(int level);
     void push_prefix(std::string message_prefix);
     void pop_prefix();
     std::string get_prefix();
@@ -42,6 +45,7 @@ public:
     void debug2(std::string message, ...);
     void debug3(std::string message, ...);
     void debug4(std::string message, ...);
+    void new_line();
     void set_write_level(bool write_level);
     std::string get_level_string();
     std::string get_level_string(LogLevel level);
