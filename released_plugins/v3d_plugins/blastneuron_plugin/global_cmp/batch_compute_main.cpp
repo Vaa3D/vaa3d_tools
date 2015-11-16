@@ -217,10 +217,10 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
 void printHelp_batch_compute()
 {
-	printf("\nBlastNeuron Plugin - Batch Compute: compute and record the neuron features (morph & gmi). by Yinan Wan.\n\n");
+    printf("\nBlastNeuron Plugin - Batch Compute: compute and record the neuron features (morph & gmi). by Yinan Wan.\n\n");
 	printf("Usage:\n");
 	printf("\t #i <database_file(s)>         input linker file (.ano) or file name list(\"a.swc b.swc\")\n");
-	printf("\t #o <output_file>              name of the output file, which will be neuron featurebase (.nfb) file.\n");
+    printf("\t #o <output_file>              name of the output file, which will be neuron featurebase (.nfb/.csv) file.\n");
 	printf("\t                               default result will be generated under the same directory of the query file and has a name of 'databaseName_features.nfb'.\n");
 	printf("\t #h                            print this message.\n\n");
 	printf("Example: vaa3d -x blastneuron -f batch_compute -p \"#i mydatabase.ano #o features.nfb\"\n\n");
