@@ -15,8 +15,8 @@ QStringList neuron_tile_display::menulist() const
 	return QStringList() 
 		<<tr("neuron_tile_display")
         <<tr("neuron_tile_XY")
-        <<tr("neuron_multi_windows")
-        <<tr("neuron_multi_windows_under_one_folder")
+        <<tr("tile_multi_windows (seletced swc files)")
+        <<tr("tile_multi_windows (swc files under one folder)")
 		<<tr("about");
 }
 
@@ -65,7 +65,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     {
         doxytile(callback, parent);
     }
-    else if (menu_name == tr("neuron_multi_windows"))
+    else if (menu_name == tr("tile_multi_windows (swc files selected)"))
     {
         QStringList swcList;
         swcList = QFileDialog::getOpenFileNames(0, QObject::tr("Open File"),
@@ -95,7 +95,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok2)
         {
             xRez = QInputDialog::getInteger(parent, " ",
-                                          "xRez:",
+                                          "offset X:",
                                           1, 1, 10000, 1, &ok3);
         }
         else
@@ -104,7 +104,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok3)
         {
             yRez = QInputDialog::getInteger(parent, " ",
-                                          "yRez:",
+                                          "offset Y:",
                                           1, 1, 10000, 1, &ok4);
         }
         else
@@ -125,7 +125,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         }
 
     }
-    else if (menu_name == tr("neuron_multi_windows_under_one_folder"))
+    else if (menu_name == tr("tile_multi_windows (swc files under one folder)"))
     {
         QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
                                                                       QDir::currentPath(),
@@ -150,7 +150,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok2)
         {
             xRez = QInputDialog::getInteger(parent, " ",
-                                          "xRez:",
+                                          "offset X:",
                                           1, 1, 10000, 1, &ok3);
         }
         else
@@ -159,7 +159,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         if(ok3)
         {
             yRez = QInputDialog::getInteger(parent, " ",
-                                          "yRez:",
+                                          "offset Y:",
                                           1, 1, 10000, 1, &ok4);
         }
         else
