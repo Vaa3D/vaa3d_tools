@@ -1,0 +1,23 @@
+This is the instruction used to batch generate movies from swc files using ZMovieMaker and Movie_Converter plugins.
+
+1. sh gen_zmovie_ano_scripts.sh <swc file path> <anchor file path> <output folder path> <output linker file path>
+<swc file path>:  the input swc file
+<anchor file path>: the anchor file path
+<output folder path>: the output folder which is used to save all movie frames
+<output linker file path>: the linker file path
+
+“batch_ano.sh” is one example to generate movie frames for all swc files under “uint8_dTdc2MARCM-F000249_seg001.lsm_c_3.tif” folder, and save all movie frames under “movie” folder. All linker files are saved under “linker_files” folder.
+
+2. Click “Batch Process” button in ZMovieMaker plugin, and select the folder including all linker files. The plugin will generate movie frames based on the input swc file and the anchor file. 
+
+3. sh gen_movie_converter_scripts.sh <input folder path> <Vaa3D executable file path> <output folder path> <output script file path>
+<input folder path>: the input folder including all movie frames for different swc files
+<Vaa3D executable file path>: the pre-built Vaa3D executable file
+<output folder path>: the output folder used to save all final movies in avi format.
+<output script file path>: the script file path
+
+Here is an example to generate “batch_converter.sh” script:
+
+/Users/zhiz/data/20151030_rhea_reconstructions_for_allen300_silver_set/gen_movie_converter_scripts.sh /Users/zhiz/data/20151030_rhea_reconstructions_for_allen300_silver_set/movie /Users/zhiz/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64 /Users/zhiz/data/20151030_rhea_reconstructions_for_allen300_silver_set/movie_final batch_converter.sh
+
+4. Run sh batch_converter.sh
