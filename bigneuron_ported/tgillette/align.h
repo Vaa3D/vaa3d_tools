@@ -29,7 +29,7 @@ struct Match{
 };
 
 float const default_average_alignment_dist = 3; // microns; this will need to be adjusted
-float const default_gap_cost = 0; // adjust later
+float const default_gap_cost = -0.5; // adjust later
 int const min_alignment_size = 4;
 
 /** Heuristic parameters **/
@@ -43,13 +43,12 @@ int const allowable_alignment_overlap = 3;
 /*  */
 double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker*> & seg2, vector<pair<int, int> > & matching_res, float const gap_cost=default_gap_cost);
 
-void split_by_alignment(NeuronSegment * seg1, NeuronSegment * seg2, vector<pair<int,int> > alignment);
-void split_segment(NeuronSegment * seg, int pos);
-
 bool is_consistent_alignment(Match * match, std::map<NeuronSegment *, std::set<Match *> > match_map);
 bool is_consistent_alignment(Match * match, bool check_segment1, std::map<NeuronSegment *, std::set<Match *> > match_map);
 bool is_overlapping_range(int start1, int end1, int start2, int end2);
 int get_overlap_size(Match * match1, Match * match2, bool check_segment1);
 int get_overlap_size(int start1, int end1, int start2, int end2);
+
+double simple_seg_weight(vector<MyMarker*> & seg1, vector<MyMarker*> & seg2, vector<pair<int, int> > & matching_res);
 
 #endif /* defined(__ConsensusBuilder__align__) */

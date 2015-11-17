@@ -10,9 +10,9 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>
+#include <stdlib.h>
 #include <dirent.h>
 #include <stdio.h>
-#include <cstdio>
 #include <string>
 #include <set>
 #include <unordered_set>
@@ -78,9 +78,6 @@ ConsensusBuilder::ConsensusBuilder(string &directory, int log_level){
                     //logger->debug2("Adding reconstruction from file %s to list", filepath.c_str());
                     // Read neuron points (in proper order)
                     vector<MyMarker *> neuronPts = readSWC_file(directory+string("/")+filename);
-                    for (MyMarker * marker : neuronPts){
-                        printf("%i %f %f %f %f\n",marker->type,marker->x,marker->y,marker->z,marker->radius);
-                    }
                     
                     if (neuronPts.size() > 0){
                         //logger->debug2("%i neuron points",neuronPts.size());
@@ -140,8 +137,10 @@ ConsensusBuilder::~ConsensusBuilder(){
 
     composite->delete_all();
     delete composite;
+
     for (pair<string, Reconstruction *> recon_pair : cb_reconstructions){
-        delete recon_pair.second;
+        Reconstruction * recon = recon_pair.second;
+        delete recon;
     }
 }
 void ConsensusBuilder::default_parameters(){
@@ -280,15 +279,18 @@ void ConsensusBuilder::bin_branches(){
     
     // Find range for each axis - defines region boundaries
     bool first = true;
+    MyMarker * marker;
     logger->debug2("Finding ranges for registration bins");
     for (pair<string, Reconstruction *> map_pairs : cb_reconstructions){
         string name = map_pairs.first;
-        logger->debug3("Reconstruction %s",name.c_str());
+//        logger->debug3("Reconstruction %s",name.c_str());
         reconstruction = map_pairs.second;
         logger->debug4("%i segments",reconstruction->get_segments().size());
         for (NeuronSegment * segment : reconstruction->get_segments()){
             logger->debug4("%i markers",segment->markers.size());
-            for (MyMarker * marker : segment->markers){
+            for (int i = 0; i < segment->markers.size(); i += 3){
+//            for (MyMarker * marker : segment->markers){
+                marker = segment->markers[i];
                 //printf("%f %f %f\n",marker->x,marker->y,marker->z);
                 if (first){
                     x_range.first = (int)floor(marker->x);
@@ -318,6 +320,8 @@ void ConsensusBuilder::bin_branches(){
     int y_bins = 1 + (y_range.second - y_range.first) / register_cube_size;
     int z_bins = 1 + (z_range.second - z_range.first) / register_cube_size;
     total_bins = x_bins * y_bins * z_bins;
+    logger->info("Bins %i x %i x %i = %i",x_bins,y_bins,z_bins,total_bins);
+    
     x_bin_positions.clear();
     y_bin_positions.clear();
     z_bin_positions.clear();
@@ -348,7 +352,8 @@ void ConsensusBuilder::bin_branches(){
 };
 
 void ConsensusBuilder::bin_branches(Reconstruction * reconstruction){
-    logger->debug2("Entering bin_branches for %s",reconstruction->get_name().c_str());
+//    if (reconstruction->get_name()
+//    logger->debug2("Entering bin_branches for %s",reconstruction->get_name().c_str());
     segments_by_recon_cube[reconstruction] = std::vector<SegmentPtrSet>(total_bins);
     std::vector<SegmentPtrSet> * segments_by_cube = &(segments_by_recon_cube[reconstruction]);
     logger->debug4("generated segments_by_cube, %i total bins",total_bins);
@@ -401,6 +406,10 @@ void ConsensusBuilder::bin_branches(Composite * composite){
                 // Determine the cube this marker is in
                 logger->debug4("Running get_bin(marker) on %p",marker);
                 int center_cube_index = get_bin(marker);
+                if (center_cube_index < 0 || center_cube_index > total_bins){
+                    logger->warn("Segment %p has center_cube_index of %i",segment,center_cube_index);
+                    logger->warn("Marker position %f %f %f",marker->x,marker->y,marker->z);
+                }
                 // Convert to x, y, z indices
                 std::vector<int> xyz = indexToXyz(center_cube_index);
                 logger->debug4("center cube index %i",center_cube_index);
@@ -448,6 +457,7 @@ void ConsensusBuilder::bin_branch(CompositeBranchContainer * branch){
                 }
             }
             // Add this segment to the cube it is in
+            logger->debug4("Inserting segment %p into composite cube index %i",segment,center_cube_index);
             composite_segments_by_cube->at(center_cube_index).insert(segment);
         }
     }
@@ -477,10 +487,22 @@ int ConsensusBuilder::get_bin(MyMarker * marker){
     std::vector<int>::iterator ind_it;
     ind_it = std::lower_bound(x_bin_positions.begin(), x_bin_positions.end(), marker->x);
     int x_ind = ind_it - x_bin_positions.begin() - 1;
+    if (x_ind < 0){
+        logger->warn("x_ind = %i",x_ind);
+        x_ind = 0;
+    }
     ind_it = std::lower_bound(y_bin_positions.begin(), y_bin_positions.end(), marker->y);
     int y_ind = ind_it - y_bin_positions.begin() - 1;
+    if (y_ind < 0){
+        logger->warn("y_ind = %i",y_ind);
+        y_ind = 0;
+    }
     ind_it = std::lower_bound(z_bin_positions.begin(), z_bin_positions.end(), marker->z);
     int z_ind = ind_it - z_bin_positions.begin() - 1;
+    if (z_ind < 0){
+        logger->warn("z_ind = %i",z_ind);
+        z_ind = 0;
+    }
     
     return x_ind * y_bin_positions.size() * z_bin_positions.size() + y_ind * z_bin_positions.size() + z_ind;
 };
@@ -706,6 +728,10 @@ void ConsensusBuilder::register_action(HOOK_NAME hook_name, HOOK_POSITION positi
 NeuronSegment * ConsensusBuilder::build_consensus(){
     return build_consensus(default_branch_confidence_threshold);
 }
+NeuronSegment * ConsensusBuilder::build_consensus(int branch_vote_threshold){
+    double conf_threshold = (double)branch_vote_threshold / cb_reconstructions.size();
+    return build_consensus(conf_threshold);
+}
 NeuronSegment * ConsensusBuilder::build_consensus(double branch_confidence_threshold){
     logger->info("Ready to run? %d ",ready_to_run);
     if (!ready_to_run){
@@ -735,28 +761,29 @@ NeuronSegment * ConsensusBuilder::build_consensus(double branch_confidence_thres
 };
 
 void ConsensusBuilder::preprocess_reconstructions(){
+    // Assign branches to bins (spatial cubes) in order to minimize set of possible branch-branch assignments
+    bin_branches();
+
     // Branch cutting for simplifying alignments (prior to assignment of cubes)
     int recon_count = 0;
     for (pair<string, Reconstruction *> map_pairs : cb_reconstructions){
-        logger->info("Cutting branches on reconstruction %i",recon_count);
         string name = map_pairs.first;
         Reconstruction * reconstruction = map_pairs.second;
-        //logger->debug4("Reconstruction ptr %p",reconstruction);
-        logger->debug4("recon segs %i, recon branches",reconstruction->get_segments().size());
+        logger->debug("Recon segs %i",reconstruction->get_segments().size());
+        
         
         // #TODO: Test the following two functions
         // Split highly curved branches at maximal distance from straight line
-        reconstruction->split_curved_branches();
-        logger->debug4("After split_curved_branches");
+        /*
+         logger->debug("Cutting branches on reconstruction %i",recon_count);
+        split_curved_branches(reconstruction);
+        logger->debug2("After split_curved_branches");
         // Split branches where they come very close or pass by another branch (this will make aligning and assigning simpler)
-        reconstruction->split_proximal_branches();
-        logger->debug4("After split_proximal_branches");
+        split_proximal_branches(reconstruction);
+        logger->debug2("After split_proximal_branches");
+         */
         recon_count++;
     }
-    
-    
-    // Assign branches to bins (spatial cubes) in order to minimize set of possible branch-branch assignments
-    bin_branches();
     
     // Determine similarity of trees to set order of processing, reducing growth rate of composite
     //sort_trees();
@@ -812,17 +839,31 @@ void ConsensusBuilder::build_composite(){
             bin_branches(composite);
             logger->info("Initialized composite using reconstruction with %d segments, composite has %d",reconstruction->get_segments().size(), composite->get_segments().size());
         }else{
+            if (recon_count > 2){
+                // ** Generate consensus **
+                logger->debug("Generating intermediary consensus");
+                //Composite * new_composite = composite->generate_consensus(0); // #TODO: plug new consensus in as base composite structure
+                // Update the NeuronSegment tree structure given the information of the new reconstruction
+                composite->update_tree();
+                
+                logger->debug4("After update_tree; check root_branch %p %i",composite->get_root(),composite->get_root()->get_children().size());
+                logger->debug4("After update_tree; check root_segment %p %i",composite->get_root_segment(),composite->get_root_segment()->markers.size());
+            }
             // First run BlastNeuron to align reconstruction with composite and get confident alignment
             std::vector<pair<int, int> > result;
-            
+            logger->new_line();
             logger->debug4("Beginning of build_composite; check root_branch %p %i",composite->get_root(),composite->get_root()->get_children().size());
             logger->debug4("Middle of build_composite; check root_segment %p %i",composite->get_root_segment(),composite->get_root_segment()->markers.size());
 
             //printf("composite reconstruction %p",composite->get_composite_reconstruction());
             std::vector<NeuronSegment *> composite_segments = composite->get_segments_ordered();
-            logger->debug2("Got composite segments %d",composite_segments.size());
+            logger->debug("Got composite segments %i",composite_segments.size());
             for (NeuronSegment *seg : composite_segments){
                 logger->debug4("seg size %i",seg->markers.size());
+                for (int d = 0; d < seg->markers.size(); d++){
+                    MyMarker *mrk = seg->markers[d];
+                    logger->debug4("marker %f %f %f",mrk->x,mrk->y,mrk->z);
+                }
             }
 
             // Create a set of segments from the composite
@@ -830,9 +871,6 @@ void ConsensusBuilder::build_composite(){
             
             // Calculate weights for each branch pair, higher weight is better for aligning
             std::vector<double> weights = calculate_weights(composite_segments, reconstruction_segments, reconstruction);
-            for (double weight : weights){
-                logger->debug4("weight %f",weight);
-            }
             
             /**
              * Align composite and reconstruction using code from BlastNeuron (in neuron_tree_align.h)
@@ -841,7 +879,7 @@ void ConsensusBuilder::build_composite(){
             neuron_tree_align(composite_segments, reconstruction_segments, weights, result);
             // 'result' is a vector of segment index pairs from reconstructionSegments and compositeSegments respectively
             
-            logger->debug("Ran alignment, result ");
+            logger->debug1("Ran alignment, result ");
             
             // Put all branches into set of unmatched branches, then later remove those that are matched from the list
             unmatched_tree1_segments.clear();
@@ -859,23 +897,25 @@ void ConsensusBuilder::build_composite(){
             for (int i=0; i < seg_clusters1.size(); i++)
             {
                 std::vector<MyMarker*> new_seg1, new_seg2;
-                std::vector<MyMarker*> tmp_seg;
                 
                 logger->debug1("i %i; cluster1[i].size %i; cluster2[i].size %i",i,seg_clusters1[i].size(),seg_clusters2[i].size());
                 
                 //the clustered segments should be in increasing order, so just concatinate them
-                for (int j=0;j<seg_clusters1[i].size();j++)
+                for (int j = seg_clusters1[i].size()-1; j >= 0;j--)
+                //for (int j = 0; j < seg_clusters1[i].size(); j--)
                 {
-                    tmp_seg.clear();
+                    logger->debug4("seg_cluster num %i",seg_clusters1[i][j]);
                     NeuronSegment * segment = composite_segments[seg_clusters1[i][j]];
                     new_seg1.insert(new_seg1.end(), segment->markers.begin(), segment->markers.end());
 
                     // This branch is matched (tentatively), so remove it from unmatched_branches
                     CompositeBranchContainer * branch = composite->get_branch_by_segment(segment);
                 }
-                for (int j=0;j<seg_clusters2[i].size();j++)
+                logger->debug4("new_seg markers");
+
+                for (int j = seg_clusters2[i].size()-1; j >= 0;j--)
+                //for (int j = 0; j < seg_clusters2[i].size(); j--)
                 {
-                    tmp_seg.clear();
                     NeuronSegment * segment = reconstruction_segments[seg_clusters2[i][j]];
                     new_seg2.insert(new_seg2.end(), segment->markers.begin(), segment->markers.end());
                     
@@ -900,18 +940,24 @@ void ConsensusBuilder::build_composite(){
             logger->debug("Aligned pairs: %i",pairs_merged.size());
             for (int i=0; i < pairs_merged.size(); i++) // Loop through matched segment pairs
             {
+                logger->debug("Checking segment matches index %i",i);
                 std::vector<pair<int, int> > marker_index_alignments;
                 std::vector<MyMarker*> seg1 = pairs_merged[i].first;
                 std::vector<MyMarker*> seg2 = pairs_merged[i].second;
                 std::vector<MyMarker*> average;
                 
                 // #CONSIDER: return alignment distances and take score as median, max, or 95th% distance
-                logger->debug1("seg1 and 2 size: %d %d",seg1.size(),seg2.size());
+                logger->debug1("seg1 and 2 size: %i %i",seg1.size(),seg2.size());
                 logger->debug1("Aligning seg1 %f %f %f; seg2 %f %f %f",seg1[0]->x,seg1[0]->y,seg1[0]->z,seg2[0]->x,seg2[0]->y,seg2[0]->z);
                 /* Run curve alignment */
-                double align_dist = seg_weight(seg1, seg2, marker_index_alignments);
-                double align_score = average_alignment_dist - align_dist/marker_index_alignments.size();
-                logger->debug1("marker_index_alignments size %d, align_dist %f",marker_index_alignments.size(), align_dist);
+                double align_dist = 0;
+                double align_score = 0;
+                if (abs((int)(seg1.size() - seg2.size())) <= 2){
+                    logger->debug("Difference in sequence lengths is too large");
+                    align_dist = simple_seg_weight(seg1, seg2, marker_index_alignments);
+                    align_score = average_alignment_dist - align_dist/marker_index_alignments.size();
+                }
+                logger->debug1("marker_index_alignments size %i, align_dist %f",marker_index_alignments.size(), align_dist);
                 logger->debug1("normalized score %f, threshold %f",align_score,match_score_threshold);
                 if (align_score > match_score_threshold){
                     logger->debug2("Score is good enough");
@@ -932,8 +978,7 @@ void ConsensusBuilder::build_composite(){
                     
                     std::reverse(segments1.begin(),segments1.end());
                     std::reverse(segments2.begin(),segments2.end());
-                    
-                    logger->debug2("Averaging and splitting alignments");
+
                     // Create weighted average for matches, then split merged segments (when segments.size() > 1)
                     average_and_split_alignments(reconstruction, segment_maps, marker_index_alignments, seg1, seg2, segments1, segments2);
                 }
@@ -955,8 +1000,8 @@ void ConsensusBuilder::build_composite(){
              **/
             
             // Use local sequence alignment
-            logger->debug3("calling 'match_remaining_branches' if there are any in unmatched_tree2_segments - %i",unmatched_tree2_segments.size());
-            if (unmatched_tree2_segments.size() > 0)
+            logger->debug3("calling 'match_remaining_branches' if there are any in unmatched_tree1_segments - %i and tree2 %i",unmatched_tree1_segments.size(),unmatched_tree2_segments.size());
+            if (unmatched_tree1_segments.size() > 0 && unmatched_tree2_segments.size() > 0)
                 match_remaining_branches(reconstruction);
             logger->debug3("done matching remaining branches");
 
@@ -980,17 +1025,7 @@ void ConsensusBuilder::build_composite(){
                     logger->warn("Found zero-length segments at end of alignment and processing");
                 }
             }
-            
-            /** Generate consensus **/
-            
-            logger->debug("Generating intermediary consensus");
-            //Composite * new_composite = composite->generate_consensus(0); // #TODO: plug new consensus in as base composite structure
-            // Update the NeuronSegment tree structure given the information of the new reconstruction
-            composite->update_tree();
-            
-            logger->debug4("After update_tree; check root_branch %p %i",composite->get_root(),composite->get_root()->get_children().size());
-            logger->debug4("After update_tree; check root_segment %p %i",composite->get_root_segment(),composite->get_root_segment()->markers.size());
-
+            logger->debug("On to next reconstruction");
         }
     }
 };
@@ -1003,30 +1038,51 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
     for (Match * match : matches){
         CompositeBranchContainer * c_branch = composite->get_branch_by_segment(match->seg1);
         BranchContainer * r_branch = reconstruction->get_branch_by_segment(match->seg2);
+        unmatched_tree1_segments.erase(c_branch->get_segment());
+        unmatched_tree2_segments.erase(r_branch->get_segment());
         
+        std::vector<pair<int,int> > * alignment = match->alignment;
+        logger->debug("Alignment start: %i %i, end: %i %i", alignment->front().first, alignment->front().second, alignment->back().first, alignment->back().second);
+        logger->debug("Compos branch length %i, recon branch length %i", c_branch->get_segment()->markers.size(),r_branch->get_segment()->markers.size());
+
+        for (pair<int,int> intpr : (*alignment)){
+            logger->debug4("%i %i",intpr.first,intpr.second);
+        }
+        
+        // Split branches as needed
+        if (alignment->front().first != 0 || alignment->back().first != c_branch->get_segment()->markers.size()-1){
+            logger->debug("Splitting composite branch");
+            std::vector<CompositeBranchContainer *> resulting_c_branches;
+            c_branch = split_branch(c_branch,match,resulting_c_branches);
+            
+            for (int i = 0; i < resulting_c_branches.size(); i++){
+                CompositeBranchContainer * c_of_set = resulting_c_branches[i];
+                if (c_of_set != c_branch)
+                    unmatched_tree1_segments.insert(c_of_set->get_segment());
+            }
+        }
+        if (alignment->front().second != 0 || alignment->back().second != r_branch->get_segment()->markers.size()-1){
+            std::vector<BranchContainer *> resulting_r_branches;
+            logger->debug4("segments in recon before split %i",r_branch->get_reconstruction()->get_segments().size());
+            r_branch = split_branch(r_branch,match,resulting_r_branches);
+            logger->debug4("segments in recon after split %i",r_branch->get_reconstruction()->get_segments().size());
+            
+            for (int i = 0; i < resulting_r_branches.size(); i++){
+                BranchContainer * r_of_set = resulting_r_branches[i];
+                logger->debug1("r_of_set %p",r_of_set);
+                if (r_of_set != r_branch)
+                    unmatched_tree2_segments.insert(r_of_set->get_segment());
+            }
+        }
+        
+        logger->debug4("Number of connections in existing composite %i",c_branch->get_connections().size());
+        
+        // Create association
+        logger->debug("Creating match between c_branch %p and r_branch %p",c_branch,r_branch);
         c_branch->add_branch_match(r_branch, match->forward);
         r_branch->set_composite_match(c_branch);
     }
     
-    // Second, reprocess matches to create connections
-    for (Match * match : matches){
-        /* Now all connections are being generated after all branches are in place
-        CompositeBranchContainer * c_branch = composite->get_branch_by_segment(match->seg1);
-        BranchContainer * r_branch = reconstruction->get_branch_by_segment(match->seg2);
-        
-        if (r_branch->get_parent()){
-            CompositeBranchContainer * c_parent = r_branch->get_parent()->get_composite_match();
-            if (c_parent){
-                // Connection ends depend both on the direction of the current match (relative to the current composite direction), and the current composite direction (for child and parent independently) relative to the original composite direction
-                BranchEnd child_end = match->forward ^ c_branch->is_segment_reversed() ? TOP : BOTTOM;
-                BranchEnd parent_end = match->forward ^ c_parent->is_segment_reversed() ? BOTTOM : TOP;
-                c_branch->add_connection(child_end, c_parent, parent_end, reconstruction, c_branch->get_confidence());
-            }
-        }
-         */
-        unmatched_tree1_segments.erase(match->seg1);
-        unmatched_tree2_segments.erase(match->seg2);
-    }
     logger->debug1("Exit match_remaining_branches");
 };
 
@@ -1058,12 +1114,15 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
     std::map<Match *, pair<Match *, int> > small_overlaps;
     
     // Put conflicts into match_conflicts
+    logger->debug("about to find conflicts");
+
     find_conflicts(unmatched_tree1_segments, matches_by_segment, match_conflicts, small_overlaps);
     find_conflicts(unmatched_tree2_segments, matches_by_segment, match_conflicts, small_overlaps);
     
     /* Process the conflict sets for possible combinations of assignments, and select optimal assignments for a given conflict set */
     
     // Create a set of ALL matches - will be used as set of matches that have not yet been processed
+    logger->debug("create set of ALL matches");
     std::set<Match *> unprocessed;
     for (std::map<NeuronSegment *,std::vector<Match *> >::iterator it = matches_by_segment.begin();
          it != matches_by_segment.end(); ++it){
@@ -1072,10 +1131,14 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
         }
     }
     
+    logger->debug("while unprocessed isn't empty");
     while (!unprocessed.empty()){
-        
+        logger->debug("unprocessed size %i",unprocessed.size());
+
         Match * first_match = *(unprocessed.begin());
+        unprocessed.erase(first_match);
         if (match_conflicts[first_match]->size() == 0){
+            logger->debug3("match %p has no conflicts",first_match);
             final_assignments.insert(first_match);
             continue;
         }
@@ -1095,6 +1158,8 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
         // Map that gets the assignment_map for a given next_matches stack
         std::map<std::stack<Match *> *, std::map<Match *,bool> * > next_matches_map;
         
+        logger->debug("Processing 1");
+
         // Initialize objects for the current conflict set
         assignment_map_ptr = new std::map<Match *,bool>();
         assignment_options.push_back(assignment_map_ptr);
@@ -1107,8 +1172,11 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
         next_matches_stack.push(next_matches);
         score_map[assignment_map_ptr] = 0;
         
-        
+        logger->debug("Processing 2");
+
         while (!next_matches_stack.empty()){
+            logger->debug("next_matches_stack size %i",next_matches_stack.size());
+
             // Pull the current next_matches and assignments objects
             next_matches = next_matches_stack.top();
             next_matches_stack.pop();
@@ -1117,6 +1185,7 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
             
             // Loop until no stacks remain
             while (!next_matches->empty()){
+                logger->debug("next_matches size %i\n",next_matches->size());
                 Match * candidate = next_matches->top();
                 next_matches->pop();
                 unprocessed.erase(candidate); // this match will now have been processed
@@ -1218,6 +1287,8 @@ std::map<NeuronSegment *,std::vector<Match *> > ConsensusBuilder::generate_candi
         // Get nearby composite segments for alignment
         std::set<NeuronSegment *> nearby_segments = get_nearby_segments(seg2, composite);
         for (NeuronSegment * seg1 : nearby_segments){
+            logger->debug4("Nearby segment unmatched ? %i",unmatched_tree1_segments.find(seg1) != unmatched_tree1_segments.end());
+            if (unmatched_tree1_segments.find(seg1) == unmatched_tree1_segments.end()) continue;
             logger->debug4("about to local align a branch and a composite branch!");
             Match * match = nullptr;
             // Run local alignment
@@ -1225,7 +1296,7 @@ std::map<NeuronSegment *,std::vector<Match *> > ConsensusBuilder::generate_candi
             double score = local_align(average_alignment_dist, seg1->markers, seg2->markers, *alignment, gap_cost);
             logger->debug4("Completed local_align with score %f", score);
             // Store the alignment: If alignment spans entire extent of one segment, or if alignment is long enough, or if per-character alignment score is good enough
-            if (alignment->size()+1 >= seg1->markers.size() || alignment->size() > min_alignment_size && score/alignment->size() >= average_alignment_dist){
+            if (alignment->size()+1 >= seg1->markers.size() || (alignment->size() > min_alignment_size && score/alignment->size() >= average_alignment_dist)){
                 logger->debug3("Good enough to create a Match");
                 match = new Match();
                 match->seg1 = seg1;
@@ -1293,14 +1364,19 @@ void ConsensusBuilder::find_conflicts(std::set<NeuronSegment *> tree_segments,
                                       std::map<NeuronSegment *, vector<Match *> > matches_by_segment,
                                       std::map<Match *, std::set<Match *> * > &match_conflicts,
                                       std::map<Match *, pair<Match *, int> > &small_overlaps){
+    int cnt = 0;
+    logger->debug("Enter find_conflicts");
     for (NeuronSegment * segment : tree_segments){
+        logger->debug2("Segment %i",cnt++);
+        for (int i = 0; i < matches_by_segment[segment].size(); i++){
+            match_conflicts[matches_by_segment[segment][i]] = new std::set<Match *>();
+        }
         for (int i = 0; i < matches_by_segment[segment].size() - 1; i++){
+            logger->debug3("match %i",i);
             Match * match1 = matches_by_segment[segment][i];
-            if (match_conflicts.count(match1) == 0){
-                match_conflicts[match1] = new std::set<Match *>();
-            }
             // Create sets of conflicts for a given match candidate
             for (int j = i+1; j < matches_by_segment[segment].size(); j++){
+                logger->debug4(" - match j");
                 Match * match2 = matches_by_segment[segment][j];
                 int overlap_size = get_overlap_size(match1, match2, true);
                 // No conflict
@@ -1313,9 +1389,6 @@ void ConsensusBuilder::find_conflicts(std::set<NeuronSegment *> tree_segments,
                 }else{
                     // Add the matches to each others' conflict sets
                     match_conflicts[match1]->insert(match2);
-                    if (match_conflicts.count(match2) == 0){
-                        match_conflicts[match2] = new std::set<Match *>();
-                    }
                     match_conflicts[match2]->insert(match1);
                 }
             }
@@ -1382,23 +1455,27 @@ void ConsensusBuilder::average_and_split_alignments(Reconstruction * reconstruct
     //std::vector<SegmentPointPair> tree1_splits, tree2_splits;
     
     logger->debug("number of marker_index_alignments %i",marker_index_alignments.size());
-    
+/*
     logger->debug4("Composite segments1[0].markers size %i, segments1[1].markers size %i",segments1[0]->markers.size(),segments1[1]->markers.size());
     logger->debug4("Composite segments1[0].markers[0] %p, segments1[1].markers[0] %p",segments1[0]->markers[0],segments1[1]->markers[0]);
     logger->debug4("Composite segments1[0].markers[last] %p, segments1[1].markers[last] %p",segments1[0]->markers.back(),segments1[1]->markers.back());
     logger->debug4("Recon segments1[0].markers size %i, segments1[1].markers size %i",segments2[0]->markers.size(),segments2[1]->markers.size());
     logger->debug4("Recon segments1[0].markers[0] %p, segments1[1].markers[0] %p",segments2[0]->markers[0],segments2[1]->markers[0]);
     logger->debug4("Recon segments1[0].markers[last] %p, segments1[1].markers[last] %p",segments2[0]->markers.back(),segments2[1]->markers.back());
-
+*/
     logger->debug4("Composite First marker %p, first marker of first segment %p", merged_seg1[marker_index_alignments[0].first], current_c_seg->markers[0]);
     logger->debug4("Reconstruction First marker %p, first marker of first segment %p", merged_seg2[marker_index_alignments[0].second], current_r_seg->markers[0]);
-    //int j;
+    int j;
+//    for (int i=0; i < marker_index_alignments.size(); i++) // Loop through aligned point pairs
+    MyMarker *prev_c = nullptr, *prev_r = nullptr;
+    std::set<MyMarker *> markers_to_merge;
+    double nearest_dist;
     for (int i=0; i < marker_index_alignments.size(); i++) // Loop through aligned point pairs
     {
-        //j = i;
+        j = marker_index_alignments.size() - i - 1;
         
-        c_marker = merged_seg1[marker_index_alignments[i].first];
-        r_marker = merged_seg2[marker_index_alignments[i].second];
+        c_marker = merged_seg1[marker_index_alignments[j].first];
+        r_marker = merged_seg2[marker_index_alignments[j].second];
         logger->debug2("i %i",i);
         logger->debug4("looping through aligned pairs 1 %p %p",c_marker,r_marker);
         logger->debug3("c_seg_num %i ; c_marker %p",c_seg_num, c_marker);
@@ -1460,6 +1537,15 @@ void ConsensusBuilder::average_and_split_alignments(Reconstruction * reconstruct
         logger->debug4("looping through aligned pairs 3, combined_weight %f",combined_weight);
 
         // Weighted average of seg1 and seg2
+        // #IMPORTANT: currently a single marker can be aligned with multiple, and thus the weight effect can be multiplied (especially when the last marker of a short segment is aligned to multuple in the longer). Need to fix this!
+        
+        if (prev_r == r_marker){
+            
+        }
+        else if (prev_c == c_marker){
+            
+        }
+        
         c_marker->x = (r_marker->x * reconstruction_weight + c_marker->x * composite_weight)/combined_weight;
         c_marker->y = (r_marker->y * reconstruction_weight + c_marker->y * composite_weight)/combined_weight;
         c_marker->z = (r_marker->z * reconstruction_weight + c_marker->z * composite_weight)/combined_weight;
@@ -1469,6 +1555,9 @@ void ConsensusBuilder::average_and_split_alignments(Reconstruction * reconstruct
         // #CONSIDER: I don't think I need this for anything, was used in BlastNeuron to generate swc link from consensus points to points from either reconstruction
         logger->debug4("looping through aligned pairs 4");
         map_segment[merged_seg2[marker_index_alignments[i].first]] = merged_seg1[marker_index_alignments[i].second];
+        
+        prev_c = c_marker;
+        prev_r = r_marker;
     }
     logger->debug2("Finished looping through aligned pairs, about to split branches");
     
@@ -1477,15 +1566,20 @@ void ConsensusBuilder::average_and_split_alignments(Reconstruction * reconstruct
     CompositeBranchContainer * c_bottom;
     for (NeuronSegment * seg : segments1){
         c_bottom = composite->get_branch_by_segment(seg);
+        logger->debug4("CURRENT 1");
         if (tree1_splits[seg].size() > 0){
             unbin_branch(c_bottom);
+            logger->debug4("CURRENT 2");
             for (std::size_t split_point : tree1_splits[seg]){
+                logger->debug4("CURRENT 2.1");
                 CompositeBranchContainer * new_branch = c_bottom->split_branch(split_point);
+                logger->debug4("CURRENT 2.2");
                 composite_subbranches.push_back(new_branch);
                 bin_branch(new_branch);
             }
             bin_branch(c_bottom);
         }
+        logger->debug4("CURRENT 3");
         composite_subbranches.push_back(c_bottom);
     }
     logger->debug3("Done splitting composite branches, now on to recon branches");
@@ -1542,7 +1636,7 @@ void ConsensusBuilder::average_and_split_alignments(Reconstruction * reconstruct
 /**
  * Split composite branch based on where alignment starts and ends
  **/
-CompositeBranchContainer * ConsensusBuilder::split_composite_branch(CompositeBranchContainer * branch, Match * match){
+CompositeBranchContainer * ConsensusBuilder::split_branch(CompositeBranchContainer * branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches){
     NeuronSegment * segment = branch->get_segment();
     vector<pair<int,int> > alignment = *(match->alignment);
     if (alignment[0].first == 0 && alignment.back().first == segment->markers.size()-1){
@@ -1558,27 +1652,70 @@ CompositeBranchContainer * ConsensusBuilder::split_composite_branch(CompositeBra
     CompositeBranchContainer * new_above, * target_branch;
     if (alignment[0].first > 0){
         CompositeBranchContainer * new_above = branch->split_branch(split_point1);
-        
+        resulting_branches.push_back(new_above);
+        logger->debug1("Split branch above start of alignment %p %p",new_above,new_above->get_segment());
         // Bin new segment above
         bin_branch(new_above);
     }
     if (alignment.back().first < segment->markers.size()-1){
+        logger->debug1("About to split branch above end of alignment %i %i",alignment.back().first, segment->markers.size());
         target_branch = branch->split_branch(split_point2);
+        resulting_branches.push_back(target_branch);
+        logger->debug1("Split branch above end of alignment %p %p",target_branch,target_branch->get_segment());
         
         // Bin new middle segment (or top segment if alignment starts at beginning of segment)
         bin_branch(target_branch);
     }else{
         target_branch = branch;
     }
+
     // Bin the new bottom-most branch
+    logger->debug("Rebinning original branch, now shorter");
     bin_branch(branch);
+    resulting_branches.push_back(branch);
+    
+    return target_branch;
+};
+BranchContainer * ConsensusBuilder::split_branch(BranchContainer * branch, Match * match, std::vector<BranchContainer *> &resulting_branches){
+    NeuronSegment * segment = branch->get_segment();
+    vector<pair<int,int> > alignment = *(match->alignment);
+    if (alignment[0].second == 0 && alignment.back().second == segment->markers.size()-1){
+        // Match captures all of the branch, so no need to split it
+        return branch;
+    }
+    
+    // Remove segment from registration bins
+    unbin_branch(branch);
+    
+    std::size_t const split_point1 = alignment[0].second;
+    std::size_t const split_point2 = alignment.back().second;
+    BranchContainer * new_above, * target_branch;
+    if (alignment[0].first > 0){
+        BranchContainer * new_above = branch->split_branch(split_point1);
+        resulting_branches.push_back(new_above);
+
+        // Bin new segment above
+        //bin_branch(new_above);
+    }
+    if (alignment.back().first < segment->markers.size()-1){
+        target_branch = branch->split_branch(split_point2);
+        resulting_branches.push_back(target_branch);
+        
+        // Bin new middle segment (or top segment if alignment starts at beginning of segment)
+        //bin_branch(target_branch);
+    }else{
+        target_branch = branch;
+    }
+    
+    resulting_branches.push_back(branch);
+    // Bin the new bottom-most branch
+    //bin_branch(branch);
     
     return target_branch;
 };
 
 /* Add missed branches to composite and update composite branch confidence_denominators */
 void ConsensusBuilder::incorporate_unassigned_branches(Reconstruction * reconstruction){
-    std::set<BranchContainer *> handled_branches;
     // First calculate summed confidence of reconstructions that have already gone
     logger->debug2("calculated summed confidence of reconstructions");
     double prev_summed_confidence = 0;
@@ -1586,52 +1723,67 @@ void ConsensusBuilder::incorporate_unassigned_branches(Reconstruction * reconstr
         prev_summed_confidence += prev_recon->get_confidence();
     }
     // Go through all branches in the list
-    logger->debug2("Go through all branches");
+    logger->debug2("Go through all unmatched reconstruction branches %i",unmatched_tree2_segments.size());
     //for (BranchContainer * branch : unmatched_branches.first){
-    for (NeuronSegment * b_seg : unmatched_tree2_segments){
+    while(!unmatched_tree2_segments.empty()){
+    //for (NeuronSegment * b_seg : unmatched_tree2_segments){
+        NeuronSegment * b_seg = *(unmatched_tree2_segments.begin());
+        logger->debug2("First segment %p",b_seg);
         BranchContainer * branch = reconstruction->get_branch_by_segment(b_seg);
-        // Some branches will be handled as children of previously handled branches, so we can skip them
-        logger->debug3("branch hasn't been dealt with? %d",(handled_branches.find(branch) != handled_branches.end()));
-        if (handled_branches.find(branch) != handled_branches.end()){
-            BranchContainer * prev_branch;
-            logger->debug3("init test branch and composite match %p %p",branch,branch->get_composite_match());
-            while (branch && !branch->get_composite_match()){
-                prev_branch = branch;
-                branch = branch->get_parent();
-                logger->debug3("test branch and composite match %p %p",branch,branch->get_composite_match());
+        logger->debug2("Its branch %p",branch);
+
+        BranchContainer * prev_branch;
+        logger->debug3("init test branch and composite match %p %p",branch,branch->get_composite_match());
+        // From the current branch, go up until finding where the subtree connects to the composite structure
+        while (branch && !branch->get_composite_match()){
+            prev_branch = branch;
+            branch = branch->get_parent();
+            logger->debug3("test branch %p",branch);
+            if (branch) logger->debug3("composite match %p",branch->get_composite_match());
+        }
+        // Hook prev_branch and its descendents onto branch's composite match
+        logger->debug3("Hook last_branch and its descendents onto branch's composite match");
+        std::stack<BranchContainer *> branch_stack;
+        branch_stack.push(prev_branch);
+        while (!branch_stack.empty()){
+            logger->debug4("TEST 0");
+            BranchContainer * orphan = branch_stack.top();
+            logger->debug4("TEST 0.1");
+            NeuronSegment * orphan_segment = orphan->get_segment();
+            branch_stack.pop();
+            logger->debug4("TEST 0.2 oprhan %p segment %p",orphan,orphan_segment);
+            
+            if (unmatched_tree2_segments.find(orphan_segment) == unmatched_tree2_segments.end()){
+                logger->debug4("Came to a branch that has been found (not an orphan)");
+                continue;
             }
-            // Hook last_branch and its descendents onto branch's composite match
-            logger->debug3("Hook last_branch and its descendents onto branch's composite match");
-            std::stack<BranchContainer *> branch_stack;
-            branch_stack.push(prev_branch);
-            while (!branch_stack.empty()){
-                BranchContainer * orphan = branch_stack.top();
-                branch_stack.pop();
-                handled_branches.insert(orphan);
-                
-                // Get parent of current reconstruction branch
-                BranchContainer * branch_parent = branch->get_parent();
-                CompositeBranchContainer * composite_parent = branch_parent->get_composite_match();
-                
-                // Copy segment and create composite branch out of it
-                NeuronSegment * composite_segment = copy_segment_markers(orphan->get_segment());
-                CompositeBranchContainer * composite_branch = new CompositeBranchContainer(composite_segment, composite);
-                //composite->add_branch(composite_branch); // Done when creating new CBC in ^
-                composite_branch->add_branch_miss(prev_summed_confidence);
-                
-                // Create links between branch and composite branch
-                composite_branch->add_branch_match(orphan, true);
-                orphan->set_composite_match(composite_branch);
-                
-                /* Now all connections are being generated after all branches are in place
-                // Set composite parent and create a connection
-                composite_branch->set_parent(composite_parent);
-                BranchEnd parent_end = composite_parent->is_segment_reversed() ? TOP : BOTTOM;
-                composite_branch->add_connection(TOP, composite_parent, parent_end, reconstruction, reconstruction->get_confidence());
-                 */
+            logger->debug4("TEST 1");
+            unmatched_tree2_segments.erase(orphan_segment);
+            
+            // Copy segment and create composite branch out of it
+            NeuronSegment * composite_segment = copy_segment_markers(orphan_segment);
+            logger->debug4("composite has %i segments",composite->get_segments().size());
+            CompositeBranchContainer * composite_branch = new CompositeBranchContainer(composite_segment, composite);
+            logger->debug4("added branch, composite has %i segments",composite->get_segments().size());
+            composite_branch->add_branch_miss(prev_summed_confidence);
+            logger->debug4("TEST 3");
+            
+            // Create links between branch and composite branch
+            composite_branch->add_branch_match(orphan, true);
+            orphan->set_composite_match(composite_branch);
+            logger->debug4("TEST 4");
+            
+            for (BranchContainer *child : branch->get_children()){
+                logger->debug4("TEST 4 child %p segment %p",child,child->get_segment());
+                if (unmatched_tree2_segments.find(child->get_segment()) != unmatched_tree2_segments.end())
+                    branch_stack.push(child);
             }
+            logger->debug4("TEST 5");
+            
         }
     }
+    
+    // For unmatched segments from the composite (tree1), mark each with a miss by the current reconstruction (tree2)
     logger->debug2("Get recon confidence");
     double recon_conf = reconstruction->get_confidence();
     logger->debug3("Add misses to increase denominator");
@@ -1645,19 +1797,23 @@ void ConsensusBuilder::incorporate_unassigned_branches(Reconstruction * reconstr
 void ConsensusBuilder::create_connections(Reconstruction * reconstruction){
     logger->debug("create_connections");
     // Go through all branches in the list
-    logger->debug2("Go through all branches");
+    logger->debug2("Go through all branches, num_segs %i",reconstruction->get_segments().size());
     //for (BranchContainer * branch : unmatched_branches.first){
     BranchContainer *r_branch, *r_parent;
     CompositeBranchContainer *c_branch, *c_parent;
     BranchEnd child_end, parent_end;
     for (NeuronSegment * b_seg : reconstruction->get_segments()){
+        logger->debug4("b_seg %p",b_seg);
         r_branch = reconstruction->get_branch_by_segment(b_seg);
+        logger->debug4("c_c 1");
         r_parent = r_branch->get_parent();
         
+        logger->debug4("c_c 2");
         c_branch = r_branch->get_composite_match();
         c_parent = nullptr;
         parent_end = BOTTOM;
         bool match_forward = c_branch->is_match_forward(r_branch);
+        logger->debug3("r_parent %p",r_parent);
         if (r_parent){
             c_parent = r_parent->get_composite_match();
             parent_end = match_forward ^ c_parent->is_segment_reversed() ? BOTTOM : TOP;
@@ -1742,3 +1898,521 @@ bool ConsensusBuilder::is_ready_to_run(){
 //    return ready_to_run;
     return builder_state >= RECONSTRUCTIONS_ADDED;
 };
+
+// Any two branches that come into close proximity to each other will each be split at their nearest point
+void ConsensusBuilder::split_proximal_branches(Reconstruction * reconstruction, float distance_threshold){
+    // Generate branch stack
+    std::stack<BranchContainer *> branch_stack;
+    std::vector<BranchContainer *> branch_vector;
+    branch_stack.push(reconstruction->get_root_branch());
+    while (!branch_stack.empty()){
+        BranchContainer * branch = branch_stack.top();
+        branch_stack.pop();
+        branch_vector.push_back(branch);
+        for (BranchContainer * child : branch->get_children()){
+            branch_stack.push(child);
+        }
+    }
+    
+    for (int i = 0; i < branch_vector.size(); i++){
+        BranchContainer * branch1 = branch_vector[i];
+        NeuronSegment * segment1 = branch1->get_segment();
+        std::set<BranchContainer *> b1_children = branch1->get_children();
+        for (int j = i+1; j < branch_vector.size(); j++){
+            BranchContainer * branch2 = branch_vector[j];
+            NeuronSegment * segment2 = branch2->get_segment();
+            std::set<BranchContainer *> b2_children = branch2->get_children();
+            
+            // Don't search for crossover if each branch is parent of the other
+            if(std::find(b1_children.begin(), b1_children.end(), branch2) == b1_children.end() &&
+               std::find(b2_children.begin(), b2_children.end(), branch1) == b2_children.end()) {
+                
+                MyMarker closest1, closest2;
+                double segments_distance = segments_perpendicular_distance(
+                                                                           *(segment1->markers.front()), *(segment1->markers.back()),
+                                                                           *(segment2->markers.front()), *(segment2->markers.back()),
+                                                                           closest1, closest2);
+                
+                if (segments_distance < distance_threshold){
+                    MyMarker * split_marker1, * split_marker2;
+                    
+                    // First check whether either of the closest points are end points
+                    bool closest1_is_end = false, closest2_is_end = false;
+                    if (closest1.x == segment1->markers.front()->x && closest1.y == segment1->markers.front()->y && closest1.z == segment1->markers.front()->z){
+                        closest1_is_end = true;
+                        split_marker1 = segment1->markers.front();
+                    }else if (closest1.x == segment1->markers.back()->x && closest1.y == segment1->markers.back()->y && closest1.z == segment1->markers.back()->z){
+                        closest1_is_end = true;
+                        split_marker1 = segment1->markers.back();
+                    }
+                    
+                    if (closest2.x == segment2->markers.front()->x && closest2.y == segment2->markers.front()->y && closest2.z == segment2->markers.front()->z){
+                        closest2_is_end = true;
+                        split_marker2 = segment2->markers.front();
+                    }else if (closest2.x == segment2->markers.back()->x && closest2.y == segment2->markers.back()->y && closest2.z == segment2->markers.back()->z){
+                        closest2_is_end = true;
+                        split_marker2 = segment2->markers.back();
+                    }
+                    
+                    // If nearest point in either case is not an end point, find the nearest marker and split the branch
+                    if (!closest1_is_end){
+                        // Find the marker on branch2 closest to closest2
+                        float nearest_distance = 10000000;
+                        for (MyMarker * marker2 : segment2->markers){
+                            float marker_dist = dist(*marker2,closest2);
+                            if (marker_dist < nearest_distance){
+                                split_marker2 = marker2;
+                                nearest_distance = marker_dist;
+                            }
+                        }
+                        // Check to make sure nearest marker wasn't an end point
+                        if (split_marker2 != segment2->markers.front() && split_marker2 != segment2->markers.back()){
+                            
+                            /* Split branch and segment */
+                            
+                            bool hit_split_point = false;
+                            std::vector<MyMarker *> markers = segment2->markers;
+                            NeuronSegment * new_segment = new NeuronSegment();
+                            BranchContainer * new_branch = new BranchContainer(branch2->get_reconstruction(), new_segment, nullptr, nullptr, branch2->get_confidence());
+                            for (BranchContainer * child : branch2->get_children()){
+                                new_branch->add_child(child); // Removes child from its former parent
+                            }
+                            branch2->add_child(new_branch);
+                            reconstruction->add_branch(new_branch);
+                            // Add new branch to the branch stack
+                            branch_vector.push_back(new_branch);
+                            
+                            int marker_index = 0;
+                            MyMarker * marker;
+                            do {
+                                marker = segment2->markers[marker_index++];
+                            } while (marker != split_marker2);
+                            new_segment->markers = std::vector<MyMarker *>(segment2->markers.begin() + marker_index, segment2->markers.end());
+                            segment2->markers.erase(segment2->markers.begin() + marker_index, segment2->markers.end());
+                            /*
+                             for (MyMarker * marker : markers){
+                             if (!hit_split_point){
+                             if (marker == split_marker2){
+                             hit_split_point = true;
+                             }
+                             }else{
+                             // Remove this marker from the current segment
+                             branch2->get_segment()->markers.erase(marker);
+                             
+                             // Add to the new segment
+                             new_segment->markers.push_back(marker);
+                             }
+                             }
+                             std::reverse(new_segment->markers.begin(),new_segment->markers.end());
+                             */
+                        }
+                    }
+                    if (!closest2_is_end){
+                        // Just need to find the marker on branch1 closest to closest1
+                        float nearest_distance = 10000000;
+                        for (MyMarker * marker1 : segment1->markers){
+                            float marker_dist = dist(*marker1,closest1);
+                            if (marker_dist < nearest_distance){
+                                split_marker1 = marker1;
+                                nearest_distance = marker_dist;
+                            }
+                        }
+                        // Check to make sure nearest marker wasn't an end point
+                        if (split_marker1 != segment1->markers.front() && split_marker1 != segment1->markers.back()){
+                            
+                            /* Split branch and segment */
+                            
+                            bool hit_split_point = false;
+                            NeuronSegment * new_segment = new NeuronSegment();
+                            BranchContainer * new_branch = new BranchContainer(branch1->get_reconstruction(), new_segment, nullptr, nullptr, branch1->get_confidence());
+                            for (BranchContainer * child : branch1->get_children()){
+                                new_branch->add_child(child); // Removes child from its former parent
+                            }
+                            branch2->add_child(new_branch);
+                            reconstruction->add_branch(new_branch);
+                            // Add new branch to the branch stack
+                            branch_vector.push_back(new_branch);
+                            
+                            int marker_index = 0;
+                            MyMarker * marker;
+                            do {
+                                marker = segment1->markers[marker_index++];
+                            } while (marker != split_marker1);
+                            new_segment->markers = std::vector<MyMarker *>(segment1->markers.begin() + marker_index, segment1->markers.end());
+                            segment1->markers.erase(segment1->markers.begin() + marker_index, segment1->markers.end());
+                            /*
+                             
+                             for (MyMarker * marker : markers){
+                             if (!hit_split_point){
+                             if (marker == split_marker1){
+                             hit_split_point = true;
+                             }
+                             }else{
+                             // Remove this marker from the current segment
+                             branch1->get_segment()->markers.erase(marker);
+                             
+                             // Add to the new segment
+                             new_segment->markers.push_back(marker);
+                             }
+                             }
+                             std::reverse(new_segment->markers.begin(),new_segment->markers.end());
+                             */
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+// Any branch that curves sufficiently (min distance from swc node to line segment between end points > threshold)
+// will be split at the local maximum.
+void ConsensusBuilder::split_curved_branches(Reconstruction * reconstruction, float curve_distance_threshold){
+    std::stack<BranchContainer *> branch_stack;
+    branch_stack.push(reconstruction->get_root_branch());
+    //    printf("SCB Test1\n");
+    while (!branch_stack.empty()){
+        BranchContainer * branch = branch_stack.top();
+        NeuronSegment * branch_seg = branch->get_segment();
+        branch_stack.pop();
+        
+        //        printf("SCB Test2 %p %p\n",branch,branch->get_segment());
+        //        printf("SCB Test2.0 %i\n",branch->get_segment()->markers.size());
+        bool split = false;
+        // Branch must have at least 3 markers
+        if (branch->get_segment()->markers.size() > 2){
+            // Get ends of segment
+            MyMarker * tip = branch_seg->markers.back();
+            MyMarker * tail = branch_seg->markers.front();
+            
+            // Follow curve
+            double last_dist = 0;
+            std::vector<MyMarker *> markers = branch_seg->markers;
+            std::reverse(markers.begin(), markers.end());
+            //            printf("SCB Test2.1\n");
+            int split_index = -1;
+            for (int index = 0; index < markers.size() && split_index == -1; index++){
+                MyMarker * marker = markers[index];
+                // Calculate shortest distance from curve point to line segment between branch ends
+                //                printf("SCB Test2.2\n");
+                MyMarker closest_on_line;
+                double curr_dist = point_segment_distance(*tip, *tail, *marker, closest_on_line);
+                //                printf("SCB Test2.3\n");
+                
+                // If the previous distance was the local maximum and was greater than threshold
+                if (last_dist > curve_distance_threshold && last_dist > curr_dist){
+                    split_index = index;
+                }
+                
+            }
+            //            printf("SCB Test3\n");
+            
+            if (split_index != -1){
+                // Split segment at the current marker
+                NeuronSegment * new_segment = new NeuronSegment();
+                BranchContainer * new_branch = new BranchContainer(branch->get_reconstruction(), new_segment, branch, nullptr, branch->get_confidence());
+                std::set<BranchContainer *> children = branch->get_children();
+                for (BranchContainer * child : children){
+                    new_branch->add_child(child); // Removes child from its former parent
+                }
+                reconstruction->add_branch(new_branch);
+                
+                // Add the new branch back to the stack
+                branch_stack.push(new_branch);
+                
+                // Move markers from old to new segment
+                new_segment->markers = std::vector<MyMarker *>(branch_seg->markers.begin() + split_index, branch_seg->markers.end());
+                branch_seg->markers.erase(branch_seg->markers.begin() + split_index, branch_seg->markers.end());
+            }
+        }
+        //        printf("SCB Test4\n");
+        
+        if (split == -1){
+            // Add children to be split in subsequent iterations
+            for (BranchContainer * child : branch->get_children()){
+                branch_stack.push(child);
+            }
+        }
+    }
+};
+
+double point_segment_distance(MyMarker s1, MyMarker s2, MyMarker p, MyMarker &closest_on_line){
+    float p_diff_x = p.x - s1.x; //A
+    float p_diff_y = p.y - s1.y; //B
+    float p_diff_z = p.z - s1.z;
+    
+    float s_diff_x = s2.x - s1.x; //C
+    float s_diff_y = s2.y - s1.y; //D
+    float s_diff_z = s2.z - s1.z; //D
+    
+    float dot = p_diff_x * s_diff_x + p_diff_y * s_diff_y + p_diff_z * s_diff_z;
+    float len_sq = s_diff_x * s_diff_x + s_diff_y * s_diff_y + s_diff_z * s_diff_z;
+    float param = dot / len_sq;
+    
+    float xx,yy,zz;
+    
+    if(param < 0){
+        xx = s1.x;
+        yy = s1.y;
+        zz = s1.z;
+    }
+    else if(param > 1){
+        xx = s2.x;
+        yy = s2.y;
+        zz = s2.z;
+    } else {
+        xx = s1.x + param * s_diff_x;
+        yy = s1.y + param * s_diff_y;
+        zz = s1.z + param * s_diff_z;
+    }
+    closest_on_line.x = xx;
+    closest_on_line.y = yy;
+    closest_on_line.z = zz;
+    
+    //float dist = d(x,y,xx,yy);
+    double point_dist = dist(p,closest_on_line);
+    return point_dist;
+};
+
+double segments_perpendicular_distance(MyMarker l11, MyMarker l12, MyMarker l21, MyMarker l22, MyMarker &closest1, MyMarker &closest2){
+    // Calculate direction vectors for each segment
+    MyMarker l1_dir(l12.x-l11.x,l12.y-l11.y,l12.z-l11.z);
+    MyMarker l2_dir(l22.x-l21.x,l22.y-l21.y,l22.z-l21.z);
+    
+    // Calculate the cross product of the direction vectors
+    MyMarker cross_prod(l1_dir.y * l2_dir.z - l1_dir.z * l2_dir.y,
+                        l1_dir.z * l2_dir.x - l1_dir.x * l2_dir.z,
+                        l1_dir.x * l2_dir.y - l1_dir.y * l2_dir.x);
+    double magnitude = sqrt((double)cross_prod.x*cross_prod.x + cross_prod.y*cross_prod.y + cross_prod.z*cross_prod.z);
+    // Calculate the normalized cross product
+    MyMarker cp_unit(cross_prod.x/magnitude, cross_prod.y/magnitude, cross_prod.z/magnitude);
+    
+    // Find points P and Q, the points at which segments 1 and 2 are closest
+    // P is given by (l1_dir.x * t + l11.x, l1_dir.y * t + l11.y, l1_dir.z * t + l11.z)
+    // Q is given by (l2_dir.x * s + l21.x, l2_dir.y * s + l21.y, l2_dir.z * s + l21.z)
+    //  vector Q-P x l1_dir = 0 and vector Q-P x l2_dir = 0
+    MyMarker point_vect(l11.x-l21.x,l11.y-l21.y,l11.z-l21.z);
+    double s1 = l2_dir.x * l1_dir.x + l2_dir.y * l1_dir.y + l2_dir.z * l1_dir.z;
+    double t1 = -l1_dir.x * l1_dir.x - l1_dir.y * l1_dir.y - l1_dir.z * l1_dir.z;
+    double const1 = - (point_vect.x * l1_dir.x + point_vect.y * l1_dir.y + point_vect.z * l1_dir.z);
+    double s2 = l2_dir.x * l2_dir.x + l2_dir.y * l2_dir.y + l2_dir.z * l2_dir.z;
+    double t2 = -l1_dir.x * l2_dir.x - l1_dir.y * l2_dir.y - l1_dir.z * l2_dir.z;
+    double const2 = -(point_vect.x * l2_dir.x + point_vect.y * l2_dir.y + point_vect.z * l2_dir.z);
+    
+    // Systems of equations = matrix [s1, t1], solve for t and s
+    //                               [s2, t2]
+    double determinant = 1 / (s1*t2 - t1*s2);
+    // Inverse matrix is det * [ t2, -t1]
+    //                         [-s2,  s1]
+    double s = t2*const1 - t1*const2;
+    double t = -s2*const1 + s1*const2;
+    
+    // In order for P and Q to be on the segments, t and s must be between 0 and 1
+    if (s > 0 && t > 0 && s < 1 && t < 1){
+        closest1.x = l11.x + l1_dir.x * t;
+        closest1.y = l11.y + l1_dir.y * t;
+        closest1.z = l11.z + l1_dir.z * t;
+        closest2.x = l21.x + l2_dir.x * s;
+        closest2.y = l21.y + l2_dir.y * s;
+        closest2.z = l21.z + l2_dir.z * s;
+        return point_vect.x * cp_unit.x + point_vect.y * cp_unit.y + point_vect.z * cp_unit.z;
+    } else {
+        // Calculate distance from either tip to the other segment
+        MyMarker close1, close2, close3, close4;
+        double dist1 = point_segment_distance(l11,l12,l21,close1);
+        double dist2 = point_segment_distance(l11,l12,l22,close2);
+        double dist3 = point_segment_distance(l21,l22,l11,close3);
+        double dist4 = point_segment_distance(l21,l22,l12,close4);
+        if (dist1 < dist2 && dist1 < dist3 && dist1 < dist4){
+            closest1 = close1;
+            closest2 = l21;
+        }else if (dist2 < dist1 && dist2 < dist3 && dist2 < dist4){
+            closest1 = close2;
+            closest2 = l22;
+        }else if (dist3 < dist1 && dist3 < dist2 && dist3 < dist4){
+            closest1 = l11;
+            closest2 = close3;
+        }else{
+            closest1 = l12;
+            closest2 = close4;
+        }
+        return std::min(dist1,std::min(dist2,std::min(dist3,dist4)));
+    }
+    //    return -1;
+    
+    // With t and s we can get P and Q and determine if each are on the line segments
+    //MyMarker P(l1_dir.x * t + l11.x, l1_dir.y * t + l11.y, l1_dir.z * t + l11.z);
+    //MyMarker Q(l2_dir.x * s + l21.x, l2_dir.y * t + l21.y, l2_dir.z * t + l21.z);
+};
+
+/**
+ * Tree vectors are expected to be ordered such that a branch always comes after all of its children, with the root at the back
+ * Weights are positive, neuron_tree_align maximizing the total score
+ **/
+double ConsensusBuilder::neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, vector<double> & w, vector<pair<int, int> > & result)
+{
+    // Indices of branches, sets giving branch merges with a child, sets 1ll<<child_num1 and 1ll<<child_num2 giving max score for pair
+    // weights gives scores for a branch pair and each branch's possible merge with one of its children
+    map<SetIndexPair, double> weights;
+    // results contains a vector of branch index pairs giving all aligned branch pairs
+    map<SetIndexPair, vector<pair<int, int> > >  results;
+    
+    int nrows = tree1.size();
+    int ncols = tree2.size();
+    
+    //    printf("nrows %i, ncols %i\n",nrows,ncols);
+    
+    map<NeuronSegment*, long> ind_map1, ind_map2;
+    for(long ind1 = 0; ind1 < tree1.size(); ind1++) ind_map1[tree1[ind1]] = ind1;
+    for(long ind2 = 0; ind2 < tree2.size(); ind2++) ind_map2[tree2[ind2]] = ind2;
+    
+    for(long ind1 = 0; ind1 < tree1.size(); ind1++)
+    {
+        printf("neuron_tree_align tree ind1 %i\n",ind1);
+        NeuronSegment * node1 = tree1[ind1];
+        int child_num1 = node1->child_list.size();
+        for(long ind2 = 0; ind2 < tree2.size(); ind2++)
+        {
+            NeuronSegment * node2 = tree2[ind2];
+            int child_num2 = node2->child_list.size();
+            
+            //            printf("Node1 childlist size %i, node2 childlist size %i, weight %f\n",child_num1,child_num2, w[ind1 * ncols + ind2]);
+            
+            SetIndexPair sip;
+            sip.ind1 = ind1;
+            sip.ind2 = ind2;
+            
+            // Compare all the subset align
+            // Each set gives a combination of the branch of ind1 with one of its children, position 0 giving the branch alone without its children
+            for(long set1 = 0; set1 < (1ll<<child_num1); set1++)
+            {
+                sip.set1 = set1;
+                vector<int> set1_bits; // all bits index of set1 with value 1
+                // Determines which children are available for matching for the current set
+                // set = 1 -> child 0; set = 2 -> child 1; set = 3 -> children 0 and 1
+                for(int b = 0; b < child_num1; b++) if(set1 & (1ll << b)) set1_bits.push_back(b);
+                
+                for(long set2 = 0; set2 < (1ll<<child_num2); set2++)
+                {
+                    sip.set2 = set2;
+                    vector<int> set2_bits; // all bits index of set2 with value 1
+                    for(int b = 0; b < child_num2; b++) if(set2 & (1ll << b)) set2_bits.push_back(b);
+                    
+                    if(set1 == 0 && set2 == 0)
+                    {
+                        weights[sip] = 0.0;
+                        results[sip] = vector<pair<int, int> >();
+                        continue;
+                    }
+                    
+                    double max_val = 0.0;
+                    SetIndexPair max_sip1, max_sip2;
+                    
+                    // When set1 == 0 but set2 > 0 max_sip1 and max_sip2 will be default initialized: ind1=0, ind2=0, set1=0, set2=0
+                    //      weights will have a value of 0 (zero-initialized), results will have empty vector of pair<int,int>
+                    // When set1 > 0 and set2 == 0, _sip1 gets set, but nothing else happens in terms of max_val, max_sip1, and max_sip2 - same as above
+                    //      But then why run this if either set1 or set2 are 0? Seems like wasted operations.
+                    
+                    // Picking best assignment of children via looking at all possible assignments
+                    // first item
+                    for(long i = 0; i < set1_bits.size(); i++)
+                    {
+                        // The bit gives which child to take;
+                        // Set=0: no children, Set=1: child 0, Set=2: child 1, Set=3 (if >1 children): children 0 and 1
+                        long b1 = set1_bits[i];
+                        SetIndexPair _sip1; // Match
+                        _sip1.ind1 = ind1;
+                        // For set in 1,2 returns 0, if set=3 gets the inverse set number associated with the bit (0:1->2, 1:2->1)
+                        // Ex: Set=1: 01 & ~01 = 01&10 = 0;
+                        // Ex: Set=3, b1 = 0: 11 & ~01 = 11 & 10 = 2 (b1 assoc set=1, get set=2)
+                        // Ex: Set=3, b1 = 1: 11 & ~10 = 11 & 01 = 1 (b1 assoc set=2, get set=1)
+                        _sip1.set1 = set1 & (~(1ll<<b1));
+                        _sip1.ind2 = ind2;
+                        
+                        for(long j = 0; j < set2_bits.size(); j++)
+                        {
+                            long b2 = set2_bits[j];
+                            _sip1.set2 = set2 & (~(1ll<<b2));        // clear bit j
+                            
+                            SetIndexPair _sip2;                   // A - {a_i}, B - {b_j}
+                            _sip2.ind1 = ind_map1[node1->child_list[b1]];                   // the index of  C(a_i)
+                            _sip2.ind2 = ind_map2[node2->child_list[b2]];                   // the index of  C(a_i)
+                            _sip2.set1 = 1ll << tree1[_sip2.ind1]->child_list.size();
+                            _sip2.set2 = 1ll << tree2[_sip2.ind2]->child_list.size();
+                            // weights[_sip1] is 0 if set is 1 or 2;
+                            // If set is 3, weights[_sip1] gives weight of opposite child pair match, weights[_sip2] of previous set iteration
+                            double val = weights[_sip1] + weights[_sip2];
+                            if(val > max_val)
+                            {
+                                max_val = val;
+                                max_sip1 = _sip1;
+                                max_sip2 = _sip2;
+                            }
+                        }
+                    }
+                    
+                    weights[sip] = max_val;
+                    results[sip].insert(results[sip].begin(), results[max_sip1].begin(), results[max_sip1].end());
+                    results[sip].insert(results[sip].begin(), results[max_sip2].begin(), results[max_sip2].end());
+                }
+            }
+            /* calcute wTT - Here is where joining of parent and child segments is made possible */
+            {
+                // For storing the optimal match case with set values above those from previous section
+                sip.set1 = 1ll << child_num1;
+                sip.set2 = 1ll << child_num2;
+                double max_val = -1.0;
+                SetIndexPair max_sip;
+                // wTT rule 3: initialize max_sip with the last/optimal set from previous child matching section
+                max_sip.ind1 = ind1;
+                max_sip.ind2 = ind2;
+                max_sip.set1 = (1ll << child_num1) - 1;
+                max_sip.set2 = (1ll << child_num2) - 1;
+                max_val = weights[max_sip];
+                // wTT rule 1 - See if best match of node1's children with node 2 is better than child matchings
+                for(int ai = 0; ai < child_num1; ai++)
+                {
+                    SetIndexPair _sip;
+                    _sip.ind1 = ind_map1[node1->child_list[ai]];
+                    _sip.set1 = 1ll << tree1[_sip.ind1]->child_list.size();
+                    _sip.ind2 = ind2;
+                    _sip.set2 = 1ll << tree2[_sip.ind2]->child_list.size();
+                    double val = weights[_sip];
+                    if(val > max_val)
+                    {
+                        max_val = val;
+                        max_sip = _sip;
+                    }
+                }
+                // wTT rule 2 - See if best match of node2's children with node 1 is better than prev matchings
+                for(int bj = 0; bj < child_num2; bj++)
+                {
+                    SetIndexPair _sip;
+                    _sip.ind1 = ind1;
+                    _sip.set1 = 1ll << tree1[_sip.ind1]->child_list.size();
+                    _sip.ind2 = ind_map2[node2->child_list[bj]];
+                    _sip.set2 = 1ll << tree2[_sip.ind2]->child_list.size();
+                    double val = weights[_sip];
+                    if(val > max_val)
+                    {
+                        max_val = val;
+                        max_sip = _sip;
+                    }
+                }
+                
+                // Weight of segment 1 and segment 2 + weight of child connections
+                weights[sip] = w[ind1 * ncols + ind2] + max_val;
+                results[sip] = results[max_sip];
+                results[sip].push_back(pair<long, long>(ind1, ind2));
+            }
+        }
+    }
+    SetIndexPair root_sip;
+    root_sip.ind1 = tree1.size() - 1;
+    root_sip.ind2 = tree2.size() - 1;
+    root_sip.set1 = 1ll << tree1[root_sip.ind1]->child_list.size();
+    root_sip.set2 = 1ll << tree2[root_sip.ind2]->child_list.size();
+    result = results[root_sip];
+    return weights[root_sip];
+};
+

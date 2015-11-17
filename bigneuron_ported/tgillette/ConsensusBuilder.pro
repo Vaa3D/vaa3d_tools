@@ -11,16 +11,14 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/
 #HEADERS += consensusbuilder_plugin.h
 #SOURCES += consensusbuilder_plugin.cpp
 
-HEADERS = Poll.h
-HEADERS += Reconstruction.h
+HEADERS = Reconstruction.h
 HEADERS += Composite.h
 HEADERS += ActionHook.h
 HEADERS += ConsensusBuilder.h
 HEADERS += logger.h
 HEADERS += align.h
 
-SOURCES = Poll.cpp
-SOURCES += Reconstruction.cpp
+SOURCES = Reconstruction.cpp
 SOURCES += Composite.cpp
 SOURCES += ActionHook.cpp
 SOURCES += ConsensusBuilder.cpp

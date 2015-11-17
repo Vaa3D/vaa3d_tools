@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <math.h>
 #include <iostream>
 #include <stack>
 #include <vector>
@@ -47,7 +48,8 @@ int main(int argc, char* argv[]){
     
 
     printf("Building consensus\n");
-    NeuronSegment * consensus_root = builder.build_consensus();
+    NeuronSegment * consensus_root = builder.build_consensus(0); // Testing with 0 threshold
+    //NeuronSegment * consensus_root = builder.build_consensus();
     
     if (consensus_root){
         // Make vector of MyMarker*, each pointing to its parent (#TODO: move into ConsensusBuilder, take care of MyMarker pointers inside as well)
@@ -56,7 +58,7 @@ int main(int argc, char* argv[]){
         segment_stack.push(consensus_root);
         MyMarker * prev_marker = nullptr;
         std::map<NeuronSegment*,NeuronSegment*> parent_map;
-        printf("Generating final consensus for writing to swc\n");
+        printf("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
         while (!segment_stack.empty()){
             NeuronSegment * segment = segment_stack.top();
             segment_stack.pop();
@@ -65,14 +67,19 @@ int main(int argc, char* argv[]){
                 prev_marker = parent_map[segment]->markers[0];
             }
             //for (MyMarker * marker : segment->markers){
-            for (std::vector<MyMarker *>::reverse_iterator rit = segment->markers.rbegin();
-                 rit != segment->markers.rend(); ++rit){
-                MyMarker * marker = *rit;
+            //for (std::vector<MyMarker *>::reverse_iterator rit = segment->markers.rbegin(); rit != segment->markers.rend(); ++rit){
+                //MyMarker * marker = *rit;
+            for (std::vector<MyMarker *>::iterator it = segment->markers.begin(); it != segment->markers.end(); ++it){
+                MyMarker * marker = *it;
                 marker->parent = prev_marker;
                 prev_marker = marker;
                 map_swc.push_back(marker);
+                marker->x = floor(marker->x*1000 + 0.5)/1000;
+                marker->y = floor(marker->y*1000 + 0.5)/1000;
+                marker->z = floor(marker->z*1000 + 0.5)/1000;
             }
             for (NeuronSegment * child : segment->child_list){
+                printf("in main, there is a child\n");
                 segment_stack.push(child);
                 parent_map[child] = segment;
             }
@@ -85,6 +92,7 @@ int main(int argc, char* argv[]){
     }else{
         printf("ConsensusBuilder not ready, see previous messages for reason\n");
     }
+    
     return 0;
 }
 

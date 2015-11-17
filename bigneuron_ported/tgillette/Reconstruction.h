@@ -115,9 +115,6 @@ public:
     void set_tree(NeuronSegment * tree);
     void set_confidence(double confidence);
     
-    void split_proximal_branches(float distance_threshold = 2);
-    void split_curved_branches(float curve_distance_threshold = 3); // Default threshold is 3 microns
-    
     string get_name();
     NeuronSegment * get_tree();
     std::set<NeuronSegment *> get_segments();

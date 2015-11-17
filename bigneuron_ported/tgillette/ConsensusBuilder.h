@@ -132,7 +132,9 @@ class ConsensusBuilder{
     /*** Subroutines of build_composite ***/
     
     void preprocess_reconstructions();
-
+    void split_proximal_branches(Reconstruction * reconstruction, float distance_threshold = 2);
+    void split_curved_branches(Reconstruction * reconstruction, float curve_distance_threshold = 3); // Default threshold is 3 microns
+    
     /**
      *  Create weighted average for matches
      *  Find locations to split on either merged segment (when segments.size() > 1)
@@ -214,7 +216,7 @@ public:
     /*
     CompositeBranchContainer * split_composite_branch(BranchContainer * splitting_branch, CompositeBranchContainer * branch, NeuronSegment * top_segment);
      */
-    CompositeBranchContainer * split_composite_branch(CompositeBranchContainer * branch, Match * match);
-    CompositeBranchContainer * split_composite_branch(CompositeBranchContainer * branch, std::size_t const split_point);
+    CompositeBranchContainer * split_branch(CompositeBranchContainer * branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches);
+    BranchContainer * split_branch(BranchContainer * branch, Match * match, std::vector<BranchContainer *> &resulting_branches);
     void split_branch_matches(BranchContainer * splitting_branch, CompositeBranchContainer * branch, CompositeBranchContainer * child);
 };
