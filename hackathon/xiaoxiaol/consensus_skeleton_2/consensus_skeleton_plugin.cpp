@@ -56,7 +56,11 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     {
         average_node_position_func(input, output);
     }
-	else if (func_name == tr("help"))
+    if (func_name == tr("vote_map"))
+    {
+        vote_map_func(input, output, callback);
+    }
+    else
 	{
 		printHelp();
 	}

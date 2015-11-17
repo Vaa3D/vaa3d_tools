@@ -68,8 +68,86 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 		v3d_msg("Unable to save file");
 		return -1;
 	}
-
+    v3d_msg("Consensus swc is saved into: " + fileSaveName + "\n");
 	return 1;
+}
+
+bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+
+    if(input.size()==0 || output.size() != 1) return true;
+    char * paras = NULL;
+
+    //parsing input
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+
+    vector<NeuronTree> nt_list;
+    QStringList nameList;
+    QString qs_linker;
+    char * dfile_result = NULL;
+    V3DLONG neuronNum = 0;
+
+    for (int i=0;i<inlist->size();i++)
+    {
+        qs_linker = QString(inlist->at(i));
+        if (qs_linker.toUpper().endsWith(".ANO"))
+        {
+            cout<<"(0). reading a linker file."<<endl;
+            P_ObjectFileType linker_object;
+            if (!loadAnoFile(qs_linker,linker_object))
+            {
+                fprintf(stderr,"Error in reading the linker file.\n");
+                return 1;
+            }
+            nameList = linker_object.swc_file_list;
+            neuronNum += nameList.size();
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                NeuronTree tmp = readSWC_file(nameList.at(i));
+                nt_list.push_back(tmp);
+            }
+        }
+        else if (qs_linker.toUpper().endsWith(".SWC"))
+        {
+            cout<<"(0). reading an swc file"<<endl;
+            NeuronTree tmp = readSWC_file(qs_linker);
+            nt_list.push_back(tmp);
+            neuronNum++;
+            if (outlist->size()==0)
+            {
+                cerr<<"You must specify outfile name if you input a list of swcs"<<endl;
+                return false;
+            }
+        }
+    }
+
+    QString outfileName;
+    if (outlist->size()==0)
+        outfileName = qs_linker + "_vote_map.v3draw";
+    else
+        outfileName = QString(outlist->at(0));
+
+
+    if (!vote_map(nt_list,outfileName, callback))
+    {
+        cerr<<"error in consensus_skeleton"<<endl;
+        return false;
+    }
+
 }
 
 bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
@@ -176,7 +254,7 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
     //parsing input
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
-    if (inlist->size()==0)
+    if (inlist->size() == 0)
     {
         cerr<<"You must specify input linker or swc files"<<endl;
         return false;
@@ -359,7 +437,8 @@ int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
         NeuronTree tmp = readSWC_file(nameList.at(i));
         nt_list.push_back(tmp);
         avg_node_num += tmp.listNeuron.size();
-        if (tmp.listNeuron.size()>max_node_num) max_node_num = tmp.listNeuron.size();
+        if (tmp.listNeuron.size() > max_node_num)
+            max_node_num = tmp.listNeuron.size();
     }
     avg_node_num /= neuronNum;
 
@@ -474,7 +553,16 @@ void printHelp()
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
     cout<<"\t-p <method_code>:  graphy connection method, given the nodes extracted from the confidence map. 1(default): by edge voting  0: minimum spanning tree connection" <<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
-	cout<<"\t                     default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
+    cout<<"\t                   default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
     cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc\n"<<endl;
+
+    cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f vote_map -i <input> -o <output_image_file> "<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  vote_map"<<endl;
+    cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
+    cout<<"\t-o <output_image_file>:  output image file name."<<endl;
+    cout<<"Example: v3d -x consensus_swc -f vote_map -i mylinker.ano -o vote_map.v3draw\n"<<endl;
+
 }
 
