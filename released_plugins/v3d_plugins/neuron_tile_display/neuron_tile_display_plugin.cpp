@@ -15,9 +15,10 @@ QStringList neuron_tile_display::menulist() const
 	return QStringList() 
 		<<tr("neuron_tile_display")
         <<tr("neuron_tile_XY")
-        <<tr("tile_multi_windows (swc files selected)")
-        <<tr("tile_multi_windows (swc files under one folder)")
-		<<tr("about");
+        <<tr("tile_multi_windows (swc and image files selected)")
+        <<tr("tile_multi_windows (swc and image files under one folder)")
+        <<tr("set configuration (tile_multi_windows options only)")
+        <<tr("about");
 }
 
 QStringList neuron_tile_display::funclist() const
@@ -37,6 +38,8 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
         imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
     else if (method_code ==2)
         imgSuffix<<"*.marker";
+    else if (method_code ==3)
+        imgSuffix<<"*.raw"<<"*.v3draw"<<"*.v3dpbd"<<"*.tif"<<"*.RAW"<<"*.V3DRAW"<<"*.TIF"<<"*.V3DPBD";
 
     QDir dir(curFilePath);
     if (!dir.exists())
@@ -65,122 +68,168 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     {
         doxytile(callback, parent);
     }
-    else if (menu_name == tr("tile_multi_windows (swc files selected)"))
+    else if (menu_name == tr("tile_multi_windows (swc and image files selected)"))
     {
-        QStringList swcList;
-        swcList = QFileDialog::getOpenFileNames(0, QObject::tr("Open File"),
+        QStringList fileList;
+        fileList = QFileDialog::getOpenFileNames(0, QObject::tr("Open File"),
                 "",
-                QObject::tr("Supported file (*.swc *.eswc)"
-                    ";;Neuron structure	(*.swc)"
-                    ";;Extended neuron structure (*.eswc)"
+                QObject::tr("Supported file (*.swc *.eswc *.raw *.v3draw *.v3dpbd *.tif)"
                     ));
-        if(swcList.isEmpty())
+        if(fileList.isEmpty())
             return;
 
-        bool ok1, ok2, ok3, ok4;
         unsigned int col=1, row=1, xRez=1, yRez=1;
-        col = QInputDialog::getInteger(parent, "",
-                                      "number of displayed windows per row:",
-                                      1, 1, 1000, 1, &ok1);
 
-        if(ok1)
-        {
-            row = QInputDialog::getInteger(parent, "",
-                                          "display from column:",
-                                          1, 1, col, 1, &ok2);
-        }
-        else
-            return;
+        QSettings settings("HHMI", "Vaa3D");
 
-        if(ok2)
-        {
-            xRez = QInputDialog::getInteger(parent, " ",
-                                          "offset X:",
-                                          1, 1, 10000, 1, &ok3);
-        }
-        else
-            return;
-
-        if(ok3)
-        {
-            yRez = QInputDialog::getInteger(parent, " ",
-                                          "offset Y:",
-                                          1, 1, 10000, 1, &ok4);
-        }
-        else
-            return;
-
+        col = settings.value("multi_windows_col").toInt(); if(col<1) col = 1;
+        row = settings.value("multi_windows_row").toInt(); if(row<1) row = 1;
+        xRez = settings.value("multi_windows_xRez").toInt();if(xRez<1) xRez = 1;
+        yRez = settings.value("multi_windows_yRez").toInt();if(yRez<1) yRez = 1;
 
         V3dR_MainWindow * new3DWindow = NULL;
         int offsety = -1;
-        for(V3DLONG i = 0; i < swcList.size(); i++)
-        {
-            QString curPathSWC = swcList.at(i);
-            new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
-            if( (i%col)*xRez ==0)
-                offsety++;
-            callback.moveWindow(new3DWindow,(i%col+row-1)*xRez,offsety*yRez);
-            callback.resizeWindow(new3DWindow,xRez,yRez);
-           // v3d_msg(QString("offsetx: %1, offsety:%2").arg((i%col+row-1)*xRez).arg(offsety*yRez));
+        for(V3DLONG i = 0; i < fileList.size(); i++)
+        {           
+            QString curPathFile = fileList.at(i);
+            QFileInfo curfile_info(curPathFile);
+            QString cur_suffix = curfile_info.suffix().toUpper();
+            if ( (cur_suffix=="LSM") ||
+                    (cur_suffix=="TIF") ||
+                    (cur_suffix=="TIFF") ||
+                    (cur_suffix=="RAW") ||
+                    (cur_suffix=="V3DRAW") ||
+                    (cur_suffix=="VAA3DRAW") ||
+                    (cur_suffix=="RAW5") ||
+                    (cur_suffix=="V3DRAW5") ||
+                    (cur_suffix=="VAA3DRAW5") ||
+                    (cur_suffix=="MRC") ||
+                    (cur_suffix=="V3DPBD") ||
+                    (cur_suffix=="NRRD") ||
+                    (cur_suffix=="NHDR") ||
+                    (cur_suffix=="VAA3DPBD") ||
+                    (cur_suffix=="MP4") ||
+                    (cur_suffix=="H5J"))
+            {
+                 char * inimg_file  = &curPathFile.toStdString()[0];
+                 Image4DSimple* p4DImage = callback.loadImage(inimg_file);
+                 v3dhandle newwin = callback.newImageWindow();
+                 callback.setImage(newwin, p4DImage);
+                 callback.setImageName(newwin,curPathFile);
+                 callback.updateImageWindow(newwin);
+                 callback.open3DWindow(newwin);
+            }
+            else if (cur_suffix=="SWC" ||
+                     cur_suffix=="ESWC")
+            {
+                new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathFile);
+
+            }
+
+            QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
+            for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
+            {
+                if( (i%col)*xRez ==0)
+                    offsety++;
+                callback.moveWindow(cur_list_3dviewer.at(i),(i%col+row-1)*xRez,offsety*yRez);
+                callback.resizeWindow(cur_list_3dviewer.at(i),xRez,yRez);
+            }
         }
 
     }
-    else if (menu_name == tr("tile_multi_windows (swc files under one folder)"))
+    else if (menu_name == tr("tile_multi_windows (swc and image files under one folder)"))
     {
         QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
                                                                       QDir::currentPath(),
                                                                       QFileDialog::ShowDirsOnly);
 
 
-        bool ok1, ok2, ok3, ok4;
         unsigned int col=1, row=1, xRez=1, yRez=1;
-        col = QInputDialog::getInteger(parent, "",
-                                      "number of displayed windows per row:",
-                                      1, 1, 1000, 1, &ok1);
+        QSettings settings("HHMI", "Vaa3D");
 
-        if(ok1)
-        {
-            row = QInputDialog::getInteger(parent, "",
-                                          "display from column:",
-                                          1, 1, col, 1, &ok2);
-        }
-        else
-            return;
+        col = settings.value("multi_windows_col").toInt(); if(col<1) col = 1;
+        row = settings.value("multi_windows_row").toInt(); if(row<1) row = 1;
+        xRez = settings.value("multi_windows_xRez").toInt();if(xRez<1) xRez = 1;
+        yRez = settings.value("multi_windows_yRez").toInt();if(yRez<1) yRez = 1;
 
-        if(ok2)
-        {
-            xRez = QInputDialog::getInteger(parent, " ",
-                                          "offset X:",
-                                          1, 1, 10000, 1, &ok3);
-        }
-        else
-            return;
-
-        if(ok3)
-        {
-            yRez = QInputDialog::getInteger(parent, " ",
-                                          "offset Y:",
-                                          1, 1, 10000, 1, &ok4);
-        }
-        else
-            return;
         QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1);
+        QStringList imagelist = importFileList_addnumbersort(m_InputfolderName, 3);
 
+        for(V3DLONG i=0; i < imagelist.size(); i++)
+        {
+            QString curPathIMAGE = imagelist.at(i);
+            char * inimg_file  = &curPathIMAGE.toStdString()[0];
+            Image4DSimple* p4DImage = callback.loadImage(inimg_file);
+            v3dhandle newwin = callback.newImageWindow();
+            callback.setImage(newwin, p4DImage);
+            callback.setImageName(newwin,curPathIMAGE);
+            callback.updateImageWindow(newwin);
+            callback.open3DWindow(newwin);
+        }
         V3dR_MainWindow * new3DWindow = NULL;
         int offsety = -1;
         for(V3DLONG i = 0; i < swcList.size(); i++)
         {
-
             QString curPathSWC = swcList.at(i);
             new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
+        }
+
+
+        QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
+        for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
+        {
             if( (i%col)*xRez ==0)
                 offsety++;
-            callback.moveWindow(new3DWindow,(i%col+row-1)*xRez,offsety*yRez);
-            callback.resizeWindow(new3DWindow,xRez,yRez);
+            callback.moveWindow(cur_list_3dviewer.at(i),(i%col+row-1)*xRez,offsety*yRez);
+            callback.resizeWindow(cur_list_3dviewer.at(i),xRez,yRez);
         }
 
     }
-	else
+    else if (menu_name == tr("set configuration (tile_multi_windows options only)"))
+    {
+             bool ok1, ok2, ok3, ok4;
+             unsigned int col=1, row=1, xRez=1, yRez=1;
+
+             col = QInputDialog::getInteger(parent, "",
+                                           "number of displayed windows per row:",
+                                           1, 1, 1000, 1, &ok1);
+
+             if(ok1)
+             {
+                 row = QInputDialog::getInteger(parent, "",
+                                               "display from column:",
+                                               1, 1, col, 1, &ok2);
+             }
+             else
+                 return;
+
+             if(ok2)
+             {
+                 xRez = QInputDialog::getInteger(parent, " ",
+                                               "offset X:",
+                                               1, 1, 10000, 1, &ok3);
+             }
+             else
+                 return;
+
+             if(ok3)
+             {
+                 yRez = QInputDialog::getInteger(parent, " ",
+                                               "offset Y:",
+                                               1, 1, 10000, 1, &ok4);
+             }
+             else
+                 return;
+
+             QSettings settings("HHMI", "Vaa3D");
+             settings.setValue("multi_windows_col", col);
+             settings.setValue("multi_windows_row", row);
+             settings.setValue("multi_windows_xRez", xRez);
+             settings.setValue("multi_windows_yRez", yRez);
+
+             v3d_msg("Configuration Done!");
+    }
+    else
 	{
 		v3d_msg(tr("This Plugin will tile neuron to display. "
 			"Developed by Hanbo Chen, 2014-10-28"));
