@@ -75,7 +75,7 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
 
-    if(input.size()==0 || output.size() != 1) return true;
+    if(input.size()==0 || output.size() != 1) return false;
     char * paras = NULL;
 
     //parsing input
@@ -147,12 +147,12 @@ bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         cerr<<"error in consensus_skeleton"<<endl;
         return false;
     }
-
+  return true;
 }
 
 bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
-	if(input.size()==0 || output.size() != 1) return true;
+    if(input.size()==0 || output.size() != 1) return false;
 	char * paras = NULL;
 
 	//parsing input

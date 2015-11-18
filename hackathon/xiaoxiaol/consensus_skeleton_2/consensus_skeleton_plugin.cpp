@@ -64,5 +64,6 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 	{
 		printHelp();
 	}
+    return true;
 }
 

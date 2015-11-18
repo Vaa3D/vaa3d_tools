@@ -13,8 +13,10 @@ void  non_max_suppresion( unsigned char * img1d,V3DLONG sz_x, V3DLONG sz_y,V3DLO
 
 QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
 
-void AddTMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz, int imageCount,V3DPluginCallback2 &callback);
-
+//void AddTMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz, int imageCount,V3DPluginCallback2 &callback);
+void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
+                    double origin_x, double origin_y,double origin_z,
+                    int imageCount, V3DPluginCallback2 & callback);
 
 bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallback2 & callback);
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,
