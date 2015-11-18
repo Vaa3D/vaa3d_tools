@@ -191,7 +191,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
              unsigned int col=1, row=1, xRez=1, yRez=1;
 
              col = QInputDialog::getInteger(parent, "",
-                                           "number of displayed windows per row:",
+                                           "#tiles per row:",
                                            1, 1, 1000, 1, &ok1);
 
              if(ok1)
