@@ -12,10 +12,17 @@
 #include <stack>
 #include <vector>
 #include <map>
+//#include <thread>
+//#include <csignal>
 #include "Reconstruction.h"
 #include "Composite.h"
 #include "ConsensusBuilder.h"
 #include "tree_matching/my_surf_objs.h"
+
+void sigint_handler(int sig)
+{
+    std::cout << "handling signal no. " << sig << "\n";
+}
 
 /** Main function **/
 int main(int argc, char* argv[]){
@@ -39,6 +46,10 @@ int main(int argc, char* argv[]){
         printf("Setting log level %i\n",loglevel);
         //builder = ConsensusBuilder(directory,loglevel);
         builder.set_log_level(loglevel);
+        if (argc > 4){
+            double scale = atof(argv[4]);
+            builder.set_average_alignment_dist(scale);
+        }
     }else{
         //builder = ConsensusBuilder(directory);
     }
@@ -46,9 +57,16 @@ int main(int argc, char* argv[]){
     printf("Created ConsensusBuilder\n");
     builder.set_match_score_threshold(1);
     
-
+    // Start thread to handle keyboard input
+    bool finished = false;
+    //std::thread t1(process_keyboard(<#int val#>));    
+    //std::signal(SIGINT, sigint_handler);
+    
     printf("Building consensus\n");
     NeuronSegment * consensus_root = builder.build_consensus(0); // Testing with 0 threshold
+    finished = true;
+    //t1.join();
+    
     //NeuronSegment * consensus_root = builder.build_consensus();
     
     if (consensus_root){
@@ -64,7 +82,7 @@ int main(int argc, char* argv[]){
             segment_stack.pop();
             if (parent_map[segment]){
                 //prev_marker = parent_map[segment]->markers.back();
-                prev_marker = parent_map[segment]->markers[0];
+                prev_marker = parent_map[segment]->markers.back();
             }
             //for (MyMarker * marker : segment->markers){
             //for (std::vector<MyMarker *>::reverse_iterator rit = segment->markers.rbegin(); rit != segment->markers.rend(); ++rit){
@@ -79,7 +97,6 @@ int main(int argc, char* argv[]){
                 marker->z = floor(marker->z*1000 + 0.5)/1000;
             }
             for (NeuronSegment * child : segment->child_list){
-                printf("in main, there is a child\n");
                 segment_stack.push(child);
                 parent_map[child] = segment;
             }
@@ -95,4 +112,10 @@ int main(int argc, char* argv[]){
     
     return 0;
 }
-
+/*
+void keyboard_interupt(ConsensusBuilder &cb, bool &finished){
+    while (!finished){
+        signal(1, process_keyboard);
+    }
+}
+*/

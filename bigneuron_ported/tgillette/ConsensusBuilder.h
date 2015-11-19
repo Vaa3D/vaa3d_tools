@@ -28,7 +28,7 @@ typedef pair<string,Reconstruction*> ReconstructionPair;
 typedef std::set<NeuronSegment *> SegmentPtrSet;
 
 const double default_branch_confidence_threshold = 0.25;
-const double register_cube_size = 8; // microns
+const double register_cube_size = 5; // microns
 const int marker_sample_rate = 3; // Value determining every n markers to sample to determine bin of segment
 
 class PositionCube{
@@ -93,6 +93,9 @@ class ConsensusBuilder{
     std::vector<int> y_bin_positions;
     std::vector<int> z_bin_positions;
     int total_bins;
+    // For each reconstruction or Composite, the segments that are found within each cube
+    std::map<void *, std::vector<std::set<NeuronSegment *> > > segments_by_tree_cube;
+
     // For each reconstruction, the segments that are found within each cube
     std::map<Reconstruction *, std::vector<std::set<NeuronSegment *> > > segments_by_recon_cube;
     // Composite segments found within each cube (Mapping on Composite * for if processing goes hierarchical - there would then be multiple composites at the same time, to eventually be merged together)
@@ -114,18 +117,22 @@ class ConsensusBuilder{
     int xyzToIndex(int x_ind, int y_ind, int z_ind);
 
     void bin_branches();
-    //std::vector<NeuronSegment *> * bin_branches(Reconstruction * reconstruction);
     void bin_branches(Reconstruction * reconstruction);
     void bin_branches(Composite * composite);
     void bin_branch(CompositeBranchContainer * branch);
+    void bin_branch(BranchContainer * branch);
     void unbin_branch(CompositeBranchContainer * branch);
     void unbin_branch(BranchContainer * branch);
     int get_bin(MyMarker * marker);
+    SegmentPtrSet get_nearby_segments(NeuronSegment * segment, std::vector<SegmentPtrSet> segments_by_cube);
     SegmentPtrSet get_nearby_segments(NeuronSegment * segment, Composite * in_composite);
     SegmentPtrSet get_nearby_segments(NeuronSegment * segment, Reconstruction * in_reconstruction);
     SegmentPtrSet get_nearby_segments(MyMarker * marker, Composite * in_composite);
     SegmentPtrSet get_nearby_segments(MyMarker * marker, Reconstruction * in_reconstruction);
-    
+/*
+    SegmentPtrSet get_nearby_segments(NeuronSegment * segment, void * in_tree);
+    SegmentPtrSet get_nearby_segments(MyMarker * marker, void * in_tree);
+  */
     NeuronSegment * build_consensus_sorted();
     NeuronSegment * build_consensus_hierarchically();
     
@@ -134,6 +141,11 @@ class ConsensusBuilder{
     void preprocess_reconstructions();
     void split_proximal_branches(Reconstruction * reconstruction, float distance_threshold = 2);
     void split_curved_branches(Reconstruction * reconstruction, float curve_distance_threshold = 3); // Default threshold is 3 microns
+    
+    
+    double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Composite * composite, vector<double> & w, vector<pair<int, int> > & result);
+    double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Reconstruction * reconstruction, vector<double> & w, vector<pair<int, int> > & result);
+    double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, std::vector<std::set<NeuronSegment *> > segments_by_cube, vector<double> & w, vector<pair<int, int> > & result);
     
     /**
      *  Create weighted average for matches
@@ -164,12 +176,12 @@ class ConsensusBuilder{
     //std::set<Match *> find_matches_local_alignment(vector<NeuronSegment *> tree1_segments, Reconstruction * reconstruction, vector<NeuronSegment *> tree2_segments);
     std::set<Match *> find_matches_local_alignment(); // Using member objects unmatched_tree1_segments (and tree2), and for registration bins 'composite'
     
-    std::map<NeuronSegment *,std::vector<Match *> > generate_candidate_matches_via_local_align(std::set<NeuronSegment *> tree2_segments);
+    std::map<NeuronSegment *,std::vector<Match *> * > generate_candidate_matches_via_local_align(std::set<NeuronSegment *> tree2_segments);
     
     void find_conflicts(std::set<NeuronSegment *> tree_segments,
-                        std::map<NeuronSegment *, vector<Match *> > matches_by_segment,
+                        std::map<NeuronSegment *, vector<Match *> * > &matches_by_segment,
                         std::map<Match *, std::set<Match *> * > &match_conflicts,
-                        std::map<Match *, pair<Match *, int> > &small_overlaps);
+                        std::map<Match *, std::map<Match *, bool> > &small_overlaps);
     
     
 public:

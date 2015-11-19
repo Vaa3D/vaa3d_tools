@@ -218,6 +218,10 @@ CompositeBranchContainer * CompositeBranchContainer::split_branch(std::size_t co
     // Get original segment
     NeuronSegment * orig_seg = bc_segment;
     
+    if (split_point <= 0 || split_point > orig_seg->markers.size()-1){
+        printf("ERROR! split_point is %i, segment length is %i\n",split_point,orig_seg->markers.size());
+    }
+    
     // Create new segment above split
     NeuronSegment * new_seg_above = new NeuronSegment();
     std::size_t const split_point_t = split_point;
@@ -960,7 +964,7 @@ Composite * Composite::copy(bool copy_segments){
         //CompositeBranchContainer * orig_branch = new_to_old_map[new_branch];
         CompositeBranchContainer * orig_parent = orig_branch->get_parent();
         
-        logger->debug2("Num connections %i",new_branch->get_connections().size());
+        logger->debug2("new_branch %p, Num connections %i",new_branch,new_branch->get_connections().size());
         // Connections have been copied, now their references must be updated!
         for (Connection * connection : new_branch->get_connections()){
             connection->set_child(new_branch);
@@ -978,13 +982,13 @@ Composite * Composite::copy(bool copy_segments){
             CompositeBranchContainer * new_parent = old_to_new_map[orig_parent];
             // Make child->parent connection
             new_branch->set_parent(new_parent);
-
-        }else{
-            // No parent, so this branch must be the root
-            logger->debug1("setting root");
-            copy->set_root(new_branch);
+        }else if (new_branch == old_to_new_map[c_root]){
+            // No parent
+            logger->debug4("no parent");
+//            copy->set_root(new_branch);
         }
     }
+    copy->set_root(old_to_new_map[c_root]);
     logger->debug("Done making copy");
     
     return copy;
@@ -1005,7 +1009,7 @@ void Composite::update_tree(){
     
     // Update connections based on running_consensus
     for (NeuronSegment * segment : running_consensus->get_segments()){
-        logger->debug2("processing segment %p",segment);
+        logger->debug4("processing segment %p",segment);
         CompositeBranchContainer * my_branch = get_branch_by_segment(segment);
         CompositeBranchContainer * consensus_branch = running_consensus->get_branch_by_segment(segment);
         CompositeBranchContainer * consensus_parent = consensus_branch->get_parent();
@@ -1238,16 +1242,15 @@ void Composite::convert_to_consensus(double branch_confidence_threshold){
     // Update marker head parent connection
     logger->debug4("Test update marker parents");
     for (CompositeBranchContainer * branch : get_branches()){
-        logger->debug("UMP - 1");
         if (branch->get_parent()){
             NeuronSegment *segment = branch->get_segment(), *parent_seg = branch->get_parent()->get_segment();
             // Link marker at top of segment to it's parent marker
-            logger->debug("UMP 2 %p %p",segment->markers[0]->parent),parent_seg->markers.back();
             segment->markers[0]->parent = parent_seg->markers.back();
         }
     }
     logger->debug4("End test update marker parents");
 };
+
 
 void update_branch_tree_sizes(CompositeBranchContainer * branch, std::map<CompositeBranchContainer *,int> &branch_tree_size){
     int size = branch_tree_size[branch];

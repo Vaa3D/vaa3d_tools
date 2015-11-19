@@ -334,6 +334,10 @@ BranchContainer * BranchContainer::split_branch(std::size_t const split_point){
     // Create new segment above split
     NeuronSegment * new_seg_above = new NeuronSegment();
     
+    if (split_point <= 0 || split_point > orig_seg->markers.size()-1){
+        printf("ERROR! split_point is %i, segment length is %i\n",split_point,orig_seg->markers.size());
+    }
+
     new_seg_above->markers = std::vector<MyMarker *>(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point);
     orig_seg->markers.erase(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point);
     
