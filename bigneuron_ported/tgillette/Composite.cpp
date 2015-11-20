@@ -80,7 +80,7 @@ void CompositeBranchContainer::copy_from(CompositeBranchContainer * branch, Comp
     segment_reversed = branch->is_segment_reversed();
     branch_matches = branch->get_branch_matches();
 //    printf("CBC:copy_from 3\n");
-    bc_confidence = branch->get_confidence();
+    bc_confidence = branch->get_summed_confidence();
 //    printf("CBC:copy_from 4\n");
     confidence_denominator = branch->get_confidence_denominator();
     cbc_parent = nullptr;
@@ -146,6 +146,7 @@ void CompositeBranchContainer::add_branch_match(BranchContainer * match){
 void CompositeBranchContainer::add_branch_match(BranchContainer * match, bool match_forward){
     branch_matches.push_back(match);
     match_forward_map[match] = match_forward;
+    printf("add_branch_match, current summed conf %f, to be added %f\n",bc_confidence,match->get_confidence());
 //    printf("add_branch_match conf before %f\n",bc_confidence);
     bc_confidence += match->get_confidence();
 //    printf("add_branch_match conf after %f\n",bc_confidence);
@@ -155,7 +156,10 @@ void CompositeBranchContainer::add_branch_match(BranchContainer * match, bool ma
 bool CompositeBranchContainer::is_match_forward(BranchContainer * match){
     return match_forward_map[match];
 };
-
+void CompositeBranchContainer::reset_confidence(){
+    bc_confidence = 0;
+    confidence_denominator = 0;
+}
 void CompositeBranchContainer::add_branch_miss(double confidence){
     confidence_denominator += confidence;
 };
@@ -223,18 +227,18 @@ CompositeBranchContainer * CompositeBranchContainer::split_branch(std::size_t co
     }
     
     // Create new segment above split
-    NeuronSegment * new_seg_above = new NeuronSegment();
+    NeuronSegment * new_seg_before = new NeuronSegment();
     std::size_t const split_point_t = split_point;
-    new_seg_above->markers = std::vector<MyMarker *>(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point_t);
+    new_seg_before->markers = std::vector<MyMarker *>(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point_t);
     //new_seg_below(orig_seg->markers.begin() + split_point_t, orig_seg->markers.end());
     orig_seg->markers.erase(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point_t);
 
     // Create new branch above split
-    CompositeBranchContainer * branch_above = new CompositeBranchContainer(new_seg_above, cbc_composite);
+    CompositeBranchContainer * branch_before = new CompositeBranchContainer(new_seg_before, cbc_composite);
 
 //    printf("CBC::split_branch 0\n");
 
-    // Transfer TOP or BOTTOM connections to new branch_above (depending on whether branch is reversed at the moment)
+    // Transfer TOP or BOTTOM connections to new branch_before (depending on whether branch is reversed at the moment)
     // Update connections, and add contributing reconstructions to new connection
     std::set<Connection *> tmp_connections = parent_connections;
     for (Connection * connection : tmp_connections){
@@ -244,16 +248,16 @@ CompositeBranchContainer * CompositeBranchContainer::split_branch(std::size_t co
 //            printf("CBC::split_branch 0.2 %i %i\n",segment_reversed, connection->get_child_end() == TOP);
             this->remove_connection(connection);
 //            printf("CBC::split_branch 0.3\n");
-            connection->set_child(branch_above); // This will also take care of parent's child connection (top_child_connections & bottom_child_connections)
+            connection->set_child(branch_before); // This will also take care of parent's child connection (top_child_connections & bottom_child_connections)
 //            printf("CBC::split_branch 0.4\n");
-            branch_above->import_connection(connection);
+            branch_before->import_connection(connection);
         }
     }
     
     // Transfer child connections that are at the TOP
     for (Connection * connection : top_child_connections){
-        connection->set_parent(branch_above);
-        branch_above->add_child_connection(connection);
+        connection->set_parent(branch_before);
+        branch_before->add_child_connection(connection);
     }
     top_child_connections.clear();
 
@@ -263,25 +267,27 @@ CompositeBranchContainer * CompositeBranchContainer::split_branch(std::size_t co
     for (BranchContainer * r_branch : branch_matches){
         if (segment_reversed){
             if (match_forward_map[r_branch])
-                branch_above->add_connection(TOP, this, BOTTOM, r_branch->get_reconstruction(), r_branch->get_confidence());
+                branch_before->add_connection(TOP, this, BOTTOM, r_branch->get_reconstruction(), r_branch->get_confidence());
             else
-                this->add_connection(BOTTOM, branch_above, TOP, r_branch->get_reconstruction(), r_branch->get_confidence());
+                this->add_connection(BOTTOM, branch_before, TOP, r_branch->get_reconstruction(), r_branch->get_confidence());
         }else{
             if (match_forward_map[r_branch])
-                this->add_connection(TOP, branch_above, BOTTOM, r_branch->get_reconstruction(), r_branch->get_confidence());
+                this->add_connection(TOP, branch_before, BOTTOM, r_branch->get_reconstruction(), r_branch->get_confidence());
             else
-                branch_above->add_connection(BOTTOM, this, TOP, r_branch->get_reconstruction(), r_branch->get_confidence());
+                branch_before->add_connection(BOTTOM, this, TOP, r_branch->get_reconstruction(), r_branch->get_confidence());
         }
     }
 
     // Split matches [#Consider updating registration bins wherever split_branch is called, though probably unnecessary since these branches have already been matched and won't be compared again]
+    branch_before->reset_confidence();
     for (BranchContainer * match : branch_matches){
         // Insert new branch between current and parent branch to match the new composite branch
+
         BranchContainer * parent = match->get_parent();
         parent->remove_child(match);
-        BranchContainer * new_match = new BranchContainer(match->get_reconstruction(), match->get_segment(), parent, branch_above, match->get_confidence());
+        BranchContainer * new_match = new BranchContainer(match->get_reconstruction(), match->get_segment(), parent, branch_before, match->get_confidence());
         match->set_parent(new_match);
-        branch_above->add_branch_match(new_match, match_forward_map[match]);
+        branch_before->add_branch_match(new_match, match_forward_map[match]);
         
         // #CONSIDER: Is there any need to also split up NeuronSegments of each Reconstruction?
         // For now we won't as it would require pointers/maps between reconstruction and composite markers, or at least vectors of gaps
@@ -290,7 +296,7 @@ CompositeBranchContainer * CompositeBranchContainer::split_branch(std::size_t co
 
     printf("CBC::split_branch complete\n");
 
-    return branch_above;
+    return branch_before;
 };
 
 
@@ -300,8 +306,8 @@ Composite * CompositeBranchContainer::get_composite(){
 double CompositeBranchContainer::get_summed_confidence() const{
     return bc_confidence;
 };
-double CompositeBranchContainer::get_confidence() const{
-    return bc_confidence / confidence_denominator;
+double CompositeBranchContainer::get_confidence() {
+    return (double)bc_confidence / (double)confidence_denominator;
 };
 double CompositeBranchContainer::get_connection_confidence() const{
     get_connection_confidence(best_connection);
@@ -954,7 +960,7 @@ Composite * Composite::copy(bool copy_segments){
         old_to_new_map[branch] = branch_copy;
         //copy->add_branch(branch_copy); // Now done when creating new CBC
     }
-    //for (CompositeBranchContainer * new_branch : c_branches){
+
     // Create parent/child pointers
     logger->debug1("Composite::copy connecting branches");
     int count = 0;
@@ -964,7 +970,7 @@ Composite * Composite::copy(bool copy_segments){
         //CompositeBranchContainer * orig_branch = new_to_old_map[new_branch];
         CompositeBranchContainer * orig_parent = orig_branch->get_parent();
         
-        logger->debug2("new_branch %p, Num connections %i",new_branch,new_branch->get_connections().size());
+        logger->debug4("new_branch %p, Num connections %i",new_branch,new_branch->get_connections().size());
         // Connections have been copied, now their references must be updated!
         for (Connection * connection : new_branch->get_connections()){
             connection->set_child(new_branch);
@@ -982,10 +988,9 @@ Composite * Composite::copy(bool copy_segments){
             CompositeBranchContainer * new_parent = old_to_new_map[orig_parent];
             // Make child->parent connection
             new_branch->set_parent(new_parent);
-        }else if (new_branch == old_to_new_map[c_root]){
+        }else {
             // No parent
             logger->debug4("no parent");
-//            copy->set_root(new_branch);
         }
     }
     copy->set_root(old_to_new_map[c_root]);
@@ -1070,6 +1075,17 @@ Composite * Composite::generate_consensus(double branch_confidence_threshold, bo
     return consensus;
 };
 
+std::map<NeuronSegment *, double> Composite::get_segment_confidences(){
+    std::map<NeuronSegment *, double> confidence_map;
+    logger->debug4("Composite::get_segment_confidences");
+    for (NeuronSegment * segment : c_segments){
+        CompositeBranchContainer * branch = segment_container_map[segment];
+        confidence_map[segment] = branch->get_summed_confidence();
+        printf("%f %f %f\n",branch->get_summed_confidence(),branch->get_confidence_denominator(),branch->get_confidence());
+    }
+    return confidence_map;
+}
+
 void Composite::convert_to_consensus(double branch_confidence_threshold){
     // Create set of segments that are below the confidence threshold
     // (they can be added back in in order to attach a branch/subtree that is otherwise unconnected from the rest of the tree)
@@ -1084,11 +1100,14 @@ void Composite::convert_to_consensus(double branch_confidence_threshold){
     }
     logger->debug("test3");
     
-    logger->debug4("generate consensus 1");
+    logger->debug4("generate consensus 1, branch_confidence_threshold %f",branch_confidence_threshold);
     std::set<CompositeBranchContainer *> removed_segments;
     for (CompositeBranchContainer * branch : copied_branches){
         // Checking whether has high confidence
-        if (branch->get_confidence() < branch_confidence_threshold){
+        logger->debug3("Branch starting at %f %f %f has confidence %f, being removed?",branch->get_segment()->markers[0]->x,branch->get_segment()->markers[0]->y,branch->get_segment()->markers[0]->z,branch->get_confidence());
+        logger->debug3("Summed conf %f, conf denominator %f",branch->get_summed_confidence(),branch->get_confidence_denominator());
+        if ((double)branch->get_confidence() < (double)branch_confidence_threshold){
+            printf("Branch is below threshold and so will be removed %f < %f",branch->get_confidence(),branch_confidence_threshold);
             removed_segments.insert(branch);
         }
         
@@ -1125,8 +1144,9 @@ void Composite::convert_to_consensus(double branch_confidence_threshold){
         logger->debug4("Segment %p, num_markers %i",branch->get_segment(),branch->get_segment()->markers.size());
         logger->debug4("Segment first marker %f %f %f",branch->get_segment()->markers[0]->x,branch->get_segment()->markers[0]->y,branch->get_segment()->markers[0]->z);
         std::vector<Connection *> connections(connections_set.begin(),connections_set.end());
-        if (connections.size() == 0 && removed_segments.find(branch) != removed_segments.end()){
-            logger->warn("Probable error, this branch is above threshold but has no remaining potential connections");
+        if (connections.size() == 0){
+            if (removed_segments.find(branch) != removed_segments.end())
+                logger->warn("Probable error, this branch is above threshold but has no remaining potential connections");
             continue;
         }
         std::sort(connections.begin(), connections.end(), &compare_connection_ptrs);
@@ -1168,8 +1188,9 @@ void Composite::convert_to_consensus(double branch_confidence_threshold){
         CompositeBranchContainer * chosen_parent = chosen_connection->get_parent();
         if (!chosen_parent){
             // Check whether this branch is the root branch
-            logger->debug2("No parent, this must be the root branch");
+            logger->debug2("No parent, is this the root branch");
             if (!c_root){
+                logger->debug2("This was the first parentless branch with the highest confidence, so it will be the root");
                 c_root = branch;
                 c_root_segment = branch->get_segment();
             }else{
@@ -1196,7 +1217,7 @@ void Composite::convert_to_consensus(double branch_confidence_threshold){
         branch->set_parent(chosen_parent, true, chosen_connection->get_child_end(), parent_end);
         
         if (chosen_parent)
-            logger->debug4("branch's parent segment has %i children",chosen_parent->get_segment()->child_list.size());
+            logger->debug4("branch's parent segment has %i children, starts at %f %f %f",chosen_parent->get_segment()->child_list.size(),chosen_parent->get_segment()->markers[0]->x,chosen_parent->get_segment()->markers[0]->y,chosen_parent->get_segment()->markers[0]->z);
         
         if (c_root){
             logger->debug4("Middle4 of generate_consensus; check root_branch %p %i",c_root,c_root->get_children().size());

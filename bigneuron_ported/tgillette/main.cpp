@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
         builder.set_log_level(loglevel);
         if (argc > 4){
             double scale = atof(argv[4]);
-            builder.set_average_alignment_dist(scale);
+            builder.set_scale(scale);
         }
     }else{
         //builder = ConsensusBuilder(directory);
@@ -64,6 +64,10 @@ int main(int argc, char* argv[]){
     
     printf("Building consensus\n");
     NeuronSegment * consensus_root = builder.build_consensus(0); // Testing with 0 threshold
+    Composite * composite = builder.get_composite();
+    composite->convert_to_consensus(0);
+    consensus_root = composite->get_root_segment();
+    std::map<NeuronSegment *,double> confidence_map = composite->get_segment_confidences();
     finished = true;
     //t1.join();
     
@@ -79,6 +83,7 @@ int main(int argc, char* argv[]){
         printf("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
         while (!segment_stack.empty()){
             NeuronSegment * segment = segment_stack.top();
+            printf("Confidence for segment %p is %f with %i markers\n",segment,confidence_map[segment],segment->markers.size());
             segment_stack.pop();
             if (parent_map[segment]){
                 //prev_marker = parent_map[segment]->markers.back();
@@ -95,6 +100,7 @@ int main(int argc, char* argv[]){
                 marker->x = floor(marker->x*1000 + 0.5)/1000;
                 marker->y = floor(marker->y*1000 + 0.5)/1000;
                 marker->z = floor(marker->z*1000 + 0.5)/1000;
+                marker->radius = confidence_map[segment];
             }
             for (NeuronSegment * child : segment->child_list){
                 segment_stack.push(child);

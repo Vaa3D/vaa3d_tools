@@ -28,7 +28,7 @@ typedef pair<string,Reconstruction*> ReconstructionPair;
 typedef std::set<NeuronSegment *> SegmentPtrSet;
 
 const double default_branch_confidence_threshold = 0.25;
-const double register_cube_size = 5; // microns
+const double default_register_cube_size = 4; // microns
 const int marker_sample_rate = 3; // Value determining every n markers to sample to determine bin of segment
 
 class PositionCube{
@@ -58,10 +58,15 @@ class ConsensusBuilder{
     //bool markers_forward;
     
     // Parameters
+    double scale; // pixel to micron ratio
+    double register_cube_size;
     double match_score_threshold;
     double endpoint_threshold_distance;
     float gap_cost;
     float average_alignment_dist;
+    double good_enough_score;
+    double best_branch_margin;
+
     void default_parameters();
     
     Logger * logger;
@@ -199,10 +204,14 @@ public:
     void set_log_level(int level);
 
     // Get/set parameters
+    double get_scale() { return scale; };
+    double get_register_cube_size() { return register_cube_size; };
     double get_match_score_threshold() { return match_score_threshold; };
     double get_endpoint_threshold_distance() { return endpoint_threshold_distance; };
     float get_gap_cost() { return gap_cost; };
     float get_average_alignment_dist() { return average_alignment_dist; };
+    void set_scale(double scale);
+    void set_register_cube_size(double register_cube_size) { this->register_cube_size = register_cube_size; };
     void set_match_score_threshold(double match_score_threshold) { this->match_score_threshold = match_score_threshold; };
     void set_endpoint_threshold_distance(double endpoint_threshold_distance) { this->endpoint_threshold_distance = endpoint_threshold_distance; };
     void set_gap_cost(float gap_cost) { this->gap_cost = gap_cost; };
@@ -223,12 +232,14 @@ public:
     NeuronSegment * build_consensus(int branch_vote_threshold);
     NeuronSegment * build_consensus(double branch_confidence_threshold);
 
+    std::vector<NeuronSegment *> produce_composite();
+    
     std::vector<Reconstruction*> get_reconstructions();
     Composite * get_composite();
     /*
     CompositeBranchContainer * split_composite_branch(BranchContainer * splitting_branch, CompositeBranchContainer * branch, NeuronSegment * top_segment);
      */
-    CompositeBranchContainer * split_branch(CompositeBranchContainer * branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches);
+    CompositeBranchContainer * split_branch(CompositeBranchContainer * orig_branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches);
     BranchContainer * split_branch(BranchContainer * branch, Match * match, std::vector<BranchContainer *> &resulting_branches);
     void split_branch_matches(BranchContainer * splitting_branch, CompositeBranchContainer * branch, CompositeBranchContainer * child);
 };

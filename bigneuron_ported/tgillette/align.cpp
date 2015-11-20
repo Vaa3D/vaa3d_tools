@@ -40,10 +40,30 @@ bool is_consistent_alignment(Match * match, bool check_segment1, std::map<Neuron
 bool is_overlapping_range(int start1, int end1, int start2, int end2){
     return !(end1 < start2 || end2 < start1);
 }
+bool is_range_inside(Match * match1, Match * match2, bool check_segment1){
+    int start1, start2, end1, end2;
+    //    printf("get_overlap_size\n");
+    if (match1->alignment_size() == 0 || match2->alignment_size() == 0) return false;
+    if (check_segment1){
+        start1 = match1->seg1_start();
+        end1 = match1->seg1_end();
+        start2 = match2->seg1_start();
+        end2 = match2->seg1_end();
+    }else{
+        start1 = match1->seg2_start();
+        end1 = match1->seg2_end();
+        start2 = match2->seg2_start();
+        end2 = match2->seg2_end();
+    }
+    return is_range_inside(start1, end1, start2, end2);
+}
+bool is_range_inside(int start1, int end1, int start2, int end2){
+    return ((start1 > start2 && end1 < end2) || (start2 > start2 && end2 < end1));
+}
 int get_overlap_size(Match * match1, Match * match2, bool check_segment1){
     int start1, start2, end1, end2;
 //    printf("get_overlap_size\n");
-    if (match1->alignment.size() == 0 || match2->alignment.size() == 0) return 0;
+    if (match1->alignment_size() == 0 || match2->alignment_size() == 0) return 0;
     if (check_segment1){
         start1 = match1->seg1_start();
         end1 = match1->seg1_end();
@@ -79,9 +99,10 @@ int get_overlap_size(int start1, int end1, int start2, int end2){
         start1 > start2 && start1 <= end2 ? end2 - start1 + 1 : -1; // -1 is an error, should NEVER happen
 }
 
-double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker*> & seg2, vector<pair<int, int> > & matching_res, float const gap_cost)
+//double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker*> & seg2, vector<pair<int, int> > & matching_res, float const gap_cost)
+double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker*> & seg2, pair<std::vector<int>,std::vector<int> > & matching_res, float const gap_cost)
 {
-    if (seg1.size()<=1 || seg2.size()<=1) //single-point branch can map to any branch without constrains
+    if (seg1.size() < 1 || seg2.size() < 1) //single-point branch can map to any branch without constrains
         return 0;
     int k=0, l=0;
     // Dynamic programming matrix
@@ -143,7 +164,9 @@ double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker
     //matching_res.push_back(pair<int, int>(seg1.size()-1, seg2.size()-1));
     
     // Find optimal local alignment
-    matching_res.push_back(pair<int,int>(best_position.first-1,best_position.second-1));
+    //matching_res.push_back(pair<int,int>(best_position.first-1,best_position.second-1));
+    matching_res.first.push_back(best_position.first-1);
+    matching_res.second.push_back(best_position.second-1);
     
     int lastp1 = best_position.first;
     int lastp2 = best_position.second;
@@ -156,14 +179,18 @@ double local_align(float average_dist, vector<MyMarker*> & seg1, vector<MyMarker
         //printf("next pos %i %i\n",p1,p2);
         if (p1<=0 || p2<=0)
             break;
-        matching_res.push_back(pair<int,int>(p1-1, p2-1)); // Segment indices
+//        matching_res.push_back(pair<int,int>(p1-1, p2-1)); // Segment indices
+        matching_res.first.push_back(p1-1); // Segment indices
+        matching_res.second.push_back(p2-1);
         lastp1 = p1;
         lastp2 = p2;
     }
     while (true);
     //printf("done backtracing\n");
     // Reverse alignment so it starts at the beginning of the segment
-    std::reverse(matching_res.begin(),matching_res.end());
+    //std::reverse(matching_res.begin(),matching_res.end());
+    std::reverse(matching_res.first.begin(),matching_res.first.end());
+    std::reverse(matching_res.second.begin(),matching_res.second.end());
 
     //return matrix.back().back();
     return best_score;

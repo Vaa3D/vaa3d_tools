@@ -70,6 +70,7 @@ public:
     //void set_children(std::vector<CompositeBranchContainer *> children);
     void add_branch_match(BranchContainer * match);
     void add_branch_match(BranchContainer * match, bool match_forward);
+    void reset_confidence();
     bool is_match_forward(BranchContainer * match);
     void add_branch_miss(double confidence);
     void set_segment_reversed(bool segment_reversed);
@@ -89,7 +90,7 @@ public:
 
     void calculate_best_connection();
     Connection* get_best_connection() const;
-    double get_confidence() const;
+    double get_confidence();
     double get_combined_connection_weight() const;
     double get_summed_confidence() const;
     double get_connection_confidence() const;
@@ -117,11 +118,11 @@ public:
     pair<bool,double> get_direction_certainty();
     pair<Connection*,double> get_connection_entropy();
     pair<Connection*,double> get_connection_entropy(BranchEnd branch_end);
-
+/*
     bool operator < (const CompositeBranchContainer& branch) const
     {
         return (this->get_confidence() < branch.get_confidence());
-    }
+    }*/
     bool operator == (CompositeBranchContainer& rhs) const
     {
         return (this->get_segment() == rhs.get_segment());
@@ -259,7 +260,8 @@ public:
     Composite * generate_consensus(double branch_confidence_threshold, bool copy_segments);
     
     void convert_to_consensus(double branch_confidence_threshold);
-
+    std::map<NeuronSegment *, double> get_segment_confidences();
+    
     static void set_logger(Logger * logger);
 };
 
