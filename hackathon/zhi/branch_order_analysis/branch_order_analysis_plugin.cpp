@@ -57,6 +57,37 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
     return true;
 };
  
+QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    if (method_code ==1)
+        imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+    else if (method_code ==2)
+        imgSuffix<<"*.marker";
+    else if (method_code ==3)
+        imgSuffix<<"*.raw"<<"*.v3draw"<<"*.v3dpbd"<<"*.tif"<<"*.RAW"<<"*.V3DRAW"<<"*.TIF"<<"*.V3DPBD";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
 bool analysis_swc(QString fileOpenName ,bool bmenu);
 
 
@@ -64,6 +95,7 @@ QStringList branch_order_analysis::menulist() const
 {
 	return QStringList() 
         <<tr("analysis")
+        <<tr("batch_analysis")
 		<<tr("about");
 }
 
@@ -91,16 +123,21 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
         bool bmenu = 1;
         analysis_swc(fileOpenName ,bmenu);
         return;
-//       QString fileDefaultName = fileOpenName+QString("_ordered.swc");
-//       //write new SWC to file
-//       QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-//               fileDefaultName,
-//               QObject::tr("Supported file (*.swc)"
-//                   ";;Neuron structure	(*.swc)"
-//                   ));
-
-//       saveSWC_file(fileSaveName.toStdString(), swc_file);
 	}
+    else if (menu_name == tr("batch_analysis"))
+    {
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+                                                                      QDir::currentPath(),
+                                                                      QFileDialog::ShowDirsOnly);
+        QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1);
+        bool bmenu = 0;
+        for(V3DLONG i = 0; i < swcList.size(); i++)
+        {
+            analysis_swc(swcList.at(i) ,bmenu);
+        }
+        v3d_msg("Done!");
+        return;
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
