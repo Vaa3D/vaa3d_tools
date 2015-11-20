@@ -135,7 +135,7 @@ QStringList eliminate_swc::menulist() const
 QStringList eliminate_swc::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("smooth_swc")
 		<<tr("help");
 }
 
@@ -271,7 +271,7 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
                 p = p->parent;
             }
             seg_markers.push_back(root_marker);
-            smooth_curve(seg_markers, length);
+            smooth_curve_Z(seg_markers, length);
         }
         inswc.clear();
 
@@ -453,14 +453,76 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 bool eliminate_swc::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
-	if (func_name == tr("func1"))
+    if (func_name == tr("smooth_swc"))
 	{
-		v3d_msg("To be implemented.");
+        cout<<"Welcome to resample_swc"<<endl;
+        vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+        vector<char*>* outlist = NULL;
+        vector<char*>* paralist = NULL;
+
+        if(input.size() != 2)
+        {
+            printf("Please specify both input file and step length parameter.\n");
+            return false;
+        }
+        paralist = (vector<char*>*)(input.at(1).p);
+        if (paralist->size()!=1)
+        {
+            printf("Please specify only two parameters.\n");
+            return false;
+        }
+        double length = atof(paralist->at(0));
+
+        QString fileOpenName = QString(inlist->at(0));
+        QString fileSaveName;
+        if (output.size()==0)
+        {
+            printf("No outputfile specified.\n");
+            fileSaveName = fileOpenName + QString("_Z_T%1.swc").arg(length);
+        }
+        else if (output.size()==1)
+        {
+            outlist = (vector<char*>*)(output.at(0).p);
+            fileSaveName = QString(outlist->at(0));
+        }
+        else
+        {
+            printf("You have specified more than 1 output file.\n");
+            return false;
+        }
+
+        vector<MyMarker*> inswc;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+            inswc = readSWC_file(fileOpenName.toStdString());
+
+        unsigned char* inimg1d = 0;
+        vector<HierarchySegment*> topo_segs;
+        swc2topo_segs(inswc, topo_segs, 1, inimg1d, 0, 0, 0);
+
+        cout<<"Smooth the final curve"<<endl;
+        for(int i = 0; i < topo_segs.size(); i++)
+        {
+            HierarchySegment * seg = topo_segs[i];
+            MyMarker * leaf_marker = seg->leaf_marker;
+            MyMarker * root_marker = seg->root_marker;
+            vector<MyMarker*> seg_markers;
+            MyMarker * p = leaf_marker;
+            while(p != root_marker)
+            {
+                seg_markers.push_back(p);
+                p = p->parent;
+            }
+            seg_markers.push_back(root_marker);
+            smooth_curve_Z(seg_markers, length);
+           // smooth_curve_XY(seg_markers, length);
+        }
+        inswc.clear();
+
+        topo_segs2swc(topo_segs, inswc, 0);
+        saveSWC_file(fileSaveName.toStdString(), inswc);
+        for(int i = 0; i < inswc.size(); i++) delete inswc[i];
+
+        return true;
 	}
 	else if (func_name == tr("help"))
 	{
