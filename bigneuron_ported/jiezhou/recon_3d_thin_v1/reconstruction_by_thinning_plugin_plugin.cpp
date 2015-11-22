@@ -6,7 +6,9 @@
  *
  * 2015-6-3 : renamed the plugin to SimpleAxisAnalyzer (modify the pro file and the menu list, function list, usage)
  *
- * ToDo:  Pre-processing and loop pruning need to be aded or to be translated from Java
+ * 2015-11-21 : added some simple preprocessing such as adaptive thresholding and histogram equalization
+ *
+ * ToDo:  Loop pruning need to be added. Big/bright soma impacts the result and should be removed first. 
  *
  */
  
@@ -42,9 +44,9 @@ using namespace std;
 struct input_PARA
 {
     QString inimg_file;
-    V3DLONG channel;
-    int threshold;
-    int treeNum;
+    V3DLONG channel = 1;
+    int threshold = 0 ;
+    int treeNum = 1;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -61,6 +63,130 @@ void getNeighbors(itk::Image<signed short, (unsigned)3> *image, vector<pixPoint*
 int numberOfNeighbors(itk::Image<signed short, (unsigned)3> *image, int xCoord, int yCoord, int zCoord);
 bool *** resetVisited(itk::Image<signed short, (unsigned)3> *image);
 
+//This method is from adaptive thresholdoing plugin. Add a binarization process for some images in BigNeuron gold standard set. 11/2015
+void BinaryProcess(unsigned char *apsInput, unsigned char * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)
+{
+        V3DLONG i, j,k,n,count;
+        double t, temp;
+
+        V3DLONG mCount = iImageHeight * iImageWidth;
+        for (i=0; i<iImageLayer; i++)
+        {
+                for (j=0; j<iImageHeight; j++)
+                {
+                        for (k=0; k<iImageWidth; k++)
+                        {
+                                V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                                V3DLONG curpos1 = i* mCount + j*iImageWidth;
+                                V3DLONG curpos2 = j* iImageWidth + k;
+                                temp = 0;
+                                count = 0;
+                                for(n =1 ; n <= d  ;n++)
+                                {
+                                        if (k>h*n) {temp += apsInput[curpos1 + k-(h*n)]; count++;}
+                                        if (k+(h*n)< iImageWidth) { temp += apsInput[curpos1 + k+(h*n)]; count++;}
+                    if (j>h*n) {temp += apsInput[i* mCount + (j-(h*n))*iImageWidth + k]; count++;}//
+                                        if (j+(h*n)<iImageHeight) {temp += apsInput[i* mCount + (j+(h*n))*iImageWidth + k]; count++;}//
+                                        if (i>(h*n)) {temp += apsInput[(i-(h*n))* mCount + curpos2]; count++;}//
+                                        if (i+(h*n)< iImageLayer) {temp += apsInput[(i+(h*n))* mCount + j* iImageWidth + k ]; count++;}
+                                }
+                                t =  apsInput[curpos]-temp/(count);
+                                aspOutput[curpos]= (t > 0)? t : 0;
+                        }
+                }
+        }
+}
+
+//v3d preprocessing method for histogram equalization
+bool hist_eq_uint8(unsigned char * data1d, V3DLONG len)
+{
+        if (!data1d || len<=0)
+        {
+                printf("The input parameters are invalid in hist_eq_uint8().\n");
+                return false;
+        }
+        
+        V3DLONG NBIN=256;
+        V3DLONG *h = new V3DLONG [NBIN]; 
+        double *c = new double [NBIN]; 
+        if (!h)
+        {
+                printf("Fail to allocate memory in hist_eq_uint8().\n");
+                return false;
+        }
+        
+        V3DLONG i;
+        
+        for (i=0;i<NBIN;i++) h[i]=0;
+        
+        for (i=0;i<len; i++)
+        {
+                h[data1d[i]]++;
+        }
+        
+        c[0]=h[0];
+        for (i=1;i<NBIN;i++) c[i] = c[i-1]+h[i];
+        for (i=0;i<NBIN;i++) {c[i] /= c[NBIN-1]; c[i] *= (NBIN-1);}
+        
+        for (i=0;i<len;i++)
+        {
+                data1d[i] = c[data1d[i]];
+        }
+        
+        if (c) {delete []c; c=0;}
+        if (h) {delete []h; h=0;}
+        return true;
+}
+
+bool hist_eq_range_uint8(unsigned char * data1d, V3DLONG len, unsigned char lowerbound, unsigned char upperbound) //only eq the [lowerbound,upperbound]
+{
+        if (!data1d || len<=0)
+        {
+                printf("The input parameters are invalid in hist_eq_uint8().\n");
+                return false;
+        }
+        
+        if (lowerbound>upperbound) 
+        {
+                unsigned char tmp=lowerbound; lowerbound=upperbound; upperbound=tmp;
+        }
+        
+        V3DLONG NBIN=256;
+        V3DLONG *h = new V3DLONG [NBIN]; 
+        double *c = new double [NBIN]; 
+        if (!h)
+        {
+                printf("Fail to allocate memory in hist_eq_uint8().\n");
+                return false;
+        }
+        
+        V3DLONG i;
+        
+        for (i=0;i<NBIN;i++) h[i]=0;
+        
+        for (i=0;i<len; i++)
+        {
+                h[data1d[i]]++;
+        }
+        
+        c[lowerbound]=h[lowerbound];
+        for (i=lowerbound+1;i<=upperbound;i++) c[i] = c[i-1]+h[i];
+        double range = upperbound-lowerbound;
+        for (i=lowerbound;i<=upperbound;i++) {c[i] /= c[upperbound]; c[i] *= range; c[i] += lowerbound;}
+        
+        for (i=0;i<len;i++)
+        {
+                if (data1d[i]>=lowerbound && data1d[i]<=upperbound)
+                        data1d[i] = c[data1d[i]];
+        }
+        
+        if (c) {delete []c; c=0;}
+        if (h) {delete []h; h=0;}
+        return true;
+}
+
+
+//******** main methods for the axis analyzer start here ********/
 typedef itk::Image<signed short, 3> ImageType;
 ImageType::Pointer globalImage = ImageType::New();
 
@@ -102,7 +228,7 @@ void reconstruction_by_thinning_plugin::domenu(const QString &menu_name, V3DPlug
         if (!ok2) return;  //have problem getting threshold
 
         reconstruction_func(callback,parent,PARA,bmenu);
-
+        
 	}
 	else
 	{
@@ -132,6 +258,7 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
             PARA.inimg_file = infiles[0];
         int k=0;
         PARA.threshold = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        std::cout<< "PARA.threshold: " << PARA.threshold << endl;
         PARA.treeNum = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
 
@@ -143,7 +270,6 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
 
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
-
         printf("**** Usage of axis analyzer plugin **** \n");
         printf("vaa3d -x SimpleAxisAnalyzer -f medial_axis_analysis -i <inimg_file> -p <parameters>\n");
         printf("inimg_file       The input image\n");
@@ -153,10 +279,10 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
-	}
-	else return false;
+     }
+     else return false;
 
-	return true;
+    return true;
 }
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
@@ -247,39 +373,115 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout << "height: "  << M << endl;
     cout << "depth: "  << P << endl;
 
-    /* //debugging
     // * Note by J Zhou June 3 2015
     // * Vaa3D appears having issue reading a signed int image of only 0 and 1 which was the output skeleton of the thinning algorithm of itk.
     // *  But it is ok as long as the plugin starts directly from an unsigned image file.
-    long num = 0;
+  
+    // * Nov 20 2015: ORNL Hackthon: add some preprocessing/thresholding method since some images in BigNeuron gold standard are noisy and not binarized.
 
-    for(int iz = 0; iz < P; iz++)
-    {
-        int offsetk = iz*M*N;
-        for(int iy = 0; iy < M; iy++)
-        {
+    if (PARA.threshold == 0)
+    {  
+      //adaptive thresholding is not suitable for image with big soma since it will leave hole in the middle
+      V3DLONG h = 5, d = 3;
+      unsigned char *pData = NULL;
+      try
+      {
+         pData = (unsigned char *) (new unsigned char [N*M*P]);
+      }catch(...)
+      { v3d_msg("Fail to allocate memory when applying adaptive thresholding for simple axis anlyzer.",0);
+        if (pData) { delete []pData; pData = NULL;}
+        return;
+      }
+        BinaryProcess(data1d, pData, N, M, P, h, d);
+        delete[] data1d; 
+        data1d = pData;
+        v3d_msg("Done thresholding", 0);       
+       
+       //stat of thresholed forground pixels to see if making sense
+       long num =0;         
+       for(int iz=0; iz<P; iz++) {
+         int offsetk = iz*M*N;
+         for(int iy =0; iy < M; iy++) {
            int offsetj = iy*N;
-           for(int ix = 0; ix < N; ix++)
+           for(int ix = 0; ix < N; ix++) {
+              int datavalue = data1d[offsetk+offsetj+ix];
+              if (datavalue > 0) num ++;
+           }
+         }
+       }
+       v3d_msg(QString("Total percentage of foreground pixels after adaptive thresholding:%1").arg(((float)num)/(N*M*P)),0);
+
+     //enhance the histogram before apply binarization.
+     //This avoids have broken holes in the connected structure.
+     hist_eq_range_uint8(data1d, N*M*P, 10, 255);
+     v3d_msg(QString("Histogram equalization done"), 0);
+    }
+        
+    //iterative histogram-based thresholding 
+    if (PARA.threshold == 999 || PARA.threshold == 0) 
+    {
+         long num = 0;
+         long sum = 0;
+         for(int iz = 0; iz < P; iz++)
+         {
+           int offsetk = iz*M*N;
+           for(int iy = 0; iy < M; iy++)
            {
+             int offsetj = iy*N;
+             for(int ix = 0; ix < N; ix++)
+             {
 
               int PixelValue =  data1d[offsetk + offsetj + ix];
               if (PixelValue > 0)
               {
                 num++;
+                sum += PixelValue;
                 if (num < 10)
                 cout << ix << ":" << iy << ":" << iz << " ";
 
               }
-           }
-       }
-    }
+             } 
+            }
+          }
+          int meanv = sum/num;
+          long sum1, num1, sum2, num2;   
+          int iterationnum = 2;// find the valley in gray level historgram, keep small to avoid under segmentation
+          for(int it =0; it < iterationnum; it++)
+          {
+            sum1=0, num1=0;
+            sum2=0, num2=0;
+            for(long iz = 0; iz < P; iz++)
+            {   
+               long offsetk = iz*M*N;
+               for(long iy = 0; iy < M; iy++)
+               {
+                 long offsetj = iy*N;
+                 for(long ix = 0; ix < N; ix++)
+                 {
+                   long idx =  offsetk + offsetj + ix;
+                   if (data1d[idx] > meanv)
+                   {  sum1 += data1d[idx]; num1++; }
+                   else
+                   {   sum2 += data1d[idx]; num2++;}
+                }  
+              }   
+            }  
+            //adjust new threshold
+           meanv = (int) (0.5*(sum1/num1+sum2/num2));
+         }
+         //meanv = meanv - 10; //adjust low due to dark image to avoid undertrace
+         std::cout << "\nmean adjusted:" << meanv <<std::endl;
 
-    v3d_msg(QString("Total foreground points:%1").arg(num), 0);
-    */
-
+         v3d_msg(QString("Total foreground points:%1").arg(sum1), 0);
+         v3d_msg(QString("Total percentage of foreground points after binarization:%1").arg(((float)num1)/(N*M*P)),0); 
+   
+         PARA.threshold = meanv;
+    }//end of thresholding!!
 
     //itk::Image<signed short, (unsigned) 3> *input;
     itk::Image<signed short, (unsigned) 3> *input = createITKImage(data1d, imageSize);
+
+
     //2. call Reconstruction3D by passing the itkimage
 
     QString swc_name = PARA.inimg_file + "_axis_analyzer.swc";
@@ -665,17 +867,17 @@ signed short getPixel(itk::Image<signed short, (unsigned)3> *image, int x, int y
 void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVisitNum){
 
 
-      // const char *outfilename = qoutputfilename.toStdString().c_str();
-       cout << "filename converted from QString" << qoutputfilename.toStdString().c_str() << endl;
+       const char *outfilename = qoutputfilename.toStdString().c_str();
+       cout << "filename converted from QString" << outfilename << endl;
 
        ofstream outFile;
        if (startVisitNum == 0) //first tree
        {
-           outFile.open(qoutputfilename.toStdString().c_str(), ios::trunc);
+           outFile.open(outfilename, ios::trunc);
            outFile << "#name reconstruction3d \n#comment \n##n,type,x,y,z,radius,parent\n";
        }
        else //subsequent trees
-           outFile.open(qoutputfilename.toStdString().c_str(), ios::app);
+           outFile.open(outfilename, ios::app);
 
        for (int i = 0; i < Points.size(); i++)
        {
@@ -687,7 +889,7 @@ void outputSWC(vector<pixPoint*> & Points, QString qoutputfilename, long startVi
        }
 
         outFile.close();
-        cout << qoutputfilename.toStdString().c_str() << " Successfully written to swc file.";
+        cout << outfilename << " Successfully written to swc file.";
 
 }//end outputSWC
 
