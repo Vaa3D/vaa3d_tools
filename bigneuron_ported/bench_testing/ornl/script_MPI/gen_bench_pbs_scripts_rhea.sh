@@ -19,7 +19,7 @@ function write_psb_script {
 
   echo "cd $inputfolder" >>  $outputScript;
   if [ $jobpernode == "-1" ]; then
-  	echo "mpirun -n $jobnumbers ./$exefilename" >>  $outputScript;
+  	echo "mpirun -np $jobnumbers --npernode 1 --report-bindings ./$exefilename" >>  $outputScript;
   else
 	echo "mpirun -n $jobnumbers -N $jobpernode -S $jobpernode  ./$exefilename" >>  $outputScript;
   fi		
