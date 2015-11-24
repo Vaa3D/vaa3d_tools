@@ -122,7 +122,7 @@ void branch_order_analysis::domenu(const QString &menu_name, V3DPluginCallback2 
             return;
 
         bool bmenu = 1;
-     //   analysis_swc(fileOpenName ,bmenu);
+        analysis_swc(fileOpenName ,bmenu);
         return;
 	}
     else if (menu_name == tr("batch_analysis"))
@@ -167,7 +167,7 @@ bool branch_order_analysis::dofunc(const QString & func_name, const V3DPluginArg
 	{
         bool bmenu = false;
         QString fileOpenName = infiles[0];
-   //     analysis_swc(fileOpenName ,bmenu);
+        analysis_swc(fileOpenName ,bmenu);
 
 
     }
