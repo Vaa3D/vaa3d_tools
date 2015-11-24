@@ -53,6 +53,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 bool processImage_adaptive_auto_blocks_indv_multithread_v2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_detect_soma_2D(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
 template <class T> void selective_Enhancement(const T* data1d,
@@ -313,6 +314,10 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     else if (func_name == tr("soma_detection"))
     {
         return processImage_detect_soma(input, output,callback);
+    }
+    else if (func_name == tr("soma_detection_2D"))
+    {
+        return processImage_detect_soma_2D(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
@@ -3829,6 +3834,109 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
 
     if(Enhancement_soma) {delete Enhancement_soma; Enhancement_soma = 0;}
     if(data1d_region) {delete data1d_region; data1d_region = 0;}
+
+    return true;
+}
+
+bool processImage_detect_soma_2D(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+
+    cout<<"Welcome to 2D soma detection"<<endl;
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+    if(infiles.empty())
+    {
+        cerr<<"Need input image"<<endl;
+        return false;
+    }
+
+    QString  inimg_file =  infiles[0];
+    int k=0;
+
+    QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+    if(inmarker_file.isEmpty())
+    {
+        cerr<<"Need a marker file"<<endl;
+        return false;
+    }
+
+    QString enhancedimg_file  =  paras.empty() ? "" : paras[k]; if(enhancedimg_file == "NULL") enhancedimg_file = "";
+    if(enhancedimg_file.isEmpty())
+    {
+        cerr<<"Need enhanced image"<<endl;
+        return false;
+    }
+
+
+    cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+    cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+    cout<<"enhancedimg_file = "<<enhancedimg_file.toStdString().c_str()<<endl;
+
+    unsigned char * original_image = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+    if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), original_image, in_sz, datatype))
+    {
+        cerr<<"load original image "<<inimg_file.toStdString()<<" error!"<<endl;
+         if (original_image) {delete []original_image; original_image=0;}
+        return false;
+    }
+
+
+    unsigned char * enhanced_image = 0;
+    if(!simple_loadimage_wrapper(callback, enhancedimg_file.toStdString().c_str(), enhanced_image, in_sz, datatype))
+    {
+        cerr<<"load enhanced image "<<enhancedimg_file.toStdString()<<" error!"<<endl;
+         if (enhanced_image) {delete []enhanced_image; enhanced_image=0;}
+        return false;
+    }
+
+    vector<MyMarker> file_inmarkers;
+    file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+    int soma_x = file_inmarkers[0].x;
+    int soma_y = file_inmarkers[0].y;
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+
+    double th_soma =  original_image[soma_y*N + soma_x] - 5;
+
+    V3DLONG xb = soma_x-200; if(xb<0) xb = 0;
+    V3DLONG xe = soma_x+200; if(xe>=N-1) xe = N-1;
+    V3DLONG yb = soma_y-200; if(yb<0) yb = 0;
+    V3DLONG ye = soma_y+200; if(ye>=M-1) ye = M-1;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = yb; iy < ye; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = xb; ix < xe; ix++)
+            {
+                double SomaValue = original_image[offsetk + offsetj + ix];
+
+                if(SomaValue > th_soma)
+                {
+                     enhanced_image[offsetk+offsetj+ix] = original_image[offsetk+offsetj+ix];
+                }
+            }
+
+        }
+    }
+
+    QString outimg_file = enhancedimg_file + "_soma.raw";
+
+    simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(), (unsigned char *)enhanced_image, in_sz, 1);
+
+
+    if(original_image) {delete original_image; original_image = 0;}
+    if(enhanced_image) {delete enhanced_image; enhanced_image = 0;}
+
 
     return true;
 }
