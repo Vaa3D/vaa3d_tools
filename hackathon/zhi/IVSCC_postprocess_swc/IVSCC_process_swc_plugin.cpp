@@ -70,6 +70,7 @@ QStringList IVSCC_process_swc::funclist() const
 {
 	return QStringList()
         <<tr("process")
+        <<tr("process_v2")
 		<<tr("help");
 }
 
@@ -267,6 +268,81 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
        saveSWC_file(outswc_file.toStdString(), final_out_swc_updated);
 
+    }
+    else if (func_name == tr("process_v2"))
+    {
+        cout<<"Welcome to IVSCC swc post processing plugin v2"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        QString  inmarkerpath_file = infiles[1];
+        if(inmarkerpath_file.isEmpty())
+        {
+            cerr<<"Need a marker path file"<<endl;
+            return false;
+        }
+
+        QString inmarker_file = infiles[2];
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+
+        QString  outswc_file =  outfiles[0];
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"inmarkerpath_file = "<<inmarkerpath_file.toStdString().c_str()<<endl;
+        cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(inmarkerpath_file)));
+
+        double sum_x = 0, sum_y = 0;
+        for(int i = 0; i < file_inmarkers.size(); i ++)
+        {
+            sum_x+= file_inmarkers[i].x;
+            sum_y+= file_inmarkers[i].y;
+        }
+
+        double cent_x = sum_x/file_inmarkers.size();
+        double cent_y = sum_y/file_inmarkers.size();
+
+        double sum_r = 0;
+        for(int i = 0; i < file_inmarkers.size(); i ++)
+        {
+            sum_r+= sqrt(pow2(file_inmarkers[i].x - cent_x) + pow2(file_inmarkers[i].y - cent_y));
+        }
+
+        double soma_r = sum_r/file_inmarkers.size();
+
+
+        vector<MyMarker> center_inmarkers;
+        center_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+        double soma_x = center_inmarkers[0].x;
+        double soma_y = center_inmarkers[0].y;
+        double soma_z = center_inmarkers[0].z;
+
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        double Dist = 10000000000;
+        V3DLONG soma_ID = -1;
+        for (V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            double point_x = nt.listNeuron.at(i).x;
+            double point_y = nt.listNeuron.at(i).y;
+            double point_z = nt.listNeuron.at(i).z;
+            if(sqrt(pow2(point_x - soma_x) + pow2(point_y - soma_y) + pow2(point_z - soma_z)) < Dist)
+            {
+                Dist = sqrt(pow2(point_x - soma_x) + pow2(point_y - soma_y) + pow2(point_z - soma_z));
+                soma_ID = i;
+            }
+        }
+        v3d_msg(QString ("Soma ID is %1").arg(soma_ID));
     }
     else if (func_name == tr("help"))
     {
