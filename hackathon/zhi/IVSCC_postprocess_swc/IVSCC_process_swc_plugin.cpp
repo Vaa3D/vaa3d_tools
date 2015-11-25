@@ -7,6 +7,7 @@
 #include <vector>
 #include "IVSCC_process_swc_plugin.h"
 #include "basic_surf_objs.h"
+#include <boost/lexical_cast.hpp>
 
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
@@ -342,7 +343,38 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                 soma_ID = i;
             }
         }
-        v3d_msg(QString ("Soma ID is %1").arg(soma_ID));
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_sort;
+        V3DPluginArgList output;
+
+        arg.type = "random";std::vector<char*> arg_input_sort;
+        char* fileName_string = infiles[0];
+        arg_input_sort.push_back(fileName_string);
+        arg.p = (void *) & arg_input_sort; input_sort<< arg;
+        arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("0");
+        string S_soma_ID = boost::lexical_cast<string>(soma_ID);
+        char* C_soma_ID = new char[S_soma_ID.length() + 1];
+        strcpy(C_soma_ID,S_soma_ID.c_str());
+        arg_sort_para.push_back(C_soma_ID);
+        arg.p = (void *) & arg_sort_para; input_sort << arg;
+        QString full_plugin_name_sort = "sort_neuron_swc";
+        QString func_name_sort = "sort_swc";
+        callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
+
+        QString swcfilename_sorted = inswc_file + "_sorted.swc";
+        vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename_sorted.toStdString());
+        for(V3DLONG i = 0; i < temp_out_swc.size(); i++)
+        {
+            if(i ==0)
+            {
+                temp_out_swc[i]->radius = soma_r;
+                temp_out_swc[i]->type = 1;
+            }
+            else
+                temp_out_swc[i]->type = 3;
+        }
+        saveSWC_file(outswc_file.toStdString(), temp_out_swc);
     }
     else if (func_name == tr("help"))
     {
