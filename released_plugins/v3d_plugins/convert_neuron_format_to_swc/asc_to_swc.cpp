@@ -86,8 +86,6 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
                     biforc[2] = 1;
                     pid = 1;
                     endTree = 1;
-                    //for test
-                    printf("end tree, string: %s, level: %d\n",k,level);
                     break;
                 }// else if (strcmp(k, "split") == 0) {
                 else{
@@ -164,8 +162,6 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
         }else if(c == '('){
             //hb: increase lvl
             level++;
-            //for test
-            printf("%d\n",level);
         }
         //go to end line
         while (c != 13 && c != -1 && c != 10) {
