@@ -49,11 +49,12 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
     int markctr = 0;
     pid = -1;
     int endTree = 0;
+    int level=1;
     while (in->peek() != -1 && endTree == 0) {
         int save = 0;
         int foundBar = 0;
         index = 0;
-        lookForCloseParenthesis = 0;
+        lookForCloseParenthesis = 1;
         save = 0;
         char c = 'y';
         double x, y, z, d;
@@ -61,8 +62,12 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
         while (c != '(' && c != '|' && in->peek() != -1) {
             in->peek();
             c = in->get();
-            if (lookForCloseParenthesis == 1 && c == ')')
+            if (lookForCloseParenthesis == 1 && c == ')'){
                 lookForCloseParenthesis = 2;
+                level--;
+                //for test
+                printf("%d; %d\n",level,index);
+            }
 
             if (c == 10 || c == 13) {
                 index = 0;
@@ -71,20 +76,22 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
             if (c == ' ')
                 index++;
             if (lookForCloseParenthesis == 2) {
-
                 char k[100];
-                *in >> k;
+                if(in->peek()!=10 && in->peek()!=13 && in->peek()!=-1)
+                    *in >> k;
 
-                if (strcmp(k, "tree") == 0) {
+                if (strcmp(k, "tree") == 0 || level==0) {
                     index = 0;
                     lastindex = 0;
                     biforc[2] = 1;
                     pid = 1;
                     endTree = 1;
+                    //for test
+                    printf("end tree, string: %s, level: %d\n",k,level);
                     break;
-                } else if (strcmp(k, "split") == 0) {
-
-                    lookForCloseParenthesis = 0;
+                }// else if (strcmp(k, "split") == 0) {
+                else{
+                    lookForCloseParenthesis = 1;
                 }
             }
         }
@@ -97,8 +104,9 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
             in->get();
 
         //if the line does not contains anything then save the previous id
-        if (in->peek() == 10 || in->peek() == 13)
+        if (in->peek() == 10 || in->peek() == 13){
             save = 1;
+        }
         // when found a '|' correct for pid
         if (lastindex == index && foundBar == 1) {
             int jj = 0;
@@ -116,9 +124,7 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
             lastindex = index;
         }
         //probable location for error!!
-        c = in->peek();
-
-        if (c == -1) {
+        if (in->peek() == -1) {
             int stop = 1;
         }
         // to skip marker blocks. when R is not present the line is skipped.
@@ -155,12 +161,16 @@ int asc_to_swc::NeurolAdd(NeuronTree &nt, ifstream * in, int id, int type) {
             *in >> d;
             add(nt, id, type, x, y, z, d, pid);
             pid = id;
+        }else if(c == '('){
+            //hb: increase lvl
+            level++;
+            //for test
+            printf("%d\n",level);
         }
         //go to end line
         while (c != 13 && c != -1 && c != 10) {
             in->peek();
             c = in->get();
-
         }
 
     }
@@ -236,7 +246,7 @@ double * asc_to_swc::getValues(ifstream * in, double * ret) {
     return ret;
 
 }
-
+#include <limits>
 void asc_to_swc::OpenNeuroL(NeuronTree &nt, char* name) {
     ifstream * in = new ifstream(name, ios::in | ios::binary);
 
