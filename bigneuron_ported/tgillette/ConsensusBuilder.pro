@@ -17,6 +17,7 @@ HEADERS += ActionHook.h
 HEADERS += ConsensusBuilder.h
 HEADERS += logger.h
 HEADERS += align.h
+HEADERS += CBUtils.h
 
 SOURCES = Reconstruction.cpp
 SOURCES += Composite.cpp
@@ -30,7 +31,6 @@ SOURCES += tree_matching/my_surf_objs.cpp
 SOURCES += tree_matching/neuron_tree_align.cpp
 SOURCES += tree_matching/seg_weight.cpp
 SOURCES += tree_matching/swc_utils.cpp
-
 
 win32 {
    contains(QMAKE_HOST.arch, x86_64) {

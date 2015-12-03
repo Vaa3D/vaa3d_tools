@@ -26,6 +26,20 @@ void sigint_handler(int sig)
 
 /** Main function **/
 int main(int argc, char* argv[]){
+    /*
+    NeuronSegment * seg1 = new NeuronSegment(), * seg2 = new NeuronSegment();
+    SegmentPtrSet sps;
+    Reconstruction * recon = new Reconstruction();
+    BranchContainer * bc1 = new BranchContainer(recon,seg1);
+    BranchContainer * bc2 = new BranchContainer(recon,seg2);
+    
+    printf("sps size %i\n",sps.size());
+    sps = recon->get_segments();
+    printf("sps size %i\n",sps.size());
+    printf("sps has seg1 %i\n",sps.find(seg1) != sps.end());
+    
+    return 0;
+    */
     // Get directory from arguments
     if (argc < 3){
       //        std::cout << "Usage is: ConsensusBuilder <indir> <outfile>\n"; // Inform the user of how to use the program
@@ -38,6 +52,7 @@ int main(int argc, char* argv[]){
 
     //    DIR * directory = opendir(argv[1]);
     string directory = argv[1];
+    double confidence_threshold = 0;
     
     printf("Creating ConsenusBuilder\n");
     ConsensusBuilder builder(directory);
@@ -49,6 +64,9 @@ int main(int argc, char* argv[]){
         if (argc > 4){
             double scale = atof(argv[4]);
             builder.set_scale(scale);
+            if (argc > 5){
+                confidence_threshold = atof(argv[5]);
+            }
         }
     }else{
         //builder = ConsensusBuilder(directory);
@@ -68,6 +86,7 @@ int main(int argc, char* argv[]){
     composite->convert_to_consensus(0);
     consensus_root = composite->get_root_segment();
     std::map<NeuronSegment *,double> confidence_map = composite->get_segment_confidences();
+    int num_recons = builder.get_reconstruction_count();
     finished = true;
     //t1.join();
     
@@ -100,7 +119,11 @@ int main(int argc, char* argv[]){
                 marker->x = floor(marker->x*1000 + 0.5)/1000;
                 marker->y = floor(marker->y*1000 + 0.5)/1000;
                 marker->z = floor(marker->z*1000 + 0.5)/1000;
-                marker->radius = confidence_map[segment];
+                marker->radius = floor(marker->radius*100 + 0.5)/100;
+                //marker->radius = 0.5 + 3 * (confidence_map[segment] / num_recons);
+                // marker->type = 1 + (int)floor(20 * confidence_map[segment] / num_recons);
+                //marker->type = (int)floor(confidence_map[segment]);
+                marker->type = 20 + 230 * (1 - confidence_map[segment]);
             }
             for (NeuronSegment * child : segment->child_list){
                 segment_stack.push(child);

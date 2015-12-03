@@ -16,6 +16,7 @@
 #include <string>
 #include <set>
 #include <unordered_set>
+#include "CBUtils.h"
 #include "tree_matching/swc_utils.h"
 #include "tree_matching/neuron_tree_align.h"
 #include "Reconstruction.h"
@@ -80,7 +81,7 @@ ConsensusBuilder::ConsensusBuilder(string &directory, int log_level){
                     vector<MyMarker *> neuronPts = readSWC_file(directory+string("/")+filename);
                     
                     if (neuronPts.size() > 0){
-                        //logger->debug2("%i neuron points",neuronPts.size());
+                        logger->debug2("%i neuron points",neuronPts.size());
                         NeuronSegment * neuron;
                         vector<NeuronSegment*> segments;
 
@@ -134,13 +135,16 @@ ConsensusBuilder::~ConsensusBuilder(){
     segments_by_recon_cube.clear();
     segments_by_composite_cube.clear();
     search_cubes_by_segment.clear();
-
     composite->delete_all();
     delete composite;
 
     for (pair<string, Reconstruction *> recon_pair : cb_reconstructions){
         Reconstruction * recon = recon_pair.second;
+        SegmentPtrSet segments = recon->get_segments();
         delete recon;
+        for (NeuronSegment * segment : segments){
+            delete segment;
+        }
     }
 }
 void ConsensusBuilder::default_parameters(){
@@ -150,9 +154,9 @@ void ConsensusBuilder::default_parameters(){
     scale = 1;
     register_cube_size = default_register_cube_size;
     gap_cost = default_gap_cost;
-    average_alignment_dist = default_average_alignment_dist;
+    alignment_dist_threshold = default_alignment_dist_threshold;
     
-    good_enough_score = default_good_enough_score;
+    good_enough_norm_score = default_good_enough_norm_score;
     best_branch_margin = default_best_branch_margin;
 
     ready_to_run = false;
@@ -163,17 +167,17 @@ void ConsensusBuilder::set_scale(double scale){
     if (scale > 0){
         // Reset existing values given initial scale
         if (this->scale != 0){
-            average_alignment_dist /= this->scale;
+            alignment_dist_threshold /= this->scale;
             gap_cost /= this->scale;
             register_cube_size /= this->scale;
-            good_enough_score /= this->scale;
+            good_enough_norm_score /= this->scale;
             best_branch_margin /= this->scale;
         }
         this->scale = scale;
-        average_alignment_dist *= scale;
+        alignment_dist_threshold *= scale;
         gap_cost *= scale;
         register_cube_size *= scale;
-        good_enough_score *= scale;
+        good_enough_norm_score *= scale;
         best_branch_margin *= scale;
     }
 };
@@ -239,11 +243,21 @@ void ConsensusBuilder::add_reconstruction(Reconstruction * reconstruction){
         builder_state = RECONSTRUCTIONS_ADDED;
     }
 };
+int ConsensusBuilder::get_reconstruction_count(){
+    return cb_reconstructions.size();
+}
+std::set<Reconstruction *> ConsensusBuilder::get_reconstructions(){
+    std::set<Reconstruction *> recons;
+    for (pair<string,Reconstruction *> recon_pair : cb_reconstructions) {
+        recons.insert(recon_pair.second);
+    }
+    return recons;
+}
 
 std::vector<double> ConsensusBuilder::calculate_weights(std::vector<NeuronSegment *> tree1_segs, std::vector<NeuronSegment *> tree2_segs, Reconstruction * reconstruction){
 /*
-    std::set<NeuronSegment *> reconstruction_segments = reconstruction->get_segments();
-    std::set<NeuronSegment *> composite_segments = composite->get_segments();
+    SegmentPtrSet reconstruction_segments = reconstruction->get_segments();
+    SegmentPtrSet composite_segments = composite->get_segments();
   */
     int nrows = tree1_segs.size();
     int ncols = tree2_segs.size();
@@ -259,7 +273,7 @@ std::vector<double> ConsensusBuilder::calculate_weights(std::vector<NeuronSegmen
     for (NeuronSegment * seg1 : tree1_segs)
     {
         int j = 0;
-        std::set<NeuronSegment *> nearby_segments = get_nearby_segments(seg1, reconstruction);
+        SegmentPtrSet nearby_segments = get_nearby_segments(seg1, reconstruction);
         //for(int j = 0; j < ncols; j++)
         for (NeuronSegment * seg2 : tree2_segs)
         {
@@ -550,7 +564,7 @@ int ConsensusBuilder::xyzToIndex(int x_ind, int y_ind, int z_ind){
     return x_ind * y_bin_positions.size() * z_bin_positions.size() + y_ind * z_bin_positions.size() + z_ind;
 };
 
-std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, std::vector<SegmentPtrSet> segments_by_cube){
+SegmentPtrSet ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, std::vector<SegmentPtrSet> segments_by_cube){
     SegmentPtrSet nearby_segments;
     std::set<int> cubes;
     
@@ -564,7 +578,7 @@ std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * 
     logger->debug3("Got nearby segments %i",nearby_segments.size());
     return nearby_segments;
 };
-std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Composite * in_composite){
+SegmentPtrSet ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Composite * in_composite){
     SegmentPtrSet nearby_segments;
     std::set<int> cubes;
     if (segments_by_composite_cube.find(in_composite) == segments_by_composite_cube.end()){
@@ -584,7 +598,7 @@ std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * 
     logger->debug3("Got nearby segments %i",nearby_segments.size());
     return nearby_segments;
 };
-std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Reconstruction * in_reconstruction){
+SegmentPtrSet ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Reconstruction * in_reconstruction){
     SegmentPtrSet nearby_segments;
     std::set<int> cubes;
     if (segments_by_recon_cube.find(in_reconstruction) == segments_by_recon_cube.end()){
@@ -656,8 +670,8 @@ SegmentPtrSet ConsensusBuilder::get_nearby_segments(MyMarker * marker, Reconstru
 };
 
 /*
-std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Composite * in_composite){
-    std::set<NeuronSegment *> nearby_segments;
+SegmentPtrSet ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Composite * in_composite){
+    SegmentPtrSet nearby_segments;
     std::set<int> cubes;
     std::vector<SegmentPtrSet * > * segments_by_cube = segments_by_composite_cube[in_composite];
     if (!segments_by_cube){
@@ -674,8 +688,8 @@ std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * 
     
     return nearby_segments;
 };
-std::set<NeuronSegment *> ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Reconstruction * in_reconstruction){
-    std::set<NeuronSegment *> nearby_segments;
+SegmentPtrSet ConsensusBuilder::get_nearby_segments(NeuronSegment * segment, Reconstruction * in_reconstruction){
+    SegmentPtrSet nearby_segments;
     std::set<int> cubes;
     std::vector<SegmentPtrSet * > * segments_by_cube = segments_by_recon_cube[in_reconstruction];
     if (!segments_by_cube){
@@ -775,9 +789,9 @@ std::vector<NeuronSegment *> ConsensusBuilder::produce_composite(){
     build_composite();
     
     /* Generate consensus */
-    Composite * composite = composite->generate_consensus(0, true);
+    Composite * composite = composite->generate_consensus(0);
     
-    std::set<NeuronSegment *> segments = composite->get_segments();
+    SegmentPtrSet segments = composite->get_segments();
     std::vector<NeuronSegment *> segments_vector(segments.begin(),segments.end());
     return segments_vector;
 };
@@ -785,9 +799,12 @@ std::vector<NeuronSegment *> ConsensusBuilder::produce_composite(){
 
 NeuronSegment * ConsensusBuilder::build_consensus(double branch_confidence_threshold){
     logger->info("Ready to run? %d ",ready_to_run);
+    if (branch_confidence_threshold >= 1){
+        branch_confidence_threshold /= cb_reconstructions.size();
+    }
     if (!ready_to_run){
         logger->error("At least 2 reconstructions are required to run ConsensusBuilder");
-        return NULL;
+        return nullptr;
     }
     
     /** CONSIDER:
@@ -806,7 +823,7 @@ NeuronSegment * ConsensusBuilder::build_consensus(double branch_confidence_thres
     build_composite();
 
     /* Generate consensus */
-    Composite * consensus = composite->generate_consensus(branch_confidence_threshold, true);
+    Composite * consensus = composite->generate_consensus(branch_confidence_threshold);
 
     return consensus->get_root_segment();
 };
@@ -886,9 +903,9 @@ void ConsensusBuilder::build_composite(){
 
         std::vector<NeuronSegment *> reconstruction_segments = reconstruction->get_segments_ordered();
 
-        std::set<NeuronSegment *> reconstruction_segments_set(reconstruction_segments.begin(),reconstruction_segments.end());
+        SegmentPtrSet reconstruction_segments_set(reconstruction_segments.begin(),reconstruction_segments.end());
 
-        logger->debug2("Got recon segments");
+        logger->debug2("Got recon segments %i",reconstruction_segments_set.size());
         /*
         for (NeuronSegment *seg : reconstruction_segments){
             logger->debug4("seg size %i",seg->markers.size());
@@ -933,12 +950,13 @@ void ConsensusBuilder::build_composite(){
             // Put all branches into set of unmatched branches, then later remove those that are matched from the list
             unmatched_tree1_segments.clear();
             unmatched_tree1_segments.insert(composite_segments.begin(),composite_segments.end());
-            //unmatched_tree2_segments.clear();
+            unmatched_tree2_segments.clear();
             unmatched_tree2_segments = reconstruction_segments_set;
+            logger->info("unmatched_tree2_segments size %i, reconstruction_segments_set size %i",unmatched_tree2_segments.size(),reconstruction_segments_set.size());
             
 
             // Create a set of segments from the composite
-            std::set<NeuronSegment *> composite_segments_set(composite_segments.begin(), composite_segments.end());
+            SegmentPtrSet composite_segments_set(composite_segments.begin(), composite_segments.end());
             
             // Calculate weights for each branch pair, higher weight is better for aligning
             std::vector<double> weights = calculate_weights(composite_segments, reconstruction_segments, reconstruction);
@@ -1022,7 +1040,7 @@ void ConsensusBuilder::build_composite(){
                 if (abs((int)(seg1.size() - seg2.size())) <= 2){
                     logger->debug("Difference in sequence lengths is too large");
                     align_dist = simple_seg_weight(seg1, seg2, marker_index_alignments);
-                    align_score = average_alignment_dist - align_dist/marker_index_alignments.size();
+                    align_score = alignment_dist_threshold - align_dist/marker_index_alignments.size();
                 }
                 logger->debug1("marker_index_alignments size %i, align_dist %f",marker_index_alignments.size(), align_dist);
                 logger->debug1("normalized score %f, threshold %f",align_score,match_score_threshold);
@@ -1073,6 +1091,7 @@ void ConsensusBuilder::build_composite(){
                 match_remaining_branches(reconstruction);
             logger->debug3("done matching remaining branches");
 
+//            return;
             // Add missed branches to composite and update composite branch confidence_denominators
             // If no match, new branch, add to composite [composite->addBranch() - HOOK]
             //incorporate_unassigned_branches(unmatched_branches);
@@ -1102,9 +1121,28 @@ void ConsensusBuilder::build_composite(){
 };
 
 void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction){
-    logger->debug1("Enter match_remaining_branches");
+    logger->info("Enter match_remaining_branches; %i recon segs, %i in unmatched_tree2_segments",reconstruction->get_segments().size(),unmatched_tree2_segments.size());
+    int cnt = 0;
+    for (NeuronSegment *s : reconstruction->get_segments()){
+        BranchContainer *b = reconstruction->get_branch_by_segment(s);
+        if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+            logger->error("Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+            cnt++;
+        }
+    }
+    logger->info("%i not found in unmatched_tree2_segments",cnt);
+
     std::set<Match *> matches = find_matches_local_alignment();
+
+    logger->debug1("Returned from find_matches_local_alignment");
     
+    for (NeuronSegment *s : reconstruction->get_segments()){
+        BranchContainer *b = reconstruction->get_branch_by_segment(s);
+        if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+            logger->error("Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+        }
+    }
+
     // Produce sets of matches on the same segment (should not be overlapping)
     std::map<NeuronSegment *, std::set<Match * > > matches_by_segment;
     for (Match * match : matches){
@@ -1118,8 +1156,8 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
 
         CompositeBranchContainer * c_branch = composite->get_branch_by_segment(match->seg1);
         BranchContainer * r_branch = reconstruction->get_branch_by_segment(match->seg2);
-        unmatched_tree1_segments.erase(c_branch->get_segment());
-        unmatched_tree2_segments.erase(r_branch->get_segment());
+        //unmatched_tree1_segments.erase(c_branch->get_segment());
+        //unmatched_tree2_segments.erase(r_branch->get_segment());
 
         printf("seg1 %p seg2 %p\n",match->seg1,match->seg2);
         logger->debug3("match forward? %i",match->forward);
@@ -1143,11 +1181,11 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
         for (int i = 0; i < match->alignment_size(); i++){
             int j = match->alignment.first[i];
             int k = match->alignment.second[i];
-            logger->debug1("First seg pos %i, second seg pos %i",j,k);
-            c_seg->markers[i]->x = (c_weight * c_seg->markers[j]->x + r_weight * r_seg->markers[k]->x) / combined_weight;
-            c_seg->markers[i]->y = (c_weight * c_seg->markers[j]->y + r_weight * r_seg->markers[k]->y) / combined_weight;
-            c_seg->markers[i]->z = (c_weight * c_seg->markers[j]->z + r_weight * r_seg->markers[k]->z) / combined_weight;
-            c_seg->markers[i]->radius = (c_weight * c_seg->markers[j]->radius + r_weight * r_seg->markers[k]->radius) / combined_weight;
+            logger->debug4("First seg pos %i, second seg pos %i",j,k);
+            c_seg->markers[j]->x = (c_weight * c_seg->markers[j]->x + r_weight * r_seg->markers[k]->x) / combined_weight;
+            c_seg->markers[j]->y = (c_weight * c_seg->markers[j]->y + r_weight * r_seg->markers[k]->y) / combined_weight;
+            c_seg->markers[j]->z = (c_weight * c_seg->markers[j]->z + r_weight * r_seg->markers[k]->z) / combined_weight;
+            c_seg->markers[j]->radius = (c_weight * c_seg->markers[j]->radius + r_weight * r_seg->markers[k]->radius) / combined_weight;
         }
         
         // Split branches as needed - composite branch
@@ -1202,24 +1240,39 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
         int align_start = match->seg2_start();
         int align_end = match->seg2_end();
         if (align_start != 0 || align_end != r_branch->get_segment()->markers.size()-1){
-            logger->debug1("Splitting recon branch of size %i given alignment from %i - %i",r_branch->get_segment()->markers.size(),match->seg2_start(),match->seg2_end());
+            logger->debug1("Splitting recon branch with seg %p of size %i given alignment from %i - %i",r_branch->get_segment(),r_branch->get_segment()->markers.size(),match->seg2_start(),match->seg2_end());
             for (Match * other_match : matches_by_segment[r_seg]){
                 logger->debug("Other r_seg match %p size %i start before: %i - %i", other_match,r_seg->markers.size(),other_match->seg2_start(),other_match->seg2_end());
+            }
+
+            for (NeuronSegment *s : reconstruction->get_segments()){
+                BranchContainer *b = reconstruction->get_branch_by_segment(s);
+                if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+                    logger->error("Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+                }
             }
 
             std::vector<BranchContainer *> resulting_r_branches;
             logger->debug4("segments in recon before split %i",r_branch->get_reconstruction()->get_segments().size());
             r_branch = split_branch(r_branch,match,resulting_r_branches);
             logger->debug4("segments in recon after split %i",r_branch->get_reconstruction()->get_segments().size());
+
             
             // Add new segments to unmatched set
             for (int i = 0; i < resulting_r_branches.size(); i++){
                 BranchContainer * r_of_set = resulting_r_branches[i];
-                logger->debug1("r_of_set %p",r_of_set);
+                logger->debug1("r_of_set seg %p, branch %p, insert ? %i",r_of_set->get_segment(),r_of_set,r_of_set != r_branch);
                 if (r_of_set != r_branch)
                     unmatched_tree2_segments.insert(r_of_set->get_segment());
             }
-            
+
+            for (NeuronSegment *s : reconstruction->get_segments()){
+                BranchContainer *b = reconstruction->get_branch_by_segment(s);
+                if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+                    logger->warn("Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+                }
+            }
+
             // Update other matches, their segment references and alignment start/end points
             matches_by_segment[r_seg].erase(match);
             std::set<Match *> other_matches = matches_by_segment[r_seg];
@@ -1241,7 +1294,6 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
                     logger->error("Alignment too large for segment size");
                 }
             }
-
         }
         
         logger->debug4("Number of connections in existing composite %i",c_branch->get_connections().size());
@@ -1252,10 +1304,189 @@ void ConsensusBuilder::match_remaining_branches(Reconstruction * reconstruction)
         c_branch->add_branch_match(r_branch, match->forward);
         logger->debug2("Branch summed confidence after %f",c_branch->get_summed_confidence());
         r_branch->set_composite_match(c_branch);
+        
+        unmatched_tree1_segments.erase(c_branch->get_segment());
+        unmatched_tree2_segments.erase(r_branch->get_segment());
+
+        logger->debug2("Erasing recon branch %p with segment %p from unmatched_tree2_segments",r_branch,r_branch->get_segment());
+
+        for (NeuronSegment *s : reconstruction->get_segments()){
+            BranchContainer *b = reconstruction->get_branch_by_segment(s);
+            if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+                logger->error("After processing match; Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+            }
+        }
+    }
+
+    logger->info("Done creating associations between reconstruction and composite branches");
+    
+    for (NeuronSegment *s : reconstruction->get_segments()){
+        BranchContainer *b = reconstruction->get_branch_by_segment(s);
+        if (unmatched_tree2_segments.find(s) == unmatched_tree2_segments.end() && !b->get_composite_match()){
+            logger->error("Segment %p, branch %p not in unmatched_tree2_segments but has no composite match",s,b);
+        }
+    }
+
+    // Done with matches, now delete them
+    for (Match * m : matches){
+        delete m;
     }
     
-    logger->debug1("Exit match_remaining_branches");
+    logger->info("Exit match_remaining_branches");
 };
+
+
+SmallOverlap ConsensusBuilder::resolve_small_overlap(Match *m1, Match *m2, bool overlap_on_first){
+    printf("M1 %p M2 %p\n",m1,m2);
+    logger->debug4("m1 alignment size %i",m1->alignment_size());
+    logger->debug4("m2 alignment size %i",m2->alignment_size());
+    
+    NeuronSegment *conflict_seg, *m1_other_seg, *m2_other_seg;
+    vector<int> conflict_positions, m1_other_align, m2_other_align;
+
+    SmallOverlap small_overlap;
+    
+    // Variables for:
+    //  - which segment is the overlap on (use 'overlap_on_first')
+    //  - which match has the matching segment that aligns earlier along the overlapped segment (uses m1start, m1end, m2start, m2end)
+    //  - for each match, is segment2 matched in reverse to segment1 (uses match->forward)
+    
+    printf("M1 segments %p %p\n",m1->seg1,m1->seg2);
+    printf("M2 segments %p %p\n",m2->seg1,m2->seg2);
+    // ** For those that overlap, just divide the markers roughly evenly **
+    
+    // Calculate the overlap size using the segment positions on the overlapped segment
+    int m1start, m1end, m2start, m2end;
+    // Overlap is via first segment (denoted in second value in overlap pair) in both matches
+    if (overlap_on_first){
+        // Work on the first segment
+        conflict_seg = m1->seg1;
+        conflict_positions = m1->alignment.first;
+        m1_other_seg = m1->seg2;
+        m1_other_align = m1->alignment.second;
+        m2_other_seg = m2->seg2;
+        m2_other_align = m2->alignment.second;
+        
+        m1start = m1->seg1_start();
+        m1end = m1->seg1_end();
+        m2start = m2->seg1_start();
+        m2end = m2->seg1_end();
+    }else{
+        // Work on the second segment
+        conflict_seg = m1->seg2;
+        conflict_positions = m1->alignment.second;
+        m1_other_seg = m1->seg1;
+        m1_other_align = m1->alignment.first;
+        m2_other_seg = m2->seg1;
+        m2_other_align = m2->alignment.first;
+        
+        m1start = m1->seg2_start();
+        m1end = m1->seg2_end();
+        m2start = m2->seg2_start();
+        m2end = m2->seg2_end();
+    }
+    logger->debug3("Determined which segment overlap is on; first? %i",overlap_on_first);
+    
+    printf("M1 alignment size %i\n",m1->alignment_size());
+    printf("M2 alignment size %i\n",m2->alignment_size());
+    printf("small overlap_on_first %i; m1 %i - %i, m2 %i - %i, m1 forward %i, m2 forward %i\n", overlap_on_first, m1start, m1end,m2start,m2end,m1->forward, m2->forward);
+    int cut_from1, cut_from2;
+    double score_adjustment = 0;
+    // Determine which match aligns from the top (before) and which from the bottom (after)
+    if ((m1start > m2start && m1start <= m2end) || (m1start == m2start && m2end < m1end)){
+        // M2 aligns first, then M1
+        small_overlap.match1_aligns_first = false;
+
+        int overlap_size = m2end - m1start + 1;
+        
+//        if (m1->alignment_size() < allowable_alignment_overlap){
+//            cut_from1 = overlap_size;
+//            cut_from2 = 0;
+//        }else if (m2->alignment_size() < allowable_alignment_overlap){
+//            cut_from1 = 0;
+//            cut_from2 = overlap_size;
+//        }else{
+            logger->debug4("Updating alignments given small overlap");
+            
+            bool assign_to_match2 = true;
+            for (int ov_step = 0; ov_step < overlap_size; ov_step++){
+                int m1_alignment_pos = ov_step;
+                int m2_alignment_pos = m2->alignment_size() - overlap_size;
+                MyMarker overlapped_marker = *(conflict_seg->markers[conflict_positions[m1_alignment_pos]]);
+                double dist_m1 = dist(overlapped_marker, *(m1_other_seg->markers[m1_other_align[m1_alignment_pos]]));
+                double dist_m2 = dist(overlapped_marker, *(m2_other_seg->markers[m2_other_align[m2_alignment_pos]]));
+                if (assign_to_match2){
+                    score_adjustment += alignment_dist_threshold - dist_m1;
+                    continue;
+                }
+                if (dist_m1 < dist_m2){
+                    assign_to_match2 = false;
+                    score_adjustment += alignment_dist_threshold - dist_m2;
+                    cut_from1 = ov_step;
+                    cut_from2 = overlap_size - ov_step;
+                }else{
+                    score_adjustment += alignment_dist_threshold - dist_m1;
+                }
+            }
+            if (assign_to_match2){
+                cut_from1 = overlap_size;
+                cut_from2 = 0;
+            }
+        //}
+        
+        printf("M2 aligns first; cut from 1: %i; cut from 2: %i\n",cut_from1,cut_from2);
+        
+    }else if ((m2start > m1start && m2start <= m1end) || (m2start == m1start && m1end < m2end)){
+        // M1 aligns first, then M2
+        small_overlap.match1_aligns_first = true;
+        
+        int overlap_size = m1end - m2start + 1;
+//        if (m1->alignment_size() < allowable_alignment_overlap){
+//            cut_from1 = overlap_size;
+//            cut_from2 = 0;
+//        }else if (m2->alignment_size() < allowable_alignment_overlap){
+//            cut_from1 = 0;
+//            cut_from2 = overlap_size;
+//        }else{
+            logger->debug4("Updating alignments given small overlap");
+            
+            bool assign_to_match1 = true;
+            for (int ov_step = 0; ov_step < overlap_size && assign_to_match1; ov_step++){
+                int m1_alignment_pos = m1->alignment_size() - overlap_size;
+                int m2_alignment_pos = ov_step;
+                MyMarker overlapped_marker = *(conflict_seg->markers[conflict_positions[m1_alignment_pos]]);
+                double dist_m1 = dist(overlapped_marker, *(m1_other_seg->markers[m1_other_align[m1_alignment_pos]]));
+                double dist_m2 = dist(overlapped_marker, *(m2_other_seg->markers[m2_other_align[m2_alignment_pos]]));
+                if (assign_to_match1){
+                    score_adjustment += alignment_dist_threshold - dist_m2;
+                    continue;
+                }
+                if (dist_m2 < dist_m1){
+                    assign_to_match1 = false;
+                    score_adjustment += alignment_dist_threshold - dist_m1;
+                    cut_from1 = overlap_size - ov_step;
+                    cut_from2 = ov_step;
+                }else{
+                    score_adjustment += alignment_dist_threshold - dist_m2;
+                }
+            }
+            if (assign_to_match1){
+                cut_from1 = 0;
+                cut_from2 = overlap_size;
+            }
+//        }
+        
+    }else{
+        logger->warn("Final matches marked as conflicting at end, but no overlap found");
+        return small_overlap;
+    }
+    
+    small_overlap.cut_from1 = cut_from1;
+    small_overlap.cut_from2 = cut_from2;
+    small_overlap.score_adjustment = score_adjustment;
+    return small_overlap;
+};
+
 
 /**
  * Takes segments from tree 1 and 2 that have not already been assigned
@@ -1267,7 +1498,7 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
 
     // Get candidate matches for each segment
     logger->debug2("enter find_matches_local_alignment");
-    std::map<NeuronSegment *,std::vector<Match *> * > matches_by_segment =
+    std::map<NeuronSegment *,std::vector<Match *> *, segment_ptr_less > matches_by_segment =
         generate_candidate_matches_via_local_align(unmatched_tree2_segments);
     logger->debug3("generated candidate matches via local align, num %i",matches_by_segment.size());
     
@@ -1282,7 +1513,7 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
     std::map<Match *, std::set<Match *> * > match_conflicts;
     // Map of marginal-conflict pairs, those accepted but with small overlap, with the overlap size as the value
     //std::map<pair<Match *, Match *>, int> small_overlaps;
-    std::map<Match *, map<Match *, bool> > small_overlaps;
+    std::map<Match *, map<Match *, SmallOverlap> > small_overlaps;
     
     // Put conflicts into match_conflicts
     logger->debug("about to find conflicts");
@@ -1297,7 +1528,7 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
     std::set<Match *> unprocessed;
     for (std::map<NeuronSegment *,std::vector<Match *> * >::iterator it = matches_by_segment.begin();
          it != matches_by_segment.end(); ++it){
-        for (Match * match : *(it->second)){
+        for (Match *match : *(it->second)){
             unprocessed.insert(match);
         }
     }
@@ -1315,29 +1546,30 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
             continue;
         }
 
+        typedef std::map<Match *,bool> AssignmentMap;
+        typedef std::stack<Match *> MatchStack;
         // Map of matches and whether they are assigned or not (T/F)
-        std::map<Match *,bool> *assignment_map_ptr, *assignment_map_copy_ptr;
-        std::map<Match *,bool> assignment_map;
+        AssignmentMap *assignment_map_ptr, *assignment_map_copy_ptr;
+        //AssignmentMap assignment_map;
         // Initialize a vector of assignment maps for all possible cases
         std::vector<std::map<Match *,bool> * > assignment_options;
         // Cumulative score for each assignments map
         std::map<std::map<Match *,bool> *, double> score_map;
         
-        // Stack of matches still remaining to determine
-        std::stack<Match *> * next_matches, * next_matches_copy;
+        // Stack of matches still remaining to determine for a given permutation of assignments
+        MatchStack *next_matches, *next_matches_copy;
         // "Possibilities" stack: Stack of next_matches stacks, as each path of assignments needs its own set of remaining matches to process
-        std::stack<std::stack<Match *> * > next_matches_stack;
+        std::stack<MatchStack * > next_matches_stack;
         // Map that gets the assignment_map for a given next_matches stack
-        std::map<std::stack<Match *> *, std::map<Match *,bool> * > next_matches_map;
+        std::map<MatchStack *, AssignmentMap * > next_matches_map;
         
         logger->debug("Processing 1; %i conflicts",match_conflicts[first_match]->size());
 
         // Initialize objects for the current conflict set
-        assignment_map_ptr = new std::map<Match *,bool>();
+        assignment_map_ptr = new AssignmentMap;
         assignment_options.push_back(assignment_map_ptr);
-        next_matches = new std::stack<Match *>();
+        next_matches = new MatchStack;
         // Put first match in set into the stack
-        //next_matches.push(*(conflict_set->begin()));
         next_matches->push(first_match);
         // Put first stack of next_matches into stack of paths (beginning with just one)
         next_matches_map[next_matches] = assignment_map_ptr;
@@ -1346,39 +1578,50 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
         
         logger->debug("Processing 2");
 
+        // Loop until no stacks remain
         while (!next_matches_stack.empty()){
-            logger->debug4("next_matches_stack size %i",next_matches_stack.size());
+            logger->debug2("next_matches_stack size %i",next_matches_stack.size());
 
             // Pull the current next_matches and assignments objects
             next_matches = next_matches_stack.top();
             next_matches_stack.pop();
             assignment_map_ptr = next_matches_map[next_matches];
-            assignment_map = *assignment_map_ptr;
+            //assignment_map = *assignment_map_ptr;
             
-            // Loop until no stacks remain
+            // Loop until no matches remain
             while (!next_matches->empty()){
                 Match * candidate = next_matches->top();
-                logger->debug4("candidate %p with %i conflicts; next_matches size %i",candidate,match_conflicts[candidate]->size(),next_matches->size());
-                logger->debug4("candidate seg1 %i - %i, seg2 %i - %i",candidate->seg1_start(), candidate->seg1_end(), candidate->seg2_start(), candidate->seg2_end());
-                logger->debug4("candidate has %i conflicts",match_conflicts[candidate]->size());
                 next_matches->pop();
-                unprocessed.erase(candidate); // this match will now have been processed
+
+                // Make sure this candidate isn't already itself set within the current assignment_map
+                if (assignment_map_ptr->find(candidate) != assignment_map_ptr->end()) continue;
+                
+                logger->debug3("candidate %p with %i conflicts; next_matches size %i",candidate,match_conflicts[candidate]->size(),next_matches->size());
+                logger->debug4("candidate seg1 %i - %i, seg2 %i - %i",candidate->seg1_start(), candidate->seg1_end(), candidate->seg2_start(), candidate->seg2_end());
+                logger->debug4("candidate seqs sizes %i and %i, score %f, forward? %i",candidate->seg1->markers.size(),candidate->seg2->markers.size(), candidate->score, candidate->forward);
                 
                 bool must_be_off = false;
                 int count_off = 0;
+                double score_adjustment = 0;
+                unprocessed.erase(candidate); // this match will now have been processed
                 
                 std::set<Match *> to_add;
                 // First determine whether the candidate can be on and/or off (if the match has no conflict on either side, turn it ON)
                 for (Match * conflict : *(match_conflicts[candidate])){
                     if (conflict->seg1 == candidate->seg1){
-                        logger->debug4("Conflict %i - %i",conflict->seg1_start(),conflict->seg1_end());
+                        logger->debug4("Conflict %p %i - %i",conflict,conflict->seg1_start(),conflict->seg1_end());
                     }else{
-                        logger->debug4("Conflict %i - %i",conflict->seg2_start(),conflict->seg2_end());
+                        logger->debug4("Conflict %p %i - %i",conflict,conflict->seg2_start(),conflict->seg2_end());
                     }
-                    if (assignment_map.find(conflict) != assignment_map.end()){
-                        if (assignment_map[conflict]){
+                    if (assignment_map_ptr->find(conflict) != assignment_map_ptr->end()){
+                        if (assignment_map_ptr->at(conflict)){
                             logger->debug4("Conflict is set to ON");
-                            must_be_off = true;
+                            // Check whether this is a small overlap. If so, treat the conflict as if it were not set, with a score adjustment if it is ON
+                            if (small_overlaps.find(candidate) != small_overlaps.end() && small_overlaps[candidate].find(conflict) != small_overlaps[candidate].end()){
+                                score_adjustment += small_overlaps[candidate][conflict].score_adjustment;
+                            }else{
+                                must_be_off = true;
+                            }
                         }else{
                             logger->debug4("Conflict is set to OFF");
                             count_off++;
@@ -1392,25 +1635,30 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
                 logger->debug4("Count of OFF %i",count_off);
 
                 if (must_be_off){
-                    assignment_map[candidate] = false;
+                    (*assignment_map_ptr)[candidate] = false;
                     logger->debug4("Must be OFF");
                 }else if (count_off == match_conflicts[candidate]->size()){
                     logger->debug4("count_off equals size of conflict set, so assign this match candidate to ON");
                     // No conflicts remain for this match, so don't bother with the case of it being OFF
-                    assignment_map[candidate] = true;
+                    (*assignment_map_ptr)[candidate] = true;
+                    logger->debug4("Current sum score copy %f",score_map[assignment_map_ptr]);
                     score_map[assignment_map_ptr] += candidate->score;
+                    logger->debug4("New sum score copy %f",score_map[assignment_map_ptr]);
                 }else{
                     logger->debug4("No conflict is ON, and some conflicts have not been set, so create version ON and OFF");
                     logger->debug4("next_matches size before %i, next_matches_stack before %i",next_matches->size(),next_matches_stack.size());
 
                     // Can be on or off, need to duplicate the assignment map for each possibility
-                    assignment_map_copy_ptr = new std::map<Match *,bool>();
-                    *assignment_map_copy_ptr = *assignment_map_ptr;
-                    next_matches_copy = new std::stack<Match *>();
+                    assignment_map_copy_ptr = new AssignmentMap();
+                    *assignment_map_copy_ptr = *assignment_map_ptr; // Copy assignment map so far
+                    next_matches_copy = new MatchStack();
                     *next_matches_copy = *next_matches;
+                    assignment_options.push_back(assignment_map_copy_ptr);
                     
                     // Copy the score
                     score_map[assignment_map_copy_ptr] = score_map[assignment_map_ptr];
+                    logger->debug("Current sum score %f",score_map[assignment_map_ptr]);
+                    logger->debug("Current sum score copy %f",score_map[assignment_map_copy_ptr]);
                     
                     // Link the new next_matches stack to its assignment map
                     next_matches_map[next_matches_copy] = assignment_map_copy_ptr;
@@ -1420,8 +1668,10 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
                     next_matches_stack.push(next_matches_copy);
                     
                     // Set the original to have this candidate ON
-                    assignment_map[candidate] = true;
-                    score_map[assignment_map_ptr] += candidate->score;
+                    (*assignment_map_ptr)[candidate] = true;
+                    score_map[assignment_map_ptr] += candidate->score - score_adjustment;
+
+                    logger->debug("New sum score %f",score_map[assignment_map_ptr]);
 
                     logger->debug4("next_matches size after %i, next_matches_stack after %i",next_matches->size(),next_matches_stack.size());
                 }
@@ -1431,31 +1681,40 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
         
         
         // Determine best assignment_map
-        std::map<Match *,bool> * best_assignments;
+        AssignmentMap * best_assignments;
         double best_score = 0;
-        for (std::map<Match *, bool> * assignment_map : assignment_options){
+        for (AssignmentMap * assignment_map : assignment_options){
+            logger->info("Option with score %f",score_map[assignment_map]);
             if (score_map[assignment_map] > best_score){
                 best_assignments = assignment_map;
                 best_score = score_map[assignment_map];
             }
         }
         // Transfer assignments to final_assignments
-        logger->info("Transfering matches into final_assignments");
-        for (std::map<Match *,bool>::iterator it = best_assignments->begin(); it != best_assignments->end(); ++it){
+        logger->info("Transfering matches into final_assignments; best score is %f; size of best_assignments %i",best_score,best_assignments->size());
+        for (AssignmentMap::iterator it = best_assignments->begin(); it != best_assignments->end(); ++it){
+            Match * match = it->first;
             if (it->second){
-                logger->debug("Adding match %p",it->first);
-                final_assignments.insert(it->first);
+                logger->debug("Adding match %p with score %f",it->first,it->first->score);
+                final_assignments.insert(match);
             }else{
                 // Delete rejected candidate matches
-                logger->debug("Deleting match %p",it->first);
-                delete it->first;
+                logger->debug("Deleting match %p with score %f",match,match->score);
+                // Remove any small overlaps first
+                if (small_overlaps.find(match) != small_overlaps.end()){
+                    for (pair<Match *,SmallOverlap> small_overlap : small_overlaps[match]){
+                        small_overlaps[small_overlap.first].erase(match);
+                    }
+                }
+                delete match;
             }
         }
-        
+
         // Cleanup of asignment objects
-        for (std::map<Match *,bool> * assignment_map : assignment_options){
+        for (AssignmentMap * assignment_map : assignment_options){
             delete assignment_map;
         }
+
     }
     
     // Delete match_conflicts sets
@@ -1465,24 +1724,92 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
     }
     
     // Resolve small overlaps
-    logger->debug("Resolve small overlaps");
+    logger->debug("Resolving small overlaps");
     std::set<Match *> processed_previously;
+    std::set<Match *> for_elimination; // matches that are shortened to length 0 by small overlaps - to be eliminated from final_assignments after traversal
     // Process each match with other possible matches
     for (Match * m1 : final_assignments){
 //        Match * m1 = final_assignments_vect[i];
+
+        logger->debug("M1 has overlaps? %i; alignment size %i",small_overlaps.find(m1) != small_overlaps.end(), m1->alignment_size());
+
+        // Skip this match if it has a 0 alignment length (must have been processed previously as an m2)
+        if (m1->alignment_size() == 0) continue;
+        
         processed_previously.insert(m1);
         // Check whether m1 has any overlaps
         if (small_overlaps.find(m1) != small_overlaps.end()){
-            logger->debug("M1 %p has %i small overlaps",m1,small_overlaps[m1].size());
+            logger->debug("M1 %p has %i small overlaps, alignment size %i, forward %i",m1,small_overlaps[m1].size(),m1->alignment_size(),m1->forward);
 
-            // Go through overlaps and process those that haven't already been processed
-            for (pair<Match*,bool> overlap : small_overlaps[m1]){
-                if (processed_previously.find(overlap.first) == processed_previously.end()){
-                    Match *m2 = overlap.first;
+            // Go through overlaps and process those that haven't already been processed, that are in final_assignments (small_overlaps will still include matches that were excluded in resolving larger overlaps), and that still have some length
+            std::map<Match *, SmallOverlap> overlaps_of_m1 = small_overlaps[m1];
+            for (pair<Match*,SmallOverlap> overlap : overlaps_of_m1){
+                Match *m2 = overlap.first;
+                SmallOverlap small_overlap = overlap.second;
+                logger->debug4("M2 %p; alignment size %i, forward %i", m2, m2->alignment_size(), m2->forward);
+                logger->debug4("cut_from1 %i, cut_from2 %i, on_first %i, m1 aligns first %i",small_overlap.cut_from1, small_overlap.cut_from2, small_overlap.overlap_on_first, small_overlap.match1_aligns_first);
+                if (small_overlap.match1_aligns_first){
+                    if (small_overlap.cut_from1){
+                        if (small_overlap.overlap_on_first || m1->forward) // M1 cuts off the front
+                            m1->erase_from_alignment(0, small_overlap.cut_from1);
+                        else // M1 cuts off the end
+                            m1->erase_from_alignment(m1->alignment_size() - small_overlap.cut_from1, m1->alignment_size());
+                    }
+                    
+                    if (small_overlap.cut_from2){
+                        if (small_overlap.overlap_on_first || m2->forward) // M2 cuts off the end
+                            m2->erase_from_alignment(m2->alignment_size() - small_overlap.cut_from2, m2->alignment_size());
+                        else // M2 cuts off the front
+                            m2->erase_from_alignment(0, small_overlap.cut_from2);
+                    }
+                }else{
+                    if (small_overlap.cut_from1){
+                        if (small_overlap.overlap_on_first || m1->forward) // M1 cuts off the end
+                            m1->erase_from_alignment(m1->alignment_size() - small_overlap.cut_from1, m1->alignment_size());
+                        else // M1 cuts off the front
+                            m1->erase_from_alignment(0, small_overlap.cut_from1);
+                    }
+                    
+                    if (small_overlap.cut_from2){
+                        if (small_overlap.overlap_on_first || m2->forward) // M2 cuts off the front
+                            m2->erase_from_alignment(0, small_overlap.cut_from2);
+                        else // M2 cuts off the end
+                            m2->erase_from_alignment(m2->alignment_size() - small_overlap.cut_from2, m2->alignment_size());
+                    }
+                }
+                
+                if (m1->alignment_size() == 0){
+                    logger->debug2("M1 has 0 length, remove it");
+                    // Remove m1
+                    matches_by_segment[m1->seg1]->erase(std::remove(matches_by_segment[m1->seg1]->begin(),matches_by_segment[m1->seg1]->end(), m1),matches_by_segment[m1->seg1]->end());
+                    matches_by_segment[m1->seg2]->erase(std::remove(matches_by_segment[m1->seg2]->begin(),matches_by_segment[m1->seg2]->end(), m1),matches_by_segment[m1->seg2]->end());
+                    for_elimination.insert(m1);
+                    // If M1 is no more, then we do not need to review any more of its small overlaps
+                    break;
+                }
+                if (m2->alignment_size() == 0){
+                    logger->debug2("M2 has 0 length, remove it");
+                    // Remove m2
+                    matches_by_segment[m2->seg1]->erase(std::remove(matches_by_segment[m2->seg1]->begin(),matches_by_segment[m2->seg1]->end(), m2),matches_by_segment[m2->seg1]->end());
+                    matches_by_segment[m2->seg2]->erase(std::remove(matches_by_segment[m2->seg2]->begin(),matches_by_segment[m2->seg2]->end(), m2),matches_by_segment[m2->seg2]->end());
+                    for_elimination.insert(m2);
+                    logger->debug2("M2 removed");
+                }
+
+/*
+                printf("M1 %p M2 %p\n",m1,m2);
+                logger->debug4("Processed previously? %i",processed_previously.find(overlap.first) != processed_previously.end());
+                logger->debug4("In final_assignments? %i",final_assignments.find(overlap.first) != final_assignments.end());
+                logger->debug4("m2 alignment size %i",m2->alignment_size());
+                if (processed_previously.find(overlap.first) == processed_previously.end() && final_assignments.find(overlap.first) != final_assignments.end() && m2->alignment_size() > 0){
                     NeuronSegment *conflict_seg, *m1_other_seg, *m2_other_seg;
                     vector<int> conflict_positions, m1_other_align, m2_other_align;
+                    
+                    // Variables to deal with:
+                    //  - which segment is the overlap on (use 'overlap_on_first')
+                    //  - which match has the matching segment that aligns earlier along the overlapped segment (uses m1start, m1end, m2start, m2end)
+                    //  - for each match, is segment2 matched in reverse to segment1 (uses match->forward)
 
-                    printf("M1 %p M2 %p\n",m1,m2);
                     printf("M1 segments %p %p\n",m1->seg1,m1->seg2);
                     printf("M2 segments %p %p\n",m2->seg1,m2->seg2);
                     // ** For those that overlap, just divide the markers roughly evenly **
@@ -1535,8 +1862,7 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
                             cut_from1 = 0;
                             cut_from2 = overlap_size;
                         }else{
-                            //cut_from1 = (overlap_size+1) / 2;
-                            //cut_from2 = overlap_size / 2;
+                            logger->debug4("Updating alignments given small overlap");
                             
                             bool assign_to_match2 = true;
                             for (int ov_step = 0; ov_step < overlap_size && assign_to_match2; ov_step++){
@@ -1590,12 +1916,11 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
                             cut_from1 = 0;
                             cut_from2 = overlap_size;
                         }else{
-                            //cut_from1 = (overlap_size+1) / 2;
-                            //cut_from2 = overlap_size / 2;
+                            logger->debug4("Updating alignments given small overlap");
                             
                             bool assign_to_match1 = true;
                             for (int ov_step = 0; ov_step < overlap_size && assign_to_match1; ov_step++){
-                                int m1_alignment_pos = m2->alignment_size() - overlap_size;
+                                int m1_alignment_pos = m1->alignment_size() - overlap_size;
                                 int m2_alignment_pos = ov_step;
                                 MyMarker overlapped_marker = *(conflict_seg->markers[conflict_positions[m1_alignment_pos]]);
                                 double dist_m1 = dist(overlapped_marker, *(m1_other_seg->markers[m1_other_align[m1_alignment_pos]]));
@@ -1635,31 +1960,68 @@ std::set<Match *> ConsensusBuilder::find_matches_local_alignment(){
                         logger->warn("Final matches marked as conflicting at end, but no overlap found");
                         continue;
                     }
-                    bool favor_end = true;
-                    
-                    printf("M1 alignment size after mod %i\n",m1->alignment_size());
-                    printf("M2 alignment size after mod %i\n",m2->alignment_size());
+
+                    // If the alignment size of a match is now zero, eliminate the match
+                    if (m1->alignment_size() == 0){
+                        logger->debug2("M1 has 0 length, remove it");
+                        // Remove m1
+                        matches_by_segment[m1->seg1]->erase(std::remove(matches_by_segment[m1->seg1]->begin(),matches_by_segment[m1->seg1]->end(), m1),matches_by_segment[m1->seg1]->end());
+                        matches_by_segment[m1->seg2]->erase(std::remove(matches_by_segment[m1->seg2]->begin(),matches_by_segment[m1->seg2]->end(), m1),matches_by_segment[m1->seg2]->end());
+                        for_elimination.insert(m1);
+                        // If M1 is no more, then we do not need to review any more of its small overlaps
+                        break;
+                    }
+                    if (m2->alignment_size() == 0){
+                        logger->debug2("M2 has 0 length, remove it");
+                        // Remove m2
+                        matches_by_segment[m2->seg1]->erase(std::remove(matches_by_segment[m2->seg1]->begin(),matches_by_segment[m2->seg1]->end(), m2),matches_by_segment[m2->seg1]->end());
+                        matches_by_segment[m2->seg2]->erase(std::remove(matches_by_segment[m2->seg2]->begin(),matches_by_segment[m2->seg2]->end(), m2),matches_by_segment[m2->seg2]->end());
+                        for_elimination.insert(m2);
+                        logger->debug2("M2 removed");
+                    }
+
+                    logger->debug2("M1 alignment size after mod %i",m1->alignment_size());
+                    logger->debug2("M2 alignment size after mod %i",m2->alignment_size());
                     
                 }
+ */
             }
         }
     }
+    logger->info("After resolving conflicts; %i matches for_elimination",for_elimination.size());
+    logger->debug1("Final_assignments size %i",final_assignments.size());
+    if (for_elimination.size() > 0){
+
+        // Remove matches from final_assignments whose alignments have been shortened to 0
+        for (Match * match : for_elimination){
+            final_assignments.erase(match);
+        }
+
+        // Delete matches that are being eliminated
+        for (std::set<Match *>::iterator it = for_elimination.begin(); it != for_elimination.end(); ){
+            Match * match = *it;
+            it = for_elimination.erase(it);
+            delete match;
+        }
+    }
+
+    logger->info("After erasing matches from final_assignments");
     
     return final_assignments;
 };
 
-std::map<NeuronSegment *,std::vector<Match *> *> ConsensusBuilder::generate_candidate_matches_via_local_align(std::set<NeuronSegment *> tree2_segments){
+std::map<NeuronSegment *,std::vector<Match *> *, segment_ptr_less> ConsensusBuilder::generate_candidate_matches_via_local_align(SegmentPtrSet tree2_segments){
     /* Run local alignment on candidates [produce std::map<NeuronSegment *, Match *> matches_by_segment] */
     
     // Map from branch to all possible matches
     // Map<NeuronSegment *,vector<Match *> >; need to initialize for all segments of either side?
-    std::map<NeuronSegment *,std::vector<Match *> *> candidate_matches;
+    std::map<NeuronSegment *,std::vector<Match *> *, segment_ptr_less> candidate_matches;
     double score, normalized_score;
     
     // Attempt to find a match for each segment in the new tree (tree 2)
     for (NeuronSegment * seg2 : tree2_segments){
         // Get nearby composite segments for alignment
-        std::set<NeuronSegment *> nearby_segments = get_nearby_segments(seg2, composite);
+        SegmentPtrSet nearby_segments = get_nearby_segments(seg2, composite);
         // Make sure seg2 has a vector of matches created
         //candidate_matches[seg2] = new std::vector<Match *>();
         candidate_matches[seg2] = new std::vector<Match *>();
@@ -1679,13 +2041,13 @@ std::map<NeuronSegment *,std::vector<Match *> *> ConsensusBuilder::generate_cand
     //        if (seg1->markers.size() == 1 && seg2->markers.size() == 1){
   //              score =
 //            }else
-            score = local_align(average_alignment_dist, seg1->markers, seg2->markers, alignment, gap_cost);
+            score = local_align(alignment_dist_threshold, seg1->markers, seg2->markers, alignment, gap_cost);
             int alignment_size = alignment.first.size();
             normalized_score = score / alignment_size;
-            logger->debug2("Completed local_align with score %f, length %i", score, alignment_size);
+            logger->debug2("Completed local_align with score %f, length %i, normed score %f", score, alignment_size, normalized_score);
             // Store the alignment: If alignment spans entire extent of one segment, or if alignment is long enough, or if per-character alignment score is good enough
-            if ((alignment_size >= min_alignment_size || seg1->markers.size() < min_alignment_size || seg2->markers.size() < min_alignment_size) && (score >= good_enough_score || normalized_score >= average_alignment_dist)){
-//            if ((alignment_size()+1 >= seg1->markers.size() && score > 0) || (alignment_size() > min_alignment_size && 2*score/alignment_size() >= average_alignment_dist)){
+            if ((alignment_size >= min_alignment_size || seg1->markers.size() < min_alignment_size || seg2->markers.size() < min_alignment_size) && (normalized_score >= good_enough_norm_score)){
+//            if ((alignment_size()+1 >= seg1->markers.size() && score > 0) || (alignment_size() > min_alignment_size && 2*score/alignment_size() >= alignment_dist_threshold)){
                 logger->debug3("Good enough to create a match candidate");
                 match = new Match();
                 match->seg1 = seg1;
@@ -1697,38 +2059,43 @@ std::map<NeuronSegment *,std::vector<Match *> *> ConsensusBuilder::generate_cand
             }
             
             // Local align with one branch reversed
-            pair<vector<int>, vector<int> > alignment_reverse;// = new vector<pair<int, int> >();
-            vector<MyMarker *> seg2_reversed = seg2->markers;
-            std::reverse(seg2_reversed.begin(), seg2_reversed.end());
-            score = local_align(average_alignment_dist, seg1->markers, seg2_reversed, alignment_reverse, gap_cost);
-            int rev_alignment_size = alignment_reverse.first.size();
-            normalized_score = score / rev_alignment_size;
-            
-            // Reverse alignment to reflect actual positions in the segment
-            int seg_size = seg2_reversed.size();
-            for (int i = 0; i < rev_alignment_size; i++){
-                alignment_reverse.second[i] = seg_size - alignment_reverse.second[i] - 1;
-            }
-            
             Match * reverse_match = nullptr;
-//            if ((alignment_reverse.size()+1 >= seg1->markers.size() && score > 0) || (alignment_reverse.size() > min_alignment_size && 2*score/alignment_reverse.size() >= average_alignment_dist)){
-            if ((rev_alignment_size >= min_alignment_size || seg1->markers.size() < min_alignment_size || seg2->markers.size() < min_alignment_size) && (score >= good_enough_score || normalized_score >= average_alignment_dist)){
-                reverse_match = new Match();
-                reverse_match->seg1 = seg1;
-                reverse_match->seg2 = seg2;
-                reverse_match->score = score;
-                reverse_match->alignment = alignment_reverse;
-                reverse_match->forward = false;
-            
-                if (match && get_overlap_size(match,reverse_match,true) > allowable_alignment_overlap){
-//                    if (match->score > reverse_match->score + best_branch_margin){
-                    if (match->score > 1.5 * reverse_match->score){
-                        delete reverse_match;
-                        reverse_match = nullptr;
-//                    }else if (reverse_match->score > match->score + best_branch_margin){
-                    }else if (reverse_match->score > 1.5 * match->score){
-                        delete match;
-                        match = nullptr;
+            // Only try if normal alignment did not extend the full length of the shorter segment
+            if (alignment.first.size() < min(seg1->markers.size(),seg2->markers.size())){
+                pair<vector<int>, vector<int> > alignment_reverse;// = new vector<pair<int, int> >();
+                vector<MyMarker *> seg2_reversed = seg2->markers;
+                std::reverse(seg2_reversed.begin(), seg2_reversed.end());
+                score = local_align(alignment_dist_threshold, seg1->markers, seg2_reversed, alignment_reverse, gap_cost);
+                int rev_alignment_size = alignment_reverse.first.size();
+                normalized_score = score / rev_alignment_size;
+                
+                logger->debug2("Completed reverse local_align with score %f, length %i, normed score %f", score, rev_alignment_size, normalized_score);
+                
+                // Reverse alignment to reflect actual positions in the segment
+                int seg_size = seg2_reversed.size();
+                for (int i = 0; i < rev_alignment_size; i++){
+                    alignment_reverse.second[i] = seg_size - alignment_reverse.second[i] - 1;
+                }
+                
+                //            if ((alignment_reverse.size()+1 >= seg1->markers.size() && score > 0) || (alignment_reverse.size() > min_alignment_size && 2*score/alignment_reverse.size() >= alignment_dist_threshold)){
+                if ((rev_alignment_size >= min_alignment_size || seg1->markers.size() < min_alignment_size || seg2->markers.size() < min_alignment_size) && (normalized_score >= good_enough_norm_score)){
+                    reverse_match = new Match();
+                    reverse_match->seg1 = seg1;
+                    reverse_match->seg2 = seg2;
+                    reverse_match->score = score;
+                    reverse_match->alignment = alignment_reverse;
+                    reverse_match->forward = false;
+                    
+                    if (match && get_overlap_size(match,reverse_match,true) > allowable_alignment_overlap){
+                        //                    if (match->score > reverse_match->score + best_branch_margin){
+                        if (match->score > ratio_cutoff * reverse_match->score){
+                            delete reverse_match;
+                            reverse_match = nullptr;
+                            //                    }else if (reverse_match->score > match->score + best_branch_margin){
+                        }else if (reverse_match->score > ratio_cutoff * match->score){
+                            delete match;
+                            match = nullptr;
+                        }
                     }
                 }
             }
@@ -1768,7 +2135,7 @@ std::map<NeuronSegment *,std::vector<Match *> *> ConsensusBuilder::generate_cand
                  */
             }
             if (reverse_match){
-                logger->debug2("match is good enough with score %f and length %i, putting it into candidate_matches",reverse_match->score,reverse_match->alignment_size());
+                logger->debug2("reverse match is good enough with score %f and length %i, putting it into candidate_matches",reverse_match->score,reverse_match->alignment_size());
                 if (reverse_match->alignment_size() == 0)
                     logger->error("Alignment length 0 for segs %p and %p",reverse_match->seg1, reverse_match->seg2);
                 candidate_matches[seg1]->push_back(reverse_match);
@@ -1779,10 +2146,10 @@ std::map<NeuronSegment *,std::vector<Match *> *> ConsensusBuilder::generate_cand
     return candidate_matches;
 };
 
-void ConsensusBuilder::find_conflicts(std::set<NeuronSegment *> tree_segments,
-                                      std::map<NeuronSegment *, vector<Match *> * > &matches_by_segment,
+void ConsensusBuilder::find_conflicts(SegmentPtrSet tree_segments,
+                                      std::map<NeuronSegment *, vector<Match *> *, segment_ptr_less > &matches_by_segment,
                                       std::map<Match *, std::set<Match *> * > &match_conflicts,
-                                      std::map<Match *, std::map<Match *, bool> > &small_overlaps){
+                                      std::map<Match *, std::map<Match *, SmallOverlap> > &small_overlaps){
     int cnt = 0, num_conflicts = 0;
     logger->debug("Enter find_conflicts");
     for (NeuronSegment * segment : tree_segments){
@@ -1799,13 +2166,13 @@ void ConsensusBuilder::find_conflicts(std::set<NeuronSegment *> tree_segments,
         if (matches_by_segment[segment]->size() <= 1) continue;
         
         for (int i = 0; i < matches_by_segment[segment]->size()-1; i++){
-            logger->debug3("match %i",i);
             Match * match1 = matches_by_segment[segment]->at(i);
+            logger->debug3("match %i: align len %i, score %f, seq lengths %i and %i",i,match1->alignment.first.size(),match1->score,match1->seg1->markers.size(),match1->seg2->markers.size());
             bool first_segment = (segment == match1->seg1);
             // Create sets of conflicts for a given match candidate
             for (int j = i+1; j < matches_by_segment[segment]->size(); j++){
-                logger->debug4(" - match j %i",j);
                 Match * match2 = matches_by_segment[segment]->at(j);
+                logger->debug4(" - match %i: align len %i, score %f, seq lengths %i and %i",j,match2->alignment.first.size(),match2->score,match2->seg1->markers.size(),match2->seg2->markers.size());
                 if (first_segment && segment != match2->seg1)
                     logger->error("Seg1 of match 2 isn't same as of match 1, is %p",match2->seg1);
                 else if (!first_segment && segment != match2->seg2)
@@ -1822,45 +2189,87 @@ void ConsensusBuilder::find_conflicts(std::set<NeuronSegment *> tree_segments,
                 logger->debug4(" - overlap size %i",overlap_size);
                 logger->debug4(" - is_range_inside %i",is_range_inside(match1,match2,first_segment));
                 logger->debug4(" - m1 align size %i, m2 align size %i, allowable_overlap %i",match1->alignment_size(),match2->alignment_size(),allowable_alignment_overlap);
-                // No conflict
-                if (overlap_size <= allowable_alignment_overlap && !(is_range_inside(match1,match2,first_segment)) && (match1->alignment_size() > 2*allowable_alignment_overlap || match2->alignment_size() > 2*allowable_alignment_overlap)){
-                    // Store overlap size (within acceptable range)
-                    if (abs(overlap_size) > 0){
-                        small_overlaps[match1][match2] = first_segment;
-                        small_overlaps[match2][match1] = first_segment;
-                        logger->debug3("Small overlap of size %i",overlap_size);
-                    }
-                }else{
+
+                if (overlap_size > 0){
                     // if (match1->score > match2->score + best_branch_margin){
-                    if (match1->score > 1.5 * match2->score){
+                    if (match1->score > ratio_cutoff * match2->score){
+                        logger->debug4("matches_by_segment[segment] size %i",matches_by_segment[segment]->size());
+                        // Eliminate this match from matches by all affected segments
                         matches_by_segment[segment]->erase(std::remove(matches_by_segment[segment]->begin(),matches_by_segment[segment]->end(), match2), matches_by_segment[segment]->end());
-                        j--;
+                        // Eliminate this match from matches by the target segment associated with the other match
+                        if (first_segment){
+                            matches_by_segment[match1->seg2]->erase(std::remove(matches_by_segment[match1->seg2]->begin(),matches_by_segment[match1->seg2]->end(), match2), matches_by_segment[match1->seg2]->end());
+                            matches_by_segment[match2->seg2]->erase(std::remove(matches_by_segment[match2->seg2]->begin(),matches_by_segment[match2->seg2]->end(), match2), matches_by_segment[match2->seg2]->end());
+                        }else{
+                            matches_by_segment[match1->seg1]->erase(std::remove(matches_by_segment[match1->seg1]->begin(),matches_by_segment[match1->seg1]->end(), match2), matches_by_segment[match1->seg1]->end());
+                            matches_by_segment[match2->seg1]->erase(std::remove(matches_by_segment[match2->seg1]->begin(),matches_by_segment[match2->seg1]->end(), match2), matches_by_segment[match2->seg1]->end());
+                        }
+
+                        logger->debug4("matches_by_segment[segment] size %i after erase",matches_by_segment[segment]->size());
                         for (Match * prev_conflict : *(match_conflicts[match2])){
                             match_conflicts[prev_conflict]->erase(match2);
                         }
-                        //match_conflicts[match2].clear();
+                        match_conflicts[match2]->clear();
+                        
+                        // Go to next match on the segment
+                        j--;
                         continue;
+                        
 //                    }else if (match2->score > match1->score + best_branch_margin){
-                    }else if (match2->score > 1.5 * match1->score){
+                    }else if (match2->score > ratio_cutoff * match1->score){
+                        logger->debug4("matches_by_segment[segment] size %i",matches_by_segment[segment]->size());
                         matches_by_segment[segment]->erase(std::remove(matches_by_segment[segment]->begin(),matches_by_segment[segment]->end(), match1), matches_by_segment[segment]->end());
+                        // Eliminate this match from matches by the target segment associated with the other match
+                        if (first_segment){
+                            matches_by_segment[match1->seg2]->erase(std::remove(matches_by_segment[match1->seg2]->begin(),matches_by_segment[match1->seg2]->end(), match1), matches_by_segment[match1->seg2]->end());
+                            matches_by_segment[match2->seg2]->erase(std::remove(matches_by_segment[match2->seg2]->begin(),matches_by_segment[match2->seg2]->end(), match1), matches_by_segment[match2->seg2]->end());
+                        }else{
+                            matches_by_segment[match1->seg1]->erase(std::remove(matches_by_segment[match1->seg1]->begin(),matches_by_segment[match1->seg1]->end(), match1), matches_by_segment[match1->seg1]->end());
+                            matches_by_segment[match2->seg1]->erase(std::remove(matches_by_segment[match2->seg1]->begin(),matches_by_segment[match2->seg1]->end(), match1), matches_by_segment[match2->seg1]->end());
+                        }
+
+                        logger->debug4("matches_by_segment[segment] size %i after erase",matches_by_segment[segment]->size());
                         i--;
                         for (Match * prev_conflict : *(match_conflicts[match1])){
                             match_conflicts[prev_conflict]->erase(match1);
                         }
-                        //match_conflicts[match1].clear();
+                        match_conflicts[match1]->clear();
                         break;
-                    }
-                    // Add the matches to each others' conflict sets
-                    match_conflicts[match1]->insert(match2);
-                    match_conflicts[match2]->insert(match1);
-                    logger->debug3("Added conflict on matches %p (forward %i) and %p (forward %i)",match1,match1->forward,match2,match2->forward);
-                    
-                    if (first_segment)
-                        logger->debug3("Added conflict on seg1 given %i - %i and %i - %i",match1->seg1_start(),match1->seg1_end(),match2->seg1_start(),match2->seg1_end());
-                    else
-                        logger->debug3("Added conflict on seg2 given %i - %i and %i - %i",match1->seg2_start(),match1->seg2_end(),match2->seg2_start(),match2->seg2_end());
+                    }else{
+                        // If is a small overlap: sufficiently small overlap, overlapping at an end (not one inside the other), and at least one of the alignments is at least twice the allowable overlap size
+                        if (overlap_size <= allowable_alignment_overlap && !is_range_inside(match1,match2,first_segment) && (match1->alignment_size() > 2*allowable_alignment_overlap || match2->alignment_size() > 2*allowable_alignment_overlap)){
 
-                    logger->debug3("%i conflicts",++num_conflicts);
+                            // Determine how overlap should be resolved - how much should be cut from either alignment
+                            SmallOverlap small_overlap = resolve_small_overlap(match1,match2,first_segment);
+                            small_overlap.overlap_on_first = first_segment;
+                            
+                            // If the cut would completely eliminate one of the matches, treat as pure conflicts
+                            if (small_overlap.cut_from1 == match1->alignment_size() || small_overlap.cut_from2 == match2->alignment_size()){
+                                // Do nothing
+                            }else{
+                                // If one of the alignments would be completely eliminated, then just label these as conflicts and NOT as small_overlaps
+                                
+                                // Store overlap size (within acceptable range)
+                                small_overlaps[match1][match2] = small_overlap;
+                                small_overlaps[match2][match1] = small_overlap;
+                                logger->debug3("Small overlap of size %i",overlap_size);
+                            }
+
+                            
+
+                        }else{ // Standard conflicts
+
+                            // Add the matches to each others' conflict sets
+                            match_conflicts[match1]->insert(match2);
+                            match_conflicts[match2]->insert(match1);
+                            
+                            if (first_segment)
+                                logger->debug3("Added conflict on seg1 given %i - %i and %i - %i",match1->seg1_start(),match1->seg1_end(),match2->seg1_start(),match2->seg1_end());
+                            else
+                                logger->debug3("Added conflict on seg2 given %i - %i and %i - %i",match1->seg2_start(),match1->seg2_end(),match2->seg2_start(),match2->seg2_end());
+                            logger->debug3("Added conflict on matches %p (forward %i) and %p (forward %i)",match1,match1->forward,match2,match2->forward);
+                        }
+                    }
                 }
             }
         }
@@ -2176,7 +2585,7 @@ BranchContainer * ConsensusBuilder::split_branch(BranchContainer * orig_branch, 
     std::size_t split_point1 = match->seg2_start();
     std::size_t split_point2 = match->seg2_end() + 1;
 
-    if (match->seg2_start() == 0 && match->seg2_end() == orig_segment->markers.size()){
+    if (match->seg2_start() == 0 && split_point2 == orig_segment->markers.size()){
         // Match captures all of the branch, so no need to split it
         return orig_branch;
     }
@@ -2186,6 +2595,7 @@ BranchContainer * ConsensusBuilder::split_branch(BranchContainer * orig_branch, 
     
     BranchContainer * new_before, * target_branch;
     if (split_point1 > 0){
+        logger->debug4("ConsensusBuilder::split_branch(BranchContainer*) split_point1 %i",split_point1);
         BranchContainer * new_before = orig_branch->split_branch(split_point1);
         resulting_branches.push_back(new_before);
         split_point2 -= split_point1;
@@ -2193,6 +2603,7 @@ BranchContainer * ConsensusBuilder::split_branch(BranchContainer * orig_branch, 
         //bin_branch(new_above);
     }
     if (split_point2 < orig_segment->markers.size()){
+        logger->debug4("ConsensusBuilder::split_branch(BranchContainer*) split before %i",split_point2);
         target_branch = orig_branch->split_branch(split_point2);
         resulting_branches.push_back(target_branch);
         
@@ -2241,25 +2652,21 @@ void ConsensusBuilder::incorporate_unassigned_branches(Reconstruction * reconstr
         std::stack<BranchContainer *> branch_stack;
         branch_stack.push(prev_branch);
         while (!branch_stack.empty()){
-            logger->debug4("TEST 0");
             BranchContainer * orphan = branch_stack.top();
-            logger->debug4("TEST 0.1");
             NeuronSegment * orphan_segment = orphan->get_segment();
             branch_stack.pop();
-            logger->debug4("TEST 0.2 oprhan %p segment %p",orphan,orphan_segment);
             
             if (unmatched_tree2_segments.find(orphan_segment) == unmatched_tree2_segments.end()){
                 logger->debug4("Came to a branch that has been found (not an orphan)");
                 continue;
             }
-            logger->debug4("TEST 1");
             unmatched_tree2_segments.erase(orphan_segment);
             
             // Copy segment and create composite branch out of it
             NeuronSegment * composite_segment = copy_segment_markers(orphan_segment);
-            logger->debug4("composite has %i segments",composite->get_segments().size());
             CompositeBranchContainer * composite_branch = new CompositeBranchContainer(composite_segment, composite);
-            logger->debug4("added branch, composite has %i segments",composite->get_segments().size());
+            bin_branch(composite_branch);
+            logger->debug4("added branch with %i markers",composite_segment->markers.size());
             composite_branch->add_branch_miss(prev_summed_confidence);
             logger->debug2("Adding miss with %f given previously summed conf",prev_summed_confidence);
             
@@ -2274,8 +2681,6 @@ void ConsensusBuilder::incorporate_unassigned_branches(Reconstruction * reconstr
                 if (unmatched_tree2_segments.find(child->get_segment()) != unmatched_tree2_segments.end())
                     branch_stack.push(child);
             }
-            logger->debug4("TEST 5");
-            
         }
     }
     
@@ -2312,7 +2717,8 @@ void ConsensusBuilder::create_connections(Reconstruction * reconstruction){
         logger->debug3("r_parent %p",r_parent);
         if (r_parent){
             c_parent = r_parent->get_composite_match();
-            parent_end = match_forward ^ c_parent->is_segment_reversed() ? BOTTOM : TOP;
+            //parent_end = match_forward ^ c_parent->is_segment_reversed() ? BOTTOM : TOP;
+            parent_end = c_parent->is_match_forward(r_parent) ^ c_parent->is_segment_reversed() ? BOTTOM : TOP;
         }
         
         //c_branch->set_parent(c_parent);
@@ -2746,7 +3152,7 @@ double ConsensusBuilder::neuron_tree_align(vector<NeuronSegment*> &tree1, vector
 {
     return neuron_tree_align(tree1, tree2, segments_by_composite_cube[composite], w, result);
 }
-double ConsensusBuilder::neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, std::vector<std::set<NeuronSegment *> > segments_by_cube, vector<double> & w, vector<pair<int, int> > & result)
+double ConsensusBuilder::neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, std::vector<SegmentPtrSet > segments_by_cube, vector<double> & w, vector<pair<int, int> > & result)
 {
     // Indices of branches, sets giving branch merges with a child, sets 1ll<<child_num1 and 1ll<<child_num2 giving max score for pair
     // weights gives scores for a branch pair and each branch's possible merge with one of its children
@@ -2915,5 +3321,134 @@ double ConsensusBuilder::neuron_tree_align(vector<NeuronSegment*> &tree1, vector
     root_sip.set2 = 1ll << tree2[root_sip.ind2]->child_list.size();
     result = results[root_sip];
     return weights[root_sip];
+};
+
+void ConsensusBuilder::write_consensus_to_swc(std::string filename, double branch_threshold, NodeTypeBasis node_type_basis=BRANCH_CONFIDENCE, TypeRange type_range=PROPORTION){
+    if (builder_state < BUILT_COMPOSITE){
+        build_composite();
+    }
+
+    Composite * composite = get_composite();
+    composite->convert_to_consensus(branch_threshold);
+    consensus_root = composite->get_root_segment();
+    std::map<NeuronSegment *,double> confidence_map;
+    if (type_range == PROPORTION)
+        if (node_type_basis == BRANCH_CONFIDENCE)
+            confidence_map = composite->get_segment_confidences();
+        else
+            confidence_map = composite->get_connection_confidences();
+    else
+        if (node_type_basis == BRANCH_CONFIDENCE)
+            confidence_map = composite->get_segment_confidence_counts();
+        else
+            confidence_map = composite->get_connection_confidence_counts();
+    
+    if (consensus_root){
+        // Make vector of MyMarker*, each pointing to its parent (#TODO: move into ConsensusBuilder, take care of MyMarker pointers inside as well)
+        std::stack<NeuronSegment*> segment_stack;
+        std::vector<MyMarker*> map_swc;
+        segment_stack.push(consensus_root);
+        MyMarker * prev_marker = nullptr;
+        std::map<NeuronSegment*,NeuronSegment*> parent_map;
+        logger->debug2("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
+        while (!segment_stack.empty()){
+            NeuronSegment * segment = segment_stack.top();
+            logger->debug4("Confidence for segment %p is %f with %i markers\n",segment,confidence_map[segment],segment->markers.size());
+            segment_stack.pop();
+            if (parent_map[segment]){
+                //prev_marker = parent_map[segment]->markers.back();
+                prev_marker = parent_map[segment]->markers.back();
+            }
+
+            for (std::vector<MyMarker *>::iterator it = segment->markers.begin(); it != segment->markers.end(); ++it){
+                MyMarker * marker = *it;
+                marker->parent = prev_marker;
+                prev_marker = marker;
+                map_swc.push_back(marker);
+                marker->x = floor(marker->x*1000 + 0.5)/1000;
+                marker->y = floor(marker->y*1000 + 0.5)/1000;
+                marker->z = floor(marker->z*1000 + 0.5)/1000;
+                marker->radius = floor(marker->radius*100 + 0.5)/100;
+                //marker->radius = 0.5 + 3 * (confidence_map[segment] / num_recons);
+                // marker->type = 1 + (int)floor(20 * confidence_map[segment] / num_recons);
+                //marker->type = (int)floor(confidence_map[segment]);
+                if (type_range == PROPORTION)
+                    marker->type = 20 + 230 * (1 - confidence_map[segment]);
+                else
+                    marker->type = confidence_map[segment];
+
+            }
+            for (NeuronSegment * child : segment->child_list){
+                segment_stack.push(child);
+                parent_map[child] = segment;
+            }
+        }
+        
+        // Write consensus to swc file
+        saveSWC_file(filename, map_swc);
+        logger->info("Wrote file to %c",filename);
+    }else{
+        logger->warn("ConsensusBuilder not ready, see previous messages for reason\n");
+    }
+};
+
+// #!!INCOMPLETE - need to determine how to write to eswc (using existing tools)
+void ConsensusBuilder::write_consensus_to_eswc(string filename, double branch_threshold){
+    logger->error("ConsensusBuilder::write_consensus_to_eswc is not ready for use");
+    if (builder_state < BUILT_COMPOSITE){
+        build_composite();
+    }
+    
+    Composite * composite = get_composite();
+    composite->convert_to_consensus(branch_threshold);
+    consensus_root = composite->get_root_segment();
+    std::map<NeuronSegment *,double> segment_confidence_map;
+    std::map<NeuronSegment *,double> connection_confidence_map;
+
+    segment_confidence_map = composite->get_segment_confidences();
+    connection_confidence_map = composite->get_connection_confidences();
+    
+    if (consensus_root){
+        // Make vector of MyMarker*, each pointing to its parent (#TODO: move into ConsensusBuilder, take care of MyMarker pointers inside as well)
+        std::stack<NeuronSegment*> segment_stack;
+        std::vector<MyMarker*> map_eswc;
+        segment_stack.push(consensus_root);
+        MyMarker * prev_marker = nullptr;
+        std::map<NeuronSegment*,NeuronSegment*> parent_map;
+        logger->debug2("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
+        while (!segment_stack.empty()){
+            NeuronSegment * segment = segment_stack.top();
+            logger->debug4("Confidence for segment %p is %f with %i markers\n",segment,confidence_map[segment],segment->markers.size());
+            segment_stack.pop();
+            if (parent_map[segment]){
+                //prev_marker = parent_map[segment]->markers.back();
+                prev_marker = parent_map[segment]->markers.back();
+            }
+            
+            for (std::vector<MyMarker *>::iterator it = segment->markers.begin(); it != segment->markers.end(); ++it){
+                MyMarker * marker = *it;
+                marker->parent = prev_marker;
+                prev_marker = marker;
+                map_swc.push_back(marker);
+                marker->x = floor(marker->x*1000 + 0.5)/1000;
+                marker->y = floor(marker->y*1000 + 0.5)/1000;
+                marker->z = floor(marker->z*1000 + 0.5)/1000;
+                marker->radius = floor(marker->radius*100 + 0.5)/100;
+
+                //marker->segment_confidence = segment_confidence_map[segment];
+                //marker->connection_confidence = connection_confidence_map[segment];
+            }
+            for (NeuronSegment * child : segment->child_list){
+                segment_stack.push(child);
+                parent_map[child] = segment;
+            }
+        }
+        
+        // Write consensus to eswc file
+        //saveSWC_file(filename, map_eswc);
+        logger->info("Wrote file to %c",filename);
+    }else{
+        logger->warn("ConsensusBuilder not ready, see previous messages for reason\n");
+    }
 };
 

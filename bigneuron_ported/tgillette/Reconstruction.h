@@ -15,8 +15,8 @@
 #include <set>
 #include <map>
 #include <stack>
-#include "Poll.h"
 //#include "Composite.h"
+#include "CBUtils.h"
 #include "tree_matching/swc_utils.h"
 
 class Reconstruction;
@@ -76,14 +76,14 @@ public:
     BranchContainer * split_branch(std::size_t const split_point);
     
     // Getters
-    NeuronSegment * get_segment();
-    BranchContainer * get_parent();
-    std::set<BranchContainer *> get_children();
-    CompositeBranchContainer * get_composite_match();
-    double get_confidence();
-    Connection * get_parent_connection();
-    std::set<Connection *> get_child_connection();
-    Reconstruction * get_reconstruction();
+    NeuronSegment * get_segment() const;
+    BranchContainer * get_parent() const;
+    std::set<BranchContainer *> get_children() const;
+    CompositeBranchContainer * get_composite_match() const;
+    double get_confidence() const;
+    Connection * get_parent_connection() const;
+    std::set<Connection *> get_child_connection() const;
+    Reconstruction * get_reconstruction() const;
     
     bool operator < (const BranchContainer& branch) const
     {
@@ -91,10 +91,21 @@ public:
     }
 };
 
+class branch_ptr_less{
+public:
+    bool operator()(const BranchContainer * lhs, const BranchContainer * rhs) const{
+        return !lhs ||
+        (rhs &&
+         (lhs->get_confidence() < rhs->get_confidence() ||
+          (lhs->get_confidence() == rhs->get_confidence() &&
+           segment_ptr_less()(lhs->get_segment(), rhs->get_segment()))));
+    }
+};
+
 class Reconstruction {
     string r_name;
     NeuronSegment * r_tree;
-    std::set<NeuronSegment *> r_segments;
+    SegmentPtrSet r_segments;
     std::map<NeuronSegment *,BranchContainer *> segment_container_map;
     BranchContainer * r_root; // Should point to r_tree
     double r_confidence;
@@ -115,24 +126,27 @@ public:
     void set_tree(NeuronSegment * tree);
     void set_confidence(double confidence);
     
-    string get_name();
-    NeuronSegment * get_tree();
-    std::set<NeuronSegment *> get_segments();
+    string get_name() const;
+    NeuronSegment * get_tree() const;
+    SegmentPtrSet get_segments() const;
     std::vector<NeuronSegment *> get_segments_ordered();
     std::vector<BranchContainer *> get_branches(); // Using vector so that children always come after their parents
     BranchContainer * get_root_branch();
     BranchContainer * get_branch_by_segment(NeuronSegment * segment);
-    double get_confidence();
+    double get_confidence() const;
     Reconstruction * copy();
 };
 
 
 std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment * root);
-std::set<NeuronSegment *> produce_segment_set(NeuronSegment * root);
+SegmentPtrSet produce_segment_set(NeuronSegment * root);
 std::map<NeuronSegment *, BranchContainer *> produce_segment_container_map(BranchContainer * container_root);
 // Shortest distance between line and point if perpendicular is on segment, otherwise shortest distance to either end
 double point_segment_distance(MyMarker s1, MyMarker s2, MyMarker p, MyMarker &closest_on_line);
 // Shortest distance between two line segments if the perpendicular of the lines is on both segments, otherwise returns -1
 double segments_perpendicular_distance(MyMarker l11, MyMarker l12, MyMarker l21, MyMarker l22, MyMarker &closest1, MyMarker &closest2);
+
+NeuronSegment * copy_segment_tree(NeuronSegment * root);
+NeuronSegment * copy_segment_markers(NeuronSegment* segment);
 
 #endif

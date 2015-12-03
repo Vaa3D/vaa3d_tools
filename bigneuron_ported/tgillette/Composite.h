@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <iterator>
+#include "CBUtils.h"
 #include "logger.h"
 #include "tree_matching/swc_utils.h"
 #include "Reconstruction.h"
@@ -21,6 +22,14 @@ class DecisionPoint;
 class Connection;
 class NeuronSegment;
 class Reconstruction;
+
+class connection_ptr_less{
+public:
+    connection_ptr_less(){};
+    bool operator()(const Connection * lhs, const Connection * rhs) const;
+};
+
+typedef std::set<Connection *,connection_ptr_less> ConnectionPtrSet;
 
 enum BranchEnd {TOP, BOTTOM};
 
@@ -42,26 +51,24 @@ class CompositeBranchContainer : public BranchContainer{
     void add_child(CompositeBranchContainer * branch); // Called reciprocally when parent is set
 
     // Possible connectivity members
-    std::set<Connection *> parent_connections; // Possible connections to branch's parent, each tallying confidence from contributing reconstructions
+    ConnectionPtrSet parent_connections; // Possible connections to branch's parent, each tallying confidence from contributing reconstructions
     void add_connection(Connection * connection);
     Connection * best_connection;
     double combined_connection_weight;
 
-    std::set<Connection *> top_child_connections;
-    std::set<Connection *> bottom_child_connections;
+    ConnectionPtrSet top_child_connections;
+    ConnectionPtrSet bottom_child_connections;
 public:
     CompositeBranchContainer();
     CompositeBranchContainer(NeuronSegment * segment, Composite * composite);
-    CompositeBranchContainer(CompositeBranchContainer * branch, bool copy_segment); // Copies branch_matches, and confidence values, and segment as specified
-    CompositeBranchContainer(CompositeBranchContainer * branch, Composite * composite, bool copy_segment);
-    CompositeBranchContainer(CompositeBranchContainer * branch); // Copies branch's segments, branch_matches, and confidence values
-    CompositeBranchContainer(CompositeBranchContainer * branch, Composite * composite); // Copies branch's segments, branch_matches, and confidence values
+    CompositeBranchContainer(CompositeBranchContainer * branch); // Copies branch_matches, and confidence values, and segment as specified
+    CompositeBranchContainer(CompositeBranchContainer * branch, Composite * composite);
     ~CompositeBranchContainer();
     
     void prepare_for_deletion();
     void delete_connections();
 
-    void copy_from(CompositeBranchContainer * branch, Composite * composite, bool copy_segment);
+    void copy_from(CompositeBranchContainer * branch, Composite * composite);
     
     void set_parent(CompositeBranchContainer * parent, bool follow=true, BranchEnd branch_end=TOP, BranchEnd parent_end=BOTTOM);
     void remove_child(CompositeBranchContainer * child, bool follow=true);
@@ -110,8 +117,9 @@ public:
     void remove_child_connections(BranchEnd branch_end);
 
     Connection * get_best_connection();
-    std::set<Connection *> get_connections() const;
-    std::set<Connection *> copy_connections() const;
+    ConnectionPtrSet get_connections() const;
+    ConnectionPtrSet get_child_connections(BranchEnd branch_end) const;
+    ConnectionPtrSet copy_connections() const;
     
     pair<Connection*,double> get_best_connection_probability() const;
     pair<Connection*,double> get_best_connection_weight() const;
@@ -156,16 +164,18 @@ public:
     Connection(CompositeBranchContainer * child, BranchEnd child_end, CompositeBranchContainer * parent, BranchEnd parent_end, std::set<Reconstruction *> reconstructions, double confidence);
     Connection(Connection * connection);
 
-    CompositeBranchContainer * get_child();
-    BranchEnd get_child_end();
-    CompositeBranchContainer * get_parent();
-    BranchEnd get_parent_end();
-    double get_confidence();
+    CompositeBranchContainer * get_child() const;
+    BranchEnd get_child_end() const;
+    CompositeBranchContainer * get_parent() const;
+    BranchEnd get_parent_end() const;
+    double get_confidence() const;
     std::set<Reconstruction *> get_reconstructions();
 
     // This is kind of dangerous, but it does make some things easier - consider safer way of achieving this (CompositeBranchContainer::split_branch)
     void set_child(CompositeBranchContainer * child);
     void set_parent(CompositeBranchContainer * parent);
+    void set_child_end(BranchEnd child_end);
+    void set_parent_end(BranchEnd parent_end);
     /*
     void set_confidence(double confidence);
  */
@@ -214,9 +224,9 @@ class Composite{
     NeuronSegment * c_root_segment;                     // Root segment of composite tree
     std::vector<Reconstruction *> reconstructions;      // Vector of contributing reconstructions that have been processed
     double summary_confidence;                          // Total confidence (calculated when asked for)
-    std::set<NeuronSegment *> c_segments;
+    SegmentPtrSet c_segments;
     std::map<NeuronSegment *, CompositeBranchContainer *> segment_container_map;    // Map from a segment to its composite branch container
-    //std::set<Connection *> connections;       // Vector of all Connections
+    //ConnectionPtrSet connections;       // Vector of all Connections
     
     void process_branch(BranchContainer * branch);        // UNUSED - might use as alternate to certain code in ConsensusBuilder
     void add_first_reconstruction(Reconstruction * reconstruction);  // Makes composite out of the first individual reconstruction
@@ -231,7 +241,6 @@ public:
     
 
     Composite * copy();
-    Composite * copy(bool copy_segments);
     
     void set_root(CompositeBranchContainer * composite_branch);
     void add_reconstruction(Reconstruction * reconstruction);
@@ -243,7 +252,7 @@ public:
     CompositeBranchContainer * get_root();
     //Reconstruction * get_composite_reconstruction();
     NeuronSegment * get_root_segment();
-    std::set<NeuronSegment *> get_segments();
+    SegmentPtrSet get_segments();
     std::vector<NeuronSegment *> get_segments_ordered();
     std::vector<Reconstruction *> get_reconstructions();
     double get_summary_confidence();
@@ -255,18 +264,16 @@ public:
     void update_tree();
     // Returns a new composite with branches below threshold removed and connections chosen
     Composite * generate_consensus(int branch_vote_threshold);
-    Composite * generate_consensus(int branch_vote_threshold, bool copy_segments);
     Composite * generate_consensus(double branch_confidence_threshold);
-    Composite * generate_consensus(double branch_confidence_threshold, bool copy_segments);
     
     void convert_to_consensus(double branch_confidence_threshold);
     std::map<NeuronSegment *, double> get_segment_confidences();
+    std::map<NeuronSegment *, int> get_segment_confidence_counts();
+    std::map<NeuronSegment *, double> get_connection_confidences();
+    std::map<NeuronSegment *, int> get_connection_confidences_counts();
     
     static void set_logger(Logger * logger);
 };
-
-NeuronSegment * copy_segment_tree(NeuronSegment * root);
-NeuronSegment * copy_segment_markers(NeuronSegment* segment);
 
 void update_branch_tree_sizes(CompositeBranchContainer * branch, std::map<CompositeBranchContainer *,int> &branch_tree_size);
 

@@ -82,8 +82,8 @@ int get_overlap_size(int start1, int end1, int start2, int end2){
     // No overlap
     if (end1 < start2 || end2 < start1) return 0;
 
-    int len1 = end1 - start1;
-    int len2 = end2 - start2;
+    int len1 = end1 - start1 + 1;
+    int len2 = end2 - start2 + 1;
     
     // Full overlap, one alignment between the ends of the other
     if (len1 >= len2){

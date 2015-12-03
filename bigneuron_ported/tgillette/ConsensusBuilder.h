@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include <dirent.h>
+#include "CBUtils.h"
 #include "Reconstruction.h"
 #include "Composite.h"
 #include "ActionHook.h"
@@ -25,20 +26,32 @@ typedef void (*ScriptFunction)(void); // function pointer type
 typedef std::map<ActionHook, ScriptFunction> script_map;
 typedef pair<string,Reconstruction*> ReconstructionPair;
 //typedef std::set<NeuronSegment *, std::less<NeuronSegment *> > SegmentPtrSet;
-typedef std::set<NeuronSegment *> SegmentPtrSet;
 
+// Matching and heuristic parameters
 const double default_branch_confidence_threshold = 0.25;
 const double default_register_cube_size = 4; // microns
 const int marker_sample_rate = 3; // Value determining every n markers to sample to determine bin of segment
+const double ratio_cutoff = 1.75;
+int const min_alignment_size = 0;
 
-class PositionCube{
+struct PositionCube{
     int index;
     short quadrant;
     std::vector<double> position;
     std::vector<NeuronSegment *> segments;
 };
 
+struct SmallOverlap{
+    int cut_from1;
+    int cut_from2;
+    bool overlap_on_first;
+    bool match1_aligns_first;
+    double score_adjustment;
+};
+
 enum BuilderState {INITIALIZED, RECONSTRUCTIONS_ADDED, PREPROCESSED, BUILT_COMPOSITE};
+enum NodeTypeBasis {BRANCH_CONFIDENCE, CONNECTION_CONFIDENCE};
+enum TypeRange {COUNT, PROPORTION};
 
 /**
  * ConsensusBuilder
@@ -63,16 +76,16 @@ class ConsensusBuilder{
     double match_score_threshold;
     double endpoint_threshold_distance;
     float gap_cost;
-    float average_alignment_dist;
-    double good_enough_score;
+    float alignment_dist_threshold;
+    double good_enough_norm_score;
     double best_branch_margin;
 
     void default_parameters();
     
     Logger * logger;
     
-    std::set<NeuronSegment *> unmatched_tree1_segments; // From composite (treated as base for alignment, or primary composite)
-    std::set<NeuronSegment *> unmatched_tree2_segments; // From reconstruction (or secondary composite to be merged)
+    SegmentPtrSet unmatched_tree1_segments; // From composite (treated as base for alignment, or primary composite)
+    SegmentPtrSet unmatched_tree2_segments; // From reconstruction (or secondary composite to be merged)
     //std::vector<NeuronSegment *> composite_segments, reconstruction_segments; // For use in build_consensus and all its subroutines
     
     /* Cubes determine which segments are near enough to be compared [To be implemented]
@@ -99,12 +112,12 @@ class ConsensusBuilder{
     std::vector<int> z_bin_positions;
     int total_bins;
     // For each reconstruction or Composite, the segments that are found within each cube
-    std::map<void *, std::vector<std::set<NeuronSegment *> > > segments_by_tree_cube;
+    std::map<void *, std::vector<SegmentPtrSet > > segments_by_tree_cube;
 
     // For each reconstruction, the segments that are found within each cube
-    std::map<Reconstruction *, std::vector<std::set<NeuronSegment *> > > segments_by_recon_cube;
+    std::map<Reconstruction *, std::vector<SegmentPtrSet > > segments_by_recon_cube;
     // Composite segments found within each cube (Mapping on Composite * for if processing goes hierarchical - there would then be multiple composites at the same time, to eventually be merged together)
-    std::map<Composite *, std::vector<std::set<NeuronSegment *> > > segments_by_composite_cube;
+    std::map<Composite *, std::vector<SegmentPtrSet > > segments_by_composite_cube;
     // For each segment, the cubes to search for candidate segments for comparison
     std::map<NeuronSegment *, std::set<int> > search_cubes_by_segment;
     /*
@@ -150,7 +163,7 @@ class ConsensusBuilder{
     
     double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Composite * composite, vector<double> & w, vector<pair<int, int> > & result);
     double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Reconstruction * reconstruction, vector<double> & w, vector<pair<int, int> > & result);
-    double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, std::vector<std::set<NeuronSegment *> > segments_by_cube, vector<double> & w, vector<pair<int, int> > & result);
+    double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, std::vector<SegmentPtrSet > segments_by_cube, vector<double> & w, vector<pair<int, int> > & result);
     
     /**
      *  Create weighted average for matches
@@ -159,7 +172,7 @@ class ConsensusBuilder{
     void average_and_split_alignments(Reconstruction * reconstruction, std::vector<std::map<MyMarker *,MyMarker *> > &segment_maps, std::vector<pair<int, int> > marker_index_alignments, std::vector<MyMarker*> merged_seg1, std::vector<MyMarker*> merged_seg2, std::vector<NeuronSegment *> segments1, std::vector<NeuronSegment *> segments2);
 
     /* Assign/match branches that were not matched by BlastNeuron */
-    //std::set<Match *> match_remaining_branches(std::set<NeuronSegment *> remaining_segments);
+    //std::set<Match *> match_remaining_branches(SegmentPtrSet remaining_segments);
     void match_remaining_branches(Reconstruction * reconstruction);
     
     /* Add missed branches to composite and update composite branch confidence_denominators */
@@ -181,13 +194,19 @@ class ConsensusBuilder{
     //std::set<Match *> find_matches_local_alignment(vector<NeuronSegment *> tree1_segments, Reconstruction * reconstruction, vector<NeuronSegment *> tree2_segments);
     std::set<Match *> find_matches_local_alignment(); // Using member objects unmatched_tree1_segments (and tree2), and for registration bins 'composite'
     
-    std::map<NeuronSegment *,std::vector<Match *> * > generate_candidate_matches_via_local_align(std::set<NeuronSegment *> tree2_segments);
+    std::map<NeuronSegment *,std::vector<Match *> *, segment_ptr_less > generate_candidate_matches_via_local_align(SegmentPtrSet tree2_segments);
     
-    void find_conflicts(std::set<NeuronSegment *> tree_segments,
-                        std::map<NeuronSegment *, vector<Match *> * > &matches_by_segment,
+    SmallOverlap resolve_small_overlap(Match *m1, Match *m2, bool overlap_on_first);
+
+    void find_conflicts(SegmentPtrSet tree_segments,
+                        std::map<NeuronSegment *, vector<Match *> *, segment_ptr_less > &matches_by_segment,
                         std::map<Match *, std::set<Match *> * > &match_conflicts,
-                        std::map<Match *, std::map<Match *, bool> > &small_overlaps);
-    
+                        std::map<Match *, std::map<Match *, SmallOverlap> > &small_overlaps);
+
+    CompositeBranchContainer * split_branch(CompositeBranchContainer * orig_branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches);
+    BranchContainer * split_branch(BranchContainer * branch, Match * match, std::vector<BranchContainer *> &resulting_branches);
+    void split_branch_matches(BranchContainer * splitting_branch, CompositeBranchContainer * branch, CompositeBranchContainer * child);
+
     
 public:
     ConsensusBuilder(int log_level=1);
@@ -209,13 +228,13 @@ public:
     double get_match_score_threshold() { return match_score_threshold; };
     double get_endpoint_threshold_distance() { return endpoint_threshold_distance; };
     float get_gap_cost() { return gap_cost; };
-    float get_average_alignment_dist() { return average_alignment_dist; };
+    float get_alignment_dist_threshold() { return alignment_dist_threshold; };
     void set_scale(double scale);
     void set_register_cube_size(double register_cube_size) { this->register_cube_size = register_cube_size; };
     void set_match_score_threshold(double match_score_threshold) { this->match_score_threshold = match_score_threshold; };
     void set_endpoint_threshold_distance(double endpoint_threshold_distance) { this->endpoint_threshold_distance = endpoint_threshold_distance; };
     void set_gap_cost(float gap_cost) { this->gap_cost = gap_cost; };
-    void set_average_alignment_dist(float average_alignment_dist) { this->average_alignment_dist = average_alignment_dist; };
+    void set_alignment_dist_threshold(float alignment_dist_threshold) { this->alignment_dist_threshold = alignment_dist_threshold; };
 
     // Manage reconstructions
     void set_reconstructions(vector<NeuronSegment*> reconstruction_root_segments);
@@ -226,7 +245,7 @@ public:
     // void register_action(HOOK_NAME hook_name, HOOK_POSITION position, ScriptFunction func);
     bool is_ready_to_run();
 
-    /** Primary functions - builds composite and consensus **/
+    // ** Primary functions - builds composite and consensus **
     void build_composite();
     NeuronSegment * build_consensus(); // Calls build_composite()
     NeuronSegment * build_consensus(int branch_vote_threshold);
@@ -234,12 +253,15 @@ public:
 
     std::vector<NeuronSegment *> produce_composite();
     
-    std::vector<Reconstruction*> get_reconstructions();
+    int get_reconstruction_count();
+//    std::vector<Reconstruction*> get_reconstructions();
+    std::set<Reconstruction*> get_reconstructions();
     Composite * get_composite();
-    /*
-    CompositeBranchContainer * split_composite_branch(BranchContainer * splitting_branch, CompositeBranchContainer * branch, NeuronSegment * top_segment);
-     */
-    CompositeBranchContainer * split_branch(CompositeBranchContainer * orig_branch, Match * match, std::vector<CompositeBranchContainer *> &resulting_branches);
-    BranchContainer * split_branch(BranchContainer * branch, Match * match, std::vector<BranchContainer *> &resulting_branches);
-    void split_branch_matches(BranchContainer * splitting_branch, CompositeBranchContainer * branch, CompositeBranchContainer * child);
+
+    // ** Output functions **
+    void write_consensus_to_swc(string filename, double branch_threshold=0, NodeTypeBasis node_type_basis=BRANCH_CONFIDENCE, TypeRange type_range=PROPORTION);
+
+    // ESWC not ready for use - still need to link to data structures and methods for representing and writing to eswc
+    void write_consensus_to_eswc(string filename, double branch_threshold=0);
+
 };

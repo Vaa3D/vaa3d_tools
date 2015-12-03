@@ -119,8 +119,14 @@ Reconstruction::Reconstruction(string name, NeuronSegment * tree, double confide
 };
 Reconstruction::~Reconstruction(){
     for (NeuronSegment * seg : r_segments){
+//        printf("~Reconstruction 1\n");
         BranchContainer * branch = get_branch_by_segment(seg);
-        delete branch;
+//        printf("~Reconstruction 2\n");
+        if (branch){
+//            printf("~Reconstruction 3 branch %p\n",branch);
+            delete branch;
+//            printf("~Reconstruction 4\n");
+        }
         //delete seg;
     }
 }
@@ -169,16 +175,16 @@ BranchContainer * Reconstruction::get_root_branch(){
 void Reconstruction::set_name(string name){
     r_name = name;
 };
-string Reconstruction::get_name(){
+string Reconstruction::get_name() const{
     return r_name;
 };
 void Reconstruction::set_tree(NeuronSegment * tree){
     r_tree = tree;
 };
-NeuronSegment * Reconstruction::get_tree(){
+NeuronSegment * Reconstruction::get_tree() const{
     return r_tree;
 };
-std::set<NeuronSegment *> Reconstruction::get_segments(){
+SegmentPtrSet Reconstruction::get_segments() const{
     return r_segments;
 };
 std::vector<NeuronSegment *> Reconstruction::get_segments_ordered(){
@@ -190,17 +196,19 @@ void Reconstruction::update_branch_by_segment(NeuronSegment * segment, BranchCon
     segment_container_map[segment] = branch;
 }
 void Reconstruction::add_branch(BranchContainer * branch){
+    printf("add_branch before: r_segments size %i, segment_container_map size %i\n",r_segments.size(),segment_container_map.size());
     segment_container_map[branch->get_segment()] = branch;
     r_segments.insert(branch->get_segment());
+    printf("add_branch after: r_segments size %i, segment_container_map size %i\n",r_segments.size(),segment_container_map.size());
 }
 
-BranchContainer * Reconstruction::get_branch_by_segment(NeuronSegment * segment){
+BranchContainer * Reconstruction::get_branch_by_segment(NeuronSegment * segment) {
     return segment_container_map[segment];
 };
 void Reconstruction::set_confidence(double confidence){
     r_confidence = confidence;
 };
-double Reconstruction::get_confidence(){
+double Reconstruction::get_confidence() const{
     return r_confidence;
 };
 
@@ -247,6 +255,7 @@ BranchContainer::BranchContainer(Reconstruction * reconstruction, NeuronSegment 
 };
 BranchContainer::~BranchContainer(){
     // #TODO - delete segment and markers?
+//    printf("~BranchContainer\n");
 }
 
 void BranchContainer::set_segment(NeuronSegment * segment){
@@ -267,7 +276,9 @@ void BranchContainer::set_parent(BranchContainer * parent){
 //        segment->parent = parent->get_segment();
         // If the parent isn't null, add this as its child
         if (parent){
-            parent->add_child(this);
+            std::set<BranchContainer *> parent_children = parent->get_children();
+            if (parent_children.find(this) == parent_children.end())
+                parent->add_child(this);
         }
     }
 };
@@ -284,6 +295,15 @@ void BranchContainer::add_child(BranchContainer * child){
         }
     }
 };
+void BranchContainer::remove_child(BranchContainer * child){
+    bc_children.erase(child);
+    if (child->get_parent() == this){
+        child->set_parent(nullptr);
+    }
+    // Remove segment child
+    bc_segment->child_list.erase(std::remove(bc_segment->child_list.begin(), bc_segment->child_list.end(), child->get_segment()), bc_segment->child_list.end());
+};
+
 void BranchContainer::add_children(std::set<BranchContainer *> children){
     for (BranchContainer * child : children){
         add_child(child);
@@ -312,20 +332,20 @@ BranchContainer * BranchContainer::split_branch(){
     NeuronSegment * orig_seg = bc_segment;
     
     // Create new segment above split
-    NeuronSegment * new_seg_above = new NeuronSegment();
+    NeuronSegment * new_seg_before = copy_segment_markers(orig_seg);
 
     // Since there is no split_point given, just copy the markers and leave the original segment alone
-    new_seg_above->markers = std::vector<MyMarker *>(orig_seg->markers.begin(), orig_seg->markers.end());
+    //new_seg_before->markers = std::vector<MyMarker *>(orig_seg->markers.begin(), orig_seg->markers.end());
     //orig_seg->markers.erase(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point_t);
     
     // Create new branch above split
-    BranchContainer * branch_above = new BranchContainer(bc_reconstruction, new_seg_above);
+    BranchContainer * branch_before = new BranchContainer(bc_reconstruction, new_seg_before, nullptr, nullptr, bc_confidence);
     
     BranchContainer * parent = bc_parent;
-    set_parent(branch_above);
-    branch_above->set_parent(parent);
+    set_parent(branch_before);
+    branch_before->set_parent(parent);
     
-    return branch_above;
+    return branch_before;
 }
 BranchContainer * BranchContainer::split_branch(std::size_t const split_point){
     // Get original segment
@@ -342,41 +362,32 @@ BranchContainer * BranchContainer::split_branch(std::size_t const split_point){
     orig_seg->markers.erase(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point);
     
     // Create new branch above split
-    BranchContainer * branch_before = new BranchContainer(bc_reconstruction, new_seg_before);
+    BranchContainer * branch_before = new BranchContainer(bc_reconstruction, new_seg_before, nullptr, nullptr, bc_confidence);
     
     BranchContainer * parent = bc_parent;
     set_parent(branch_before);
     branch_before->set_parent(parent);
 
     return branch_before;
-
 };
 
 
-void BranchContainer::remove_child(BranchContainer * child){
-    bc_children.erase(child);
-    if (child->get_parent() == this){
-        child->set_parent(nullptr);
-    }
-    // Remove segment child
-    bc_segment->child_list.erase(std::remove(bc_segment->child_list.begin(), bc_segment->child_list.end(), child->get_segment()), bc_segment->child_list.end());
-};
-std::set<BranchContainer *> BranchContainer::get_children(){
+std::set<BranchContainer *> BranchContainer::get_children() const{
     return bc_children;
 }
-BranchContainer * BranchContainer::get_parent(){
+BranchContainer * BranchContainer::get_parent() const{
     return bc_parent;
 }
-NeuronSegment * BranchContainer::get_segment(){
+NeuronSegment * BranchContainer::get_segment() const{
     return bc_segment;
 }
-CompositeBranchContainer * BranchContainer::get_composite_match(){
+CompositeBranchContainer * BranchContainer::get_composite_match() const{
     return bc_composite_match;
 };
-double BranchContainer::get_confidence(){
+double BranchContainer::get_confidence() const{
     return bc_confidence;
 };
-Reconstruction * BranchContainer::get_reconstruction(){
+Reconstruction * BranchContainer::get_reconstruction() const{
     return bc_reconstruction;
 }
 
@@ -398,10 +409,10 @@ std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment * root){
     return segments;
 }
 
-std::set<NeuronSegment *> produce_segment_set(NeuronSegment * root){
+SegmentPtrSet produce_segment_set(NeuronSegment * root){
     std::stack<NeuronSegment *> segment_stack;
     segment_stack.push(root);
-    std::set<NeuronSegment *> segments;
+    SegmentPtrSet segments;
     NeuronSegment * segment;
     while (!segment_stack.empty()){
         segment = segment_stack.top();
@@ -429,3 +440,45 @@ std::map<NeuronSegment *, BranchContainer *> produce_segment_container_map(Branc
     }
     return sb_map;
 }
+
+
+NeuronSegment * copy_segment_markers(NeuronSegment* segment){
+    NeuronSegment * new_segment = new NeuronSegment();
+    new_segment->markers = std::vector<MyMarker*>(segment->markers.size());
+    MyMarker * new_marker;
+    std::map<MyMarker *, MyMarker *> marker_map;
+    int ind = 0;
+    for (MyMarker* marker : segment->markers){
+        new_marker = new MyMarker(*marker);
+        if (marker_map.find(marker->parent) != marker_map.end()){
+            new_marker->parent = marker_map[marker->parent];
+        }
+        marker_map[marker] = new_marker;
+        new_segment->markers[ind++] = new_marker;
+    }
+    return new_segment;
+};
+
+NeuronSegment * copy_segment_tree(NeuronSegment * root){
+    NeuronSegment * segment, * copy, * child_copy, * root_copy;
+    typedef pair<NeuronSegment *, NeuronSegment *> SegmentPair;
+    std::stack<SegmentPair> seg_stack;
+    root_copy = copy_segment_markers(root);
+    seg_stack.push(SegmentPair(root, root_copy));
+    while (!seg_stack.empty()){
+        pair<NeuronSegment *, NeuronSegment *> pair = seg_stack.top();
+        segment = pair.first;
+        copy = pair.second;
+        seg_stack.pop();
+        for (NeuronSegment * child : segment->child_list){
+            child_copy = copy_segment_markers(child);
+            copy->child_list.push_back(child_copy);
+            if (child->child_list.size() > 0){
+                seg_stack.push(SegmentPair(child, child_copy));
+            }
+        }
+    }
+    return root_copy;
+};
+
+
