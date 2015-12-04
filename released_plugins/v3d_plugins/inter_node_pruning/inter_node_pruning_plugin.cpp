@@ -21,7 +21,7 @@ QStringList inter_node_pruning::menulist() const
 QStringList inter_node_pruning::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("pruning")
 		<<tr("func2")
 		<<tr("help");
 }
@@ -124,13 +124,73 @@ bool inter_node_pruning::dofunc(const QString & func_name, const V3DPluginArgLis
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("pruning"))
 	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
+        cout<<"Welcome to swc inter-node pruning processing plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        NeuronTree nt = readSWC_file(inswc_file);
+        if(nt.listNeuron[0].pn >0)
+        {
+            v3d_msg("Please sort the swc file first before using this plugin.",0);
+            return false;
+        }
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        vector<MyMarker*> final_out_swc = readSWC_file(inswc_file.toStdString());
+        vector<MyMarker*> final_out_swc_updated;
+        final_out_swc_updated.push_back(final_out_swc[0]);
+
+
+        for(int j = 0; j < final_out_swc.size(); j++)
+        {
+            if(final_out_swc[j]->parent != 0)
+            {
+                int flag_prun = 0;
+                int par_x = final_out_swc[j]->parent->x;
+                int par_y = final_out_swc[j]->parent->y;
+                int par_z = final_out_swc[j]->parent->z;
+                int par_r = final_out_swc[j]->parent->radius;
+
+                int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
+                if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+                {
+                    if(childs[j].size() > 0)
+                    {
+                        for(int jj = 0; jj < childs[j].size(); jj++)
+                            final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
+                    }
+                    flag_prun = 1;
+                }
+
+                if(flag_prun == 0)
+                {
+                    final_out_swc_updated.push_back(final_out_swc[j]);
+                }
+            }
+            else
+                final_out_swc_updated.push_back(final_out_swc[j]);
+
+        }
+
+
+        QString outswc_file = inswc_file+QString("_pruned.swc");
+        saveSWC_file(outswc_file.toStdString(), final_out_swc_updated);
+        return true;
+
 	}
 	else if (func_name == tr("help"))
 	{
