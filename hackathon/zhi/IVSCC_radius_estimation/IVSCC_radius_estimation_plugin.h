@@ -51,7 +51,7 @@ class radiusEstimationDialog : public QDialog
             QGridLayout * layout = new QGridLayout();
             inswc_box = new QLineEdit("");
             outswc_box = new QLineEdit("(optional)");
-            bkg_thresh_box = new QLineEdit("40");
+            bkg_thresh_box = new QLineEdit("5");
             stop_thresh_box = new QDoubleSpinBox();
             stop_thresh_box->setMinimum(0.1);
             stop_thresh_box->setMaximum(10);
