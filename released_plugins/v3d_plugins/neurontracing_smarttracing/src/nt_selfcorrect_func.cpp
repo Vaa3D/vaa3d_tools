@@ -16,7 +16,7 @@ nt_selfcorrect_func::nt_selfcorrect_func()
     p_img1D = 0;
     ppp_img3D = 0;
     tmp_ppp_window = 0;
-    sz_img = 0;
+    sz_img[4] = 0;
     type_img = 1;
     featureNum = 0;
     svmModel = 0;
@@ -152,12 +152,19 @@ bool nt_selfcorrect_func::loadImageData(QString fname_img, int ch)
     string fname = fname_img.toStdString();
     cstr = new char [fname.size()+1];
     strcpy( cstr, fname.c_str() );
+    V3DLONG in_sz[4];
     //load image
-    if(!loadImage(cstr, p_img1D, sz_img, type_img)){
+    if (!simple_loadimage_wrapper(*callback,fname.c_str(), p_img1D, sz_img, type_img))
+    {
         qDebug()<<"error: cannot read image "<<fname_img;
         error_code=31;
         return false;
     }
+//    if(!loadImage(cstr, p_img1D, sz_img, type_img)){
+//        qDebug()<<"error: cannot read image "<<fname_img;
+//        error_code=31;
+//        return false;
+//    }
     if(type_img!=1){
         qDebug()<<"ERROR: only support image type UINT8";
         error_code=32;

@@ -98,7 +98,7 @@ private:
     V3DPluginCallback2* callback;
     unsigned char * p_img1D;
     unsigned char *** ppp_img3D; //ppp_img3d[z][y][x]
-    V3DLONG * sz_img;
+    V3DLONG sz_img[4];
     int type_img;
     vector<MyMarker*> ntmarkers;
     QString fname_tmpout;
