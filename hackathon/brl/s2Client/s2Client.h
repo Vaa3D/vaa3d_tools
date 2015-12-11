@@ -1,42 +1,4 @@
-/****************************************************************************
-**
-** Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies).
-** All rights reserved.
-** Contact: Nokia Corporation (qt-info@nokia.com)
-**
-** This file is part of the examples of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:BSD$
-** You may use this file under the terms of the BSD license as follows:
-**
-** "Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are
-** met:
-**   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
-**   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
-**   * Neither the name of Nokia Corporation and its Subsidiary(-ies) nor
-**     the names of its contributors may be used to endorse or promote
-**     products derived from this software without specific prior written
-**     permission.
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+
 
 #ifndef S2CLIENT_H
 #define S2CLIENT_H
@@ -63,15 +25,26 @@ public:
     S2Client(QWidget *parent = 0);
 
 private slots:
-    void requestNewFortune();
+    void sendCommand();
     void readPV();
     void displayError(QAbstractSocket::SocketError socketError);
-    void enableGetFortuneButton();
+    void enablesendCommandButton();
     void sessionOpened();
 	void cleanAndSend(QString);
 	void sendX();
 	void cleanUp();
 	void connectToPV();
+    void initConnection(); //[initialize connection to PV over TCP/IP]
+    void initScope();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
+             /* some parameters will be stored in a separate class described below
+                */
+    void initROI();//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+    void startROI(); //    set a target file location and trigger the 3D ROI.
+    void getROIData();//    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
+                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
+    void processROIData(); //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
+    void startNextROI();//    Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
+    void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
 
 private:
     QLabel *hostLabel;
@@ -81,16 +54,33 @@ private:
     QLineEdit *portLineEdit;
 	QLineEdit *cmdLineEdit;
     QLabel *statusLabel;
-    QPushButton *getFortuneButton;
+    QPushButton *sendCommandButton;
     QPushButton *quitButton;
 	QPushButton *connectButton;
     QDialogButtonBox *buttonBox;
 
     QTcpSocket *tcpSocket;
-    QString currentFortune;
+    QString currentMessage;
     quint16 blockSize;
 
     QNetworkSession *networkSession;
+
+    QObject ss2Params;
+    /*  this will include:
+     * optical zoom
+     * pixel size in microns
+     * pixels/line
+     * rows/image
+     * resonant/nonresonant mode
+    * Current scan xy location in microns (within field of view)
+    * xy stage position (for future use  )
+    * piezo z position
+    * stepper z position.
+    * piezo v. stepper z mode
+    * Pockels cell voltage
+    *  ???
+    * this object may include polling on its own*/
+
 };
 //! [0]
 

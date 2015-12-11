@@ -66,16 +66,16 @@ S2Client::S2Client(QWidget *parent):   QDialog(parent), networkSession(0)
 
     statusLabel = new QLabel(tr(" - - - "));
 
-    getFortuneButton = new QPushButton(tr("Send Command"));
-    getFortuneButton->setDefault(true);
-    getFortuneButton->setEnabled(false);
+    sendCommandButton = new QPushButton(tr("Send Command"));
+    sendCommandButton->setDefault(true);
+    sendCommandButton->setEnabled(false);
 	connectButton = new QPushButton(tr("connect to PrairieView"));
 	connectButton->setEnabled(false);
 
     quitButton = new QPushButton(tr("Quit"));
 
     buttonBox = new QDialogButtonBox;
-    buttonBox->addButton(getFortuneButton, QDialogButtonBox::ActionRole);
+    buttonBox->addButton(sendCommandButton, QDialogButtonBox::ActionRole);
     buttonBox->addButton(quitButton, QDialogButtonBox::RejectRole);
 	buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
 //! [1]
@@ -83,11 +83,11 @@ S2Client::S2Client(QWidget *parent):   QDialog(parent), networkSession(0)
 //! [1]
 
     connect(hostLineEdit, SIGNAL(textChanged(QString)),
-            this, SLOT(enableGetFortuneButton()));
+            this, SLOT(enablesendCommandButton()));
     connect(portLineEdit, SIGNAL(textChanged(QString)),
-            this, SLOT(enableGetFortuneButton()));
-    connect(getFortuneButton, SIGNAL(clicked()),
-            this, SLOT(requestNewFortune()));
+            this, SLOT(enablesendCommandButton()));
+    connect(sendCommandButton, SIGNAL(clicked()),
+            this, SLOT(sendCommand()));
     connect(connectButton, SIGNAL(clicked()), this, SLOT(connectToPV()));
 //! [2] //! [3]
     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(readPV()));
@@ -130,7 +130,7 @@ S2Client::S2Client(QWidget *parent):   QDialog(parent), networkSession(0)
         networkSession = new QNetworkSession(config, this);
         connect(networkSession, SIGNAL(opened()), this, SLOT(sessionOpened()));
 
-        getFortuneButton->setEnabled(false);
+        sendCommandButton->setEnabled(false);
         statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
@@ -143,22 +143,17 @@ void S2Client::connectToPV()
 	portLineEdit->text().toInt());
 	}
 
-void S2Client::requestNewFortune()
+void S2Client::sendCommand()
 {
-    getFortuneButton->setEnabled(false);
+    sendCommandButton->setEnabled(false);
  	cleanAndSend(cmdLineEdit->text());
 }
 
 void S2Client::cleanAndSend(QString inputString)
 {	
-	//QString outputString = cmdLineEdit->text();
-	//outputString.replace(' ', (char)1);
-	//outputString.append((char)13).append((char)10).toLatin1();
-	//tcpSocket->write(outputString);
 	inputString.replace(' ', (char)1).append((char)13).append((char)10);
 	tcpSocket->write(inputString.toLatin1());
-	//tcpSocket->write(cmdLineEdit->text().replace(' ', (char)1).append((char)13).append((char)10).toLatin1());
-	getFortuneButton->setEnabled(true);
+    sendCommandButton->setEnabled(true);
 }
 
 void S2Client::sendX()
@@ -187,7 +182,7 @@ void S2Client::readPV()
 
 //! [9]
     statusLabel->setText(pvResponse);
-    getFortuneButton->setEnabled(true);
+    sendCommandButton->setEnabled(true);
 }
 
 
@@ -197,30 +192,30 @@ void S2Client::displayError(QAbstractSocket::SocketError socketError)
     case QAbstractSocket::RemoteHostClosedError:
         break;
     case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(this, tr("Fortune Client"),
+        QMessageBox::information(this, tr("smartScope2 Client"),
                                  tr("The host was not found. Please check the "
                                     "host name and port settings."));
         break;
     case QAbstractSocket::ConnectionRefusedError:
-        QMessageBox::information(this, tr("Fortune Client"),
+        QMessageBox::information(this, tr("smartScope2 Client"),
                                  tr("The connection was refused by the peer. "
-                                    "Make sure the fortune server is running, "
+                                    "Make sure PrairieView is running, "
                                     "and check that the host name and port "
                                     "settings are correct."));
         break;
     default:
-        QMessageBox::information(this, tr("Fortune Client"),
+        QMessageBox::information(this, tr("smartScope2 Client"),
                                  tr("The following error occurred: %1.")
                                  .arg(tcpSocket->errorString()));
     }
 
-    getFortuneButton->setEnabled(true);
+    sendCommandButton->setEnabled(true);
 }
 //! [13]
 
-void S2Client::enableGetFortuneButton()
+void S2Client::enablesendCommandButton()
 {
-    getFortuneButton->setEnabled((!networkSession || networkSession->isOpen()) &&
+    sendCommandButton->setEnabled((!networkSession || networkSession->isOpen()) &&
                                  !hostLineEdit->text().isEmpty() &&
                                  !portLineEdit->text().isEmpty());
     connectButton->setEnabled((!networkSession || networkSession->isOpen()) &&
@@ -243,9 +238,9 @@ void S2Client::sessionOpened()
     settings.setValue(QLatin1String("DefaultNetworkConfiguration"), id);
     settings.endGroup();
 
-    statusLabel->setText(tr("This examples requires that you run the "
-                            "Fortune Server example as well."));
+    statusLabel->setText(tr("Prototype client requires "
+                            "PrairieView to run at the same time."));
 
-    enableGetFortuneButton();
+    enablesendCommandButton();
 }
 
