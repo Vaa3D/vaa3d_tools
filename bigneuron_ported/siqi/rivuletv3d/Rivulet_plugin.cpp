@@ -541,7 +541,7 @@ double* distgradient(double* T, V3DLONG* in_sz)
     V3DLONG NVOX = in_sz[0] * in_sz[1] * in_sz[2];
     V3DLONG jin_sz[3]; // matrix for jacobian
     jin_sz[0] = in_sz[0] + 2; jin_sz[1] = in_sz[1] + 2; jin_sz[2] = in_sz[2] + 2;
-    int jsz = jin_sz[0] * jin_sz[1] * in_sz[2];
+    int jsz = jin_sz[0] * jin_sz[1] * jin_sz[2];
     double* Fx = new double[NVOX];
     std::fill(Fx, Fx+NVOX, 0.0);
     double* Fy = new double[NVOX];
@@ -569,7 +569,7 @@ double* distgradient(double* T, V3DLONG* in_sz)
             }
 
     // Make the neighbour position kernel
-    short *Ne[26];
+    short *Ne[27];
     int ctr = 0;
     for (int i = -1; i <= 1 ; i++)
         for (int j = -1; j <= 1 ; j++)
@@ -582,8 +582,8 @@ double* distgradient(double* T, V3DLONG* in_sz)
                 // printf("Ne %d, %d, %d\n", i, j, k);
                 ctr++;
             }
-    
-    for (int i=0; i<26; i++)
+
+    for (int i=0; i<27; i++)
         for (int x=0; x<in_sz[0]; x++)
             for (int y=0; y<in_sz[1]; y++)
                 for (int z=0; z<in_sz[2]; z++)
