@@ -13,13 +13,14 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "stackutil.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
+#include <boost/lexical_cast.hpp>
 
 
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
-#define INF 1E9
+#define INF 1E29
 
 struct MST_PARA
 {
@@ -45,7 +46,7 @@ QStringList neurontracing_mst::funclist() const
 }
 
 void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA, bool bmenu);
-template <class T> QList<NeuronSWC> seed_detection(T* data1d,
+template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
@@ -210,7 +211,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     }
 
 
-    QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
+    QList<NeuronSWC> nt_seed = seed_detection(callback,data1d, in_sz, Ws, c, th);
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
    // writeSWC_file("mst.swc",nt_tmp);
@@ -356,15 +357,6 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
 
     writeSWC_file(swc_name,nt_final);
 
-    if(!bmenu)
-    {
-        if(data1d) {delete []data1d; data1d = 0;}
-    }
-
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-
-    return;
-
     V3DPluginArgItem arg;
     V3DPluginArgList input_sort;
     V3DPluginArgList output;
@@ -375,81 +367,95 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     arg.type = "random";std::vector<char*> arg_input_sort;
     arg_input_sort.push_back(fileName_string);
     arg.p = (void *) & arg_input_sort; input_sort<< arg;
-    arg.type = "random";std::vector<char*> arg_sort_para;arg.p = (void *) & arg_sort_para; input_sort << arg;
+
+    string winx2 = boost::lexical_cast<string>(6*Ws);
+    char* winx =  new char[winx2.length() + 1];
+    strcpy(winx, winx2.c_str());
+
+    arg.type = "random";std::vector<char*> arg_sort_para;arg_sort_para.push_back(winx);arg.p = (void *) & arg_sort_para; input_sort << arg;
     arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
 
     QString full_plugin_name_sort = "sort_neuron_swc";
     QString func_name_sort = "sort_swc";
     callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
-    return;
     //writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
 
     NeuronTree nt_sorted = readSWC_file(swc_name);
     NeuronTree nt_sorted_prund = post_process(nt_sorted);
-    NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
+//    NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
 
-    p0.x = nt_sorted_prund_2nd.listNeuron.at(0).x;
-    p0.y = nt_sorted_prund_2nd.listNeuron.at(0).y;
-    p0.z = nt_sorted_prund_2nd.listNeuron.at(0).z;
-    pp.clear();
+//    p0.x = nt_sorted_prund_2nd.listNeuron.at(0).x;
+//    p0.y = nt_sorted_prund_2nd.listNeuron.at(0).y;
+//    p0.z = nt_sorted_prund_2nd.listNeuron.at(0).z;
+//    pp.clear();
 
-    QVector<QVector<V3DLONG> > childs;
+//    QVector<QVector<V3DLONG> > childs;
 
-    V3DLONG neuronNum = nt_sorted_prund_2nd.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    for (V3DLONG i=0;i<neuronNum;i++)
+//    V3DLONG neuronNum = nt_sorted_prund_2nd.listNeuron.size();
+//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    for (V3DLONG i=0;i<neuronNum;i++)
+//    {
+//        V3DLONG par = nt_sorted_prund_2nd.listNeuron[i].pn;
+//        if (par<0) continue;
+//        childs[nt_sorted_prund_2nd.hashNeuron.value(par)].push_back(i);
+//    }
+
+
+//    QList<NeuronSWC> list = nt_sorted_prund_2nd.listNeuron;
+//    for (int i=1;i<list.size();i++)
+//    {
+//        if (childs[i].size()==0)
+//        {
+//            LocationSimple tmpp;
+//            tmpp.x = list.at(i).x;
+//            tmpp.y = list.at(i).y;
+//            tmpp.z = list.at(i).z;
+//            pp.push_back(tmpp);
+//        }
+//    }
+
+//    V3DLONG sz_tracing[4];
+//    sz_tracing[0] = in_sz[0];
+//    sz_tracing[1] = in_sz[1];
+//    sz_tracing[2] = in_sz[2];
+//    sz_tracing[3] = 1;
+
+//    unsigned char ****p4d_entire = 0;
+//    if (!new4dpointer(p4d_entire, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], data1d))
+//    {
+//        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+//        return;
+//    }
+
+//   // trace_para.b_postMergeClosebyBranches = true;
+//    NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
+//                              p0, pp,
+//                              trace_para, weight_xy_z);
+//    if(p4d_entire) {delete []p4d_entire; p4d_entire = 0;}
+
+//    NeuronTree nt_2nd_sorted;
+//    SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5);
+
+    nt_sorted_prund.name = "MST_Tracing";
+    writeSWC_file(swc_name.toStdString().c_str(),nt_sorted_prund);
+
+
+
+    if(!bmenu)
     {
-        V3DLONG par = nt_sorted_prund_2nd.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt_sorted_prund_2nd.hashNeuron.value(par)].push_back(i);
+        if(data1d) {delete []data1d; data1d = 0;}
     }
 
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
-    QList<NeuronSWC> list = nt_sorted_prund_2nd.listNeuron;
-    for (int i=1;i<list.size();i++)
-    {
-        if (childs[i].size()==0)
-        {
-            LocationSimple tmpp;
-            tmpp.x = list.at(i).x;
-            tmpp.y = list.at(i).y;
-            tmpp.z = list.at(i).z;
-            pp.push_back(tmpp);
-        }
-    }
-
-    V3DLONG sz_tracing[4];
-    sz_tracing[0] = in_sz[0];
-    sz_tracing[1] = in_sz[1];
-    sz_tracing[2] = in_sz[2];
-    sz_tracing[3] = 1;
-
-    unsigned char ****p4d_entire = 0;
-    if (!new4dpointer(p4d_entire, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], data1d))
-    {
-        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        return;
-    }
-
-   // trace_para.b_postMergeClosebyBranches = true;
-    NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
-                              p0, pp,
-                              trace_para, weight_xy_z);
-    if(p4d_entire) {delete []p4d_entire; p4d_entire = 0;}
-
-    NeuronTree nt_2nd_sorted;
-    SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5);
-
-    nt_2nd_sorted.name = "MST_Tracing";
-    writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
-
+    return;
 
     return;
 
 }
 
-template <class T> QList<NeuronSWC> seed_detection(T* data1d,
+template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
@@ -567,163 +573,164 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
 
     }
 
-//    double x1,y1,z1;
-//    for (int i=0;i<marknum;i++)
-//    {
-//        x1 = seeds.at(i).x;
-//        y1 = seeds.at(i).y;
-//        z1 = seeds.at(i).z;
-//        for (int j=0;j<marknum;j++)
-//        {
-//            markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
-//        }
-//    }
-
-
-
-    double weight_xy_z=1.0;
-    bool b_mergeCloseBranches = false;
-    bool b_usedshortestpathonly = false;
-    bool b_postTrim = true;
-    bool b_pruneArtifactBranches = true;
-    int ds_step = 2;
-
-    CurveTracePara trace_para;
-    trace_para.channo = 0;
-    trace_para.sp_graph_resolution_step = ds_step;
-    trace_para.b_deformcurve = b_usedshortestpathonly;
-    trace_para.b_postMergeClosebyBranches = b_mergeCloseBranches;
-    trace_para.b_3dcurve_width_from_xyonly = true;
-    trace_para.b_post_trimming = b_postTrim;
-    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
-
-    #define X_I(i)				 	(0+(i)*ds_step)
-    #define Y_I(i)				 	(0+(i)*ds_step)
-    #define Z_I(i)				 	(0+(i)*ds_step)
-
-    LocationSimple p0;
-    vector<LocationSimple> pp;
-    NeuronTree nt;
-
     double x1,y1,z1;
     for (int i=0;i<marknum;i++)
     {
         x1 = seeds.at(i).x;
         y1 = seeds.at(i).y;
         z1 = seeds.at(i).z;
-        for (int j=i;j<marknum;j++)
+        for (int j=0;j<marknum;j++)
         {
-            double x2 = seeds.at(j).x;
-            double y2 = seeds.at(j).y;
-            double z2 = seeds.at(j).z;
-            if(sqrt(double(x1-x2)*double(x1-x2) + double(y1-y2)*double(y1-y2) + double(z1-z2)*double(z1-z2)) > 2*Ws)
-                 markEdge[i][j] = INF;
-            else
-            {
-
-                p0.x = x1;
-                p0.y = y1;
-                p0.z = z1;
-                pp.clear();
-
-                LocationSimple tmpp;
-                tmpp.x = x2;
-                tmpp.y = y2;
-                tmpp.z = z2;
-             //   pp.push_back(tmpp);
-                double cent_x =  0.5 * (p0.x + tmpp.x);
-                double cent_y =  0.5 * (p0.y + tmpp.y);
-                double cent_z =  0.5 * (p0.z + tmpp.z);
-
-                V3DLONG xb = cent_x - 2*Ws; if(xb < 0) xb = 0;
-                V3DLONG xe = cent_x + 2*Ws-1; if(xe>N-1) xe = N-1;
-                V3DLONG yb = cent_y - 2*Ws; if(yb < 0) yb = 0;
-                V3DLONG ye = cent_y + 2*Ws-1; if(ye>M-1) ye = M-1;
-                V3DLONG zb = cent_z - 2*Ws; if(zb < 0) zb = 0;
-                V3DLONG ze = cent_z + 2*Ws-1; if(ze>P-1) ze = P-1;
-
-                unsigned char *localarea=0;
-                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
-                localarea = new unsigned char [blockpagesz];
-                V3DLONG d = 0;
-                for(V3DLONG iz = zb; iz < ze + 1; iz++)
-                {
-                    V3DLONG offsetk = iz*M*N;
-                    for(V3DLONG iy = yb; iy < ye+1; iy++)
-                    {
-                        V3DLONG offsetj = iy*N;
-                        for(V3DLONG ix = xb; ix < xe+1; ix++)
-                        {
-
-                            localarea[d] = data1d[offsetc+offsetk + offsetj + ix];
-                            d++;
-                        }
-                    }
-                }
-
-                V3DLONG sz_tracing[4];
-                sz_tracing[0] = xe-xb+1;
-                sz_tracing[1] = ye-yb+1;
-                sz_tracing[2] = ze-zb+1;
-                sz_tracing[3] = 1;
-
-                unsigned char ****p4d = 0;
-                if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
-                {
-                    fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-                }
-
-
-                p0.x = p0.x - xb;
-                p0.y = p0.y - yb;
-                p0.z = p0.z - zb;
-                tmpp.x = x2 - xb;
-                tmpp.y = y2 - yb;
-                tmpp.z = z2 - zb;
-                pp.push_back(tmpp);
-
-                nt = v3dneuron_GD_tracing(p4d, sz_tracing,
-                                          p0, pp,
-                                          trace_para, weight_xy_z);
-
-
-
-                if(nt.listNeuron.size() >0)
-                {
-                    unsigned char ***img3d = p4d[0];
-                    double intensity_sum = 0;
-
-                    for(V3DLONG nn = 0; nn < nt.listNeuron.size() ;nn++)
-                    {
-
-                        V3DLONG ii = nt.listNeuron.at(nn).x;
-                        V3DLONG jj = nt.listNeuron.at(nn).y;;
-                        V3DLONG kk = nt.listNeuron.at(nn).z;
-
-                        double va = getBlockAveValue(img3d, sz_tracing[0], sz_tracing[1], sz_tracing[2], ii,jj,kk,
-                                                     ds_step, ds_step, (ds_step/weight_xy_z));
-                        double tmpv = 1-va/255;
-                        intensity_sum =  intensity_sum + exp((tmpv*tmpv)*10);
-
-                    }
-                    markEdge[i][j] =  intensity_sum;
-
-                }
-
-                if(p4d) {delete []p4d; p4d = 0;}
-                if(localarea) {delete []localarea; localarea = 0;}
-            }
-
+            markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
         }
     }
 
-    for (int i=0;i<marknum;i++)
-    {
-        for (int j=i;j<marknum;j++)
-        {
-            markEdge[j][i] =  markEdge[i][j];
-        }
-    }
+
+
+//    double weight_xy_z=1.0;
+//    bool b_mergeCloseBranches = false;
+//    bool b_usedshortestpathonly = false;
+//    bool b_postTrim = true;
+//    bool b_pruneArtifactBranches = true;
+//    int ds_step = 2;
+
+//    CurveTracePara trace_para;
+//    trace_para.channo = 0;
+//    trace_para.sp_graph_resolution_step = ds_step;
+//    trace_para.b_deformcurve = b_usedshortestpathonly;
+//    trace_para.b_postMergeClosebyBranches = b_mergeCloseBranches;
+//    trace_para.b_3dcurve_width_from_xyonly = true;
+//    trace_para.b_post_trimming = b_postTrim;
+//    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
+
+//    #define X_I(i)				 	(0+(i)*ds_step)
+//    #define Y_I(i)				 	(0+(i)*ds_step)
+//    #define Z_I(i)				 	(0+(i)*ds_step)
+
+//    LocationSimple p0;
+//    vector<LocationSimple> pp;
+//    NeuronTree nt;
+
+//    double x1,y1,z1;
+//    for (int i=0;i<marknum;i++)
+//    {
+//        x1 = seeds.at(i).x;
+//        y1 = seeds.at(i).y;
+//        z1 = seeds.at(i).z;
+//        for (int j=i;j<marknum;j++)
+//        {
+//            double x2 = seeds.at(j).x;
+//            double y2 = seeds.at(j).y;
+//            double z2 = seeds.at(j).z;
+//            if(sqrt(double(x1-x2)*double(x1-x2) + double(y1-y2)*double(y1-y2) + double(z1-z2)*double(z1-z2)) > 6*Ws)
+//                 markEdge[i][j] = INF;
+//            else
+//            {
+
+//                p0.x = x1;
+//                p0.y = y1;
+//                p0.z = z1;
+//                pp.clear();
+
+//                LocationSimple tmpp;
+//                tmpp.x = x2;
+//                tmpp.y = y2;
+//                tmpp.z = z2;
+//             //   pp.push_back(tmpp);
+//                double cent_x =  0.5 * (p0.x + tmpp.x);
+//                double cent_y =  0.5 * (p0.y + tmpp.y);
+//                double cent_z =  0.5 * (p0.z + tmpp.z);
+
+//                V3DLONG xb = cent_x - 3*Ws; if(xb < 0) xb = 0;
+//                V3DLONG xe = cent_x + 3*Ws-1; if(xe>N-1) xe = N-1;
+//                V3DLONG yb = cent_y - 3*Ws; if(yb < 0) yb = 0;
+//                V3DLONG ye = cent_y + 3*Ws-1; if(ye>M-1) ye = M-1;
+//                V3DLONG zb = cent_z - 3*Ws; if(zb < 0) zb = 0;
+//                V3DLONG ze = cent_z + 3*Ws-1; if(ze>P-1) ze = P-1;
+
+//                unsigned char *localarea=0;
+//                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
+//                localarea = new unsigned char [blockpagesz];
+//                V3DLONG d = 0;
+//                for(V3DLONG iz = zb; iz < ze + 1; iz++)
+//                {
+//                    V3DLONG offsetk = iz*M*N;
+//                    for(V3DLONG iy = yb; iy < ye+1; iy++)
+//                    {
+//                        V3DLONG offsetj = iy*N;
+//                        for(V3DLONG ix = xb; ix < xe+1; ix++)
+//                        {
+
+//                            localarea[d] = data1d[offsetc+offsetk + offsetj + ix];
+//                            d++;
+//                        }
+//                    }
+//                }
+
+//                V3DLONG sz_tracing[4];
+//                sz_tracing[0] = xe-xb+1;
+//                sz_tracing[1] = ye-yb+1;
+//                sz_tracing[2] = ze-zb+1;
+//                sz_tracing[3] = 1;
+
+
+
+//                unsigned char ****p4d = 0;
+//                if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
+//                {
+//                    fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+//                }
+
+
+//                p0.x = p0.x - xb;
+//                p0.y = p0.y - yb;
+//                p0.z = p0.z - zb;
+//                tmpp.x = x2 - xb;
+//                tmpp.y = y2 - yb;
+//                tmpp.z = z2 - zb;
+//                pp.push_back(tmpp);
+
+//                nt = v3dneuron_GD_tracing(p4d, sz_tracing,
+//                                          p0, pp,
+//                                          trace_para, weight_xy_z);
+
+
+
+//                if(nt.listNeuron.size() >0)
+//                {
+//                    unsigned char ***img3d = p4d[0];
+//                    double intensity_sum = 0;
+
+//                    for(V3DLONG nn = 0; nn < nt.listNeuron.size() ;nn++)
+//                    {
+
+//                        V3DLONG ii = nt.listNeuron.at(nn).x;
+//                        V3DLONG jj = nt.listNeuron.at(nn).y;;
+//                        V3DLONG kk = nt.listNeuron.at(nn).z;
+
+//                        double va = getBlockAveValue(img3d, sz_tracing[0], sz_tracing[1], sz_tracing[2], ii,jj,kk,
+//                                                     ds_step, ds_step, (ds_step/weight_xy_z));
+//                        double tmpv = 1-va/255;
+//                        intensity_sum =  intensity_sum + exp((tmpv*tmpv)*10);
+
+//                    }
+//                    markEdge[i][j] =  intensity_sum;
+//               }
+
+//                if(p4d) {delete []p4d; p4d = 0;}
+//                if(localarea) {delete []localarea; localarea = 0;}
+//            }
+
+//        }
+//    }
+
+//    for (int i=0;i<marknum;i++)
+//    {
+//        for (int j=i;j<marknum;j++)
+//        {
+//            markEdge[j][i] =  markEdge[i][j];
+//        }
+//    }
      //NeutronTree structure
     NeuronTree marker_MST;
     QList <NeuronSWC> listNeuron;
@@ -828,11 +835,14 @@ NeuronTree  post_process(NeuronTree nt)
         {
             int index_tip = 0;
             int parent_tip = getParent(i,nt);
+
             while(childs[parent_tip].size()<2)
             {
 
                 parent_tip = getParent(parent_tip,nt);
                 index_tip++;
+                if(parent_tip == 1000000000)
+                    break;
             }
             if(index_tip < length)
             {
@@ -843,6 +853,8 @@ NeuronTree  post_process(NeuronTree nt)
                 {
                     flag[parent_tip] = -1;
                     parent_tip = getParent(parent_tip,nt);
+                    if(parent_tip == 1000000000)
+                        break;
                 }
             }
 
