@@ -1,0 +1,56 @@
+Organization:
+
+1. vaa3d Plugin
+2. s2 Master Sequencer
+3. s2 Controller
+4. s2PV Communicator
+
+
+The controller will have commands that make sense for any microscope.
+The communicator will translate the commands into TCP/IP commands (for PrairieView) and handle sending and receiving informaiton
+
+
+
+the plugin needs to actually communicate with the sequencer, so my current scheme of just instantiating a new QWidget wont work. 
+
+my master sequencer (which needs a better name) needs to be passed the current vaa3d session (can the current vaa3d session be the parent?)
+and then be able to (e.g.) make a new tri-view, load new data from a file, etc.
+
+how should this be arranged?
+
+microscope parameters can be a struct defined in a separate file
+the communicator should be its own class, with our prairieview version a specific condition. 
+ e.g. communicator(type = PV, comParameters = [port1236, IPAddress])
+then inside, there will be an attribute that describes the type of microscope and each method
+will have a switch statement to go through each type of scope.   this will be a little annoying to code up, but worth the trouble
+for future flexibility.  
+
+so in the controller it will look like:
+
+1.  instantiate a communicator object:   myCommunicator = s2Communicator(type = PV, etc);
+2.  ask the scope to do something will be:   myCommunicator::startScan(x, y, z);
+
+
+what about the higher-level stuff?
+
+call the plugin, get a nice interface window with various buttons, axes, etc.  
+the 'start' button instatiates a smartScope2 object (the class previously known as the master communicator)
+and that object supplies all the desired information to the GUI...
+
+in the plugin:
+mySmartScope = smartScope2(establishedConfiguration?);
+and then connect smartScope2 signals to GUI slots or poll smartScope2 attributes directly 
+then when the user clicks 'start', it will look like
+
+startCallback:
+mySmartScope::startScan(x,y,z from gui or something)
+
+and within smartScope2 object
+
+smartScope2::startScan(xyz)
+myCommunicator::startScan(x,y,z)
+
+
+so this isn't THAT crazy...  the thing to do is make sure that I start by building up the minimal functionality, 
+and show that it works through these layers.  we MUST resist the urge to hack this together- it's just not worth it 
+in the long run.

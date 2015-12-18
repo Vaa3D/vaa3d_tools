@@ -65,7 +65,7 @@ private:
 
     QNetworkSession *networkSession;
 
-    QObject s2Params;
+    QObject ss2Params;
     /*  this will include:
      * optical zoom
      * pixel size in microns
