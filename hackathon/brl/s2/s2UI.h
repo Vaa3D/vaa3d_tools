@@ -6,7 +6,7 @@
 #include <QDialog>
 #include <QTcpSocket>
 #include <v3d_interface.h>
-
+#include "s2Controller.h"
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
 class QLabel;
@@ -25,9 +25,16 @@ class S2UI : public QDialog
 public:
     S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
 
+private slots:
+    void startS2();
+    void startScan();
 private:
     QLabel *s2Label;
     QLineEdit *s2LineEdit;
+    QPushButton *startS2PushButton;
+    QPushButton *startScanPushButton;
+    QDialogButtonBox *buttonBox1;
+    S2Controller *myController;
     //QObject ss2Params;
     /*  this will include:
      * optical zoom
