@@ -34,7 +34,7 @@ private:
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
     QDialogButtonBox *buttonBox1;
-    S2Controller *myController;
+    S2Controller myController;
     //QObject ss2Params;
     /*  this will include:
      * optical zoom

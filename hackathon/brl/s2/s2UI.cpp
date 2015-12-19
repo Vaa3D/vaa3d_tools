@@ -44,17 +44,16 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 void S2UI::startS2()
 {
-     S2Controller myController;
      myController.show();
      myController.exec();
 }
 
 void S2UI::startScan()
 {
-    if (!myController)
+ /*   if (!myController)
     {
         v3d_msg("please start smartScope2");
     return;
-    }
-    myController->connectToPV();
+    }*/
+    myController.cleanAndSend("-mto test");
 }
