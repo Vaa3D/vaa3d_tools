@@ -1,0 +1,291 @@
+--------------------------------------------------------------------------------
+Point Grey Research FlyCapture2 SDK Release Notes
+--------------------------------------------------------------------------------
+
+We welcome your bug reports, questions, and comments: 
+www.ptgrey.com/support/contact/
+
+--------------------------------------------------------------------------------
+Errata
+--------------------------------------------------------------------------------
+The latest errata can be found online at http://www.ptgrey.com/support/downloads/releasenotes/fc2_errata.txt.
+
+--------------------------------------------------------------------------------
+Change Log
+--------------------------------------------------------------------------------
+
+*** 2.1 Release 5 (Feb 4 2011) ***
+- Update signed drivers for FirePRO, PGRUsbCam and PGRGigE to 2.3.3.7.
+- GigE filter driver has a breaking change and will not work with older versions of FlyCapture2.
+- Fixed crash that would happen when USB cameras were started and stopped repeatedly.
+- Improved grab callback performance at high frame rates.
+- Fixed PGRGuid comparison issue when running multiple GigE cameras on Linux.
+- Added application configuration file for Managed library to allow execution with .NET 4 code.
+- USB bus resets now get propagated correctly instead of being sent as 1394 bus resets.
+- Improved GigE reliability on Windows 7 x64.
+- Fixed NullReferenceException seen when clearing callback delegate in Managed library.
+
+*** 2.1 Release 4 (Sep 16 2010) ***
+- DirectShow source now supports IAMVideoControl interface.
+- WaitForBufferEvent() added to Managed interface.
+- Fix bug in Mono12 to RGBU/BGRU conversion.
+- Fix various behvaior issues related to GigE imaging modes.
+
+*** 2.1 Release Candidate 3 (Aug 27 2010) ***
+- GigE filter driver updated to 2.2.3.3.
+
+*** 2.1 Beta 2 (Aug 23 2010) ***
+- PGRDirectShowDecoder now outputs in RGB24/RGB32/YUY2.
+- IAMCameraControl and IAMVideoProcAmp interfaces are now implemented in PGRDirectShowSource.
+
+Resolved Issues:
+- Many DirectShow fixes
+
+Enhancements
+- FlyCapture2 now dynamically links with OpenMP. This allows end users to use IPP in conjunction with FlyCapture2. 
+
+*** 2.1 Beta 1 (Aug 4 2010) ***
+Resolved Issues:
+- Bluescreen while running FFMV on Windows7 x64
+
+Enhancements:
+- Added callback functionality to fc2StartSyncCapture() (C interface).
+- Updated FC2 Managed Documentation.
+- Resolved issue where DirectShow files were not registered automatically during 64-bit install.
+- Resolved issue where bus enumeration would pop up a Windows Firewall Warning.
+
+*** 2.1 Alpha 1 (May 10 2010) ***
+- Added functions to BusManager to manage GigE cameras.
+- Added GigECamera class and accompanying support structures.
+- Added GigEConfigurator utility for GigE network configuration.
+- Added GigE filter driver for improved network performance.
+- Added GigEGrabEx example for C++, C and C#.
+- Added documentation for Managed interface.
+- Managed interface is now split into core library and GUI, mirroring C++ interface.
+- Many bug fixes for overall stability.
+- Cameras are now able to stream across bus resets.
+- Added FireBusReset() to programmatically fire a bus reset for a specific device or camera.
+
+*** 2.0 Release 19 (Mar 21 2010) ***
+Resolved Issues:
+- Translation layer can not start cameras.
+
+Enhancements:
+- Return grab error when image is corrupted, allowing users to throw out the corrupted image.
+
+*** 2.0 Release 18 (Mar 16 2010) ***
+Resolved Issues:
+- Driver changes to fix possible image corruption on systems with >= 4G RAM
+
+*** 2.0 Release 17 (Feb 24 2010) ***
+Resolved Issues:
+- USB driver not pre-installing if camera not present during install
+- 64bit C# precompiled example do not work out of the box.  Needed to be recompiled.
+- Missing files with 64 bit GTKmm installation.
+
+Enhancements:
+- Added new driver to further improve performance on OS's with 4GB RAM or more.
+- Made improvements to histogram window.
+
+*** 2.0 Release 16 (Feb 17 2010) ***
+- Improved performance with images less than 1MB on OS's with 4GB RAM or more to reduce possible image corruption with firewire cameras.
+
+*** 2.0 Release 15 (Feb 15 2010) ***
+- No fixes since 14.  Some minor installer formatting changes increased the version number.
+
+*** 2.0 Release 14 (Feb 3 2010) ***
+- New signed drivers with support for Windows 7 are now available.
+- Improved enumeration of large camera arrays.
+- Fixed Raw16 to BGRU image conversion bug.
+- Fixed histogram memory leak.
+- Improved stability of StartSyncCapture().
+- Many other stability and bug fixes.
+
+C Library
+- Fixed bug with strobe info retrieval.
+
+DirectShow
+- Mono12 / Raw12 is now supported.
+- Improved compatibility of cameras and output formats.
+- Fixed image orientation issue.
+
+
+*** 2.0 Release 12 (Oct 23 2009) ***
+- OpenGL rendering is now used for the GTK and MFC examples.
+- Self signed drivers are now available.
+
+Documentation
+- Added ActiveX documentation.
+- Added C documentation.
+- Updated TAN200703 to reflect changes for FlyCapture2.
+
+Examples
+- Added ImageEventEx example.
+
+*** 2.0 Release Candidate 11 (Sep 29 2009) ***
+- Added signed drivers for USB, pgrcam, and FirePRO drivers.
+- Fixed multiple BSOD issues with USB cameras, many of which were found on Vista 64 systems.
+- Fixed issues with firewire cameras with < 1M images on 64-bit systems could not start.
+- Fixed issues with cameras not being able to start when running 32-bit applications on 64-bit systems.
+
+*** 2.0 Beta 10 (Sep 16 2009) ***
+Library
+- Fixed issue where Raw16 was not available in Format7.
+- Fixed issue where interaction between SetUserBuffers() and SetConfiguration() was causing crashes.
+- Improved bus reset stability.
+- Fixed issue with plugging/unplugging USB devices would cause USB controller to hang if streaming a USB camera.
+
+Managed Interface
+- Assembly is now strong-named.
+
+Windows Installer
+- Upgraded to GTKmm 2.16.
+
+*** 2.0 Beta 9 (Sep 4 2009) ***
+C++ interface
+- Saving of 16-bit tiff images from Mono16 and Raw16 image formats is now implemented.
+
+Windows Installer
+- C++, C and Managed DLLs now all reside in \bin directory.
+- ActiveX, TWAIN and DirectShow interfaces now all reside in \bin directory.
+
+Examples
+- Improved several examples to be more robust
+- Fixed missing Glade file for x64 SerialPortEx in Windows
+- Fixed wrong runtime configuration for SaveImageToAviEx
+
+*** 2.0 Beta 8 (Aug 14 2009) ***
+C++ interface
+- Fixed broken pipe issue during USB stops in Linux
+- Fixed handle errors during USB communication
+- Fix issues with setting IIDC 1.32 Format7 modes
+- VideoMode and FrameRate API has been updated to more consistent
+
+Managed interface
+- Completed exception based model (See FC2Exception class)
+- Updated to be more consistent with .NET conventions
+
+ActiveX
+- No longer depends on the FC1 emulation layer
+
+DirectShow
+- No longer depends on the FC1 emulation layer
+- Added IAMVideoProc interface
+
+TWAIN
+- No longer depends on the FC1 emulation layer
+
+*** 2.0 Beta 7 (July 29 2009) ***
+GUI Changes:
+- Disable Start/Stop buttons as needed when streaming (or not) 
+- Adding spinbuttons to camera settings page
+- Removed horizontal and vertical seperators from camera settings page 
+- Added legend to bus topology page
+- Default color processing algorithm set to Nearest Neighbor
+- Close all camera selection dialogs opened by the camera selection dialog when user clicks Ok or Cancel
+- Fixed bug where saving to memory channel 2 didn't work
+- LUT no longer errors out when trying to an already-on LUT to on
+
+Linux Specific Changes:
+- Fixed multiple linux installation issues, putting files in the correct location, with the proper permissions, and updating errors in the install script.
+
+Other bug fixes:
+- Changed C libraries from static libraries to dll's.  This fixes a problem where non-Microsoft compilers in Windows could not compile using the Point Grey C libraries.
+- Fixed issue where 1394b cameras would not be discovered in the camera selection dialog if they are plugged into a 1394a bus without restarting the application.
+- Fixed issue where 1394b cameras were not reporting the correct bus speed when plugged into a 1394a bus.  The bus speed was still showing up as S800.  It now properly shows as S400.
+- Fixed issue where USB cameras were not being properly shut down, causing possible issues such as pipe error messages and crashing of the software.
+- Fixed issue where unplugging a firewire camera while streaming could cause a linux system to 
+- Fixed StartSyncCapture to properly sync cameras which are running at >= 1.875 fps.
+- Fixed bug where Format7 modes above MODE_7 where not being set properly to the camera
+- Began moving away from ManagedError and using an exception based model instead.
+- Fixed 16 bit image output
+- Populate maximum bus speed member in CameraInfo 
+- Renamed Get/SetSpeed to Get/SetIsochBusSpeed 
+
+*** 2.0 Beta 6 (June 25 2009) ***
+New Features
+- Added Firefly MV technical reference
+ 
+Fixes
+- Fixed compile issue with managed examples
+- Fixed various compilation issues with examples
+- Fixed missing file in FlyCapture2GUI example
+
+*** 2.0 Beta 5 (June 17 2009) ***
+New Features
+- Added preliminary IIDC 1.32 LUT support.
+- Added support for image event notification.
+- Added support for getting and setting isochronous and asynchronous bus speeds.
+- Added new example: ImageEventEx.
+- Added DirectShow, TWAIN and ActiveX components. These use the FC1 emulation layer.
+
+Changes
+- TopologyNode has been modified to hide the stl::vector children and port members.
+- Linux debian package has been split into individual components.
+
+Fixes
+- Various stability issues have been resolved.
+
+*** 2.0 Beta 4 (May 11 2009) ***
+New Features
+- Added IIDC 1.32 support (32 Format7 modes, frame buffer, Mono12/Raw12 color conversion).
+- Added PDF output for documentation.
+- Added new examples: ExtendedShutterEx, SaveImageToAviEx, SerialPortEx
+- Added examples.sln for VS2005.
+- Added headers, libraries and DLLs for FC1 emulation layer (Windows x86 and x64 only).
+
+Changes
+- PGRGuid and ImageStatistics have been upgraded to classes rather than structures.
+- Image::GetStatistics has been renamed to Image::CalculateStatistics().
+
+Fixes
+- Resolved floating point exception that was occuring on some Linux systems.
+- Fixed some Debian installer issues.
+
+*** 2.0 Beta 3 (April 6 2009) ***
+General Issues
+- CPU usage and frame rates may be affected by FlyCap2 window size.
+- Using the PGRCAM (pgrcam.sys) driver may cause crashes on a Mac Mini.
+- Register block reads larger than 25 quadlets may return all 0's.
+- Stopping the camera while in trigger mode may hang the application, requiring a restart.
+- Application may return a grab error while in BUFFER_FRAME mode
+
+Installer Issues:
+- Program may need to be uninstalled twice before it is removed.
+
+Linux Specific:
+- UpdatorGUI tool for Linux console not implemented.
+- Register reads and writes may hang on USB cameras running on Linux.
+
+Not Implemented
+- Message logging interface not implemented.
+- Support for Ladybug cameras not implemented.
+- Support for stereo cameras not implemented.
+- Image event notification not implemented.
+- PHY register reads and writes not implemented.
+
+*** 2.0 Alpha 2 (Febraury 23 2009) ***
+- Added embedded image information in side panel, and implemented a window to modify what is embedded.
+- Added support for timestamp display.
+- Improved issues due to disconneting/reconnecting cameras.
+- Improved issues due to stopping or closing the application unexpectedly.
+- Added 64-bit support/installer
+- Updated and added more examples.  Fixed examples which were failing under 64-bit.
+- General improvements and additions to Flycapture2 dll and example.
+
+*** 2.0 Alpha 1 (January 29 2009) ***
+Known Current Issues:
+- Need to implement set/get bus speed functionality
+- Need to implement image event notification.
+- Need to implement support for systems with 4G RAM or more.
+- Need to implement image sequence numbers.
+- No DirectShow interface.
+- No ActiveX interface
+- No TWAIN interface.
+- No Ladybug support
+- No Histogram window
+- No bus topology view
+- No message logging.
+- GTK applications currently run slower than MFC applications
+- bus reset handling currently causes all streaming cameras to disconnect, even if they are not unplugged.
+- PGRCam driver does not work properly on Mac Mini.  FirePRO driver works okay.

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtendedShutterEx", "ExtendedShutterEx.vcproj", "{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Debug|Win32.Build.0 = Debug|Win32
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Debug|x64.ActiveCfg = Debug|x64
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Debug|x64.Build.0 = Debug|x64
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Release|Win32.ActiveCfg = Release|Win32
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Release|Win32.Build.0 = Release|Win32
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Release|x64.ActiveCfg = Release|x64
+		{589E34A5-DDE7-4AFF-9D53-EAB88F9F389F}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

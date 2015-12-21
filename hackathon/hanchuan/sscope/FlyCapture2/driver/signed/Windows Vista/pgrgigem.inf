@@ -1,0 +1,51 @@
+[Version]
+Signature  = "$Windows NT$"
+Class      = Net
+ClassGUID  = {4D36E972-E325-11CE-BFC1-08002BE10318}
+Provider   = %PointGrey%
+DriverVer = 01/25/2011, 2.3.3.7
+CatalogFile = pgrgigem.cat
+
+[ControlFlags]
+;ExcludeFromSelect = ms_PGRGIGEmp
+
+[DestinationDirs]
+DefaultDestDir=12
+; No files to copy 
+
+[Manufacturer]
+%PointGrey% = POINTGREY,NTamd64
+
+[POINTGREY]
+%PGRGIGEMP_Desc% = PGRGIGEMP.ndi, gl_PGRGIGEmp
+
+[POINTGREY.NTamd64]
+%PGRGIGEMP_Desc% = PGRGIGEMP.ndi, gl_PGRGIGEmp
+
+[PGRGIGEMP.ndi]
+Characteristics = 0x29 ;NCF_NOT_USER_REMOVABLE | NCF_VIRTUAL | NCF_HIDDEN
+
+[PGRGIGEMP.ndi.Services]
+AddService = PGRGIGE,0x2, PGRGIGEMP.AddService
+
+[PGRGIGEMP.AddService]
+DisplayName    = %PGRGIGEMP_Desc%
+ServiceType    = 1 ;SERVICE_KERNEL_DRIVER
+StartType      = 3 ;SERVICE_DEMAND_START
+ErrorControl   = 1 ;SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\PGRGIGE.sys
+LoadOrderGroup = PNP_TDI
+AddReg         = PGRGIGEMP.AddService.AddReg
+
+[PGRGIGEMP.AddService.AddReg]
+;None
+
+[Strings]
+PointGrey = "PointGrey"
+PGRGIGEMP_Desc = "PointGrey Image Filter Driver"
+
+[SourceDisksNames]
+;None 
+
+[SourceDisksFiles]
+;None

@@ -1,0 +1,27 @@
+
+Building instructions for smartscope_controller (sscope)
+
+1. Checkout the source of sscope from 
+  
+2. Enter "sscope\" folder 
+
+3. Open and edit the file "smartscope_control.pro":
+	change the variable of V3DMAINPATH according to your V3D root path
+	
+4. Run
+   qmake -tp vc smartscope_control.pro
+   
+5. Double click "smartscope_controller.vcproj" in "sscope\" folder and open it in MS Visual Studio 2008
+
+6. Choose building in "Release" mode in MS Visual Studio 2008
+
+7. Choose building in "Win32" (for 32bit building) mode in smartscope_controller Property Pages (by right-click smartscope_controller project icon 
+	in the left collumn in workspace in MS Visual Studio 2008) or just on the toolbar
+
+8. Choose menu "Build->Build Solution F7" to build the solution. A popup dialog will appear to ask to save solution file for this project. 
+	Just click "Save" in this dialog
+
+9. Now smartscope_controller has been built. You can find it from the location "$$V3DMAINPATH\released_plugins\v3d\plugins\smartscope_controller".
+    $V3DMAINPATH is the root path of V3D, e.g. C:/work/v3d/.
+
+The building method works for 32bit buildings.

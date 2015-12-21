@@ -1,0 +1,12 @@
+prefix=c:/devel/target/d18d2b75f6bfdf53f3e3acff339d8d7d
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: GdkPixbuf
+Description: Image loading and scaling
+Version: 2.14.3
+Requires: gobject-2.0,gmodule-no-export-2.0
+Libs: -L${libdir} -lgdk_pixbuf-2.0 
+Cflags: -I${includedir}/gtk-2.0 
+

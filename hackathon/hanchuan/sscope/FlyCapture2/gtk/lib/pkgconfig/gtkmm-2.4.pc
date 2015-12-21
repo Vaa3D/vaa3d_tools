@@ -1,0 +1,11 @@
+prefix=/gtkmm_debug
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: gtkmm
+Description: C++ wrapper for GTK+
+Requires: glibmm-2.4 giomm-2.4 gdkmm-2.4 pangomm-1.4 atkmm-1.6 gtk+-2.0
+Version: 2.16.0
+Libs: -L${libdir} -lgtkmm-2.4
+Cflags: -I${includedir}/gtkmm-2.4 -I${libdir}/gtkmm-2.4/include

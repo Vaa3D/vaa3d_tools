@@ -1,0 +1,12 @@
+prefix=/target
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+gmmprocdir=${exec_prefix}/lib/glibmm-2.4/proc
+
+Name: GLibmm
+Description: C++ wrapper for GLib
+Requires: gobject-2.0 sigc++-2.0
+Version: 2.18.0
+Libs: -L${libdir} -lglibmm-2.4
+Cflags: -I${includedir}/glibmm-2.4 -I${libdir}/glibmm-2.4/include

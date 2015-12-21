@@ -1,0 +1,11 @@
+prefix=/gtkmm_debug
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Pangomm
+Description: C++ wrapper for Pango
+Requires: glibmm-2.4 cairomm-1.0 pango pangocairo
+Version: 2.24.0
+Libs: -L${libdir} -lpangomm-1.4
+Cflags: -I${includedir}/pangomm-1.4

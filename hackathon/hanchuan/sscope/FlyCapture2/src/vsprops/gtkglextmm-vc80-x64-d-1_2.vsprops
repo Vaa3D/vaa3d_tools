@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="gtkglextmm 1.2 Debug (x64)"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalOptions="/vd2"
+		AdditionalIncludeDirectories="&quot;$(GTKMM_X64_BASEPATH)\include\gtkglextmm-1.2\&quot;;&quot;$(GTKMM_X64_BASEPATH)\include\gtkglext-1.2\&quot;"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="Opengl32.lib glu32.lib GtkGLextd.lib GtkGLextmm_gdkd.lib GtkGLextmm_gtkd.lib"
+		AdditionalLibraryDirectories="$(GTKMM_X64_BASEPATH)\lib"
+	/>
+</VisualStudioPropertySheet>

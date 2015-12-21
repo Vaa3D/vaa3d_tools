@@ -1,0 +1,54 @@
+[Version]
+Signature  = "$Windows NT$"
+Class      = NetService
+ClassGUID  = {4D36E974-E325-11CE-BFC1-08002BE10318}
+Provider   = %PointGrey%
+DriverVer = 01/25/2011, 2.3.3.7
+CatalogFile = pgrgige.cat
+
+[Manufacturer]
+%PointGrey% = POINTGREY,NTamd64
+
+[ControlFlags]
+
+[POINTGREY]
+%PGRGIGE_Desc% = PGRGIGE.ndi, gl_PGRGIGE
+
+[POINTGREY.NTamd64]
+%PGRGIGE_Desc% = PGRGIGE.ndi, gl_PGRGIGE
+
+[PGRGIGE.ndi]
+AddReg = PGRGIGE.ndi.AddReg, PGRGIGE.AddReg
+Characteristics = 0x490 ; NCF_FILTER | NCF_NO_SERVICE !!--Filter Specific--!!
+CopyFiles = @PGRGIGE.sys
+CopyINF = pgrgigem.inf
+
+[SourceDisksNames]
+1=%DiskDescription%,"",,
+
+[SourceDisksFiles]
+PGRGIGE.sys=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[PGRGIGE.ndi.AddReg]
+HKR, Ndi, HelpText, , %PGRGIGE_HELP%
+
+HKR, Ndi,            FilterClass,         , failover
+HKR, Ndi,            FilterDeviceInfFile, , PGRGIGEm.inf
+HKR, Ndi,            FilterDeviceInfId,   , gl_PGRGIGEmp
+HKR, Ndi,            Service,             , PGRGIGE
+HKR, Ndi\Interfaces, UpperRange,          , noupper
+HKR, Ndi\Interfaces, LowerRange,          , nolower
+HKR, Ndi\Interfaces, FilterMediaTypes,    , "ethernet, tokenring, fddi"
+
+[PGRGIGE.AddReg]
+; None
+
+[Strings]
+PointGrey = "PointGrey"
+DiskDescription = "Point Grey Image Filter Driver Disk"
+
+PGRGIGE_Desc = "Point Grey Image Filter Driver"
+PGRGIGE_HELP = "Point Grey Image Filter Driver"

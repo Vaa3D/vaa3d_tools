@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="FlyCapture2"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="..\..\include"
+		WarningLevel="3"
+	/>
+	<Tool
+		Name="VCLibrarianTool"
+		AdditionalDependencies="FlyCapture2.lib"
+		AdditionalLibraryDirectories="..\..\lib"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="FlyCapture2.lib"
+		AdditionalLibraryDirectories="..\..\lib"
+		TargetMachine="1"
+	/>
+</VisualStudioPropertySheet>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="FlyCapture2 GUI GTK Debug"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		Optimization="0"
+		AdditionalIncludeDirectories="..\..\include"
+		RuntimeLibrary="3"
+		WarningLevel="4"
+	/>
+	<Tool
+		Name="VCLibrarianTool"
+		AdditionalDependencies="FlyCapture2GUId.lib"
+		AdditionalLibraryDirectories="..\..\lib"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="FlyCapture2GUId.lib"
+		AdditionalLibraryDirectories="..\..\lib"
+		GenerateDebugInformation="true"
+		AssemblyDebug="1"
+		TargetMachine="1"
+	/>
+</VisualStudioPropertySheet>

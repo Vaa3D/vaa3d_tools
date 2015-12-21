@@ -1,0 +1,165 @@
+;//=============================================================================
+;// Copyright © 2007 Point Grey Research, Inc. All Rights Reserved.
+;// 
+;// This software is the confidential and proprietary information of Point
+;// Grey Research, Inc. ("Confidential Information").  You shall not
+;// disclose such Confidential Information and shall use it only in
+;// accordance with the terms of the license agreement you entered into
+;// with Point Grey Research Inc.
+;// 
+;// PGR MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE
+;// SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+;// IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+;// PURPOSE, OR NON-INFRINGEMENT. PGR SHALL NOT BE LIABLE FOR ANY DAMAGES
+;// SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+;// THIS SOFTWARE OR ITS DERIVATIVES.
+;//=============================================================================
+
+
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=PGRDevices
+ClassGUID={1354185D-3C13-4b72-BFF9-9EA802513D34}
+Provider=%PGR%
+DriverVer=01/25/2011,2.3.3.7
+CatalogFile=PGRUSBCam.cat
+
+
+; ================= Class section =====================
+
+[ClassInstall32]
+Addreg=PGRUSBCamClassReg     
+
+[PGRUSBCamClassReg]
+HKR,,,0,%PGRCAMClassName%
+HKR,,Icon,,-20
+
+
+; ================= Device section =====================
+
+[Manufacturer]
+%MfgName%=PGR,NTAMD64
+
+; For Win2K
+[PGR]
+%USB\VID_1E10&PID_1000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_1000
+%USB\VID_1E10&PID_2000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2000
+%USB\VID_1E10&PID_2001.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2001
+%USB\VID_1E10&PID_2002.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2002
+%USB\VID_1E10&PID_2003.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2003
+%USB\VID_1E10&PID_2004.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2004
+%USB\VID_1E10&PID_2005.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2005
+%USB\VID_1E10&PID_3000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3000
+%USB\VID_1E10&PID_3001.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3001
+%USB\VID_1E10&PID_3002.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3002
+%USB\VID_1E10&PID_3004.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3004
+%USB\VID_1E10&PID_3005.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3005
+%USB\VID_1E10&PID_3006.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3006
+%USB\VID_1E10&PID_3007.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3007
+%USB\VID_1E10&PID_3008.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3008
+
+
+; For XP and later
+[PGR.NTAMD64]
+%USB\VID_1E10&PID_1000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_1000
+%USB\VID_1E10&PID_2000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2000
+%USB\VID_1E10&PID_2001.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2001
+%USB\VID_1E10&PID_2002.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2002
+%USB\VID_1E10&PID_2003.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2003
+%USB\VID_1E10&PID_2004.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2004
+%USB\VID_1E10&PID_2005.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_2005
+%USB\VID_1E10&PID_3000.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3000
+%USB\VID_1E10&PID_3001.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3001
+%USB\VID_1E10&PID_3002.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3002
+%USB\VID_1E10&PID_3004.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3004
+%USB\VID_1E10&PID_3005.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3005
+%USB\VID_1E10&PID_3006.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3006
+%USB\VID_1E10&PID_3007.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3007
+%USB\VID_1E10&PID_3008.DeviceDesc%=PGRUSBCam.Dev, USB\VID_1E10&PID_3008
+
+[PGRUSBCam.Dev.NT]
+CopyFiles=PGRUSBCam.Files.Ext
+AddReg=PGRUSBCam.AddReg
+
+
+[PGRUSBCam.Dev.NT.Services]
+Addservice = PGRUSBCam, %SPSVCINST_ASSOCSERVICE%, PGRUSBCam.AddService
+
+[PGRUSBCam.AddService]
+DisplayName    = %PGRUSBCam.SvcDesc%
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\PGRUSBCam.sys
+AddReg         = PGRUSBCam.AddReg
+LoadOrderGroup = Base
+
+[PGRUSBCam.AddReg]
+;HKR, Parameters\Wdf, VerboseOn,       0x00010001, 1
+;HKR, Parameters\Wdf, VerifierOn,      0x00010001, 1
+;HKR, Parameters\Wdf, DbgBreakOnError, 0x00010001, 1
+HKR,,NTMPDriver,,pgrusbcam.sys
+
+
+[PGRUSBCam.Files.Ext]
+PGRUSBCam.sys
+
+[SourceDisksNames]
+1=%Disk_Description%,,,
+
+[SourceDisksFiles]
+PGRUSBCam.sys = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+;-------------- WDF Coinstaller installation
+
+[DestinationDirs]
+CoInstaller_CopyFiles = 11
+
+[PGRUSBCam.Dev.NT.CoInstallers]
+AddReg=CoInstaller_AddReg
+CopyFiles=CoInstaller_CopyFiles
+
+[CoInstaller_CopyFiles]
+wdfcoinstaller01009.dll
+
+[SourceDisksFiles]
+wdfcoinstaller01009.dll=1 ; make sure the number matches with SourceDisksNames
+
+[CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "wdfcoinstaller01009.dll,WdfCoInstaller"
+
+[PGRUSBCam.Dev.NT.Wdf]
+KmdfService = PGRUSBCam, PGRUSBCam_wdfsect
+[PGRUSBCam_wdfsect]
+KmdfLibraryVersion = 1.9
+
+;---------------------------------------------------------------;
+
+[Strings]
+PGR="Point Grey Research"
+MfgName="Point Grey Research"
+Disk_Description="PGRUSBCam Installation Disk"
+USB\VID_1E10&PID_1000.DeviceDesc="Updator"
+USB\VID_1E10&PID_2000.DeviceDesc="PGR Firefly MV FMVU-03MTC"
+USB\VID_1E10&PID_2001.DeviceDesc="PGR Firefly MV FMVU-03MTM"
+USB\VID_1E10&PID_2002.DeviceDesc="PGR Firefly MV FMVU-13S2C"
+USB\VID_1E10&PID_2003.DeviceDesc="PGR Firefly MV FMVU-13S2M"
+USB\VID_1E10&PID_2004.DeviceDesc="PGR Chameleon CMLN-13S2C"
+USB\VID_1E10&PID_2005.DeviceDesc="PGR Chameleon CMLN-13S2M"
+USB\VID_1E10&PID_3000.DeviceDesc="Flea3 FL3-U3-32S2C"
+USB\VID_1E10&PID_3001.DeviceDesc="Flea3 FL3-U3-32S2M"
+USB\VID_1E10&PID_3002.DeviceDesc="PGR FL3-USB IMX103"
+USB\VID_1E10&PID_3004.DeviceDesc="Flea3 FL3-U3-13Y3C"
+USB\VID_1E10&PID_3005.DeviceDesc="Flea3 FL3-U3-13Y3M"
+USB\VID_1E10&PID_3006.DeviceDesc="Flea3 FL3-U3-13S2C"
+USB\VID_1E10&PID_3007.DeviceDesc="Flea3 FL3-U3-13S2M"
+USB\VID_1E10&PID_3008.DeviceDesc="Flea3 FL3-U3-63S4C"
+
+
+PGRUSBCam.SvcDesc="PGR USB Camera"
+PGRCAMClassName="Point Grey Research Devices"
+SPSVCINST_ASSOCSERVICE= 0x00000002

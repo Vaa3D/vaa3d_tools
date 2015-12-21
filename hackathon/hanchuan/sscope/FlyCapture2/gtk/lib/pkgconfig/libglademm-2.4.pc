@@ -1,0 +1,11 @@
+prefix=/gtkmm_debug
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libglademm
+Description: C++ wrapper for libglade
+Requires: gtkmm-2.4 >= 2.6.0 libglade-2.0 >= 2.6.1
+Version: 2.6.7
+Libs: -L${libdir} -lglademm-2.4
+Cflags: -I${includedir}/libglademm-2.4 -I${libdir}/libglademm-2.4/include

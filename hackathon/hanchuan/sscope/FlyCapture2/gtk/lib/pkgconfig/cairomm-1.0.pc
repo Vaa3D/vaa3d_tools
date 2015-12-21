@@ -1,0 +1,12 @@
+prefix=/gtkmm_debug
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: cairomm
+Description: C++ wrapper for cairo
+Requires: cairo sigc++-2.0
+Version: 1.8.0
+Libs: -L${libdir} -lcairomm-1.0
+Cflags: -I${includedir}/cairomm-1.0
+

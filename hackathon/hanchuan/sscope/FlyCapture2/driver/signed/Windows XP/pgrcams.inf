@@ -1,0 +1,465 @@
+;=============================================================================
+; Copyright © 2007 Point Grey Research, Inc. All Rights Reserved.
+; 
+; This software is the confidential and proprietary information of Point
+; Grey Research, Inc. ("Confidential Information").  You shall not
+; disclose such Confidential Information and shall use it only in
+; accordance with the terms of the license agreement you entered into
+; with PGR.
+; 
+; PGR MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE
+; SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+; PURPOSE, OR NON-INFRINGEMENT. PGR SHALL NOT BE LIABLE FOR ANY DAMAGES
+; SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+; THIS SOFTWARE OR ITS DERIVATIVES.
+;=============================================================================
+
+;=============================================================================
+; PGRCAM.INF -- PGR Camera Device .inf for Windows 98, Windows NT, 
+; Windows 2000, Windows XP (32bit, 64bit), Windows Vista (32bit, 64bit)
+; Copyright 2007 Point Grey Research Inc.
+;=============================================================================
+
+[Version]
+CatalogFile = pgrcam.cat
+Signature="$WINDOWS NT$"
+Class=PGRDevices
+ClassGUID={1354185D-3C13-4b72-BFF9-9EA802513D34}
+Provider=%PGR%
+; make sure individual driver version date and version are set in
+; each of the install sections for win98/ME & NT type OSes.
+DriverVer = 01/20/2010, 2.0.3.14
+
+[SourceDisksNames]
+1 = %InstallDisk%,,,""
+
+[SourceDisksFiles]
+pgrcam.sys  = 1,,
+
+[DestinationDirs]
+defaultdestdir=11
+DriverInstall.CopyDriver=10,system32\drivers
+DriverInstall.CopyDll=11
+
+
+; =================== Class Sections ===========================
+[ClassInstall32]
+Addreg=PGRCAMClassReg
+
+[PGRCAMClassReg]
+;reg-root,[subkey],[value-entry-name],[flags],[value]
+HKR,,,%REG_SZ%,%PGRCAMClassName%
+HKR,,Icon,,-21
+;HKR,,DeviceCharacteristics,%REG_DWORD%,0x100                    ; FILE_DEVICE_SECURE_OPEN
+;HKR,,Security,,"D:P(A;;GR;;;WD)(A;;GA;;;SY)(A;;GA;;;BA)"        ; generic read - everybody
+;HKR,,Security,,"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;PU)" 
+
+; =================== Table of content =========================
+
+[Manufacturer]
+%PointGreyResearchMfg%=PointGreyResearch,NTamd64
+
+; =================== Point Grey Research ========================
+
+[PointGreyResearch]
+%1394\PGR&PGRCAM.DeviceDesc00%=DriverInstall,1394\Point_Grey_Research
+%1394\PGR&PGRCAM.DeviceDesc01%=DriverInstall,1394\PGR&Firefly
+%1394\PGR&PGRCAM.DeviceDesc02%=DriverInstall,1394\PGR&Firefly2
+%1394\PGR&PGRCAM.DeviceDesc03%=DriverInstall,1394\Point_Grey_Research&Dragonfly
+%1394\PGR&PGRCAM.DeviceDesc04%=DriverInstall,1394\Point_Grey_Research&Dragonfly2
+%1394\PGR&PGRCAM.DeviceDesc05%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express
+%1394\PGR&PGRCAM.DeviceDesc05_1%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express_DX-BW
+%1394\PGR&PGRCAM.DeviceDesc05_2%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express_DX-COL
+%1394\PGR&PGRCAM.DeviceDesc06%=DriverInstall,1394\Point_Grey_Research&AIM
+%1394\PGR&PGRCAM.DeviceDesc07%=DriverInstall,1394\Point_Grey_Research&Scorpion
+%1394\PGR&PGRCAM.DeviceDesc08%=DriverInstall,1394\Point_Grey_Research&Scorpion_Express
+%1394\PGR&PGRCAM.DeviceDesc09%=DriverInstall,1394\Point_Grey_Research&Flea
+%1394\PGR&PGRCAM.DeviceDesc10%=DriverInstall,1394\Point_Grey_Research&Flea_Col
+%1394\PGR&PGRCAM.DeviceDesc11%=DriverInstall,1394\Point_Grey_Research&Flea_Bayer
+%1394\PGR&PGRCAM.DeviceDesc12%=DriverInstall,1394\Point_Grey_Research&Flea_BW
+%1394\PGR&PGRCAM.DeviceDesc13%=DriverInstall,1394\Point_Grey_Research&Flea_HiCol
+%1394\PGR&PGRCAM.DeviceDesc14%=DriverInstall,1394\Point_Grey_Research&Flea_HiBayer
+%1394\PGR&PGRCAM.DeviceDesc15%=DriverInstall,1394\Point_Grey_Research&Flea_HiBW
+%1394\PGR&PGRCAM.DeviceDesc27%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-BW
+%1394\PGR&PGRCAM.DeviceDesc16%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-HIBW
+%1394\PGR&PGRCAM.DeviceDesc17%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-COL
+%1394\PGR&PGRCAM.DeviceDesc18%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-HICOL
+%1394\PGR&PGRCAM.DeviceDesc19%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-03SOM
+%1394\PGR&PGRCAM.DeviceDesc20%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-03SOC
+%1394\PGR&PGRCAM.DeviceDesc21%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-14SOM
+%1394\PGR&PGRCAM.DeviceDesc22%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-14SOC
+%1394\PGR&PGRCAM.DeviceDesc23%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-20SOM
+%1394\PGR&PGRCAM.DeviceDesc24%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-20SOC
+%1394\PGR&PGRCAM.DeviceDesc25%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-13FFM
+%1394\PGR&PGRCAM.DeviceDesc26%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-13FFC
+%1394\PGR&PGRCAM.DeviceDesc28%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-BW
+%1394\PGR&PGRCAM.DeviceDesc29%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-HIBW
+%1394\PGR&PGRCAM.DeviceDesc30%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-COL
+%1394\PGR&PGRCAM.DeviceDesc31%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-HICOL
+%1394\PGR&PGRCAM.DeviceDesc32%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-BW
+%1394\PGR&PGRCAM.DeviceDesc33%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-HIBW
+%1394\PGR&PGRCAM.DeviceDesc34%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-COL
+%1394\PGR&PGRCAM.DeviceDesc35%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-HICOL
+%1394\PGR&PGRCAM.DeviceDesc35_1%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-13S2M
+%1394\PGR&PGRCAM.DeviceDesc35_2%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-13S2C
+%1394\PGR&PGRCAM.DeviceDesc35_3%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-03S2M-EX
+%1394\PGR&PGRCAM.DeviceDesc35_4%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-03S2C-EX
+%1394\PGR&PGRCAM.DeviceDesc35_5%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-08S2M-EX
+%1394\PGR&PGRCAM.DeviceDesc35_6%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-08S2C-EX
+%1394\PGR&PGRCAM.DeviceDesc36%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-03S2M
+%1394\PGR&PGRCAM.DeviceDesc37%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-08S2M
+%1394\PGR&PGRCAM.DeviceDesc38%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-08S2C
+%1394\PGR&PGRCAM.DeviceDesc39%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-03S2C
+%1394\PGR&PGRCAM.DeviceDesc39_1%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-14S3M
+%1394\PGR&PGRCAM.DeviceDesc39_2%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-14S3C
+%1394\PGR&PGRCAM.DeviceDesc39_3%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-20S4M
+%1394\PGR&PGRCAM.DeviceDesc39_4%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-20S4C
+%1394\PGR&PGRCAM.DeviceDesc39_5%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-50S5M
+%1394\PGR&PGRCAM.DeviceDesc39_6%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_7%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_8%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_9%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_10%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_11%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-50S5M
+%1394\PGR&PGRCAM.DeviceDesc39_12%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_13%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S1C
+%1394\PGR&PGRCAM.DeviceDesc39_14%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S1M
+%1394\PGR&PGRCAM.DeviceDesc39_15%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S2C
+%1394\PGR&PGRCAM.DeviceDesc39_16%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S2M
+%1394\PGR&PGRCAM.DeviceDesc39_17%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S3C
+%1394\PGR&PGRCAM.DeviceDesc39_18%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S3M
+%1394\PGR&PGRCAM.DeviceDesc39_19%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-08S2C
+%1394\PGR&PGRCAM.DeviceDesc39_20%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-08S2M
+%1394\PGR&PGRCAM.DeviceDesc39_21%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_22%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_23%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-14S3C
+%1394\PGR&PGRCAM.DeviceDesc39_24%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-14S3M
+%1394\PGR&PGRCAM.DeviceDesc39_25%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-20S4C
+%1394\PGR&PGRCAM.DeviceDesc39_26%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-20S4M
+%1394\PGR&PGRCAM.DeviceDesc39_27%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_28%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-50S5M
+%1394\PGR&PGRCAM.DeviceDesc40%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03MTM
+%1394\PGR&PGRCAM.DeviceDesc41%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03MTC
+%1394\PGR&PGRCAM.DeviceDesc41_1%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03M2M
+%1394\PGR&PGRCAM.DeviceDesc41_2%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03M2C
+%1394\PGR&PGRCAM.DeviceDesc42%=DriverInstall,1394\Point_Grey_Research&Bumblebee_XB3_BBX3-13S2M
+%1394\PGR&PGRCAM.DeviceDesc42_1%=DriverInstall,1394\Point_Grey_Research&Bumblebee_XB3_BBX3-13S2C
+%1394\PGR&PGRCAM.DeviceDesc43_01%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-03S2M
+%1394\PGR&PGRCAM.DeviceDesc43_02%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-03S2C
+%1394\PGR&PGRCAM.DeviceDesc43_03%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-08S2M
+%1394\PGR&PGRCAM.DeviceDesc43_04%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-08S2C
+%1394\PGR&PGRCAM.DeviceDesc44_01%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S5M
+%1394\PGR&PGRCAM.DeviceDesc44_02%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S5C
+%1394\PGR&PGRCAM.DeviceDesc44_03%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-20S4M
+%1394\PGR&PGRCAM.DeviceDesc44_04%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-20S4C
+%1394\PGR&PGRCAM.DeviceDesc44_05%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-50S5M
+%1394\PGR&PGRCAM.DeviceDesc44_06%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-50S5C
+%1394\PGR&PGRCAM.DeviceDesc44_07%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03S3M
+%1394\PGR&PGRCAM.DeviceDesc44_08%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S3M
+%1394\PGR&PGRCAM.DeviceDesc44_09%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S3C
+%1394\PGR&PGRCAM.DeviceDesc44_10%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03K2M
+%1394\PGR&PGRCAM.DeviceDesc44_11%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03K2C
+%1394\PGR&PGRCAM.DeviceDesc44_12%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-10K3M
+%1394\PGR&PGRCAM.DeviceDesc44_13%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-10K3C
+%1394\PGR&PGRCAM.DeviceDesc44_14%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-13S2M
+%1394\PGR&PGRCAM.DeviceDesc44_15%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-13S2C
+%1394\PGR&PGRCAM.DeviceDesc45_1%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S1M
+%1394\PGR&PGRCAM.DeviceDesc45_2%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S1C
+%1394\PGR&PGRCAM.DeviceDesc45_3%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S2M
+%1394\PGR&PGRCAM.DeviceDesc45_4%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S2C
+%1394\PGR&PGRCAM.DeviceDesc45_5%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S3M
+%1394\PGR&PGRCAM.DeviceDesc45_6%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S3C
+%1394\PGR&PGRCAM.DeviceDesc45_7%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-13S2M
+%1394\PGR&PGRCAM.DeviceDesc45_8%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-13S2C
+%1394\PGR&PGRCAM.DeviceDesc45_9%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-14S3M
+%1394\PGR&PGRCAM.DeviceDesc45_10%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-14S3C
+%1394\PGR&PGRCAM.DeviceDesc45_11%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-20S4M
+%1394\PGR&PGRCAM.DeviceDesc45_12%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-20S4C
+%1394\PGR&PGRCAM.DeviceDesc45_13%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-50S5M
+%1394\PGR&PGRCAM.DeviceDesc45_14%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-50S5C
+%1394\PGR&PGRCAM.DeviceDesc46_1%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-20S4M
+%1394\PGR&PGRCAM.DeviceDesc46_2%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-20S4C
+%1394\PGR&PGRCAM.DeviceDesc46_3%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-50S5M
+%1394\PGR&PGRCAM.DeviceDesc46_4%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-50S5C
+%1394\PGR&PGRCAM.DeviceDesc47_1%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-10K3M
+%1394\PGR&PGRCAM.DeviceDesc47_2%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-21K5M
+%1394\PGR&PGRCAM.DeviceDesc47_3%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-21K5C
+
+
+[PointGreyResearch.NTamd64]
+%1394\PGR&PGRCAM.DeviceDesc00%=DriverInstall,1394\Point_Grey_Research
+%1394\PGR&PGRCAM.DeviceDesc01%=DriverInstall,1394\PGR&Firefly
+%1394\PGR&PGRCAM.DeviceDesc02%=DriverInstall,1394\PGR&Firefly2
+%1394\PGR&PGRCAM.DeviceDesc03%=DriverInstall,1394\Point_Grey_Research&Dragonfly
+%1394\PGR&PGRCAM.DeviceDesc04%=DriverInstall,1394\Point_Grey_Research&Dragonfly2
+%1394\PGR&PGRCAM.DeviceDesc05%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express
+%1394\PGR&PGRCAM.DeviceDesc05_1%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express_DX-BW
+%1394\PGR&PGRCAM.DeviceDesc05_2%=DriverInstall,1394\Point_Grey_Research&Dragonfly_Express_DX-COL
+%1394\PGR&PGRCAM.DeviceDesc06%=DriverInstall,1394\Point_Grey_Research&AIM
+%1394\PGR&PGRCAM.DeviceDesc07%=DriverInstall,1394\Point_Grey_Research&Scorpion
+%1394\PGR&PGRCAM.DeviceDesc08%=DriverInstall,1394\Point_Grey_Research&Scorpion_Express
+%1394\PGR&PGRCAM.DeviceDesc09%=DriverInstall,1394\Point_Grey_Research&Flea
+%1394\PGR&PGRCAM.DeviceDesc10%=DriverInstall,1394\Point_Grey_Research&Flea_Col
+%1394\PGR&PGRCAM.DeviceDesc11%=DriverInstall,1394\Point_Grey_Research&Flea_Bayer
+%1394\PGR&PGRCAM.DeviceDesc12%=DriverInstall,1394\Point_Grey_Research&Flea_BW
+%1394\PGR&PGRCAM.DeviceDesc13%=DriverInstall,1394\Point_Grey_Research&Flea_HiCol
+%1394\PGR&PGRCAM.DeviceDesc14%=DriverInstall,1394\Point_Grey_Research&Flea_HiBayer
+%1394\PGR&PGRCAM.DeviceDesc15%=DriverInstall,1394\Point_Grey_Research&Flea_HiBW
+%1394\PGR&PGRCAM.DeviceDesc27%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-BW
+%1394\PGR&PGRCAM.DeviceDesc16%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-HIBW
+%1394\PGR&PGRCAM.DeviceDesc17%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-COL
+%1394\PGR&PGRCAM.DeviceDesc18%=DriverInstall,1394\Point_Grey_Research&Flea_FLEA-HICOL
+%1394\PGR&PGRCAM.DeviceDesc19%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-03SOM
+%1394\PGR&PGRCAM.DeviceDesc20%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-03SOC
+%1394\PGR&PGRCAM.DeviceDesc21%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-14SOM
+%1394\PGR&PGRCAM.DeviceDesc22%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-14SOC
+%1394\PGR&PGRCAM.DeviceDesc23%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-20SOM
+%1394\PGR&PGRCAM.DeviceDesc24%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-20SOC
+%1394\PGR&PGRCAM.DeviceDesc25%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-13FFM
+%1394\PGR&PGRCAM.DeviceDesc26%=DriverInstall,1394\Point_Grey_Research&Scorpion_SCOR-13FFC
+%1394\PGR&PGRCAM.DeviceDesc28%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-BW
+%1394\PGR&PGRCAM.DeviceDesc29%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-HIBW
+%1394\PGR&PGRCAM.DeviceDesc30%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-COL
+%1394\PGR&PGRCAM.DeviceDesc31%=DriverInstall,1394\Point_Grey_Research&Dragonfly_DRAG-HICOL
+%1394\PGR&PGRCAM.DeviceDesc32%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-BW
+%1394\PGR&PGRCAM.DeviceDesc33%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-HIBW
+%1394\PGR&PGRCAM.DeviceDesc34%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-COL
+%1394\PGR&PGRCAM.DeviceDesc35%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-HICOL
+%1394\PGR&PGRCAM.DeviceDesc35_1%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-13S2M
+%1394\PGR&PGRCAM.DeviceDesc35_2%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-13S2C
+%1394\PGR&PGRCAM.DeviceDesc35_3%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-03S2M-EX
+%1394\PGR&PGRCAM.DeviceDesc35_4%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-03S2C-EX
+%1394\PGR&PGRCAM.DeviceDesc35_5%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-08S2M-EX
+%1394\PGR&PGRCAM.DeviceDesc35_6%=DriverInstall,1394\Point_Grey_Research&Dragonfly2_DR2-08S2C-EX
+%1394\PGR&PGRCAM.DeviceDesc36%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-03S2M
+%1394\PGR&PGRCAM.DeviceDesc37%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-08S2M
+%1394\PGR&PGRCAM.DeviceDesc38%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-08S2C
+%1394\PGR&PGRCAM.DeviceDesc39%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-03S2C
+%1394\PGR&PGRCAM.DeviceDesc39_1%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-14S3M
+%1394\PGR&PGRCAM.DeviceDesc39_2%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-14S3C
+%1394\PGR&PGRCAM.DeviceDesc39_3%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-20S4M
+%1394\PGR&PGRCAM.DeviceDesc39_4%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-20S4C
+%1394\PGR&PGRCAM.DeviceDesc39_5%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-50S5M
+%1394\PGR&PGRCAM.DeviceDesc39_6%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_7%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_8%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_9%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_10%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_11%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-50S5M
+%1394\PGR&PGRCAM.DeviceDesc39_12%=DriverInstall,1394\Point_Grey_Research&Flea2_FL2G-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_13%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S1C
+%1394\PGR&PGRCAM.DeviceDesc39_14%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S1M
+%1394\PGR&PGRCAM.DeviceDesc39_15%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S2C
+%1394\PGR&PGRCAM.DeviceDesc39_16%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S2M
+%1394\PGR&PGRCAM.DeviceDesc39_17%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S3C
+%1394\PGR&PGRCAM.DeviceDesc39_18%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-03S3M
+%1394\PGR&PGRCAM.DeviceDesc39_19%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-08S2C
+%1394\PGR&PGRCAM.DeviceDesc39_20%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-08S2M
+%1394\PGR&PGRCAM.DeviceDesc39_21%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-13S2C
+%1394\PGR&PGRCAM.DeviceDesc39_22%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-13S2M
+%1394\PGR&PGRCAM.DeviceDesc39_23%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-14S3C
+%1394\PGR&PGRCAM.DeviceDesc39_24%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-14S3M
+%1394\PGR&PGRCAM.DeviceDesc39_25%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-20S4C
+%1394\PGR&PGRCAM.DeviceDesc39_26%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-20S4M
+%1394\PGR&PGRCAM.DeviceDesc39_27%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-50S5C
+%1394\PGR&PGRCAM.DeviceDesc39_28%=DriverInstall,1394\Point_Grey_Research&Flea2N_FL2N-50S5M
+%1394\PGR&PGRCAM.DeviceDesc40%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03MTM
+%1394\PGR&PGRCAM.DeviceDesc41%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03MTC
+%1394\PGR&PGRCAM.DeviceDesc41_1%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03M2M
+%1394\PGR&PGRCAM.DeviceDesc41_2%=DriverInstall,1394\Point_Grey_Research&Firefly_MV_FFMV-03M2C
+%1394\PGR&PGRCAM.DeviceDesc42%=DriverInstall,1394\Point_Grey_Research&Bumblebee_XB3_BBX3-13S2M
+%1394\PGR&PGRCAM.DeviceDesc42_1%=DriverInstall,1394\Point_Grey_Research&Bumblebee_XB3_BBX3-13S2C
+%1394\PGR&PGRCAM.DeviceDesc43_01%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-03S2M
+%1394\PGR&PGRCAM.DeviceDesc43_02%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-03S2C
+%1394\PGR&PGRCAM.DeviceDesc43_03%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-08S2M
+%1394\PGR&PGRCAM.DeviceDesc43_04%=DriverInstall,1394\Point_Grey_Research&Bumblebee2_BB2-08S2C
+%1394\PGR&PGRCAM.DeviceDesc44_01%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S5M
+%1394\PGR&PGRCAM.DeviceDesc44_02%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S5C
+%1394\PGR&PGRCAM.DeviceDesc44_03%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-20S4M
+%1394\PGR&PGRCAM.DeviceDesc44_04%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-20S4C
+%1394\PGR&PGRCAM.DeviceDesc44_05%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-50S5M
+%1394\PGR&PGRCAM.DeviceDesc44_06%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-50S5C
+%1394\PGR&PGRCAM.DeviceDesc44_07%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03S3M
+%1394\PGR&PGRCAM.DeviceDesc44_08%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S3M
+%1394\PGR&PGRCAM.DeviceDesc44_09%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-14S3C
+%1394\PGR&PGRCAM.DeviceDesc44_10%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03K2M
+%1394\PGR&PGRCAM.DeviceDesc44_11%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-03K2C
+%1394\PGR&PGRCAM.DeviceDesc44_12%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-10K3M
+%1394\PGR&PGRCAM.DeviceDesc44_13%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-10K3C
+%1394\PGR&PGRCAM.DeviceDesc44_14%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-13S2M
+%1394\PGR&PGRCAM.DeviceDesc44_15%=DriverInstall,1394\Point_Grey_Research&Grasshopper_GRAS-13S2C
+%1394\PGR&PGRCAM.DeviceDesc45_1%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S1M
+%1394\PGR&PGRCAM.DeviceDesc45_2%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S1C
+%1394\PGR&PGRCAM.DeviceDesc45_3%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S2M
+%1394\PGR&PGRCAM.DeviceDesc45_4%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S2C
+%1394\PGR&PGRCAM.DeviceDesc45_5%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S3M
+%1394\PGR&PGRCAM.DeviceDesc45_6%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-03S3C
+%1394\PGR&PGRCAM.DeviceDesc45_7%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-13S2M
+%1394\PGR&PGRCAM.DeviceDesc45_8%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-13S2C
+%1394\PGR&PGRCAM.DeviceDesc45_9%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-14S3M
+%1394\PGR&PGRCAM.DeviceDesc45_10%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-14S3C
+%1394\PGR&PGRCAM.DeviceDesc45_11%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-20S4M
+%1394\PGR&PGRCAM.DeviceDesc45_12%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-20S4C
+%1394\PGR&PGRCAM.DeviceDesc45_13%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-50S5M
+%1394\PGR&PGRCAM.DeviceDesc45_14%=DriverInstall,1394\Point_Grey_Research&Flea3_FL3-FW-50S5C
+%1394\PGR&PGRCAM.DeviceDesc46_1%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-20S4M
+%1394\PGR&PGRCAM.DeviceDesc46_2%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-20S4C
+%1394\PGR&PGRCAM.DeviceDesc46_3%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-50S5M
+%1394\PGR&PGRCAM.DeviceDesc46_4%=DriverInstall,1394\Point_Grey_Research&Grasshopper2_GRS2-FW-50S5C
+%1394\PGR&PGRCAM.DeviceDesc47_1%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-10K3M
+%1394\PGR&PGRCAM.DeviceDesc47_2%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-21K5M
+%1394\PGR&PGRCAM.DeviceDesc47_3%=DriverInstall,1394\Point_Grey_Research&Grasshopper_Express_GX-FW-21K5C
+
+[DriverInstall.AddReg]
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,pgrcam.sys
+
+[DriverInstall.NT]
+DriverVer = 01/20/2010, 2.0.3.14
+AddReg=DriverInstall.AddReg
+CopyFiles=DriverInstall.CopyDriver,DriverInstall.CopyDll
+
+[DriverInstall.NT.Services]
+AddService=PGRCAM,2,DriverInstall_ServiceInstall
+
+[DriverInstall_ServiceInstall]
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\pgrcam.sys
+
+[DriverInstall.CopyDriver]
+pgrcam.sys
+
+[DriverInstall.CopyDll]
+
+[Strings]
+PGR="Point Grey Research"
+PGRCAMClassName="Point Grey Research Devices"
+PointGreyResearchMfg="Point Grey Research Inc."
+InstallDisk="Installation Disk # 1"
+1394\PGR&PGRCAM.DeviceDesc00="PGR Camera"
+1394\PGR&PGRCAM.DeviceDesc01="PGR Firefly"
+1394\PGR&PGRCAM.DeviceDesc02="PGR Firefly2"
+1394\PGR&PGRCAM.DeviceDesc03="PGR Dragonfly"
+1394\PGR&PGRCAM.DeviceDesc04="PGR Dragonfly2"
+1394\PGR&PGRCAM.DeviceDesc05="PGR Dragonfly Express"
+1394\PGR&PGRCAM.DeviceDesc05_1="PGR Dragonfly Express DX-BW"
+1394\PGR&PGRCAM.DeviceDesc05_2="PGR Dragonfly Express DX-COL"
+1394\PGR&PGRCAM.DeviceDesc06="PGR AIM"
+1394\PGR&PGRCAM.DeviceDesc07="PGR Scorpion"
+1394\PGR&PGRCAM.DeviceDesc08="PGR Scorpion Express"
+1394\PGR&PGRCAM.DeviceDesc09="PGR Flea"
+1394\PGR&PGRCAM.DeviceDesc10="PGR Flea Low Resolution Colour"
+1394\PGR&PGRCAM.DeviceDesc11="PGR Flea Low Resolution Bayer"
+1394\PGR&PGRCAM.DeviceDesc12="PGR Flea Low Resolution BW"
+1394\PGR&PGRCAM.DeviceDesc13="PGR Flea High Resolution Colour"
+1394\PGR&PGRCAM.DeviceDesc14="PGR Flea High Resolution Bayer"
+1394\PGR&PGRCAM.DeviceDesc15="PGR Flea High Resolution BW"
+1394\PGR&PGRCAM.DeviceDesc27="PGR Flea FLEA-BW"
+1394\PGR&PGRCAM.DeviceDesc16="PGR Flea FLEA-HIBW"
+1394\PGR&PGRCAM.DeviceDesc17="PGR Flea FLEA-COL"
+1394\PGR&PGRCAM.DeviceDesc18="PGR Flea FLEA-HICOL"
+1394\PGR&PGRCAM.DeviceDesc19="PGR Scorpion SCOR-03SOM"
+1394\PGR&PGRCAM.DeviceDesc20="PGR Scorpion SCOR-03SOC"
+1394\PGR&PGRCAM.DeviceDesc21="PGR Scorpion SCOR-14SOM"
+1394\PGR&PGRCAM.DeviceDesc22="PGR Scorpion SCOR-14SOC"
+1394\PGR&PGRCAM.DeviceDesc23="PGR Scorpion SCOR-20SOM"
+1394\PGR&PGRCAM.DeviceDesc24="PGR Scorpion SCOR-20SOC"
+1394\PGR&PGRCAM.DeviceDesc25="PGR Scorpion SCOR-13FFM"
+1394\PGR&PGRCAM.DeviceDesc26="PGR Scorpion SCOR-13FFC"
+1394\PGR&PGRCAM.DeviceDesc28="PGR Dragonfly DRAG-BW"
+1394\PGR&PGRCAM.DeviceDesc29="PGR Dragonfly DRAG-HIBW"
+1394\PGR&PGRCAM.DeviceDesc30="PGR Dragonfly DRAG-COL"
+1394\PGR&PGRCAM.DeviceDesc31="PGR Dragonfly DRAG-HICOL"
+1394\PGR&PGRCAM.DeviceDesc32="PGR Dragonfly2 DR2-BW"
+1394\PGR&PGRCAM.DeviceDesc33="PGR Dragonfly2 DR2-HIBW"
+1394\PGR&PGRCAM.DeviceDesc34="PGR Dragonfly2 DR2-COL"
+1394\PGR&PGRCAM.DeviceDesc35="PGR Dragonfly2 DR2-HICOL"
+1394\PGR&PGRCAM.DeviceDesc35_1="PGR Dragonfly2 DR2-13S2M"
+1394\PGR&PGRCAM.DeviceDesc35_2="PGR Dragonfly2 DR2-13S2C"
+1394\PGR&PGRCAM.DeviceDesc35_3="PGR Dragonfly2 DR2-03S2M-EX"
+1394\PGR&PGRCAM.DeviceDesc35_4="PGR Dragonfly2 DR2-03S2C-EX"
+1394\PGR&PGRCAM.DeviceDesc35_5="PGR Dragonfly2 DR2-08S2M-EX"
+1394\PGR&PGRCAM.DeviceDesc35_6="PGR Dragonfly2 DR2-08S2C-EX"
+1394\PGR&PGRCAM.DeviceDesc36="PGR Flea2 FL2-03S2M"
+1394\PGR&PGRCAM.DeviceDesc37="PGR Flea2 FL2-08S2M"
+1394\PGR&PGRCAM.DeviceDesc38="PGR Flea2 FL2-08S2C"
+1394\PGR&PGRCAM.DeviceDesc39="PGR Flea2 FL2-03S2C"
+1394\PGR&PGRCAM.DeviceDesc39_1="PGR Flea2 FL2-14S3M"
+1394\PGR&PGRCAM.DeviceDesc39_2="PGR Flea2 FL2-14S3C"
+1394\PGR&PGRCAM.DeviceDesc39_3="PGR Flea2 FL2-20S4M"
+1394\PGR&PGRCAM.DeviceDesc39_4="PGR Flea2 FL2-20S4C"
+1394\PGR&PGRCAM.DeviceDesc39_5="PGR Flea2 FL2-50S5M"
+1394\PGR&PGRCAM.DeviceDesc39_6="PGR Flea2 FL2-50S5C"
+1394\PGR&PGRCAM.DeviceDesc39_7="PGR Flea2 FL2-13S2M"
+1394\PGR&PGRCAM.DeviceDesc39_8="PGR Flea2 FL2-13S2C"
+1394\PGR&PGRCAM.DeviceDesc39_9="PGR Flea2 FL2G-13S2M"
+1394\PGR&PGRCAM.DeviceDesc39_10="PGR Flea2 FL2G-13S2C"
+1394\PGR&PGRCAM.DeviceDesc39_11="PGR Flea2 FL2G-50S5M"
+1394\PGR&PGRCAM.DeviceDesc39_12="PGR Flea2 FL2G-50S5C"
+1394\PGR&PGRCAM.DeviceDesc39_13="PGR Flea2 FL2N-03S1C"
+1394\PGR&PGRCAM.DeviceDesc39_14="PGR Flea2 FL2N-03S1M"
+1394\PGR&PGRCAM.DeviceDesc39_15="PGR Flea2 FL2N-03S2C"
+1394\PGR&PGRCAM.DeviceDesc39_16="PGR Flea2 FL2N-03S2M"
+1394\PGR&PGRCAM.DeviceDesc39_17="PGR Flea2 FL2N-03S3C"
+1394\PGR&PGRCAM.DeviceDesc39_18="PGR Flea2 FL2N-03S3M"
+1394\PGR&PGRCAM.DeviceDesc39_19="PGR Flea2 FL2N-08S2C"
+1394\PGR&PGRCAM.DeviceDesc39_20="PGR Flea2 FL2N-08S2M"
+1394\PGR&PGRCAM.DeviceDesc39_21="PGR Flea2 FL2N-13S2C"
+1394\PGR&PGRCAM.DeviceDesc39_22="PGR Flea2 FL2N-13S2M"
+1394\PGR&PGRCAM.DeviceDesc39_23="PGR Flea2 FL2N-14S3C"
+1394\PGR&PGRCAM.DeviceDesc39_24="PGR Flea2 FL2N-14S3M"
+1394\PGR&PGRCAM.DeviceDesc39_25="PGR Flea2 FL2N-20S4C"
+1394\PGR&PGRCAM.DeviceDesc39_26="PGR Flea2 FL2N-20S4M"
+1394\PGR&PGRCAM.DeviceDesc39_27="PGR Flea2 FL2N-50S5C"
+1394\PGR&PGRCAM.DeviceDesc39_28="PGR Flea2 FL2N-50S5M"
+1394\PGR&PGRCAM.DeviceDesc40="PGR Firefly MV FFMV-03MTM"
+1394\PGR&PGRCAM.DeviceDesc41="PGR Firefly MV FFMV-03MTC"
+1394\PGR&PGRCAM.DeviceDesc41_1="PGR Firefly MV FFMV-03M2M"
+1394\PGR&PGRCAM.DeviceDesc41_2="PGR Firefly MV FFMV-03M2C"
+1394\PGR&PGRCAM.DeviceDesc42="PGR Bumblebee XB3 BBX3-13S2M"
+1394\PGR&PGRCAM.DeviceDesc42_1="PGR Bumblebee XB3 BBX3-13S2C"
+1394\PGR&PGRCAM.DeviceDesc43_01="PGR Bumblebee2 BB2-03S2M"
+1394\PGR&PGRCAM.DeviceDesc43_02="PGR Bumblebee2 BB2-03S2C"
+1394\PGR&PGRCAM.DeviceDesc43_03="PGR Bumblebee2 BB2-08S2M"
+1394\PGR&PGRCAM.DeviceDesc43_04="PGR Bumblebee2 BB2-08S2C"
+1394\PGR&PGRCAM.DeviceDesc44_01="PGR Grasshopper GRAS-14S5M"
+1394\PGR&PGRCAM.DeviceDesc44_02="PGR Grasshopper GRAS-14S5C"
+1394\PGR&PGRCAM.DeviceDesc44_03="PGR Grasshopper GRAS-20S4M"
+1394\PGR&PGRCAM.DeviceDesc44_04="PGR Grasshopper GRAS-20S4C"
+1394\PGR&PGRCAM.DeviceDesc44_05="PGR Grasshopper GRAS-50S5M"
+1394\PGR&PGRCAM.DeviceDesc44_06="PGR Grasshopper GRAS-50S5C"
+1394\PGR&PGRCAM.DeviceDesc44_07="PGR Grasshopper_GRAS-03S3M"
+1394\PGR&PGRCAM.DeviceDesc44_08="PGR Grasshopper GRAS-14S3M"
+1394\PGR&PGRCAM.DeviceDesc44_09="PGR Grasshopper GRAS-14S3C"
+1394\PGR&PGRCAM.DeviceDesc44_10="PGR Grasshopper GRAS-03K2M"
+1394\PGR&PGRCAM.DeviceDesc44_11="PGR Grasshopper GRAS-03K2C"
+1394\PGR&PGRCAM.DeviceDesc44_12="PGR Grasshopper GRAS-10K3M"
+1394\PGR&PGRCAM.DeviceDesc44_13="PGR Grasshopper GRAS-10K3C"
+1394\PGR&PGRCAM.DeviceDesc44_14="PGR Grasshopper GRAS-13S2M"
+1394\PGR&PGRCAM.DeviceDesc44_15="PGR Grasshopper GRAS-13S2C"
+1394\PGR&PGRCAM.DeviceDesc45_1="PGR Flea3 FL3-FW-03S1M"
+1394\PGR&PGRCAM.DeviceDesc45_2="PGR Flea3 FL3-FW-03S1C"
+1394\PGR&PGRCAM.DeviceDesc45_3="PGR Flea3 FL3-FW-03S2M"
+1394\PGR&PGRCAM.DeviceDesc45_4="PGR Flea3 FL3-FW-03S2C"
+1394\PGR&PGRCAM.DeviceDesc45_5="PGR Flea3 FL3-FW-03S3M"
+1394\PGR&PGRCAM.DeviceDesc45_6="PGR Flea3 FL3-FW-03S3C"
+1394\PGR&PGRCAM.DeviceDesc45_7="PGR Flea3 FL3-FW-13S2M"
+1394\PGR&PGRCAM.DeviceDesc45_8="PGR Flea3 FL3-FW-13S2C"
+1394\PGR&PGRCAM.DeviceDesc45_9="PGR Flea3 FL3-FW-14S3M"
+1394\PGR&PGRCAM.DeviceDesc45_10="PGR Flea3 FL3-FW-14S3C"
+1394\PGR&PGRCAM.DeviceDesc45_11="PGR Flea3 FL3-FW-20S4M"
+1394\PGR&PGRCAM.DeviceDesc45_12="PGR Flea3 FL3-FW-20S4C"
+1394\PGR&PGRCAM.DeviceDesc45_13="PGR Flea3 FL3-FW-50S5M"
+1394\PGR&PGRCAM.DeviceDesc45_14="PGR Flea3 FL3-FW-50S5C"
+1394\PGR&PGRCAM.DeviceDesc46_1="PGR Grasshopper2 GRS2-FW-20S4M"
+1394\PGR&PGRCAM.DeviceDesc46_2="PGR Grasshopper2 GRS2-FW-20S4C"
+1394\PGR&PGRCAM.DeviceDesc46_3="PGR Grasshopper2 GRS2-FW-50S5M"
+1394\PGR&PGRCAM.DeviceDesc46_4="PGR Grasshopper2 GRS2-FW-50S5C"
+1394\PGR&PGRCAM.DeviceDesc47_1="PGR Grasshopper Express_GX-FW-10K3M"
+1394\PGR&PGRCAM.DeviceDesc47_2="PGR Grasshopper Express_GX-FW-21K5M"
+1394\PGR&PGRCAM.DeviceDesc47_3="PGR Grasshopper Express_GX-FW-21K5C"
+REG_SZ                      = 0x00000000
+REG_DWORD                   = 0x00010001

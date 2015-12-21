@@ -1,0 +1,11 @@
+prefix=/target
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: gdkmm
+Description: C++ wrappers for GLib, GTK+, and Pango
+Requires: glibmm-2.4 pangomm-1.4 gdk-2.0 cairomm-1.0
+Version: 2.14.1
+Libs: -L${libdir} -lgdkmm-2.4
+Cflags: -I${includedir}/gdkmm-2.4 -I${libdir}/gdkmm-2.4/include

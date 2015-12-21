@@ -1,0 +1,12 @@
+prefix=/target
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: cairomm
+Description: C++ wrapper for cairo
+Requires: cairo
+Version: 1.6.1
+Libs: -L${libdir} -lcairomm-1.0
+Cflags: -I${includedir}/cairomm-1.0
+
