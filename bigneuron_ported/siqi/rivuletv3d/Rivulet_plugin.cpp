@@ -19,6 +19,9 @@
 #include "marker_radius.h"
 #include <ctime>
 #include "vn_rivulet.h"
+#include "lib/ImageOperation.h"
+
+ImageOperation *IM;
 Q_EXPORT_PLUGIN2(Rivulet, RivuletPlugin);
 
 using namespace std;
@@ -33,6 +36,9 @@ struct input_PARA
     int dumpbranch;
     float connectrate;
     float percentage;
+    float sigma;
+    float alpha_one;
+    float alpha_two;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -86,6 +92,9 @@ void RivuletPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         PARA.gap = p.gap;
         PARA.stepsize = p.stepsize;
         PARA.channel = p.channel;
+        PARA.sigma = p.sigmavalue;
+        PARA.alpha_one = p.alpha_one_value;
+        PARA.alpha_two = p.alpha_two_value;
 
         reconstruction_func(callback,parent,PARA,bmenu);
 
@@ -126,6 +135,9 @@ bool RivuletPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         PARA.percentage = (paras.size() >= k+1) ? atof(paras[k]) : 0.98;  k++;
         if (PARA.percentage > 1.0)
             PARA.percentage = 1.0;
+        PARA.sigma = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.alpha_one = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.alpha_two = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
@@ -270,10 +282,50 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // Fast marching distance transform proposed in APP2 
     fastmarching_dt(data1d, bdist1d, N, M, P, 2, threshold);
 
+    // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
+    IM = new ImageOperation;
+
+
+    int in_sz_int[4];
+
+    for(int i = 0; i < 4; i++)
+    {
+        in_sz_int[i] = (int)in_sz[i];
+    }
+
+    IM->Imcreate(data1d, in_sz_int);
+    // std::cout<<"image operation work or not?"<<std::endl;
+    IM->computeHessian(PARA.sigma, PARA.alpha_one, PARA.alpha_two);
+    std::cout<<"=== Hessian computation Finished..."<<std::endl;
+    //----------------------------vesselness begin
+    V3DLONG l_npixels_vessel;
+    l_npixels_vessel = in_sz_int[0] * in_sz_int[1] * in_sz_int[2];
+    cout<<"l_npixels_vessel"<<l_npixels_vessel<<endl;
+    GradientImageType::IndexType index;
+    unsigned char *p_vessel = new unsigned char[l_npixels_vessel]();
+    unsigned char *vp_tmp = p_vessel;
+    ImageType::RegionType rg = (IM->finalim->GetLargestPossibleRegion());
+    ImageType::SizeType sz = rg.GetSize();
+    for(V3DLONG Z = 0;Z < in_sz[2]; Z++)
+        for(V3DLONG Y = 0;Y < in_sz[1]; Y++)
+            for(V3DLONG X = 0;X < in_sz[0]; X++)
+            {
+                index[0] = X; index[1] = Y; index[2] = Z;
+
+                *vp_tmp = (unsigned char)(IM->finalim->GetPixel(index) * 100);
+                vp_tmp++;
+            }
+    // cout<<"Before the vesselness image is saved."<<endl;
+    // QString str_outimg_filename = PARA.inimg_file + "_vesselness.v3draw";
+    // saveImage(qPrintable(str_outimg_filename), p_vessel, in_sz, V3D_UINT8);
+    // cout<<"After the vesselness image is saved."<<endl;
+    cout<<"the vesselness image is binaried with threshold."<<endl;
+
     // binarize data
     for (int i=0; i<NVOX; i++)
     {
-        binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
+        // binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
+        binary_data1d[i] = p_vessel[i] > 2? 1 : 0;
     }
 
     // Find the source point
@@ -328,7 +380,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     {
         T[i] = binary_data1d[i] ==0 ? 0 : T[i];
     }
-
     // Start Tracing
     cout<<"Start Tracing"<<endl;
     cout<<"        '.,\n          'b      *\n           '$    #.\n            $:   #:\n            *#  @):\n            :@,@):   ,.**:'\n  ,         :@@*: ..**'\n   '#o.    .:(@'.@*\"'\n      'bq,..:,@@*'   ,*\n      ,p$q8,:@)'  .p*'\n     '    '@@Pp@@*'\n           Y7'.'\n          :@):.\n         .:@:'.\n       .::(@:.  \n"<<endl;
