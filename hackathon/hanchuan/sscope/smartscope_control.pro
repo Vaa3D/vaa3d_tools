@@ -45,5 +45,5 @@ SOURCES = smartscope_gui.cpp \
 		$$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET  = $$qtLibraryTarget(smartscope_controller)
-DESTDIR = $$V3DMAINPATH/released_plugins/v3d/plugins/smartscope_controller
+DESTDIR = $$V3DMAINPATH/bin/plugins/smartscope_controller
 
