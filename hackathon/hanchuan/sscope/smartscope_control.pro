@@ -4,7 +4,7 @@
 # 2011-May-13
 
 
-V3DMAINPATH = c:/Users/zhouj/work/vaa3d_32bit/
+V3DMAINPATH = ../../../../v3d_external
 
 TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
