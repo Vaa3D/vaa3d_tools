@@ -325,7 +325,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     for (int i=0; i<NVOX; i++)
     {
         // binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
-        binary_data1d[i] = p_vessel[i] > 2? 1 : 0;
+        binary_data1d[i] = p_vessel[i] > threshold? 1 : 0;
     }
 
     // Find the source point
