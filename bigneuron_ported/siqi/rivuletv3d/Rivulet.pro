@@ -8,7 +8,7 @@ mac{
     ITKLIBPATH = lib/ITKlibs_MAC
 }
 else{
-    ITKLIBPATH = lib/ITKlibs_Linux
+    ITKLIBPATH = ../stalker_v3d/lib/ITKlibs_Linux
     SOURCES = lib/ITK_include/itkLightProcessObject.cxx
 }
 
