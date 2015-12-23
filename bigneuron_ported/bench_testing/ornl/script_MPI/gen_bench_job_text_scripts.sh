@@ -188,13 +188,31 @@ function write_neuron_tracing_command {
 #3DTraceSWC
 
   if [ $METHOD == "28" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 20 2 2.5;chmod -R 777 $inimgfileTracing*_pyzh.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 20 2 2.5;chmod -R 777 $inimgfileTracing*_pyzhi.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #Rivulet
 
   if [ $METHOD == "29" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x Rivulet -f tracing_func -i $inimgfileTracing -p 1 2 1 10 0 2 0.95 3 0.5 1;chmod -R 777 $inimgfileTracing*_Rivulet.swc;mv  $inimgfileTracing*_Rivulet.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#APP2_new1
+
+  if [ $METHOD == "30" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new1.swc  -p NULL 0 AUTO 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new1.swc;mv  $inimgfileTracing*_app2new1.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+  fi;
+
+#APP2_new2
+
+  if [ $METHOD == "31" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new2.swc  -p NULL 0 AUTO 1 1 0 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new2.swc;mv  $inimgfileTracing*_app2new2.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+  fi;
+
+#APP2_new3
+
+  if [ $METHOD == "32" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
   fi;
 }
 
