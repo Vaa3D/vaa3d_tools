@@ -1289,7 +1289,7 @@ void NeuronLiveMatchDialog::output()
 //    QString fname_output = QDir(folder_output).filePath(fname_base);
 
     matchfunc->output_candMatchScore(fname_output + "_matchscore.txt");
-    matchfunc->output_affine(fname_output,ntList->at(0).name);
+    matchfunc->output_affine(fname_output,ntList->at(0).file);
     matchfunc->output_matchedMarkers_orgspace(fname_output + "_nt0_matched.marker",fname_output + "_nt1_matched.marker");
     matchfunc->output_parameter(fname_output+"_param.txt");
     matchfunc->output_stitch(fname_output);
@@ -2848,7 +2848,16 @@ void neuron_match_clique::output_stitch(QString fname)
     if(nt1_stitch->listNeuron.size()<=0)
         return;
 
-    QString fname_neuron0 = fname+"_stitched_nt0.swc";
+    bool eswc0_flag=false;
+    bool eswc1_flag=false;
+
+    QString fname_neuron0;
+    if(nt0_org->file.section('.',-1).toUpper() == "ESWC"){
+        fname_neuron0 = fname+"_stitched_nt0.eswc";
+        eswc0_flag=true;
+    }
+    else
+        fname_neuron0 = fname+"_stitched_nt0.swc";
     //output neuron
     if (!export_list2file(nt0_stitch->listNeuron,fname_neuron0,nt0_org->name))
     {
@@ -2856,7 +2865,13 @@ void neuron_match_clique::output_stitch(QString fname)
         return;
     }
 
-    QString fname_neuron1 = fname+"_stitched_nt1.swc";
+    QString fname_neuron1;
+    if(nt1_org->file.section('.',-1).toUpper() == "ESWC"){
+        eswc1_flag=true;
+        fname_neuron1 = fname+"_stitched_nt1.eswc";
+    }
+    else
+        fname_neuron1 = fname+"_stitched_nt1.swc";
     //output neuron
     if (!export_list2file(nt1_stitch->listNeuron,fname_neuron1,nt1_org->name))
     {
@@ -2876,6 +2891,11 @@ void neuron_match_clique::output_stitch(QString fname)
         S.pn = nt0_stitch->listNeuron.at(i).pn;
         S.r = nt0_stitch->listNeuron.at(i).r;
         S.type = swcType0.at(i);
+        if(eswc0_flag){
+            S.seg_id = nt0_org->listNeuron.at(i).seg_id;
+            S.level= nt0_org->listNeuron.at(i).level;
+            S.fea_val = nt0_org->listNeuron.at(i).fea_val;
+        }
         combined.append(S);
         idmax=idmax>S.n?idmax:S.n;
         idmax=idmax>S.pn?idmax:S.pn;
@@ -2888,14 +2908,23 @@ void neuron_match_clique::output_stitch(QString fname)
         S.n = nt1_stitch->listNeuron.at(i).n+idmax+1;
         S.r = nt1_stitch->listNeuron.at(i).r;
         S.type = swcType1.at(i);
+        if(eswc1_flag){
+            S.seg_id = nt1_org->listNeuron.at(i).seg_id;
+            S.level= nt1_org->listNeuron.at(i).level;
+            S.fea_val = nt1_org->listNeuron.at(i).fea_val;
+        }
         if(nt1_stitch->listNeuron.at(i).pn>=0)
             S.pn = nt1_stitch->listNeuron.at(i).pn+idmax+1;
         else
             S.pn=-1;
         combined.append(S);
     }
-    QString fname_neuron = fname+"_stitched.swc";
-    if (!export_list2file(combined,fname_neuron,nt0_org->name))
+    QString fname_neuron;
+    if(eswc0_flag || eswc1_flag)
+        fname_neuron = fname+"_stitched.eswc";
+    else
+        fname_neuron = fname+"_stitched.swc";
+    if (!export_list2file(combined,fname_neuron,nt0_org->file + " + " + nt1_org->file))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron);
         return;
@@ -2926,9 +2955,14 @@ void neuron_match_clique::output_affine(QString fname, QString fname_nt0)
     if(candmatch0.size()<=0)
         return;
 
-    QString fname_neuron = fname+"_affine.swc";
+    QString fname_neuron;
+    if(nt1_org->file.section('.',-1).toUpper() == "ESWC")
+        fname_neuron = fname+"_affine.eswc";
+    else
+        fname_neuron = fname+"_affine.swc";
+
     //output neuron
-    if (!export_list2file(nt1_a->listNeuron,fname_neuron,nt1_org->name))
+    if (!export_list2file(nt1_a->listNeuron,fname_neuron,nt1_org->file))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron);
         return;
