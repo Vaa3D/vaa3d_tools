@@ -1,4 +1,5 @@
 #include <common.h>
+#include <math.h>
 
 int calc_nearest_node(NeuronTree neuron,float center_x,float center_y,float center_z)
 {
@@ -16,6 +17,39 @@ int calc_nearest_node(NeuronTree neuron,float center_x,float center_y,float cent
         }
     }
     return nearest_node_id;
+}
+
+void backupNeuron(NeuronTree & source, NeuronTree & backup)
+{
+    NeuronTree *np = (NeuronTree *)(&backup);
+    np->n=source.n; np->on=source.on; np->selected=source.selected; np->name=source.name; np->comment=source.comment;
+    np->color.r=source.color.r; np->color.g=source.color.g; np->color.b=source.color.b; np->color.a=source.color.a;
+    np->listNeuron.clear();
+
+    for(V3DLONG i=0; i<source.listNeuron.size(); i++)
+    {
+        NeuronSWC S;
+        S.n = source.listNeuron[i].n;
+        S.type = source.listNeuron[i].type;
+        S.x = source.listNeuron[i].x;
+        S.y = source.listNeuron[i].y;
+        S.z = source.listNeuron[i].z;
+        S.r = source.listNeuron[i].r;
+        S.pn = source.listNeuron[i].pn;
+        //S.seg_id = source.listNeuron[i].seg_id;
+        //S.level = source.listNeuron[i].level;
+        //S.fea_val = source.listNeuron[i].fea_val;
+        S.fea_val.clear();
+        for (int j=0;j<5;j++)
+        {
+            S.fea_val.append(-1);
+        }
+        np->listNeuron.append(S);
+    }
+    np->hashNeuron = source.hashNeuron;
+    //np->file     = source.file;
+    np->editable = source.editable;
+    np->linemode = source.linemode;
 }
 
 bool write_marker_file(QString filename,LandmarkList listmarkers)
@@ -42,10 +76,10 @@ bool write_marker_file(QString filename,LandmarkList listmarkers)
 
 bool save_project_results(V3DPluginCallback2 *callback,V3DLONG sz_img[4],vector<GOV> label_group,QString folder_output,
       QString input_swc_name,QString input_image_name,bool eswc_flag, NeuronTree neuron,LandmarkList LList,int sel_channel,int bg_thr,int max_dis
-        ,int seg_id,int marker_id,QString output_label_name,QString output_marker_name,QString output_csv_name)
+        ,int seg_id,int marker_id,QString output_label_name,QString output_marker_name,QString output_csv_name,QString output_eswc_name)
 
 {
-    qDebug()<<"saving profiles " <<"eswc flag:"<<eswc_flag;
+    //qDebug()<<"saving profiles " <<"eswc flag:"<<eswc_flag;
     //save label image
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
     V3DLONG label_sz[4];
@@ -65,7 +99,6 @@ bool save_project_results(V3DPluginCallback2 *callback,V3DLONG sz_img[4],vector<
             //tmp_label[tmp.at(j)->pos+size_page]=tmp.at(j)->dst;
         }
     }
-    //maybe not to save dst...too large memory cost
     QString fname_output = QDir(folder_output).filePath(output_label_name);
     if (!simple_saveimage_wrapper(*callback, fname_output.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 2))
         return false;
@@ -79,15 +112,20 @@ bool save_project_results(V3DPluginCallback2 *callback,V3DLONG sz_img[4],vector<
         return false;
     qDebug()<<"finish saving markerfile";
 
+    //save eswc file
+    QString eswc_file=QDir(folder_output).filePath(output_eswc_name);
+    NeuronTree nt_copy;
+    //backupNeuron(neuron,nt_copy);
+
     //save csv file
     QString csv_file=QDir(folder_output).filePath(output_csv_name);
-    FILE *fp2=fopen(csv_file.toAscii(),"wt");
+    FILE *fp2=fopen(csv_file.toAscii(),"w");
     if (!fp2)
         return false;
-    if (eswc_flag)
-        fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
+    if (0) //eswc_flag)
+        fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,head_width,center_x,center_y,center_z,skel_node,skel_type,skel_node_seg,skel_node_branch,dis_to_root,tree_id\n");
     else
-        fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,center_x,center_y,center_z,skel_node\n");
+        fprintf(fp2,"##marker_id,auto_detect_id,volume,max_dis,min_dis,center_dis,head_width,center_x,center_y,center_z,skel_node\n");
 
     for (int i=0;i<LList.size();i++)
     {
@@ -103,29 +141,64 @@ bool save_project_results(V3DPluginCallback2 *callback,V3DLONG sz_img[4],vector<
             int min_dis=tmp.back()->dst;
             int volume=tmp.size();
 
-            V3DLONG sum_dis=0;
+            float sum_dis=0;
 
             for (int j=0;j<tmp.size();j++)
-                sum_dis+=tmp[j]->dst;
+                sum_dis+=(float)tmp[j]->dst;
 
-            int center_dis=sum_dis/tmp.size();
+            int center_dis=sum_dis/tmp.size()+0.5;
             int skel_id=calc_nearest_node(neuron,LList.at(i).x-1,LList.at(i).y-1,LList.at(i).z-1);
             //qDebug()<<"skel_id_size:"<<skel_id_size<<" skel_id:"<<skel_id;
-            if (eswc_flag)
+            float head_width=calc_head_width(tmp,center_dis,LList[i].x-1.,LList[i].y-1.,LList[i].z-1.);
+
+            //construct eswc file
+//            if (nt_copy.listNeuron[skel_id].fea_val[0]==-1)
+//            {
+//                nt_copy.listNeuron[skel_id].fea_val[0]=volume;
+//                nt_copy.listNeuron[skel_id].fea_val[1]=center_dis;
+//                nt_copy.listNeuron[skel_id].fea_val[2]=head_width;
+//            }
+//            else
+//            {
+//                NeuronSWC S;
+//                S.n = nt_copy.listNeuron.length()+1;
+//                qDebug()<<"~~~~~~~~~~~~~New node add:"<<S.n<<"ori node: "<<nt_copy.listNeuron[skel_id].n
+//                       <<" ori node parent:"<<nt_copy.listNeuron[skel_id].parent;
+//                S.type = nt_copy.listNeuron[skel_id].type;
+//                S.x = nt_copy.listNeuron[skel_id].x;
+//                S.y = nt_copy.listNeuron[skel_id].y;
+//                S.z = nt_copy.listNeuron[skel_id].z;
+//                S.r = nt_copy.listNeuron[skel_id].r;
+//                S.parent = nt_copy.listNeuron[skel_id].parent;
+//                S.fea_val.clear();
+//                S.fea_val.push_back(volume);
+//                S.fea_val.push_back(center_dis);
+//                S.fea_val.push_back(head_width);
+//                for (int jj=0;jj<2;jj++)
+//                    S.fea_val.push_back(-1);
+//                nt_copy.listNeuron[skel_id].parent=S.n;
+//                nt_copy.listNeuron.append(S);
+//            }
+            //done with eswc file
+
+            if (0) //eswc_flag)
             {
-                fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",i+1,group_id,volume,max_dis,
-                        min_dis,center_dis,(int)LList.at(i).x-1,(int)LList.at(i).y-1,(int)LList.at(i).z-1,skel_id,
+                fprintf(fp2,"%d,%d,%d,%d,%d,%d,%.2f,%d,%d,%d,%d,%d,%d,%d,%.2f,%d\n",i+1,group_id,volume,max_dis,
+                        min_dis,center_dis,head_width,(int)LList.at(i).x-1,(int)LList.at(i).y-1,(int)LList.at(i).z-1,skel_id,
                         neuron.listNeuron.at(skel_id).type,(int)neuron.listNeuron.at(skel_id).seg_id,
                         (int)neuron.listNeuron.at(skel_id).level, neuron.listNeuron.at(skel_id).fea_val[1],
                         (int)neuron.listNeuron.at(skel_id).fea_val[0]);
             }
             else
-                fprintf(fp2,"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",i+1,group_id,volume,max_dis,min_dis
-                        ,center_dis,(int)LList.at(i).x-1,(int)LList.at(i).y-1,(int)LList.at(i).z-1,skel_id);
+                fprintf(fp2,"%d,%d,%d,%d,%d,%d,%.2f,%d,%d,%d,%d\n",i+1,group_id,volume,max_dis,min_dis
+                        ,center_dis,head_width,(int)LList.at(i).x-1,(int)LList.at(i).y-1,(int)LList.at(i).z-1,skel_id);
         }
     }
     fclose(fp2);
     qDebug()<<"finish saving csv";
+
+    //complete saving eswc file
+    //writeESWC_file(eswc_file,nt_copy);
 
     //get the project profile txt
     QString tmp_name="project.txt";
@@ -152,6 +225,66 @@ bool save_project_results(V3DPluginCallback2 *callback,V3DLONG sz_img[4],vector<
 
     qfile.close();
     qDebug()<<"file complete wrriting";
+    return true;
+}
+
+float calc_head_width(GOV cur_group, int center_dis, float center_x, float center_y, float center_z)
+{
+    //cur_group is sorted by dst //decending
+    //qDebug()<<"In calc head width:"<<"center width:"<<center_dis;
+    int minNumberofvoxels=8;
+    int vid_begin,vid_end;
+    vid_begin=vid_end=0;
+
+    while(vid_begin<cur_group.size() && cur_group[vid_begin]->dst>center_dis){
+        //qDebug()<<"cur_group[vid_begin]:"<<cur_group[vid_begin]->dst;
+        vid_begin++;
+        continue;
+    }
+
+    vid_end=vid_begin;
+    while(vid_end<cur_group.size()&&cur_group[vid_end]->dst==center_dis)
+    {
+        vid_end++;
+        continue;
+    }
+    if (vid_end-vid_begin<minNumberofvoxels) //include two more layers
+    {
+        while(vid_end<cur_group.size() && cur_group[vid_end]->dst>=center_dis-1){
+            vid_end++;
+            continue;
+        }
+        vid_begin=0;
+        while(vid_begin<cur_group.size() && cur_group[vid_begin]->dst>center_dis+1){
+            vid_begin++;
+            continue;
+        }
+    }
+    //qDebug()<<":"<<vid_end-vid_begin;
+//    float sum_x,sum_y,sum_z;
+//    sum_x=sum_y=sum_z=0;
+//    for (int i=vid_begin;i<vid_end;i++)
+//    {
+//        sum_x+=cur_layer[i]->x;
+//        sum_y+=cur_layer[i]->y;
+//        sum_z+=cur_layer[i]->z;
+//    }
+
+//    center_x=sum_x/cur_layer.size();
+//    center_y=sum_y/cur_layer.size();
+//    center_z=sum_z/cur_layer.size();
+
+    float max_dis=0;
+    for (int k=vid_begin;k<vid_end;k++)
+    {
+        float dis=(cur_group[k]->x-center_x)*(cur_group[k]->x-center_x)+
+                (cur_group[k]->y-center_y)*(cur_group[k]->y-center_y)+
+                (cur_group[k]->z-center_z)*(cur_group[k]->z-center_z);
+        if (dis>max_dis)
+            max_dis=dis;
+    }
+    max_dis=2*sqrt(max_dis);
+    return max_dis;
 }
 
 void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)

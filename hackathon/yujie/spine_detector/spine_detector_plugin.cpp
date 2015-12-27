@@ -9,6 +9,7 @@
 #include "file_io_dialog.h"
 #include "manual_proofread_dialog.h"
 #include "spine_detector_dialog.h"
+#include "combiner.h"
 
 
 using namespace std;
@@ -26,6 +27,7 @@ QStringList spine_detector::menulist() const
         <<tr("SpineDetector_NewProject")
         <<tr("SpineDetector_ExistingProject")
         <<tr("IS_Quantifier")
+        <<tr("Combiner")
         <<tr("about");
 }
 
@@ -105,6 +107,11 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     {
         file_io_dialog *dialog=new file_io_dialog(&callback,2);
         dialog->show();
+    }
+    else if (menu_name==tr("Combiner"))
+    {
+        combiner *this_comb = new combiner(&callback);
+        this_comb->show();
     }
     else
         v3d_msg(tr("This tool is designed for spine morphology reconstructions. "

@@ -134,11 +134,11 @@ void manual_proofread_dialog::check_each_seg()
     QSet<int> seg_candid;
     for (int i=0;i<LList_in.size();i++)
     {
-        qDebug()<<"I:"<<i<<" size:"<<LList_in[i].category;
+        //qDebug()<<"I:"<<i<<" size:"<<LList_in[i].category;
         if (LList_in[i].category!=0)
             seg_candid<<LList_in[i].category;
     }
-    qDebug()<<"seg_candid:"<<seg_candid.size();
+    //qDebug()<<"seg_candid:"<<seg_candid.size();
     int count=0;
     QSet<int>::const_iterator i = seg_candid.constBegin();
     while (i != seg_candid.constEnd()) {
@@ -155,27 +155,8 @@ void manual_proofread_dialog::check_each_seg()
         stop: {}
         ++i;
     }
-    qDebug()<<"count:"<<count;
+    //qDebug()<<"count:"<<count;
 
-//    for (int i=0;i<segment_neuronswc.size();i++)
-//    {
-//        vector<V3DLONG> coord(6,0);
-//        coord=image_seg_plan(segment_neuronswc[i],checked_neuron);
-//        for (int j=0;j<LList_in.size();j++)
-//        {
-//            if (LList_in[j].x-1<=coord[0]|| LList_in[j].x-1>=coord[3] || LList_in[j].y-1<=coord[1]
-//                || LList_in[j].y-1>=coord[4] || LList_in[j].z-1<=coord[2] ||LList_in[j].z-1>=coord[5] )
-//                continue;
-//            QString tmp_str=QString::fromStdString(LList_in[j].comments);
-//            if(tmp_str.contains("0"))
-//            {
-//                finish_flag[i]=false;
-//                goto stop;
-//            }
-//        }
-//        finish_flag[i]=true;
-//        stop: {}
-//    }
 }
 
 void manual_proofread_dialog::run_interface_with_auto(int ret,NeuronTree auto_neuron,bool eswc_tmp_flag,
@@ -199,7 +180,7 @@ void manual_proofread_dialog::run_interface_with_auto(int ret,NeuronTree auto_ne
     sz_img[0]=sz_img_in[0];
     sz_img[1]=sz_img_in[1];
     sz_img[2]=sz_img_in[2];
-    sz_img[3]=1;
+    sz_img[3]=sz_img_in[3];
 
     V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
     image1Dc_spine = new unsigned char [size_page*3];
@@ -1214,9 +1195,10 @@ bool manual_proofread_dialog::save_current_project()
     QString output_label_name="auto_manual_label.v3draw";
     QString output_marker_name="auto_manual.marker";
     QString output_csv_name="auto_manual.csv";
+    QString output_eswc_name="auto_manual.eswc";
     if (!save_project_results(callback,sz_img,label_group,baseDir,input_swc_name,
         input_image_name,eswc_flag,neuron,LList_in,auto_para.channel,auto_para.bg_thr,auto_para.max_dis,
-                           seg_id,marker_id,output_label_name,output_marker_name,output_csv_name))
+                seg_id,marker_id,output_label_name,output_marker_name,output_csv_name,output_eswc_name))
 
     {
         QMessageBox::information(0,MAINWINNAME,"Current results saving error!",
