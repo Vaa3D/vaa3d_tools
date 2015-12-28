@@ -127,12 +127,61 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
     if (func_name == tr("BatchTest"))
 	{
 
-       Batch_Test1(callback, input, output,1,0);
+        return   Batch_Test1(callback, input, output,1,0);
 
-       return Batch_Test1(callback, input, output,2,0);
+        //Batch_Test1(callback, input, output,2,0);
 
      //  return Batch_Test2000(callback, input, output,1,0);
 	}
+
+    if (func_name == tr("BigNSWC2IMG"))
+	{
+
+        return   BigN_swc2img(callback, input, output);
+
+        //Batch_Test1(callback, input, output,2,0);
+
+     //  return Batch_Test2000(callback, input, output,1,0);
+	}
+
+
+
+    if (func_name == tr("BigNScore"))
+	{
+
+       //Batch_Test1(callback, input, output,1,0);
+
+      // Dist_Score_BigN(callback, input, output,1,0);
+
+       // Dist_Score_BigN(callback, input, output,2,0);
+
+        Rank_Score_BigN(callback,input,output,1,0);
+
+        return Rank_Score_BigN(callback,input,output,2,0);
+
+     //  return Dist_Score_BigN(callback, input, output,2,0);
+
+     //  return Batch_Test2000(callback, input, output,1,0);
+	}
+
+    if (func_name == tr("OPFScore"))
+	{
+
+       //Batch_Test1(callback, input, output,1,0);
+
+      // Dist_Score_OPF(callback, input, output,1,0);
+
+       //return Dist_Score_OPF(callback, input, output,2,0);
+
+       Rank_Score_OPF(callback, input, output,1,0);
+
+       return Rank_Score_OPF(callback, input, output,2,0);
+
+
+
+     //  return Batch_Test2000(callback, input, output,1,0);
+	}
+
 
     if (func_name == tr("BatchTest2000"))
 	{
@@ -140,6 +189,29 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 		return Batch_Test2000(callback, input, output,1,0);
 	}
 
+
+
+
+    if (func_name == tr("OPF"))
+	{
+
+        Batch_Test_OPF(callback, input, output,1,0);
+
+		//return Batch_Test_OPF(callback, input, output,2,0);
+
+		return Batch_Test_OPF(callback, input, output,2,0);
+
+		//return Batch_Test2000(callback, input, output,1,0);
+	}
+
+	if (func_name == tr("Retinal"))
+	{
+
+        //Batch_Trace_Retinal(callback,input,output,1);
+
+        return Batch_Trace_Retinal(callback,input,output);
+
+	}
 
 
 

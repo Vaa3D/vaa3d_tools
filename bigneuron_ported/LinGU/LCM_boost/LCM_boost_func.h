@@ -424,6 +424,26 @@ int  app2trace_marker(V3DPluginCallback2 & callback, char *infile, char * marker
 
 bool General_Boost1(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm2);
 
+bool Batch_Test_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int bm1, int bm2);
+
+bool Dist_Score_BigN(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2);
+
+int nst_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile, char * outfile);
+
+bool Dist_Score_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2);
+
+bool Rank_Score_BigN(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2);
+
+int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char *objfile2, char * outfile);
+
+bool Rank_Score_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2);
+
+bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+bool BigN_swc2img(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
 
 #endif
 

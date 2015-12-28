@@ -44,7 +44,7 @@ using namespace cv::ml;
 
 #define base_method 1
 
-#define base_line_open 1
+#define base_line_open 0
 
 #define memory_efficient 1
 
@@ -10318,7 +10318,8 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
   //  cin.get();
 
-
+    for(int i = 0; i < n_samp; i++)
+        resp_tst[i] = -1;
 
 
 
@@ -10399,6 +10400,8 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
                     cout << " Pass 11548 " << endl;
 
+                    if(node == 7)
+                        return 1;
 
 
 
@@ -13934,6 +13937,17 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
 
         break;
 
+//    case 8:
+
+  //      plugin_name = "plugins/neuron_tracing/MST_tracing/libneurontracing_mst.so";  //for Linux
+
+    //    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+     //   func_name = "tracing_func";
+
+      //  break;
+
+
     case 8:
 
         plugin_name = "plugins/neuron_tracing/MST_tracing/libneurontracing_mst.so";  //for Linux
@@ -13943,7 +13957,6 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
         func_name = "tracing_func";
 
         break;
-
 
 
     default:
@@ -13997,17 +14010,6 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
         cout << " Successfully call the base tracer" << endl;
 
     }
-
-//    cin.get();
-
-
-
-
-    //call the reliability score method
-
-    // push the swc file in
-
-    //infiles.push_back(infile);
 
     infiles.push_back(outfile);
 
@@ -16661,21 +16663,21 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
     	string roi_fn = infile;
 
-    	roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
+    	roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Roi/roi_" + roi_fn + convert.str() + ".v3draw";
 
         string save_conf_fn = infile;
 
-     	save_conf_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Conf/" + base_method_str + "/conf_" + save_conf_fn + convert.str() + ".v3draw";
+     	save_conf_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Conf/" + base_method_str + "/conf_" + save_conf_fn + convert.str() + ".v3draw";
 
 
         string save_seg_fn = infile;
 
-     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Seg/" + base_method_str + "/seg_" + save_seg_fn + convert.str() + ".v3draw";
+     	save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Seg/" + base_method_str + "/seg_" + save_seg_fn + convert.str() + ".v3draw";
 
 
         string save_swc_fn = infile;
 
-     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+     	save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
 
 
 
@@ -16795,7 +16797,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             string swc_fn = infile;
 
-            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
+            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
 
           //  cin.get();
 
@@ -16834,7 +16836,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
                     string app2_swc_fn = infile;
 
-                    app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+                    app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
 
                     app2trace1(callback, (char*)save_conf_fn.c_str(), (char*)app2_swc_fn.c_str());
 
@@ -16867,7 +16869,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             string swc_fn = infile;
 
-            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
+            swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
 
             if(isApp2[i_img])
             {
@@ -16890,7 +16892,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
                 if(isApp2[i_img])
                 {
 
-                    app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
+                    app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + convert.str() + ".swc";
 
                     app2trace1(callback, (char*)save_conf_fn.c_str(), (char*)app2_swc_fn.c_str());
 
@@ -17523,6 +17525,12 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
 
             break;
 
+       case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
         default:
 
             break;
@@ -17584,10 +17592,10 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
     */
 
 
-    double cell_body[4 * 3] = {526.982, 443.69, 29.117, 298.190, 152.139, 17.862, 1137,  833, 12,452.555, 23.714, 13.218};
+  //  double cell_body[4 * 3] = {526.982, 443.69, 29.117, 298.190, 152.139, 17.862, 1137,  833, 12,452.555, 23.714, 13.218};
 
 
-    for(int i_img = 1; i_img < 44; i_img ++)
+    for(int i_img = 2; i_img < 43; i_img ++)
     {
 
         ostringstream convert;
@@ -17602,45 +17610,19 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
 
         save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
 
-
         Mat image1;
 
         cout << im_file << endl;
 
         cout << save_swc_fn << endl;
 
-       // cin.get();
-
-
         if(!isTest[i_img])
             continue;
 
-
         double current_cellbody[3];
-
-      //  current_cellbody[0] = cell_body[(i_img - 1) * 3];
-
-      //  current_cellbody[1] = cell_body[(i_img - 1) * 3 + 1];
-
-      //  current_cellbody[2] = cell_body[(i_img - 1) * 3 + 2];
-
-        //current_cellbody[0] = 115;
-
-        //current_cellbody[1] = 397;
-
-        //current_cellbody[2] = 193;
 
 
         Call_General_Boost(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2);
-
-
-      //  if(diadiem_open)
-        //  Call_General_Boost_Diadiem(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2, current_cellbody);
-       // else
-         // Call_General_Boost(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2);
-
-
-
 
     }
 
@@ -17681,6 +17663,8 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
         xv[i] = 0;
 
     cout << "Initialise " << endl;
+
+    //cin.get();
 
 
     for(int z = 0; z < image1.size[2]; z++)
@@ -17811,6 +17795,8 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << "offset is " << bz[0] << endl;
 
+   // cin.get();
+
     // get the region of interest
 
     Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
@@ -17851,18 +17837,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     image1.release();
 
-
-    QString image_name = infile;
-
-    QString img_folder = QFileInfo(image_name).path()+("/");
-
-    string img_fn = img_folder.toStdString() + "tmp_cache_img.v3draw";
-
-    saveMat(image,(char*)img_fn.c_str());
-
-    Mat conf_img;
-
-    // now use either the multiscale enhancement or the GWDT to collect
+        // now use either the multiscale enhancement or the GWDT to collect
     // the base image
 
     int t1,t2;
@@ -17945,6 +17920,13 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
             break;
 
+        case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
+
         default:
 
             break;
@@ -17956,9 +17938,29 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
     }
 
 
+
+    QString image_name = infile;
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+
     string img_file_name = QFileInfo(image_name).completeBaseName().toStdString();
 
     cout << img_file_name << endl;
+
+    string img_fn = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_cache_img.v3draw";
+
+    cout << img_fn << endl;
+
+    //cin.get();
+
+    saveMat(image,(char*)img_fn.c_str());
+
+    Mat conf_img;
+
+
+
+
 
 
     if(bm1 == 1)
@@ -17971,7 +17973,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         sprintf(dataset,"BigNmEh");
 
-        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
 
         app2_trace(image, (char*)swc_file_raw.c_str());
 
@@ -17993,7 +17995,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         sprintf(dataset,"BigNFM");
 
-        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
 
         app2_trace(image, (char*)swc_file_raw.c_str());
 
@@ -18005,19 +18007,25 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     if(bm1 == 3)
     {
-        // swc2conf((char*)roi_fn.c_str(), conf_img);
+        //
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
 
-        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
-
-        swc2conf(callback,(char*)swc_file_raw.c_str(),conf_img,bm2);
+        swc2conf1(callback,(char*)img_fn.c_str(),conf_img,bm2);
 
         t1 = 20;
+
 
         t2 = 10;
 
         sprintf(dataset,"BigNtrace");
 
+      //  cout << " Complete swc2 conf " << endl;
+
+      //  cin.get();
+
     }
+
+    //cin.get();
 
 
     cout << "Complete the base method" << endl;
@@ -18028,8 +18036,14 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << "complete the LCM " << endl;
 
+   // cin.get();
+
     // output the result into the harddisk
     trace_img3(callback, seg_img, image, offset, 15, outfile_swc);
+
+    cout << " complete tracing the image " << endl;
+
+   // cin.get();
 
 
     // the base line option saves the related data into the hard disk
@@ -18038,69 +18052,69 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         string roi_fn = img_file_name;
 
-        roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Roi/roi_" + roi_fn + ".v3draw";
+        roi_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Roi/roi_" + roi_fn + ".v3draw";
 
         string save_conf_fn = img_file_name;
 
-        save_conf_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Conf/" + base_method_str + "/conf_" + save_conf_fn + ".v3draw";
+        save_conf_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Conf/" + base_method_str + "/conf_" + save_conf_fn + ".v3draw";
 
 
         string save_seg_fn = img_file_name;
 
-        save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Seg/" + base_method_str + "/seg_" + save_seg_fn + ".v3draw";
+        save_seg_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Seg/" + base_method_str + "/seg_" + save_seg_fn + ".v3draw";
 
 
         string app2_swc_fn = img_file_name;
 
-        app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + ".swc";
+        app2_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + ".swc";
 
 
         string base_swc_fn = img_file_name;
 
-        base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Base_swc/" + base_method_str + "/base_swc_" + base_swc_fn + ".swc";
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Base_swc/" + base_method_str + "/base_swc_" + base_swc_fn + ".swc";
 
 
 
         string app2_swc_full_fn = img_file_name;
 
-        app2_swc_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_full_fn + "_full.swc";
+        app2_swc_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_full_fn + "_full.swc";
 
 
         string app2_swc_raw_full_fn = img_file_name;
 
-        app2_swc_raw_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_full_fn + "_full.swc";
+        app2_swc_raw_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_full_fn + "_full.swc";
 
 
         string app2_swc_raw_fn = img_file_name;
 
-        app2_swc_raw_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_fn + ".swc";
+        app2_swc_raw_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_fn + ".swc";
 
 
 
         string app2_img_fn = img_file_name;
 
-        app2_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_img/" + base_method_str + "/app2_swc_" + app2_img_fn + ".v3draw";
+        app2_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc_img/" + base_method_str + "/app2_swc_" + app2_img_fn + ".v3draw";
 
 
         string app2_raw_img_fn = img_file_name;
 
-        app2_raw_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_img/" + base_method_str + "/app2_raw_swc_" + app2_raw_img_fn + ".v3draw";
+        app2_raw_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc_img/" + base_method_str + "/app2_raw_swc_" + app2_raw_img_fn + ".v3draw";
 
 
         string swc_img_fn = img_file_name;
 
-        swc_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC_img/" + base_method_str + "/swc_" + swc_img_fn + ".v3draw";
+        swc_img_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/SWC_img/" + base_method_str + "/swc_" + swc_img_fn + ".v3draw";
 
 
         string swc_full_fn = img_file_name;
 
-        swc_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/swc_" + swc_full_fn + "_full.swc";
+        swc_full_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/SWC/" + base_method_str + "/swc_" + swc_full_fn + "_full.swc";
 
 
 
         string roi_offset_fn = img_file_name;
 
-        roi_offset_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Roi/roi_" + roi_offset_fn + ".txt";
+        roi_offset_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/Roi/roi_" + roi_offset_fn + ".txt";
 
         Mat conf_img1;
 
@@ -18132,6 +18146,10 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
         swc2image(tracing_image, outfile_swc);
 
         saveMat(tracing_image,(char*)swc_img_fn.c_str());
+
+        cout << swc_img_fn << endl;
+
+   //     cin.get();
 
         // save the traced image
 
@@ -18189,8 +18207,8 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         cout << mark_fn << endl;
 
-        if(diadiem_open)
-        {
+     //   if(diadiem_open)
+     //   {
 
             trace_img3_diadiem(callback,seg_img,image,offset1,15,(char*)mark_fn.c_str(),(char*)swc_full_fn.c_str());
 
@@ -18198,7 +18216,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
             trace_img_diadiem(callback, image, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_raw_full_fn.c_str());
 
-        }
+      //  }
 
 
 
@@ -18387,6 +18405,12 @@ bool Batch_Test2000(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
             break;
 
+         case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
         default:
 
             break;
@@ -18397,55 +18421,14 @@ bool Batch_Test2000(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
     }
 
-    int isTest[46];
+    int isTest[2000];
 
-    int isApp2[46];
-
-    isApp2[5] = 0;
-
-    isApp2[8] = 0;
-
-    isApp2[9] = 0;
-
-
-    for(int i = 0; i < 47; i ++)
+    for(int i = 0; i < 2000; i ++)
         isTest[i] = 1;
 
 
-    isTest[3] = 0;
 
-    isTest[5] = 0;
-
-    isTest[8] = 0;
-
-    isTest[9] = 0;
-
-    isTest[10] = 0;
-
-    isTest[20] = 0;
-
-    // isTest[21] = 0;
-
-
-    /*
-
-    isTest[1] = 0;
-
-    isTest[2] = 0;
-
-    isTest[3] = 0;
-
-    isTest[4] = 0;
-
-    isTest[5] = 0;
-
-    isTest[6] = 0;
-
-    isTest[8] = 0;
-
-    */
-
-    for(int i_img = 1; i_img < 2001; i_img ++)
+    for(int i_img = 22; i_img < 2001; i_img ++)
     {
 
         ostringstream convert;
@@ -18460,7 +18443,7 @@ bool Batch_Test2000(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
         string save_swc_fn = infile;
 
-        save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+        save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst2000/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
 
 
         Mat image1;
@@ -18596,6 +18579,11 @@ int LCM_classify_CF(Mat feature_cc, double * resp_tst, int * node_tst, char * da
 
 
                     cout << " Pass 11548 " << endl;
+
+                    //return
+
+
+                    //cin.get();
 
                     cout << " i is " << i << endl;
 
@@ -19331,7 +19319,11 @@ int trace_img3_diadiem(V3DPluginCallback2 & callback, cv::Mat seg_img, cv::Mat i
 
 //    cin.get();
 
-    app2trace_marker(callback,(char *)tmp_file.c_str(), mark_fn, outfile_swc);
+    if(diadiem_open)
+        app2trace_marker(callback,(char *)tmp_file.c_str(), mark_fn, outfile_swc);
+    else
+        app2trace1(callback,(char *)tmp_file.c_str(),outfile_swc);
+
 
     remove((char *)tmp_file.c_str());
 
@@ -19496,7 +19488,10 @@ int trace_img_diadiem(V3DPluginCallback2 & callback, cv::Mat image, int offset[]
 
     saveMat(image1,(char *)tmp_file.c_str());
 
-    app2trace_marker(callback,(char *)tmp_file.c_str(), mark_fn, outfile_swc);
+    if(diadiem_open)
+        app2trace_marker(callback,(char *)tmp_file.c_str(), mark_fn, outfile_swc);
+    else
+        app2trace1(callback,(char *)tmp_file.c_str(), outfile_swc);
 
     remove((char *)tmp_file.c_str());
 
@@ -19543,4 +19538,2100 @@ bool General_Boost1(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int b
 
 }
 
+
+// call the function to batch process  the whole data
+bool Batch_Test_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+
+    for(int i_img = 4; i_img < 10; i_img ++)
+    {
+
+        ostringstream convert;
+
+        convert << i_img;
+
+        string im_file = infile;
+
+        im_file = "/media/gulin/E402023602020DEC/Data/OPF_data/data/" + im_file + "_" + convert.str() + ".v3draw";
+
+        string save_swc_fn = infile;
+
+        save_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+
+
+
+        cout << im_file << endl;
+
+        cout << save_swc_fn << endl;
+
+        //cin.get();
+
+        string gt_swc_file;
+
+        gt_swc_file = "/media/gulin/E402023602020DEC/Data/OPF_data/Gold Standard Reconstructions/OP_" + convert.str() + ".swc";
+
+
+        string gt_img_file;
+
+        gt_img_file = "/media/gulin/E402023602020DEC/Data/OPF_data/gt/gt_" + convert.str() + ".v3draw";
+
+        Mat image;
+
+        loadMat(callback,image,(char*)im_file.c_str());
+
+        image = Scalar::all(0);
+
+        swc2image(image,(char*)gt_swc_file.c_str());
+
+        saveMat(image,(char*)gt_img_file.c_str());
+
+       image.release();
+
+       Call_General_Boost_OPF(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2);
+
+
+        // generate the image for the groundtruth swc
+
+
+
+
+    }
+
+
+    return true;
+}
+
+
+
+
+
+bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int bm1, int bm2)
+{
+	unsigned char * inimg1d = 0;
+
+    Mat image1;
+
+
+    loadMat(callback,image1, infile);
+
+    int raw_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        raw_sz[i] = image1.size[i];
+
+
+    // shrink the image if possible
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+    cout << "Initialise " << endl;
+
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+      for(int i = 0; i < image1.size[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+       }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+    }
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+    int offset[3];
+
+    if(checkin > 0)
+    {
+
+        offset[0] = bx[0];
+
+        offset[1] = by[0];
+
+        offset[2] = bz[0];
+
+    }else
+    {
+
+        offset[0] = 0;
+
+        offset[1] = 0;
+
+        offset[2] = 0;
+
+
+    }
+
+
+    cout << "offset is " << bx[0] << endl;
+
+    cout << "offset is " << by[0] << endl;
+
+    cout << "offset is " << bz[0] << endl;
+
+    // get the region of interest
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+    cout << img_sz_new[0] << endl;
+
+    cout << img_sz_new[1] << endl;
+
+    cout << img_sz_new[2] << endl;
+
+   // cout << image1.size[0] << endl;
+
+
+
+    //cin.get();
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = image1.size[1] - y - by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    image1.release();
+
+    //cin.get();
+
+
+    QString image_name = infile;
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+    string img_fn = img_folder.toStdString() + "tmp_cache_img.v3draw";
+
+    saveMat(image,(char*)img_fn.c_str());
+
+    Mat conf_img;
+
+    // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+
+
+    string base_method_str;
+
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+    string img_file_name = QFileInfo(image_name).completeBaseName().toStdString();
+
+    cout << img_file_name << endl;
+
+
+    if(bm1 == 1)
+    {
+        multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img);
+
+        t1 = 50;
+
+        t2 = 20;
+
+        sprintf(dataset,"BigNmEh");
+
+        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+
+    }
+
+    if(bm1 == 2)
+    {
+
+        fastMarch((char*)img_fn.c_str(), conf_img);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNFM");
+
+        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
+    if(bm1 == 3)
+    {
+        // swc2conf((char*)roi_fn.c_str(), conf_img);
+
+        string swc_file_raw = img_folder.toStdString() + "tmp_swc.swc";
+
+        swc2conf(callback,(char*)swc_file_raw.c_str(),conf_img,bm2);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNtrace");
+
+    }
+
+
+    cout << "Complete the base method" << endl;
+
+    Mat seg_img;
+
+    LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+    // output the result into the harddisk
+    trace_img3(callback, seg_img, image, offset, 15, outfile_swc);
+
+
+    // the base line option saves the related data into the hard disk
+    if(base_line_flag)
+    {
+
+        string roi_fn = img_file_name;
+
+        roi_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Roi/roi_" + roi_fn + ".v3draw";
+
+        string save_conf_fn = img_file_name;
+
+        save_conf_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Conf/" + base_method_str + "/conf_" + save_conf_fn + ".v3draw";
+
+
+        string save_seg_fn = img_file_name;
+
+        save_seg_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Seg/" + base_method_str + "/seg_" + save_seg_fn + ".v3draw";
+
+
+        string app2_swc_fn = img_file_name;
+
+        app2_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_fn + ".swc";
+
+
+        string base_swc_fn = img_file_name;
+
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Base_swc/" + base_method_str + "/base_swc_" + base_swc_fn + ".swc";
+
+
+
+        string app2_swc_full_fn = img_file_name;
+
+        app2_swc_full_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc/" + base_method_str + "/app2_swc_" + app2_swc_full_fn + "_full.swc";
+
+
+        string app2_swc_raw_full_fn = img_file_name;
+
+        app2_swc_raw_full_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_full_fn + "_full.swc";
+
+
+        string app2_swc_raw_fn = img_file_name;
+
+        app2_swc_raw_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + app2_swc_raw_fn + ".swc";
+
+
+
+        string app2_img_fn = img_file_name;
+
+        app2_img_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc_img/" + base_method_str + "/app2_swc_" + app2_img_fn + ".v3draw";
+
+
+        string app2_raw_img_fn = img_file_name;
+
+        app2_raw_img_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc_img/" + base_method_str + "/app2_raw_swc_" + app2_raw_img_fn + ".v3draw";
+
+
+        string swc_img_fn = img_file_name;
+
+        swc_img_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC_img/" + base_method_str + "/swc_" + swc_img_fn + ".v3draw";
+
+
+        string swc_full_fn = img_file_name;
+
+        swc_full_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC/" + base_method_str + "/swc_" + swc_full_fn + "_full.swc";
+
+
+
+        string roi_offset_fn = img_file_name;
+
+        roi_offset_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Roi/roi_" + roi_offset_fn + ".txt";
+
+        Mat conf_img1;
+
+        if(bm1 == 1)
+        {
+            multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img1);
+
+        }
+
+        if(bm1 == 2)
+        {
+
+            fastMarch((char*)img_fn.c_str(), conf_img1);
+
+        }
+
+        saveMat(image,(char*)roi_fn.c_str());
+
+        saveMat(seg_img,(char*)save_seg_fn.c_str());
+
+        cout << save_seg_fn.c_str() <<  endl;
+
+       // cin.get();
+
+        saveMat(conf_img1,(char*)save_conf_fn.c_str());
+
+        // trace the neuron with base method
+
+        app2trace1(callback,(char*)save_conf_fn.c_str(),(char*)app2_swc_fn.c_str());
+
+        Mat tracing_image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+        swc2image(tracing_image, outfile_swc);
+
+        saveMat(tracing_image,(char*)swc_img_fn.c_str());
+
+        // save the traced image
+
+        tracing_image = Scalar::all(0);
+
+        if(bm1 < 3)
+        {
+
+            swc2image(tracing_image,(char*)app2_swc_fn.c_str());
+
+            saveMat(tracing_image,(char*)app2_img_fn.c_str());
+
+
+        }
+        else
+        {
+
+            swc2conf1(callback,(char*)roi_fn.c_str(),tracing_image,bm2);
+
+            saveMat(seg_img,(char*)app2_img_fn.c_str());
+
+        }
+
+        // trace the raw image
+
+        app2trace1(callback,(char*)roi_fn.c_str(),(char*)app2_swc_raw_fn.c_str());
+
+        tracing_image = Scalar::all(0);
+
+        swc2image(tracing_image,(char*)app2_swc_raw_fn.c_str());
+
+        saveMat(tracing_image,(char*)app2_raw_img_fn.c_str());
+
+
+        // trace the base method
+
+        app2_trace(conf_img1,(char*)base_swc_fn.c_str());
+
+
+
+        // trace the neuron with DIADIEM
+        int offset1[3];
+
+        offset1[0] = bx[0];
+
+        offset1[1] = by[0];
+
+        offset1[2] = bz[0];
+
+
+
+        string mark_fn = img_file_name;
+
+        mark_fn = img_folder.toStdString()  +  mark_fn + ".marker";
+
+        cout << mark_fn << endl;
+
+       // if(diadiem_open)
+       // {
+
+            trace_img3_diadiem(callback,seg_img,image,offset1,15,(char*)mark_fn.c_str(),(char*)swc_full_fn.c_str());
+
+            trace_img_diadiem(callback, conf_img1, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_full_fn.c_str());
+
+            trace_img_diadiem(callback, image, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_raw_full_fn.c_str());
+
+            cout << app2_swc_raw_full_fn << endl;
+
+            cout << app2_swc_full_fn << endl;
+
+            cout << swc_full_fn << endl;
+
+         //   cin.get();
+
+       // }
+
+
+
+
+
+        cout << roi_offset_fn << endl;
+
+        //    cin.get();
+
+        ofstream myfile ((char*)roi_offset_fn.c_str());
+
+        myfile <<  by[0] << "\n";
+
+        myfile <<  bx[0] << "\n";
+
+        myfile <<  bz[0] << "\n";
+
+        cout << "offset is " << by[0] << endl;
+
+        cout << "offset is " << bx[0] << endl;
+
+        cout << "offset is " << bz[0] << endl;
+
+        myfile.close();
+
+        // cin.get();
+
+
+        tracing_image.release();
+
+    }
+
+
+    remove((char*)img_fn.c_str());
+
+    delete [] dataset;
+
+	return true;
+}
+
+// call the function to batch process  the whole data
+bool Dist_Score_BigN(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+    int isTest[46];
+
+    int isApp2[46];
+
+    isApp2[5] = 0;
+
+    isApp2[8] = 0;
+
+    isApp2[9] = 0;
+
+
+    for(int i = 0; i < 47; i ++)
+        isTest[i] = 1;
+
+
+    isTest[3] = 0;
+
+    isTest[5] = 0;
+
+    isTest[8] = 0;
+
+    isTest[9] = 0;
+
+    isTest[10] = 0;
+
+    isTest[20] = 0;
+
+    for(int i_img = 1; i_img < 43; i_img ++)
+    {
+
+        ostringstream convert;
+
+        convert << i_img;
+
+        string gt_swc_fn = infile;
+
+        gt_swc_fn = "/media/gulin/E402023602020DEC/Data/BigN/" + gt_swc_fn + "_" + convert.str() + ".swc";
+
+
+
+        string base_swc_fn = infile;
+
+      //  if(bm1 == 1)
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+       // else
+         //   base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+        string obj_swc_fn = infile;
+
+        obj_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/swc_" + obj_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+        string base_score_fn = infile;
+
+        base_score_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Ndst_Score/" + base_method_str + "/base_score_" + base_score_fn + convert.str() + ".txt";
+
+
+        string obj_score_fn = infile;
+
+        obj_score_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Ndst_Score/" + base_method_str + "/our_score_" + obj_score_fn + convert.str() + ".txt";
+
+
+        if(!isTest[i_img])
+            continue;
+
+        nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)base_swc_fn.c_str(), (char*)base_score_fn.c_str());
+
+        nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)obj_swc_fn.c_str(), (char*)obj_score_fn.c_str());
+
+        //cin.get();
+
+
+
+    }
+
+    return true;
+}
+
+
+int nst_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile, char * outfile)
+{
+
+    // call neuron distance
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    func_name = "neuron_distance";
+
+
+    plugin_name = "plugins/neuron_utilities/neuron_distance/libneuron_dist.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+
+    V3DPluginArgItem arg;
+
+    V3DPluginArgItem arg1;
+
+    V3DPluginArgItem arg2;
+
+    V3DPluginArgList input;
+
+    V3DPluginArgList output;
+
+
+
+    std::vector<char*> infiles;
+
+    infiles.push_back(gtfile);
+
+    infiles.push_back(objfile);
+
+    arg.p =  &infiles;
+
+    input << arg;
+
+
+    std::vector<char*> outfiles;
+
+    outfiles.push_back(outfile);
+
+    arg2.p =  & outfiles;
+
+    output<< arg2;
+
+
+   // cout << gtfile << endl;
+
+   // cout << objfile << endl;
+
+  //  cout << outfile << endl;
+
+
+   // cin.get();
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input,output))
+    {
+
+        v3d_msg("Fail to call the Neuron Score Distance Metric");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call Neuron Score Distance Metric" << endl;
+
+
+        //string tmp_ini_fn = infile;
+
+
+        //tmp_ini_fn = tmp_ini_fn + "_ini.swc";
+
+        //cin.get();
+
+        //remove((char*)tmp_ini_fn.c_str());
+
+        //cin.get();
+
+
+        return 1;
+
+    }
+
+
+}
+
+bool Dist_Score_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+
+    for(int i_img = 4; i_img < 10; i_img ++)
+    {
+        ostringstream convert;
+
+        convert << i_img;
+
+        string gt_swc_fn = infile;
+
+        gt_swc_fn = "/media/gulin/E402023602020DEC/Data/OPF/OP_" + convert.str() + ".swc";
+
+
+
+        string base_swc_fn = infile;
+
+      //  if(bm1 == 1)
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+       // else
+         //   base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+        string obj_swc_fn = infile;
+
+        obj_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC/" + base_method_str + "/swc_" + obj_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+        string base_score_fn = infile;
+
+        base_score_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Ndst_Score/" + base_method_str + "/base_score_" + base_score_fn + convert.str() + ".txt";
+
+
+        string obj_score_fn = infile;
+
+        obj_score_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Ndst_Score/" + base_method_str + "/our_score_" + obj_score_fn + convert.str() + ".txt";
+
+
+
+        nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)base_swc_fn.c_str(), (char*)base_score_fn.c_str());
+
+        nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)obj_swc_fn.c_str(), (char*)obj_score_fn.c_str());
+
+
+    }
+
+    return true;
+
+}
+
+
+bool Rank_Score_BigN(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+    int isTest[46];
+
+    int isApp2[46];
+
+    isApp2[5] = 0;
+
+    isApp2[8] = 0;
+
+    isApp2[9] = 0;
+
+
+    for(int i = 0; i < 47; i ++)
+        isTest[i] = 1;
+
+
+    isTest[3] = 0;
+
+    isTest[5] = 0;
+
+    isTest[8] = 0;
+
+    isTest[9] = 0;
+
+    isTest[10] = 0;
+
+    isTest[20] = 0;
+
+    for(int i_img = 1; i_img < 43; i_img ++)
+    {
+
+        ostringstream convert;
+
+        convert << i_img;
+
+        string gt_swc_fn = infile;
+
+        gt_swc_fn = "/media/gulin/E402023602020DEC/Data/BigN/" + gt_swc_fn + "_" + convert.str() + ".swc";
+
+
+
+        string base_swc_fn = infile;
+
+      //  if(bm1 == 1)
+       // base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + ".swc";
+
+
+       // else
+         //   base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+        string obj_swc_fn = infile;
+
+        //obj_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/swc_" + obj_swc_fn + "_" + convert.str() + "_full.swc";
+
+        obj_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + obj_swc_fn + convert.str() + ".swc";
+
+        string rank_score_fn = infile;
+
+        rank_score_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/Ndst_Score/" + base_method_str + "/rank_" + rank_score_fn + convert.str() + ".ano";
+
+
+        if(!isTest[i_img])
+            continue;
+
+        rank_score(callback, (char*)gt_swc_fn.c_str(), (char*)base_swc_fn.c_str(),(char*)obj_swc_fn.c_str(), (char*)rank_score_fn.c_str());
+
+    }
+
+    return true;
+}
+
+
+
+int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char *objfile2, char * outfile)
+{
+
+    // call neuron distance
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    QString func_name1 = "batch_compute";
+
+    QString func_name2 = "global_retrieve";
+
+    plugin_name = "plugins/blastneuron/libblastneuron.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+
+    // build a ano file at first
+
+    string ano_file = "tmp_data.ano";
+
+    ofstream myfile ((char*)ano_file.c_str());
+
+    myfile << "SWCFILE=" <<  objfile1 << endl;
+
+    myfile << "SWCFILE=" <<  objfile2 << "\n" << endl;
+
+    myfile.close();
+
+ //   cin.get();
+
+
+
+    //V3DPluginArgItem arg;
+
+    V3DPluginArgItem arg1;
+
+    V3DPluginArgItem arg2;
+
+    V3DPluginArgList input1;
+
+    V3DPluginArgList output1;
+
+
+    V3DPluginArgList input2;
+
+    V3DPluginArgList output2;
+
+
+   std::vector<char*> paralist1;
+
+   string paras1 = "#i tmp_data.ano #o ftrs.nfb";
+
+   char para_list1_char[100];
+
+   strcpy(para_list1_char,paras1.c_str());
+
+   paralist1.push_back(para_list1_char);
+
+   arg1.p = &paralist1;
+
+   input1 << arg1;
+
+   input1 << arg1;
+
+   // cin.get();
+
+    cout << func_name1.toStdString() << endl;
+
+    cout << para_list1_char << endl;
+
+  //  cin.get();
+
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name1, input1,output1))
+    {
+
+
+       // cin.get();
+
+        v3d_msg("Fail to generate blast neuron features");
+
+        remove(ano_file.c_str());
+
+        return 0;
+
+    }
+    else
+    {
+
+        //cin.get();
+
+        remove((char*)ano_file.c_str());
+
+        cout << " Successfully generate blast neuron features" << endl;
+
+        std::vector<char*> paralist2;
+
+
+
+
+        string gtfile_str = gtfile;
+
+        //string gtfile_str = "trn_1.swc";
+
+        string outfile_str = outfile;
+
+        //string outfile_str = "ab.ano";
+
+        string paras2 = "#d ftrs.nfb #q " + gtfile_str + " #n 2 #m 1,2,4 #o " + outfile_str;
+
+       // string paras2 = "#d ftrs.nfb #q trn_1.swc #n 2 #o result.ano #m 1,2,4";
+
+
+    //    string paras2 = "#d ftrs.nfb #q /media/gulin/E402023602020DEC/Data/BigN/trn_1.swc #n 2 #m 1,2,4 #o /media/gulin/E402023602020DEC/Data/BigNtst/Ndst_Score/multiScale/rank_trn1.ano";
+
+        //cout << paras2 << endl;
+
+        //cin.get();
+
+        char para_list2_char[1000];
+
+        strcpy(para_list2_char,paras2.c_str());
+
+        paralist2.push_back(para_list2_char);
+
+        arg2.p = &paralist2;
+
+        input2 << arg2;
+
+        input2 << arg2;
+
+        cout << func_name2.toStdString() << endl;
+
+        cout << paras2 << endl;
+
+       // cin.get();
+
+        if (! callback.callPluginFunc(full_plugin_name, func_name2, input2,output2))
+        {
+
+
+
+            remove("ftrs.nfb");
+
+            v3d_msg("Fail to rank blast neurons");
+
+            return 0;
+
+        }
+
+       // cin.get();
+
+        remove("ftrs.nfb");
+
+        return 1;
+
+    }
+
+}
+
+
+
+bool Rank_Score_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+
+    for(int i_img = 4; i_img < 10; i_img ++)
+    {
+        ostringstream convert;
+
+        convert << i_img;
+
+        string gt_swc_fn = infile;
+
+        gt_swc_fn = "/media/gulin/E402023602020DEC/Data/OPF/OP_" + convert.str() + ".swc";
+
+
+
+        string base_swc_fn = infile;
+
+      //  if(bm1 == 1)
+        //base_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+        base_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/APP2_swc/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + ".swc";
+
+       // else
+         //   base_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/APP2_swc_raw/" + base_method_str + "/app2_swc_" + base_swc_fn + "_" + convert.str() + "_full.swc";
+
+
+
+        string obj_swc_fn = infile;
+
+     //   obj_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC/" + base_method_str + "/swc_" + obj_swc_fn + "_" + convert.str() + "_full.swc";
+
+        obj_swc_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/SWC/" + base_method_str + "/boosted_swc_" + obj_swc_fn + convert.str() + ".swc";
+
+
+
+
+        string rank_score_fn = infile;
+
+        rank_score_fn = "/media/gulin/E402023602020DEC/Data/OPFtst/Ndst_Score/" + base_method_str + "/rank_" + rank_score_fn + convert.str() + ".ano";
+
+        rank_score(callback, (char*)gt_swc_fn.c_str(), (char*)base_swc_fn.c_str(),(char*)obj_swc_fn.c_str(), (char*)rank_score_fn.c_str());
+
+    }
+
+    return true;
+
+}
+
+
+
+// call the function to batch process  the whole data
+bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+    unsigned char * inimg1d = 0;
+
+    if(input.empty()) return false;
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+    int database = atoi(infile);
+
+
+    string database_str;
+
+    int n_test;
+
+    int n_method;
+
+    switch(database)
+    {
+
+    case 1:
+
+        database_str = "DRIVE";
+
+        n_test = 20;
+
+        n_method = 5;
+
+        break;
+
+    case 2:
+
+        database_str = "STARE";
+
+        n_test = 10;
+
+        n_method = 5;
+
+        break;
+
+    case 3:
+
+        database_str = "NeuronB1";
+
+        break;
+
+    case 4:
+
+        database_str = "NeuronB2";
+
+        break;
+
+    default:
+
+        break;
+
+
+    }
+
+
+    for(int i_img = 1; i_img < n_test; i_img ++)
+    {
+
+        ostringstream convert1;
+
+        convert1 << i_img;
+
+
+        for(int i_method = 1; i_method < n_method; i_method++)
+        {
+            ostringstream convert2;
+
+            convert2 << i_method;
+
+
+            string seg_img;
+
+            seg_img = "/media/gulin/E402023602020DEC/Data/" + database_str + "/seg_imgs/seg_img_" + convert1.str() + "_m_"  + convert2.str() + "_boosted.raw";
+
+
+            string seg_img_base;
+
+            seg_img_base = "/media/gulin/E402023602020DEC/Data/" + database_str + "/seg_imgs/seg_img_" + convert1.str() + "_m_"  + convert2.str() + "_base.raw";
+
+
+
+            string save_swc_fn;
+
+            save_swc_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/SWC/boosted_swc_img_" + convert1.str() + "_m_"  + convert2.str() + ".swc";
+
+
+            string save_swc_base_fn;
+
+            save_swc_base_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/SWC/base_swc_img_" + convert1.str() + "_m_"  + convert2.str() + ".swc";
+
+
+
+            string gt_swc_fn;
+
+            gt_swc_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/gt/gt_" + convert1.str() + ".swc";
+
+
+            string base_score_fn;
+
+            base_score_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/NDistScore/base_swc_img_" + convert1.str() + "_m_"  + convert2.str() + ".txt";
+
+
+            string obj_score_fn;
+
+            obj_score_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/NDistScore/obj_swc_img_" + convert1.str() + "_m_"  + convert2.str() + ".txt";
+
+
+            string rank_score_fn;
+
+            rank_score_fn = "/media/gulin/E402023602020DEC/Data/" + database_str + "/RankScore/rank_img_" + convert1.str() + "_m_"  + convert2.str() + ".ano";
+
+            string swc_img_gt;
+
+            swc_img_gt = "/media/gulin/E402023602020DEC/Data/" + database_str + "/swc_img/gt_img_" + convert1.str() + "_m_"  + convert2.str() + ".raw";
+
+            string swc_img_base;
+
+            swc_img_base = "/media/gulin/E402023602020DEC/Data/" + database_str + "/swc_img/base_img_" + convert1.str() + "_m_"  + convert2.str() + ".raw";
+
+
+            string swc_img_boosted;
+
+            swc_img_boosted = "/media/gulin/E402023602020DEC/Data/" + database_str + "/swc_img/boosted_img_" + convert1.str() + "_m_"  + convert2.str() + ".raw";
+
+
+           // cout << seg_img.c_str() << endl;
+
+           // cout << save_swc_fn.c_str() << endl;
+
+          //  cin.get();
+
+
+            app2trace1(callback,(char*)seg_img.c_str(),(char*)save_swc_fn.c_str());
+
+            nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)save_swc_fn.c_str(), (char*)obj_score_fn.c_str());
+
+
+
+            Mat image;
+
+            loadMat(callback,image,(char*)seg_img_base.c_str());
+
+
+            cv::Scalar mean_image;
+
+            mean_image = cv::mean(image);
+
+
+            image = cv::Scalar::all(0);
+
+            swc2image(image,(char*)gt_swc_fn.c_str());
+
+            saveMat(image,(char*)swc_img_gt.c_str());
+
+
+
+            image = cv::Scalar::all(0);
+
+            swc2image(image,(char*)save_swc_fn.c_str());
+
+            saveMat(image,(char*)swc_img_boosted.c_str());
+
+
+
+         //   cin.get();
+
+
+            if(mean_image[0] < 250)
+            {
+
+                //cout << seg_img_base.c_str() << endl;
+
+                //cin.get();
+
+
+                app2trace1(callback,(char*)seg_img_base.c_str(),(char*)save_swc_base_fn.c_str());
+
+                nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)save_swc_base_fn.c_str(), (char*)base_score_fn.c_str());
+
+             //   rank_score(callback, (char*)gt_swc_fn.c_str(), (char*)save_swc_base_fn.c_str(),(char*)save_swc_fn.c_str(), (char*)rank_score_fn.c_str());
+
+
+
+                image = cv::Scalar::all(0);
+
+                swc2image(image,(char*)save_swc_base_fn.c_str());
+
+               // cout << swc_img_base.c_str() << endl;
+
+               // cin.get();
+
+                saveMat(image,(char*)swc_img_base.c_str());
+
+
+            }
+           // cin.get();
+
+
+        }
+
+
+    }
+
+
+    return true;
+
+}
+
+/*
+// call the function to batch process  the whole data
+bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+
+    if(input.empty()) return false;
+
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+       case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+    int isTest[46];
+
+    int isApp2[46];
+
+    isApp2[5] = 0;
+
+    isApp2[8] = 0;
+
+    isApp2[9] = 0;
+
+
+    for(int i = 0; i < 47; i ++)
+        isTest[i] = 1;
+
+
+    for(int i_img = 2; i_img < 43; i_img ++)
+    {
+
+        ostringstream convert;
+
+        convert << i_img;
+
+        string im_file = infile;
+
+        im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + "_" + convert.str() + ".v3draw";
+
+        string save_swc_fn = infile;
+
+        save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+
+        Mat image1;
+
+        cout << im_file << endl;
+
+        cout << save_swc_fn << endl;
+
+        if(!isTest[i_img])
+            continue;
+
+        double current_cellbody[3];
+
+
+        Call_General_Boost(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2);
+
+    }
+
+    return true;
+}
+
+*/
 
