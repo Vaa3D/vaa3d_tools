@@ -25,7 +25,16 @@ public:
 public slots:
     void sendCommand();
     void cleanAndSend(QString);
-    void connectToPV();
+    void initializeParameters();
+    void initializeS2();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
+    //             /* some parameters will be stored in a separate class described below
+    //                */
+    void initROI();//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+    void startROI(); //    set a target file location and trigger the 3D ROI.
+    void getROIData();//    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
+    //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
+    void processROIData(); //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
+    void startNextROI();//    Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
 
 private slots:
     void readPV();
@@ -34,19 +43,14 @@ private slots:
     void sessionOpened();
     void sendX();
     void cleanUp();
-//    void initConnection(); //[initialize connection to PV over TCP/IP]
-//    void initScope();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
-//             /* some parameters will be stored in a separate class described below
-//                */
-//    void initROI();//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
-//    void startROI(); //    set a target file location and trigger the 3D ROI.
-//    void getROIData();//    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
-//                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
-//    void processROIData(); //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
-//    void startNextROI();//    Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
-//    void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
+    void initConnection(); //[initialize connection to PV over TCP/IP]
 
 private:
+
+    void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
+    void connectToS2();
+
+
     QLabel *hostLabel;
     QLabel *portLabel;
     QLabel *cmdLabel;
@@ -66,22 +70,59 @@ private:
 
     QNetworkSession *networkSession;
 
-    QObject s2Params;
-    /*  this will include:
-     * optical zoom
-     * pixel size in microns
-     * pixels/line
-     * rows/image
-     * resonant/nonresonant mode
-    * Current scan xy location in microns (within field of view)
-    * xy stage position (for future use  )
-    * piezo z position
-    * stepper z position.
-    * piezo v. stepper z mode
-    * Pockels cell voltage
-    *  ???
-    * this object may include polling on its own*/
 
+
+};
+
+
+// useful parameters stored in the class S2Data
+class S2Data{
+public:
+    int resonantMode;
+    int zMode;
+    float opticalZoom;
+    float pixelSizeX;
+    float pixelSizeY;
+    float pixelSizeZ;
+    int pixelsPerLine;
+    int rowsPerImage;
+    float currentScanX;
+    float currentScanY;
+    float currentStageX;
+    float currentStageY;
+    float currentPiezoZ;
+    float currentStepperZ;
+    float currentPockelsCell;
+
+    S2Data(int resonantMode=0,
+           int zMode=0,
+           float opticalZoom=1.0,
+           float pixelSizeX=1.0,
+           float pixelSizeY=1.0,
+           float pixelSizeZ= 1.0,
+           int pixelsPerLine = 256,
+           int rowsPerImage = 256,
+           float currentScanX = 0.0,
+           float currentScanY = 0.0,
+           float currentStageX = 0.0,
+           float currentStageY = 0.0,
+           float currentPiezoZ = 0.0,
+           float currentStepperZ = 0.0,
+           float currentPockelsCell = 0.0)
+        : resonantMode(0),// 0 = nonresonant, 1 = resonant
+          opticalZoom(1.0),// 0  = stepper , 1 = piezo
+          pixelSizeX(1.0),
+          pixelSizeY(1.0),
+          pixelSizeZ(1.0),
+          pixelsPerLine(256),
+          rowsPerImage(256),
+          currentScanX(0.0),
+          currentScanY(0.0),
+          currentStageX(0.0),
+          currentStageY(0.0),
+          currentPiezoZ(0.0),
+          currentStepperZ(0.0),
+          currentPockelsCell(0.0){}
 };
 
 #endif

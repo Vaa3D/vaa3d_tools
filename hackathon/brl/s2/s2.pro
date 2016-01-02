@@ -21,4 +21,4 @@ SOURCES += $$VAA3D_DIR/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3D_DIR/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(s2)
-DESTDIR	= $$VAA3D_DIR/bin/plugins/neuron_utilities/s2/
+DESTDIR	= $$VAA3D_DIR/bin/plugins/s2/

@@ -28,28 +28,16 @@ public:
 private slots:
     void startS2();
     void startScan();
+    void loadScan();
+    void displayScan();
 private:
     QLabel *s2Label;
     QLineEdit *s2LineEdit;
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
+    QPushButton *loadScanPushButton;
     QDialogButtonBox *buttonBox1;
     S2Controller myController;
-    //QObject ss2Params;
-    /*  this will include:
-     * optical zoom
-     * pixel size in microns
-     * pixels/line
-     * rows/image
-     * resonant/nonresonant mode
-    * Current scan xy location in microns (within field of view)
-    * xy stage position (for future use  )
-    * piezo z position
-    * stepper z position.
-    * piezo v. stepper z mode
-    * Pockels cell voltage
-    *  ???
-    * this object may include polling on its own*/
 
 };
 //! [0]

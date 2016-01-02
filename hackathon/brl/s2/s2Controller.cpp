@@ -1,4 +1,4 @@
-
+#include "v3d_message.h"
 #include <QDebug>
 #include <QtGui>
 #include <QtNetwork>
@@ -6,11 +6,9 @@
 #include "s2Controller.h"
 
 
-
 //! [0]
 S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0)
 {
-//! [0]
     hostLabel = new QLabel(tr("&Server name:"));
     portLabel = new QLabel(tr("S&erver port:"));
     cmdLabel = new QLabel(tr("Command:"));
@@ -56,7 +54,7 @@ S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0
             this, SLOT(enablesendCommandButton()));
     connect(sendCommandButton, SIGNAL(clicked()),
             this, SLOT(sendCommand()));
-    connect(connectButton, SIGNAL(clicked()), this, SLOT(connectToPV()));
+    connect(connectButton, SIGNAL(clicked()), this, SLOT(initializeS2()));
 //! [2] //! [3]
     //connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(readPV()));
     connect(getReplyButton, SIGNAL(clicked()), this, SLOT(readPV()));
@@ -106,7 +104,20 @@ S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0
 //! [5]
 }
 
-void S2Controller::connectToPV()
+
+void S2Controller::initializeS2(){
+    initializeParameters();
+}
+
+void S2Controller::initConnection(){
+}
+
+void S2Controller::initializeParameters(){
+    S2Data myS2Data;
+
+}
+
+void S2Controller::connectToS2()
 {
     tcpSocket->connectToHost(hostLineEdit->text(),
     portLineEdit->text().toInt());
@@ -216,4 +227,23 @@ void S2Controller::sessionOpened()
 
     enablesendCommandButton();
 }
+
+void S2Controller::initROI(){//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+}
+
+void S2Controller::startROI(){ //    set a target file location and trigger the 3D ROI.
+}
+
+void S2Controller::getROIData(){ //    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
+       //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
+}
+
+void S2Controller::processROIData(){ //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
+}
+void S2Controller::startNextROI(){//   Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
+}
+
+
+
+
 
