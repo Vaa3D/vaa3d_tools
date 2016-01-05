@@ -2,13 +2,15 @@
 #include <QDebug>
 #include <QtGui>
 #include <QtNetwork>
+#include <QRegExp>
 #include <stdlib.h>
 #include "s2Controller.h"
 
 
 //! [0]
-S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0)
+S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0)
 {
+
     hostLabel = new QLabel(tr("&Server name:"));
     portLabel = new QLabel(tr("S&erver port:"));
     cmdLabel = new QLabel(tr("Command:"));
@@ -56,7 +58,7 @@ S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0
             this, SLOT(sendCommand()));
     connect(connectButton, SIGNAL(clicked()), this, SLOT(initializeS2()));
 //! [2] //! [3]
-    //connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(readPV()));
+    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(readPV()));
     connect(getReplyButton, SIGNAL(clicked()), this, SLOT(readPV()));
     connect(quitButton, SIGNAL(clicked()), this, SLOT(sendX()));
 //! [2] //! [4]
@@ -107,6 +109,7 @@ S2Controller::S2Controller(QWidget *parent):   QDialog(parent), networkSession(0
 
 void S2Controller::initializeS2(){
     initializeParameters();
+    connectToS2();
 }
 
 void S2Controller::initConnection(){
@@ -164,9 +167,35 @@ void S2Controller::readPV()
         return;*/
     QString pvResponse;
     pvResponse = tcpSocket->readAll( );
-    currentMessage = pvResponse;
-    statusLabel->setText(currentMessage);
-    sendCommandButton->setEnabled(true);
+    totalMessage.append(pvResponse.toLatin1());
+
+    // check for ACK and DONE?
+    // if totalMessage contains ACK and DONE,
+    // remove them and intervening characters from totalMessage
+    // place what's between them into currentMessage and emit
+    // currentMessage to a new field.
+
+    // actually need to break this out some more-  check for ACK and emit signal to
+    // update sent/waiting/done status (new attribute!)
+    // then if the same string has ACK-*-DONE, process the string.
+    // if not, this method (readPV) will change behavior to wait for DONE.
+
+    const QRegExp rx("DONE");
+    if (totalMessage.contains("DONE")) {
+        QStringList mList;
+        mList = totalMessage.split("ACK\r\n");
+        currentMessage = QString(mList.last().split("\r\nDONE\r\n").first());
+        QString displayMessage;
+        QString stringToRemove;
+        stringToRemove = currentMessage;
+        displayMessage = currentMessage;
+        stringToRemove.append("\r\nDONE\r\n").prepend("ACK\r\n");
+        statusLabel->setText(displayMessage);
+        totalMessage.remove(stringToRemove);
+        sendCommandButton->setEnabled(true);
+        qDebug()<<totalMessage;
+    }
+
 }
 
 

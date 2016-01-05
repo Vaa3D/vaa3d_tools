@@ -3,7 +3,7 @@
 #ifndef S2CONTROLLER_H
 #define S2CONTROLLER_H
 
-#include <QDialog>
+#include <QWidget>
 #include <QTcpSocket>
 
 QT_BEGIN_NAMESPACE
@@ -16,7 +16,7 @@ class QNetworkSession;
 
 QT_END_NAMESPACE
 //! [0]
-class S2Controller : public QDialog
+class S2Controller : public QWidget
 {
     Q_OBJECT
 
@@ -65,14 +65,32 @@ private:
     QDialogButtonBox *buttonBox;
 
     QTcpSocket *tcpSocket;
+    QString totalMessage;
     QString currentMessage;
     quint16 blockSize;
 
     QNetworkSession *networkSession;
 
-
-
 };
+
+// TODO:
+// implement case/switch in controller for PV or other
+// create listener/handler for data from PV this will
+// ask about why QDialog::exec  is used for the plugin gui instead of .show()
+// is there a .run()?  basically, I want the GUI open until I close it, but
+// not blocking cout<< or whatever
+
+// I need to clean up the S2controller code so the high-level stuff doesn't have any
+// pv-specific syntax or variables.
+
+// now that I have a growing list, I can parse the responses...
+// split up the string between ACK and DONE and pull out the intervening text
+// store that text in some kind of buffer?  that has a sequence of data...?
+//   TODAY:  get file name back and parse
+//           load that in vaa3d ?!
+//
+// -gts directory SingelImage  returns correct directory.
+//  file should contain ch1  .ome.tif
 
 
 // useful parameters stored in the class S2Data
