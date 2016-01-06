@@ -5,12 +5,12 @@
 
 
 using namespace std;
-#include "NeuronAssembler_MostVesselTracer_plugin.h"
+#include "NeuronAssembler_region_Neuron2_plugin.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
-Q_EXPORT_PLUGIN2(NeuronAssembler_MostVesselTracer, NeuronAssembler_MostVesselTracer);
+Q_EXPORT_PLUGIN2(NeuronAssembler_region_Neuron2, NeuronAssembler_region_Neuron2);
 //Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
 
 struct root_node
@@ -35,8 +35,10 @@ struct NA_PARA
 {
   //  int  bkg_thresh;
     int is_entire;
-	int channel;
-	double background_th;
+	int ch;
+	double th;
+	int b_256;
+	int region;
     int block_size;
     int root_1st[3];
 
@@ -120,7 +122,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
 NeuronTree eliminate(NeuronTree input, double length);
  
 //QStringList neuronassembler::menulist() const
-QStringList NeuronAssembler_MostVesselTracer::menulist() const
+QStringList NeuronAssembler_region_Neuron2::menulist() const
 {
 	return QStringList() 
 		<<tr("trace_tc")
@@ -129,7 +131,7 @@ QStringList NeuronAssembler_MostVesselTracer::menulist() const
 }
 
 //QStringList neuronassembler::funclist() const
-QStringList NeuronAssembler_MostVesselTracer::funclist() const
+QStringList NeuronAssembler_region_Neuron2::funclist() const
 {
 	return QStringList()
 		<<tr("trace_tc")
@@ -137,7 +139,7 @@ QStringList NeuronAssembler_MostVesselTracer::funclist() const
 		<<tr("help");
 }
 
-void NeuronAssembler_MostVesselTracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void NeuronAssembler_region_Neuron2::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 //void neuronassembler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("trace_tc"))
@@ -163,8 +165,10 @@ void NeuronAssembler_MostVesselTracer::domenu(const QString &menu_name, V3DPlugi
         }
 
    //     P.bkg_thresh = dialog.bkg_thresh;
-		P.channel = dialog.channel;
-		P.background_th = dialog.background_th;
+		P.ch = dialog.ch;
+		P.th = dialog.th;
+		P.b_256 = dialog.b_256;
+		P.region = dialog.region;
    //     P.channel = dialog.channel;
         P.block_size = dialog.block_size;
         LocationSimple tmpLocation(0,0,0);
@@ -204,8 +208,10 @@ void NeuronAssembler_MostVesselTracer::domenu(const QString &menu_name, V3DPlugi
             P.root_1st[2] = file_inmarkers[0].z;
         }
 
-		P.channel = dialog.channel;
-		P.background_th = dialog.background_th;
+		P.ch = dialog.ch;
+		P.th = dialog.th;
+		P.b_256 = dialog.b_256;
+		P.region = dialog.region;
         P.block_size = dialog.block_size;
         P.inimg_file = dialog.rawfilename;
         P.is_entire = dialog.is_entire;
@@ -215,11 +221,11 @@ void NeuronAssembler_MostVesselTracer::domenu(const QString &menu_name, V3DPlugi
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2015-01-01"));
+			"Developed by Zhi Zhou, 2015-10-30"));
 	}
 }
 
-bool NeuronAssembler_MostVesselTracer::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool NeuronAssembler_region_Neuron2::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 //        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 //            "Developed by Zhi Zhou, 2014-11-09"));
 //    }
@@ -292,8 +298,10 @@ bool NeuronAssembler_MostVesselTracer::dofunc(const QString & func_name, const V
     //    P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
     //    P.bkg_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 10; k++;
         P.block_size = (paras.size() >= k+1) ? atoi(paras[k]) : 1024; k++;
-		P.channel = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
-		P.background_th = (paras.size() >= k+1) ? atof(paras[k]):40.0; k++;
+		P.ch = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.th = (paras.size() >= k+1) ? atof(paras[k]):40; k++;
+		P.b_256 = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.region = (paras.size() >= k+1) ? atoi(paras[k]):10000; k++;
         assembler_tc(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("trace_raw"))
@@ -333,34 +341,40 @@ bool NeuronAssembler_MostVesselTracer::dofunc(const QString & func_name, const V
 
 
 
-		P.channel = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
-		P.background_th = (paras.size() >= k+1) ? atof(paras[k]):40.0; k++;
+		P.ch = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.th = (paras.size() >= k+1) ? atof(paras[k]):40; k++;
+		P.b_256 = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
+		P.region = (paras.size() >= k+1) ? atoi(paras[k]):10000; k++;
         assembler_raw(callback,parent,P,bmenu);
 	}
 	else if (func_name == tr("help"))
 	{
         printf("\n**** Usage of Neuron Assembler ****\n");
 //        printf("vaa3d -x plugin_name -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <tracing_method> <channel> <bkg_thresh> <block size>\n");
-		printf("vaa3d -x NeuronAssembler_MostVesselTracer -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size> <channel> <background_th>\n");
+        printf("vaa3d -x NeuronAssembler_region_app1 -f trace_tc -i <inimg_file> -p <inmarker_file> <tc_file> <block size> <ch> <th> <b_256> <region>\n");
 		printf("inimg_file		Should be 8 bit image\n");
 		printf("inmarker_file		Please specify the path of the marker file\n");
 		printf("tc_file			Please specify the path of the tc file\n");
 		printf("block size		Default 1024\n");
 
-		printf("channel			Required by the tracing algorithm. Default value is 1\n");
-		printf("background_th		Required by the tracing algorithm. Default value is 40.0\n");
+		printf("ch			Required by the tracing algorithm. Default value is 1\n");
+		printf("th			Required by the tracing algorithm. Default value is 40\n");
+		printf("b_256			Required by the tracing algorithm. Default value is 1\n");
+		printf("region			Required by the tracing algorithm. Default value is 10000\n");
 
 		printf("outswc_file		Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 
-		printf("vaa3d -x NeuronAssembler_MostVesselTracer -f trace_raw -i <inimg_file> -p <inmarker_file> <block size> <tracing_entire_image> <channel> <background_th>\n");
+        printf("vaa3d -x NeuronAssembler_region_app1 -f trace_raw -i <inimg_file> -p <inmarker_file> <block size> <tracing_entire_image> <ch> <th> <b_256> <region>\n");
 		printf("inimg_file		Should be 8 bit v3draw/raw image\n");
 		printf("inmarker_file		Please specify the path of the marker file, Default value is NULL\n");
 		printf("block size		Default 1024\n");
 		printf("tracing_entire_image	YES:1, NO:0. Default value is 0\n");
 
-		printf("channel			Required by the tracing algorithm. Default value is 1\n");
-		printf("background_th		Required by the tracing algorithm. Default value is 40.0\n");
+		printf("ch			Required by the tracing algorithm. Default value is 1\n");
+		printf("th			Required by the tracing algorithm. Default value is 40\n");
+		printf("b_256			Required by the tracing algorithm. Default value is 1\n");
+		printf("region			Required by the tracing algorithm. Default value is 10000\n");
 
 		printf("outswc_file		Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -476,9 +490,9 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
 
-	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MostVesselTracer.swc";
-	QString tmpfolder = QFileInfo(tcfile).path()+("/tmp_NeuronAssembler_MostVesselTracer");
-	head->tilename = QFileInfo(tcfile).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_region_app1.swc";
+    QString tmpfolder = QFileInfo(tcfile).path()+("/tmp_NeuronAssembler_region_app1");
+    head->tilename = QFileInfo(tcfile).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
    // QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -504,7 +518,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
 
       //  QString swcfilename =  walker->tilename + QString("_MOST.swc");
-		QString swcfilename =  walker->tilename + QString("_MOST.swc");
+		QString swcfilename =  walker->tilename + QString("_region_APP1.swc");
 
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -525,17 +539,27 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
         arg.type = "random";
         std::vector<char*> arg_para;
 //        char channel = '0' + P.channel;
-		string S_channel = boost::lexical_cast<string>(P.channel);
-		char* C_channel = new char[S_channel.length() + 1];
-		strcpy(C_channel,S_channel.c_str());
-		arg_para.push_back(C_channel);
+		string S_ch = boost::lexical_cast<string>(P.ch);
+		char* C_ch = new char[S_ch.length() + 1];
+		strcpy(C_ch,S_ch.c_str());
+		arg_para.push_back(C_ch);
 
-		string S_background_th = boost::lexical_cast<string>(P.background_th);
-		char* C_background_th = new char[S_background_th.length() + 1];
-		strcpy(C_background_th,S_background_th.c_str());
-		arg_para.push_back(C_background_th);
+		string S_th = boost::lexical_cast<string>(P.th);
+		char* C_th = new char[S_th.length() + 1];
+		strcpy(C_th,S_th.c_str());
+		arg_para.push_back(C_th);
 
-		full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
+		string S_b_256 = boost::lexical_cast<string>(P.b_256);
+		char* C_b_256 = new char[S_b_256.length() + 1];
+		strcpy(C_b_256,S_b_256.c_str());
+		arg_para.push_back(C_b_256);
+
+		string S_region = boost::lexical_cast<string>(P.region);
+		char* C_region = new char[S_region.length() + 1];
+		strcpy(C_region,S_region.c_str());
+		arg_para.push_back(C_region);
+
+		full_plugin_name = "Region_Neuron2";  func_name =  "trace_app1";
 //        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
 //        char* Th =  new char[T_background.length() + 1];
 //        strcpy(Th, T_background.c_str());
@@ -603,7 +627,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -631,7 +655,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -659,7 +683,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -686,7 +710,7 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
              //   newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -811,9 +835,9 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
    // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MOST.swc";
-	QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_MostVesselTracer.swc";
-	QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronAssembler_MostVesselTracer");
-	head->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronAssembler_region_app1.swc";
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronAssembler_region_app1");
+    head->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
 
    // QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -853,7 +877,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
             continue;
         }
 
-		QString swcfilename =  walker->tilename + QString("_MOST.swc");
+		QString swcfilename =  walker->tilename + QString("_region_APP1.swc");
        // QString swcfilename =  walker->tilename + QString("_MOST.swc");;
 
         V3DPluginArgItem arg;
@@ -874,21 +898,27 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
         arg.type = "random";
         std::vector<char*> arg_para;
 //        char channel = '0' + P.channel;
-		string S_channel = boost::lexical_cast<string>(P.channel);
-		char* C_channel = new char[S_channel.length() + 1];
-		strcpy(C_channel,S_channel.c_str());
-		arg_para.push_back(C_channel);
+		string S_ch = boost::lexical_cast<string>(P.ch);
+		char* C_ch = new char[S_ch.length() + 1];
+		strcpy(C_ch,S_ch.c_str());
+		arg_para.push_back(C_ch);
 
-		string S_background_th = boost::lexical_cast<string>(P.background_th);
-		char* C_background_th = new char[S_background_th.length() + 1];
-		strcpy(C_background_th,S_background_th.c_str());
-		arg_para.push_back(C_background_th);
+		string S_th = boost::lexical_cast<string>(P.th);
+		char* C_th = new char[S_th.length() + 1];
+		strcpy(C_th,S_th.c_str());
+		arg_para.push_back(C_th);
 
-        arg_para.push_back("80");
-        arg_para.push_back("20");
+		string S_b_256 = boost::lexical_cast<string>(P.b_256);
+		char* C_b_256 = new char[S_b_256.length() + 1];
+		strcpy(C_b_256,S_b_256.c_str());
+		arg_para.push_back(C_b_256);
 
+		string S_region = boost::lexical_cast<string>(P.region);
+		char* C_region = new char[S_region.length() + 1];
+		strcpy(C_region,S_region.c_str());
+		arg_para.push_back(C_region);
 
-		full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
+		full_plugin_name = "Region_Neuron2";  func_name =  "trace_app1";
 //        string T_background = boost::lexical_cast<string>(P.bkg_thresh);
 //        char* Th =  new char[T_background.length() + 1];
 //        strcpy(Th, T_background.c_str());
@@ -956,7 +986,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
             //    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -984,7 +1014,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -1012,7 +1042,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
               //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
@@ -1039,7 +1069,7 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_MostVesselTracer/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_region_app1/").append(QString(region_name));
                // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
