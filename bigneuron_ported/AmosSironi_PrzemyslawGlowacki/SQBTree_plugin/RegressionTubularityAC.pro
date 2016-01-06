@@ -35,12 +35,13 @@ LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
 
 
 
-LIBS += -L"../libs/liblbfgs-1.10/lib/.libs"
-#LIBS += -L"../libs/liblbfgs-1.10_Linux"
+#LIBS += -L"../libs/liblbfgs-1.10/lib/.libs"
+LIBS += -L"../libs/liblbfgs-1.10_Linux/lib"
 LIBS += -llbfgs
 
-LIBS += -L"../libs/libconfig-1.4.9_old/lib/.libs"
-#LIBS += -L"../libs/libconfig-1.4.9_Linux"
+#LIBS += -L"../libs/libconfig-1.4.9/lib/"
+#LIBS += -L"../libs/libconfig-1.4.9_old/lib/.libs"
+LIBS += -L"../libs/libconfig-1.4.9_Linux"
 LIBS += -lconfig++
 
 
