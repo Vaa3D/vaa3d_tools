@@ -30,8 +30,8 @@ win32{
 
 unix{
     LIBS         += -lm -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
-    LIBS         += -lpthread
-    LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+   # LIBS         += -lpthread
+   # LIBS	 += -lv3dfftw3f -lv3dfftw3f_threads
 }
 
 
