@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#This is a shell program to batch reconstruct images using 4 different methods using NeuronAssember.
+#This is a shell program to batch reconstruct images using 10 different methods using NeuronAssember.
 #
 
 
@@ -17,7 +17,19 @@ function write_neuron_tracing_command {
 #APP1
 
   if [ $METHOD == "1" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_region_Neuron2 -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_Neuron2.swc;mv  $inimgfileTracing*_NeuronAssembler_region_Neuron2.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronAssembler_region_app1 -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_app1.swc;mv  $inimgfileTracing*_NeuronAssembler_region_app1.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#APP2
+
+  if [ $METHOD == "2" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_region_app2 -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_app2.swc;mv  $inimgfileTracing*_NeuronAssembler_region_app2.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#MOST
+
+   if [ $METHOD == "3" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_MostVesselTracer -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc;mv  $inimgfileTracing*_NeuronAssembler_MostVesselTracer.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #NEUTUBE
@@ -39,12 +51,6 @@ function write_neuron_tracing_command {
     echo "./start_vaa3d.sh -x NeuronAssembler_tReMap -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_tReMap.swc;mv  $inimgfileTracing*_NeuronAssembler_tReMap.swc $finalfileFolder" >> $outputScript;
   fi;
 
-#MST
-
-  if [ $METHOD == "10" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_mST_tracing -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_mST_tracing;mv  $inimgfileTracing*_NeuronAssembler_mST_tracing.swc $finalfileFolder" >> $outputScript;
-  fi;
-
 
 #NeuroGPSTree
 
@@ -52,10 +58,22 @@ function write_neuron_tracing_command {
     echo "./start_vaa3d.sh -x NeuronAssembler_neuroGPSTree -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_neuroGPSTree.swc;mv  $inimgfileTracing*_NeuronAssembler_neuroGPSTree.swc $finalfileFolder" >> $outputScript;
   fi;
 
+#NeuronChaser
+
+  if [ $METHOD == "20" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_region_neuronchaser -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_neuronchaser.swc;mv  $inimgfileTracing*_NeuronAssembler_region_neuronchaser.swc $finalfileFolder" >> $outputScript;
+  fi;
+
 #neutu_autotrace
 
   if [ $METHOD == "22" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_Neutu_autotrace -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_Neutu_autotrace.swc;mv  $inimgfileTracing*_neutu_autotrace.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronAssembler_Neutu_autotrace -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_Neutu_autotrace.swc;mv  $inimgfileTracing*NeuronAssembler_neutu_autotrace.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+#Advantra
+
+  if [ $METHOD == "23" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x NeuronAssembler_region_advantra -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_region_advantra.swc;mv  $inimgfileTracing*_NeuronAssembler_region_advantra.swc $finalfileFolder" >> $outputScript;
   fi;
 
 }
