@@ -286,7 +286,7 @@ void locate_and_smooth_bumps(std::vector<double> &dydx, std::vector< std::vector
                              std::vector<long> & pnslope, std::vector<long> &pzslope, std::vector<double> &ARC,
                              std::vector<double> &DIAM, double &thresh,double &max_dist,double &step_min){
 
-//    printf("\t*\tlocate_and_smooth_bumps\t--->\tStarted\n\n");
+    printf("\t*\tlocate_and_smooth_bumps\t--->\tStarted\n\n");
     ups_and_downs(dydx, dend, preprocessing_flag, dend_num, ppslope, pnslope, pzslope,ARC,DIAM);
 //    printf("\t*\tprimeiro ups_and_downs\n\n");
     float M_shape_th = 0.95;
@@ -300,7 +300,7 @@ void locate_and_smooth_bumps(std::vector<double> &dydx, std::vector< std::vector
                 /*printf*/( "x1=%d detected at dend[%d]\n",x1,dend_num);
                 //getchar()
     }else{
-//        printf( "threshold not trespassed\n");
+        printf( "threshold not trespassed\n");
         scan_flag = 0;
     }
 
