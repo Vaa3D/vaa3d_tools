@@ -188,7 +188,7 @@ function write_neuron_tracing_command {
 #3DTraceSWC
 
   if [ $METHOD == "28" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 20 2 2.5;chmod -R 777 $inimgfileTracing*_pyzhi.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x aVaaTrace3D -f func1 -i $inimgfileTracing -p 50 5 2.5;chmod -R 777 $inimgfileTracing*_pyzhi.swc;mv  $inimgfileTracing*_pyzh.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #Rivulet
