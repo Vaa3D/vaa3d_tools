@@ -18,7 +18,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     QString ipAddress;
     ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
     int portnumber= 1236;
-    hostLineEdit = new QLineEdit("10.128.50.139");
+    hostLineEdit = new QLineEdit("10.128.50.123");
     portLineEdit = new QLineEdit("1236");
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
     cmdLineEdit = new QLineEdit;
@@ -58,8 +58,11 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
             this, SLOT(sendCommand()));
     connect(connectButton, SIGNAL(clicked()), this, SLOT(initializeS2()));
 //! [2] //! [3]
-    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(readPV()));
-    connect(getReplyButton, SIGNAL(clicked()), this, SLOT(readPV()));
+    connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(checkForMessage()));
+    connect(this, SIGNAL(messageIsComplete()), this, SLOT(processMessage()));
+    connect(this, SIGNAL(newMessage(QString)), this, SLOT(messageHandler(QString)));
+
+
     connect(quitButton, SIGNAL(clicked()), this, SLOT(sendX()));
 //! [2] //! [4]
     connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
@@ -116,9 +119,9 @@ void S2Controller::initConnection(){
 }
 
 void S2Controller::initializeParameters(){
-    S2Data myS2Data;
-
+    emit newMessage(QString("initialized"));
 }
+
 
 void S2Controller::connectToS2()
 {
@@ -129,22 +132,30 @@ void S2Controller::connectToS2()
 void S2Controller::sendCommand()
 {
     sendCommandButton->setEnabled(false);
-    cleanAndSend(cmdLineEdit->text());
+    sendAndReceive(cmdLineEdit->text());
+}
+void S2Controller::sendAndReceive(QString inputString){
+    if (!okToSend){return;}
+    okToSend = false;
+    if (cleanAndSend(inputString)){
+        qDebug()<<"sent "<<inputString;
+    }
+
 }
 
-void S2Controller::cleanAndSend(QString inputString)
+bool S2Controller::cleanAndSend(QString inputString)
 {
     inputString.replace(' ', (char)1).append((char)13).append((char)10);
     tcpSocket->write(inputString.toLatin1());
-    sendCommandButton->setEnabled(true);
+    return true;
 }
 
 void S2Controller::sendX()
 {
     const QString xQ = QString("-x");
     cmdLineEdit->setText(xQ);
-    cleanAndSend(xQ);
-    QTimer::singleShot(100, this, SLOT(cleanUp()));
+    sendAndReceive(xQ);
+    QTimer::singleShot(1000, this, SLOT(cleanUp()));
 }
 
 void S2Controller::cleanUp()
@@ -153,50 +164,57 @@ void S2Controller::cleanUp()
     close();
 }
 
-void S2Controller::readPV()
-{
-//! [9]
-    QTextStream in(tcpSocket);
-    /*in.setVersion(QDataStream::Qt_4_0);
-    if (blockSize == 0) {
-        if (tcpSocket->bytesAvailable() < (int)sizeof(quint16))
-            return;
-        in >> blockSize;
-    }
-    if (tcpSocket->bytesAvailable() < blockSize)
-        return;*/
-    QString pvResponse;
-    pvResponse = tcpSocket->readAll( );
-    totalMessage.append(pvResponse.toLatin1());
 
-    // check for ACK and DONE?
-    // if totalMessage contains ACK and DONE,
-    // remove them and intervening characters from totalMessage
-    // place what's between them into currentMessage and emit
-    // currentMessage to a new field.
 
-    // actually need to break this out some more-  check for ACK and emit signal to
-    // update sent/waiting/done status (new attribute!)
-    // then if the same string has ACK-*-DONE, process the string.
-    // if not, this method (readPV) will change behavior to wait for DONE.
 
-    const QRegExp rx("DONE");
-    if (totalMessage.contains("DONE")) {
-        QStringList mList;
-        mList = totalMessage.split("ACK\r\n");
-        currentMessage = QString(mList.last().split("\r\nDONE\r\n").first());
-        QString displayMessage;
-        QString stringToRemove;
-        stringToRemove = currentMessage;
-        displayMessage = currentMessage;
-        stringToRemove.append("\r\nDONE\r\n").prepend("ACK\r\n");
-        statusLabel->setText(displayMessage);
-        totalMessage.remove(stringToRemove);
-        sendCommandButton->setEnabled(true);
-        qDebug()<<totalMessage;
-    }
+void S2Controller::checkForMessage(){
+    // this will get called by readyRead signal from tcpsocket
+    // append any incoming data to a totalString attribute
+    stringMessage.append(QString(tcpSocket->readAll()).toLatin1());
+    if (stringMessage.contains("DONE\r\n")){
+    // check for DONE.  if not, don't do anything!
+    // [this will still be called when new data is available]
+
+    // if DONE, emit a signal to processMessage
+        emit messageIsComplete();
+    qDebug()<<stringMessage;}
+    // DO NOT unblock commands yet!
 
 }
+
+void S2Controller::processMessage(){
+    // once a fullMessage is made, this method should only be called as a slot
+    // because it unblocks the ability to send tcp commands
+    // - parse the message here, extracting the returned message
+    message = QString("");
+    QStringList mList;
+    mList = stringMessage.split("ACK\r\n");
+    message = QString(mList.last().split("DONE\r\n").first());//  still has carriage return
+    message.remove("\r\n");
+    // and emitting the message, including updating text fields, etc.
+    emit newMessage(message);
+
+    // clear the fullMessage buffer  [this should be OK- only this method
+    // and checkForMessages should ever access it]  note this is not scalable-
+    // there's only one fullMessage at a time.
+
+    stringMessage.clear();
+    // unblock commands
+    okToSend = true;
+    sendCommandButton->setEnabled(true);
+
+}
+
+void S2Controller::messageHandler(QString messageH){
+    // slot for handling messages.   first round will
+    // just be updating text in this object and the calling UI
+    myS2Data.messageString = messageH;
+    emit newS2Data(myS2Data);
+    statusLabel->setText(messageH);
+}
+
+
+
 
 
 void S2Controller::displayError(QAbstractSocket::SocketError socketError)
@@ -257,6 +275,7 @@ void S2Controller::sessionOpened()
     enablesendCommandButton();
 }
 
+
 void S2Controller::initROI(){//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
 }
 
@@ -273,6 +292,22 @@ void S2Controller::startNextROI(){//   Move to the next ROI location and start t
 }
 
 
+void S2Controller::getPosition(int axis, int subAxis){
+    // axis 0 = X, 1 = Y, 2 = Z  (letter names are within microscope)
+    // subaxis is system-dependent, default is zero
+    axis =2;
+    QString qaxis;
+    QString qsubAxis;
+    QString toSendString;
 
+    if (axis == 2){
+        qaxis = QString("ZAxis");
+    }
+    qsubAxis = QString(subAxis);
+    toSendString = QString("-gts positionCurrent ").append(qaxis).append(' ').append(qsubAxis);
+    qDebug()<<toSendString;
+    sendAndReceive(toSendString);
+
+}
 
 

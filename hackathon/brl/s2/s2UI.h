@@ -24,21 +24,21 @@ class S2UI : public QDialog
 
 public:
     S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
+    QLineEdit *s2LineEdit;
 
 private slots:
     void startS2();
     void startScan();
     void loadScan();
     void displayScan();
+    void updateS2Data(S2Data myS2Data);
 private:
     QLabel *s2Label;
-    QLineEdit *s2LineEdit;
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
     QPushButton *loadScanPushButton;
     QDialogButtonBox *buttonBox1;
     S2Controller myController;
-
 };
 //! [0]
 

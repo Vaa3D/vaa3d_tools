@@ -3,9 +3,8 @@
 #include <QtGui>
 #include <QtNetwork>
 #include <stdlib.h>
-#include "s2UI.h"
 #include "s2Controller.h"
-
+#include "s2UI.h"
 
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
@@ -24,6 +23,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     connect(startS2PushButton, SIGNAL(clicked()), this, SLOT(startS2()));
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(loadScanPushButton, SIGNAL(clicked()), this, SLOT(loadScan()));
+    connect(&myController,SIGNAL(newS2Data(S2Data)), this, SLOT(updateS2Data(S2Data)));
+
     v3dhandle curwin = callback.currentImageWindow();
     /*if (!curwin)
     {
@@ -68,4 +69,8 @@ void S2UI::loadScan(){
 void S2UI::displayScan(){ // this will listen for a signal from myController
     //containing either a filename or  eventually an address
 
+}
+
+void S2UI::updateS2Data(S2Data myS2Data){
+    s2LineEdit->setText(myS2Data.messageString);
 }
