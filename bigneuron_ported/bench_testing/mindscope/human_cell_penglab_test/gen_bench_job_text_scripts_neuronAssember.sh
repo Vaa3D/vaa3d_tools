@@ -67,7 +67,7 @@ function write_neuron_tracing_command {
 #neutu_autotrace
 
   if [ $METHOD == "22" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronAssembler_Neutu_autotrace -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_Neutu_autotrace.swc;mv  $inimgfileTracing*NeuronAssembler_neutu_autotrace.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronAssembler_Neutu_autotrace -f trace_raw -i $inimgfileTracing -p NULL 512 1;chmod -R 777 $inimgfileTracing*_NeuronAssembler_Neutu_autotrace.swc;mv  $inimgfileTracing*NeuronAssembler_Neutu_autotrace.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #Advantra
