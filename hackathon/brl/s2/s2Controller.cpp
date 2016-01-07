@@ -46,9 +46,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
 
 
 
-//! [1]
     tcpSocket = new QTcpSocket(this);
-//! [1]
 
     connect(hostLineEdit, SIGNAL(textChanged(QString)),
             this, SLOT(enablesendCommandButton()));
@@ -57,18 +55,16 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     connect(sendCommandButton, SIGNAL(clicked()),
             this, SLOT(sendCommand()));
     connect(connectButton, SIGNAL(clicked()), this, SLOT(initializeS2()));
-//! [2] //! [3]
     connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(checkForMessage()));
     connect(this, SIGNAL(messageIsComplete()), this, SLOT(processMessage()));
-    connect(this, SIGNAL(newMessage(QString)), this, SLOT(messageHandler(QString)));
+    connect(this, SIGNAL(newMessage(QString)),
+            this, SLOT(messageHandler(QString)));
 
 
     connect(quitButton, SIGNAL(clicked()), this, SLOT(sendX()));
-//! [2] //! [4]
+
     connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
-//! [3]
             this, SLOT(displayError(QAbstractSocket::SocketError)));
-//! [4]
 
     QGridLayout *mainLayout = new QGridLayout;
     mainLayout->addWidget(hostLabel, 0, 0);
@@ -291,23 +287,46 @@ void S2Controller::processROIData(){ //Process image data and return 1 or more n
 void S2Controller::startNextROI(){//   Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
 }
 
-
-void S2Controller::getPosition(int axis, int subAxis){
-    // axis 0 = X, 1 = Y, 2 = Z  (letter names are within microscope)
-    // subaxis is system-dependent, default is zero
-    axis =2;
-    QString qaxis;
-    QString qsubAxis;
-    QString toSendString;
-
-    if (axis == 2){
-        qaxis = QString("ZAxis");
+void S2Controller::startPosMon(){
+    if (inPosMonMode){
+        emit newMessage("already in Position Monitor mode");
+        return;
     }
-    qsubAxis = QString(subAxis);
-    toSendString = QString("-gts positionCurrent ").append(qaxis).append(' ').append(qsubAxis);
-    qDebug()<<toSendString;
-    sendAndReceive(toSendString);
+    inPosMonMode = true;
+   //
 
 }
 
+void S2Controller::stopPosMon(){
+    cancelPosMon = true;
+    inPosMonMode = false;
+}
 
+void S2Controller::posMon(int jj){
+    //update index jj in big case/switch statement
+
+    //after delay, emit signal and return
+
+    // a separate handler will take that signal and call posMon with a new
+    // index
+}
+
+
+
+// next:
+// add optional 'cancel' to flush read and write buffers and release block
+// of sending commands.
+
+//
+
+// start bulking up the UI to have some useful parameters
+// build a separate widget for monitoring (all?) position parameters over
+// one or more new TCP sockets.
+// how to do this?
+// I could start from this controller(?) and write in code to use it as a monitor.
+// the UI would instantiate an s2controller and a click would turn on the monitor
+// in that controller.
+// another s2controller in control mode could still be used at the same time.
+
+
+// extract file destination, run this on the scope machine.

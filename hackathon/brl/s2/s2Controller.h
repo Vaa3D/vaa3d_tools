@@ -87,6 +87,9 @@ public:
     QString stringMessage;
     QString message;
     QString displayMessage;
+
+    bool inPosMonMode = false;
+    bool cancelPosMon = false;
 public slots:
     void sendCommand();
     bool cleanAndSend(QString);
@@ -101,11 +104,13 @@ public slots:
     //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
     void processROIData(); //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
     void startNextROI();//    Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
-    void getPosition(int axis, int subAxis=0);
+    void startPosMon();
+    void stopPosMon();
 signals:
     void newS2Data(S2Data myS2Data);
     void messageIsComplete();
     void newMessage(QString message);
+    void newPosMonIndex();
 private slots:
     void checkForMessage();
     void processMessage();
@@ -116,6 +121,7 @@ private slots:
     void sendX();
     void cleanUp();
     void initConnection(); //[initialize connection to PV over TCP/IP]
+    void posMon(int jj);
 private:
 
     void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
@@ -137,7 +143,7 @@ private:
     QString totalMessage;
     QString currentMessage;
     quint16 blockSize;
-
+    int ii = 0;
     QNetworkSession *networkSession;
 
 };
