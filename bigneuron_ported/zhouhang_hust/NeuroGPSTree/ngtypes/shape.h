@@ -7,7 +7,11 @@
 class Shape : public INeuronDataObject
 {
 public:
-    typedef std::shared_ptr<Shape> ShapePointer;
+#ifdef _WIN32
+	typedef std::tr1::shared_ptr<Shape> ShapePointer;
+#else
+	typedef std::shared_ptr<Shape> ShapePointer;
+#endif
 
     Shape(INeuronProcessObject *p = nullptr);
     ~Shape();
@@ -38,8 +42,12 @@ public:
     void push_back(Shape::ShapePointer&);
 //    void SetProcessObject(INeuronProcessObject*);
 //    void ReleaseProcessObject();
+#ifdef _WIN32
+	typedef std::tr1::shared_ptr<ShapeCluster> ShapeClusterPointer;
+#else
+	typedef std::shared_ptr<ShapeCluster> ShapeClusterPointer;
+#endif
 
-    typedef std::shared_ptr<ShapeCluster> ShapeClusterPointer;
 private:
     std::vector<Shape::ShapePointer> m_Shapes;
     ShapeCluster(const ShapeCluster&) ;

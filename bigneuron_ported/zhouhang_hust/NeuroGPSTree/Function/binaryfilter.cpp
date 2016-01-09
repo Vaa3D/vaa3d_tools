@@ -1,20 +1,32 @@
-#include "binaryfilter.h"
-#include "../ngtypes/volume.h"
+/*
+ * Copyright (c)2013-2015  Zhou Hang, Shaoqun Zeng, Tingwei Quan
+ * Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology
+ * All rights reserved.
+ */
+
 #ifdef _WIN32
 #include <ctime>
-#include <omp.h>
 #else
 #include <sys/time.h>
 #endif
+#include <omp.h>
+#include "binaryfilter.h"
+#include "../ngtypes/volume.h"
 
 BinaryFilter::BinaryFilter()
 {
     identifyName = std::string("BinaryFilter");
+#ifdef _WIN32
+    m_Source = std::tr1::shared_ptr<CVolume>(new CVolume(this));
+    m_Back = std::tr1::shared_ptr<SVolume>(new SVolume(this));
+#else
     m_Source = std::shared_ptr<CVolume>(new CVolume(this));
     m_Back = std::shared_ptr<SVolume>(new SVolume(this));
+#endif
     m_BinPtSet = BinPtSetPointer(new VectorVec3i);
     threadNum = 4;
     binThreshold = 6.0;
+    threValue=255;
 }
 
 BinaryFilter::~BinaryFilter()
@@ -43,8 +55,13 @@ bool BinaryFilter::Update()
 
 ConstDataPointer BinaryFilter::GetOutput()
 {
+#ifdef _WIN32
+    if(!m_Source) m_Source = std::tr1::shared_ptr<SVolume>(new SVolume(this));
+    if(!m_Back) m_Back = std::tr1::shared_ptr<CVolume>(new CVolume(this));
+#else
     if(!m_Source) m_Source = std::shared_ptr<SVolume>(new SVolume(this));
     if(!m_Back) m_Back = std::shared_ptr<CVolume>(new CVolume(this));
+#endif
     if(!m_BinPtSet) m_BinPtSet = BinPtSetPointer(new VectorVec3i);
     return m_Source;
 }
@@ -93,9 +110,15 @@ void BinaryFilter::SetThreshold(double t)
 bool BinaryFilter::Binary()
 {
     if ( !m_Input || m_Input->GetIdentifyName() != std::string("Volume")) return false;
+#ifdef _WIN32
+    std::tr1::shared_ptr<const SVolume> tmpImg = std::tr1::dynamic_pointer_cast<const SVolume>(m_Input);
+    std::tr1::shared_ptr<CVolume> tmpBin = std::tr1::dynamic_pointer_cast<CVolume>(m_Source);
+    std::tr1::shared_ptr<SVolume> tmpBack = std::tr1::dynamic_pointer_cast<SVolume>(m_Back);
+#else
     std::shared_ptr<const SVolume> tmpImg = std::dynamic_pointer_cast<const SVolume>(m_Input);
     std::shared_ptr<CVolume> tmpBin = std::dynamic_pointer_cast<CVolume>(m_Source);
     std::shared_ptr<SVolume> tmpBack = std::dynamic_pointer_cast<SVolume>(m_Back);
+#endif
     /*range*/
     int i, j, ij, num,k,l;
     int w = tmpImg->x();
@@ -106,6 +129,7 @@ bool BinaryFilter::Binary()
     int filterNum = 20;
     /*initialization*/
     tmpBin->SetSize(w,h,f);
+    tmpBin->SetResolution(tmpImg->XResolution(), tmpImg->YResolution(), tmpImg->ZResolution());
     tmpBack->SetSize(w, h, f);
     /*parameter*/
     int radius = 4;
@@ -120,16 +144,14 @@ bool BinaryFilter::Binary()
 #endif
 
     ///---------------------------------20 filters--------------------------///
-   // omp_set_num_threads(threadNum);
-#ifdef _WIN32
+    omp_set_num_threads(threadNum);
 #pragma omp parallel
 #pragma omp for  private( i, j, num,k,l,tmp_value)
-#endif
     for (ij = 0 ; ij < f ; ++ij){			//all frame
         double *m1 = new double[wh];
         double *sum = new double[ w - 2*radius ];
         memset(sum, 0, sizeof(double) * (w-2*radius));//model
-        ///-----------------------------有没有更好的赋值？--------------------------
+        ///-------------------------------------------------------
         for (j = 0; j < h; ++j)
             for (i = 0 ; i < w ; ++i)
                 m1[ j * w + i ] = std::min((double)tmpImg->GetPixel(i,j,ij), 400.0);//100.0
@@ -188,7 +210,8 @@ bool BinaryFilter::Binary()
         // YY=MMt-YYs
         for ( j = 0; j < h; ++j ){//YY0=(YY>(1+threv*sqrt(YYs)));%(key points
             for (i = 0 ; i < w ; ++i){
-                if ( ( double(tmpImg->GetPixel(i,j,ij)) - m1[ j * w + i ]) > (1.0f + binThreshold * sqrt( m1[ j * w + i ] ) ) )
+                if ( ( double(tmpImg->GetPixel(i,j,ij)) - m1[ j * w + i ]) > (1.0f + binThreshold * sqrt( m1[ j * w + i ] ) )
+                    || double(tmpImg->GetPixel(i,j,ij)) - double(tmpBack->GetPixel(i,j,ij)) > threValue)
                     tmpBin->GetPixel(i,j,ij) = 255;
                 tmpBack->GetPixel(i,j,ij) = (int)m1[ j * w + i ];/*save background noise*/
             }
@@ -222,4 +245,10 @@ bool BinaryFilter::Binary()
     //printf("Binarying Finished!\n");
     printf("There are %d dots before Erosion.\n", (int)m_BinPtSet->size());
     return true;
+}
+
+//2015-8-13
+void BinaryFilter::SetThreValue( double arg)
+{
+    threValue = arg;
 }

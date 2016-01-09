@@ -1,8 +1,84 @@
+/*
+ * Copyright (c)2013-2015  Zhou Hang, Shaoqun Zeng, Tingwei Quan
+ * Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology
+ * All rights reserved.
+ */
 #ifndef VOLUMEALGO_H
 #define VOLUMEALGO_H
 #include "../ngtypes/volume.h"
 #include "../ngtypes/basetypes.h"
 #include <algorithm>
+
+struct Pair_1st_great{
+    bool operator() (const std::pair<size_t, int>& p1, const std::pair<size_t, int>& p2){
+        if (p1.first > p2.first)
+            return true;
+        else return false;
+    }
+};
+
+struct Pair_less{
+	bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+		return lhs.second < rhs.second;
+	}
+};
+
+struct Vec4d_3th_less{
+	bool operator() (const Vec4d& lhs, const Vec4d& rhs){
+		return lhs(3) < rhs(3);
+	}
+};
+
+struct Vec4d_3th_great{
+	bool operator() (const Vec4d& lhs, const Vec4d& rhs){
+		return lhs(3) > rhs(3);
+	}
+};
+
+struct Vec3i_less{
+	bool operator() (const Vec3i& lhs, const Vec3i &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	}
+};
+
+struct Vec3d_less{
+	bool operator() (const Vec3d& lhs, const Vec3d &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	}
+};
+
+struct Vec4d_3_great_012less{
+	bool operator() (const Vec4d& lhs, const Vec4d &rhs){
+		if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
+		else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+		return lhs(2) < rhs(2);
+	}
+};
+
+struct Vec4d_3012less{
+    bool operator() (const Vec4d& lhs, const Vec4d &rhs){
+        if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
+        else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+        else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+        return lhs(2) < rhs(2);
+    }
+};
+
+struct Vec4d_0123less{
+	bool operator() (const Vec4d& lhs, const Vec4d &rhs){
+		if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+		else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+		return lhs(3) < rhs(3);
+	}
+};
 
 template<typename T>
 T MedianAfterSort(const std::vector<T>& arg)
@@ -82,7 +158,7 @@ template<typename T>
 void Conv3d(int *dst, const Volume<T> &src, const int nXVoxel, const int nYVoxel, const int nZVoxel)
 {
     if(!dst) return;
-    ///------------------初始化------------------------------
+    ///------------------initialize----------------------------
         int i,j,ij;
         int sum(0);
         int nx	= src.x();
@@ -90,7 +166,7 @@ void Conv3d(int *dst, const Volume<T> &src, const int nXVoxel, const int nYVoxel
         int nz	= src.z();
         int nxy = nx * ny;
 
-        /*根据数据类型来判断*/
+        /*according to type of data*/
         //dst is the same size as src
         for(int ii = 0; ii < src.x(); ++ii)
             for(int jj = 0; jj < src.y(); ++jj)
@@ -162,6 +238,8 @@ void ExtractArea(const Volume<T> &orig, const int xMin, const int xMax, const in
                  const int yMax, const int zMin, const int zMax,
                  Volume<T> &dest)
 {
+	//2015-8-13
+	dest.SetResolution(orig.XResolution(), orig.YResolution(), orig.ZResolution());
     dest.SetSize(xMax - xMin + 1, yMax - yMin + 1, zMax - zMin + 1);
     for (int i = xMin; i <= xMax; ++i){
         for (int j = yMin; j <= yMax; ++j){
@@ -172,7 +250,7 @@ void ExtractArea(const Volume<T> &orig, const int xMin, const int xMax, const in
     }
 }
 
-/*区域最大值*/
+/*max value*/
 template<class T>
 void GetAreaMaxValue(const Volume<T> &orig, const int xMin, const int xMax, const int yMin,
                      const int yMax, const int zMin, const int zMax,
@@ -189,7 +267,7 @@ void GetAreaMaxValue(const Volume<T> &orig, const int xMin, const int xMax, cons
     }
 }
 
-/*区域最小值*/
+/**/
 template<class T>
 void GetAreaMinValue(const Volume<T> &orig, const int xMin, const int xMax, const int yMin,
                      const int yMax, const int zMin, const int zMax,

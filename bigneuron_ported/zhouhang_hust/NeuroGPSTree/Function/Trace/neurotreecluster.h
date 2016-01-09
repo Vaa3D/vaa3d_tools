@@ -1,3 +1,8 @@
+/*
+ * Copyright (c)2013-2015  Zhou Hang, Shaoqun Zeng, Tingwei Quan
+ * Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology
+ * All rights reserved.
+ */
 #ifndef NEURONTREECLUSTER_H
 #define NEURONTREECLUSTER_H
 #include <list>
@@ -7,7 +12,11 @@ template<typename T> class Volume;
 typedef Volume<unsigned short> SVolume;
 class Tree;
 class NeuroTreeCluster;
+#ifdef _WIN32
+typedef std::tr1::shared_ptr<NeuroTreeCluster> NGNeuronTreeCluster;
+#else
 typedef std::shared_ptr<NeuroTreeCluster> NGNeuronTreeCluster;
+#endif
 
 class NeuroTreeCluster : public INeuronProcessObject
 {
@@ -20,9 +29,11 @@ public:
     ConstDataPointer GetOutput();
     DataPointer ReleaseData();
 
-    void SetInputCurve(ConstDataPointer);
-    void SetInputSoma(ConstDataPointer);
-    void SetInputOrigImage(ConstDataPointer);
+    void SetInputCurve(ConstDataPointer p){m_Curve = p;}
+    void SetInputSoma(ConstDataPointer p){m_Soma = p;}
+    void SetInputOrigImage(ConstDataPointer p){m_OrigImg = p;}
+    void SetInputBinImage(ConstDataPointer p){m_BinImg = p;}
+    void SetInputBackImage(ConstDataPointer p){m_BackImg = p;}
     void SetInputDeleteID(const VectorVec4d& arg){deleteID = arg;}
     const std::vector<int>& GetTypeList() const {return typeList;}
 
@@ -33,6 +44,8 @@ private:
     ConstDataPointer m_Curve;
     ConstDataPointer m_Soma;
     ConstDataPointer m_OrigImg;
+    ConstDataPointer m_BackImg;
+    ConstDataPointer m_BinImg;
     VectorVec4d deleteID;
 
     std::vector<int> typeList;
@@ -208,7 +221,10 @@ private:
     void SearchAndBreakTreeModify(const VectorVec2i &aSomaConnectSet,
         std::vector<std::list<int> > &pathGraph,
         VectorVec2i &resultSet);
-
+	void GetNetBridgeModify(const std::vector<std::list<int>> &adjcentList, const int subNetNum, const std::vector<int> &validDendIDListWithHeadTail, const std::vector<int> &wetList, std::vector<int> &validIDListWithHeadTail, std::vector<int> &resultWetList);
+	void MyDijkstraModify(const std::vector<std::list<int>>& adjcentList, const int subNetNum, const int beg, std::vector<int>& d, std::vector<int>& path);
+	bool IsConnectValidInAdjcentList(const std::vector<std::list<int>>& adjcentList, int beg, int dst);
+	void BreakSomaTreeUnassignedNetModify(const MatXi &compressPathGraph1, const int subNetNum, const VectorVec3i &validDendIDListWithHeadTail, const std::vector<int> &currentDendID, const std::vector<VectorVec5d> &rawDendList, const SVolume &origImg, MatXi &newCompressGraph);
 };
 
 #endif // NEURONTREECLUSTER_H

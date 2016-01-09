@@ -2,6 +2,7 @@
 #define SOMA_H
 #include "ineurondataobject.h"
 #include <vector>
+#define nullptr 0 
 struct Cell{
     Cell(){}
     ~Cell(){}

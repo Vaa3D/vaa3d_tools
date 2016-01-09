@@ -4,8 +4,14 @@
 #include <string>
 class INeuronProcessObject;
 class INeuronDataObject;
+#ifdef _WIN32
+typedef std::tr1::shared_ptr<INeuronDataObject> DataPointer;
+typedef std::tr1::shared_ptr<const INeuronDataObject> ConstDataPointer;
+#define nullptr 0
+#else
 typedef std::shared_ptr<INeuronDataObject> DataPointer;
 typedef std::shared_ptr<const INeuronDataObject> ConstDataPointer;
+#endif
 
 class INeuronDataObject
 {

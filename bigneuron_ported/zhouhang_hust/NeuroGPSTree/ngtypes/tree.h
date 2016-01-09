@@ -40,7 +40,7 @@
 class TreeCurve : public INeuronDataObject
 {
 public:
-    TreeCurve(INeuronProcessObject *p = nullptr);
+    TreeCurve(INeuronProcessObject *p = 0);
     ~TreeCurve();
     bool IsEmpty()const;
     //void SetProcessObject(INeuronProcessObject*);
@@ -54,8 +54,14 @@ public:
 private:
     std::vector<VectorVec5d> m_Curve;
 };
+#ifdef _WIN32
+#define nullptr 0 
+typedef std::tr1::shared_ptr<TreeCurve> TreeCurvePointer;
+typedef std::tr1::shared_ptr<const TreeCurve> CTreeCurvePointer;
+#else
 typedef std::shared_ptr<TreeCurve> TreeCurvePointer;
 typedef std::shared_ptr<const TreeCurve> CTreeCurvePointer;
+#endif
 
 class TreeConnect : public INeuronDataObject
 {
@@ -73,8 +79,13 @@ public:
 private:
     VectorMat2i m_Connect;
 };
+#ifdef _WIN32
+typedef std::tr1::shared_ptr<TreeConnect> TreeConnectPointer;
+typedef std::tr1::shared_ptr<const TreeConnect> CTreeConnectPointer;
+#else
 typedef std::shared_ptr<TreeConnect> TreeConnectPointer;
 typedef std::shared_ptr<const TreeConnect> CTreeConnectPointer;
+#endif
 
 class SeperateTree : public INeuronDataObject
 {
@@ -97,7 +108,12 @@ private:
     std::vector<std::vector<VectorVec5d> >  m_Tree;
     std::vector<int> m_typeList;
 };
+#ifdef _WIN32
+typedef std::tr1::shared_ptr<SeperateTree> SeperateTreePointer;
+typedef std::tr1::shared_ptr<const SeperateTree> CSeperateTreePointer;
+#else
 typedef std::shared_ptr<SeperateTree> SeperateTreePointer;
 typedef std::shared_ptr<const SeperateTree> CSeperateTreePointer;
+#endif
 
 #endif // TREE_H

@@ -35,7 +35,9 @@ HEADERS	+= NeuroGPSTree_plugin.h \
     ngtypes/soma.h \
     ngtypes/tree.h \
     ngtypes/volume.h \
-    ngtypes/volumecreator.h
+    ngtypes/volumecreator.h \
+    Function/Trace/WeakSWCFilter.h \
+    Function/IO/treewriter.h
 SOURCES	+= NeuroGPSTree_plugin.cpp \
     Function/binaryfilter.cpp \
     Function/contourutil.cpp \
@@ -48,7 +50,9 @@ SOURCES	+= NeuroGPSTree_plugin.cpp \
     ngtypes/shape.cpp \
     ngtypes/soma.cpp \
     ngtypes/tree.cpp \
-    ngtypes/volume.cpp
+    ngtypes/volume.cpp \
+    Function/Trace/WeakSWCFilter.cpp \
+    Function/IO/treewriter.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 

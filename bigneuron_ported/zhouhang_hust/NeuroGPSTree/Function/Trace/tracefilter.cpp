@@ -14,6 +14,7 @@
 #include <deque>
 #include <utility>
 #include <Eigen/LU>
+#include <iostream>
 #ifdef _WIN32
 #include <ctime>
 #else
@@ -26,20 +27,19 @@
 
 const double EXPO = 0.000001;
 
-//#define __HUST_ORIGINAL_2015__
-#ifndef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-//to disablethis part, simply define a MACRO variable __HUST_ORIGINAL_2015__
-//note, I haven't fixed the original crashing possibility of these origianl code as they did not check if pointers would be valid!
-
-#endif
-
-//
-
 TraceFilter::TraceFilter()
 {
     identifyName = std::string("TraceFilter");
-    m_Source = std::shared_ptr<TreeCurve>(new TreeCurve(this));
+#ifdef _WIN32
+	m_Source = std::tr1::shared_ptr<TreeCurve>(new TreeCurve(this));
+	rawDendConInfoPointer = std::tr1::shared_ptr<TreeConnect>(new TreeConnect);
+#else
+	m_Source = std::shared_ptr<TreeCurve>(new TreeCurve(this));
 	rawDendConInfoPointer = std::shared_ptr<TreeConnect>(new TreeConnect);
+#endif
+	fillThrev = 120.0;
+	endThrev = 150.0;
+	//threValue = 1020;
 }
 
 TraceFilter::~TraceFilter()
@@ -60,27 +60,42 @@ bool TraceFilter::Update()
         }
     }
 
-    if(!m_Soma) m_Soma = std::shared_ptr<INeuronDataObject>(new Soma);
-    std::shared_ptr<const Volume<unsigned short> > tmpOrig =
-            std::dynamic_pointer_cast<const Volume<unsigned short> >(m_Input);
-    std::shared_ptr<const Volume<unsigned short> > tmpBack =
-            std::dynamic_pointer_cast<const Volume<unsigned short> >(m_Back);
-    std::shared_ptr<const Volume<NGCHAR> > tmpBin =
-            std::dynamic_pointer_cast<const Volume<NGCHAR> >(m_Bin);
-    std::shared_ptr<const Soma > tmpSoma =
-            std::dynamic_pointer_cast<const Soma>(m_Soma);
-    std::shared_ptr<TreeCurve > tmpTree =
-            std::dynamic_pointer_cast<TreeCurve>(m_Source);
-    if(!tmpOrig || !tmpBack || !tmpBin || !tmpSoma) {
+#ifdef _WIN32
+	if(!m_Soma) m_Soma = std::tr1::shared_ptr<INeuronDataObject>(new Soma);
+	origImgPointer =
+		std::tr1::dynamic_pointer_cast<const Volume<unsigned short> >(m_Input);
+	backImgPointer =
+		std::tr1::dynamic_pointer_cast<const Volume<unsigned short> >(m_Back);
+	binImgPointer =
+		std::tr1::dynamic_pointer_cast<const Volume<NGCHAR> >(m_Bin);
+	std::tr1::shared_ptr<const Soma > tmpSoma =
+		std::tr1::dynamic_pointer_cast<const Soma>(m_Soma);
+	std::tr1::shared_ptr<TreeCurve > tmpTree =
+		std::tr1::dynamic_pointer_cast<TreeCurve>(m_Source);
+#else
+	if(!m_Soma) m_Soma = std::shared_ptr<INeuronDataObject>(new Soma);
+	origImgPointer =
+		std::dynamic_pointer_cast<const Volume<unsigned short> >(m_Input);
+	backImgPointer =
+		std::dynamic_pointer_cast<const Volume<unsigned short> >(m_Back);
+	binImgPointer =
+		std::dynamic_pointer_cast<const Volume<NGCHAR> >(m_Bin);
+	std::shared_ptr<const Soma > tmpSoma =
+		std::dynamic_pointer_cast<const Soma>(m_Soma);
+	std::shared_ptr<TreeCurve > tmpTree =
+		std::dynamic_pointer_cast<TreeCurve>(m_Source);
+#endif
+
+    if(!origImgPointer || !backImgPointer || !binImgPointer || !tmpSoma) {
         printf("error backnoise image!\n");
         printf("error occured in %s\n", identifyName.c_str());
         return false;
     }
 
     //complete initialize
-    int vx = tmpOrig->x();
-    int vy = tmpOrig->y();
-    int vz = tmpOrig->z();
+    int vx = origImgPointer->x();
+    int vy = origImgPointer->y();
+    int vz = origImgPointer->z();
 
     Volume<int> indexImg;
     indexImg.SetSize(vx, vy, vz);//short just support 2^16 = 65536
@@ -93,7 +108,13 @@ bool TraceFilter::Update()
 
     //std::vector<std::vector<int> > MM;
     //rawDendConInfoPointer = std::shared_ptr<TreeConnect>(new TreeConnect);
-    std::shared_ptr<TreeConnect> tmpRawDendConInfoPointer = std::dynamic_pointer_cast<TreeConnect>(rawDendConInfoPointer);
+#ifdef _WIN32
+	rawDendConInfoPointer = std::tr1::shared_ptr<TreeConnect>(new TreeConnect);
+	std::tr1::shared_ptr<TreeConnect> tmpRawDendConInfoPointer = std::tr1::dynamic_pointer_cast<TreeConnect>(rawDendConInfoPointer);
+#else
+	rawDendConInfoPointer = std::shared_ptr<TreeConnect>(new TreeConnect);
+	std::shared_ptr<TreeConnect> tmpRawDendConInfoPointer = std::dynamic_pointer_cast<TreeConnect>(rawDendConInfoPointer);
+#endif
     std::vector<VectorVec5d> rawDendList;
     VectorMat2i rawDendConInfo;
 #ifdef _WIN32
@@ -102,7 +123,7 @@ bool TraceFilter::Update()
     timeval start1, end1;
     gettimeofday(&start1, 0);
 #endif
-    TraceCurvesAndConInfo(indexImg, *tmpOrig, *tmpBin, *tmpBack, somaList, rawDendList, rawDendConInfo);
+    TraceCurvesAndConInfo(indexImg, *origImgPointer, *binImgPointer, *backImgPointer, somaList, rawDendList, rawDendConInfo);
     tmpTree->Swap(rawDendList);
     tmpRawDendConInfoPointer->Swap(rawDendConInfo);
 #ifdef _WIN32
@@ -120,7 +141,11 @@ bool TraceFilter::Update()
 ConstDataPointer TraceFilter::GetOutput()
 {
     if(!m_Source)
-        m_Source = std::shared_ptr<TreeCurve>(new TreeCurve(this));
+#ifdef _WIN32
+		m_Source = std::tr1::shared_ptr<TreeConnect>(new TreeConnect(this));
+#else
+		m_Source = std::shared_ptr<TreeConnect>(new TreeConnect(this));
+#endif
     return m_Source;
 }
 
@@ -168,12 +193,12 @@ void TraceFilter::TraceCurvesAndConInfo(Volume<int> &resultIndexImg, const Volum
     VectorMat2i resultDendConInfo;
     //all soma shape
     VectorMatXd allRayLen;
-    //printf("before ReconstructSomaShapeForTrace.\n");
-    ReconstructSomaShapeForTrace(somaList,origImg, resultIndexImg,allRayLen);
+	ReconstructSomaShapeForTrace(somaList,origImg, resultIndexImg,allRayLen);
     //printf("ReconstructSomaShapeForTrace.\n");
     //all seed not inside soma
     VectorVec3d tmpTraceSeed;
     SelectSeedForTrace(binImg, origImg, resultIndexImg, tmpTraceSeed);
+	//tmpTraceSeed.push_back(Vec3d(157,159,110));//2015-11-20
     //printf("SelectSeedForTrace.\n");
     VectorVec3d::size_type somaNum = somaList.size();
     VectorVec3d traceSeed(somaList);
@@ -265,8 +290,8 @@ void TraceFilter::TraceCurvesAndConInfo(Volume<int> &resultIndexImg, const Volum
 
     //TODO:2014-4-19 no comment
     printf("\n");
-    int seedSeries = int(0.9 * traceSeed.size() +0.5);
-    int uppersz = somaNum + seedSeries;
+    int seedSeries = int(0.7 * traceSeed.size() +0.5);
+    int uppersz = somaNum + seedSeries;//2015-11-20
     for (int i = somaNum; i < uppersz; ++i){
         printf("                \r");
         printf("seed tracing : %d of %d\r", int(i - somaNum + 1), seedSeries);
@@ -308,13 +333,39 @@ void TraceFilter::TraceCurvesAndConInfo(Volume<int> &resultIndexImg, const Volum
     rawDendList.clear();
     rawDendConInfo.clear();
     AddCollideConnectNode(resultDendCurves, resultDendConInfo, somaList, rawDendList);
-    std::swap(rawDendConInfo, resultDendConInfo);
+	std::swap(rawDendConInfo, resultDendConInfo);
+	//2015-8-13
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+	}else{
+		std::vector<VectorVec5d> dendCurves;
+		dendCurves.swap(rawDendList);
+		VectorMat2i dendConInfo;
+		dendConInfo.swap(rawDendConInfo);
+		MyCrossDetection(dendCurves, dendConInfo, rawDendList, rawDendConInfo);
+	}
+	
     //test---------------------
-//    FILE *fp = fopen("/home/zhouhang/TIFF/compareCDendInfo.txt","w");
-//    for(size_t kk = 0; kk < rawDendConInfo.size();++kk){
-//        fprintf(fp, "%d %d\n",rawDendConInfo[kk](0,0),rawDendConInfo[kk](0,1));
-//    }
-//    fclose(fp);
+	/*FILE *fp = fopen("D:/dd222.txt","w");
+    for(size_t kk = 0; kk < rawDendConInfo.size();++kk){
+        fprintf(fp, "%d %d\n",rawDendConInfo[kk](0,0),rawDendConInfo[kk](0,1));
+    }
+    fclose(fp);
+	fp = fopen("D:/dd111.txt","w");
+	int idx = 0;
+	for(size_t kk = 0; kk < rawDendList.size();++kk){
+		for (size_t ii = 0; ii < rawDendList[kk].size(); ++ii) {
+			++idx;
+			if (ii == 0) {
+				fprintf(fp, "%d 1 %lf %lf %lf 1.0 %d\n", idx, rawDendList[kk][ii](0), rawDendList[kk][ii](1), rawDendList[kk][ii](2), -1);
+			}else{
+				fprintf(fp, "%d 1 %lf %lf %lf 1.0 %d\n", idx, rawDendList[kk][ii](0), rawDendList[kk][ii](1), rawDendList[kk][ii](2), idx - 1);
+			}
+			
+		}
+		
+	}
+	fclose(fp);
+	system("pause");*/
 }
 
 void TraceFilter::SelectSeedForTrace(const Volume<NGCHAR> &binImg, const Volume<unsigned short> &origImg,
@@ -332,63 +383,53 @@ void TraceFilter::SelectSeedForTrace(const Volume<NGCHAR> &binImg, const Volume<
     //more memory occupied
     Volume<unsigned short> origImgCopy;
     origImgCopy.QuickCopy(origImg);
+	int range = 0;
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		range = 5;
+	}else{
+		range = 7;
+	}
 
-    for (int i = 0; i < nxx; ++i)
-    {
-        for (int j = 0; j < nyy; ++j)
-        {
-            for (int ij = 0; ij < nzz; ++ij)
-            {
-                //if (origImgCopy(45,34,13) == 0){
-                    //printf("%d %d %d\n",i,j,ij );
-                //}
-                if (binImg(i,j,ij) > 0 && indexImg(i,j,ij) >=0
-                        && IsAreaMaxValue<unsigned short>(origImgCopy, std::max<int>(i - 5, 0), std::min<int>(i + 5, nxx - 1),
-                                                   std::max<int>(j - 5, 0), std::min<int>(j + 5, nyy - 1),
-                                                   std::max<int>(ij - 5, 0), std::min<int>(ij + 5, nzz - 1),
-                                                   origImgCopy(i, j, ij) ) )
-                {
-                    tmpvec4<< i, j, ij, origImgCopy(i, j, ij);
-                    tmpTraceSeed.push_back(tmpvec4);
-                    //printf("%d %d %d\n", i+1,j+1,ij+1);
-                    SetAreaValue<unsigned short>(origImgCopy, std::max<int>(i - 5, 0), std::min<int>(i + 5, nxx - 1),
-                                         std::max<int>(j - 5, 0), std::min<int>(j + 5, nyy - 1),
-                                         std::max<int>(ij - 5, 0), std::min<int>(ij + 5, nzz - 1),
-                                         0 );
-                }
+	for (int i = 0; i < nxx; ++i)
+	{
+		for (int j = 0; j < nyy; ++j)
+		{
+			for (int ij = 0; ij < nzz; ++ij)
+			{
+				if (binImg(i,j,ij) > 0 && indexImg(i,j,ij) >=0
+					&& IsAreaMaxValue<unsigned short>(origImgCopy, std::max<int>(i - range, 0), std::min<int>(i + range, nxx - 1),
+					std::max<int>(j - range, 0), std::min<int>(j + range, nyy - 1),
+					std::max<int>(ij - range, 0), std::min<int>(ij + range, nzz - 1),
+					origImgCopy(i, j, ij) ) )
+				{
+					tmpvec4<< i, j, ij, origImgCopy(i, j, ij);
+					tmpTraceSeed.push_back(tmpvec4);
+					//printf("%d %d %d\n", i+1,j+1,ij+1);
+					SetAreaValue<unsigned short>(origImgCopy, std::max<int>(i - range, 0), std::min<int>(i + range, nxx - 1),
+						std::max<int>(j - range, 0), std::min<int>(j + range, nyy - 1),
+						std::max<int>(ij - range, 0), std::min<int>(ij + range, nzz - 1),
+						0 );
+				}
 
-            }
-        }
-    }//for
+			}
+		}
+	}//for
 
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-    std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), [](const Vec4d& lhs, const Vec4d& rhs){//Node_v_x_y_z_DES
-        if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
-        else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-        else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-        return lhs(2) < rhs(2);
-    });
+#ifdef _WIN32
+	std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), Vec4d_3_great_012less());
 #else
-
-    struct neurongfp_tmp
-    {
-        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
-        {
-            if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
-            else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-            return lhs(2) < rhs(2);
-        }
-    } NGPS_OBJ;
-    std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), NGPS_OBJ);
+	std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), [](const Vec4d& lhs, const Vec4d& rhs){//Node_v_x_y_z_DES
+		if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
+		else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+		return lhs(2) < rhs(2);
+	});
 #endif
 
-    //traceSeed.resize(tmpTraceSeed.size());
     size_t numLimit = std::min<size_t>(tmpTraceSeed.size(), 250000);
 	traceSeed.resize(numLimit);
     for (VectorVec4d::size_type i = 0; i < numLimit; ++i )
         traceSeed[i] = (Vec3d(tmpTraceSeed[i](0), tmpTraceSeed[i](1), tmpTraceSeed[i](2) ));
-    //traceSeed.swap(tmpTraceSeed);
 }
 
 void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
@@ -405,12 +446,17 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
     int vz = origImg.z();
 
     /*初始化*/
-    int xMin = std::max(Round(curSeedNode(0) - 7.0 ), 0);
-    int xMax = std::min(Round(curSeedNode(0) + 7.0), vx - 1);
-    int yMin = std::max(Round(curSeedNode(1) - 7.0 ), 0);
-    int yMax = std::min(Round(curSeedNode(1) + 7.0 ), vy - 1);
-    int zMin = std::max(Round(curSeedNode(2) - 6.0 ), 0);
-    int zMax = std::min(Round(curSeedNode(2) + 6.0 ), vz - 1);
+	//2015-8-13
+	double xExtractRegion, yExtractRegion, zExtractRegion;
+	xExtractRegion = yExtractRegion = 7.0;
+	zExtractRegion = 6.0;
+	
+    int xMin = std::max(Round(curSeedNode(0) - xExtractRegion ), 0);
+    int xMax = std::min(Round(curSeedNode(0) + xExtractRegion), vx - 1);
+    int yMin = std::max(Round(curSeedNode(1) - yExtractRegion ), 0);
+    int yMax = std::min(Round(curSeedNode(1) + yExtractRegion ), vy - 1);
+    int zMin = std::max(Round(curSeedNode(2) - zExtractRegion ), 0);
+    int zMax = std::min(Round(curSeedNode(2) + zExtractRegion ), vz - 1);
 
     Vec3d curCenter(curSeedNode(0) - (double)xMin,
         curSeedNode(1) - (double)yMin, curSeedNode(2) - (double)zMin);//ML1,中心点
@@ -442,204 +488,403 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
 
     double angleThrev1=-0.95;
     double angleThrev2= 0.95;
-
-    if (minLen > 3 && vz > 3){
-        /*AAj = zeros(4,216)*/
-        VectorVec4d backwardNodeSet;//AAj
-        for (int i = 0; i < 36; ++i){
-            for ( int j = 0; j < 18; ++j){
-                ii = (double)i * M_PI / 18.0;
-                jj = (double)j * M_PI / 18.0;
-                Vec3d polarPosition((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)), (std::cos(jj)));
-                angleDiff = polarPosition.dot(initVec);/*jd*/
-                if (angleDiff < angleThrev1) //if jd < -0.85
-                {
-                    VectorVec3d rayNode;
-                    rayNode.push_back(curCenter + polarPosition);
-                    rayNode.push_back(curCenter + 2 * polarPosition);
-                    rayNode.push_back(curCenter + 3 * polarPosition);
-                    rayNode.push_back(curCenter + 4 * polarPosition);
-                    rayNode.push_back(curCenter + 5 * polarPosition);
-                    std::vector<double> rayNodeWet;
-                    WeighRayValue(rayNode, locOrigImg, rayNodeWet);
-                    double meanRayNodeWet = std::accumulate(rayNodeWet.begin(), rayNodeWet.begin() + 3, 0.0);
-                    meanRayNodeWet /= 3.0;//akmmv.size();
-                    backwardNodeSet.push_back(Vec4d(polarPosition(0), polarPosition(1), polarPosition(2), meanRayNodeWet));
-                }//if
-            }
-        }//for
-        /*异常处理*/
-        if (backwardNodeSet.size() < 2) firDir =  - initVec;
-        else{
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
-                                                             [](const Vec4d& lhs, const Vec4d& rhs){
-                return lhs(3) < rhs(3);
-            });//Node_4TH_MAX
+	
+	//2015-8-13
+	if (minLen > 3 && vz > 3){
+		/*AAj = zeros(4,216)*/
+		VectorVec4d backwardNodeSet;//AAj
+		for (int i = 0; i < 36; ++i){
+			for ( int j = 0; j < 18; ++j){
+				ii = (double)i * M_PI / 18.0;
+				jj = (double)j * M_PI / 18.0;
+				Vec3d polarPosition((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)), (std::cos(jj)));
+				angleDiff = polarPosition.dot(initVec);/*jd*/
+				if (angleDiff < angleThrev1) //if jd < -0.85
+				{
+					VectorVec3d rayNode;
+					rayNode.push_back(curCenter + polarPosition);
+					rayNode.push_back(curCenter + 2 * polarPosition);
+					rayNode.push_back(curCenter + 3 * polarPosition);
+					rayNode.push_back(curCenter + 4 * polarPosition);
+					rayNode.push_back(curCenter + 5 * polarPosition);
+					std::vector<double> rayNodeWet;
+					WeighRayValue(rayNode, locOrigImg, rayNodeWet);
+					double meanRayNodeWet = std::accumulate(rayNodeWet.begin(), rayNodeWet.begin() + 3, 0.0);
+					meanRayNodeWet /= 3.0;//akmmv.size();
+					backwardNodeSet.push_back(Vec4d(polarPosition(0), polarPosition(1), polarPosition(2), meanRayNodeWet));
+				}//if
+			}
+		}//for
+		/*异常处理*/
+		if (backwardNodeSet.size() < 2) firDir =  - initVec;
+		else{
+#ifdef _WIN32
+			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+				Vec4d_3th_less());//Node_4TH_MAX
 #else
-
-            struct neurongfp_tmp
-            {
-                bool operator() (const Vec4d& lhs, const Vec4d& rhs)
-                {
-                    return lhs(3) < rhs(3);
-                }
-            } NGPS_OBJ;
-
-            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(), NGPS_OBJ);//Node_4TH_MAX
+			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+				[](const Vec4d& lhs, const Vec4d& rhs){
+					return lhs(3) < rhs(3);
+			});//Node_4TH_MAX
 #endif
-            Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
-            firDir = maxVec.normalized();//x10 =
-        }
-    }
-    else firDir = - initVec;
+			Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
+			firDir = maxVec.normalized();//x10 =
+		}
+	}
+	else firDir = - initVec;
 
-    if (minLen > 3 && vz > 3){
-        /*AAj2 = zeros(4,216)*/
-        VectorVec4d forwardNodeSet;//AAj2
-        for (int i = 0; i < 36; ++i){
-            for ( int j = 0; j < 18; ++j){
-                ii = (double)i * M_PI / 18.0;
-                jj = (double)j * M_PI / 18.0;
-                Vec3d ds1((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)) , (std::cos(jj)));//ds1
-                angleDiff = ds1.dot(initVec);/*jd*/
-                if (angleDiff > angleThrev2){ //if jd > -0.85
-                    VectorVec3d rayNode;
-                    rayNode.push_back(curCenter + ds1);
-                    rayNode.push_back(curCenter + 2 * ds1);
-                    rayNode.push_back(curCenter + 3 * ds1);
-                    rayNode.push_back(curCenter + 4 * ds1);
-                    rayNode.push_back(curCenter + 5 * ds1);
-                    rayNode.push_back(curCenter + 6 * ds1);
-                    std::vector<double> rayNodeWet;
-                    WeighRayValue(rayNode, locOrigImg, rayNodeWet);
-                    double meanRayNodeWet = accumulate(rayNodeWet.begin(), rayNodeWet.begin()+3, 0.0);
-                    meanRayNodeWet /= 3.0;//akmmv.size();
-                    forwardNodeSet.push_back(Vec4d(ds1[0], ds1[1], ds1[2], meanRayNodeWet));
-                }
-            }
-        }//for
-        /*异常处理*/
-        if (forwardNodeSet.size() < 2) secDir = initVec;
-        else{
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-            VectorVec4d::iterator maxItem = max_element(forwardNodeSet.begin(), forwardNodeSet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-                return lhs(3) < rhs(3);
-            });//Node_4TH_MAX
+	if (minLen > 3 && vz > 3){
+		/*AAj2 = zeros(4,216)*/
+		VectorVec4d forwardNodeSet;//AAj2
+		for (int i = 0; i < 36; ++i){
+			for ( int j = 0; j < 18; ++j){
+				ii = (double)i * M_PI / 18.0;
+				jj = (double)j * M_PI / 18.0;
+				Vec3d ds1((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)) , (std::cos(jj)));//ds1
+				angleDiff = ds1.dot(initVec);/*jd*/
+				if (angleDiff > angleThrev2){ //if jd > -0.85
+					VectorVec3d rayNode;
+					rayNode.push_back(curCenter + ds1);
+					rayNode.push_back(curCenter + 2 * ds1);
+					rayNode.push_back(curCenter + 3 * ds1);
+					rayNode.push_back(curCenter + 4 * ds1);
+					rayNode.push_back(curCenter + 5 * ds1);
+					rayNode.push_back(curCenter + 6 * ds1);
+					std::vector<double> rayNodeWet;
+					WeighRayValue(rayNode, locOrigImg, rayNodeWet);
+					double meanRayNodeWet = accumulate(rayNodeWet.begin(), rayNodeWet.begin()+3, 0.0);
+					meanRayNodeWet /= 3.0;//akmmv.size();
+					forwardNodeSet.push_back(Vec4d(ds1[0], ds1[1], ds1[2], meanRayNodeWet));
+				}
+			}
+		}//for
+		/*异常处理*/
+		if (forwardNodeSet.size() < 2) secDir = initVec;
+		else{
+#ifdef _WIN32
+			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+				Vec4d_3th_less());//Node_4TH_MAX
 #else
-            struct neurongfp_tmp
-            {
-                bool operator() (const Vec4d& lhs, const Vec4d& rhs)
-                {
-                    return lhs(3) < rhs(3);
-                }
-            } NGPS_OBJ;
-
-            VectorVec4d::iterator maxItem = max_element(forwardNodeSet.begin(), forwardNodeSet.end(), NGPS_OBJ);//Node_4TH_MAX
+			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+				[](const Vec4d& lhs, const Vec4d& rhs){
+					return lhs(3) < rhs(3);
+			});//Node_4TH_MAX
 #endif
-            Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
-            secDir = maxVec.normalized();
-        }
-    }
-    else secDir = initVec;
+			Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
+			secDir = maxVec.normalized();
+		}
+	}
+	else secDir = initVec;
 
-    /*dataSS = zeros(4,8*125);//存放射线区域信息*/
-    VectorVec4d rayArea;//dataSS,dataS
-    for (int i = 0; i < 4; ++i){//2014-4-21
-        //Vec3d data10(curSeedNode(0), curSeedNode(1), curSeedNode(2));
-        //Vec3d ray = i * firDir + data10; //data10 + i * x10
-        Vec3d rayNode = i * firDir + curSeedNode;
-        int minX = std::max(std::min(Round(rayNode(0) - 2.0), vx - 1), 0);
-        int maxX = std::min(std::max(Round(rayNode[0] + 2.0), 0), vx - 1);
-        int minY = std::max(std::min(Round(rayNode[1] - 2.0), vy - 1), 0);
-        int maxY = std::min(std::max(Round(rayNode[1] + 2.0), 0), vy - 1);
-        int minZ = std::max(std::min(Round(rayNode[2] - 2.0), vz - 1), 0);
-        int maxZ = std::min(std::max(Round(rayNode[2] + 2.0), 0), vz - 1);
-        //Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
-        int lx = maxX - minX + 1;
-        int ly = maxY - minY + 1;
-        int lz = maxZ - minZ + 1;
-        /*存储射线区域*/
-        Vec4d tmpNode;
-        for (int ix = 0; ix < lx; ++ix){
-            for (int iy = 0; iy < ly; ++iy){
-                for (int iz = 0; iz < lz; ++iz){
-                    int newX = minX + ix;
-                    int newY = minY + iy;
-                    int newZ = minZ + iz;
-                    tmpNode << newX, newY , newZ , std::max(double(origImg(newX, newY, newZ)) - threv, 0.0) ;
-                    rayArea.push_back(tmpNode);
-                }
-            }
-        }
-    }
-    /*第二条射线区域*/
-    for (int i = 1; i < 4; ++i){
-        //Vec3d data10(curSeedNode(0), curSeedNode(1), curSeedNode(2));
-        //Vec3d ray = i * secDir + data10; //data10 + i * x11
-        Vec3d rayNode = i * secDir + curSeedNode;
-        int minX = std::max(std::min(int(rayNode[0] - 2.0 + 0.5), vx - 1), 0);
-        int maxX = std::min(std::max(int(rayNode[0] + 2.0 + 0.5), 0), vx - 1);
-        int minY = std::max(std::min(int(rayNode[1] - 2.0 + 0.5), vy - 1), 0);
-        int maxY = std::min(std::max(int(rayNode[1] + 2.0 + 0.5), 0), vy - 1);
-        int minZ = std::max(std::min(int(rayNode[2] - 2.0 + 0.5), vz - 1), 0);
-        int maxZ = std::min(std::max(int(rayNode[2] + 2.0 + 0.5), 0), vz - 1);
-        //Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
-        int lx = maxX - minX + 1;
-        int ly = maxY - minY + 1;
-        int lz = maxZ - minZ + 1;
-        /*存储射线区域*/
-        Vec4d tmpNode;
-        for (int ix = 0; ix < lx; ++ix){
-            for (int iy = 0; iy < ly; ++iy){
-                for (int iz = 0; iz < lz; ++iz){
-                    int newX  = minX + ix;
-                    int newY = minY + iy;
-                    int newZ = minZ + iz;
-                    tmpNode << newX, newY , newZ , (std::max)((double)origImg(newX, newY, newZ) - threv, 0.0) ;
-                    rayArea.push_back(tmpNode);
-                }
-            }
-        }
-    }
-
-    if (!rayArea.empty()){
-        /*清除冗余rayArea*/
-        //sort from x-y-z-v
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-        std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-            if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-            else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
-            return lhs(3) < rhs(3);
-        });//Node_v_x_y_z_MAX
+	/*dataSS = zeros(4,8*125);//存放射线区域信息*/
+	VectorVec4d rayArea;//dataSS,dataS
+	for (int i = 0; i < 3; ++i){//2014-4-21
+		//Vec3d data10(curSeedNode(0), curSeedNode(1), curSeedNode(2));
+		//Vec3d ray = i * firDir + data10; //data10 + i * x10
+		Vec3d rayNode = i * firDir + curSeedNode;
+		int minX = std::max(std::min(Round(rayNode(0) - 2.0), vx - 1), 0);
+		int maxX = std::min(std::max(Round(rayNode[0] + 2.0), 0), vx - 1);
+		int minY = std::max(std::min(Round(rayNode[1] - 2.0), vy - 1), 0);
+		int maxY = std::min(std::max(Round(rayNode[1] + 2.0), 0), vy - 1);
+		int minZ = std::max(std::min(Round(rayNode[2] - 2.0), vz - 1), 0);
+		int maxZ = std::min(std::max(Round(rayNode[2] + 2.0), 0), vz - 1);
+		//Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
+		int lx = maxX - minX + 1;
+		int ly = maxY - minY + 1;
+		int lz = maxZ - minZ + 1;
+		/*存储射线区域*/
+		Vec4d tmpNode;
+		for (int ix = 0; ix < lx; ++ix){
+			for (int iy = 0; iy < ly; ++iy){
+				for (int iz = 0; iz < lz; ++iz){
+					int newX = minX + ix;
+					int newY = minY + iy;
+					int newZ = minZ + iz;
+					tmpNode << newX, newY , newZ , std::max(double(origImg(newX, newY, newZ)) - threv, 0.0) ;
+					rayArea.push_back(tmpNode);
+				}
+			}
+		}
+	}
+	/*第二条射线区域*/
+	for (int i = 1; i < 3; ++i){
+		//Vec3d data10(curSeedNode(0), curSeedNode(1), curSeedNode(2));
+		//Vec3d ray = i * secDir + data10; //data10 + i * x11
+		Vec3d rayNode = i * secDir + curSeedNode;
+		int minX = std::max(std::min(int(rayNode[0] - 2.0 + 0.5), vx - 1), 0);
+		int maxX = std::min(std::max(int(rayNode[0] + 2.0 + 0.5), 0), vx - 1);
+		int minY = std::max(std::min(int(rayNode[1] - 2.0 + 0.5), vy - 1), 0);
+		int maxY = std::min(std::max(int(rayNode[1] + 2.0 + 0.5), 0), vy - 1);
+		int minZ = std::max(std::min(int(rayNode[2] - 2.0 + 0.5), vz - 1), 0);
+		int maxZ = std::min(std::max(int(rayNode[2] + 2.0 + 0.5), 0), vz - 1);
+		//Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
+		int lx = maxX - minX + 1;
+		int ly = maxY - minY + 1;
+		int lz = maxZ - minZ + 1;
+		/*存储射线区域*/
+		Vec4d tmpNode;
+		for (int ix = 0; ix < lx; ++ix){
+			for (int iy = 0; iy < ly; ++iy){
+				for (int iz = 0; iz < lz; ++iz){
+					int newX  = minX + ix;
+					int newY = minY + iy;
+					int newZ = minZ + iz;
+					tmpNode << newX, newY , newZ , (std::max)((double)origImg(newX, newY, newZ) - threv, 0.0) ;
+					rayArea.push_back(tmpNode);
+				}
+			}
+		}
+	}
+	if (!rayArea.empty()){
+		/*清除冗余rayArea*/
+		//sort from x-y-z-v
+#ifdef _WIN32
+		std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
 #else
-        struct neurongfp_tmp
-        {
-            bool operator() (const Vec4d& lhs, const Vec4d& rhs)
-            {
-                if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-                else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-                else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
-                return lhs(3) < rhs(3);
-            }
-        } NGPS_OBJ;
-
-        std::sort(rayArea.begin(), rayArea.end(), NGPS_OBJ);
+		std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+			if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+			else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+			else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+			return lhs(3) < rhs(3);
+		});//Node_v_x_y_z_MAX
 #endif
-        rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
-        Vec3d tmp;
-        for (VectorVec4d::size_type i = 0; i < rayArea.size(); ++i){
-            neighborWet.push_back(rayArea[i](3));
-            //tmp(0) = (rayArea[i](0), rayArea[i](1), rayArea[i](2));
-            tmp << rayArea[i](0), rayArea[i](1), rayArea[i](2);
-            neighborPtSet.push_back(tmp);
-        }
-    }
-    else{
-        neighborWet.clear();
-        neighborPtSet.clear();
-    }
+		rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
+		Vec3d tmp;
+		for (VectorVec4d::size_type i = 0; i < rayArea.size(); ++i){
+			neighborWet.push_back(rayArea[i](3));
+			//tmp(0) = (rayArea[i](0), rayArea[i](1), rayArea[i](2));
+			tmp << rayArea[i](0), rayArea[i](1), rayArea[i](2);
+			neighborPtSet.push_back(tmp);
+		}
+	}
+	else{
+		neighborWet.clear();
+		neighborPtSet.clear();
+	}
+
+}
+
+void TraceFilter::CalcNeighborSignalV2(const Volume<unsigned short> &origImg,
+									 const Vec3d &curSeedNode, const Vec3d &initVec, const double threv,
+									 VectorVec3d &neighborPtSet, std::vector<double> &neighborWet,
+									 Vec3d &firDir, Vec3d &secDir)
+{
+	neighborPtSet.clear();
+	neighborWet.clear();
+	firDir.setZero();
+	secDir.setZero();
+	int vx = origImg.x();
+	int vy = origImg.y();
+	int vz = origImg.z();
+
+	/*初始化*/
+	//2015-8-13
+	double xExtractRegion, yExtractRegion, zExtractRegion;
+	xExtractRegion = yExtractRegion = 9.0;
+	zExtractRegion = 9.0;
+	int xMin = std::max(Round(curSeedNode(0) - xExtractRegion ), 0);
+	int xMax = std::min(Round(curSeedNode(0) + xExtractRegion), vx - 1);
+	int yMin = std::max(Round(curSeedNode(1) - yExtractRegion ), 0);
+	int yMax = std::min(Round(curSeedNode(1) + yExtractRegion ), vy - 1);
+	int zMin = std::max(Round(curSeedNode(2) - zExtractRegion ), 0);
+	int zMax = std::min(Round(curSeedNode(2) + zExtractRegion ), vz - 1);
+
+	Vec3d curCenter(curSeedNode(0) - (double)xMin,
+		curSeedNode(1) - (double)yMin, curSeedNode(2) - (double)zMin);//ML1,中心点
+	/*提取区域*/
+	Volume<unsigned short> locOrigImg;
+	//Change : 2014-3-19-10-16
+	locOrigImg.SetSize(xMax - xMin + 1, yMax - yMin + 1, zMax - zMin + 1);
+	//const Volume<unsigned short> &pptr = origImg;//局部区域
+	for (int i = xMin; i <= xMax; ++i){
+		for (int j = yMin; j <= yMax; ++j){
+			for (int ij = zMin; ij <= zMax; ++ij){
+				locOrigImg(i - xMin, j - yMin, ij - zMin) = origImg(i, j, ij);
+			}
+		}
+	}
+	/*局部大小*/
+	int sx = xMax - xMin + 1;
+	int sy = yMax - yMin + 1;
+	int sz = zMax - zMin + 1;
+	//Volumn subVol(xMax - xMin + 1, yMax - yMin + 1, vol.z);//nx1,ny1,nz1 zMax - zMin + 1
+	/*最小边长*/
+	int minLen = (sx) < (sy) ?
+		((sx) < (sz) ? (sx) : (sz)) :
+		((sy) < (sz) ? (sy) : (sz));
+
+	double ii(0.0);
+	double jj(0.0);
+	double angleDiff(0.0);
+
+	double angleThrev1=-0.95;
+	double angleThrev2= 0.95;
+
+	//2015-8-13
+	if (minLen > 3 && vz > 3){
+		VectorVec4d backwardNodeSet;//AAj
+		for (int i = 0; i < 36; ++i){
+			for ( int j = 0; j < 18; ++j){
+				ii = (double)i * M_PI / 18.0;
+				jj = (double)j * M_PI / 18.0;
+				Vec3d polarPosition((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)), (std::cos(jj)));
+				angleDiff = polarPosition.dot(initVec);/*jd*/
+				if (angleDiff < angleThrev1) //if jd < -0.85
+				{
+					VectorVec3d rayNode;
+					rayNode.push_back(curCenter + polarPosition);
+					rayNode.push_back(curCenter + 3 * polarPosition);
+					rayNode.push_back(curCenter + 5 * polarPosition);
+					rayNode.push_back(curCenter + 7 * polarPosition);
+					rayNode.push_back(curCenter + 8 * polarPosition);//2015-8-13
+					std::vector<double> rayNodeWet;
+					WeighRayValue(rayNode, locOrigImg, rayNodeWet);
+					double meanRayNodeWet = std::accumulate(rayNodeWet.begin(), rayNodeWet.begin() + 3, 0.0);
+					meanRayNodeWet /= 3.0;//akmmv.size();
+					backwardNodeSet.push_back(Vec4d(polarPosition(0), polarPosition(1), polarPosition(2), meanRayNodeWet));
+				}//if
+			}
+		}//for
+		/*异常处理*/
+		if (backwardNodeSet.size() < 2) firDir =  - initVec;
+		else{
+#ifdef _WIN32
+			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+				Vec4d_3th_less());//Node_4TH_MAX
+#else
+			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+				[](const Vec4d& lhs, const Vec4d& rhs){
+					return lhs(3) < rhs(3);
+			});//Node_4TH_MAX
+#endif
+			Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
+			firDir = maxVec.normalized();//x10 =
+		}
+	}
+	else firDir = - initVec;
+
+	if (minLen > 3 && vz > 3){
+		/*AAj2 = zeros(4,216)*/
+		VectorVec4d forwardNodeSet;//AAj2
+		for (int i = 0; i < 36; ++i){
+			for ( int j = 0; j < 18; ++j){
+				ii = (double)i * M_PI / 18.0;
+				jj = (double)j * M_PI / 18.0;
+				Vec3d ds1((std::sin(jj)) * (std::cos(ii)), (std::sin(ii)) * (std::sin(jj)) , (std::cos(jj)));//ds1
+				angleDiff = ds1.dot(initVec);/*jd*/
+				if (angleDiff > angleThrev2){ //if jd > -0.85
+					VectorVec3d rayNode;
+					rayNode.push_back(curCenter + ds1);
+					rayNode.push_back(curCenter + 3 * ds1);
+					rayNode.push_back(curCenter + 5 * ds1);
+					rayNode.push_back(curCenter + 7 * ds1);
+					rayNode.push_back(curCenter + 8 * ds1);//2015-8-13
+					std::vector<double> rayNodeWet;
+					WeighRayValue(rayNode, locOrigImg, rayNodeWet);
+					double meanRayNodeWet = accumulate(rayNodeWet.begin(), rayNodeWet.begin()+3, 0.0);
+					meanRayNodeWet /= 3.0;//akmmv.size();
+					forwardNodeSet.push_back(Vec4d(ds1[0], ds1[1], ds1[2], meanRayNodeWet));
+				}
+			}
+		}//for
+		/*异常处理*/
+		if (forwardNodeSet.size() < 2) secDir = initVec;
+		else{
+#ifdef _WIN32
+			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+				Vec4d_3th_less());//Node_4TH_MAX
+#else
+			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+				[](const Vec4d& lhs, const Vec4d& rhs){
+					return lhs(3) < rhs(3);
+			});//Node_4TH_MAX
+#endif
+			Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
+			secDir = maxVec.normalized();
+		}
+	}
+	else secDir = initVec;
+
+	VectorVec4d rayArea;
+	for (int i = 0; i < 5; ++i){//2015-8-13
+		Vec3d rayNode = 1.5 * i * firDir + curSeedNode;//2015-8-13
+		int minX = std::max(std::min(Round(rayNode(0) - 3.0), vx - 1), 0);
+		int maxX = std::min(std::max(Round(rayNode[0] + 3.0), 0), vx - 1);
+		int minY = std::max(std::min(Round(rayNode[1] - 3.0), vy - 1), 0);
+		int maxY = std::min(std::max(Round(rayNode[1] + 3.0), 0), vy - 1);
+		int minZ = std::max(std::min(Round(rayNode[2] - 2.0), vz - 1), 0);
+		int maxZ = std::min(std::max(Round(rayNode[2] + 2.0), 0), vz - 1);
+		//Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
+		int lx = maxX - minX + 1;
+		int ly = maxY - minY + 1;
+		int lz = maxZ - minZ + 1;
+		/*存储射线区域*/
+		Vec4d tmpNode;
+		for (int ix = 0; ix < lx; ++ix){
+			for (int iy = 0; iy < ly; ++iy){
+				for (int iz = 0; iz < lz; ++iz){
+					int newX = minX + ix;
+					int newY = minY + iy;
+					int newZ = minZ + iz;
+					tmpNode << newX, newY , newZ , std::max(double(origImg(newX, newY, newZ)) - threv, 0.0) ;
+					rayArea.push_back(tmpNode);
+				}
+			}
+		}
+	}
+	/*第二条射线区域*/
+	for (int i = 1; i < 5; ++i){//2015-8-13
+		Vec3d rayNode = 1.5 * i * secDir + curSeedNode;//2015-8-13
+		int minX = std::max(std::min(int(rayNode[0] - 2.0 + 0.5), vx - 1), 0);
+		int maxX = std::min(std::max(int(rayNode[0] + 2.0 + 0.5), 0), vx - 1);
+		int minY = std::max(std::min(int(rayNode[1] - 2.0 + 0.5), vy - 1), 0);
+		int maxY = std::min(std::max(int(rayNode[1] + 2.0 + 0.5), 0), vy - 1);
+		int minZ = std::max(std::min(int(rayNode[2] - 2.0 + 0.5), vz - 1), 0);
+		int maxZ = std::min(std::max(int(rayNode[2] + 2.0 + 0.5), 0), vz - 1);
+		//Volumn localVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
+		int lx = maxX - minX + 1;
+		int ly = maxY - minY + 1;
+		int lz = maxZ - minZ + 1;
+		/*存储射线区域*/
+		Vec4d tmpNode;
+		for (int ix = 0; ix < lx; ++ix){
+			for (int iy = 0; iy < ly; ++iy){
+				for (int iz = 0; iz < lz; ++iz){
+					int newX  = minX + ix;
+					int newY = minY + iy;
+					int newZ = minZ + iz;
+					tmpNode << newX, newY , newZ , (std::max)((double)origImg(newX, newY, newZ) - threv, 0.0) ;
+					rayArea.push_back(tmpNode);
+				}
+			}
+		}
+	}
+	if (!rayArea.empty()){
+		/*清除冗余rayArea*/
+		//sort from x-y-z-v
+#ifdef _WIN32
+		std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
+#else
+		std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+			if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+			else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+			else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+			return lhs(3) < rhs(3);
+		});//Node_v_x_y_z_MAX
+#endif
+		rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
+		Vec3d tmp;
+		for (VectorVec4d::size_type i = 0; i < rayArea.size(); ++i){
+			neighborWet.push_back(rayArea[i](3));
+			//tmp(0) = (rayArea[i](0), rayArea[i](1), rayArea[i](2));
+			tmp << rayArea[i](0), rayArea[i](1), rayArea[i](2);
+			neighborPtSet.push_back(tmp);
+		}
+	}
+	else{
+		neighborWet.clear();
+		neighborPtSet.clear();
+	}
 }
 
 void TraceFilter::WeighRayValue(const VectorVec3d &rayNode, const Volume<unsigned short> &locOrigImg,
@@ -680,7 +925,11 @@ void TraceFilter::TraceCurvesFromSeed(const Volume<unsigned short> &origImg, con
     Vec3d initDirection;//, x2, x3;
 
     if ( 0 == indexImg((int)initialPoint(0), (int)initialPoint(1), (int)initialPoint(2)) ){
-        CalcInitDirectionOnTraceSeed(origImg, backImg, initialPoint, 8.0, initDirection);
+		if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+			CalcInitDirectionOnTraceSeed(origImg, backImg, initialPoint, 8.0, initDirection);//2015-8-13
+		}else{
+			CalcInitDirectionOnTraceSeed(origImg, backImg, initialPoint, 12.0, initDirection);//2015-8-13
+		}
         roundInitPt = Vec3d( Round(initialPoint(0) ), Round(initialPoint(1)), Round(initialPoint(2) )  );
 
         int xMin, xMax, yMin, yMax, zMin, zMax;
@@ -759,35 +1008,65 @@ void TraceFilter::TraceCurvesFromSeed(const Volume<unsigned short> &origImg, con
             resultCurveCopy.push_back(half);
         }
         resultCurveCopy.push_back(rawSeedCurve[nxxs - 1]);
-        //2014-4-23
+        //2015-8-13
         std::vector<double> three;
-        for (VectorVec5d::size_type i = 0; i < resultCurveCopy.size(); ++i)
-            three.push_back(std::min(6.0,
-                                     double(std::max(1.0, double(Round(resultCurveCopy[i](3) + 0.5) )))) );//这里是1
+		if(origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5){
+			for (VectorVec5d::size_type i = 0; i < resultCurveCopy.size(); ++i)
+				three.push_back(std::min(2.0,
+										 double(std::max(1.0, double(Round(resultCurveCopy[i](3) + 0.5) )))) );//这里是1
+		}else{
+			for (VectorVec5d::size_type i = 0; i < resultCurveCopy.size(); ++i)
+				three.push_back(std::min(5.0,
+				double(std::max(1.0, double(Round(resultCurveCopy[i](3) + 2.5) )))) );
+		}
 
         int id1(0), id2(0), id3(0);
         int xMin, xMax, yMin, yMax, zMin, zMax;
-        //Change:2014-3-21-21-42
-        for (VectorVec5d::size_type ik = 1; ik < 2*nxxs - 2; ++ik){
-            id1 = Round(resultCurveCopy[ik](0) );
-            id2 = Round(resultCurveCopy[ik](1) );
-            id3 = Round(resultCurveCopy[ik](2) );
+		//2015-8-13
+		if(origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5){
+			//Change:2014-3-21-21-42
+			for (VectorVec5d::size_type ik = 1; ik < 2*nxxs - 2; ++ik){
+				id1 = Round(resultCurveCopy[ik](0) );
+				id2 = Round(resultCurveCopy[ik](1) );
+				id3 = Round(resultCurveCopy[ik](2) );
 
-            Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, id1, id2, id3,
-                std::max(0, (int)three[ik]), std::max(0, (int)three[ik]), std::max(0, (int)three[ik]),
-                0, (int)nxx - 1, 0, (int)nyy - 1, 0, (int)nzz - 1);
+				Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, id1, id2, id3,
+					std::max(0, (int)three[ik]), std::max(0, (int)three[ik]), std::max(0, (int)three[ik]),
+					0, (int)nxx - 1, 0, (int)nyy - 1, 0, (int)nzz - 1);
 
-            for (int ii = xMin; ii <= xMax; ++ii){
-                for (int jj = yMin; jj <= yMax; ++jj){
-                    for (int kk = zMin; kk <= zMax; ++kk){
-                        if (indexImg(ii, jj, kk) == 0) indexImg(ii, jj, kk) = seedId;
-                    }
-                }//for
-            }//for
-            //TODO:2014-3-20-21-08
-            //resultCurve.resize(resultCurveCopy.size());
-            //copy(resultCurveCopy.begin(), resultCurveCopy.end(), resultCurve.begin());
-        }
+				for (int ii = xMin; ii <= xMax; ++ii){
+					for (int jj = yMin; jj <= yMax; ++jj){
+						for (int kk = zMin; kk <= zMax; ++kk){
+							if (indexImg(ii, jj, kk) == 0) indexImg(ii, jj, kk) = seedId;
+						}
+					}//for
+				}//for
+			}
+		}else{
+			//Change:2015-8-13
+			for (VectorVec5d::size_type ik = 1; ik < 2*nxxs - 2; ++ik){
+				id1 = Round(resultCurveCopy[ik](0) );
+				id2 = Round(resultCurveCopy[ik](1) );
+				id3 = Round(resultCurveCopy[ik](2) );
+
+				Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, id1, id2, id3,
+					std::max(0, (int)three[ik]), std::max(0, (int)three[ik]), std::max(0, (int)three[ik]),
+					0, (int)nxx - 1, 0, (int)nyy - 1, 0, (int)nzz - 1);
+
+				for (int ii = xMin; ii <= xMax; ++ii){
+					for (int jj = yMin; jj <= yMax; ++jj){
+						for (int kk = zMin; kk <= zMax; ++kk){
+							double dist = (Vec3d( double(ii), double(jj), double(kk)) - Vec3d(double(id1), double(id2), double(id3))).norm();
+							if (indexImg(ii, jj, kk) == 0 && dist < 2.0) indexImg(ii, jj, kk) = seedId;
+							if(indexImg(ii, jj, kk) == 0 && dist >= 2.0
+								&& double(origImg(ii,jj,kk) - backImg(ii,jj,kk)) >  std::max(fillThrev, 4.5* std::sqrt(double(backImg(ii,jj,kk))))) 
+								indexImg(ii, jj, kk) = seedId;
+						}
+					}//for
+				}//for
+			}
+		}
+        
         resultCurve.swap(resultCurveCopy);
     }
     else{
@@ -894,28 +1173,16 @@ void TraceFilter::CalcInitDirectionOnTraceSeed(const Volume<unsigned short> &ori
     backValue /= (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1);
 
     /*排序,依次是强度，x,y,z*/
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-    VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-        if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
-        else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-        else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-        return lhs(2) < rhs(2);
-    });//Node_v_x_y_z_MAX
+#ifdef _WIN32
+	VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), Vec4d_3012less());//Node_v_x_y_z_MAX
 #else
-    struct neurongfp_tmp
-    {
-        bool operator() (const Vec4d& lhs, const Vec4d& rhs)
-        {
-            if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
-            else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-            return lhs(2) < rhs(2);
-        }
-    } NGPS_OBJ;
-
-    VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), NGPS_OBJ);
+	VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+		if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
+		else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+		return lhs(2) < rhs(2);
+	});//Node_v_x_y_z_MAX
 #endif
-
     //maxRay << (*maxItem)(0), (*maxItem)(1), (*maxItem)(2), (*maxItem)(3);
     Vec3d maxTransItem((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//L11(1:3)'
 
@@ -970,15 +1237,48 @@ void TraceFilter::TraceCurvesForwardFromSeed(const Vec3d &seedInitDir,
     saveDirection.reserve(3000);
     saveDirection.push_back(nextDendDir);
     std::vector<int> CC_infor(3000,0);
-    //Vec3d x2(ix2);
-    //Vec3d x3(ix3);
+    //2015-8-13
+	double xExtractRegion, yExtractRegion, zExtractRegion;
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		xExtractRegion = yExtractRegion = 10;
+		zExtractRegion = 7;
+	}else{
+		xExtractRegion = yExtractRegion = 15;
+		zExtractRegion = 10;
+	}
+
+	//2015-8-13
+	bool isHighResolution = false;
+	double endThrev = 2.0;
+	typedef void (TraceFilter::*MyTraceNextCurveNode)( const Volume<unsigned short> &, const Vec3d &,const double &, const Vec3d &,
+		Vec3d &, Vec3d &,int & );
+	typedef void (TraceFilter::*MyDetectCollision)(const VectorVec5d &, const VectorVec3d &,
+		const Vec2i &, const Volume<int> &,
+		const Volume<unsigned short> &, const Volume<unsigned short> &,
+		const int, const int, const int,
+		VectorVec5d &, int &,
+		Vec2i &, int &, int& );
+	MyTraceNextCurveNode curTraceNextCurveNode;
+	MyDetectCollision curDetectCollision;
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		curTraceNextCurveNode = &TraceFilter::TraceNextCurveNode;
+		curDetectCollision = &TraceFilter::DetectCollision;
+		isHighResolution = false;
+		endThrev = 2.0;
+	}else{
+		//printf("TraceFilter::TraceNextCurveNodeV2\n");
+		curTraceNextCurveNode = &TraceFilter::TraceNextCurveNodeV2;
+		curDetectCollision = &TraceFilter::DetectCollisionV2;
+		isHighResolution = true;
+		endThrev = 4.0;
+	}
 
     while(isNextNodeValid == 1 && i < 3000) {
         int xMin, xMax, yMin, yMax, zMin, zMax;
 
         Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax,
             Round(resultSeedCurve[i](0)), Round(resultSeedCurve[i](1)), Round(resultSeedCurve[i](2) ),
-            10, 10, 7, 0, nxx - 1, 0, nyy - 1, 0, nzz - 1);
+            xExtractRegion, yExtractRegion, zExtractRegion, 0, nxx - 1, 0, nyy - 1, 0, nzz - 1);//2015-8-13
 
         Volume<unsigned short> locOrigImg;//(xMax - xMin + 1, yMax - yMin + 1, zMax - zMin + 1);
         ExtractArea(origImg, xMin, xMax, yMin, yMax, zMin, zMax, locOrigImg);
@@ -996,7 +1296,7 @@ void TraceFilter::TraceCurvesForwardFromSeed(const Vec3d &seedInitDir,
         nextCurveNode.setZero();
         //Vec3d vmmk; vmmk.setZero(); vmmk = tmpx1
         Vec3d nextDendDirCopy;//, tmpx2, tmpx3;
-        TraceNextCurveNode(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir, nextCurveNode, nextDendDirCopy,
+		(this->*curTraceNextCurveNode)(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir, nextCurveNode, nextDendDirCopy,
             isNextNodeValid);
         nextDendDir = nextDendDirCopy;
         Vec3d vmmk = nextDendDirCopy;
@@ -1036,7 +1336,7 @@ void TraceFilter::TraceCurvesForwardFromSeed(const Vec3d &seedInitDir,
             VectorVec5d modifiedResultSeedCurve;
             TraceUtil::GetPartVectorVec3d(resultSeedCurve, std::max<int>(i-10,0), i-1, tmpCurve);
             CalcPtCurveDirection(tmpCurve, nextDendDir);
-            DetectCollision(resultSeedCurve, somaList, curConInfo, indexImg, origImg, backImg,
+            (this->*curDetectCollision)(resultSeedCurve, somaList, curConInfo, indexImg, origImg, backImg,
                             i,0,isNextNodeValid, modifiedResultSeedCurve, isNextNodeValidCp,
                             curConInfoCp, iCp, C_infor);
             resultSeedCurve.swap(modifiedResultSeedCurve);
@@ -1101,31 +1401,35 @@ void TraceFilter::TraceCurvesForwardFromSeed(const Vec3d &seedInitDir,
                 i -= 3;
             }
 
-            if (isNextNodeValid>0){
+            if (isNextNodeValid>0){//
                 VectorVec3d tmpCurve;
                 TraceUtil::GetPartVectorVec3d(resultSeedCurve, i-1,i, tmpCurve);
                 std::vector<double> origWet, backWet, origbackWet;
                 WeighRayValue(tmpCurve, origImg, origWet);
                 WeighRayValue(tmpCurve, backImg, backWet);
                 for(size_t k = 0; k < origWet.size(); ++k){
-                    origbackWet.push_back(origWet[k] - backWet[k]-2.0
+                    origbackWet.push_back(origWet[k] - backWet[k]-endThrev
                                           * std::sqrt(backWet[k]));
                 }
                 if(MaxValueInVector(origbackWet) < 0.0){
-                    VectorVec5d tryForwardCurve;
-                    RayburstShapeTrack(resultSeedCurve[i-3].block(0,0,3,1),origImg,
-                            nextDendDir, 5, tryForwardCurve);
-                    if(tryForwardCurve.size() > 2){
-                        for(int k = i-2; k <= i; ++k)
-                            resultSeedCurve[k].block(0,0,3,1)=
-                                    tryForwardCurve[k - i + 2].block(0,0,3,1);
-                        VectorVec3d tmpCurve1;
-                        TraceUtil::GetPartVectorVec3d(resultSeedCurve, std::max<int>(i - 9, 0),
-                                                      i, tmpCurve1);
-                        CalcPtCurveDirection(tmpCurve1, nextDendDir);
-                    } else{
-                        isNextNodeValid = 0;
-                    }
+					if (isHighResolution) {
+						isNextNodeValid = 0;
+					}else{
+						VectorVec5d tryForwardCurve;
+						RayburstShapeTrack(resultSeedCurve[i-3].block(0,0,3,1),origImg,
+							nextDendDir, 5, tryForwardCurve);
+						if(tryForwardCurve.size() > 2){
+							for(int k = i-2; k <= i; ++k)
+								resultSeedCurve[k].block(0,0,3,1)=
+								tryForwardCurve[k - i + 2].block(0,0,3,1);
+							VectorVec3d tmpCurve1;
+							TraceUtil::GetPartVectorVec3d(resultSeedCurve, std::max<int>(i - 9, 0),
+								i, tmpCurve1);
+							CalcPtCurveDirection(tmpCurve1, nextDendDir);
+						} else{
+							isNextNodeValid = 0;
+						}
+					} 
                 }
             }
         }
@@ -1218,6 +1522,69 @@ void TraceFilter::IsCurvesCollide(const Volume<int> &indexImg,
     }
 }
 
+//2015-8-13
+void TraceFilter::IsCurvesCollideV2(const Volume<int> &indexImg,
+								  const int xMin, const int xMax,
+								  const int yMin, const int yMax,
+								  const int zMin, const int zMax,
+								  int &conInfo, double &curveCollideFlag,
+								  double &somaCollideFlag)
+{
+	conInfo = 0;
+	curveCollideFlag = 0;
+	somaCollideFlag = 1;
+	std::vector<int> indexWindowVal;
+	int kkk = 0;
+	for (int i = xMin; i <= xMax; ++i){
+		for (int j = yMin; j <= yMax; ++j){
+			for (int k = zMin; k <= zMax; ++k){
+				if ( 0 != indexImg(i, j, k) ) indexWindowVal.push_back( indexImg(i, j, k) );
+				if ( 0 > indexImg(i, j, k)  ) ++kkk;
+			}
+		}
+	}//for
+	//2014-4-24
+	if ( indexWindowVal.size() >  60 || kkk > 60 ){
+		std::sort(indexWindowVal.begin(), indexWindowVal.end());
+		std::vector<int>::const_iterator maxIt = std::max_element(indexWindowVal.begin(), indexWindowVal.begin() + 50);
+		if ( *maxIt < 0 ){
+			somaCollideFlag = -1;
+			conInfo=indexWindowVal[0];
+		}
+		else{
+			//jumpIndexVal=diff(indexWindowVal);
+			std::deque<int> jumpIndexVal;
+			//diff_vector(L, Lk);
+			std::adjacent_difference(indexWindowVal.begin(), indexWindowVal.end(), std::back_inserter(jumpIndexVal));
+			jumpIndexVal.pop_front();//do not need first element
+			// jumpIndexList=[indexWindowVal((jumpIndexVal~=0)), indexWindowVal(end)];
+			std::deque<int> jumpIndexList;
+			for (std::deque<int>::size_type ii = 0; ii < jumpIndexVal.size(); ++ii){
+				if ( 0 != jumpIndexVal[ii] )
+					jumpIndexList.push_back(indexWindowVal[ii]);
+			}
+			jumpIndexList.push_back( indexWindowVal[indexWindowVal.size() - 1] );//end
+			//collideSets=diff([0,find(jumpIndexVal~=0),length(indexWindowVal)]);
+			//std::deque<int>::size_type nxrs = jumpIndexList.size();
+			std::deque<int> collideSets;
+			std::vector<int> tmprs1;
+			//[0,find(jumpIndexVal~=0),length(indexWindowVal)]
+			tmprs1.push_back(0);
+			for (std::deque<int>::size_type ii = 0; ii < jumpIndexVal.size(); ++ii){
+				if ( 0 != jumpIndexVal[ii]  ) tmprs1.push_back(ii);
+			}
+			tmprs1.push_back(indexWindowVal.size());
+			//diff_vector(tmprs1, rs1);
+			std::adjacent_difference(tmprs1.begin(), tmprs1.end(), std::back_inserter(collideSets));
+			collideSets.pop_front();//do not need first element
+			// [idexv,idexx]=max(collideSets);
+			std::deque<int>::const_iterator maxIt = std::max_element(collideSets.begin(), collideSets.end());
+			conInfo = jumpIndexList[maxIt - collideSets.begin()];
+			curveCollideFlag = double(*maxIt) / 125.0;
+		}
+	}
+}
+
 void TraceFilter::TraceCurvesFromSoma(const Volume<unsigned short> &origImg, const Volume<unsigned short> &backImg,
                                       Volume<int> &resultIndexImg, const VectorVec5d &thickNodeList, const int somaId,
                                       const Mat3d& somaInitDir, const VectorVec3d& somaList,
@@ -1239,37 +1606,8 @@ void TraceFilter::TraceCurvesFromSoma(const Volume<unsigned short> &origImg, con
     rawSomaCurve.clear();
     resultCurConInfo.setZero();
 
-    //Vec3d denSomaInitDirection;
-    //Vec3d denInitCenter;
-    //VectorVec3d innerSomaPts;
-
-    //ReconstructShapeForTrace(thickNodeList, origImg, backImg,
-        //denSomaInitDirection, denInitCenter, innerSomaPts);
-
-    //int innerSomaPtNum = innerSomaPts.size();
-    //int tmpX, tmpY, tmpZ;
-//    for (int i = 0; i < innerSomaPtNum; ++i){
-//        tmpX = std::max(std::min((int)(innerSomaPts[i](0)), nxx - 1), 0);
-//        tmpY = std::max(std::min((int)(innerSomaPts[i](1)), nyy - 1), 0);
-//        tmpZ = std::max(std::min((int)(innerSomaPts[i](2)), nzz - 1), 0);
-//        resultIndexImg(tmpX, tmpY, tmpZ) = - somaId;
-//    }
-
     rawSomaCurve.clear();
     Vec3d initPt = thickCurve.back();
-
-    //if (denSomaInitDirection.array().abs().sum() > 0.0 )//&& Ikk > -1.0 && Ikk < 1.0
-    //{
-        //Vec3d x1(denSomaInitDirection);
-    //Vec5d curveNode;
-    //curveNode.setZero();
-    //curveNode(0) = thickNodeList(0);
-    //curveNode(1) = thickNodeList(1);
-    //curveNode(2) = thickNodeList(2);
-
-    //vector<vec5d> dataLLs;
-    //Change : 2014-3-19-16-22
-    //rawSomaCurve.push_back(curveNode);
 
     VectorVec5d resultSomaCurve;
     TraceCurveForwardFromSoma(somaInitDir.col(0),
@@ -1363,7 +1701,7 @@ void TraceFilter::TraceCurvesFromSoma(const Volume<unsigned short> &origImg, con
         for (VectorVec5d::size_type i = 0; i < resultCurveCopy.size(); ++i){
             //three.push_back((double)std::max(3, int(resultCurveCopy[i](3) + 1.0) ) );
             //2014-4-20
-            three.push_back(std::min<double>(6.0, double(Round(resultCurveCopy[i](3) + 0.5) ) ) );
+            three.push_back(std::min<double>(2.0, double(Round(resultCurveCopy[i](3) + 0.5) ) ) );
         }
         int id1(0), id2(0), id3(0);
         int xMin, xMax, yMin, yMax, zMin, zMax;
@@ -1400,16 +1738,6 @@ void TraceFilter::TraceCurvesFromSoma(const Volume<unsigned short> &origImg, con
                                 int(innerSomaPt[k](2)) ) = somaId;
             }
         }
-
-//        Vec5d tmpP; tmpP.setZero();
-//        tmpP(0) = thickNodeList(0);
-//        tmpP(1) = thickNodeList(1);
-//        tmpP(2) = thickNodeList(2);
-
-//        resultCurve.resize(1 + resultCurveCopy.size());
-//        //*(resultCurve.begin()) = tmpP;
-//        resultCurve[0] = tmpP;
-        //std::copy(resultCurveCopy.begin(), resultCurveCopy.end(), resultCurve.begin() + 1);
         resultCurve.swap(resultCurveCopy);
     }
     else{
@@ -1440,10 +1768,34 @@ void TraceFilter::TraceCurveForwardFromSoma(const Vec3d &dendSomaInitDir, const 
     Vec3d nextDendDir(dendSomaInitDir);
     Vec3d fixInitDendDir(dendSomaInitDir);
 
+	//2015-8-13
+	int xExtractRegion, yExtractRegion, zExtractRegion;
+	typedef void (TraceFilter::*MyTraceNextCurveNode)( const Volume<unsigned short> &, const Vec3d &,const double &, const Vec3d &,
+		Vec3d &, Vec3d &,int & );
+	typedef void (TraceFilter::*MyDetectCollision)(const VectorVec5d &, const VectorVec3d &,
+		const Vec2i &, const Volume<int> &,
+		const Volume<unsigned short> &, const Volume<unsigned short> &,
+		const int, const int, const int,
+		VectorVec5d &, int &,
+		Vec2i &, int &, int& );
+	MyTraceNextCurveNode curTraceNextCurveNode;
+	MyDetectCollision curDetectCollision;
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		xExtractRegion = yExtractRegion = 10;
+		zExtractRegion = 7;
+		curTraceNextCurveNode = &TraceFilter::TraceNextCurveNode;
+		curDetectCollision = &TraceFilter::DetectCollision;
+	}else{
+		xExtractRegion = yExtractRegion = 15;
+		zExtractRegion = 10;
+		curTraceNextCurveNode = &TraceFilter::TraceNextCurveNodeV2;
+		curDetectCollision = &TraceFilter::DetectCollisionV2;
+	}
+
     while(isNextNodeValid == 1 && i < 3000){
         int xMin, xMax, yMin, yMax, zMin, zMax;
         Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax,
-            Round(resultSomaCurve[i](0) ), Round(resultSomaCurve[i](1)), Round(resultSomaCurve[i](2)), 10, 10, 7,
+            Round(resultSomaCurve[i](0) ), Round(resultSomaCurve[i](1)), Round(resultSomaCurve[i](2)), xExtractRegion, yExtractRegion, zExtractRegion,
             0, nxx - 1, 0, nyy - 1, 0, nzz - 1);
 
         Volume<unsigned short> locOrigImg;
@@ -1466,8 +1818,11 @@ void TraceFilter::TraceCurveForwardFromSoma(const Vec3d &dendSomaInitDir, const 
         Vec3d nextDenDirCopy;
         nextDenDirCopy.setZero();
         Vec3d tmpx1;
-        TraceNextCurveNode(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir,nextCurveNode, tmpx1,
+		//2015-8-13
+        (this->*curTraceNextCurveNode)(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir,nextCurveNode, tmpx1,
             isNextNodeValid);
+		/*TraceNextCurveNode(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir,nextCurveNode, tmpx1,
+			isNextNodeValid);*/
         nextDendDir = tmpx1;
         nextDenDirCopy = nextDendDir;
 
@@ -1752,29 +2107,16 @@ void TraceFilter::ReconstructShapeForTrace(const Vec3d &intialPoint, const Volum
     //innerSomaPts.swap(VectorVec3d(innerSomaPts));
     /*去除重复*/
     //lambda function
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-
-    std::sort(innerSomaPts.begin(), innerSomaPts.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-        return false;
-    });
+#ifdef _WIN32
+	std::sort(innerSomaPts.begin(), innerSomaPts.end(), Vec3d_less());
 #else
-    struct neurongfp_tmp
-    {
-        bool operator() (const Vec3d& lhs, const Vec3d &rhs)
-        {
-            if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-            else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-            else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-            return false;
-        }
-    } NGPS_OBJ;
-    std::sort(innerSomaPts.begin(), innerSomaPts.end(), NGPS_OBJ);
+	std::sort(innerSomaPts.begin(), innerSomaPts.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	});
 #endif
-
     innerSomaPts.erase(std::unique(innerSomaPts.begin(), innerSomaPts.end()), innerSomaPts.end());
     //2014-4-19
     VectorVec3d tmpInnder;
@@ -1790,100 +2132,6 @@ void TraceFilter::ReconstructShapeForTrace(const Vec3d &intialPoint, const Volum
         }
     }
     innerSomaPts.swap(tmpInnder);
-
-    //const Volume<unsigned short> &XXb = backImg;
-    //double thre3 = (double)XXb(int(intialPoint(0) + 0.5), int(intialPoint(1) + 0.5), int(intialPoint(2) + 0.5));
-//    double inflateThrev = (double)backImg(int(intialPoint(0) + 0.5), int(intialPoint(1) + 0.5), int(intialPoint(2) + 0.5));
-//    inflateThrev = inflateThrev + 5.0 * std::sqrt(inflateThrev);
-
-//    VectorVec3d inflatedArea;
-//    InflateBoundary(innerSomaPts, locOrigImg, inflateThrev, inflatedArea);
-
-//    VectorVec3d::size_type inflatedPtsNum = inflatedArea.size();
-//    VectorVec3d resultInflatedPts;
-//    Volume<NGCHAR> locIndexImg;
-//    locIndexImg.SetSize(locOrigImg.x(), locOrigImg.y(), locOrigImg.z());
-
-//    double validNodeDense1;
-//    double validNodeDense2(10000);
-//    double ixx, iyy, izz;
-//    Vec3d tmpNorm;
-//    for (VectorVec3d::size_type i = 0; i < inflatedPtsNum; ++i){
-//        validNodeDense1 = 0.0;
-//        validNodeDense2 = 10000;
-//        for (int ii = 1; ii <= Theta; ++ii){
-//            for (int jj = 1; jj <= Phi; ++jj){
-//                double k = 0.5 * resultRayLength(ii - 1, jj - 1);
-
-//                ixx = k * std::sin(b * (double)jj * PI_180) * std::cos(a * (double)ii * PI_180) + locPoint(0);
-//                iyy = k * std::sin(b * (double)jj * PI_180) * std::sin(a * (double)ii * PI_180) + locPoint(1);
-//                izz = k * std::cos(b * (double)jj * PI_180) + locPoint(2);
-
-//                ixx = int(ixx + 0.5);
-//                iyy = int(iyy + 0.5);
-//                izz = int(izz + 0.5);
-
-//                tmpNorm = inflatedArea[i] - Vec3d(ixx,iyy,izz);//
-//                rayNodeDense = tmpNorm.norm();
-//                if (rayNodeDense > 2.0 && rayNodeDense < validNodeDense2){
-//                    validNodeDense1 = rayNodeDense;
-//                    validNodeDense2 = rayNodeDense;
-//                }
-//            }
-//        }
-
-//        if (validNodeDense1 > 3.0){
-//            resultInflatedPts.push_back(inflatedArea[i]);
-//            locIndexImg((int)inflatedArea[i](0), (int)inflatedArea[i](1), (int)inflatedArea[i](2)) = 255;//1
-//        }
-//    }
-
-//    VectorVec3d dendInitPts;//yy
-//    std::vector<int> dendInitPtSetSum;
-//    DetectCellSignal(locIndexImg, resultInflatedPts, dendInitPts, dendInitPtSetSum);
-//    if (!dendInitPtSetSum.empty()){
-//        std::vector<int>::const_iterator maxIt = std::max_element(dendInitPtSetSum.begin(), dendInitPtSetSum.end());
-//        int dist = maxIt - dendInitPtSetSum.begin();
-//        std::vector<double> cumDendInitPtsNum(dendInitPtSetSum.size()+1);
-//        cumDendInitPtsNum[0]=0;
-//        //cumsum(idy.begin(), idy.end(),CumExtNum.begin()+1);
-//        std::partial_sum(dendInitPtSetSum.begin(), dendInitPtSetSum.end(), cumDendInitPtsNum.begin() + 1);
-
-//        VectorVec3d dendInitPtSet;
-//        dendInitPtSet.assign(dendInitPts.begin() + cumDendInitPtsNum[dist], dendInitPts.begin() + cumDendInitPtsNum[dist + 1] );
-
-//        double xMean(0.0), yMean(0.0), zMean(0.0);
-//        for (VectorVec3d::size_type sz = 0; sz < dendInitPtSet.size(); ++sz){
-//            xMean += dendInitPtSet[sz](0);
-//            yMean += dendInitPtSet[sz](1);
-//            zMean += dendInitPtSet[sz](2);
-//        }
-//        xMean /= (double)dendInitPtSet.size();
-//        yMean /= (double)dendInitPtSet.size();
-//        zMean /= (double)dendInitPtSet.size();
-
-//        Vec3d dendInitPtSetCenter(xMean, yMean, zMean);
-
-//        globalDendInitCenter = dendInitPtSetCenter - locPoint + intialPoint;
-//        dendSomaInitDirection = dendInitPtSetCenter - locPoint;
-//        dendSomaInitDirection.normalize();
-//        //directionc(dendSomaInitDirection, xx2, xx3);
-//    }
-//    else{
-//        dendSomaInitDirection.setZero();
-//        globalDendInitCenter.setZero();
-//    }
-
-//    //soma problem
-//    inflatedPtsNum = innerSomaPts.size();
-//    Vec3d tmpDenInitPt;
-//    for (VectorVec3d::size_type i = 0; i < inflatedPtsNum; ++i){
-//        tmpDenInitPt = innerSomaPts[i] - locPoint + intialPoint;
-//        tmpDenInitPt(0) = tmpDenInitPt(0) < 0.0 ? 0.0 : tmpDenInitPt(0);
-//        tmpDenInitPt(1) = tmpDenInitPt(1) < 0.0 ? 0.0 : tmpDenInitPt(1);
-//        tmpDenInitPt(2) = tmpDenInitPt(2) < 0.0 ? 0.0 : tmpDenInitPt(2);
-//        innerSomaPts[i] = tmpDenInitPt;
-//    }
 }
 
 void TraceFilter::InflateBoundary(const VectorVec3d &innerSomaPts, const Volume<unsigned short> &locOrigImg,
@@ -2016,64 +2264,6 @@ void TraceFilter::InflateMarginalAreaAboveThrev(const VectorVec3d &initPoints, V
     }
 }
 
-//void TraceFilter::DetectCellSignal(const Volume<NGCHAR> &locIndexImg, const VectorVec3d &inflatedPoints,
-//                                   VectorVec3d &dendInitPts, std::vector<int> &dendInitPtSetSum)
-//{
-//    ///------------------初始化---------------------------------------------------------------
-//    //int n, i, j ,ij ;
-//    int xMin,xMax;
-//    int yMin,yMax;
-//    int zMin,zMax;
-
-//    dendInitPts.clear();
-//    dendInitPtSetSum.clear();
-
-//    int ax		= locIndexImg.x();
-//    int ay		= locIndexImg.y();
-//    int az		= locIndexImg.z();
-//    //int aWH	= ax * ay;
-
-//    Volume<NGCHAR> tmpLocIndexImg;//(XX1.x(), XX1.y(), XX1.z());
-//    //QuickCopyVoxel(XX1, Ima);
-//    tmpLocIndexImg.QuickCopy(locIndexImg);
-//    //memcpy(Ima.Data(), XX1.Data(), sizeof(UChar) * XX1.x() * XX1.y() * XX1.z());
-
-//    //Vec3d pt;
-//    int nxx = inflatedPoints.size();
-//    int locWinWet(0);
-//    ///----------------开始-----------------
-//    for (int n = 0; n < nxx; ++n){
-
-//        const Vec3d& pt = inflatedPoints[n];
-
-//        if (pt(0) > 1 && pt(0) < ax-1 && pt(1) > 1 && pt(1) < ay-1 && pt(2) > 1 && pt(2) < az-1)
-//            //if id1>2 & id1<ax & id2>2 & id2<ay & id3>2 & id3<az ///
-//        {
-//            Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, int(pt(0) + 0.5), int(pt(1) + 0.5)
-//                        , int(pt(2) + 0.5), 1, 1, 1);
-
-//            locWinWet = 0;
-//            GetAreaSum(tmpLocIndexImg, xMin, xMax, yMin, yMax, zMin, zMax, locWinWet);
-//            locWinWet /= 255;
-//        }
-//        else locWinWet = 0;
-
-//        VectorVec3d resultPoint;
-//        resultPoint.clear();//一定要注意
-//        ///-----------------提取-----------------------
-//        if (locWinWet > 20){
-//            /*提取区域*/
-//            TraceUtil::ExtractSubRegionOP(pt, tmpLocIndexImg, resultPoint);
-//            /*不判断是否是连通域*/
-//            VectorVec3d::size_type sz = dendInitPts.size();
-//            dendInitPts.resize(sz + resultPoint.size());
-//            std::copy(resultPoint.begin(), resultPoint.end(), dendInitPts.begin() + sz);
-//            dendInitPtSetSum.push_back(resultPoint.size());
-//            resultPoint.clear();
-//        }//if
-//    }//for
-//}
-
 void TraceFilter::DetectCellSignalModify(const Volume<NGCHAR> &locIndexImg, const VectorVec3d &inflatedPoints,
                                          const int threv, VectorVec3d &cxDomainSet, std::vector<int> &cxDomainNumList)
 {
@@ -2141,24 +2331,13 @@ void TraceFilter::CalcOrthoBasis(const Vec3d &vec1, Vec3d &vec2, Vec3d &vec3)
     tmp.push_back(std::pair<int, double>(1, std::abs(vec1(1))));
     tmp.push_back(std::pair<int, double>(2, std::abs(vec1(2))));
     /*[idxv,idexx]=sort(abs(vec1))*/
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-
-    std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-        return lhs.second < rhs.second;
-    });
+#ifdef _WIN32
+	std::sort(tmp.begin(), tmp.end(),Pair_less());
 #else
-    struct neurongfp_tmp
-    {
-        bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
-        {
-            return  lhs.second < rhs.second;
-        }
-    } NGPS_OBJ;
-
-    std::sort(tmp.begin(), tmp.end(), NGPS_OBJ);
+	std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+		return lhs.second < rhs.second;
+	});
 #endif
-
     double cdd = (tmp[0].second * tmp[0].second + tmp[1].second * tmp[1].second) / tmp[2].second;
     vec2(tmp[2].first) = - (double)TraceUtil::sign(vec1[tmp[2].first]) * cdd;
 
@@ -2237,6 +2416,60 @@ void TraceFilter::CalcConstraintPCA(const VectorVec3d &neighborPtSet, const Vec3
     } else{
         mdata3 = MMs1;
     }
+}
+
+void TraceFilter::CalcConstraintPCAv2(const VectorVec3d &neighborPtSet, const Vec3d &curSeedNode, const Mat3d &convMat,
+									const std::vector<double> &neighborWet,
+									double &P, Mat3d &sigmaH, Vec3d &mdata3)
+{
+	Vec3d g;//g
+	Mat3d H;//H就是HH
+	g.setZero();
+	H.setZero();
+
+	VectorVec3d::size_type length = neighborPtSet.size();//nx
+	Vec3d X(curSeedNode(0), curSeedNode(1), curSeedNode(2)); //X
+	std::vector<double> C;//C
+	VectorVec3d U;//U
+
+	Mat3d MMs;//MMs
+	MMs.setZero();
+	Vec3d MMs1;//MMs1
+	MMs1.setZero();
+	Vec3d dd(0.0, 0.0, 0.0);//dd
+	//vec3d tmpCenter;//data1的一个元素
+	for (VectorVec3d::size_type i = 0; i < length; ++i){
+		dd = X - neighborPtSet[i];//dd=X-data1(:,i)
+		//dd(2) *= 2.0;
+		if (dd.norm() < 6.0){
+			C.push_back(neighborWet[i] * std::exp(-0.5 * dd.transpose() * convMat * dd));
+		}
+		else{
+			C.push_back(0.0);//C(:,i)
+		}
+
+		U.push_back(convMat * dd);//U(:,i) = data2 *dd
+		g += C[i] * U[i];//g
+		H += C[i] * (U[i] * U[i].transpose() - convMat);//HH
+		MMs += C[i] * convMat;//MMs
+		MMs1 += (C[i] * convMat) * dd;//MMs1
+	}
+
+	//P = std::accumulate(C.begin(), C.end(), 0.0);//P = sum(C)
+	P = 0.0;
+	for(std::vector<double>::size_type i = 0; i < C.size(); ++i){
+		P += C[i];
+	}
+	g *= -1.0;
+
+	/*sigmaH = -H./P + (P^(-2)) * g * g'*/
+	sigmaH = - H / P + std::pow(P, -2.0) * (g * g.transpose());
+	if (std::abs(MMs.determinant()) > 0.1){
+		Mat3d tmpcorrection = MMs.inverse();
+		mdata3 = tmpcorrection * MMs1;//inv(MMs)*MMs1
+	} else{
+		mdata3 = MMs1;
+	}
 }
 
 void TraceFilter::CalcPCADirections(const Mat3d &sigmaH, const Vec3d &initVec, const Vec3d &T2, const double threv,
@@ -2326,8 +2559,15 @@ void TraceFilter::CalcParmOfCurveNode(const Volume<unsigned short> &origImg, con
     int vz = backImg.z();
 
     int xMin, xMax, yMin, yMax, zMin, zMax;
-    Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, Round(curNode(0) ), Round(curNode(1) ), Round(curNode(2) ),
-        5, 5, 5, 0, vx - 1, 0, vy - 1, 0, vz - 1);
+	//2015-8-13
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, Round(curNode(0) ), Round(curNode(1) ), Round(curNode(2) ),
+			5, 5, 5, 0, vx - 1, 0, vy - 1, 0, vz - 1);
+	}else{
+		Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax, Round(curNode(0) ), Round(curNode(1) ), Round(curNode(2) ),
+			8, 8, 8, 0, vx - 1, 0, vy - 1, 0, vz - 1);
+	}
+    
 
     int xLen = xMax - xMin + 1;
     int yLen = yMax - yMin + 1;
@@ -2352,12 +2592,20 @@ void TraceFilter::CalcParmOfCurveNode(const Volume<unsigned short> &origImg, con
     double vv0 = 0.0;
     double vv1 = 0.0;
 
+	//2015-8-13
+	Vec4d level;
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		level << 1.0, 2.0, 3.0, 4.0;
+	}else{
+		level << 1.5, 3.0, 4.5, 6.0;
+	}
+
     for (double i = 0; i < xLen; ++i){
         for (double j = 0; j < yLen; ++j){
             for (double ij = 0; ij < zLen; ++ij){
                 Vec3d dist(i - center(0), j - center(1), ij - center(2));
                 double distNorm = dist.norm();
-                if (distNorm <= 1.0){ //距离中心为1
+                if (distNorm <= level(0)){ //距离中心为1
                     distWet(0, 0) += 1.0;
                     if (procImg(i, j, ij) > 0.0){
                         vv0 += procImg(i, j, ij);
@@ -2365,7 +2613,7 @@ void TraceFilter::CalcParmOfCurveNode(const Volume<unsigned short> &origImg, con
                     }
                 }//if
 
-                if (distNorm <= 2.0){ //距离中心为2
+                if (distNorm <= level(1)){ //距离中心为2
                     distWet(0, 1) += 1.0;
                     if (procImg(i, j, ij) > 0){
                         vv1 += procImg(i, j, ij);
@@ -2373,13 +2621,13 @@ void TraceFilter::CalcParmOfCurveNode(const Volume<unsigned short> &origImg, con
                     }
                 }
 
-                if (distNorm <= 3.0){ //距离中心为3
+                if (distNorm <= level(2)){ //距离中心为3
                     distWet(0, 2) += 1.0;
                     if (procImg(i, j, ij) > 0)
                         distWet(1, 2) += 1.0;
                 }
 
-                if (distNorm <= 4.0){ //距离中心为4
+                if (distNorm <= level(3)){ //距离中心为4
                     distWet(0, 3) += 1.0;
                     if (procImg(i, j, ij) > 0)
                         distWet(1, 3) += 1.0;
@@ -2388,16 +2636,30 @@ void TraceFilter::CalcParmOfCurveNode(const Volume<unsigned short> &origImg, con
         }
     }//for
 
+	//2015-8-13
     Vec4d procDistWet = distWet.row(1).array() / ( distWet.row(0).array() + 0.0001);
-    for (int i = 1; i <= 4; ++i){
-        if (procDistWet(4-i) > 0.5){
-            radius = 5.0 - (double)i;
-            break;
-        }
-    }
+	if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+		for (int i = 1; i <= 4; ++i){
+			if (procDistWet(4-i) > 0.5){
+				radius = 5.0 - (double)i;
+				break;
+			}
+		}
+	}else{
+		for (int i = 1; i <= 4; ++i){
+			if (procDistWet(4-i) > 0.5){
+				radius = (5.0 - (double)i) * 1.5;
+				break;
+			}
+		}
+	}
 
     if (radius > 2.1){//注意这里！！
-        radius = radius / std::pow(distWet(0, int(radius + 0.5) - 1) / distWet(1, int(radius + 0.5) - 1), 1.0/3.0);
+		if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+			radius = radius / std::pow(distWet(0, int(radius + 0.5) - 1) / distWet(1, int(radius + 0.5) - 1), 1.0/3.0);
+		}else{
+			radius = radius / std::pow(distWet(0, int(radius/1.5 + 0.5) - 1) / distWet(1, int(radius / 1.5 + 0.5) - 1), 1.0/3.0);
+		}
         wet = vv1 / distWet(1, 1);
     }
 
@@ -2466,7 +2728,12 @@ void TraceFilter::TraceNextCurveNode(const Volume<unsigned short> &locOrigImg, c
     Vec3d x11;//x11
     x11.setZero();
 
-    CalcNeighborSignal(locOrigImg, curSeedNode, nextDenDir, threv, neighborPtSet, neighborWet, x10, x11);
+	CalcNeighborSignal(locOrigImg, curSeedNode, nextDenDir, threv, neighborPtSet, neighborWet, x10, x11);//2015-8-13
+	/*if (locOrigImg.XResolution() * locOrigImg.YResolution() * locOrigImg.ZResolution() > 1.5) {
+		CalcNeighborSignal(locOrigImg, curSeedNode, nextDenDir, threv, neighborPtSet, neighborWet, x10, x11);
+	}else{
+		CalcNeighborSignalV2(locOrigImg, curSeedNode, nextDenDir, threv, neighborPtSet, neighborWet, x10, x11);
+	}*/
 
     size_t neighborWetNum = neighborPtSet.size();
     /*W1 = sort(W, 'desend')*/
@@ -2494,7 +2761,7 @@ void TraceFilter::TraceNextCurveNode(const Volume<unsigned short> &locOrigImg, c
 
     double P = 0.0;
     //2014-4-22
-    if (neighborWetNum > std::max(0.1 * threv, 5.0) && thrdk > std::max(0.3 * threv, 4.5 * std::sqrt(threv))){
+    if (neighborWetNum > std::max(0.1 * threv, 5.0) && thrdk > std::max(endThrev, std::max(0.3 * threv, 4.5 * std::sqrt(threv)))){
         /*Change : conflict between old and new version, choose new version*/
         CalcConstraintPCA(neighborPtSet, curSeedNode, 0.150 * Eigen::Matrix3d::Identity(), neighborWet, P, sigmaH, kk);
         if (P>0){
@@ -2515,6 +2782,73 @@ void TraceFilter::TraceNextCurveNode(const Volume<unsigned short> &locOrigImg, c
         nextCurveNode = - (tmpResultDirections.col(0) * tmpResultDirections.col(0).transpose() + tmpResultDirections.col(1) * tmpResultDirections.col(1).transpose()) * kk + curSeedNode;
     }
     else isNextNodeValid = 0;
+}
+
+void TraceFilter::TraceNextCurveNodeV2(const Volume<unsigned short> &locOrigImg, const Vec3d &curSeedNode,
+									 const double &threv, const Vec3d &initDir,
+									 Vec3d &nextCurveNode, Vec3d &nextDenDir,  int &isNextNodeValid)
+{
+	nextCurveNode.setZero();
+	isNextNodeValid = 1;
+	nextDenDir = initDir;
+
+	VectorVec3d neighborPtSet;//
+	std::vector<double> neighborWet;//W
+
+	Vec3d x10;//x10
+	x10.setZero();
+	Vec3d x11;//x11
+	x11.setZero();
+
+	CalcNeighborSignalV2(locOrigImg, curSeedNode, nextDenDir, threv, neighborPtSet, neighborWet, x10, x11);
+
+	size_t neighborWetNum = neighborPtSet.size();
+	/*W1 = sort(W, 'desend')*/
+	std::vector<double> sortedNeighborWet;//W1
+	sortedNeighborWet.assign(neighborWet.begin(), neighborWet.end());
+	std::sort(sortedNeighborWet.begin(), sortedNeighborWet.end(), std::greater<double>());
+
+	size_t dsw = (std::min)((size_t)20, sortedNeighborWet.size());//2015-8-13
+	/*包含*/
+	double thrdk(0.0);
+	if (dsw > 15){
+		//thrdk = std::accumulate(sortedNeighborWet.begin(), sortedNeighborWet.begin() + dsw, 0.0) / dsw;
+		thrdk = 0.0;
+		for(int i = 0; i < int(dsw); ++i){
+			thrdk += sortedNeighborWet[i];
+		}
+		thrdk /= double(dsw);
+	}
+	else thrdk = 0.0;
+
+	Mat3d sigmaH;//sigmaH
+	sigmaH.setZero();
+	Vec3d kk;//kk
+	kk.setZero();
+
+	double P = 0.0;
+	//2014-4-22
+	if (neighborWetNum > std::max(0.1 * threv, 15.0) && thrdk > std::max(endThrev, std::max(0.3 * threv, 4.5 * std::sqrt(threv)))){//2015-8-13
+		/*Change : conflict between old and new version, choose new version*/
+		CalcConstraintPCAv2(neighborPtSet, curSeedNode, 0.150 * Eigen::Matrix3d::Identity(), neighborWet, P, sigmaH, kk);
+		if (P>0){
+			if ( std::abs(sigmaH.determinant() / ((sigmaH.inverse()).determinant()) + 0.0001) < 10.0 ) {
+				CalcPCADirections(TraceUtil::sign(sigmaH.determinant()) * sigmaH.inverse(), initDir.normalized(),
+					x11, 0.9, nextDenDir);//0.85-0.9
+			}
+		} else{
+			isNextNodeValid=0;
+		}
+		Mat3d tmpResultDirections;
+		Vec3d x2, x3;
+		CalcOrthoBasis(nextDenDir, x2, x3);
+		tmpResultDirections.col(0) = x3;
+		tmpResultDirections.col(1) = x2;
+		tmpResultDirections.col(2) = nextDenDir;
+		//vmmk = nextDenDir;
+		nextCurveNode = - (tmpResultDirections.col(0) * tmpResultDirections.col(0).transpose() + tmpResultDirections.col(1) * tmpResultDirections.col(1).transpose()) * kk + curSeedNode;
+	}
+	else isNextNodeValid = 0;
 }
 
 void TraceFilter::ClearShortCurvesAndInvalidConnection(const std::vector<VectorVec5d> &rawDendCurves,
@@ -2617,25 +2951,13 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-
-            std::sort(conNodeDistList.begin(), conNodeDistList.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-                return lhs.second < rhs.second;
-            });
+#ifdef _WIN32
+			std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
 #else
-
-            struct neurongfp_tmp
-            {
-                bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
-                {
-                    return lhs.second < rhs.second;
-                }
-            } NGPS_OBJ;
-            std::sort(conNodeDistList.begin(), conNodeDistList.end(),NGPS_OBJ);
-
+			std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+				return lhs.second < rhs.second;
+			});
 #endif
-
             //Change:2014-3-21-10-32
             int isShortestExist = std::min(1, (int)nxx);//1 or 0
             std::vector<int> shortestNodeId;
@@ -2730,22 +3052,12 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-            std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-                return lhs.second < rhs.second;
-            });
+#ifdef _WIN32
+			std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
 #else
-
-            struct neurongfp_tmp
-            {
-                bool operator() (const std::pair<int, double>& lhs, const std::pair<int, double>& rhs)
-                {
-                    return lhs.second < rhs.second;
-                }
-            } NGPS_OBJ;
-            std::sort(conNodeDistList.begin(), conNodeDistList.end(), NGPS_OBJ);
-
+			std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+				return lhs.second < rhs.second;
+			});
 #endif
             //Change:5->1
             int isShortestExist = std::min(1, int(nxx));
@@ -2795,7 +3107,12 @@ void TraceFilter::ReconstructSomaShapeForTrace(const VectorVec3d &somaList, cons
         VectorVec3d innerSomaPts;
         if(indexImg(Idex, Idey,Idez) == 0){
             MatXd resultRayLength;
-            ReconstructShapeForTrace(initialP,origImg, resultRayLength,innerSomaPts);
+			if (origImg.XResolution() * origImg.YResolution() * origImg.ZResolution() > 1.5) {
+				ReconstructShapeForTrace(initialP,origImg, resultRayLength,innerSomaPts);
+			}else{
+				printf("ReconstructSomaShapeQuanRevi\n");
+				ReconstructSomaShapeQuanRevi(initialP, resultRayLength, innerSomaPts);//2015-8-13
+			}
 
             //printf("ReconstructShapeForTrace:%d\n", ii);
             allRayLen.push_back(resultRayLength);
@@ -2859,29 +3176,16 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             }
         }
     }
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-    std::sort(innerSomaPt.begin(), innerSomaPt.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-        return false;
-    });
+#ifdef _WIN32
+	std::sort(innerSomaPt.begin(), innerSomaPt.end(), Vec3d_less());
 #else
-
-            struct neurongfp_tmp1
-            {
-                bool operator() (const Vec3d& lhs, const Vec3d &rhs){
-                    if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-                    else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-                    else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-                    return false;
-                }
-            } NGPS_OBJ1;
-            std::sort(innerSomaPt.begin(), innerSomaPt.end(), NGPS_OBJ1);
-
+	std::sort(innerSomaPt.begin(), innerSomaPt.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	});
 #endif
-
     innerSomaPt.erase(std::unique(innerSomaPt.begin(), innerSomaPt.end()),
                       innerSomaPt.end());
 
@@ -2911,27 +3215,15 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             medianContourPtSet.push_back(Vec3d(xx,yy,zz));
         }
     }
-
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-    std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-        return false;
-    });
+#ifdef _WIN32
+	std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), Vec3d_less());
 #else
-
-            struct neurongfp_tmp2
-            {
-                bool operator() (const Vec3d& lhs, const Vec3d &rhs){
-                    if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-                    else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-                    else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-                    return false;
-                }
-            } NGPS_OBJ2;
-            std::sort(medianContourPtSet.begin(), medianContourPtSet.end(),  NGPS_OBJ2);
-
+	std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	});
 #endif
     medianContourPtSet.erase(std::unique(medianContourPtSet.begin(),
                                             medianContourPtSet.end()),
@@ -3062,7 +3354,7 @@ void TraceFilter::ForceModifyDirection(VectorMat3d &allThickDendInitDir, std::ve
     for(size_t i = 0; i < nzz; ++i){
         eachDirCorrSumList[i] = mainDirCorrMat.col(i).sum();
     }
-    auto maxIt = std::max_element(eachDirCorrSumList.begin(), eachDirCorrSumList.end());
+    std::vector<double>::iterator maxIt = std::max_element(eachDirCorrSumList.begin(), eachDirCorrSumList.end());
     int maxCorrDirID = std::distance(eachDirCorrSumList.begin(), maxIt);
     Vec3d maxCorrDir = allThickDendInitDir[maxCorrDirID].col(0);
     for(size_t i=0; i < nzz; ++i){
@@ -3156,6 +3448,90 @@ void TraceFilter::DetectCollision(const VectorVec5d &somaCurve, const VectorVec3
         }
     }
     resultCollideInfo = collideInfo;
+}
+
+void TraceFilter::DetectCollisionV2(const VectorVec5d &somaCurve, const VectorVec3d &somaList,
+								  const Vec2i &initCollideInfo, const Volume<int> &indexImg,
+								  const Volume<unsigned short> &origImg, const Volume<unsigned short> &backImg,
+								  const int origID, const int isSoma, const int isContinue,
+								  VectorVec5d &modifiedSomaCurve, int &isContinueTrace,
+								  Vec2i &resultCollideInfo, int &curID, int& resultConInfo)
+{
+	resultConInfo = 0;
+	curID=origID;
+	int nxx = origImg.x();
+	int nyy = origImg.y();
+	int nzz = origImg.z();
+	Vec2i collideInfo = initCollideInfo;
+	isContinueTrace = isContinue;
+	modifiedSomaCurve = somaCurve;
+	curID = origID;
+	int id1 = Round(modifiedSomaCurve[curID](0));
+	int id2 = Round(modifiedSomaCurve[curID](1));
+	int id3 = Round(modifiedSomaCurve[curID](2));
+	int xMin, xMax, yMin, yMax, zMin, zMax;
+	xMin = std::max<int>(0, id1 - 2);
+	xMax = std::min<int>(id1 + 2, nxx - 1);
+	yMin = std::max<int>(0, id2 - 2);
+	yMax = std::min<int>(id2 + 2, nyy - 1);
+	zMin = std::max<int>(0, id3 - 2);
+	zMax = std::min<int>(id3 + 2, nzz - 1);
+	VectorVec3d tmpCurve;
+	TraceUtil::GetPartVectorVec3d(modifiedSomaCurve, std::max<int>(curID-6,0),
+		curID, tmpCurve);
+	Vec3d directions;
+	CalcPtCurveDirection(tmpCurve, directions);
+	int collideConInfo;
+	double curveCollideFlag;
+	double somaCollideFlag;
+	IsCurvesCollideV2(indexImg,xMin, xMax, yMin, yMax, zMin, zMax,collideConInfo,
+		curveCollideFlag, somaCollideFlag);
+	if(curveCollideFlag > 0.1){//2015-8-13
+		collideInfo(0)=collideConInfo;
+		isContinueTrace = 0;
+	}
+	if(somaCollideFlag < 0.5){
+		if(isSoma == 0){
+			collideInfo(0)=collideConInfo;
+			isContinueTrace = 0;
+		} else{
+			Vec3d nodeOtherSomaVec = modifiedSomaCurve[curID].block(0,0,3,1)
+				- somaList[-collideConInfo-1];//warning
+			nodeOtherSomaVec(2) *= 2;
+			double dist = std::pow(nodeOtherSomaVec.norm(), 2.0) -
+				std::pow(directions.dot(nodeOtherSomaVec), 2.0);
+			dist = std::sqrt(dist);
+			if(dist < 5.5){
+				collideInfo(0)=collideConInfo;
+				isContinueTrace = 0;
+			}
+		}
+	}
+	if(curveCollideFlag > 3.5){//2015-8-13
+		TraceUtil::GetPartVectorVec3d(modifiedSomaCurve,
+			std::max<int>(curID - 10,0),
+			curID - 2, tmpCurve);
+		Vec3d drc1;
+		CalcPtCurveDirection(tmpCurve, drc1);
+		Vec3d initPoint = modifiedSomaCurve[curID-2].block(0,0,3,1);
+		VectorVec3d crossCurve;
+		int isThroughKnot;
+		TraceForwardInKnotV2(drc1, initPoint, backImg, origImg,
+			indexImg, collideConInfo, crossCurve,isThroughKnot);
+		if(1 == isThroughKnot){
+			resultConInfo = collideConInfo;
+			isContinueTrace = 1;
+			modifiedSomaCurve.resize(curID + 4);
+			modifiedSomaCurve[curID - 1].block(0,0,3,1)=crossCurve[1];
+			modifiedSomaCurve[curID].block(0,0,3,1)=crossCurve[2];
+			modifiedSomaCurve[curID + 1].block(0,0,3,1)=crossCurve[3];
+			modifiedSomaCurve[curID + 2].block(0,0,3,1)=crossCurve[4];
+			modifiedSomaCurve[curID + 3].block(0,0,3,1)=crossCurve[5];
+			curID += 3;
+			collideInfo(0) = 0;
+		}
+	}
+	resultCollideInfo = collideInfo;
 }
 
 void TraceFilter::TraceForwardInKnot(const Vec3d &initMainDir, const Vec3d &initP,
@@ -3281,6 +3657,125 @@ void TraceFilter::TraceForwardInKnot(const Vec3d &initMainDir, const Vec3d &init
     }
 }
 
+void TraceFilter::TraceForwardInKnotV2(const Vec3d &initMainDir, const Vec3d &initP,
+									 const Volume<unsigned short> &backImg,
+									 const Volume<unsigned short> &origImg,
+									 const Volume<int> &indexImg, const int collideConInfo,
+									 VectorVec3d &crossCurve, int &isContinueTrace)
+{
+	int i = 0;
+	int nxx = backImg.x();
+	int nyy = backImg.y();
+	int nzz = backImg.z();
+	VectorVec3d tmpDendCurve;
+	tmpDendCurve.push_back(initP);
+	int isNextNodeValid = 1;
+	Vec3d nextDendDir(initMainDir);
+	crossCurve.clear();
+	//double projLength = 0.0;
+	while(isNextNodeValid == 1 && i < 14){
+		int xMin, xMax, yMin, yMax, zMin, zMax;
+		Get3DRegion(xMin, xMax, yMin, yMax, zMin, zMax,
+			Round(tmpDendCurve[i](0) ), Round(tmpDendCurve[i](1)), Round(tmpDendCurve[i](2) ), 15, 15, 10,
+			0, nxx - 1, 0, nyy - 1, 0, nzz - 1);
+
+		Volume<unsigned short> locOrigImg;
+		ExtractArea(origImg, xMin, xMax, yMin, yMax, zMin, zMax, locOrigImg);
+
+		Vec3d lefttopAxis(xMin, yMin, zMin);
+
+		int rdrvx = std::min(std::max(Round(tmpDendCurve[i](0) - 1.0 ), 0), nxx - 1);
+		//2014-4-22
+		//int rdrvy = std::min(std::max(int(tmpDendCurve[i](1) - 3.0 + 0.5), 0), nyy - 1);
+		int rdrvy = std::min(std::max(Round(tmpDendCurve[i](1) - 1.0 ), 0), nyy - 1);
+		int rdrvz = std::min(std::max(Round(tmpDendCurve[i](2) - 1.0 ), 0), nzz - 1);
+		double threv = backImg(rdrvx, rdrvy, rdrvz);//int(double(zMin + zMax) / 2.0 + 0.5)
+		Vec3d tmpCurrentCurveNode(tmpDendCurve[i](0) - xMin, tmpDendCurve[i](1) - yMin, tmpDendCurve[i](2) - zMin);
+
+		Vec3d nextCurveNode;
+		nextCurveNode.setZero();
+		Vec3d nextDendDirCopy;
+		nextDendDirCopy.setZero();
+		Vec3d tmpx1;
+		TraceNextCurveNodeV2(locOrigImg, tmpCurrentCurveNode, threv, nextDendDir,nextCurveNode, tmpx1,
+			isNextNodeValid);
+		nextDendDir = tmpx1;
+		nextDendDirCopy = nextDendDir;
+		nextDendDir=0.8*initMainDir + 0.2 * nextDendDir;
+		nextDendDir.normalize();
+
+		if ( nextCurveNode(0) != 0.0 && nextCurveNode(1) != 0.0 && nextCurveNode(2) != 0.0 )
+			nextCurveNode += lefttopAxis;
+
+		if(isNextNodeValid == 1){
+			tmpDendCurve[i].block(0,0,3,1)=nextCurveNode;
+			++i;
+			tmpDendCurve.push_back(nextCurveNode+2.0*nextDendDirCopy);
+		}
+		if(tmpDendCurve[i].block(0,0,3,1).minCoeff() < -1.0 || tmpDendCurve[i](0) > nxx
+			|| tmpDendCurve[i](1) > nyy || tmpDendCurve[i](2) > nzz){
+				isNextNodeValid = 0;
+		}
+
+		if(isNextNodeValid > 0){
+			VectorVec3d tmpCurve;
+			TraceUtil::GetPartVectorVec3d(tmpDendCurve, i-1, i, tmpCurve);
+			std::vector<double> origWet,backWet;
+			WeighRayValue(tmpCurve, origImg,origWet);
+			WeighRayValue(tmpCurve, backImg, backWet);
+			std::vector<double> threvWet(origWet.size());
+			for(size_t k = 0; k < origWet.size(); ++k){
+				threvWet[k]=origWet[k] - backWet[k] - 3.5 * std::sqrt(backWet[k]);
+			}
+			double tmpMax = threvWet[0] > threvWet[1]?threvWet[0] : threvWet[1];
+			if(tmpMax < 0.0){
+				isNextNodeValid = 0;
+				i = i-2;
+			}
+		}
+	}
+	TraceUtil::GetPartVectorVec3d(tmpDendCurve,0,i,crossCurve);
+	if(i > 4){
+		std::vector<int> indexWindow(i+1);
+		std::vector<int> origWindow(i+1);
+		std::vector<int> backWindow(i+1);
+		for(int ij = 0; ij <= i; ++ij){
+			//<=i
+			Vec3i curRoundPt;
+			curRoundPt << Round(crossCurve[ij](0)),Round(crossCurve[ij](1)),
+				Round(crossCurve[ij](2));
+
+			indexWindow[ij]= indexImg(ValueInMinMax<int>(curRoundPt(0),0,nxx-1),
+				ValueInMinMax<int>(curRoundPt(1),0,nyy-1),
+				ValueInMinMax<int>(curRoundPt(2),0,nzz-1));
+			origWindow[ij]= origImg(ValueInMinMax<int>(curRoundPt(0),0,nxx-1),
+				ValueInMinMax<int>(curRoundPt(1),0,nyy-1),
+				ValueInMinMax<int>(curRoundPt(2),0,nzz-1));
+			backWindow[ij]= backImg(ValueInMinMax<int>(curRoundPt(0),0,nxx-1),
+				ValueInMinMax<int>(curRoundPt(1),0,nyy-1),
+				ValueInMinMax<int>(curRoundPt(2),0,nzz-1));
+
+			if(double(origWindow[ij]) > double(backWindow[ij])+4.5*std::sqrt(double(backWindow[ij]))){
+				continue;
+			}else{
+				indexWindow[ij]=0;
+			}
+		}
+		double projLength = (crossCurve[i]-crossCurve[0]).dot(initMainDir);
+		std::vector<int> tmpList;
+		FindEqualList(indexWindow, collideConInfo, tmpList);
+		size_t validLen = tmpList.size();
+		size_t noValidLen = indexWindow.size() - validLen;
+		if(projLength > 10.0 && noValidLen >6){
+			isContinueTrace = 1;
+		} else{
+			isContinueTrace = 0;
+		}
+	} else{
+		isContinueTrace = 0;
+	}
+}
+
 void TraceFilter::PushNodeUseRayBurst(const Vec3d &curveNode, const Volume<unsigned short> &origImg,
                                       const double threv, const Vec3d &x1, Vec3d &pushedNode)
 {
@@ -3330,24 +3825,15 @@ void TraceFilter::PushNodeUseRayBurst(const Vec3d &curveNode, const Volume<unsig
             }
         }
 
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-
-        Vec4d tmpNode1 = *(max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-                                       [](const Vec4d& lhs, const Vec4d& rhs){
-                                    return lhs(3) < rhs(3);
-                                    }));
+#ifdef _WIN32
+		Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+			Vec4d_3th_less()));
 #else
-
-            struct neurongfp_tmp
-            {
-                bool operator() (const Vec4d& lhs, const Vec4d& rhs){
-                    return lhs(3) < rhs(3);
-                    }
-            } NGPS_OBJ;
-            Vec4d tmpNode1 = *(max_element(forwardNodeSet.begin(), forwardNodeSet.end(), NGPS_OBJ));
-
+		Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+			[](const Vec4d& lhs, const Vec4d& rhs){
+				return lhs(3) < rhs(3);
+		}));
 #endif
-
         Vec3d tmpx10(tmpNode1(0), tmpNode1(1), tmpNode1(2));
         x10 = tmpx10.normalized();
     }
@@ -3623,28 +4109,16 @@ void TraceFilter::RayBurstShape(const Vec3d &initSoma, const SVolume &v, VectorV
         }
     }
 
-#ifdef __HUST_ORIGINAL_2015__ //added conditional building by Hanchuan Peng 2015-03-19 to avoid lambda closure for Qt porting.
-
-    std::sort(rayNode.begin(), rayNode.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-        return false;
-    });
+#ifdef _WIN32
+	std::sort(rayNode.begin(), rayNode.end(), Vec3d_less());
 #else
-    struct neurongfp_tmp
-    {
-        bool operator() (const Vec3d& lhs, const Vec3d &rhs){
-            if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-            else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-            else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-            return false;
-        }
-    } NGPS_OBJ;
-    std::sort(rayNode.begin(), rayNode.end(),  NGPS_OBJ);
-
+	std::sort(rayNode.begin(), rayNode.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+		return false;
+	});
 #endif
-
     rayNode.erase(std::unique(rayNode.begin(), rayNode.end()), rayNode.end());
 
     int nxxp = rayNode.size();
@@ -3662,147 +4136,662 @@ void TraceFilter::RayBurstShape(const Vec3d &initSoma, const SVolume &v, VectorV
     rayNode.swap(rayNodeCp);
 }
 
-/*void TraceFilter::Connectionf3(const VectorMat2i &cc2, std::vector<std::vector<int> > &BBs)
+void TraceFilter::ReconstructSomaShapeQuanRevi(const Vec3d &initialPoint, MatXd& resultRayLength,
+                                                     VectorVec3d &innerSomaPts)
 {
-    VectorMat2i::size_type nxx = cc2.size();
-    VectorVec3d mms;
-    Vec3d tmpMms;
+    //2015-6-8
+    const SVolume &origImg = *origImgPointer;
+    const SVolume &backImg = *backImgPointer;
+    //
+    innerSomaPts.clear();
+    SVolume locOrigImg;
+    SVolume locBackImg;
+    Vec3d locPoint;
+    const int Theta = 40;
+    const int Phi = 20;
+    ExtractLocalDomainV2(initialPoint, origImg, locOrigImg, locPoint);//2015-6-18
+    ExtractLocalDomainV2(initialPoint, backImg, locBackImg, locPoint);//2015-6-18
+    double slice = 0.5;
+    const int blocksum = 51;//2015-6-18
 
-    Eigen::MatrixXi AAm(nxx,nxx);
-    AAm.setZero();
-    for (VectorMat2i::size_type i = 0; i < nxx; ++i){
-        const Mat2i &MM = cc2[i];
-        tmpMms<< MM(0,0), MM(0,1), i + 1;
-        mms.push_back(tmpMms);
+    std::vector<double> raySlice;
+    for(int i = 0; i < blocksum; ++i){
+        raySlice.push_back(slice * double(i));
     }
 
-    Vec3d ax; Vec3d ay;
-    for (VectorMat2i::size_type i = 0; i < nxx; ++i){
-        for (VectorMat2i::size_type j = i + 1 ; j < nxx; ++j)
-        {
-            ax << mms[i](0), mms[i](1), mms[i](2);
-            ay << mms[j](0), mms[j](1), mms[j](2);
-            AAm(i, j) = Connectionf3dis(ax, ay);
-            AAm(j, i) = AAm(i, j);
-        }
-    }
+    /**/
+    Volume<double> sphereRayWet;
+    sphereRayWet.SetSize(raySlice.size(), Theta, Phi);
+    Volume<double> sphereBackWet;
+    sphereBackWet.SetSize(raySlice.size(), Theta, Phi);
 
-    BBs.clear();
-    Connectionf3cluster(AAm, BBs);
-}
+    const double a = 360.0 / (double)Theta;
+    const double b = 180.0 / (double)Phi;
+    const double PI_180 = M_PI / 180.0;
 
-int TraceFilter::Connectionf3dis(const Vec3d &ax, const Vec3d &ay)
-{
-    //int nx(3), ny(3);
-    int dd1(0);
-    for ( int i = 0; i < 3; ++i){
-        for (int j = 0; j < 3; ++j){
-            if ( !( std::abs(ax(i) - 0.0) < EXPO ) && std::abs(ax(i) - ay(j)) < EXPO )
-                dd1 = 1;
+    double rayNodeDense(0.0), rayNodeWet(0.0);
+    double x,y,z;
+
+    for (std::vector<double>::size_type k = 0; k < raySlice.size(); ++k){
+        for (int i = 1; i <= Theta; ++i){
+            for (int j = 1; j <= Phi; ++j){
+                x = raySlice[k] * std::sin(b * (double)j * PI_180) * std::cos(a * (double)i * PI_180) + locPoint(0);
+                y = raySlice[k] * std::sin(b * (double)j * PI_180) * std::sin(a * (double)i * PI_180) + locPoint(1);
+                z = raySlice[k] * std::cos(b * (double)j * PI_180) + locPoint(2);
+
+                rayNodeDense = rayNodeWet = 0.0;
+                ContourUtil::CalculateSphereOneNode(locOrigImg, 1.0, x, y, z, rayNodeDense, rayNodeWet);
+                sphereRayWet(k, i-1, j-1) = (double)(rayNodeDense / (rayNodeWet + 0.0001));
+
+                //2015-6-8
+                rayNodeDense = rayNodeWet = 0.0;
+                ContourUtil::CalculateSphereOneNode(locBackImg, 1.0, x, y, z, rayNodeDense, rayNodeWet);
+                sphereBackWet(k, i-1, j-1) = (double)(rayNodeDense / (rayNodeWet + 0.0001));
+            }
         }
     }//for
-    return dd1;
-}
 
-void TraceFilter::Connectionf3cluster(const Eigen::MatrixXi &AAm, std::vector<std::vector<int> > &BBs)
-{
-    int nx = AAm.rows();
-    std::vector<int > Lbs(nx, 0);
-    std::vector<int> idexs1;
-    std::vector<int> idexs;
-    for (int i = 0; i < nx; ++i){
-        idexs1.clear();
-        if ( 0 == Lbs[i] ){
-            std::vector<int> tmp;
-            tmp.push_back(i + 1);
-            idexs.clear();
-            Connectionf3cluster1(AAm, tmp, Lbs, idexs);
-            std::copy(idexs.begin(), idexs.end(), std::back_inserter(idexs1));
-            while ( !idexs.empty() ){
-                Connectionf3cluster1(AAm, std::vector<int>(idexs), Lbs, idexs);
-                std::copy(idexs.begin(), idexs.end(), std::back_inserter(idexs1));
-            }
-            BBs.push_back(idexs1);
+    std::vector<std::vector<double> > rayLimit;
+    GetRayLimitV2(sphereRayWet, sphereBackWet, 8, rayLimit);
+
+    Volume<double> smoothRay;
+
+    TraceUtil::GetGradientVectorFlowForTrace(sphereRayWet, smoothRay);
+
+    double gradThrev(0.0);//max value of 
+    GetAreaMaxValue(smoothRay, 0,  smoothRay.x() - 1, 0, smoothRay.y() - 1, 0, smoothRay.z() - 1, gradThrev);
+    gradThrev *= 0.1;
+    //MatXd resultRayLength;//2015-2-7
+    resultRayLength = 5.0 * MatXd::Ones(Theta + 2, Phi + 2);//ray length
+    for(size_t i = 0; i < rayLimit.size();++i){
+        for(size_t j = 0; j < rayLimit[0].size(); ++j){
+            resultRayLength(i+1,j+1)=rayLimit[i][j];
         }
+    }
+    MatXd AAss = resultRayLength;//2015-6-8
+
+    std::vector<double> raySliceIndex;
+    for(int i = 0; i < blocksum; ++i){
+        raySliceIndex.push_back(1.0 + double(i));
+    }
+
+    double currentRayLength(0);
+    std::vector<double> currentRayGrad(smoothRay.x());
+    std::vector<double> rayGradWet(smoothRay.x());
+
+    double pullParm[2];
+    pullParm[0] = 0.8;
+    pullParm[1] = 1.0 - pullParm[0];
+
+    int repeat = 20;//2015-6-8
+    double rayGradWetSum;
+
+    for (int jj = 0; jj < repeat;++jj){
+        for (int i = 1; i <= Theta; ++i){
+            for (int j = 1; j <= Phi; ++j){
+                currentRayLength = resultRayLength(i, j);
+                for (int ij = 0; ij < smoothRay.x(); ++ij){
+                    currentRayGrad[ij] = smoothRay(ij, i - 1, j - 1);
+                    rayGradWet[ij] = currentRayGrad[ij]
+                            * std::exp( -0.05 *std::pow( raySliceIndex[ij] - currentRayLength, 2.0));
+                }
+                //rayGradWetSum = std::accumulate(rayGradWet.begin(), rayGradWet.end(), 0.0);
+                rayGradWetSum = 0.0;
+                for(std::vector<double>::size_type k = 0; k < rayGradWet.size(); ++k){
+                    rayGradWetSum += rayGradWet[k];
+                }
+                //if (std::abs(rayGradWetSum) > 0.001){
+                resultRayLength(i,j) += pullParm[0] * ( ( (std::inner_product(raySliceIndex.begin(), raySliceIndex.end(), rayGradWet.begin(), 0.0)) /
+                                                          (rayGradWetSum ) ) - resultRayLength(i,j) )//2015-6-8+0.001
+                        - pullParm[1] * (4.0 * resultRayLength(i,j)
+                                         - resultRayLength(i-1,j) - resultRayLength(i+1,j) - resultRayLength(i,j-1) - resultRayLength(i,j+1));
+                //}
+
+            }
+            //resultRayLength = (resultRayLength.array() > 0.0).select(resultRayLength, 0.0);
+            resultRayLength = resultRayLength.cwiseMax(AAss);//2015-6-8
+            resultRayLength.row(0) = resultRayLength.row(2);
+            resultRayLength.row(Theta + 1) = resultRayLength.row(Theta - 1);
+            resultRayLength.col(0) = resultRayLength.col(2);
+            resultRayLength.col(Phi + 1) = resultRayLength.col(Phi - 1);
+        }
+    }//for
+
+    for (int jj = 0; jj < repeat;++jj){
+        for (int i = 1; i <= Theta; ++i){
+            for (int j = 1; j <= Phi; ++j){
+                currentRayLength = resultRayLength(i, j);
+                for (int ij = 0; ij < smoothRay.x(); ++ij){
+                    currentRayGrad[ij] = smoothRay(ij, i - 1, j - 1);
+                    rayGradWet[ij] = currentRayGrad[ij] * std::exp( -0.05 * std::pow( raySliceIndex[ij] - currentRayLength, 2.0));
+                }
+
+                rayGradWetSum = 0.0;
+                for(std::vector<double>::size_type k = 0; k < rayGradWet.size(); ++k){
+                    rayGradWetSum += rayGradWet[k];
+                }
+                if ( smoothRay( (std::min)(Round(currentRayLength + 0.5) -1, (int)raySlice.size() - 1), i - 1, j - 1 ) >  gradThrev ){
+                    resultRayLength(i,j) += pullParm[0] * ( ( (inner_product(raySliceIndex.begin(), raySliceIndex.end(), rayGradWet.begin(), 0.0)) /
+                                                              (rayGradWetSum ) ) - resultRayLength(i,j) )//2015-6-8+0.001
+                            - pullParm[1] * (4.0 * resultRayLength(i,j) - resultRayLength(i-1,j) - resultRayLength(i+1,j) - resultRayLength(i,j-1) - resultRayLength(i,j+1));
+                }
+                else{
+                    resultRayLength(i,j) += (-pullParm[1]) * (4.0 * resultRayLength(i,j) - resultRayLength(i-1,j) - resultRayLength(i+1,j) - resultRayLength(i,j-1) - resultRayLength(i,j+1));
+                }
+            }
+            //resultRayLength = (resultRayLength.array() > 0.0).select(resultRayLength, 0.0);
+            resultRayLength = resultRayLength.cwiseMax(AAss);//2015-6-8
+            resultRayLength.row(0) = resultRayLength.row(2);
+            resultRayLength.row(Theta + 1) = resultRayLength.row(Theta - 1);
+            resultRayLength.col(0) = resultRayLength.col(2);
+            resultRayLength.col(Phi + 1) = resultRayLength.col(Phi - 1);
+        }
+    }//for
+
+    /*
+     * 2015-2-5 new inner point collect method
+    */
+    Vec3d curPt, curNormPt;
+    double curPtLength;
+    double altitudeAngle, azimuthAngle;
+    int altitudeIndicator, azimuthIndicator;
+    double ray0, ray1, ray2, ray3, ray4, rayMean;
+    Vec3d soma;
+    soma << Round(initialPoint(0)), Round(initialPoint(1)), Round(initialPoint(2));
+    //2015-6-18
+    for(int i = -40; i <= 40; ++i){
+        for(int j = -40; j <= 40; ++j){
+            for(int ij = -40; ij <= 40; ++ij){
+                curPt << i,j,ij;
+                curPtLength = curPt.norm();
+                if(curPtLength > 0.01){
+                    curNormPt = curPt.normalized();
+                    CalVectorAngle(curNormPt, altitudeAngle, azimuthAngle);
+                    altitudeIndicator=std::min(Round(altitudeAngle*180.0/M_PI/b+0.5),Phi);//+1;
+                    azimuthIndicator=std::min(Round(azimuthAngle*180.0/M_PI/a+0.5),Theta);//+1;//C++ minus 1
+                    ray0 = resultRayLength(azimuthIndicator,altitudeIndicator)*0.5;
+                    ray1 = resultRayLength(azimuthIndicator+1,altitudeIndicator)*0.5;
+                    ray2 = resultRayLength(azimuthIndicator-1,altitudeIndicator)*0.5;
+                    ray3 = resultRayLength(azimuthIndicator,altitudeIndicator+1)*0.5;
+                    ray4 = resultRayLength(azimuthIndicator,altitudeIndicator-1)*0.5;
+                    rayMean = 0.2 * (ray0 + ray1 + ray2 + ray3 + ray4);
+                    if(curPtLength < rayMean + 0.5)
+                        innerSomaPts.push_back(Vec3d(i,j,ij) + soma);
+                }else{
+                    innerSomaPts.push_back(Vec3d(i,j,ij) + soma);//2015-6-8
+                }
+            }
+        }
+    }
+    {
+        VectorVec3d tmp(innerSomaPts);
+        innerSomaPts.swap(tmp);
     }
 }
 
-void TraceFilter::Connectionf3cluster1(const Eigen::MatrixXi &AAm, const std::vector<int> &mmk, std::vector<int> &Lbs, std::vector<int> &idexsm)
+//2015-6-8
+void TraceFilter::GetRayLimitV2(const Volume<double> &sphereRayWet, const Volume<double> &sphereBackWet,
+								  const double constrictionThrev, std::vector<std::vector<double> > &rayLimit)
 {
-    idexsm.clear();
-    std::vector<int>::size_type nx = mmk.size();
-    std::vector<int> idexx;
-    std::vector<int> idexm;
-    std::deque<int> idexs;
-    for (std::vector<int>::size_type ik = 0; ik < nx; ++ik){
-        int i = mmk[ik];
-        idexx.clear();
-        idexm.clear();
-        idexs.clear();
-        for (int j = 0; j < AAm.cols(); ++j){
-            if (1 == AAm(i - 1, j))
-                idexx.push_back(j);
-        }
+	int nx = sphereRayWet.x();
+	int ny = sphereRayWet.y();
+	int nz = sphereRayWet.z();
+	//std::vector<double> sphereRay;
+	//std::vector<double> sphereBackRay;
+	std::vector<double> tmpRay;
+	std::vector<double> tmp;
+	int arra(0);
+	double value;
 
-        if (!idexx.empty()){
-            for (std::vector<int>::size_type k = 0; k < idexx.size(); ++k){
-                if (0 == Lbs[idexx[k]])
-                    idexm.push_back(k);
-            }
+	for (int i = 0; i < ny; ++i){
+		tmp.clear();
+		for (int j = 0; j < nz; ++j){
+			for (int ij = 0; ij < nx; ++ij){
+				//sphereRay.push_back(sphereRayWet(ij, i, j));
+				//sphereBackRay.push_back(sphereBackWet(ij, i, j));
+				value = sphereRayWet(ij, i, j) - sphereBackWet(ij, i, j) -
+					constrictionThrev * std::sqrt(sphereBackWet(ij, i, j));
+				tmpRay.push_back(value);
+			}
 
-            if (!idexm.empty()){
-                idexs.clear();
-                for (std::vector<int>::size_type kk = 0; kk < idexm.size(); ++kk){
-                    idexs.push_back(idexx[idexm[kk]] + 1);
-                    Lbs[idexs.back() - 1] = 1;
-                }
-                if (0 == Lbs[i - 1]){
-                    idexs.push_front(i);
-                    Lbs[i - 1] = 1;
-                }
-            }
-        }
+			ContourUtil::CalculateOneRayLimit(tmpRay, 0, arra);
+			tmp.push_back(arra);
+			tmpRay.clear();
+			//sphereBackRay.clear();
+		}
+		rayLimit.push_back(tmp);
+	}
+}
 
-        if (idexx.empty() && 0 == Lbs[i - 1]){
-            idexs.clear();
-            idexs.push_back(i );
-            Lbs[i - 1] = 1;
-        }
+void TraceFilter::CalVectorAngle(const Vec3d &curNormPt, double &altitudeAngle, double &azimuthAngle)
+{
+	altitudeAngle = std::acos(curNormPt(2));
+	if(std::abs(curNormPt(0)) < 0.01){
+		if(curNormPt(1) > 0.0)
+			azimuthAngle = M_PI_2;
+		else
+			azimuthAngle = M_PI_2 + M_PI;
+	}
+	else{
+		azimuthAngle=std::atan2(curNormPt(1), curNormPt(0));
+		if(azimuthAngle <= 0.0)
+			azimuthAngle += 2 * M_PI;
+	}
+}
 
-        std::copy(idexs.begin(), idexs.end(), std::back_inserter(idexsm));
-    }
-}*/
+//2015-6-18
+void TraceFilter::ExtractLocalDomainV2(const Vec3d &initPoint, const SVolume &origImg,
+									   SVolume &locOrigImg, Vec3d &locPoint)
+{
+	//Volumn vol(v.Width(), v.Height(), v.Depth());
+	int nx = origImg.x();
+	int ny = origImg.y();
+	int nz = origImg.z();
+	int minX = std::max(Round(initPoint(0) - 40.0 ), 0);
+	int maxX = std::min(Round(initPoint(0) + 40.0 ), nx - 1);
+	int minY = std::max(Round(initPoint(1) - 40.0 ), 0);
+	int maxY = std::min(Round(initPoint(1) + 40.0 ), ny - 1);
+	int minZ = std::max(Round(initPoint(2) - 40.0 ), 0);//2015-6-18
+	int maxZ = std::min(Round(initPoint(2) + 40.0 ), nz - 1);
 
-//void TraceFilter::Swcpp122(const std::vector<VectorVec3d> &dd1, const VectorMat2i &dd2,
-//                           const VectorVec3d &dataC, std::vector<VectorVec3d> &ddd1, VectorMat2i &ddd2, int &nxx)
-//{
-//    nxx = (int)dd1.size();
-//    ddd1 = dd1;
-//    ddd2 = dd2;
-//    for (int i = 0; i < nxx; ++i){
-//        Mat2i aa = dd2[i];
-//        if (aa(0,0) < 0 ){
-//            aa(0,0) = -aa(0,0) + nxx;
-//            ddd2[i] = aa;
-//        }
-//        if (aa(0,1) < 0 ){
-//            aa(0,1) = -aa(0,1) + nxx;
-//            ddd2[i] = aa;
-//        }
-//    }
+	locPoint = Vec3d(initPoint(0) - minX, initPoint(1) - minY, initPoint(2) - minZ);
 
-//    VectorVec3d tmpDc;
-//    Mat2i tmpd2;
-//    tmpd2.setZero();
-//    for (VectorVec3d::size_type i = 0; i < dataC.size(); ++i){
-//        tmpDc.clear();
-//        tmpDc.push_back(dataC[i]);
-//        ddd1.push_back(tmpDc);
-//        ddd2.push_back(tmpd2);
-//    }
-//}
+	//Volumn SubVol(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
+	int sx = maxX - minX + 1;
+	int sy = maxY - minY + 1;
+	int sz = maxZ - minZ + 1;
 
-//void TraceFilter::GetMyConnectSwc(const std::vector<VectorVec3d> &dd1, const VectorMat2i &dd2, const std::vector<std::vector<int> > &BBs, VectorVec2i &cxSwc)
-//{
+	locOrigImg.SetSize(sx, sy, sz);
+	for (int i = minX; i <= maxX; ++i){
+		for (int j = minY; j <= maxY; ++j){
+			for (int ij = minZ; ij <= maxZ; ++ij)
+				locOrigImg(i - minX, j - minY, ij - minZ) = origImg(i, j, ij);
+		}
+	}//for
+}
 
-//}
+void TraceFilter::SetThreValue( double arg)
+{
+	fillThrev = arg * 4.0;
+	endThrev = (arg + 5.0) * 4.0;
+}
+
+void TraceFilter::MyCrossDetection( const std::vector<VectorVec5d>& dendCurves, const VectorMat2i &dendConInfo, 
+					  std::vector<VectorVec5d>& resultDendCurves, VectorMat2i &resultDendConInfo )
+{
+	resultDendCurves = dendCurves;
+	resultDendConInfo = dendConInfo;
+	VectorVec5d connectDotSet;
+	size_t sz = dendCurves.size();
+	Vec5d tmpDot;
+	for (size_t i = 0; i < sz; ++i) {
+		if (dendConInfo[i](0, 0) > 0) {
+			tmpDot << double(i), 1.0, dendCurves[i][0](0), dendCurves[i][0](1), dendCurves[i][0](2);
+			connectDotSet.push_back(tmpDot);
+		}
+		if (dendConInfo[i](0, 1) > 0) {
+			tmpDot << double(i), 2.0, dendCurves[i].back()(0), dendCurves[i].back()(1), dendCurves[i].back()(2);
+			connectDotSet.push_back(tmpDot);
+		}
+	}
+	
+	std::vector<std::vector<int> > clustreConnectDotSet;
+	ClustreFuseConnectDotSet( connectDotSet, 10.0, clustreConnectDotSet );
+
+	size_t clustreConnectDotSetNum = clustreConnectDotSet.size();
+	for (size_t ik = 0; ik < clustreConnectDotSetNum; ++ik) {
+		std::vector<int>& curClustre = clustreConnectDotSet[ik];
+		size_t curClustreNum = curClustre.size();
+		MatXd paraDistMatrix(curClustreNum, curClustreNum);
+		paraDistMatrix.setZero();
+		MatXd corrDirMatrix(curClustreNum, curClustreNum);
+		corrDirMatrix.setZero();
+		MatXi fuseFlagMatrix(curClustreNum, curClustreNum);
+		fuseFlagMatrix.setZero();
+		Vec2i headTailFlags(0,0);
+		int fuseFlag = 0;
+		double paraDist = 0.0, corrDir = 0.0;
+		for(size_t i = 0; i < curClustreNum; ++i){
+			for (size_t j = 0; j < curClustreNum; ++j){
+				if (i != j) {
+					const VectorVec5d& curCurve1 = dendCurves[int(connectDotSet[curClustre[i]](0)) ];
+					const VectorVec5d& curCurve2 = dendCurves[int(connectDotSet[curClustre[j]](0)) ];
+					headTailFlags << int(connectDotSet[curClustre[i]](1)), int(connectDotSet[curClustre[j]](1));
+					MyIdentifyCurvesMerge(curCurve1, curCurve2, headTailFlags, fuseFlag, paraDist, corrDir);
+					paraDistMatrix(i, j) = paraDist;
+					corrDirMatrix(i, j) = corrDir;
+					fuseFlagMatrix(i, j) = fuseFlag;
+				}
+			}
+		}
+		/*std::cout<<ik << "\n paraDistMatrix:" <<std::endl;
+		std::cout << paraDistMatrix << std::endl;
+		std::cout<<ik << "\n corrDirMatrix:" <<std::endl;
+		std::cout << corrDirMatrix << std::endl;*/
+		//
+		VectorVec3d fuseList;
+		for(size_t i = 0; i < curClustreNum; ++i){
+			for (size_t j = 0; j < curClustreNum; ++j){
+				if (fuseFlagMatrix(i, j) == 1) {
+					fuseList.push_back(Vec3d(double(i), double(j), corrDirMatrix(i, j)));
+				}
+			}
+		}
+		//
+		if (!fuseList.empty()) {
+			//[~,minIndex]=min(fuseList(3,:));%融合曲线
+			int minIndex = -1;
+			double tmpMin = 10000.0;
+			for (size_t i = 0; i < fuseList.size(); ++i) {
+				if (tmpMin > fuseList[i](2)) {
+					tmpMin = fuseList[i](2);
+					minIndex = int(i);
+				}
+			}
+			int fuseIndex1 = int(fuseList[minIndex](0));
+			int fuseIndex2 = int(fuseList[minIndex](1));
+			int fuseCurveIndex1 = int(connectDotSet[curClustre[fuseIndex1] ](0));
+			int fuseCurveIndex2 = int(connectDotSet[curClustre[fuseIndex2] ](0));
+			Vec2i headTailFlags;
+			headTailFlags << int(connectDotSet[curClustre[fuseIndex1] ](1)), int(connectDotSet[curClustre[fuseIndex2] ](1));
+			if(fuseCurveIndex1 != fuseCurveIndex2){
+				std::cout << fuseCurveIndex1 <<"  " << fuseCurveIndex2 << std::endl;
+				MyMergeCurves(resultDendCurves, resultDendConInfo, fuseCurveIndex1, fuseCurveIndex2, headTailFlags);
+			}
+		}
+	}
+}
+
+void TraceFilter::ClustreFuseConnectDotSet( const VectorVec5d& connectDotSet, double distThrev, std::vector<std::vector<int> >& clustreConnectDotSet )
+{
+	std::vector<std::vector<int> > adjacentList;
+	adjacentList.resize(connectDotSet.size());
+	size_t sz = connectDotSet.size();
+	double tmpDist = 1000.0;
+	double dist;
+	int idx = -1;
+	//construct adjacent list
+	for (size_t i = 0; i < sz; ++i) {
+		tmpDist = 10000.0;
+		idx = -1;
+		for(size_t j = i + 1; j < sz; ++j){
+			dist = (connectDotSet[i].block(2,0,3,1) - connectDotSet[j].block(2,0,3,1)).norm();
+			if (dist < distThrev) {
+				if (tmpDist > dist) {
+					idx = j;
+					tmpDist = dist;
+				}
+			}
+		}
+		if (idx > -1) {
+			adjacentList[i].push_back(idx);
+			adjacentList[idx].push_back(i);
+		}
+	}
+
+	//clustre
+	clustreConnectDotSet.clear();
+	for (size_t i = 0; i < sz; ++i) {
+		if(!adjacentList[i].empty()){
+			clustreConnectDotSet.push_back(std::vector<int>());
+			clustreConnectDotSet.back() = adjacentList[i];
+			std::vector<int> curLevel;
+			curLevel.swap(adjacentList[i]);
+			while(!curLevel.empty()){
+				std::vector<int> curLevelCp;
+				curLevel.swap(curLevelCp);
+				for (size_t j = 0; j < curLevelCp.size(); ++j) {
+					std::copy(adjacentList[curLevelCp[j] ].begin(), adjacentList[curLevelCp[j] ].end(), std::back_inserter(clustreConnectDotSet.back()));
+					std::copy(adjacentList[curLevelCp[j] ].begin(), adjacentList[curLevelCp[j] ].end(), std::back_inserter(curLevel));
+					adjacentList[curLevelCp[j] ].clear();
+				}
+			}
+			std::sort(clustreConnectDotSet.back().begin(), clustreConnectDotSet.back().end());
+			clustreConnectDotSet.back().erase(std::unique(clustreConnectDotSet.back().begin(), clustreConnectDotSet.back().end()
+				), clustreConnectDotSet.back().end());
+		}
+	}
+}
+
+void TraceFilter::MyIdentifyCurvesMerge( const VectorVec5d& curCurve1, const VectorVec5d& curCurve2, const Vec2i& headTailFlags, 
+						   int& fuseFlag, double& paraDist, double& corrDir )
+{
+	//
+	std::vector<VectorVec3d> subCurveSet1, subCurveSet2;
+	size_t curCurve1Num = curCurve1.size();
+	size_t curCurve2Num = curCurve2.size();
+	if (headTailFlags(0)==1) {
+		VectorVec3d tmp;
+		for (size_t beg = 2; beg < 6; ++beg) {
+			for (size_t i = beg; i < std::min(curCurve1Num, beg + size_t(7)); i += 2 ) {
+				tmp.push_back(curCurve1[i].block(0,0,3,1));
+			}
+			subCurveSet1.push_back(VectorVec3d());
+			subCurveSet1.back().swap(tmp);
+			tmp.clear();
+		}
+	}else{
+		VectorVec3d tmp;
+		int curCurve1NumCp = int(curCurve1Num);
+		for (int end = curCurve1NumCp - 2 - 1; end >= std::max(curCurve1NumCp-6,0); --end) {
+			for (int i = end; i >= std::max(end - 6, 0); i -= 2 ) {
+				tmp.push_back(curCurve1[i].block(0,0,3,1));
+			}
+			subCurveSet1.push_back(VectorVec3d());
+			subCurveSet1.back().swap(tmp);
+			tmp.clear();
+		}
+	}
+	//
+	if (headTailFlags(1)==1) {
+		VectorVec3d tmp;
+		for (size_t beg = 2; beg < 6; ++beg) {
+			for (size_t i = beg; i < std::min(curCurve2Num, beg + size_t(7)); i += 2 ) {
+				tmp.push_back(curCurve2[i].block(0,0,3,1));
+			}
+			subCurveSet2.push_back(VectorVec3d());
+			subCurveSet2.back().swap(tmp);
+			tmp.clear();
+		}
+	}else{
+		VectorVec3d tmp;
+		int curCurve2NumCp = int(curCurve2Num);
+		for (int end = curCurve2NumCp - 2 - 1; end >= std::max(curCurve2NumCp-6,0); --end) {
+			for (int i = end; i >= std::max(end - 6, 0); i -= 2 ) {
+				tmp.push_back(curCurve2[i].block(0,0,3,1));
+			}
+			subCurveSet2.push_back(VectorVec3d());
+			subCurveSet2.back().swap(tmp);
+			tmp.clear();
+		}
+	}
+
+	Mat4d paraDistMatrix;
+	paraDistMatrix.setZero();
+	Mat4d corrDirMatrix;
+	corrDirMatrix.setZero();
+
+	for (size_t i = 0; i < 4; ++i) {
+		for (size_t j = 0; j < 4; ++j) {
+			double pd, cd;
+			MyCalcCurvesSimilarity(subCurveSet1[i], subCurveSet2[j], pd, cd);
+			paraDistMatrix(i,j) = pd;
+			corrDirMatrix(i,j) = cd;
+		}
+	}
+	double tmpValue = 10000.0;
+	Vec2i optIndex(-1,-1);
+	for (size_t i = 0; i < 4; ++i) {
+		for (size_t j = 0; j < 4; ++j) {
+			if (paraDistMatrix(i,j)+10.0*corrDirMatrix(i,j)<tmpValue) {
+				optIndex << int(i), int(j);
+				tmpValue = paraDistMatrix(i,j) + 10.0 * corrDirMatrix(i,j);
+			}
+		}
+	}
+	//
+	paraDist = paraDistMatrix(optIndex(0),optIndex(1));
+	corrDir = corrDirMatrix(optIndex(0),optIndex(1));
+	for (size_t i = 0; i < 4; ++i) {
+		for (size_t j = 0; j < 4; ++j) {
+			if ( paraDistMatrix(i,j) < 6.0 && corrDirMatrix(i,j) < -0.9){
+				fuseFlag = 1;
+				break;
+			}
+		}
+	}
+}
+
+void TraceFilter::MyCalcCurvesSimilarity( const VectorVec3d& curve1, const VectorVec3d& curve2, double& paraDist, double& corrDir )
+{
+	int curve1Num = int(curve1.size()) - 1;
+	int curve2Num = int(curve2.size()) - 1;
+	MatXd paraDistMatrix(curve1Num, curve2Num);
+	paraDistMatrix.setZero();
+	MatXd corrDirMatrix(curve1Num, curve2Num);
+	corrDirMatrix.setZero();
+	VecXd lengthList(curve1Num);
+	double pd(0.0), cd(0.0);
+	for (int i = 0; i < curve1Num; ++i) {
+		const Vec3d& curve1Dot1 = curve1[i];
+		const Vec3d& curve1Dot2 = curve1[i + 1];
+		lengthList(i) = (curve1Dot2-curve1Dot1).norm();
+		for (int j = 0; j < curve2Num; ++j) {
+			const Vec3d& curve2Dot1 = curve2[j];
+			const Vec3d& curve2Dot2 = curve2[j + 1];
+			MyCalcSegmentSimilarity(curve1Dot1, curve1Dot2, curve2Dot1, curve2Dot2, pd, cd);
+			paraDistMatrix(i,j) = pd;
+			corrDirMatrix(i,j) = cd;
+		}
+	}
+	double sum = lengthList.sum();
+	VecXd normList = lengthList / sum;
+	paraDist = normList.transpose() * paraDistMatrix.rowwise().mean();
+	corrDir = normList.transpose() * corrDirMatrix.rowwise().mean();
+
+}
+
+void TraceFilter::MyCalcSegmentSimilarity( const Vec3d& curve1Dot1, const Vec3d& curve1Dot2, const Vec3d& curve2Dot1, const Vec3d& curve2Dot2,
+							 double& paraDist, double& corrDir )
+{
+	double den1 = std::max( (curve1Dot2-curve1Dot1).norm(), 0.001);
+	Vec3d dir1 = (curve1Dot2-curve1Dot1) / den1;
+	double den2 = std::max( (curve2Dot2-curve2Dot1).norm(), 0.001);
+	Vec3d dir2 = (curve2Dot2-curve2Dot1) / den2;
+	double t1 = (curve1Dot1-curve2Dot1).transpose() * dir2;
+	Vec3d mapCurve1Dot1 = curve2Dot1 + t1 * dir2;
+	double t2 = (curve1Dot2-curve2Dot1).transpose() * dir2;
+	Vec3d mapCurve1Dot2 = curve2Dot1 + t2*dir2;
+	double d1 = (curve1Dot1-mapCurve1Dot1).norm();
+	double d2 = (curve1Dot2-mapCurve1Dot2).norm();
+	paraDist = (d1 * d1 + d2 * d2) / (d1 + d2 + 0.001);
+	corrDir = dir1.transpose() * dir2;
+}
+
+void TraceFilter::MyMergeCurves( std::vector<VectorVec5d>& resultDendCurves, VectorMat2i& resultDendConInfo,
+				   int fuseCurveIndex1, int fuseCurveIndex2, const Vec2i& headTailFlags)
+{
+	VectorVec5d &curCurve1 = resultDendCurves[fuseCurveIndex1];
+	VectorVec5d &curCurve2 = resultDendCurves[fuseCurveIndex2];
+	int curCurve1Num = int(curCurve1.size());
+	int curCurve2Num = int(curCurve2.size());
+	Vec3d curve1HeadPt = curCurve1[0].block(0,0,3,1);
+	Vec3d curve1TailPt = curCurve1.back().block(0,0,3,1);
+	std::vector<double> curveHeadNodeDist(curCurve2Num);
+	std::vector<double> curveTailNodeDist(curCurve2Num);
+	for (int i = 0; i < curCurve2Num; ++i) {
+		curveHeadNodeDist[i] = (curve1HeadPt-curCurve2[i].block(0,0,3,1)).norm();
+		curveTailNodeDist[i] = (curve1TailPt-curCurve2[i].block(0,0,3,1)).norm();
+	}
+	std::vector<double>::iterator it1 = std::min_element(curveHeadNodeDist.begin(), curveHeadNodeDist.end());
+	std::vector<double>::iterator it2 = std::min_element(curveTailNodeDist.begin(), curveTailNodeDist.end());
+	double headMinDist = *it1;
+	int headMinIndex = int(std::distance(curveHeadNodeDist.begin(), it1));
+	double tailMinDist = *it2;
+	int tailMinIndex = int(std::distance(curveTailNodeDist.begin(), it2));
+	if(headMinDist<tailMinDist){
+		if(headTailFlags(1)==1){
+			VectorVec5d mergeCurve;
+			std::copy(curCurve2.rbegin(), curCurve2.rbegin() + curCurve2Num - headMinIndex, std::back_inserter(mergeCurve));
+			std::copy(curCurve1.begin(), curCurve1.end(), std::back_inserter(mergeCurve));
+			resultDendCurves[fuseCurveIndex1].swap(mergeCurve);
+			Mat2i conInfo1 = resultDendConInfo[fuseCurveIndex1];
+			Mat2i conInfo2 = resultDendConInfo[fuseCurveIndex2];
+			conInfo1(0,0)=conInfo2(0,1);
+			resultDendConInfo[fuseCurveIndex1]=conInfo1;
+			resultDendConInfo[fuseCurveIndex2].setZero();
+		}else{
+			VectorVec5d mergeCurve;
+			std::copy(curCurve2.begin(), curCurve2.begin() + headMinIndex + 1, std::back_inserter(mergeCurve));
+			std::copy(curCurve1.begin(), curCurve1.end(), std::back_inserter(mergeCurve));
+			resultDendCurves[fuseCurveIndex1].swap(mergeCurve);
+			Mat2i conInfo1 = resultDendConInfo[fuseCurveIndex1];
+			Mat2i conInfo2 = resultDendConInfo[fuseCurveIndex2];
+			conInfo1(0,0)=conInfo2(0,0);
+			resultDendConInfo[fuseCurveIndex1]=conInfo1;
+			resultDendConInfo[fuseCurveIndex2].setZero();
+		}
+		//
+		int resultDendCurvesNum = int(resultDendCurves.size());
+		for (int ik = 0; ik < resultDendCurvesNum; ++ik) {
+			if(ik != fuseCurveIndex1 && ik != fuseCurveIndex2){
+				Mat2i& conInfo = resultDendConInfo[ik];
+				if( conInfo(0,0) == fuseCurveIndex2 + 1 ){
+					conInfo(0,0) = fuseCurveIndex1 + 1;
+				}
+				if( conInfo(0,1) == fuseCurveIndex2 + 1 ){
+					conInfo(0,1) = fuseCurveIndex1 + 1;
+				}
+			}
+		}
+	}else{//if(headMinDist<tailMinDist){
+		if(headTailFlags(1)==1){
+			VectorVec5d mergeCurve;
+			std::copy(curCurve2.rbegin(), curCurve2.rbegin() + curCurve2Num - tailMinIndex, std::back_inserter(mergeCurve));
+			std::copy(curCurve1.rbegin(), curCurve1.rend(), std::back_inserter(mergeCurve));
+			resultDendCurves[fuseCurveIndex1].swap(mergeCurve);
+			Mat2i conInfo1 = resultDendConInfo[fuseCurveIndex1];
+			Mat2i conInfo2 = resultDendConInfo[fuseCurveIndex2];
+			Mat2i conInfo;
+			conInfo.setZero();
+			conInfo(0,0)=conInfo2(0,1);
+			conInfo(0,1)=conInfo1(0,0);
+			resultDendConInfo[fuseCurveIndex1]=conInfo;
+			resultDendConInfo[fuseCurveIndex2].setZero();
+		}else{
+			VectorVec5d mergeCurve;
+			std::copy(curCurve2.begin(), curCurve2.begin() + tailMinIndex + 1, std::back_inserter(mergeCurve));
+			std::copy(curCurve1.rbegin(), curCurve1.rend(), std::back_inserter(mergeCurve));
+			resultDendCurves[fuseCurveIndex1].swap(mergeCurve);
+			Mat2i conInfo1 = resultDendConInfo[fuseCurveIndex1];
+			Mat2i conInfo2 = resultDendConInfo[fuseCurveIndex2];
+			Mat2i conInfo;
+			conInfo.setZero();
+			conInfo(0,0)=conInfo2(0,0);
+			conInfo(0,1)=conInfo1(0,0);
+			resultDendConInfo[fuseCurveIndex1]=conInfo;
+			resultDendConInfo[fuseCurveIndex2].setZero();
+		}
+		//
+		int resultDendCurvesNum = int(resultDendCurves.size());
+		for (int ik = 0; ik < resultDendCurvesNum; ++ik) {
+			if(ik != fuseCurveIndex1 && ik != fuseCurveIndex2){
+				Mat2i& conInfo = resultDendConInfo[ik];
+				if( conInfo(0,0) == fuseCurveIndex2 + 1 ){
+					conInfo(0,0) = fuseCurveIndex1 + 1;
+				}
+				if( conInfo(0,1) == fuseCurveIndex2 + 1 ){
+					conInfo(0,1) = fuseCurveIndex1 + 1;
+				}
+			}
+		}
+	}
+}
+
+
+
+///*
+// * Copyright (c)2013-2015  Zhou Hang, Shaoqun Zeng, Tingwei Quan
+// * Britton Chance Center for Biomedical Photonics, Huazhong University of Science and Technology
+// * All rights reserved.
+// */

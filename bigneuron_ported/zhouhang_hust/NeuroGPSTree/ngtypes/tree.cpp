@@ -107,6 +107,7 @@ void TreeCurve::SetCurve(std::vector<VectorVec5d> &arg)
 SeperateTree::SeperateTree(INeuronProcessObject *p)
 {
     m_ProcessObject = p;
+    identifyName =  std::string("SeperateTree");
 }
 
 SeperateTree::~SeperateTree()

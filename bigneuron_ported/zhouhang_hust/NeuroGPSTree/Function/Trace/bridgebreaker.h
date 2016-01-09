@@ -6,11 +6,18 @@
 
 template<typename T> class Volume;
 //typedef Volume<unsigned short> CVolume;
-typedef std::shared_ptr<Volume<unsigned short> > SVolumePointer;
-typedef std::shared_ptr<const Volume<unsigned short> > CSVolumePointer;
 class Tree;
 class BridgeBreaker;
+
+#ifdef _WIN32
+typedef std::tr1::shared_ptr<Volume<unsigned short> > SVolumePointer;
+typedef std::tr1::shared_ptr<const Volume<unsigned short> > CSVolumePointer;
+typedef std::tr1::shared_ptr<BridgeBreaker> NGBridgeBreaker;
+#else
+typedef std::shared_ptr<Volume<unsigned short> > SVolumePointer;
+typedef std::shared_ptr<const Volume<unsigned short> > CSVolumePointer;
 typedef std::shared_ptr<BridgeBreaker> NGBridgeBreaker;
+#endif
 
 class BridgeBreaker : public INeuronProcessObject
 {
