@@ -37,7 +37,7 @@ using namespace std;
 // input parameter default values (offered in user menu)
 static long     channel = 1;
 static int      scal    = 12;
-static int      perc    = 90;
+//static int      perc    = 90;
 static float    znccTh  = 0.60;
 static int      Ndir    = 15;
 static float    angSig  = 60;
@@ -47,10 +47,10 @@ static int      Ns      = 5; // nr. states
 static float    zDist   = 1.0;
 static int      saveMidres = 0;
 
-static int nrInputParams = 10; // to constrain number of arguments
+static int nrInputParams = 9; // to constrain number of arguments
 
 // not necessary to tune
-static unsigned char lowmargin = 2; // margin towards low end of the intensity range
+static unsigned char lowmargin = 1; // margin towards low end of the intensity range
 //static int prune_len = 4;   // those that reach endpoint after 1 step are removed from the reconstrction to clean the tree
 static int GRAYLEVEL = 256; // plugin works with 8 bit images
 static int Kskip = 3; // subsampling factor (useful for large stacks to reduce unnecessary computation)
@@ -94,7 +94,7 @@ struct input_PARA
     V3DLONG channel;
 
     int     scal;       // scale
-    int     perc;       // fg. percentile
+//    int     perc;       // fg. percentile
     float   znccTh;     // correlation threshold
     int     Ndir;       // number of directions
     float   angSig;     // angular deviation
@@ -134,7 +134,7 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         // pick the default params
         PARA.channel = channel;
         PARA.scal = scal;
-        PARA.perc = perc;
+//        PARA.perc = perc;
         PARA.znccTh = znccTh;
         PARA.Ndir   = Ndir;
         PARA.angSig = angSig;
@@ -152,7 +152,7 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         vector<string> items;
         items.push_back("Channel");
         items.push_back("Scale (5, 20] pix.");
-        items.push_back("Percentile [50, 100].");
+//        items.push_back("Percentile [50, 100].");
         items.push_back("Correlation threshold [0.5, 1.0).");
         items.push_back("nr. directions [5, 20].");
         items.push_back("Angular sigma [1,90] degs.");
@@ -166,7 +166,7 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         vector<string> inits;
         inits.push_back(QString::number(PARA.channel).toStdString().c_str());
         inits.push_back(QString::number(PARA.scal).toStdString().c_str());
-        inits.push_back(QString::number(PARA.perc).toStdString().c_str());
+//        inits.push_back(QString::number(PARA.perc).toStdString().c_str());
         inits.push_back(QString::number(PARA.znccTh).toStdString().c_str());
         inits.push_back(QString::number(PARA.Ndir).toStdString().c_str());
         inits.push_back(QString::number(PARA.angSig).toStdString().c_str());
@@ -184,7 +184,7 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         dialog.get_num("Channel", PARA.channel);
         dialog.get_num("Scale (5, 20] pix.", PARA.scal);
-        dialog.get_num("Percentile [50, 100].", PARA.perc);
+//        dialog.get_num("Percentile [50, 100].", PARA.perc);
         dialog.get_num("Correlation threshold [0.5, 1.0).", PARA.znccTh);
         dialog.get_num("nr. directions [5, 20].", PARA.Ndir);
         dialog.get_num("Angular sigma [1,90] degs.", PARA.angSig);
@@ -197,7 +197,7 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         // check input
         if(PARA.channel <= 0)                           {v3d_msg(QObject::tr("Channel is out of range")); return;}
         if(PARA.scal <= 5       || PARA.scal>20)        {v3d_msg(QObject::tr("Scale is out of range")); return;}
-        if(PARA.perc < 50       || PARA.perc > 100)     {v3d_msg(QObject::tr("Percentile is out of range")); return;}
+//        if(PARA.perc < 50       || PARA.perc > 100)     {v3d_msg(QObject::tr("Percentile is out of range")); return;}
         if(PARA.znccTh < 0.5    || PARA.znccTh >= 1.0)  {v3d_msg(QObject::tr("Correlation is out of range")); return;}
         if(PARA.Ndir<5          || PARA.Ndir>20)        {v3d_msg(QObject::tr("# directions is out of range")); return;}
         if(PARA.angSig < 1      || PARA.angSig>90)      {v3d_msg(QObject::tr("Angular sigma is out of range")); return;}
@@ -219,11 +219,11 @@ void NeuronChaser::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 void print_help(){
     printf("**** Usage of NeuronChaser tracing **** \n");
-    printf("vaa3d -x NeuronChaser -f nc_func -i <inimg_file> -p <channel> <scal perc znccTh Ndir angSig Ni Ns zDist saveMidres>\n");
+    printf("vaa3d -x NeuronChaser -f nc_func -i <inimg_file> -p <channel> <scal znccTh Ndir angSig Ni Ns zDist saveMidres>\n");
     printf("inimg_file          The input image\n");
     printf("channel             Data channel for tracing. Start from 1 (default 1).\n");
     printf("scal                Scale (5, 20] pix.\n");
-    printf("perc                Percentile [50, 100].\n");
+//    printf("perc                Percentile [50, 100].\n");
     printf("znccTh              Correlation threshold [0.5, 1.0).\n");
     printf("Ndir                nr. directions [5, 20].\n");
     printf("angSig              Angular sigma [1,90] degs.\n");
@@ -266,7 +266,7 @@ bool NeuronChaser::dofunc(const QString & func_name, const V3DPluginArgList & in
         int k=0;
         PARA.channel    = (paras.size() >= k+1)   ? atoi(paras[k])              : channel;   k++;
         PARA.scal       = (paras.size() >= k+1)   ? atoi(paras[k])              : scal;      k++;
-        PARA.perc       = (paras.size() >= k+1)   ? atoi(paras[k])              : perc;      k++;
+//        PARA.perc       = (paras.size() >= k+1)   ? atoi(paras[k])              : perc;      k++;
         PARA.znccTh     = (paras.size() >= k+1)   ? QString(paras[k]).toFloat() : znccTh;    k++;
         PARA.Ndir       = (paras.size() >= k+1)   ? atoi(paras[k])              : Ndir;      k++;
         PARA.angSig     = (paras.size() >= k+1)   ? QString(paras[k]).toFloat() : angSig;    k++;
@@ -279,7 +279,7 @@ bool NeuronChaser::dofunc(const QString & func_name, const V3DPluginArgList & in
         // check input
         if(PARA.channel <= 0)                            {v3d_msg(QObject::tr("Channel is out of range")); return false;}
         if(PARA.scal <= 5       || PARA.scal>20)         {v3d_msg(QObject::tr("Scale is out of range")); return false;}
-        if(PARA.perc < 50       || PARA.perc > 100)      {v3d_msg(QObject::tr("Percentile is out of range")); return false;}
+//        if(PARA.perc < 50       || PARA.perc > 100)      {v3d_msg(QObject::tr("Percentile is out of range")); return false;}
         if(PARA.znccTh < 0.5    || PARA.znccTh >= 1.0)   {v3d_msg(QObject::tr("Correlation is out of range")); return false;}
         if(PARA.Ndir<5          || PARA.Ndir>20)         {v3d_msg(QObject::tr("# directions is out of range")); return false;}
         if(PARA.angSig < 1      || PARA.angSig>90)       {v3d_msg(QObject::tr("Angular sigma is out of range")); return false;}
@@ -345,22 +345,37 @@ public:
     bool hasItems(){return !kk.empty();}
 };
 
-int get_undiscovered(vector<int> indices, bool * disc) {
+int get_undiscovered(vector<int> indices, int * dist) {
 
     for (int i = 0; i < indices.size(); i++) {  // go indices sorted by the correlation value
 
-        if (indices[i]!=0) {
+        //if (indices[i]!=0) {
 
-            if (!disc[indices[i]])
+            if (dist[indices[i]]==INT_MAX)
                 return indices[i];
 
-        }
+        //}
 
     }
 
     return -1;
 
 }
+
+//private int get_undiscovered(int[] dist){
+
+//    for (int i = 0; i < dist.length; i++) {
+//        if (dist[i]>0) {
+//            if (dist[i]==Integer.MAX_VALUE) {
+//                return i;
+//            }
+//        }
+//    }
+
+//    return -1;
+
+//}
+
 
 template<typename T>
 T maximum(T x, T y, T z) {
@@ -455,7 +470,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout<<"----------  NeuronChaser  ----------"   <<endl;
     cout<<"channel = "  <<PARA.channel              <<endl;
     cout<<"scal = "     <<PARA.scal                 <<endl;
-    cout<<"perc = "     <<PARA.perc                 <<endl;
+//    cout<<"perc = "     <<PARA.perc                 <<endl;
     cout<<"znccTh = "   <<PARA.znccTh               <<endl;
     cout<<"Ndir = "     <<PARA.Ndir                 <<endl;
     cout<<"angSig = "   <<PARA.angSig               <<endl;
@@ -465,7 +480,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout<<"zDist = "    <<PARA.zDist                <<endl;
     cout<<"saveMidres = "<<PARA.saveMidres          <<endl;
     cout<<"-------------------------------------"   <<endl;
-
     long size = N * M * P; // N : width, M : height, P : nr. layers
 
     // find min/max
@@ -481,7 +495,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     unsigned char imgTh = globalmin + lowmargin;
 
     ///////////////////////////////////////
-    // offsets in different planes
+    // offsets along different planes
     ///////////////////////////////////////
     int limxy = ceil( PARA.scal/2.0);// PARA.scal corresponds to the diameter
     int limz  = ceil((PARA.scal/2.0)/zDist);
@@ -515,15 +529,28 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             }
         }
     }
+    //// offsets XYZ
+    vector<int> dx_XYZ, dy_XYZ, dz_XYZ;
+    for (int dx = -limxy; dx <= limxy; ++dx) {
+        for (int dy = -limxy; dy <= limxy; ++dy) {
+            for (int dz = -limz; dz <= limz; ++dz) {
+                if (pow(dx,2)/pow(limxy,2)+pow(dy,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                    dx_XYZ.push_back(dx);
+                    dy_XYZ.push_back(dy);
+                    dz_XYZ.push_back(dz);
+                }
+            }
+        }
+    }
 
     ///////////////////////////////////////
-    // erosion, variance
+    // erosion
     ///////////////////////////////////////
 
     unsigned char * erd1d = new unsigned char[size]; // local min.
     unsigned char * scr1 = new unsigned char[size]; // score
-    vector<unsigned char> scr;
-    scr.reserve(size/(Kskip*Kskip));
+//    vector<unsigned char> scr;
+//    scr.reserve(size/(Kskip*Kskip));
 
     cout << "processing... " << flush;
     for (long i = 0; i < size; ++i) {
@@ -540,7 +567,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
             if (data1d[i]<imgTh) { // if below lowest boundary defined with min. value and margin
                 erd1d[i] = imgTh;
-                scr.push_back(0);
+                //scr.push_back(0);
                 scr1[i] = 0;
             }
             else {
@@ -621,7 +648,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 } // P>1
 
                 erd1d[i] = (xymin<imgTh)?imgTh:xymin;
-                scr.push_back(scrxyz);
+//                scr.push_back(scrxyz);
                 scr1[i] = scrxyz;
 
             } // >= imgTh
@@ -724,6 +751,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // node belongs to soma, gpnt or trc
     ////////////////////////////////////////
 
+//    cout << "init tagmap" << endl;
+
     int * tagmap = new int[size];   // size too large for static alloc
     for (long i = 0; i < size; ++i)
         tagmap[i] = 0;
@@ -738,19 +767,105 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     delete somaseg; somaseg = 0;
 
-    ////////////////////////////////////////
-    // percentile on score
-    unsigned char th = quantile(scr, PARA.perc, 100);
-    cout << "\t" << PARA.perc << "th = " << (int)th << endl;
+    // threshold
+     unsigned char scr1_min = scr1[0];
+     unsigned char scr1_max = scr1[0];
 
-    // assign those that are in the foreground with -1
+     for (long i = 1; i < size; ++i) {
+         if (scr1[i]<scr1_min) scr1_min=scr1[i];
+         if (scr1[i]>scr1_max) scr1_max=scr1[i];
+     }
+
+    int cntvals = 0;
+
     for (long i = 0; i < size; ++i) {
-        if (scr1[i]>th && tagmap[i]==0)
+        if (scr1[i]>scr1_min && scr1[i]<scr1_max) {
+            cntvals++;
+        }
+    }
+
+    unsigned char * scr1_temp = new unsigned char[cntvals];
+
+    cntvals = 0;
+    for (long i = 0; i < size; ++i) {
+        if (scr1[i]>scr1_min && scr1[i]<scr1_max) {
+            scr1_temp[cntvals] = scr1[i];
+            cntvals++;
+        }
+    }
+
+    if (scr1_min==scr1_max) return;
+
+//    unsigned char th1 = intermodes_th(data1d_temp, cntvals);
+//    unsigned char th1 = otsu_th(data1d_temp, cntvals);
+    unsigned char th1 = (cntvals==0)? scr1_max : maxentropy_th(scr1_temp, cntvals);
+
+    delete scr1_temp; scr1_temp = 0;
+
+    // assign those tagmap that are in the foreground (thresholded) with -1
+    for (long i = 0; i < size; ++i) {
+        if (scr1[i]>=th1 && tagmap[i]==0)
             tagmap[i] = -1;
+    }
+
+    // and also their neighbourhood
+    if (false) {
+    int * tagmap_temp1 = new int[size]; // tagmap copy
+    for (int i = 0; i < size; ++i)
+        tagmap_temp1[i] = tagmap[i];
+
+    for (long i = 0; i < size; ++i) {
+
+        int x  = i % N;
+        int z  = i / (N*M);
+        int y  = i/N-z*M;
+
+        if (tagmap_temp1[z*N*M+y*N+x]==-1) {
+            for (int k = 0; k < dx_XYZ.size(); ++k) {
+
+                int xi = x+dx_XYZ[k];
+                int yi = y+dy_XYZ[k];
+                int zi = z+dz_XYZ[k];
+
+                if (xi>=0 && xi<N && yi>=0 && yi<M && zi>=0 && zi<P) { // inside image boundaries
+                    int ii = zi*N*M + yi*N + xi;
+                    if (tagmap[ii]==0)
+                        tagmap[ii] = -1;
+                }
+            }
+        }
+    }
+
+    delete tagmap_temp1; tagmap_temp1 = 0;
     }
 
     delete scr1; scr1 = 0;
 
+    ///////
+    if (PARA.saveMidres) {
+
+        unsigned char * temp = new unsigned char[size];
+        for (long i = 0; i < size; ++i)
+            temp[i] = 0;
+
+        for (long i = 0; i < size; ++i) {
+
+            int x = i % N;
+            int z = i / (N*M);
+            int y = i/N-z*M;
+
+            if (tagmap[i]!=0)
+                temp[i]=255;
+
+        }
+
+        QString of = PARA.inimg_file + "_tagmapInit.tif";
+        simple_saveimage_wrapper(callback, of.toStdString().c_str(), temp, in_sz, V3D_UINT8);
+
+        delete temp; temp = 0;
+    }
+
+    ///////
 //    unsigned char * conn = new unsigned char[size];
 //    ConnectedComponents cc(30);
 //    cc.connected(eroded1d, conn, N, M, std::equal_to<unsigned char>(), constant<bool,true>());
@@ -762,7 +877,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         for (long i = 0; i < size; ++i)
             tagmapcopy[i] = tagmap[i];
 
-        QString of = PARA.inimg_file + "_tagmap_blob_and_fgbg.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+        QString of = PARA.inimg_file + "_tagmap_Init.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
         char * of1 = new char[of.length()+1];
         strcpy(of1, of.toLatin1().constData());
         Image4DSimple outimg1;
@@ -786,8 +901,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (tagmap[i]==-1)
             cnt_fg++;
 
-    cout << setprecision(4) << cnt_fg/1000.0 << "k fg. locs, " << setprecision(2) << ((float)cnt_fg/size) << "%, at scale=" << PARA.scal << endl;
-
+    cout << setprecision(4) << cnt_fg/1000.0 << "k fg. locs, " << setprecision(2) << (((float)cnt_fg/size)*100) << "%, at scale=" << PARA.scal << endl;
     ////////////////////////////////////////
 
     int ** i2xyz = new int*[cnt_fg];
@@ -898,9 +1012,19 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     int rxout, ryout, rzout;  // outer sphere radius
     int rxin,  ryin,  rzin;   // inner
 
+    // skip some foreground locaitons in case there is too many
+    // 100.000 is a feasible number to work out, more than 200.000 starts with the reduction
+    int every = cnt_fg/100000;
+    every = (every<1)?1:every; // cannot be lower than 1
+    cout << "every = " << every << endl;
+
     for (long i = 0; i < cnt_fg; ++i) { // go through all foreground locations (initially tagged as -1)
 
-        if (i%(cnt_fg/10)==0) cout << (i/(cnt_fg/100)) << "%\t" << std::flush;
+    	if (i%every!=0)
+            continue;
+
+        if (i%(cnt_fg/10)==0) 
+        	cout << (i/(cnt_fg/100)) << "%\t" << std::flush;
 
         int x  = i2xyz[i][0]; // get corresponding real locations in 3d
         int y  = i2xyz[i][1];
@@ -917,10 +1041,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             if (i2calcs[i][0] == -FLT_MAX) { // calculate zncc at this location if it's not been done yet
 
                 for (int dix = 0; dix < PARA.Ndir; ++dix) {
+
                     curr_zncc = btrcr.zncc(x, y, z, vx_corr[dix], vy_corr[dix], vz_corr[dix],
                                 data1d, N, M, P,
                                 curr_gcsstd,
                                 false);
+
                     if (curr_zncc>i2calcs[i][0]) {
                         i2calcs[i][0] = curr_zncc;
                         i2calcs[i][1] = curr_gcsstd;
@@ -928,6 +1054,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                         i2calcs[i][3] = vy_corr[dix];
                         i2calcs[i][4] = vz_corr[dix];
                     }
+
                 }
             }
 
@@ -1037,7 +1164,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                                         int currenttag = tagmap[znn*N*M+ynn*N+xnn];
                                         if (currenttag==-1 || currenttag==0) {
                                             // overwriting makes sense
-                                            tagmap[znn*N*M+ynn*N+xnn] = -2;
+                                            tagmap[znn*N*M+ynn*N+xnn] = -2; // perhaps outer is not necesssary
+                                        }
+
+                                        if (currenttag>0) {
+                                            //cout << "YES " << currenttag << endl;
                                         }
 
                                     }
@@ -1053,6 +1184,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     cout << "DONE." << endl;
 
+//    cout << nodelist.size() << " elements in nodelist" << endl;
+//    for (int var = 0; var < nodelist.size(); ++var) {
+//        cout << "node " << var << " r=" << nodelist[var].r << "   ";
+//        for (int var1 = 0; var1 < nodelist[var].nbr.size(); ++var1) {
+//            cout << nodelist[var].nbr[var1] << " ";
+//        }
+//        cout << endl;
+//    }
+
     ////////////////////////////////////////
     // expand foreground to accomodate traces
     ////////////////////////////////////////
@@ -1063,22 +1203,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         tagmap_temp[i] = tagmap[i];
 
     // go through all of tagmap copy's non-zero elements and dilate with -1s, substituting zeros with -1s in original tagmap
-
-    // offsets XYZ
-//    limxy = ceil( PARA.scal/2.0);
-//    limz  = 1;//ceil((PARA.scal/1.0)/zDist);
-    vector<int> dx_XYZ, dy_XYZ, dz_XYZ;
-    for (int dx = -limxy; dx <= limxy; ++dx) {
-        for (int dy = -limxy; dy <= limxy; ++dy) {
-            for (int dz = -limz; dz <= limz; ++dz) {
-                if (pow(dx,2)/pow(limxy,2)+pow(dy,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
-                    dx_XYZ.push_back(dx);
-                    dy_XYZ.push_back(dy);
-                    dz_XYZ.push_back(dz);
-                }
-            }
-        }
-    }
 
     for (long i = 0; i < size; ++i) {
 
@@ -1106,7 +1230,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     delete tagmap_temp; tagmap_temp = 0;
 
-    cout << "done.\n--------\n"<< endl;
+    cout << "done.\n--------"<< endl;
 
     // test: check how many locations were calculated and how large they were
     int cnt_skipped = 0;
@@ -1128,11 +1252,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout << setprecision(2) << znccmax << " zncc max" << endl;
 
     // new tagmap after calculating
-    long cnt_new_fg = 0;
-    for (long ii = 0; ii < size; ++ii) {
-        if (tagmap[ii]!=0) cnt_new_fg++;
-    }
-    cout << setprecision(4) << cnt_new_fg/1000.0 << "k after expanding." << endl;
+//    long cnt_new_fg = 0;
+//    for (long ii = 0; ii < size; ++ii) {
+//        if (tagmap[ii]!=0) cnt_new_fg++;
+//    }
+//    cout << setprecision(4) << cnt_new_fg/1000.0 << "k after expanding." << endl;
 
     ////////////////////////////////////////
     for (int i = 0; i < cnt_fg; ++i) {delete i2xyz[i]; delete i2calcs[i];}
@@ -1180,6 +1304,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     }
 
+//    if (true) {
+//        cout << "OUTGO" << endl;
+//        return;
+//    }
+
     ////////////////////////////////////////
     // arrange guidepoint nodes by correlation score (start chasing from the one with highest correlation)
     // std::sort(nodelist.begin(), nodelist.end(), compareNode); // highest correlation first
@@ -1190,7 +1319,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     for (int i = 0; i < indices.size(); ++i) indices.at(i) = i; // std::iota does the same
     sort(indices.begin(), indices.end(), CompareIndicesByNodeVectorCorrValues(&nodelist));
     ////////////////////////////////////////
-
+    // test trace
     if (PARA.saveMidres) { // ttrace
 
         int tt_i    = indices.at(0);
@@ -1219,12 +1348,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         for (long iii = 0; iii < size; ++iii) {tt_tagmap[iii] = tt_i;} // initialize test tagmap with tt_i
 
         // trace in one direction
-        vector<int> out1 = btrcr.trace(tt_x,tt_y,tt_z,tt_vx,tt_vy,tt_vz,tt_r,data1d,N,M,P,PARA.angSig,tt_tagmap, tt_i, false); // PARA.gcsSig,
-
-//        for (int var = 0; var < out1.size(); ++var) {
-//            cout << out1[var] << " " << flush;
-//        }
-//        cout << endl;
+        btrcr.trace(tt_x,tt_y,tt_z,tt_vx,tt_vy,tt_vz,tt_r,data1d,N,M,P,PARA.angSig,tt_tagmap, tt_i, false); // PARA.gcsSig,
 
         for (int ni = 0; ni < btrcr.node_cnt; ++ni) {
             int node_cnt = ttraceswc.listNeuron.back().n+1;
@@ -1240,7 +1364,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
 
         // trace in the other direction
-        vector<int> out2 = btrcr.trace(tt_x,tt_y,tt_z,-tt_vx,-tt_vy,-tt_vz,tt_r,data1d,N,M,P,PARA.angSig, tt_tagmap, tt_i, false); // PARA.gcsSig,
+        btrcr.trace(tt_x,tt_y,tt_z,-tt_vx,-tt_vy,-tt_vz,tt_r,data1d,N,M,P,PARA.angSig, tt_tagmap, tt_i, false); // PARA.gcsSig,
 
         for (int ni = 0; ni < btrcr.node_cnt; ++ni) {
             int node_cnt = ttraceswc.listNeuron.back().n+1;
@@ -1291,16 +1415,17 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 return;
             }
 
+
+
             vector<int> outcome_tags = btrcr.trace(tt_x, tt_y, tt_z,
                         vsgn*tt_vx, vsgn*tt_vy, vsgn*tt_vz, tt_r,
                         data1d, N, M, P,
                         PARA.angSig,
                         tagmap, tt_i, false); // each trace will use updated tagmap // PARA.gcsSig,
 
-            // there will be at least one member in the vector
-            if (outcome_tags[0]>0 || outcome_tags[0]==-2) { // if the trace will be added
-
-                for (int ti = 0; ti <= btrcr.node_cnt; ++ti) {
+//            cout << "\n" << tt_i << " -- " << outcome_tags.size();
+//            cout << btrcr.node_cnt << " nodes: ";
+                for (int ti = 0; ti <= btrcr.node_cnt_last; ++ti) {
 
                     // add node to the nodelist
                     Node gpntnode(btrcr.xc[ti], btrcr.yc[ti], btrcr.zc[ti], btrcr.rc[ti], Node::AXON); // reminder!! tracer's r will be gcsstd
@@ -1309,17 +1434,22 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
                     // add bidirectional linking
                     if (ti==0) {
-                        // towards previous
+                        // link towards previous
                         nodelist[nodetag].nbr.push_back(tt_i);
                         nodelist[tt_i].nbr.push_back(nodetag);
-
                         // radius equalization
                         float ravg = 0.5*(nodelist[tt_i].r + nodelist[nodetag].r);
                         nodelist[tt_i].r    = ravg;
                         nodelist[nodetag].r = ravg;
                     }
 
-                    if (ti==btrcr.node_cnt && outcome_tags[0]>0) {
+                    if (ti>0) { // previous will exist
+                        nodelist[nodetag].nbr.push_back(nodetag-1);
+                        nodelist[nodetag-1].nbr.push_back(nodetag);
+                    }
+
+                    // linking with the other end
+                    if (ti==btrcr.node_cnt_last && outcome_tags.size()>0) {
                         // it is the last one vector with tags is reached, reached tag==-2 means tag was not reached so don't add tip linking
                         for (int k1 = 0; k1 < outcome_tags.size(); ++k1) {
                             nodelist[nodetag].nbr.push_back(outcome_tags[k1]);
@@ -1332,11 +1462,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
                         }
 
-                    }
-
-                    if (ti>0) { // previous will exist
-                        nodelist[nodetag].nbr.push_back(nodetag-1);
-                        nodelist[nodetag-1].nbr.push_back(nodetag);
                     }
 
                     // trace tagging - fill the tagmap with current nodetag - the same way it was in guidepoint extraction and trace checking
@@ -1354,12 +1479,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                     int z1 = floor(z_sph - rz_sph);
                     int z2 = ceil( z_sph + rz_sph);
 
-                    for (int xfill = x1; xfill <= x2; ++xfill) {
+                    for (int xfill = x1; xfill <= x2; ++xfill) { // TODO this is done twice!! redundant loops that can be predefined
                         for (int yfill = y1; yfill <= y2; ++yfill) {
                             for (int zfill = z1; zfill <= z2; ++zfill) {
                                 if (xfill>=0 && xfill<N && yfill>=0 && yfill<M && zfill>=0 && zfill<P) { // is in image (general 2d/3d)
 
-                                    // overwriting those tags makes sense, if it is 0+ don't overwrite already tagged ones
+
                                     float x2 = pow(xfill-x_sph,2);
                                     float y2 = pow(yfill-y_sph,2);
                                     float z2 = pow(zfill-z_sph,2);
@@ -1369,6 +1494,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                                     if (isinelipse) {
                                         int currenttag = tagmap[zfill*N*M+yfill*N+xfill];
                                         if (currenttag==-1 || currenttag==-2 || currenttag==0) {
+                                            // overwriting those tags makes sense, if it is 0+ don't overwrite already tagged ones
                                             tagmap[zfill*N*M+yfill*N+xfill] = nodetag;
                                         }
                                         else {
@@ -1385,7 +1511,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
                 }
 
-            }
+//            }
 
         }
 
@@ -1427,7 +1553,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         for (long i = 0; i < size; ++i)
             tagmapcopy[i] = tagmap[i];
 
-        QString of = PARA.inimg_file + "_tagmap_chases.raw";//+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
+        QString of = PARA.inimg_file + "_tagmap_chases.raw"; //+QString("%1").arg(zz, 4, 10, QChar('0'))+".txt";
         char * of1 = new char[of.length()+1];
         strcpy(of1, of.toLatin1().constData());
         Image4DSimple outimg1;
@@ -1440,31 +1566,35 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     delete tagmap; tagmap = 0;
 
     ////////////////////////////////////////
-    cout << "extract tree..." << endl;
+    cout << "extract reconstruction tree..." << endl;
     /** traverse through the connected nodes to get the tree out
-      *  breadth-first search (BFS) to traverse the tree from extracted node list
-      *  http://en.wikipedia.org/wiki/Breadth-first_search
-      *
-             1  procedure BFS(G,v) is
-             2      let Q be a queue
-             3      Q.enqueue(v)
-             4      label v as discovered
-             5      while Q is not empty
-             6         v ← Q.dequeue()
-             7         for all edges from v to w in G.adjacentEdges(v) do
-             8             if w is not labeled as discovered
-             9                 Q.enqueue(w)
-             10                label w as discovered
-       *
-       */
+    /*
+    https://en.wikipedia.org/wiki/Breadth-first_search
+     1 Breadth-First-Search(Graph, root):
+     2
+     3     for each node n in Graph:
+     4         n.distance = INFINITY
+     5         n.parent = NIL
+     6
+     7     create empty queue Q
+     8
+     9     root.distance = 0
+    10     Q.enqueue(root)
+    11
+    12     while Q is not empty:
+    13
+    14         current = Q.dequeue()
+    15
+    16         for each node n that is adjacent to current:
+    17             if n.distance == INFINITY:
+    18                 n.distance = current.distance + 1
+    19                 n.parent = current
+    20                 Q.enqueue(n)
+    */
 
     // will essentially convert linked nodelist into NeuronTree with the list of neuron nodes
     // each node (NeuronSWC) having 1 parent
     // BFS needs Queue data structure that is implemented in class BfsQueue
-    // queue accumulates the linkages between nodes
-    // linkage is described as vector<int> with 2 node indexes [curr_node_idx, next_node_idx]
-    // knowing just the node_idx is not enough, need to know the index of the parent node
-
     // nodelist data structure:
     // nodelist[0] dummy node
     // nodelist[1] Node instance (tag 1) with connections to other neighbours stored in nbr
@@ -1474,23 +1604,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // ...
     // nodelist[N].nbr will be a list of nodelist indexes of adjacent nodes
 
-    bool        D[nodelist.size()]; // for book-keeping the discovered nodes
-    int         L[nodelist.size()]; // len store the distance to backtrack towards nearest CP
-    int         I2Swc[nodelist.size()];// map node index with corresponding swc index
-
-    // reset BFS
-    for (int i = 0; i < nodelist.size(); ++i) {
-        D[i]        = (i==0)?true:false;
-        I2Swc[i]    = -1; // undefined
-        L[i]        = -1; // undefined
-    }
-
     NeuronTree nt; // selected output tree
     int maxtreenodes = -1;
+
     QString signature =
             "NeuronChaser\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
             "\n#scal="+QString("%1").arg(PARA.scal)+
-            "\n#perc="+QString("%1").arg(PARA.perc)+
+//            "\n#perc="+QString("%1").arg(PARA.perc)+
             "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
             "\n#Ndir="+QString("%1").arg(PARA.Ndir)+
             "\n#angSig="+QString("%1").arg(PARA.angSig)+
@@ -1498,304 +1618,183 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             "\n#Ns="+QString("%1").arg(PARA.Ns)+
             "\n#zDist="+QString("%1").arg(PARA.zDist)+
             "\n#---------------------\n#Kskip="+QString("%1").arg(Kskip)+
-            "\n#enforceSingleTree="+QString("%1").arg(enforceSingleTree)+
+//            "\n#enforceSingleTree="+QString("%1").arg(enforceSingleTree)+
             "\n#maxBlobCount="+QString("%1").arg(maxBlobCount)+
-            "\n#minSomaSize="+QString("%1").arg(minSomaSize);;
+            "\n#minSomaSize="+QString("%1").arg(minSomaSize);
 
-    // two strategies for tree extraction - one will be deprecated
-    if (!enforceSingleTree) {
+    // 1. seed from the node with highest correlation and pull the largest tree out
 
-        // this is something that was originally designed to capture as many nodes
-        // but the error was in having several trees instead of only one
-        // plan is to have this case removed in future
+    int dist[nodelist.size()];
+    int nmap[nodelist.size()];
+    int parentBFS[nodelist.size()];
 
-        int seedidx;
-        bool fisrttime = true; // first time seed from blobs
+    for (int i = 0; i < nodelist.size(); ++i) {
+        dist[i]   = (i==0)?-1:INT_MAX;
+        nmap[i]   = -1;
+        parentBFS[i] = -1;
+    }
 
-            while ((seedidx = get_undiscovered(indices, D))!=-1) {
+    int treecnt = 0;
+    int seed;
 
-            BfsQueue< vector<int> > boob; // queue for the BFS
+    while ((seed = get_undiscovered(indices, dist))!=-1) {
 
-            vector<int> seed; // seed indexeses of nodes that will initialize the tree genesis
-            if (fisrttime && xc.size()>=1) { // if it's first time and soma regions exist
-                for (int si = 1; si <= xc.size(); ++si)
-                    seed.push_back(si);
-            }
-            else
-                seed.push_back(seedidx); // yet undiscovered with highest corr.
+        cout << "\n\t seed = " << seed << " ... " << flush;
+        NeuronTree ntcurr;
+        ntcurr.name = signature;
+        BfsQueue<int> q;
 
-            fisrttime = false;
+        treecnt++;
 
-            NeuronTree ntcurr;
-            ntcurr.name = signature;
+        dist[seed] = 0;
+        nmap[seed] = -1;
+        parentBFS[seed] = -1;
+        q.enqueue(seed);
 
-            for (int i = 0; i < seed.size(); i++) {
-                // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-                vector<int> lnk(2);
-                lnk[0] = -1;
-                lnk[1] = seed[i];
-                boob.enqueue(lnk);
+        while(q.hasItems()) {
 
-                D[seed[i]] = true; // mark as discovered
-                L[seed[i]] = 0; // information on length toowards CP
-                // I2Swc will be filled at the dequeue moment
-            }
+            int curr = q.dequeue();
 
-            while (boob.hasItems()) { // while queue is not empty
+            NeuronSWC n;
+            n.n = n.nodeinseg_id = ntcurr.listNeuron.size()+1; // start with id=1
+            n.type = treecnt+1; // Node::AXON
+            n.x = nodelist[curr].x;
+            n.y = nodelist[curr].y;
+            n.z = nodelist[curr].z;
+            n.r = btrcr.gcsstd2rad * nodelist[curr].r;
+            n.parent = (parentBFS[curr]==-1)? -1 : nmap[parentBFS[curr]];
 
-                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-                vector<int> tt = boob.dequeue();
-                int prev = tt[0];
-                int curr = tt[1];
+            nmap[curr] = ntcurr.listNeuron.size()+1;
 
-                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
+            ntcurr.listNeuron.append(n);
 
-                // add to swc
-                NeuronSWC n0;
-                n0.n = n0.nodeinseg_id = I2Swc[curr];
-                n0.type = Node::AXON;
-                n0.x = nodelist[curr].x;
-                n0.y = nodelist[curr].y;
-                n0.z = nodelist[curr].z;
-                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
-                n0.parent = (prev==-1)? -1 : I2Swc[prev];
-                ntcurr.listNeuron.append(n0);
+            // for each node adjecent to current
+            vector<int> adjlist;
+            adjlist.empty();
 
-                vector<int> nextlist;
-                nextlist.empty();
+            for (int j = 0; j < nodelist[curr].nbr.size(); ++j) {
 
-                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
-                    int next = nodelist[curr].nbr[k];
-                    if (!D[next]) {
+                int adj = nodelist[curr].nbr[j];
+                if (dist[adj]==INT_MAX) {
 
-                        vector<int> lnk(2);
-                        lnk[0] = curr;
-                        lnk[1] = next;
-                        boob.enqueue(lnk);
+                    dist[adj] = dist[curr] + 1;
+                    parentBFS[adj] = curr;
+                    q.enqueue(adj);
 
-                        D[next] = true;
-                        L[next] = L[curr] + 1;
-
-                        nextlist.push_back(next);
-
-                    }
+                    adjlist.push_back(adj);
                 }
-                // termination in tree search (to reduce number of idle ends)
-                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
-    //                ntcurr.listNeuron.last().type = Node::END;
-    //                for (int k = 0; k < L[curr]; ++k)
+            }
+
+            // termination in tree search (to reduce number of idle ends)
+            if (adjlist.size()==0 && nodelist[curr].nbr.size()>1) {
                         ntcurr.listNeuron.removeLast();
-                }
-//                else if (nextlist.size()>1) {
-    //                for (int k = 0; k < nextlist.size(); ++k)
-    //                    L[nextlist[k]] = 1; // reset if they are expanding from CP
-//                }
             }
 
-            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
 
-            if (ntcurr.listNeuron.size()>maxtreenodes) {
-                maxtreenodes = ntcurr.listNeuron.size();
-                nt = ntcurr; // keep the one with highest number of nodes in nt
-            }
-            if (PARA.saveMidres) { // can be enabled to save the rest
-                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
-                writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
-            }
+        }
 
+        cout << "done. " <<  (ntcurr.listNeuron.size()-1) << " nodes found." << endl;
+
+        if (ntcurr.listNeuron.size()>maxtreenodes) {
+            cout << "\t\t\t\t\t*** add it ***" << endl;
+            maxtreenodes = ntcurr.listNeuron.size();
+            nt = ntcurr; // keep the one with highest number of nodes in nt
+        }
+
+        if (PARA.saveMidres) { // can be enabled to save the rest
+            QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(treecnt,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+            writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
         }
 
     }
-    else {
 
-        cout << "ENFORCE SINGLE TREE." << endl;
-        // this is tree extraction that enables having only one tree - structural metrics needs 1 tree and neuron reconstruction is defined as 1 tree task
+    // 2. seed from the blobs if they exist (pick largest)
+    cout << " *** seed from blob *** " << xc.size() << endl;
 
-        // 1. seed from the highest correlation node and pull out largest tree out
+    for (seed = 1; seed <= xc.size(); ++seed) {
 
-        // reset BFS
+        // reset before each tree is built from the beginning
         for (int i = 0; i < nodelist.size(); ++i) {
-            D[i]        = (i==0)?true:false;
-            I2Swc[i]    = -1; // undefined
-            L[i]        = -1; // undefined
+            dist[i]   = (i==0)?-1:INT_MAX;
+            nmap[i]   = -1;
+            parentBFS[i] = -1;
         }
 
-        int seedidx;
-        int couttrials = 0;
-
-        while ((seedidx = get_undiscovered(indices, D))!=-1) {
-
-            cout << "seedidx = " << seedidx << " ... " << flush;
+        cout << "\n\t seed = " << seed << " ... " << flush;
 
             NeuronTree ntcurr;
             ntcurr.name = signature;
+            BfsQueue<int> q;
 
-            BfsQueue< vector<int> > boob; // queue for the BFS
+            treecnt++;
 
-            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-            vector<int> lnk(2);
-            lnk[0] = -1;
-            lnk[1] = seedidx;
-            boob.enqueue(lnk);
+            dist[seed] = 0;
+            nmap[seed] = -1;
+            parentBFS[seed] = -1;
+            q.enqueue(seed);
 
-            D[seedidx] = true; // mark as discovered
-            L[seedidx] = 0; // information on length toowards CP
-            // I2Swc will be filled at the dequeue moment
+            while(q.hasItems()) {
 
-            while (boob.hasItems()) { // while queue is not empty
+                int curr = q.dequeue();
 
-                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-                vector<int> tt = boob.dequeue();
-                int prev = tt[0];
-                int curr = tt[1];
+                NeuronSWC n;
+                n.n = n.nodeinseg_id = ntcurr.listNeuron.size()+1; // start with id=1
+                n.type = treecnt+1; // Node::AXON
+                n.x = nodelist[curr].x;
+                n.y = nodelist[curr].y;
+                n.z = nodelist[curr].z;
+                n.r = btrcr.gcsstd2rad * nodelist[curr].r;
+                n.parent = (parentBFS[curr]==-1)? -1 : nmap[parentBFS[curr]];
 
-                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
+                nmap[curr] = ntcurr.listNeuron.size()+1;
 
-                // add to swc
-                NeuronSWC n0;
-                n0.n = n0.nodeinseg_id = I2Swc[curr];
-                n0.type = Node::AXON;
-                n0.x = nodelist[curr].x;
-                n0.y = nodelist[curr].y;
-                n0.z = nodelist[curr].z;
-                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
-                n0.parent = (prev==-1)? -1 : I2Swc[prev];
-                ntcurr.listNeuron.append(n0);
+                ntcurr.listNeuron.append(n);
 
-                vector<int> nextlist;
-                nextlist.empty();
+                // for each node adjecent to current
+                vector<int> adjlist;
+                adjlist.empty();
 
-                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
-                    int next = nodelist[curr].nbr[k];
-                    if (!D[next]) {
+                for (int j = 0; j < nodelist[curr].nbr.size(); ++j) {
 
-                        vector<int> lnk(2);
-                        lnk[0] = curr;
-                        lnk[1] = next;
-                        boob.enqueue(lnk);
+                    int adj = nodelist[curr].nbr[j];
+                    if (dist[adj]==INT_MAX) {
 
-                        D[next] = true;
-                        L[next] = L[curr] + 1;
+                        dist[adj] = dist[curr] + 1;
+                        parentBFS[adj] = curr;
+                        q.enqueue(adj);
 
-                        nextlist.push_back(next);
-
+                        adjlist.push_back(adj);
                     }
                 }
+
                 // termination in tree search (to reduce number of idle ends)
-                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
-    //                ntcurr.listNeuron.last().type = Node::END;
-    //                for (int k = 0; k < L[curr]; ++k)
-                        ntcurr.listNeuron.removeLast();
+                if (adjlist.size()==0 && nodelist[curr].nbr.size()>1) {
+                    ntcurr.listNeuron.removeLast();
                 }
+
             }
 
-            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
-
-            if (ntcurr.listNeuron.size()>maxtreenodes) {
-                cout << " *add it* " << endl;
-                maxtreenodes = ntcurr.listNeuron.size();
-                nt = ntcurr; // keep the one with highest number of nodes in nt
-            }
-            if (PARA.saveMidres) { // can be enabled to save the rest
-                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(couttrials++,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
-                writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
-            }
-
-        }
-
-        // 2. seed from the blobs if they exist (pick largest)
-        cout << " *** seed from blob *** " << xc.size() << endl;
-
-        for (int seedi = 1; seedi <= xc.size(); ++seedi) {
-
-            cout << seedi << " :\t" << flush;
-
-            // reset BFS before each tree is built from the beginning
-            for (int i = 0; i < nodelist.size(); ++i) {
-                D[i]        = (i==0)?true:false;
-                I2Swc[i]    = -1; // undefined
-                L[i]        = -1; // undefined
-            }
-
-            NeuronTree ntcurr;
-            ntcurr.name = signature;
-
-            BfsQueue< vector<int> > boob; // queue for the BFS
-
-            // enqueue(), add to FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-            vector<int> lnk(2);
-            lnk[0] = -1;
-            lnk[1] = seedi;
-            boob.enqueue(lnk);
-
-            D[seedi] = true; // mark as discovered
-            L[seedi] = 0; // information on length toowards CP
-            // I2Swc will be filled at the dequeue moment
-
-            while (boob.hasItems()) { // while queue is not empty
-
-                // dequeue(), take from FIFO structure, http://en.wikipedia.org/wiki/Queue_%28abstract_data_type%29
-                vector<int> tt = boob.dequeue();
-                int prev = tt[0];
-                int curr = tt[1];
-
-                I2Swc[curr] = ntcurr.listNeuron.size()+1; // index that will be after adding
-
-                // add to swc
-                NeuronSWC n0;
-                n0.n = n0.nodeinseg_id = I2Swc[curr];
-                n0.type = Node::AXON;
-                n0.x = nodelist[curr].x;
-                n0.y = nodelist[curr].y;
-                n0.z = nodelist[curr].z;
-                n0.r = btrcr.gcsstd2rad * nodelist[curr].r;
-                n0.parent = (prev==-1)? -1 : I2Swc[prev];
-                ntcurr.listNeuron.append(n0);
-
-                vector<int> nextlist;
-                nextlist.empty();
-
-                for (int k = 0; k < nodelist[curr].nbr.size(); ++k) {
-                    int next = nodelist[curr].nbr[k];
-                    if (!D[next]) {
-
-                        vector<int> lnk(2);
-                        lnk[0] = curr;
-                        lnk[1] = next;
-                        boob.enqueue(lnk);
-
-                        D[next] = true;
-                        L[next] = L[curr] + 1;
-
-                        nextlist.push_back(next);
-
-                    }
-                }
-                // termination in tree search (to reduce number of idle ends)
-                if (nextlist.size()==0 && nodelist[curr].nbr.size()>1) {
-    //                ntcurr.listNeuron.last().type = Node::END;
-    //                for (int k = 0; k < L[curr]; ++k)
-                        ntcurr.listNeuron.removeLast();
-                }
-            }
-
-            cout << "DONE. " <<  ntcurr.listNeuron.size() << " nodes found." << endl;
+            cout << "done. " <<  (ntcurr.listNeuron.size()-1) << " nodes found." << endl;
 
             if (ntcurr.listNeuron.size()>=maxtreenodes) {
+                cout << "\t\t\t\t\t*** add it ***" << endl;
                 maxtreenodes = ntcurr.listNeuron.size();
                 nt = ntcurr; // keep the one with highest number of nodes in nt
             }
 
             if (PARA.saveMidres) { // can be enabled to save the rest
-                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(couttrials++,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
+                QString ntcurrswc_name = PARA.inimg_file+"_NeuronChaser_tree_"+QString("%1").arg(treecnt,3,10, QChar('0'))+"_"+QString("%1").arg(ntcurr.listNeuron.size(), 4, 10, QChar('0'))+".swc";
                 writeSWC_file(ntcurrswc_name.toStdString().c_str(), ntcurr);
             }
 
-        }
+    }
 
-    } // case when 1 tree is enforced
+    cout << "\n\nreconstruction -> " << nt.listNeuron.size() << " nodes.\n\n" << endl;
 
-    cout << "\n\n\nTREE -> " << nt.listNeuron.size() << " NODES.\n\n" << endl;
+    // enforce neurite type to axon before exporting
+    for (int i = 0; i < nt.listNeuron.size(); ++i) {
+        nt.listNeuron[i].type = Node::AXON;
+    }
 
     QString swc_name = PARA.inimg_file + "_NeuronChaser.swc";
     writeSWC_file(swc_name.toStdString().c_str(), nt);

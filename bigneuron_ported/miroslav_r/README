@@ -6,11 +6,10 @@ Parameter configurations, basic info, terminal calls with parameter configuratio
 vaa3d -x NeuronChaser -f help
 ############################################
 **** Usage of NeuronChaser tracing **** 
-vaa3d -x NeuronChaser -f nc_func -i <inimg_file> -p <channel> <scal perc znccTh Ndir angSig Ni Ns zDist saveMidres>
-inimg_file          The input image\n");
+vaa3d -x NeuronChaser -f nc_func -i <inimg_file> -p <channel> <scal znccTh Ndir angSig Ni Ns zDist saveMidres>
+inimg_file          The input image
 channel             Data channel for tracing. Start from 1 (default 1).
 scal                Scale (5, 20] pix.
-perc                Percentile [50, 100].
 znccTh              Correlation threshold [0.5, 1.0).
 Ndir                nr. directions [5, 20].
 angSig              Angular sigma [1,90] degs.
@@ -20,13 +19,8 @@ zDist               z layer dist [1, 4] pix.
 saveMidres          Save midresults 0-no, 1 -yes.
 outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.
 ############################################
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 90 0.6 15 60 30 5 1 0
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 95 0.6 15 60 30 5 1 0
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 99 0.6 15 60 30 5 1 0
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 90 0.6 15 60 30 5 1 0
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 95 0.6 15 60 30 5 1 0
-vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 99 0.6 15 60 30 5 1 0
-
+vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 0.7 20 60 10 5 1 0
+vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 10 0.7 20 60 15 5 1 0
 
 ############################################
 ####              Advantra              ####
@@ -34,11 +28,10 @@ vaa3d -x NeuronChaser -f nc_func -i image.tif -p 1 12 99 0.6 15 60 30 5 1 0
 vaa3d -x Advantra -f help
 ############################################
 **** Usage of Advantra tracing **** 
-vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio perc znccTh Ndir angSig Ni Ns zDist>
+vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio znccTh Ndir angSig Ni Ns zDist>
 inimg_file          The input image
 scal                Scale (5, 20] pix.
 bratio              Background ratio (0, 1].
-perc                Percentile [50, 100].
 znccTh              Correlation threshold [0.5, 1.0).
 Ndir                nr. directions [5, 20].
 angSig              Angular sigma [20,90] degs.
@@ -47,11 +40,5 @@ Ns                  nr. states [1, 20].
 zDist               z layer dist [1, 4] pix.
 outswc_file         Will be named automatically based on the input image file name, so you don't have to specify it.
 ############################################
-vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.3 95 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.3 99 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.8 95 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.8 99 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.3 95 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.3 99 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.8 95 0.6 15 60 30 5 1
-vaa3d -x Advantra -f advantra_func -i image.tif -p 12 0.8 99 0.6 15 60 30 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.5 0.7 20 60 10 5 1
+vaa3d -x Advantra -f advantra_func -i image.tif -p 10 0.5 0.7 20 60 15 5 1

@@ -20,16 +20,18 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 #include "float.h"
 #include <cstdlib>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
 float   BTracer::gcsstd2rad = 2.5;
-float   BTracer::gcsstd_min = 1.0;
+float   BTracer::gcsstd_min = 1.5;
 float   BTracer::gcsstd_step = 0.5;
 int     BTracer::Nsteps = 4;   // steps to cover scale with samples, 3,4 is reasonable
 float   BTracer::ang = 3.14 * (30.0/180.0); // degrees in radians
 int     BTracer::Ndirs = 5; // these Ndirs are different from ones used in the main plugin
-float   BTracer::K = 4.0;
+float   BTracer::K = 10.0;
+float   BTracer::bkgratio = 0.4f;
 
 BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _zDist)
 {
@@ -40,6 +42,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
     NN = Nstates * N1;
 
     node_cnt = 0;
+    node_cnt_last = 0;
 
     is2D = _is2D;
     zDist = _zDist;
@@ -64,6 +67,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
 
     // gcsstd define
     gcsstd_max = ((float)1/gcsstd2rad)*U2;
+    if (gcsstd_max<gcsstd_min) {gcsstd_max=gcsstd_min;} // guarantee one scale existing
     int cnt = 0;
     for (float sg = gcsstd_min; sg <= gcsstd_max; sg+=gcsstd_step) cnt++;
     gcsstd_nr = cnt;
@@ -471,7 +475,7 @@ float BTracer::interp(float atX, float atY, float atZ, unsigned char * img, int 
         bool isIn2D = x1>=0 && x2<width && y1>=0 && y2<height;
 
         if(!isIn2D) {
-            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, width, height, length);
+//            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, width, height, length);
             return 0;
         }
 
@@ -502,7 +506,7 @@ float BTracer::interp(float atX, float atY, float atZ, unsigned char * img, int 
         bool isIn3D = y1>=0 && y2<height && x1>=0 && x2<width && z1>=0 && z2<length;
 
         if(!isIn3D) {
-            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, z1, z2, width, height, length);
+//            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, z1, z2, width, height, length);
             return 0;
         }
 
@@ -534,7 +538,6 @@ vector<int> BTracer::trace( float x,  float y,  float z,
                     int               img_height,
                     int               img_length,
                     float             angstd_deg,
-//                    float             gcsstdstd_pix,
                     int *             tag_map,
                     int               tag_beg,
                     bool dbg){
@@ -542,7 +545,12 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
     // these are the main outputs:
     node_cnt = 0; //reset each call to know how many nodes were there along the trace till it was stoppped
+    node_cnt_last = 0;
     vector<int> tags_reached; // tags reached till the iteration end or till the moment trace reached background
+
+    vector<int> tags_traced;
+    tags_traced.push_back(tag_beg);
+
     // scenarios:
     // 1. NOT reached iteration limit, BACKGROUND:      tags_reached = <-1 >
     // 2. NOT reached iteration limit, TAG reached:     tags_reached = < t1,...>         add the trace with end linking
@@ -573,16 +581,6 @@ vector<int> BTracer::trace( float x,  float y,  float z,
                    vx_pr, vy_pr, vz_pr,
                    false);
 
-//            cout<<"iter 0: \n";
-//            for (int kk = 0; kk < Nsteps; ++kk) {
-//                cout << "#step " << kk << ":\n";
-//                for (int kkk = 0; kkk < (int)round(pow(Ndirs,kk+1)); ++kkk) {
-//                    cout<<kkk<<"--"<< setprecision(2)<<priortt1[kk][kkk]<<"--"<< postrtt1[kk][kkk] <<"\t";
-//                }
-//                cout<<endl;
-//            }
-//            cout<<endl;
-
             // take Nstates highest ones, sort: auxiliary values and indexes
             for (int ii = 0; ii < N1; ++ii) {
                 postrtt1_aux[ii] = postrtt1[Nsteps-1][ii];
@@ -591,11 +589,6 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
             // Nstates highest posteriors, topIdxs in [0, Ndirs^Nsteps)
             getKhighestIdxs(postrtt1_aux, postrtt1_idx, N1, Nstates, topIdxs);
-
-//            cout<<"--- top Nstates "<<endl;
-//            for (int ii = 0; ii < Nstates; ++ii) {
-//                cout<<topIdxs[ii]<<" -- " << postrtt1[Nsteps-1][topIdxs[ii]] << endl;
-//            }
 
         }
         else {
@@ -607,19 +600,8 @@ vector<int> BTracer::trace( float x,  float y,  float z,
                    vx_pr, vy_pr, vz_pr,
                    false);
 
-//            cout<< "iter " << iter_counter << ": \n";
-//            for (int kk = 0; kk < Nsteps; ++kk) {
-//                cout << "#step " << kk << ":\n";
-//                for (int kkk = 0; kkk < (int)(Nstates*round(pow(Ndirs,kk+1))); ++kkk) {
-//                    cout<<kkk<<"--"<< setw(10) << setprecision(2) << priorttN[kk][kkk]<<"--"<< postrttN[kk][kkk] <<"\t";
-//                }
-//                cout<<endl;
-//            }
-//            cout<<endl;
-
             // take Nstates highest ones, sort: auxiliary values and indexes
             for (int ii = 0; ii < NN; ++ii) {
-                //float r2 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/X));
                 postrttN_aux[ii] = postrttN[Nsteps-1][ii];
                 postrttN_idx[ii] = ii;
             }
@@ -627,30 +609,10 @@ vector<int> BTracer::trace( float x,  float y,  float z,
             // Nstates highest posteriors, topIdxs in [0, Nstates*Ndirs^Nsteps)
             getKhighestIdxs(postrttN_aux, postrttN_idx, NN, Nstates, topIdxs);
 
-//            cout<<"---top Nstates posteriors "<<endl;
-//            for (int ii = 0; ii < Nstates; ++ii) {
-//                cout<<topIdxs[ii]<<" -- " << postrttN[Nsteps-1][topIdxs[ii]] << endl;
-//            }
-
         }
 
         // extract the track: take each of the Nstates indexes at the last step and loop back xt, yt, zt, vxt, vyt, vzt, rt, wt...
         bool is_first = iter_counter == 0;
-
-//        if (is_first) {
-//            for (int s = 0; s < Nsteps; ++s) {
-//                for (int s1 = 0; s1 < (int)pow(Ndirs, s+1); ++s1) {
-//                        cout<<node_cnt+1<<" "<<s%7<<" "<<xtt1[s][s1]<<" "<<ytt1[s][s1]<<" "<<ztt1[s][s1]<<" "<<0.5<<" "<<-1<< endl;
-//                }
-//            }
-//        }
-//        else {
-//            for (int s = 0; s < Nsteps; ++s) {
-//                for (int s1 = 0; s1 < Nstates*(int)pow(Ndirs, s+1); ++s1) {
-//                        cout<<node_cnt+1<<" "<<s%7<<" "<<xttN[s][s1]<<" "<<yttN[s][s1]<<" "<<zttN[s][s1]<<" "<<0.5<<" "<<-1<< endl;
-//                }
-//            }
-//        }
 
         // these will accumulate directions of the last step necessary for the prior in the next iteration
         vx_pr = 0;
@@ -687,7 +649,6 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                 rt[node_cnt][i_sample]    = (is_first)? rtt1[i_step][pp] : rttN[i_step][pp];
 
-//cout<<node_cnt+1<<" "<<node_cnt%7<<" "<<xt[node_cnt][i_sample]<<" "<<yt[node_cnt][i_sample]<<" "<<zt[node_cnt][i_sample]<<" "<<0.75<<" "<<-1<< endl;
             }
 
             // wt -> probability distribution, estimate centroids and check stoppage
@@ -705,28 +666,25 @@ vector<int> BTracer::trace( float x,  float y,  float z,
             }
 
             // stopage criteria: check the tagmap label in corresponding neighbourhood
+            tags_reached.clear();
+
             float x_sph   = xc[node_cnt];
             float y_sph   = yc[node_cnt];
             float z_sph   = zc[node_cnt];
-            float rxy_sph = rc[node_cnt];
-            float rz_sph  = rc[node_cnt]/zDist; // /zDist
+            float rxy_sph = gcsstd2rad*rc[node_cnt]; // this should be gcsstd actually
+            float rz_sph  = gcsstd2rad*rc[node_cnt]/zDist; // /zDist
 
             int x1 = floor(x_sph-rxy_sph);  int x2 = ceil(x_sph+rxy_sph);
             int y1 = floor(y_sph-rxy_sph);  int y2 = ceil(y_sph+rxy_sph);
             int z1 = floor(z_sph-rz_sph);   int z2 = ceil(z_sph+rz_sph);
 
-//cout << x1 << " - " << x2 << " | " << y1 << " - " << y2 << " | " << z1 << " - " << z2 << endl;
-
-            tags_reached.clear();
-
-            bool reached_background = true;
             bool readched_othertag = false;
             int  cnttotal = 0;
             int  cntbckg = 0;
 
             // check the values - in the sphere (either 2d or 3d)
-            // criteria: certain ratio (say 50%) are in the background - stop
-            for (int xChkLocal = x1; xChkLocal <= x2; ++xChkLocal) {
+            // criteria: certain ratio are in the background - stop
+            for (int xChkLocal = x1; xChkLocal <= x2; ++xChkLocal) { // TODO: OPTIMIZE looping here!!!!
                 for (int yChkLocal = y1; yChkLocal <= y2; ++yChkLocal) {
 
                     if (is2D) { // then there is no need to loop through the layers
@@ -740,7 +698,7 @@ vector<int> BTracer::trace( float x,  float y,  float z,
                                 int tag_curr = tag_map[0*(img_width*img_height)+yChkLocal*img_width+xChkLocal];
 
                                 if (tag_curr==0) cntbckg++;
-                                reached_background = reached_background && (tag_curr==0);
+//                                reached_background = reached_background && (tag_curr==0);
 
                                 bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
 
@@ -751,12 +709,6 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                             } // was in sphere
                         } // was inside 2d image
-                        else // it went out of the image - stop and return -1
-                        {
-                            tags_reached.clear();
-                            tags_reached.push_back(-1);
-                            return tags_reached;
-                        }
 
                     }
                     else { // loop through the z stack
@@ -777,7 +729,7 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                                     if (tag_curr==0) cntbckg++;
 
-                                    reached_background = reached_background && (tag_curr==0);
+//                                    reached_background = reached_background && (tag_curr==0);
 
                                     bool reached_othertag1 = tag_curr>0 && tag_curr!=tag_beg;
 
@@ -788,29 +740,57 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
                                 } // it i in the sphere
                             } // is in image
-                            else // it went out of the image - stop and return -1
-                            {
-                                tags_reached.clear();
-                                tags_reached.push_back(-1);
-                                return tags_reached;
-                            }
 
-                        }
+                        } // z
 
                     }
 
                 } // y
             } // x
 
-            if ((float)cntbckg/(float)cnttotal>=0.5) { // reached_background means that all voxels are in the background
-//                cout << "\nreached background at " << node_cnt << " steps " << x1 << ", " << x2 << ", " << y1 << ", " << y2 << ", " << z1 << ", " <<z2<<endl;
-                tags_reached.clear();
-                tags_reached.push_back(-1); // (-1) it's not added
-//                tags_reached.push_back(-2); // (-2) it is added
-                return tags_reached; // add loose trace that ended up in the background
+//            if ((float)cntbckg/(float)cnttotal>=bkgratio && false) { //  && false // reached_background means that all voxels are in the background
+//                sort(tags_reached.begin(), tags_reached.end());
+//                tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
+//                return tags_reached; // add loose trace that ended up in the background
+//            }
+
+            if ((float)cntbckg/(float)cnttotal<bkgratio) { // it is in foreground, keep the track of the index
+
+                // update the limit for later appending, keep the track of the latest that was in the foregronud
+                node_cnt_last = node_cnt;
+
             }
+
             if (readched_othertag) {
+
+                node_cnt_last = node_cnt;
+
+                sort(tags_reached.begin(), tags_reached.end());
+                tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
                 return tags_reached; // guaranteed to have at leas one tag in the list
+
+            }
+
+            int xcen = round(xc[node_cnt]);
+            int ycen = round(yc[node_cnt]);
+            int zcen = round(zc[node_cnt]);
+            if (is2D) {
+                bool isInside = xcen>=0 && xcen<img_width && ycen>=0 && ycen<img_height;
+                if (!isInside) {
+//                    sort(tags_reached.begin(), tags_reached.end());
+//                    tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
+                    tags_reached.clear();
+                    return tags_reached;
+                }
+            }
+            else {
+                bool isInside = xcen>=0 && xcen<img_width && ycen>=0 && ycen<img_height && zcen>=0 && zcen<img_length;
+                if (!isInside) {
+//                    sort(tags_reached.begin(), tags_reached.end());
+//                    tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
+                    tags_reached.clear();
+                    return tags_reached;
+                }
             }
 
         } // loop steps to estimate whether the trace should stop
@@ -818,10 +798,13 @@ vector<int> BTracer::trace( float x,  float y,  float z,
         // last step accumulated Nstates directions, their average directions is used to calculate priors for the next iteration
         float norm = sqrt(vx_pr*vx_pr + vy_pr*vy_pr + vz_pr*vz_pr);
         if (norm<2*FLT_MIN) {
-            cout<<"ERROR: null direction est.!!!" << endl;
+            cout<<"null direction est.!!!" << endl;
+//            tags_reached.push_back(-1);
+//            sort(tags_reached.begin(), tags_reached.end());
+//            tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
             tags_reached.clear();
-            tags_reached.push_back(-1);
             return tags_reached;
+
         }
         else {
             vx_pr /= norm; // to make it unit direction - will be prior in the next iteration
@@ -831,9 +814,15 @@ vector<int> BTracer::trace( float x,  float y,  float z,
 
     } // loop iterations
 
-    cout << "reached iteration limit " << node_cnt << endl;
+//    cout << "reached iteration limit " << node_cnt << endl;
     tags_reached.clear();
-    tags_reached.push_back(-2);
+//    tags_reached.push_back(-2);
+//    if (tags_reached.size()>0) {
+//        cout << "there was some error, this one should have stopped earlier." << endl;
+//    }
+
+//    sort(tags_reached.begin(), tags_reached.end());
+//    tags_reached.erase(unique(tags_reached.begin(), tags_reached.end()), tags_reached.end());
     return tags_reached;
 
 }
@@ -1234,6 +1223,7 @@ float BTracer::zncc( float x, float y, float z,
     // find correlation with corresponding template(s)
     float out_corr = -99; // ensure that at least one score will be higher
     float out_r = -99;
+//    float out_corr1 = 0;
 
     for (int tidx = 0; tidx < gcsstd_nr; ++tidx) {
 
@@ -1289,8 +1279,6 @@ float BTracer::zncc( float x, float y, float z,
 
             }
         }
-
-//        printf("mn = %f mx = %f \n", mn, mx);
 
         printf("sampl:\n");
         int swcdbg_cnt=1;

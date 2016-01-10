@@ -544,7 +544,7 @@ float BTracer::interp(float atX, float atY, float atZ, unsigned char * img, int 
         bool isIn2D = x1>=0 && x2<width && y1>=0 && y2<height;
 
         if(!isIn2D) {
-            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, width, height, length);
+//            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, width, height, length);
             return 0;
         }
 
@@ -575,7 +575,7 @@ float BTracer::interp(float atX, float atY, float atZ, unsigned char * img, int 
         bool isIn3D = y1>=0 && y2<height && x1>=0 && x2<width && z1>=0 && z2<length;
 
         if(!isIn3D) {
-            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, z1, z2, width, height, length);
+//            printf("interp() out of boundary [%6.2f, %6.2f, %6.2f],[%d--%d],[%d--%d],[%d--%d] M=%d, N=%d, P=%d \n", atX, atY, atZ, x1, x2, y1, y2, z1, z2, width, height, length);
             return 0;
         }
 

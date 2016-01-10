@@ -36,22 +36,22 @@ Q_EXPORT_PLUGIN2(Advantra, Advantra);
 using namespace std;
 
 // input parameter default values (offered in user menu)
-static int      scal    = 12;
+static int      scal    = 10;
 static float    bratio  = 0.5;  // background ratio
-static int      perc    = 99;   // this one varies between 2d and 3d since it refers to the volume
-static float    znccTh  = 0.60; // corr. th
-static int      Ndir    = 15;   // directions
+//static int      perc    = 99;   // this one varies between 2d and 3d since it refers to the volume
+static float    znccTh  = 0.75; // corr. th
+static int      Ndir    = 20;   // directions
 static float    angSig  = 60;   // angular sigma
-static int      Ni      = 30;   // trace length will go up to Ni*scal
+static int      Ni      = 5;   // trace length will go up to Ni*scal
 static int      Ns      = 5;    // nr. states
 static float    zDist   = 1.0;  // scaling along z
 
-static int nrInputParams = 9; // to bound number of arguments in coding interface
+static int nrInputParams = 8; // to bound number of arguments in coding interface
 
 // not necessary to tune
 static V3DLONG channel = 1; // default channel
 static int  saveMidres = 0; // for debugging
-static unsigned char lowmargin = 2; // margin towards low end of the intensity range
+static unsigned char lowmargin = 1; // margin towards low end of the intensity range
 static int GRAYLEVEL = 256; // plugin works with 8 bit images
 static int Kskip = 3; // subsampling factor (useful for large stacks to reduce unnecessary computation)
 static int maxBlobCount = 5; // max nr. blobs
@@ -95,7 +95,7 @@ struct input_PARA
     V3DLONG channel;
     int     scal;       // scale
     float   bratio;     // background ratio - stopping the trace
-    int     perc;       // fg. percentile
+//    int     perc;       // fg. percentile
     float   znccTh;     // correlation threshold
     int     Ndir;       // number of directions
     float   angSig;     // angular deviation
@@ -177,7 +177,7 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
         PARA.channel = channel;
         PARA.scal = scal;
         PARA.bratio = bratio;
-        PARA.perc = perc;
+//        PARA.perc = perc;
         PARA.znccTh = znccTh;
         PARA.Ndir   = Ndir;
         PARA.angSig = angSig;
@@ -192,7 +192,7 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
         vector<string> items;
         items.push_back("Scale (5, 20] pix.");
         items.push_back("Background ratio (0, 1].");
-        items.push_back("Percentile [50, 100].");
+//        items.push_back("Percentile [50, 100].");
         items.push_back("Correlation threshold [0.5, 1.0).");
         items.push_back("nr. directions [5, 20].");
         items.push_back("Angular sigma [20,90] degs.");
@@ -204,7 +204,7 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
         vector<string> inits;
         inits.push_back(QString::number(PARA.scal).toStdString().c_str());
         inits.push_back(QString::number(PARA.bratio).toStdString().c_str());
-        inits.push_back(QString::number(PARA.perc).toStdString().c_str());
+//        inits.push_back(QString::number(PARA.perc).toStdString().c_str());
         inits.push_back(QString::number(PARA.znccTh).toStdString().c_str());
         inits.push_back(QString::number(PARA.Ndir).toStdString().c_str());
         inits.push_back(QString::number(PARA.angSig).toStdString().c_str());
@@ -218,7 +218,7 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
 
         dialog.get_num("Scale (5, 20] pix.", PARA.scal);
         dialog.get_num("Background ratio (0, 1].", PARA.bratio);
-        dialog.get_num("Percentile [50, 100].", PARA.perc);
+//        dialog.get_num("Percentile [50, 100].", PARA.perc);
         dialog.get_num("Correlation threshold [0.5, 1.0).", PARA.znccTh);
         dialog.get_num("nr. directions [5, 20].", PARA.Ndir);
         dialog.get_num("Angular sigma [20,90] degs.", PARA.angSig);
@@ -229,7 +229,7 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
         // check input
         if(PARA.scal <= 5  || PARA.scal>20){v3d_msg(QObject::tr("Scale is out of range")); return;}
         if(PARA.bratio <= 0 || PARA.bratio > 1.0){v3d_msg(QObject::tr("Background ratio is out of range")); return;}
-        if(PARA.perc < 50  || PARA.perc > 100){v3d_msg(QObject::tr("Percentile is out of range")); return;}
+//        if(PARA.perc < 50  || PARA.perc > 100){v3d_msg(QObject::tr("Percentile is out of range")); return;}
         if(PARA.znccTh < 0.5||PARA.znccTh >= 1.0){v3d_msg(QObject::tr("Correlation is out of range")); return;}
         if(PARA.Ndir<5|| PARA.Ndir>20){v3d_msg(QObject::tr("# directions is out of range")); return;}
         if(PARA.angSig < 20 || PARA.angSig>90){v3d_msg(QObject::tr("Angular sigma is out of range")); return;}
@@ -249,11 +249,11 @@ void Advantra::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
 
 void print_help(){
     printf("**** Usage of Advantra tracing **** \n");
-    printf("vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio perc znccTh Ndir angSig Ni Ns zDist>\n");
+    printf("vaa3d -x Advantra -f advantra_func -i <inimg_file> -p <scal bratio znccTh Ndir angSig Ni Ns zDist>\n");
     printf("inimg_file          The input image\n");
     printf("scal                Scale (5, 20] pix.\n");
     printf("bratio              Background ratio (0, 1].\n");
-    printf("perc                Percentile [50, 100].\n");
+//    printf("perc                Percentile [50, 100].\n");
     printf("znccTh              Correlation threshold [0.5, 1.0).\n");
     printf("Ndir                nr. directions [5, 20].\n");
     printf("angSig              Angular sigma [20,90] degs.\n");
@@ -294,7 +294,7 @@ bool Advantra::dofunc(const QString & func_name, const V3DPluginArgList & input,
 
         PARA.scal       = (paras.size() >= k+1)   ? atoi(paras[k])              : scal;      k++;
         PARA.bratio     = (paras.size() >= k+1)   ? QString(paras[k]).toFloat() : bratio;    k++;
-        PARA.perc       = (paras.size() >= k+1)   ? atoi(paras[k])              : perc;      k++;
+//        PARA.perc       = (paras.size() >= k+1)   ? atoi(paras[k])              : perc;      k++;
         PARA.znccTh     = (paras.size() >= k+1)   ? QString(paras[k]).toFloat() : znccTh;    k++;
         PARA.Ndir       = (paras.size() >= k+1)   ? atoi(paras[k])              : Ndir;      k++;
         PARA.angSig     = (paras.size() >= k+1)   ? QString(paras[k]).toFloat() : angSig;    k++;
@@ -307,7 +307,7 @@ bool Advantra::dofunc(const QString & func_name, const V3DPluginArgList & input,
         // check user input
         if(PARA.scal <= 5  || PARA.scal>20){v3d_msg(QObject::tr("Scale is out of range")); return 0;}
         if(PARA.bratio <= 0 || PARA.bratio > 1.0){v3d_msg(QObject::tr("Background ratio is out of range"));return 0;}
-        if(PARA.perc < 50  || PARA.perc > 100){v3d_msg(QObject::tr("Percentile is out of range")); return 0;}
+//        if(PARA.perc < 50  || PARA.perc > 100){v3d_msg(QObject::tr("Percentile is out of range")); return 0;}
         if(PARA.znccTh < 0.5 || PARA.znccTh >= 1.0){v3d_msg(QObject::tr("Correlation is out of range"));return 0;}
         if(PARA.Ndir<5|| PARA.Ndir>20){v3d_msg(QObject::tr("# directions is out of range")); return 0;}
         if(PARA.angSig<20|| PARA.angSig>90){v3d_msg(QObject::tr("Angular sigma is out of range")); return 0;}
@@ -438,7 +438,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout<<"channel = "  <<PARA.channel              <<endl;
     cout<<"scal = "     <<PARA.scal                 <<endl;
     cout<<"bratio = "   <<PARA.bratio               <<endl;
-    cout<<"perc = "     <<PARA.perc                 <<endl;
+//    cout<<"perc = "     <<PARA.perc                 <<endl;
     cout<<"znccTh = "   <<PARA.znccTh               <<endl;
     cout<<"Ndir = "     <<PARA.Ndir                 <<endl;
     cout<<"angSig = "   <<PARA.angSig               <<endl;
@@ -714,13 +714,53 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     delete somaseg; somaseg = 0;
 
-    // percentile on score
-    unsigned char th = quantile(scr, PARA.perc, 100);
+    // percentile on score (causes oversegmentation)
+//    unsigned char th = quantile(scr, PARA.perc, 100);
+
+
+     // threshold
+     unsigned char scr1_min = scr1[0];
+     unsigned char scr1_max = scr1[0];
+
+     for (long i = 0; i < size; ++i) {
+         if (scr1[i]<scr1_min) scr1_min=scr1[i];
+         if (scr1[i]>scr1_max) scr1_max=scr1[i];
+     }
+
+    int cntvals = 0;
+
+    for (long i = 0; i < size; ++i) {
+        if (scr1[i]>scr1_min && scr1[i]<scr1_max) {
+            cntvals++;
+        }
+    }
+
+    unsigned char * scr1_temp = new unsigned char[cntvals];
+
+    cntvals = 0;
+    for (long i = 0; i < size; ++i) {
+        if (scr1[i]>scr1_min && scr1[i]<scr1_max) {
+            scr1_temp[cntvals] = scr1[i];
+            cntvals++;
+        }
+    }
+
+//    cout << "globalth" << endl;
+    if (scr1_min==scr1_max) return;
+
+//    unsigned char th1 = intermodes_th(data1d_temp, cntvals);
+
+//    unsigned char th1 = otsu_th(data1d_temp, cntvals);
+
+    unsigned char th = (cntvals==0)? scr1_max : maxentropy_th(scr1_temp, cntvals);
+//    unsigned char th = maxentropy_th(scr1, size);
 //    cout << "\t" << PARA.perc << "th = " << (int)th << endl;
+
+    delete scr1_temp; scr1_temp = 0;
 
     // assign those that are in the foreground with -1 (necessary to disctinct from background)
     for (long i = 0; i < size; ++i) {
-        if (scr1[i]>th && tagmap[i]==0)
+        if (scr1[i]>=th && tagmap[i]==0)
             tagmap[i] = -1;
     }
 
@@ -1265,7 +1305,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     QString signature = 
             "Advantra\n#author: Miroslav (miroslav.radojevic@gmail.com)\n#params:\n#channel="+QString("%1").arg(PARA.channel)+
                 "\n#scal="+QString("%1").arg(PARA.scal)+
-                "\n#perc="+QString("%1").arg(PARA.perc)+
+//                "\n#perc="+QString("%1").arg(PARA.perc)+
                 "\n#znccTh="+QString("%1").arg(PARA.znccTh)+
                 "\n#Ndir="+QString("%1").arg(PARA.Ndir)+
                 "\n#angSig="+QString("%1").arg(PARA.angSig)+

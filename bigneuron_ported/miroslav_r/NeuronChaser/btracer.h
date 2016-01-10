@@ -15,6 +15,7 @@ public:
     static int Nsteps; // 2,3,4 fix
     static float ang;
     static float K; // likelihood exponential
+    static float bkgratio;
 
     float step; // scale/Nsteps
 
@@ -22,6 +23,7 @@ public:
     int NN; // total posterior samples from N states
 
     int node_cnt; // # nodes in current trace [0, Niterations*Nsteps)
+    int node_cnt_last;
 
     static float gcsstd2rad; // scaling between gaussian cross section standard deviation and the neurite radius
     static float gcsstd_step;
