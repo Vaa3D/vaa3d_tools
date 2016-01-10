@@ -185,7 +185,7 @@ int swc2image(cv::Mat &image,char * filename)
 
     if(pImMask)
         delete [] pImMask;
-    //cin.get();
+
 }
 
 
@@ -1157,7 +1157,7 @@ int trace_img(Mat seg_img, Mat image, char * outfile_swc)
 
     cout << outfile_swc << endl;
 
-   // cin.get();
+   //
 
 
 
@@ -1885,11 +1885,11 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
             sprintf(dataset,"BigNTrace");
 
-            //cin.get();
+            //
 
             //saveMat(conf_img,"tmp_conf.v3draw");
 
-          //  cin.get();
+          //
 
         }
 
@@ -1900,7 +1900,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
             app2_trace(image, tmp_nm);
 
-          //  cin.get();
+          //
 
         }
 
@@ -1913,7 +1913,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
        // cout << dataset << endl;
 
-       // cin.get();
+       //
 
         LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
 
@@ -1933,7 +1933,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         offset[2] = 0;
 
-       // cin.get();
+       //
 
 
         if(checkin > 0)
@@ -1949,7 +1949,7 @@ bool Batch_Process(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         delete [] tmp_nm;
 
-       // cin.get();
+       //
 
     }
 
@@ -2618,7 +2618,7 @@ int filter_small_comp1(cv::Mat &seg_img, double thres)
             cout << "npl is "  << npl[i] * 100.0 << "% " << endl;
 
 
-       // cin.get();
+       //
 
     }
 
@@ -2990,7 +2990,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
     while((prop_cc > 0.1) & (prop_cc < 2))
     {
 
-        ////cin.get();
+        ////
 
         if(debug_on > 0)
             cin.get();
@@ -3028,7 +3028,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
         cout << "1384" << endl;
 
-        ////cin.get();
+        ////
 
         if(debug_on > 0)
             cin.get();
@@ -3071,7 +3071,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 */
 
-     //   ////cin.get();
+     //   ////
 
 
         cout << "Complete growing the base" << endl;
@@ -3113,7 +3113,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
         }
 
-       ////cin.get();
+       ////
 
 
         */
@@ -3173,7 +3173,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
 
-        ////cin.get();
+        ////
 
         */
         if(nc > 0)
@@ -3193,13 +3193,11 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
        // cout << "The target is " << label_base_img.at<int>(target_tip) << endl;
 
-        if(debug_on > 0)
-            cin.get();
-      //  ////cin.get();
+      //  ////
 
         //cout << "..................2..............." << endl;
 
-      //  ////cin.get();
+      //  ////
 
     //  cout << "1450" << endl;
 
@@ -3293,7 +3291,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
             cout << "knock out " << n_seg << " Pixels" << endl;
 
-          //  ////cin.get();
+          //  ////
 
         }
 
@@ -3335,7 +3333,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
         cout << 1678 << endl;
 
       //  if(stopsigh > 0)
-            //cin.get();
+            //
 
 
         if(max_label > 0)
@@ -3361,14 +3359,14 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
                 collect_idx_int(label_base_img, Pseg, max_scc + 1);
 
             //  if(!(*npmaxp) == (max_scc + 1))
-            //    ////cin.get();
+            //    ////
 
             //cout << 1709 << endl;
 
             //if(stopsigh > 0)
-                //cin.get();
+                //
 
-            //////cin.get();
+            //////
 
           //  for(int i = 0; i < max_label; i++)
             //    cout << "np " << i << " is "  << np[i] << endl;
@@ -3377,7 +3375,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
           //  cout << 1721 << endl;
 
-            ////cin.get();
+            ////
 
             int target_label;
 
@@ -3389,7 +3387,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
       //      cout << 1732 << endl;
 
             //if(stopsigh > 0)
-                //cin.get();
+                //
 
             prop_cc = (double)(*npmaxp) / (double)n_sum;
 
@@ -3401,7 +3399,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
       //  if(stopsigh > 0)
-        //    //cin.get();
+        //    //
 
         cout << "The current base represents " << prop_cc * 100 << "%" << endl;
 
@@ -3413,7 +3411,7 @@ int merge_base_img(Mat image, Mat &seg_img, vector<int> & comp_list)
 
     //cout << "Out of the loop" << endl;
 
-   // //cin.get();
+   // //
 
     // get the dim componnet back
 
@@ -3592,7 +3590,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
     while(prop_cc > 0.1)
     {
 
-       // //cin.get();
+       // //
 
         cout << "Start growing the base" << endl;
 
@@ -3617,7 +3615,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
 
-        ////cin.get();
+        ////
 
 
         if(nc > 0)
@@ -3630,7 +3628,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
 
-      //  //cin.get();
+      //  //
 
 
         int * tx;
@@ -3670,7 +3668,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 */
 
-     //   //cin.get();
+     //   //
 
 
         cout << "Complete growing the base" << endl;
@@ -3705,7 +3703,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
         }
 
-       //cin.get();
+       //
 
 
         */
@@ -3759,7 +3757,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
 
-        //cin.get();
+        //
 
         */
         if(nc > 0)
@@ -3778,11 +3776,11 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
        // cout << "The target is " << label_base_img.at<int>(target_tip) << endl;
 
 
-      //  //cin.get();
+      //  //
 
         //cout << "..................2..............." << endl;
 
-      //  //cin.get();
+      //  //
 
     //  cout << "1450" << endl;
 
@@ -3815,7 +3813,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
             cout << "The component has " << *npmaxp << endl;
 
-       //     //cin.get();
+       //     //
 
           //  np[max_scc] = 0;
 
@@ -3870,7 +3868,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
             cout << "knock out " << n_seg << " Pixels" << endl;
 
-          //  //cin.get();
+          //  //
 
         }
 
@@ -3911,7 +3909,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
         //if(stopsigh > 0)
-         //   //cin.get();
+         //   //
 
         if(max_label > 0)
         {
@@ -3936,12 +3934,12 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
                 collect_idx_int(label_base_img, Pseg, max_scc + 1);
 
             //  if(!(*npmaxp) == (max_scc + 1))
-            //    //cin.get();
+            //    //
 
            // if(stopsigh > 0)
-               // //cin.get();
+               // //
 
-            ////cin.get();
+            ////
 
            // for(int i = 0; i < max_label; i++)
             //    cout << "np " << i << " is "  << np[i] << endl;
@@ -3955,7 +3953,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
 
           //  if(stopsigh > 0)
-            //    //cin.get();
+            //    //
 
             prop_cc = (double)(*npmaxp) / (double)n_sum;
 
@@ -3965,7 +3963,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
             prop_cc = 0;
 
       //  if(stopsigh > 0)
-        //    //cin.get();
+        //    //
 
         cout << "The current base represents " << prop_cc * 100 << "%" << endl;
 
@@ -3977,7 +3975,7 @@ int merge_base(Mat image, Mat &seg_img, vector<int> & comp_list)
 
     //cout << "Out of the loop" << endl;
 
-   // //cin.get();
+   // //
 
     // get the dim componnet back
 
@@ -4072,7 +4070,7 @@ int merge_base3(Mat input_image, Mat &seg_img)
 
     cout << "The sum of the proportion is" << p_sum << endl;
 
-    //cin.get();
+    //
 
     delete [] pl_base;
 
@@ -4190,12 +4188,12 @@ int merge_base3(Mat input_image, Mat &seg_img)
 
     cout << "prop_base is of " << prop_base.size() << endl;
 
-    //cin.get();
+    //
 
 
     cout << "The min_dist is " << min_dist << endl;
 
-//    cin.get();
+//
 
     delete [] seg_img1;
 
@@ -4299,7 +4297,7 @@ int merge_base3(Mat input_image, Mat &seg_img)
 
         expand_tip(seg_img,v3);
 
-        //cin.get();
+        //
     }
 
 
@@ -4360,7 +4358,7 @@ int merge_base2(Mat input_image, Mat &seg_img, int t2)
 
     cout << "The sum of the proportion is" << p_sum << endl;
 
-    //cin.get();
+    //
 
     delete [] pl_base;
 
@@ -4478,12 +4476,12 @@ int merge_base2(Mat input_image, Mat &seg_img, int t2)
 
     cout << "prop_base is of " << prop_base.size() << endl;
 
-    //cin.get();
+    //
 
 
     cout << "The min_dist is " << min_dist << endl;
 
-//    cin.get();
+//
 
     delete [] seg_img1;
 
@@ -4602,7 +4600,7 @@ int merge_base2(Mat input_image, Mat &seg_img, int t2)
 
         expand_tip1(seg_img,v3,exp_sz);
 
-        //cin.get();
+        //
     }
 
 
@@ -4777,7 +4775,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
     {
 
 
-        //cin.get();
+        //
 
         cout << "Start growing the base" << endl;
 
@@ -4806,7 +4804,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
 
-        ////cin.get();
+        ////
 
 
         if(nc > 0)
@@ -4819,7 +4817,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
 
-      //  //cin.get();
+      //  //
 
 
         int * tx;
@@ -4859,7 +4857,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 */
 
-     //   //cin.get();
+     //   //
 
 
         cout << "Complete growing the base" << endl;
@@ -4894,7 +4892,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
         }
 
-       //cin.get();
+       //
 
 
         */
@@ -4948,7 +4946,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
 
-        //cin.get();
+        //
 
         */
         if(nc > 0)
@@ -4967,11 +4965,11 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
        // cout << "The target is " << label_base_img.at<int>(target_tip) << endl;
 
 
-      //  //cin.get();
+      //  //
 
         //cout << "..................2..............." << endl;
 
-      //  //cin.get();
+      //  //
 
     //  cout << "1450" << endl;
 
@@ -5004,7 +5002,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
             cout << "The component has " << *npmaxp << endl;
 
-       //     //cin.get();
+       //     //
 
           //  np[max_scc] = 0;
 
@@ -5075,7 +5073,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
             cout << "knock out " << n_seg << " Pixels" << endl;
 
-          //  //cin.get();
+          //  //
 
         }
 
@@ -5116,7 +5114,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
         //if(stopsigh > 0)
-         //   //cin.get();
+         //   //
 
         if(max_label > 0)
         {
@@ -5141,12 +5139,12 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
                 collect_idx_int(label_base_img, Pseg, max_scc + 1);
 
             //  if(!(*npmaxp) == (max_scc + 1))
-            //    //cin.get();
+            //    //
 
            // if(stopsigh > 0)
-               // //cin.get();
+               // //
 
-            ////cin.get();
+            ////
 
            // for(int i = 0; i < max_label; i++)
             //    cout << "np " << i << " is "  << np[i] << endl;
@@ -5160,7 +5158,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
           //  if(stopsigh > 0)
-            //    //cin.get();
+            //    //
 
             prop_cc = (double)(*npmaxp) / (double)n_sum;
 
@@ -5172,7 +5170,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
 
       //  if(stopsigh > 0)
-        //    //cin.get();
+        //    //
 
         cout << "The current base represents " << prop_cc * 100 << "%" << endl;
 
@@ -5188,7 +5186,7 @@ int merge_base1(Mat image, Mat &seg_img, vector<int> & comp_list, vector<trip_id
 
     //cout << "Out of the loop" << endl;
 
-   // //cin.get();
+   // //
 
     // get the dim componnet back
 
@@ -5944,7 +5942,7 @@ int grow_base_adv(cv::Mat label_img, cv::Mat &seg_img, int source, int *target_t
 
             cout << "Now the connecting dist is " << (double)con_dist << endl;
 
-            //cin.get();
+            //
 
             if( isc < 1)
             {
@@ -6286,8 +6284,6 @@ int force_merge1(cv::Mat image, cv::Mat &seg_img, int t_seg)
 
             cout << "The main trunk now contains " << prop_cc * 100 << "%" << endl;
 
-            if(debug_on1 > 0)
-                cin.get();
 
 
 
@@ -6728,7 +6724,7 @@ int check_connect(cv::Mat &seg_img)
 
 	label_t2.release();
 
-   // cin.get();
+   //
 
 	int * np;
 
@@ -6767,7 +6763,7 @@ int check_connect(cv::Mat &seg_img)
 
     }
 
-  //  cin.get();
+  //
 
 
     double * p_segt1 = new double[n_t1];
@@ -6851,7 +6847,7 @@ int check_connect(cv::Mat &seg_img)
       //  cout << "t12cp is " << t12_cp[i] << endl;
 
        // if(t12_c[i] > 0)
-         //   cin.get();
+         //
 
 	}
 
@@ -6925,7 +6921,7 @@ int check_connect(cv::Mat &seg_img)
 
 
 
- //   cin.get();
+ //
 
     delete [] pt1;
 
@@ -7042,7 +7038,7 @@ int check_connect(cv::Mat &seg_img)
 
     cout << "The n small is " << n_small << endl;
 
-	cin.get();
+
 
 	delete [] t12_c;
 
@@ -7103,7 +7099,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 	int base_thres;
 
-	//cin.get();
+	//
 
 	n_base  = get_main_branch(image, seg_img, t1,base_thres);
 
@@ -7121,7 +7117,7 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
 	check_connect(seg_img);
 
-	//cin.get();
+	//
 
     cout << "Start merging the base2" << endl;
 
@@ -7153,18 +7149,17 @@ int LCM_boost(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * data
 
     cout << strcmp(key,dataset) << endl;
 
-   // cin.get();
+   //
 
 
     if(strcmp(key,dataset) != 0)
     {
-      //  cin.get();
 
       	retrieve_low_confidence(input_img, image, seg_img,  dataset);
 
     }
 
-    //cin.get();
+    //
 
 
  	cout << "carry out the final filtering" << endl;
@@ -7262,7 +7257,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
         cout << " base_pl " << i << " is " << base_pl[i] << endl;
 
 
-	//cin.get();
+	//
 
 
 
@@ -7341,7 +7336,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << "label image has " << n_t2  << " components" << endl;
 
-	//cin.get();
+	//
 
 	//link_ftrs(min_dist1,curvature_l, base_thrs, bnd, frag_p1,base_p1, PixelIdxListx, PixelIdxListy,PixelIdxListz);
 
@@ -7364,12 +7359,12 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
    // cout << feature_cc.cols << endl;
 
-   // cin.get();
+   //
 
 
 	// fill the features for individual component
 
-   //cin.get();
+   //
 
 
 	cout << "start filling" << endl;
@@ -7447,7 +7442,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
         }
 
-        cin.get();
+
 
     }
 
@@ -7469,7 +7464,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
             }
 
-            cin.get();
+
 
         }
 
@@ -7486,7 +7481,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
 	cout << "Start classifying" << endl;
 
-    //cin.get();
+    //
 
     if(CF_flag)
         LCM_classify_CF(feature_cc,resp_tst,node_tst,dataset);
@@ -7557,13 +7552,13 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
 
                    // cout << fn << endl;
 
-                   // cin.get();
+                   //
 
                     int rows, cols;
 
                     import_matrix_from_txt_file(fn,v,rows,cols);
 
-                //    cin.get();
+                //
 
                     for(int i = 0; i < rows; i ++)
                     {
@@ -7623,7 +7618,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
         }
 
 
-        //cin.get();
+        //
 
         //delete [] fn;
 
@@ -7724,7 +7719,7 @@ int retrieve_low_confidence(cv::Mat input_img, cv::Mat image, cv::Mat & seg_img,
     }
 
 
-//	cin.get();
+//
 
 
 	//rt_test(feature_cc, resp_tst);
@@ -8787,7 +8782,7 @@ int collect_hog1(Mat label_img,Mat & hist1,int * base_list,vector<vector<int> > 
 
 
 
-	    				 // cin.get();
+	    				 //
 
 	    				  //hist[g3d[0]][g3d[1]][g3d[2]][l] ++;
 
@@ -9540,7 +9535,7 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
        // cout << cub1.size[2] << endl;
 
 
-     //   cin.get();
+     //
 
 
 		 for(int l = 0; l < cub1.size[2]; l++)
@@ -9600,11 +9595,11 @@ int fill_features(Mat & feature_cc,vector<vector<int> > PixelIdxListx, int * bnd
      //       cout << (double)feature_cc.at<float>(k,i) << endl;
 
 
-    //     cin.get();
+    //
 
 
 
-		// cin.get();
+		//
 
       cout << "Complete 10707" << endl;
 
@@ -10310,13 +10305,13 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
  //    cout << fn << endl;
 
- //    cin.get();
+ //
 
     cout << fn << endl;
 
     import_matrix_from_txt_file(fn,v,rows,cols);
 
-  //  cin.get();
+  //
 
     for(int i = 0; i < n_samp; i++)
         resp_tst[i] = -1;
@@ -10368,7 +10363,7 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
 
         sprintf(rf_name,"LCM_model/%sLCM_classifier_%d.xml",dataset,node);
 
-      //  cin.get();
+      //
 
         Ptr<RTrees> rtrees;
 
@@ -10383,7 +10378,7 @@ int LCM_classify(Mat feature_cc, double * resp_tst, char * dataset)
         //  cout << "feature " << i << " is " << (double)feature_cc.at<float>(1,i) << endl;
 
 
-        //cin.get();
+        //
 
 
         if(child_l[0] > 0)
@@ -11929,7 +11924,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
     cout << fileName_string << endl;
 
-   //  cin.get();
+   //
 
 
  //   if (!loadImage(fileName_string, inimg, in_sz, datatype))
@@ -11937,7 +11932,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
  //       cout << "Could not open the vaa3d raw file" << endl;
 
-      //  cin.get();
+      //
 
    //     return -1;
 
@@ -11951,7 +11946,7 @@ int loadMat(V3DPluginCallback2 &callback, Mat & image, char * fileName_string)
 
         cout << "Could not open the vaa3d raw file" << endl;
 
-    //    cin.get();
+    //
 
         return -1;
 
@@ -12272,7 +12267,7 @@ float bwdist2(Mat image,float * &dist_img, int source, int target_tip[], float m
 
    cout << "min_dist is " << min_dist << endl;
 
-   ////cin.get();
+   ////
 
 
    delete [] seg_img1;
@@ -12407,7 +12402,7 @@ float bwdist_img(Mat image, Mat label_image, float * &dist_img, int source, int 
 
 
 
-  // //cin.get();
+  // //
 
 
    delete [] seg_img1;
@@ -12513,7 +12508,7 @@ float bwdist_img1(Mat image, Mat label_image, float * &dist_img, float * dist_im
 
    cout << "Sum of the other component is " << seg_sm1 << endl;
 
-   cin.get();
+
 
  //  float * dist_img;
 
@@ -12562,7 +12557,7 @@ float bwdist_img1(Mat image, Mat label_image, float * &dist_img, float * dist_im
 
 
 
-  // //cin.get();
+  // //
 
 
    delete [] seg_img1;
@@ -13764,7 +13759,7 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
     cout << "offset is " <<  offset[0] << " " << offset[1] << " " << offset[2] << endl;
 
-   // cin.get();
+   //
 
 
     for(V3DLONG i = 0; i < outswc.size(); i++)
@@ -13780,7 +13775,7 @@ int trace_img1(Mat seg_img, Mat image, int offset[], char * outfile_swc)
 
    //cout << outfile_swc << endl;
 
-   //cin.get();
+   //
 
    saveSWC_file(outfile_swc, outswc);
 
@@ -14062,7 +14057,7 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
 
     }
 
-    //cin.get();
+    //
 
     Mat image;
 
@@ -14146,10 +14141,10 @@ int swc2conf(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int bas
      remove(outfile);
 
 
-    //cin.get();
+    //
 
 
-    //cin.get();
+    //
 
 
     return 1;
@@ -14204,7 +14199,7 @@ int swc2image_score(cv::Mat &image,char * filename, const char * score_name)
 
 
 
-    //cin.get();
+    //
 
 
     NeuronTree neuron = readSWC_file(fs);
@@ -14276,7 +14271,7 @@ int swc2image_score(cv::Mat &image,char * filename, const char * score_name)
 
     delete [] neuron_score;
 
-    //cin.get();
+    //
 
 }
 
@@ -14418,6 +14413,16 @@ int swc2conf1(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int ba
         break;
 
 
+    case 9:
+
+        plugin_name = "plugins/RegressionTubularityAC/libRegressionTubularityAC.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "RegressionTubularityAC";
+
+        break;
+
 
     default:
 
@@ -14471,7 +14476,7 @@ int swc2conf1(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int ba
 
     }
 
-//    cin.get();
+//
 
 
 
@@ -14533,7 +14538,7 @@ int swc2conf1(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int ba
 
     }
 
-    //cin.get();
+    //
 
     Mat image;
 
@@ -14619,10 +14624,10 @@ int swc2conf1(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int ba
      remove(outfile);
 
 
-    //cin.get();
+    //
 
 
-    //cin.get();
+    //
 
 
     return 1;
@@ -14634,9 +14639,6 @@ int swc2conf1(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int ba
 
 bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm2)
 {
-
-    //cin.get();
-
 	if(callback.getImageWindowList().empty()) return QMessageBox::information(0, title, QObject::tr("No image is open."));
 
 	unsigned char * data1d = 0;
@@ -14929,7 +14931,7 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
 
     }
 
-   // cin.get();
+   //
 
 
     if(bm1 == 3)
@@ -15009,155 +15011,6 @@ bool General_Boost(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int bm
     delete [] zv;
 
 
-    //v3d_msg(tr("The traced result has been saved in neuron_swc.swc"));
-
-    //v3d_msg(tr("This plugin will boost the performance of the existing methods"));
-
-    //nt = readSWC_file((char *)tmp_nm);
-
-/*
-
-    uchar * show1d = new uchar[in_sz[0] * in_sz[1] * in_sz[2]];
-
-    for(int z = 0; z < image.size[2]; z++)
-    {
-
-        V3DLONG offsetk = (V3DLONG)z*in_sz[1]*in_sz[0];
-
-         for(int y = 0; y < image.size[1]; y ++)
-         {
-
-            V3DLONG offsetj = (V3DLONG)y*in_sz[0];
-
-            for(int x = 0; x < image.size[0]; x++)
-            {
-
-                int v3[3];
-
-                v3[0] = x;
-
-                v3[1] = y;
-
-                v3[2] = z;
-
-                unsigned char PixelValue = image.at<uchar>(v3);
-
-                show1d[offsetk + offsetj + (V3DLONG)x] = PixelValue;
-
-            }
-
-         }
-
-    }
-
-
-
-	V3DLONG in_sz1[4];
-
-	in_sz1[0] = (V3DLONG)image.size[0];
-
-	in_sz1[1] = (V3DLONG)image.size[1];
-
-	in_sz1[2] = (V3DLONG)image.size[2];
-
-	in_sz1[3] = 1;
-
-
-
-        // start visualising the image
-
-    v3dhandle newwin = callback.newImageWindow();
-
-    Image4DSimple *p4DImage_new;
-
-    p4DImage_new->setData(show1d, in_sz1[0], in_sz1[1], in_sz1[2], 1, p4DImage->getDatatype());
-
-    callback.setImage(newwin, p4DImage_new);
-
-    callback.setImageName(newwin, QObject::tr("Boosted Image"));
-
-   // callback.setSWC(newwin, nt);
-
-    callback.updateImageWindow(newwin);
-
-    delete []  show1d;
-*/
-
-/*
-
-	int img_sz[3];
-
-	for(int i = 0; i < 3; i++)
-        img_sz[i] = (int)in_sz[i];
-
-    Mat label_img = Mat(3,img_sz,CV_32S,Scalar::all(0));
-
-    int sz[3];
-
-    for(int i = 0; i < 3; i++)
-        sz[i] = (int)in_sz[i];
-
-    image = Mat(3,sz,CV_8UC1,Scalar::all(0));
-
-    for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
-    {
-
-        V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
-        for(V3DLONG iy = 0; iy <  in_sz[1]; iy++)
-        {
-            V3DLONG offsetj = iy*in_sz[0];
-            for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
-            {
-
-                unsigned char PixelValue = inimg[offsetk + offsetj + ix];
-
-                int v3[3];
-
-                v3[0] = (int)ix;
-
-                v3[1] = (int)iy;
-
-                v3[2] = (int)iz;
-
-                image.at<uchar>(v3) = PixelValue;
-
-            }
-        }
-
-    }
-
-    delete [] inimg;
-
-    delete [] in_sz;
-
-
-    Mat conf_img;
-
-    // multiscaleEhance(callback, infile, conf_img);
-
-
-
-    // process the labelling image
-
-    cout << "Start processing  the image" << endl;
-
-    LCM_boost(label_img, );
-
-    cout << "Complete processing  the image" << endl;
-
-
-    Mat show_img;
-
-    label_img.convertTo(show_img,CV_8UC1);
-
-
-
-*/
-
-
-
-
-
 
 
     return true;
@@ -15190,25 +15043,10 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
                 return -1;
         }
 
-       // char * outfile = outlist->at(0);
-
         char * outfile_swc = outlist->at(0);
 
 
     Mat image1;
-
-
-
-
-
-
-  //  cout << tmpfolder.toStdString().c_str() << endl;
-
-  //  cin.get();
-
-
-
-
 
     loadMat(callback,image1, infile);
 
@@ -15270,10 +15108,6 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
         if(zv[i] > 1000)
             zv[i] = 1000;
-
-     //   zv[i] = zv[i] / (double)(sz[0] * sz[1]);
-
-        //cout << "zv "  << i << " is " << zv[i] << endl;
        }
 
 
@@ -15283,16 +15117,12 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
             if(yv[i] > 1000)
             yv[i] = 1000;
 
-       // yv[i] = yv[i] / (do)uble)(sz[0] * sz[2]);
-
-      //cout << "yv is " << yv[i] << endl;
 
     }
 
     for(int i = 0; i < image1.size[0]; i++)
     {
 
-        //xv[i] = xv[i] / (double)(sz[1] * sz[2]);
             if(xv[i] > 1000)
             xv[i] = 1000;
 
@@ -15416,46 +15246,9 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     saveMat(image,(char*)tmp_file.c_str());
 
- /*
-
-
-    loadMat(image1,infile);
-
-    cout << "............................" << endl;
-
-
-    cout << image1.size[0] << endl;
-
-    cout << image.size[0] << endl;
-
-
-    cout << image1.size[1] << endl;
-
-    cout << image.size[1] << endl;
-
-
-    cout << image1.size[2] << endl;
-
-    cout << image.size[2] << endl;
-
-    double sum_value = (double)std::accumulate(image.begin<uchar>(), image.end<uchar>(), 0.0);
-
-    cout << "sum value is " << sum_value << endl;
-
-
-    sum_value = (double)std::accumulate(image1.begin<uchar>(), image1.end<uchar>(), 0.0);
-
-    cout << "sum value is " << sum_value << endl;
-
-
-*/
 
 
     Mat conf_img;
-
-    //uchar * conf_img1;
-
-    //image.release();
 
     // now use either the multiscale enhancement or the GWDT to collect
     // the base image
@@ -15545,17 +15338,6 @@ bool General_Boost(V3DPluginCallback2 & callback, const V3DPluginArgList & input
 
     cout << "complete the LCM " << endl;
 
-    // output the result into the harddisk
-
-    //saveMat(seg_img,outfile);
-
-    // trace the image
-//    if(checkin > 0)
-//        trace_img1(seg_img, image, offset, outfile_swc);
-//    else
-//        trace_img(seg_img, image,outfile_swc);
-
-
 
 
     trace_img2(seg_img, conf_img, offset, t1, outfile_swc);
@@ -15639,7 +15421,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
     	//cout << im_file << endl;
 
-    	//cin.get();
+    	//
 
     	string roi_fn = infile;
 
@@ -15697,7 +15479,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
 
 
-    	//cin.get();
+    	//
 
 
 
@@ -15742,7 +15524,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
           //  cout << imfile1 << endl;
 
-         //   cin.get();
+         //
 
             string app2_swc_fn = infile;
 
@@ -15750,13 +15532,13 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
             cout << app2_swc_fn << endl;
 
-            cin.get();
+
 
             app2trace1(callback,(char*)im_file.c_str(),(char*)app2_swc_fn.c_str());
 
             cout << "Start loading the image" << endl;
 
-           // cin.get();
+           //
 
 
             if(loadMat(callback,image1, (char*)im_file.c_str()) < 0)
@@ -15798,13 +15580,13 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
             //cout << "offset is shown" << endl;
 
-      //      cin.get();
+      //
 
          //   cout << offset[0] << endl;
 
             image1.release();
 
-           // cin.get();
+           //
 
             cout << "Start saving the image" << endl;
 
@@ -15833,7 +15615,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
                 t2 = 2;
 
-                //cin.get();
+                //
 
 
                 multiscaleEhance(callback, (char*)roi_fn.c_str(), conf_img);
@@ -15876,7 +15658,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
             }
 
-            //cin.get();
+            //
 
             //image.release();
 
@@ -15908,7 +15690,7 @@ bool Batch_Base_Method(V3DPluginCallback2 & callback, const V3DPluginArgList & i
 
 
 
-     //       cin.get();
+     //
 
 
         }
@@ -15975,7 +15757,7 @@ int roi_img1(cv::Mat &image,cv::Mat image1, int * offset)
 
     n_sum = n_sum / (image1.size[0] * image1.size[1] * image1.size[2]);
 
-  //  cin.get();
+  //
 
 
 
@@ -16014,7 +15796,7 @@ int roi_img1(cv::Mat &image,cv::Mat image1, int * offset)
 
 
 
-   // cin.get();
+   //
 
 
     for(int i = 0; i < image1.size[1]; i++)
@@ -16213,7 +15995,7 @@ int app2trace1(V3DPluginCallback2 & callback, char *infile, char * outfile)
 
     cout << outfile << endl;
 
-    //cin.get();
+    //
 
     if (! callback.callPluginFunc(full_plugin_name, func_name, input,output))
     {
@@ -16232,11 +16014,11 @@ int app2trace1(V3DPluginCallback2 & callback, char *infile, char * outfile)
 
         tmp_ini_fn = tmp_ini_fn + "_ini.swc";
 
-        //cin.get();
+        //
 
         remove((char*)tmp_ini_fn.c_str());
 
-        //cin.get();
+        //
 
 
         return 1;
@@ -16284,7 +16066,7 @@ int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3D
 
 	//cout << fn << endl;
 
-	//cin.get();
+	//
 
     import_matrix_from_txt_file(fn,v,rows,cols);
 
@@ -16292,7 +16074,7 @@ int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3D
 
     v.clear();
 
-  //  cin.get();
+  //
 
 
     //int * stack = new int[1000];
@@ -16317,7 +16099,7 @@ int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3D
 
     	nlist.pop_front();
 
-    	//cin.get();
+    	//
 
     	train_LCM_node(node,pref);
 
@@ -16339,7 +16121,7 @@ int train_LCM(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3D
 
         import_matrix_from_txt_file(fn,v,rows,cols);
 
-        //cin.get();
+        //
 
 
         /*
@@ -16427,7 +16209,7 @@ int train_LCM_node(int node,char * pref)
 
 
 
-	//cin.get();
+	//
 
 	sprintf(fn,"LCM_trn_data/%sLCM_trn_ftrs_%d.txt",pref,node);
 
@@ -16440,7 +16222,7 @@ int train_LCM_node(int node,char * pref)
 
 
 
-   // cin.get();
+   //
 
 	Mat trn_ftrs(rows,cols,CV_64F);
 
@@ -16455,7 +16237,7 @@ int train_LCM_node(int node,char * pref)
 
 		}
 
-		//cin.get();
+		//
 
 	}
 
@@ -16483,7 +16265,7 @@ int train_LCM_node(int node,char * pref)
 
 	cout << node << endl;
 
-//	cin.get();
+//
 
 
 
@@ -16522,7 +16304,7 @@ int train_LCM_node(int node,char * pref)
 		//cout << "weight is " << w << endl;
 	}
 
-	//cin.get();
+	//
 
     //cout << "row is " << samples.rows << endl;
 
@@ -16533,7 +16315,7 @@ int train_LCM_node(int node,char * pref)
     //cout << resp.cols << endl;
 
 
-	//cin.get();
+	//
 
 	Ptr<TrainData> sample_trn = TrainData::create(samples, ROW_SAMPLE, resp,Mat(),Mat(),weight);
 
@@ -16541,7 +16323,7 @@ int train_LCM_node(int node,char * pref)
   //      cout << "feature " << i <<  " is "  << (double)samples.at<float>(12,i) << endl;
 
 
-   // cin.get();
+   //
 
 	rtrees->train(sample_trn);
 
@@ -16714,7 +16496,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
 
 
-       // cin.get();
+       //
 
         if(loadMat(callback,image1, (char*)im_file.c_str()) < 0)
             continue;
@@ -16735,7 +16517,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
         image1.release();
 
-        //cin.get();
+        //
 
 
         saveMat(image,(char*)roi_fn.c_str());
@@ -16799,11 +16581,11 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             swc_fn =  "/media/gulin/E402023602020DEC/Data/BigNtst2000/APP2_swc/APP2/app2_swc_" + swc_fn + convert.str() + ".swc";
 
-          //  cin.get();
+          //
 
             cout << swc_fn << endl;
 
-          //  cin.get();
+          //
 
             if(isApp2[i_img])
             {
@@ -16812,9 +16594,9 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             cout << "Complete tracing the image" << endl;
 
-          //  cin.get();
+          //
 
-            //cin.get();
+            //
 
             swc2image(conf_img,(char*)swc_fn.c_str());
 
@@ -16822,7 +16604,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
 
             }
-           // cin.get();
+           //
 
            // if(base_line_open < 1)
              // remove((char*)swc_fn.c_str());
@@ -16850,7 +16632,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
         if(base_method == 2)
         {
 
-            //cin.get();
+            //
 
             fastMarch((char*)roi_fn.c_str(), conf_img);
 
@@ -16858,7 +16640,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             saveMat(conf_img,(char*)save_conf_fn.c_str());
 
-            //cin.get();
+            //
 
 
             t1 = 10;
@@ -16916,11 +16698,11 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             sprintf(dataset,"BigNTrace");
 
-            //cin.get();
+            //
 
             //saveMat(conf_img,"tmp_conf.v3draw");
 
-          //  cin.get();
+          //
 
         }
 
@@ -16931,7 +16713,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
             app2_trace(image, tmp_nm);
 
-          //  cin.get();
+          //
 
         }
 
@@ -16944,9 +16726,9 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
        // cout << dataset << endl;
 
-       // cin.get();
+       //
 
-   //    cin.get();
+   //
 
 
 
@@ -17013,7 +16795,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
         // trace the image
 
 
-       // cin.get();
+       //
 
         if(memory_efficient > 0)
         {
@@ -17039,7 +16821,7 @@ bool Batch_Test(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V
 
         delete [] tmp_nm;
 
-       // cin.get();
+       //
 
     }
 
@@ -17383,7 +17165,7 @@ int trace_img2(Mat seg_img, Mat image, int offset[], int t2i, char * outfile_swc
 
     cout << "offset is " <<  offset[0] << " " << offset[1] << " " << offset[2] << endl;
 
-   // cin.get();
+   //
 
 
     for(V3DLONG i = 0; i < outswc.size(); i++)
@@ -17399,7 +17181,7 @@ int trace_img2(Mat seg_img, Mat image, int offset[], int t2i, char * outfile_swc
 
    //cout << outfile_swc << endl;
 
-   //cin.get();
+   //
 
    saveSWC_file(outfile_swc, outswc);
 
@@ -17429,6 +17211,8 @@ int trace_img2(Mat seg_img, Mat image, int offset[], int t2i, char * outfile_swc
     return 1;
 
 }
+
+
 
 
 // call the function to batch process  the whole data
@@ -17664,7 +17448,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << "Initialise " << endl;
 
-    //cin.get();
+    //
 
 
     for(int z = 0; z < image1.size[2]; z++)
@@ -17795,7 +17579,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << "offset is " << bz[0] << endl;
 
-   // cin.get();
+   //
 
     // get the region of interest
 
@@ -17920,12 +17704,6 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
             break;
 
-        case 9:
-
-            base_method_str = "kernel_boost";
-
-            break;
-
 
         default:
 
@@ -17937,6 +17715,12 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     }
 
+    if(bm1 == 4)
+    {
+
+        base_method_str = "RegressionTubularityAC";
+
+    }
 
 
     QString image_name = infile;
@@ -17952,16 +17736,9 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << img_fn << endl;
 
-    //cin.get();
-
     saveMat(image,(char*)img_fn.c_str());
 
     Mat conf_img;
-
-
-
-
-
 
     if(bm1 == 1)
     {
@@ -17971,7 +17748,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         t2 = 20;
 
-        sprintf(dataset,"BigNmEh");
+        sprintf(dataset,"BigN_fullmEh");
 
         string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
 
@@ -17993,7 +17770,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         t2 = 10;
 
-        sprintf(dataset,"BigNFM");
+        sprintf(dataset,"BigN_fullFM");
 
         string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
 
@@ -18004,6 +17781,29 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
         remove((char*)swc_file_raw.c_str());
 
     }
+
+
+    if(bm1 == 4)
+    {
+
+        RegressionTubularity(callback,(char*)img_fn.c_str(),conf_img);
+
+        t1 = 100;
+
+        t2 = 80;
+
+        sprintf(dataset,"BigN_fullRegressionTubularityAC");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
 
     if(bm1 == 3)
     {
@@ -18017,15 +17817,68 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         t2 = 10;
 
-        sprintf(dataset,"BigNtrace");
 
-      //  cout << " Complete swc2 conf " << endl;
 
-      //  cin.get();
+            switch(bm2)
+            {
+
+                case 1:
+
+                sprintf(dataset,"BigNmostVessel");
+
+                break;
+
+                case 2:
+
+                sprintf(dataset,"BigNTrace");
+
+            break;
+
+        case 3:
+
+            sprintf(dataset,"BigNSimpTracing");
+
+            break;
+
+        case 4:
+
+            sprintf(dataset,"BigNAPP2");
+
+            break;
+
+        case 5:
+
+            sprintf(dataset,"BigNAPP1");
+
+            break;
+
+        case 6:
+
+            sprintf(dataset,"BigNfmspant");
+
+            break;
+
+        case 7:
+
+            sprintf(dataset,"BigNNGPSt");
+
+            break;
+
+        case 8:
+
+            sprintf(dataset,"BigNneurontracing_mst");
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
 
     }
-
-    //cin.get();
 
 
     cout << "Complete the base method" << endl;
@@ -18036,14 +17889,12 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
     cout << "complete the LCM " << endl;
 
-   // cin.get();
+   //
 
     // output the result into the harddisk
     trace_img3(callback, seg_img, image, offset, 15, outfile_swc);
 
     cout << " complete tracing the image " << endl;
-
-   // cin.get();
 
 
     // the base line option saves the related data into the hard disk
@@ -18149,7 +18000,7 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         cout << swc_img_fn << endl;
 
-   //     cin.get();
+   //
 
         // save the traced image
 
@@ -18222,7 +18073,6 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
 
         cout << roi_offset_fn << endl;
 
-        //    cin.get();
 
         ofstream myfile ((char*)roi_offset_fn.c_str());
 
@@ -18239,8 +18089,6 @@ bool Call_General_Boost(V3DPluginCallback2 & callback, char * infile, char * out
         cout << "offset is " << bz[0] << endl;
 
         myfile.close();
-
-        // cin.get();
 
 
         tracing_image.release();
@@ -18491,13 +18339,13 @@ int LCM_classify_CF(Mat feature_cc, double * resp_tst, int * node_tst, char * da
 
  //    cout << fn << endl;
 
- //    cin.get();
+ //
 
     cout << fn << endl;
 
     import_matrix_from_txt_file(fn,v,rows,cols);
 
-  //  cin.get();
+  //
 
 
 
@@ -18548,7 +18396,7 @@ int LCM_classify_CF(Mat feature_cc, double * resp_tst, int * node_tst, char * da
 
         sprintf(rf_name,"LCM_model/%sLCM_classifier_%d.xml",dataset,node);
 
-      //  cin.get();
+      //
 
         Ptr<RTrees> rtrees;
 
@@ -18563,7 +18411,7 @@ int LCM_classify_CF(Mat feature_cc, double * resp_tst, int * node_tst, char * da
         //  cout << "feature " << i << " is " << (double)feature_cc.at<float>(1,i) << endl;
 
 
-        //cin.get();
+        //
 
 
         if(child_l[0] > 0)
@@ -18583,11 +18431,11 @@ int LCM_classify_CF(Mat feature_cc, double * resp_tst, int * node_tst, char * da
                     //return
 
 
-                    //cin.get();
+                    //
 
                     cout << " i is " << i << endl;
 
-                    //cin.get();
+                    //
 
                     float resp_elmt = rtrees->predict(feature_cc.row(i));
 
@@ -18691,7 +18539,7 @@ int LCM_boost1(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * dat
 
 	int base_thres;
 
-	//cin.get();
+	//
 
 	n_base  = get_main_branch(image, seg_img, t1,base_thres);
 
@@ -18709,7 +18557,7 @@ int LCM_boost1(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * dat
 
 	check_connect(seg_img);
 
-	//cin.get();
+	//
 
     cout << "Start merging the base2" << endl;
 
@@ -18741,18 +18589,18 @@ int LCM_boost1(Mat input_img, Mat image, Mat & seg_img,int t1, int t2,char * dat
 
     cout << strcmp(key,dataset) << endl;
 
-   // cin.get();
+   //
 
 
     if(strcmp(key,dataset) != 0)
     {
-      //  cin.get();
+      //
 
       	retrieve_low_confidence(input_img, image, seg_img,  dataset);
 
     }
 
-    //cin.get();
+    //
 
 
  	cout << "carry out the final filtering" << endl;
@@ -18846,13 +18694,13 @@ int trace_img3(V3DPluginCallback2 & callback, Mat seg_img, Mat image, int offset
 
     cout << tmp_file << endl;
 
-   // cin.get();
+   //
 
     saveMat(image1,(char *)tmp_file.c_str());
 
     cout << "Pass 18836" << endl;
 
-    //cin.get();
+    //
 
     app2trace1(callback,(char *)tmp_file.c_str(),outfile_swc);
 
@@ -18987,7 +18835,7 @@ int trace_diadiem(cv::Mat seg_img, cv::Mat image, int offset[], double soma_xyz[
 
     soma_xyz[2] = soma_xyz[2] - (double)offset[2];
 
-   // cin.get();
+   //
 
     MyMarker max_marker((V3DLONG)soma_xyz[0], (V3DLONG)soma_xyz[1], (V3DLONG)soma_xyz[2]);
 
@@ -19155,7 +19003,7 @@ int trace_diadiem(cv::Mat seg_img, cv::Mat image, int offset[], double soma_xyz[
     cout << "starting point is " <<  soma_xyz[0] << " " << soma_xyz[1] << " " << soma_xyz[2] << endl;
 
 
-   // cin.get();
+   //
 
     for(int i = 0; i < 10 ; i++)
     {
@@ -19193,16 +19041,16 @@ int trace_diadiem(cv::Mat seg_img, cv::Mat image, int offset[], double soma_xyz[
 
     cout << "offset is " << offset[0] << " " << offset[1] << " " << offset[2] << endl;
 
-  //  cin.get();
+  //
 
 
    //cout << outfile_swc << endl;
 
-   //cin.get();
+   //
 
    saveSWC_file(outfile_swc, outswc);
 
-   cin.get();
+
 
 
    delete [] show_img;
@@ -19306,18 +19154,18 @@ int trace_img3_diadiem(V3DPluginCallback2 & callback, cv::Mat seg_img, cv::Mat i
 
     cout << tmp_file << endl;
 
-   // cin.get();
+   //
 
     saveMat(image1,(char *)tmp_file.c_str());
 
     //cout << "Pass 18836" << endl;
 
-  //  cin.get();
+  //
 
    cout << mark_fn << endl;
 
 
-//    cin.get();
+//
 
     if(diadiem_open)
         app2trace_marker(callback,(char *)tmp_file.c_str(), mark_fn, outfile_swc);
@@ -19400,7 +19248,7 @@ int app2trace_marker(V3DPluginCallback2 & callback, char *infile, char * marker_
 
     cout << marker_fn << endl;
 
-  //  cin.get();
+  //
 
     if (! callback.callPluginFunc(full_plugin_name, func_name, input,output))
     {
@@ -19419,11 +19267,11 @@ int app2trace_marker(V3DPluginCallback2 & callback, char *infile, char * marker_
 
         tmp_ini_fn = tmp_ini_fn + "_ini.swc";
 
-        //cin.get();
+        //
 
         remove((char*)tmp_ini_fn.c_str());
 
-        //cin.get();
+        //
 
 
         return 1;
@@ -19505,7 +19353,7 @@ bool General_Boost1(V3DPluginCallback2 &callback, QWidget *parent, int bm1,int b
 {
     unsigned char * inimg1d = 0;
 
-    //cin.get();
+    //
 
   	if(callback.getImageWindowList().empty()) return QMessageBox::information(0, title, QObject::tr("No image is open."));
 
@@ -19666,7 +19514,7 @@ bool Batch_Test_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 
         cout << save_swc_fn << endl;
 
-        //cin.get();
+        //
 
         string gt_swc_file;
 
@@ -19884,7 +19732,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
 
 
-    //cin.get();
+    //
 
     for(int z = 0; z < image.size[2]; z++)
     {
@@ -19922,7 +19770,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
     image1.release();
 
-    //cin.get();
+    //
 
 
     QString image_name = infile;
@@ -20195,7 +20043,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
         cout << save_seg_fn.c_str() <<  endl;
 
-       // cin.get();
+       //
 
         saveMat(conf_img1,(char*)save_conf_fn.c_str());
 
@@ -20280,7 +20128,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
             cout << swc_full_fn << endl;
 
-         //   cin.get();
+         //
 
        // }
 
@@ -20290,7 +20138,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
         cout << roi_offset_fn << endl;
 
-        //    cin.get();
+        //
 
         ofstream myfile ((char*)roi_offset_fn.c_str());
 
@@ -20308,7 +20156,7 @@ bool Call_General_Boost_OPF(V3DPluginCallback2 & callback, char * infile, char *
 
         myfile.close();
 
-        // cin.get();
+        //
 
 
         tracing_image.release();
@@ -20497,7 +20345,7 @@ bool Dist_Score_BigN(V3DPluginCallback2 & callback, const V3DPluginArgList & inp
 
         nst_score(callback, (char*)gt_swc_fn.c_str(), (char*)obj_swc_fn.c_str(), (char*)obj_score_fn.c_str());
 
-        //cin.get();
+        //
 
 
 
@@ -20565,7 +20413,7 @@ int nst_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile, char *
   //  cout << outfile << endl;
 
 
-   // cin.get();
+   //
 
     if (! callback.callPluginFunc(full_plugin_name, func_name, input,output))
     {
@@ -20586,11 +20434,11 @@ int nst_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile, char *
 
         //tmp_ini_fn = tmp_ini_fn + "_ini.swc";
 
-        //cin.get();
+        //
 
         //remove((char*)tmp_ini_fn.c_str());
 
-        //cin.get();
+        //
 
 
         return 1;
@@ -20963,7 +20811,7 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
 
     myfile.close();
 
- //   cin.get();
+ //
 
 
 
@@ -20999,20 +20847,20 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
 
    input1 << arg1;
 
-   // cin.get();
+   //
 
     cout << func_name1.toStdString() << endl;
 
     cout << para_list1_char << endl;
 
-  //  cin.get();
+  //
 
 
     if (! callback.callPluginFunc(full_plugin_name, func_name1, input1,output1))
     {
 
 
-       // cin.get();
+       //
 
         v3d_msg("Fail to generate blast neuron features");
 
@@ -21024,7 +20872,7 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
     else
     {
 
-        //cin.get();
+        //
 
         remove((char*)ano_file.c_str());
 
@@ -21052,7 +20900,7 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
 
         //cout << paras2 << endl;
 
-        //cin.get();
+        //
 
         char para_list2_char[1000];
 
@@ -21070,7 +20918,7 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
 
         cout << paras2 << endl;
 
-       // cin.get();
+       //
 
         if (! callback.callPluginFunc(full_plugin_name, func_name2, input2,output2))
         {
@@ -21085,7 +20933,7 @@ int rank_score(V3DPluginCallback2 & callback, char *gtfile, char *objfile1, char
 
         }
 
-       // cin.get();
+       //
 
         remove("ftrs.nfb");
 
@@ -21394,7 +21242,7 @@ bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList &
 
            // cout << save_swc_fn.c_str() << endl;
 
-          //  cin.get();
+          //
 
 
             app2trace1(callback,(char*)seg_img.c_str(),(char*)save_swc_fn.c_str());
@@ -21429,7 +21277,7 @@ bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList &
 
 
 
-         //   cin.get();
+         //
 
 
             if(mean_image[0] < 250)
@@ -21437,7 +21285,7 @@ bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList &
 
                 //cout << seg_img_base.c_str() << endl;
 
-                //cin.get();
+                //
 
 
                 app2trace1(callback,(char*)seg_img_base.c_str(),(char*)save_swc_base_fn.c_str());
@@ -21454,13 +21302,13 @@ bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList &
 
                // cout << swc_img_base.c_str() << endl;
 
-               // cin.get();
+               //
 
                 saveMat(image,(char*)swc_img_base.c_str());
 
 
             }
-           // cin.get();
+           //
 
 
         }
@@ -21473,15 +21321,14 @@ bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList &
 
 }
 
-/*
-// call the function to batch process  the whole data
-bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+
+
+// Test invidual methods on all of 76 images
+bool Batch_Test_BigNeuron(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
 {
     unsigned char * inimg1d = 0;
 
-
     if(input.empty()) return false;
-
 
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
 
@@ -21495,6 +21342,8 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
 
     cout << "The input is " << infile << endl;
 
+    //
+
  //   int bm1 = 1;
 
   //  int bm2 = 1;
@@ -21506,8 +21355,6 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
     {
       base_method_str = "multiScale";
     }
-
-
 
     if(bm1 == 2)
     {
@@ -21584,35 +21431,97 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
 
     }
 
-    int isTest[46];
-
-    int isApp2[46];
-
-    isApp2[5] = 0;
-
-    isApp2[8] = 0;
-
-    isApp2[9] = 0;
+    if(bm1 == 4)
+    {
+       base_method_str = "RegressionTubularityAC";
+    }
 
 
-    for(int i = 0; i < 47; i ++)
-        isTest[i] = 1;
+    // read the list of file names in the objective directory
+
+    string neuron_dir = "/media/gulin/E402023602020DEC/Data/BigN_w_groundtruth/BigN_training_tracing/";
+
+    DIR *dir;
+
+    struct dirent *ent;
+
+    vector<string> neuron_fn_list;
+
+    if ((dir = opendir (neuron_dir.c_str())) != NULL)
+    {
+        while ((ent = readdir (dir)) != NULL)
+        {
+
+            string file_name = ent->d_name;
+
+            if(file_name.length() >= 3)
+            {
+
+             //   cout << file_name.length() << endl;
+
+                if(!(file_name.compare(file_name.length() - 3,file_name.length(),"raw")
+                && file_name.compare(file_name.length() - 3,file_name.length(),"pbd")))
+                {
+                    //cout << file_name << endl;
+
+                    //
+
+                    neuron_fn_list.push_back(file_name);
+                }
+
+            }
+
+        }
+        closedir (dir);
+
+   }else
+   {
+    /* could not open directory */
+    perror ("");
+    return EXIT_FAILURE;
+   }
+
+    /*
+    for(int i = 0; i < neuron_fn_list.size();i++)
+    {
+        cout << neuron_fn_list[i] << endl;
 
 
-    for(int i_img = 2; i_img < 43; i_img ++)
+    }
+    */
+
+    string result_dir = "/media/gulin/E402023602020DEC/Data/BigNeuron_Confidence_map/Train/";
+
+    for(int i_img = 0; i_img < neuron_fn_list.size(); i_img ++)
     {
 
-        ostringstream convert;
+       // ostringstream convert;
 
-        convert << i_img;
+       // convert << i_img;
 
-        string im_file = infile;
+        //string im_file = neuron_fn_list[i_img];
 
-        im_file = "/media/gulin/E402023602020DEC/Data/BigN/" + im_file + "_" + convert.str() + ".v3draw";
+        string im_file = neuron_dir + neuron_fn_list[i_img];
 
-        string save_swc_fn = infile;
+       // cout << im_file << endl;
 
-        save_swc_fn = "/media/gulin/E402023602020DEC/Data/BigNtst/SWC/" + base_method_str + "/boosted_swc_" + save_swc_fn + convert.str() + ".swc";
+        //
+
+        string save_swc_fn = result_dir + "SWC/" + base_method_str + "/boosted_swc_" + neuron_fn_list[i_img] + ".swc";
+
+
+      //  cout << base_method_str << endl;
+
+       //
+
+        string save_dir =  result_dir + "SWC/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "SWC/" + base_method_str;
+
+        create_directory(save_dir);
+
 
         Mat image1;
 
@@ -21620,18 +21529,2349 @@ bool Batch_Test1(V3DPluginCallback2 & callback, const V3DPluginArgList & input, 
 
         cout << save_swc_fn << endl;
 
-        if(!isTest[i_img])
-            continue;
+      //
 
-        double current_cellbody[3];
+        Call_General_Boost_v2(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), 1, bm1, bm2);
 
+        cout << "Complete tracing the current neuron" << endl;
 
-        Call_General_Boost(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), bm1, bm2);
+       //
 
     }
 
     return true;
+
 }
 
-*/
+
+
+bool Call_General_Boost_v2(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int base_line_compare,int bm1, int bm2)
+{
+	unsigned char * inimg1d = 0;
+
+    Mat image1;
+
+
+    loadMat(callback,image1, infile);
+
+    int raw_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        raw_sz[i] = image1.size[i];
+
+
+    // shrink the image if possible
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+  //  cout << "Initialise " << endl;
+
+  //  cout << QFileInfo(infile).completeBaseName().toStdString() << endl;
+
+  //
+
+
+    //
+
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+      for(int i = 0; i < image1.size[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+       }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+    }
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+    int offset[3];
+
+    if(checkin > 0)
+    {
+
+        offset[0] = bx[0];
+
+        offset[1] = by[0];
+
+        offset[2] = bz[0];
+
+    }else
+    {
+
+        offset[0] = 0;
+
+        offset[1] = 0;
+
+        offset[2] = 0;
+
+
+    }
+
+
+    cout << "offset is " << bx[0] << endl;
+
+    cout << "offset is " << by[0] << endl;
+
+    cout << "offset is " << bz[0] << endl;
+
+   //
+
+    // get the region of interest
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    image1.release();
+
+        // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+
+
+    string base_method_str;
+
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+
+    if(bm1 == 4)
+    {
+       base_method_str = "RegressionTubularityAC";
+    }
+
+
+
+
+    QString image_name = infile;
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+
+    string img_file_name = QFileInfo(image_name).completeBaseName().toStdString();
+
+   // cout << img_file_name << endl;
+
+   //
+
+
+
+    string img_fn = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_cache_img.v3draw";
+
+    cout << img_fn << endl;
+
+    //
+
+    saveMat(image,(char*)img_fn.c_str());
+
+    Mat conf_img;
+
+
+    if(bm1 == 1)
+    {
+        multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img);
+
+        t1 = 50;
+
+        t2 = 20;
+
+        sprintf(dataset,"BigNmEh");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+
+    }
+
+    if(bm1 == 2)
+    {
+
+        fastMarch((char*)img_fn.c_str(), conf_img);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNFM");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
+    if(bm1 == 3)
+    {
+        //
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        swc2conf1(callback,(char*)img_fn.c_str(),conf_img,bm2);
+
+        t1 = 20;
+
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNtrace");
+
+      //  cout << " Complete swc2 conf " << endl;
+
+      //
+
+    }
+
+    if(bm1 == 4)
+    {
+
+     //   cout << " Ready to Call the Reg " << endl;
+
+     //
+
+        RegressionTubularity(callback,(char*)img_fn.c_str(),conf_img);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNtrace");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        //
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
+
+
+    //
+
+
+
+
+    cout << "Complete the base method" << endl;
+
+    //
+
+    Mat seg_img;
+
+    LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+  //
+
+    // output the result into the harddisk
+    trace_img3(callback, seg_img, image, offset, 15, outfile_swc);
+
+    cout << " complete tracing the image " << endl;
+
+ //
+
+
+    // the base line option saves the related data into the hard disk
+    if(base_line_compare)
+    {
+
+        string result_dir = "/media/gulin/E402023602020DEC/Data/BigNeuron_Confidence_map/Train/";
+
+        string data_dir = "/media/gulin/E402023602020DEC/Data/BigN_w_groundtruth/BigN_training_tracing/";
+
+        string gt_dir = result_dir + "GT/";
+
+        create_directory(gt_dir);
+
+        string gt_swc_fn = data_dir + img_file_name + ".swc";
+
+        Mat image_swc_gt = Mat(3,raw_sz,CV_8UC1,Scalar::all(0));
+
+        string gt_swc_img_fn = gt_dir + "gt_" + img_file_name + ".v3draw";
+
+        swc2image(image_swc_gt,(char*)gt_swc_fn.c_str());
+
+        saveMat(image_swc_gt,(char*)gt_swc_img_fn.c_str());
+
+        cout << "Ready to run the base line" << endl;
+
+       //
+
+
+
+      //  swc2image()
+
+
+        //cout << img_file_name << endl;
+
+        //
+
+
+
+        string roi_dir = result_dir + "Roi/";
+
+        create_directory(roi_dir);
+
+        string roi_fn = result_dir + "Roi/roi_" + img_file_name + ".v3draw";
+
+        cout << "roi_fn is " << roi_fn << endl;
+
+       //
+
+        string save_dir =  result_dir + "Conf/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Conf/" + base_method_str;
+
+        create_directory(save_dir);
+
+        string save_conf_fn = result_dir + "Conf/" + base_method_str + "/conf_" + img_file_name + ".v3draw";
+
+
+
+        string save_seg_fn = result_dir + "Seg/" + base_method_str + "/seg_" + img_file_name + ".v3draw";
+
+
+        save_dir =  result_dir + "Seg/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Seg/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_fn = result_dir + "APP2_swc/" + base_method_str + "/app2_swc_" + img_file_name + ".swc";
+
+
+        save_dir =  result_dir + "APP2_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string base_swc_fn = result_dir + "Base_swc/" + base_method_str + "/base_swc_" + img_file_name + ".swc";
+
+
+        save_dir =  result_dir + "Base_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Base_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_full_fn = result_dir + "APP2_swc/" + base_method_str + "/app2_swc_" + img_file_name + "_full.swc";
+
+
+        save_dir =  result_dir + "APP2_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+
+        string app2_swc_raw_full_fn = result_dir + "APP2_swc_raw/" + base_method_str + "/app2_swc_" + img_file_name + "_full.swc";
+
+        save_dir =  result_dir + "APP2_swc_raw/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc_raw/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_raw_fn = result_dir + "APP2_swc_raw/" + base_method_str + "/app2_swc_" + img_file_name + ".swc";
+
+
+        string app2_img_fn = result_dir + "APP2_swc_img/" + base_method_str + "/app2_swc_" + img_file_name + ".v3draw";
+
+
+
+        save_dir =  result_dir + "APP2_swc_img/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc_img/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_raw_img_fn = result_dir + "APP2_swc_img/" + base_method_str + "/app2_raw_swc_" + img_file_name + ".v3draw";
+
+
+        string swc_img_fn = result_dir + "SWC_img/" + base_method_str + "/swc_" + img_file_name + ".v3draw";
+
+
+        save_dir =  result_dir + "SWC_img/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "SWC_img/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string swc_full_fn = result_dir + "SWC/" + base_method_str + "/swc_" + img_file_name + "_full.swc";
+
+        save_dir =  result_dir + "SWC/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "SWC/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+
+        string roi_offset_fn = result_dir + "Roi/roi_" + img_file_name + ".txt";
+
+        Mat conf_img1;
+
+        if(bm1 == 1)
+        {
+            multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img1);
+
+        }
+
+        if(bm1 == 2)
+        {
+
+            fastMarch((char*)img_fn.c_str(), conf_img1);
+
+        }
+
+
+        if(bm1 == 4)
+        {
+
+            RegressionTubularity(callback,(char*)img_fn.c_str(),conf_img1);
+
+        }
+
+        saveMat(image,(char*)roi_fn.c_str());
+
+        saveMat(seg_img,(char*)save_seg_fn.c_str());
+
+        saveMat(conf_img1,(char*)save_conf_fn.c_str());
+
+
+
+
+        Mat tracing_image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+        swc2image(tracing_image, outfile_swc);
+
+        saveMat(tracing_image,(char*)swc_img_fn.c_str());
+
+
+
+        /*
+
+        // trace the neuron with base method
+
+       app2trace1(callback,(char*)save_conf_fn.c_str(),(char*)app2_swc_fn.c_str());
+
+
+
+        cout << swc_img_fn << endl;
+
+   //
+
+        // save the traced image
+
+        tracing_image = Scalar::all(0);
+
+        if((bm1 < 3) || (bm1 == 4) )
+        {
+
+            swc2image(tracing_image,(char*)app2_swc_fn.c_str());
+
+            saveMat(tracing_image,(char*)app2_img_fn.c_str());
+
+
+        }
+        else
+        {
+
+            swc2conf1(callback,(char*)roi_fn.c_str(),tracing_image,bm2);
+
+            saveMat(seg_img,(char*)app2_img_fn.c_str());
+
+        }
+
+        */
+
+        // trace the raw image
+
+        app2trace1(callback,(char*)roi_fn.c_str(),(char*)app2_swc_raw_fn.c_str());
+
+        tracing_image = Scalar::all(0);
+
+        swc2image(tracing_image,(char*)app2_swc_raw_fn.c_str());
+
+        saveMat(tracing_image,(char*)app2_raw_img_fn.c_str());
+
+
+        // trace the base method
+
+       // app2_trace(conf_img1,(char*)base_swc_fn.c_str());
+
+
+
+        // trace the neuron with DIADIEM
+        int offset1[3];
+
+        offset1[0] = bx[0];
+
+        offset1[1] = by[0];
+
+        offset1[2] = bz[0];
+
+
+
+       // string mark_fn = img_file_name;
+
+        //mark_fn = img_folder.toStdString()  +  mark_fn + ".marker";
+
+        //cout << mark_fn << endl;
+
+        //trace_img3_diadiem(callback,seg_img,image,offset1,15,(char*)mark_fn.c_str(),(char*)swc_full_fn.c_str());
+
+        //trace_img_diadiem(callback, conf_img1, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_full_fn.c_str());
+
+       // trace_img_diadiem(callback, image, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_raw_full_fn.c_str());
+
+        cout << roi_offset_fn << endl;
+
+        ofstream myfile ((char*)roi_offset_fn.c_str());
+
+        myfile <<  bx[0] << "\n";
+
+        myfile <<  by[0] << "\n";
+
+        myfile <<  bz[0] << "\n";
+
+        cout << "offset is " << bx[0] << endl;
+
+        cout << "offset is " << by[0] << endl;
+
+        cout << "offset is " << bz[0] << endl;
+
+        myfile.close();
+
+        tracing_image.release();
+
+    }
+
+
+    remove((char*)img_fn.c_str());
+
+    delete [] dataset;
+
+	return true;
+}
+
+
+bool create_directory(string roi_dir)
+{
+    struct stat sb;
+
+    stat(roi_dir.c_str(), &sb);
+
+    if (S_ISDIR(sb.st_mode) == 0)
+    {
+       cout << "create a directory" << endl;
+
+       const int dir_err = mkdir(roi_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+       return 1;
+
+    }else
+    {
+       cout << "the directory exists" << endl;
+
+       return 0;
+
+    }
+
+}
+
+
+
+int RegressionTubularity(V3DPluginCallback2 & callback, char * infile, Mat & image)
+{
+
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    string tmp_out_file_name = infile;
+
+    tmp_out_file_name = tmp_out_file_name + "tmp_regression_tubularity.raw";
+
+    char * outfile;
+
+    outfile = &tmp_out_file_name[0u];
+
+
+    plugin_name = "plugins/RegressionTubularityAC/libRegressionTubularityAC.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+    func_name = "test";
+
+
+    V3DPluginArgItem argi;
+
+    V3DPluginArgItem argp;
+
+    V3DPluginArgItem argo;
+
+    V3DPluginArgList input;
+
+    V3DPluginArgList output;
+
+
+    std::vector<char*> infiles;
+
+    infiles.push_back(infile);
+
+    argi.p =  &infiles;
+
+    input << argi;
+
+    std::vector<char*> paras;
+
+    char* filter_name1 = "filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_sep_cpd_rank_49.txt";
+
+    char* filter_name2 = "filter_banks/oof_fb_3d_scale_1_2_3_5_size_13_weigths_cpd_rank_49.txt";
+
+    char* filter_name3 = "filter_banks/proto_filter_AC_lap_633_822_sep_cpd_rank_49.txt";
+
+    char* filter_name4 = "filter_banks/proto_filter_AC_lap_633_822_weigths_cpd_rank_49.txt";
+
+    char* model_name1 = "trained_models/model_S/Regressor_ac_0.cfg";
+
+    char* model_name2 = "trained_models/model_S/Regressor_ac_1.cfg";
+
+    paras.push_back(filter_name1);
+
+    paras.push_back(filter_name2);
+
+    paras.push_back(filter_name3);
+
+    paras.push_back(filter_name4);
+
+    paras.push_back(model_name1);
+
+    paras.push_back(model_name2);
+
+
+    argp.p =  &paras;
+
+    input << argp;
+
+
+    std::vector<char*> outfiles;
+
+    outfiles.push_back(outfile);
+
+    argo.p =  & outfiles;
+
+    output<< argo;
+
+    cout << "prior to calling the Reg Plugin " << endl;
+
+   //
+
+    if (!callback.callPluginFunc(full_plugin_name, func_name, input, output) )
+    {
+
+        v3d_msg("Fail to call the base tracer");
+
+        //remove(outfile);
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the base tracer" << endl;
+
+    }
+
+
+    loadMat(callback,image,outfile);
+
+    remove(outfile);
+
+
+    return 1;
+
+
+}
+
+
+
+bool Batch_PreProcess_BigNeuron(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output,int bm1, int bm2)
+{
+    unsigned char * inimg1d = 0;
+
+    if(input.empty()) return false;
+
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+
+    if (inlist->size() != 1)
+    {
+        cout<<"You must specify 1 input file!"<<endl;
+        return -1;
+    }
+
+    char * infile = inlist->at(0);
+
+    cout << "The input is " << infile << endl;
+
+    //
+
+ //   int bm1 = 1;
+
+  //  int bm2 = 1;
+
+
+    string base_method_str;
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+    if(bm1 == 4)
+    {
+       base_method_str = "RegressionTubularityAC";
+    }
+
+
+    // read the list of file names in the objective directory
+
+    string neuron_dir = "/media/gulin/E402023602020DEC/Data/BigN_w_groundtruth/BigN_training_tracing/";
+
+    DIR *dir;
+
+    struct dirent *ent;
+
+    vector<string> neuron_fn_list;
+
+    if ((dir = opendir (neuron_dir.c_str())) != NULL)
+    {
+        while ((ent = readdir (dir)) != NULL)
+        {
+
+            string file_name = ent->d_name;
+
+            if(file_name.length() >= 3)
+            {
+
+             //   cout << file_name.length() << endl;
+
+                if(!(file_name.compare(file_name.length() - 3,file_name.length(),"raw")
+                && file_name.compare(file_name.length() - 3,file_name.length(),"pbd")))
+                {
+                    //cout << file_name << endl;
+
+                    //
+
+                    neuron_fn_list.push_back(file_name);
+                }
+
+            }
+
+        }
+        closedir (dir);
+
+   }else
+   {
+    /* could not open directory */
+    perror ("");
+    return EXIT_FAILURE;
+   }
+
+
+    for(int i = 0; i < neuron_fn_list.size();i++)
+    {
+        cout <<  i  <<  " is "  << neuron_fn_list[i] << endl;
+
+
+    }
+
+   // cin.get();
+
+
+    string result_dir = "/media/gulin/E402023602020DEC/Data/BigNeuron_Confidence_map/Train/";
+
+    int bm1_list[] = {1, 2, 4, 3, 3, 3, 3, 3, 3};
+
+    int bm2_list[] = {0, 0, 0, 1, 3, 4, 5, 6, 7};
+
+
+    for(int i_method = 7; i_method < 9; i_method ++)
+    {
+
+        // neuron_fn_list.size()
+
+        for(int i_img = 0; i_img < neuron_fn_list.size(); i_img ++)
+        {
+
+            string im_file = neuron_dir + neuron_fn_list[i_img];
+
+
+            string save_swc_fn = result_dir + "SWC/" + base_method_str + "/boosted_swc_" + neuron_fn_list[i_img] + ".swc";
+
+
+            string save_dir =  result_dir + "SWC/";
+
+            create_directory(save_dir);
+
+            save_dir =  result_dir + "SWC/" + base_method_str;
+
+            create_directory(save_dir);
+
+
+            Mat image1;
+
+            cout << im_file << endl;
+
+            cout << save_swc_fn << endl;
+
+            PreProcess_Dataset(callback, (char*)im_file.c_str(), (char*)save_swc_fn.c_str(), 1, bm1_list[i_method], bm2_list[i_method]);
+
+            cout << "Complete tracing the current neuron" << endl;
+
+        }
+
+    }
+
+    return true;
+
+}
+
+
+
+bool PreProcess_Dataset(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int base_line_compare,int bm1, int bm2)
+{
+	unsigned char * inimg1d = 0;
+
+    Mat image1;
+
+
+    loadMat(callback,image1, infile);
+
+    int raw_sz[3];
+
+    for(int i = 0; i < 3; i++)
+        raw_sz[i] = image1.size[i];
+
+
+    // shrink the image if possible
+
+    double * zv = new double[image1.size[2]];
+
+    double * yv = new double[image1.size[1]];
+
+    double * xv = new double[image1.size[0]];
+
+    for(int i = 0; i < image1.size[2]; i++)
+        zv[i] = 0;
+
+    for(int i = 0; i < image1.size[1]; i++)
+        yv[i] = 0;
+
+    for(int i = 0; i < image1.size[0]; i++)
+        xv[i] = 0;
+
+  //  cout << "Initialise " << endl;
+
+  //  cout << QFileInfo(infile).completeBaseName().toStdString() << endl;
+
+  //
+
+
+    //
+
+
+    for(int z = 0; z < image1.size[2]; z++)
+    {
+
+         for(int y = 0; y < image1.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image1.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                double p = (double)image1.at<uchar>(v3);
+
+                xv[x] = xv[x] + p;
+
+                yv[y] = yv[y] + p;
+
+                zv[z] = zv[z] + p;
+
+
+            }
+
+         }
+
+    }
+
+
+      for(int i = 0; i < image1.size[2]; i++)
+      {
+
+        if(zv[i] > 1000)
+            zv[i] = 1000;
+
+       }
+
+
+    for(int i = 0; i < image1.size[1]; i++)
+    {
+
+            if(yv[i] > 1000)
+            yv[i] = 1000;
+
+    }
+
+    for(int i = 0; i < image1.size[0]; i++)
+    {
+
+            if(xv[i] > 1000)
+            xv[i] = 1000;
+
+
+    }
+
+
+
+    double rng[1] = {1000};
+
+    int bx[2];
+
+    int by[2];
+
+    int bz[2];
+
+    input_boundary(xv, image1.size[0],rng, bx, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "x1 and x2 is " << bx[0] << "  " << bx[1] << endl;
+
+
+    input_boundary(yv, image1.size[1],rng, by, 5);
+
+    cout << "....................................................." << endl;
+
+    cout << "y1 and y2 is " << by[0] << "  " << by[1] << endl;
+
+    input_boundary(zv, image1.size[2],rng, bz, 3);
+
+    cout << "....................................................." << endl;
+
+    cout << "z1 and z2 is " << bz[0] << "  " << bz[1] << endl;
+
+
+    int img_sz_new[3];
+
+    img_sz_new[0] = bx[1] - bx[0];
+
+    img_sz_new[1] = by[1] - by[0];
+
+    img_sz_new[2] = bz[1] - bz[0];
+
+
+    if(img_sz_new[0] * img_sz_new[1] * img_sz_new[2] > 300 * 400 * 400)
+    {
+
+        return 0;
+
+    }
+
+
+
+
+    int offset[3];
+
+    if(checkin > 0)
+    {
+
+        offset[0] = bx[0];
+
+        offset[1] = by[0];
+
+        offset[2] = bz[0];
+
+    }else
+    {
+
+        offset[0] = 0;
+
+        offset[1] = 0;
+
+        offset[2] = 0;
+
+
+    }
+
+
+    cout << "offset is " << bx[0] << endl;
+
+    cout << "offset is " << by[0] << endl;
+
+    cout << "offset is " << bz[0] << endl;
+
+   //
+
+    // get the region of interest
+
+    Mat image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+    for(int z = 0; z < image.size[2]; z++)
+    {
+
+         for(int y = 0; y < image.size[1]; y ++)
+         {
+
+            for(int x = 0; x < image.size[0]; x++)
+            {
+
+                int v3[3];
+
+                v3[0] = x;
+
+                v3[1] = y;
+
+                v3[2] = z;
+
+                int v3ip[3];
+
+                v3ip[0] = x + bx[0];
+
+                v3ip[1] = y + by[0];
+
+                v3ip[2] = z + bz[0];
+
+                image.at<uchar>(v3) = image1.at<uchar>(v3ip);
+
+
+            }
+
+         }
+
+    }
+
+    image1.release();
+
+        // now use either the multiscale enhancement or the GWDT to collect
+    // the base image
+
+    int t1,t2;
+
+
+    char * dataset = new char[100];
+
+    cout << "......................" << endl;
+
+    cout << "Start the base method" << endl;
+
+
+
+    string base_method_str;
+
+
+    if(bm1 == 1)
+    {
+      base_method_str = "multiScale";
+    }
+
+
+
+    if(bm1 == 2)
+    {
+       base_method_str = "fastMarching";
+    }
+
+    if(bm1 == 3)
+    {
+
+        switch(bm2)
+        {
+
+        case 1:
+
+            base_method_str = "mostVesselTracer";
+
+            break;
+
+        case 2:
+
+            base_method_str = "neuTube";
+
+            break;
+
+        case 3:
+
+            base_method_str = "SimpleTracing";
+
+            break;
+
+        case 4:
+
+            base_method_str = "APP2";
+
+            break;
+
+        case 5:
+
+            base_method_str = "APP1";
+
+            break;
+
+        case 6:
+
+            base_method_str = "fastmarching_spanningtree";
+
+            break;
+
+        case 7:
+
+            base_method_str = "NeuroGPSTree";
+
+            break;
+
+        case 8:
+
+            base_method_str = "neurontracing_mst";
+
+            break;
+
+        case 9:
+
+            base_method_str = "kernel_boost";
+
+            break;
+
+
+        default:
+
+            break;
+
+
+        }
+
+
+    }
+
+
+
+    if(bm1 == 4)
+    {
+       base_method_str = "RegressionTubularityAC";
+    }
+
+
+
+
+    QString image_name = infile;
+
+    QString img_folder = QFileInfo(image_name).path()+("/");
+
+
+    string img_file_name = QFileInfo(image_name).completeBaseName().toStdString();
+
+   // cout << img_file_name << endl;
+
+   //
+
+
+
+    string img_fn = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_cache_img.v3draw";
+
+    cout << img_fn << endl;
+
+    //
+
+    saveMat(image,(char*)img_fn.c_str());
+
+    Mat conf_img;
+
+/*
+    if(bm1 == 1)
+    {
+        multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img);
+
+        t1 = 50;
+
+        t2 = 20;
+
+        sprintf(dataset,"BigNmEh");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+
+    }
+
+
+
+    if(bm1 == 2)
+    {
+
+        fastMarch((char*)img_fn.c_str(), conf_img);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNFM");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
+
+
+    if(bm1 == 3)
+    {
+        //
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        swc2conf1(callback,(char*)img_fn.c_str(),conf_img,bm2);
+
+        t1 = 20;
+
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNtrace");
+
+      //  cout << " Complete swc2 conf " << endl;
+
+      //
+
+    }
+
+    if(bm1 == 4)
+    {
+
+     //   cout << " Ready to Call the Reg " << endl;
+
+     //
+
+        RegressionTubularity(callback,(char*)img_fn.c_str(),conf_img);
+
+        t1 = 20;
+
+        t2 = 10;
+
+        sprintf(dataset,"BigNtrace");
+
+        string swc_file_raw = img_folder.toStdString() + img_file_name + "_" + base_method_str + "_tmp_swc.swc";
+
+        app2_trace(image, (char*)swc_file_raw.c_str());
+
+        swc2image(conf_img,(char*)swc_file_raw.c_str());
+
+        //
+
+        remove((char*)swc_file_raw.c_str());
+
+    }
+
+    */
+
+
+
+    //
+
+
+
+
+    cout << "Complete the base method" << endl;
+
+    //
+
+    Mat seg_img;
+
+  //  LCM_boost(image, conf_img,seg_img,t1,t2,dataset);
+
+    cout << "complete the LCM " << endl;
+
+  //
+
+    // output the result into the harddisk
+ //   trace_img3(callback, seg_img, image, offset, 15, outfile_swc);
+
+    cout << " complete tracing the image " << endl;
+
+ //
+
+
+    // the base line option saves the related data into the hard disk
+    if(base_line_compare)
+    {
+
+        string result_dir = "/media/gulin/E402023602020DEC/Data/BigNeuron_Confidence_map/Train/";
+
+        string data_dir = "/media/gulin/E402023602020DEC/Data/BigN_w_groundtruth/BigN_training_tracing/";
+
+        string gt_dir = result_dir + "GT/";
+
+        create_directory(gt_dir);
+
+        string gt_swc_fn = data_dir + img_file_name + ".swc";
+
+        Mat image_swc_gt = Mat(3,raw_sz,CV_8UC1,Scalar::all(0));
+
+        string gt_swc_img_fn = gt_dir + "gt_" + img_file_name + ".v3draw";
+
+
+        swc2image(image_swc_gt,(char*)gt_swc_fn.c_str());
+
+
+        saveMat(image_swc_gt,(char*)gt_swc_img_fn.c_str());
+
+        cout << "Ready to run the base line" << endl;
+
+       //
+
+
+
+      //  swc2image()
+
+
+        //cout << img_file_name << endl;
+
+        //
+
+
+
+        string roi_dir = result_dir + "Roi/";
+
+        create_directory(roi_dir);
+
+        string roi_fn = result_dir + "Roi/roi_" + img_file_name + ".v3draw";
+
+        cout << "roi_fn is " << roi_fn << endl;
+
+       //
+
+        string save_dir =  result_dir + "Conf/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Conf/" + base_method_str;
+
+        create_directory(save_dir);
+
+        string save_conf_fn = result_dir + "Conf/" + base_method_str + "/conf_" + img_file_name + ".v3draw";
+
+
+
+        string save_seg_fn = result_dir + "Seg/" + base_method_str + "/seg_" + img_file_name + ".v3draw";
+
+
+        save_dir =  result_dir + "Seg/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Seg/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_fn = result_dir + "APP2_swc/" + base_method_str + "/app2_swc_" + img_file_name + ".swc";
+
+
+        save_dir =  result_dir + "APP2_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string base_swc_fn = result_dir + "Base_swc/" + base_method_str + "/base_swc_" + img_file_name + ".swc";
+
+
+        save_dir =  result_dir + "Base_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "Base_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_full_fn = result_dir + "APP2_swc/" + base_method_str + "/app2_swc_" + img_file_name + "_full.swc";
+
+
+        save_dir =  result_dir + "APP2_swc/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+
+        string app2_swc_raw_full_fn = result_dir + "APP2_swc_raw/" + base_method_str + "/app2_swc_" + img_file_name + "_full.swc";
+
+        save_dir =  result_dir + "APP2_swc_raw/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc_raw/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_swc_raw_fn = result_dir + "APP2_swc_raw/" + base_method_str + "/app2_swc_" + img_file_name + ".swc";
+
+
+        string app2_img_fn = result_dir + "APP2_swc_img/" + base_method_str + "/app2_swc_" + img_file_name + ".v3draw";
+
+
+
+        save_dir =  result_dir + "APP2_swc_img/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "APP2_swc_img/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string app2_raw_img_fn = result_dir + "APP2_swc_img/" + base_method_str + "/app2_raw_swc_" + img_file_name + ".v3draw";
+
+
+        string swc_img_fn = result_dir + "SWC_img/" + base_method_str + "/swc_" + img_file_name + ".v3draw";
+
+
+        save_dir =  result_dir + "SWC_img/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "SWC_img/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+        string swc_full_fn = result_dir + "SWC/" + base_method_str + "/swc_" + img_file_name + "_full.swc";
+
+        save_dir =  result_dir + "SWC/";
+
+        create_directory(save_dir);
+
+        save_dir =  result_dir + "SWC/" + base_method_str;
+
+        create_directory(save_dir);
+
+
+
+        string roi_offset_fn = result_dir + "Roi/roi_" + img_file_name + ".txt";
+
+        Mat conf_img1;
+
+        Mat tracing_image = Mat(3,img_sz_new,CV_8UC1,Scalar::all(0));
+
+        if(bm1 == 1)
+        {
+            multiscaleEhance(callback, (char*)img_fn.c_str(), conf_img1);
+
+        }
+
+        if(bm1 == 2)
+        {
+
+            fastMarch((char*)img_fn.c_str(), conf_img1);
+
+        }
+
+        if(bm1 == 3)
+        {
+
+            // generate the psudo confidence map from the existing othe tracing method
+            // along with Hanchuan's
+
+            generate_confidence_map(callback,(char*)roi_fn.c_str(),conf_img1,bm2);
+        //    swc2conf1(callback,(char*)roi_fn.c_str(),conf_img1,bm2);
+
+
+        }
+
+
+        if(bm1 == 4)
+        {
+
+            RegressionTubularity(callback,(char*)img_fn.c_str(),conf_img1);
+
+        }
+
+        cout << "Complete the base method" << endl;
+
+
+
+
+
+        saveMat(image,(char*)roi_fn.c_str());
+
+        saveMat(seg_img,(char*)save_seg_fn.c_str());
+
+        saveMat(conf_img1,(char*)save_conf_fn.c_str());
+
+
+
+
+
+    //    swc2image(tracing_image, outfile_swc);
+
+    //    saveMat(tracing_image,(char*)swc_img_fn.c_str());
+
+
+
+        /*
+
+        // trace the neuron with base method
+
+       app2trace1(callback,(char*)save_conf_fn.c_str(),(char*)app2_swc_fn.c_str());
+
+
+
+        cout << swc_img_fn << endl;
+
+   //
+
+        // save the traced image
+
+        tracing_image = Scalar::all(0);
+
+        if((bm1 < 3) || (bm1 == 4) )
+        {
+
+            swc2image(tracing_image,(char*)app2_swc_fn.c_str());
+
+            saveMat(tracing_image,(char*)app2_img_fn.c_str());
+
+
+        }
+        else
+        {
+
+            swc2conf1(callback,(char*)roi_fn.c_str(),tracing_image,bm2);
+
+            saveMat(seg_img,(char*)app2_img_fn.c_str());
+
+        }
+
+        */
+
+        // trace the raw image
+
+        app2trace1(callback,(char*)roi_fn.c_str(),(char*)app2_swc_raw_fn.c_str());
+
+        cout << "Complete tracing the image " << endl;
+
+
+
+        tracing_image = Scalar::all(0);
+
+        swc2image(tracing_image,(char*)app2_swc_raw_fn.c_str());
+
+        saveMat(tracing_image,(char*)app2_raw_img_fn.c_str());
+
+
+        // trace the base method
+
+       // app2_trace(conf_img1,(char*)base_swc_fn.c_str());
+
+
+
+        // trace the neuron with DIADIEM
+        int offset1[3];
+
+        offset1[0] = bx[0];
+
+        offset1[1] = by[0];
+
+        offset1[2] = bz[0];
+
+
+
+       // string mark_fn = img_file_name;
+
+        //mark_fn = img_folder.toStdString()  +  mark_fn + ".marker";
+
+        //cout << mark_fn << endl;
+
+        //trace_img3_diadiem(callback,seg_img,image,offset1,15,(char*)mark_fn.c_str(),(char*)swc_full_fn.c_str());
+
+        //trace_img_diadiem(callback, conf_img1, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_full_fn.c_str());
+
+       // trace_img_diadiem(callback, image, offset1, (char*)mark_fn.c_str(), (char*)app2_swc_raw_full_fn.c_str());
+
+        cout << roi_offset_fn << endl;
+
+        ofstream myfile ((char*)roi_offset_fn.c_str());
+
+        myfile <<  bx[0] << "\n";
+
+        myfile <<  by[0] << "\n";
+
+        myfile <<  bz[0] << "\n";
+
+        cout << "offset is " << bx[0] << endl;
+
+        cout << "offset is " << by[0] << endl;
+
+        cout << "offset is " << bz[0] << endl;
+
+        myfile.close();
+
+        tracing_image.release();
+
+    }
+
+
+    remove((char*)img_fn.c_str());
+
+    delete [] dataset;
+
+	return true;
+}
+
+
+
+int generate_confidence_map(V3DPluginCallback2 & callback, char *infile, Mat &conf_img, int base_swc)
+{
+
+    // call different tracing method
+
+    QString plugin_name;
+
+    QString full_plugin_name;
+
+    QString func_name;
+
+    string tmp_swc_name;
+
+    char * outfile;
+
+    switch (base_swc)
+    {
+
+    case 1:
+
+        plugin_name = "plugins/neuron_tracing/MOST_tracing/libmostVesselTracer.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "MOST_trace";
+
+        tmp_swc_name = string(infile);
+
+        tmp_swc_name = tmp_swc_name + "_MOST.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+        break;
+
+    case 2:
+
+
+        plugin_name = "plugins/neuron_tracing/neuTube/libneuTube.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "neutube";
+
+        outfile = infile;
+
+        break;
+
+    case 3:
+
+        plugin_name = "plugins/neuron_tracing/SimpleTracing/libSimpleTracing.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing";
+
+        tmp_swc_name = string(infile);
+
+        tmp_swc_name = tmp_swc_name + "_SimpleTracing.swc";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+        break;
+
+    case 4:
+
+        plugin_name = "plugins/neuron_tracing/Vaa3D_Neuron2/libvn2.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "app2";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 5:
+
+        plugin_name = "plugins/neuron_tracing/Vaa3D_Neuron2/libvn2.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "app1";
+
+        tmp_swc_name = "tmp_base_swc.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+
+    case 6:
+
+        plugin_name = "plugins/neuron_tracing/BJUT_fastmarching_spanningtree/libfastmarching_spanningtree.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        tmp_swc_name = string(infile) + "_fastmarching_spanningtree.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 7:
+
+        plugin_name = "plugins/neuron_tracing/HUST_NeuroGPSTree/libNeuroGPSTree.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        tmp_swc_name = string(infile) + "_NeuroGPSTree.swc";
+
+        outfile = &tmp_swc_name[0u];
+
+
+        break;
+
+    case 8:
+
+        plugin_name = "plugins/neuron_tracing/MST_tracing/libneurontracing_mst.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "tracing_func";
+
+        break;
+
+
+    case 9:
+
+        plugin_name = "plugins/RegressionTubularityAC/libRegressionTubularityAC.so";  //for Linux
+
+        full_plugin_name = getAppPath() + "/" + plugin_name;
+
+        func_name = "RegressionTubularityAC";
+
+        break;
+
+
+    default:
+
+        break;
+
+
+    }
+
+
+    V3DPluginArgItem arg;
+
+    V3DPluginArgItem arg1;
+
+    V3DPluginArgList input;
+
+    V3DPluginArgList output;
+
+
+
+    std::vector<char*> infiles;
+
+    infiles.push_back(infile);
+
+    arg.p =  &infiles;
+
+    input << arg;
+
+
+
+    std::vector<char*> outfiles;
+
+    outfiles.push_back(outfile);
+
+    arg1.p =  & outfiles;
+
+    output<< arg1;
+
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input, output) )
+    {
+
+        v3d_msg("Fail to call the base tracer");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the base tracer" << endl;
+
+    }
+
+//
+
+
+
+
+
+    Mat image;
+
+    loadMat(callback,image,infile);
+
+    //conf_img = mat
+
+    int sz[3];
+
+    for(int i = 0; i < 3; i++)
+        sz[i] = (int)image.size[i];
+
+    conf_img = Mat(3,sz,CV_32F,Scalar::all(0));
+
+
+    //call the reliability score method
+
+    // push the swc file in
+
+    //infiles.push_back(infile);
+
+    infiles.push_back(outfile);
+
+    V3DPluginArgItem arg2;
+
+    arg2.p =  &infiles;
+
+    V3DPluginArgList input1;
+
+    input1 << arg2;
+
+    plugin_name = "plugins/neuron_utilities/calculate_reliability_score/libcalculate_reliability_score.so";  //for Linux
+
+    full_plugin_name = getAppPath() + "/" + plugin_name;
+
+    func_name = "calculate_score";
+
+    cout << "outfile is " << outfile << endl;
+
+    V3DPluginArgList output1;
+
+    V3DPluginArgItem arg3;
+
+
+    char * outfile1 = new char[100];
+
+    sprintf(outfile1,"swc");
+
+    std::vector<char*> outfiles1;
+
+    outfiles1.push_back(outfile1);
+
+    arg3.p =  & outfiles1;
+
+    output1<< arg3;
+
+
+    char * score_swc = new char[100];
+
+    sprintf(score_swc,"swc_scored.swc");
+
+
+    char * score_txt_fn = new char[100];
+
+    sprintf(score_txt_fn,"swc_score.txt");
+
+
+
+    if(1)
+    {
+
+    if (! callback.callPluginFunc(full_plugin_name, func_name, input1, output1) )
+    {
+
+        v3d_msg("Fail to call the reliablity score");
+
+        return 0;
+
+    }
+    else
+    {
+
+        cout << " Successfully call the reliablity score" << endl;
+
+    }
+
+
+
+    //
+
+
+
+
+
+    //swc2image(conf_img,outfile);
+
+    cout << "Complete swc" << endl;
+
+    //remove(outfile);
+
+
+
+
+
+    swc2image_score(conf_img,score_swc,score_txt_fn);
+
+    }else
+    {
+
+
+        swc2image(conf_img,outfile);
+
+    }
+
+    // to fill the image, now directly add the swc score on the exisiting methods
+
+
+    for(int ix = 0; ix < image.size[0]; ix++)
+    {
+
+        for(int iy = 0; iy < image.size[1]; iy++)
+        {
+
+            for(int iz = 0; iz < image.size[2]; iz ++)
+            {
+
+
+                int v3[3];
+
+                v3[0] = ix;
+
+                v3[1] = iy;
+
+                v3[2] = iz;
+
+                uchar pv1 = image.at<uchar>(v3);
+
+                uchar pv2 = conf_img.at<uchar>(v3);
+
+                int pv3 = (int)pv1 + (int)pv2;
+
+                pv3 = min(pv3, 254);
+
+                conf_img.at<uchar>(v3) = (uchar)pv3;
+
+            }
+
+        }
+
+    }
+
+
+
+     image.release();
+
+     if(1)
+     {
+
+        remove(score_swc);
+
+        remove(score_txt_fn);
+
+     }
+
+     remove(outfile);
+
+
+    //
+
+
+    //
+
+
+    return 1;
+
+}
+
+
+
 

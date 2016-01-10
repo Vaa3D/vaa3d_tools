@@ -65,6 +65,10 @@
 
 #include <time.h>
 
+#include <dirent.h>
+
+#include <sys/stat.h>
+
 
 
 typedef int vertex_t;
@@ -443,6 +447,22 @@ bool Rank_Score_OPF(V3DPluginCallback2 & callback, const V3DPluginArgList & inpu
 bool Batch_Trace_Retinal(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 bool BigN_swc2img(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+bool Batch_Test_BigNeuron(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+bool Call_General_Boost_v2(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int base_line_compare, int bm1, int bm2);
+
+bool create_directory(string roi_dir);
+
+int RegressionTubularity(V3DPluginCallback2 & callback, char * fileName_string, cv::Mat & image);
+
+
+bool Batch_PreProcess_BigNeuron(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output, int bm1, int bm2);
+
+bool PreProcess_Dataset(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int base_line_compare,int bm1, int bm2);
+
+
+int generate_confidence_map(V3DPluginCallback2 & callback, char *infile, cv :: Mat &conf_img, int base_swc);
 
 
 #endif

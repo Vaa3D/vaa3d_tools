@@ -15,6 +15,7 @@ QStringList LoadImageAndSWCPlugin::menulist() const
 	return QStringList()
 		<<tr("LCM_boost(MultiScale Ehancement based)")
 		<<tr("LCM_boost(Fast Marching based)")
+		<<tr("LCM_boost(regression_tubularity based)")
 		<<tr("LCM_boost(mostVesselTracer based)")
 		<<tr("LCM_boost(neuTube based)")
 		<<tr("LCM_boost(SimpleTracing based)")
@@ -43,7 +44,7 @@ void LoadImageAndSWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 
 	if (menu_name == tr("LCM_boost(MultiScale Ehancement based)"))
 	{
-		(callback,parent,1,0);
+		General_Boost1(callback,parent,1,0);
 	}
 
 	if (menu_name == tr("LCM_boost(Fast Marching based)"))
@@ -51,10 +52,18 @@ void LoadImageAndSWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 		General_Boost1(callback,parent,2,0);
 	}
 
+
+	if (menu_name == tr("LCM_boost(RegressionTubularityAC based)"))
+	{
+		General_Boost1(callback,parent,4,0);
+	}
+
+
 	if (menu_name == tr("LCM_boost(mostVesselTracer based)"))
 	{
 		General_Boost1(callback,parent,3,1);
 	}
+
 
 	if (menu_name == tr("LCM_boost(neuTube based)"))
 	{
@@ -122,6 +131,13 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
 		return train_LCM(callback, input, output);
 	}
+
+
+//	if (func_name == tr("TrainLCM_BigNeuron"))
+//	{
+
+//		return train_LCM(callback, input, output);
+//	}
 
 
     if (func_name == tr("BatchTest"))
@@ -192,6 +208,7 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
 
 
+
     if (func_name == tr("OPF"))
 	{
 
@@ -212,6 +229,22 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
         return Batch_Trace_Retinal(callback,input,output);
 
 	}
+
+	if (func_name == tr("Batch_Test_BigNeuron_GT"))
+	{
+
+        return   Batch_Test_BigNeuron(callback, input, output,4,0);
+
+	}
+
+
+	if (func_name == tr("Batch_PreProcess_BigNeuron_GT"))
+	{
+
+        return   Batch_PreProcess_BigNeuron(callback, input, output,4,0);
+
+	}
+
 
 
 
@@ -234,12 +267,12 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
 	if (func_name == tr("LCM_boost_3"))
 	{
-		return General_Boost1(callback,input,output,3,1);
+		return General_Boost1(callback,input,output,4,0);
 	}
 
 	if (func_name == tr("LCM_boost_4"))
 	{
-		return General_Boost1(callback,input,output,3,2);
+		return General_Boost1(callback,input,output,3,1);
 	}
 
 	if (func_name == tr("LCM_boost_5"))
@@ -292,9 +325,9 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
         printf(" The function name LCM_boost_2 corresponds to fast marching base method. \n");
 
-        printf(" The function name LCM_boost_3 corresponds to mostVesselTracer base method. \n");
+        printf(" The function name LCM_boost_3 corresponds to RegressionTubularityAC base method. \n");
 
-        printf(" The function name LCM_boost_4 corresponds to neuTube base method. \n");
+        printf(" The function name LCM_boost_4 corresponds to mostVesselTracer base method. \n");
 
         printf(" The function name LCM_boost_5 corresponds to SimpleTracing base method. \n");
 
@@ -309,8 +342,6 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
         printf(" The function name LCM_boost_10 corresponds to neurontracing_mst base method. \n");
 
 	}
-
-
 
 }
 
