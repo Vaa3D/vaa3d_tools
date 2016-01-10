@@ -15,12 +15,18 @@ int sz_y = -1;
 int sz_z = -1;
 int sz_total = -1;
 int sz_xy = -1;
-unsigned char bresh = -1;
+unsigned char bresh = 30;
 double coverRate = 1;
 string fileName;
 qint64 timeCost = 0;
 qint64 totalTimeCost = 0;
 qint64 lastTimeCost = 0;
 QElapsedTimer timer;
+int n1=0;
+
+double m=0;
+double mean=0;
+
+
 
 #endif // GLOBAL_H

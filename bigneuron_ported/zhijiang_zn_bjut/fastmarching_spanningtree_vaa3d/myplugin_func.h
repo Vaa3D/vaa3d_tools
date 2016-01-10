@@ -16,8 +16,10 @@
 bool proc(V3DPluginCallback2 &callback,QWidget* parent,unsigned char* data1d,V3DLONG* in_sz,QString inimg_file);
 template<class T>
 void mst(QMap<V3DLONG,Graph<T>*> map,QList<Tree<T>*> &rootList,QMap<V3DLONG,Tree<T>*> &treeMap);//最小生成树
-void findNode(unsigned char* img1d, QMap<V3DLONG,Graph<Node*>*> &nodeMap);//获取前景色点
-void initPath(QMap<V3DLONG,Graph<Node*>*> &nodeMap);//初始化图结构
+//void findNode(unsigned char* img1d, QMap<V3DLONG,Graph<Node*>*> &nodeMap);//获取前景色点
+//void findNode(unsigned char* img1d, QMap<V3DLONG,Graph<Node*>*> &nodeMap,double m=0,int n1=0);
+//void findNode_sec(unsigned char* img1d, QMap<V3DLONG,Graph<Node*>*> &nodeMap,double mean,int n1);
+void initPath(unsigned char* img1d,QMap<V3DLONG,Graph<Node*>*> &nodeMap);//初始化图结构
 void calculateRadius_old(QMap<V3DLONG,Graph<Node*>*> &nodeMap);//抛弃使用的计算半径方法
 void calculateRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap);//计算半径
 void prundNodeByRadius(QMap<V3DLONG,Graph<Node*>*> &nodeMap);//根据半径合并点

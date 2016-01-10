@@ -35,6 +35,7 @@ QStringList fastmarching_spanningtree_Plugin::funclist() const
 		<<tr("tracing_func")
 		<<tr("help");
 }
+    
 
 void fastmarching_spanningtree_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -52,6 +53,10 @@ void fastmarching_spanningtree_Plugin::domenu(const QString &menu_name, V3DPlugi
 	}
 }
 
+
+
+    
+    
 bool fastmarching_spanningtree_Plugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	if (func_name == tr("tracing_func"))
