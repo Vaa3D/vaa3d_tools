@@ -211,7 +211,7 @@ void TraceFilter::TraceCurvesAndConInfo(Volume<int> &resultIndexImg, const Volum
     //2014-4-19 : new
     VectorMat3d allThickDendInitDir(somaNum);
     VectorVec3d allThickDendInitPt(somaNum);
-#pragma omp parallel for
+//#pragma omp parallel for
     for(int ii = 0; ii < int(somaNum); ++ii){
         const Vec3d& initialP = traceSeed[ii];
         Vec3d mainDir1,mainDir2,mainDir3,thickDendInitPt;

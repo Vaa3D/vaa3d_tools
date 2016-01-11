@@ -151,7 +151,7 @@ bool BridgeBreaker::DeleteErrorDendConnect(const std::vector<VectorVec5d> &rawDe
 	int ddst = 0;
 	//VectorVec5d headConnectLine;
 	//VectorVec5d tailConnectLine;
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < nxx; ++i){
 		printf("cal %d\n",i);
 		const Mat2i& currentDendConInfo = rawDendConInfo[i];
