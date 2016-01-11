@@ -3,15 +3,6 @@
 
 
 /**
-  Rewritten in C++ for BigNeuron Hackathon.
-  Edward Hottendorf 
-
-  Modification made by Jie Zhou for porting to Vaa3D. 
-  June 2015
-
-**/
-
-/**
 * AnalyzeSkeleton_ plugin for ImageJ(C).
 * Copyright (C) 2008,2009 Ignacio Arganda-Carreras
 *
@@ -39,9 +30,9 @@ class Point
 {
 public:
 
-	int x;	/** x- coordinate */
-	int y;	/** y- coordinate */
-	int z;	/** z- coordinate */
+	int x = 0;	/** x- coordinate */
+	int y = 0;	/** y- coordinate */
+	int z = 0;	/** z- coordinate */
 
 	Point();
 	Point(int x, int y, int z);
