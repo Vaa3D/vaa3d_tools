@@ -149,7 +149,7 @@ bool reconstruction_by_thinning_plugin::dofunc(const QString & func_name, const 
         printf("vaa3d -x SimpleAxisAnalyzer -f medial_axis_analysis -i <inimg_file> -p <parameters>\n");
         printf("inimg_file       The input image\n");
         printf("threshold       Threshold (default 998). Special parameters: 0, 998, 999. Other thresholds will be used directly for binarization.\n");
-        printf("numberOfTrees    Number of trees to include in reconstruction (default 15)");
+        printf("numberOfTrees    Number of trees to include in reconstruction (default 15). \n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
