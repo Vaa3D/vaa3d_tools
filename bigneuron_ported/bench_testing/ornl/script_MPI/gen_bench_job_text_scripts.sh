@@ -140,7 +140,7 @@ function write_neuron_tracing_command {
 #NeuronChaser
 
   if [ $METHOD == "20" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuronChaser -f nc_func -i $inimgfileTracing -p 1 10 90 0.6 15 60 30 5 1 0;chmod -R 777 $inimgfileTracing*_NeuronChaser.swc;mv  $inimgfileTracing*_NeuronChaser.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuronChaser -f nc_func -i $inimgfileTracing -p 1 10 0.7 20 60 10 5 1 0;chmod -R 777 $inimgfileTracing*_NeuronChaser.swc;mv  $inimgfileTracing*_NeuronChaser.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #smartTracing
@@ -158,7 +158,7 @@ function write_neuron_tracing_command {
 #Advantra
 
   if [ $METHOD == "23" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x Advantra -f advantra_func -i $inimgfileTracing -p 10 0.3 95 0.6 15 60 30 5 1;chmod -R 777 $inimgfileTracing*_Advantra.swc;mv  $inimgfileTracing*_Advantra.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x Advantra -f advantra_func -i $inimgfileTracing -p 10 0.5 0.7 20 60 10 5 1;chmod -R 777 $inimgfileTracing*_Advantra.swc;mv  $inimgfileTracing*_Advantra.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #RegMST
