@@ -25,4 +25,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(fastmarching_spanningtree)
-DESTDIR = $$V3DMAINPATH/../bin/plugins/neuron_tracing/fastmarching_spanningtree
+DESTDIR = $$V3DMAINPATH/../bin/plugins/neuron_tracing/BJUT_fastmarching_spanningtree

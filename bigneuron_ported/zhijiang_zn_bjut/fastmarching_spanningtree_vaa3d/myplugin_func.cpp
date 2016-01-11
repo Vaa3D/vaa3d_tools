@@ -970,7 +970,7 @@ void myplugin_proc(unsigned char* img1d)
     prundSeg(root,treeMap);
 	printf("reconstruction over\n");
     //todo 输出swc
-    printSWC(treeMap,fileName + "_fastmarching_spanningtree_hm.swc");
+    printSWC(treeMap,fileName + "_fastmarching_spanningtree.swc");
     printf("over\n");
 }
 void printSWC(QMap<V3DLONG,Tree<Node*>*> treeMap,string fileName)
