@@ -197,23 +197,30 @@ function write_neuron_tracing_command {
     echo "./start_vaa3d.sh -x Rivulet -f tracing_func -i $inimgfileTracing -p 1 2 1 10 0 2 0.95 3 0.5 1;chmod -R 777 $inimgfileTracing*_Rivulet.swc;mv  $inimgfileTracing*_Rivulet.swc $finalfileFolder" >> $outputScript;
   fi;
 
-#APP2_new1
+#ENT
 
   if [ $METHOD == "30" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new1.swc  -p NULL 0 AUTO 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new1.swc;mv  $inimgfileTracing*_app2new1.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+    echo "./start_vaa3d.sh -x ENT -f tracing_func -i $inimgfileTracing;chmod -R 777 $inimgfileTracing*_ENT.swc;mv  $inimgfileTracing*_ENT.swc $finalfileFolder" >> $outputScript;
   fi;
+
+
+#APP2_new1
+
+ # if [ $METHOD == "30" -o $METHOD == "-1" ]; then
+ #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new1.swc  -p NULL 0 AUTO 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new1.swc;mv  $inimgfileTracing*_app2new1.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+ # fi;
 
 #APP2_new2
 
-  if [ $METHOD == "31" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new2.swc  -p NULL 0 AUTO 1 1 0 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new2.swc;mv  $inimgfileTracing*_app2new2.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
-  fi;
+ # if [ $METHOD == "31" -o $METHOD == "-1" ]; then
+ #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new2.swc  -p NULL 0 AUTO 1 1 0 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new2.swc;mv  $inimgfileTracing*_app2new2.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+ # fi;
 
 #APP2_new3
 
-  if [ $METHOD == "32" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
-  fi;
+ # if [ $METHOD == "32" -o $METHOD == "-1" ]; then
+ #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+ # fi;
 }
 
 if [ ! $# -ge 1 ]; then
