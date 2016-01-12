@@ -222,7 +222,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //	vector<MyMarker*> Tracer1, Tracer2, Tracer3, Result;
 	unsigned char* img1D1 = new unsigned char[(in_sz[0]*in_sz[1]*in_sz[2])];
 	unsigned char* img1D2 = new unsigned char[(in_sz[0]*in_sz[1]*in_sz[2])];
-	unsigned char* img1D3 = new unsigned char[(in_sz[0]*in_sz[1]*in_sz[2])];
+    unsigned char* img1D3 = new unsigned char[(in_sz[0]*in_sz[1]*in_sz[2])];
 	
 /*	for (V3DLONG i=0;i<(in_sz[0]*in_sz[1]*in_sz[2]);i++)
 	{
@@ -230,11 +230,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		img1D2[i] = data1d[i];
 		img1D3[i] = data1d[i];
 	}*/
-	
-	memcpy(img1D1, data1d, (in_sz[0]*in_sz[1]*in_sz[2]));
+
+    memcpy(img1D1, data1d, (in_sz[0]*in_sz[1]*in_sz[2]));
 	memcpy(img1D2, data1d, (in_sz[0]*in_sz[1]*in_sz[2]));
-	memcpy(img1D3, data1d, (in_sz[0]*in_sz[1]*in_sz[2]));
-	
+    memcpy(img1D3, data1d, (in_sz[0]*in_sz[1]*in_sz[2]));
+
 /*	unsigned char*** img3D;
 	img3D = new unsigned char**[in_sz[2]];
 	for(int i = 0; i < in_sz[2]; ++i)
@@ -243,7 +243,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		for(int j = 0; j < in_sz[1]; ++j) img3D[i][j] = new unsigned char[in_sz[0]];
 	}*/
 	double val[3], maximumD, idx;
-	int topDown, leftRight, blockX, blockY, maximumI;
+    int topDown, leftRight, blockX, blockY, maximumI;
 
 	/** end of inisialization **/
 	/*****************************************************************************************/
@@ -258,16 +258,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 	v3dhandle newwin1 = callback.newImageWindow();
 	p4DImageNew1->setData(img1D, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
 	callback.setImage(newwin1, p4DImageNew1);
-	callback.setImageName(newwin1, QObject::tr("Image Partition"));*/
+    callback.setImageName(newwin1, QObject::tr("Image Partition"));*/
 
 	/*for (V3DLONG i=0;i<(in_sz[0]*in_sz[1]*in_sz[2]);i++)
 	{
 		if (data1d[i]>0) img1D[i] = 255;
 		else img1D[i] = 0;
-	}*/
-	Partition(data1d, in_sz[0], in_sz[1], in_sz[2], topDown, leftRight, blockX, blockY);
-	
-	img1D1 = NVersion(img1D1, in_sz[0]*in_sz[1]*in_sz[2]);
+    }*/
+    Partition(data1d, in_sz[0], in_sz[1], in_sz[2], topDown, leftRight, blockX, blockY);
+
+    img1D1 = NVersion(img1D1, in_sz[0]*in_sz[1]*in_sz[2]);
 	val[0] = Learning(img1D1, in_sz[0], in_sz[1], in_sz[2], leftRight, topDown);
 	
 	img1D2 = SVersion(img1D2, in_sz[0]*in_sz[1]*in_sz[2]);
@@ -306,7 +306,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		{
 			if (maximumI == Result[i].size())
 			{
-				QString swc_name = PARA.inimg_file + "ENT.swc";
+                QString swc_name = PARA.inimg_file + "_ENT.swc";
 				saveSWC_file(swc_name.toStdString(), Result[i]);
 			}
 		}
@@ -340,12 +340,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 		
 		if (Result1.size()>11000)
 		{
-			QString swc_name = PARA.inimg_file + "ENT.swc";
+            QString swc_name = PARA.inimg_file + "_ENT.swc";
 			saveSWC_file(swc_name.toStdString(), Result2);
 		}
 		else if (Result2.size()>11000)
 		{
-			QString swc_name = PARA.inimg_file + "ENT.swc";
+            QString swc_name = PARA.inimg_file + "_ENT.swc";
 			saveSWC_file(swc_name.toStdString(), Result1);
 		}
 		else
@@ -353,12 +353,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 			maximumI = max(Result1.size(), Result2.size());
 			if (maximumI == Result1.size())
 			{
-				QString swc_name = PARA.inimg_file + "ENT.swc";
+                QString swc_name = PARA.inimg_file + "_ENT.swc";
 				saveSWC_file(swc_name.toStdString(), Result1);
 			}
 			else
 			{
-				QString swc_name = PARA.inimg_file + "ENT.swc";
+                QString swc_name = PARA.inimg_file + "_ENT.swc";
 				saveSWC_file(swc_name.toStdString(), Result2);
 			}
 		}
@@ -522,15 +522,15 @@ void Partition(unsigned char* data1d, V3DLONG X, V3DLONG Y, V3DLONG Z, int &numL
 	sz[0] = ((int)(X/8)) * 8;
 	sz[1] = ((int)(Y/8)) * 8;
 	sz[2] = Z;
-	
-	/****************************/
+
+    /****************************/
 	unsigned char*** img3D;
 	img3D = new unsigned char**[sz[2]];
-	for(int x = 0; x < sz[2]; ++x)
-	{
-		img3D[x] = new unsigned char*[sz[1]];
-		for(int y = 0; y < sz[1]; ++y) img3D[x][y] = new unsigned char[sz[0]];
-	}
+    for(int x = 0; x < sz[2]; ++x)
+    {
+        img3D[x] = new unsigned char*[sz[1]];
+        for(int y = 0; y < sz[1]; ++y) img3D[x][y] = new unsigned char[sz[0]];
+    }
 	/****************************/
 	
 	/****************************/
@@ -540,9 +540,9 @@ void Partition(unsigned char* data1d, V3DLONG X, V3DLONG Y, V3DLONG Z, int &numL
 	/****************************/
 	
 	/****************************/
-	unsigned char* imgPartition;
-	V3DLONG sizeImage = (sz[0]*sz[1]*sz[2])/64;
-	imgPartition = new unsigned char[sizeImage];
+    unsigned char* imgPartition;
+    V3DLONG sizeImage = (sz[0]*sz[1]*sz[2])/64;
+    imgPartition = new unsigned char[sizeImage];
 	/****************************/
 
 	unsigned char maxRow;
@@ -550,38 +550,38 @@ void Partition(unsigned char* data1d, V3DLONG X, V3DLONG Y, V3DLONG Z, int &numL
 	int maximumRow;
 	int maximumBlock = 0;
 	int count = 0, countPartition = 0;
-	int numOfPixel = 0;
+    int numOfPixel = 0;
 	/*********************************************************************************/
 
 	// convert 1D data to 3D data
-	/****************************/
-	for (int k=0;k<sz[2];k++)
-	{
-		for (int j=0;j<sz[1];j++)
-		{
-			for (int i=0;i<sz[0];i++)
-			{
-				img3D[k][j][i] = data1d[i+(j*X)+(k*X*Y)];
-			}
-		}
-	}
+    /****************************/
+    for (int k=0;k<sz[2];k++)
+    {
+        for (int j=0;j<sz[1];j++)
+        {
+            for (int i=0;i<sz[0];i++)
+            {
+                img3D[k][j][i] = data1d[i+(j*X)+(k*X*Y)];
+            }
+        }
+    }
 	/****************************/
 	
 	// convert 3D data to 2D data
 	/****************************/
-	for (int i=0;i<sz[1];i++)
-	{
-		for (int j=0;j<sz[0];j++)
-		{
-			img2D[i][j] = img3D[0][i][j];
-			for (int k=1;k<sz[2];k++)
-			{
-				img2D[i][j] = max(img2D[i][j], img3D[k][i][j]);
-			}
-		}
-	}
+    for (int i=0;i<sz[1];i++)
+    {
+        for (int j=0;j<sz[0];j++)
+        {
+           //img2D[i][j] = img3D[0][i][j];
+            for (int k=1;k<sz[2];k++)
+            {
+                img2D[i][j] = max(img3D[0][i][j], img3D[k][i][j]);
+            }
+        }
+    }
 	
-	delete[] img3D;
+    delete[] img3D;
 	/****************************/
 	
 	// maximum intensity in image 2D
@@ -607,7 +607,7 @@ void Partition(unsigned char* data1d, V3DLONG X, V3DLONG Y, V3DLONG Z, int &numL
 			if (img2D[i][j]<maxValue) img2D[i][j] = 0;
 			else img2D[i][j] = 1;
 		}
-	}
+    }
 	
 	int blockCount[8][8];
 	int coordinateX, coordinateY;
@@ -683,8 +683,8 @@ void Partition(unsigned char* data1d, V3DLONG X, V3DLONG Y, V3DLONG Z, int &numL
 			blockX = 0;
 			blockY = 0;
 		}
-	}
-	/***********************/
+    }
+    /***********************/
 }
 
 unsigned char*** Convert1D3D (unsigned char* inimg1d, V3DLONG x, V3DLONG y, V3DLONG z)
@@ -1191,9 +1191,9 @@ unsigned char* NVersion (unsigned char* img, V3DLONG size) //Niblack
 	for (V3DLONG i=0;i<size;i++)
 	{
 		img[i] = image[i];
-	}*/
-	
-	int distribution[256], pixelMin, pixelMax, temp2;
+    }*/
+
+    int distribution[256], pixelMin, pixelMax, temp2;
 	float  histNormalized[256]; 
 	float nonzero = 0.1;
 	float w = 0;
@@ -1203,20 +1203,20 @@ unsigned char* NVersion (unsigned char* img, V3DLONG size) //Niblack
 	double work3 = 0.0;
 	int binary_threshold = 0;
 	float imagemean = 0.0;
-	
+
 	for (int i=0;i<256;i++)
 	{
 		distribution[i] = 0;
 		histNormalized[i] = 0;
 	}
-	
+
 	for (V3DLONG i=0;i<size;i++)
-	{
-		distribution[img[i]] = distribution[img[i]] + 1;
+    {
+        distribution[img[i]] = distribution[img[i]] + 1;
 		imagemean += img[i];
 		if (img[i] >0 )
 			nonzero = nonzero +1 ;
-	}
+    }
 	// Create normalised histogram values
 	// (size=image width * image height)
 	for (int i=1; i<256; i++) 
@@ -1233,7 +1233,7 @@ unsigned char* NVersion (unsigned char* img, V3DLONG size) //Niblack
 	}
 	// Convert the final value to an integer
 	
-	
+
 	imagemean = imagemean/(float)nonzero;
 	float sum_deviation=0.0, deviation = 0.0;
 	
