@@ -18,6 +18,8 @@ public:
     double r;
 public:
     Node();
+
+
 	Node(V3DLONG i,V3DLONG j,V3DLONG k)
 	{
 		x=i;

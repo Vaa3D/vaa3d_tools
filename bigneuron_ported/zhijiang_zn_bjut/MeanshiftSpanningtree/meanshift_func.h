@@ -9,11 +9,30 @@
 #include <v3d_interface.h>
 #include<Gradient.h>
 #include "node.h"
-
+struct input_PARA
+{
+    QString inimg_file;
+    V3DLONG channel;
+    double prim_distance;//the distance decide to delete covered nodes
+    double threshold;//the threshold which used in determining noisy node
+    double percentage;//same effect with threshold
+};
 
 int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent);
+void bf_vn3(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 void meanshift_vn5(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 Node getnode(Node *node);
+QMap<V3DLONG,Node> merge_cluster_node(QMap<V3DLONG,Node> rootnodes,double distance);
+QMap<V3DLONG,QMap<V3DLONG,Node>> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node>> final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance);
+ QMap<V3DLONG,QList<Node>> cluster2newroot(QMap<V3DLONG,QList<V3DLONG>> covered,QMultiMap<V3DLONG,Node> cluster);
+QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node>> roots);
+bool determine_noisy(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double threshold,double percentage,int iter_step);
+Node choose_next_node(unsigned char * &img1d,Node* pre,V3DLONG next_x,V3DLONG next_y,V3DLONG next_z,QList<Node> choose,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
+QMap<int,Node*> merge_rootnode_vn2(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double distance);
+long meanshift_vn6(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration,V3DLONG *in_sz);
+long meanshift_vn7(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration,V3DLONG *in_sz);
+bool found_final_vn3(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r);
+QList<NeuronSWC> connect_shortest_path_vn5(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz);
 QList<NeuronSWC> connect_shortest_path_vn4(unsigned char * &img1d,QList<Node> path,Node* begin,Node* end,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 QList<NeuronSWC> smooth_SWC_radius(QList<NeuronSWC> target,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 double fix_radius(QHash<V3DLONG,NeuronSWC> neuron,V3DLONG Parent,QList<V3DLONG> Childs );
@@ -38,7 +57,7 @@ void enlarge_radiusof_root_xy(unsigned char * &img1d,QList<Node*> &class_List,No
 bool exist(V3DLONG x,V3DLONG y,V3DLONG z,QList<Node*> List);
 void meanshift_vn4(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 void construct_tree(QMap<int,QList<Node*> > finalclass_node,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
-int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu);
+int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned char* img1d,V3DLONG *in_sz, QString &image_name,bool bmenu,input_PARA &PARA);
 int meanshift_plugin(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp();
 void merge_spanning_tree(QList<QList <NeuronSWC> > &tree_part);

@@ -13,11 +13,7 @@
 // 1- Export the plugin class to a target, the first item in the bracket should match the TARGET parameter in the .pro file
 Q_EXPORT_PLUGIN2(meanshift, MeanShiftPlugin);
 
-struct input_PARA
-{
-    QString inimg_file;
-    V3DLONG channel;
-};
+
  
 
 // 2- Set up the items in plugin domenu
@@ -114,7 +110,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     //main neuron reconstruction code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON TRACING CODE
-    meanshift_plugin_vn4(callback,parent,data1d, in_sz,image_name,bmenu);
+   double distance=PARA.prim_distance;
+   double thre=PARA.threshold;
+   double per=PARA.percentage;
+    meanshift_plugin_vn4(callback,parent,data1d, in_sz,image_name,bmenu,PARA);
 
     if(!bmenu)
     {
@@ -150,6 +149,9 @@ void MeanShiftPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             in_sz[1] = p4d->getYDim();
             in_sz[2] = p4d->getZDim();
            // meanshift_plugin_vn4(callback,parent,img1d, in_sz,image_name,bmenu);
+            PARA.percentage=0.6;
+            PARA.prim_distance=4.0;
+            PARA.threshold=10;
             reconstruction_func(callback,parent,PARA,image_name,bmenu);
         }
         else if (menu_name == tr("about"))
@@ -183,6 +185,9 @@ bool MeanShiftPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
             PARA.inimg_file = infiles[0];
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.prim_distance=(paras.size() >= k+1) ? atoi(paras[k]) : 3.0;  k++;
+        PARA.threshold=(paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
+        PARA.percentage=(paras.size() >= k+1) ? atoi(paras[k]) : 0.6;  k++;
 
            // meanshift_plugin_vn4(callback,parent,data1d,in_sz,image_name,bmenu);
              reconstruction_func(callback,parent,PARA,image_name,bmenu);
@@ -190,6 +195,14 @@ bool MeanShiftPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         else if (func_name == tr("help"))
         {
                 printHelp();
+                printf("**** Usage of meanshift_spanning tracing **** \n");
+                printf("vaa3d -x BJUT_meanshift -f meanshift -i <inimg_file> -p <channel> <prim_distance> <threshold> <percentage> \n");
+                printf("inimg_file       The input image\n");
+                printf("channel       image channel, default 1.\n");
+                printf("prim_distance       the distance to delete the covered nodes.\n");
+                printf("threshold  the pixal threshold to determine noisy.\n");
+                printf("percentage          same effect with threshold.\n");
+
         }
 		return true;
 }
