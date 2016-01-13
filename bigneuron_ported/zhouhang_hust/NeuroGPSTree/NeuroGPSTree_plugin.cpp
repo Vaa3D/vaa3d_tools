@@ -50,7 +50,7 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         bool ok;
         QString paraStr = QInputDialog::getText(parent, tr("Input trace parameter"),
                                                 tr("Please Input x resolution, y resolution, z resolution, binaryThreshold, trace Value, linear enhance value"),
-                                                QLineEdit::Normal,tr("1 1 1 6 0 255"),&ok);
+                                                QLineEdit::Normal,tr("0.5 0.5 1 15 10 150"),&ok);
         if(!ok) return;
         QStringList listStr = paraStr.split(' ');
         PARA.xRes_ = listStr[0].toDouble();

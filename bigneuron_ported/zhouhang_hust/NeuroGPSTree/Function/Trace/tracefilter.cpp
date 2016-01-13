@@ -426,7 +426,7 @@ void TraceFilter::SelectSeedForTrace(const Volume<NGCHAR> &binImg, const Volume<
 	});
 #endif
 
-    size_t numLimit = std::min<size_t>(tmpTraceSeed.size(), 250000);
+    size_t numLimit = std::min<size_t>(tmpTraceSeed.size(), 10000);
 	traceSeed.resize(numLimit);
     for (VectorVec4d::size_type i = 0; i < numLimit; ++i )
         traceSeed[i] = (Vec3d(tmpTraceSeed[i](0), tmpTraceSeed[i](1), tmpTraceSeed[i](2) ));

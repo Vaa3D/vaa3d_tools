@@ -421,8 +421,8 @@ bool NeuroTreeCluster::Update()
     tmpSeperateTree->SetTypeList(typeList);
 	clock_t end = clock();
 	printf("tree cluster use %d ms.\n",end - beg);
-    //2016-1-4
-    if (tmpSoma->size() == 1) {
+    //2016-1-13
+    if (tmpSoma->size() <= 1) {
         NGWeakSWCFilter weakFilter = WeakSWCFilter::New();
         weakFilter->SetInput(m_OrigImg);
         weakFilter->SetInputBack(m_BackImg);

@@ -153,7 +153,8 @@ bool WeakSWCFilter::Update()
     }
     std::vector<size_t> remainIndex;
     std::set_difference(allIndex.begin(), allIndex.end(), mergeIndex.begin(), mergeIndex.end(), std::back_inserter(remainIndex));
-    std::vector<int> resultType(1+remainIndex.size(),0);
+    //std::vector<int> resultType(1+remainIndex.size(),0);
+    std::vector<int> resultType(1,0);
     //sometimes the largest tree is not soma tree
     size_t ifFirstSWCSomaNum = 1000000;
     for (size_t i = 0; i < mergeIndex.size(); ++i) {
@@ -164,7 +165,8 @@ bool WeakSWCFilter::Update()
         }
     }
 	
-	std::vector<std::vector<VectorVec5d> > tmpResultTreeList(1+remainIndex.size());
+    //std::vector<std::vector<VectorVec5d> > tmpResultTreeList(1+remainIndex.size());
+    std::vector<std::vector<VectorVec5d> > tmpResultTreeList(1);
 	std::vector<VectorVec5d> tmpResultTree;
     //if soma tree, then put soma curve first
     if (resultType[0] == 2) {
@@ -193,10 +195,10 @@ bool WeakSWCFilter::Update()
     }
 
 	
-    for (size_t i = 0; i < remainIndex.size(); ++i) {
-        tmpResultTreeList[i+1] = tmpSeperateTree->GetTree()[remainIndex[i]];
-        resultType[i+1] = (tmpSeperateTree->GetTypeList()[remainIndex[i]]);
-    }
+//    for (size_t i = 0; i < remainIndex.size(); ++i) {
+//        tmpResultTreeList[i+1] = tmpSeperateTree->GetTree()[remainIndex[i]];
+//        resultType[i+1] = (tmpSeperateTree->GetTypeList()[remainIndex[i]]);
+//    }
 	tmpTree->GetTree().swap(tmpResultTreeList);
 	tmpTree->SetTypeList(resultType);
 

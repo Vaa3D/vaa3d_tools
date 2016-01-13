@@ -54,9 +54,10 @@ bool TreeWriter::Update()
     std::string::size_type pos_begin = 0;
     std::string::size_type comma_pos = fileName.find_first_of('.', pos_begin);
     std::string prefix = fileName.substr(pos_begin, comma_pos - pos_begin);
-    for (size_t i = 0; i < swcList.size(); ++i) {
-        sprintf(line, "_%d",int(i));
-        if (typeList[i] == 2) {
+    //for (size_t i = 0; i < swcList.size(); ++i) {
+    for (size_t i = 0; i < 1; ++i) {
+        //sprintf(line, "_%d",int(i));
+        //if (typeList[i] == 2) {
             const std::vector<VectorVec5d>& dendList = swcList[i];
             std::vector<std::vector<std::vector<size_t> > > dendConInfo;
             GetDendConInfoFromDendList(dendList, distThrev, dendConInfo);
@@ -70,32 +71,33 @@ bool TreeWriter::Update()
             GetWholeConnectSWC( dendList, parentNodeList, sonNodeList, treeLevel, dendConInfo,
                 distThrev, resultSwc );
 
-            truePath = prefix + std::string(line) + ".swc";
+            //truePath = prefix + std::string(line) + ".swc";
+            truePath = prefix + ".swc";
             WriteOneSwc(truePath, resultSwc, typeList[i]);
-        } else{
-            truePath = prefix + std::string(line) + "_notree.swc";
-            FILE* fp = fopen((const char*)(truePath.c_str()), "w");
-            if(!fp) {
-                printf("error write tree!\n");
-                break;
-            }
+        //} else{
+            //truePath = prefix + std::string(line) + "_notree.swc";
+            //FILE* fp = fopen((const char*)(truePath.c_str()), "w");
+            //if(!fp) {
+            //    printf("error write tree!\n");
+            //    break;
+            //}
             //One file One tree
-            const std::vector<VectorVec5d> &localTree = swcList[i];
-            int globalIndex = 1;
-            for(size_t j = 0; j < localTree.size();++j){
+            //const std::vector<VectorVec5d> &localTree = swcList[i];
+            //int globalIndex = 1;
+            //for(size_t j = 0; j < localTree.size();++j){
                 //One curve
-                const VectorVec5d &localCurve = localTree[j];
-                fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i], localCurve[0](0) * xExtend_ ,
-                    localCurve[0](1) * yExtend_,localCurve[0](2) * zExtend_, localCurve[0](3));
-                ++globalIndex;
-                for(size_t k = 1; k < localCurve.size();++k){
-                    fprintf(fp,"%d %d %lf %lf %lf %lf %d\n", globalIndex, typeList[i], localCurve[k](0) * xExtend_ ,
-                        localCurve[k](1) * yExtend_, localCurve[k](2) * zExtend_, localCurve[k](3), globalIndex - 1);
-                    ++globalIndex;
-                }
-            }
-            fclose(fp);
-        }
+            //    const VectorVec5d &localCurve = localTree[j];
+            //    fprintf(fp,"%d %d %lf %lf %lf %lf -1\n", globalIndex, typeList[i], localCurve[0](0) * xExtend_ ,
+            //        localCurve[0](1) * yExtend_,localCurve[0](2) * zExtend_, localCurve[0](3));
+            //    ++globalIndex;
+            //    for(size_t k = 1; k < localCurve.size();++k){
+            //        fprintf(fp,"%d %d %lf %lf %lf %lf %d\n", globalIndex, typeList[i], localCurve[k](0) * xExtend_ ,
+            //            localCurve[k](1) * yExtend_, localCurve[k](2) * zExtend_, localCurve[k](3), globalIndex - 1);
+            //        ++globalIndex;
+            //    }
+            //}
+            //fclose(fp);
+        //}
     }
     return true;
 }
