@@ -48,7 +48,7 @@ function write_neuron_tracing_command {
 #NEUTUBE
 
   if [ $METHOD == "4" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1;chmod -R 777 $inimgfileTracing*_neutube.swc;mv  $inimgfileTracing*_neutube.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x neuTube -f neutube_trace -i $inimgfileTracing;chmod -R 777 $inimgfileTracing*_neutube.swc;mv  $inimgfileTracing*_neutube.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #FARSIGHT Snake
