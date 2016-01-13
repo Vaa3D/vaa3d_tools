@@ -86,7 +86,7 @@ function write_neuron_tracing_command {
 #NeuroGPSTree
 
   if [ $METHOD == "11" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x NeuroGPSTree -f tracing_func -i $inimgfileTracing -p 1 1 1 10;chmod -R 777 $inimgfileTracing*_NeuroGPSTree.swc;mv  $inimgfileTracing*_NeuroGPSTree.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x NeuroGPSTree -f tracing_func -i $inimgfileTracing -p 0.5 0.5 1 15 10 150;chmod -R 777 $inimgfileTracing*_NeuroGPSTree.swc;mv  $inimgfileTracing*_NeuroGPSTree.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #fastmarching_spanningtree
