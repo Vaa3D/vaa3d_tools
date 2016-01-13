@@ -50,10 +50,10 @@ bool TreeWriter::Update()
     const std::vector<int>& typeList = tmptree->GetTypeList();
     double distThrev = 1.0;
     char line[256];
-    std::string truePath;
-    std::string::size_type pos_begin = 0;
-    std::string::size_type comma_pos = fileName.find_first_of('.', pos_begin);
-    std::string prefix = fileName.substr(pos_begin, comma_pos - pos_begin);
+    //std::string truePath;
+    //std::string::size_type pos_begin = 0;
+    //std::string::size_type comma_pos = fileName.find_first_of('.', pos_begin);
+    //std::string prefix = fileName.substr(pos_begin, comma_pos - pos_begin);
     //for (size_t i = 0; i < swcList.size(); ++i) {
     for (size_t i = 0; i < 1; ++i) {
         //sprintf(line, "_%d",int(i));
@@ -72,8 +72,9 @@ bool TreeWriter::Update()
                 distThrev, resultSwc );
 
             //truePath = prefix + std::string(line) + ".swc";
-            truePath = prefix + ".swc";
-            WriteOneSwc(truePath, resultSwc, typeList[i]);
+            //truePath = prefix + ".swc";
+            //WriteOneSwc(truePath, resultSwc, typeList[i]);
+            WriteOneSwc(fileName, resultSwc, typeList[i]);
         //} else{
             //truePath = prefix + std::string(line) + "_notree.swc";
             //FILE* fp = fopen((const char*)(truePath.c_str()), "w");

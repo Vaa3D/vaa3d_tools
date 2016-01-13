@@ -529,6 +529,7 @@ void NeuroGPSTreePlugin::reconstruction_func(V3DPluginCallback2 &callback, QWidg
 
     //Output
 
+    //QString swc_name = PARA.inimg_file.section('.', 0,-2) + "_NeuroGPSTree.swc";
     QString swc_name = PARA.inimg_file + "_NeuroGPSTree.swc";
     //NeuronTree nt;
     //nt.name = "tracing method";
