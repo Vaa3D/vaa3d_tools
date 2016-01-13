@@ -29,5 +29,5 @@ LIBS    += -L$$neutube/neurolabi/cpp/lib/build -lneutube\
            -L$$neutube/neurolabi/lib/xml/lib\
             -L$$neutube/neurolabi/lib/hdf5/lib -ljansson -lxml2 -lfftw3f -lfftw3 -lm -lz -lhdf5
 
-TARGET	= $$qtLibraryTarget(neutube_v2)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/neutube_v2/
+TARGET	= $$qtLibraryTarget(neuTube)
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/neuTube/
