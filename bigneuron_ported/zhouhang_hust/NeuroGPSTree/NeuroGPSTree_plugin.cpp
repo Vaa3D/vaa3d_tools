@@ -194,14 +194,16 @@ bool NeuroGPSTreePlugin::ConvertVaa3dImg2NGImg(UChar *data1d,
                                 temp += data1d[i*xScale_ + ii + (j * yScale_ + jj) * X + nCur * XY];
                             }
                         }
-                        tmpImg->operator ()(i,ry - j - 1,nCur) += temp;
+                        //tmpImg->operator ()(i,ry - j - 1,nCur) += temp;
+                        tmpImg->operator ()(i, j, nCur) += temp;
                     }
             }
             else{
                 for (int i = 0; i < rx; ++ i)
                     for (int j = 0; j < ry; ++ j){
                         temp = data1d[i + j * X + nCur * XY];
-                        tmpImg->operator ()(i,ry - j - 1,nCur) += temp;//2015-8-13
+                        //tmpImg->operator ()(i,ry - j - 1,nCur) += temp;//2015-8-13
+                        tmpImg->operator ()(i, j, nCur) += temp;//2015-8-13
                     }
             }
         }
