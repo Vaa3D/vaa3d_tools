@@ -98,7 +98,7 @@ function write_neuron_tracing_command {
 #meanshift
 
   if [ $METHOD == "13" -o $METHOD == "-1" ]; then
-    echo "./start_vaa3d.sh -x BJUT_meanshift -f meanshift -i $inimgfileTracing ;rm  $inimgfileTracing*init_meanshift.swc;chmod -R 777 $inimgfileTracing*_meanshift.swc;mv  $inimgfileTracing*_meanshift.swc $finalfileFolder" >> $outputScript;
+    echo "./start_vaa3d.sh -x BJUT_meanshift -f meanshift -i $inimgfileTracing -p 1 3.0 10 0.6;rm  $inimgfileTracing*init_meanshift.swc;chmod -R 777 $inimgfileTracing*_meanshift.swc;mv  $inimgfileTracing*_meanshift.swc $finalfileFolder" >> $outputScript;
   fi;
 
 #CWlab_method1_version1
