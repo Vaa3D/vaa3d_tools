@@ -139,6 +139,7 @@ public slots:
     void startPosMon();
     void stopPosMon();
     bool getPosMon();
+    void startScan();
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();

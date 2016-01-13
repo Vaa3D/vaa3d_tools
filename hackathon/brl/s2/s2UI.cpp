@@ -26,7 +26,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     connect(startS2PushButton, SIGNAL(clicked()), this, SLOT(startS2()));
-    connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
+    connect(startScanPushButton, SIGNAL(clicked()), &myController, SLOT(startScan()));
     connect(loadScanPushButton, SIGNAL(clicked()), this, SLOT(loadScan()));
     connect(startPosMonButton,SIGNAL(clicked()), this, SLOT(posMonButtonClicked()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -49,11 +49,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(s2LineEdit, 0, 1);
     mainLayout->addWidget(buttonBox1,1,0,2,4);
     mainLayout->addWidget(startPosMonButton,3,0);
-    // add fields with data...
-
-
-    //int jj = 0;
-    for (int jj=0; jj<=4; jj++){
+    // add fields with data...  currently hardcoding the number of parameters...
+    for (int jj=0; jj<=7; jj++){
     QLabel * labeli = new QLabel(tr("test"));
     labeli->setText(QString::number(jj));
     labeli->setObjectName(QString::number(jj));
@@ -124,17 +121,20 @@ for (int i: currentParameterMap.keys()){
     QString parameterStringi = currentParameterMap[i].getParameterName();
     float parameterValuei = currentParameterMap[i].getCurrentValue();
     QString iString = QString::number(i);
-    if (QString::compare("string",currentParameterMap[i].getExpectedType())){
+    if (currentParameterMap[i].getExpectedType().contains("string")){
     parameterStringi.append(" = ").append(currentParameterMap[i].getCurrentString());
-    }else{
+    }
+    if (currentParameterMap[i].getExpectedType().contains("float")){
     parameterStringi.append(" = ").append(QString::number(parameterValuei));
+    }
+    if (currentParameterMap[i].getExpectedType().contains("list")){
+    parameterStringi.append(" = ").append(currentParameterMap[i].getCurrentString().split(".xml").first());
     }
     QLabel* item = this->findChild<QLabel*>( iString);
     if (item){
         item->setText(parameterStringi);
     }
 }
-
 
 }
 

@@ -164,13 +164,17 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
     s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ;
     s2ParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ;
-
+    s2ParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions",0.0, "", "list"));
 
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
 }
 
+void S2Controller::startScan(){
+    sendCommandButton->setEnabled(false);
+    sendAndReceive(QString("-ss"));
+}
 
 void S2Controller::connectToS2()
 {
