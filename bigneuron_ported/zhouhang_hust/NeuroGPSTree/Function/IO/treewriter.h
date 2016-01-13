@@ -41,7 +41,7 @@ protected:
         double distThrev,
         std::vector<swcElementStruct>& resultSwc);
 
-    void WriteOneSwc(const std::string& curFileName, const std::vector<swcElementStruct>& resultSwc, int type);
+    bool WriteOneSwc(const std::string& curFileName, const std::vector<swcElementStruct>& resultSwc, int type);
 
     bool isMember(size_t ind, const std::vector<size_t>& searchRange);
 

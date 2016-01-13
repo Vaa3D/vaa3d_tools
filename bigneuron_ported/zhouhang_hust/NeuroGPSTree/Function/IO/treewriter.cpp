@@ -74,7 +74,10 @@ bool TreeWriter::Update()
             //truePath = prefix + std::string(line) + ".swc";
             //truePath = prefix + ".swc";
             //WriteOneSwc(truePath, resultSwc, typeList[i]);
-            WriteOneSwc(fileName, resultSwc, typeList[i]);
+            if(!WriteOneSwc(fileName, resultSwc, typeList[i])){
+                printf("cannot write file.\n");
+                return false;
+            }
         //} else{
             //truePath = prefix + std::string(line) + "_notree.swc";
             //FILE* fp = fopen((const char*)(truePath.c_str()), "w");
@@ -397,15 +400,17 @@ void TreeWriter::GetWholeConnectSWC( const std::vector<VectorVec5d>& dendList, c
     }
 }
 
-void TreeWriter::WriteOneSwc( const std::string& curFileName, const std::vector<swcElementStruct>& resultSwc, int type )
+bool TreeWriter::WriteOneSwc( const std::string& curFileName, const std::vector<swcElementStruct>& resultSwc, int type )
 {
     FILE* fp = fopen(curFileName.c_str(), "w");
+    if(!fp) return false;
     for (size_t i = 0; i < resultSwc.size(); ++i) {
         fprintf(fp, "%d %d %lf %lf %lf %lf %d\n", resultSwc[i].id, type,
             resultSwc[i].node(0) * xExtend_, resultSwc[i].node(1) * yExtend_, resultSwc[i].node(2) * zExtend_, resultSwc[i].node(3),
             resultSwc[i].pid);
     }
     fclose(fp);
+    return true;
 }
 
 bool TreeWriter::isMember( size_t ind, const std::vector<size_t>& searchRange )
