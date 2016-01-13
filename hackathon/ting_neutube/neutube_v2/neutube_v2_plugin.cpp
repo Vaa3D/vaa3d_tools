@@ -61,7 +61,7 @@ void neutube_v2::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
 bool neutube_v2::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("tracing"))
+    if (func_name == tr("neutube_trace"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -88,7 +88,7 @@ bool neutube_v2::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
 		printf("**** Usage of neutube_v2 tracing **** \n");
-		printf("vaa3d -x neutube_v2 -f tracing -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x neuTube -f neutube_trace -i <inimg_file> -p <channel> <other parameters>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
@@ -243,7 +243,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
       tree->rescale(xintv + 1, yintv + 1, zintv + 1);
     }
 
-    QString swc_name = PARA.inimg_file + "_neutube_v2.swc";
+    QString swc_name = PARA.inimg_file + "_neutube.swc";
     tree->save(swc_name.toStdString().c_str());
     delete tree;
 
