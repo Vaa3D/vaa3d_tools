@@ -6,6 +6,45 @@
 #include <stdlib.h>
 #include "s2Controller.h"
 
+S2Parameter::S2Parameter():
+    parameterName(""),
+    currentValue(0.0),
+    currentString(""),
+    expectedType("float"){}
+
+S2Parameter::S2Parameter(QString parameterN,
+                         QString sendS,
+                         float currentV,
+                         QString currentS,
+                         QString expectedT){
+    sendString = sendS;
+    parameterName = parameterN;
+    currentValue=currentV;
+    currentString = currentS;
+    expectedType = expectedT;
+}
+
+QString S2Parameter::getSendString(){
+    return sendString;
+}
+QString S2Parameter::getCurrentString(){
+    return currentString;
+}
+void S2Parameter::setCurrentString(QString inputString){
+    currentString = inputString;
+}
+float S2Parameter::getCurrentValue(){
+    return currentValue;
+}
+void S2Parameter::setCurrentValue(float value){
+    currentValue = value;
+}
+QString S2Parameter::getExpectedType(){
+    return expectedType;
+}
+QString S2Parameter::getParameterName(){
+return parameterName;
+}
 
 //! [0]
 S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0)
@@ -59,6 +98,8 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     connect(this, SIGNAL(messageIsComplete()), this, SLOT(processMessage()));
     connect(this, SIGNAL(newMessage(QString)),
             this, SLOT(messageHandler(QString)));
+    connect(this, SIGNAL(newMessage(QString)),
+            this, SLOT(posMonListener(QString)));
 
 
     connect(quitButton, SIGNAL(clicked()), this, SLOT(sendX()));
@@ -91,7 +132,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
         // If the saved network configuration is not currently discovered use the system default
         QNetworkConfiguration config = manager.configurationFromIdentifier(id);
         if ((config.state() & QNetworkConfiguration::Discovered) !=
-            QNetworkConfiguration::Discovered) {
+                QNetworkConfiguration::Discovered) {
             config = manager.defaultConfiguration();
         }
 
@@ -102,7 +143,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
         statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
-//! [5]
+    //! [5]
 }
 
 
@@ -115,15 +156,27 @@ void S2Controller::initConnection(){
 }
 
 void S2Controller::initializeParameters(){
+    S2Parameter tPara =S2Parameter("currentMode","-gts activeMode");
+    s2ParameterMap.insert(0,tPara);//S2Parameter("resonantMode","-gts scanMode", 0.0,  "", "string"));
+    s2ParameterMap.insert(1, S2Parameter("galvoX", "-gts currentScanCenter XAxis")) ;
+    s2ParameterMap.insert(2, S2Parameter("galvoY", "-gts currentScanCenter YAxis")) ;
+    s2ParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
+    s2ParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
+    s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ;
+    s2ParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ;
+
+
+    maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
+
 }
 
 
 void S2Controller::connectToS2()
 {
     tcpSocket->connectToHost(hostLineEdit->text(),
-    portLineEdit->text().toInt());
-    }
+                             portLineEdit->text().toInt());
+}
 
 void S2Controller::sendCommand()
 {
@@ -168,12 +221,12 @@ void S2Controller::checkForMessage(){
     // append any incoming data to a totalString attribute
     stringMessage.append(QString(tcpSocket->readAll()).toLatin1());
     if (stringMessage.contains("DONE\r\n")){
-    // check for DONE.  if not, don't do anything!
-    // [this will still be called when new data is available]
+        // check for DONE.  if not, don't do anything!
+        // [this will still be called when new data is available]
 
-    // if DONE, emit a signal to processMessage
+        // if DONE, emit a signal to processMessage
         emit messageIsComplete();
-    qDebug()<<stringMessage;}
+        qDebug()<<stringMessage;}
     // DO NOT unblock commands yet!
 
 }
@@ -201,17 +254,32 @@ void S2Controller::processMessage(){
 
 }
 
+
 void S2Controller::messageHandler(QString messageH){
     // slot for handling messages.   first round will
     // just be updating text in this object and the calling UI
-    myS2Data.messageString = messageH;
-    emit newS2Data(myS2Data);
-    statusLabel->setText(messageH);
+        myS2Data.messageString = messageH;
+        emit newBroadcast(messageH);
+        statusLabel->setText(messageH);
+
+}
+
+//
+
+void S2Controller::posMonListener(QString messageL){
+messageL.remove("\r\n");
+s2ParameterMap[ii].setCurrentString( messageL);
+s2ParameterMap[ii].setCurrentValue(messageL.toFloat());
+    // use s2ParameterMap to keep track of parameter values.
+if (inPosMonMode){
+
+    ii = (ii+1) % maxParams;
+    emit newS2Parameter(s2ParameterMap);
+    QTimer::singleShot(100, this, SLOT(posMon()));
 }
 
 
-
-
+}
 
 void S2Controller::displayError(QAbstractSocket::SocketError socketError)
 {
@@ -243,11 +311,11 @@ void S2Controller::displayError(QAbstractSocket::SocketError socketError)
 void S2Controller::enablesendCommandButton()
 {
     sendCommandButton->setEnabled((!networkSession || networkSession->isOpen()) &&
-                                 !hostLineEdit->text().isEmpty() &&
-                                 !portLineEdit->text().isEmpty());
+                                  !hostLineEdit->text().isEmpty() &&
+                                  !portLineEdit->text().isEmpty());
     connectButton->setEnabled((!networkSession || networkSession->isOpen()) &&
-                                 !hostLineEdit->text().isEmpty() &&
-                                 !portLineEdit->text().isEmpty());
+                              !hostLineEdit->text().isEmpty() &&
+                              !portLineEdit->text().isEmpty());
 }
 
 void S2Controller::sessionOpened()
@@ -279,7 +347,7 @@ void S2Controller::startROI(){ //    set a target file location and trigger the 
 }
 
 void S2Controller::getROIData(){ //    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
-       //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
+    //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
 }
 
 void S2Controller::processROIData(){ //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
@@ -288,29 +356,41 @@ void S2Controller::startNextROI(){//   Move to the next ROI location and start t
 }
 
 void S2Controller::startPosMon(){
+    qDebug()<<" start in myPosMon";
     if (inPosMonMode){
         emit newMessage("already in Position Monitor mode");
         return;
     }
     inPosMonMode = true;
-   //
+    cancelPosMon = false;
+    emit pmStatus(inPosMonMode);
+    ii = 0;
+    posMon();
+
+    //
 
 }
 
 void S2Controller::stopPosMon(){
+    qDebug()<<" stop in myPosMon";
+    ii = -1;
     cancelPosMon = true;
     inPosMonMode = false;
+    emit pmStatus(inPosMonMode);
+
 }
 
-void S2Controller::posMon(int jj){
-    //update index jj in big case/switch statement
+bool S2Controller::getPosMon(){
+    return inPosMonMode;
+}
 
+
+void S2Controller::posMon(){
+// send current query string
+    sendAndReceive(s2ParameterMap[ii].getSendString());
     //after delay, emit signal and return
 
-    // a separate handler will take that signal and call posMon with a new
-    // index
 }
-
 
 
 // next:
@@ -320,13 +400,6 @@ void S2Controller::posMon(int jj){
 //
 
 // start bulking up the UI to have some useful parameters
-// build a separate widget for monitoring (all?) position parameters over
-// one or more new TCP sockets.
-// how to do this?
-// I could start from this controller(?) and write in code to use it as a monitor.
-// the UI would instantiate an s2controller and a click would turn on the monitor
-// in that controller.
-// another s2controller in control mode could still be used at the same time.
 
 
 // extract file destination, run this on the scope machine.

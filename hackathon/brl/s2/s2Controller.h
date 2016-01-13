@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QTcpSocket>
 #include <QThread>
+#include <QMap>
 
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
@@ -14,7 +15,6 @@ class QLineEdit;
 class QPushButton;
 class QTcpSocket;
 class QNetworkSession;
-
 QT_END_NAMESPACE
 
 class Sleeper : public QThread
@@ -25,8 +25,39 @@ public:
     static void sleep(unsigned long secs){QThread::sleep(secs);}
 };
 
+class S2Parameter
+{
+public:
+    S2Parameter();//defined with initialization list
+
+    S2Parameter(QString parameterN,
+                QString sendS,
+                float currentV=0.0,
+                QString currentS="",
+                QString expectedT="float");
+
+    QString getSendString();
+    void setCurrentString(QString inputString);
+    QString getCurrentString();
+    void setCurrentValue(float value);
+    float getCurrentValue();
+    QString getParameterName();
+    QString getExpectedType();
+private:
+    QString parameterName;
+    QString sendString;
+    QString expectedType;
+    float currentValue;
+    QString currentString;
+};
+
+
+
+
+
 // useful parameters stored in the class S2Data
-class S2Data{
+class S2Data
+{
 public:
     int resonantMode;
     int zMode;
@@ -87,6 +118,7 @@ public:
     QString stringMessage;
     QString message;
     QString displayMessage;
+    QMap<int, S2Parameter> s2ParameterMap;
 
     bool inPosMonMode = false;
     bool cancelPosMon = false;
@@ -106,11 +138,15 @@ public slots:
     void startNextROI();//    Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
     void startPosMon();
     void stopPosMon();
+    bool getPosMon();
 signals:
-    void newS2Data(S2Data myS2Data);
+    void newS2Data( S2Data myS2Data);
     void messageIsComplete();
     void newMessage(QString message);
+    void newBroadcast(QString message);
     void newPosMonIndex();
+    void pmStatus(bool inPosMonMode);
+    void newS2Parameter( QMap<int, S2Parameter> parameterMap);
 private slots:
     void checkForMessage();
     void processMessage();
@@ -121,7 +157,8 @@ private slots:
     void sendX();
     void cleanUp();
     void initConnection(); //[initialize connection to PV over TCP/IP]
-    void posMon(int jj);
+    void posMon();
+    void posMonListener(QString messageL);
 private:
 
     void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
@@ -143,29 +180,13 @@ private:
     QString totalMessage;
     QString currentMessage;
     quint16 blockSize;
-    int ii = 0;
+    int ii = -1;
+    int maxParams = 10;//temp!
     QNetworkSession *networkSession;
 
 };
 
-// TODO:
-// implement case/switch in controller for PV or other
-// create listener/handler for data from PV this will
-// ask about why QDialog::exec  is used for the plugin gui instead of .show()
-// is there a .run()?  basically, I want the GUI open until I close it, but
-// not blocking cout<< or whatever
 
-// I need to clean up the S2controller code so the high-level stuff doesn't have any
-// pv-specific syntax or variables.
-
-// now that I have a growing list, I can parse the responses...
-// split up the string between ACK and DONE and pull out the intervening text
-// store that text in some kind of buffer?  that has a sequence of data...?
-//   TODAY:  get file name back and parse
-//           load that in vaa3d ?!
-//
-// -gts directory SingelImage  returns correct directory.
-//  file should contain ch1  .ome.tif
 
 
 
