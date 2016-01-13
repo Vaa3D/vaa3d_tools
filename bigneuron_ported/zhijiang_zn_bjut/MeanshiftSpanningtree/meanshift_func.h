@@ -23,9 +23,9 @@ void bf_vn3(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d
 void meanshift_vn5(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG r,int iteration);
 Node getnode(Node *node);
 QMap<V3DLONG,Node> merge_cluster_node(QMap<V3DLONG,Node> rootnodes,double distance);
-QMap<V3DLONG,QMap<V3DLONG,Node>> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node>> final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance);
- QMap<V3DLONG,QList<Node>> cluster2newroot(QMap<V3DLONG,QList<V3DLONG>> covered,QMultiMap<V3DLONG,Node> cluster);
-QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node>> roots);
+QMap<V3DLONG,QMap<V3DLONG,Node> > delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node> > final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance);
+ QMap<V3DLONG,QList<Node> > cluster2newroot(QMap<V3DLONG,QList<V3DLONG> > covered,QMultiMap<V3DLONG,Node> cluster);
+QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots);
 bool determine_noisy(unsigned char * &img1d,V3DLONG x,V3DLONG y,V3DLONG z,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double threshold,double percentage,int iter_step);
 Node choose_next_node(unsigned char * &img1d,Node* pre,V3DLONG next_x,V3DLONG next_y,V3DLONG next_z,QList<Node> choose,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z);
 QMap<int,Node*> merge_rootnode_vn2(QMap<int,Node*> &rootnodes,unsigned char * &img1d,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double distance);

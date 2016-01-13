@@ -104,7 +104,7 @@ vector<QList<Node*> > v_List;
 QMap<V3DLONG,QList<Node*> > root_class;
 QList<Node*> QTest;
 int cluster_number=0;
-QMap<V3DLONG,QList<V3DLONG>> covered_relation;
+QMap<V3DLONG,QList<V3DLONG> > covered_relation;
 QMap<V3DLONG,Node*> node_afterMerge;
 
 
@@ -1810,9 +1810,9 @@ bool decide_samebox(V3DLONG offset_x,V3DLONG offset_y,V3DLONG offset_z,Node* nod
 
 
 }
-QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
+QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots){
     QList<Node> seeds;
-     for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
+     for(QMap<V3DLONG,QMap<V3DLONG,Node> >::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
          QMap<V3DLONG,Node> temp1=iter1.value();
           for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
                 Node temp2=iter2.value();
@@ -2483,7 +2483,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
       double prim_distance=PARA.prim_distance;
       //printf("%lf %lf %lf \n",threshold,percentage_rate,prim_distance);
     QMultiMap<V3DLONG,Node> cluster_result;
-    QMap<V3DLONG,QList<Node>> final_cluster_result;
+    QMap<V3DLONG,QList<Node> > final_cluster_result;
 
     // printf("### find out rootnode  ###\n");
 
@@ -2569,7 +2569,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     final_cluster_result=cluster2newroot(covered_relation,cluster_result);//assemble every node(not noisy) to the remaining new root
    // printf("%d\n",final_cluster_result.count());
     //printSwcByMap(root,"C:\\result\\final_vn2.swc");
-    QMap<V3DLONG,QMap<V3DLONG,Node>> nodes_each_classification=delete_cluster_node(img1d,final_cluster_result,sz_x,sz_y,sz_z,in_sz,prim_distance);//for every new root, delete the corresponding suboridinate nodes which could be covered by each other
+    QMap<V3DLONG,QMap<V3DLONG,Node> > nodes_each_classification=delete_cluster_node(img1d,final_cluster_result,sz_x,sz_y,sz_z,in_sz,prim_distance);//for every new root, delete the corresponding suboridinate nodes which could be covered by each other
     // printf("%d\n",nodes_each_classification.count());
     // printSWCByQMap_QMap_vn2("C:\\result\\final_vn3.swc",nodes_each_classification);
 
@@ -2600,11 +2600,11 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     return -1;
 
 }
-QMap<V3DLONG,QMap<V3DLONG,Node>> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node>> final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
-    QMap<V3DLONG,QMap<V3DLONG,Node>> result;
-    QMap<V3DLONG,QMap<V3DLONG,Node>> mid_result;
+QMap<V3DLONG,QMap<V3DLONG,Node> > delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node> > final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
+    QMap<V3DLONG,QMap<V3DLONG,Node> > result;
+    QMap<V3DLONG,QMap<V3DLONG,Node> > mid_result;
 
-    for(QMap<V3DLONG,QList<Node>>::iterator iter =final_cluster.begin(); iter != final_cluster.end(); iter++){//clean the final_cluster, change its type to QMap<V3DLONG,QMap<V3DLONG,Node>> for easy process
+    for(QMap<V3DLONG,QList<Node> >::iterator iter =final_cluster.begin(); iter != final_cluster.end(); iter++){//clean the final_cluster, change its type to QMap<V3DLONG,QMap<V3DLONG,Node> > for easy process
         QList<Node> cluster_list=iter.value();
         QMap<V3DLONG,Node> temp;
         temp.clear();
@@ -2619,7 +2619,7 @@ QMap<V3DLONG,QMap<V3DLONG,Node>> delete_cluster_node(unsigned char * &img1d,QMap
         mid_result.insert(iter.key(),temp);
     }
     //begin to merge the node for each classification
-    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
+    for(QMap<V3DLONG,QMap<V3DLONG,Node> >::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
         QMap<V3DLONG,Node> elem_Map=iter.value();
         QMap<V3DLONG,Node> after_merge=merge_cluster_node(elem_Map,prim_distance);
        // printf("%d\n",after_merge.count());
@@ -2640,9 +2640,9 @@ QMap<V3DLONG,QMap<V3DLONG,Node>> delete_cluster_node(unsigned char * &img1d,QMap
 
 }
 
-QMap<V3DLONG,QList<Node>> cluster2newroot(QMap<V3DLONG,QList<V3DLONG>> covered,QMultiMap<V3DLONG,Node> cluster){
-    QMap<V3DLONG,QList<Node>> result;
-    for(QMap<V3DLONG,QList<V3DLONG>>::iterator iter =covered.begin(); iter != covered.end(); iter++){
+QMap<V3DLONG,QList<Node> > cluster2newroot(QMap<V3DLONG,QList<V3DLONG> > covered,QMultiMap<V3DLONG,Node> cluster){
+    QMap<V3DLONG,QList<Node> > result;
+    for(QMap<V3DLONG,QList<V3DLONG> >::iterator iter =covered.begin(); iter != covered.end(); iter++){
         QList<V3DLONG> subcovered=iter.value();
         if(subcovered.size()==0&&!(node_afterMerge.contains(iter.key())))
             continue;
