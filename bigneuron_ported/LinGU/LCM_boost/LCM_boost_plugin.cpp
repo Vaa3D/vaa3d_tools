@@ -246,6 +246,14 @@ bool LoadImageAndSWCPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	}
 
 
+	if (func_name == tr("Batch_Evaluate_BigNeuron_GT"))
+	{
+
+        return   Batch_Evaluate_BigNeuron(callback, input, output);
+
+	}
+
+
 
 
 //    if (func_name == tr("BatchTest1"))

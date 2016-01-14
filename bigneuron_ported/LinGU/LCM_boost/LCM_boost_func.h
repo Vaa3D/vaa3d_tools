@@ -465,5 +465,11 @@ bool PreProcess_Dataset(V3DPluginCallback2 & callback, char * infile, char * out
 int generate_confidence_map(V3DPluginCallback2 & callback, char *infile, cv :: Mat &conf_img, int base_swc);
 
 
+bool Batch_Evaluate_BigNeuron(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+
+
+bool Evaluate_Dataset(V3DPluginCallback2 & callback, char * infile, char * outfile_swc, int base_line_compare,int bm1, int bm2);
+
+
 #endif
 
