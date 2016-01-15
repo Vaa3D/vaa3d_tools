@@ -221,6 +221,21 @@ function write_neuron_tracing_command {
   if [ $METHOD == "33" -o $METHOD == "-1" ]; then
     echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;mv ${inimgfileTracing}_vn2_app2_time.log ${inimgfileTracing}_app2new3_time.log;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
   fi;
+
+#LCM_boost_2
+
+  if [ $METHOD == "34" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x LCM_boost -f LCM_boost_2 -i $inimgfileTracing -o ${inimgfileTracing}_LCMboost_2.swc ;chmod -R 777 $inimgfileTracing*_LCMboost_2.swc;mv  $inimgfileTracing*_LCMboost_2.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+
+#LCM_boost_3
+
+  if [ $METHOD == "35" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x LCM_boost -f LCM_boost_3 -i $inimgfileTracing -o ${inimgfileTracing}_LCMboost_3.swc ;chmod -R 777 $inimgfileTracing*_LCMboost_3.swc;mv  $inimgfileTracing*_LCMboost_3.swc $finalfileFolder" >> $outputScript;
+  fi;
+
+
 }
 
 if [ ! $# -ge 1 ]; then
