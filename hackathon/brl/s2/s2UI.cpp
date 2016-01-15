@@ -49,10 +49,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startPosMonButton,3,0);
     // add fields with data...  currently hardcoding the number of parameters...
     for (int jj=0; jj<=7; jj++){
-    QLabel * labeli = new QLabel(tr("test"));
-    labeli->setText(QString::number(jj));
-    labeli->setObjectName(QString::number(jj));
-    mainLayout->addWidget(labeli,jj+4,0,1,4);
+        QLabel * labeli = new QLabel(tr("test"));
+        labeli->setText(QString::number(jj));
+        labeli->setObjectName(QString::number(jj));
+        mainLayout->addWidget(labeli,jj+4,0,1,4);
     }
 
 
@@ -67,68 +67,70 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 void S2UI::startS2()
 {
-     myController.show();
-     myPosMon.show();
-     myPosMon.setWindowTitle(tr("posMon"));
+    myController.show();
+    myPosMon.show();
+    myPosMon.setWindowTitle(tr("posMon"));
 }
 
 void S2UI::startScan()
 {
-lastFile=getFileString();
-waitingForFile = true;
+    lastFile=getFileString();
+    waitingForFile = true;
 }
 
 
 void S2UI::loadScan(){
- //myController.getROIData(); // this should really be a signal to myController,
-                            // not an explicit call
+    //myController.getROIData(); // this should really be a signal to myController,
+    // not an explicit call
 
-    v3dhandle newwin = cb->newImageWindow();
-    QString latestString = getFileString();
-    //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
-
-
-    Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
+    //QString latestString = getFileString();
+    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
-    QDir imageDir =  imageFileInfo.dir();
-    QStringList filterList;
-    filterList.append(QString("*Ch2*.tif"));
-    imageDir.setNameFilters(filterList);
-    QStringList fileList = imageDir.entryList();
+    if (imageFileInfo.isReadable()){
+        v3dhandle newwin = cb->newImageWindow();
+        Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
+        QDir imageDir =  imageFileInfo.dir();
+        QStringList filterList;
+        filterList.append(QString("*Ch2*.tif"));
+        imageDir.setNameFilters(filterList);
+        QStringList fileList = imageDir.entryList();
 
-    //get the parent dir and the list of ch1....ome.tif files
-    //use this to id the number of images in the stack (in one channel?!)
-    long x = pNewImage->getXDim();
-    long y = pNewImage->getYDim();
-    long nFrames = fileList.length();
-    long pBytes = pNewImage->getUnitBytes();
+        //get the parent dir and the list of ch1....ome.tif files
+        //use this to id the number of images in the stack (in one channel?!)
+        long x = pNewImage->getXDim();
+        long y = pNewImage->getYDim();
+        long nFrames = fileList.length();
+        long pBytes = pNewImage->getUnitBytes();
 
 
 
-    V3DLONG tunits = x*y*nFrames*pBytes;
-    unsigned char * total1dData = new unsigned char [tunits];
-long totalImageIndex = 0;
-    for (int f=0; f<nFrames; f++){
-qDebug()<<fileList[f];
-        Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-        if (pNewImage->valid()){
-       unsigned char * data1d = 0;
-       data1d = new unsigned char [x*y*pBytes];
-       pNewImage->setNewRawDataPointer(data1d);
-        for (long i = 0; i< (x*y*pBytes); i++){
-            total1dData[totalImageIndex]= data1d[i];
-                totalImageIndex++;
+        V3DLONG tunits = x*y*nFrames*pBytes;
+        unsigned char * total1dData = new unsigned char [tunits];
+        long totalImageIndex = 0;
+        for (int f=0; f<nFrames; f++){
+            qDebug()<<fileList[f];
+            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+            if (pNewImage->valid()){
+                unsigned char * data1d = 0;
+                data1d = new unsigned char [x*y*pBytes];
+                pNewImage->setNewRawDataPointer(data1d);
+                for (long i = 0; i< (x*y*pBytes); i++){
+                    total1dData[totalImageIndex]= data1d[i];
+                    totalImageIndex++;
+                }
+            }else{
+                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+            }
         }
-        }else{
-            qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
-        }
+        Image4DSimple  total4DImage;
+        total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        cb->setImage(newwin, &total4DImage);
+        cb->setImageName(newwin,QString("test"));
+        cb->updateImageWindow(newwin);
+
+    }else{
+        qDebug()<<"invalid image";
     }
-    Image4DSimple  total4DImage;
-    total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-    cb->setImage(newwin, &total4DImage);
-     cb->setImageName(newwin,QString("test"));
-     cb->updateImageWindow(newwin);
-
 }
 
 void S2UI::displayScan(){ // this will listen for a signal from myController
@@ -159,26 +161,26 @@ void S2UI::posMonButtonClicked(){
 
 }
 void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
-for (int i: currentParameterMap.keys()){
-    QString parameterStringi = currentParameterMap[i].getParameterName();
-    float parameterValuei = currentParameterMap[i].getCurrentValue();
-    QString iString = QString::number(i);
-    if (currentParameterMap[i].getExpectedType().contains("string")){
-    parameterStringi.append(" = ").append(currentParameterMap[i].getCurrentString());
+    for (int i: currentParameterMap.keys()){
+        QString parameterStringi = currentParameterMap[i].getParameterName();
+        float parameterValuei = currentParameterMap[i].getCurrentValue();
+        QString iString = QString::number(i);
+        if (currentParameterMap[i].getExpectedType().contains("string")){
+            parameterStringi.append(" = ").append(currentParameterMap[i].getCurrentString());
+        }
+        if (currentParameterMap[i].getExpectedType().contains("float")){
+            parameterStringi.append(" = ").append(QString::number(parameterValuei));
+        }
+        if (currentParameterMap[i].getExpectedType().contains("list")){
+            QString fString = currentParameterMap[i].getCurrentString().split(".xml").first();
+            parameterStringi.append(" = ").append(fString);
+            updateFileString(fString);
+        }
+        QLabel* item = this->findChild<QLabel*>( iString);
+        if (item){
+            item->setText(parameterStringi);
+        }
     }
-    if (currentParameterMap[i].getExpectedType().contains("float")){
-    parameterStringi.append(" = ").append(QString::number(parameterValuei));
-    }
-    if (currentParameterMap[i].getExpectedType().contains("list")){
-    QString fString = currentParameterMap[i].getCurrentString().split(".xml").first();
-    parameterStringi.append(" = ").append(fString);
-    updateFileString(fString);
-    }
-    QLabel* item = this->findChild<QLabel*>( iString);
-    if (item){
-        item->setText(parameterStringi);
-    }
-}
 
 }
 
@@ -188,14 +190,13 @@ void S2UI::updateString(QString broadcastedString){
 
 void S2UI::updateFileString(QString inputString){
     fileString = inputString;
-
-    fileString.replace("\\AIBSDATA","\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
-    qDebug()<<fileString;
+    fileString.replace("Z:\\","\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
     if ((!QString::compare(fileString, lastFile))& (waitingForFile)){
         waitingForFile = false;
         loadScan();
-
+        qDebug()<<fileString;
     }
+    lastFile = fileString;
 }
 
 QString S2UI::getFileString(){

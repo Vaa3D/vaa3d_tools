@@ -57,7 +57,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     QString ipAddress;
     ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
     int portnumber= 1236;
-    hostLineEdit = new QLineEdit("10.128.50.123");
+    hostLineEdit = new QLineEdit("10.128.50.132");
     portLineEdit = new QLineEdit("1236");
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
     cmdLineEdit = new QLineEdit;
@@ -143,6 +143,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
         statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
+    enablesendCommandButton();
     //! [5]
 }
 
@@ -178,8 +179,12 @@ void S2Controller::startScan(){
 
 void S2Controller::connectToS2()
 {
+    if ( hostLineEdit->text().contains("local")){
+        tcpSocket->connectToHost(QHostAddress::LocalHost, portLineEdit->text().toInt());
+    }else{
     tcpSocket->connectToHost(hostLineEdit->text(),
                              portLineEdit->text().toInt());
+    }
 }
 
 void S2Controller::sendCommand()
@@ -191,7 +196,7 @@ void S2Controller::sendAndReceive(QString inputString){
     if (!okToSend){return;}
     okToSend = false;
     if (cleanAndSend(inputString)){
-        qDebug()<<"sent "<<inputString;
+      //  qDebug()<<"sent "<<inputString;
     }
 
 }
@@ -230,7 +235,8 @@ void S2Controller::checkForMessage(){
 
         // if DONE, emit a signal to processMessage
         emit messageIsComplete();
-        qDebug()<<stringMessage;}
+       // qDebug()<<stringMessage;
+    }
     // DO NOT unblock commands yet!
 
 }
