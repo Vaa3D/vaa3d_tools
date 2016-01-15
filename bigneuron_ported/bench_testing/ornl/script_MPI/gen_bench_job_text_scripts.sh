@@ -206,21 +206,21 @@ function write_neuron_tracing_command {
 
 #APP2_new1
 
- # if [ $METHOD == "30" -o $METHOD == "-1" ]; then
- #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new1.swc  -p NULL 0 AUTO 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new1.swc;mv  $inimgfileTracing*_app2new1.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
- # fi;
+  if [ $METHOD == "31" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new1.swc  -p NULL 0 AUTO 1 1 1 1 5 0 0 0;mv ${inimgfileTracing}_vn2_app2_time.log ${inimgfileTracing}_app2new1_time.log;chmod -R 777 $inimgfileTracing*_app2new1.swc;mv  $inimgfileTracing*_app2new1.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+  fi;
 
 #APP2_new2
 
- # if [ $METHOD == "31" -o $METHOD == "-1" ]; then
- #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new2.swc  -p NULL 0 AUTO 1 1 0 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new2.swc;mv  $inimgfileTracing*_app2new2.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
- # fi;
+  if [ $METHOD == "32" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new2.swc  -p NULL 0 AUTO 1 1 0 1 5 0 0 0;mv ${inimgfileTracing}_vn2_app2_time.log ${inimgfileTracing}_app2new2_time.log;chmod -R 777 $inimgfileTracing*_app2new2.swc;mv  $inimgfileTracing*_app2new2.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+  fi;
 
 #APP2_new3
 
- # if [ $METHOD == "32" -o $METHOD == "-1" ]; then
- #   echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
- # fi;
+  if [ $METHOD == "33" -o $METHOD == "-1" ]; then
+    echo "./start_vaa3d.sh -x vn2 -f app2 -i $inimgfileTracing -o ${inimgfileTracing}_app2new3.swc  -p NULL 0 10 1 1 1 1 5 0 0 0;mv ${inimgfileTracing}_vn2_app2_time.log ${inimgfileTracing}_app2new3_time.log;chmod -R 777 $inimgfileTracing*_app2new3.swc;mv  $inimgfileTracing*_app2new3.swc $finalfileFolder;rm  $inimgfileTracing*_ini.swc" >> $outputScript;
+  fi;
 }
 
 if [ ! $# -ge 1 ]; then
