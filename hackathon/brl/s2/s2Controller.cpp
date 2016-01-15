@@ -264,7 +264,11 @@ void S2Controller::messageHandler(QString messageH){
     // just be updating text in this object and the calling UI
         myS2Data.messageString = messageH;
         emit newBroadcast(messageH);
+        if (messageH.length() <20){
         statusLabel->setText(messageH);
+        }else{
+            statusLabel->setText(QString("long message!"));
+        }
 
 }
 

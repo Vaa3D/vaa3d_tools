@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QTcpSocket>
+#include <QDir>
 #include <v3d_interface.h>
 #include "s2Controller.h"
 QT_BEGIN_NAMESPACE
@@ -41,7 +42,10 @@ private slots:
     void posMonButtonClicked();
     void updateS2Data(  QMap<int, S2Parameter> currentParameterMap);
     void updateString(QString broadcastedString);
+    void updateFileString(QString inputString);
+    QString getFileString();
 private:
+    V3DPluginCallback2 * cb;
     QLabel *s2Label;
     //QLabel *labeli;
     QGridLayout *mainLayout;
@@ -55,6 +59,9 @@ private:
     S2Controller myController;
     S2Controller myPosMon;
     bool posMonStatus = false;
+    QString fileString ;
+    QString lastFile;
+    bool waitingForFile = false;
 };
 //! [0]
 
