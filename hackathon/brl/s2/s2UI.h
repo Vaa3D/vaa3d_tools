@@ -62,6 +62,13 @@ private:
     QString fileString ;
     QString lastFile;
     bool waitingForFile = false;
+    QGroupBox *createROIControls();
+    QGroupBox *createS2Monitors();
+    QDialogButtonBox *createButtonBox1();
+    void hookUpSignalsAndSlots();
+    QMap<int, S2Parameter> uiS2ParameterMap;
+    void checkParameters(QMap<int, S2Parameter> currentParameterMap);
+
 };
 //! [0]
 

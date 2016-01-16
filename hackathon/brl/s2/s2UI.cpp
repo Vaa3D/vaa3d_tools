@@ -15,15 +15,25 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     cb = &callback;
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("01b");
-    startS2PushButton = new QPushButton(tr("Start smartScope2"));
-    startScanPushButton = new QPushButton(tr("start scan"));
-    loadScanPushButton = new QPushButton(tr("load last scan"));
     startPosMonButton = new QPushButton(tr("start monitor"));
-    buttonBox1 = new QDialogButtonBox;
-    buttonBox1->addButton(startS2PushButton, QDialogButtonBox::ActionRole);
-    buttonBox1->addButton(startScanPushButton, QDialogButtonBox::RejectRole);
-    buttonBox1->addButton(loadScanPushButton, QDialogButtonBox::RejectRole);
 
+
+    mainLayout = new QGridLayout();
+    mainLayout->addWidget(s2Label, 0, 0);
+    mainLayout->addWidget(s2LineEdit, 0, 1);
+    mainLayout->addWidget(createButtonBox1(),1,0,2,4);
+    mainLayout->addWidget(startPosMonButton,3,0);
+    mainLayout->addWidget(createS2Monitors(), 4,0, 7, 4);
+    mainLayout->addWidget(createROIControls(), 0,5, 4,4);
+    hookUpSignalsAndSlots();
+    setLayout(mainLayout);
+    setWindowTitle(tr("smartScope2 Interface"));
+
+
+
+}
+
+void S2UI::hookUpSignalsAndSlots(){
     connect(startS2PushButton, SIGNAL(clicked()), this, SLOT(startS2()));
     connect(startScanPushButton, SIGNAL(clicked()), &myController, SLOT(startScan()));
     connect(loadScanPushButton, SIGNAL(clicked()), this, SLOT(loadScan()));
@@ -34,35 +44,87 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     connect(&myPosMon, SIGNAL(newS2Parameter(QMap<int,S2Parameter>)), this, SLOT(updateS2Data(QMap<int,S2Parameter>)));
     connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
     connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
+}
 
-    v3dhandle curwin = callback.currentImageWindow();
-    /*if (!curwin)
-    {
-        v3d_msg("Please open an image.");
-        return;
-    }*/
+QDialogButtonBox *S2UI::createButtonBox1(){
+    startS2PushButton = new QPushButton(tr("Start smartScope2"));
+    startScanPushButton = new QPushButton(tr("start scan"));
+    loadScanPushButton = new QPushButton(tr("load last scan"));
+    buttonBox1 = new QDialogButtonBox;
+    buttonBox1->addButton(startS2PushButton, QDialogButtonBox::ActionRole);
+    buttonBox1->addButton(startScanPushButton, QDialogButtonBox::RejectRole);
+    buttonBox1->addButton(loadScanPushButton, QDialogButtonBox::RejectRole);
+    return buttonBox1;
+}
 
-    mainLayout = new QGridLayout();
-    mainLayout->addWidget(s2Label, 0, 0);
-    mainLayout->addWidget(s2LineEdit, 0, 1);
-    mainLayout->addWidget(buttonBox1,1,0,2,4);
-    mainLayout->addWidget(startPosMonButton,3,0);
+QGroupBox *S2UI::createS2Monitors(){
     // add fields with data...  currently hardcoding the number of parameters...
-    for (int jj=0; jj<=7; jj++){
+    QGroupBox *gMonBox = new QGroupBox(tr("&smartScope Monitor"));
+
+    QVBoxLayout *vbMon = new QVBoxLayout;
+
+    for (int jj=0; jj<=9; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
-        mainLayout->addWidget(labeli,jj+4,0,1,4);
+        vbMon->addWidget(labeli);
     }
-
-
-
-    setLayout(mainLayout);
-    setWindowTitle(tr("smartScope2 Interface"));
-
-
-
+    vbMon->addStretch(1);
+    gMonBox->setLayout(vbMon);
+    return gMonBox;
 }
+
+QGroupBox *S2UI::createROIControls(){
+    QGroupBox *gROIBox = new QGroupBox(tr("&ROI Controls"));
+    gROIBox->setCheckable(true);
+    gROIBox->setChecked(true);
+    QLabel *roiXLabel = new QLabel(tr("ROI x ="));
+    QLineEdit *roiXEdit = new QLineEdit("0.0");
+    roiXLabel->setBuddy(roiXEdit);
+    roiXEdit->setObjectName("roiX");
+    QLabel *roiYLabel = new QLabel(tr("ROI y ="));
+    QLineEdit *roiYEdit = new QLineEdit("0.0");
+    roiYLabel->setBuddy(roiYEdit);
+    roiYEdit->setObjectName("roiY");
+
+    QLabel *roiZLabel = new QLabel(tr("ROI z ="));
+    QLineEdit *roiZEdit = new QLineEdit("0.0");
+    roiZLabel->setBuddy(roiZEdit);
+    roiZEdit->setObjectName("roiZ");
+
+    QLabel *roiXWLabel = new QLabel(tr("size ="));
+    QLineEdit *roiXWEdit = new QLineEdit("0.0");
+    roiXWLabel->setBuddy(roiXWEdit);
+    roiXWEdit->setObjectName("roiXW");
+    QLabel *roiYWLabel = new QLabel(tr(" size ="));
+    QLineEdit *roiYWEdit = new QLineEdit("0.0");
+    roiYWLabel->setBuddy(roiYWEdit);
+    roiYWEdit->setObjectName("roiYW");
+    QLabel  *roiZWLabel = new QLabel(tr("size ="));
+    QLineEdit *roiZWEdit = new QLineEdit("0.0");
+    roiZWLabel->setBuddy(roiZWEdit);
+    roiZWEdit->setObjectName("roiZW");
+
+
+
+    QGridLayout *glROI = new QGridLayout;
+    glROI->addWidget(roiXLabel, 1, 0);
+    glROI->addWidget(roiXEdit, 1, 1);
+    glROI->addWidget(roiXWLabel, 1, 2);
+    glROI->addWidget(roiXWEdit, 1, 3);
+    glROI->addWidget(roiYLabel, 2, 0);
+    glROI->addWidget(roiYEdit, 2, 1);
+    glROI->addWidget(roiYWLabel, 2, 2);
+    glROI->addWidget(roiYWEdit, 2, 3);
+    glROI->addWidget(roiZLabel, 3, 0);
+    glROI->addWidget(roiZEdit, 3, 1);
+    glROI->addWidget(roiZWLabel, 3, 2);
+    glROI->addWidget(roiZWEdit, 3, 3);
+
+    gROIBox->setLayout(glROI);
+    return gROIBox;
+}
+
 
 
 void S2UI::startS2()
@@ -176,15 +238,29 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
             parameterStringi.append(" = ").append(fString);
             updateFileString(fString);
         }
+
         QLabel* item = this->findChild<QLabel*>( iString);
         if (item){
             item->setText(parameterStringi);
         }
+
+
     }
+    checkParameters(currentParameterMap);
 
 }
 
-
+void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
+ for (int i: currentParameterMap.keys()){
+     if (currentParameterMap[i].getExpectedType().contains("float")){
+         if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
+            uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
+            if (ii==1){
+        roiXLabel
+            }
+     }
+ }
+}
 void S2UI::updateString(QString broadcastedString){
 }
 

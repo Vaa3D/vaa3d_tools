@@ -140,6 +140,7 @@ public slots:
     void stopPosMon();
     bool getPosMon();
     void startScan();
+    void closeEvent(QCloseEvent *event);
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();

@@ -71,7 +71,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     sendCommandButton->setDefault(true);
     sendCommandButton->setEnabled(false);
     connectButton = new QPushButton(tr("connect to PrairieView"));
-    connectButton->setEnabled(false);
+    connectButton->setEnabled(true);
 
     quitButton = new QPushButton(tr("Quit"));
     getReplyButton = new QPushButton(tr("get reply"));
@@ -166,7 +166,9 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ;
     s2ParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ;
     s2ParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions",0.0, "", "list"));
-
+    s2ParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis"));
+    s2ParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis"));
+    //s2ParameterMap.insert(10,S2Parameter("zStepSize", "-gts "))
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
@@ -219,10 +221,14 @@ void S2Controller::sendX()
 void S2Controller::cleanUp()
 {
     tcpSocket->close();
+    cmdLineEdit->setText("");
     close();
 }
 
-
+void S2Controller::closeEvent(QCloseEvent *event){
+    tcpSocket->close();
+    cmdLineEdit->setText("");
+}
 
 
 void S2Controller::checkForMessage(){
