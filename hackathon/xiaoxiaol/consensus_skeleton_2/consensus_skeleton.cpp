@@ -170,7 +170,57 @@ QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons)
     return neuron_id_table;
 }
 
+
+
 void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
+                    int imageCount, V3DPluginCallback2 & callback)
+{
+    NeuronSWC *p_cur = 0;
+    double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
+    V3DLONG pagesz = sx*sy;
+    V3DLONG tol_sz = pagesz*sz;
+    for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
+    {
+        V3DLONG i,j,k;
+        p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
+        xs = p_cur->x;
+        ys = p_cur->y;
+        zs = p_cur->z;
+        rs = p_cur->r;
+
+        double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
+
+        ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sx-1));
+        ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sx-1));
+        if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
+
+        bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sy-1));
+        bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sy-1));
+        if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
+
+        ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz-1));
+        ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
+        if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
+
+        //mark all voxels close to the swc node(s)
+        for (k = ballz0; k <= ballz1; k++){
+            for (j = bally0; j <= bally1; j++){
+                for (i = ballx0; i <= ballx1; i++){
+                    V3DLONG ind = (k)*pagesz + (j)*sx + i;
+                    ind = MIN(ind,tol_sz);
+                    ind = MAX(ind, 0);
+                    if (pImMask[ind]<=imageCount) {
+                        pImMask[ind] +=1;}
+
+                }
+            }
+        }
+   }
+}
+
+
+
+void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
                     int imageCount, V3DPluginCallback2 & callback)
 {
     NeuronSWC *p_cur = 0;
@@ -257,10 +307,11 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
         double yIncrement = double(dy) / (steps*2);
         double zIncrement = double(dz) / (steps*2);
 
+        if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
         V3DLONG idex1=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
         idex1 = MIN(idex1,tol_sz);
         idex1 = MAX(idex1, 0);
-        if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+
          pImMask[idex1] += 1;
 
         for (int i = 0; i <= steps; i++)
@@ -272,12 +323,11 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
             x = ( x > sx )? sx : x;
             y = ( y > sy )? sy : y;
             z = ( z > sz )? sz : z;
-
-            V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-            idex = MIN(idex,tol_sz);
-            idex = MAX(idex, 0);
-            if (pImMask[idex]> imageCount) continue;
             if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+            V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
+
+            if (pImMask[idex]> imageCount) continue;
+
             pImMask[idex] += 1;
 
         }
@@ -332,11 +382,11 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
                         double normsce = sqrt((xe-xc)*(xe-xc)+(ye-yc)*(ye-yc)+(ze-zc)*(ze-zc));
                         rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
                     }
-                    V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
-                    ind1 = MIN(ind1,tol_sz);
-                    ind1 = MAX(ind1, 0);
-                    if (pImMask[ind1]>imageCount) continue;
                     if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
+                    V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
+
+                    if (pImMask[ind1]>imageCount) continue;
+
                     if (dist <= rr || dist<=1)
                     {
                         pImMask[ind1] += 1;
@@ -363,7 +413,7 @@ bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallba
 
 
     V3DLONG  tol_sz = sz_x * sz_y * sz_z;
-    cout << "image size = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+    cout << "image size = " << tol_sz<<": " <<sz_x<<" x "<<sz_y<<" x "<<sz_z<< endl;
 
     unsigned char* pImMask = 0;
     pImMask = new unsigned char [tol_sz];
@@ -554,7 +604,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     }
 
 
-    if (method_code == 0 ){
+    if (method_code == 2 ){
         long rootnode =100;
         printf("(3). computing max-spanning tree.\n");
 

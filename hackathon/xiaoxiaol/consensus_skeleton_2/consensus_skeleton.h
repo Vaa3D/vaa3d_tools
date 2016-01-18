@@ -17,6 +17,9 @@ QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
 void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
                     double origin_x, double origin_y,double origin_z,
                     int imageCount, V3DPluginCallback2 & callback);
+void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
+                    double origin_x, double origin_y,double origin_z,
+                    int imageCount, V3DPluginCallback2 & callback);
 
 bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallback2 & callback);
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,

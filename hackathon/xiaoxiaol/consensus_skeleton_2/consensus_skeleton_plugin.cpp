@@ -44,26 +44,30 @@ void ConsSkelPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 
 bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("consensus_swc"))
-	{
-        return consensus_swc_func(input, output, callback);
-	}
-    if (func_name == tr("median_swc"))
+  if (func_name == tr("consensus_swc"))
     {
-        median_swc_func(input, output);
+    return consensus_swc_func(input, output, callback);
     }
-    if (func_name == tr("average_node_position"))
+
+  if (func_name == tr("median_swc"))
     {
-        average_node_position_func(input, output);
-    }
-    if (func_name == tr("vote_map"))
-    {
-        vote_map_func(input, output, callback);
-    }
-    else
-	{
-		printHelp();
-	}
+    median_swc_func(input, output);
     return true;
+    }
+
+  if (func_name == tr("average_node_position"))
+    {
+    average_node_position_func(input, output);
+    return true;
+    }
+
+  if (func_name == tr("vote_map"))
+    {
+    vote_map_func(input, output, callback);
+    return true;
+    }
+
+  printHelp();
+  return true;
 }
 
