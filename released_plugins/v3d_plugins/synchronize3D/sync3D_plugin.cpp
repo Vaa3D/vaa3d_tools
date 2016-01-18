@@ -440,28 +440,14 @@ void MyComboBox::updateList()
 
     QString lastDisplayfile = currentText();
 
-    v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
 
     QStringList items;
     int i;
 
-    for (i=0; i<cur_list_triview.size(); i++)
-        items << m_v3d->getImageName(cur_list_triview[i]);
-
     for (i=0; i<cur_list_3dviewer.count(); i++)
     {
-        QString curname = m_v3d->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
-        bool b_found=false;
-        for (int j=0; j<cur_list_triview.size(); j++)
-            if (curname==m_v3d->getImageName(cur_list_triview[j]))
-            {
-                b_found=true;
-                break;
-            }
-
-        if (!b_found)
-            items << m_v3d->getImageName(cur_list_3dviewer[i]);
+         items << m_v3d->getImageName(cur_list_3dviewer[i]);
     }
 
     //update the list now
@@ -538,13 +524,8 @@ void controlPanel::_slot_sync_onetime()
 {
     list_3dviewer = m_v3d.getListAll3DViewers();
     curwin = list_triview[combo_surface->currentIndex()];
-    if(curwin)
-    {
-        m_v3d.open3DWindow(curwin);
-        view = m_v3d.getView3DControl(curwin);
-    }
-    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
-
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());
+    v3d_msg(curname);
 
     int xRot,yRot,zRot,xShift,yShift,zShift,zoom;
     for (int i=0; i<list_3dviewer.count(); i++)
@@ -554,8 +535,8 @@ void controlPanel::_slot_sync_onetime()
             surface_win = list_3dviewer[i];
             if(surface_win)
             {
-                view = m_v3d.getView3DControl_Any3DViewer(surface_win);
-                if(view)
+                view_master = m_v3d.getView3DControl_Any3DViewer(surface_win);
+                if(view_master)
                 {
                     view_master->absoluteRotPose();
                     xRot = view_master->xRot();
@@ -578,7 +559,7 @@ void controlPanel::_slot_sync_onetime()
             V3dR_MainWindow * slave_win = list_3dviewer[i];
             if(slave_win)
             {
-                View3DControl *view_slave = m_v3d.getView3DControl_Any3DViewer(surface_win);
+                view_slave = m_v3d.getView3DControl_Any3DViewer(slave_win);
                 if(view_slave)
                 {
                     if (check_rotation->isChecked())
@@ -598,8 +579,6 @@ void controlPanel::_slot_sync_onetime()
             }
         }
     }
-
-
     return;
 }
 
