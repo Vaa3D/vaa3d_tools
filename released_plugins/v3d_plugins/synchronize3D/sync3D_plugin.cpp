@@ -17,7 +17,8 @@ void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent);
 
 
 static lookPanel *panel = 0;
-controlPanel* controlPanel::panel = 0;
+static controlPanel *ControlPanel=0;
+
 
 void finishSyncPanel()
 {
@@ -27,6 +28,16 @@ void finishSyncPanel()
         panel=0;
     }
 }
+
+void finishSyncControlPanel()
+{
+    if (ControlPanel)
+    {
+        delete ControlPanel;
+        ControlPanel=0;
+    }
+}
+
 
 QStringList sync3D::menulist() const
 {
@@ -409,20 +420,20 @@ void lookPanel::_slot_timerupdate()
 
 void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent)
 {
-    if (controlPanel::panel)
+    if (ControlPanel)
     {
-        controlPanel::panel->show();
+        ControlPanel->show();
         return;
     }
     else
     {
-        controlPanel* p = new controlPanel(v3d, parent);
-        if (p)
+        ControlPanel = new controlPanel(v3d, parent);
+        if (ControlPanel)
         {
-            p->show();
-            p->raise();
-            p->move(500,50);
-            p->activateWindow();
+            ControlPanel->show();
+            ControlPanel->raise();
+            ControlPanel->move(500,50);
+            ControlPanel->activateWindow();
         }
     }
 }
@@ -504,14 +515,14 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 
     connect(ok,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
-//    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
-//    connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
+    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
     connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
     connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
     connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
-//    m_pTimer = new QTimer(this);
-//    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
+    m_pTimer = new QTimer(this);
+    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
 }
 
 controlPanel::~controlPanel()
@@ -520,36 +531,32 @@ controlPanel::~controlPanel()
 
 }
 
+void controlPanel::reject()
+{
+    finishSyncControlPanel();
+
+}
+
 void controlPanel::_slot_sync_onetime()
 {
+    if(combo_surface->currentIndex()<0) return;
     list_3dviewer = m_v3d.getListAll3DViewers();
     curwin = list_triview[combo_surface->currentIndex()];
     QString curname = combo_surface->itemText(combo_surface->currentIndex());
-    v3d_msg(curname);
-
     int xRot,yRot,zRot,xShift,yShift,zShift,zoom;
-    for (int i=0; i<list_3dviewer.count(); i++)
-    {
-        if(curname == m_v3d.getImageName(list_3dviewer[i]))
-        {
-            surface_win = list_3dviewer[i];
-            if(surface_win)
-            {
-                view_master = m_v3d.getView3DControl_Any3DViewer(surface_win);
-                if(view_master)
-                {
-                    view_master->absoluteRotPose();
-                    xRot = view_master->xRot();
-                    yRot = view_master->yRot();
-                    zRot = view_master->zRot();
 
-                    xShift = view_master->xShift();
-                    yShift = view_master->yShift();
-                    zShift = view_master->zShift();
-                    zoom = view_master->zoom();
-                }
-            }
-        }
+    view_master = m_v3d.getView3DControl_Any3DViewer(list_3dviewer[combo_surface->currentIndex()]);
+    if(view_master)
+    {
+        view_master->absoluteRotPose();
+        xRot = view_master->xRot();
+        yRot = view_master->yRot();
+        zRot = view_master->zRot();
+
+        xShift = view_master->xShift();
+        yShift = view_master->yShift();
+        zShift = view_master->zShift();
+        zoom = view_master->zoom();
     }
 
     for (int i=0; i<list_3dviewer.count(); i++)
@@ -582,3 +589,116 @@ void controlPanel::_slot_sync_onetime()
     return;
 }
 
+void controlPanel::resetSyncAutoState()
+{
+    if (m_pTimer)
+        m_pTimer->stop();
+    b_autoON = false;
+    if (syncAuto)
+        syncAuto->setText("Start Sync (real time)");
+    if (combo_surface) combo_surface->setEnabled(true);
+}
+
+void controlPanel::_slot_syncAuto()
+{
+
+    if(combo_surface->currentIndex()<0) return;
+
+    b_autoON = !b_autoON; // a simple bi-state switch
+
+    if (b_autoON)
+    {
+        syncAuto->setText("Stop Sync (real time)");
+        xRot_past = -1;
+        yRot_past = -1;
+        zRot_past = -1;
+        xShift_past = -1;
+        yShift_past = -1;
+        zShift_past = -1;
+        zoom_past = -1;
+
+        view_master = m_v3d.getView3DControl_Any3DViewer(list_3dviewer[combo_surface->currentIndex()]);
+        combo_surface->setEnabled( false );
+        long interval = 0.2 * 1000;
+        m_pTimer->start(interval);
+    }
+    else
+    {
+        resetSyncAutoState();
+        return;
+    }
+    return;
+}
+
+void controlPanel::_slot_timerupdate()
+{
+    list_3dviewer = m_v3d.getListAll3DViewers();
+    curwin = list_triview[combo_surface->currentIndex()];
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());
+    int xRot,yRot,zRot,xShift,yShift,zShift,zoom;
+
+    view_master = m_v3d.getView3DControl_Any3DViewer(list_3dviewer[combo_surface->currentIndex()]);
+    if(view_master)
+    {
+        view_master->absoluteRotPose();
+
+        xRot = view_master->xRot();
+        yRot = view_master->yRot();
+        zRot = view_master->zRot();
+
+        xShift = view_master->xShift();
+        yShift = view_master->yShift();
+        zShift = view_master->zShift();
+
+        zoom = view_master->zoom();
+    }
+
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        if(curname != m_v3d.getImageName(list_3dviewer[i]))
+        {
+            V3dR_MainWindow * slave_win = list_3dviewer[i];
+            if(slave_win)
+            {
+                view_slave = m_v3d.getView3DControl_Any3DViewer(slave_win);
+                if(view_slave)
+                {
+                    if (check_rotation->isChecked())
+                    {
+
+                        if (xRot!=xRot_past || yRot!=yRot_past || zRot!=zRot_past)
+                        {
+                            view_slave->resetRotation();
+                            view_slave->doAbsoluteRot(xRot,yRot,zRot);
+                        }
+                    }
+                    if (check_shift->isChecked())
+                    {
+
+                        if (xShift!=xShift_past || yShift!=yShift_past || zShift!=zShift_past)
+                        {
+                            view_slave->setXShift(xShift);
+                            view_slave->setYShift(yShift);
+                            view_slave->setZShift(zShift);
+                        }
+                    }
+                    if (check_zoom->isChecked())
+                    {
+                        if (zoom!=zoom_past)
+                        {
+                            view_slave->setZoom(zoom);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    xRot_past = xRot;
+    yRot_past = yRot;
+    zRot_past = zRot;
+    xShift_past = xShift;
+    yShift_past = yShift;
+    zShift_past = zShift;
+    zoom_past = zoom;
+}

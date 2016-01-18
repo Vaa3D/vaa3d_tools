@@ -91,8 +91,6 @@ public:
     v3dhandle curwin;
     V3dR_MainWindow *surface_win;
     View3DControl *view;
-    static controlPanel *panel;
-
 
     QList <V3dR_MainWindow *> list_3dviewer;
     v3dhandleList list_triview;
@@ -117,10 +115,10 @@ private:
     void resetSyncAutoState();
 
 private slots:
-//    void _slot_syncAuto();
+     void _slot_syncAuto();
      void _slot_sync_onetime();
-//    void _slot_timerupdate();
-//    void reject();
+     void _slot_timerupdate();
+     void reject();
 
 
 };
