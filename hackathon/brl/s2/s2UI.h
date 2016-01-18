@@ -10,6 +10,7 @@
 #include <QDir>
 #include <v3d_interface.h>
 #include "s2Controller.h"
+#include "s2plot.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -31,6 +32,7 @@ public:
     QLineEdit *s2LineEdit;
 public slots:
     void pmStatusHandler(bool pmStatus);
+
 signals:
     void startPM();
     void stopPM();
@@ -44,6 +46,8 @@ private slots:
     void updateString(QString broadcastedString);
     void updateFileString(QString inputString);
     QString getFileString();
+    void updateROIPlot(QString ignore);
+
 private:
     V3DPluginCallback2 * cb;
     QLabel *s2Label;
@@ -58,17 +62,26 @@ private:
     QVBoxLayout *vbox;
     S2Controller myController;
     S2Controller myPosMon;
-    bool posMonStatus = false;
+    bool posMonStatus;
     QString fileString ;
     QString lastFile;
-    bool waitingForFile = false;
+    bool waitingForFile;
     QGroupBox *createROIControls();
     QGroupBox *createS2Monitors();
     QDialogButtonBox *createButtonBox1();
     void hookUpSignalsAndSlots();
     QMap<int, S2Parameter> uiS2ParameterMap;
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
-
+    QGroupBox *roiGroupBox;
+    QGroupBox *createROIMonitor();
+    QRectF roiRect;
+    QLineEdit *roiXEdit;
+    QLineEdit *roiYEdit;
+    QLineEdit *roiZEdit;
+    QGridLayout * gl;
+    QGraphicsScene * roiGS;
+    QGraphicsView * roiGV;
+    QGraphicsRectItem *newRect;
 };
 //! [0]
 

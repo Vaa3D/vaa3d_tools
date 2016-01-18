@@ -114,14 +114,14 @@ class S2Controller : public QWidget
 public:
     S2Controller(QWidget *parent = 0);
     S2Data myS2Data;
-    bool okToSend = true;
+    bool okToSend;
     QString stringMessage;
     QString message;
     QString displayMessage;
     QMap<int, S2Parameter> s2ParameterMap;
 
-    bool inPosMonMode = false;
-    bool cancelPosMon = false;
+    bool inPosMonMode;
+    bool cancelPosMon;
 public slots:
     void sendCommand();
     bool cleanAndSend(QString);
@@ -182,8 +182,8 @@ private:
     QString totalMessage;
     QString currentMessage;
     quint16 blockSize;
-    int ii = -1;
-    int maxParams = 10;//temp!
+    int ii;
+    int maxParams;//temp!
     QNetworkSession *networkSession;
 
 };

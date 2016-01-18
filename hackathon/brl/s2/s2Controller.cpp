@@ -145,6 +145,9 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     }
     enablesendCommandButton();
     //! [5]
+    ii =-1;
+    cancelPosMon = false;
+    inPosMonMode = false;
 }
 
 

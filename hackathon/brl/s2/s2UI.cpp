@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "s2Controller.h"
 #include "s2UI.h"
-
+#include "s2plot.h"
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
@@ -16,7 +16,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("01b");
     startPosMonButton = new QPushButton(tr("start monitor"));
-
+    createROIMonitor();
 
     mainLayout = new QGridLayout();
     mainLayout->addWidget(s2Label, 0, 0);
@@ -25,7 +25,11 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(createS2Monitors(), 4,0, 7, 4);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
+    mainLayout->addWidget(roiGroupBox,4,5,7,4);
+    roiGroupBox->show();
     hookUpSignalsAndSlots();
+    posMonStatus = false;
+    waitingForFile = false;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
 
@@ -44,6 +48,39 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(&myPosMon, SIGNAL(newS2Parameter(QMap<int,S2Parameter>)), this, SLOT(updateS2Data(QMap<int,S2Parameter>)));
     connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
     connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
+
+    connect(roiXEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiYEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiZEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+
+
+}
+
+
+
+QGroupBox *S2UI::createROIMonitor(){
+    roiGroupBox = new QGroupBox(tr("ROI Monitor"));
+    gl = new QGridLayout();
+    roiGS = new QGraphicsScene();
+    roiGS->setObjectName("roiGS");
+    roiGV = new QGraphicsView();
+    roiGV->setObjectName("roiGV");
+    roiGV->setScene(roiGS);
+    roiRect = QRectF(0.0, 10.2, 30.9, 12.2);
+    roiGS->addRect(roiRect);
+    newRect = roiGS->addRect(0,0,10,10);
+    roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
+    gl->addWidget(roiGV);
+
+    roiGroupBox->setLayout(gl);
+}
+
+void S2UI::updateROIPlot(QString ignore){
+    roiRect.moveLeft(roiXEdit->text().toFloat());
+    roiRect.setY(roiYEdit->text().toFloat());
+    qDebug()<<"y="<<roiYEdit->text().toFloat();
+    roiGS->removeItem(newRect);
+    newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),10,10);
 }
 
 QDialogButtonBox *S2UI::createButtonBox1(){
@@ -79,16 +116,16 @@ QGroupBox *S2UI::createROIControls(){
     gROIBox->setCheckable(true);
     gROIBox->setChecked(true);
     QLabel *roiXLabel = new QLabel(tr("ROI x ="));
-    QLineEdit *roiXEdit = new QLineEdit("0.0");
+    roiXEdit = new QLineEdit("0.0");
     roiXLabel->setBuddy(roiXEdit);
     roiXEdit->setObjectName("roiX");
     QLabel *roiYLabel = new QLabel(tr("ROI y ="));
-    QLineEdit *roiYEdit = new QLineEdit("0.0");
+    roiYEdit = new QLineEdit("0.0");
     roiYLabel->setBuddy(roiYEdit);
     roiYEdit->setObjectName("roiY");
 
     QLabel *roiZLabel = new QLabel(tr("ROI z ="));
-    QLineEdit *roiZEdit = new QLineEdit("0.0");
+    roiZEdit = new QLineEdit("0.0");
     roiZLabel->setBuddy(roiZEdit);
     roiZEdit->setObjectName("roiZ");
 
@@ -223,7 +260,7 @@ void S2UI::posMonButtonClicked(){
 
 }
 void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
-    for (int i: currentParameterMap.keys()){
+    for (int i= currentParameterMap.keys()[0]; i < currentParameterMap.keys().length(); i++){
         QString parameterStringi = currentParameterMap[i].getParameterName();
         float parameterValuei = currentParameterMap[i].getCurrentValue();
         QString iString = QString::number(i);
@@ -251,12 +288,12 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 }
 
 void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
- for (int i: currentParameterMap.keys()){
+ for (int i= currentParameterMap.keys()[0]; i < currentParameterMap.keys().length(); i++){
      if (currentParameterMap[i].getExpectedType().contains("float")){
          if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
             uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if (ii==1){
-        roiXLabel
+            if (i==1){
+        //roiXLabel;
             }
      }
  }
@@ -266,7 +303,7 @@ void S2UI::updateString(QString broadcastedString){
 
 void S2UI::updateFileString(QString inputString){
     fileString = inputString;
-    fileString.replace("Z:\\","\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
+    fileString.replace("Z:\\","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
     if ((!QString::compare(fileString, lastFile))& (waitingForFile)){
         waitingForFile = false;
         loadScan();
