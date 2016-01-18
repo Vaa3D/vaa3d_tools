@@ -66,4 +66,63 @@ private slots:
     void reject();
 };
 
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+    void enterEvent(QEvent * event);
+
+public slots:
+    void updateList();
+};
+class controlPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
+
+public:
+    v3dhandle curwin;
+    V3dR_MainWindow *surface_win;
+    View3DControl *view;
+    static controlPanel *panel;
+
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+    v3dhandleList list_triview;
+    QGridLayout *gridLayout;
+    V3DPluginCallback2 & m_v3d;
+
+    MyComboBox* combo_surface;
+    QLabel* label_surface;
+    QCheckBox* check_rotation;
+    QCheckBox* check_shift;
+    QCheckBox* check_zoom;
+    QTimer *m_pTimer;
+    QPushButton* syncAuto;
+    View3DControl *view_master;
+    View3DControl *view_slave;
+    int xRot_past, yRot_past,zRot_past;
+    int xShift_past,yShift_past,zShift_past;
+    int zoom_past;
+    bool b_autoON;
+
+private:
+    void resetSyncAutoState();
+
+private slots:
+//    void _slot_syncAuto();
+     void _slot_sync_onetime();
+//    void _slot_timerupdate();
+//    void reject();
+
+
+};
+
 #endif

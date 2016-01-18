@@ -13,8 +13,12 @@
 Q_EXPORT_PLUGIN2(sync3D, sync3D)
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
+void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent);
+
 
 static lookPanel *panel = 0;
+controlPanel* controlPanel::panel = 0;
+
 void finishSyncPanel()
 {
     if (panel)
@@ -28,7 +32,8 @@ QStringList sync3D::menulist() const
 {
     return QStringList()
             <<tr("synchronize 3D viewers")
-           <<tr("about");
+            <<tr("synchronize multiple 3D viewers")
+            <<tr("about");
 }
 
 QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
@@ -38,6 +43,10 @@ void sync3D::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
     if (menu_name == tr("synchronize 3D viewers"))
     {
         SynTwoImage(callback, parent);
+    }
+    if (menu_name == tr("synchronize multiple 3D viewers"))
+    {
+        SynMulImage(callback, parent);
     }
     else
     {
@@ -396,5 +405,201 @@ void lookPanel::_slot_timerupdate()
             }
         }
     }
+}
+
+void SynMulImage(V3DPluginCallback2 &v3d, QWidget *parent)
+{
+    if (controlPanel::panel)
+    {
+        controlPanel::panel->show();
+        return;
+    }
+    else
+    {
+        controlPanel* p = new controlPanel(v3d, parent);
+        if (p)
+        {
+            p->show();
+            p->raise();
+            p->move(500,50);
+            p->activateWindow();
+        }
+    }
+}
+
+void MyComboBox::enterEvent(QEvent *e)
+{
+    updateList();
+    QComboBox::enterEvent(e);
+}
+
+void MyComboBox::updateList()
+{
+    if (!m_v3d)
+        return;
+
+    QString lastDisplayfile = currentText();
+
+    v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
+
+    QStringList items;
+    int i;
+
+    for (i=0; i<cur_list_triview.size(); i++)
+        items << m_v3d->getImageName(cur_list_triview[i]);
+
+    for (i=0; i<cur_list_3dviewer.count(); i++)
+    {
+        QString curname = m_v3d->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
+        bool b_found=false;
+        for (int j=0; j<cur_list_triview.size(); j++)
+            if (curname==m_v3d->getImageName(cur_list_triview[j]))
+            {
+                b_found=true;
+                break;
+            }
+
+        if (!b_found)
+            items << m_v3d->getImageName(cur_list_3dviewer[i]);
+    }
+
+    //update the list now
+    clear();
+    addItems(items);
+
+    int curDisplayIndex=-1; //-1 for invalid index
+    for (i=0; i<items.size(); i++)
+        if (items[i]==lastDisplayfile)
+        {
+            curDisplayIndex = i;
+            break;
+        }
+
+    if (curDisplayIndex>=0)
+        setCurrentIndex(curDisplayIndex);
+
+    //
+    update();
+
+    return;
+}
+
+
+controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
+    QDialog(parent), m_v3d(_v3d)
+{
+    //potential bugs for the following two sentences
+    list_triview = m_v3d.getImageWindowList();
+    list_3dviewer = m_v3d.getListAll3DViewers();
+
+    combo_surface = new MyComboBox(&m_v3d);
+    combo_surface->updateList();
+
+    label_surface = new QLabel(QObject::tr("Master-window: "));
+    check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
+    check_shift = new QCheckBox(); check_shift->setText(QObject::tr("Shift"));check_shift->setChecked(true);
+    check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
+    QPushButton* ok     = new QPushButton("Sync (one shot)");
+    QPushButton* cancel = new QPushButton("Close");
+    syncAuto     = new QPushButton("Start Sync (real time)");
+
+    gridLayout = new QGridLayout();
+    gridLayout->addWidget(label_surface, 1,0,1,5);
+    gridLayout->addWidget(combo_surface, 2,0,1,5);
+    gridLayout->addWidget(check_rotation, 3,0,1,1);
+    gridLayout->addWidget(check_shift,3,1,1,1);
+    gridLayout->addWidget(check_zoom, 3,2,1,1);
+    gridLayout->addWidget(ok, 4,0);
+    gridLayout->addWidget(cancel,4,6);
+    gridLayout->addWidget(syncAuto,4,1);
+    setLayout(gridLayout);
+    setWindowTitle(QString("Synchronize multiple 3D views"));
+
+
+    connect(ok,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
+//    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+//    connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
+    connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
+    connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
+    connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
+//    m_pTimer = new QTimer(this);
+//    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
+}
+
+controlPanel::~controlPanel()
+{
+     if(panel){delete panel; panel=0;}
+
+}
+
+void controlPanel::_slot_sync_onetime()
+{
+    list_3dviewer = m_v3d.getListAll3DViewers();
+    curwin = list_triview[combo_surface->currentIndex()];
+    if(curwin)
+    {
+        m_v3d.open3DWindow(curwin);
+        view = m_v3d.getView3DControl(curwin);
+    }
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
+
+
+    int xRot,yRot,zRot,xShift,yShift,zShift,zoom;
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        if(curname == m_v3d.getImageName(list_3dviewer[i]))
+        {
+            surface_win = list_3dviewer[i];
+            if(surface_win)
+            {
+                view = m_v3d.getView3DControl_Any3DViewer(surface_win);
+                if(view)
+                {
+                    view_master->absoluteRotPose();
+                    xRot = view_master->xRot();
+                    yRot = view_master->yRot();
+                    zRot = view_master->zRot();
+
+                    xShift = view_master->xShift();
+                    yShift = view_master->yShift();
+                    zShift = view_master->zShift();
+                    zoom = view_master->zoom();
+                }
+            }
+        }
+    }
+
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        if(curname != m_v3d.getImageName(list_3dviewer[i]))
+        {
+            V3dR_MainWindow * slave_win = list_3dviewer[i];
+            if(slave_win)
+            {
+                View3DControl *view_slave = m_v3d.getView3DControl_Any3DViewer(surface_win);
+                if(view_slave)
+                {
+                    if (check_rotation->isChecked())
+                    {
+                        view_slave->resetRotation();
+                        view_slave->doAbsoluteRot(xRot,yRot,zRot);
+                    }
+                    if (check_shift->isChecked())
+                    {
+                        view_slave->setXShift(xShift);
+                        view_slave->setYShift(yShift);
+                        view_slave->setZShift(zShift);
+                    }
+                    if (check_zoom->isChecked())
+                        view_slave->setZoom(zoom);
+                }
+            }
+        }
+    }
+
+
+    return;
 }
 
