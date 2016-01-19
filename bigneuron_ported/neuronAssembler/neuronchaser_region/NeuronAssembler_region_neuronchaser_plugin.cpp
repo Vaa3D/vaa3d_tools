@@ -327,10 +327,10 @@ bool NeuronAssembler_region_neuronchaser::dofunc(const QString & func_name, cons
 		P.channel = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
 		P.scal = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.perc = (paras.size() >= k+1) ? atoi(paras[k]):90; k++;
-		P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.6; k++;
-		P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):15; k++;
-		P.angSig = (paras.size() >= k+1) ? atof(paras[k]):30; k++;
-		P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):30; k++;
+        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.7; k++;
+        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):20; k++;
+        P.angSig = (paras.size() >= k+1) ? atof(paras[k]):60; k++;
+        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.Ns = (paras.size() >= k+1) ? atoi(paras[k]):5; k++;
 		P.zDist = (paras.size() >= k+1) ? atof(paras[k]):1; k++;
 		P.saveMidres = (paras.size() >= k+1) ? atoi(paras[k]):0; k++;
@@ -378,10 +378,10 @@ bool NeuronAssembler_region_neuronchaser::dofunc(const QString & func_name, cons
 		P.channel = (paras.size() >= k+1) ? atoi(paras[k]):1; k++;
 		P.scal = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.perc = (paras.size() >= k+1) ? atoi(paras[k]):90; k++;
-		P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.6; k++;
-		P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):15; k++;
-		P.angSig = (paras.size() >= k+1) ? atof(paras[k]):30; k++;
-		P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):30; k++;
+        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.7; k++;
+        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):20; k++;
+        P.angSig = (paras.size() >= k+1) ? atof(paras[k]):60; k++;
+        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.Ns = (paras.size() >= k+1) ? atoi(paras[k]):5; k++;
 		P.zDist = (paras.size() >= k+1) ? atof(paras[k]):1; k++;
 		P.saveMidres = (paras.size() >= k+1) ? atoi(paras[k]):0; k++;
@@ -615,10 +615,10 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 		strcpy(C_scal,S_scal.c_str());
 		arg_para.push_back(C_scal);
 
-		string S_perc = boost::lexical_cast<string>(P.perc);
-		char* C_perc = new char[S_perc.length() + 1];
-		strcpy(C_perc,S_perc.c_str());
-		arg_para.push_back(C_perc);
+//		string S_perc = boost::lexical_cast<string>(P.perc);
+//		char* C_perc = new char[S_perc.length() + 1];
+//		strcpy(C_perc,S_perc.c_str());
+//		arg_para.push_back(C_perc);
 
 		string S_znccTh = boost::lexical_cast<string>(P.znccTh);
 		char* C_znccTh = new char[S_znccTh.length() + 1];
@@ -1014,10 +1014,10 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 		strcpy(C_scal,S_scal.c_str());
 		arg_para.push_back(C_scal);
 
-		string S_perc = boost::lexical_cast<string>(P.perc);
-		char* C_perc = new char[S_perc.length() + 1];
-		strcpy(C_perc,S_perc.c_str());
-		arg_para.push_back(C_perc);
+//		string S_perc = boost::lexical_cast<string>(P.perc);
+//		char* C_perc = new char[S_perc.length() + 1];
+//		strcpy(C_perc,S_perc.c_str());
+//		arg_para.push_back(C_perc);
 
 		string S_znccTh = boost::lexical_cast<string>(P.znccTh);
 		char* C_znccTh = new char[S_znccTh.length() + 1];
