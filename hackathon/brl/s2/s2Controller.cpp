@@ -57,7 +57,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     QString ipAddress;
     ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
     int portnumber= 1236;
-    hostLineEdit = new QLineEdit("10.128.50.132");
+    hostLineEdit = new QLineEdit("10.128.50.123");
     portLineEdit = new QLineEdit("1236");
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
     cmdLineEdit = new QLineEdit;
@@ -143,9 +143,10 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
         statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
-    enablesendCommandButton();
+    //enablesendCommandButton();
     //! [5]
     ii =-1;
+    okToSend= true;
     cancelPosMon = false;
     inPosMonMode = false;
 }
@@ -171,7 +172,9 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions",0.0, "", "list"));
     s2ParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis"));
     s2ParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis"));
-    //s2ParameterMap.insert(10,S2Parameter("zStepSize", "-gts "))
+    s2ParameterMap.insert(10,S2Parameter("pixelsPerLine", "-gts pixelsPerLine"));
+    s2ParameterMap.insert(11,S2Parameter("opticalZoom", "-gts opticalZoom"));
+
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
@@ -182,6 +185,11 @@ void S2Controller::startScan(){
     sendAndReceive(QString("-ss"));
 }
 
+void S2Controller::centerGalvos(){
+    sendCommandButton->setEnabled(false);
+    sendAndReceive(QString("-png center"));
+}
+
 void S2Controller::connectToS2()
 {
     if ( hostLineEdit->text().contains("local")){
@@ -190,6 +198,8 @@ void S2Controller::connectToS2()
     tcpSocket->connectToHost(hostLineEdit->text(),
                              portLineEdit->text().toInt());
     }
+    qDebug()<<"tcpSocket isopen "<<tcpSocket->isOpen();
+    qDebug()<<"tcpSocket isValid"<<tcpSocket->isValid();
 }
 
 void S2Controller::sendCommand()
@@ -201,7 +211,6 @@ void S2Controller::sendAndReceive(QString inputString){
     if (!okToSend){return;}
     okToSend = false;
     if (cleanAndSend(inputString)){
-      //  qDebug()<<"sent "<<inputString;
     }
 
 }
@@ -244,7 +253,6 @@ void S2Controller::checkForMessage(){
 
         // if DONE, emit a signal to processMessage
         emit messageIsComplete();
-       // qDebug()<<stringMessage;
     }
     // DO NOT unblock commands yet!
 
@@ -295,10 +303,9 @@ s2ParameterMap[ii].setCurrentString( messageL);
 s2ParameterMap[ii].setCurrentValue(messageL.toFloat());
     // use s2ParameterMap to keep track of parameter values.
 if (inPosMonMode){
-
     ii = (ii+1) % maxParams;
     emit newS2Parameter(s2ParameterMap);
-    QTimer::singleShot(100, this, SLOT(posMon()));
+    QTimer::singleShot(50, this, SLOT(posMon()));
 }
 
 

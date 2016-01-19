@@ -141,6 +141,7 @@ public slots:
     bool getPosMon();
     void startScan();
     void closeEvent(QCloseEvent *event);
+    void centerGalvos();
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();

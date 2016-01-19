@@ -38,20 +38,27 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 }
 
 void S2UI::hookUpSignalsAndSlots(){
+    //internal communication
     connect(startS2PushButton, SIGNAL(clicked()), this, SLOT(startS2()));
-    connect(startScanPushButton, SIGNAL(clicked()), &myController, SLOT(startScan()));
     connect(loadScanPushButton, SIGNAL(clicked()), this, SLOT(loadScan()));
     connect(startPosMonButton,SIGNAL(clicked()), this, SLOT(posMonButtonClicked()));
+    connect(roiXEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiYEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiZEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+
+
+
+    // communication with myController to send commands
+    connect(startScanPushButton, SIGNAL(clicked()), &myController, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
+    connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
+
+    // communication with myPosMon to monitor parameters
     connect(&myPosMon, SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(&myPosMon, SIGNAL(pmStatus(bool)), this, SLOT(pmStatusHandler(bool)));
     connect(&myPosMon, SIGNAL(newS2Parameter(QMap<int,S2Parameter>)), this, SLOT(updateS2Data(QMap<int,S2Parameter>)));
     connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
     connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
-
-    connect(roiXEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
-    connect(roiYEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
-    connect(roiZEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
 
 
 }
@@ -66,21 +73,24 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV = new QGraphicsView();
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
-    roiRect = QRectF(0.0, 10.2, 30.9, 12.2);
+    roiRect = QRectF(-2.0, -2.2, 4.9, 4.2);
     roiGS->addRect(roiRect);
     newRect = roiGS->addRect(0,0,10,10);
-    roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
+    //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
+    roiGV->adjustSize();
     gl->addWidget(roiGV);
 
     roiGroupBox->setLayout(gl);
 }
 
 void S2UI::updateROIPlot(QString ignore){
-    roiRect.moveLeft(roiXEdit->text().toFloat());
-    roiRect.setY(roiYEdit->text().toFloat());
-    qDebug()<<"y="<<roiYEdit->text().toFloat();
+    //roiRect.moveLeft(roiXEdit->text().toFloat());
+    //roiRect.setY(roiYEdit->text().toFloat());
+    //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),10,10);
+    //newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),10,10);
+    newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,100,100);
+
 }
 
 QDialogButtonBox *S2UI::createButtonBox1(){
@@ -100,10 +110,11 @@ QGroupBox *S2UI::createS2Monitors(){
 
     QVBoxLayout *vbMon = new QVBoxLayout;
 
-    for (int jj=0; jj<=9; jj++){
+    for (int jj=0; jj<=11; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
+        labeli->setWordWrap(true);
         vbMon->addWidget(labeli);
     }
     vbMon->addStretch(1);
@@ -142,6 +153,7 @@ QGroupBox *S2UI::createROIControls(){
     roiZWLabel->setBuddy(roiZWEdit);
     roiZWEdit->setObjectName("roiZW");
 
+    centerGalvosPB = new QPushButton(tr("center galvos"));
 
 
     QGridLayout *glROI = new QGridLayout;
@@ -157,6 +169,7 @@ QGroupBox *S2UI::createROIControls(){
     glROI->addWidget(roiZEdit, 3, 1);
     glROI->addWidget(roiZWLabel, 3, 2);
     glROI->addWidget(roiZWEdit, 3, 3);
+    glROI->addWidget(centerGalvosPB, 4, 1, 1,2);
 
     gROIBox->setLayout(glROI);
     return gROIBox;
@@ -182,8 +195,8 @@ void S2UI::loadScan(){
     //myController.getROIData(); // this should really be a signal to myController,
     // not an explicit call
 
-    //QString latestString = getFileString();
-    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    QString latestString = getFileString();
+    //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -260,7 +273,11 @@ void S2UI::posMonButtonClicked(){
 
 }
 void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
-    for (int i= currentParameterMap.keys()[0]; i < currentParameterMap.keys().length(); i++){
+
+
+    int minVal = 0;
+    int maxVal = currentParameterMap.keys().length();
+   for (int i= 0; i <maxVal ; i++){
         QString parameterStringi = currentParameterMap[i].getParameterName();
         float parameterValuei = currentParameterMap[i].getCurrentValue();
         QString iString = QString::number(i);
@@ -275,25 +292,28 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
             parameterStringi.append(" = ").append(fString);
             updateFileString(fString);
         }
-
         QLabel* item = this->findChild<QLabel*>( iString);
         if (item){
-            item->setText(parameterStringi);
+            item->setText(parameterStringi.split("\\").last());
         }
 
 
     }
+
     checkParameters(currentParameterMap);
 
 }
 
 void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
- for (int i= currentParameterMap.keys()[0]; i < currentParameterMap.keys().length(); i++){
+    int minVal = 0;
+    int maxVal = currentParameterMap.keys().length();
+   for (int i= 0; i <maxVal ; i++){
      if (currentParameterMap[i].getExpectedType().contains("float")){
          if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
             uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if (i==1){
-        //roiXLabel;
+            if ((i==1)|(i==2)){
+                updateROIPlot(QString("ignore"));
+
             }
      }
  }
@@ -303,10 +323,10 @@ void S2UI::updateString(QString broadcastedString){
 
 void S2UI::updateFileString(QString inputString){
     fileString = inputString;
-    fileString.replace("Z:\\","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
+    fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
     if ((!QString::compare(fileString, lastFile))& (waitingForFile)){
         waitingForFile = false;
-        loadScan();
+        //loadScan();
         qDebug()<<fileString;
     }
     lastFile = fileString;

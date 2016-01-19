@@ -82,6 +82,7 @@ private:
     QGraphicsScene * roiGS;
     QGraphicsView * roiGV;
     QGraphicsRectItem *newRect;
+    QPushButton *centerGalvosPB ;
 };
 //! [0]
 
