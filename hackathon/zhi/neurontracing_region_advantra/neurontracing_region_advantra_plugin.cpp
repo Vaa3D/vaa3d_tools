@@ -104,7 +104,7 @@ bool neurontracing_region_advantra::dofunc(const QString & func_name, const V3DP
 
         P.scal = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
         P.bratio = (paras.size() >= k+1) ? atof(paras[k]) : 0.3; k++;
-        P.perc = (paras.size() >= k+1) ? atoi(paras[k]) : 95; k++;
+   //     P.perc = (paras.size() >= k+1) ? atoi(paras[k]) : 95; k++;
         P.znccTh = (paras.size() >= k+1) ? atof(paras[k]) : 0.6; k++;
         P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]) : 15; k++;
         P.angSig = (paras.size() >= k+1) ? atof(paras[k]) : 60; k++;
@@ -307,8 +307,8 @@ template <class T> void advantra_tracing(const T* image_region,
 
 
     #if  defined(Q_OS_LINUX)
-        QString cmd_advantra = QString("%1/vaa3d -x Advantra -f advantra_func -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10 %11").arg(getAppPath().toStdString().c_str()).arg(advantra_image_name.toStdString().c_str())
-                .arg(Para.scal).arg(Para.bratio).arg(Para.perc).arg(Para.znccTh).arg(Para.Ndir).arg(Para.angSig).arg(Para.Ni).arg(Para.Ns).arg(Para.zDist);
+        QString cmd_advantra = QString("%1/vaa3d -x Advantra -f advantra_func -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(advantra_image_name.toStdString().c_str())
+                .arg(Para.scal).arg(Para.bratio).arg(Para.znccTh).arg(Para.Ndir).arg(Para.angSig).arg(Para.Ni).arg(Para.Ns).arg(Para.zDist);
         system(qPrintable(cmd_advantra));
     #else
         v3d_msg("The OS is not Linux. Do nothing.");
