@@ -107,11 +107,11 @@ bool neurontracing_region_neuronchaser::dofunc(const QString & func_name, const 
 
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.scal = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
-        P.perc = (paras.size() >= k+1) ? atoi(paras[k]) : 90; k++;
-        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]) : 0.6; k++;
-        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]) : 15; k++;
+       // P.perc = (paras.size() >= k+1) ? atoi(paras[k]) : 90; k++;
+        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]) : 0.7; k++;
+        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]) : 20; k++;
         P.angSig = (paras.size() >= k+1) ? atof(paras[k]) : 60; k++;
-        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]) : 30; k++;
+        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
         P.Ns = (paras.size() >= k+1) ? atoi(paras[k]) : 5; k++;
         P.zDist = (paras.size() >= k+1) ? atof(paras[k]) : 1; k++;
         P.saveMidres = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
@@ -312,8 +312,8 @@ template <class T> void neuronchaser_tracing(const T* image_region,
 
 
     #if  defined(Q_OS_LINUX)
-        QString cmd_neuronchaser = QString("%1/vaa3d -x NeuronChaser -f nc_func -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10 %11 %12").arg(getAppPath().toStdString().c_str()).arg(neuronchaser_image_name.toStdString().c_str())
-                .arg(Para.channel).arg(Para.scal).arg(Para.perc).arg(Para.znccTh).arg(Para.Ndir).arg(Para.angSig).arg(Para.Ni).arg(Para.Ns).arg(Para.zDist).arg(Para.saveMidres);
+        QString cmd_neuronchaser = QString("%1/vaa3d -x NeuronChaser -f nc_func -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10 %11").arg(getAppPath().toStdString().c_str()).arg(neuronchaser_image_name.toStdString().c_str())
+                .arg(Para.channel).arg(Para.scal).arg(Para.znccTh).arg(Para.Ndir).arg(Para.angSig).arg(Para.Ni).arg(Para.Ns).arg(Para.zDist).arg(Para.saveMidres);
         system(qPrintable(cmd_neuronchaser));
     #else
         v3d_msg("The OS is not Linux. Do nothing.");
