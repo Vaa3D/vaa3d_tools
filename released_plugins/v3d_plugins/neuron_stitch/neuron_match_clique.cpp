@@ -3036,6 +3036,7 @@ void neuron_match_clique::matchCliquesAndCands()
     candMS.clear();
     MS_x=candID0.size();
     MS_y=candID1.size();
+
     candMS.resize(MS_x*MS_y,0);
     QList<int> candtype0, candtype1;
     if(typeConstrain){
@@ -3059,12 +3060,15 @@ void neuron_match_clique::matchCliquesAndCands()
     for(int i=0; i<cliqueList0.size(); i++){
         for(int j=0; j<cliqueList1.size(); j++){
             //find matching clique
-            if(candtype0.at(cliqueList0[i].idx[0]) != candtype1.at(cliqueList1[i].idx[0])) continue;
-            if(candtype0.at(cliqueList0[i].idx[1]) != candtype1.at(cliqueList1[i].idx[1])) continue;
-            if(candtype0.at(cliqueList0[i].idx[2]) != candtype1.at(cliqueList1[i].idx[2])) continue;
+            if(candtype0.at(cliqueList0[i].idx[0]) != candtype1.at(cliqueList1[j].idx[0])) continue;
+            if(candtype0.at(cliqueList0[i].idx[1]) != candtype1.at(cliqueList1[j].idx[1])) continue;
+            if(candtype0.at(cliqueList0[i].idx[2]) != candtype1.at(cliqueList1[j].idx[2])) continue;
+            qDebug()<<"test-b: "<<cliqueList0[i].e[0]<<"; "<<cliqueList0[i].e[1]<<"; "<<cliqueList0[i].e[2];
+            qDebug()<<"test-b: "<<cliqueList1[j].e[0]<<"; "<<cliqueList1[j].e[1]<<"; "<<cliqueList1[j].e[2];
             if(fabs(cliqueList0[i].e[0]-cliqueList1[j].e[0])>cmatchThr) continue;
             if(fabs(cliqueList0[i].e[1]-cliqueList1[j].e[1])>cmatchThr) continue;
             if(fabs(cliqueList0[i].e[2]-cliqueList1[j].e[2])>cmatchThr) continue;
+            qDebug()<<"test-c: "<<i<<"; "<<j;
             if(NTDOT(cliqueList0[i].dir[0],cliqueList1[j].dir[0])<angThr_match) continue;
             if(NTDOT(cliqueList0[i].dir[1],cliqueList1[j].dir[1])<angThr_match) continue;
             if(NTDOT(cliqueList0[i].dir[2],cliqueList1[j].dir[2])<angThr_match) continue;
