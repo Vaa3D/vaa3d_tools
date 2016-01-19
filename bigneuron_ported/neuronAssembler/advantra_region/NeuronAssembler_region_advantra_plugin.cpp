@@ -322,12 +322,12 @@ bool NeuronAssembler_region_advantra::dofunc(const QString & func_name, const V3
 		P.th = (paras.size() >= k+1) ? atoi(paras[k]):50; k++;
 		P.region = (paras.size() >= k+1) ? atoi(paras[k]):10000; k++;
 		P.scal = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
-		P.bratio = (paras.size() >= k+1) ? atof(paras[k]):0.3; k++;
+        P.bratio = (paras.size() >= k+1) ? atof(paras[k]):0.5; k++;
 		P.perc = (paras.size() >= k+1) ? atoi(paras[k]):95; k++;
-		P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.6; k++;
-		P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):15; k++;
+        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.7; k++;
+        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):20; k++;
 		P.angSig = (paras.size() >= k+1) ? atof(paras[k]):60; k++;
-		P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):30; k++;
+        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.Ns = (paras.size() >= k+1) ? atoi(paras[k]):5; k++;
 		P.zDist = (paras.size() >= k+1) ? atof(paras[k]):1; k++;
         assembler_tc(callback,parent,P,bmenu);
@@ -372,12 +372,12 @@ bool NeuronAssembler_region_advantra::dofunc(const QString & func_name, const V3
 		P.th = (paras.size() >= k+1) ? atoi(paras[k]):50; k++;
 		P.region = (paras.size() >= k+1) ? atoi(paras[k]):10000; k++;
 		P.scal = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
-		P.bratio = (paras.size() >= k+1) ? atof(paras[k]):0.3; k++;
+        P.bratio = (paras.size() >= k+1) ? atof(paras[k]):0.5; k++;
 		P.perc = (paras.size() >= k+1) ? atoi(paras[k]):95; k++;
-		P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.6; k++;
-		P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):15; k++;
+        P.znccTh = (paras.size() >= k+1) ? atof(paras[k]):0.7; k++;
+        P.Ndir = (paras.size() >= k+1) ? atoi(paras[k]):20; k++;
 		P.angSig = (paras.size() >= k+1) ? atof(paras[k]):60; k++;
-		P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):30; k++;
+        P.Ni = (paras.size() >= k+1) ? atoi(paras[k]):10; k++;
 		P.Ns = (paras.size() >= k+1) ? atoi(paras[k]):5; k++;
 		P.zDist = (paras.size() >= k+1) ? atof(paras[k]):1; k++;
         assembler_raw(callback,parent,P,bmenu);
@@ -395,12 +395,12 @@ bool NeuronAssembler_region_advantra::dofunc(const QString & func_name, const V3
 		printf("th			Required by the tracing algorithm. Default value is 50\n");
 		printf("region			Required by the tracing algorithm. Default value is 10000\n");
 		printf("scal			Required by the tracing algorithm. Default value is 10\n");
-		printf("bratio			Required by the tracing algorithm. Default value is 0.3\n");
+        printf("bratio			Required by the tracing algorithm. Default value is 0.5\n");
 		printf("perc			Required by the tracing algorithm. Default value is 95\n");
-		printf("znccTh			Required by the tracing algorithm. Default value is 0.6\n");
-		printf("Ndir			Required by the tracing algorithm. Default value is 15\n");
+        printf("znccTh			Required by the tracing algorithm. Default value is 0.7\n");
+        printf("Ndir			Required by the tracing algorithm. Default value is 20\n");
 		printf("angSig			Required by the tracing algorithm. Default value is 60\n");
-		printf("Ni			Required by the tracing algorithm. Default value is 30\n");
+        printf("Ni			Required by the tracing algorithm. Default value is 10\n");
 		printf("Ns			Required by the tracing algorithm. Default value is 5\n");
 		printf("zDist			Required by the tracing algorithm. Default value is 1\n");
 
@@ -413,17 +413,18 @@ bool NeuronAssembler_region_advantra::dofunc(const QString & func_name, const V3
 		printf("block size		Default 1024\n");
 		printf("tracing_entire_image	YES:1, NO:0. Default value is 0\n");
 
-		printf("th			Required by the tracing algorithm. Default value is 50\n");
-		printf("region			Required by the tracing algorithm. Default value is 10000\n");
-		printf("scal			Required by the tracing algorithm. Default value is 10\n");
-		printf("bratio			Required by the tracing algorithm. Default value is 0.3\n");
-		printf("perc			Required by the tracing algorithm. Default value is 95\n");
-		printf("znccTh			Required by the tracing algorithm. Default value is 0.6\n");
-		printf("Ndir			Required by the tracing algorithm. Default value is 15\n");
-		printf("angSig			Required by the tracing algorithm. Default value is 60\n");
-		printf("Ni			Required by the tracing algorithm. Default value is 30\n");
-		printf("Ns			Required by the tracing algorithm. Default value is 5\n");
-		printf("zDist			Required by the tracing algorithm. Default value is 1\n");
+        printf("th			Required by the tracing algorithm. Default value is 50\n");
+        printf("region			Required by the tracing algorithm. Default value is 10000\n");
+        printf("scal			Required by the tracing algorithm. Default value is 10\n");
+        printf("bratio			Required by the tracing algorithm. Default value is 0.5\n");
+        printf("perc			Required by the tracing algorithm. Default value is 95\n");
+        printf("znccTh			Required by the tracing algorithm. Default value is 0.7\n");
+        printf("Ndir			Required by the tracing algorithm. Default value is 20\n");
+        printf("angSig			Required by the tracing algorithm. Default value is 60\n");
+        printf("Ni			Required by the tracing algorithm. Default value is 10\n");
+        printf("Ns			Required by the tracing algorithm. Default value is 5\n");
+        printf("zDist			Required by the tracing algorithm. Default value is 1\n");
+
 
 		printf("outswc_file		Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -608,10 +609,10 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 		strcpy(C_bratio,S_bratio.c_str());
 		arg_para.push_back(C_bratio);
 
-		string S_perc = boost::lexical_cast<string>(P.perc);
-		char* C_perc = new char[S_perc.length() + 1];
-		strcpy(C_perc,S_perc.c_str());
-		arg_para.push_back(C_perc);
+//		string S_perc = boost::lexical_cast<string>(P.perc);
+//		char* C_perc = new char[S_perc.length() + 1];
+//		strcpy(C_perc,S_perc.c_str());
+//		arg_para.push_back(C_perc);
 
 		string S_znccTh = boost::lexical_cast<string>(P.znccTh);
 		char* C_znccTh = new char[S_znccTh.length() + 1];
@@ -1002,10 +1003,10 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
 		strcpy(C_bratio,S_bratio.c_str());
 		arg_para.push_back(C_bratio);
 
-		string S_perc = boost::lexical_cast<string>(P.perc);
-		char* C_perc = new char[S_perc.length() + 1];
-		strcpy(C_perc,S_perc.c_str());
-		arg_para.push_back(C_perc);
+//		string S_perc = boost::lexical_cast<string>(P.perc);
+//		char* C_perc = new char[S_perc.length() + 1];
+//		strcpy(C_perc,S_perc.c_str());
+//		arg_para.push_back(C_perc);
 
 		string S_znccTh = boost::lexical_cast<string>(P.znccTh);
 		char* C_znccTh = new char[S_znccTh.length() + 1];
