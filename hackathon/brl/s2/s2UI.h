@@ -8,6 +8,7 @@
 #include <QGroupBox>
 #include <QTcpSocket>
 #include <QDir>
+#include <QTabWidget>
 #include <v3d_interface.h>
 #include "s2Controller.h"
 #include "s2plot.h"
@@ -52,6 +53,8 @@ private:
     V3DPluginCallback2 * cb;
     QLabel *s2Label;
     //QLabel *labeli;
+
+    QTabWidget * lhTabs;
     QGridLayout *mainLayout;
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
@@ -78,6 +81,11 @@ private:
     QLineEdit *roiXEdit;
     QLineEdit *roiYEdit;
     QLineEdit *roiZEdit;
+
+
+    QLineEdit *roiXWEdit ;
+    QLineEdit *roiYWEdit ;
+    QLineEdit *roiZWEdit;
     QGridLayout * gl;
     QGraphicsScene * roiGS;
     QGraphicsView * roiGV;

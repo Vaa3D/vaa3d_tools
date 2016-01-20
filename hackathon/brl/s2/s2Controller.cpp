@@ -43,7 +43,7 @@ QString S2Parameter::getExpectedType(){
     return expectedType;
 }
 QString S2Parameter::getParameterName(){
-return parameterName;
+    return parameterName;
 }
 
 //! [0]
@@ -69,21 +69,21 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
 
     sendCommandButton = new QPushButton(tr("Send Command"));
     sendCommandButton->setDefault(true);
-    sendCommandButton->setEnabled(false);
+    sendCommandButton->setEnabled(true);
     connectButton = new QPushButton(tr("connect to PrairieView"));
     connectButton->setEnabled(true);
 
     quitButton = new QPushButton(tr("Quit"));
     getReplyButton = new QPushButton(tr("get reply"));
 
-    buttonBox = new QDialogButtonBox;
-    buttonBox->addButton(sendCommandButton, QDialogButtonBox::ActionRole);
-    buttonBox->addButton(quitButton, QDialogButtonBox::RejectRole);
-    buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
-    buttonBox->addButton(getReplyButton, QDialogButtonBox::ActionRole);
+    buttonBox = new QGroupBox;
+    QVBoxLayout *vb = new QVBoxLayout;
 
-
-
+    vb->addWidget(sendCommandButton);
+    vb->addWidget(quitButton);
+    vb->addWidget(connectButton);
+    vb->addWidget(getReplyButton);
+    buttonBox->setLayout(vb);
 
     tcpSocket = new QTcpSocket(this);
 
@@ -114,8 +114,8 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     mainLayout->addWidget(portLineEdit, 1, 1);
     mainLayout->addWidget(cmdLabel, 2,0);
     mainLayout->addWidget(cmdLineEdit,2,1);
-    mainLayout->addWidget(statusLabel, 3, 0, 1, 3);
-    mainLayout->addWidget(buttonBox, 4, 0, 1, 3);
+    mainLayout->addWidget(statusLabel, 3, 0, 1, 2);
+    mainLayout->addWidget(buttonBox, 4, 0, 1, 2);
     setLayout(mainLayout);
 
     setWindowTitle(tr("smartScope2 Controller"));
@@ -173,7 +173,10 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis"));
     s2ParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis"));
     s2ParameterMap.insert(10,S2Parameter("pixelsPerLine", "-gts pixelsPerLine"));
-    s2ParameterMap.insert(11,S2Parameter("opticalZoom", "-gts opticalZoom"));
+    s2ParameterMap.insert(11, S2Parameter("linesPerFrame","-gts linesPerFrame"));
+    s2ParameterMap.insert(12,S2Parameter("opticalZoom", "-gts opticalZoom"));
+    s2ParameterMap.insert(13,S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
+    s2ParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));
 
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
@@ -195,8 +198,8 @@ void S2Controller::connectToS2()
     if ( hostLineEdit->text().contains("local")){
         tcpSocket->connectToHost(QHostAddress::LocalHost, portLineEdit->text().toInt());
     }else{
-    tcpSocket->connectToHost(hostLineEdit->text(),
-                             portLineEdit->text().toInt());
+        tcpSocket->connectToHost(hostLineEdit->text(),
+                                 portLineEdit->text().toInt());
     }
     qDebug()<<"tcpSocket isopen "<<tcpSocket->isOpen();
     qDebug()<<"tcpSocket isValid"<<tcpSocket->isValid();
@@ -285,28 +288,38 @@ void S2Controller::processMessage(){
 void S2Controller::messageHandler(QString messageH){
     // slot for handling messages.   first round will
     // just be updating text in this object and the calling UI
-        myS2Data.messageString = messageH;
-        emit newBroadcast(messageH);
-        if (messageH.length() <20){
+    myS2Data.messageString = messageH;
+    emit newBroadcast(messageH);
+    if (messageH.length() <20){
         statusLabel->setText(messageH);
-        }else{
-            statusLabel->setText(QString("long message!"));
-        }
+    }else{
+        statusLabel->setText(QString("long message!"));
+    }
 
 }
 
 //
 
 void S2Controller::posMonListener(QString messageL){
-messageL.remove("\r\n");
-s2ParameterMap[ii].setCurrentString( messageL);
-s2ParameterMap[ii].setCurrentValue(messageL.toFloat());
+    messageL.remove("\r\n");
+    float newValue = messageL.toFloat();
+    if (s2ParameterMap[ii].getExpectedType().contains("derived")){
+        if (ii==13){
+            newValue = s2ParameterMap[10].getCurrentValue()*s2ParameterMap[8].getCurrentValue();
+        }else if (ii==14){
+            newValue =  s2ParameterMap[11].getCurrentValue()*s2ParameterMap[9].getCurrentValue();
+        }
+        messageL = QString::number(newValue);
+    }
+
+    s2ParameterMap[ii].setCurrentString( messageL);
+    s2ParameterMap[ii].setCurrentValue(newValue);
     // use s2ParameterMap to keep track of parameter values.
-if (inPosMonMode){
-    ii = (ii+1) % maxParams;
-    emit newS2Parameter(s2ParameterMap);
-    QTimer::singleShot(50, this, SLOT(posMon()));
-}
+    if (inPosMonMode){
+        ii = (ii+1) % maxParams;
+        emit newS2Parameter(s2ParameterMap);
+        QTimer::singleShot(10, this, SLOT(posMon()));
+    }
 
 
 }
@@ -416,8 +429,12 @@ bool S2Controller::getPosMon(){
 
 
 void S2Controller::posMon(){
-// send current query string
-    sendAndReceive(s2ParameterMap[ii].getSendString());
+    // send current query string
+    if (!s2ParameterMap[ii].getExpectedType().contains("derived")){
+        sendAndReceive(s2ParameterMap[ii].getSendString());
+    }else{
+        posMonListener("");
+    }
     //after delay, emit signal and return
 
 }

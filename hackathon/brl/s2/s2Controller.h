@@ -7,6 +7,7 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <QMap>
+#include <QGroupBox>
 
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
@@ -177,7 +178,7 @@ private:
     QPushButton *quitButton;
     QPushButton *connectButton;
     QPushButton *getReplyButton;
-    QDialogButtonBox *buttonBox;
+    QGroupBox *buttonBox;
 
     QTcpSocket *tcpSocket;
     QString totalMessage;

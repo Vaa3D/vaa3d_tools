@@ -18,12 +18,17 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     startPosMonButton = new QPushButton(tr("start monitor"));
     createROIMonitor();
 
+    lhTabs = new QTabWidget();
+    lhTabs->addTab(createS2Monitors(), "s2 Monitor");
+    lhTabs->addTab(&myPosMon, "monCOM" );
+    lhTabs->addTab(&myController, "s2COM");
     mainLayout = new QGridLayout();
     mainLayout->addWidget(s2Label, 0, 0);
     mainLayout->addWidget(s2LineEdit, 0, 1);
     mainLayout->addWidget(createButtonBox1(),1,0,2,4);
     mainLayout->addWidget(startPosMonButton,3,0);
-    mainLayout->addWidget(createS2Monitors(), 4,0, 7, 4);
+
+    mainLayout->addWidget(lhTabs, 4,0, 5, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
     mainLayout->addWidget(roiGroupBox,4,5,7,4);
     roiGroupBox->show();
@@ -45,11 +50,13 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiXEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiYEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiZEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
-
+    connect(roiXWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiYWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
+    connect(roiZWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
 
 
     // communication with myController to send commands
-    connect(startScanPushButton, SIGNAL(clicked()), &myController, SLOT(startScan()));
+    connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
 
@@ -88,8 +95,8 @@ void S2UI::updateROIPlot(QString ignore){
     //roiRect.setY(roiYEdit->text().toFloat());
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    //newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),10,10);
-    newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,100,100);
+    newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
+    //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
 }
 
@@ -110,14 +117,13 @@ QGroupBox *S2UI::createS2Monitors(){
 
     QVBoxLayout *vbMon = new QVBoxLayout;
 
-    for (int jj=0; jj<=11; jj++){
+    for (int jj=0; jj<=14; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
         labeli->setWordWrap(true);
         vbMon->addWidget(labeli);
     }
-    vbMon->addStretch(1);
     gMonBox->setLayout(vbMon);
     return gMonBox;
 }
@@ -141,15 +147,15 @@ QGroupBox *S2UI::createROIControls(){
     roiZEdit->setObjectName("roiZ");
 
     QLabel *roiXWLabel = new QLabel(tr("size ="));
-    QLineEdit *roiXWEdit = new QLineEdit("0.0");
+    roiXWEdit = new QLineEdit("0.0");
     roiXWLabel->setBuddy(roiXWEdit);
     roiXWEdit->setObjectName("roiXW");
     QLabel *roiYWLabel = new QLabel(tr(" size ="));
-    QLineEdit *roiYWEdit = new QLineEdit("0.0");
+    roiYWEdit = new QLineEdit("0.0");
     roiYWLabel->setBuddy(roiYWEdit);
     roiYWEdit->setObjectName("roiYW");
     QLabel  *roiZWLabel = new QLabel(tr("size ="));
-    QLineEdit *roiZWEdit = new QLineEdit("0.0");
+    roiZWEdit = new QLineEdit("0.0");
     roiZWLabel->setBuddy(roiZWEdit);
     roiZWEdit->setObjectName("roiZW");
 
@@ -179,21 +185,21 @@ QGroupBox *S2UI::createROIControls(){
 
 void S2UI::startS2()
 {
-    myController.show();
-    myPosMon.show();
-    myPosMon.setWindowTitle(tr("posMon"));
+    myController.initializeS2();
+    myPosMon.initializeS2();
+    startS2PushButton->setText("s2 running");// should check something..?
 }
 
 void S2UI::startScan()
 {
     lastFile=getFileString();
     waitingForFile = true;
+    QTimer::singleShot(0, &myController, SLOT(startScan()));
 }
 
 
 void S2UI::loadScan(){
-    //myController.getROIData(); // this should really be a signal to myController,
-    // not an explicit call
+
 
     QString latestString = getFileString();
     //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
@@ -277,7 +283,7 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 
     int minVal = 0;
     int maxVal = currentParameterMap.keys().length();
-   for (int i= 0; i <maxVal ; i++){
+    for (int i= 0; i <maxVal ; i++){
         QString parameterStringi = currentParameterMap[i].getParameterName();
         float parameterValuei = currentParameterMap[i].getCurrentValue();
         QString iString = QString::number(i);
@@ -307,27 +313,35 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
     int minVal = 0;
     int maxVal = currentParameterMap.keys().length();
-   for (int i= 0; i <maxVal ; i++){
-     if (currentParameterMap[i].getExpectedType().contains("float")){
-         if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
-            uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if ((i==1)|(i==2)){
-                updateROIPlot(QString("ignore"));
-
+    for (int i= 0; i <maxVal ; i++){
+        if (currentParameterMap[i].getExpectedType().contains("float")){
+            if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
+                uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
+            if (i==1){
+                //updateROIPlot(QString("ignore"));
+                roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+            }else if (i==2){
+                roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+            }else if (i==13){
+                roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+            }else if (i==14){
+                roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
             }
-     }
- }
+        }
+    }
 }
+
+
+
 void S2UI::updateString(QString broadcastedString){
 }
 
 void S2UI::updateFileString(QString inputString){
     fileString = inputString;
     fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
-    if ((!QString::compare(fileString, lastFile))& (waitingForFile)){
+    if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
         waitingForFile = false;
-        //loadScan();
-        qDebug()<<fileString;
+        QTimer::singleShot(0, this, SLOT(loadScan()));
     }
     lastFile = fileString;
 }
