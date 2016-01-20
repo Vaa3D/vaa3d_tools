@@ -49,6 +49,7 @@ private slots:
     void updateS2Data(  QMap<int, S2Parameter> currentParameterMap);
     void updateString(QString broadcastedString);
     void updateFileString(QString inputString);
+    void startingZStack();
     QString getFileString();
     void updateROIPlot(QString ignore);
 private:
@@ -60,6 +61,7 @@ private:
     QGridLayout *mainLayout;
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
+    QPushButton  *startZStackPushButton;
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
     QDialogButtonBox *buttonBox1;

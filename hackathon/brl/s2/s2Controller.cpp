@@ -440,6 +440,10 @@ void S2Controller::posMon(){
 
 }
 
+void S2Controller::startZStack(){
+    sendAndReceive(QString("-zs"));
+}
+
 
 // next:
 // add optional 'cancel' to flush read and write buffers and release block

@@ -137,6 +137,7 @@ public slots:
     void startScan();
     void closeEvent(QCloseEvent *event);
     void centerGalvos();
+    void startZStack();
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();

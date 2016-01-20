@@ -20,6 +20,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     startPosMonButton = new QPushButton(tr("start monitor"));
     createROIMonitor();
     startStackAnalyzerPB = new QPushButton(tr("start stack analyzer"));
+
     lhTabs = new QTabWidget();
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
     lhTabs->addTab(&myPosMon, "monCOM" );
@@ -62,6 +63,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
+    connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
+    connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
 
     // communication with myPosMon to monitor parameters
     connect(&myPosMon, SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -110,10 +113,12 @@ QDialogButtonBox *S2UI::createButtonBox1(){
     startS2PushButton = new QPushButton(tr("Start smartScope2"));
     startScanPushButton = new QPushButton(tr("start scan"));
     loadScanPushButton = new QPushButton(tr("load last scan"));
+    startZStackPushButton = new QPushButton(tr("start z stack"));
     buttonBox1 = new QDialogButtonBox;
     buttonBox1->addButton(startS2PushButton, QDialogButtonBox::ActionRole);
     buttonBox1->addButton(startScanPushButton, QDialogButtonBox::RejectRole);
     buttonBox1->addButton(loadScanPushButton, QDialogButtonBox::RejectRole);
+    buttonBox1->addButton(startZStackPushButton, QDialogButtonBox::RejectRole);
     return buttonBox1;
 }
 
@@ -342,6 +347,10 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
 
 
 void S2UI::updateString(QString broadcastedString){
+}
+
+void S2UI::startingZStack(){
+    waitingForFile = true;
 }
 
 void S2UI::updateFileString(QString inputString){
