@@ -7,17 +7,19 @@
 #include "s2Controller.h"
 #include "s2UI.h"
 #include "s2plot.h"
+#include "stackAnalyzer.h"
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
     fileString =QString("");
     lastFile = QString("");
     cb = &callback;
+    myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("01b");
     startPosMonButton = new QPushButton(tr("start monitor"));
     createROIMonitor();
-
+    startStackAnalyzerPB = new QPushButton(tr("start stack analyzer"));
     lhTabs = new QTabWidget();
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
     lhTabs->addTab(&myPosMon, "monCOM" );
@@ -31,6 +33,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(lhTabs, 4,0, 5, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
     mainLayout->addWidget(roiGroupBox,4,5,7,4);
+    mainLayout->addWidget(startStackAnalyzerPB, 10, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
     posMonStatus = false;
@@ -67,6 +70,9 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
     connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
 
+
+    // communication with  myStackAnalyzer
+    connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
 
 }
 
@@ -255,6 +261,8 @@ void S2UI::displayScan(){ // this will listen for a signal from myController
     //containing either a filename or  eventually an address
 
 }
+
+
 
 void S2UI::pmStatusHandler(bool pmStatus){
     posMonStatus = pmStatus;

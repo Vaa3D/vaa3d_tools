@@ -12,6 +12,7 @@
 #include <v3d_interface.h>
 #include "s2Controller.h"
 #include "s2plot.h"
+#include "stackAnalyzer.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -31,6 +32,8 @@ class S2UI : public QDialog
 public:
     S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
     QLineEdit *s2LineEdit;
+
+    StackAnalyzer *myStackAnalyzer;
 public slots:
     void pmStatusHandler(bool pmStatus);
 
@@ -48,7 +51,6 @@ private slots:
     void updateFileString(QString inputString);
     QString getFileString();
     void updateROIPlot(QString ignore);
-
 private:
     V3DPluginCallback2 * cb;
     QLabel *s2Label;
@@ -91,6 +93,7 @@ private:
     QGraphicsView * roiGV;
     QGraphicsRectItem *newRect;
     QPushButton *centerGalvosPB ;
+    QPushButton * startStackAnalyzerPB;
 };
 //! [0]
 
