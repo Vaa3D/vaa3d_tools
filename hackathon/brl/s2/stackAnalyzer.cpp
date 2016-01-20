@@ -15,7 +15,7 @@ void StackAnalyzer::loadScan(){
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    QString latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -28,30 +28,28 @@ void StackAnalyzer::loadScan(){
 
         //get the parent dir and the list of ch1....ome.tif files
         //use this to id the number of images in the stack (in one channel?!)
-        long x = pNewImage->getXDim();
-        long y = pNewImage->getYDim();
-        long nFrames = fileList.length();
-        long pBytes = pNewImage->getUnitBytes();
+        V3DLONG x = pNewImage->getXDim();
+        V3DLONG y = pNewImage->getYDim();
+        V3DLONG nFrames = fileList.length();
 
-
-
-        V3DLONG tunits = x*y*nFrames*pBytes;
-        unsigned char * total1dData = new unsigned char [tunits];
-        long totalImageIndex = 0;
+        V3DLONG tunits = x*y*nFrames;
+        unsigned short int * total1dData = new unsigned short int [tunits];
+        V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
             qDebug()<<fileList[f];
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
             if (pNewImage->valid()){
-                unsigned char * data1d = 0;
-                data1d = new unsigned char [x*y*pBytes];
-                pNewImage->setNewRawDataPointer(data1d);
-                for (long i = 0; i< (x*y*pBytes); i++){
+                unsigned short int * data1d = 0;
+                data1d = new unsigned short int [x*y];
+                data1d = (unsigned short int*)pNewImage->getRawData();
+                for (V3DLONG i = 0; i< (x*y); i++){
                     total1dData[totalImageIndex]= data1d[i];
                     totalImageIndex++;
                 }
             }else{
                 qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
             }
+
         }
         Image4DSimple  total4DImage;
         total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);

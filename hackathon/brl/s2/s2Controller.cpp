@@ -5,6 +5,7 @@
 #include <QRegExp>
 #include <stdlib.h>
 #include "s2Controller.h"
+#include "v3d_message.h"
 
 S2Parameter::S2Parameter():
     parameterName(""),
