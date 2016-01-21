@@ -186,7 +186,9 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
         xs = p_cur->x;
         ys = p_cur->y;
         zs = p_cur->z;
+        // ignore radii
         rs = p_cur->r;
+        rs = 0;
 
         double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
 
@@ -425,6 +427,10 @@ bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallba
     }
 
     Image4DSimple *image = new Image4DSimple();
+    for (int i = 0 ; i< tol_sz;i++)
+      {
+          pImMask[i]= pImMask[i]*1.0/nt_list.size() *255;
+      }
     image->setData(pImMask, sz_x, sz_y, sz_z, 1, V3D_UINT8);
     callback.saveImage(image, &(outfileName.toStdString()[0]));
 
