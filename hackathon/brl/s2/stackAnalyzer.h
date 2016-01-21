@@ -15,7 +15,7 @@ public:
 
 
 signals:
-    void analysisDone(QList<QList<int> > newTargets);
+    void analysisDone(LandmarkList newTargets);
     void messageSignal(QString msg);
 public slots:
     void loadScan();

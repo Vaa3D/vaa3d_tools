@@ -61,7 +61,7 @@ void StackAnalyzer::loadScan(){
         p.is_gsdt = false;
         p.is_coverage_prune = true;
         p.is_break_accept = false;
-        p.bkg_thresh = 10;
+        p.bkg_thresh = 150;
         p.length_thresh = 5;
         p.cnn_type = 2;
         p.channel = 0;
@@ -79,19 +79,66 @@ void StackAnalyzer::loadScan(){
         p.yc1 = p.p4dImage->getYDim()-1;
         p.zc1 = p.p4dImage->getZDim()-1;
 
-
         QString versionStr = "v2.621";
         proc_app2(*cb, p, versionStr);
+
         NeuronTree nt;
         nt = readSWC_file(p.outswc_file);
+        LandmarkList newTargetList;
+        V3DLONG neuronNum = nt.listNeuron.size();
+        bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG node_x = nt.listNeuron[i].x;
+            V3DLONG node_y = nt.listNeuron[i].y;
+            V3DLONG node_z = nt.listNeuron[i].z;
+
+            LocationSimple newTarget;
+            if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+            {
+                newTarget.x = -p.p4dImage->getXDim();
+                newTarget.y = 0;
+                newTarget.z = node_z;
+
+                scan_left = true;
+                newTargetList.push_back(newTarget);
+            }
+            if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
+            {
+                newTarget.x = p.p4dImage->getXDim();
+                newTarget.y = 0;
+                newTarget.z = node_z;
+                scan_right = true;
+                newTargetList.push_back(newTarget);
+            }
+            if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
+            {
+                newTarget.x = 0;
+                newTarget.y = -p.p4dImage->getYDim();
+                newTarget.z = node_z;
+                scan_up = true;
+                newTargetList.push_back(newTarget);
+            }
+            if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
+            {
+                newTarget.x = 0;
+                newTarget.y = p.p4dImage->getYDim();
+                newTarget.z = node_z;
+                scan_down = true;
+                newTargetList.push_back(newTarget);
+            }
+        }
+
         cb->setImage(newwin, &total4DImage);
         cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
+        cb->setLandmark(newwin,newTargetList);
         cb->pushObjectIn3DWindow(newwin);
         cb->updateImageWindow(newwin);
 
-
-
+        // exact format is TBD...  center of face with tips?
+        //                         average location of tips on each face?
+        //
 
     }else{
         qDebug()<<"invalid image";
@@ -132,21 +179,54 @@ void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     Image4DSimple total4DImage;
     total4DImage.setData((unsigned char*)pInputImage->getRawData(), p.xc1, p.yc1, p.zc1, 1, V3D_UINT16);
 
-    v3dhandle newwin = cb->newImageWindow();
-    cb->setImage(newwin, &total4DImage);
-    cb->open3DWindow(newwin);
-    cb->setSWC(newwin,nt);
-    cb->pushObjectIn3DWindow(newwin);
-    cb->updateImageWindow(newwin);
-
-
-// emit messageSignal(QString("message!")
-
-
-
     // determine all ROI locations and put them in newTargetList, a QList of 3-ints [x,y,z] coordinates
     // for the next ROI.
-    QList<QList<int> > newTargetList;
+    LandmarkList newTargetList;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG node_x = nt.listNeuron[i].x;
+        V3DLONG node_y = nt.listNeuron[i].y;
+
+        LocationSimple newTarget;
+        if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+        {
+            newTarget.x = -p.p4dImage->getXDim()*p.p4dImage->getRezX() + p.p4dImage->getOriginX();
+            newTarget.y = p.p4dImage->getOriginY();
+            scan_left = true;
+            newTargetList.push_back(newTarget);
+        }
+        if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
+        {
+            newTarget.x = p.p4dImage->getXDim()*p.p4dImage->getRezX() + p.p4dImage->getOriginX();
+            newTarget.y = p.p4dImage->getOriginY();
+            scan_right = true;
+            newTargetList.push_back(newTarget);
+        }
+        if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
+        {
+            newTarget.x = p.p4dImage->getOriginX();
+            newTarget.y = -p.p4dImage->getYDim()*p.p4dImage->getRezY() + p.p4dImage->getOriginY();
+            scan_up = true;
+            newTargetList.push_back(newTarget);
+        }
+        if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
+        {
+            newTarget.x = p.p4dImage->getOriginX();
+            newTarget.y = p.p4dImage->getYDim()*p.p4dImage->getRezY() + p.p4dImage->getOriginY();
+            scan_down = true;
+            newTargetList.push_back(newTarget);
+        }
+    }
+
+//    v3dhandle newwin = cb->newImageWindow();
+//    cb->setImage(newwin, &total4DImage);
+//    cb->open3DWindow(newwin);
+//    cb->setSWC(newwin,nt);
+//    cb->pushObjectIn3DWindow(newwin);
+//    cb->updateImageWindow(newwin);
+
     // exact format is TBD...  center of face with tips?
     //                         average location of tips on each face?
     //
