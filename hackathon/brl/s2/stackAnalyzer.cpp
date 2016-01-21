@@ -16,10 +16,10 @@ void StackAnalyzer::loadScan(){
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    QString latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
-      //  v3dhandle newwin = cb->newImageWindow();
+        v3dhandle newwin = cb->newImageWindow();
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;

@@ -386,3 +386,9 @@ QString S2UI::getFileString(){
 }
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
+
+
+// get voltage-to-pixel-to-micron resolution and add methods to
+// move to pan to micron positions using -sts currentScanCenter
+
+
