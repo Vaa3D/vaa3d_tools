@@ -235,7 +235,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
-                                 "Enter dialte ratio:",
+                                 "Enter dialate ratio:",
                                  3.0, 1.0, 100.0);
     int flip = QInputDialog::getInteger(parent, "flip in y ?",
                                  "Flip in Y (0/1):",
