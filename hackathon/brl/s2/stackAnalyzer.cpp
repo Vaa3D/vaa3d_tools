@@ -100,6 +100,44 @@ void StackAnalyzer::loadScan(){
 
 void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     // process stack data
+    PARA_APP2 p;
+    p.is_gsdt = false;
+    p.is_coverage_prune = true;
+    p.is_break_accept = false;
+    p.bkg_thresh = 10;
+    p.length_thresh = 5;
+    p.cnn_type = 2;
+    p.channel = 0;
+    p.SR_ratio = 3.0/9.9;
+    p.b_256cube = 1;
+    p.b_RadiusFrom2D = true;
+    p.b_resample = 1;
+    p.b_intensity = 0;
+    p.b_brightfiled = 0;
+    p.outswc_file = QString(pInputImage->getFileName()) + "_app2.swc";
+
+    p.p4dImage = pInputImage;
+    p.xc0 = p.yc0 = p.zc0 = 0;
+    p.xc1 = p.p4dImage->getXDim()-1;
+    p.yc1 = p.p4dImage->getYDim()-1;
+    p.zc1 = p.p4dImage->getZDim()-1;
+
+
+    QString versionStr = "v2.621";
+    proc_app2(*cb, p, versionStr);
+    NeuronTree nt;
+    nt = readSWC_file(p.outswc_file);
+
+
+    Image4DSimple total4DImage;
+    total4DImage.setData((unsigned char*)pInputImage->getRawData(), p.xc1, p.yc1, p.zc1, 1, V3D_UINT16);
+
+    v3dhandle newwin = cb->newImageWindow();
+    cb->setImage(newwin, &total4DImage);
+    cb->open3DWindow(newwin);
+    cb->setSWC(newwin,nt);
+    cb->pushObjectIn3DWindow(newwin);
+    cb->updateImageWindow(newwin);
 
 
 // emit messageSignal(QString("message!")
