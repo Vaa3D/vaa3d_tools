@@ -176,8 +176,8 @@ void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     nt = readSWC_file(p.outswc_file);
 
 
-    Image4DSimple total4DImage;
-    total4DImage.setData((unsigned char*)pInputImage->getRawData(), p.xc1, p.yc1, p.zc1, 1, V3D_UINT16);
+//    Image4DSimple total4DImage;
+//    total4DImage.setData((unsigned char*)pInputImage->getRawData(), p.xc1, p.yc1, p.zc1, 1, V3D_UINT16);
 
     // determine all ROI locations and put them in newTargetList, a QList of 3-ints [x,y,z] coordinates
     // for the next ROI.
