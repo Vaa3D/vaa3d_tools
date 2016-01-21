@@ -4,6 +4,7 @@
 #include <QtGui>
 #include <QtNetwork>
 #include <stdlib.h>
+#include <QThread>
 #include "s2Controller.h"
 #include "s2UI.h"
 #include "s2plot.h"
@@ -37,10 +38,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startStackAnalyzerPB, 10, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
+    //workerThread = new QThread;
+    //myStackAnalyzer->moveToThread(workerThread);
     posMonStatus = false;
     waitingForFile = false;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
+    //workerThread->start();
 
 
 
@@ -76,7 +80,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
     // communication with  myStackAnalyzer
     connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
-
+    connect(this, SIGNAL(newImageData(Image4DSimple*)), myStackAnalyzer, SLOT(processStack(Image4DSimple*)) );
 }
 
 
@@ -216,6 +220,19 @@ void S2UI::loadScan(){
     //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
+        //set up metadata in the eventual output image.
+        // do this here to minimize chance of modified values...
+        Image4DSimple  total4DImage;
+        total4DImage.setFileName(latestString.toLocal8Bit().data());
+        // THE VALUES below are 'live' values which could potentially change
+        // while the image data is being read in.
+        total4DImage.setRezX(uiS2ParameterMap[8].getCurrentValue());
+        total4DImage.setRezY(uiS2ParameterMap[9].getCurrentValue());
+        total4DImage.setRezZ(1.0);// HARDCODED Z RESOLUTION!  needs to be added to parameterMap
+        total4DImage.setOriginX(uiS2ParameterMap[1].getCurrentValue());
+        total4DImage.setOriginY(uiS2ParameterMap[2].getCurrentValue());
+
+
         v3dhandle newwin = cb->newImageWindow();
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
@@ -233,17 +250,17 @@ void S2UI::loadScan(){
 
 
 
-        V3DLONG tunits = x*y*nFrames*pBytes;
-        unsigned char * total1dData = new unsigned char [tunits];
-        long totalImageIndex = 0;
+        V3DLONG tunits = x*y*nFrames;
+        unsigned short int * total1dData = new unsigned short int [tunits];
+        V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
             qDebug()<<fileList[f];
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
             if (pNewImage->valid()){
-                unsigned char * data1d = 0;
-                data1d = new unsigned char [x*y*pBytes];
-                pNewImage->setNewRawDataPointer(data1d);
-                for (long i = 0; i< (x*y*pBytes); i++){
+                unsigned short int * data1d = 0;
+                data1d = new unsigned short int [x*y];
+                data1d = (unsigned short int*)pNewImage->getRawData();
+                for (V3DLONG i = 0; i< (x*y); i++){
                     total1dData[totalImageIndex]= data1d[i];
                     totalImageIndex++;
                 }
@@ -251,8 +268,9 @@ void S2UI::loadScan(){
                 qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
             }
         }
-        Image4DSimple  total4DImage;
         total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+
+        emit newImageData(&total4DImage);
         cb->setImage(newwin, &total4DImage);
         cb->setImageName(newwin,QString("test"));
         cb->updateImageWindow(newwin);
@@ -366,3 +384,5 @@ void S2UI::updateFileString(QString inputString){
 QString S2UI::getFileString(){
     return fileString;
 }
+//  set filename in Image4DSimple* using  ->setFileName
+//  BEFORE PASSING TO StackAnalyzer slot.

@@ -40,6 +40,7 @@ public slots:
 signals:
     void startPM();
     void stopPM();
+    void newImageData(Image4DSimple*);
 private slots:
     void startS2();
     void startScan();
@@ -56,6 +57,7 @@ private:
     V3DPluginCallback2 * cb;
     QLabel *s2Label;
     //QLabel *labeli;
+    QThread *workerThread;
 
     QTabWidget * lhTabs;
     QGridLayout *mainLayout;
