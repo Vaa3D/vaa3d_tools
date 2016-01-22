@@ -11,7 +11,7 @@ class StackAnalyzer : public QObject
 {
     Q_OBJECT
 public:
-    StackAnalyzer(V3DPluginCallback2 &callback, QObject *parent = 0 );
+    StackAnalyzer(V3DPluginCallback2 &callback);
 
 
 signals:

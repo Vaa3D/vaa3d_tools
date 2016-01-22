@@ -14,6 +14,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
     fileString =QString("");
     lastFile = QString("");
+    allROILocations = new LandmarkList;
     cb = &callback;
     myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
@@ -32,10 +33,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(createButtonBox1(),1,0,2,4);
     mainLayout->addWidget(startPosMonButton,3,0);
 
-    mainLayout->addWidget(lhTabs, 4,0, 5, 3);
+    mainLayout->addWidget(lhTabs, 4,0, 4, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
     mainLayout->addWidget(roiGroupBox,4,5,7,4);
-    mainLayout->addWidget(startStackAnalyzerPB, 10, 0,1,2);
+    mainLayout->addWidget(startStackAnalyzerPB, 8, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
     //workerThread = new QThread;
@@ -67,7 +68,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
-    connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
+    //connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
 
     // communication with myPosMon to monitor parameters
@@ -81,6 +82,8 @@ void S2UI::hookUpSignalsAndSlots(){
     // communication with  myStackAnalyzer
     connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
     connect(this, SIGNAL(newImageData(Image4DSimple*)), myStackAnalyzer, SLOT(processStack(Image4DSimple*)) );
+    connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
+    connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
 }
 
 
@@ -130,16 +133,16 @@ QGroupBox *S2UI::createS2Monitors(){
     // add fields with data...  currently hardcoding the number of parameters...
     QGroupBox *gMonBox = new QGroupBox(tr("&smartScope Monitor"));
 
-    QVBoxLayout *vbMon = new QVBoxLayout;
+    QGridLayout *gbMon = new QGridLayout;
 
-    for (int jj=0; jj<=14; jj++){
+    for (int jj=0; jj<=19; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
         labeli->setWordWrap(true);
-        vbMon->addWidget(labeli);
+        gbMon->addWidget(labeli, jj%11, jj/11);
     }
-    gMonBox->setLayout(vbMon);
+    gMonBox->setLayout(gbMon);
     return gMonBox;
 }
 
@@ -368,22 +371,84 @@ void S2UI::updateString(QString broadcastedString){
 }
 
 void S2UI::startingZStack(){
-    waitingForFile = true;
+    waitingForFile = false;
+    qDebug()<<"now have total "<< allROILocations->length()<<" landmarks!";
+    for (int i = 0; i<allROILocations->length(); i++){
+        qDebug()<<"x= "<<allROILocations->value(i).x<<" y = "<<allROILocations->value(i).y<<" z= "<<allROILocations->value(i).z;
+    }
+    if ((!allROILocations->isEmpty())&(!waitingForFile)){
+        LocationSimple nextLocation = allROILocations->first();
+        allROILocations->removeFirst();
+        moveToROI(nextLocation);
+        QTimer::singleShot(100, &myController, SLOT(startZStack()));
+
+    }
+
 }
 
 void S2UI::updateFileString(QString inputString){
+    //this means a new file has been created.. it can be late by up to 1 full cycle of s2parametermap updating
+    // but it guarantees that the acquisition is done
+    // a separate poller of updated filename could be much faster.
+    // final version will require much more rigorous timing- it's not clear how we'll parse out
+    // the streamed image data into files...
     fileString = inputString;
     fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
         waitingForFile = false;
         QTimer::singleShot(0, this, SLOT(loadScan()));
+
     }
     lastFile = fileString;
+}
+
+void S2UI::s2ROIMonitor(){
+
+    if ((!allROILocations->isEmpty())&(!waitingForFile)){
+        LocationSimple nextLocation = allROILocations->first();
+        allROILocations->removeFirst();
+        moveToROI(nextLocation);
+        QTimer::singleShot(100, &myController, SLOT(startZStack()));
+
+    }
+
+    QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
+
 }
 
 QString S2UI::getFileString(){
     return fileString;
 }
+
+
+void S2UI::handleNewLocation(LandmarkList newLandmarks){
+    qDebug()<<"got "<< newLandmarks.length()<<"  new landmarks!";
+    for (int i = 0; i<newLandmarks.length(); i++){
+    qDebug()<<"x= "<<newLandmarks.value(i).x<<" y = "<<newLandmarks.value(i).y<<" z= "<<newLandmarks.value(i).z;
+    allROILocations->append(newLandmarks.value(i));
+    }
+
+    qDebug()<<"now have total "<< allROILocations->length()<<" landmarks!";
+    for (int i = 0; i<allROILocations->length(); i++){
+        qDebug()<<"x= "<<allROILocations->value(i).x<<" y = "<<allROILocations->value(i).y<<" z= "<<allROILocations->value(i).z;
+    }
+
+}
+
+
+void S2UI::moveToROI(LocationSimple nextROI){
+// convert from pixels to microns:
+float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
+float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
+// and now to galvo voltage:
+float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
+float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+LocationSimple newLoc;
+newLoc.x = nextGalvoX;
+newLoc.y = nextGalvoY;
+emit moveToNext(newLoc);
+}
+
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
 
@@ -391,4 +456,9 @@ QString S2UI::getFileString(){
 // get voltage-to-pixel-to-micron resolution and add methods to
 // move to pan to micron positions using -sts currentScanCenter
 
+// need an origin at the beginning
+
+// need a new 'start smartscan' button as path to eventual handler
+
+//
 

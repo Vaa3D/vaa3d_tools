@@ -36,11 +36,12 @@ public:
     StackAnalyzer *myStackAnalyzer;
 public slots:
     void pmStatusHandler(bool pmStatus);
-
+    void handleNewLocation(LandmarkList newlandmarks);
 signals:
     void startPM();
     void stopPM();
     void newImageData(Image4DSimple*);
+    void moveToNext(LocationSimple);
 private slots:
     void startS2();
     void startScan();
@@ -53,6 +54,8 @@ private slots:
     void startingZStack();
     QString getFileString();
     void updateROIPlot(QString ignore);
+    void s2ROIMonitor();
+    void moveToROI(LocationSimple);
 private:
     V3DPluginCallback2 * cb;
     QLabel *s2Label;
@@ -98,6 +101,7 @@ private:
     QGraphicsRectItem *newRect;
     QPushButton *centerGalvosPB ;
     QPushButton * startStackAnalyzerPB;
+    LandmarkList *allROILocations;
 };
 //! [0]
 

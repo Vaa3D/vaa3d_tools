@@ -8,6 +8,7 @@
 #include <QThread>
 #include <QMap>
 #include <QGroupBox>
+#include <v3d_interface.h>
 
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
@@ -125,7 +126,7 @@ public slots:
     void initializeS2();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
     //             /* some parameters will be stored in a separate class described below
     //                */
-    void initROI();//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+    void initROI(LocationSimple);//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
     void startROI(); //    set a target file location and trigger the 3D ROI.
     void getROIData();//    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
     //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.

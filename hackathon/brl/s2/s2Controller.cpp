@@ -164,8 +164,8 @@ void S2Controller::initConnection(){
 void S2Controller::initializeParameters(){
     S2Parameter tPara =S2Parameter("currentMode","-gts activeMode");
     s2ParameterMap.insert(0,tPara);//S2Parameter("resonantMode","-gts scanMode", 0.0,  "", "string"));
-    s2ParameterMap.insert(1, S2Parameter("galvoX", "-gts currentScanCenter XAxis")) ;
-    s2ParameterMap.insert(2, S2Parameter("galvoY", "-gts currentScanCenter YAxis")) ;
+    s2ParameterMap.insert(1, S2Parameter("galvoXVolts", "-gts currentScanCenter XAxis")) ;
+    s2ParameterMap.insert(2, S2Parameter("galvoYVolts", "-gts currentScanCenter YAxis")) ;
     s2ParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
     s2ParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
     s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ;
@@ -178,7 +178,12 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(12,S2Parameter("opticalZoom", "-gts opticalZoom"));
     s2ParameterMap.insert(13,S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
     s2ParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));
+    s2ParameterMap.insert(15,S2Parameter("maxVoltsX", "-gts maxVoltage XAxis ", 0.0, "float"));
+    s2ParameterMap.insert(16,S2Parameter("minVoltsX", "-gts minVoltage XAxis ", 0.0, "float"));
 
+    s2ParameterMap.insert(17,S2Parameter("micronsPerVolt","", 0.0, "", "floatderived"));
+    s2ParameterMap.insert(18,S2Parameter("galvoXmicrons", "", 0.0, "", "floatderived"));
+    s2ParameterMap.insert(19, S2Parameter("galvoYmicrons", "", 0.0, "", "floatderived"));
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
@@ -309,6 +314,15 @@ void S2Controller::posMonListener(QString messageL){
             newValue = s2ParameterMap[10].getCurrentValue()*s2ParameterMap[8].getCurrentValue();
         }else if (ii==14){
             newValue =  s2ParameterMap[11].getCurrentValue()*s2ParameterMap[9].getCurrentValue();
+        }else if (ii == 17){
+            newValue = s2ParameterMap[13].getCurrentValue()/(s2ParameterMap[15].getCurrentValue()-s2ParameterMap[16].getCurrentValue());
+            if (newValue<0){
+            newValue = -newValue;}
+
+        }else if (ii == 18){
+            newValue = s2ParameterMap[17].getCurrentValue()*s2ParameterMap[1].getCurrentValue();
+        }else if (ii == 19){
+            newValue = s2ParameterMap[17].getCurrentValue()*s2ParameterMap[2].getCurrentValue();
         }
         messageL = QString::number(newValue);
     }
@@ -384,7 +398,24 @@ void S2Controller::sessionOpened()
 }
 
 
-void S2Controller::initROI(){//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+void S2Controller::initROI(LocationSimple nextLoc){
+    //    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+// for now, just move galvos to appropriate location:
+   float x = nextLoc.x;
+   float y = nextLoc.y;
+   qDebug()<<"caught nextLoc x= "<<x<<"  y = "<<y;
+    if ((x<7.6)&(x>-7.6)){
+    QString toSend = QString("-sts currentScanCenter ");
+    toSend.append(QString::number(x));
+    toSend.append(" XAxis");
+    cleanAndSend(toSend);
+    }
+     if ((y<7.6)&(y>-7.6)){
+    QString toSend = QString("-sts currentScanCenter ") ;
+    toSend.append(QString::number(y));
+    toSend.append(" YAxis");
+    cleanAndSend(toSend);}
+
 }
 
 void S2Controller::startROI(){ //    set a target file location and trigger the 3D ROI.

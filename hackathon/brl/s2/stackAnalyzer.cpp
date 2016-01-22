@@ -1,8 +1,7 @@
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 
-StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback, QObject *parent) :
-    QObject(parent)
+StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
     cb = &callback;
 }
@@ -16,7 +15,7 @@ void StackAnalyzer::loadScan(){
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    QString latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -128,7 +127,7 @@ void StackAnalyzer::loadScan(){
                 newTargetList.push_back(newTarget);
             }
         }
-
+emit analysisDone(newTargetList);
         cb->setImage(newwin, &total4DImage);
         cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
