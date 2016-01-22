@@ -51,57 +51,84 @@ private slots:
     void updateS2Data(  QMap<int, S2Parameter> currentParameterMap);
     void updateString(QString broadcastedString);
     void updateFileString(QString inputString);
+    void startingSmartScan();
     void startingZStack();
-    QString getFileString();
     void updateROIPlot(QString ignore);
     void s2ROIMonitor();
     void moveToROI(LocationSimple);
+    void clearROIPlot();
+    void smartScanHandler();
+    QString getFileString();
+
 private:
     V3DPluginCallback2 * cb;
-    QLabel *s2Label;
-    //QLabel *labeli;
-    QThread *workerThread;
+
+//    QThread *workerThread;
+
+ // Layout and buttons
 
     QTabWidget * lhTabs;
+
     QGridLayout *mainLayout;
+    QGridLayout * gl;
+
+    QDialogButtonBox *buttonBox1;
+
+    QGroupBox *parameterBox;
+    QVBoxLayout *vbox;
+    QGroupBox *roiGroupBox;
+    QGroupBox *createROIMonitor();
+    QRectF roiRect;
+    QGraphicsScene * roiGS;
+    QGraphicsView * roiGV;
+    QGraphicsRectItem *newRect;
+
+    QGroupBox *createROIControls();
+    QGroupBox *createS2Monitors();
+    void createButtonBox1();
+
+    QLabel *s2Label;
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
     QPushButton  *startZStackPushButton;
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
-    QDialogButtonBox *buttonBox1;
-    QGroupBox *parameterBox;
-    QVBoxLayout *vbox;
-    S2Controller myController;
-    S2Controller myPosMon;
-    bool posMonStatus;
-    QString fileString ;
-    QString lastFile;
-    bool waitingForFile;
-    QGroupBox *createROIControls();
-    QGroupBox *createS2Monitors();
-    QDialogButtonBox *createButtonBox1();
-    void hookUpSignalsAndSlots();
-    QMap<int, S2Parameter> uiS2ParameterMap;
-    void checkParameters(QMap<int, S2Parameter> currentParameterMap);
-    QGroupBox *roiGroupBox;
-    QGroupBox *createROIMonitor();
-    QRectF roiRect;
+    QPushButton *startSmartScanPB;
+    QPushButton *centerGalvosPB ;
+    QPushButton * startStackAnalyzerPB;
+    QPushButton *roiClearPB;
+
     QLineEdit *roiXEdit;
     QLineEdit *roiYEdit;
     QLineEdit *roiZEdit;
-
-
     QLineEdit *roiXWEdit ;
     QLineEdit *roiYWEdit ;
     QLineEdit *roiZWEdit;
-    QGridLayout * gl;
-    QGraphicsScene * roiGS;
-    QGraphicsView * roiGV;
-    QGraphicsRectItem *newRect;
-    QPushButton *centerGalvosPB ;
-    QPushButton * startStackAnalyzerPB;
+
+// External S2 controllers
+
+    S2Controller myController;
+    S2Controller myPosMon;
+
+
+// gui hookup
+
+    void hookUpSignalsAndSlots();
+
+//  internal methods and important parameters
+    void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     LandmarkList *allROILocations;
+    QMap<int, S2Parameter> uiS2ParameterMap;
+
+    QString fileString ;
+    QString lastFile;
+    bool posMonStatus;
+    bool waitingForFile;
+    int smartScanStatus;
+    double scanNumber;
+    int resultNumber;
+    LandmarkList scanList;
+
 };
 //! [0]
 

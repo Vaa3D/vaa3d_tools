@@ -20,8 +20,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("01b");
     startPosMonButton = new QPushButton(tr("start monitor"));
-    createROIMonitor();
+    startSmartScanPB = new QPushButton(tr("SmartScan"));
+    startSmartScanPB->setEnabled(false);
     startStackAnalyzerPB = new QPushButton(tr("start stack analyzer"));
+    createROIMonitor();
 
     lhTabs = new QTabWidget();
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
@@ -30,8 +32,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout = new QGridLayout();
     mainLayout->addWidget(s2Label, 0, 0);
     mainLayout->addWidget(s2LineEdit, 0, 1);
-    mainLayout->addWidget(createButtonBox1(),1,0,2,4);
+    createButtonBox1();
+    mainLayout->addWidget(startS2PushButton, 1,0);
+    mainLayout->addWidget(startScanPushButton, 1,1);
+    mainLayout->addWidget(loadScanPushButton, 2,0);
+    mainLayout->addWidget(startZStackPushButton,2,1);
     mainLayout->addWidget(startPosMonButton,3,0);
+    mainLayout->addWidget(startSmartScanPB, 3,1,1,2);
 
     mainLayout->addWidget(lhTabs, 4,0, 4, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
@@ -43,10 +50,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     //myStackAnalyzer->moveToThread(workerThread);
     posMonStatus = false;
     waitingForFile = false;
+    smartScanStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     //workerThread->start();
-
 
 
 }
@@ -62,14 +69,16 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiXWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiYWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiZWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
-
+    connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
-    //connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
+    connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
+
+    connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
 
     // communication with myPosMon to monitor parameters
     connect(&myPosMon, SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -84,6 +93,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple*)), myStackAnalyzer, SLOT(processStack(Image4DSimple*)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
+
+
 }
 
 
@@ -96,12 +107,15 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV = new QGraphicsView();
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
-    roiRect = QRectF(-2.0, -2.2, 4.9, 4.2);
-    roiGS->addRect(roiRect);
-    newRect = roiGS->addRect(0,0,10,10);
+    roiRect = QRectF(-400, -400, 800, 800);
+    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
-    gl->addWidget(roiGV);
+    roiGV->setDragMode(QGraphicsView::ScrollHandDrag);
+    gl->addWidget(roiGV,0,0,4,4);
+    roiClearPB = new QPushButton(tr("clear ROIs"));
+    gl->addWidget(roiClearPB, 4,0);
 
     roiGroupBox->setLayout(gl);
 }
@@ -116,17 +130,12 @@ void S2UI::updateROIPlot(QString ignore){
 
 }
 
-QDialogButtonBox *S2UI::createButtonBox1(){
+void S2UI::createButtonBox1(){
     startS2PushButton = new QPushButton(tr("Start smartScope2"));
-    startScanPushButton = new QPushButton(tr("start scan"));
+    startScanPushButton = new QPushButton(tr("single scan"));
     loadScanPushButton = new QPushButton(tr("load last scan"));
     startZStackPushButton = new QPushButton(tr("start z stack"));
-    buttonBox1 = new QDialogButtonBox;
-    buttonBox1->addButton(startS2PushButton, QDialogButtonBox::ActionRole);
-    buttonBox1->addButton(startScanPushButton, QDialogButtonBox::RejectRole);
-    buttonBox1->addButton(loadScanPushButton, QDialogButtonBox::RejectRole);
-    buttonBox1->addButton(startZStackPushButton, QDialogButtonBox::RejectRole);
-    return buttonBox1;
+
 }
 
 QGroupBox *S2UI::createS2Monitors(){
@@ -213,6 +222,8 @@ void S2UI::startScan()
     lastFile=getFileString();
     waitingForFile = true;
     QTimer::singleShot(0, &myController, SLOT(startScan()));
+    roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+
 }
 
 
@@ -232,8 +243,7 @@ void S2UI::loadScan(){
         total4DImage.setRezX(uiS2ParameterMap[8].getCurrentValue());
         total4DImage.setRezY(uiS2ParameterMap[9].getCurrentValue());
         total4DImage.setRezZ(1.0);// HARDCODED Z RESOLUTION!  needs to be added to parameterMap
-        total4DImage.setOriginX(uiS2ParameterMap[1].getCurrentValue());
-        total4DImage.setOriginY(uiS2ParameterMap[2].getCurrentValue());
+
 
 
         v3dhandle newwin = cb->newImageWindow();
@@ -272,11 +282,14 @@ void S2UI::loadScan(){
             }
         }
         total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-
-        emit newImageData(&total4DImage);
         cb->setImage(newwin, &total4DImage);
         cb->setImageName(newwin,QString("test"));
         cb->updateImageWindow(newwin);
+        if (smartScanStatus ==1){
+            total4DImage.setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
+            total4DImage.setOriginY(scanList.value(scanNumber).y);
+        emit newImageData(&total4DImage); // goes to stackAnalyzer
+        return;}
 
     }else{
         qDebug()<<"invalid image";
@@ -300,12 +313,15 @@ void S2UI::posMonButtonClicked(){
     // and change button text to 'stop pos mon'
     if (!posMonStatus){
         emit startPM();
-        s2LineEdit->setText(tr("pm stop"));
+        s2LineEdit->setText(tr("Position Monitor started"));
         startPosMonButton->setText(tr("stop position monitor"));
+        startSmartScanPB->setEnabled(true);
     }
     else{
         emit stopPM();
         startPosMonButton->setText(tr("start position monitor"));
+        startSmartScanPB->setEnabled(false);
+
     }
     // if it's running, stop it
     // and change text to start pos mon
@@ -351,10 +367,10 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
         if (currentParameterMap[i].getExpectedType().contains("float")){
             if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
                 uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if (i==1){
+            if (i==18){
                 //updateROIPlot(QString("ignore"));
                 roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==2){
+            }else if (i==19){
                 roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
             }else if (i==13){
                 roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
@@ -370,19 +386,76 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
 void S2UI::updateString(QString broadcastedString){
 }
 
-void S2UI::startingZStack(){
-    waitingForFile = false;
-    qDebug()<<"now have total "<< allROILocations->length()<<" landmarks!";
+
+//  -------  smart scanning stuffs   --------
+//  -----------------------------------------
+void S2UI::startingSmartScan(){
+
+    if (smartScanStatus==1){
+        smartScanStatus=0;
+        startSmartScanPB->setText("smartScan");
+        allROILocations->clear();
+        return;
+    }
+    smartScanStatus = 1;
+    startSmartScanPB->setText("cancel smartScan");
+    if (allROILocations->isEmpty()){
+       s2LineEdit->setText("starting smartScan...");
+        LocationSimple startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
+                uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
+                0);
+        startLocation.mass = 0;
+        allROILocations->append(startLocation);
+        QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+    }
+    // append text to noteTaker
+    //
+
+}
+
+void S2UI::handleNewLocation(LandmarkList newLandmarks){
+    qDebug()<<"got "<< newLandmarks.length()<<"  new landmarks associated with ROI "<<scanNumber;
+    for (int i = 0; i<newLandmarks.length(); i++){
+        qDebug()<<"x= "<<newLandmarks.value(i).x<<" y = "<<newLandmarks.value(i).y<<" z= "<<newLandmarks.value(i).z;
+        allROILocations->append(newLandmarks.value(i));
+    }
+    scanNumber++;
+smartScanHandler();
+
+}
+void S2UI::smartScanHandler(){
+    if (smartScanStatus!=1){
+        qDebug()<<"smartScan aborted";
+        scanNumber = 0;
+        return;
+    }
+    qDebug()<<"we now have a total of "<< allROILocations->length()<<" target ROIs...";
     for (int i = 0; i<allROILocations->length(); i++){
         qDebug()<<"x= "<<allROILocations->value(i).x<<" y = "<<allROILocations->value(i).y<<" z= "<<allROILocations->value(i).z;
     }
-    if ((!allROILocations->isEmpty())&(!waitingForFile)){
+
+    if (!allROILocations->isEmpty()){
         LocationSimple nextLocation = allROILocations->first();
         allROILocations->removeFirst();
         moveToROI(nextLocation);
-        QTimer::singleShot(100, &myController, SLOT(startZStack()));
-
+        waitingForFile = true;
+        scanList.append(nextLocation);
+        QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
+        // how to make this more eventdriven. maybe  wait for move to finish.
+        qDebug()<<"start next ROI at x = "<<nextLocation.x<<"  y = "<<nextLocation.y;
+        s2LineEdit->setText(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
     }
+
+}
+
+
+// ------------------------------------
+
+
+void S2UI::startingZStack(){
+    QTimer::singleShot(100, &myController, SLOT(startZStack()));
+    qDebug()<<"start single z Stack";
+    roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
 }
 
@@ -416,37 +489,37 @@ void S2UI::s2ROIMonitor(){
 
 }
 
+void S2UI::clearROIPlot(){
+    roiGS->clear();
+    roiRect = QRectF(-400, -400, 800, 800);
+    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    newRect = roiGS->addRect(0,0,10,10);
+}
+
 QString S2UI::getFileString(){
     return fileString;
 }
 
 
-void S2UI::handleNewLocation(LandmarkList newLandmarks){
-    qDebug()<<"got "<< newLandmarks.length()<<"  new landmarks!";
-    for (int i = 0; i<newLandmarks.length(); i++){
-    qDebug()<<"x= "<<newLandmarks.value(i).x<<" y = "<<newLandmarks.value(i).y<<" z= "<<newLandmarks.value(i).z;
-    allROILocations->append(newLandmarks.value(i));
-    }
-
-    qDebug()<<"now have total "<< allROILocations->length()<<" landmarks!";
-    for (int i = 0; i<allROILocations->length(); i++){
-        qDebug()<<"x= "<<allROILocations->value(i).x<<" y = "<<allROILocations->value(i).y<<" z= "<<allROILocations->value(i).z;
-    }
-
-}
 
 
 void S2UI::moveToROI(LocationSimple nextROI){
-// convert from pixels to microns:
-float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
-float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
-// and now to galvo voltage:
-float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
-float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
-LocationSimple newLoc;
-newLoc.x = nextGalvoX;
-newLoc.y = nextGalvoY;
-emit moveToNext(newLoc);
+    // convert from pixels to microns:
+    if( posMonStatus){
+    float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
+    float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
+    // and now to galvo voltage:
+    float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
+    float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+    LocationSimple newLoc;
+    newLoc.x = nextGalvoX;
+    newLoc.y = nextGalvoY;
+    roiGS->addRect(nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+    emit moveToNext(newLoc);
+    }else{
+        s2LineEdit->setText("start PosMon before moving galvos");
+        smartScanStatus = -1;
+    }
 }
 
 //  set filename in Image4DSimple* using  ->setFileName

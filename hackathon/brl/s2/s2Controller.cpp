@@ -409,12 +409,15 @@ void S2Controller::initROI(LocationSimple nextLoc){
     toSend.append(QString::number(x));
     toSend.append(" XAxis");
     cleanAndSend(toSend);
-    }
+    }else{
+        qDebug()<<"X out of bounds!";}
      if ((y<7.6)&(y>-7.6)){
     QString toSend = QString("-sts currentScanCenter ") ;
     toSend.append(QString::number(y));
     toSend.append(" YAxis");
-    cleanAndSend(toSend);}
+    cleanAndSend(toSend);}else{
+         qDebug()<<"Y out of bounds!";
+     }
 
 }
 

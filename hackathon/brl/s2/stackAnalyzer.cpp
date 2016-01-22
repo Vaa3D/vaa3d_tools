@@ -174,9 +174,7 @@ void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     NeuronTree nt;
     nt = readSWC_file(p.outswc_file);
 
-
-//    Image4DSimple total4DImage;
-//    total4DImage.setData((unsigned char*)pInputImage->getRawData(), p.xc1, p.yc1, p.zc1, 1, V3D_UINT16);
+qDebug()<< "done with readSWC_file";
 
     // determine all ROI locations and put them in newTargetList, a QList of 3-ints [x,y,z] coordinates
     // for the next ROI.
@@ -220,20 +218,16 @@ void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     }
 
 //    v3dhandle newwin = cb->newImageWindow();
-//    cb->setImage(newwin, &total4DImage);
+//    cb->setImage(newwin, pInputImage);
 //    cb->open3DWindow(newwin);
 //    cb->setSWC(newwin,nt);
 //    cb->pushObjectIn3DWindow(newwin);
 //    cb->updateImageWindow(newwin);
 
-    // exact format is TBD...  center of face with tips?
-    //                         average location of tips on each face?
-    //
 
+    emit analysisDone(newTargetList);
 
-    // emit analysisDone(newTargetList);
-
-
+return;
 
 
 }
