@@ -40,7 +40,8 @@ public slots:
 signals:
     void startPM();
     void stopPM();
-    void newImageData(Image4DSimple*);
+    void callSALoad(QString);
+    void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 private slots:
     void startS2();
@@ -128,6 +129,9 @@ private:
     double scanNumber;
     int resultNumber;
     LandmarkList scanList;
+
+    Image4DSimple  total4DImage;
+
 
 };
 //! [0]

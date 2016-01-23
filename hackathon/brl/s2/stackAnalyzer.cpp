@@ -8,14 +8,14 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 
 
 
-void StackAnalyzer::loadScan(){
+void StackAnalyzer::loadScan(QString latestString){
 
 
     //QString latestString = getFileString();
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -70,7 +70,7 @@ void StackAnalyzer::loadScan(){
         p.b_resample = 1;
         p.b_intensity = 0;
         p.b_brightfiled = 0;
-        p.outswc_file = latestString + "_app2.swc";
+        p.outswc_file = "/Users/brianl/dump/_app2.swc";
 
         p.p4dImage = &total4DImage;
         p.xc0 = p.yc0 = p.zc0 = 0;
@@ -144,7 +144,8 @@ emit analysisDone(newTargetList);
     }
 }
 
-void StackAnalyzer::processStack(Image4DSimple * pInputImage){
+void StackAnalyzer::processStack(Image4DSimple InputImage){
+    qDebug()<<InputImage.valid();
     // process stack data
     PARA_APP2 p;
     p.is_gsdt = false;
@@ -160,15 +161,17 @@ void StackAnalyzer::processStack(Image4DSimple * pInputImage){
     p.b_resample = 1;
     p.b_intensity = 0;
     p.b_brightfiled = 0;
-    p.outswc_file = QString(pInputImage->getFileName()) + "_app2.swc";
+    p.outswc_file = QString(InputImage.getFileName()).append( "_app2.swc");
 
-    p.p4dImage = pInputImage;
+    p.p4dImage = &InputImage;
     p.xc0 = p.yc0 = p.zc0 = 0;
     p.xc1 = p.p4dImage->getXDim()-1;
     p.yc1 = p.p4dImage->getYDim()-1;
     p.zc1 = p.p4dImage->getZDim()-1;
 
-
+qDebug()<<p.p4dImage->valid();
+QFileInfo testFileInfo = QFileInfo(QString(p.outswc_file));
+qDebug()<<testFileInfo.isWritable();
     QString versionStr = "v2.621";
     proc_app2(*cb, p, versionStr);
     NeuronTree nt;

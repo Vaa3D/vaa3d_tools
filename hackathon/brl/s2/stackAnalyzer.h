@@ -18,8 +18,8 @@ signals:
     void analysisDone(LandmarkList newTargets);
     void messageSignal(QString msg);
 public slots:
-    void loadScan();
-    void processStack(Image4DSimple * pInputImage);
+    void loadScan(QString latestString);
+    void processStack(Image4DSimple InputImage);
 private:
     V3DPluginCallback2 * cb;
 

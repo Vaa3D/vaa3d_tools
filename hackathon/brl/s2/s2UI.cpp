@@ -88,12 +88,13 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
 
 
+
     // communication with  myStackAnalyzer
     connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
-    connect(this, SIGNAL(newImageData(Image4DSimple*)), myStackAnalyzer, SLOT(processStack(Image4DSimple*)) );
+    connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-
+    connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
 
 }
 
@@ -229,15 +230,15 @@ void S2UI::startScan()
 
 void S2UI::loadScan(){
 
-
     QString latestString = getFileString();
     //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
-        //set up metadata in the eventual output image.
+         emit callSALoad(latestString);
+     /*   //set up metadata in the eventual output image.
         // do this here to minimize chance of modified values...
-        Image4DSimple  total4DImage;
-        total4DImage.setFileName(latestString.toLocal8Bit().data());
+        total4DImage.setFileName(QString("/Users/brianl/dump/testSWC").append(QString::number(scanNumber)).toLocal8Bit().data());
+        //total4DImage.setFileName(latestString.toLocal8Bit().data());
         // THE VALUES below are 'live' values which could potentially change
         // while the image data is being read in.
         total4DImage.setRezX(uiS2ParameterMap[8].getCurrentValue());
@@ -281,6 +282,7 @@ void S2UI::loadScan(){
                 qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
             }
         }
+        qDebug()<<total4DImage.valid();
         total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
         cb->setImage(newwin, &total4DImage);
         cb->setImageName(newwin,QString("test"));
@@ -288,9 +290,11 @@ void S2UI::loadScan(){
         if (smartScanStatus ==1){
             total4DImage.setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage.setOriginY(scanList.value(scanNumber).y);
-        emit newImageData(&total4DImage); // goes to stackAnalyzer
-        return;}
-
+qDebug()<<total4DImage.valid();
+            emit callSALoad(latestString);//newImageData(total4DImage); // goes to stackAnalyzer
+            //myStackAnalyzer->processStack(total4DImage);
+return;}
+*/
     }else{
         qDebug()<<"invalid image";
     }
@@ -512,9 +516,9 @@ void S2UI::moveToROI(LocationSimple nextROI){
     float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
     float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
     LocationSimple newLoc;
-    newLoc.x = nextGalvoX;
+    newLoc.x = -nextGalvoX;
     newLoc.y = nextGalvoY;
-    roiGS->addRect(nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+    roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
     emit moveToNext(newLoc);
     }else{
         s2LineEdit->setText("start PosMon before moving galvos");
