@@ -77,68 +77,104 @@ int main(int argc, char* argv[]){
     
     // Start thread to handle keyboard input
     bool finished = false;
-    //std::thread t1(process_keyboard(<#int val#>));    
+    //std::thread t1(process_keyboard(<#int val#>));
     //std::signal(SIGINT, sigint_handler);
     
     printf("Building consensus\n");
-    NeuronSegment * consensus_root = builder.build_consensus(0); // Testing with 0 threshold
-    Composite * composite = builder.get_composite();
-    composite->convert_to_consensus(0);
-    consensus_root = composite->get_root_segment();
-    std::map<NeuronSegment *,double> confidence_map = composite->get_segment_confidences();
-    int num_recons = builder.get_reconstruction_count();
-    finished = true;
-    //t1.join();
     
-    //NeuronSegment * consensus_root = builder.build_consensus();
-    
-    if (consensus_root){
-        // Make vector of MyMarker*, each pointing to its parent (#TODO: move into ConsensusBuilder, take care of MyMarker pointers inside as well)
-        std::stack<NeuronSegment*> segment_stack;
-        std::vector<MyMarker*> map_swc;
-        segment_stack.push(consensus_root);
-        MyMarker * prev_marker = nullptr;
-        std::map<NeuronSegment*,NeuronSegment*> parent_map;
-        printf("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
-        while (!segment_stack.empty()){
-            NeuronSegment * segment = segment_stack.top();
-            printf("Confidence for segment %p is %f with %i markers\n",segment,confidence_map[segment],segment->markers.size());
-            segment_stack.pop();
-            if (parent_map[segment]){
-                //prev_marker = parent_map[segment]->markers.back();
-                prev_marker = parent_map[segment]->markers.back();
-            }
-            //for (MyMarker * marker : segment->markers){
-            //for (std::vector<MyMarker *>::reverse_iterator rit = segment->markers.rbegin(); rit != segment->markers.rend(); ++rit){
-                //MyMarker * marker = *rit;
-            for (std::vector<MyMarker *>::iterator it = segment->markers.begin(); it != segment->markers.end(); ++it){
-                MyMarker * marker = *it;
-                marker->parent = prev_marker;
-                prev_marker = marker;
-                map_swc.push_back(marker);
-                marker->x = floor(marker->x*1000 + 0.5)/1000;
-                marker->y = floor(marker->y*1000 + 0.5)/1000;
-                marker->z = floor(marker->z*1000 + 0.5)/1000;
-                marker->radius = floor(marker->radius*100 + 0.5)/100;
-                //marker->radius = 0.5 + 3 * (confidence_map[segment] / num_recons);
-                // marker->type = 1 + (int)floor(20 * confidence_map[segment] / num_recons);
-                //marker->type = (int)floor(confidence_map[segment]);
-                marker->type = 20 + 230 * (1 - confidence_map[segment]);
-            }
-            for (NeuronSegment * child : segment->child_list){
-                segment_stack.push(child);
-                parent_map[child] = segment;
-            }
-        }
-
-        // Write consensus to swc file
-        saveSWC_file(argv[2], map_swc);
-        string message = "Wrote file to "+string(argv[2])+"\n";
-        std::cout << message;
+    string outfile_orig = string(argv[2]), outfile;
+    if (confidence_threshold == 0){
+//        outfile = outfile_orig;
+//        outfile.replace(outfile.end()-3,outfile.end(),"_ConfThresh0_TypeByBranch_Proportion.swc");
+//        builder.write_consensus_to_swc(outfile, 0, BRANCH_CONFIDENCE, PROPORTION);
+        
+        outfile = outfile_orig;
+        outfile.replace(outfile.end()-3,outfile.end(),"ConfThresh1_TypeByBranch_Proportion.swc");
+        builder.write_consensus_to_swc(outfile, 1, BRANCH_CONFIDENCE, PROPORTION);
+        
+//        outfile = outfile_orig;
+//        outfile.replace(outfile.end()-3,outfile.end(),"ConfThresh0_TypeByConn_Proportion.swc");
+//        builder.write_consensus_to_swc(outfile, 0, CONNECTION_CONFIDENCE, PROPORTION);
+        
+        outfile = outfile_orig;
+        outfile.replace(outfile.end()-3,outfile.end(),"ConfThresh1_TypeByConn_Proportion.swc");
+        builder.write_consensus_to_swc(outfile, 1, CONNECTION_CONFIDENCE, PROPORTION);
     }else{
-        printf("ConsensusBuilder not ready, see previous messages for reason\n");
+        string conf_thresh_str = confidence_threshold > 1 ? to_string((int)confidence_threshold) : to_string(confidence_threshold);
+        outfile = outfile_orig;
+        outfile.replace(outfile.end()-3,outfile.end(),"BranchConfThresh"+conf_thresh_str+"_TypeByBranch_Proportion.swc");
+        builder.write_consensus_to_swc(outfile, confidence_threshold, BRANCH_CONFIDENCE, PROPORTION);
+
+        printf("Finished with TypeByBranch, moving on to TypeByConn\n");
+        
+        outfile = outfile_orig;
+        outfile.replace(outfile.end()-3,outfile.end(),"BranchConfThresh"+conf_thresh_str+"_TypeByConn_Proportion.swc");
+        builder.write_consensus_to_swc(outfile, confidence_threshold, CONNECTION_CONFIDENCE, PROPORTION);
     }
+    return 0;
     
+    NeuronSegment *consensus_root;
+    //consensus_root = builder.build_consensus(0); // Testing with 0 threshold
+    try{
+        Composite * composite = builder.get_composite();
+        composite->convert_to_consensus(0);
+        consensus_root = composite->get_root_segment();
+        std::map<NeuronSegment *,double> confidence_map = composite->get_segment_confidences();
+        int num_recons = builder.get_reconstruction_count();
+        finished = true;
+        //t1.join();
+        
+        //NeuronSegment * consensus_root = builder.build_consensus();
+        
+        if (consensus_root){
+            // Make vector of MyMarker*, each pointing to its parent (#TODO: move into ConsensusBuilder, take care of MyMarker pointers inside as well)
+            std::stack<NeuronSegment*> segment_stack;
+            std::vector<MyMarker*> map_swc;
+            segment_stack.push(consensus_root);
+            MyMarker * prev_marker = nullptr;
+            std::map<NeuronSegment*,NeuronSegment*> parent_map;
+            printf("Generating final consensus for writing to swc, starting at %f %f %f\n",consensus_root->markers[0]->x,consensus_root->markers[0]->y,consensus_root->markers[0]->z);
+            while (!segment_stack.empty()){
+                NeuronSegment * segment = segment_stack.top();
+                printf("Confidence for segment %p is %f with %i markers\n",segment,confidence_map[segment],segment->markers.size());
+                segment_stack.pop();
+                if (parent_map[segment]){
+                    //prev_marker = parent_map[segment]->markers.back();
+                    prev_marker = parent_map[segment]->markers.back();
+                }
+                //for (MyMarker * marker : segment->markers){
+                //for (std::vector<MyMarker *>::reverse_iterator rit = segment->markers.rbegin(); rit != segment->markers.rend(); ++rit){
+                //MyMarker * marker = *rit;
+                for (std::vector<MyMarker *>::iterator it = segment->markers.begin(); it != segment->markers.end(); ++it){
+                    MyMarker * marker = *it;
+                    marker->parent = prev_marker;
+                    prev_marker = marker;
+                    map_swc.push_back(marker);
+                    marker->x = floor(marker->x*1000 + 0.5)/1000;
+                    marker->y = floor(marker->y*1000 + 0.5)/1000;
+                    marker->z = floor(marker->z*1000 + 0.5)/1000;
+                    marker->radius = floor(marker->radius*100 + 0.5)/100;
+                    //marker->radius = 0.5 + 3 * (confidence_map[segment] / num_recons);
+                    // marker->type = 1 + (int)floor(20 * confidence_map[segment] / num_recons);
+                    //marker->type = (int)floor(confidence_map[segment]);
+                    marker->type = 20 + 230 * (1 - confidence_map[segment]);
+                }
+                for (NeuronSegment * child : segment->child_list){
+                    segment_stack.push(child);
+                    parent_map[child] = segment;
+                }
+            }
+            
+            // Write consensus to swc file
+            saveSWC_file(argv[2], map_swc);
+            string message = "Wrote file to "+string(argv[2])+"\n";
+            std::cout << message;
+        }else{
+            printf("ConsensusBuilder not ready, see previous messages for reason\n");
+        }
+    } catch (std::string e){
+        printf(e.c_str());
+    }
     return 0;
 }
 /*

@@ -67,6 +67,12 @@ class ConsensusBuilder{
     std::map<string,Reconstruction*> cb_reconstructions;
     Composite * composite;
     
+    std::map<NeuronSegment *,std::vector<MyMarker *> > reversed_segments_map;
+    std::map<NeuronSegment *,std::vector<MyMarker *> > segment_vectors_map;
+    std::map<NeuronSegment *,std::vector<MyMarker *> > reverse_segment_vectors_map;
+    std::vector<MyMarker *> get_segment_vectors(NeuronSegment *segment, MyMarker *parent=nullptr, bool reverse=false);
+    void clear_segment_vectors(NeuronSegment *segment);
+    
     // The algorithm needs to know what direction the markers go within a segment [Now handled explicitly in the code]
     //bool markers_forward;
     
@@ -76,13 +82,16 @@ class ConsensusBuilder{
     double match_score_threshold;
     double endpoint_threshold_distance;
     float gap_cost;
-    float alignment_dist_threshold;
-    double good_enough_norm_score;
-    double best_branch_margin;
+    float euclidean_dist_threshold;
+    float cos_angle_threshold;
+    //float combined_distance_threshold;
+    float good_enough_norm_score;
+    float best_branch_margin;
 
     void default_parameters();
     
-    Logger * logger;
+    bool delete_logger;
+    Logger *logger;
     
     SegmentPtrSet unmatched_tree1_segments; // From composite (treated as base for alignment, or primary composite)
     SegmentPtrSet unmatched_tree2_segments; // From reconstruction (or secondary composite to be merged)
@@ -106,7 +115,7 @@ class ConsensusBuilder{
      
      Better to refer to actual cubes or to their ids? Can assign vector of PositionCubes
 */
-    /** Members for binning segments **/
+    // ** Members for binning segments **
     std::vector<int> x_bin_positions;
     std::vector<int> y_bin_positions;
     std::vector<int> z_bin_positions;
@@ -154,12 +163,13 @@ class ConsensusBuilder{
     NeuronSegment * build_consensus_sorted();
     NeuronSegment * build_consensus_hierarchically();
     
-    /*** Subroutines of build_composite ***/
+    // *** Subroutines of build_composite ***
     
     void preprocess_reconstructions();
     void split_proximal_branches(Reconstruction * reconstruction, float distance_threshold = 2);
     void split_curved_branches(Reconstruction * reconstruction, float curve_distance_threshold = 3); // Default threshold is 3 microns
     
+    Reconstruction *current_reconstruction;
     
     double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Composite * composite, vector<double> & w, vector<pair<int, int> > & result);
     double neuron_tree_align(vector<NeuronSegment*> &tree1, vector<NeuronSegment*> &tree2, Reconstruction * reconstruction, vector<double> & w, vector<pair<int, int> > & result);
@@ -171,14 +181,17 @@ class ConsensusBuilder{
      **/
     void average_and_split_alignments(Reconstruction * reconstruction, std::vector<std::map<MyMarker *,MyMarker *> > &segment_maps, std::vector<pair<int, int> > marker_index_alignments, std::vector<MyMarker*> merged_seg1, std::vector<MyMarker*> merged_seg2, std::vector<NeuronSegment *> segments1, std::vector<NeuronSegment *> segments2);
 
-    /* Assign/match branches that were not matched by BlastNeuron */
+    // * Assign/match branches that were not matched by BlastNeuron *
     //std::set<Match *> match_remaining_branches(SegmentPtrSet remaining_segments);
     void match_remaining_branches(Reconstruction * reconstruction);
     
-    /* Add missed branches to composite and update composite branch confidence_denominators */
+    // * Determine whether to extend alignment by one to bring alignment to end of one of the segments *
+    void process_match_ends(Match &match);
+    
+    // * Add missed branches to composite and update composite branch confidence_denominators *
     void incorporate_unassigned_branches(Reconstruction * reconstruction);
 
-    /* Create connections between composite branches based on reconstruction branches, their parents, and their composite matches */
+    // * Create connections between composite branches based on reconstruction branches, their parents, and their composite matches *
     void create_connections(Reconstruction * reconstruction);
 
     std::vector<double> calculate_weights(std::vector<NeuronSegment *> tree1_segs, std::vector<NeuronSegment *> tree2_segs, Reconstruction * reconstruction);
@@ -228,13 +241,18 @@ public:
     double get_match_score_threshold() { return match_score_threshold; };
     double get_endpoint_threshold_distance() { return endpoint_threshold_distance; };
     float get_gap_cost() { return gap_cost; };
-    float get_alignment_dist_threshold() { return alignment_dist_threshold; };
+    float get_euclidean_dist_threshold() { return euclidean_dist_threshold; };
+    float get_cos_angle_threshold() { return cos_angle_threshold; };
     void set_scale(double scale);
     void set_register_cube_size(double register_cube_size) { this->register_cube_size = register_cube_size; };
     void set_match_score_threshold(double match_score_threshold) { this->match_score_threshold = match_score_threshold; };
     void set_endpoint_threshold_distance(double endpoint_threshold_distance) { this->endpoint_threshold_distance = endpoint_threshold_distance; };
     void set_gap_cost(float gap_cost) { this->gap_cost = gap_cost; };
-    void set_alignment_dist_threshold(float alignment_dist_threshold) { this->alignment_dist_threshold = alignment_dist_threshold; };
+    void set_euclidean_dist_threshold(float euclidean_dist_threshold) {
+        this->euclidean_dist_threshold = scale * euclidean_dist_threshold;
+    };
+    void set_angle_threshold(float angle_threshold) { this->cos_angle_threshold = cos(angle_threshold); };
+    void set_cos_angle_threshold(float cos_angle_threshold) { this->cos_angle_threshold = cos_angle_threshold; };
 
     // Manage reconstructions
     void set_reconstructions(vector<NeuronSegment*> reconstruction_root_segments);

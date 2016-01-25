@@ -12,11 +12,12 @@
 #include "tree_matching/swc_utils.h"
 
 struct Match{
-    NeuronSegment * seg1;
-    NeuronSegment * seg2;
+    NeuronSegment *seg1;
+    NeuronSegment *seg2;
     double score;
     //vector<pair<int,int> > alignment;
-    pair<vector<int>,vector<int> > alignment;
+    pair<std::vector<int>,std::vector<int> > alignment;
+    std::vector<double> position_scores;
     //    int seg1_start, seg1_end, seg2_start, seg2_end;
     bool forward;
     
@@ -52,7 +53,7 @@ struct Match{
 
 class match_ptr_less{
 public:
-    bool operator()(const Match * lhs, const Match * rhs) const{
+    bool operator()(const Match *lhs, const Match *rhs) const{
         return lhs < rhs;
 //        return !lhs ? (rhs ? true : false) : (!rhs ? false : lhs->score < rhs->score ? true : lhs < rhs);
     }
@@ -61,7 +62,7 @@ public:
 class segment_ptr_less{
 public:
     segment_ptr_less(){};
-    bool operator()(const NeuronSegment * lhs, const NeuronSegment * rhs) const{
+    bool operator()(const NeuronSegment *lhs, const NeuronSegment *rhs) const{
         return lhs < rhs;
 /*        return !lhs ? (rhs ? true : false) : (!rhs ? false :
                  lhs->child_list.size() < rhs->child_list.size() ? true :
