@@ -60,6 +60,8 @@ private slots:
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
+    void loadScanFromFile(QString file);
+    void toLoad();
 
 private:
     V3DPluginCallback2 * cb;
@@ -86,6 +88,7 @@ private:
 
     QGroupBox *createROIControls();
     QGroupBox *createS2Monitors();
+    QGroupBox *createTracingParameters();
     void createButtonBox1();
 
     QLabel *s2Label;

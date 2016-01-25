@@ -30,6 +30,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
     lhTabs->addTab(&myPosMon, "monCOM" );
     lhTabs->addTab(&myController, "s2COM");
+    lhTabs->addTab(createTracingParameters(),"tracing");
     mainLayout = new QGridLayout();
     mainLayout->addWidget(s2Label, 0, 0);
     mainLayout->addWidget(s2LineEdit, 0, 1);
@@ -91,7 +92,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     // communication with  myStackAnalyzer
-//    connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
+    connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(toLoad()));
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
@@ -156,6 +157,28 @@ QGroupBox *S2UI::createS2Monitors(){
     gMonBox->setLayout(gbMon);
     return gMonBox;
 }
+
+
+QGroupBox *S2UI::createTracingParameters(){
+    // add fields with data...  currently hardcoding the number of parameters...
+    QGroupBox *tPBox = new QGroupBox(tr("Tracing"));
+
+    QGridLayout *tPL = new QGridLayout;
+
+    QLabel * labeli = new QLabel(tr("background threshold = "));
+    QSpinBox *bkgSpnBx = new QSpinBox(0);
+    bkgSpnBx->setMaximum(255);
+    bkgSpnBx->setMinimum(0);
+    bkgSpnBx->setValue(10);
+    bkgSpnBx->setObjectName("bkgSpinBox");
+    tPL->addWidget(labeli,0,0);
+    tPL->addWidget(bkgSpnBx,0,1);
+
+
+    tPBox->setLayout(tPL);
+    return tPBox;
+}
+
 
 QGroupBox *S2UI::createROIControls(){
     QGroupBox *gROIBox = new QGroupBox(tr("&ROI Controls"));
@@ -277,7 +300,7 @@ void S2UI::loadScan(){
 
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(latestString.toLatin1().data());
+        total4DImage->setFileName("/Users/brianl/dump/testX.v3draw");//latestString.toLatin1().data());
         NeuronTree nt;
         LandmarkList newTargetList;
         if (smartScanStatus ==1){
@@ -290,7 +313,7 @@ void S2UI::loadScan(){
             p.is_gsdt = false;
             p.is_coverage_prune = true;
             p.is_break_accept = false;
-            p.bkg_thresh = 100; //  I've tried to vary this value but it seems to be a rather unstable parameter.
+            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value(); //  I've tried to vary this value but it seems to be a rather unstable parameter.
             p.length_thresh = 5;
             p.cnn_type = 2;
             p.channel = 0;
@@ -300,7 +323,7 @@ void S2UI::loadScan(){
             p.b_resample = 1;
             p.b_intensity = 0;
             p.b_brightfiled = 0;
-            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+            p.outswc_file = QString("/Users/brianl/dump/testX.swc");//QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
             p.p4dImage = total4DImage;
             p.xc0 = p.yc0 = p.zc0 = 0;
@@ -435,6 +458,147 @@ return;}
         qDebug()<<"invalid image";
     }
 }
+
+void S2UI::toLoad(){
+    loadScanFromFile(s2LineEdit->text());
+}
+void S2UI::loadScanFromFile(QString file){
+    QFileInfo imageFileInfo = QFileInfo(file);
+    if (imageFileInfo.isReadable()){
+        v3dhandle newwin = cb->newImageWindow();
+        Image4DSimple * pNewImage = cb->loadImage(file.toLatin1().data());
+        QDir imageDir =  imageFileInfo.dir();
+        QStringList filterList;
+        filterList.append(QString("*Ch2*.tif"));
+        imageDir.setNameFilters(filterList);
+        QStringList fileList = imageDir.entryList();
+
+        //get the parent dir and the list of ch1....ome.tif files
+        //use this to id the number of images in the stack (in one channel?!)
+        V3DLONG x = pNewImage->getXDim();
+        V3DLONG y = pNewImage->getYDim();
+        V3DLONG nFrames = fileList.length();
+
+        V3DLONG tunits = x*y*nFrames;
+        unsigned short int * total1dData = new unsigned short int [tunits];
+        V3DLONG totalImageIndex = 0;
+        for (int f=0; f<nFrames; f++){
+            qDebug()<<fileList[f];
+            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+            if (pNewImage->valid()){
+                unsigned short int * data1d = 0;
+                data1d = new unsigned short int [x*y];
+                data1d = (unsigned short int*)pNewImage->getRawData();
+                for (V3DLONG i = 0; i< (x*y); i++){
+                    total1dData[totalImageIndex]= data1d[i];
+                    totalImageIndex++;
+                }
+            }else{
+                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+            }
+
+        }
+
+
+        total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        total4DImage->setFileName(file.toLatin1().data());
+        NeuronTree nt;
+        LandmarkList newTargetList;
+            qDebug()<<total4DImage->valid();
+
+
+            PARA_APP2 p;
+            p.is_gsdt = false;
+            p.is_coverage_prune = true;
+            p.is_break_accept = false;
+            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value(); //  I've tried to vary this value but it seems to be a rather unstable parameter.
+            p.length_thresh = 5;
+            p.cnn_type = 2;
+            p.channel = 0;
+            p.SR_ratio = 3.0/9.9;
+            p.b_256cube = 1;
+            p.b_RadiusFrom2D = true;
+            p.b_resample = 1;
+            p.b_intensity = 0;
+            p.b_brightfiled = 0;
+            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+
+            p.p4dImage = total4DImage;
+            p.xc0 = p.yc0 = p.zc0 = 0;
+            p.xc1 = p.p4dImage->getXDim()-1;
+            p.yc1 = p.p4dImage->getYDim()-1;
+            p.zc1 = p.p4dImage->getZDim()-1;
+
+            QString versionStr = "v2.621";
+            proc_app2(*cb, p, versionStr);
+
+            nt = readSWC_file(p.outswc_file);
+            V3DLONG neuronNum = nt.listNeuron.size();
+            bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                V3DLONG node_x = nt.listNeuron[i].x;
+                V3DLONG node_y = nt.listNeuron[i].y;
+                V3DLONG node_z = nt.listNeuron[i].z;
+
+                LocationSimple newTarget;
+                if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+                {
+                    newTarget.x = -p.p4dImage->getXDim();
+                    newTarget.y = 0;
+                    newTarget.z = node_z;
+
+                    scan_left = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
+                {
+                    newTarget.x = p.p4dImage->getXDim();
+                    newTarget.y = 0;
+                    newTarget.z = node_z;
+                    scan_right = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
+                {
+                    newTarget.x = 0;
+                    newTarget.y = -p.p4dImage->getYDim();
+                    newTarget.z = node_z;
+                    scan_up = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
+                {
+                    newTarget.x = 0;
+                    newTarget.y = p.p4dImage->getYDim();
+                    newTarget.z = node_z;
+                    scan_down = true;
+                    newTargetList.push_back(newTarget);
+                }
+            }
+            if (!newTargetList.empty()){
+                for (int i = 0; i<newTargetList.length(); i++){
+                    newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
+                    newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
+                    newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
+                }
+            }
+
+
+        cb->setImage(newwin, total4DImage);
+        cb->open3DWindow(newwin);
+        cb->setSWC(newwin,nt);
+        cb->setLandmark(newwin,newTargetList);
+        cb->pushObjectIn3DWindow(newwin);
+        cb->updateImageWindow(newwin);
+    }else{
+        qDebug()<<"invalid image";
+    }
+}
+
+
+
 
 void S2UI::displayScan(){ // this will listen for a signal from myController
     //containing either a filename or  eventually an address
