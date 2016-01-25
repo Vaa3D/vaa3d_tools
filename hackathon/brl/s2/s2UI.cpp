@@ -9,6 +9,7 @@
 #include "s2UI.h"
 #include "s2plot.h"
 #include "stackAnalyzer.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
@@ -90,11 +91,11 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     // communication with  myStackAnalyzer
-    connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
+//    connect(startStackAnalyzerPB, SIGNAL(clicked()),myStackAnalyzer, SLOT(loadScan()));
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
+   // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
 
 }
 
@@ -232,10 +233,145 @@ void S2UI::loadScan(){
 
     QString latestString = getFileString();
     //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    //    QFileInfo imageFileInfo = QFileInfo(latestString);
+    //    if (imageFileInfo.isReadable()){
+    //         emit callSALoad(latestString);
+
+
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
-         emit callSALoad(latestString);
-     /*   //set up metadata in the eventual output image.
+        v3dhandle newwin = cb->newImageWindow();
+        Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
+        QDir imageDir =  imageFileInfo.dir();
+        QStringList filterList;
+        filterList.append(QString("*Ch2*.tif"));
+        imageDir.setNameFilters(filterList);
+        QStringList fileList = imageDir.entryList();
+
+        //get the parent dir and the list of ch1....ome.tif files
+        //use this to id the number of images in the stack (in one channel?!)
+        V3DLONG x = pNewImage->getXDim();
+        V3DLONG y = pNewImage->getYDim();
+        V3DLONG nFrames = fileList.length();
+
+        V3DLONG tunits = x*y*nFrames;
+        unsigned short int * total1dData = new unsigned short int [tunits];
+        V3DLONG totalImageIndex = 0;
+        for (int f=0; f<nFrames; f++){
+            qDebug()<<fileList[f];
+            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+            if (pNewImage->valid()){
+                unsigned short int * data1d = 0;
+                data1d = new unsigned short int [x*y];
+                data1d = (unsigned short int*)pNewImage->getRawData();
+                for (V3DLONG i = 0; i< (x*y); i++){
+                    total1dData[totalImageIndex]= data1d[i];
+                    totalImageIndex++;
+                }
+            }else{
+                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+            }
+
+        }
+
+
+        total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        total4DImage->setFileName(latestString.toLatin1().data());
+        NeuronTree nt;
+        LandmarkList newTargetList;
+        if (smartScanStatus ==1){
+            total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
+            total4DImage->setOriginY(scanList.value(scanNumber).y);
+            qDebug()<<total4DImage->valid();
+
+
+            PARA_APP2 p;
+            p.is_gsdt = false;
+            p.is_coverage_prune = true;
+            p.is_break_accept = false;
+            p.bkg_thresh = 100; //  I've tried to vary this value but it seems to be a rather unstable parameter.
+            p.length_thresh = 5;
+            p.cnn_type = 2;
+            p.channel = 0;
+            p.SR_ratio = 3.0/9.9;
+            p.b_256cube = 1;
+            p.b_RadiusFrom2D = true;
+            p.b_resample = 1;
+            p.b_intensity = 0;
+            p.b_brightfiled = 0;
+            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+
+            p.p4dImage = total4DImage;
+            p.xc0 = p.yc0 = p.zc0 = 0;
+            p.xc1 = p.p4dImage->getXDim()-1;
+            p.yc1 = p.p4dImage->getYDim()-1;
+            p.zc1 = p.p4dImage->getZDim()-1;
+
+            QString versionStr = "v2.621";
+            proc_app2(*cb, p, versionStr);
+
+            nt = readSWC_file(p.outswc_file);
+            V3DLONG neuronNum = nt.listNeuron.size();
+            bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                V3DLONG node_x = nt.listNeuron[i].x;
+                V3DLONG node_y = nt.listNeuron[i].y;
+                V3DLONG node_z = nt.listNeuron[i].z;
+
+                LocationSimple newTarget;
+                if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+                {
+                    newTarget.x = -p.p4dImage->getXDim();
+                    newTarget.y = 0;
+                    newTarget.z = node_z;
+
+                    scan_left = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
+                {
+                    newTarget.x = p.p4dImage->getXDim();
+                    newTarget.y = 0;
+                    newTarget.z = node_z;
+                    scan_right = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
+                {
+                    newTarget.x = 0;
+                    newTarget.y = -p.p4dImage->getYDim();
+                    newTarget.z = node_z;
+                    scan_up = true;
+                    newTargetList.push_back(newTarget);
+                }
+                if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
+                {
+                    newTarget.x = 0;
+                    newTarget.y = p.p4dImage->getYDim();
+                    newTarget.z = node_z;
+                    scan_down = true;
+                    newTargetList.push_back(newTarget);
+                }
+            }
+            if (!newTargetList.empty()){
+                for (int i = 0; i<newTargetList.length(); i++){
+                    newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
+                    newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
+                    newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
+                }
+            }
+            handleNewLocation(newTargetList);
+
+        }
+        cb->setImage(newwin, total4DImage);
+        cb->open3DWindow(newwin);
+        cb->setSWC(newwin,nt);
+        cb->setLandmark(newwin,newTargetList);
+        cb->pushObjectIn3DWindow(newwin);
+        cb->updateImageWindow(newwin);
+        /*   //set up metadata in the eventual output image.
         // do this here to minimize chance of modified values...
         total4DImage.setFileName(QString("/Users/brianl/dump/testSWC").append(QString::number(scanNumber)).toLocal8Bit().data());
         //total4DImage.setFileName(latestString.toLocal8Bit().data());
@@ -404,7 +540,9 @@ void S2UI::startingSmartScan(){
     smartScanStatus = 1;
     startSmartScanPB->setText("cancel smartScan");
     if (allROILocations->isEmpty()){
-       s2LineEdit->setText("starting smartScan...");
+        scanList.clear();
+        scanNumber = 0;
+        s2LineEdit->setText("starting smartScan...");
         LocationSimple startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
                 uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
                 0);
@@ -421,11 +559,22 @@ void S2UI::handleNewLocation(LandmarkList newLandmarks){
     qDebug()<<"got "<< newLandmarks.length()<<"  new landmarks associated with ROI "<<scanNumber;
     for (int i = 0; i<newLandmarks.length(); i++){
         qDebug()<<"x= "<<newLandmarks.value(i).x<<" y = "<<newLandmarks.value(i).y<<" z= "<<newLandmarks.value(i).z;
+        if (!isDuplicateROI(newLandmarks.value(i))){
         allROILocations->append(newLandmarks.value(i));
+        }else{
+            qDebug()<<"already scanned here!";
+        }
     }
     scanNumber++;
-smartScanHandler();
+    smartScanHandler();
+}
 
+bool S2UI::isDuplicateROI(LocationSimple inputLocation){
+    for (int i=0; i<scanList.length(); i++){
+        if ((inputLocation.x == scanList[i].x)&(inputLocation.y == scanList[i].y))
+            return true;
+    }
+    return false;
 }
 void S2UI::smartScanHandler(){
     if (smartScanStatus!=1){
@@ -510,16 +659,16 @@ QString S2UI::getFileString(){
 void S2UI::moveToROI(LocationSimple nextROI){
     // convert from pixels to microns:
     if( posMonStatus){
-    float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
-    float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
-    // and now to galvo voltage:
-    float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
-    float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
-    LocationSimple newLoc;
-    newLoc.x = -nextGalvoX;
-    newLoc.y = nextGalvoY;
-    roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-    emit moveToNext(newLoc);
+        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
+        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
+        // and now to galvo voltage:
+        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
+        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+        LocationSimple newLoc;
+        newLoc.x = -nextGalvoX;
+        newLoc.y = nextGalvoY;
+        roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+        emit moveToNext(newLoc);
     }else{
         s2LineEdit->setText("start PosMon before moving galvos");
         smartScanStatus = -1;
@@ -539,3 +688,5 @@ void S2UI::moveToROI(LocationSimple nextROI){
 
 //
 
+
+// HAVE TO FIGURE OUT HOW TO PASS THE IMAGE4DSIMPLE THROUGH A SLOT!

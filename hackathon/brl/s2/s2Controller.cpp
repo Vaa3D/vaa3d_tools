@@ -58,7 +58,7 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     QString ipAddress;
     ipAddress = QHostAddress(QHostAddress::LocalHost).toString();
     int portnumber= 1236;
-    hostLineEdit = new QLineEdit("10.128.50.123");
+    hostLineEdit = new QLineEdit("10.128.50.5");
     portLineEdit = new QLineEdit("1236");
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
     cmdLineEdit = new QLineEdit;

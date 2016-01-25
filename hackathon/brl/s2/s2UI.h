@@ -118,6 +118,7 @@ private:
 
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
+    bool isDuplicateROI(LocationSimple inputLocation);
     LandmarkList *allROILocations;
     QMap<int, S2Parameter> uiS2ParameterMap;
 
@@ -130,7 +131,7 @@ private:
     int resultNumber;
     LandmarkList scanList;
 
-    Image4DSimple  total4DImage;
+    Image4DSimple*  total4DImage;
 
 
 };
