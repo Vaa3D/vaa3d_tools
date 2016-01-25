@@ -49,10 +49,12 @@ bool SORTPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if (func_name == tr("sort_swc"))
 	{
 		sort_func(input, output);
+	  return true;
 	}
 	else if (func_name == tr("help"))
 	{
 		printHelp(input,output);
+	  return true;
 	}
 	else if (func_name == tr("TOOLBOXsort_swc"))
 	{
