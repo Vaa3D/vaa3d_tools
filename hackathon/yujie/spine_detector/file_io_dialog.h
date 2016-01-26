@@ -21,7 +21,7 @@ private:
     bool check_button();
     bool load_image();
     bool load_swc();
-    //bool save_project();
+    bool save_project();
     int maybe_proofread();
 
     //for is detection

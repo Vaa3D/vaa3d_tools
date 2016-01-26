@@ -166,6 +166,7 @@ void file_io_dialog::run()
         dialog->run_interface_with_auto(ret,neuron,eswc_flag,LList_in,label_group,image1Dc_in,sz_img
          ,all_para.bgthr,all_para.max_dis,sel_channel,input_swc_name,input_image_name,folder_output);
 
+
     }
     else if (ret==4)
     {
@@ -350,7 +351,7 @@ bool file_io_dialog::load_image()
 
 bool file_io_dialog::load_swc()
 {
-    eswc_flag=false;
+    eswc_flag=true;
     input_swc_name=edit_swc->text();
     //load swc
     NeuronSWC *p_cur=0;
@@ -366,28 +367,28 @@ bool file_io_dialog::load_swc()
         }
      }
 
-//    if (input_swc_name.contains(".eswc"))
-//    {
-//        V3DLONG sum_level=0;
-//        bool possible_eswc=true;
-//        for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
-//        {
-//            p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
-////            qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
-////            qDebug()<<" level:"<<neuron.listNeuron[ii].level;
-////            qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0]<<"size:"<<neuron.listNeuron[ii].fea_val.size();
-//            sum_level+=p_cur->level;
-//            if (p_cur->fea_val.size()<2)
-//            {
-////                v3d_msg("No additional node info is provided. The csv output will onlly"
-////                " produce the basic spine info.");
-//                possible_eswc=false;
-//                break;
-//            }
-//        }
-//        if (possible_eswc && sum_level!=0)  //this is a eswc file
-//            eswc_flag=true;
-//    }
+    if (input_swc_name.contains(".eswc"))
+    {
+        V3DLONG sum_level=0;
+        bool possible_eswc=true;
+        for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+        {
+            p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+//            qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
+//            qDebug()<<" level:"<<neuron.listNeuron[ii].level;
+//            qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0]<<"size:"<<neuron.listNeuron[ii].fea_val.size();
+            sum_level+=p_cur->level;
+            if (p_cur->fea_val.size()<2)
+            {
+                v3d_msg("No additional node info is provided. The csv output will onlly"
+                " produce the basic spine info.");
+                possible_eswc=false;
+                break;
+            }
+        }
+        if (possible_eswc && sum_level!=0)  //this is a eswc file
+            eswc_flag=true;
+    }
 
     qDebug()<<"finished reading"<<neuron.listNeuron.size();
     return true;
@@ -405,19 +406,19 @@ void file_io_dialog::get_para()
     all_para.dst_max_pixel=2000;
 }
 
-//bool file_io_dialog::save_project()
-//{
-//    QString output_label_name="auto_label.v3draw";
-//    QString output_marker_name="auto.marker";
-//    QString output_csv_name="auto.csv";
-//    if (!save_project_results(callback,sz_img,label_group,folder_output,input_swc_name,input_image_name,eswc_flag,neuron,
-//                                 LList_in,sel_channel,all_para.bgthr,all_para.max_dis,0,0,output_label_name,
-//                              output_marker_name,output_csv_name))
-//    {
-//        return false;
-//    }
-//    return true;
-//}
+bool file_io_dialog::save_project()
+{
+    QString output_label_name="auto_label.v3draw";
+    QString output_marker_name="auto.marker";
+    QString output_csv_name="auto.csv";
+    if (!save_project_results(callback,sz_img,label_group,folder_output,input_swc_name,input_image_name,eswc_flag,neuron,
+                                 LList_in,sel_channel,all_para.bgthr,all_para.max_dis,0,0,output_label_name,
+                              output_marker_name,output_csv_name))
+    {
+        return false;
+    }
+    return true;
+}
 
 
 int file_io_dialog::maybe_proofread()

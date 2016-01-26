@@ -22,15 +22,12 @@ is_analysis_fun::is_analysis_fun(V3DPluginCallback2 *cb, QStringList name_list)
 
 void is_analysis_fun::run()
 {
-    //backupNeuron(nt,nt_copy);
-    //qDebug()<<"nt copy size:"<<nt_copy.listNeuron.size();
     obtain_mask();
     connected_components();
     stat_generate();
     visualize_image();
     create_proofread_panel();
 }
-
 
 void is_analysis_fun::obtain_mask()
 {
@@ -626,8 +623,6 @@ bool is_analysis_fun::csv_generate()
     csv_out_name=QFileDialog::getSaveFileName(this,tr("Save csv"),completName,tr("Supported file: (*.csv)"),0,0);
     if (csv_out_name.isEmpty())
         return false;
-
-    //Save file to csv
     QFile file(csv_out_name);
     if (!file.open(QIODevice::WriteOnly))
         return false;
@@ -652,67 +647,12 @@ bool is_analysis_fun::csv_generate()
     return true;
 }
 
-bool is_analysis_fun::eswc_generate()
-{
-    //only get the swc name
-    qDebug()<<"in eswc generate";
-    QString baseName = swc_name.section('/', -1);
-    QString fileDefaultName=baseName+"_IS.eswc";
-    QString completName=QDir(basedir).filePath(fileDefaultName);
-    eswc_out_name=QFileDialog::getSaveFileName(this,tr("Save eswc"),completName,tr("Supported file: (*.eswc)"),0,0);
-    if (eswc_out_name.isEmpty())
-        return false;
-
-    for (int kk=0;kk<voxel_groups.size();kk++)
-    {
-        QString tmp=QString::fromStdString(LList_out[kk].comments);
-        if (tmp.contains("2"))  //delete
-            continue;
-        int node_idx=voxel_groups[kk].nearest_node;
-        if (nt_copy.listNeuron[node_idx].fea_val[3]==-1)
-        {
-            nt_copy.listNeuron[node_idx].fea_val[3]=voxel_groups[kk].voxel.size();
-            nt_copy.listNeuron[node_idx].fea_val[4]=voxel_groups[kk].on_dendrite;
-        }
-        else
-        {
-            NeuronSWC S;
-            S.n = nt_copy.listNeuron.length()+1;
-            qDebug()<<"~~~~~~~~~~~~~New node add:"<<S.n<<"ori node: "<<nt_copy.listNeuron[node_idx].n
-                   <<" ori node parent:"<<nt_copy.listNeuron[node_idx].parent;
-            S.type = nt_copy.listNeuron[node_idx].type;
-            S.x = nt_copy.listNeuron[node_idx].x;
-            S.y = nt_copy.listNeuron[node_idx].y;
-            S.z = nt_copy.listNeuron[node_idx].z;
-            S.r = nt_copy.listNeuron[node_idx].r;
-            S.parent = nt_copy.listNeuron[node_idx].parent;
-            S.fea_val.clear();
-            for (int jj=0;jj<3;jj++)
-                S.fea_val.push_back(-1);
-            S.fea_val.push_back(voxel_groups[kk].voxel.size());
-            S.fea_val.push_back(voxel_groups[kk].on_dendrite);
-            nt_copy.listNeuron[node_idx].parent=S.n;
-            nt_copy.listNeuron.append(S);
-        }
-    }
-
-    writeESWC_file(eswc_out_name,nt_copy);
-//    out<<"# "<<image_name<<endl;
-//    out<<"# "<<swc_name<<endl;
-//    out<<"# for location: on_dendrite=1; on_spine=0"<<endl;
-//    file.close();
-    qDebug()<<"voxel_group:"<<voxel_groups.size()<<"finish writing out"<<endl;
-    return true;
-}
-
 int is_analysis_fun::finish_implement()
 {
     open_main_win();
     //prepare csv
     if (!csv_generate())
         return 0;
-//    if (!eswc_generate())
-//        return 0;
     qDebug()<<"before closing window";
     //close dialog, close other 3D window
     v3dhandleList list_triwin = callback->getImageWindowList();

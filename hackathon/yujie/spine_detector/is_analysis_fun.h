@@ -44,7 +44,7 @@ public:
 private:
     V3DPluginCallback2 * callback;
     V3DLONG sz_img[4],mask_sz[4],sz[4];
-    NeuronTree nt,nt_copy;
+    NeuronTree nt;
     unsigned char * p_img1D, *mask,*image_trun;
     //unsigned char ***ppp_img3D;
     int type_img;
@@ -57,7 +57,7 @@ private:
     QPlainTextEdit *edit_box;
     int x_start,y_start,z_start,x_end,y_end,z_end;
     v3dhandle main_win,curwin;
-    QString basedir,swc_name,image_name,csv_out_name,eswc_out_name;
+    QString basedir,swc_name,image_name,csv_out_name;
 
 private:
     void obtain_mask();
@@ -72,7 +72,6 @@ private:
     bool check_cur_win();   //not used
     bool csv_generate();
     int finish_implement();
-    bool eswc_generate();
 
 public slots:
     void marker_doubleclicked(); //not used

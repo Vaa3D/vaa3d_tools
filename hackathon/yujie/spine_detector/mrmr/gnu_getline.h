@@ -21,14 +21,8 @@
 // Modified by Hanchuan Peng so that the code can be used for Mac
 // 01/26/2006
 
-
-//#if defined(Q_OS_WIN32)
-//    typedef int ssize_t;
-//#endif
-
 #if  defined(Q_OS_MAX)
 typedef int ssize_t;
->>>>>>> .r3032
 #endif
 
 #ifndef _GNU_GETLINE_H_
@@ -45,8 +39,8 @@ typedef int ssize_t;
 # endif
 
 
-//ssize_t gnu_getline (char **lineptr, size_t *n, FILE *stream);
-//ssize_t gnu_getdelim (char **lineptr, size_t *n, int delim, FILE *stream);
+ssize_t gnu_getline (char **lineptr, size_t *n, FILE *stream);
+ssize_t gnu_getdelim (char **lineptr, size_t *n, int delim, FILE *stream);
 
 
 //extern int getline PARAMS ((char **_lineptr, size_t *_n, FILE *_stream));

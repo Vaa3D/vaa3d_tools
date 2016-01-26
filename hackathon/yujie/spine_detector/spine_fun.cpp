@@ -677,7 +677,7 @@ bool spine_fun::reverse_dst_grow()
 
     while (seeds.size()>0)
     {
-        qDebug()<<"dst_floor:"<<dst_floor<<" seeds size:"<<seeds.size();
+        //qDebug()<<"dst_floor:"<<dst_floor<<" seeds size:"<<seeds.size();
         dst_floor++;
         cur_layer.clear();
         for(V3DLONG sid=0; sid<seeds.size(); sid++){
@@ -766,36 +766,10 @@ bool spine_fun::reverse_dst_grow()
         seeds=seeds_next;
         //qDebug()<<"seeds next size:"<<seeds_next.size();
         seeds_next.clear();
-//        if (dst_floor%4==0)
-//        {
-//            V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
-//            unsigned char *tmp_label = new unsigned char[sz_page*2];
-//            memset(tmp_label,0,sz_page*2*sizeof(unsigned char));
-//            memcpy(tmp_label,p_img1D,sz_page);
-
-//            label_sz[0]=sz_img[0];
-//            label_sz[1]=sz_img[1];
-//            label_sz[2]=sz_img[2];
-//            label_sz[3]=2;
-//            //qDebug()<<"1";
-//            for (V3DLONG i=0;i<voxels.size();i++)
-//            {
-//                //qDebug()<<"i:"<<i<<":"<<voxels[i]->dst_label;
-//                if (voxels[i]->dst_label==0)
-//                {
-//                    tmp_label[voxels.at(i)->pos+sz_page]=255;
-//                    //tmp_label[voxels.at(i)->pos]=voxels[i]->intensity;
-//                }
-//            }
-//            qDebug()<<"2";
-//            QString local_fn=QString::number(dst_floor)+".v3draw";
-//            simple_saveimage_wrapper(*callback, local_fn.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 1);
-
-//        }
     }
 
 
-    qDebug()<<"~~~~~dst grow complete, check connected component";
+    //qDebug()<<"~~~~~dst grow complete, check connected component";
     //find connected components among points whose dst_label!=0
     //1)get rid of groups that are too small
     //2)get ready for intesity grow
