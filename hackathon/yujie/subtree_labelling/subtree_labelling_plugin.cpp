@@ -37,9 +37,9 @@ void subtree_label::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 	else
 	{
-        QString info="The subtree label plug-in is used to label subtrees. Each node in the subtree is assigned subtree type,subtree id,segment id,branch order and the distance between the node to subtree root node."
+        QString info="The subtree label plug-in is used to label subtrees. Each node in the subtree is assigned a subtree type,subtree id,segment id,branch order and the distance between the node to subtree root node."
                 "The plug-in does not assume the precence of soma or a complete neuron tree."
-                " Each markers defined by the user will be the root node of one subtree.The segment id and branch order of the subree root node is set to 1 and increase when there is a bifurcation."
+                "If soma is defined by the user, it will be the root node of this subtree. In the presence of multiple markers on one subtree, the root node will the the first marker. The segment id and branch order of the subree root node is set to 1 and increase when there is a bifurcation."
                 " The input is a sorted swc file and markers. The output is a eswc file";
         QMessageBox::information(0,"subtree plug-in information",info,QMessageBox::Ok);
 	}

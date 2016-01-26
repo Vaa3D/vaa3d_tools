@@ -28,7 +28,6 @@ public:
    void connected_components();
 
 public slots:
-   void marker_change();
    void soma_clicked();
    void axon_clicked();
    void apical_dendrite_clicked();

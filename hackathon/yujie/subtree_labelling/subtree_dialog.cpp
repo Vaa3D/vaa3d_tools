@@ -44,8 +44,6 @@ bool subtree_dialog::get_swc_marker()
         QList<NeuronTree> *tmp_nt;
         tmp_nt=callback->getHandleNeuronTrees_Any3DViewer(swc_win);
         nt=(NeuronTree *)&((*tmp_nt)[0]);
-        //backup nt
-        //backupNeuron((*tmp_nt)[0],*nt);
 
         //check swc file
         if (nt->listNeuron.size()<=0)
@@ -266,17 +264,6 @@ void subtree_dialog::build_connt_LUT()
 //    }
 }
 
-void subtree_dialog::marker_change()
-{
-    if(markers->count()==0) return;
-    // if this markers is not determined,Landmark color change
-//    if (LList_in[mid].comments.empty())
-//    {
-//        LList_in[mid].color.r=LList_in[mid].color.b=255;
-//        LList_in[mid].color.g=70;
-//    }
-
-}
 
 void subtree_dialog::soma_clicked()
 {
