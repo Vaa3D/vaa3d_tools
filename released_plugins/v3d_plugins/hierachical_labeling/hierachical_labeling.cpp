@@ -65,7 +65,11 @@ bool hierachical_labeling(NeuronTree & nt)
 		do
 		{
 			NeuronSWC s = nt.listNeuron[cur];
-			if (s.pn<0) break;
+			if (s.pn<0)
+         {
+          nt.listNeuron[cur].fea_val.append(-1);
+          break;
+         } 
 			nt.listNeuron[cur].fea_val.append(colored);
 			pid = nt.hashNeuron.value(s.pn);
 			cur = pid;
