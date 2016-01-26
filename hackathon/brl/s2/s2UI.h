@@ -13,6 +13,7 @@
 #include "s2Controller.h"
 #include "s2plot.h"
 #include "stackAnalyzer.h"
+#include "noteTaker.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -71,6 +72,8 @@ private:
  // Layout and buttons
 
     QTabWidget * lhTabs;
+    QTabWidget * rhTabs;
+
 
     QGridLayout *mainLayout;
     QGridLayout * gl;
@@ -136,7 +139,7 @@ private:
 
     Image4DSimple*  total4DImage;
 
-
+    NoteTaker *myNotes;
 };
 //! [0]
 

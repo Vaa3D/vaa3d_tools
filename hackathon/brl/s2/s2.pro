@@ -14,7 +14,8 @@ QT           += network
 
 HEADERS  = s2_plugin.h \
     s2plot.h \
-    stackAnalyzer.h
+    stackAnalyzer.h \
+    noteTaker.h
 HEADERS += s2UI.h
 HEADERS += s2Controller.h
 HEADERS += $$VAA3D_DIR/v3d_main/basic_c_fun/customary_structs/vaa3d_neurontoolbox_para.h
@@ -32,7 +33,8 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 
 SOURCES = s2_plugin.cpp \
     s2plot.cpp \
-    stackAnalyzer.cpp
+    stackAnalyzer.cpp \
+    noteTaker.cpp
 SOURCES += s2UI.cpp
 SOURCES += s2Controller.cpp
 SOURCES += $$VAA3D_DIR/v3d_main/basic_c_fun/basic_surf_objs.cpp

@@ -23,8 +23,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     startPosMonButton = new QPushButton(tr("start monitor"));
     startSmartScanPB = new QPushButton(tr("SmartScan"));
     startSmartScanPB->setEnabled(false);
-    startStackAnalyzerPB = new QPushButton(tr("start stack analyzer"));
-    createROIMonitor();
+    startStackAnalyzerPB = new QPushButton(tr("trace single stack"));
+
+    myNotes = new NoteTaker;
+
+    rhTabs = new QTabWidget();
+    rhTabs->addTab(   createROIMonitor(), "ROI Monitor");
+    rhTabs->addTab(myNotes, "status and notes");
 
     lhTabs = new QTabWidget();
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
@@ -44,7 +49,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     mainLayout->addWidget(lhTabs, 4,0, 4, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
-    mainLayout->addWidget(roiGroupBox,4,5,7,4);
+    mainLayout->addWidget(rhTabs,4,5,7,4);
     mainLayout->addWidget(startStackAnalyzerPB, 8, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
@@ -121,6 +126,7 @@ QGroupBox *S2UI::createROIMonitor(){
     gl->addWidget(roiClearPB, 4,0);
 
     roiGroupBox->setLayout(gl);
+    return roiGroupBox;
 }
 
 void S2UI::updateROIPlot(QString ignore){
@@ -143,6 +149,7 @@ void S2UI::createButtonBox1(){
 
 QGroupBox *S2UI::createS2Monitors(){
     // add fields with data...  currently hardcoding the number of parameters...
+    QFont newFont = QFont("Times", 8, QFont::Normal);
     QGroupBox *gMonBox = new QGroupBox(tr("&smartScope Monitor"));
 
     QGridLayout *gbMon = new QGridLayout;
@@ -152,6 +159,7 @@ QGroupBox *S2UI::createS2Monitors(){
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
         labeli->setWordWrap(true);
+        labeli->setFont(newFont);
         gbMon->addWidget(labeli, jj%11, jj/11);
     }
     gMonBox->setLayout(gbMon);
@@ -300,7 +308,7 @@ void S2UI::loadScan(){
 
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName("/Users/brianl/dump/testX.v3draw");//latestString.toLatin1().data());
+        total4DImage->setFileName(QString("/Users/brianl/dump/s2testData/").append(imageFileInfo.fileName()).toLatin1().data());
         NeuronTree nt;
         LandmarkList newTargetList;
         if (smartScanStatus ==1){
@@ -313,7 +321,7 @@ void S2UI::loadScan(){
             p.is_gsdt = false;
             p.is_coverage_prune = true;
             p.is_break_accept = false;
-            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value(); //  I've tried to vary this value but it seems to be a rather unstable parameter.
+            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value();
             p.length_thresh = 5;
             p.cnn_type = 2;
             p.channel = 0;
@@ -323,7 +331,7 @@ void S2UI::loadScan(){
             p.b_resample = 1;
             p.b_intensity = 0;
             p.b_brightfiled = 0;
-            p.outswc_file = QString("/Users/brianl/dump/testX.swc");//QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+            p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
             p.p4dImage = total4DImage;
             p.xc0 = p.yc0 = p.zc0 = 0;
@@ -502,7 +510,7 @@ void S2UI::loadScanFromFile(QString file){
 
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(file.toLatin1().data());
+        total4DImage->setFileName(QString("/Users/brianl/dump/testImagex.v3draw").toLatin1().data());
         NeuronTree nt;
         LandmarkList newTargetList;
             qDebug()<<total4DImage->valid();
@@ -522,7 +530,7 @@ void S2UI::loadScanFromFile(QString file){
             p.b_resample = 1;
             p.b_intensity = 0;
             p.b_brightfiled = 0;
-            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+            p.outswc_file = QString("/Users/brianl/dump/testX.swc");//QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
             p.p4dImage = total4DImage;
             p.xc0 = p.yc0 = p.zc0 = 0;
