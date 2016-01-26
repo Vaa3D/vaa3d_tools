@@ -21,6 +21,8 @@ typedef struct NOI{
     };
     QList<float> fea_val; //feature values
     QSet<NOI *> conn; //connections from NOI
+    long seg_id;
+    long level;
 }NOI;
 
 typedef QHash<V3DLONG, NOI*>::iterator NodeIter;

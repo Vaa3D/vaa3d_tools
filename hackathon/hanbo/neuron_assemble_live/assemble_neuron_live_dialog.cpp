@@ -135,6 +135,8 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
                 node->type=ntList.at(i).listNeuron.at(j).type;
                 node->r=ntList.at(i).listNeuron.at(j).r;
                 node->fea_val=ntList.at(i).listNeuron.at(j).fea_val;
+                node->level=ntList.at(i).listNeuron.at(j).level;
+                node->seg_id=ntList.at(i).listNeuron.at(j).seg_id;
                 node->cid = -1;
                 nodes.insert(n,node);
             }else{
@@ -158,28 +160,50 @@ void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
             nodes.value(pn)->conn.insert(iter.key());
         }
     }
-    //remove duplicated node
+    //count duplicated node
+    long dupcount=0;
     for(QHash<V3DLONG, NOI*>::Iterator iter = nodes.begin(); iter!=nodes.end(); ){
         NOI * node=iter.value();
         bool mask_rm = false;
         for(QSet<NOI *>::Iterator iter_c=node->conn.begin(); iter_c!=node->conn.end(); iter_c++){
             NOI * nei=*iter_c;
             if(fabs(node->x-nei->x)+fabs(node->y-nei->y)+fabs(node->z-nei->z) < 1e-3){//merge them
-                nei->conn.remove(node);
-                for(QSet<NOI *>::Iterator iter_n=node->conn.begin(); iter_n!=node->conn.end(); iter_n++){
-                    (*iter_n)->conn.remove(node);
-                    if(nei == *iter_n) //no self loop
-                        continue;
-                    nei->conn.insert(*iter_n);
-                    (*iter_n)->conn.insert(nei);
-                }
-                iter=nodes.erase(iter);
-                mask_rm=true;
-                break;
+                dupcount++;
             }
         }
         if(!mask_rm)
             iter++;
+    }
+    dupcount/=2;
+    if(dupcount>0){
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Duplicate vertex", "Detected " + QString::number(dupcount) +
+                                      " pairs of duplicated nodes. Do you want to remove redundant ones?",QMessageBox::Yes|QMessageBox::No);
+        if(reply == QMessageBox::Yes){
+            //remove duplicated node
+            for(QHash<V3DLONG, NOI*>::Iterator iter = nodes.begin(); iter!=nodes.end(); ){
+                NOI * node=iter.value();
+                bool mask_rm = false;
+                for(QSet<NOI *>::Iterator iter_c=node->conn.begin(); iter_c!=node->conn.end(); iter_c++){
+                    NOI * nei=*iter_c;
+                    if(fabs(node->x-nei->x)+fabs(node->y-nei->y)+fabs(node->z-nei->z) < 1e-3){//merge them
+                        nei->conn.remove(node);
+                        for(QSet<NOI *>::Iterator iter_n=node->conn.begin(); iter_n!=node->conn.end(); iter_n++){
+                            (*iter_n)->conn.remove(node);
+                            if(nei == *iter_n) //no self loop
+                                continue;
+                            nei->conn.insert(*iter_n);
+                            (*iter_n)->conn.insert(nei);
+                        }
+                        iter=nodes.erase(iter);
+                        mask_rm=true;
+                        break;
+                    }
+                }
+                if(!mask_rm)
+                    iter++;
+            }
+        }
     }
     //init connected components
     {
@@ -921,7 +945,12 @@ void assemble_neuron_live_dialog::sortsaveSWC()
     QList<NeuronSWC> NeuronList = generate_swc_typesort(nodes, n_root);
 
     //save file
-    QString fname_output = nt.file + ".assembled.swc";
+    QString fname_output;
+    if(nt.file.section('.',-1).toUpper()=="ESWC")
+        fname_output=nt.file+"_assembled.eswc";
+    else
+        fname_output=nt.file+"_assembled.swc";
+
     fname_output = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                                                 fname_output,
             QObject::tr("Supported file (*.swc *.eswc)"
@@ -2105,6 +2134,8 @@ QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_ro
         S.type=nodes[c_roots.at(i)]->type;
         S.r=nodes[c_roots.at(i)]->r;
         S.pn=-1;
+        S.fea_val=nodes[c_roots.at(i)]->fea_val;
+        S.seg_id=nodes[c_roots.at(i)]->seg_id;
         neuronList.push_back(S);
     }
 
@@ -2116,6 +2147,8 @@ QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_ro
         seeds_tmp.append(QPair<NOI*,V3DLONG>(nodes[c_roots.at(i)],-1));
         seeds_next.push_back(seeds_tmp);
     }
+
+
     for(int type=1; type<20; type++){ //sort with type priority
         int emptycount=0;
         for(int cidx=0; cidx<seeds_next.size(); cidx++){
@@ -2128,7 +2161,7 @@ QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_ro
             seeds_cur.clear();
             while(!seeds_pre.isEmpty()){
                 QPair<NOI*,V3DLONG> pair_cur = seeds_pre.dequeue();
-                if(pair_cur.first->type > type){
+                if(pair_cur.first->type > type && type<19){
                     seeds_next[cidx].append(pair_cur);
                     continue;
                 }
@@ -2141,18 +2174,22 @@ QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_ro
                     S.z=pair_cur.first->z;
                     S.type=pair_cur.first->type;
                     S.r=pair_cur.first->r;
+                    S.fea_val=pair_cur.first->fea_val;
+                    S.seg_id=pair_cur.first->seg_id;
+                    S.level=pair_cur.first->level;
                     S.pn=pair_cur.second;
                     neuronList.push_back(S);
                 }
                 seeds_cur.append(pair_cur.first);
             }
+            qDebug()<<"+++++++++++++ "<<cidx<<" "<<seeds_cur.size()<<" "<<seeds_next.at(0).size();//<<" "<<seeds_cur.at(0)->conn.size();
 
             while(!seeds_cur.isEmpty()){
                 NOI* node_cur=seeds_cur.dequeue();
                 for(QSet<NOI*>::Iterator niter=node_cur->conn.begin(); niter!=node_cur->conn.end(); niter++){
                     if(hash_old_new.contains((*niter)->n))
                         continue;
-                    if((*niter)->type<=type){
+                    if((*niter)->type<=type || type>=19){
                         hash_old_new.insert((*niter)->n,neuronList.size()+1);
                         NeuronSWC S;
                         S.n=neuronList.size()+1;
@@ -2161,6 +2198,9 @@ QList<NeuronSWC> generate_swc_typesort(QHash<V3DLONG, NOI*>& nodes, V3DLONG n_ro
                         S.z=(*niter)->z;
                         S.type=(*niter)->type;
                         S.r=(*niter)->r;
+                        S.fea_val=(*niter)->fea_val;
+                        S.seg_id=(*niter)->seg_id;
+                        S.level=(*niter)->level;
                         S.pn=hash_old_new[node_cur->n];
                         neuronList.push_back(S);
                         seeds_cur.push_back(*niter);
@@ -2184,13 +2224,24 @@ bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)
     QFile file(fileSaveName);
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
+    bool eswc_flag=false;
+    if(fileSaveName.section('.',-1).toUpper()=="ESWC")
+        eswc_flag=true;
     QTextStream myfile(&file);
-    myfile<<"# generated by Vaa3D Plugin assemble_neuron_live"<<endl;
-    myfile<<"# date "<<QDate::currentDate().toString("yyyy.MM.dd")<<endl;
-    myfile<<"# id,type,x,y,z,r,pid"<<endl;
-    for (V3DLONG i=0;i<lN.size();i++)
-        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
-
+    myfile<<"# generated by Vaa3D Plugin neuron_assembler_live"<<endl;
+    if(eswc_flag)
+        myfile<<"##n,type,x,y,z,radius,parent,segment_id,segment_layer,feature_value"<<endl;
+    else
+        myfile<<"##n,type,x,y,z,radius,parent"<<endl;
+    for (V3DLONG i=0;i<lN.size();i++){
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn;
+        if(eswc_flag){
+            myfile<<" "<<lN.at(i).seg_id<<" "<<lN.at(i).level;
+            for(int j=0; j<lN.at(i).fea_val.size(); j++)
+                myfile <<" "<< lN.at(i).fea_val.at(j);
+        }
+        myfile << endl;
+    }
     file.close();
     return true;
 }
