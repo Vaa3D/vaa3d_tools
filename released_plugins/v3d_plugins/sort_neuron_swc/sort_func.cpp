@@ -237,8 +237,8 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"-i<file name>:\t\t input .swc or .ano file\n";
 	cout<<"-o<file name>:\t\t (not required) output sorted swc file. DEFAUTL: 'inputName_sorted.swc'\n";
 	cout<<"-p<link threshold, root id>:\t (not required) the threshold of link you want the plugin to generate in case the input swc(s) are broken. if you set thres=0, no new link will be generated. DEFAULT: Infinity (all points will be connected automatically); The node id of the root you would like to specify, by default, the first root's id  in the swc will be used.\n";
-	cout<<"Demo1:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc -p 100000.0  1  \n";
-	cout<<"Demo2:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc  (no new links, use the default first root as the root id) \n";
+	cout<<"Demo1:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc -p 0  1 (no new links) \n";
+	cout<<"Demo2:\t ./v3d -x sort_neuron_swc -f sort_swc -i test.swc -o test_sorted.swc <-p Inifinity> (Default threshold Infinity:all points will be connected automatically, use the default first root as the root id) \n";
 
 }
 
