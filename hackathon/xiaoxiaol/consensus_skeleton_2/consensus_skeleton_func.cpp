@@ -44,13 +44,14 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 
 	bool ok;
-    int method_code = QInputDialog::getInt(parent, "method", "0:direct vote; 1: maximum spanning tree", 0, 1, 1, 1, &ok);
-	
+    int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
+    int cluster_distance_threshold = QInputDialog::getInt(parent, "FIX ME:cluster distance threshold", "5~10", 0, 1, 1, 1, &ok);
+
 	if (!ok)
 		return 0;
 	
     QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, method_code, callback))
+    if (!consensus_skeleton(nt_list, merge_result, method_code, cluster_distance_threshold,  callback))
     {
         v3d_msg("Error in consensus swc!");
         return -1;
@@ -141,8 +142,8 @@ bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     else
         outfileName = QString(outlist->at(0));
 
-
-    if (!vote_map(nt_list,outfileName, callback))
+    int dilation_radius = 2;
+    if (!vote_map(nt_list,dilation_radius,outfileName, callback))
     {
         cerr<<"error in consensus_skeleton"<<endl;
         return false;
@@ -174,13 +175,18 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	//parsing parameters
 
     int method_code = 1; //adj matrix
+    int cluster_distance_threshold = 5; // ignore nodes that far away for clustering
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
-		if (paras->size()==1)
+        if (paras->size() >= 1)
 		{
             method_code = atoi(paras->at(0));
             cout<<"method_code = "<<method_code<<endl;
+            if (paras->size() == 2){
+                cluster_distance_threshold =  atoi(paras->at(1));
+                cout<<"clustering distance threshold = "<<cluster_distance_threshold<<endl;
+            }
 		}
 		else
 		{
@@ -236,7 +242,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		outfileName = QString(outlist->at(0));
 
 	QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, method_code, callback))
+    if (!consensus_skeleton(nt_list, merge_result, method_code,cluster_distance_threshold, callback))
 	{
 		cerr<<"error in consensus_skeleton"<<endl;
 		return false;

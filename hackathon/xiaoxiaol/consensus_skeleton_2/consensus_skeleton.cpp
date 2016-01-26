@@ -48,6 +48,16 @@ unsigned int v_max(vector<unsigned int> x)
     return  x[x.size()-1];
 }
 
+int max_image_value( unsigned char *  img1d, V3DLONG siz)
+{
+    int max_v = 0;
+    for(int i = 0; i < siz; i++ )
+    {
+        if (int(img1d[i]) > max_v)
+            max_v = img1d[i];
+    }
+    return max_v;
+ }
 
 V3DLONG median(vector<V3DLONG> x)
 {
@@ -103,7 +113,7 @@ MyBoundingBox neuron_trees_bb(vector<NeuronTree> nt_list)
 }
 
 
-void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z, Point3D offset,
+void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z, int threshold_votes, Point3D offset,
                          vector<Point3D> &node_list,  vector<unsigned int> &vote_list,unsigned int win_size)
 { // extract the local maximum voted skelenton node locations : node_list
   // the corresponding votes are collected in: vote_list
@@ -112,7 +122,7 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
         for (V3DLONG id_y = 0 + win_size/2; id_y <  sz_y- win_size/2; id_y++)
             for (V3DLONG id_z = 0 + win_size/2; id_z <  sz_z- win_size/2; id_z++)
             {
-                //nn
+                //nn, find the local max value within window size
                 unsigned char max_val = 0 ;
                 V3DLONG max_idx = 0 ;
                 for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
@@ -125,8 +135,8 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
                                 max_idx = idx;
                             }
                         }
-                if ( max_val > 0 )
-                {// found non-zero max
+                if ( max_val > 0)
+                {// found non-zero max that passes the majority votes threshold
                     for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
                         for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
                             for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
@@ -138,14 +148,14 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
                     img1d[max_idx] = max_val;
                 }
             }
-
+    //collect SWC nodes from the local max points
     for (V3DLONG id_x = 0 + win_size/2; id_x <  sz_x- win_size/2; id_x++)
         for (V3DLONG id_y = 0 + win_size/2; id_y <  sz_y- win_size/2; id_y++)
             for (V3DLONG id_z = 0 + win_size/2; id_z <  sz_z- win_size/2; id_z++)
             {
                 V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
 
-                if (img1d[idx] >0)
+                if (img1d[idx] >threshold_votes)
                 {
                     num_nodes++;
                     Point3D p;
@@ -172,7 +182,7 @@ QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons)
 
 
 
-void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
+void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,int dialate_radius,
                     int imageCount, V3DPluginCallback2 & callback)
 {
     NeuronSWC *p_cur = 0;
@@ -186,9 +196,13 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
         xs = p_cur->x;
         ys = p_cur->y;
         zs = p_cur->z;
-        // ignore radii
-        rs = p_cur->r;
-        rs = 0;
+
+        //rs = p_cur->r;
+        // when radii estimation are not taken into consideration for consensus,
+        // ignore radii;
+        // here register swc nodes to its nearby 3x3 neighborhood volume in the mask image
+        // to be more robust/smooth
+        rs = dialate_radius;
 
         double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
 
@@ -402,7 +416,7 @@ void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3D
 
 }
 
-bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallback2 & callback){
+bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileName,V3DPluginCallback2 & callback){
 
     //initialize the image volume to record/accumulate the  location votes from neurons
     MyBoundingBox bbUnion = neuron_trees_bb(nt_list);
@@ -423,7 +437,7 @@ bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallba
 
     for (int j = 0; j < nt_list.size(); j++){
         NeuronTree nt = nt_list[j];
-        AddToMaskImage(nt, pImMask, sz_x, sz_y, sz_z,j,callback);
+        AddToMaskImage(nt, pImMask, sz_x, sz_y, sz_z,dialate_radius,j,callback);
     }
 
     Image4DSimple *image = new Image4DSimple();
@@ -438,9 +452,10 @@ bool vote_map(vector<NeuronTree> & nt_list,  QString outfileName,V3DPluginCallba
 }
 
 
-bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,V3DPluginCallback2 &callback)
+bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code, int cluster_distance_threshold,V3DPluginCallback2 &callback)
 {
-    double CLUSTERING_RANGE = 10;//threshold to ignore mapping  (too far away) for generting nodeMap below
+    //int cluster_distance_threshold = 10;
+    //threshold to ignore mapping  (too far away) for generting nodeMap below
     //potentially, there are invalid neuron trees (massive node points, no node points, looping)
     remove_outliers(nt_list);
     int neuronNum = nt_list.size();
@@ -490,20 +505,27 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
     }
 
     //for debug only
-    /*
+
     Image4DSimple *image = new Image4DSimple();
     image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-    callback.saveImage(image, "./vote_count_image.v3draw");
-    */
+    callback.saveImage(image, "./vote_map.v3draw");
+
 
     //non-maximum suppresion
      vector<Point3D>  node_list;
      vector<unsigned int>  vote_list;
-     non_max_suppresion (img1d,sz_x,sz_y,sz_z,offset,node_list,vote_list,3);
+
+     int max_vote = max_image_value(img1d, tol_sz);
+     cout << "maximum votes in the vote map:" << max_vote << endl;
+     int threshold = max_vote/5;
+     int windows_siz = 5;
+     cout << "threshold vote:" << threshold << endl;
+     non_max_suppresion (img1d,sz_x,sz_y,sz_z,threshold, offset,node_list,vote_list,windows_siz);
      cout << "After non_max supression:"<< endl;
      cout << "number of nodes:"<< node_list.size() << endl;
-     cout << "maximum votes:" << v_min(vote_list) << endl;
-     cout << "minimum votes:" << v_max(vote_list) << endl;
+     cout << "maximum votes:" << v_max(vote_list) << endl;
+
+
 
      //for debug only
      /*
@@ -513,7 +535,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
      */
 
      // for debug: save node_list to check locations
-     /*QList<NeuronSWC> locationTree;
+     QList<NeuronSWC> locationTree;
      for (int i=0;i<node_list.size();i++)
      {
          NeuronSWC tmp;
@@ -528,8 +550,8 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
          locationTree.append(tmp);
      }
-    export_listNeuron_2swc(locationTree, "./testlocation.swc");
-    */
+    export_listNeuron_2swc(locationTree, "./test_nms_location.swc");
+
 
     printf("(2). compute adjacency matrix (vote for edges).\n");
 
@@ -567,7 +589,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 
             //find its nearest node
             V3DLONG node_id = -1;// this node does not exist
-            double min_dis = CLUSTERING_RANGE; //threshold to ignore mapping  (too far away)
+            double min_dis = double(cluster_distance_threshold); //threshold to ignore mapping  (too far away)
             for (V3DLONG ni = 0; ni <node_list.size(); ni++)
             {
                 Point3D p = node_list[ni];
@@ -714,7 +736,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
         {
             for (V3DLONG col = row+1;col < num_nodes;col++){
                 unsigned int edgeVote = adjMatrix[row*num_nodes + col];
-                if (edgeVote > 0)
+                if (edgeVote >= max_vote/2)
                 {
                     if (merge_result[row].pn == -1)
                     {//exsiting isolated vertex, modify parent id
