@@ -95,7 +95,6 @@ bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         return false;
     }
 
-
     vector<NeuronTree> nt_list;
     QStringList nameList;
     QString qs_linker;
@@ -142,7 +141,7 @@ bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     else
         outfileName = QString(outlist->at(0));
 
-    int dilation_radius = 2;
+    int dilation_radius = 0;
     if (!vote_map(nt_list,dilation_radius,outfileName, callback))
     {
         cerr<<"error in consensus_skeleton"<<endl;
