@@ -6,5 +6,5 @@
 **/Makefile
 
 #ignore symlink folder
-bin/*
-v3d_main/*
+bin
+v3d_main
