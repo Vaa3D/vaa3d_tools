@@ -1,0 +1,10 @@
+#ignore binary files
+**/*.o
+**/ui_*.*
+**/moc_*.*
+**/qrc_*.*
+**/Makefile
+
+#ignore symlink folder
+bin/*
+v3d_main/*
