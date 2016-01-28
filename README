@@ -1,0 +1,10 @@
+This folder contains the Vaa3D's plugin programs and various work from many contributors.
+
+Folder structure:
+
+* released_plugins: the plugins that are additional to the main vaa3d program.
+* hackathon: experimental code by various people
+* bigneuron_ported: the plugins and other code dedicated to the BigNeuron project
+
+By Hanchuan Peng
+2007-2016
