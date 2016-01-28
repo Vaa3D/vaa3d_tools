@@ -161,6 +161,9 @@ void S2Controller::initializeS2(){
 void S2Controller::initConnection(){
 }
 
+void S2Controller::status(QString statusM){
+	emit statusSig(statusM);
+}
 void S2Controller::initializeParameters(){
     S2Parameter tPara =S2Parameter("currentMode","-gts activeMode");
     s2ParameterMap.insert(0,tPara);//S2Parameter("resonantMode","-gts scanMode", 0.0,  "", "string"));
@@ -207,8 +210,8 @@ void S2Controller::connectToS2()
         tcpSocket->connectToHost(hostLineEdit->text(),
                                  portLineEdit->text().toInt());
     }
-    qDebug()<<"tcpSocket isopen "<<tcpSocket->isOpen();
-    qDebug()<<"tcpSocket isValid"<<tcpSocket->isValid();
+	status(QString("tcpSocket isopen: ").append(QString::number(tcpSocket->isOpen())));
+	status(QString("tcpSocket isvalid: ").append(QString::number(tcpSocket->isValid())));
 }
 
 void S2Controller::sendCommand()
@@ -403,20 +406,20 @@ void S2Controller::initROI(LocationSimple nextLoc){
 // for now, just move galvos to appropriate location:
    float x = nextLoc.x;
    float y = nextLoc.y;
-   qDebug()<<"caught nextLoc x= "<<x<<"  y = "<<y;
+   status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
     if ((x<7.6)&(x>-7.6)){
     QString toSend = QString("-sts currentScanCenter ");
     toSend.append(QString::number(x));
     toSend.append(" XAxis");
     cleanAndSend(toSend);
     }else{
-        qDebug()<<"X out of bounds!";}
+        status(QString("X out of bounds!"));}
      if ((y<7.6)&(y>-7.6)){
     QString toSend = QString("-sts currentScanCenter ") ;
     toSend.append(QString::number(y));
     toSend.append(" YAxis");
     cleanAndSend(toSend);}else{
-         qDebug()<<"Y out of bounds!";
+         status(QString("Y out of bounds!"));
      }
 
 }
@@ -434,9 +437,9 @@ void S2Controller::startNextROI(){//   Move to the next ROI location and start t
 }
 
 void S2Controller::startPosMon(){
-    qDebug()<<" start in myPosMon";
+    status(QString(" start in myPosMon"));
     if (inPosMonMode){
-        emit newMessage("already in Position Monitor mode");
+        status("already in Position Monitor mode");
         return;
     }
     inPosMonMode = true;
@@ -450,7 +453,7 @@ void S2Controller::startPosMon(){
 }
 
 void S2Controller::stopPosMon(){
-    qDebug()<<" stop in myPosMon";
+    status(" stop in myPosMon");
     ii = -1;
     cancelPosMon = true;
     inPosMonMode = false;

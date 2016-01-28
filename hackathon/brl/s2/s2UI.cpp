@@ -36,6 +36,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(&myPosMon, "monCOM" );
     lhTabs->addTab(&myController, "s2COM");
     lhTabs->addTab(createTracingParameters(),"tracing");
+	localRemoteCB = new QCheckBox;
+	localRemoteCB->setText(tr("Local PrairieView"));
     mainLayout = new QGridLayout();
     mainLayout->addWidget(s2Label, 0, 0);
     mainLayout->addWidget(s2LineEdit, 0, 1);
@@ -46,22 +48,22 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startZStackPushButton,2,1);
     mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 3,1,1,2);
-
-    mainLayout->addWidget(lhTabs, 4,0, 4, 3);
+	mainLayout->addWidget(localRemoteCB,4,0,1,2);
+    mainLayout->addWidget(lhTabs, 5,0, 4, 3);
     mainLayout->addWidget(createROIControls(), 0,5, 4,4);
     mainLayout->addWidget(rhTabs,4,5,7,4);
-    mainLayout->addWidget(startStackAnalyzerPB, 8, 0,1,2);
+    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
     //workerThread = new QThread;
     //myStackAnalyzer->moveToThread(workerThread);
     posMonStatus = false;
     waitingForFile = false;
+	isLocal = false;
     smartScanStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     //workerThread->start();
-
 
 }
 
@@ -78,12 +80,15 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiZWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
 
+	connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
+
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
     connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
+	connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
 
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
 
@@ -103,6 +108,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
    // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
 
+	//communicate with NoteTaker:
+	connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 }
 
 
@@ -139,6 +146,18 @@ void S2UI::updateROIPlot(QString ignore){
 
 }
 
+void S2UI::updateLocalRemote(bool state){
+isLocal = state;
+status(QString("isLocal ").append(QString::number(isLocal)));
+if (isLocal){
+myController.hostLineEdit->setText(QString("local"));
+myPosMon.hostLineEdit->setText(QString("local"));
+}else{
+	myController.hostLineEdit->setText(QString("10.128.50.5"));
+		myPosMon.hostLineEdit->setText(QString("10.128.50.5"));
+}
+
+}
 void S2UI::createButtonBox1(){
     startS2PushButton = new QPushButton(tr("Start smartScope2"));
     startScanPushButton = new QPushButton(tr("single scan"));
@@ -245,6 +264,7 @@ QGroupBox *S2UI::createROIControls(){
 
 void S2UI::startS2()
 {
+	localRemoteCB->setEnabled(false);
     myController.initializeS2();
     myPosMon.initializeS2();
     startS2PushButton->setText("s2 running");// should check something..?
@@ -253,6 +273,7 @@ void S2UI::startS2()
 void S2UI::startScan()
 {
     lastFile=getFileString();
+	status(QString("lastFile = ").append(lastFile));
     waitingForFile = true;
     QTimer::singleShot(0, &myController, SLOT(startScan()));
     roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
@@ -289,7 +310,7 @@ void S2UI::loadScan(){
         unsigned short int * total1dData = new unsigned short int [tunits];
         V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
-            qDebug()<<fileList[f];
+            status(fileList[f]);
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
             if (pNewImage->valid()){
                 unsigned short int * data1d = 0;
@@ -300,7 +321,7 @@ void S2UI::loadScan(){
                     totalImageIndex++;
                 }
             }else{
-                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+                status(QString(imageDir.absoluteFilePath(fileList[f])).append(" failed!"));
             }
 
         }
@@ -308,13 +329,15 @@ void S2UI::loadScan(){
 
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(QString("/Users/brianl/dump/s2testData/").append(imageFileInfo.fileName()).toLatin1().data());
+        total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
+		status(imageFileInfo.fileName());  
         NeuronTree nt;
         LandmarkList newTargetList;
+
         if (smartScanStatus ==1){
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage->setOriginY(scanList.value(scanNumber).y);
-            qDebug()<<total4DImage->valid();
+            status(QString("total4DImage is valid? ").append(QString(total4DImage->valid())));
 
 
             PARA_APP2 p;
@@ -463,7 +486,7 @@ qDebug()<<total4DImage.valid();
 return;}
 */
     }else{
-        qDebug()<<"invalid image";
+		status(QString("invalid image: ").append(latestString));
     }
 }
 
@@ -510,7 +533,7 @@ void S2UI::loadScanFromFile(QString file){
 
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(QString("/Users/brianl/dump/testImagex.v3draw").toLatin1().data());
+        total4DImage->setFileName(file.toLatin1().data());
         NeuronTree nt;
         LandmarkList newTargetList;
             qDebug()<<total4DImage->valid();
@@ -530,8 +553,8 @@ void S2UI::loadScanFromFile(QString file){
             p.b_resample = 1;
             p.b_intensity = 0;
             p.b_brightfiled = 0;
-            p.outswc_file = QString("/Users/brianl/dump/testX.swc");//QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
-
+            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+//QString("/Users/brianl/dump/testX.swc");//
             p.p4dImage = total4DImage;
             p.xc0 = p.yc0 = p.zc0 = 0;
             p.xc1 = p.p4dImage->getXDim()-1;
@@ -601,7 +624,7 @@ void S2UI::loadScanFromFile(QString file){
         cb->pushObjectIn3DWindow(newwin);
         cb->updateImageWindow(newwin);
     }else{
-        qDebug()<<"invalid image";
+		status(QString("invalid image: ").append(file));
     }
 }
 
@@ -778,6 +801,7 @@ void S2UI::smartScanHandler(){
 
 
 void S2UI::startingZStack(){
+	waitingForFile = true;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     qDebug()<<"start single z Stack";
     roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
@@ -791,7 +815,10 @@ void S2UI::updateFileString(QString inputString){
     // final version will require much more rigorous timing- it's not clear how we'll parse out
     // the streamed image data into files...
     fileString = inputString;
-    fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/").append("_Cycle00001_Ch2_000001.ome.tif");
+	if (!isLocal){
+    fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/");
+	}
+	fileString.append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
         waitingForFile = false;
         QTimer::singleShot(0, this, SLOT(loadScan()));
@@ -825,7 +852,9 @@ QString S2UI::getFileString(){
     return fileString;
 }
 
-
+void S2UI::status(QString statString){
+	emit noteStatus(statString);
+}
 
 
 void S2UI::moveToROI(LocationSimple nextROI){

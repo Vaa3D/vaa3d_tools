@@ -29,8 +29,7 @@ void NoteTaker::updateStuff(){
 }
 
 void NoteTaker::status(QString statString){
-    statString.append(myTime->currentDateTime().toString());
-    notes->append(statString);
+    notes->append(myTime->currentDateTime().toString().append(" ").append(statString));
 }
 
 void NoteTaker::setSaveDir(QFileInfo saveDir){

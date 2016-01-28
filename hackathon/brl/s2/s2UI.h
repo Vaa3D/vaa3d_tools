@@ -8,6 +8,7 @@
 #include <QGroupBox>
 #include <QTcpSocket>
 #include <QDir>
+#include <QCheckBox>
 #include <QTabWidget>
 #include <v3d_interface.h>
 #include "s2Controller.h"
@@ -44,6 +45,7 @@ signals:
     void callSALoad(QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
+	void noteStatus(QString);
 private slots:
     void startS2();
     void startScan();
@@ -63,7 +65,8 @@ private slots:
     QString getFileString();
     void loadScanFromFile(QString file);
     void toLoad();
-
+	void status(QString statString);
+	void updateLocalRemote(bool state);
 private:
     V3DPluginCallback2 * cb;
 
@@ -93,6 +96,8 @@ private:
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
     void createButtonBox1();
+	
+	QCheckBox *localRemoteCB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
@@ -125,6 +130,7 @@ private:
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     bool isDuplicateROI(LocationSimple inputLocation);
+
     LandmarkList *allROILocations;
     QMap<int, S2Parameter> uiS2ParameterMap;
 
@@ -132,6 +138,7 @@ private:
     QString lastFile;
     bool posMonStatus;
     bool waitingForFile;
+	bool isLocal;
     int smartScanStatus;
     double scanNumber;
     int resultNumber;

@@ -115,7 +115,7 @@ public:
     QString message;
     QString displayMessage;
     QMap<int, S2Parameter> s2ParameterMap;
-
+    QLineEdit *hostLineEdit;
     bool inPosMonMode;
     bool cancelPosMon;
 public slots:
@@ -147,6 +147,7 @@ signals:
     void newPosMonIndex();
     void pmStatus(bool inPosMonMode);
     void newS2Parameter( QMap<int, S2Parameter> parameterMap);
+	void statusSig(QString statusMessage);
 private slots:
     void checkForMessage();
     void processMessage();
@@ -166,7 +167,7 @@ private:
     QLabel *hostLabel;
     QLabel *portLabel;
     QLabel *cmdLabel;
-    QLineEdit *hostLineEdit;
+
     QLineEdit *portLineEdit;
     QLineEdit *cmdLineEdit;
     QLabel *statusLabel;
@@ -183,6 +184,7 @@ private:
     int ii;
     int maxParams;//temp!
     QNetworkSession *networkSession;
+	void status(QString statusM);
 
 };
 
