@@ -56,7 +56,7 @@ void soma_sorting::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 {
 	if (menu_name == tr("soma_sorting"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("Only works on dofunc for now.");
 	}
 	else
 	{
