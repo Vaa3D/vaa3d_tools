@@ -1,10 +1,22 @@
-This folder contains the Vaa3D's plugin programs and various work from many contributors.
+This code repository hosts source code for Vaa3D (vaa3d.org) plugins for numerous different appliations
+in bioimage processing, visualziation,  especially neuron tracing.
+
 
 Folder structure:
 
-* released_plugins: the plugins that are additional to the main vaa3d program.
-* hackathon: experimental code by various people
-* bigneuron_ported: the plugins and other code dedicated to the BigNeuron project
+* released_plugins: contains well-tested plugins that will be released with vaa3d installers
+* hackathon: sandbox for plugin developers
+* bigneuron_ported: the tools dedicated to the BigNeuron project (bigneuron.org)
 
-By Hanchuan Peng
-2007-2016
+* How to build Vaa3D plugins:
+Please follow the build instructions here to build released plugins along with the Vaa3d main program:
+     https://github.com/Vaa3D/Vaa3D_Wiki/wiki/BuildVaa3d.wiki
+If you would like to build plugins in the hackathon folder or plugins for bigneuron project, please follow
+this wiki page:
+     https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki
+     
+
+If you have questions, please check the documentations on the Vaa3D website: http://vaa3d.org , 
+and the wiki pages: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/.
+You could find answers of FAQs and submmit your questions using the following help forum:
+https://www.nitrc.org/forum/forum.php?forum_id=1553.
