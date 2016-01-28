@@ -273,7 +273,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 	}
 	else if (func_name == tr("help"))
 	{
-        cout<<"Usage : v3d -x dllname -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
+        cout<<"Usage : <vaa3d> -x soma_sorting_swc -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
         cout<<endl;
 	}
 	else return false;
