@@ -104,19 +104,19 @@ bool GeneratorAno4FilesInDir(const V3DPluginArgList & input, V3DPluginArgList & 
 	}
 
      char * ano_file = 0;
-	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+	char * input_path = ((vector<char*> *)(input.at(0).p))->at(0);
      if (output.size() >= 1)
      {
           ano_file = ((vector<char*> *)(output.at(0).p))->at(0);
           cout<<"ano_file = "<<ano_file<<endl;
      }
-	cout<<"inimg_file = "<<inimg_file<<endl;
+	cout<<"input_path = "<<input_path<<endl;
 
      //choose a directory that contain specified files
 	// QString qs_dir_swc;
-     // qs_dir_swc = QString(inimg_file);
+     // qs_dir_swc = QString(input_path);
 
-     createANO(QString(inimg_file), QString(ano_file), method_code);
+     createANO(QString(input_path), QString(ano_file), method_code);
      return true;
 }
 
@@ -196,7 +196,7 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
      if(ano_file.isEmpty())
           qs_filename_out = qs_dir_swc+"/mylinker.ano"; // for domenu()
      else
-          qs_filename_out = qs_dir_swc + "/" + ano_file;
+          qs_filename_out =  ano_file;
 
 	QFile qf_anofile(qs_filename_out);
 	if(!qf_anofile.open(QIODevice::WriteOnly))
