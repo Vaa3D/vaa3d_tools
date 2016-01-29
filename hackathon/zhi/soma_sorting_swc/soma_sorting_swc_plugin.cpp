@@ -99,7 +99,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         char* C_th = new char[S_th.length() + 1];
         strcpy(C_th,S_th.c_str());
 
-        double sort_th = dis_th * 2;
+        double sort_th = dis_th * 2; //the parameter in sort_neuron_swc plugin, specifying the length threshold to bridge the gap 
         string S_sort_th = boost::lexical_cast<string>(sort_th);
         char* C_sort_th = new char[S_sort_th.length() + 1];
         strcpy(C_sort_th,S_sort_th.c_str());
@@ -137,7 +137,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
         NeuronTree nt_gs = readSWC_file(gsswc_file);
-        double soma_x, soma_y, soma_z;
+        double soma_x, soma_y, soma_z, soma_r;
         for (V3DLONG i = 0; i < nt_gs.listNeuron.size(); i++)
         {
             if(nt_gs.listNeuron[i].pn<0)
@@ -145,6 +145,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
                 soma_x = nt_gs.listNeuron.at(i).x;
                 soma_y = nt_gs.listNeuron.at(i).y;
                 soma_z = nt_gs.listNeuron.at(i).z;
+                soma_r = nt_gs.listNeuron.at(i).r;
                 break;
             }
         }
@@ -180,8 +181,8 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
             }
         }
 
-        //NeutronTree structure
-        NeuronTree nt_prunned;
+        //Prune small segments
+        NeuronTree nt_pruned;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
         listNeuron.clear();
@@ -204,22 +205,22 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
                 hashNeuron.insert(S.n, listNeuron.size()-1);
             }
         }
-        nt_prunned.n = -1;
-        nt_prunned.on = true;
-        nt_prunned.listNeuron = listNeuron;
-        nt_prunned.hashNeuron = hashNeuron;
+        nt_pruned.n = -1;
+        nt_pruned.on = true;
+        nt_pruned.listNeuron = listNeuron;
+        nt_pruned.hashNeuron = hashNeuron;
         if(flag) {delete[] flag; flag = 0;}
 
         QVector<QVector<V3DLONG> > childs_prunned;
 
-        V3DLONG neuronNum_prunned = nt_prunned.listNeuron.size();
+        V3DLONG neuronNum_prunned = nt_pruned.listNeuron.size();
         childs_prunned = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
 
         for (V3DLONG i=0;i<neuronNum_prunned;i++)
         {
-            V3DLONG par = nt_prunned.listNeuron[i].pn;
+            V3DLONG par = nt_pruned.listNeuron[i].pn;
             if (par<0) continue;
-            childs_prunned[nt_prunned.hashNeuron.value(par)].push_back(i);
+            childs_prunned[nt_pruned.hashNeuron.value(par)].push_back(i);
         }
 
         double Dist = 10000000000;
@@ -227,27 +228,35 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         V3DLONG soma_ID = -1;
         V3DLONG dist_ID = -1;
         int child_num = 0;
-        QList<NeuronSWC> list_prunned = nt_prunned.listNeuron;
+        QList<NeuronSWC> list_prunned = nt_pruned.listNeuron;
+
+        // set the distance threshold to searching for matching soma node
+
+        double search_distance_th = soma_r*2 ;
+        if (search_distance_th < sort_th *2)
+         {
+             search_distance_th = sort_th *2;
+         }
 
         for (V3DLONG i=0;i<list_prunned.size();i++)
         {
             NeuronSWC curr = list_prunned.at(i);
             double nodedist = sqrt(pow2(curr.x - soma_x) + pow2(curr.y - soma_y) + pow2(curr.z - soma_z));
-            if(nodedist <= sort_th && curr.pn <0)
+            if(nodedist <= search_distance_th && curr.pn <0)
             {
                 soma_ID = curr.n;
                 child_num = 1;
                 break;
             }
 
-            if(nodedist <= sort_th && childs_prunned[i].size() > child_num)
+            if(nodedist <= search_distance_th  && childs_prunned[i].size() > child_num)
             {
                 soma_ID = curr.n;
                 child_num = childs_prunned[i].size();
                 Dist_inrange = nodedist;
             }
 
-            if(nodedist <= sort_th && childs_prunned[i].size() == child_num && nodedist < Dist_inrange)
+            if(nodedist <= search_distance_th && childs_prunned[i].size() == child_num && nodedist < Dist_inrange)
             {
                 soma_ID = curr.n;
                 Dist_inrange = nodedist;
@@ -262,7 +271,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         if(child_num < 1 || soma_ID == -1) soma_ID = dist_ID;
 
-        export_list2file(nt_prunned.listNeuron,outswc_file,soma_ID);
+        export_list2file(nt_pruned.listNeuron,outswc_file,soma_ID);
 
         string S_soma_ID = boost::lexical_cast<string>(soma_ID);
         char* C_soma_ID = new char[S_soma_ID.length() + 1];
@@ -273,7 +282,11 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 	}
 	else if (func_name == tr("help"))
 	{
+        cout << "This plugin is used to post-processing auto reconstructions for comparisons.  It will identify the soma for each input reconstruction" <<endl;
+        cout << "based on the gold standard SWC file, and resample them according to specified stepsize and sort SWC nodes based on the soma root while bridging" <<endl;
+        cout << " all disconneted components when the gap is less then  2*stepsize. The search range for the maching soma  is  max(2* soma_radius, 4* stepsize)." <<endl;
         cout<<"Usage : <vaa3d> -x soma_sorting_swc -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
+
         cout<<endl;
 	}
 	else return false;
