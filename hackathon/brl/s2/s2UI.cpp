@@ -5,6 +5,7 @@
 #include <QtNetwork>
 #include <stdlib.h>
 #include <QThread>
+#include <QDateTime>
 #include "s2Controller.h"
 #include "s2UI.h"
 #include "s2plot.h"
@@ -36,6 +37,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(&myPosMon, "monCOM" );
     lhTabs->addTab(&myController, "s2COM");
     lhTabs->addTab(createTracingParameters(),"tracing");
+    lhTabs->addTab(createROIControls(),"ROI Controls");
 	localRemoteCB = new QCheckBox;
 	localRemoteCB->setText(tr("Local PrairieView"));
     mainLayout = new QGridLayout();
@@ -50,8 +52,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startSmartScanPB, 3,1,1,2);
 	mainLayout->addWidget(localRemoteCB,4,0,1,2);
     mainLayout->addWidget(lhTabs, 5,0, 4, 3);
-    mainLayout->addWidget(createROIControls(), 0,5, 4,4);
-    mainLayout->addWidget(rhTabs,4,5,7,4);
+    mainLayout->addWidget(rhTabs,0,5,9,4);
     mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
@@ -63,6 +64,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     smartScanStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
+    updateLocalRemote(isLocal);
     //workerThread->start();
 
 }
@@ -149,15 +151,33 @@ void S2UI::updateROIPlot(QString ignore){
 void S2UI::updateLocalRemote(bool state){
 isLocal = state;
 status(QString("isLocal ").append(QString::number(isLocal)));
+QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
+QString topDirStr = QString("F:/testData/");
+
 if (isLocal){
 myController.hostLineEdit->setText(QString("local"));
 myPosMon.hostLineEdit->setText(QString("local"));
+topDirStr = QString("F:/testData/");
+
+
 }else{
 	myController.hostLineEdit->setText(QString("10.128.50.5"));
 		myPosMon.hostLineEdit->setText(QString("10.128.50.5"));
-}
+        topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
+                                                     "/",
+                                                        QFileDialog::ShowDirsOnly
+                                                        | QFileDialog::DontResolveSymlinks);
+
+
+} QDir topDir = QDir(topDirStr);
+topDir.mkdir(timeString);
+saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
+
+myNotes->setSaveDir(saveDir);
 
 }
+
+
 void S2UI::createButtonBox1(){
     startS2PushButton = new QPushButton(tr("Start smartScope2"));
     startScanPushButton = new QPushButton(tr("single scan"));

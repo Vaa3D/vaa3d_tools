@@ -14,6 +14,7 @@ NoteTaker::NoteTaker(QWidget *parent) :
     mainLayout->addWidget(updateButton,5,0);
     setLayout(mainLayout);
     connectStuff();
+
 }
 
 void NoteTaker::connectStuff(){
@@ -32,10 +33,19 @@ void NoteTaker::status(QString statString){
     notes->append(myTime->currentDateTime().toString().append(" ").append(statString));
 }
 
-void NoteTaker::setSaveDir(QFileInfo saveDir){
-
+void NoteTaker::setSaveDir(QDir saveDir){
+  saveFileString = saveDir.absolutePath().append("/s2Notes.txt");
+  status(saveFileString);
 }
 
 void NoteTaker::save(){
+    QFile saveTextFile(saveFileString);
+    if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+            status("save file failed!");
+            return;}
+
+    QTextStream outputStream(&saveTextFile);
+    outputStream<<notes->toPlainText();
+    saveTextFile.close();
 
 }

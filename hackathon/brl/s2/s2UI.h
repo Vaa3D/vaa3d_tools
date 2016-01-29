@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QCheckBox>
 #include <QTabWidget>
+#include <QDir>
 #include <v3d_interface.h>
 #include "s2Controller.h"
 #include "s2plot.h"
@@ -147,6 +148,8 @@ private:
     Image4DSimple*  total4DImage;
 
     NoteTaker *myNotes;
+
+    QDir saveDir;
 };
 //! [0]
 

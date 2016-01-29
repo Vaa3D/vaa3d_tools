@@ -51,3 +51,6 @@ DESTDIR	= $$VAA3D_DIR/bin/plugins/s2/
 
 FORMS += \
     s2plot.ui
+
+OTHER_FILES += \
+    taskList.txt
