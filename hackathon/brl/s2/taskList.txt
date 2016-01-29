@@ -25,7 +25,7 @@ GUI:
 
 
 
-Add dialog for ‘entire thing finished’ or similar..
+#Add dialog for ‘entire thing finished’ or similar..
 
 Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
 

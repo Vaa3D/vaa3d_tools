@@ -151,6 +151,8 @@ private:
     NoteTaker *myNotes;
 
     QDir saveDir;
+
+
 };
 //! [0]
 

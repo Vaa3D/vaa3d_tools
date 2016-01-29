@@ -147,8 +147,15 @@ void S2UI::updateROIPlot(QString ignore){
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
     newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
-    //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+    if (smartScanStatus==1){
+        QGraphicsTextItem* sequenceNumberText;
 
+        sequenceNumberText = new QGraphicsTextItem;
+        sequenceNumberText->setPos(roiXEdit->text().toFloat()+10,roiYEdit->text().toFloat());
+        sequenceNumberText->setPlainText(QString::number(scanNumber));
+        roiGS->addItem(sequenceNumberText);
+        }
 }
 
 void S2UI::updateLocalRemote(bool state){
@@ -626,7 +633,14 @@ void S2UI::smartScanHandler(){
     if (!allROILocations->isEmpty()){
         LocationSimple nextLocation = allROILocations->first();
         allROILocations->removeFirst();
-        moveToROI(nextLocation);
+        moveToROI(nextLocation);        if (smartScanStatus==1){
+            QGraphicsTextItem* sequenceNumberText;
+
+            sequenceNumberText = new QGraphicsTextItem;
+            sequenceNumberText->setPos(roiXEdit->text().toFloat()+10,roiYEdit->text().toFloat());
+            sequenceNumberText->setPlainText(QString::number(scanNumber));
+            roiGS->addItem(sequenceNumberText);
+            }
         waitingForFile = true;
         scanList.append(nextLocation);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
@@ -636,6 +650,27 @@ void S2UI::smartScanHandler(){
 
 }
 
+
+void S2UI::moveToROI(LocationSimple nextROI){
+    // convert from pixels to microns:
+    if( posMonStatus){
+        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
+        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
+        // and now to galvo voltage:
+        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
+        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+        LocationSimple newLoc;
+        newLoc.x = -nextGalvoX;
+        newLoc.y = nextGalvoY;
+        roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+
+
+        emit moveToNext(newLoc);
+    }else{
+        status("start PosMon before moving galvos");
+        smartScanStatus = -1;
+    }
+}
 
 // ------------------------------------
 
@@ -667,7 +702,7 @@ void S2UI::updateFileString(QString inputString){
     lastFile = fileString;
 }
 
-void S2UI::s2ROIMonitor(){
+void S2UI::s2ROIMonitor(){ // future version will work like this...
 
     if ((!allROILocations->isEmpty())&(!waitingForFile)){
         LocationSimple nextLocation = allROILocations->first();
@@ -696,25 +731,6 @@ void S2UI::status(QString statString){
     emit noteStatus(statString);
 }
 
-
-void S2UI::moveToROI(LocationSimple nextROI){
-    // convert from pixels to microns:
-    if( posMonStatus){
-        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
-        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
-        // and now to galvo voltage:
-        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
-        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
-        LocationSimple newLoc;
-        newLoc.x = -nextGalvoX;
-        newLoc.y = nextGalvoY;
-        roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-        emit moveToNext(newLoc);
-    }else{
-        status("start PosMon before moving galvos");
-        smartScanStatus = -1;
-    }
-}
 
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
