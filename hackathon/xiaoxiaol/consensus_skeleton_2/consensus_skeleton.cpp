@@ -70,8 +70,25 @@ void remove_outliers(vector<NeuronTree> & nt_list)
 {  //validate each tree (remove empty tree and extreame big trees, trees that contain straight lines)
 
    //remove statistically outlisers
+   vector<V3DLONG> nt_sizes;
+   for(int i = 0; i < nt_list.size(); i++){
+       NeuronTree tree = nt_list[i];
+       V3DLONG num_nodes = tree.listNeuron.size();
+       nt_sizes.push_back(num_nodes);
+   }
 
-   cout <<"no trees are removed"<<endl;
+   V3DLONG median_size = median(nt_sizes);
+   cout << "Median size = " << median_size <<endl;
+   for(int i = 0; i < nt_list.size(); i++){
+        if (nt_sizes[i] > 2*median_size || nt_sizes[i] < median_size/5 )
+        {
+            cout <<"Outlier detected: "<<endl;
+            nt_list.erase(nt_list.begin()+i);
+            cout <<"Tree "<< i<< " has "<<  nt_sizes[i] << " nodes, and is removed"<<endl;
+        }
+
+   }
+
 
 }
 
