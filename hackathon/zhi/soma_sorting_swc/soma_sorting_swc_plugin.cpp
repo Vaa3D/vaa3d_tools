@@ -99,7 +99,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         char* C_th = new char[S_th.length() + 1];
         strcpy(C_th,S_th.c_str());
 
-        double sort_th = dis_th * 2;
+        double sort_th = dis_th * 2; //the parameter in sort_neuron_swc plugin, specifying the length threshold to bridge the gap 
         string S_sort_th = boost::lexical_cast<string>(sort_th);
         char* C_sort_th = new char[S_sort_th.length() + 1];
         strcpy(C_sort_th,S_sort_th.c_str());
@@ -228,26 +228,27 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         V3DLONG dist_ID = -1;
         int child_num = 0;
         QList<NeuronSWC> list_prunned = nt_prunned.listNeuron;
+        double search_distance_th = sort_th *3;
 
         for (V3DLONG i=0;i<list_prunned.size();i++)
         {
             NeuronSWC curr = list_prunned.at(i);
             double nodedist = sqrt(pow2(curr.x - soma_x) + pow2(curr.y - soma_y) + pow2(curr.z - soma_z));
-            if(nodedist <= sort_th && curr.pn <0)
+            if(nodedist <= search_distance_th && curr.pn <0)
             {
                 soma_ID = curr.n;
                 child_num = 1;
                 break;
             }
 
-            if(nodedist <= sort_th && childs_prunned[i].size() > child_num)
+            if(nodedist <= search_distance_th  && childs_prunned[i].size() > child_num)
             {
                 soma_ID = curr.n;
                 child_num = childs_prunned[i].size();
                 Dist_inrange = nodedist;
             }
 
-            if(nodedist <= sort_th && childs_prunned[i].size() == child_num && nodedist < Dist_inrange)
+            if(nodedist <= search_distance_th && childs_prunned[i].size() == child_num && nodedist < Dist_inrange)
             {
                 soma_ID = curr.n;
                 Dist_inrange = nodedist;
@@ -273,7 +274,11 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 	}
 	else if (func_name == tr("help"))
 	{
+        cout << "This plugin is used to post-processing auto reconstructions for comparisons.  It will identify the soma for each input reconstruction" <<endl;
+        cout << "based on the gold standard SWC file, and resample them according to specified stepsize and sort SWC nodes based on the soma root while bridging" <<endl;
+        cout << " all disconneted components when the gap is less then  2*stepsize. The search range for the maching soma  is  6* stepsize." <<endl;
         cout<<"Usage : <vaa3d> -x soma_sorting_swc -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
+
         cout<<endl;
 	}
 	else return false;
