@@ -32,7 +32,7 @@ private:
     void connectStuff();
     QDateTime *myTime;
     QString saveFileString;
-
+    void closeEvent(QCloseEvent *event);
 };
 
 #endif // NOTETAKER_H

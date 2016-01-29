@@ -20,7 +20,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     cb = &callback;
     myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
-    s2LineEdit = new QLineEdit("01b");
+    s2LineEdit = new QLineEdit("");
+
+
     startPosMonButton = new QPushButton(tr("start monitor"));
     startSmartScanPB = new QPushButton(tr("SmartScan"));
     startSmartScanPB->setEnabled(false);
@@ -38,34 +40,35 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(&myController, "s2COM");
     lhTabs->addTab(createTracingParameters(),"tracing");
     lhTabs->addTab(createROIControls(),"ROI Controls");
-	localRemoteCB = new QCheckBox;
-	localRemoteCB->setText(tr("Local PrairieView"));
+    localRemoteCB = new QCheckBox;
+    localRemoteCB->setText(tr("Local PrairieView"));
     mainLayout = new QGridLayout();
-    mainLayout->addWidget(s2Label, 0, 0);
-    mainLayout->addWidget(s2LineEdit, 0, 1);
+    //mainLayout->addWidget(s2Label, 0, 0);
+    //mainLayout->addWidget(s2LineEdit, 0, 1);
     createButtonBox1();
-    mainLayout->addWidget(startS2PushButton, 1,0);
-    mainLayout->addWidget(startScanPushButton, 1,1);
-    mainLayout->addWidget(loadScanPushButton, 2,0);
+    mainLayout->addWidget(startS2PushButton, 0,0, 1, 2);
+    mainLayout->addWidget(startScanPushButton, 2,0);
+    mainLayout->addWidget(loadScanPushButton, 3,0);
     mainLayout->addWidget(startZStackPushButton,2,1);
-    mainLayout->addWidget(startPosMonButton,3,0);
-    mainLayout->addWidget(startSmartScanPB, 3,1,1,2);
-	mainLayout->addWidget(localRemoteCB,4,0,1,2);
+//mainLayout->addWidget(startPosMonButton,3,0);
+    mainLayout->addWidget(startSmartScanPB, 1,0,1,2);
+    mainLayout->addWidget(localRemoteCB,4,0,1,2);
     mainLayout->addWidget(lhTabs, 5,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
-    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
+//    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
     //workerThread = new QThread;
     //myStackAnalyzer->moveToThread(workerThread);
     posMonStatus = false;
     waitingForFile = false;
-	isLocal = false;
+    isLocal = false;
     smartScanStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     updateLocalRemote(isLocal);
     //workerThread->start();
+    startSmartScanPB->resize(50,40);
 
 }
 
@@ -82,7 +85,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiZWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
 
-	connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
+    connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -90,7 +93,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
     connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
-	connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
+    connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
 
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
 
@@ -108,10 +111,10 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-   // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
+    // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
 
-	//communicate with NoteTaker:
-	connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
+    //communicate with NoteTaker:
+    connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 }
 
 
@@ -149,40 +152,40 @@ void S2UI::updateROIPlot(QString ignore){
 }
 
 void S2UI::updateLocalRemote(bool state){
-isLocal = state;
-status(QString("isLocal ").append(QString::number(isLocal)));
-QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
-QString topDirStr = QString("F:/testData/");
+    isLocal = state;
+    status(QString("isLocal ").append(QString::number(isLocal)));
+    QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
+    QString topDirStr = QString("F:/testData/");
 
-if (isLocal){
-myController.hostLineEdit->setText(QString("local"));
-myPosMon.hostLineEdit->setText(QString("local"));
-topDirStr = QString("F:/testData/");
+    if (isLocal){
+        myController.hostLineEdit->setText(QString("local"));
+        myPosMon.hostLineEdit->setText(QString("local"));
+        topDirStr = QString("F:/testData/");
 
 
-}else{
-	myController.hostLineEdit->setText(QString("10.128.50.5"));
-		myPosMon.hostLineEdit->setText(QString("10.128.50.5"));
+    }else{
+        myController.hostLineEdit->setText(QString("10.128.50.5"));
+        myPosMon.hostLineEdit->setText(QString("10.128.50.5"));
         topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
-                                                     "/",
-                                                        QFileDialog::ShowDirsOnly
-                                                        | QFileDialog::DontResolveSymlinks);
+                                                      "/",
+                                                      QFileDialog::ShowDirsOnly
+                                                      | QFileDialog::DontResolveSymlinks);
 
 
-} QDir topDir = QDir(topDirStr);
-topDir.mkdir(timeString);
-saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
+    } QDir topDir = QDir(topDirStr);
+    topDir.mkdir(timeString);
+    saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
 
-myNotes->setSaveDir(saveDir);
+    myNotes->setSaveDir(saveDir);
 
 }
 
 
 void S2UI::createButtonBox1(){
-    startS2PushButton = new QPushButton(tr("Start smartScope2"));
+    startS2PushButton = new QPushButton(tr("Initialize SmartScope2"));
     startScanPushButton = new QPushButton(tr("single scan"));
     loadScanPushButton = new QPushButton(tr("load last scan"));
-    startZStackPushButton = new QPushButton(tr("start z stack"));
+    startZStackPushButton = new QPushButton(tr("single z stack"));
 
 }
 
@@ -214,14 +217,16 @@ QGroupBox *S2UI::createTracingParameters(){
 
     QLabel * labeli = new QLabel(tr("background threshold = "));
     QSpinBox *bkgSpnBx = new QSpinBox(0);
+    s2Label->setText("input file path:");
     bkgSpnBx->setMaximum(255);
     bkgSpnBx->setMinimum(0);
     bkgSpnBx->setValue(10);
     bkgSpnBx->setObjectName("bkgSpinBox");
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
-
-
+    tPL->addWidget(s2Label,1,0);
+    tPL->addWidget(s2LineEdit,1,1);
+tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -284,16 +289,17 @@ QGroupBox *S2UI::createROIControls(){
 
 void S2UI::startS2()
 {
-	localRemoteCB->setEnabled(false);
+    localRemoteCB->setEnabled(false);
     myController.initializeS2();
     myPosMon.initializeS2();
+    QTimer::singleShot(1000,this, SLOT(posMonButtonClicked()));
     startS2PushButton->setText("s2 running");// should check something..?
 }
 
 void S2UI::startScan()
 {
     lastFile=getFileString();
-	status(QString("lastFile = ").append(lastFile));
+    //status(QString("lastFile = ").append(lastFile));
     waitingForFile = true;
     QTimer::singleShot(0, &myController, SLOT(startScan()));
     roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
@@ -302,12 +308,19 @@ void S2UI::startScan()
 
 
 void S2UI::loadScan(){
+    QTimer::singleShot(0, this, SLOT(loadLatest()));
+}
 
-    QString latestString = getFileString();
-    //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
-    //    QFileInfo imageFileInfo = QFileInfo(latestString);
-    //    if (imageFileInfo.isReadable()){
-    //         emit callSALoad(latestString);
+void S2UI::loadLatest(){
+    loadScanFromFile(getFileString());
+}
+
+void S2UI::toLoad(){
+    loadScanFromFile(s2LineEdit->text());
+}
+void S2UI::loadScanFromFile(QString fileString){
+
+    QString latestString = fileString;
 
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
@@ -330,7 +343,7 @@ void S2UI::loadScan(){
         unsigned short int * total1dData = new unsigned short int [tunits];
         V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
-            status(fileList[f]);
+            //status(fileList[f]);
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
             if (pNewImage->valid()){
                 unsigned short int * data1d = 0;
@@ -350,304 +363,108 @@ void S2UI::loadScan(){
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
         total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
-		status(imageFileInfo.fileName());  
+        status(QString("loaded file ").append(imageFileInfo.fileName()));
         NeuronTree nt;
         LandmarkList newTargetList;
 
         if (smartScanStatus ==1){
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage->setOriginY(scanList.value(scanNumber).y);
-            status(QString("total4DImage is valid? ").append(QString(total4DImage->valid())));
+            status(QString("total4DImage is valid? ").append(QString::number(total4DImage->valid())));
 
+            if (total4DImage->valid()){
+                PARA_APP2 p;
+                p.is_gsdt = false;
+                p.is_coverage_prune = true;
+                p.is_break_accept = false;
+                p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value();
+                p.length_thresh = 5;
+                p.cnn_type = 2;
+                p.channel = 0;
+                p.SR_ratio = 3.0/9.9;
+                p.b_256cube = 1;
+                p.b_RadiusFrom2D = true;
+                p.b_resample = 1;
+                p.b_intensity = 0;
+                p.b_brightfiled = 0;
+                p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
-            PARA_APP2 p;
-            p.is_gsdt = false;
-            p.is_coverage_prune = true;
-            p.is_break_accept = false;
-            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value();
-            p.length_thresh = 5;
-            p.cnn_type = 2;
-            p.channel = 0;
-            p.SR_ratio = 3.0/9.9;
-            p.b_256cube = 1;
-            p.b_RadiusFrom2D = true;
-            p.b_resample = 1;
-            p.b_intensity = 0;
-            p.b_brightfiled = 0;
-            p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+                p.p4dImage = total4DImage;
+                p.xc0 = p.yc0 = p.zc0 = 0;
+                p.xc1 = p.p4dImage->getXDim()-1;
+                p.yc1 = p.p4dImage->getYDim()-1;
+                p.zc1 = p.p4dImage->getZDim()-1;
 
-            p.p4dImage = total4DImage;
-            p.xc0 = p.yc0 = p.zc0 = 0;
-            p.xc1 = p.p4dImage->getXDim()-1;
-            p.yc1 = p.p4dImage->getYDim()-1;
-            p.zc1 = p.p4dImage->getZDim()-1;
+                QString versionStr = "v2.621";
+                proc_app2(*cb, p, versionStr);
 
-            QString versionStr = "v2.621";
-            proc_app2(*cb, p, versionStr);
-
-            nt = readSWC_file(p.outswc_file);
-            V3DLONG neuronNum = nt.listNeuron.size();
-            bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
-            for (V3DLONG i=0;i<neuronNum;i++)
-            {
-                V3DLONG node_x = nt.listNeuron[i].x;
-                V3DLONG node_y = nt.listNeuron[i].y;
-                V3DLONG node_z = nt.listNeuron[i].z;
-
-                LocationSimple newTarget;
-                if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+                nt = readSWC_file(p.outswc_file);
+                V3DLONG neuronNum = nt.listNeuron.size();
+                bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+                for (V3DLONG i=0;i<neuronNum;i++)
                 {
-                    newTarget.x = -p.p4dImage->getXDim();
-                    newTarget.y = 0;
-                    newTarget.z = node_z;
+                    V3DLONG node_x = nt.listNeuron[i].x;
+                    V3DLONG node_y = nt.listNeuron[i].y;
+                    V3DLONG node_z = nt.listNeuron[i].z;
 
-                    scan_left = true;
-                    newTargetList.push_back(newTarget);
+                    LocationSimple newTarget;
+                    if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+                    {
+                        newTarget.x = -p.p4dImage->getXDim();
+                        newTarget.y = 0;
+                        newTarget.z = node_z;
+
+                        scan_left = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                    if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
+                    {
+                        newTarget.x = p.p4dImage->getXDim();
+                        newTarget.y = 0;
+                        newTarget.z = node_z;
+                        scan_right = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                    if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
+                    {
+                        newTarget.x = 0;
+                        newTarget.y = -p.p4dImage->getYDim();
+                        newTarget.z = node_z;
+                        scan_up = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                    if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
+                    {
+                        newTarget.x = 0;
+                        newTarget.y = p.p4dImage->getYDim();
+                        newTarget.z = node_z;
+                        scan_down = true;
+                        newTargetList.push_back(newTarget);
+                    }
                 }
-                if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
-                {
-                    newTarget.x = p.p4dImage->getXDim();
-                    newTarget.y = 0;
-                    newTarget.z = node_z;
-                    scan_right = true;
-                    newTargetList.push_back(newTarget);
+                if (!newTargetList.empty()){
+                    for (int i = 0; i<newTargetList.length(); i++){
+                        newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
+                        newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
+                        newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
+                    }
                 }
-                if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
-                {
-                    newTarget.x = 0;
-                    newTarget.y = -p.p4dImage->getYDim();
-                    newTarget.z = node_z;
-                    scan_up = true;
-                    newTargetList.push_back(newTarget);
-                }
-                if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
-                {
-                    newTarget.x = 0;
-                    newTarget.y = p.p4dImage->getYDim();
-                    newTarget.z = node_z;
-                    scan_down = true;
-                    newTargetList.push_back(newTarget);
-                }
+                handleNewLocation(newTargetList);
+
             }
-            if (!newTargetList.empty()){
-                for (int i = 0; i<newTargetList.length(); i++){
-                    newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
-                    newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
-                    newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
-                }
-            }
-            handleNewLocation(newTargetList);
-
-        }
-        cb->setImage(newwin, total4DImage);
-        cb->open3DWindow(newwin);
-        cb->setSWC(newwin,nt);
-        cb->setLandmark(newwin,newTargetList);
-        cb->pushObjectIn3DWindow(newwin);
-        cb->updateImageWindow(newwin);
-        /*   //set up metadata in the eventual output image.
-        // do this here to minimize chance of modified values...
-        total4DImage.setFileName(QString("/Users/brianl/dump/testSWC").append(QString::number(scanNumber)).toLocal8Bit().data());
-        //total4DImage.setFileName(latestString.toLocal8Bit().data());
-        // THE VALUES below are 'live' values which could potentially change
-        // while the image data is being read in.
-        total4DImage.setRezX(uiS2ParameterMap[8].getCurrentValue());
-        total4DImage.setRezY(uiS2ParameterMap[9].getCurrentValue());
-        total4DImage.setRezZ(1.0);// HARDCODED Z RESOLUTION!  needs to be added to parameterMap
+            cb->setImage(newwin, total4DImage);
+            cb->open3DWindow(newwin);
+            cb->setSWC(newwin,nt);
+            cb->setLandmark(newwin,newTargetList);
+            cb->pushObjectIn3DWindow(newwin);
+            cb->updateImageWindow(newwin);
+        }else{status("invalid imagedata");}
 
 
-
-        v3dhandle newwin = cb->newImageWindow();
-        Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
-        QDir imageDir =  imageFileInfo.dir();
-        QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
-        imageDir.setNameFilters(filterList);
-        QStringList fileList = imageDir.entryList();
-
-        //get the parent dir and the list of ch1....ome.tif files
-        //use this to id the number of images in the stack (in one channel?!)
-        long x = pNewImage->getXDim();
-        long y = pNewImage->getYDim();
-        long nFrames = fileList.length();
-        long pBytes = pNewImage->getUnitBytes();
-
-
-
-        V3DLONG tunits = x*y*nFrames;
-        unsigned short int * total1dData = new unsigned short int [tunits];
-        V3DLONG totalImageIndex = 0;
-        for (int f=0; f<nFrames; f++){
-            qDebug()<<fileList[f];
-            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-            if (pNewImage->valid()){
-                unsigned short int * data1d = 0;
-                data1d = new unsigned short int [x*y];
-                data1d = (unsigned short int*)pNewImage->getRawData();
-                for (V3DLONG i = 0; i< (x*y); i++){
-                    total1dData[totalImageIndex]= data1d[i];
-                    totalImageIndex++;
-                }
-            }else{
-                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
-            }
-        }
-        qDebug()<<total4DImage.valid();
-        total4DImage.setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        cb->setImage(newwin, &total4DImage);
-        cb->setImageName(newwin,QString("test"));
-        cb->updateImageWindow(newwin);
-        if (smartScanStatus ==1){
-            total4DImage.setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
-            total4DImage.setOriginY(scanList.value(scanNumber).y);
-qDebug()<<total4DImage.valid();
-            emit callSALoad(latestString);//newImageData(total4DImage); // goes to stackAnalyzer
-            //myStackAnalyzer->processStack(total4DImage);
-return;}
-*/
     }else{
-		status(QString("invalid image: ").append(latestString));
+        status(QString("invalid image path: ").append(latestString));
     }
 }
-
-void S2UI::toLoad(){
-    loadScanFromFile(s2LineEdit->text());
-}
-void S2UI::loadScanFromFile(QString file){
-    QFileInfo imageFileInfo = QFileInfo(file);
-    if (imageFileInfo.isReadable()){
-        v3dhandle newwin = cb->newImageWindow();
-        Image4DSimple * pNewImage = cb->loadImage(file.toLatin1().data());
-        QDir imageDir =  imageFileInfo.dir();
-        QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
-        imageDir.setNameFilters(filterList);
-        QStringList fileList = imageDir.entryList();
-
-        //get the parent dir and the list of ch1....ome.tif files
-        //use this to id the number of images in the stack (in one channel?!)
-        V3DLONG x = pNewImage->getXDim();
-        V3DLONG y = pNewImage->getYDim();
-        V3DLONG nFrames = fileList.length();
-
-        V3DLONG tunits = x*y*nFrames;
-        unsigned short int * total1dData = new unsigned short int [tunits];
-        V3DLONG totalImageIndex = 0;
-        for (int f=0; f<nFrames; f++){
-            qDebug()<<fileList[f];
-            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-            if (pNewImage->valid()){
-                unsigned short int * data1d = 0;
-                data1d = new unsigned short int [x*y];
-                data1d = (unsigned short int*)pNewImage->getRawData();
-                for (V3DLONG i = 0; i< (x*y); i++){
-                    total1dData[totalImageIndex]= data1d[i];
-                    totalImageIndex++;
-                }
-            }else{
-                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
-            }
-
-        }
-
-
-        total4DImage = new Image4DSimple;
-        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(file.toLatin1().data());
-        NeuronTree nt;
-        LandmarkList newTargetList;
-            qDebug()<<total4DImage->valid();
-
-
-            PARA_APP2 p;
-            p.is_gsdt = false;
-            p.is_coverage_prune = true;
-            p.is_break_accept = false;
-            p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value(); //  I've tried to vary this value but it seems to be a rather unstable parameter.
-            p.length_thresh = 5;
-            p.cnn_type = 2;
-            p.channel = 0;
-            p.SR_ratio = 3.0/9.9;
-            p.b_256cube = 1;
-            p.b_RadiusFrom2D = true;
-            p.b_resample = 1;
-            p.b_intensity = 0;
-            p.b_brightfiled = 0;
-            p.outswc_file = QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
-//QString("/Users/brianl/dump/testX.swc");//
-            p.p4dImage = total4DImage;
-            p.xc0 = p.yc0 = p.zc0 = 0;
-            p.xc1 = p.p4dImage->getXDim()-1;
-            p.yc1 = p.p4dImage->getYDim()-1;
-            p.zc1 = p.p4dImage->getZDim()-1;
-
-            QString versionStr = "v2.621";
-            proc_app2(*cb, p, versionStr);
-
-            nt = readSWC_file(p.outswc_file);
-            V3DLONG neuronNum = nt.listNeuron.size();
-            bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
-            for (V3DLONG i=0;i<neuronNum;i++)
-            {
-                V3DLONG node_x = nt.listNeuron[i].x;
-                V3DLONG node_y = nt.listNeuron[i].y;
-                V3DLONG node_z = nt.listNeuron[i].z;
-
-                LocationSimple newTarget;
-                if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
-                {
-                    newTarget.x = -p.p4dImage->getXDim();
-                    newTarget.y = 0;
-                    newTarget.z = node_z;
-
-                    scan_left = true;
-                    newTargetList.push_back(newTarget);
-                }
-                if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
-                {
-                    newTarget.x = p.p4dImage->getXDim();
-                    newTarget.y = 0;
-                    newTarget.z = node_z;
-                    scan_right = true;
-                    newTargetList.push_back(newTarget);
-                }
-                if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
-                {
-                    newTarget.x = 0;
-                    newTarget.y = -p.p4dImage->getYDim();
-                    newTarget.z = node_z;
-                    scan_up = true;
-                    newTargetList.push_back(newTarget);
-                }
-                if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
-                {
-                    newTarget.x = 0;
-                    newTarget.y = p.p4dImage->getYDim();
-                    newTarget.z = node_z;
-                    scan_down = true;
-                    newTargetList.push_back(newTarget);
-                }
-            }
-            if (!newTargetList.empty()){
-                for (int i = 0; i<newTargetList.length(); i++){
-                    newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
-                    newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
-                    newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
-                }
-            }
-
-
-        cb->setImage(newwin, total4DImage);
-        cb->open3DWindow(newwin);
-        cb->setSWC(newwin,nt);
-        cb->setLandmark(newwin,newTargetList);
-        cb->pushObjectIn3DWindow(newwin);
-        cb->updateImageWindow(newwin);
-    }else{
-		status(QString("invalid image: ").append(file));
-    }
-}
-
 
 
 
@@ -660,7 +477,7 @@ void S2UI::displayScan(){ // this will listen for a signal from myController
 
 void S2UI::pmStatusHandler(bool pmStatus){
     posMonStatus = pmStatus;
-    s2LineEdit->setText(tr("pmstatus updated"));
+    status("pmstatus updated");
 }
 
 void S2UI::posMonButtonClicked(){
@@ -668,7 +485,7 @@ void S2UI::posMonButtonClicked(){
     // and change button text to 'stop pos mon'
     if (!posMonStatus){
         emit startPM();
-        s2LineEdit->setText(tr("Position Monitor started"));
+        status("Position Monitor started");
         startPosMonButton->setText(tr("stop position monitor"));
         startSmartScanPB->setEnabled(true);
     }
@@ -757,7 +574,7 @@ void S2UI::startingSmartScan(){
     if (allROILocations->isEmpty()){
         scanList.clear();
         scanNumber = 0;
-        s2LineEdit->setText("starting smartScan...");
+        status("starting smartScan...");
         LocationSimple startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
                 uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
                 0);
@@ -771,13 +588,13 @@ void S2UI::startingSmartScan(){
 }
 
 void S2UI::handleNewLocation(LandmarkList newLandmarks){
-    qDebug()<<"got "<< newLandmarks.length()<<"  new landmarks associated with ROI "<<scanNumber;
+    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanNumber)));
     for (int i = 0; i<newLandmarks.length(); i++){
-        qDebug()<<"x= "<<newLandmarks.value(i).x<<" y = "<<newLandmarks.value(i).y<<" z= "<<newLandmarks.value(i).z;
+        status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
         if (!isDuplicateROI(newLandmarks.value(i))){
-        allROILocations->append(newLandmarks.value(i));
+            allROILocations->append(newLandmarks.value(i));
         }else{
-            qDebug()<<"already scanned here!";
+            status("already scanned here!");
         }
     }
     scanNumber++;
@@ -793,13 +610,17 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
 }
 void S2UI::smartScanHandler(){
     if (smartScanStatus!=1){
-        qDebug()<<"smartScan aborted";
+        status("smartScan aborted");
         scanNumber = 0;
         return;
     }
-    qDebug()<<"we now have a total of "<< allROILocations->length()<<" target ROIs...";
+    if (!allROILocations->isEmpty()){
+        v3d_msg("Finished with smartscan !",true);
+    }
+
+    status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
     for (int i = 0; i<allROILocations->length(); i++){
-        qDebug()<<"x= "<<allROILocations->value(i).x<<" y = "<<allROILocations->value(i).y<<" z= "<<allROILocations->value(i).z;
+        status(QString("x= ").append(QString::number(allROILocations->value(i).x)).append(" y = ").append(QString::number(allROILocations->value(i).y)).append(" z= ").append(QString::number(allROILocations->value(i).z)));
     }
 
     if (!allROILocations->isEmpty()){
@@ -810,8 +631,7 @@ void S2UI::smartScanHandler(){
         scanList.append(nextLocation);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
-        qDebug()<<"start next ROI at x = "<<nextLocation.x<<"  y = "<<nextLocation.y;
-        s2LineEdit->setText(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
+        status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
     }
 
 }
@@ -821,9 +641,9 @@ void S2UI::smartScanHandler(){
 
 
 void S2UI::startingZStack(){
-	waitingForFile = true;
+    waitingForFile = true;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
-    qDebug()<<"start single z Stack";
+    status("start single z Stack");
     roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
 }
@@ -835,10 +655,10 @@ void S2UI::updateFileString(QString inputString){
     // final version will require much more rigorous timing- it's not clear how we'll parse out
     // the streamed image data into files...
     fileString = inputString;
-	if (!isLocal){
-    fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/");
-	}
-	fileString.append("_Cycle00001_Ch2_000001.ome.tif");
+    if (!isLocal){
+        fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/");
+    }
+    fileString.append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
         waitingForFile = false;
         QTimer::singleShot(0, this, SLOT(loadScan()));
@@ -873,7 +693,7 @@ QString S2UI::getFileString(){
 }
 
 void S2UI::status(QString statString){
-	emit noteStatus(statString);
+    emit noteStatus(statString);
 }
 
 
@@ -891,7 +711,7 @@ void S2UI::moveToROI(LocationSimple nextROI){
         roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
         emit moveToNext(newLoc);
     }else{
-        s2LineEdit->setText("start PosMon before moving galvos");
+        status("start PosMon before moving galvos");
         smartScanStatus = -1;
     }
 }

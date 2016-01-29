@@ -234,3 +234,9 @@ return;
 
 
 }
+
+void StackAnalyzer::processSmartScan(QString fileWithData){
+    // zhi add code to generate combined reconstruction from .txt file
+    // at location filewith data
+
+}

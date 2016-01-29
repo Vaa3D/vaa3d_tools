@@ -49,3 +49,7 @@ void NoteTaker::save(){
     saveTextFile.close();
 
 }
+
+void NoteTaker::closeEvent(QCloseEvent *event){
+    save();
+}

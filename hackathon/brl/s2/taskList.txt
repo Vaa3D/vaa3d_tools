@@ -10,15 +10,18 @@ GUI:
 
 # NoteTaker- make ‘save’ functional,  ALSO ADDED LOCAL SAVE DIRECTORY FOR ALL RELEVANT STACK, SWC, v3draw, etc data
 
-hook up all qDebug<< and s2LineEdit to status.
+# hook up all qDebug<< and s2LineEdit to status.
 
-Eliminate display of file reads.
+# Eliminate display of file reads.
+
+# CLEANED UP stack loading code to eliminate duplicate code. need to test
+
+# add automatic saving of notes file.
 
 
+# Make “smartScan”  the biggest, first button so the user can see what to do.
 
-Make “smartScan”  the biggest, first button so the user can see what to do.
-
-Improve wording on buttons/labels
+# Improve wording on buttons/labels
 
 
 

@@ -20,6 +20,7 @@ signals:
 public slots:
     void loadScan(QString latestString);
     void processStack(Image4DSimple InputImage);
+    void processSmartScan(QString fileWithData);
 private:
     V3DPluginCallback2 * cb;
 

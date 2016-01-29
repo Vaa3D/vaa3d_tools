@@ -40,6 +40,7 @@ public:
 public slots:
     void pmStatusHandler(bool pmStatus);
     void handleNewLocation(LandmarkList newlandmarks);
+    void loadLatest();
 signals:
     void startPM();
     void stopPM();
@@ -64,7 +65,7 @@ private slots:
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
-    void loadScanFromFile(QString file);
+    void loadScanFromFile(QString fileString);
     void toLoad();
 	void status(QString statString);
 	void updateLocalRemote(bool state);
