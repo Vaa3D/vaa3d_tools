@@ -1,5 +1,12 @@
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
 
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
@@ -239,5 +246,43 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    int offsetX, offsetY;
+    string swcfilepath;
+    vector<MyMarker*> outswc;
+    int node_type = 1;
+    while(ifs && getline(ifs, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilepath;
+
+        vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
+
+        for(V3DLONG d = 0; d < inputswc.size(); d++)
+        {
+            inputswc[d]->x = inputswc[d]->x + offsetX;
+            inputswc[d]->y = inputswc[d]->y + offsetY;
+            inputswc[d]->type = node_type;
+            outswc.push_back(inputswc[d]);
+        }
+        node_type++;
+    }
+
+    QString fileSaveName = fileWithData + ".swc";
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+    V3dR_MainWindow * new3DWindow = NULL;
+    new3DWindow = cb->createEmpty3DViewer();
+    QList<NeuronTree> * new_treeList = cb->getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    if (!new_treeList)
+    {
+        v3d_msg(QString("New 3D viewer has invalid neuron tree list"));
+        return;
+    }
+    NeuronTree resultTree;
+    resultTree = readSWC_file(fileSaveName);
+    new_treeList->push_back(resultTree);
+    cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
+    cb->update_NeuronBoundingBox(new3DWindow);
 
 }
