@@ -128,6 +128,7 @@ private:
 // gui hookup
 
     void hookUpSignalsAndSlots();
+    QDir getSaveDirectory();
 
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
@@ -151,7 +152,9 @@ private:
     NoteTaker *myNotes;
 
     QDir saveDir;
-
+    QDir currentDirectory;
+    QFile saveTextFile;
+    QTextStream outputStream;
 
 };
 //! [0]

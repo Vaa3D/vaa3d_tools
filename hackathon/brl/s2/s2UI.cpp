@@ -380,6 +380,8 @@ void S2UI::loadScanFromFile(QString fileString){
             status(QString("total4DImage is valid? ").append(QString::number(total4DImage->valid())));
 
             if (total4DImage->valid()){
+                QString swcString = saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
+                outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString;
                 PARA_APP2 p;
                 p.is_gsdt = false;
                 p.is_coverage_prune = true;
@@ -394,7 +396,9 @@ void S2UI::loadScanFromFile(QString fileString){
                 p.b_resample = 1;
                 p.b_intensity = 0;
                 p.b_brightfiled = 0;
-                p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
+                p.outswc_file =swcString.toLatin1().data();
+
+                //p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
                 p.p4dImage = total4DImage;
                 p.xc0 = p.yc0 = p.zc0 = 0;
@@ -574,9 +578,20 @@ void S2UI::startingSmartScan(){
         smartScanStatus=0;
         startSmartScanPB->setText("smartScan");
         allROILocations->clear();
+        saveTextFile.close();
         return;
     }
     smartScanStatus = 1;
+
+    QString scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
+    status(scanDataFileString);
+    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+    if (!saveTextFile.isOpen()){
+      if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+              return;}     }
+
+    outputStream.setDevice(&saveTextFile);
+
     startSmartScanPB->setText("cancel smartScan");
     if (allROILocations->isEmpty()){
         scanList.clear();
@@ -619,10 +634,13 @@ void S2UI::smartScanHandler(){
     if (smartScanStatus!=1){
         status("smartScan aborted");
         scanNumber = 0;
+        saveTextFile.close();
         return;
     }
-    if (!allROILocations->isEmpty()){
+    if (allROILocations->isEmpty()){
         v3d_msg("Finished with smartscan !",true);
+        saveTextFile.close();
+        smartScanStatus = 0;
     }
 
     status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
@@ -646,6 +664,9 @@ void S2UI::smartScanHandler(){
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
+
+          //outputStream<<notes->toPlainText();
+         // saveTextFile.close();
     }
 
 }
@@ -731,6 +752,10 @@ void S2UI::status(QString statString){
     emit noteStatus(statString);
 }
 
+QDir S2UI::getSaveDirectory(){
+
+    return saveDir;
+}
 
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
