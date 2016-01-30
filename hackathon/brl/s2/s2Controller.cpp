@@ -331,7 +331,11 @@ void S2Controller::posMonListener(QString messageL){
     }
 
     s2ParameterMap[ii].setCurrentString( messageL);
-    s2ParameterMap[ii].setCurrentValue(newValue);
+    if (ii==1){
+    s2ParameterMap[ii].setCurrentValue(-newValue); // x galvo is flipped
+    }else{
+            s2ParameterMap[ii].setCurrentValue(newValue);
+    }
     // use s2ParameterMap to keep track of parameter values.
     if (inPosMonMode){
         ii = (ii+1) % maxParams;

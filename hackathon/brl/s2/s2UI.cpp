@@ -148,14 +148,7 @@ void S2UI::updateROIPlot(QString ignore){
     roiGS->removeItem(newRect);
     newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
      //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
-    if (smartScanStatus==1){
-        QGraphicsTextItem* sequenceNumberText;
 
-        sequenceNumberText = new QGraphicsTextItem;
-        sequenceNumberText->setPos(roiXEdit->text().toFloat()+10,roiYEdit->text().toFloat());
-        sequenceNumberText->setPlainText(QString::number(scanNumber));
-        roiGS->addItem(sequenceNumberText);
-        }
 }
 
 void S2UI::updateLocalRemote(bool state){
@@ -381,6 +374,9 @@ void S2UI::loadScanFromFile(QString fileString){
 
             if (total4DImage->valid()){
                 QString swcString = saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
+
+                total4DImage->saveImage(swcString.append(".v3draw").toLatin1());
+
                 outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString;
                 PARA_APP2 p;
                 p.is_gsdt = false;
@@ -463,6 +459,7 @@ void S2UI::loadScanFromFile(QString fileString){
                 handleNewLocation(newTargetList);
 
             }
+
             cb->setImage(newwin, total4DImage);
             cb->open3DWindow(newwin);
             cb->setSWC(newwin,nt);
@@ -651,7 +648,8 @@ void S2UI::smartScanHandler(){
     if (!allROILocations->isEmpty()){
         LocationSimple nextLocation = allROILocations->first();
         allROILocations->removeFirst();
-        moveToROI(nextLocation);        if (smartScanStatus==1){
+        moveToROI(nextLocation);
+        if (smartScanStatus==1){
             QGraphicsTextItem* sequenceNumberText;
 
             sequenceNumberText = new QGraphicsTextItem;
