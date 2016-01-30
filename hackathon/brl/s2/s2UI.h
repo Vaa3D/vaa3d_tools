@@ -48,6 +48,7 @@ signals:
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
+    void processSmartScanSig(QString);
 private slots:
     void startS2();
     void startScan();
@@ -69,6 +70,7 @@ private slots:
     void toLoad();
 	void status(QString statString);
 	void updateLocalRemote(bool state);
+    void runSAStuffClicked();
 private:
     V3DPluginCallback2 * cb;
 
@@ -111,7 +113,7 @@ private:
     QPushButton *centerGalvosPB ;
     QPushButton * startStackAnalyzerPB;
     QPushButton *roiClearPB;
-
+    QPushButton *runSAStuff;
     QLineEdit *roiXEdit;
     QLineEdit *roiYEdit;
     QLineEdit *roiZEdit;

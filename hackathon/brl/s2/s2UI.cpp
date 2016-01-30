@@ -112,6 +112,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
     // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
+    connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
+    connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -214,7 +216,7 @@ QGroupBox *S2UI::createTracingParameters(){
     QGroupBox *tPBox = new QGroupBox(tr("Tracing"));
 
     QGridLayout *tPL = new QGridLayout;
-
+    runSAStuff = new QPushButton(tr("run stackAnalyzer code"));
     QLabel * labeli = new QLabel(tr("background threshold = "));
     QSpinBox *bkgSpnBx = new QSpinBox(0);
     s2Label->setText("input file path:");
@@ -227,6 +229,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(s2Label,1,0);
     tPL->addWidget(s2LineEdit,1,1);
 tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
+tPL->addWidget(runSAStuff,3,0,1,2);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -375,9 +378,13 @@ void S2UI::loadScanFromFile(QString fileString){
             if (total4DImage->valid()){
                 QString swcString = saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
 
-                total4DImage->saveImage(swcString.append(".v3draw").toLatin1());
-
-                outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString;
+                V3DLONG mysz[4];
+                mysz[0] = total4DImage->getXDim();
+                mysz[1] = total4DImage->getYDim();
+                mysz[2] = total4DImage->getZDim();
+                mysz[3] = total4DImage->getCDim();
+                //simple_saveimage_wrapper(*cb, swcString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+                outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString<<"\n";
                 PARA_APP2 p;
                 p.is_gsdt = false;
                 p.is_coverage_prune = true;
@@ -753,6 +760,11 @@ void S2UI::status(QString statString){
 QDir S2UI::getSaveDirectory(){
 
     return saveDir;
+}
+
+
+void S2UI::runSAStuffClicked(){
+    emit processSmartScanSig(s2LineEdit->text());
 }
 
 //  set filename in Image4DSimple* using  ->setFileName
