@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include "s2Controller.h"
 #include "v3d_message.h"
+#include <s2UI.h>
+
 
 S2Parameter::S2Parameter():
     parameterName(""),
@@ -165,8 +167,8 @@ void S2Controller::status(QString statusM){
 	emit statusSig(statusM);
 }
 void S2Controller::initializeParameters(){
-    S2Parameter tPara =S2Parameter("currentMode","-gts activeMode");
-    s2ParameterMap.insert(0,tPara);//S2Parameter("resonantMode","-gts scanMode", 0.0,  "", "string"));
+    S2Parameter tPara =S2Parameter("currentMode","-gts activeMode", 0.0, "","string");
+    s2ParameterMap.insert(0,tPara);
     s2ParameterMap.insert(1, S2Parameter("galvoXVolts", "-gts currentScanCenter XAxis")) ;
     s2ParameterMap.insert(2, S2Parameter("galvoYVolts", "-gts currentScanCenter YAxis")) ;
     s2ParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
@@ -200,6 +202,25 @@ void S2Controller::startScan(){
 void S2Controller::centerGalvos(){
     sendCommandButton->setEnabled(false);
     sendAndReceive(QString("-png center"));
+}
+
+
+void S2Controller::overviewSetup(){
+    // idea is to just send a bunch of commands and then the main UI will wait until the parameters are correct.
+                        // the return data from PV will likely be lost to processMessage(), but that's OK.
+                        // a more robust? version could query here instead of in S2UI
+    centerGalvos();
+    cleanAndSend("-");// set to galvo mode
+    cleanAndSend("-"); // set mag to 1x
+    cleanAndSend("-"); // set pixels per line to  1024
+    cleanAndSend("-"); // set lines per frame to 1024
+    QTimer::singleShot(10, this, SLOT(overviewHandler()));
+
+}
+
+
+void S2Controller::overviewHandler(){
+
 }
 
 void S2Controller::connectToS2()
@@ -308,6 +329,7 @@ void S2Controller::messageHandler(QString messageH){
 }
 
 //
+
 
 void S2Controller::posMonListener(QString messageL){
     messageL.remove("\r\n");

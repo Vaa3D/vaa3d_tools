@@ -9,7 +9,6 @@
 #include <QMap>
 #include <QGroupBox>
 #include <v3d_interface.h>
-
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
 class QLabel;
@@ -139,6 +138,7 @@ public slots:
     void closeEvent(QCloseEvent *event);
     void centerGalvos();
     void startZStack();
+    void overviewSetup();
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();
@@ -160,8 +160,8 @@ private slots:
     void initConnection(); //[initialize connection to PV over TCP/IP]
     void posMon();
     void posMonListener(QString messageL);
+    void overviewHandler();
 private:
-
     void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
     void connectToS2();
     QLabel *hostLabel;

@@ -50,12 +50,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(startScanPushButton, 2,0);
     mainLayout->addWidget(loadScanPushButton, 3,0);
     mainLayout->addWidget(startZStackPushButton,2,1);
-//mainLayout->addWidget(startPosMonButton,3,0);
+    mainLayout->addWidget(collectOverviewPushButton,3,1);
+    //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,2);
     mainLayout->addWidget(localRemoteCB,4,0,1,2);
     mainLayout->addWidget(lhTabs, 5,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
-//    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
+    //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
     //workerThread = new QThread;
@@ -86,7 +87,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
 
     connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
-
+    connect(overlapSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateOverlap(int)));
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -96,6 +97,10 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
 
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
+    connect(collectOverviewPushButton, SIGNAL(clicked()),this, SLOT(collectOverview()));
+    connect(collectOverviewPushButton, SIGNAL(clicked()),&myController, SLOT(overviewSetup()));
+
+
 
     // communication with myPosMon to monitor parameters
     connect(&myPosMon, SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -114,6 +119,9 @@ void S2UI::hookUpSignalsAndSlots(){
     // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
+
+
+
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -149,7 +157,7 @@ void S2UI::updateROIPlot(QString ignore){
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
     newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
-     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+    //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
 }
 
@@ -188,6 +196,7 @@ void S2UI::createButtonBox1(){
     startScanPushButton = new QPushButton(tr("single scan"));
     loadScanPushButton = new QPushButton(tr("load last scan"));
     startZStackPushButton = new QPushButton(tr("single z stack"));
+    collectOverviewPushButton = new QPushButton(tr("collect &preview"));
 
 }
 
@@ -224,12 +233,26 @@ QGroupBox *S2UI::createTracingParameters(){
     bkgSpnBx->setMinimum(0);
     bkgSpnBx->setValue(10);
     bkgSpnBx->setObjectName("bkgSpinBox");
+
+
+    overlapSpinBox = new QSpinBox;
+    overlapSpinBox->setSuffix(" percent ");
+    overlapSpinBox->setMinimum(0);
+    overlapSpinBox->setMaximum(20 );
+    overlapSpinBox->setValue(5);
+    overlapSBLabel = new QLabel;
+    overlapSBLabel->setText(tr("tile &overlap: "));
+    overlapSBLabel->setBuddy(overlapSpinBox);
+
+
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
     tPL->addWidget(s2Label,1,0);
     tPL->addWidget(s2LineEdit,1,1);
-tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
-tPL->addWidget(runSAStuff,3,0,1,2);
+    tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
+    tPL->addWidget(runSAStuff,3,0,1,2);
+    tPL->addWidget(overlapSpinBox,4,2);
+    tPL->addWidget(overlapSBLabel,4,0);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -366,10 +389,15 @@ void S2UI::loadScanFromFile(QString fileString){
         total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
         total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
+
+
         status(QString("loaded file ").append(imageFileInfo.fileName()));
+
+
+
         NeuronTree nt;
         LandmarkList newTargetList;
-
+        overlap = (float) overlapSpinBox->value();
         if (smartScanStatus ==1){
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage->setOriginY(scanList.value(scanNumber).y);
@@ -458,9 +486,9 @@ void S2UI::loadScanFromFile(QString fileString){
                 }
                 if (!newTargetList.empty()){
                     for (int i = 0; i<newTargetList.length(); i++){
-                        newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
-                        newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
-                        newTargetList[i].z =newTargetList[i].z+p.p4dImage->getOriginZ();
+                        newTargetList[i].x = (1.0-overlap)*newTargetList[i].x+p.p4dImage->getOriginX();
+                        newTargetList[i].y=(1.0-overlap)*newTargetList[i].y+p.p4dImage->getOriginY();
+                        newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
                     }
                 }
                 handleNewLocation(newTargetList);
@@ -587,12 +615,12 @@ void S2UI::startingSmartScan(){
     }
     smartScanStatus = 1;
 
-    QString scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
+    scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
     status(scanDataFileString);
     saveTextFile.setFileName(scanDataFileString);// add currentScanFile
     if (!saveTextFile.isOpen()){
-      if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
-              return;}     }
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+            return;}     }
 
     outputStream.setDevice(&saveTextFile);
 
@@ -639,12 +667,14 @@ void S2UI::smartScanHandler(){
         status("smartScan aborted");
         scanNumber = 0;
         saveTextFile.close();
+        emit processSmartScanSig(scanDataFileString);
         return;
     }
     if (allROILocations->isEmpty()){
         v3d_msg("Finished with smartscan !",true);
         saveTextFile.close();
         smartScanStatus = 0;
+        emit processSmartScanSig(scanDataFileString);
     }
 
     status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
@@ -663,15 +693,15 @@ void S2UI::smartScanHandler(){
             sequenceNumberText->setPos(roiXEdit->text().toFloat()+10,roiYEdit->text().toFloat());
             sequenceNumberText->setPlainText(QString::number(scanNumber));
             roiGS->addItem(sequenceNumberText);
-            }
+        }
         waitingForFile = true;
         scanList.append(nextLocation);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
 
-          //outputStream<<notes->toPlainText();
-         // saveTextFile.close();
+        //outputStream<<notes->toPlainText();
+        // saveTextFile.close();
     }
 
 }
@@ -699,6 +729,38 @@ void S2UI::moveToROI(LocationSimple nextROI){
 }
 
 // ------------------------------------
+
+
+void S2UI::collectOverview(){
+    // collect overview stack at lowest mag and high spatial resolution. requires galvo mode.
+    // this is called at the same time that a signal is sent to the controller to setup for an overview
+
+    // so start my monitor to see when it's in ready state:
+    overviewCycles = 0;
+    status("start overview");
+    QTimer::singleShot(0, this, SLOT(overviewHandler()));
+}
+
+void S2UI::overviewHandler(){
+    bool readyForOverview = uiS2ParameterMap[0].getCurrentString().contains("esonant") &&
+            (uiS2ParameterMap[12].getCurrentValue() ==1.0)&&
+            (uiS2ParameterMap[10].getCurrentValue() == 1024)&&
+            (uiS2ParameterMap[11].getCurrentValue() == 1024);
+    bool overViewTimedOut = overviewCycles >50;
+
+    if (overViewTimedOut){
+        status("overview timeout!");
+                return;
+    }
+    if (readyForOverview){
+        QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
+        return;
+    }
+    if (!readyForOverview&&!overViewTimedOut){
+        overviewCycles++;
+        QTimer::singleShot(100, this, SLOT(overviewHandler()));
+    }
+}
 
 
 void S2UI::startingZStack(){
@@ -765,6 +827,15 @@ QDir S2UI::getSaveDirectory(){
 
 void S2UI::runSAStuffClicked(){
     emit processSmartScanSig(s2LineEdit->text());
+}
+
+void S2UI::updateOverlap(int value){
+    overlap = (float) value;
+}
+
+
+void S2UI::getCurrentParameters(){
+    emit currentParameters(uiS2ParameterMap);
 }
 
 //  set filename in Image4DSimple* using  ->setFileName

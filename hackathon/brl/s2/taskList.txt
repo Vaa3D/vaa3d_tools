@@ -31,7 +31,8 @@ Add total info /progress into dialog at ‘click ok’ and maybe add cancel opti
 
 
 
-Try MIP display for each ROI, but it’s more important to display order number on ROI plot.
+Try MIP display for each ROI,
+# but it’s more important to display order number on ROI plot.
 
 
 
@@ -39,7 +40,7 @@ Fix ROI xy directions on ROI plot relative to images
 
 
 
-Display current ROI location in red and/or label ‘current’.
+# didnt do this- just look for the highest numberDisplay current ROI location in red and/or label ‘current’.
 
 
 
@@ -47,7 +48,7 @@ Internal control of the program:
 
 Create .config file for the whole QWidget.
 
-Add user-adjustable overlap between tiles.
+# Add user-adjustable overlap between tiles.
 
 Add ROI controls-  with z scan info.
 

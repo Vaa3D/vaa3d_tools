@@ -41,6 +41,8 @@ public slots:
     void pmStatusHandler(bool pmStatus);
     void handleNewLocation(LandmarkList newlandmarks);
     void loadLatest();
+    void collectOverview();
+    void getCurrentParameters();
 signals:
     void startPM();
     void stopPM();
@@ -49,6 +51,7 @@ signals:
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
     void processSmartScanSig(QString);
+    void currentParameters(QMap<int, S2Parameter> currentParameterMap);
 private slots:
     void startS2();
     void startScan();
@@ -71,6 +74,8 @@ private slots:
 	void status(QString statString);
 	void updateLocalRemote(bool state);
     void runSAStuffClicked();
+    void updateOverlap(int value);
+    void overviewHandler();
 private:
     V3DPluginCallback2 * cb;
 
@@ -107,6 +112,7 @@ private:
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
     QPushButton  *startZStackPushButton;
+    QPushButton *collectOverviewPushButton;
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
     QPushButton *startSmartScanPB;
@@ -120,6 +126,8 @@ private:
     QLineEdit *roiXWEdit ;
     QLineEdit *roiYWEdit ;
     QLineEdit *roiZWEdit;
+    QSpinBox *overlapSpinBox;
+    QLabel *overlapSBLabel;
 
 // External S2 controllers
 
@@ -135,6 +143,7 @@ private:
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     bool isDuplicateROI(LocationSimple inputLocation);
+
 
     LandmarkList *allROILocations;
     QMap<int, S2Parameter> uiS2ParameterMap;
@@ -157,7 +166,9 @@ private:
     QDir currentDirectory;
     QFile saveTextFile;
     QTextStream outputStream;
-
+    QString scanDataFileString;
+    float overlap;
+    int overviewCycles;
 };
 //! [0]
 
