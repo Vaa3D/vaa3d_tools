@@ -56,7 +56,7 @@ Add ROI controls-  with z scan info.
 
 Major Addition:
 
->Create method to scan whole area in low-res preview mode with no z (or 3 plane z stack MIP?)  and show the image.
+# testing single plane version>Create method to scan whole area in low-res preview mode with no z (or 3 plane z stack MIP?)  and show the image.
 
 >From this preview scan, allow user to generate block grid based on 2 anchor points.
 

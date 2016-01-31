@@ -753,7 +753,8 @@ void S2UI::overviewHandler(){
                 return;
     }
     if (readyForOverview){
-        QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
+        QTimer::singleShot(100, startScanPushButton, SLOT(click()));
+        status("starting single scan");
         return;
     }
     if (!readyForOverview&&!overViewTimedOut){
