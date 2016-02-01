@@ -143,6 +143,7 @@ private:
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     bool isDuplicateROI(LocationSimple inputLocation);
+    void closeEvent(QCloseEvent *event);
 
 
     LandmarkList *allROILocations;

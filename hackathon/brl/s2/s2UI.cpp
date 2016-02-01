@@ -156,7 +156,9 @@ void S2UI::updateROIPlot(QString ignore){
     //roiRect.setY(roiYEdit->text().toFloat());
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    newRect =  roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
 }
@@ -328,7 +330,9 @@ void S2UI::startScan()
     //status(QString("lastFile = ").append(lastFile));
     waitingForFile = true;
     QTimer::singleShot(0, &myController, SLOT(startScan()));
-    roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
 }
 
@@ -413,7 +417,7 @@ void S2UI::loadScanFromFile(QString fileString){
                 mysz[1] = total4DImage->getYDim();
                 mysz[2] = total4DImage->getZDim();
                 mysz[3] = total4DImage->getCDim();
-                //simple_saveimage_wrapper(*cb, swcString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+                simple_saveimage_wrapper(*cb, swcString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
                 outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString<<"\n";
                 PARA_APP2 p;
                 p.is_gsdt = false;
@@ -720,7 +724,9 @@ void S2UI::moveToROI(LocationSimple nextROI){
         LocationSimple newLoc;
         newLoc.x = -nextGalvoX;
         newLoc.y = nextGalvoY;
-        roiGS->addRect(-nextXMicrons,nextYMicrons,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+        float leftEdge = -nextXMicrons -roiXWEdit->text().toFloat()/2.0;
+        float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
+        roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
 
         emit moveToNext(newLoc);
@@ -770,7 +776,9 @@ void S2UI::startingZStack(){
     waitingForFile = true;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     status("start single z Stack");
-    roiGS->addRect(roiXEdit->text().toFloat(),roiYEdit->text().toFloat(),roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
 }
 
@@ -840,6 +848,16 @@ void S2UI::updateOverlap(int value){
 void S2UI::getCurrentParameters(){
     emit currentParameters(uiS2ParameterMap);
 }
+
+
+
+void S2UI::closeEvent(QCloseEvent *){
+    myNotes->close();
+    myPosMon.close();
+    myController.close();
+
+}
+
 
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
