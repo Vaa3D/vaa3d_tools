@@ -210,17 +210,18 @@ void S2Controller::overviewSetup(){
                         // the return data from PV will likely be lost to processMessage(), but that's OK.
                         // a more robust? version could query here instead of in S2UI
     centerGalvos();
-    cleanAndSend("-");// set to galvo mode
-    cleanAndSend("-"); // set mag to 1x
-    cleanAndSend("-"); // set pixels per line to  1024
-    cleanAndSend("-"); // set lines per frame to 1024
+    cleanAndSend("-oz 1"); // set mag to 1x
+    cleanAndSend("-sts pixelsPerLine 1024"); // set pixels per line to  1024
+    cleanAndSend("-sts linesPerFrame 1024"); // set lines per frame to 1024
+    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+
     QTimer::singleShot(10, this, SLOT(overviewHandler()));
 
 }
 
 
 void S2Controller::overviewHandler(){
-
+// this is now being done in s2UI
 }
 
 void S2Controller::connectToS2()

@@ -392,7 +392,9 @@ void S2UI::loadScanFromFile(QString fileString){
 
 
         status(QString("loaded file ").append(imageFileInfo.fileName()));
-
+        status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+        cb->setImage(newwin, total4DImage);
+        cb->open3DWindow(newwin);
 
 
         NeuronTree nt;
@@ -495,13 +497,13 @@ void S2UI::loadScanFromFile(QString fileString){
 
             }
 
-            cb->setImage(newwin, total4DImage);
-            cb->open3DWindow(newwin);
+
             cb->setSWC(newwin,nt);
             cb->setLandmark(newwin,newTargetList);
             cb->pushObjectIn3DWindow(newwin);
-            cb->updateImageWindow(newwin);
+
         }else{status("invalid imagedata");}
+        cb->updateImageWindow(newwin);
 
 
     }else{
@@ -742,15 +744,15 @@ void S2UI::collectOverview(){
 }
 
 void S2UI::overviewHandler(){
-    bool readyForOverview = uiS2ParameterMap[0].getCurrentString().contains("esonant") &&
-            (uiS2ParameterMap[12].getCurrentValue() ==1.0)&&
-            (uiS2ParameterMap[10].getCurrentValue() == 1024)&&
-            (uiS2ParameterMap[11].getCurrentValue() == 1024);
+    bool readyForOverview = !uiS2ParameterMap[0].getCurrentString().contains("Resonant") &&
+            ((int) uiS2ParameterMap[12].getCurrentValue() ==1)&&
+            ((int) uiS2ParameterMap[10].getCurrentValue() == 1024)&&
+            ((int) uiS2ParameterMap[11].getCurrentValue() == 1024);
     bool overViewTimedOut = overviewCycles >50;
 
     if (overViewTimedOut){
         status("overview timeout!");
-                return;
+        return;
     }
     if (readyForOverview){
         QTimer::singleShot(100, startScanPushButton, SLOT(click()));
