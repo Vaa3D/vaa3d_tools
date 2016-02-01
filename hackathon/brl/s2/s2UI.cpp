@@ -395,16 +395,20 @@ void S2UI::loadScanFromFile(QString fileString){
         total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
 
 
-        status(QString("loaded file ").append(imageFileInfo.fileName()));
-        status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-        cb->setImage(newwin, total4DImage);
-        cb->open3DWindow(newwin);
+        //        status(QString("loaded file ").append(imageFileInfo.fileName()));
+        //        status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+        //        cb->setImage(newwin, total4DImage);
+        //        cb->open3DWindow(newwin);
 
 
         NeuronTree nt;
         LandmarkList newTargetList;
         overlap = (float) overlapSpinBox->value();
         if (smartScanStatus ==1){
+            status(QString("loaded file ").append(imageFileInfo.fileName()));
+            status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+            cb->setImage(newwin, total4DImage);
+            cb->open3DWindow(newwin);
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage->setOriginY(scanList.value(scanNumber).y);
             status(QString("total4DImage is valid? ").append(QString::number(total4DImage->valid())));
@@ -506,11 +510,16 @@ void S2UI::loadScanFromFile(QString fileString){
             cb->setLandmark(newwin,newTargetList);
             cb->pushObjectIn3DWindow(newwin);
 
-        }else{status("invalid imagedata");}
+        }else{// not in smartscan mode
+            status(QString("loaded file ").append(imageFileInfo.fileName()));
+            status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+            cb->setImage(newwin, total4DImage);
+            cb->open3DWindow(newwin);
+        }
         cb->updateImageWindow(newwin);
 
 
-    }else{
+    }else{  //initial string is not readable
         status(QString("invalid image path: ").append(latestString));
     }
 }
