@@ -176,8 +176,8 @@ void S2UI::updateLocalRemote(bool state){
 
 
     }else{
-        myController.hostLineEdit->setText(QString("10.128.50.5"));
-        myPosMon.hostLineEdit->setText(QString("10.128.50.5"));
+        myController.hostLineEdit->setText(QString("10.128.48.53"));
+        myPosMon.hostLineEdit->setText(QString("10.128.48.53"));
         topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
                                                       "/",
                                                       QFileDialog::ShowDirsOnly
@@ -403,15 +403,11 @@ void S2UI::loadScanFromFile(QString fileString){
 
         NeuronTree nt;
         LandmarkList newTargetList;
-        overlap = (float) overlapSpinBox->value();
         if (smartScanStatus ==1){
             status(QString("loaded file ").append(imageFileInfo.fileName()));
-            status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-            cb->setImage(newwin, total4DImage);
-            cb->open3DWindow(newwin);
+
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
             total4DImage->setOriginY(scanList.value(scanNumber).y);
-            status(QString("total4DImage is valid? ").append(QString::number(total4DImage->valid())));
 
             if (total4DImage->valid()){
                 QString swcString = saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
@@ -421,7 +417,8 @@ void S2UI::loadScanFromFile(QString fileString){
                 mysz[1] = total4DImage->getYDim();
                 mysz[2] = total4DImage->getZDim();
                 mysz[3] = total4DImage->getCDim();
-                simple_saveimage_wrapper(*cb, swcString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+                QString imageSaveString = swcString;
+                simple_saveimage_wrapper(*cb, imageSaveString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
                 outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString<<"\n";
                 PARA_APP2 p;
                 p.is_gsdt = false;
@@ -439,7 +436,6 @@ void S2UI::loadScanFromFile(QString fileString){
                 p.b_brightfiled = 0;
                 p.outswc_file =swcString.toLatin1().data();
 
-                //p.outswc_file =QString(total4DImage->getFileName()).append("test.swc").toLatin1().data();
 
                 p.p4dImage = total4DImage;
                 p.xc0 = p.yc0 = p.zc0 = 0;
@@ -504,15 +500,20 @@ void S2UI::loadScanFromFile(QString fileString){
                 handleNewLocation(newTargetList);
 
             }
+            status(QString("before setImage.  total4DImage is valid? ").append(QString::number(total4DImage->valid())));
 
+            cb->setImage(newwin, total4DImage);
+            status(QString("after setImage.  total4DImage is valid? ").append(QString::number(total4DImage->valid())));
+
+            cb->open3DWindow(newwin);
 
             cb->setSWC(newwin,nt);
             cb->setLandmark(newwin,newTargetList);
             cb->pushObjectIn3DWindow(newwin);
 
         }else{// not in smartscan mode
-            status(QString("loaded file ").append(imageFileInfo.fileName()));
-            status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+            status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
+            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
             cb->setImage(newwin, total4DImage);
             cb->open3DWindow(newwin);
         }
@@ -672,8 +673,8 @@ void S2UI::handleNewLocation(LandmarkList newLandmarks){
 
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
     for (int i=0; i<scanList.length(); i++){
-        if ((inputLocation.x == scanList[i].x)&(inputLocation.y == scanList[i].y))
-            return true;
+        if ((qAbs(inputLocation.x - scanList[i].x)<50) && (qAbs(inputLocation.y - scanList[i].y)<50)){
+            return true;}
     }
     return false;
 }
@@ -799,7 +800,7 @@ void S2UI::updateFileString(QString inputString){
     // the streamed image data into files...
     fileString = inputString;
     if (!isLocal){
-        fileString.replace("\\AIBSDATA","\\Volumes").replace("\\","/");
+        fileString.replace("\\AIBSDATA","\\data").replace("\\","/");
     }
     fileString.append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
@@ -850,7 +851,8 @@ void S2UI::runSAStuffClicked(){
 }
 
 void S2UI::updateOverlap(int value){
-    overlap = (float) value;
+    overlap = 0.01* ((float) value);
+
 }
 
 
