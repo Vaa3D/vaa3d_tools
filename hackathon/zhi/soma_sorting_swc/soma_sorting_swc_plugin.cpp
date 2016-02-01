@@ -232,10 +232,10 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         // set the distance threshold to searching for matching soma node
 
-        double search_distance_th = soma_r*2 ;
-        if (search_distance_th < sort_th *2)
+        double search_distance_th = soma_r*5 ;
+        if (search_distance_th < sort_th *5)
          {
-             search_distance_th = sort_th *2;
+             search_distance_th = sort_th *5;
          }
 
         for (V3DLONG i=0;i<list_prunned.size();i++)
@@ -284,7 +284,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 	{
         cout << "This plugin is used to post-processing auto reconstructions for comparisons.  It will identify the soma for each input reconstruction" <<endl;
         cout << "based on the gold standard SWC file, and resample them according to specified stepsize and sort SWC nodes based on the soma root while bridging" <<endl;
-        cout << " all disconneted components when the gap is less then  2*stepsize. The search range for the maching soma  is  max(2* soma_radius, 4* stepsize)." <<endl;
+        cout << " all disconneted components when the gap is less then  2*stepsize. The search range for the maching soma  is  max(5* soma_radius, 10* stepsize)." <<endl;
         cout<<"Usage : <vaa3d> -x soma_sorting_swc -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
 
         cout<<endl;
