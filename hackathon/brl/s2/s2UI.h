@@ -43,6 +43,7 @@ public slots:
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
+    void combinedSmartScan(QString);
 signals:
     void startPM();
     void stopPM();
@@ -80,7 +81,7 @@ private slots:
 private:
     V3DPluginCallback2 * cb;
 
-//    QThread *workerThread;
+   QThread *workerThread;
 
  // Layout and buttons
 

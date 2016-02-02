@@ -17,6 +17,7 @@ public:
 signals:
     void analysisDone(LandmarkList newTargets);
     void messageSignal(QString msg);
+    void combinedSWC(QString fileSaveName);
 public slots:
     void loadScan(QString latestString, float overlap, int background);
     void processStack(Image4DSimple InputImage);

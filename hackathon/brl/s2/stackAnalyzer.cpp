@@ -18,15 +18,13 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 void StackAnalyzer::loadScan(QString latestString, float overlap, int background){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
+
     //QString latestString = getFileString();
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    latestString =QString("/Users/zhiz/Downloads/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     LandmarkList inputRootList;
- //   LocationSimple testroot;
- //   testroot.x = 10;testroot.y = 31;testroot.z = 101;inputRootList.push_back(testroot);
- //   testroot.x = 205;testroot.y = 111;testroot.z = 102;inputRootList.push_back(testroot);
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
@@ -67,7 +65,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
 
         //new code starts here:
-        QDir saveDir = QDir("/Users/zhiz/Desktop/2016_02_01_Mon_20_28/"); // Zhi pick a directory here.
+
+
+        QDir saveDir = QDir("/data/mat/BRL/testData/"); // Zhi pick a directory here.
+
         int scanNumber = 0;
         QString swcString =   saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
 
@@ -108,6 +109,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         QString versionStr = "v2.621";
 
         qDebug()<<"starting app2";
+
 
         if(inputRootList.size() <1)
         {
@@ -359,18 +361,5 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
 
     QString fileSaveName = fileWithData + ".swc";
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
-    V3dR_MainWindow * new3DWindow = NULL;
-    new3DWindow = cb->createEmpty3DViewer();
-    QList<NeuronTree> * new_treeList = cb->getHandleNeuronTrees_Any3DViewer (new3DWindow);
-    if (!new_treeList)
-    {
-        v3d_msg(QString("New 3D viewer has invalid neuron tree list"));
-        return;
-    }
-    NeuronTree resultTree;
-    resultTree = readSWC_file(fileSaveName);
-    new_treeList->push_back(resultTree);
-    cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
-    cb->update_NeuronBoundingBox(new3DWindow);
-
+    emit combinedSWC(fileSaveName);
 }

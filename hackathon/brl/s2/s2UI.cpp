@@ -14,6 +14,7 @@
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
+    qRegisterMetaType<LandmarkList>("LandmarkList");
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new LandmarkList;
@@ -59,8 +60,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
     hookUpSignalsAndSlots();
-    //workerThread = new QThread;
-    //myStackAnalyzer->moveToThread(workerThread);
+
+
+//    workerThread = new QThread;
+//    myStackAnalyzer->moveToThread(workerThread);
+//    workerThread->start();
+
+
     posMonStatus = false;
     waitingForFile = false;
     isLocal = false;
@@ -68,7 +74,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     updateLocalRemote(isLocal);
-    //workerThread->start();
+
+
+
     startSmartScanPB->resize(50,40);
 
 }
@@ -119,7 +127,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(callSALoad(QString,float,int)), myStackAnalyzer, SLOT(loadScan(QString,float,int)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
-
+    connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
 
 
 
@@ -749,6 +757,23 @@ void S2UI::moveToROI(LocationSimple nextROI){
         status("start PosMon before moving galvos");
         smartScanStatus = -1;
     }
+}
+
+
+void S2UI::combinedSmartScan(QString saveFilename){
+    V3dR_MainWindow * new3DWindow = NULL;
+    new3DWindow = cb->createEmpty3DViewer();
+    QList<NeuronTree> * new_treeList = cb->getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    if (!new_treeList)
+    {
+        v3d_msg(QString("New 3D viewer has invalid neuron tree list"));
+        return;
+    }
+    NeuronTree resultTree;
+    resultTree = readSWC_file(saveFilename);
+    new_treeList->push_back(resultTree);
+    cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
+    cb->update_NeuronBoundingBox(new3DWindow);
 }
 
 // ------------------------------------
