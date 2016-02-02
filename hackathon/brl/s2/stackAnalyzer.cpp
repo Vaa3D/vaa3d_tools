@@ -24,6 +24,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
     latestString =QString("/Users/zhiz/Downloads/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    LandmarkList inputRootList;
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -79,10 +80,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
-            total4DImage->setOriginX(0);
-            total4DImage->setOriginY(0);// these WILL BE SET eventually.
+        total4DImage->setOriginX(0);
+        total4DImage->setOriginY(0);// these WILL BE SET eventually.
 
-       outputStream<<total4DImage->getOriginX()<<" "<<total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<<total4DImage->getOriginX()<<" "<<total4DImage->getOriginY()<<" "<<swcString<<"\n";
         PARA_APP2 p;
         p.is_gsdt = false;
         p.is_coverage_prune = true;
@@ -97,8 +98,6 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.b_resample = 1;
         p.b_intensity = 0;
         p.b_brightfiled = 0;
-        p.outswc_file =swcString.toLatin1().data();
-
         p.b_menu = false; //if set to be "true", v3d_msg window will show up.
 
         p.p4dImage = total4DImage;
@@ -106,12 +105,28 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.xc1 = p.p4dImage->getXDim()-1;
         p.yc1 = p.p4dImage->getYDim()-1;
         p.zc1 = p.p4dImage->getZDim()-1;
-        qDebug()<<"starting app2";
         QString versionStr = "v2.621";
-        proc_app2(*cb, p, versionStr);
+
+        qDebug()<<"starting app2";
+
+        vector<MyMarker*> tileswc_file;
+        for(int i = 0; i < inputRootList.size(); i++)
+        {
+            p.outswc_file =swcString + (QString::number(i)) + (".swc");
+            p.landmarks.push_back(inputRootList.at(i));
+            proc_app2(*cb, p, versionStr);
+            p.landmarks.clear();
+            vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                tileswc_file.push_back(inputswc[d]);
+            }
+        }
+
+        saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
 
         NeuronTree nt;
-        nt = readSWC_file(p.outswc_file);
+        nt = readSWC_file(swcString);
         QVector<QVector<V3DLONG> > childs;
         V3DLONG neuronNum = nt.listNeuron.size();
         childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
