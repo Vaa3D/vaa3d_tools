@@ -1,4 +1,4 @@
-#include "stackAnalyzer.h"
+﻿#include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include <fstream>
@@ -18,12 +18,12 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 void StackAnalyzer::loadScan(QString latestString, float overlap, int background){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
-
+    v3d_msg("test!");
     //QString latestString = getFileString();
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    //QString latestString =QString("/Volumes/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    latestString =QString("/Users/zhiz/Downloads/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -66,9 +66,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         //new code starts here:
 
-        NeuronTree nt;
-        LandmarkList newTargetList;
-        QDir saveDir = QDir("/data/mat/BRL/testData/"); // Zhi pick a directory here.
+        QDir saveDir = QDir("/Users/zhiz/Desktop/2016_02_01_Mon_20_28/"); // Zhi pick a directory here.
         int scanNumber = 0;
         QString swcString =   saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
 
@@ -101,6 +99,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.b_brightfiled = 0;
         p.outswc_file =swcString.toLatin1().data();
 
+        p.b_menu = false; //if set to be "true", v3d_msg window will show up.
 
         p.p4dImage = total4DImage;
         p.xc0 = p.yc0 = p.zc0 = 0;
@@ -111,50 +110,99 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         QString versionStr = "v2.621";
         proc_app2(*cb, p, versionStr);
 
+        NeuronTree nt;
         nt = readSWC_file(p.outswc_file);
+        QVector<QVector<V3DLONG> > childs;
         V3DLONG neuronNum = nt.listNeuron.size();
-        bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
         for (V3DLONG i=0;i<neuronNum;i++)
         {
-            V3DLONG node_x = nt.listNeuron[i].x;
-            V3DLONG node_y = nt.listNeuron[i].y;
-            V3DLONG node_z = nt.listNeuron[i].z;
-
-            LocationSimple newTarget;
-            if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+        LandmarkList borderTipsList;
+        QList<NeuronSWC> list = nt.listNeuron;
+        for (V3DLONG i=0;i<list.size();i++)
+        {
+            if (childs[i].size()==0)
             {
-                newTarget.x = -p.p4dImage->getXDim();
-                newTarget.y = 0;
-                newTarget.z = node_z;
-
-                scan_left = true;
-                newTargetList.push_back(newTarget);
-            }
-            if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
-            {
-                newTarget.x = p.p4dImage->getXDim();
-                newTarget.y = 0;
-                newTarget.z = node_z;
-                scan_right = true;
-                newTargetList.push_back(newTarget);
-            }
-            if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
-            {
-                newTarget.x = 0;
-                newTarget.y = -p.p4dImage->getYDim();
-                newTarget.z = node_z;
-                scan_up = true;
-                newTargetList.push_back(newTarget);
-            }
-            if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
-            {
-                newTarget.x = 0;
-                newTarget.y = p.p4dImage->getYDim();
-                newTarget.z = node_z;
-                scan_down = true;
-                newTargetList.push_back(newTarget);
+                NeuronSWC curr = list.at(i);
+                LocationSimple newTip;
+                if( curr.x < 0.05* p.p4dImage->getXDim() || curr.x > 0.95 * p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > 0.95*p.p4dImage->getYDim())
+                {
+                    newTip.x = curr.x;
+                    newTip.y = curr.y;
+                    newTip.z = curr.z;
+                    borderTipsList.push_back(newTip);
+                }
             }
         }
+
+        LandmarkList newTargetList;
+        vector<LandmarkList*> newTipslist;
+        bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
+        for (int d = 0; d < 4;d++)
+        {
+            LandmarkList* tip = new LandmarkList;
+            for (V3DLONG i = 0; i < borderTipsList.size(); i++)
+            {
+                if(borderTipsList.at(i).x < 0.05* p.p4dImage->getXDim() && d == 0 )
+                {
+                    tip->push_back(borderTipsList.at(i));
+                    LocationSimple newTarget;
+                    if(!scan_left)
+                    {
+                        newTarget.x = -p.p4dImage->getXDim();
+                        newTarget.y = 0;
+                        newTarget.z = borderTipsList.at(i).z;
+                        scan_left = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                }
+                else if (borderTipsList.at(i).x > 0.95* p.p4dImage->getXDim() && d == 1)
+                {
+                    tip->push_back(borderTipsList.at(i));
+                    LocationSimple newTarget;
+                    if(!scan_right)
+                    {
+                        newTarget.x = p.p4dImage->getXDim();
+                        newTarget.y = 0;
+                        newTarget.z = borderTipsList.at(i).z;
+                        scan_right = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                }
+                else if (borderTipsList.at(i).y < 0.05* p.p4dImage->getYDim() && d == 2)
+                {
+                    tip->push_back(borderTipsList.at(i));
+                    LocationSimple newTarget;
+                    if(!scan_up)
+                    {
+                        newTarget.x = 0;
+                        newTarget.y = -p.p4dImage->getYDim();
+                        newTarget.z = borderTipsList.at(i).z;
+                        scan_up = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                }
+                else if (borderTipsList.at(i).y > 0.95* p.p4dImage->getYDim() && d == 3)
+                {
+                    tip->push_back(borderTipsList.at(i));
+                    LocationSimple newTarget;
+                    if(!scan_down)
+                    {
+                        newTarget.x = 0;
+                        newTarget.y = p.p4dImage->getYDim();
+                        newTarget.z = borderTipsList.at(i).z;
+                        scan_down = true;
+                        newTargetList.push_back(newTarget);
+                    }
+                }
+            }
+            if(tip->size()>0) newTipslist.push_back(tip);
+        }
+
         if (!newTargetList.empty()){
             for (int i = 0; i<newTargetList.length(); i++){
                 newTargetList[i].x = (1.0-overlap)*newTargetList[i].x+p.p4dImage->getOriginX();
@@ -168,7 +216,8 @@ emit analysisDone(newTargetList);
         cb->setImage(newwin, total4DImage);
         cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
-        cb->setLandmark(newwin,newTargetList);
+       // cb->setLandmark(newwin,*newTipslist.at(2));
+        cb->setLandmark(newwin,borderTipsList);
         cb->pushObjectIn3DWindow(newwin);
         cb->updateImageWindow(newwin);
 
