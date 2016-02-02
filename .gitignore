@@ -4,6 +4,8 @@
 **/moc_*.*
 **/qrc_*.*
 **/Makefile
+**/*pro.user
+**/*.autosave
 
 #ignore symlink folder
 bin
