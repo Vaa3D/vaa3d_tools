@@ -51,13 +51,13 @@ bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<str
 bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
   //  bool b_menu = true;
-    
+    bool b_dofunc = false;
     if (!p.p4dImage || !p.p4dImage->valid())
     {
         if (p.inimg_file.isEmpty())
             return false;
         
-      //  b_menu = false;
+        b_dofunc = true;
         
         //in this case try to read the image files
         QString infile = p.inimg_file;
@@ -690,7 +690,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
     outtree.clear();
     
-    if (!p.b_menu)
+    if (b_dofunc)
     {
         if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
     }
