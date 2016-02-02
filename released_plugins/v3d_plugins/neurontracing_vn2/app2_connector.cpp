@@ -50,14 +50,14 @@ bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<str
 
 bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
-    bool b_menu = true;
+  //  bool b_menu = true;
     
     if (!p.p4dImage || !p.p4dImage->valid())
     {
         if (p.inimg_file.isEmpty())
             return false;
         
-        b_menu = false;
+      //  b_menu = false;
         
         //in this case try to read the image files
         QString infile = p.inimg_file;
@@ -86,7 +86,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             {
                 if(i==0)
                 {
-                    v3d_msg("The first marker is invalid.",b_menu);
+                    v3d_msg("The first marker is invalid.",p.b_menu);
                     return false;
                 }
                 else
@@ -101,7 +101,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
     if(p.landmarks.size() < 2 && p.b_intensity ==1)
     {
-       v3d_msg("You have to select at least two markers if using high intensity background option.",b_menu);
+       v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
        return false;
     }
 
@@ -661,7 +661,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             saveSWC_file_app2(outswc_file.toStdString(), temp_out_swc, infostring);
         }
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
+                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
         
         if (0) //by PHC 120909
         {
@@ -690,7 +690,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
     outtree.clear();
     
-    if (!b_menu)
+    if (!p.b_menu)
     {
         if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
     }
@@ -730,6 +730,8 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     b_resample = (paras.size() >= k+1) ? atoi(paras[k]) : b_resample; k++;// 1.0;
     b_brightfiled = (paras.size() >= k+1) ? atoi(paras[k]) : b_brightfiled; k++;// 0.0;
     b_intensity = (paras.size() >= k+1) ? atoi(paras[k]) : b_intensity; k++;// 0.0;
+
+    b_menu = false;
 
     //cnn_type = 2; // default connection type 2
     //SR_ratio = 3.0/9.0;

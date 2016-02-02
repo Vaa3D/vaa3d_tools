@@ -21,6 +21,8 @@ struct PARA_APP2: public PARA_VN
     int b_intensity;
     int b_brightfiled;
 
+    bool b_menu;
+
     
     QString inimg_file, inmarker_file, outswc_file;
     
@@ -39,6 +41,7 @@ struct PARA_APP2: public PARA_VN
         b_resample = 1;
         b_intensity = 0;
         b_brightfiled = 0;
+        b_menu = true;
 
         inimg_file = "";
         inmarker_file = "";
