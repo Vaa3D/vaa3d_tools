@@ -18,7 +18,7 @@ signals:
     void analysisDone(LandmarkList newTargets);
     void messageSignal(QString msg);
 public slots:
-    void loadScan(QString latestString);
+    void loadScan(QString latestString, float overlap, int background);
     void processStack(Image4DSimple InputImage);
     void processSmartScan(QString fileWithData);
 private:

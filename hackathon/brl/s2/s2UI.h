@@ -46,7 +46,7 @@ public slots:
 signals:
     void startPM();
     void stopPM();
-    void callSALoad(QString);
+    void callSALoad(QString,float,int);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
@@ -76,6 +76,7 @@ private slots:
     void runSAStuffClicked();
     void updateOverlap(int value);
     void overviewHandler();
+    void loadForSA();
 private:
     V3DPluginCallback2 * cb;
 

@@ -112,11 +112,11 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     // communication with  myStackAnalyzer
-    connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(toLoad()));
+    connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    // connect(this, SIGNAL(callSALoad(QString)), myStackAnalyzer, SLOT(loadScan(QString)));
+    connect(this, SIGNAL(callSALoad(QString,float,int)), myStackAnalyzer, SLOT(loadScan(QString,float,int)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
 
@@ -245,7 +245,7 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
     overlapSBLabel->setBuddy(overlapSpinBox);
-
+    overlap = 0.01* ((float) overlapSpinBox->value());
 
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
@@ -348,6 +348,11 @@ void S2UI::loadLatest(){
 void S2UI::toLoad(){
     loadScanFromFile(s2LineEdit->text());
 }
+
+void S2UI::loadForSA(){
+    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value() );
+}
+
 void S2UI::loadScanFromFile(QString fileString){
 
     QString latestString = fileString;
