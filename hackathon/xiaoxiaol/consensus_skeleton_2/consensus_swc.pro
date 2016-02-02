@@ -7,7 +7,8 @@ INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 
 HEADERS	+= consensus_skeleton_plugin.h \
     median_swc.h \
-    point3d_util.h
+    point3d_util.h \
+    sort_eswc.h
 HEADERS	+= consensus_skeleton_func.h
 HEADERS	+= consensus_skeleton.h
 HEADERS	+= kcentroid_cluster.h

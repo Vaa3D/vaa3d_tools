@@ -25,6 +25,8 @@ bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileN
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,
                          int cluster_distance_threshold, V3DPluginCallback2 &callback);
 
+bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, double soma_x, double soma_y, double soma_z,
+               QList<NeuronSWC> &out_sorted_consensus_nt_list);
 
-void  remove_outliers(vector<NeuronTree> & nt_list);
+void  remove_outliers(vector<NeuronTree> & nt_list,double &median_root_x, double &median_root_y, double  &median_root_z);
 #endif

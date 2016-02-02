@@ -74,18 +74,18 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 	if (func_name == tr("soma_sorting"))
 	{
-        cout<<"Welcome to soma sorting plugin"<<endl;
-        if(infiles.empty())
+        cout<<"This is soma sorting plugin"<<endl;
+        if(infiles.size() <2)
         {
-            cerr<<"Need the gold standard swc file"<<endl;
+            cerr<<"Need  both the gold standard swc file and the input swc file"<<endl;
             return false;
         }
 
         QString  gsswc_file =  infiles[0];
         QString  inputswc_file = infiles[1];
-        if(inputswc_file.isEmpty())
+        if(inputswc_file.isEmpty() || gsswc_file.isEmpty())
         {
-            cerr<<"Need the input swc file"<<endl;
+            cerr<<"please check both input swc files"<<endl;
             return false;
         }
 
@@ -126,6 +126,8 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         QString full_plugin_name_resample = "resample_swc";
         QString func_name_resample = "resample_swc";
+
+        cout<<" Soma sorting: 0) run resampleing plugin"<<endl;
         callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
 
         arg.type = "random";std::vector<char*> arg_input_sort;
@@ -134,6 +136,8 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back(C_sort_th);arg.p = (void *) & arg_sort_para; input_sort << arg;
         QString full_plugin_name_sort = "sort_neuron_swc";
         QString func_name_sort = "sort_swc";
+
+        cout<<" Soma sorting: 1) run sorting plugin"<<endl;
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
         NeuronTree nt_gs = readSWC_file(gsswc_file);
@@ -182,6 +186,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         }
 
         //Prune small segments
+        cout<<" Soma sorting: 2) prune small segments"<<endl;
         NeuronTree nt_pruned;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
@@ -230,7 +235,13 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         int child_num = 0;
         QList<NeuronSWC> list_prunned = nt_pruned.listNeuron;
 
-        // set the distance threshold to searching for matching soma node
+        if (list_prunned.size() == 0){
+                cout << "empty tree after prunning!" <<endl;
+                return false;
+        }
+
+        cout<<" Soma sorting: 3) matching soma roots"<<endl;
+       // set the distance threshold to searching for matching soma node
 
         double search_distance_th = soma_r*5 ;
         if (search_distance_th < sort_th *5)
@@ -277,6 +288,7 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         char* C_soma_ID = new char[S_soma_ID.length() + 1];
         strcpy(C_soma_ID,S_soma_ID.c_str());
         arg_sort_para.push_back(C_soma_ID);arg.p = (void *) & arg_sort_para; input_sort << arg;
+        cout<<" Soma sorting: 4) resort"<<endl;
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
 	}
