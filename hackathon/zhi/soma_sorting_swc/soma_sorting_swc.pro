@@ -6,6 +6,11 @@ VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 
 HEADERS	+= soma_sorting_swc_plugin.h
+HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/resample_swc/resampling.h
+HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
+
+
+
 SOURCES	+= soma_sorting_swc_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
