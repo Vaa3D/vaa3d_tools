@@ -219,6 +219,18 @@ void S2Controller::overviewSetup(){
 
 }
 
+void S2Controller::stackSetup(){
+    // idea is to just send a bunch of commands and then the main UI will wait until the parameters are correct.
+                        // the return data from PV will likely be lost to processMessage(), but that's OK.
+                        // a more robust? version could query here instead of in S2UI
+    centerGalvos();
+    cleanAndSend("-oz 18"); // set mag to 18x
+    cleanAndSend("-sts pixelsPerLine 256"); // set pixels per line to  256
+    cleanAndSend("-sts linesPerFrame 256"); // set lines per frame to 256
+    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+
+
+}
 
 void S2Controller::overviewHandler(){
 // this is now being done in s2UI

@@ -1,6 +1,6 @@
 2015.02.01 meeting generated this chunk of tasks:
 
-add RESET button to return system (to overview mode?)
+# add RESET button to return system (to overview mode?)
 add preview with 3-5 plane MIP
 add cell body markers as starting locations
 add option to run 1 marker or run all markers

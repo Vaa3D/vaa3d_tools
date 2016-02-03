@@ -77,7 +77,11 @@ private slots:
     void runSAStuffClicked();
     void updateOverlap(int value);
     void overviewHandler();
+    void scanStatusHandler();
     void loadForSA();
+    void resetToOverviewPBCB();
+    void resetToScanPBCB();
+
 private:
     V3DPluginCallback2 * cb;
 
@@ -114,6 +118,10 @@ private:
     QPushButton *startS2PushButton;
     QPushButton *startScanPushButton;
     QPushButton  *startZStackPushButton;
+    QPushButton * resetToOverviewPB;
+    QPushButton * resetToScanPB;
+
+
     QPushButton *collectOverviewPushButton;
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
@@ -174,6 +182,7 @@ private:
     QString scanDataFileString;
     float overlap;
     int overviewCycles;
+    int scanStatusWaitCycles;
 };
 //! [0]
 
