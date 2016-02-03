@@ -60,8 +60,7 @@ void soma_sorting::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2016-1-28"));
+        v3d_msg(tr("Developed by Zhi Zhou, 2016-1-28"));
 	}
 }
 
@@ -156,89 +155,109 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 
         NeuronTree nt = readSWC_file(outswc_file);
-        QVector<QVector<V3DLONG> > childs;
 
         V3DLONG neuronNum = nt.listNeuron.size();
-        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-        V3DLONG *flag = new V3DLONG[neuronNum];
+        QVector<QVector<V3DLONG> > children_list = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
 
-        for (V3DLONG i=0;i<neuronNum;i++)
+        for (V3DLONG i = 0; i < neuronNum; i++)
         {
-            flag[i] = 1;
-            V3DLONG par = nt.listNeuron[i].pn;
-            if (par<0) continue;
-            childs[nt.hashNeuron.value(par)].push_back(i);
-        }
-        QList<NeuronSWC> list = nt.listNeuron;
-        for (V3DLONG i=0;i<list.size();i++)
-        {
-            if (childs[i].size()==0)
-            {
-                int parent_tip = getParent(i,nt);
-                if(parent_tip == 1000000000)
-                    flag[i] = -1;
-                else if(getParent(parent_tip,nt) == 1000000000 && childs[parent_tip].size() ==1)
-                {
-                    flag[i] = -1;
-                    flag[parent_tip] = -1;
-                }
-            }
+            V3DLONG parent = nt.listNeuron[i].pn;
+            if (parent < 0)
+                continue;
+            children_list[nt.hashNeuron.value(parent)].push_back(i);
         }
 
-        //Prune small segments
-        cout<<" Soma sorting: 2) prune small segments"<<endl;
-        NeuronTree nt_pruned;
-        QList <NeuronSWC> listNeuron;
-        QHash <int, int>  hashNeuron;
-        listNeuron.clear();
-        hashNeuron.clear();
-        //set node
-        NeuronSWC S;
-        for (V3DLONG i=0;i<list.size();i++)
-        {
-            if(flag[i] == 1)
-            {
-                NeuronSWC curr = list.at(i);
-                S.n 	= curr.n;
-                S.type 	= curr.type;
-                S.x 	= curr.x;
-                S.y 	= curr.y;
-                S.z 	= curr.z;
-                S.r 	= curr.r;
-                S.pn 	= curr.pn;
-                listNeuron.append(S);
-                hashNeuron.insert(S.n, listNeuron.size()-1);
-            }
-        }
-        nt_pruned.n = -1;
-        nt_pruned.on = true;
-        nt_pruned.listNeuron = listNeuron;
-        nt_pruned.hashNeuron = hashNeuron;
-        if(flag) {delete[] flag; flag = 0;}
 
-        QVector<QVector<V3DLONG> > childs_prunned;
+//        QVector<QVector<V3DLONG> > childs;
 
-        V3DLONG neuronNum_prunned = nt_pruned.listNeuron.size();
-        childs_prunned = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//        V3DLONG neuronNum = nt.listNeuron.size();
+//        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//        V3DLONG *flag = new V3DLONG[neuronNum];
 
-        for (V3DLONG i=0;i<neuronNum_prunned;i++)
-        {
-            V3DLONG par = nt_pruned.listNeuron[i].pn;
-            if (par<0) continue;
-            childs_prunned[nt_pruned.hashNeuron.value(par)].push_back(i);
-        }
+//        for (V3DLONG i=0;i<neuronNum;i++)
+//        {
+//            flag[i] = 1;
+//            V3DLONG par = nt.listNeuron[i].pn;
+//            if (par<0) continue;
+//            childs[nt.hashNeuron.value(par)].push_back(i);
+//        }
+
+
+
+//        QList<NeuronSWC> list = nt.listNeuron;
+//        for (V3DLONG i=0;i<list.size();i++)
+//        {
+//            if (childs[i].size()==0)
+//            {
+//                int parent_tip = getParent(i,nt);
+//                if(parent_tip == 1000000000)
+//                    flag[i] = -1;
+//                else if(getParent(parent_tip,nt) == 1000000000 && childs[parent_tip].size() ==1)
+//                {
+//                    flag[i] = -1;
+//                    flag[parent_tip] = -1;
+//                }
+//            }
+//        }
+
+//        //Prune small segments
+//        cout<<" Soma sorting: 2) prune small segments"<<endl;
+//        NeuronTree nt_pruned;
+//        QList <NeuronSWC> listNeuron;
+//        QHash <int, int>  hashNeuron;
+//        listNeuron.clear();
+//        hashNeuron.clear();
+//        //set node
+//        NeuronSWC S;
+//        for (V3DLONG i=0;i<list.size();i++)
+//        {
+//            if(flag[i] == 1)
+//            {
+//                NeuronSWC curr = list.at(i);
+//                S.n 	= curr.n;
+//                S.type 	= curr.type;
+//                S.x 	= curr.x;
+//                S.y 	= curr.y;
+//                S.z 	= curr.z;
+//                S.r 	= curr.r;
+//                S.pn 	= curr.pn;
+//                listNeuron.append(S);
+//                hashNeuron.insert(S.n, listNeuron.size()-1);
+//            }
+//        }
+//        nt_pruned.n = -1;
+//        nt_pruned.on = true;
+//        nt_pruned.listNeuron = listNeuron;
+//        nt_pruned.hashNeuron = hashNeuron;
+//        if(flag) {delete[] flag; flag = 0;}
+
+
+
+//        QVector<QVector<V3DLONG> > children_list;
+
+//        V3DLONG neuronNum_prunned = nt_pruned.listNeuron.size();
+//        children_list = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+//        for (V3DLONG i=0;i<neuronNum_prunned;i++)
+//        {
+//            V3DLONG par = nt_pruned.listNeuron[i].pn;
+//            if (par<0) continue;
+//            children_list[nt_pruned.hashNeuron.value(par)].push_back(i);
+//        }
 
         double Dist = 10000000000;
         double Dist_inrange = 10000000000;
         V3DLONG soma_ID = -1;
         V3DLONG dist_ID = -1;
         int child_num = 0;
-        QList<NeuronSWC> list_prunned = nt_pruned.listNeuron;
 
-        if (list_prunned.size() == 0){
-                cout << "empty tree after prunning!" <<endl;
-                return false;
-        }
+
+        QList<NeuronSWC> list_neurons = nt.listNeuron;
+
+//        if (list_prunned.size() == 0){
+//                cout << "empty tree after prunning!" <<endl;
+//                return false;
+//        }
 
         cout<<" Soma sorting: 3) matching soma roots"<<endl;
        // set the distance threshold to searching for matching soma node
@@ -249,9 +268,9 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
              search_distance_th = sort_th *5;
          }
 
-        for (V3DLONG i=0;i<list_prunned.size();i++)
+        for (V3DLONG i=0;i<list_neurons.size();i++)
         {
-            NeuronSWC curr = list_prunned.at(i);
+            NeuronSWC curr = list_neurons.at(i);
             double nodedist = sqrt(pow2(curr.x - soma_x) + pow2(curr.y - soma_y) + pow2(curr.z - soma_z));
             if(nodedist <= search_distance_th && curr.pn <0)
             {
@@ -260,14 +279,14 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
                 break;
             }
 
-            if(nodedist <= search_distance_th  && childs_prunned[i].size() > child_num)
+            if(nodedist <= search_distance_th  && children_list[i].size() > child_num)
             {
                 soma_ID = curr.n;
-                child_num = childs_prunned[i].size();
+                child_num = children_list[i].size();
                 Dist_inrange = nodedist;
             }
 
-            if(nodedist <= search_distance_th && childs_prunned[i].size() == child_num && nodedist < Dist_inrange)
+            if(nodedist <= search_distance_th && children_list[i].size() == child_num && nodedist < Dist_inrange)
             {
                 soma_ID = curr.n;
                 Dist_inrange = nodedist;
@@ -282,21 +301,23 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         if(child_num < 1 || soma_ID == -1) soma_ID = dist_ID;
 
-        export_list2file(nt_pruned.listNeuron,outswc_file,soma_ID);
+        //assign soma type
+        export_list2file(list_neurons,outswc_file,soma_ID);
 
         string S_soma_ID = boost::lexical_cast<string>(soma_ID);
         char* C_soma_ID = new char[S_soma_ID.length() + 1];
         strcpy(C_soma_ID,S_soma_ID.c_str());
         arg_sort_para.push_back(C_soma_ID);arg.p = (void *) & arg_sort_para; input_sort << arg;
+
         cout<<" Soma sorting: 4) resort"<<endl;
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
 	}
 	else if (func_name == tr("help"))
 	{
-        cout << "This plugin is used to post-processing auto reconstructions for comparisons.  It will identify the soma for each input reconstruction" <<endl;
+        cout << "This super-plugin (calls resample, and sort plugin)  is used to post-processing auto reconstructions for comparisons.  It will identify the soma for each input reconstruction" <<endl;
         cout << "based on the gold standard SWC file, and resample them according to specified stepsize and sort SWC nodes based on the soma root while bridging" <<endl;
-        cout << " all disconneted components when the gap is less then  2*stepsize. The search range for the maching soma  is  max(5* soma_radius, 10* stepsize)." <<endl;
+        cout << " all disconneted components when the gap is less then 2*stepsize. The search range for the maching soma  is  max(5* soma_radius, 10* stepsize)." <<endl;
         cout<<"Usage : <vaa3d> -x soma_sorting_swc -f soma_sorting -i <gsswc_file> <inswc_file> -o <outswc_file> -p <step_size>"<<endl;
 
         cout<<endl;
