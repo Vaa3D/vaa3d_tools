@@ -204,7 +204,7 @@ int cluster_number=0;
 QMap<V3DLONG,QList<V3DLONG> > covered_relation;
 
 QMap<V3DLONG,Node*> node_afterMerge;
-QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> arrive_path;
+QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > arrive_path;
 QMap<V3DLONG,int> seed_pos_number;
 
 
@@ -1992,11 +1992,11 @@ QList<NeuronSWC> spanning_tree_algorithm(double** markEdge,QList<Node> seeds){
         return marker_MST_sorted;
     //  outimg = pImage;
 }
-QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
+QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> >  roots){
 
     QList<Node> seeds;
 
-    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
+    for(QMap<V3DLONG,QMap<V3DLONG,Node> > ::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
         QMap<V3DLONG,Node> temp1=iter1.value();
         for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
             Node temp2=iter2.value();
@@ -2764,14 +2764,14 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     printf("###   connect all nodes using an improved spanning tree which using a sphere model to calculate distance\n");
     //printf("after_merge_final::%d\n",after_merge_final.size());
     printSwcByMap(after_merge_final,"C:\\result\\final_vn3.swc");
-    QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots;
+    QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > path_between_each_roots;
     int threshold_node_number=200;//this is a bug, not very reasonable, fix it later-20160203
     if(after_merge_final.size()<threshold_node_number){
         path_between_each_roots=sphere_search(img1d,after_merge_final,sz_x,sz_y,sz_z,2.0,iteration);
         // printf("%d\n",path_between_each_roots.count());
         //we need to calculate the distance based on path_between_each_roots
         printf("###  path finding finished     ###\n");
-        // QMap<V3DLONG,QList<Node>> node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node>> the adjecent node of node A should be included in QList
+        // QMap<V3DLONG,QList<Node> >  node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node> >  the adjecent node of node A should be included in QList
         //should define a connect algorithm
         printf("###  calculate the distance between nodes and connect them     ###\n");
         con_tree=calculate_distance_between_roots(path_between_each_roots,after_merge_final,sz_x,sz_y,sz_z);
@@ -2783,7 +2783,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
         // printf("%d\n",path_between_each_roots.count());
         //we need to calculate the distance based on path_between_each_roots
         printf("###  path finding finished     ###\n");
-        // QMap<V3DLONG,QList<Node>> node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node>> the adjecent node of node A should be included in QList
+        // QMap<V3DLONG,QList<Node> >  node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node> >  the adjecent node of node A should be included in QList
         //should define a connect algorithm
         printf("###  calculate the distance between nodes and connect them     ###\n");
         con_tree=calculate_distance_between_roots(path_between_each_roots,root,sz_x,sz_y,sz_z);
@@ -2817,7 +2817,7 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 
 }
 
-QList<NeuronSWC> fulfill_path_between_roots(QList<NeuronSWC> con_tree,QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+QList<NeuronSWC> fulfill_path_between_roots(QList<NeuronSWC> con_tree,QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
     V3DLONG temp_child;
     V3DLONG temp_pn;
     QMap<V3DLONG,V3DLONG> child_parent;
@@ -3092,13 +3092,13 @@ QList<NeuronSWC> fulfill_path_between_roots(QList<NeuronSWC> con_tree,QMap<V3DLO
 
 
 
-QMap<V3DLONG,QList<Node>> check_node_conection(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
-    QMap<V3DLONG,QList<Node>> result;
-    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1=path_between_each_roots.begin();iter1!=path_between_each_roots.end();iter1++){
-        QMultiMap<V3DLONG,QList<Node>> temp=iter1.value();
+QMap<V3DLONG,QList<Node> >  check_node_conection(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    QMap<V3DLONG,QList<Node> >  result;
+    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > >::iterator iter1=path_between_each_roots.begin();iter1!=path_between_each_roots.end();iter1++){
+        QMultiMap<V3DLONG,QList<Node> >  temp=iter1.value();
         QList<Node> connect_list;
         connect_list.clear();
-        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2=temp.begin();iter2!=temp.end();iter2++){
+        for(QMultiMap<V3DLONG,QList<Node> > ::iterator iter2=temp.begin();iter2!=temp.end();iter2++){
             QList<Node> temp_list=iter2.value();
             V3DLONG node_first=GET_IND(temp_list.first().x,temp_list.first().y,temp_list.first().z);
             V3DLONG node_terminal=GET_IND(temp_list.last().x,temp_list.last().y,temp_list.last().z);
@@ -3111,17 +3111,17 @@ QMap<V3DLONG,QList<Node>> check_node_conection(QMultiMap<V3DLONG,QMultiMap<V3DLO
     return result;
 }
 
-void printf_path_between_roots(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> root_path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+void printf_path_between_roots(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > root_path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
     FILE * fp = fopen("C:\\result\\final_vn4.swc", "wt");
     if (!fp) return;
 
     fprintf(fp, "#name\n");
     fprintf(fp, "#comment\n");
     fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1=root_path.begin();iter1!=root_path.end();iter1++){
-        QMultiMap<V3DLONG,QList<Node>> temp1=iter1.value();
+    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > >::iterator iter1=root_path.begin();iter1!=root_path.end();iter1++){
+        QMultiMap<V3DLONG,QList<Node> >  temp1=iter1.value();
         int number=0;
-        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
+        for(QMultiMap<V3DLONG,QList<Node> > ::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
             QList<Node> temp2=iter2.value();
             if((iter1.key()==GET_IND(temp2.first().x,temp2.first().y,temp2.first().z))&&(iter2.key()==GET_IND(temp2.last().x,temp2.last().y,temp2.last().z))){
                 for(int i=0;i<temp2.size();i++){
@@ -3139,9 +3139,9 @@ void printf_path_between_roots(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>
 
 }
 
-QList<Node> change_type_to_QList(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
+QList<Node> change_type_to_QList(QMap<V3DLONG,QMap<V3DLONG,Node> >  roots){
     QList<Node> seeds;
-    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
+    for(QMap<V3DLONG,QMap<V3DLONG,Node> > ::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
         QMap<V3DLONG,Node> temp1=iter1.value();
         for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
             Node temp2=iter2.value();
@@ -3153,7 +3153,7 @@ QList<Node> change_type_to_QList(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
 
 }
 
-QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots,QMap<int,Node* > roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > path_between_each_roots,QMap<int,Node* > roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
     //should define a QList which include all roots or nodes, and calculate the distance in order based on  path_between_each_roots
     int marknum=path_between_each_roots.count();
     //printf("%d\n",marknum);
@@ -3165,10 +3165,10 @@ QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QL
     }
     QList<Node> seeds_temp;
     //delete the node which can not arrive others
-    for(QMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator iter_item1 =path_between_each_roots.begin(); iter_item1 != path_between_each_roots.end(); iter_item1++){
-        QMap<V3DLONG,QList<Node>> root_begin=iter_item1.value();
+    for(QMap<V3DLONG,QMap<V3DLONG,QList<Node> > >::iterator iter_item1 =path_between_each_roots.begin(); iter_item1 != path_between_each_roots.end(); iter_item1++){
+        QMap<V3DLONG,QList<Node> >  root_begin=iter_item1.value();
         bool flag=false;
-        for(QMap<V3DLONG,QList<Node>>::iterator iter_item2=root_begin.begin();iter_item2!=root_begin.end();iter_item2++){
+        for(QMap<V3DLONG,QList<Node> > ::iterator iter_item2=root_begin.begin();iter_item2!=root_begin.end();iter_item2++){
             QList<Node> path=iter_item2.value();
             if((iter_item1.key()==GET_IND(path.first().x,path.first().y,path.first().z))&&(iter_item2.key()==GET_IND(path.last().x,path.last().y,path.last().z))){
                 flag=true;
@@ -3200,7 +3200,7 @@ QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QL
         V3DLONG temp1_v3dlong=GET_IND(seeds_temp.at(i).x,seeds_temp.at(i).y,seeds_temp.at(i).z);
         Node temp1=seeds_temp.at(i);
         seed_pos_number.insert(temp1_v3dlong,i);
-        QMap<V3DLONG,QList<Node>> node_path;
+        QMap<V3DLONG,QList<Node> >  node_path;
         node_path.clear();
         for(int j=i+1;j<seeds_temp.size();j++)
         {
@@ -3241,12 +3241,12 @@ QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QL
     // printf("%d\n",marknum);
 
 
-    /*  for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1 =path_between_each_roots.begin(); iter1 != path_between_each_roots.end(); iter1++)
+    /*  for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > >::iterator iter1 =path_between_each_roots.begin(); iter1 != path_between_each_roots.end(); iter1++)
     {
-        QMultiMap<V3DLONG,QList<Node>> elem1=iter1.value();
+        QMultiMap<V3DLONG,QList<Node> >  elem1=iter1.value();
         //  printf("sub node list::%d\n",elem1.count());
         indexj=0;
-        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2 =elem1.begin(); iter2!= elem1.end(); iter2++)
+        for(QMultiMap<V3DLONG,QList<Node> > ::iterator iter2 =elem1.begin(); iter2!= elem1.end(); iter2++)
         {
             QList<Node> elem2=iter2.value();
 
@@ -3309,7 +3309,7 @@ QList <NeuronSWC> DFS_construct(double** markEdge,QList<Node> seeds,V3DLONG sz_x
     QMap<V3DLONG,int> new_seeds;
     new_seeds.clear();
     QMap<V3DLONG,int> root_number;//every root has a number in order (line number in SWC)
-    QMap<int,QMap<int,bool>> path_visited;
+    QMap<int,QMap<int,bool> >  path_visited;
     root_number.clear();
     NeuronTree marker_MST;
     QList <NeuronSWC> listNeuron;
@@ -3338,7 +3338,7 @@ QList <NeuronSWC> DFS_construct(double** markEdge,QList<Node> seeds,V3DLONG sz_x
 
     }
     QStack<Node> stack;
-    // QMap<int,QList<int>> connectship;//represent ith node connect with other jth nodes
+    // QMap<int,QList<int> >  connectship;//represent ith node connect with other jth nodes
     QList<int> connected_node;
     NeuronSWC S_root;
     S_root.n 	= 1;
@@ -3497,11 +3497,11 @@ double Map_coordinate(Node current_center,Node target_node,V3DLONG relate_x,V3DL
 }
 
 //define a coordinate system which Y axis is the vector between source node and target node, origin of coordinate is source node
-QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> sphere_search(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > sphere_search(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
     //first calculate the distance between roots using bf based on sphere model
     //second, after get the distance, input it into mst algorithm and get a connection relation
     //finally fix the route between parent and child in SWC based on the bf route got in first step
-    QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_roots;
+    QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > path_between_roots;
     path_between_roots.clear();
     int count_time=0;
 
@@ -3509,7 +3509,7 @@ QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> sphere_search(unsigned char * &img1d,QMa
     {
         Node* elem1=iter1.value();
         V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
-        QMap<V3DLONG,QList<Node>> path_to_target;
+        QMap<V3DLONG,QList<Node> >  path_to_target;
         path_to_target.clear();
 
         for(QMap<int,Node*>::iterator iter2 =cluster_root.begin(); iter2 != cluster_root.end(); iter2++)
@@ -3682,11 +3682,11 @@ QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> sphere_search(unsigned char * &img1d,QMa
 }
 
 //two directions
-QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn3(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > spanning_combined_bf_vn3(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
     //first calculate the distance between roots using bf based on sphere model
     //second, after get the distance, input it into mst algorithm and get a connection relation
     //finally fix the route between parent and child in SWC based on the bf route got in first step
-    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > path_between_roots;
     path_between_roots.clear();
     int count_time=0;
 
@@ -3694,7 +3694,7 @@ QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn3(unsig
     {
         Node* elem1=iter1.value();
         V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
-        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        QMultiMap<V3DLONG,QList<Node> >  path_to_target;
         path_to_target.clear();
 
 
@@ -3855,11 +3855,11 @@ QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn3(unsig
 
 }
 //four directions
-QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn2(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > spanning_combined_bf_vn2(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
     //first calculate the distance between roots using bf based on sphere model
     //second, after get the distance, input it into mst algorithm and get a connection relation
     //finally fix the route between parent and child in SWC based on the bf route got in first step
-    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > path_between_roots;
     path_between_roots.clear();
     int count_time=0;
 
@@ -3867,7 +3867,7 @@ QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn2(unsig
     {
         Node* elem1=iter1.value();
         V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
-        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        QMultiMap<V3DLONG,QList<Node> >  path_to_target;
         path_to_target.clear();
 
 
@@ -4090,12 +4090,12 @@ QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn2(unsig
 }
 
 
-//should define a QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> which indicate that the QList is the nodes between two roots
-QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+//should define a QMap<V3DLONG,QMap<V3DLONG,QList<Node> > > which indicate that the QList is the nodes between two roots
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > spanning_combined_bf(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
     //first calculate the distance between roots using bf based on sphere model
     //second, after get the distance, input it into mst algorithm and get a connection relation
     //finally fix the route between parent and child in SWC based on the bf route got in first step
-    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node> > > path_between_roots;
     path_between_roots.clear();
     int count_time=0;
 
@@ -4103,7 +4103,7 @@ QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf(unsigned 
     {
         Node* elem1=iter1.value();
         V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
-        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        QMultiMap<V3DLONG,QList<Node> >  path_to_target;
         path_to_target.clear();
 
 
@@ -4404,7 +4404,7 @@ Node choose_region_vn4(unsigned char * &img1d,struct sphere_model_two_directions
     QList<V3DLONG> direction_node_number;
     //QList<double> direction_average_pixal;
     //QList<double> direction_node_pixal;
-    QList<QList<Node>> direction_all_nodes;
+    QList<QList<Node> >  direction_all_nodes;
     QList<Node> direction_node;
     Node result_pseu;
     result_pseu.x=-1;
@@ -4519,7 +4519,7 @@ Node choose_region_vn3(unsigned char * &img1d,struct sphere_model_four_direction
     QList<V3DLONG> direction_node_number;
     QList<double> direction_average_pixal;
     QList<double> direction_node_pixal;
-    QList<QList<Node>> direction_all_nodes;
+    QList<QList<Node> >  direction_all_nodes;
     QList<Node> direction_node;
 
     direction_node_pixal.append(sphere_m.pixal_up_right);
@@ -4626,7 +4626,7 @@ Node choose_region_vn2(unsigned char * &img1d,struct sphere_model sphere_m,Node 
     QList<V3DLONG> direction_node_number;
     QList<double> direction_average_pixal;
     QList<double> direction_node_pixal;
-    QList<QList<Node>> direction_all_nodes;
+    QList<QList<Node> >  direction_all_nodes;
     QList<Node> direction_node;
 
     direction_node_pixal.append(sphere_m.pixal_up_right_up);
@@ -4854,9 +4854,9 @@ Node choose_region(struct sphere_model sphere_m,Node source_node,Node target_nod
 
 }
 
-QMap<int,Node*> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node>> final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
+QMap<int,Node*> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node> >  final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
     QMap<int,Node*> result;
-    QMap<V3DLONG,QMap<V3DLONG,Node>> mid_result;
+    QMap<V3DLONG,QMap<V3DLONG,Node> >  mid_result;
 
 
     for(QMap<V3DLONG,QList<Node> >::iterator iter =final_cluster.begin(); iter != final_cluster.end(); iter++){//clean the final_cluster, change its type to QMap<V3DLONG,QMap<V3DLONG,Node> > for easy process
@@ -4876,7 +4876,7 @@ QMap<int,Node*> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<No
     //begin to merge the node for each classification
 
     int count_number=0;
-    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
+    for(QMap<V3DLONG,QMap<V3DLONG,Node> > ::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
 
         QMap<V3DLONG,Node> elem_Map=iter.value();
         QMap<V3DLONG,Node> after_merge=merge_cluster_node(elem_Map,prim_distance);
