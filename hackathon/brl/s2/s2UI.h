@@ -16,6 +16,7 @@
 #include "s2plot.h"
 #include "stackAnalyzer.h"
 #include "noteTaker.h"
+#include "targetList.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -53,6 +54,7 @@ signals:
 	void noteStatus(QString);
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
+    void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
 private slots:
     void startS2();
     void startScan();
@@ -112,6 +114,9 @@ private:
     QGroupBox *createTracingParameters();
     void createButtonBox1();
 	
+
+    void createTargetList();
+
 	QCheckBox *localRemoteCB;
 
     QLabel *s2Label;
@@ -139,6 +144,12 @@ private:
     QSpinBox *overlapSpinBox;
     QLabel *overlapSBLabel;
 
+// Target and ROI table widget
+
+    TargetList myTargetTable;
+    int targetIndex;
+
+
 // External S2 controllers
 
     S2Controller myController;
@@ -155,7 +166,8 @@ private:
     bool isDuplicateROI(LocationSimple inputLocation);
     void closeEvent(QCloseEvent *event);
 
-
+    LandmarkList allTargetLocations;
+    QList<LandmarkList> allScanLocations;
     LandmarkList *allROILocations;
     QList<LandmarkList> *allTipsList;
     QMap<int, S2Parameter> uiS2ParameterMap;

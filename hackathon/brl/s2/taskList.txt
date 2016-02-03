@@ -4,8 +4,8 @@
 add preview with 3-5 plane MIP
 add cell body markers as starting locations
 add option to run 1 marker or run all markers
-add option to pop up window for tracing or not
-add configuration.
+#add option to pop up window for tracing or not
+# add configuration.
 REMAINING FROM PREVIOUS:
 Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
 Try MIP display for each ROI,

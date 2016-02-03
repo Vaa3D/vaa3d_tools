@@ -19,6 +19,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lastFile = QString("");
     allROILocations = new LandmarkList;
     allTipsList = new QList<LandmarkList>;
+
+    allTargetLocations = new LandmarkList;
+    allScanLocations = new QList<LandmarkList>;
+
     cb = &callback;
     myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
@@ -35,10 +39,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     myNotes = new NoteTaker;
 
+
     rhTabs = new QTabWidget();
     rhTabs->addTab(   createROIMonitor(), "ROI Monitor");
     rhTabs->addTab(myNotes, "status and notes");
 
+
+    createTargetList();
     lhTabs = new QTabWidget();
     lhTabs->addTab(createS2Monitors(), "s2 Monitor");
     lhTabs->addTab(&myPosMon, "monCOM" );
@@ -66,6 +73,13 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(rhTabs,0,5,9,4);
     //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
+
+
+
+    myTargetTable.show();
+targetIndex = -1;
+
+
     hookUpSignalsAndSlots();
 
 
@@ -85,7 +99,6 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     startSmartScanPB->resize(50,40);
-
 }
 
 void S2UI::hookUpSignalsAndSlots(){
@@ -146,8 +159,19 @@ void S2UI::hookUpSignalsAndSlots(){
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
+
+
+    // communication with targetList:
+    connect(this,SIGNAL(updateTable(LandmarkList,QList<LandmarkList>)),&myTargetTable, SLOT(updateTargetTable(LandmarkList,QList<LandmarkList>)));
 }
 
+
+void S2UI::createTargetList(){
+
+  //  myTargetTable.show();
+
+
+}
 
 
 QGroupBox *S2UI::createROIMonitor(){
@@ -383,7 +407,6 @@ void S2UI::updateLocalRemote(bool state){
             tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
             tileLocation.y = scanList.value(scanNumber).y;
             emit  callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation );
-
         }else{
             loadScanFromFile(getFileString());
         }
@@ -690,7 +713,7 @@ void S2UI::updateLocalRemote(bool state){
             return;
         }
         smartScanStatus = 1;
-
+        targetIndex++;
         scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
         status(scanDataFileString);
         saveTextFile.setFileName(scanDataFileString);// add currentScanFile
@@ -710,6 +733,9 @@ void S2UI::updateLocalRemote(bool state){
                     0);
             startLocation.mass = 0;
             allROILocations->append(startLocation);
+            allScanLocations.append(allROILocations);
+            allTargetLocations.append(startLocation);
+
             QTimer::singleShot(10,this, SLOT(smartScanHandler()));
         }
         // append text to noteTaker
@@ -786,6 +812,9 @@ void S2UI::updateLocalRemote(bool state){
             waitingForFile = true;
             scanList.append(nextLocation);
             tipList.append(nextLandmarkList);
+            allScanLocations.value(targetIndex) = scanList;
+            emit updateTable(allTargetLocations,allScanLocations);
+
             QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
             // how to make this more eventdriven. maybe  wait for move to finish.
             status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
@@ -991,6 +1020,8 @@ void S2UI::updateLocalRemote(bool state){
             QTimer::singleShot(100, this, SLOT(scanStatusHandler()));
         }
     }
+
+
     //  set filename in Image4DSimple* using  ->setFileName
     //  BEFORE PASSING TO StackAnalyzer slot.
 
