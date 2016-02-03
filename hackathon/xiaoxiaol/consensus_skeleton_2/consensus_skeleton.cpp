@@ -706,7 +706,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
      int max_vote = max_image_value(img1d, tol_sz);
      cout << "maximum votes in the vote map:" << max_vote << endl;
-     int vote_threshold = 3;//max_vote/3;
+     int vote_threshold = 2;//max_vote/3;
 //     if (vote_threshold > 5){
 //         vote_threshold = 5;
 //     }
@@ -903,7 +903,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
         {
             for (V3DLONG col = row+1;col < num_nodes;col++){
                 unsigned int edgeVote = adjMatrix[row*num_nodes + col];
-                if (edgeVote >= vote_threshold)
+                if (edgeVote > vote_threshold)
                 {
                     if (merge_result[row].pn == -1)
                     {//exsiting isolated vertex, modify parent id
@@ -977,7 +977,7 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
         return false;
     }
 
-    if (strcmp(&filename[len-1-4], "eswc") ==0 )
+    if (strncmp(&filename[len-1-4], "eswc",4) ==0 )
     { // eswc
         fprintf(fp,"#n,type,x,y,z,radius,parent,seg_id,level,edge_vote\n");   //,vote\n");
         for (int i=0;i<list.size();i++)
