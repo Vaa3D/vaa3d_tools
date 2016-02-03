@@ -39,7 +39,7 @@ public:
     StackAnalyzer *myStackAnalyzer;
 public slots:
     void pmStatusHandler(bool pmStatus);
-    void handleNewLocation(LandmarkList newlandmarks);
+    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks);
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
@@ -47,7 +47,7 @@ public slots:
 signals:
     void startPM();
     void stopPM();
-    void callSALoad(QString,float,int);
+    void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
@@ -149,6 +149,7 @@ private:
 
 
     LandmarkList *allROILocations;
+    QList<LandmarkList> *allTipsList;
     QMap<int, S2Parameter> uiS2ParameterMap;
 
     QString fileString ;
@@ -160,6 +161,7 @@ private:
     double scanNumber;
     int resultNumber;
     LandmarkList scanList;
+    QList<LandmarkList> tipList;
 
     Image4DSimple*  total4DImage;
 

@@ -18,6 +18,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new LandmarkList;
+    allTipsList = new QList<LandmarkList>;
     cb = &callback;
     myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
@@ -62,9 +63,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     hookUpSignalsAndSlots();
 
 
-//    workerThread = new QThread;
-//    myStackAnalyzer->moveToThread(workerThread);
-//    workerThread->start();
+    //    workerThread = new QThread;
+    //    myStackAnalyzer->moveToThread(workerThread);
+    //    workerThread->start();
 
 
     posMonStatus = false;
@@ -122,9 +123,9 @@ void S2UI::hookUpSignalsAndSlots(){
     // communication with  myStackAnalyzer
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
-    connect(myStackAnalyzer, SIGNAL(analysisDone(LandmarkList)), this, SLOT(handleNewLocation(LandmarkList)));
+    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    connect(this, SIGNAL(callSALoad(QString,float,int)), myStackAnalyzer, SLOT(loadScan(QString,float,int)));
+    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
@@ -195,6 +196,7 @@ void S2UI::updateLocalRemote(bool state){
     } QDir topDir = QDir(topDirStr);
     topDir.mkdir(timeString);
     saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
+    scanDataFileString = saveDir.absolutePath().append("/").append("_0_scanData.txt");
 
     myNotes->setSaveDir(saveDir);
 
@@ -244,7 +246,10 @@ QGroupBox *S2UI::createTracingParameters(){
     bkgSpnBx->setValue(10);
     bkgSpnBx->setObjectName("bkgSpinBox");
 
-
+    QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
+    QCheckBox *interruptCB = new QCheckBox;
+    labelInterrupt->setBuddy(interruptCB);
+    interruptCB->setObjectName("interruptCB");
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
@@ -261,8 +266,10 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(s2LineEdit,1,1);
     tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
     tPL->addWidget(runSAStuff,3,0,1,2);
-    tPL->addWidget(overlapSpinBox,4,2);
+    tPL->addWidget(overlapSpinBox,4,1);
     tPL->addWidget(overlapSBLabel,4,0);
+    tPL->addWidget(labelInterrupt,5,0);
+    tPL->addWidget(interruptCB, 5,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -350,22 +357,40 @@ void S2UI::loadScan(){
 }
 
 void S2UI::loadLatest(){
-    loadScanFromFile(getFileString());
-}
+    if (smartScanStatus ==1){
+        LandmarkList rootList = tipList.at(scanNumber);
+        LocationSimple tileLocation;
+        tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(scanNumber).y;
+        emit  callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation );
 
+    }else{
+        loadScanFromFile(getFileString());
+    }
+}
 void S2UI::toLoad(){
     loadScanFromFile(s2LineEdit->text());
 }
 
 void S2UI::loadForSA(){
-    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value() );
+    LandmarkList rootList;
+    LocationSimple tileLocation;
+
+    if (smartScanStatus == 1){
+    rootList = tipList.at(scanNumber);
+    tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
+    tileLocation.y = scanList.value(scanNumber).y;
+    }else{
+        tileLocation.x = 0;
+        tileLocation.y = 0;
+        rootList.clear();
+    }
+
+    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation );
 }
 
 void S2UI::loadScanFromFile(QString fileString){
-
     QString latestString = fileString;
-
-
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         v3dhandle newwin = cb->newImageWindow();
@@ -510,7 +535,9 @@ void S2UI::loadScanFromFile(QString fileString){
                         newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
                     }
                 }
-                handleNewLocation(newTargetList);
+                QList<LandmarkList> newTipsList;
+
+                handleNewLocation(newTipsList,newTargetList);
 
             }
             status(QString("before setImage.  total4DImage is valid? ").append(QString::number(total4DImage->valid())));
@@ -670,15 +697,25 @@ void S2UI::startingSmartScan(){
 
 }
 
-void S2UI::handleNewLocation(LandmarkList newLandmarks){
+void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks){
+
+
+    qDebug()<<"back in S2UI with new locations";
+
     status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanNumber)));
     for (int i = 0; i<newLandmarks.length(); i++){
+        if (!newTipsList.value(i).empty()){
         status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
+        for (int k=0; k<newTipsList.value(i).length();k++){
+            status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
+        }
+
         if (!isDuplicateROI(newLandmarks.value(i))){
             allROILocations->append(newLandmarks.value(i));
+            allTipsList->append(newTipsList.value(i));
         }else{
             status("already scanned here!");
-        }
+        }}
     }
     scanNumber++;
     smartScanHandler();
@@ -713,6 +750,9 @@ void S2UI::smartScanHandler(){
 
     if (!allROILocations->isEmpty()){
         LocationSimple nextLocation = allROILocations->first();
+        LandmarkList  nextLandmarkList;
+        nextLandmarkList = allTipsList->first();
+        allTipsList->removeFirst();
         allROILocations->removeFirst();
         moveToROI(nextLocation);
         if (smartScanStatus==1){
@@ -725,12 +765,11 @@ void S2UI::smartScanHandler(){
         }
         waitingForFile = true;
         scanList.append(nextLocation);
+        tipList.append(nextLandmarkList);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
 
-        //outputStream<<notes->toPlainText();
-        // saveTextFile.close();
     }
 
 }

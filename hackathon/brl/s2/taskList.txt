@@ -1,3 +1,20 @@
+2015.02.01 meeting generated this chunk of tasks:
+
+add RESET button to return system (to overview mode?)
+add preview with 3-5 plane MIP
+add cell body markers as starting locations
+add option to run 1 marker or run all markers
+add option to pop up window for tracing or not
+add configuration.
+REMAINING FROM PREVIOUS:
+Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
+Try MIP display for each ROI,
+Add ROI controls-  with z scan info.
+allow user to generate block grid based on 2 anchor points in preview scan
+...then Automatically scan the whole grid in full resolution.
+
+
+
 2015.01.27 meeting generated this chunk of tasks.
 
 started 2015.01.28 1545
@@ -27,16 +44,16 @@ GUI:
 
 #Add dialog for ‘entire thing finished’ or similar..
 
-Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
 
 
 
-Try MIP display for each ROI,
+
+
 # but it’s more important to display order number on ROI plot.
 
 
 
-Fix ROI xy directions on ROI plot relative to images
+# Fix ROI xy directions on ROI plot relative to images
 
 
 
@@ -46,11 +63,10 @@ Fix ROI xy directions on ROI plot relative to images
 
 Internal control of the program:
 
-Create .config file for the whole QWidget.
 
 # Add user-adjustable overlap between tiles.
 
-Add ROI controls-  with z scan info.
+
 
 
 
@@ -58,7 +74,5 @@ Major Addition:
 
 # testing single plane version>Create method to scan whole area in low-res preview mode with no z (or 3 plane z stack MIP?)  and show the image.
 
->From this preview scan, allow user to generate block grid based on 2 anchor points.
 
->Automatically scan the whole grid in full resolution.
 

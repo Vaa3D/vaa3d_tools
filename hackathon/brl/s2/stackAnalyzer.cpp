@@ -15,7 +15,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 
 
 
-void StackAnalyzer::loadScan(QString latestString, float overlap, int background){
+void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation ){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
 
@@ -23,8 +23,14 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
-    latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
-    LandmarkList inputRootList;
+
+    //latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    //LandmarkList inputRootList;
+    qDebug()<<"loadScan input: "<<latestString;
+    //   LocationSimple testroot;
+    //   testroot.x = 10;testroot.y = 31;testroot.z = 101;inputRootList.push_back(testroot);
+    //   testroot.x = 205;testroot.y = 111;testroot.z = 102;inputRootList.push_back(testroot);
+
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
@@ -46,7 +52,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         unsigned short int * total1dData = new unsigned short int [tunits];
         V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
-            qDebug()<<fileList[f];
+            //qDebug()<<fileList[f];
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
             if (pNewImage->valid()){
                 unsigned short int * data1d = 0;
@@ -67,22 +73,24 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         //new code starts here:
 
 
-        QDir saveDir = QDir("/data/mat/BRL/testData/"); // Zhi pick a directory here.
-
+        QDir saveDir = imageFileInfo.absoluteDir();//QDir("/Users/zhiz/Desktop/2016_02_01_Mon_20_28/"); // Zhi pick a directory here.
+        saveDir.cdUp();
         int scanNumber = 0;
         QString swcString =   saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
 
         QString scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
         qDebug()<<scanDataFileString;
         QFile saveTextFile;
-                saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
         if (!saveTextFile.isOpen()){
-            if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::ReadWrite  )){
+                qDebug()<<"unable to save file!";
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
-        total4DImage->setOriginX(0);
-        total4DImage->setOriginY(0);// these WILL BE SET eventually.
+        total4DImage->setOriginX(tileLocation.x);
+        total4DImage->setOriginY(tileLocation.y);
+        qDebug()<<total4DImage->getOriginX();
 
         outputStream<<total4DImage->getOriginX()<<" "<<total4DImage->getOriginY()<<" "<<swcString<<"\n";
         PARA_APP2 p;
@@ -99,7 +107,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.b_resample = 1;
         p.b_intensity = 0;
         p.b_brightfiled = 0;
-        p.b_menu = false; //if set to be "true", v3d_msg window will show up.
+        p.b_menu = interrupt; //if set to be "true", v3d_msg window will show up.
 
         p.p4dImage = total4DImage;
         p.xc0 = p.yc0 = p.zc0 = 0;
@@ -109,7 +117,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         QString versionStr = "v2.621";
 
         qDebug()<<"starting app2";
-
+        qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
 
         if(inputRootList.size() <1)
         {
@@ -130,7 +138,8 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 p.landmarks.push_back(RootNewLocation);
                 proc_app2(*cb, p, versionStr);
                 p.landmarks.clear();
-                vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());;
+                vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());
+                qDebug()<<"ran app2";
                 for(V3DLONG d = 0; d < inputswc.size(); d++)
                 {
                     tileswc_file.push_back(inputswc[d]);
@@ -152,10 +161,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
 
         LandmarkList newTargetList;
-        LandmarkList* tip_left = new LandmarkList;
-        LandmarkList* tip_right = new LandmarkList;
-        LandmarkList* tip_up = new LandmarkList;
-        LandmarkList* tip_down = new LandmarkList;
+        LandmarkList tip_left;
+        LandmarkList tip_right;
+        LandmarkList tip_up ;
+        LandmarkList tip_down;
         QList<NeuronSWC> list = nt.listNeuron;
         for (V3DLONG i=0;i<list.size();i++)
         {
@@ -168,50 +177,50 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 newTip.z = curr.z + p.p4dImage->getOriginZ();
                 if( curr.x < 0.05* p.p4dImage->getXDim())
                 {
-                    tip_left->push_back(newTip);
+                    tip_left.push_back(newTip);
                 }else if (curr.x > 0.95 * p.p4dImage->getXDim())
                 {
-                    tip_right->push_back(newTip);
+                    tip_right.push_back(newTip);
                 }else if (curr.y < 0.05 * p.p4dImage->getYDim())
                 {
-                    tip_up->push_back(newTip);
+                    tip_up.push_back(newTip);
                 }else if (curr.y > 0.95*p.p4dImage->getYDim())
                 {
-                    tip_down->push_back(newTip);
+                    tip_down.push_back(newTip);
                 }
             }
         }
 
-        vector<LandmarkList*> newTipslist;
+        QList<LandmarkList> newTipsList;
         LocationSimple newTarget;
 
-        if(tip_left->size()>0)
+        if(tip_left.size()>0)
         {
-            newTipslist.push_back(tip_left);
+            newTipsList.push_back(tip_left);
             newTarget.x = -p.p4dImage->getXDim();
             newTarget.y = 0;
             newTarget.z = 0;
             newTargetList.push_back(newTarget);
         }
-        if(tip_right->size()>0)
+        if(tip_right.size()>0)
         {
-            newTipslist.push_back(tip_right);
+            newTipsList.push_back(tip_right);
             newTarget.x = p.p4dImage->getXDim();
             newTarget.y = 0;
             newTarget.z = 0;
             newTargetList.push_back(newTarget);
         }
-        if(tip_up->size()>0)
+        if(tip_up.size()>0)
         {
-            newTipslist.push_back(tip_up);
+            newTipsList.push_back(tip_up);
             newTarget.x = 0;
             newTarget.y = -p.p4dImage->getYDim();
             newTarget.z = 0;
             newTargetList.push_back(newTarget);
         }
-        if(tip_down->size()>0)
+        if(tip_down.size()>0)
         {
-            newTipslist.push_back(tip_down);
+            newTipsList.push_back(tip_down);
             newTarget.x = 0;
             newTarget.y = p.p4dImage->getYDim();
             newTarget.z = 0;
@@ -228,107 +237,40 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
         saveTextFile.close();
-emit analysisDone(newTargetList);
         cb->setImage(newwin, total4DImage);
         cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
-        cb->setLandmark(newwin,newTargetList);
-       // cb->setLandmark(newwin,*newTipslist.at(0));
+        LandmarkList imageLandmarks = newTargetList;
+//        cb->setLandmark(newwin,newTargetList);
+        RGBA8 myColor;
+        myColor.r = 128;
+        myColor.g = 200;
+        myColor.b = 128;
+        myColor.a = 128;
+        for (int i =0; i<imageLandmarks.length(); i++){
+            imageLandmarks.value(i).color = myColor;
+        }
+        for (int i = 0; i<newTipsList.length(); i++){
+
+            imageLandmarks.append(newTipsList.value(i));
+
+        }
+        if (!imageLandmarks.isEmpty()){
+            cb->setLandmark(newwin,imageLandmarks);
+            cb->pushObjectIn3DWindow(newwin);
+            qDebug()<<"set landmark group";
+        }
+
         cb->pushObjectIn3DWindow(newwin);
         cb->updateImageWindow(newwin);
+        emit analysisDone(newTipsList, newTargetList);
+
     }else{
         qDebug()<<"invalid image";
     }
 }
 
 void StackAnalyzer::processStack(Image4DSimple InputImage){
-    qDebug()<<InputImage.valid();
-    // process stack data
-    PARA_APP2 p;
-    p.is_gsdt = false;
-    p.is_coverage_prune = true;
-    p.is_break_accept = false;
-    p.bkg_thresh = 10;
-    p.length_thresh = 5;
-    p.cnn_type = 2;
-    p.channel = 0;
-    p.SR_ratio = 3.0/9.9;
-    p.b_256cube = 1;
-    p.b_RadiusFrom2D = true;
-    p.b_resample = 1;
-    p.b_intensity = 0;
-    p.b_brightfiled = 0;
-    p.outswc_file = QString(InputImage.getFileName()).append( "_app2.swc");
-
-    p.p4dImage = &InputImage;
-    p.xc0 = p.yc0 = p.zc0 = 0;
-    p.xc1 = p.p4dImage->getXDim()-1;
-    p.yc1 = p.p4dImage->getYDim()-1;
-    p.zc1 = p.p4dImage->getZDim()-1;
-
-qDebug()<<p.p4dImage->valid();
-QFileInfo testFileInfo = QFileInfo(QString(p.outswc_file));
-qDebug()<<testFileInfo.isWritable();
-    QString versionStr = "v2.621";
-    proc_app2(*cb, p, versionStr);
-    NeuronTree nt;
-    nt = readSWC_file(p.outswc_file);
-
-qDebug()<< "done with readSWC_file";
-
-    // determine all ROI locations and put them in newTargetList, a QList of 3-ints [x,y,z] coordinates
-    // for the next ROI.
-    LandmarkList newTargetList;
-    V3DLONG neuronNum = nt.listNeuron.size();
-    bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
-    for (V3DLONG i=0;i<neuronNum;i++)
-    {
-        V3DLONG node_x = nt.listNeuron[i].x;
-        V3DLONG node_y = nt.listNeuron[i].y;
-
-        LocationSimple newTarget;
-        if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
-        {
-            newTarget.x = -p.p4dImage->getXDim()*p.p4dImage->getRezX() + p.p4dImage->getOriginX();
-            newTarget.y = p.p4dImage->getOriginY();
-            scan_left = true;
-            newTargetList.push_back(newTarget);
-        }
-        if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
-        {
-            newTarget.x = p.p4dImage->getXDim()*p.p4dImage->getRezX() + p.p4dImage->getOriginX();
-            newTarget.y = p.p4dImage->getOriginY();
-            scan_right = true;
-            newTargetList.push_back(newTarget);
-        }
-        if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
-        {
-            newTarget.x = p.p4dImage->getOriginX();
-            newTarget.y = -p.p4dImage->getYDim()*p.p4dImage->getRezY() + p.p4dImage->getOriginY();
-            scan_up = true;
-            newTargetList.push_back(newTarget);
-        }
-        if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
-        {
-            newTarget.x = p.p4dImage->getOriginX();
-            newTarget.y = p.p4dImage->getYDim()*p.p4dImage->getRezY() + p.p4dImage->getOriginY();
-            scan_down = true;
-            newTargetList.push_back(newTarget);
-        }
-    }
-
-//    v3dhandle newwin = cb->newImageWindow();
-//    cb->setImage(newwin, pInputImage);
-//    cb->open3DWindow(newwin);
-//    cb->setSWC(newwin,nt);
-//    cb->pushObjectIn3DWindow(newwin);
-//    cb->updateImageWindow(newwin);
-
-
-    emit analysisDone(newTargetList);
-
-return;
-
 
 }
 

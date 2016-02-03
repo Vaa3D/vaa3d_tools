@@ -15,11 +15,11 @@ public:
 
 
 signals:
-    void analysisDone(LandmarkList newTargets);
+    void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets);
     void messageSignal(QString msg);
     void combinedSWC(QString fileSaveName);
 public slots:
-    void loadScan(QString latestString, float overlap, int background);
+    void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation);
     void processStack(Image4DSimple InputImage);
     void processSmartScan(QString fileWithData);
 private:
