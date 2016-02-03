@@ -150,7 +150,7 @@ void MeanShiftPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
             in_sz[2] = p4d->getZDim();
            // meanshift_plugin_vn4(callback,parent,img1d, in_sz,image_name,bmenu);
             PARA.percentage=0.6;
-            PARA.prim_distance=4.0;
+            PARA.prim_distance=3.0;
             PARA.threshold=10;
             reconstruction_func(callback,parent,PARA,image_name,bmenu);
         }

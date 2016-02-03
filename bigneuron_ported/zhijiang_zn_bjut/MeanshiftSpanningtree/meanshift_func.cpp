@@ -68,8 +68,105 @@ static struct adj_node{
 {0,-1,-1,sqrt(2.0)},
 {1,-1,-1,sqrt(3.0)}
 };
+struct sphere_model{
+    //the number of nodes which were included by eight directions
+    V3DLONG up_right_up;
+    V3DLONG up_left_up;
+    V3DLONG up_left_bottom;
+    V3DLONG up_right_bottom;
+    V3DLONG down_right_up;
+    V3DLONG down_left_up;
+    V3DLONG down_left_bottom;
+    V3DLONG down_right_bottom;
+    //define the node with maximum pixval value in the eight directions and corresponding pixal
+    Node node_up_right_up;
+    Node node_up_left_up;
+    Node node_up_left_bottom;
+    Node node_up_right_bottom;
+    Node node_down_right_up;
+    Node node_down_left_up;
+    Node node_down_left_bottom;
+    Node node_down_right_bottom;
+
+    QList<Node> QList_up_right_up;
+    QList<Node> QList_up_left_up;
+    QList<Node> QList_up_left_bottom;
+    QList<Node> QList_up_right_bottom;
+    QList<Node> QList_down_right_up;
+    QList<Node> QList_down_left_up;
+    QList<Node> QList_down_left_bottom;
+    QList<Node> QList_down_right_bottom;
 
 
+    double pixal_up_right_up;
+    double pixal_up_left_up;
+    double pixal_up_left_bottom;
+    double pixal_up_right_bottom;
+    double pixal_down_right_up;
+    double pixal_down_left_up;
+    double pixal_down_left_bottom;
+    double pixal_down_right_bottom;
+
+    double sum_pixal_up_right_up;
+    double sum_pixal_up_left_up;
+    double sum_pixal_up_left_bottom;
+    double sum_pixal_up_right_bottom;
+    double sum_pixal_down_right_up;
+    double sum_pixal_down_left_up;
+    double sum_pixal_down_left_bottom;
+    double sum_pixal_down_right_bottom;
+
+};
+
+struct sphere_model_four_directions{
+    //the number of nodes which were included by eight directions
+    V3DLONG up_right;
+    V3DLONG up_left;
+    V3DLONG down_right;
+    V3DLONG down_left;
+
+    //define the node with maximum pixval value in the eight directions and corresponding pixal
+    Node node_up_right;
+    Node node_up_left;
+    Node node_down_right;
+    Node node_down_left;
+
+    QList<Node> QList_up_right;
+    QList<Node> QList_up_left;
+    QList<Node> QList_down_right;
+    QList<Node> QList_down_left;
+
+    double pixal_up_right;
+    double pixal_up_left;
+    double pixal_down_right;
+    double pixal_down_left;
+
+    double sum_pixal_up_right;
+    double sum_pixal_up_left;
+    double sum_pixal_down_right;
+    double sum_pixal_down_left;
+
+};
+
+struct sphere_model_two_directions{
+    //the number of nodes which were included by eight directions
+    V3DLONG up;
+    V3DLONG down;
+
+    //define the node with maximum pixval value in the eight directions and corresponding pixal
+    Node node_up;
+    Node node_down;
+
+    QList<Node> QList_up;
+    QList<Node> QList_down;
+
+    double pixal_up;
+    double pixal_down;
+
+    double sum_pixal_up;
+    double sum_pixal_down;
+
+};
 
 int *flag;
 
@@ -105,7 +202,10 @@ QMap<V3DLONG,QList<Node*> > root_class;
 QList<Node*> QTest;
 int cluster_number=0;
 QMap<V3DLONG,QList<V3DLONG> > covered_relation;
+
 QMap<V3DLONG,Node*> node_afterMerge;
+QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> arrive_path;
+QMap<V3DLONG,int> seed_pos_number;
 
 
 Node getnode(Node *node)
@@ -408,7 +508,7 @@ double enlarge_radiusof_single_node_xy_vn2(unsigned char * &img1d,Node node,V3DL
 
 void writeSWC_file(char* path,QList<NeuronSWC> listNeuron)
 {
-    FILE * fp = fopen(path, "a");
+    FILE * fp = fopen(path, "wt");
     if (!fp) return;
 
     fprintf(fp, "#name\n");
@@ -471,11 +571,11 @@ void printSWCByQMap_QMap_vn2(char* path,QMap<V3DLONG,QMap<V3DLONG,Node > > nodeM
         QMap<V3DLONG,Node > temp1=iter1.value();
         for(QMap<V3DLONG,Node >::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++)
         {
-           Node temp2=iter2.value();
+            Node temp2=iter2.value();
 
 
-                fprintf(fp, "%ld %d %ld %ld %ld %5.3f %ld\n",number, 1,  temp2.x,  temp2.y,  temp2.z, temp2.r, -1);
-                number++;
+            fprintf(fp, "%ld %d %ld %ld %ld %5.3f %ld\n",number, 1,  temp2.x,  temp2.y,  temp2.z, temp2.r, -1);
+            number++;
 
 
         }
@@ -488,7 +588,7 @@ void printSWCByQMap_QMap_vn2(char* path,QMap<V3DLONG,QMap<V3DLONG,Node > > nodeM
 
 void printSWCByQList_QList(QList<QList <NeuronSWC> > result_list,char* path)
 {
-    FILE * fp = fopen(path, "a");
+    FILE * fp = fopen(path, "wt");
     if (!fp) return;
 
     fprintf(fp, "#name\n");
@@ -851,7 +951,7 @@ void printSwcByMap(QMap<int,Node*> nodeMap,char* path)
     {
         Node* temp_node=iter.value();;
         fprintf(fp, "%ld %d %ld %ld %ld %5.3f %ld\n",
-                number, 1,  temp_node->x,  temp_node->y,  temp_node->z, temp_node->r, -1);
+                number, 1,  temp_node->x,  temp_node->y,  temp_node->z, 1.0, -1);
         number++;
     }
 
@@ -1810,37 +1910,10 @@ bool decide_samebox(V3DLONG offset_x,V3DLONG offset_y,V3DLONG offset_z,Node* nod
 
 
 }
-QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots){
-    QList<Node> seeds;
-     for(QMap<V3DLONG,QMap<V3DLONG,Node> >::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
-         QMap<V3DLONG,Node> temp1=iter1.value();
-          for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
-                Node temp2=iter2.value();
-                seeds.append(temp2);
 
-          }
-     }
-
+QList<NeuronSWC> spanning_tree_algorithm(double** markEdge,QList<Node> seeds){
     V3DLONG marknum = seeds.size();
-
-    double** markEdge = new double*[marknum];
-    for(int i = 0; i < marknum; i++)
-    {
-        markEdge[i] = new double[marknum];
-
-    }
-
-    double x1,y1,z1;
-    for (int i=0;i<marknum;i++)
-    {
-        x1 = seeds.at(i).x;
-        y1 = seeds.at(i).y;
-        z1 = seeds.at(i).z;
-        for (int j=0;j<marknum;j++)
-        {
-            markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
-        }
-    }
+    printf("%ld\n",marknum);
 
     //NeutronTree structure
     NeuronTree marker_MST;
@@ -1850,7 +1923,6 @@ QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots){
     hashNeuron.clear();
 
     //set node
-
     NeuronSWC S;
     S.n 	= 1;
     S.type 	= 3;
@@ -1870,7 +1942,7 @@ QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots){
     for(int loop = 0; loop<marknum;loop++)
     {
         double min = INF;
-        for(int i = 0; i<marknum; i++)
+        for(int i = 0; i<marknum; i++)//the aim of this is to find the node which flag is 1
         {
             if (pi[i] == 1)
             {
@@ -1910,17 +1982,130 @@ QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node> > roots){
     marker_MST.on = true;
     marker_MST.listNeuron = listNeuron;
     marker_MST.hashNeuron = hashNeuron;
+    writeSWC_file("C:\\result\\final_vn5.swc",listNeuron);
 
-    if(markEdge) {delete []markEdge, markEdge = 0;}
+    //if(markEdge) {delete []markEdge, markEdge = 0;}
+    delete []pi;
     //  writeSWC_file("mst.swc",marker_MST);
     QList<NeuronSWC> marker_MST_sorted;
     if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
         return marker_MST_sorted;
     //  outimg = pImage;
 }
+QList<NeuronSWC> spanning_without_bf(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
 
-void bf_vn3(QMap<int,Node* > roots,double **weight_result,unsigned char * &img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z)
-{//found the shortest path between one node and other nodes using breadth first algorithm
+    QList<Node> seeds;
+
+    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
+        QMap<V3DLONG,Node> temp1=iter1.value();
+        for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
+            Node temp2=iter2.value();
+            seeds.append(temp2);
+
+
+        }
+
+        V3DLONG marknum = seeds.size();
+
+        double** markEdge = new double*[marknum];
+        for(int i = 0; i < marknum; i++)
+        {
+            markEdge[i] = new double[marknum];
+
+        }
+
+        double x1,y1,z1;
+        for (int i=0;i<marknum;i++)
+        {
+            x1 = seeds.at(i).x;
+            y1 = seeds.at(i).y;
+            z1 = seeds.at(i).z;
+            for (int j=0;j<marknum;j++)
+            {
+                markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
+            }
+        }
+
+        //NeutronTree structure
+        NeuronTree marker_MST;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+        NeuronSWC S;
+        S.n 	= 1;
+        S.type 	= 3;
+        S.x 	= seeds.at(0).x;
+        S.y 	= seeds.at(0).y;
+        S.z 	= seeds.at(0).z;
+        S.r 	= 1;
+        S.pn 	= -1;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, listNeuron.size()-1);
+
+        int* pi = new int[marknum];
+        for(int i = 0; i< marknum;i++)
+            pi[i] = 0;
+        pi[0] = 1;
+        int indexi,indexj;
+        for(int loop = 0; loop<marknum;loop++)
+        {
+            double min = INF;
+            for(int i = 0; i<marknum; i++)
+            {
+                if (pi[i] == 1)
+                {
+                    for(int j = 0;j<marknum; j++)
+                    {
+                        if(pi[j] == 0 && min > markEdge[i][j])
+                        {
+                            min = markEdge[i][j];
+                            indexi = i;
+                            indexj = j;
+                        }
+                    }
+                }
+
+            }
+            if(indexi>=0)
+            {
+                S.n 	= indexj+1;
+                S.type 	= 7;
+                S.x 	= seeds.at(indexj).x;
+                S.y 	= seeds.at(indexj).y;
+                S.z 	= seeds.at(indexj).z;
+                S.r 	= 1;
+                S.pn 	= indexi+1;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+
+            }else
+            {
+                break;
+            }
+            pi[indexj] = 1;
+            indexi = -1;
+            indexj = -1;
+        }
+        marker_MST.n = -1;
+        marker_MST.on = true;
+        marker_MST.listNeuron = listNeuron;
+        marker_MST.hashNeuron = hashNeuron;
+
+        if(markEdge) {delete []markEdge, markEdge = 0;}
+        //  writeSWC_file("mst.swc",marker_MST);
+        QList<NeuronSWC> marker_MST_sorted;
+        if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+            return marker_MST_sorted;
+        //  outimg = pImage;
+    }
+}
+
+void bf_vn3(QMap<int,Node*> roots,double **weight_result,unsigned char *&img1d,double average_dis,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    //found the shortest path between one node and other nodes using breadth first algorithm
 
 
     QQueue<double> queue_distance;//keep the unit distance of two nodes
@@ -2475,13 +2660,15 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     V3DLONG r=5;
     V3DLONG count=0;
     int times=50;
+    //this method should be optimized
+    int iteration=100;//this variable is used to find the path between roots
     int num_mark=1;
     int nstep=1;
 
     double threshold=PARA.threshold;
-     double percentage_rate=PARA.percentage;
-      double prim_distance=PARA.prim_distance;
-      //printf("%lf %lf %lf \n",threshold,percentage_rate,prim_distance);
+    double percentage_rate=PARA.percentage;
+    double prim_distance=PARA.prim_distance;
+    //printf("%lf %lf %lf \n",threshold,percentage_rate,prim_distance);
     QMultiMap<V3DLONG,Node> cluster_result;
     QMap<V3DLONG,QList<Node> > final_cluster_result;
 
@@ -2525,8 +2712,6 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
 
 
     //  printf("###  rootnode found   ###\n");
-    //在这里将找到的root打印出来
-
     printf("###  cluster nodes using meanshift   ###\n");
 
     for(V3DLONG i=0;i<sz_x;i++)
@@ -2559,28 +2744,59 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
             }
         }
     }
-    //printSwcByMap(Map_rootnode,"C:\\result\\final.swc");
+    printSwcByMap(Map_rootnode,"C:\\result\\final.swc");
     //delete []flag;
     //printSWCByMap_List(Map_finalnode_list,"D:\\result\\compare.swc");
     printf("###  cluster finished   ###\n");
-   // printf("%d  %d\n",Map_finalnode.count(),Map_rootnode.count());
+    // printf("%d  %d\n",Map_finalnode.count(),Map_rootnode.count());
+    printf("###  merge and delete roots according to radius and distance    ###");
 
     root= merge_rootnode_vn2(Map_rootnode,img1d,sz_x,sz_y,sz_z,prim_distance);//delete some root which covered by others
+    printf("###  merge and delete roots finished    ###\n");
+    printf("###  begin to cluster the non-roots    ###\n");
     final_cluster_result=cluster2newroot(covered_relation,cluster_result);//assemble every node(not noisy) to the remaining new root
-   // printf("%d\n",final_cluster_result.count());
-    //printSwcByMap(root,"C:\\result\\final_vn2.swc");
-    QMap<V3DLONG,QMap<V3DLONG,Node> > nodes_each_classification=delete_cluster_node(img1d,final_cluster_result,sz_x,sz_y,sz_z,in_sz,prim_distance);//for every new root, delete the corresponding suboridinate nodes which could be covered by each other
-    // printf("%d\n",nodes_each_classification.count());
-    // printSWCByQMap_QMap_vn2("C:\\result\\final_vn3.swc",nodes_each_classification);
 
+    // printf("%d\n",final_cluster_result.count());
+    printSwcByMap(root,"C:\\result\\final_vn2.swc");
+    //printf("root::%d\n",root.size());
+    printf("###  begin to delete the     ###\n");
+    QMap<int,Node*> after_merge_final=delete_cluster_node(img1d,final_cluster_result,sz_x,sz_y,sz_z,in_sz,prim_distance);//for every new root, delete the corresponding suboridinate nodes which could be covered by each other
+    printf("###   connect all nodes using an improved spanning tree which using a sphere model to calculate distance\n");
+    //printf("after_merge_final::%d\n",after_merge_final.size());
+    printSwcByMap(after_merge_final,"C:\\result\\final_vn3.swc");
+    QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots;
+    int threshold_node_number=200;//this is a bug, not very reasonable, fix it later-20160203
+    if(after_merge_final.size()<threshold_node_number){
+        path_between_each_roots=sphere_search(img1d,after_merge_final,sz_x,sz_y,sz_z,2.0,iteration);
+        // printf("%d\n",path_between_each_roots.count());
+        //we need to calculate the distance based on path_between_each_roots
+        printf("###  path finding finished     ###\n");
+        // QMap<V3DLONG,QList<Node>> node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node>> the adjecent node of node A should be included in QList
+        //should define a connect algorithm
+        printf("###  calculate the distance between nodes and connect them     ###\n");
+        con_tree=calculate_distance_between_roots(path_between_each_roots,after_merge_final,sz_x,sz_y,sz_z);
+        //printf("2222222222222222222222\n");
+        printf("###   nodes connected   ###\n");
 
-    printf("###   connect all roots using an improved spanning tree which adopt bf method to calculate distance\n");
-    // con_tree=construct_tree_vn5(root,img1d,img1d,sz_x,sz_y,sz_z,in_sz);
-    con_tree= spanning_without_bf(nodes_each_classification);
+    }else{
+        path_between_each_roots=sphere_search(img1d,root,sz_x,sz_y,sz_z,2.0,iteration);
+        // printf("%d\n",path_between_each_roots.count());
+        //we need to calculate the distance based on path_between_each_roots
+        printf("###  path finding finished     ###\n");
+        // QMap<V3DLONG,QList<Node>> node_adj_node=build_adj_matrix(path_between_each_roots,node_con_node);//output:QMap<V3DLONG,QList<Node>> the adjecent node of node A should be included in QList
+        //should define a connect algorithm
+        printf("###  calculate the distance between nodes and connect them     ###\n");
+        con_tree=calculate_distance_between_roots(path_between_each_roots,root,sz_x,sz_y,sz_z);
+        //printf("2222222222222222222222\n");
+        printf("###   nodes connected   ###\n");
 
-    printf("###   roots connected   ###\n");
+    }
+
+    QList <NeuronSWC > con_tree_final=fulfill_path_between_roots(con_tree,path_between_each_roots,sz_x,sz_y,sz_z);
+
+    writeSWC_file("C:\\result\\final_vn5.swc",con_tree);
     vector<MyMarker*>  inswc;
-    change_NeuronSWCTo_MyMarker(con_tree,inswc);
+    change_NeuronSWCTo_MyMarker(con_tree_final,inswc);
 
     QString initswc_file = image_name + "init_meanshift.swc";
     saveSWC_file(initswc_file.toStdString(), inswc);
@@ -2600,9 +2816,2048 @@ int meanshift_plugin_vn4(V3DPluginCallback2 &callback, QWidget *parent,unsigned 
     return -1;
 
 }
-QMap<V3DLONG,QMap<V3DLONG,Node> > delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node> > final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
-    QMap<V3DLONG,QMap<V3DLONG,Node> > result;
-    QMap<V3DLONG,QMap<V3DLONG,Node> > mid_result;
+
+QList<NeuronSWC> fulfill_path_between_roots(QList<NeuronSWC> con_tree,QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    V3DLONG temp_child;
+    V3DLONG temp_pn;
+    QMap<V3DLONG,V3DLONG> child_parent;
+    QList<NeuronSWC> result;
+    QMap<V3DLONG,NeuronSWC> con_tree_Map;
+    QMap<V3DLONG,int> order_con_tree;
+    FILE * fp = fopen("C:\\result\\final6.swc", "wt");
+    if (!fp) return result;
+
+    for(int i=0;i<con_tree.size();i++){
+        NeuronSWC child_node=con_tree.at(i);
+        V3DLONG child_node_index=GET_IND(child_node.x,child_node.y,child_node.z);
+        if(child_node.pn==-1){
+            child_parent.insert(child_node_index,-1);
+
+        }else{
+            NeuronSWC parent_node=con_tree.at((int)child_node.pn-1);
+            V3DLONG parent_node_index=GET_IND(parent_node.x,parent_node.y,parent_node.z);
+            child_parent.insert(child_node_index,parent_node_index);
+        }
+        con_tree_Map.insert(child_node_index,child_node);
+        order_con_tree.insert(child_node_index,i+1);
+
+    }
+    printf("con_tree::%d\n",con_tree.size());
+    printf("child_parent::%d\n",child_parent.size());
+    int count_number=1;
+    QMap<int,NeuronSWC> path_SWC_roots;
+    QMap<V3DLONG,int> root_index;
+
+    /* for(int i=0;i<con_tree.size();i++){
+        //seed_pos_number;
+        NeuronSWC temp_child=con_tree.at(i);
+        V3DLONG temp_index_child=GET_IND(temp_child.x,temp_child.y,temp_child.z);
+        if(temp_child.pn==-1)
+            continue;
+        NeuronSWC temp_parent=con_tree.at((int)temp_child.pn-1);
+        V3DLONG temp_index_parent=GET_IND(temp_parent.x,temp_parent.y,temp_parent.z);
+        //path_between_each_roots.contains(temp_index);
+        if(arrive_path.value(temp_index_child).contains(temp_index_parent)||arrive_path.value(temp_index_parent).contains(temp_index_child))
+        {//have a path
+            if(seed_pos_number.value(temp_index_child)<seed_pos_number.value(temp_index_parent)){
+                QList<NeuronSWC> temp_list=arrive_path.value(temp_index_child).value(temp_index_parent);
+                for(int i=0;i<temp_list.size();i++)
+                {
+                    //write
+                    NeuronSWC temp2=temp_list.at(i);
+                    V3DLONG temp2_index=GET_IND(temp2.x,temp2.y,temp2.z);
+                    if(temp2.pn==-1){
+                        temp2.n=count_number;
+                        path_SWC_roots.insert(count_number,temp2);
+                        root_index.insert(temp2_index,count_number);
+                        //fprintf(fp, "%ld %d %f %f %f %f %ld\n",count_number, temp2.type,  temp2.x,  temp2.y,  temp2.z, 1.0, -1);
+
+                    }else{
+                        temp2.n=count_number;
+                        temp2.pn=count_number-1;
+                        path_SWC_roots.insert(count_number,temp2);
+                        root_index.insert(temp2_index,count_number);
+                        // fprintf(fp, "%ld %d %f %f %f %f %ld\n",count_number, temp2.type,  temp2.x,  temp2.y,  temp2.z, 1.0, count_number-1);
+                    }
+                    count_number++;
+                }
+
+
+            }else{
+                QList<NeuronSWC> temp_list1=arrive_path.value(temp_index_parent).value(temp_index_child);
+                for(int j=0;j<temp_list1.size();j++){
+                    //write
+                    NeuronSWC temp1=temp_list1.at(j);
+                    V3DLONG temp1_index=GET_IND(temp1.x,temp1.y,temp1.z);
+                    if(temp1.pn==-1){
+                        temp1.n=count_number;
+                        path_SWC_roots.insert(count_number,temp1);
+                        root_index.insert(temp1_index,count_number);
+                        //fprintf(fp, "%ld %d %f %f %f %f %ld\n",count_number, temp1.type,  temp1.x,  temp1.y,  temp1.z, 1.0, -1);
+
+                    }else{
+                        temp1.n=count_number;
+                        temp1.pn=count_number-1;
+                        path_SWC_roots.insert(count_number,temp1);
+                        root_index.insert(temp1_index,count_number);
+                        //fprintf(fp, "%ld %d %f %f %f %f %ld\n",count_number, temp1.type,  temp1.x,  temp1.y,  temp1.z, 1.0, count_number-1);
+
+                    }
+
+                    count_number++;
+                }
+
+
+            }
+
+        }else{//have no pa
+            temp_child.n=count_number;
+            temp_child.pn=-1;
+            path_SWC_roots.insert(count_number,temp_child);
+            root_index.insert(temp_index_child,count_number);
+            count_number++;
+            //printf("something wrong!");
+        }
+
+
+    }*/
+    int child_order;
+    int parent_order;
+    // NeuronSWC temp_node;
+    /*  for(QMap<V3DLONG,V3DLONG>::iterator iter1=child_parent.begin();iter1!=child_parent.end();iter1++)
+    {
+        V3DLONG parent_index=iter1.value();
+        V3DLONG child_index=iter1.key();
+        if(parent_index==-1)
+        {
+            child_order=root_index.value(child_index);
+           NeuronSWC temp_node1=path_SWC_roots.value(child_order);
+            temp_node1.pn=-1;
+            path_SWC_roots.remove(child_order);
+            path_SWC_roots.insert(child_order,temp_node1);
+        }else
+        {
+            child_order=root_index.value(child_index);
+            parent_order=root_index.value(parent_index);
+            NeuronSWC temp_node=path_SWC_roots.value(child_order);
+            if(temp_node.pn==-1){
+                path_SWC_roots.remove(child_order);
+                temp_node.pn=parent_order;
+                path_SWC_roots.insert(child_order,temp_node);
+            }
+
+        }
+
+    }*/
+    int length=con_tree.size();
+    Node node_parent;
+    Node node_child;
+    V3DLONG index_child;
+    V3DLONG index_parent;
+    for(int i=0;i<length;i++)
+    {
+        NeuronSWC temp_child=con_tree.at(i);
+        V3DLONG index_child=GET_IND(temp_child.x,temp_child.y,temp_child.z);
+        if(temp_child.pn==-1){
+            continue;
+        }
+        NeuronSWC temp_parent=con_tree.at((int) temp_child.pn-1);
+        V3DLONG index_parent=GET_IND(temp_parent.x,temp_parent.y,temp_parent.z);\
+        if(arrive_path.value(index_child).contains(index_parent)||arrive_path.value(index_parent).contains(index_child))
+        {
+            if(seed_pos_number.value(index_child)<seed_pos_number.value(index_parent)){//from child to parent
+                QList<Node> temp_list=arrive_path.value(index_child).value(index_parent);
+                if(temp_list.size()==0){
+                    printf("8888888888888\n");
+                    continue;
+                }
+                if((GET_IND(temp_list.first().x,temp_list.first().y,temp_list.first().z)==index_child)&&(GET_IND(temp_list.last().x,temp_list.last().y,temp_list.last().z)==index_parent))
+                {
+
+
+                }else{
+                    printf("1:something wrong\n");
+
+                }
+                for(int i=temp_list.size()-1;i>=0;i--)
+                {
+
+                    if(i==temp_list.size()-1){
+                        continue;
+                    }
+                    node_parent=temp_list.at(i+1);
+                    node_child=temp_list.at(i);
+                    index_child=GET_IND(node_child.x,node_child.y,node_child.z);
+                    index_parent=GET_IND(node_parent.x,node_parent.y,node_parent.z);
+                    if(con_tree_Map.contains(index_child)){
+                        NeuronSWC temp_child=con_tree_Map.value(index_child);
+                        temp_child.pn=order_con_tree.value(index_parent);
+                        con_tree_Map.insert(index_child,temp_child);
+
+                    }else{
+
+                        NeuronSWC S;
+                        S.n=con_tree.size()+1;
+                        S.x=node_child.x;
+                        S.y=node_child.y;
+                        S.z=node_child.z;
+                        S.type=20;
+                        S.pn=order_con_tree.value(index_parent);
+                        con_tree.append(S);
+                        con_tree_Map.insert(index_child,S);
+                        order_con_tree.insert(index_child,S.n);
+                        child_parent.insert(index_child,index_parent);
+                    }
+
+                }
+
+
+            }else{
+                QList<Node> temp_list1=path_between_each_roots.value(index_parent).value(index_child);//from parent to child
+                if(temp_list1.size()==0){
+                    printf("99999999999999999999\n");
+                    continue;
+                }
+                if((GET_IND(temp_list1.first().x,temp_list1.first().y,temp_list1.first().z)==index_parent)&&(GET_IND(temp_list1.last().x,temp_list1.last().y,temp_list1.last().z)==index_child))
+                {
+
+
+                }else{
+                    printf("2:something wrong\n");
+
+                }
+                for(int i=0;i<temp_list1.size();i++)
+                {
+                    if(i==0){
+                        continue;
+                    }
+                    node_parent=temp_list1.at(i-1);
+                    node_child=temp_list1.at(i);
+                    index_child=GET_IND(node_child.x,node_child.y,node_child.z);
+                    index_parent=GET_IND(node_parent.x,node_parent.y,node_parent.z);
+                    if(con_tree_Map.contains(index_child)){
+                        NeuronSWC temp_child1=con_tree_Map.value(index_child);
+                        temp_child1.pn=order_con_tree.value(index_parent);
+                        con_tree_Map.insert(index_child,temp_child1);
+
+                    }else{
+
+                        NeuronSWC S1;
+                        S1.n=con_tree.size()+1;
+                        S1.x=node_child.x;
+                        S1.y=node_child.y;
+                        S1.z=node_child.z;
+                        S1.type=20;
+                        S1.pn=order_con_tree.value(index_parent);
+                        con_tree.append(S1);
+                        con_tree_Map.insert(index_child,S1);
+                        order_con_tree.insert(index_child,S1.n);
+                        child_parent.insert(index_child,index_parent);
+                    }
+
+                }
+
+            }
+        }
+    }
+
+
+    //write path_SWC_roots here
+    /*for(QMap<int,NeuronSWC>::iterator iter2=path_SWC_roots.begin();iter2!=path_SWC_roots.end();iter2++){
+        NeuronSWC write_node=iter2.value();
+        fprintf(fp, "%ld %d %f %f %f %f %ld\n",write_node.n, write_node.type,  write_node.x,  write_node.y,  write_node.z, 1.0, write_node.pn);
+    }*/
+    for(QMap<V3DLONG,NeuronSWC>::iterator iter2=con_tree_Map.begin();iter2!=con_tree_Map.end();iter2++)
+    {
+        NeuronSWC write_node=iter2.value();
+        fprintf(fp, "%ld %d %f %f %f %f %ld\n",write_node.n, write_node.type,  write_node.x,  write_node.y,  write_node.z, 1.0, write_node.pn);
+    }
+    for(int ii=0;ii<con_tree.size();ii++){
+        NeuronSWC temp_result=con_tree.at(ii);
+        V3DLONG temp_result_index=GET_IND(temp_result.x,temp_result.y,temp_result.z);
+        //temp_node.r= markerRadiusXY(img1d, in_sz, *new_temp_node, 20);
+        result.append(con_tree_Map.value(temp_result_index));
+
+    }
+    QList<NeuronSWC> marker_MST_sorted;
+    SortSWC(result, marker_MST_sorted ,1, 0);
+    //return marker_MST_sorted;
+
+
+    fclose(fp);
+
+    return marker_MST_sorted;
+
+}
+
+
+
+QMap<V3DLONG,QList<Node>> check_node_conection(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_each_roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    QMap<V3DLONG,QList<Node>> result;
+    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1=path_between_each_roots.begin();iter1!=path_between_each_roots.end();iter1++){
+        QMultiMap<V3DLONG,QList<Node>> temp=iter1.value();
+        QList<Node> connect_list;
+        connect_list.clear();
+        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2=temp.begin();iter2!=temp.end();iter2++){
+            QList<Node> temp_list=iter2.value();
+            V3DLONG node_first=GET_IND(temp_list.first().x,temp_list.first().y,temp_list.first().z);
+            V3DLONG node_terminal=GET_IND(temp_list.last().x,temp_list.last().y,temp_list.last().z);
+            if(node_first==iter1.key()&&node_terminal==iter2.key()){
+                connect_list.append(temp_list.last());
+            }
+        }
+        result.insert(iter1.key(),connect_list);
+    }
+    return result;
+}
+
+void printf_path_between_roots(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> root_path,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    FILE * fp = fopen("C:\\result\\final_vn4.swc", "wt");
+    if (!fp) return;
+
+    fprintf(fp, "#name\n");
+    fprintf(fp, "#comment\n");
+    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
+    for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1=root_path.begin();iter1!=root_path.end();iter1++){
+        QMultiMap<V3DLONG,QList<Node>> temp1=iter1.value();
+        int number=0;
+        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
+            QList<Node> temp2=iter2.value();
+            if((iter1.key()==GET_IND(temp2.first().x,temp2.first().y,temp2.first().z))&&(iter2.key()==GET_IND(temp2.last().x,temp2.last().y,temp2.last().z))){
+                for(int i=0;i<temp2.size();i++){
+                    fprintf(fp, "%ld %d %ld %ld %ld %5.3f %ld\n",number, 1,  temp2.at(i).x,  temp2.at(i).y,  temp2.at(i).z, 1.0, -1);
+                    number++;//for test
+                }
+            }
+
+        }
+
+
+    }
+    fclose(fp);
+    return;
+
+}
+
+QList<Node> change_type_to_QList(QMap<V3DLONG,QMap<V3DLONG,Node>> roots){
+    QList<Node> seeds;
+    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter1=roots.begin();iter1!=roots.end();iter1++){
+        QMap<V3DLONG,Node> temp1=iter1.value();
+        for(QMap<V3DLONG,Node>::iterator iter2=temp1.begin();iter2!=temp1.end();iter2++){
+            Node temp2=iter2.value();
+            seeds.append(temp2);
+
+        }
+    }
+    return seeds;
+
+}
+
+QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_each_roots,QMap<int,Node* > roots,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    //should define a QList which include all roots or nodes, and calculate the distance in order based on  path_between_each_roots
+    int marknum=path_between_each_roots.count();
+    //printf("%d\n",marknum);
+    double** markEdge = new double*[marknum];
+    for(int i = 0; i < marknum; i++)
+    {
+        markEdge[i] = new double[marknum];
+
+    }
+    QList<Node> seeds_temp;
+    //delete the node which can not arrive others
+    for(QMap<V3DLONG,QMap<V3DLONG,QList<Node>>>::iterator iter_item1 =path_between_each_roots.begin(); iter_item1 != path_between_each_roots.end(); iter_item1++){
+        QMap<V3DLONG,QList<Node>> root_begin=iter_item1.value();
+        bool flag=false;
+        for(QMap<V3DLONG,QList<Node>>::iterator iter_item2=root_begin.begin();iter_item2!=root_begin.end();iter_item2++){
+            QList<Node> path=iter_item2.value();
+            if((iter_item1.key()==GET_IND(path.first().x,path.first().y,path.first().z))&&(iter_item2.key()==GET_IND(path.last().x,path.last().y,path.last().z))){
+                flag=true;
+
+            }
+
+        }
+        if(!flag){
+            root_begin.clear();
+            path_between_each_roots.insert(iter_item1.key(),root_begin);
+        }
+
+    }
+    for(QMap<int,Node* >::iterator iter1 =roots.begin(); iter1 != roots.end(); iter1++){
+        Node* temp=iter1.value();
+        V3DLONG temp_index=GET_IND(temp->x,temp->y,temp->z);
+        if(path_between_each_roots.value(temp_index).size()==0){//delete those node which cannot arrive others, this method may not correct, fix it later
+            //printf("6666666666666\n");
+            continue;
+
+        }else{
+            seeds_temp.append(getnode(temp));
+        }
+
+
+    }
+    for(int i=0;i<seeds_temp.size()-1;i++)
+    {
+        V3DLONG temp1_v3dlong=GET_IND(seeds_temp.at(i).x,seeds_temp.at(i).y,seeds_temp.at(i).z);
+        Node temp1=seeds_temp.at(i);
+        seed_pos_number.insert(temp1_v3dlong,i);
+        QMap<V3DLONG,QList<Node>> node_path;
+        node_path.clear();
+        for(int j=i+1;j<seeds_temp.size();j++)
+        {
+            V3DLONG temp2_v3dlong=GET_IND(seeds_temp.at(j).x,seeds_temp.at(j).y,seeds_temp.at(j).z);
+            Node temp2=seeds_temp.at(j);
+            QList<Node> distance_list=path_between_each_roots.value(temp1_v3dlong).value(temp2_v3dlong);
+            markEdge[i][j]=0;
+            if(distance_list.size()==1){
+                printf("1111111111111:%ld  %ld\n",temp1,temp2);
+
+            }
+            if((temp1_v3dlong==GET_IND(distance_list.first().x,distance_list.first().y,distance_list.first().z))&&(temp2_v3dlong==GET_IND(distance_list.last().x,distance_list.last().y,distance_list.last().z))){
+                // printf("11111111111111111111111111111111111111111\n");
+                //QList<Node> listNeuron;
+                //listNeuron.clear();
+                for(int k=0;k<distance_list.size()-1;k++){
+                    Node temp1=distance_list.at(k);
+                    Node temp2=distance_list.at(k+1);
+                    double distance=(double)sqrt((double)(temp1.x-temp2.x)*(temp1.x-temp2.x)+(temp1.y-temp2.y)*(temp1.y-temp2.y)+(temp1.z-temp2.z)*(temp1.z-temp2.z));
+                    markEdge[i][j]=markEdge[i][j]+distance;
+
+                }
+                node_path.insert(temp2_v3dlong,distance_list);
+            }else{
+                //if we cannot find the path between two roots in limited steps, we define the distance between two roots as the direct space distance or INF;
+                //markEdge[i][j]=INF;//one choice
+                markEdge[i][j]=double(sqrt((double)((temp1.x-temp2.x)*(temp1.x-temp2.x)+(temp1.y-temp2.y)*(temp1.y-temp2.y)+(temp1.z-temp2.z)*(temp1.z-temp2.z))));
+
+            }
+        }
+        if(node_path.size()!=0){
+            arrive_path.insert(temp1_v3dlong,node_path);
+
+        }
+
+
+    }
+    // printf("%d\n",marknum);
+
+
+    /*  for(QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>>::iterator iter1 =path_between_each_roots.begin(); iter1 != path_between_each_roots.end(); iter1++)
+    {
+        QMultiMap<V3DLONG,QList<Node>> elem1=iter1.value();
+        //  printf("sub node list::%d\n",elem1.count());
+        indexj=0;
+        for(QMultiMap<V3DLONG,QList<Node>>::iterator iter2 =elem1.begin(); iter2!= elem1.end(); iter2++)
+        {
+            QList<Node> elem2=iter2.value();
+
+            markEdge[indexi][indexj]=0;
+            if((iter1.key()==GET_IND(elem2.first().x,elem2.first().y,elem2.first().z))&&(iter2.key()==GET_IND(elem2.last().x,elem2.last().y,elem2.last().z))){
+                //printf("11111111111111111111111111111111111111111\n");
+                for(int i=0;i<elem2.size()-1;i++){
+                    Node temp1=elem2.at(i);
+                    Node temp2=elem2.at(i+1);
+                    double distance=(double)sqrt((double)(temp1.x-temp2.x)*(temp1.x-temp2.x)+(temp1.y-temp2.y)*(temp1.y-temp2.y)+(temp1.z-temp2.z)*(temp1.z-temp2.z));
+                    markEdge[indexi][indexj]=markEdge[indexi][indexj]+distance;
+                }
+
+
+            }else{
+                //if we cannot find the path between two roots in limited steps, we define the distance between two roots as the direct space distance or INF;
+                markEdge[indexi][indexj]=INF;//one choice
+
+                continue;
+            }
+            indexj++;
+
+
+        }
+        indexi++;
+        printf("%d %d\n",indexi,indexj);
+
+    }*/
+
+
+
+    for(int i=0;i<marknum;i++){
+        for(int j=0;j<marknum;j++){
+            if(i==j){
+                markEdge[i][j]=0;
+
+            }else if(i>j){
+                markEdge[i][j]=markEdge[j][i];
+
+            }
+
+        }
+
+    }
+    path_between_each_roots.clear();
+    //write DFS algorithm here to construct a SWC tree
+    //con_tree=DFS_construct(markEdge,seeds_temp,sz_x,sz_y,sz_z);
+
+    con_tree=spanning_tree_algorithm(markEdge,seeds_temp);
+    if(markEdge) {delete []markEdge, markEdge = 0;}
+
+    return con_tree;
+
+}
+QList <NeuronSWC> DFS_construct(double** markEdge,QList<Node> seeds,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    int **adj_mark=new int*[seeds.size()];
+    int *visit_mark=new int[seeds.size()];
+    bool **path_mark=new bool*[seeds.size()];
+
+    QMap<V3DLONG,int> new_seeds;
+    new_seeds.clear();
+    QMap<V3DLONG,int> root_number;//every root has a number in order (line number in SWC)
+    QMap<int,QMap<int,bool>> path_visited;
+    root_number.clear();
+    NeuronTree marker_MST;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    for(int i=0;i<seeds.size();i++){
+        adj_mark[i]=new int[seeds.size()];
+        path_mark[i]=new bool[seeds.size()];
+        new_seeds.insert(GET_IND(seeds.at(i).x,seeds.at(i).y,seeds.at(i).z),i);
+        visit_mark[i]=-1;//initialize visit mark
+
+    }
+    for(int i=0;i<seeds.size();i++){
+
+        for(int j=0;j<seeds.size();j++){
+
+            path_mark[i][j]=false;
+
+            if(markEdge[i][j]>0){
+                adj_mark[i][j]=1;//means there is a path between two nodes
+            }else{
+                adj_mark[i][j]=0;//means there is no node between two nodes
+            }
+        }
+
+    }
+    QStack<Node> stack;
+    // QMap<int,QList<int>> connectship;//represent ith node connect with other jth nodes
+    QList<int> connected_node;
+    NeuronSWC S_root;
+    S_root.n 	= 1;
+    S_root.type 	= 3;
+    S_root.x 	= seeds.at(0).x;
+    S_root.y 	= seeds.at(0).y;
+    S_root.z 	= seeds.at(0).z;
+    S_root.r 	= 1;
+    S_root.pn 	= -1;
+    listNeuron.append(S_root);
+    hashNeuron.insert(S_root.n, listNeuron.size()-1);
+    root_number.insert(GET_IND(S_root.x,S_root.y,S_root.z),S_root.n);
+
+    for(int k=0;k<seeds.size();k++){
+        stack.push(seeds.at(k));
+        if(!root_number.contains(GET_IND(seeds.at(k).x,seeds.at(k).y,seeds.at(k).z))){
+            NeuronSWC S1;
+            S1.n 	= listNeuron.size()+1;
+            S1.type 	= 3;
+            S1.x 	= seeds.at(k).x;
+            S1.y 	= seeds.at(k).y;
+            S1.z 	= seeds.at(k).z;
+            S1.r 	= 1;
+            S1.pn 	= listNeuron.size()+1;
+            listNeuron.append(S1);
+            hashNeuron.insert(S1.n, listNeuron.size()-1);
+            root_number.insert(GET_IND(S1.x,S1.y,S1.z),S1.n);
+            visit_mark[new_seeds.value(GET_IND(S1.x,S1.y,S1.z))]=1;
+        }
+        printf("222222222222222222222222\n");
+        int pre_node=-1;
+        while(!stack.empty()){
+            Node first=stack.pop();
+            int begin_node=new_seeds.value(GET_IND(first.x,first.y,first.z));
+            visit_mark[begin_node]=1;
+            connected_node.clear();
+            //visit_mark[begin_node]=1;//means visited
+            for(int j=0;j<seeds.size();j++)
+            {
+                if(adj_mark[begin_node][j]==0){//here can be insted by markEdge
+                    continue;
+                }else{
+                    connected_node.append(j);
+                }
+            }
+            //connectship.insert(begin_node,connected_node);
+            if(connected_node.size()==0){
+                continue;
+            }
+            int num=-1;
+            double minimum=INF;
+            for(int i=0;i<connected_node.size();i++){
+                int terminal_node=connected_node.at(i);
+                if((minimum>markEdge[begin_node][terminal_node])){//need to garantee the selected node is not the former node
+                    minimum=markEdge[begin_node][terminal_node];
+                    num=terminal_node;
+                }
+            }
+            printf("111111111111111111111111111111:%d\n",num);
+            if(num==-1){
+                continue;
+            }else if((path_mark[begin_node][num]==false)){
+                path_mark[begin_node][num]=true;
+                path_mark[num][begin_node]=true;
+                visit_mark[num]=1;
+
+                stack.push(seeds.at(num));
+                NeuronSWC S2;
+                S2.n 	= listNeuron.size()+1;
+                S2.type 	= 3;
+                S2.x 	= seeds.at(num).x;
+                S2.y 	= seeds.at(num).y;
+                S2.z 	= seeds.at(num).z;
+                S2.r 	= 1;
+                S2.pn 	= root_number.value(GET_IND(first.x,first.y,first.z));
+                listNeuron.append(S2);
+                hashNeuron.insert(S2.n, listNeuron.size()-1);
+                root_number.insert(GET_IND(S2.x,S2.y,S2.z),S2.n);
+
+            }
+            /* else if(path_visited.value(begin_node).value(num)==true){
+                NeuronSWC S;
+                S.n 	= listNeuron.size()+1;
+                S.type 	= 3;
+                S.x 	= seeds.at(begin_node).x;
+                S.y 	= seeds.at(begin_node).y;
+                S.z 	= seeds.at(begin_node).z;
+                S.r 	= 1;
+                S.pn 	= root_number.value(GET_IND(seeds.at(num).x,seeds.at(num).y,seeds.at(num).z));
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+                root_number.insert(GET_IND(S.x,S.y,S.z),S.n);
+
+            }*/
+            pre_node=begin_node;
+        }
+
+    }
+    if(adj_mark) {delete []adj_mark, adj_mark = 0;}
+    if(visit_mark) {delete visit_mark;}
+    if(path_mark) {delete [] path_mark,path_mark=0;}
+    return listNeuron;
+
+}
+
+double Map_coordinate(Node current_center,Node target_node,V3DLONG relate_x,V3DLONG relate_y,V3DLONG relate_z)
+{
+
+    Node* new_y_axis=new Node(target_node.x-current_center.x,target_node.y-current_center.y,target_node.z-current_center.z);
+    //Node new_y_axis=new Node(current_center.x-target_node.x,current_center.y-target_node.y,current_center.z-target_node.z);
+    //double unit_length_x=1/sqrt((double)(target_node.x-current_center.x)*(target_node.x-current_center.x)+(target_node.y-current_center.y)*(target_node.y-current_center.y)+(target_node.z-current_center.z)*(target_node.z-current_center.z));
+    // Node* new_y_axis_unit=new Node((target_node.x-current_center.x)*unit_length_x,(target_node.y-current_center.y)*unit_length_x,(target_node.z-current_center.z)*unit_length_x);
+    //rotating order:first x then z
+    //projection of the new Y axis in the yoz panel
+    // printf("%ld %ld %ld\n",new_y_axis->x,new_y_axis->y,new_y_axis->z);
+    double angle_y_rotate=0;
+    if(new_y_axis->y==0){//rotate Y axis to X axis
+        angle_y_rotate=0;
+
+    }else{
+        angle_y_rotate=(1*new_y_axis->y)/sqrt((double)(new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z));//the cos(angle) between old y axis and projection of the new Y axis in the yoz panel
+
+    }
+
+    //printf("%lf %ld\n",angle_y_rotate,new_y_axis->y);
+    //first rotation
+    double first_rotate_x=(double)relate_x;
+    double first_rotate_y=(double)(relate_y*angle_y_rotate-relate_z*sin(acos(angle_y_rotate)));
+    double first_rotate_z=(double)(relate_y*sin(acos(angle_y_rotate))+relate_z*angle_y_rotate);
+    //printf("if 1::%lf\n",angle_y_rotate*angle_y_rotate+sin(acos(angle_y_rotate))*sin(acos(angle_y_rotate)));
+
+    //second rotation
+    double angle_z_rotate=0;
+    if(new_y_axis->y==0&&new_y_axis->z==0){
+        angle_z_rotate=0;
+
+    }else if(new_y_axis->x==0){
+        angle_z_rotate=1;
+    }else{
+        angle_z_rotate=(double)(new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z)/(sqrt((double)(new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z))*sqrt((double)(new_y_axis->x*new_y_axis->x+new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z)));
+    }
+    //double angle_z_rotate_vn2=
+    double second_rotate_x=(double)(first_rotate_x*angle_z_rotate-first_rotate_y*sin(acos(angle_z_rotate)));
+    double second_rotate_y=(double)(first_rotate_x*sin(acos(angle_z_rotate))+first_rotate_y*angle_z_rotate);
+    double second_rotate_z=first_rotate_z;
+    // printf("%lf\n",angle_z_rotate);
+    // printf("if 2::%lf\n",angle_z_rotate*angle_z_rotate+sin(acos(angle_z_rotate))*sin(acos(angle_z_rotate)));
+    //for two directions
+    if((sqrt((double)second_rotate_x*second_rotate_x+second_rotate_y*second_rotate_y+second_rotate_z*second_rotate_z)*sqrt((double)new_y_axis->x*new_y_axis->x+new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z))==0)
+        printf("3333333333\n");
+    double angle_result=(second_rotate_x*new_y_axis->x+second_rotate_y*new_y_axis->y+second_rotate_z*new_y_axis->z)/(sqrt((double)second_rotate_x*second_rotate_x+second_rotate_y*second_rotate_y+second_rotate_z*second_rotate_z)*sqrt((double)new_y_axis->x*new_y_axis->x+new_y_axis->y*new_y_axis->y+new_y_axis->z*new_y_axis->z));
+    delete new_y_axis;
+    // printf("%lf\n",angle_result);
+    return angle_result;
+
+}
+
+//define a coordinate system which Y axis is the vector between source node and target node, origin of coordinate is source node
+QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> sphere_search(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+    //first calculate the distance between roots using bf based on sphere model
+    //second, after get the distance, input it into mst algorithm and get a connection relation
+    //finally fix the route between parent and child in SWC based on the bf route got in first step
+    QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> path_between_roots;
+    path_between_roots.clear();
+    int count_time=0;
+
+    for(QMap<int,Node*>::iterator iter1 =cluster_root.begin(); iter1 != cluster_root.end(); iter1++)
+    {
+        Node* elem1=iter1.value();
+        V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
+        QMap<V3DLONG,QList<Node>> path_to_target;
+        path_to_target.clear();
+
+        for(QMap<int,Node*>::iterator iter2 =cluster_root.begin(); iter2 != cluster_root.end(); iter2++)
+        {
+
+            Node* elem2=iter2.value();
+            Node current_center=getnode(elem1);
+            V3DLONG index2=GET_IND(elem2->x,elem2->y,elem2->z);
+            if(index1==index2)
+            {
+                continue;
+            }
+
+            QList<Node> path;
+            path.clear();
+            // printf("original size::%d\n",path.size());
+            path.append(current_center);
+            //QQueue<Node> queue_candidate;
+            //queue_candidate.clear();
+            int times=0;
+
+            //printf("current_center in the beginning::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+            while(times<iteration)
+            {
+
+                //initialize a sphere
+                struct sphere_model_two_directions sphere;
+                sphere.up=0;
+                sphere.down=0;
+
+                sphere.pixal_up=0;
+                sphere.pixal_down=0;
+
+                sphere.QList_up.clear();
+                sphere.QList_down.clear();
+
+                sphere.sum_pixal_up=0;
+                sphere.sum_pixal_down=0;
+                //first count the average pixal in the region between begin node and terminal node, if got a low pixal, enlarge the search radius
+                //realize the function later,20160126
+                // if average<30 r=5.0;else r=2.0(the selection method of r should be according to the prim distance)
+
+                //construct a sphere which radius is r
+                V3DLONG left_x=current_center.x-r;
+                V3DLONG right_x=current_center.x+r;
+                V3DLONG left_y=current_center.y-r;
+                V3DLONG right_y=current_center.y+r;
+                V3DLONG left_z=current_center.z-r;
+                V3DLONG right_z=current_center.z+r;
+                left_x=(left_x<0)?0:left_x;
+                right_x=(right_x>sz_x)?sz_x:right_x;
+                left_y=(left_y<0)?0:left_y;
+                right_y=(right_y>sz_y)?sz_y:right_y;
+                left_z=(left_z<0)?0:left_z;
+                right_z=(right_z>sz_z)?sz_z:right_z;
+                for(V3DLONG i=left_x;i<=right_x;i++){
+                    for(V3DLONG j=left_y;j<=right_y;j++){
+                        for(V3DLONG k=left_z;k<=right_z;k++){
+                            if(img1d[GET_IND(i,j,k)]==0){//set a threshold here
+                                continue;
+
+                            }
+                            if(GET_IND(i,j,k)==GET_IND(current_center.x,current_center.y,current_center.z)){
+                                continue;
+                            }
+                            V3DLONG relate_x=i-current_center.x;
+                            V3DLONG relate_y=j-current_center.y;
+                            V3DLONG relate_z=k-current_center.z;
+
+                            double distance_node=(double)sqrt((double)(relate_x*relate_x+relate_y*relate_y+relate_z*relate_z));
+                            if(distance_node>r){//means the node is not in the sphere
+                                continue;
+                            }
+                            //design a function here to map the node into the new coordinate
+                            //double Map_node_direction=Map_coordinate(current_center,getnode(elem2),relate_x,relate_y,relate_z);
+                            //calculate the angle between new node and new y axis,if >0 means same direction, otherwise opposite
+                            // printf("Map_node_direction:%lf\n",Map_node_direction);
+                            V3DLONG beg_ter_x=elem2->x-current_center.x;
+                            V3DLONG beg_ter_y=elem2->y-current_center.y;
+                            V3DLONG beg_ter_z=elem2->z-current_center.z;
+                            double Map_node_direction=(beg_ter_x*relate_x+beg_ter_y*relate_y+beg_ter_z*relate_z)/(sqrt((double)beg_ter_x*beg_ter_x+beg_ter_y*beg_ter_y+beg_ter_z*beg_ter_z)*sqrt((double)relate_x*relate_x+relate_y*relate_y+relate_z*relate_z));
+                            if((sqrt((double)beg_ter_x*beg_ter_x+beg_ter_y*beg_ter_y+beg_ter_z*beg_ter_z)*sqrt((double)relate_x*relate_x+relate_y*relate_y+relate_z*relate_z))==0){
+                                printf("denominator equals 0\n");
+
+                            }
+                            //statistical the node number in eight directions
+                            if((Map_node_direction>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){//the threshold can be considered as 1
+                                sphere.up++;
+                                sphere.sum_pixal_up=sphere.sum_pixal_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up=new Node(i,j,k);
+                                if(sphere.pixal_up<img1d[GET_IND(i,j,k)])
+                                {
+                                    sphere.pixal_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up=getnode(temp_node_up);
+                                    // }
+                                }
+                                sphere.QList_up.append(getnode(temp_node_up));
+                                delete temp_node_up;
+
+                            }else if((Map_node_direction<0)){
+                                //if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down++;
+                                sphere.sum_pixal_down=sphere.sum_pixal_down+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down=new Node(i,j,k);
+                                if(sphere.pixal_down<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down=getnode(temp_node_down);
+                                    //  }
+                                }
+                                sphere.QList_down.append(getnode(temp_node_down));
+                                delete temp_node_down;
+                            }
+                        }
+
+                    }
+
+                }
+                /* printf("%ld\n",sphere.up);
+                printf("%ld\n",sphere.down);*///for test
+
+                //determine whether the current node and target is in the same sphere
+                double dis_cur_target_x=current_center.x-elem2->x;
+                double dis_cur_target_y=current_center.y-elem2->y;
+                double dis_cur_target_z=current_center.z-elem2->z;
+                double dis_cur_target=(double)sqrt(dis_cur_target_x*dis_cur_target_x+dis_cur_target_y*dis_cur_target_y+dis_cur_target_z*dis_cur_target_z);
+                if((dis_cur_target<=r)&&(dis_cur_target!=0)){
+                    // printf("222222222222222222222222222\n");
+                    path.append(getnode(elem2));
+                    break;
+                }else if(dis_cur_target==0){
+                    break;
+                }
+                //printf("beginning node::%ld  %ld  %ld\n",elem1->x,elem1->y,elem1->z);
+
+                // printf("first,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                //printf("first\n");
+                current_center=choose_region_vn4(img1d,sphere,current_center,getnode(elem2),sz_x,sz_y,sz_z);//the node which pixal is the maximum in the eight regions have been chose in the above,then choose the region using a weight formula
+                //current_center=sphere.node_up;
+                path.append(current_center);
+                //printf("second\n");
+                // printf("second,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                // printf("terminal node::%ld  %ld  %ld\n",elem2->x,elem2->y,elem2->z);
+                //need to use current_node to form a path which indicate the path between two roots
+                if(current_center.x==-1)
+                {
+                    //printf("111111111111111111\n");
+                    break;
+                }
+
+                times++;
+
+            }
+            //printf("after iteration:: %d\n",path.size());
+
+
+            path_to_target.insert(index2,path);
+
+
+        }
+        count_time++;
+        //printf("count_time::%d\n",count_time);
+
+        path_between_roots.insert(index1,path_to_target);
+
+    }
+
+    return path_between_roots;
+
+}
+
+//two directions
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn3(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+    //first calculate the distance between roots using bf based on sphere model
+    //second, after get the distance, input it into mst algorithm and get a connection relation
+    //finally fix the route between parent and child in SWC based on the bf route got in first step
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    path_between_roots.clear();
+    int count_time=0;
+
+    for(QMap<int,Node*>::iterator iter1 =cluster_root.begin(); iter1 != cluster_root.end(); iter1++)
+    {
+        Node* elem1=iter1.value();
+        V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
+        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        path_to_target.clear();
+
+
+        for(QMap<int,Node*>::iterator iter2 =cluster_root.begin(); iter2 != cluster_root.end(); iter2++)
+        {
+
+
+            Node* elem2=iter2.value();
+            Node current_center=getnode(elem1);
+            V3DLONG index2=GET_IND(elem2->x,elem2->y,elem2->z);
+            if(index1==index2){
+                continue;
+
+            }
+
+            QList<Node> path;
+            path.clear();
+            // printf("original size::%d\n",path.size());
+            path.append(current_center);
+            //QQueue<Node> queue_candidate;
+            //queue_candidate.clear();
+            int times=0;
+            // printf("beginning node::%ld  %ld  %ld\n",elem1->x,elem1->y,elem1->z);
+            // printf("terminal node::%ld  %ld  %ld\n",elem2->x,elem2->y,elem2->z);
+            // printf("current_center in the beginning::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+            while(times<iteration)
+            {
+
+                //initialize a sphere
+                struct sphere_model_two_directions sphere;
+                sphere.up=0;
+                sphere.down=0;
+
+                sphere.pixal_up=0;
+                sphere.pixal_down=0;
+
+                sphere.QList_up.clear();
+                sphere.QList_down.clear();
+
+                sphere.sum_pixal_up=0;
+                sphere.sum_pixal_down=0;
+
+
+                //construct a sphere which radius is r
+                V3DLONG left_x=current_center.x-r;
+                V3DLONG right_x=current_center.x+r;
+                V3DLONG left_y=current_center.y-r;
+                V3DLONG right_y=current_center.y+r;
+                V3DLONG left_z=current_center.z-r;
+                V3DLONG right_z=current_center.z+r;
+                left_x=(left_x<0)?0:left_x;
+                right_x=(right_x>sz_x)?sz_x:right_x;
+                left_y=(left_y<0)?0:left_y;
+                right_y=(right_y>sz_y)?sz_y:right_y;
+                left_z=(left_z<0)?0:left_z;
+                right_z=(right_z>sz_z)?sz_z:right_z;
+                for(V3DLONG i=left_x;i<=right_x;i++){
+                    for(V3DLONG j=left_y;j<=right_y;j++){
+                        for(V3DLONG k=left_z;k<=right_z;k++){
+                            if(img1d[GET_IND(i,j,k)]==0){//set a threshold here
+                                continue;
+
+                            }
+                            if(GET_IND(i,j,k)==GET_IND(current_center.x,current_center.y,current_center.z)){
+                                continue;
+                            }
+                            V3DLONG relate_x=i-current_center.x;
+                            V3DLONG relate_y=j-current_center.y;
+                            V3DLONG relate_z=k-current_center.z;
+
+                            double distance_node=(double)sqrt((double)(relate_x*relate_x+relate_y*relate_y+relate_z*relate_z));
+                            if(distance_node>r){//means the node is not in the sphere
+                                continue;
+
+                            }
+                            //statistical the node number in eight directions
+                            if((relate_z>0)){
+
+                                sphere.up++;
+                                sphere.sum_pixal_up=sphere.sum_pixal_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up=new Node(i,j,k);
+                                /*if(sphere.pixal_up<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up=getnode(temp_node_up);
+
+                                }*/
+                                sphere.QList_up.append(getnode(temp_node_up));
+                                delete temp_node_up;
+
+                            }else if((relate_z<0)){
+
+                                sphere.down++;
+                                sphere.sum_pixal_down=sphere.sum_pixal_down+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down=new Node(i,j,k);
+                                /*if(sphere.pixal_down<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down=getnode(temp_node_down);
+
+                                }*/
+                                sphere.QList_down.append(getnode(temp_node_down));
+                                delete temp_node_down;
+                            }
+                        }
+
+                    }
+
+                }
+                /* printf("%ld\n",sphere.up);
+                printf("%ld\n",sphere.down);*///for test
+
+
+                //determine whether the current node and target is in the same sphere
+                double dis_cur_target_x=current_center.x-elem2->x;
+                double dis_cur_target_y=current_center.y-elem2->y;
+                double dis_cur_target_z=current_center.z-elem2->z;
+                double dis_cur_target=(double)sqrt(dis_cur_target_x*dis_cur_target_x+dis_cur_target_y*dis_cur_target_y+dis_cur_target_z*dis_cur_target_z);
+                if((dis_cur_target<=r)&&(dis_cur_target!=0)){
+                    // printf("222222222222222222222222222\n");
+                    path.append(getnode(elem2));
+                    break;
+                }else if(dis_cur_target==0){
+                    break;
+                }
+                // printf("first,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                current_center=choose_region_vn4(img1d,sphere,current_center,getnode(elem2),sz_x,sz_y,sz_z);//the node which pixal is the maximum in the eight regions have been chose in the above,then choose the region using a weight formula
+                path.append(current_center);
+                // printf("second,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                //need to use current_node to form a path which indicate the path between two roots
+                if(current_center.x==-1){
+                    printf("111111111111111111\n");
+                    break;
+                }
+
+                times++;
+
+            }
+            //printf("after iteration:: %d\n",path.size());
+            if(path.size()<5){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            if(GET_IND(current_center.x,current_center.y,current_center.z)==index2){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            path_to_target.insert(index2,path);
+
+
+        }
+        count_time++;
+        printf("count_time::%d\n",count_time);
+
+        path_between_roots.insert(index1,path_to_target);
+
+    }
+
+    return path_between_roots;
+
+}
+//four directions
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf_vn2(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+    //first calculate the distance between roots using bf based on sphere model
+    //second, after get the distance, input it into mst algorithm and get a connection relation
+    //finally fix the route between parent and child in SWC based on the bf route got in first step
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    path_between_roots.clear();
+    int count_time=0;
+
+    for(QMap<int,Node*>::iterator iter1 =cluster_root.begin(); iter1 != cluster_root.end(); iter1++)
+    {
+        Node* elem1=iter1.value();
+        V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
+        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        path_to_target.clear();
+
+
+        for(QMap<int,Node*>::iterator iter2 =cluster_root.begin(); iter2 != cluster_root.end(); iter2++)
+        {
+
+
+            Node* elem2=iter2.value();
+            Node current_center=getnode(elem1);
+            V3DLONG index2=GET_IND(elem2->x,elem2->y,elem2->z);
+            if(index1==index2){
+                continue;
+
+            }
+
+            QList<Node> path;
+            path.clear();
+            // printf("original size::%d\n",path.size());
+            path.append(current_center);
+            //QQueue<Node> queue_candidate;
+            //queue_candidate.clear();
+            int times=0;
+            // printf("beginning node::%ld  %ld  %ld\n",elem1->x,elem1->y,elem1->z);
+            // printf("terminal node::%ld  %ld  %ld\n",elem2->x,elem2->y,elem2->z);
+            // printf("current_center in the beginning::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+            while(times<iteration)
+            {
+                //define node number of eight directions
+                /* V3DLONG up_right_up=0;
+                V3DLONG up_left_up=0;
+                V3DLONG up_left_bottom=0;
+                V3DLONG up_right_bottom=0;
+                V3DLONG down_right_up=0;
+                V3DLONG down_left_up=0;
+                V3DLONG down_left_bottom=0;
+                V3DLONG down_right_bottom=0;
+                //define the node with maximum pixval value in the eight directions and corresponding pixal
+                Node node_up_right_up=0;
+                Node node_up_left_up=0;
+                Node node_up_left_bottom=0;
+                Node node_up_right_bottom=0;
+                Node node_down_right_up=0;
+                Node node_down_left_up=0;
+                Node node_down_left_bottom=0;
+                Node node_down_right_bottom=0;
+
+                double pixal_up_right_up=0;
+                double pixal_up_left_up=0;
+                double pixal_up_left_bottom=0;
+                double pixal_up_right_bottom=0;
+                double pixal_down_right_up=0;
+                double pixal_down_left_up=0;
+                double pixal_down_left_bottom=0;
+                double pixal_down_right_bottom=0;*/
+                //initialize a sphere
+                struct sphere_model_four_directions sphere;
+                sphere.up_right=0;
+                sphere.up_left=0;
+                sphere.down_right=0;
+                sphere.down_left=0;
+
+                sphere.pixal_up_right=0;
+                sphere.pixal_up_left=0;
+                sphere.pixal_down_right=0;
+                sphere.pixal_down_left=0;
+
+                sphere.QList_up_right.clear();
+                sphere.QList_up_left.clear();
+                sphere.QList_down_right.clear();
+                sphere.QList_down_left.clear();
+
+                sphere.sum_pixal_up_right=0;
+                sphere.sum_pixal_up_left=0;
+                sphere.sum_pixal_down_right=0;
+                sphere.sum_pixal_down_left=0;
+
+                //construct a sphere which radius is r
+                V3DLONG left_x=current_center.x-r;
+                V3DLONG right_x=current_center.x+r;
+                V3DLONG left_y=current_center.y-r;
+                V3DLONG right_y=current_center.y+r;
+                V3DLONG left_z=current_center.z-r;
+                V3DLONG right_z=current_center.z+r;
+                left_x=(left_x<0)?0:left_x;
+                right_x=(right_x>sz_x)?sz_x:right_x;
+                left_y=(left_y<0)?0:left_y;
+                right_y=(right_y>sz_y)?sz_y:right_y;
+                left_z=(left_z<0)?0:left_z;
+                right_z=(right_z>sz_z)?sz_z:right_z;
+                for(V3DLONG i=left_x;i<=right_x;i++){
+                    for(V3DLONG j=left_y;j<=right_y;j++){
+                        for(V3DLONG k=left_z;k<=right_z;k++){
+                            if(img1d[GET_IND(i,j,k)]==0){//set a threshold here
+                                continue;
+
+                            }
+                            if(GET_IND(i,j,k)==GET_IND(current_center.x,current_center.y,current_center.z)){
+                                continue;
+                            }
+                            V3DLONG relate_x=i-current_center.x;
+                            V3DLONG relate_y=j-current_center.y;
+                            V3DLONG relate_z=k-current_center.z;
+
+                            double distance_node=(double)sqrt((double)(relate_x*relate_x+relate_y*relate_y+relate_z*relate_z));
+                            if(distance_node>r){//means the node is not in the sphere
+                                continue;
+
+                            }
+                            //statistical the node number in eight directions
+                            if((relate_x>0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){//the threshold can be consider as 1
+                                sphere.up_right++;
+                                sphere.sum_pixal_up_right=sphere.sum_pixal_up_right+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_right=new Node(i,j,k);
+                                if(sphere.pixal_up_right<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_right=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_right=getnode(temp_node_up_right);
+                                    // }
+                                }
+                                sphere.QList_up_right.append(getnode(temp_node_up_right));
+                                delete temp_node_up_right;
+
+                            }else if((relate_x<0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.up_left++;
+                                sphere.sum_pixal_up_left=sphere.sum_pixal_up_left+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_left=new Node(i,j,k);
+                                if(sphere.pixal_up_left<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_left=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_left=getnode(temp_node_up_left);
+                                    // }
+                                }
+                                sphere.QList_up_left.append(getnode(temp_node_up_left));
+                                delete temp_node_up_left;
+
+                            }else if((relate_x>0)&&(relate_z<0)){
+                                //if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_right++;
+                                sphere.sum_pixal_down_right=sphere.sum_pixal_down_right+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_right=new Node(i,j,k);
+                                if(sphere.pixal_down_right<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_right=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_right=getnode(temp_node_down_right);
+                                    //  }
+                                }
+                                sphere.QList_down_right.append(getnode(temp_node_down_right));
+                                delete temp_node_down_right;
+                            }else if((relate_x<0)&&(relate_z<0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_left++;
+                                sphere.sum_pixal_down_left=sphere.sum_pixal_down_left+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_left=new Node(i,j,k);
+                                if(sphere.pixal_down_left<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_left=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_left=getnode(temp_node_down_left);
+                                    // }
+                                }
+                                sphere.QList_down_left.append(getnode(temp_node_down_left));
+                                delete temp_node_down_left;
+
+                            }
+                        }
+
+                    }
+
+                }
+                /* printf("%ld\n",sphere.up_right);
+                printf("%ld\n",sphere.up_left);
+                printf("%ld\n",sphere.down_right);
+                printf("%ld\n",sphere.down_left);*///for test
+
+
+                //determine whether the current node and target is in the same sphere
+                double dis_cur_target_x=current_center.x-elem2->x;
+                double dis_cur_target_y=current_center.y-elem2->y;
+                double dis_cur_target_z=current_center.z-elem2->z;
+                double dis_cur_target=(double)sqrt(dis_cur_target_x*dis_cur_target_x+dis_cur_target_y*dis_cur_target_y+dis_cur_target_z*dis_cur_target_z);
+                if((dis_cur_target<=r)&&(dis_cur_target!=0)){
+                    // printf("222222222222222222222222222\n");
+                    path.append(getnode(elem2));
+                    break;
+                }else if(dis_cur_target==0){
+                    break;
+                }
+                // printf("first,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                current_center=choose_region_vn3(img1d,sphere,current_center,getnode(elem2),sz_x,sz_y,sz_z);//the node which pixal is the maximum in the eight regions have been chose in the above,then choose the region using a weight formula
+                path.append(current_center);
+                // printf("second,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                //need to use current_node to form a path which indicate the path between two roots
+                if(current_center.x==-1){
+                    printf("111111111111111111\n");
+                    break;
+                }
+
+                times++;
+
+            }
+            //printf("after iteration:: %d\n",path.size());
+            if(path.size()<5){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            if(GET_IND(path.last().x,path.last().y,path.last().z)==index2){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            path_to_target.insert(index2,path);
+
+
+        }
+        count_time++;
+        printf("count_time::%d\n",count_time);
+
+        path_between_roots.insert(index1,path_to_target);
+
+    }
+
+    return path_between_roots;
+
+}
+
+
+//should define a QMap<V3DLONG,QMap<V3DLONG,QList<Node>>> which indicate that the QList is the nodes between two roots
+QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> spanning_combined_bf(unsigned char * &img1d,QMap<int,Node* > cluster_root,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,double r,int iteration){
+    //first calculate the distance between roots using bf based on sphere model
+    //second, after get the distance, input it into mst algorithm and get a connection relation
+    //finally fix the route between parent and child in SWC based on the bf route got in first step
+    QMultiMap<V3DLONG,QMultiMap<V3DLONG,QList<Node>>> path_between_roots;
+    path_between_roots.clear();
+    int count_time=0;
+
+    for(QMap<int,Node*>::iterator iter1 =cluster_root.begin(); iter1 != cluster_root.end(); iter1++)
+    {
+        Node* elem1=iter1.value();
+        V3DLONG index1=GET_IND(elem1->x,elem1->y,elem1->z);
+        QMultiMap<V3DLONG,QList<Node>> path_to_target;
+        path_to_target.clear();
+
+
+        for(QMap<int,Node*>::iterator iter2 =cluster_root.begin(); iter2 != cluster_root.end(); iter2++)
+        {
+
+
+            Node* elem2=iter2.value();
+            Node current_center=getnode(elem1);
+            V3DLONG index2=GET_IND(elem2->x,elem2->y,elem2->z);
+            if(index1==index2){
+                continue;
+
+            }
+
+            QList<Node> path;
+            path.clear();
+            // printf("original size::%d\n",path.size());
+            path.append(current_center);
+            //QQueue<Node> queue_candidate;
+            //queue_candidate.clear();
+            int times=0;
+            // printf("beginning node::%ld  %ld  %ld\n",elem1->x,elem1->y,elem1->z);
+            // printf("terminal node::%ld  %ld  %ld\n",elem2->x,elem2->y,elem2->z);
+            // printf("current_center in the beginning::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+            while(times<iteration)
+            {
+                //define node number of eight directions
+                /* V3DLONG up_right_up=0;
+                V3DLONG up_left_up=0;
+                V3DLONG up_left_bottom=0;
+                V3DLONG up_right_bottom=0;
+                V3DLONG down_right_up=0;
+                V3DLONG down_left_up=0;
+                V3DLONG down_left_bottom=0;
+                V3DLONG down_right_bottom=0;
+                //define the node with maximum pixval value in the eight directions and corresponding pixal
+                Node node_up_right_up=0;
+                Node node_up_left_up=0;
+                Node node_up_left_bottom=0;
+                Node node_up_right_bottom=0;
+                Node node_down_right_up=0;
+                Node node_down_left_up=0;
+                Node node_down_left_bottom=0;
+                Node node_down_right_bottom=0;
+
+                double pixal_up_right_up=0;
+                double pixal_up_left_up=0;
+                double pixal_up_left_bottom=0;
+                double pixal_up_right_bottom=0;
+                double pixal_down_right_up=0;
+                double pixal_down_left_up=0;
+                double pixal_down_left_bottom=0;
+                double pixal_down_right_bottom=0;*/
+                //initialize a sphere
+                struct sphere_model sphere;
+                sphere.up_right_up=0;
+                sphere.up_left_up=0;
+                sphere.up_left_bottom=0;
+                sphere.up_right_bottom=0;
+                sphere.down_right_up=0;
+                sphere.down_left_up=0;
+                sphere.down_left_bottom=0;
+                sphere.down_right_bottom=0;
+
+                sphere.pixal_up_right_up=0;
+                sphere.pixal_up_left_up=0;
+                sphere.pixal_up_left_bottom=0;
+                sphere.pixal_up_right_bottom=0;
+                sphere.pixal_down_right_up=0;
+                sphere.pixal_down_left_up=0;
+                sphere.pixal_down_left_bottom=0;
+                sphere.pixal_down_right_bottom=0;
+
+                sphere.QList_up_right_up.clear();
+                sphere.QList_up_left_up.clear();
+                sphere.QList_up_left_bottom.clear();
+                sphere.QList_up_right_bottom.clear();
+                sphere.QList_down_right_up.clear();
+                sphere.QList_down_left_up.clear();
+                sphere.QList_down_left_bottom.clear();
+                sphere.QList_down_right_bottom.clear();
+
+                sphere.sum_pixal_up_right_up=0;
+                sphere.sum_pixal_up_left_up=0;
+                sphere.sum_pixal_up_left_bottom=0;
+                sphere.sum_pixal_up_right_bottom=0;
+                sphere.sum_pixal_down_right_up=0;
+                sphere.sum_pixal_down_left_up=0;
+                sphere.sum_pixal_down_left_bottom=0;
+                sphere.sum_pixal_down_right_bottom=0;
+
+                //construct a sphere which radius is r
+                V3DLONG left_x=current_center.x-r;
+                V3DLONG right_x=current_center.x+r;
+                V3DLONG left_y=current_center.y-r;
+                V3DLONG right_y=current_center.y+r;
+                V3DLONG left_z=current_center.z-r;
+                V3DLONG right_z=current_center.z+r;
+                left_x=(left_x<0)?0:left_x;
+                right_x=(right_x>sz_x)?sz_x:right_x;
+                left_y=(left_y<0)?0:left_y;
+                right_y=(right_y>sz_y)?sz_y:right_y;
+                left_z=(left_z<0)?0:left_z;
+                right_z=(right_z>sz_z)?sz_z:right_z;
+                for(V3DLONG i=left_x;i<=right_x;i++){
+                    for(V3DLONG j=left_y;j<=right_y;j++){
+                        for(V3DLONG k=left_z;k<=right_z;k++){
+                            if(img1d[GET_IND(i,j,k)]==0){//set a threshold here
+                                continue;
+
+                            }
+                            if(GET_IND(i,j,k)==GET_IND(current_center.x,current_center.y,current_center.z)){
+                                continue;
+                            }
+                            V3DLONG relate_x=i-current_center.x;
+                            V3DLONG relate_y=j-current_center.y;
+                            V3DLONG relate_z=k-current_center.z;
+
+                            double distance_node=(double)sqrt((double)(relate_x*relate_x+relate_y*relate_y+relate_z*relate_z));
+                            if(distance_node>r){//means the node is not in the sphere
+                                continue;
+
+                            }
+                            //statistical the node number in eight directions
+                            if((relate_x>0)&&(relate_y>0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){//the threshold can be consider as 1
+                                sphere.up_right_up++;
+                                sphere.sum_pixal_up_right_up=sphere.sum_pixal_up_right_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_right_up=new Node(i,j,k);
+                                if(sphere.pixal_up_right_up<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_right_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_right_up=getnode(temp_node_up_right_up);
+                                    // }
+                                }
+                                sphere.QList_up_right_up.append(getnode(temp_node_up_right_up));
+                                delete temp_node_up_right_up;
+
+                            }else if((relate_x<0)&&(relate_y>0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.up_left_up++;
+                                sphere.sum_pixal_up_left_up=sphere.sum_pixal_up_left_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_left_up=new Node(i,j,k);
+                                if(sphere.pixal_up_left_up<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_left_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_left_up=getnode(temp_node_up_left_up);
+                                    // }
+                                }
+                                sphere.QList_up_left_up.append(getnode(temp_node_up_left_up));
+                                delete temp_node_up_left_up;
+
+                            }else if((relate_x<0)&&(relate_y<0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.up_left_bottom++;
+                                sphere.sum_pixal_up_left_bottom=sphere.sum_pixal_up_left_bottom+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_left_bottom=new Node(i,j,k);
+                                if(sphere.pixal_up_left_bottom<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_left_bottom=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_left_bottom=getnode(temp_node_up_left_bottom);
+                                    // }
+                                }
+                                sphere.QList_up_left_bottom.append(getnode(temp_node_up_left_bottom));
+                                delete temp_node_up_left_bottom;
+
+                            }else if((relate_x>0)&&(relate_y<0)&&(relate_z>0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.up_right_bottom++;
+                                sphere.sum_pixal_up_right_bottom=sphere.sum_pixal_up_right_bottom+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_up_right_bottom=new Node(i,j,k);
+                                if(sphere.pixal_up_right_bottom<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_up_right_bottom=img1d[GET_IND(i,j,k)];
+                                    sphere.node_up_right_bottom=getnode(temp_node_up_right_bottom);
+                                    // }
+                                }
+                                sphere.QList_up_right_bottom.append(getnode(temp_node_up_right_bottom));
+                                delete temp_node_up_right_bottom;
+
+                            }else if((relate_x>0)&&(relate_y>0)&&(relate_z<0)){
+                                //if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_right_up++;
+                                sphere.sum_pixal_down_right_up=sphere.sum_pixal_down_right_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_right_up=new Node(i,j,k);
+                                if(sphere.pixal_down_right_up<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_right_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_right_up=getnode(temp_node_down_right_up);
+                                    //  }
+                                }
+                                sphere.QList_down_right_up.append(getnode(temp_node_down_right_up));
+                                delete temp_node_down_right_up;
+                            }else if((relate_x<0)&&(relate_y>0)&&(relate_z<0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_left_up++;
+                                sphere.sum_pixal_down_left_up=sphere.sum_pixal_down_left_up+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_left_up=new Node(i,j,k);
+                                if(sphere.pixal_down_left_up<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_left_up=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_left_up=getnode(temp_node_down_left_up);
+                                    // }
+                                }
+                                sphere.QList_down_left_up.append(getnode(temp_node_down_left_up));
+                                delete temp_node_down_left_up;
+
+                            }else if((relate_x<0)&&(relate_y<0)&&(relate_z<0)){
+                                // if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_left_bottom++;
+                                sphere.sum_pixal_down_left_bottom=sphere.sum_pixal_down_left_bottom+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_left_bottom=new Node(i,j,k);
+                                if(sphere.pixal_down_left_bottom<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_left_bottom=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_left_bottom=getnode(temp_node_down_left_bottom);
+                                    // }
+                                }
+                                sphere.QList_down_left_bottom.append(getnode(temp_node_down_left_bottom));
+                                delete temp_node_down_left_bottom;
+
+                            }else if((relate_x>0)&&(relate_y<0)&&(relate_z<0)){
+                                //if(img1d[GET_IND(i,j,k)]>5){
+                                sphere.down_right_bottom++;
+                                sphere.sum_pixal_down_right_bottom=sphere.sum_pixal_down_right_bottom+img1d[GET_IND(i,j,k)];
+                                Node* temp_node_down_right_bottom=new Node(i,j,k);
+                                if(sphere.pixal_down_right_bottom<img1d[GET_IND(i,j,k)]){
+                                    sphere.pixal_down_right_bottom=img1d[GET_IND(i,j,k)];
+                                    sphere.node_down_right_bottom=getnode(temp_node_down_right_bottom);
+                                    // }
+                                }
+                                sphere.QList_down_right_bottom.append(getnode(temp_node_down_right_bottom));
+                                delete temp_node_down_right_bottom;
+
+                            }
+
+
+                        }
+
+                    }
+
+                }
+                /* printf("%ld\n",sphere.up_right_up);
+                printf("%ld\n",sphere.up_left_up);
+                printf("%ld\n",sphere.up_left_bottom);
+                printf("%ld\n",sphere.up_right_bottom);
+                printf("%ld\n",sphere.down_right_up);
+                printf("%ld\n",sphere.down_left_up);
+                printf("%ld\n",sphere.down_left_bottom);
+                printf("%ld\n",sphere.down_right_bottom);*///for test
+
+
+                //determine whether the current node and target is in the same sphere
+                double dis_cur_target_x=current_center.x-elem2->x;
+                double dis_cur_target_y=current_center.y-elem2->y;
+                double dis_cur_target_z=current_center.z-elem2->z;
+                double dis_cur_target=(double)sqrt(dis_cur_target_x*dis_cur_target_x+dis_cur_target_y*dis_cur_target_y+dis_cur_target_z*dis_cur_target_z);
+                if((dis_cur_target<=r)&&(dis_cur_target!=0)){
+                    // printf("222222222222222222222222222\n");
+                    path.append(getnode(elem2));
+                    break;
+                }else if(dis_cur_target==0){
+                    break;
+                }
+                // printf("first,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                current_center=choose_region_vn2(img1d,sphere,current_center,getnode(elem2),sz_x,sz_y,sz_z);//the node which pixal is the maximum in the eight regions have been chose in the above,then choose the region using a weight formula
+                path.append(current_center);
+                // printf("second,current_center::%ld  %ld  %ld\n",current_center.x,current_center.y,current_center.z);
+                //need to use current_node to form a path which indicate the path between two roots
+                if(current_center.x==-1){
+                    printf("111111111111111111\n");
+                    break;
+                }
+
+                times++;
+
+            }
+            //printf("after iteration:: %d\n",path.size());
+            if(path.size()<5){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            if(GET_IND(current_center.x,current_center.y,current_center.z)==index2){
+                printf("0000000000000000000000000000000\n");
+
+            }
+            path_to_target.insert(index2,path);
+
+
+        }
+        count_time++;
+        printf("count_time::%d\n",count_time);
+
+        path_between_roots.insert(index1,path_to_target);
+
+    }
+
+    return path_between_roots;
+
+}
+
+Node choose_region_vn4(unsigned char * &img1d,struct sphere_model_two_directions sphere_m,Node source_node,Node target_node,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    //two directions
+    QList<V3DLONG> direction_node_number;
+    //QList<double> direction_average_pixal;
+    //QList<double> direction_node_pixal;
+    QList<QList<Node>> direction_all_nodes;
+    QList<Node> direction_node;
+    Node result_pseu;
+    result_pseu.x=-1;
+
+    //direction_node_pixal.append(sphere_m.pixal_up);
+    //direction_node_pixal.append(sphere_m.pixal_down);
+
+    direction_node.append(sphere_m.node_up);
+    direction_node.append(sphere_m.node_down);
+
+    direction_node_number.append(sphere_m.up);
+    direction_node_number.append(sphere_m.down);
+
+    direction_all_nodes.append(sphere_m.QList_up);
+    direction_all_nodes.append(sphere_m.QList_down);
+
+    /* double average_pixval_1=(sphere_m.up==0)?0:sphere_m.sum_pixal_up/sphere_m.up;
+    direction_average_pixal.append(average_pixval_1);
+    double average_pixval_2=(sphere_m.down==0)?0:sphere_m.sum_pixal_down/sphere_m.down;
+    direction_average_pixal.append(average_pixval_2);*/
+
+    double weight=-INF;
+    double weight_temp=-INF;
+    int node_number=0;
+    double angle_final=0;
+    V3DLONG node_numbers=0;
+    // printf("direction_node.size::%d\n",direction_node.size());
+
+    for(int i=0;i<direction_node.size();i++)
+    {
+        if(direction_node_number.at(i)==0){//means there is no suitable node
+            continue;
+        }
+        QList<Node> sub_all_nodes=direction_all_nodes.at(i);
+        weight_temp=0;
+        for(int j=0;j<sub_all_nodes.size();j++)
+        {
+            Node sub_node=sub_all_nodes.at(j);
+            V3DLONG vector1_x=source_node.x-sub_node.x;
+            V3DLONG vector1_y=source_node.y-sub_node.y;
+            V3DLONG vector1_z=source_node.z-sub_node.z;
+
+            V3DLONG vector2_x=source_node.x-target_node.x;
+            V3DLONG vector2_y=source_node.y-target_node.y;
+            V3DLONG vector2_z=source_node.z-target_node.z;
+            double angle=(vector1_x*vector2_x+vector1_y*vector2_y+vector1_z*vector2_z)/((double)sqrt((double)(vector1_x*vector1_x+vector1_y*vector1_y+vector1_z*vector1_z))*(double)sqrt((double)(vector2_x*vector2_x+vector2_y*vector2_y+vector2_z*vector2_z)));
+            if(((double)sqrt((double)(vector1_x*vector1_x+vector1_y*vector1_y+vector1_z*vector1_z))*(double)sqrt((double)(vector2_x*vector2_x+vector2_y*vector2_y+vector2_z*vector2_z)))==0){
+                printf("denominator equals 0 (2)\n");
+
+            }
+            double distance_between_can_tar=(double)sqrt((double)(sub_node.x-target_node.x)*(sub_node.x-target_node.x)+(sub_node.y-target_node.y)*(sub_node.y-target_node.y)+(sub_node.z-target_node.z)*(sub_node.z-target_node.z));
+            weight_temp=weight_temp+angle*(img1d[GET_IND(sub_node.x,sub_node.y,sub_node.z)]*img1d[GET_IND(target_node.x,target_node.y,target_node.z)])/(distance_between_can_tar*distance_between_can_tar);
+
+        }
+        if(sub_all_nodes.size()==0){
+            printf("denominator equals 0 (1)\n");
+
+        }
+        weight_temp=weight_temp/sub_all_nodes.size();
+
+        if(weight<weight_temp)
+        {
+            weight=weight_temp;
+            //angle_final=angle;
+            node_number=i;
+            // node_numbers=direction_node_number.at(i);
+
+        }
+    }//choose the region
+    // printf("node_number::%d\n",node_number);
+    double distance_minimum=INF;
+    int minimum_number=0;
+
+    for(int k=0;k<direction_all_nodes.at(node_number).size();k++)
+    {//choose the node in the area
+        Node temp=direction_all_nodes.at(node_number).at(k);
+        double dis=(double)sqrt((double)(temp.x-target_node.x)*(temp.x-target_node.x)+(temp.y-target_node.y)*(temp.y-target_node.y)+(temp.z-target_node.z)*(temp.z-target_node.z));
+        if(distance_minimum>dis)
+        {
+            distance_minimum=dis;
+            minimum_number=k;
+
+        }
+
+    }
+
+
+    if(weight==-INF){//this maybe means that there is only one center node in the sphere
+        // printf("minimum_number::%d %d\n",minimum_number,direction_all_nodes.at(node_number).size());
+        direction_node_number.clear();
+        direction_all_nodes.clear();
+        direction_node.clear();
+        return result_pseu;
+    }else{
+        //printf("minimum_number::%d %d\n",minimum_number,direction_all_nodes.at(node_number).size());
+        Node result_return=direction_all_nodes.at(node_number).at(minimum_number);
+        // printf("minimum_number11::%d\n",minimum_number);
+        // printf("select_angle::%lf\n",angle_final);
+        //printf("select_direction::%d\n",node_number);
+        direction_node_number.clear();
+        // direction_average_pixal.clear();
+        //direction_node_pixal.clear();
+        direction_all_nodes.clear();
+        direction_node.clear();
+        return result_return;
+    }
+
+}
+
+Node choose_region_vn3(unsigned char * &img1d,struct sphere_model_four_directions sphere_m,Node source_node,Node target_node,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    //four directions
+    QList<V3DLONG> direction_node_number;
+    QList<double> direction_average_pixal;
+    QList<double> direction_node_pixal;
+    QList<QList<Node>> direction_all_nodes;
+    QList<Node> direction_node;
+
+    direction_node_pixal.append(sphere_m.pixal_up_right);
+    direction_node_pixal.append(sphere_m.pixal_up_left);
+    direction_node_pixal.append(sphere_m.pixal_down_right);
+    direction_node_pixal.append(sphere_m.pixal_down_left);
+
+    direction_node.append(sphere_m.node_up_right);
+    direction_node.append(sphere_m.node_up_left);
+    direction_node.append(sphere_m.node_down_right);
+    direction_node.append(sphere_m.node_down_left);
+
+    direction_node_number.append(sphere_m.up_right);
+    direction_node_number.append(sphere_m.up_left);
+    direction_node_number.append(sphere_m.down_right);
+    direction_node_number.append(sphere_m.down_left);
+
+    direction_all_nodes.append(sphere_m.QList_up_right);
+    direction_all_nodes.append(sphere_m.QList_up_left);
+    direction_all_nodes.append(sphere_m.QList_down_right);
+    direction_all_nodes.append(sphere_m.QList_down_left);
+
+    double average_pixval_1=(sphere_m.up_right==0)?0:sphere_m.sum_pixal_up_right/sphere_m.up_right;
+    direction_average_pixal.append(average_pixval_1);
+    double average_pixval_2=(sphere_m.up_left==0)?0:sphere_m.sum_pixal_up_left/sphere_m.up_left;
+    direction_average_pixal.append(average_pixval_2);
+    double average_pixval_3=(sphere_m.down_right==0)?0:sphere_m.sum_pixal_down_right/sphere_m.down_right;
+    direction_average_pixal.append(average_pixval_3);
+    double average_pixval_4=(sphere_m.down_left==0)?0:sphere_m.sum_pixal_down_left/sphere_m.down_left;
+    direction_average_pixal.append(average_pixval_4);
+    double weight=-INF;
+    double weight_temp=-INF;
+    int node_number=0;
+    double angle_final=0;
+    V3DLONG node_numbers=0;
+
+    for(int i=0;i<direction_node.size();i++)
+    {
+        if(direction_node_number.at(i)==0){//means there is no suitable node
+            continue;
+        }
+        QList<Node> sub_all_nodes=direction_all_nodes.at(i);
+        weight_temp=0;
+        for(int j=0;j<sub_all_nodes.size();j++){
+            Node sub_node=sub_all_nodes.at(j);
+            V3DLONG vector1_x=source_node.x-sub_node.x;
+            V3DLONG vector1_y=source_node.y-sub_node.y;
+            V3DLONG vector1_z=source_node.z-sub_node.z;
+
+            V3DLONG vector2_x=source_node.x-target_node.x;
+            V3DLONG vector2_y=source_node.y-target_node.y;
+            V3DLONG vector2_z=source_node.z-target_node.z;
+            double angle=(vector1_x*vector2_x+vector1_y*vector2_y+vector1_z*vector2_z)/((double)sqrt((double)(vector1_x*vector1_x+vector1_y*vector1_y+vector1_z*vector1_z))*(double)sqrt((double)(vector2_x*vector2_x+vector2_y*vector2_y+vector2_z*vector2_z)));
+            double distance_between_can_tar=(double)sqrt((double)(sub_node.x-target_node.x)*(sub_node.x-target_node.x)+(sub_node.y-target_node.y)*(sub_node.y-target_node.y)+(sub_node.z-target_node.z)*(sub_node.z-target_node.z));
+            weight_temp=weight_temp+angle*(img1d[GET_IND(sub_node.x,sub_node.y,sub_node.z)]*img1d[GET_IND(target_node.x,target_node.y,target_node.z)])/(distance_between_can_tar*distance_between_can_tar);
+
+        }
+        weight_temp=weight_temp/sub_all_nodes.size();
+
+        if(weight<weight_temp)
+        {
+            weight=weight_temp;
+            //angle_final=angle;
+            node_number=i;
+            // node_numbers=direction_node_number.at(i);
+
+        }
+    }//choose the region
+    double distance_minimum=INF;
+    int minimum_number=0;
+
+    for(int k=0;k<direction_all_nodes.at(node_number).size();k++){//choose the node in the area
+        Node temp=direction_all_nodes.at(node_number).at(k);
+        double dis=(double)sqrt((double)(temp.x-target_node.x)*(temp.x-target_node.x)+(temp.y-target_node.y)*(temp.y-target_node.y)+(temp.z-target_node.z)*(temp.z-target_node.z));
+        if(distance_minimum>dis)
+        {
+            distance_minimum=dis;
+            minimum_number=k;
+
+        }
+
+    }
+    Node result_return=direction_all_nodes.at(node_number).at(minimum_number);
+    // printf("select_angle::%lf\n",angle_final);
+    //printf("select_direction::%d\n",node_number);
+    direction_node_number.clear();
+    direction_average_pixal.clear();
+    direction_node_pixal.clear();
+    direction_all_nodes.clear();
+    direction_node.clear();
+
+    if(weight==-INF){//this maybe means that there is only one center node in the sphere
+        Node result;
+        result.x=-1;
+        return result;
+    }else{
+        return result_return;
+    }
+
+}
+
+Node choose_region_vn2(unsigned char * &img1d,struct sphere_model sphere_m,Node source_node,Node target_node,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z){
+    //eight directions
+    QList<V3DLONG> direction_node_number;
+    QList<double> direction_average_pixal;
+    QList<double> direction_node_pixal;
+    QList<QList<Node>> direction_all_nodes;
+    QList<Node> direction_node;
+
+    direction_node_pixal.append(sphere_m.pixal_up_right_up);
+    direction_node_pixal.append(sphere_m.pixal_up_left_up);
+    direction_node_pixal.append(sphere_m.pixal_up_left_bottom);
+    direction_node_pixal.append(sphere_m.pixal_up_right_bottom);
+    direction_node_pixal.append(sphere_m.pixal_down_right_up);
+    direction_node_pixal.append(sphere_m.pixal_down_left_up);
+    direction_node_pixal.append(sphere_m.pixal_down_left_bottom);
+    direction_node_pixal.append(sphere_m.pixal_down_right_bottom);
+
+    direction_node.append(sphere_m.node_up_right_up);
+    direction_node.append(sphere_m.node_up_left_up);
+    direction_node.append(sphere_m.node_up_left_bottom);
+    direction_node.append(sphere_m.node_up_right_bottom);
+    direction_node.append(sphere_m.node_down_right_up);
+    direction_node.append(sphere_m.node_down_left_up);
+    direction_node.append(sphere_m.node_down_left_bottom);
+    direction_node.append(sphere_m.node_down_right_bottom);
+
+    direction_node_number.append(sphere_m.up_right_up);
+    direction_node_number.append(sphere_m.up_left_up);
+    direction_node_number.append(sphere_m.up_left_bottom);
+    direction_node_number.append(sphere_m.up_right_bottom);
+    direction_node_number.append(sphere_m.down_right_up);
+    direction_node_number.append(sphere_m.down_left_up);
+    direction_node_number.append(sphere_m.down_left_bottom);
+    direction_node_number.append(sphere_m.down_right_bottom);
+
+    direction_all_nodes.append(sphere_m.QList_up_right_up);
+    direction_all_nodes.append(sphere_m.QList_up_left_up);
+    direction_all_nodes.append(sphere_m.QList_up_left_bottom);
+    direction_all_nodes.append(sphere_m.QList_up_right_bottom);
+    direction_all_nodes.append(sphere_m.QList_down_right_up);
+    direction_all_nodes.append(sphere_m.QList_down_left_up);
+    direction_all_nodes.append(sphere_m.QList_down_left_bottom);
+    direction_all_nodes.append(sphere_m.QList_down_right_bottom);
+
+    double average_pixval_1=(sphere_m.up_right_up==0)?0:sphere_m.sum_pixal_up_right_up/sphere_m.up_right_up;
+    direction_average_pixal.append(average_pixval_1);
+    double average_pixval_2=(sphere_m.up_left_up==0)?0:sphere_m.sum_pixal_up_left_up/sphere_m.up_left_up;
+    direction_average_pixal.append(average_pixval_2);
+    double average_pixval_3=(sphere_m.up_left_bottom==0)?0:sphere_m.sum_pixal_up_left_bottom/sphere_m.up_left_bottom;
+    direction_average_pixal.append(average_pixval_3);
+    double average_pixval_4=(sphere_m.up_right_bottom==0)?0:sphere_m.sum_pixal_up_right_bottom/sphere_m.up_right_bottom;
+    direction_average_pixal.append(average_pixval_4);
+    double average_pixval_5=(sphere_m.down_right_up==0)?0:sphere_m.sum_pixal_down_right_up/sphere_m.down_right_up;
+    direction_average_pixal.append(average_pixval_5);
+    double average_pixval_6=(sphere_m.down_left_up==0)?0:sphere_m.sum_pixal_down_left_up/sphere_m.down_left_up;
+    direction_average_pixal.append(average_pixval_6);
+    double average_pixval_7=(sphere_m.down_left_bottom==0)?0:sphere_m.sum_pixal_down_left_bottom/sphere_m.down_left_bottom;
+    direction_average_pixal.append(average_pixval_7);
+    double average_pixval_8=(sphere_m.down_right_bottom==0)?0:sphere_m.sum_pixal_down_right_bottom/sphere_m.down_right_bottom;
+    direction_average_pixal.append(average_pixval_8);
+    double weight=-INF;
+    double weight_temp=-INF;
+    int node_number=0;
+    double angle_final=0;
+    V3DLONG node_numbers=0;
+
+    for(int i=0;i<direction_node.size();i++)
+    {
+        if(direction_node_number.at(i)==0){//means there is no suitable node
+            continue;
+        }
+        QList<Node> sub_all_nodes=direction_all_nodes.at(i);
+        weight_temp=0;
+        for(int j=0;j<sub_all_nodes.size();j++){
+            Node sub_node=sub_all_nodes.at(j);
+            V3DLONG vector1_x=source_node.x-sub_node.x;
+            V3DLONG vector1_y=source_node.y-sub_node.y;
+            V3DLONG vector1_z=source_node.z-sub_node.z;
+
+            V3DLONG vector2_x=source_node.x-target_node.x;
+            V3DLONG vector2_y=source_node.y-target_node.y;
+            V3DLONG vector2_z=source_node.z-target_node.z;
+            double angle=(vector1_x*vector2_x+vector1_y*vector2_y+vector1_z*vector2_z)/((double)sqrt((double)(vector1_x*vector1_x+vector1_y*vector1_y+vector1_z*vector1_z))*(double)sqrt((double)(vector2_x*vector2_x+vector2_y*vector2_y+vector2_z*vector2_z)));
+            double distance_between_can_tar=(double)sqrt((double)(sub_node.x-target_node.x)*(sub_node.x-target_node.x)+(sub_node.y-target_node.y)*(sub_node.y-target_node.y)+(sub_node.z-target_node.z)*(sub_node.z-target_node.z));
+            weight_temp=weight_temp+angle*(img1d[GET_IND(sub_node.x,sub_node.y,sub_node.z)]*img1d[GET_IND(target_node.x,target_node.y,target_node.z)])/(distance_between_can_tar*distance_between_can_tar);
+
+        }
+        weight_temp=weight_temp/sub_all_nodes.size();
+
+        if(weight<weight_temp)
+        {
+            weight=weight_temp;
+            //angle_final=angle;
+            node_number=i;
+            // node_numbers=direction_node_number.at(i);
+
+        }
+    }//choose the region
+    double distance_minimum=INF;
+    int minimum_number=0;
+
+    for(int k=0;k<direction_all_nodes.at(node_number).size();k++){//choose the node in the area
+        Node temp=direction_all_nodes.at(node_number).at(k);
+        double dis=(double)sqrt((double)(temp.x-target_node.x)*(temp.x-target_node.x)+(temp.y-target_node.y)*(temp.y-target_node.y)+(temp.z-target_node.z)*(temp.z-target_node.z));
+        if(distance_minimum>dis){
+            distance_minimum=dis;
+            minimum_number=k;
+
+        }
+
+    }
+    Node result_return=direction_all_nodes.at(node_number).at(minimum_number);
+    // printf("select_angle::%lf\n",angle_final);
+    //printf("select_direction::%d\n",node_number);
+    direction_node_number.clear();
+    direction_average_pixal.clear();
+    direction_node_pixal.clear();
+    direction_all_nodes.clear();
+    direction_node.clear();
+
+    if(weight==-INF){//this maybe means that there is only one center node in the sphere
+        Node result;
+        result.x=-1;
+        return result;
+    }else{
+        return result_return;
+    }
+
+}
+
+Node choose_region(struct sphere_model sphere_m,Node source_node,Node target_node){
+
+    QList<V3DLONG> direction_node_number;
+    QList<double> direction_average_pixal;
+    QList<double> direction_node_pixal;
+    QList<Node> direction_node;
+
+    direction_node_pixal.append(sphere_m.pixal_up_right_up);
+    direction_node_pixal.append(sphere_m.pixal_up_left_up);
+    direction_node_pixal.append(sphere_m.pixal_up_left_bottom);
+    direction_node_pixal.append(sphere_m.pixal_up_right_bottom);
+    direction_node_pixal.append(sphere_m.pixal_down_right_up);
+    direction_node_pixal.append(sphere_m.pixal_down_left_up);
+    direction_node_pixal.append(sphere_m.pixal_down_left_bottom);
+    direction_node_pixal.append(sphere_m.pixal_down_right_bottom);
+
+    direction_node.append(sphere_m.node_up_right_up);
+    direction_node.append(sphere_m.node_up_left_up);
+    direction_node.append(sphere_m.node_up_left_bottom);
+    direction_node.append(sphere_m.node_up_right_bottom);
+    direction_node.append(sphere_m.node_down_right_up);
+    direction_node.append(sphere_m.node_down_left_up);
+    direction_node.append(sphere_m.node_down_left_bottom);
+    direction_node.append(sphere_m.node_down_right_bottom);
+
+    direction_node_number.append(sphere_m.up_right_up);
+    direction_node_number.append(sphere_m.up_left_up);
+    direction_node_number.append(sphere_m.up_left_bottom);
+    direction_node_number.append(sphere_m.up_right_bottom);
+    direction_node_number.append(sphere_m.down_right_up);
+    direction_node_number.append(sphere_m.down_left_up);
+    direction_node_number.append(sphere_m.down_left_bottom);
+    direction_node_number.append(sphere_m.down_right_bottom);
+
+    double average_pixval_1=(sphere_m.up_right_up==0)?0:sphere_m.sum_pixal_up_right_up/sphere_m.up_right_up;
+    direction_average_pixal.append(average_pixval_1);
+    double average_pixval_2=(sphere_m.up_left_up==0)?0:sphere_m.sum_pixal_up_left_up/sphere_m.up_left_up;
+    direction_average_pixal.append(average_pixval_2);
+    double average_pixval_3=(sphere_m.up_left_bottom==0)?0:sphere_m.sum_pixal_up_left_bottom/sphere_m.up_left_bottom;
+    direction_average_pixal.append(average_pixval_3);
+    double average_pixval_4=(sphere_m.up_right_bottom==0)?0:sphere_m.sum_pixal_up_right_bottom/sphere_m.up_right_bottom;
+    direction_average_pixal.append(average_pixval_4);
+    double average_pixval_5=(sphere_m.down_right_up==0)?0:sphere_m.sum_pixal_down_right_up/sphere_m.down_right_up;
+    direction_average_pixal.append(average_pixval_5);
+    double average_pixval_6=(sphere_m.down_left_up==0)?0:sphere_m.sum_pixal_down_left_up/sphere_m.down_left_up;
+    direction_average_pixal.append(average_pixval_6);
+    double average_pixval_7=(sphere_m.down_left_bottom==0)?0:sphere_m.sum_pixal_down_left_bottom/sphere_m.down_left_bottom;
+    direction_average_pixal.append(average_pixval_7);
+    double average_pixval_8=(sphere_m.down_right_bottom==0)?0:sphere_m.sum_pixal_down_right_bottom/sphere_m.down_right_bottom;
+    direction_average_pixal.append(average_pixval_8);
+    double weight=INF;
+    double weight_temp=INF;
+    int node_number=0;
+    double angle_final=0;
+    V3DLONG node_numbers=0;
+
+    for(int i=0;i<direction_node.size();i++)
+    {
+        if(direction_node_number.at(i)==0){//means there is no suitable node
+            continue;
+        }
+        Node temp=direction_node.at(i);
+        V3DLONG vector1_x=source_node.x-temp.x;
+        V3DLONG vector1_y=source_node.y-temp.y;
+        V3DLONG vector1_z=source_node.z-temp.z;
+
+        V3DLONG vector2_x=source_node.x-target_node.x;
+        V3DLONG vector2_y=source_node.y-target_node.y;
+        V3DLONG vector2_z=source_node.z-target_node.z;
+        //calculate the distance between candidate node and target node
+        double distance_between_can_tar=(double)sqrt((double)(temp.x-target_node.x)*(temp.x-target_node.x)+(temp.y-target_node.y)*(temp.y-target_node.y)+(temp.z-target_node.z)*(temp.z-target_node.z));
+
+        double angle=(vector1_x*vector2_x+vector1_y*vector2_y+vector1_z*vector2_z)/((double)sqrt((double)(vector1_x*vector1_x+vector1_y*vector1_y+vector1_z*vector1_z))*(double)sqrt((double)(vector2_x*vector2_x+vector2_y*vector2_y+vector2_z*vector2_z)));
+        //weight_temp=angle*log((2*direction_node_number.at(i)+direction_average_pixal.at(i)));
+        //weight_temp=exp((double)angle*direction_node_number.at(i));
+        weight_temp=angle*exp((double)(2*direction_node_number.at(i)+direction_average_pixal.at(i)));
+        weight_temp=distance_between_can_tar;
+        if(weight>weight_temp)
+        {
+            weight=weight_temp;
+            angle_final=angle;
+            node_number=i;
+            node_numbers=direction_node_number.at(i);
+
+        }
+    }
+    // printf("select_angle::%lf\n",angle_final);
+    // printf("select_direction::%d\n",node_number);
+    direction_node_number.clear();
+    direction_average_pixal.clear();
+    direction_node_pixal.clear();
+    // direction_node.clear();
+
+    if(weight==INF){//this maybe means that there is only one center node in the sphere
+        Node result;
+        result.x=-1;
+        return result;
+    }else{
+        return direction_node.at(node_number);
+    }
+
+}
+
+QMap<int,Node*> delete_cluster_node(unsigned char * &img1d,QMap<V3DLONG,QList<Node>> final_cluster,V3DLONG sz_x,V3DLONG sz_y,V3DLONG sz_z,V3DLONG *in_sz,double prim_distance){//every classification node also contained itself
+    QMap<int,Node*> result;
+    QMap<V3DLONG,QMap<V3DLONG,Node>> mid_result;
+
 
     for(QMap<V3DLONG,QList<Node> >::iterator iter =final_cluster.begin(); iter != final_cluster.end(); iter++){//clean the final_cluster, change its type to QMap<V3DLONG,QMap<V3DLONG,Node> > for easy process
         QList<Node> cluster_list=iter.value();
@@ -2619,20 +4874,28 @@ QMap<V3DLONG,QMap<V3DLONG,Node> > delete_cluster_node(unsigned char * &img1d,QMa
         mid_result.insert(iter.key(),temp);
     }
     //begin to merge the node for each classification
-    for(QMap<V3DLONG,QMap<V3DLONG,Node> >::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
+
+    int count_number=0;
+    for(QMap<V3DLONG,QMap<V3DLONG,Node>>::iterator iter =mid_result.begin(); iter != mid_result.end(); iter++){
+
         QMap<V3DLONG,Node> elem_Map=iter.value();
         QMap<V3DLONG,Node> after_merge=merge_cluster_node(elem_Map,prim_distance);
-       // printf("%d\n",after_merge.count());
-        if(after_merge.count()==1){
+        //printf("%d\n",after_merge.count());
+        /* if(after_merge.count()==1){
             V3DLONG key=after_merge.begin().key();
             Node test=after_merge.begin().value();
-            //printf("baohan: %d\n",node_afterMerge.contains(key));//
-           // printf("baohan: %d\n",key==GET_IND(test.x,test.y,test.z));
+            //printf("baohan: %d\n",node_afterMerge.contains(key));
+            // printf("baohan: %d\n",key==GET_IND(test.x,test.y,test.z));
+        }*/
+        //change the type of QMap<V3DLONG,Node> to QMap<int,Node*>
+        for(QMap<V3DLONG,Node>::iterator iter1=after_merge.begin();iter1!=after_merge.end();iter1++){
+            Node temp1=iter1.value();
+            Node* temp2=new Node(temp1.x,temp1.y,temp1.z);
+            result.insert(count_number,temp2);
+            count_number++;
 
         }
-        result.insert(iter.key(),after_merge);
-
-
+        //result.insert(iter.key(),after_merge);
     }
 
     return result;
@@ -2670,7 +4933,7 @@ QMap<V3DLONG,QList<Node> > cluster2newroot(QMap<V3DLONG,QList<V3DLONG> > covered
             temp.append(begin.value());
             begin++;
         }
-       Node* temp_root= node_afterMerge.value(iter.key());//add the root itself as its sub-element
+        Node* temp_root= node_afterMerge.value(iter.key());//add the root itself as its sub-element
         temp.append(getnode(temp_root));
 
         result.insert(iter.key(),temp);
@@ -2837,7 +5100,7 @@ QMap<V3DLONG,Node> merge_cluster_node(QMap<V3DLONG,Node> rootnodes,double distan
     for(QMap<V3DLONG,Node>::iterator iter1 =rootnodes.begin(); iter1 != rootnodes.end(); iter1++){
 
         Node elem=(iter1.value());
-       // V3DLONG index1=GET_IND(elem.x,elem.y,elem.z);
+        // V3DLONG index1=GET_IND(elem.x,elem.y,elem.z);
 
         if ((evidence2.value(iter1.key())==1)){
 
@@ -2851,7 +5114,7 @@ QMap<V3DLONG,Node> merge_cluster_node(QMap<V3DLONG,Node> rootnodes,double distan
                 continue;
             }
             Node elem1=iter2.value();
-           // V3DLONG index2=GET_IND(elem1->x,elem1->y,elem1->z);
+            // V3DLONG index2=GET_IND(elem1->x,elem1->y,elem1->z);
             double dis=(double)sqrt((double)(elem.x-elem1.x)*(elem.x-elem1.x)+(double)(elem.y-elem1.y)*(elem.y-elem1.y)+(double)(elem.z-elem1.z)*(elem.z-elem1.z));
 
             if((dis/(elem.r+elem1.r)<distance)&&(!node_afterMerge.contains(iter2.key()))){//if some nodes cover root, do not mark the root as deletion-able;

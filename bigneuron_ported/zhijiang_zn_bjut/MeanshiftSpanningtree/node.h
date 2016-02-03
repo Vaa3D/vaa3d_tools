@@ -12,7 +12,7 @@ public:
     V3DLONG number;//swc中编号
 	int containByroot;//flag用于判断是否被其他的根节点包含
 	double intensity;
-	int class_mark;//类别标记
+    V3DLONG class_mark;//类别标记,用自己的序号做标记
     QMap<V3DLONG,Node*> connect;//连接点集合
     V3DLONG count;
     double r;
