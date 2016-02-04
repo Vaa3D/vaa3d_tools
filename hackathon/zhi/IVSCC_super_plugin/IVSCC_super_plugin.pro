@@ -12,6 +12,8 @@ HEADERS	+= sort_swc_fiji.h
 SOURCES	+= IVSCC_super_plugin_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
+
 
 
 TARGET	= $$qtLibraryTarget(IVSCC_super_plugin)

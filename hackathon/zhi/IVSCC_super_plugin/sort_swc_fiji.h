@@ -16,6 +16,10 @@
 #include <string.h>
 #include <vector>
 #include <iostream>
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../neurontracing_mip/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/neuron_radius/hierarchy_prune.h"
+
 using namespace std;
 
 #ifndef VOID
@@ -23,6 +27,12 @@ using namespace std;
 #endif
 
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
 
 
 QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT) 
@@ -313,7 +323,7 @@ NeuronTree SortSWC(QList<NeuronSWC> & neurons, V3DLONG newrootid, double thres)
     return nt_sorted;
 };
 
-NeuronTree prunswc(NeuronTree nt, double length)
+NeuronTree pruneswc(NeuronTree nt, double length)
 {
     QVector<QVector<V3DLONG> > childs;
 
@@ -397,6 +407,84 @@ NeuronTree prunswc(NeuronTree nt, double length)
 
    if(flag) {delete[] flag; flag = 0;}
    return nt_prunned;
+}
+
+bool smoothswc(vector<MyMarker*> & inswc, double length)
+{
+    unsigned char* inimg1d = 0;
+    vector<HierarchySegment*> topo_segs;
+    swc2topo_segs(inswc, topo_segs, 1, inimg1d, 0, 0, 0);
+
+    cout<<"Smooth the final curve"<<endl;
+    for(int i = 0; i < topo_segs.size(); i++)
+    {
+        HierarchySegment * seg = topo_segs[i];
+        MyMarker * leaf_marker = seg->leaf_marker;
+        MyMarker * root_marker = seg->root_marker;
+        vector<MyMarker*> seg_markers;
+        MyMarker * p = leaf_marker;
+        while(p != root_marker)
+        {
+            seg_markers.push_back(p);
+            p = p->parent;
+        }
+        seg_markers.push_back(root_marker);
+        smooth_curve_Z(seg_markers, length);
+       // smooth_curve_XY(seg_markers, length);
+    }
+    inswc.clear();
+
+    topo_segs2swc(topo_segs, inswc, 0);
+    return true;
+}
+
+vector<MyMarker*> internodeprune(vector<MyMarker*> & final_out_swc, NeuronTree nt)
+{
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+    vector<MyMarker*> final_out_swc_updated;
+    final_out_swc_updated.push_back(final_out_swc[0]);
+
+
+    for(int j = 0; j < final_out_swc.size(); j++)
+    {
+        if(final_out_swc[j]->parent != 0)
+        {
+            int flag_prun = 0;
+            int par_x = final_out_swc[j]->parent->x;
+            int par_y = final_out_swc[j]->parent->y;
+            int par_z = final_out_swc[j]->parent->z;
+            int par_r = final_out_swc[j]->parent->radius;
+
+            int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
+            if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+            {
+                if(childs[j].size() > 0)
+                {
+                    for(int jj = 0; jj < childs[j].size(); jj++)
+                        final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
+                }
+                flag_prun = 1;
+            }
+
+            if(flag_prun == 0)
+            {
+                final_out_swc_updated.push_back(final_out_swc[j]);
+            }
+        }
+        else
+            final_out_swc_updated.push_back(final_out_swc[j]);
+
+    }
+
+    return final_out_swc_updated;
 }
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
