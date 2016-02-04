@@ -9,7 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-class IVSCC_super_plugin : public QObject, public V3DPluginInterface2_1
+class AllenNeuron_postprocessing : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);

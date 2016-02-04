@@ -5,11 +5,11 @@
  
 #include "v3d_message.h"
 #include <vector>
-#include "IVSCC_super_plugin_plugin.h"
+#include "AllenNeuron_postprocessing_plugin.h"
 #include <iostream>
 //#include <boost/lexical_cast.hpp>
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
-#include "sort_swc_fiji.h"
+#include "sort_swc_IVSCC.h"
 #include "../IVSCC_radius_estimation/my_surf_objs.h"
 #include "../IVSCC_radius_estimation/marker_radius.h"
 #include "../IVSCC_radius_estimation/smooth_curve.h"
@@ -20,9 +20,9 @@
 #define FNUM 22
 
 using namespace std;
-Q_EXPORT_PLUGIN2(IVSCC_super_plugin, IVSCC_super_plugin);
+Q_EXPORT_PLUGIN2(AllenNeuron_postprocessing, AllenNeuron_postprocessing);
  
-QStringList IVSCC_super_plugin::menulist() const
+QStringList AllenNeuron_postprocessing::menulist() const
 {
 	return QStringList() 
         <<tr("whole_process")
@@ -30,7 +30,7 @@ QStringList IVSCC_super_plugin::menulist() const
 		<<tr("about");
 }
 
-QStringList IVSCC_super_plugin::funclist() const
+QStringList AllenNeuron_postprocessing::funclist() const
 {
 	return QStringList()
 		<<tr("func1")
@@ -38,7 +38,7 @@ QStringList IVSCC_super_plugin::funclist() const
 		<<tr("help");
 }
 
-void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("part1"))
 	{
@@ -267,7 +267,7 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	}
 }
 
-bool IVSCC_super_plugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool AllenNeuron_postprocessing::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
