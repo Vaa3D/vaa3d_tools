@@ -248,7 +248,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	}
 
 	export_listNeuron_2swc(merge_result,qPrintable(outfileName));
-	printf("\t %s has been generated successfully, size:%d.\n",qPrintable(outfileName), merge_result.size());
+	printf("%s has been generated successfully\n",qPrintable(outfileName));
 
 	return true;
 }
