@@ -152,7 +152,7 @@ bool inter_node_pruning::dofunc(const QString & func_name, const V3DPluginArgLis
 
         vector<MyMarker*> final_out_swc = readSWC_file(inswc_file.toStdString());
         vector<MyMarker*> final_out_swc_updated;
-        final_out_swc_updated.push_back(final_out_swc[0]);
+     //   final_out_swc_updated.push_back(final_out_swc[0]);
 
 
         for(int j = 0; j < final_out_swc.size(); j++)
