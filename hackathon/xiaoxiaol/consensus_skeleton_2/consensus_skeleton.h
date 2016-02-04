@@ -8,7 +8,7 @@
 using namespace std;
 
 bool  export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename);
-void  non_max_suppresion( unsigned char * img1d,V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,int threshold_votes,
+void  non_max_suppresion( unsigned char * img1d,V3DLONG sz_x, V3DLONG sz_y,V3DLONG sz_z,double threshold_votes,
                           Point3D offset, vector<Point3D>  &node_list, vector<unsigned int> &vote_list, unsigned int win_size);
 
 QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
@@ -26,7 +26,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
                          int cluster_distance_threshold, V3DPluginCallback2 &callback);
 
 bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, double soma_x, double soma_y, double soma_z,
-               QList<NeuronSWC> &out_sorted_consensus_nt_list);
+               QList<NeuronSWC> &out_sorted_consensus_nt_list, double bridge_size);
 
 void  remove_outliers(vector<NeuronTree> & nt_list,double &median_root_x, double &median_root_y, double  &median_root_z);
 #endif
