@@ -26,7 +26,7 @@ QStringList IVSCC_super_plugin::menulist() const
 {
 	return QStringList() 
 		<<tr("part1")
-		<<tr("part2")
+        <<tr("whole_process")
 		<<tr("about");
 }
 
@@ -89,7 +89,7 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         }
 
 	}
-	else if (menu_name == tr("part2"))
+    else if (menu_name == tr("whole_process"))
 	{
         radiusEstimationDialog dialog(callback, parent);
         if (!dialog.image)
@@ -99,18 +99,6 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         string inswc_file = dialog.inswc_file;
         string outswc_file = dialog.outswc_file;
-        bool is_2d = dialog.is_2d;
-        double bkg_thresh = dialog.bkg_thresh;
-        double stop_thresh = dialog.stop_thresh/100;
-
-        V3DLONG  in_sz[4];
-        Image4DSimple* p4DImage = dialog.image;
-        unsigned char* inimg1d = p4DImage->getRawData();
-
-        in_sz[0] = p4DImage->getXDim();
-        in_sz[1] = p4DImage->getYDim();
-        in_sz[2] = p4DImage->getZDim();
-        in_sz[3] = p4DImage->getCDim();
 
         QString fileOpenName =  QString::fromStdString(inswc_file);
 
@@ -135,6 +123,21 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
 
         vector<MyMarker*> inswc = readSWC_file(fileTmpName.toStdString());
+
+        //radius estimation start
+        bool is_2d = dialog.is_2d;
+        double bkg_thresh = dialog.bkg_thresh;
+        double stop_thresh = dialog.stop_thresh/100;
+
+        V3DLONG  in_sz[4];
+        Image4DSimple* p4DImage = dialog.image;
+        unsigned char* inimg1d = p4DImage->getRawData();
+
+        in_sz[0] = p4DImage->getXDim();
+        in_sz[1] = p4DImage->getYDim();
+        in_sz[2] = p4DImage->getZDim();
+        in_sz[3] = p4DImage->getCDim();
+
         if(inswc.empty()) return;
         for(int i = 0; i < inswc.size(); i++)
         {
@@ -171,6 +174,8 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         topo_segs2swc(topo_segs, inswc, 0); // no resampling
         saveSWC_file(fileTmpName.toStdString(), inswc);
 
+        //radius estimation end
+
         NeuronTree nt_radius= readSWC_file(fileTmpName);
         NeuronTree nt_radius_sort = SortSWC(nt_radius.listNeuron,VOID, 0);
         export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
@@ -185,7 +190,7 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
       //  export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
 
-        QString fileDefaultName = fileOpenName+QString("_part1.swc");
+        QString fileDefaultName = fileOpenName+QString("_processed.swc");
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                 fileDefaultName,
@@ -204,7 +209,7 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         NeuronTree nt_final = readSWC_file(fileSaveName);
         double * features = new double[FNUM];
-        computeFeature(nt,features);
+        computeFeature(nt_final,features);
         QMessageBox infoBox;
         infoBox.setText("Global features of the neuron:");
         infoBox.setInformativeText(QString("<pre><font size='4'>"
