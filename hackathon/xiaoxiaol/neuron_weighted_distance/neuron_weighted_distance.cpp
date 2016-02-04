@@ -39,34 +39,36 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     V3DLONG p1sz = p1->listNeuron.size(), p2sz = p2->listNeuron.size();
     if (p1sz<1 || p2sz<1) return ss;
 
-    double sum12, sum21;
-    V3DLONG nseg1, nseg2;
-    double sum12big, sum21big;
+    double w_dist_12big = -1, w_dist_21big = -1;
     double maxdist12 = -1, maxdist21 = -1; //set as some big numbers
-    V3DLONG nseg1big, nseg2big;
-    sum12 = dist_directional_swc_1_2(nseg1, nseg1big, sum12big, p1, p2, maxdist12);
-    sum21 = dist_directional_swc_1_2(nseg2, nseg2big, sum21big, p2, p1, maxdist21);
+    double big_ratio12 = 0.0,big_ratio21 = 0.0;
 
-    qDebug() << "sum12="<<sum12 << "npoints1="<< nseg1 << "sum21="<< sum21 << "npoint2="<< nseg2;
-    qDebug() << "sum12big="<<sum12big << "npoints1big="<< nseg1big << "sum21big="<< sum21big << "npoint2big="<< nseg2big;
-    qDebug() << "maxdist12="<<maxdist12 << "maxdist21="<< maxdist21;
+    double weighted_dist_12 = weighted_dist_directional_swc_1_2( w_dist_12big, big_ratio12, p1, p2, maxdist12);
+    double weighted_dist_21 = weighted_dist_directional_swc_1_2( w_dist_21big, big_ratio21,p2, p1, maxdist21);
 
-    ss.dist_allnodes = (sum12/nseg1 + sum21/nseg2)/2.0;
-    if (nseg1big>0)
+
+    if (weighted_dist_12 < 0 || weighted_dist_21 <0)
     {
-        if (nseg2big>0)
-            ss.dist_apartnodes = (sum12big/nseg1big + sum21big/nseg2big)/2.0;
-        else
-            ss.dist_apartnodes = (sum12big/nseg1big);
+        qDebug() <<"Error: one of the input neuron probably has less than 2 SWC nodes, cannot computing.";
+        ss.weighted_dist12_allnodes = -1;
+        ss.weighted_dist21_allnodes = -1;
+        ss.weighted_dist_ave_allnodes = -1;
+        ss.dist_max = -1;
+        ss.dist_apartnodes = -1;
+        ss.percent_apartnodes = -1;
+        return ss;
     }
-    else
-    {
-        if (nseg2big>0)
-            ss.dist_apartnodes = (sum21big/nseg2big);
-        else
-            ss.dist_apartnodes = 0;
-    }
-    ss.percent_apartnodes = (double(nseg1big)/nseg1 + double(nseg2big)/nseg2)/2.0;
+
+
+    ss.weighted_dist12_allnodes = weighted_dist_12;
+
+    ss.weighted_dist21_allnodes = weighted_dist_21;
+
+    ss.weighted_dist_ave_allnodes = (weighted_dist_12+ weighted_dist_21)/2.0;
+
+    ss.dist_apartnodes = (w_dist_12big + w_dist_21big)/2.0;
+
+    ss.percent_apartnodes = (big_ratio12 + big_ratio21)/2.0;
 
     ss.dist_max = (maxdist12<maxdist21) ? maxdist12 : maxdist21; //this max distance should refelect the meaningful measure.
                                                                  // Becasue the two neurons (tracts) can have different starting and ending locations,
@@ -76,30 +78,45 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     return ss;
 }
 
-double dist_directional_swc_1_2(V3DLONG & nseg1, V3DLONG & nseg1big, double & sum1big, const NeuronTree *p1, const NeuronTree *p2, double & maxdist)
+double weighted_dist_directional_swc_1_2( double & w_dist_12big, double &difference_ratio12, const NeuronTree *p1, const NeuronTree *p2, double & maxdist)
 {
     if (!p1 || !p2) return -1;
     V3DLONG p1sz = p1->listNeuron.size(), p2sz = p2->listNeuron.size();
-    if (p1sz<2 || p2sz<2) return -1;
-
+    if (p1sz<2 || p2sz<2)
+    {
+        return -1;
+    }
     NeuronSWC *tp1, *tp2;
     V3DLONG i, j;
-    double sum1=0;
-    nseg1=0;
-    nseg1big=0;
-    sum1big=0;
-
+    double sum_dist=0, sum_weights=0.0;
+    double sum_weights_big=0.0;
+    w_dist_12big=0;
+    difference_ratio12 = 0.0;
+    V3DLONG nseg=0;
+    V3DLONG nsegbig=0;
+    double fea_v = -1;
     QHash<int, int> h1 = generate_neuron_swc_hash(p1); //generate a hash lookup table from a neuron swc graph
 
     for (i=0;i<p1->listNeuron.size();i++)
     {
         //first find the two ends of a line seg
         tp1 = (NeuronSWC *)(&(p1->listNeuron.at(i)));
+
+
         if (tp1->pn < 0 || tp1->pn >= p1sz)
             continue;
         tp2 = (NeuronSWC *)(&(p1->listNeuron.at(h1.value(tp1->pn)))); //use hash table
         //qDebug() << "i="<< i << " pn="<<tp1->pn - 1;
 
+        // take feature value from the input eswc file
+        if (tp1->fea_val.size()>0 )
+        {
+            fea_v= tp1->fea_val[0];
+        }
+        else{
+            fea_v= tp2->fea_val[0];
+
+        }
         //now produce a series of points for the line seg
         double len=dist_L2(XYZ(tp1->x,tp1->y,tp1->z), XYZ(tp2->x,tp2->y,tp2->z));
         int N = int(1+len+0.5);
@@ -119,8 +136,9 @@ double dist_directional_swc_1_2(V3DLONG & nseg1, V3DLONG & nseg1big, double & su
         {
             XYZ curpt(tp1->x + ptdiff.x*j, tp1->y + ptdiff.y*j, tp1->z + ptdiff.z*j);
             double cur_d = dist_pt_to_swc(curpt, p2);
-            sum1 += cur_d;
-            nseg1++;
+            sum_dist += cur_d*fea_v;
+            sum_weights += fea_v;
+            nseg++;
 
             if (maxdist<0) //use <0 as a condition to check if maxdist has been set
                 maxdist = cur_d;
@@ -132,16 +150,37 @@ double dist_directional_swc_1_2(V3DLONG & nseg1, V3DLONG & nseg1big, double & su
 
             if (cur_d>=d_thres)
             {
-                sum1big += cur_d;
-                nseg1big++;
-                //qDebug() << "(" << cur_d << ", " << nseg1big << ")";
+                w_dist_12big += cur_d *fea_v;
+                sum_weights_big +=  fea_v;
+                nsegbig++;
+                //qDebug() << "(" << cur_d << ", " << w_dist_nseg1big << ")";
             }
 
         }
     }
     //qDebug() << "end directional neuronal distance computing";
 
-    return sum1;
+    if( nseg > 0 ){
+        difference_ratio12 = nsegbig/nseg;
+    }
+
+    if (sum_weights_big == 0 )
+    {
+        w_dist_12big = -1;
+    }
+    else
+    {
+        w_dist_12big = w_dist_12big/sum_weights_big;
+    }
+
+
+    if (sum_weights ==0 )
+    {
+        w_dist_12big = -1;
+        return -1;
+    }
+    return sum_dist/sum_weights;
+
 }
 
 double dist_pt_to_swc(const XYZ & pt, const NeuronTree * p_tree)

@@ -24,8 +24,11 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 	selectDlg->exec();
 
     NeuronDistSimple tmp_score = weighted_neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1);
-	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
-	message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
+    QString message = QString("Distance between neuron 1 (with feature) :\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
+
+    message += QString("weighted entire-structure neuron 1 to neuron 2 = %1\n").arg(tmp_score.weighted_dist12_allnodes);
+    message += QString("weighted entire-structure neuron 2 to neuron 1 = %1\n").arg(tmp_score.weighted_dist21_allnodes);
+    message += QString("average of bidirectional entire-structure = %1\n").arg(tmp_score.weighted_dist_ave_allnodes);
 	message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
 	message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 
@@ -61,10 +64,13 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	NeuronTree nt2 = readSWC_file(name_nt2);
     NeuronDistSimple tmp_score = weighted_neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu);
 
-	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
-    cout<<"entire-structure-average = "<<tmp_score.dist_allnodes <<endl;
+    cout<<"\nDistance between neuron 1 (with feature) "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
+    cout<<"weighted entire-structure distance from neuron 1 to 2= "<<tmp_score.weighted_dist12_allnodes <<endl;
+    cout<<"weighted entire-structure distance from neuron 2 to 1= "<<tmp_score.weighted_dist21_allnodes <<endl;
+    cout<<"average bidirectional weighted entire-structure= "<<tmp_score.weighted_dist_ave_allnodes <<endl;
 	cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
 	cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
+    cout<< "maximum distance = "<<tmp_score.dist_max<<endl<<endl;
 
     if (output.size() == 1)
     {
@@ -76,11 +82,17 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << "   ";
         myfile << name_nt2.toStdString().c_str();
         myfile << "   ";
-        myfile << tmp_score.dist_allnodes;
+        myfile << tmp_score.weighted_dist12_allnodes;
+        myfile << "   ";
+        myfile << tmp_score.weighted_dist21_allnodes;
+        myfile << "   ";
+        myfile << tmp_score.weighted_dist_ave_allnodes;
         myfile << "   ";
         myfile << tmp_score.dist_apartnodes;
         myfile << "   ";
         myfile << tmp_score.percent_apartnodes;
+        myfile << "   ";
+        myfile << tmp_score.dist_max;
         myfile << "\n";
         myfile.close();
     }
@@ -123,10 +135,10 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 void printHelp()
 {
-	cout<<"\nNeuron Distance: compute the distance between two neurons. distance is defined as the average distance among all nearest point pairs. 2012-05-04 by Yinan Wan"<<endl;
-    cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2> -o <output_file>"<<endl;
+    cout<<"\n Neuron  Weighted Distance: Compute the weighted distance between two neurons, input neuron 1 should provide feature value to be the weights. Distance is defined as the average distance among all nearest point pairs."<<endl;
+    cout<<"Usage: v3d -x neuron_weighted_distance -f neuron_weighted_distance -i <input_filename1> <input_filename2, *.eswc> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
-	cout<<"\t-i <input_filename1> <input_filename2>: input neuron structure file (*.swc *.eswc)"<<endl;
+    cout<<"\t-i <input_filename1, .eswc> <input_filename2>: input neuron structure file"<<endl;
 	cout<<"Distance result will be printed on the screen\n"<<endl;
 }
 
