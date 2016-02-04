@@ -56,9 +56,9 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	QString name_nt1(inlist->at(0));
 	QString name_nt2(inlist->at(1));
     NeuronTree nt1 = readSWC_file(name_nt1); //eswc file
-    if ( !name_nt1.endsWith('.eswc'))
+    if ( !name_nt1.endsWith(".eswc"))
     {
-         cout <<"Error: the fist input file is not an eswc file!"<<endl;
+         cout <<"Error: the fist input file is not an eswc file!" <<inlist->at(0)<<endl;
          return false;
     }
 	NeuronTree nt2 = readSWC_file(name_nt2);

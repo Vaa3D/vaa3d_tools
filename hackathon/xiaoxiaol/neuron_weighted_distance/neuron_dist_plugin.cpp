@@ -8,20 +8,20 @@ Q_EXPORT_PLUGIN2(neuron_dist, NeuronDistPlugin);
 QStringList NeuronDistPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("neuron_dist")
+		<<tr("neuron_weighted_dist")
 		<<tr("about");
 }
 
 QStringList NeuronDistPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("neuron_distance")
+		<<tr("neuron_weighted_distance")
 		<<tr("help");
 }
 
 void NeuronDistPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("neuron_dist"))
+	if (menu_name == tr("neuron_weighted_dist"))
 	{
 		neuron_dist_io(callback,parent);
 	}
@@ -35,7 +35,7 @@ void NeuronDistPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
 bool NeuronDistPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("neuron_distance"))
+	if (func_name == tr("neuron_weighted_distance"))
 	{
 		return neuron_dist_io(input, output);
 	}

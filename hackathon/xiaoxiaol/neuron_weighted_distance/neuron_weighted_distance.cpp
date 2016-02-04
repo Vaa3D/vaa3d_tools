@@ -78,7 +78,7 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     return ss;
 }
 
-double weighted_dist_directional_swc_1_2( double & w_dist_12big, double &difference_ratio12, const NeuronTree *p1, const NeuronTree *p2, double & maxdist)
+double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & difference_ratio12, const NeuronTree *p1, const NeuronTree *p2, double & maxdist)
 {
     if (!p1 || !p2) return -1;
     V3DLONG p1sz = p1->listNeuron.size(), p2sz = p2->listNeuron.size();
@@ -161,10 +161,10 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double &differe
     //qDebug() << "end directional neuronal distance computing";
 
     if( nseg > 0 ){
-        difference_ratio12 = nsegbig/nseg;
+        difference_ratio12 = double(nsegbig)/double(nseg);
     }
 
-    if (sum_weights_big == 0 )
+    if (nsegbig == 0 )
     {
         w_dist_12big = -1;
     }
