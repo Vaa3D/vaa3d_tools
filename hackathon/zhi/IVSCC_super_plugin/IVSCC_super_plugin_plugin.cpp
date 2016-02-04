@@ -14,7 +14,10 @@
 #include "../IVSCC_radius_estimation/marker_radius.h"
 #include "../IVSCC_radius_estimation/smooth_curve.h"
 #include "../IVSCC_radius_estimation/hierarchy_prune.h"
+#include "../IVSCC_radius_estimation/hierarchy_prune.h"
+#include "../../../released_plugins/v3d_plugins/global_neuron_feature/compute.h"
 
+#define FNUM 22
 
 using namespace std;
 Q_EXPORT_PLUGIN2(IVSCC_super_plugin, IVSCC_super_plugin);
@@ -178,7 +181,9 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
-        export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
+        remove(fileTmpName.toStdString().c_str());
+
+      //  export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
 
         QString fileDefaultName = fileOpenName+QString("_part1.swc");
 
@@ -189,11 +194,67 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
                     ));
         if (fileSaveName.isEmpty())
             return;
-        if (!export_list2file(nt_smooth_sort.listNeuron,fileSaveName,fileOpenName))
+        if (!export_list2file(nt_inter_sort.listNeuron,fileSaveName,fileOpenName))
         {
             v3d_msg("fail to write the output swc file.");
             return;
         }
+
+        analysis_swc(fileSaveName ,1);
+
+        NeuronTree nt_final = readSWC_file(fileSaveName);
+        double * features = new double[FNUM];
+        computeFeature(nt,features);
+        QMessageBox infoBox;
+        infoBox.setText("Global features of the neuron:");
+        infoBox.setInformativeText(QString("<pre><font size='4'>"
+                    "number of nodes                  : %1<br>"
+                    "soma surface                     : %2<br>"
+                    "number of stems                  : %3<br>"
+                    "number of bifurcations           : %4<br>"
+                    "number of branches               : %5<br>"
+                    "number of tips                   : %6<br>"
+                    "overall width                    : %7<br>"
+                    "overall height                   : %8<br>"
+                    "overall depth                    : %9<br>"
+                    "average diameter                 : %10<br>"
+                    "total length                     : %11<br>"
+                    "total surface                    : %12<br>"
+                    "total volume                     : %13<br>"
+                    "max euclidean distance           : %14<br>"
+                    "max path distance                : %15<br>"
+                    "max branch order                 : %16<br>"
+                    "average contraction              : %17<br>"
+                    "average fragmentation            : %18<br>"
+                    "average parent-daughter ratio    : %19<br>"
+                    "average bifurcation angle local  : %20<br>"
+                    "average bifurcation angle remote : %21<br>"
+                    "Hausdorff dimension              : %22</font></pre>")
+                    .arg(features[0])
+                    .arg(features[1])
+                    .arg(features[2])
+                    .arg(features[3])
+                    .arg(features[4])
+                    .arg(features[5])
+                    .arg(features[6])
+                    .arg(features[7])
+                    .arg(features[8])
+                    .arg(features[9])
+                    .arg(features[10])
+                    .arg(features[11])
+                    .arg(features[12])
+                    .arg(features[13])
+                    .arg(features[14])
+                    .arg(features[15])
+                    .arg(features[16])
+                    .arg(features[17])
+                    .arg(features[18])
+                    .arg(features[19])
+                    .arg(features[20])
+                    .arg(features[21]));
+        infoBox.exec();
+
+        if (features) {delete []features; features = NULL;}
 	}
 	else
 	{
