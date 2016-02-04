@@ -86,13 +86,13 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << tmp_score.weighted_dist12_allnodes;
         myfile << "\nweighted entire-structure-average (from neuron 2 to 1) = ";
         myfile << tmp_score.weighted_dist21_allnodes;
-        myfile << "\nweighted average of bi-directional entire-structure-averages =   ";
+        myfile << "\nweighted average of bi-directional entire-structure-averages = ";
         myfile << tmp_score.weighted_dist_ave_allnodes;
-        myfile << "\nweighted differen-structure-average =   ";
+        myfile << "\nweighted differen-structure-average = ";
         myfile << tmp_score.dist_apartnodes;
-        myfile << "\npercent of different-structure  =   ";
+        myfile << "\npercent of different-structure = ";
         myfile << tmp_score.percent_apartnodes;
-        myfile << "\nmaximum distance =   ";
+        myfile << "\nmaximum distance = ";
         myfile << tmp_score.dist_max;
         myfile << "\n";
         myfile.close();
