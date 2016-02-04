@@ -80,12 +80,11 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << tmp_score.dist_12_allnodes;
         myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
         myfile << tmp_score.dist_21_allnodes;
-        myfile << "\naverage of bi-directional entire-structure-averages =   ";
+        myfile << "\naverage of bi-directional entire-structure-averages = ";
         myfile << tmp_score.dist_allnodes;
-        myfile << "\ndifferen-structure-average =   ";
+        myfile << "\ndifferen-structure-average = ";
         myfile << tmp_score.dist_apartnodes;
-        myfile << "\npercent of different-structure  =   ";
-
+        myfile << "\npercent of different-structure = ";
         myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();
