@@ -26,7 +26,9 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 
     NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1);
 	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
-	message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
+    message += QString("entire-structure-average:from neuron 1 to 2 = %1\n").arg(tmp_score.dist_12_allnodes);
+    message += QString("entire-structure-average:from neuron 2 to 1 = %1\n").arg(tmp_score.dist_21_allnodes);
+    message += QString("average of bi-directional entire-structure-averages = %1\n").arg(tmp_score.dist_allnodes);
 	message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
 	message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 
@@ -58,7 +60,9 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
     NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu);
 
 	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
-    cout<<"entire-structure-average = "<<tmp_score.dist_allnodes <<endl;
+    cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
+    cout<<"entire-structure-average (from neuron 2 to 1)= "<<tmp_score.dist_21_allnodes <<endl;
+    cout<<"average of bi-directional entire-structure-averages = "<<tmp_score.dist_allnodes <<endl;
 	cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
 	cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
 
@@ -67,15 +71,21 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
         ofstream myfile;
-        myfile.open (outimg_file,ios::out | ios::app );
+        myfile.open (outimg_file);
+        myfile << "input1 = ";
         myfile << name_nt1.toStdString().c_str()  ;
-        myfile << "   ";
+        myfile << "\nintput2 = ";
         myfile << name_nt2.toStdString().c_str();
-        myfile << "   ";
+        myfile << "\nentire-structure-average (from neuron 1 to 2) = ";
+        myfile << tmp_score.dist_12_allnodes;
+        myfile << "\nentire-structure-average (from neuron 2 to 1) = ";
+        myfile << tmp_score.dist_21_allnodes;
+        myfile << "\naverage of bi-directional entire-structure-averages =   ";
         myfile << tmp_score.dist_allnodes;
-        myfile << "   ";
+        myfile << "\ndifferen-structure-average =   ";
         myfile << tmp_score.dist_apartnodes;
-        myfile << "   ";
+        myfile << "\npercent of different-structure  =   ";
+
         myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();
@@ -103,8 +113,10 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 		NeuronTree curr_nt = nt_list->at(i);
 		if (curr_nt.file == nt.file) {cur_idx = i; continue;}
         NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt, &curr_nt,1);
-		message += QString("\nneuron #%1:\n%2\n").arg(i+1).arg(curr_nt.file);
-		message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
+        message += QString("\nneuron #%1:\n%2\n").arg(i+1).arg(curr_nt.file);
+        message += QString("entire-structure-average (from neuron 1 to 2)= %1\n").arg(tmp_score.dist_12_allnodes);
+        message += QString("entire-structure-average (from neuron 2 to 1)= %1\n").arg(tmp_score.dist_21_allnodes);
+        message += QString("average of bi-directional entire-structure-averages = %1\n").arg(tmp_score.dist_allnodes);
 		message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
 		message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 	}
