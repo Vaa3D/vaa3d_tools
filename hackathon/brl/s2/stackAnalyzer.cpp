@@ -15,7 +15,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 
 
 
-void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation ){
+void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
 
@@ -74,16 +74,16 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
 
         QDir saveDir = imageFileInfo.absoluteDir();//QDir("/Users/zhiz/Desktop/2016_02_01_Mon_20_28/"); // Zhi pick a directory here.
-        saveDir.cdUp();
-        int scanNumber = 0;
-        QString swcString =   saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
+        QString swcString =   saveDir.absolutePath().append("/").append("total").append("test.swc");
 
-        QString scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
+
+
+        QString scanDataFileString = saveDirString.append("/").append("scanData.txt");
         qDebug()<<scanDataFileString;
         QFile saveTextFile;
         saveTextFile.setFileName(scanDataFileString);// add currentScanFile
         if (!saveTextFile.isOpen()){
-            if (!saveTextFile.open(QIODevice::Text|QIODevice::ReadWrite  )){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
                 return;}     }
         QTextStream outputStream;
@@ -92,7 +92,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<<total4DImage->getOriginX()<<" "<<total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
         PARA_APP2 p;
         p.is_gsdt = false;
         p.is_coverage_prune = true;
@@ -127,7 +127,13 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         else
         {
             vector<MyMarker*> tileswc_file;
-            for(int i = 0; i < inputRootList.size(); i++)
+            int maxRootListSize;// kludge here to make it through debugging. need some more filters on the swc outputs and marker inputs
+            if (inputRootList.size()>16){
+                maxRootListSize = 16;
+            }else{
+                maxRootListSize = inputRootList.size();}
+
+            for(int i = 0; i < maxRootListSize; i++)
             {
                 p.outswc_file =swcString + (QString::number(i)) + (".swc");
                 LocationSimple RootNewLocation;
