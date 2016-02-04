@@ -66,7 +66,22 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
 
     ss.weighted_dist_ave_allnodes = (weighted_dist_12+ weighted_dist_21)/2.0;
 
-    ss.dist_apartnodes = (w_dist_12big + w_dist_21big)/2.0;
+
+    if (w_dist_12big>-1)
+    {
+        if (w_dist_21big>-1)
+            ss.dist_apartnodes = (w_dist_12big + w_dist_21big)/2.0;
+        else
+            ss.dist_apartnodes = w_dist_12big;
+    }
+    else
+    {
+        if (w_dist_21big>-1)
+            ss.dist_apartnodes = w_dist_21big;
+        else
+            ss.dist_apartnodes = 0;
+    }
+
 
     ss.percent_apartnodes = (big_ratio12 + big_ratio21)/2.0;
 
