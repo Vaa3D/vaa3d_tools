@@ -7,7 +7,7 @@
 #include <vector>
 #include "IVSCC_super_plugin_plugin.h"
 #include <iostream>
-#include <boost/lexical_cast.hpp>
+//#include <boost/lexical_cast.hpp>
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "sort_swc_fiji.h"
 #include "../IVSCC_radius_estimation/my_surf_objs.h"
@@ -25,8 +25,8 @@ Q_EXPORT_PLUGIN2(IVSCC_super_plugin, IVSCC_super_plugin);
 QStringList IVSCC_super_plugin::menulist() const
 {
 	return QStringList() 
-		<<tr("part1")
         <<tr("whole_process")
+        <<tr("part1")
 		<<tr("about");
 }
 
@@ -121,7 +121,6 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
         export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
-
         vector<MyMarker*> inswc = readSWC_file(fileTmpName.toStdString());
 
         //radius estimation start
@@ -186,6 +185,7 @@ void IVSCC_super_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
+
         remove(fileTmpName.toStdString().c_str());
 
       //  export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);

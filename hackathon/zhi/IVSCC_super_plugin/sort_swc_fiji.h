@@ -450,7 +450,7 @@ vector<MyMarker*> internodeprune(vector<MyMarker*> & final_out_swc, NeuronTree n
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
     vector<MyMarker*> final_out_swc_updated;
-    final_out_swc_updated.push_back(final_out_swc[0]);
+    //final_out_swc_updated.push_back(final_out_swc[0]);
 
 
     for(int j = 0; j < final_out_swc.size(); j++)
@@ -483,6 +483,7 @@ vector<MyMarker*> internodeprune(vector<MyMarker*> & final_out_swc, NeuronTree n
             final_out_swc_updated.push_back(final_out_swc[j]);
 
     }
+
 
     return final_out_swc_updated;
 }

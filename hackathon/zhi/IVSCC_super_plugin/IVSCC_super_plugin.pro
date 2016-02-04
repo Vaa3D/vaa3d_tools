@@ -18,5 +18,5 @@ SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/global_neu
 
 
 
-TARGET	= $$qtLibraryTarget(IVSCC_super_plugin)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/IVSCC_super_plugin/
+TARGET	= $$qtLibraryTarget(AllenNeuron_postprocessing)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/AllenNeuron_postprocessing/
