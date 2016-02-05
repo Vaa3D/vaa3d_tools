@@ -7,13 +7,10 @@
 
 using namespace std;
 
-
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
     cb = &callback;
 }
-
-
 
 void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString){
     qDebug()<<"loadScan input: "<<latestString;
@@ -322,19 +319,24 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
+   // fileWithData = "/Users/zhiz/Downloads/2016_02_04_Thu_16_00/scanData.txt";
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
     string swcfilepath;
     vector<MyMarker*> outswc;
     int node_type = 1;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = 0,offsetY_max =0;
     while(ifs && getline(ifs, info_swc))
     {
         std::istringstream iss(info_swc);
         iss >> offsetX >> offsetY >> swcfilepath;
+        if(offsetX < offsetX_min) offsetX_min = offsetX;
+        if(offsetY < offsetY_min) offsetY_min = offsetY;
+        if(offsetX > offsetX_max) offsetX_max = offsetX;
+        if(offsetY > offsetY_max) offsetY_max = offsetY;
 
         vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
-
         for(V3DLONG d = 0; d < inputswc.size(); d++)
         {
             inputswc[d]->x = inputswc[d]->x + offsetX;
@@ -344,8 +346,60 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         }
         node_type++;
     }
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x = outswc[i]->x - offsetX_min;
+        outswc[i]->y = outswc[i]->y - offsetY_min;
+    }
 
     QString fileSaveName = fileWithData + ".swc";
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+
+    //write tc file
+    QString folderpath = QFileInfo(fileWithData).absolutePath();
+    QString lastImagepath = folderpath + "/" + QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+    unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+    if(!simple_loadimage_wrapper(*cb, lastImagepath.toStdString().c_str(), data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<lastImagepath.toStdString()<<" error!"<<endl;
+        return;
+    }
+    if(data1d) {delete []data1d; data1d=0;}
+    QString tc_name = fileWithData + ".tc";
+    ofstream myfile;
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    if (myfile.is_open()==true)
+    {
+        myfile.close();
+        remove(tc_name.toStdString().c_str());
+    }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << node_type-1 << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << offsetX_max - offsetX_min + 1 << " " << offsetY_max - offsetY_min + 1 << " " << in_sz[2] << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+
+    ifstream ifs_2nd(fileWithData.toLatin1());
+    while(ifs_2nd && getline(ifs_2nd, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilepath;
+        QString imagefilepath = QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+        imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX).arg(offsetY).arg(in_sz[0]-1 + offsetX).arg(in_sz[1]-1 + offsetY).arg(in_sz[2]-1));
+        myfile << imagefilepath.toStdString();
+        myfile << "\n";
+    }
+    myfile.close();
+
     emit combinedSWC(fileSaveName);
 }
