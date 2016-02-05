@@ -73,12 +73,12 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         //new code starts here:
 
 
-        QDir saveDir = imageFileInfo.absoluteDir();//QDir("/Users/zhiz/Desktop/2016_02_01_Mon_20_28/"); // Zhi pick a directory here.
-        QString swcString =   saveDir.absolutePath().append("/").append("total").append("test.swc");
+        QString swcString = saveDirString;
+        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
 
 
-
-        QString scanDataFileString = saveDirString.append("/").append("scanData.txt");
+        QString scanDataFileString = saveDirString;
+        scanDataFileString.append("/").append("scanData.txt");
         qDebug()<<scanDataFileString;
         QFile saveTextFile;
         saveTextFile.setFileName(scanDataFileString);// add currentScanFile
@@ -93,6 +93,17 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         qDebug()<<total4DImage->getOriginX();
 
         outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+
+        V3DLONG mysz[4];
+        mysz[0] = total4DImage->getXDim();
+        mysz[1] = total4DImage->getYDim();
+        mysz[2] = total4DImage->getZDim();
+        mysz[3] = total4DImage->getCDim();
+        QString imageSaveString = saveDirString;
+
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+
         PARA_APP2 p;
         p.is_gsdt = false;
         p.is_coverage_prune = true;
@@ -244,27 +255,32 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
         saveTextFile.close();
         cb->setImage(newwin, total4DImage);
-        cb->open3DWindow(newwin);
+        //cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
-        LandmarkList imageLandmarks = newTargetList;
-//        cb->setLandmark(newwin,newTargetList);
-        RGBA8 myColor;
-        myColor.r = 128;
-        myColor.g = 200;
-        myColor.b = 128;
-        myColor.a = 128;
-        for (int i =0; i<imageLandmarks.length(); i++){
-            imageLandmarks.value(i).color = myColor;
-        }
-        for (int i = 0; i<newTipsList.length(); i++){
+        LandmarkList imageLandmarks;
+        QList<ImageMarker> outputLandmarks;
+        for (int i = 0; i<inputRootList.length(); i++){
+                LocationSimple RootNewLocation;
+                ImageMarker outputMarker;
+                RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
+                RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
+                imageLandmarks.append(RootNewLocation);
+                outputMarker.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
+                outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
+                outputLandmarks.append(outputMarker);
 
-            imageLandmarks.append(newTipsList.value(i));
 
         }
         if (!imageLandmarks.isEmpty()){
             cb->setLandmark(newwin,imageLandmarks);
             cb->pushObjectIn3DWindow(newwin);
             qDebug()<<"set landmark group";
+            QString markerSaveString;
+            markerSaveString = swcString;
+            markerSaveString.append(".marker");
+            writeMarker_file(markerSaveString, outputLandmarks);
         }
 
         cb->pushObjectIn3DWindow(newwin);

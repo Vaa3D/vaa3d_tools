@@ -83,7 +83,7 @@ private slots:
     void loadForSA();
     void resetToOverviewPBCB();
     void resetToScanPBCB();
-
+    void pickTargets();
 private:
     V3DPluginCallback2 * cb;
 
@@ -125,7 +125,7 @@ private:
     QPushButton  *startZStackPushButton;
     QPushButton * resetToOverviewPB;
     QPushButton * resetToScanPB;
-
+    QPushButton * pickTargetsPB;
 
     QPushButton *collectOverviewPushButton;
     QPushButton *loadScanPushButton;
@@ -175,7 +175,8 @@ private:
     QString fileString ;
     QString lastFile;
     bool posMonStatus;
-    bool waitingForFile;
+    int waitingForFile;//  0 => not waiting.  1 => waiting for image.
+    bool waitingForOverview;
 	bool isLocal;
     int smartScanStatus;
     double scanNumber;
@@ -195,6 +196,11 @@ private:
     float overlap;
     int overviewCycles;
     int scanStatusWaitCycles;
+    bool havePreview;
+
+//   vaa3d variables
+    v3dhandle previewWindow;
+
 };
 //! [0]
 

@@ -210,6 +210,7 @@ void S2Controller::overviewSetup(){
                         // the return data from PV will likely be lost to processMessage(), but that's OK.
                         // a more robust? version could query here instead of in S2UI
     centerGalvos();
+    cleanAndSend("-zsz 20");
     cleanAndSend("-oz 1"); // set mag to 1x
     cleanAndSend("-sts pixelsPerLine 1024"); // set pixels per line to  1024
     cleanAndSend("-sts linesPerFrame 1024"); // set lines per frame to 1024
@@ -224,6 +225,7 @@ void S2Controller::stackSetup(){
                         // the return data from PV will likely be lost to processMessage(), but that's OK.
                         // a more robust? version could query here instead of in S2UI
     centerGalvos();
+    cleanAndSend("-zsz 1.0");
     cleanAndSend("-oz 18"); // set mag to 18x
     cleanAndSend("-sts pixelsPerLine 256"); // set pixels per line to  256
     cleanAndSend("-sts linesPerFrame 256"); // set lines per frame to 256

@@ -20,6 +20,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     allROILocations = new LandmarkList;
     allTipsList = new QList<LandmarkList>;
 
+    previewWindow = new v3dhandle;
+    havePreview = false;
     LandmarkList allTargetLocations;
     QList<LandmarkList>    allScanLocations ;
 
@@ -33,9 +35,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     startSmartScanPB = new QPushButton(tr("SmartScan"));
     startSmartScanPB->setEnabled(false);
     startStackAnalyzerPB = new QPushButton(tr("trace single stack"));
-    resetToOverviewPB = new QPushButton(tr("&RESET to overview"));
+    resetToOverviewPB = new QPushButton(tr("&RESET to preview"));
     resetToScanPB = new QPushButton(tr("RESET to &SmartScan"));
-
+    pickTargetsPB = new QPushButton(tr("pick smartScan starting points"));
 
     myNotes = new NoteTaker;
 
@@ -65,11 +67,12 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(collectOverviewPushButton,3,1);
     mainLayout->addWidget(resetToOverviewPB,2,2);
     mainLayout->addWidget(resetToScanPB,3,2);
+    mainLayout->addWidget(pickTargetsPB,4,1);
 
     //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,3);
-    mainLayout->addWidget(localRemoteCB,4,0,1,2);
-    mainLayout->addWidget(lhTabs, 5,0, 4, 3);
+    mainLayout->addWidget(localRemoteCB,5,0,1,2);
+    mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
     //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
@@ -89,7 +92,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     posMonStatus = false;
-    waitingForFile = false;
+    waitingForFile = 0;
     isLocal = false;
     smartScanStatus = 0;
     setLayout(mainLayout);
@@ -120,6 +123,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(resetToOverviewPB, SIGNAL(clicked()),this, SLOT(resetToOverviewPBCB()));
     connect(resetToScanPB, SIGNAL(clicked()), this, SLOT(resetToScanPBCB()));
 
+
+    connect(pickTargetsPB,SIGNAL(clicked()),this, SLOT(pickTargets()));
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -388,7 +393,7 @@ void S2UI::startScan()
 {
     lastFile=getFileString();
     //status(QString("lastFile = ").append(lastFile));
-    waitingForFile = true;
+    waitingForFile = 1;
     QTimer::singleShot(0, &myController, SLOT(startScan()));
     float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
@@ -443,8 +448,13 @@ void S2UI::loadForSA(){
 void S2UI::loadScanFromFile(QString fileString){
     QString latestString = fileString;
     QFileInfo imageFileInfo = QFileInfo(latestString);
+    QString windowString = latestString;
+    NeuronTree nt;
+    LandmarkList newTargetList;
+
     if (imageFileInfo.isReadable()){
-        v3dhandle newwin = cb->newImageWindow();
+
+
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
@@ -489,10 +499,9 @@ void S2UI::loadScanFromFile(QString fileString){
         //        cb->setImage(newwin, total4DImage);
         //        cb->open3DWindow(newwin);
 
-
-        NeuronTree nt;
-        LandmarkList newTargetList;
         if (smartScanStatus ==1){
+
+
             status(QString("loaded file ").append(imageFileInfo.fileName()));
 
             total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
@@ -591,24 +600,37 @@ void S2UI::loadScanFromFile(QString fileString){
                 handleNewLocation(newTipsList,newTargetList);
 
             }
-            status(QString("before setImage.  total4DImage is valid? ").append(QString::number(total4DImage->valid())));
 
-            cb->setImage(newwin, total4DImage);
-            status(QString("after setImage.  total4DImage is valid? ").append(QString::number(total4DImage->valid())));
-
-            cb->open3DWindow(newwin);
-
-            cb->setSWC(newwin,nt);
-            cb->setLandmark(newwin,newTargetList);
-            cb->pushObjectIn3DWindow(newwin);
 
         }else{// not in smartscan mode
-            status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
-            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-            cb->setImage(newwin, total4DImage);
-            cb->open3DWindow(newwin);
-        }
+        status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
+        //            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+        //            cb->setImage(newwin, total4DImage);
+        //            cb->open3DWindow(newwin);
+    }
+
+
+    if (waitingForOverview){windowString = "s2 Preview Image";
+        previewWindow = cb->newImageWindow();
+        cb->setImageName(previewWindow,windowString);
+        cb->setImage(previewWindow, total4DImage);
+        cb->open3DWindow(previewWindow);
+        cb->updateImageWindow(previewWindow);
+        havePreview = true;
+        waitingForOverview = false;
+    }else{
+        v3dhandle newwin = cb->newImageWindow();
+        cb->setImageName(newwin,windowString);
+        cb->setImage(newwin, total4DImage);
+        cb->open3DWindow(newwin);
+        if (smartScanStatus==1){
+            cb->setSWC(newwin,nt);
+            cb->setLandmark(newwin,newTargetList);
+            cb->pushObjectIn3DWindow(newwin);}
+
         cb->updateImageWindow(newwin);
+    }
+
 
 
     }else{  //initial string is not readable
@@ -809,7 +831,7 @@ void S2UI::smartScanHandler(){
         LandmarkList  nextLandmarkList;
         if (allTipsList->isEmpty()){
             qDebug()<<"no incoming tip locations";
-                // leave nextLandmarkList empty and don't touch allTipsList
+            // leave nextLandmarkList empty and don't touch allTipsList
         }else{
             nextLandmarkList = allTipsList->first();
             allTipsList->removeFirst();
@@ -818,15 +840,8 @@ void S2UI::smartScanHandler(){
         allROILocations->removeFirst();
         qDebug()<<nextLocation.x;
         moveToROI(nextLocation);
-        if (smartScanStatus==1){
-            QGraphicsTextItem* sequenceNumberText;
 
-            sequenceNumberText = new QGraphicsTextItem;
-            sequenceNumberText->setPos(roiXEdit->text().toFloat()+10,roiYEdit->text().toFloat());
-            sequenceNumberText->setPlainText(QString::number(scanNumber));
-            roiGS->addItem(sequenceNumberText);
-        }
-        waitingForFile = true;
+        waitingForFile = 1;
         scanList.append(nextLocation);
         //allScanLocations.value(targetIndex) = scanList;
         // emit updateTable(allTargetLocations,allScanLocations);
@@ -850,7 +865,7 @@ void S2UI::moveToROI(LocationSimple nextROI){
         LocationSimple newLoc;
         newLoc.x = -nextGalvoX;
         newLoc.y = nextGalvoY;
-        float leftEdge = -nextXMicrons -roiXWEdit->text().toFloat()/2.0;
+        float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
         float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
         roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
@@ -905,7 +920,8 @@ void S2UI::overviewHandler(){
     }
     if (readyForOverview){
         // set up 3-plane z stack here?
-        QTimer::singleShot(100, startScanPushButton, SLOT(click()));
+        waitingForOverview = true;
+        QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
         status("starting single scan");
         return;
     }
@@ -917,12 +933,20 @@ void S2UI::overviewHandler(){
 
 
 void S2UI::startingZStack(){
-    waitingForFile = true;
+    waitingForFile = 1;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     status("start single z Stack");
     float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
     roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    if (smartScanStatus==1){
+        QGraphicsTextItem* sequenceNumberText;
+
+        sequenceNumberText = new QGraphicsTextItem;
+        sequenceNumberText->setPos(leftEdge+10,topEdge);
+        sequenceNumberText->setPlainText(QString::number(scanNumber));
+        roiGS->addItem(sequenceNumberText);
+    }
 
 }
 
@@ -937,8 +961,8 @@ void S2UI::updateFileString(QString inputString){
         fileString.replace("\\AIBSDATA","\\data").replace("\\","/");
     }
     fileString.append("_Cycle00001_Ch2_000001.ome.tif");
-    if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile)){
-        waitingForFile = false;
+    if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile>0)){
+        waitingForFile = 0;
         QTimer::singleShot(0, this, SLOT(loadScan()));
 
     }
@@ -947,7 +971,7 @@ void S2UI::updateFileString(QString inputString){
 
 void S2UI::s2ROIMonitor(){ // future version will work like this...
 
-    if ((!allROILocations->isEmpty())&(!waitingForFile)){
+    if ((!allROILocations->isEmpty())&(waitingForFile<1)){
         LocationSimple nextLocation = allROILocations->first();
         allROILocations->removeFirst();
         moveToROI(nextLocation);
@@ -1037,18 +1061,41 @@ void S2UI::scanStatusHandler(){
 }
 
 
+void S2UI::pickTargets(){
+    qDebug()<<"in pickTargets...";
+    if (!havePreview){
+        v3d_msg("please collect a preview image");
+        return;
+    }
+    LandmarkList previewTargets =  cb->getLandmark(previewWindow);
+    if (previewTargets.isEmpty()){
+        v3d_msg("please select a target");
+        return;
+    }
+    LocationSimple startCenter;
+    QList<LandmarkList>  startingROIList;
+    for (int i =0; i<previewTargets.length();i++){
+        startCenter.x = 0.0+previewTargets.at(i).x;
+        startCenter.y = 0.0+previewTargets.at(i).y;
+        LandmarkList startList;
+        startList.append(startCenter);
+        startingROIList.append(startList);
+    }
+    emit updateTable(previewTargets,startingROIList);
+}
+
+
+// handling a list of targets...
+
+// need:    start sequence button
+//          skip cell button
+//          new directory for each smartscan
+//          listener to handle moving to the next location
+//
+
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.
 
 
-// get voltage-to-pixel-to-micron resolution and add methods to
-// move to pan to micron positions using -sts currentScanCenter
-
-// need an origin at the beginning
-
-// need a new 'start smartscan' button as path to eventual handler
-
-//
 
 
-// HAVE TO FIGURE OUT HOW TO PASS THE IMAGE4DSIMPLE THROUGH A SLOT!
