@@ -3,6 +3,7 @@
 #include <QInputDialog>
 #include "neuron_weighted_distance.h"
 #include "v_neuronswc.h"
+#include <iostream>
 
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p);
@@ -49,7 +50,7 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
 
     if (weighted_dist_12 < 0 || weighted_dist_21 <0)
     {
-        qDebug() <<"Error: one of the input neuron probably has less than 2 SWC nodes, cannot computing.";
+        std::cout <<"Error: one of the input neuron probably has less than 2 SWC nodes, cannot computing."<<std::endl;
         ss.weighted_dist12_allnodes = -1;
         ss.weighted_dist21_allnodes = -1;
         ss.weighted_dist_ave_allnodes = -1;
@@ -109,9 +110,41 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
     difference_ratio12 = 0.0;
     V3DLONG nseg=0;
     V3DLONG nsegbig=0;
-    double fea_v = -1;
+
     QHash<int, int> h1 = generate_neuron_swc_hash(p1); //generate a hash lookup table from a neuron swc graph
 
+    std::cout << "calculating directional weighted average distance"<< std::endl;
+    // collect the weights
+    vector<double> fea_values;
+    NeuronSWC t1 = p1->listNeuron.at(0);
+    NeuronSWC t2 = p2->listNeuron.at(0);
+    if (t1.fea_val.size()>0 )
+    {
+        std::cout << "Use neuron 1 feature values as the weights."<<std::endl;
+        for (int ii=0;ii<p1->listNeuron.size();ii++){
+            NeuronSWC t = p1->listNeuron.at(ii);
+            fea_values.push_back( t.fea_val[0]);
+        }
+
+    }
+    else if (t2.fea_val.size()>0)
+    {
+        std::cout << "Use neuron 2 feature values as the weights."<<std::endl;
+        for (int ii=0;ii<p2->listNeuron.size();ii++){
+            NeuronSWC t = p2->listNeuron.at(ii);
+            fea_values.push_back( t.fea_val[0]);
+        }
+    }
+    else{
+        std::cout << "No weights are provided."<<std::endl;
+        return -1;
+    }
+
+
+
+
+
+    double weight = -1;
     for (i=0;i<p1->listNeuron.size();i++)
     {
         //first find the two ends of a line seg
@@ -123,15 +156,9 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
         tp2 = (NeuronSWC *)(&(p1->listNeuron.at(h1.value(tp1->pn)))); //use hash table
         //qDebug() << "i="<< i << " pn="<<tp1->pn - 1;
 
-        // take feature value from the input eswc file
-        if (tp1->fea_val.size()>0 )
-        {
-            fea_v= tp1->fea_val[0];
-        }
-        else{
-            fea_v= tp2->fea_val[0];
+        // take wegiths from feature values
+        weight = fea_values[i];
 
-        }
         //now produce a series of points for the line seg
         double len=dist_L2(XYZ(tp1->x,tp1->y,tp1->z), XYZ(tp2->x,tp2->y,tp2->z));
         int N = int(1+len+0.5);
@@ -151,8 +178,8 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
         {
             XYZ curpt(tp1->x + ptdiff.x*j, tp1->y + ptdiff.y*j, tp1->z + ptdiff.z*j);
             double cur_d = dist_pt_to_swc(curpt, p2);
-            sum_dist += cur_d*fea_v;
-            sum_weights += fea_v;
+            sum_dist += cur_d*weight;
+            sum_weights += weight;
             nseg++;
 
             if (maxdist<0) //use <0 as a condition to check if maxdist has been set
@@ -165,8 +192,8 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
 
             if (cur_d>=d_thres)
             {
-                w_dist_12big += cur_d *fea_v;
-                sum_weights_big +=  fea_v;
+                w_dist_12big += cur_d *weight;
+                sum_weights_big +=  weight;
                 nsegbig++;
                 //qDebug() << "(" << cur_d << ", " << w_dist_nseg1big << ")";
             }
@@ -525,5 +552,5 @@ void neuron_branch_tip_count(V3DLONG &n_branch, V3DLONG &n_tip, const V_NeuronSW
         }
     }
 
-    qDebug("cojoc: all:%d/link:%d/0:%d/1:%d/2:%d/3+:%d",in_swc.row.size(),link_map.size(),n_single,n_tip,n_path,n_branch);
+    qDebug("all:%d/link:%d/0:%d/1:%d/2:%d/3+:%d",in_swc.row.size(),link_map.size(),n_single,n_tip,n_path,n_branch);
 }

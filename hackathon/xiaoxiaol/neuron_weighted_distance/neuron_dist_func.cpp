@@ -136,7 +136,9 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 void printHelp()
 {
-    cout<<"\n Neuron  Weighted Distance: Compute the weighted distance between two neurons, input neuron 1 should provide feature value to be the weights. Distance is defined as the average distance among all nearest point pairs."<<endl;
+    cout<<"\n Neuron  Weighted Distance: Compute the weighted distance between two neurons, input neuron 1 should provide feature value to be the weights."<<endl;
+    cout <<"If none of the neurons provide feature values in eswc formats, use the type value from neuron 1 as the weights."<<endl;
+    cout <<"Distance is defined as the average distance among all nearest point pairs."<<endl;
     cout<<"Usage: v3d -x neuron_weighted_distance -f neuron_weighted_distance -i <input_filename1, *.eswc> <input_filename2> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
     cout<<"\t-i <input_filename1, .eswc> <input_filename2>: input neuron structure file"<<endl;
