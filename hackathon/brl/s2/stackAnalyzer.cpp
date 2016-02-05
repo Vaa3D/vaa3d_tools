@@ -207,10 +207,13 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             if (childs[i].size()==0)
             {
                 NeuronSWC curr = list.at(i);
+                V3DLONG node_pn = curr.pn;
+                V3DLONG node_pn_2nd = list.at(node_pn).pn;
+                if(node_pn_2nd <0) node_pn_2nd = node_pn;
                 LocationSimple newTip;
-                newTip.x = curr.x + p.p4dImage->getOriginX();
-                newTip.y = curr.y + p.p4dImage->getOriginY();
-                newTip.z = curr.z + p.p4dImage->getOriginZ();
+                newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
+                newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
+                newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
                 if( curr.x < 0.05* p.p4dImage->getXDim())
                 {
                     tip_left.push_back(newTip);
