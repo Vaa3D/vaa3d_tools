@@ -1004,14 +1004,14 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 {
 	FILE * fp;
 	fp = fopen(filename,"w");
-        int len = sizeof(filename);
+        QString fn = QString(filename);
 	if (fp==NULL)
 	{
 		fprintf(stderr,"ERROR: %s: failed to open file to write!\n",filename);
 		return false;
 	}
 
-        if (strncmp(&filename[len-4], ".eswc",5) ==0 )
+        if (fn.endsWith(".eswc"))
 	{ // eswc
 		fprintf(fp,"#n,type,x,y,z,radius,parent,seg_id,level,edge_vote\n");   //,vote\n");
 		for (int i=0;i<list.size();i++)
