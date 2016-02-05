@@ -381,7 +381,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     myfile << "# tiles \n";
     myfile << node_type-1 << " \n\n";
     myfile << "# dimensions (XYZC) \n";
-    myfile << offsetX_max - offsetX_min + 1 << " " << offsetY_max - offsetY_min + 1 << " " << in_sz[2] << " " << 1 << " ";
+    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
     myfile << "\n\n";
     myfile << "# origin (XYZ) \n";
     myfile << "0.000000 0.000000 0.000000 \n\n";
