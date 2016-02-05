@@ -102,34 +102,42 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 	//remove statistically outlisers
 	cout<<"\nOutlier detection:"<<endl;
 	vector<V3DLONG> nt_sizes;
-        cout <<"Remove SWCs have too fewer nodes:"<<endl;
+    //cout <<"Dectecting  SWCs have too few nodes (< 10):"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
 		V3DLONG num_nodes = tree.listNeuron.size();
-		nt_sizes.push_back(num_nodes);
-		if (num_nodes < 10){
-			nt_list.erase(nt_list.begin()+i);
-			cout <<"Tree "<< i<< " has "<<  nt_sizes[i] << " nodes"<<endl;
-		}
+        //cout<<num_nodes<<endl;
+        if (num_nodes> 10 && num_nodes <10000){
+              nt_sizes.push_back(num_nodes);
+        }
 	}
 
 	V3DLONG median_size = median(nt_sizes);
-	cout <<"Median node size = " << median_size <<endl;
-        cout <<"Remove SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
+    vector<V3DLONG > rm_ids;
+    cout <<"Median node size (exclude those num_nodes <10 or >10000 ) = " << median_size <<endl;
+    cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
-		if (nt_sizes[i] > 3*median_size || nt_sizes[i] < median_size/3 )
+        V3DLONG num_nodes = nt_list[i].listNeuron.size();
+        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 10000 )
 		{
-			nt_list.erase(nt_list.begin()+i);
-			cout <<"Tree "<< i<< " has "<<  nt_sizes[i] << " nodes"<<endl;
+            cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
+            rm_ids.push_back(i);
+
 		}
-		if (nt_sizes[i] == median_size)
-		{
+        if (num_nodes== median_size)
+        {  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
 			NeuronSWC root = nt_list[i].listNeuron.at(0);
 			median_root_x = root.x;
 			median_root_y = root.y;
 			median_root_z = root.z;
 		}
 	}
+
+    for (int i =0; i< rm_ids.size();i++){
+      nt_list.erase(nt_list.begin()+rm_ids[i]);
+    }
+
+    cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
 }
 
 struct MyBoundingBox{
@@ -187,12 +195,16 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 						for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
 						{
 							V3DLONG idx = zz * (sz_x*sz_y) + yy * sz_x + xx;
+                            if (img1d[idx] < threshold_votes)
+                            {
+                                    img1d[idx] =0;
+                            }
 							if (img1d[idx] > max_val){
 								max_val = img1d[idx] ;
 								max_idx = idx;
 							}
 						}
-				if ( max_val > 0)
+                if ( max_val >= threshold_votes)
 				{// found non-zero max that passes the majority votes threshold
 					for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
 						for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
@@ -212,8 +224,8 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 			{
 				V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
 
-				if (img1d[idx] >=threshold_votes)
-				{
+                if (img1d[idx] >=threshold_votes)
+                {
 					num_nodes++;
 					Point3D p;
 					p.x = id_x+offset.x;
@@ -221,7 +233,7 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 					p.z = id_z+offset.z;
 					node_list.push_back(p);
 					vote_list.push_back(img1d[idx]);
-				}
+                }
 			}
 	return;
 }
@@ -732,10 +744,10 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	cout << "mean votes in the vote map:" << mean_vote << endl;
 	double vote_threshold = mean_vote ;
         if (vote_threshold < 1) { vote_threshold = 1.0;}
-	int windows_siz = 7;
+    int windows_siz = 5;
 	cout << "threshold vote:" << vote_threshold << endl;
 	non_max_suppresion (img1d,sz_x,sz_y,sz_z,vote_threshold, offset,node_list,vote_list,windows_siz);
-	cout << "After non_max supression:"<< endl;
+    cout << "after non_max supression:"<< endl;
 	cout << "number of nodes:"<< node_list.size() << endl;
 	cout << "maximum votes:" << v_max(vote_list) << endl;
 
