@@ -67,8 +67,28 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
 
+        //convert to 8bit image using 8 shiftnbits
+        unsigned char * total1dData_8bit = 0;
+        try
+        {
+            total1dData_8bit = new unsigned char [tunits];
+        }
+        catch (...)
+        {
+            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            return;
+        }
+        double dn = pow(2.0, double(8));
+        for (V3DLONG i=0;i<tunits;i++)
+        {
+            double tmp = (double)(total1dData[i]) / dn;
+            if (tmp>255) total1dData_8bit[i] = 255;
+            else
+                total1dData_8bit[i] = (unsigned char)(tmp);
+        }
+
         Image4DSimple* total4DImage = new Image4DSimple;
-        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
 
         //new code starts here:
 
@@ -103,6 +123,8 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+
+        if(total1dData) {delete []total1dData; total1dData = 0;}
 
         PARA_APP2 p;
         p.is_gsdt = false;
