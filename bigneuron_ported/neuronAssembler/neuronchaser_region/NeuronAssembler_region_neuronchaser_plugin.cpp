@@ -6,10 +6,10 @@
 
 using namespace std;
 #include "NeuronAssembler_region_neuronchaser_plugin.h"
-#include "/local1/work/v3d_external/bin/../v3d_main//../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readRawfile_func.h"
-#include "/local1/work/v3d_external/bin/../v3d_main//../released_plugins_more/v3d_plugins/istitch/y_imglib.h"
-#include "/local1/work/v3d_external/bin/../v3d_main//../released_plugins_more/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-#include "/local1/work/v3d_external/bin/../v3d_main//../../vaa3d_tools/hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
+#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
 Q_EXPORT_PLUGIN2(NeuronAssembler_region_neuronchaser, NeuronAssembler_region_neuronchaser);
 //Q_EXPORT_PLUGIN2(neuronassembler, neuronassembler);
 
