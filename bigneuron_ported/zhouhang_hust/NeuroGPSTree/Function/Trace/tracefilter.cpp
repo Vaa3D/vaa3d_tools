@@ -415,15 +415,15 @@ void TraceFilter::SelectSeedForTrace(const Volume<NGCHAR> &binImg, const Volume<
 		}
 	}//for
 
-#ifdef _WIN32
-	std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), Vec4d_3_great_012less());
+#ifdef __linux
+    std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), [](const Vec4d& lhs, const Vec4d& rhs){//Node_v_x_y_z_DES
+        if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
+        else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+        else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+        return lhs(2) < rhs(2);
+    });
 #else
-	std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), [](const Vec4d& lhs, const Vec4d& rhs){//Node_v_x_y_z_DES
-		if(lhs(3) != rhs(3)) return lhs(3) > rhs(3);
-		else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-		return lhs(2) < rhs(2);
-	});
+    std::sort(tmpTraceSeed.begin(), tmpTraceSeed.end(), Vec4d_3_great_012less());
 #endif
 
     size_t numLimit = std::min<size_t>(tmpTraceSeed.size(), 10000);
@@ -518,14 +518,15 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
 		/*异常处理*/
 		if (backwardNodeSet.size() < 2) firDir =  - initVec;
 		else{
-#ifdef _WIN32
-			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
-				Vec4d_3th_less());//Node_4TH_MAX
+#ifdef __linux
+            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+                [](const Vec4d& lhs, const Vec4d& rhs){
+                    return lhs(3) < rhs(3);
+            });//Node_4TH_MAX
+
 #else
-			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
-				[](const Vec4d& lhs, const Vec4d& rhs){
-					return lhs(3) < rhs(3);
-			});//Node_4TH_MAX
+            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+                Vec4d_3th_less());//Node_4TH_MAX
 #endif
 			Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
 			firDir = maxVec.normalized();//x10 =
@@ -561,14 +562,15 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
 		/*异常处理*/
 		if (forwardNodeSet.size() < 2) secDir = initVec;
 		else{
-#ifdef _WIN32
-			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-				Vec4d_3th_less());//Node_4TH_MAX
+#ifdef __linux
+            VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+                [](const Vec4d& lhs, const Vec4d& rhs){
+                    return lhs(3) < rhs(3);
+            });//Node_4TH_MAX
 #else
-			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-				[](const Vec4d& lhs, const Vec4d& rhs){
-					return lhs(3) < rhs(3);
-			});//Node_4TH_MAX
+            VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+                Vec4d_3th_less());//Node_4TH_MAX
+
 #endif
 			Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
 			secDir = maxVec.normalized();
@@ -638,15 +640,15 @@ void TraceFilter::CalcNeighborSignal(const Volume<unsigned short> &origImg,
 	if (!rayArea.empty()){
 		/*清除冗余rayArea*/
 		//sort from x-y-z-v
-#ifdef _WIN32
-		std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
+#ifdef __linux
+        std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+            if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+            else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+            return lhs(3) < rhs(3);
+        });//Node_v_x_y_z_MAX
 #else
-		std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-			if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-			else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-			else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
-			return lhs(3) < rhs(3);
-		});//Node_v_x_y_z_MAX
+        std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
 #endif
 		rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
 		Vec3d tmp;
@@ -748,14 +750,15 @@ void TraceFilter::CalcNeighborSignalV2(const Volume<unsigned short> &origImg,
 		/*异常处理*/
 		if (backwardNodeSet.size() < 2) firDir =  - initVec;
 		else{
-#ifdef _WIN32
-			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
-				Vec4d_3th_less());//Node_4TH_MAX
+#ifdef __linux
+            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+                [](const Vec4d& lhs, const Vec4d& rhs){
+                    return lhs(3) < rhs(3);
+            });//Node_4TH_MAX
+
 #else
-			VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
-				[](const Vec4d& lhs, const Vec4d& rhs){
-					return lhs(3) < rhs(3);
-			});//Node_4TH_MAX
+            VectorVec4d::iterator maxItem = std::max_element(backwardNodeSet.begin(), backwardNodeSet.end(),
+                Vec4d_3th_less());//Node_4TH_MAX
 #endif
 			Vec3d maxVec((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//xss
 			firDir = maxVec.normalized();//x10 =
@@ -790,14 +793,15 @@ void TraceFilter::CalcNeighborSignalV2(const Volume<unsigned short> &origImg,
 		/*异常处理*/
 		if (forwardNodeSet.size() < 2) secDir = initVec;
 		else{
-#ifdef _WIN32
-			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-				Vec4d_3th_less());//Node_4TH_MAX
+#ifdef __linux
+            VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+                [](const Vec4d& lhs, const Vec4d& rhs){
+                    return lhs(3) < rhs(3);
+            });//Node_4TH_MAX
+
 #else
-			VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-				[](const Vec4d& lhs, const Vec4d& rhs){
-					return lhs(3) < rhs(3);
-			});//Node_4TH_MAX
+            VectorVec4d::iterator maxItem = std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+                Vec4d_3th_less());//Node_4TH_MAX
 #endif
 			Vec3d maxVec((*maxItem).x(), (*maxItem).y(), (*maxItem).z());//xss
 			secDir = maxVec.normalized();
@@ -862,15 +866,16 @@ void TraceFilter::CalcNeighborSignalV2(const Volume<unsigned short> &origImg,
 	if (!rayArea.empty()){
 		/*清除冗余rayArea*/
 		//sort from x-y-z-v
-#ifdef _WIN32
-		std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
+#ifdef __linux
+        std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+            if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+            else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+            else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
+            return lhs(3) < rhs(3);
+        });//Node_v_x_y_z_MAX
 #else
-		std::sort(rayArea.begin(), rayArea.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-			if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-			else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-			else if(lhs(2) != rhs(2)) return lhs(2) < rhs(2);
-			return lhs(3) < rhs(3);
-		});//Node_v_x_y_z_MAX
+        std::sort(rayArea.begin(), rayArea.end(), Vec4d_0123less());//Node_v_x_y_z_MAX
+
 #endif
 		rayArea.erase(std::unique(rayArea.begin(), rayArea.end()), rayArea.end());
 		Vec3d tmp;
@@ -1173,15 +1178,16 @@ void TraceFilter::CalcInitDirectionOnTraceSeed(const Volume<unsigned short> &ori
     backValue /= (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1);
 
     /*排序,依次是强度，x,y,z*/
-#ifdef _WIN32
-	VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), Vec4d_3012less());//Node_v_x_y_z_MAX
+#ifdef __linux
+    VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
+        if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
+        else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
+        else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
+        return lhs(2) < rhs(2);
+    });//Node_v_x_y_z_MAX
 #else
-	VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), [](const Vec4d& lhs, const Vec4d& rhs){
-		if(lhs(3) != rhs(3)) return lhs(3) < rhs(3);
-		else if(lhs(0) != rhs(0)) return lhs(0) < rhs(0);
-		else if(lhs(1) != rhs(1)) return lhs(1) < rhs(1);
-		return lhs(2) < rhs(2);
-	});//Node_v_x_y_z_MAX
+    VectorVec4d::iterator maxItem = std::max_element(rayWet.begin(), rayWet.end(), Vec4d_3012less());//Node_v_x_y_z_MAX
+
 #endif
     //maxRay << (*maxItem)(0), (*maxItem)(1), (*maxItem)(2), (*maxItem)(3);
     Vec3d maxTransItem((*maxItem)(0), (*maxItem)(1), (*maxItem)(2));//L11(1:3)'
@@ -2107,15 +2113,16 @@ void TraceFilter::ReconstructShapeForTrace(const Vec3d &intialPoint, const Volum
     //innerSomaPts.swap(VectorVec3d(innerSomaPts));
     /*去除重复*/
     //lambda function
-#ifdef _WIN32
-	std::sort(innerSomaPts.begin(), innerSomaPts.end(), Vec3d_less());
+#ifdef _linux
+    std::sort(innerSomaPts.begin(), innerSomaPts.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+        return false;
+    });
 #else
-	std::sort(innerSomaPts.begin(), innerSomaPts.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-		return false;
-	});
+    std::sort(innerSomaPts.begin(), innerSomaPts.end(), Vec3d_less());
+
 #endif
     innerSomaPts.erase(std::unique(innerSomaPts.begin(), innerSomaPts.end()), innerSomaPts.end());
     //2014-4-19
@@ -2331,12 +2338,13 @@ void TraceFilter::CalcOrthoBasis(const Vec3d &vec1, Vec3d &vec2, Vec3d &vec3)
     tmp.push_back(std::pair<int, double>(1, std::abs(vec1(1))));
     tmp.push_back(std::pair<int, double>(2, std::abs(vec1(2))));
     /*[idxv,idexx]=sort(abs(vec1))*/
-#ifdef _WIN32
-	std::sort(tmp.begin(), tmp.end(),Pair_less());
+#ifdef __linux
+    std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+        return lhs.second < rhs.second;
+    });
 #else
-	std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-		return lhs.second < rhs.second;
-	});
+    std::sort(tmp.begin(), tmp.end(),Pair_less());
+
 #endif
     double cdd = (tmp[0].second * tmp[0].second + tmp[1].second * tmp[1].second) / tmp[2].second;
     vec2(tmp[2].first) = - (double)TraceUtil::sign(vec1[tmp[2].first]) * cdd;
@@ -2951,12 +2959,13 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
-#ifdef _WIN32
-			std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
+#ifdef __linux
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+                return lhs.second < rhs.second;
+            });
 #else
-			std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-				return lhs.second < rhs.second;
-			});
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
+
 #endif
             //Change:2014-3-21-10-32
             int isShortestExist = std::min(1, (int)nxx);//1 or 0
@@ -3052,12 +3061,13 @@ void TraceFilter::AddCollideConnectNode(const std::vector<VectorVec5d> &dendCurv
                 datap22 = firstDendPt - datap2;
                 conNodeDistList.push_back(std::pair<int, double>(ii + 1, datap22.norm()));
             }
-#ifdef _WIN32
-			std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
+#ifdef __linux
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+                return lhs.second < rhs.second;
+            });
 #else
-			std::sort(conNodeDistList.begin(), conNodeDistList.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-				return lhs.second < rhs.second;
-			});
+            std::sort(conNodeDistList.begin(), conNodeDistList.end(), Pair_less());
+
 #endif
             //Change:5->1
             int isShortestExist = std::min(1, int(nxx));
@@ -3176,15 +3186,16 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             }
         }
     }
-#ifdef _WIN32
-	std::sort(innerSomaPt.begin(), innerSomaPt.end(), Vec3d_less());
+#ifdef __linux
+    std::sort(innerSomaPt.begin(), innerSomaPt.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+        return false;
+    });
 #else
-	std::sort(innerSomaPt.begin(), innerSomaPt.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-		return false;
-	});
+    std::sort(innerSomaPt.begin(), innerSomaPt.end(), Vec3d_less());
+
 #endif
     innerSomaPt.erase(std::unique(innerSomaPt.begin(), innerSomaPt.end()),
                       innerSomaPt.end());
@@ -3215,15 +3226,16 @@ void TraceFilter::FindThickDendDirFromSoma(const MatXd &rayLength, const SVolume
             medianContourPtSet.push_back(Vec3d(xx,yy,zz));
         }
     }
-#ifdef _WIN32
-	std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), Vec3d_less());
+#ifdef __linux
+    std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+        return false;
+    });
 #else
-	std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-		return false;
-	});
+    std::sort(medianContourPtSet.begin(), medianContourPtSet.end(), Vec3d_less());
+
 #endif
     medianContourPtSet.erase(std::unique(medianContourPtSet.begin(),
                                             medianContourPtSet.end()),
@@ -3825,14 +3837,16 @@ void TraceFilter::PushNodeUseRayBurst(const Vec3d &curveNode, const Volume<unsig
             }
         }
 
-#ifdef _WIN32
-		Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-			Vec4d_3th_less()));
+#ifdef __linux
+        Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+            [](const Vec4d& lhs, const Vec4d& rhs){
+                return lhs(3) < rhs(3);
+        }));
+
 #else
-		Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
-			[](const Vec4d& lhs, const Vec4d& rhs){
-				return lhs(3) < rhs(3);
-		}));
+        Vec4d tmpNode1 = *(std::max_element(forwardNodeSet.begin(), forwardNodeSet.end(),
+            Vec4d_3th_less()));
+
 #endif
         Vec3d tmpx10(tmpNode1(0), tmpNode1(1), tmpNode1(2));
         x10 = tmpx10.normalized();
@@ -4109,15 +4123,16 @@ void TraceFilter::RayBurstShape(const Vec3d &initSoma, const SVolume &v, VectorV
         }
     }
 
-#ifdef _WIN32
-	std::sort(rayNode.begin(), rayNode.end(), Vec3d_less());
+#ifdef __linux
+    std::sort(rayNode.begin(), rayNode.end(), [](const Vec3d& lhs, const Vec3d &rhs){
+        if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
+        else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
+        else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
+        return false;
+    });
 #else
-	std::sort(rayNode.begin(), rayNode.end(), [](const Vec3d& lhs, const Vec3d &rhs){
-		if (lhs(0) != rhs(0))  return lhs(0) < rhs(0);
-		else if (lhs(1) != rhs(1))  return lhs(1) < rhs(1);
-		else if (lhs(2) != rhs(2))  return lhs(2) < rhs(2);
-		return false;
-	});
+    std::sort(rayNode.begin(), rayNode.end(), Vec3d_less());
+
 #endif
     rayNode.erase(std::unique(rayNode.begin(), rayNode.end()), rayNode.end());
 

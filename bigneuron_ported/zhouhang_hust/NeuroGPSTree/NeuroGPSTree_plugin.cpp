@@ -63,7 +63,12 @@ void NeuroGPSTreePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
                                                 tr("Please Input soma position file path"),
                                                 QLineEdit::Normal,tr("NULL"), &ok);
 
+#ifdef _WIN32
         PARA.threadNum = omp_get_max_threads();
+#endif
+#ifdef __linux
+        PARA.threadNum = omp_get_max_threads();
+#endif
         if(!ok) return;
         PARA.swcfile = paraStr.toStdString();
 

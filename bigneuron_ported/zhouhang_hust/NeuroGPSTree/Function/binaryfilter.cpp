@@ -6,10 +6,13 @@
 
 #ifdef _WIN32
 #include <ctime>
+#include <omp.h>
 #else
 #include <sys/time.h>
 #endif
+#ifdef __linux
 #include <omp.h>
+#endif
 #include "binaryfilter.h"
 #include "../ngtypes/volume.h"
 
@@ -144,7 +147,13 @@ bool BinaryFilter::Binary()
 #endif
 
     ///---------------------------------20 filters--------------------------///
+
+#ifdef _WIN32
     omp_set_num_threads(threadNum);
+#endif
+#ifdef __linux
+    omp_set_num_threads(threadNum);
+#endif
 //#pragma omp parallel
 //#pragma omp for  private( i, j, num,k,l,tmp_value)
     for (ij = 0 ; ij < f ; ++ij){			//all frame

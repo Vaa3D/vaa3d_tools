@@ -221,9 +221,9 @@ private:
     void SearchAndBreakTreeModify(const VectorVec2i &aSomaConnectSet,
         std::vector<std::list<int> > &pathGraph,
         VectorVec2i &resultSet);
-	void GetNetBridgeModify(const std::vector<std::list<int>> &adjcentList, const int subNetNum, const std::vector<int> &validDendIDListWithHeadTail, const std::vector<int> &wetList, std::vector<int> &validIDListWithHeadTail, std::vector<int> &resultWetList);
-	void MyDijkstraModify(const std::vector<std::list<int>>& adjcentList, const int subNetNum, const int beg, std::vector<int>& d, std::vector<int>& path);
-	bool IsConnectValidInAdjcentList(const std::vector<std::list<int>>& adjcentList, int beg, int dst);
+    void GetNetBridgeModify(const std::vector<std::list<int> > &adjcentList, const int subNetNum, const std::vector<int> &validDendIDListWithHeadTail, const std::vector<int> &wetList, std::vector<int> &validIDListWithHeadTail, std::vector<int> &resultWetList);
+    void MyDijkstraModify(const std::vector<std::list<int> >& adjcentList, const int subNetNum, const int beg, std::vector<int>& d, std::vector<int>& path);
+    bool IsConnectValidInAdjcentList(const std::vector<std::list<int> >& adjcentList, int beg, int dst);
 	void BreakSomaTreeUnassignedNetModify(const MatXi &compressPathGraph1, const int subNetNum, const VectorVec3i &validDendIDListWithHeadTail, const std::vector<int> &currentDendID, const std::vector<VectorVec5d> &rawDendList, const SVolume &origImg, MatXi &newCompressGraph);
 };
 

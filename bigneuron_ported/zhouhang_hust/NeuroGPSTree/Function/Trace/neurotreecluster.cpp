@@ -1583,7 +1583,7 @@ void NeuroTreeCluster::GetNetBridge(const MatXi &compressPathGraph1, const int s
     }
 }
 
-void NeuroTreeCluster::GetNetBridgeModify(const std::vector<std::list<int>> &adjcentList, const int subNetNum,
+void NeuroTreeCluster::GetNetBridgeModify(const std::vector<std::list<int> > &adjcentList, const int subNetNum,
                                      const std::vector<int> &validDendIDListWithHeadTail,
                                      const std::vector<int> &wetList, std::vector<int> &validIDListWithHeadTail,
                                      std::vector<int> &resultWetList)
@@ -1723,7 +1723,7 @@ void NeuroTreeCluster::MyDijkstra(const MatXi &graph, const int beg, const int f
     }
 }
 
-void NeuroTreeCluster::MyDijkstraModify(const std::vector<std::list<int>>& adjcentList, const int subNetNum, const int beg, std::vector<int>& d, std::vector<int>& path)
+void NeuroTreeCluster::MyDijkstraModify(const std::vector<std::list<int> >& adjcentList, const int subNetNum, const int beg, std::vector<int>& d, std::vector<int>& path)
 {
 	int sz = int(adjcentList.size());
     //std::vector<int> path;
@@ -3662,7 +3662,7 @@ void NeuroTreeCluster::SearchLargeTreeFromSomaModify( std::vector<std::list<int>
     }
 }
 
-bool NeuroTreeCluster::IsConnectValidInAdjcentList(const std::vector<std::list<int>>& adjcentList, int beg, int dst)
+bool NeuroTreeCluster::IsConnectValidInAdjcentList(const std::vector<std::list<int> >& adjcentList, int beg, int dst)
 {
 	for(std::list<int>::const_iterator it = adjcentList[beg].begin(); it != adjcentList[beg].end(); ++it){
 		if(*it == dst) return true;

@@ -5,11 +5,14 @@
 #include "../volumealgo.h"
 #include "../contourutil.h"
 #include "./traceutil.h"
+#ifdef __linux
 #include <omp.h>
+#endif
 #include <algorithm>
 #include <numeric>
 #ifdef _WIN32
 #include <ctime>
+#include <omp.h>
 #else
 #include <sys/time.h>
 #endif
@@ -1332,12 +1335,12 @@ void BridgeBreaker::CalcOrthoBasis(const Vec3d &vec1, Vec3d &vec2, Vec3d &vec3)
 	tmp.push_back(std::pair<int, double>(1, std::abs(vec1(1))));
 	tmp.push_back(std::pair<int, double>(2, std::abs(vec1(2))));
 	/*[idxv,idexx]=sort(abs(vec1))*/
-#ifdef _WIN32
-	std::sort(tmp.begin(), tmp.end(),Pair_less());
+#ifdef __linux
+    std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
+        return lhs.second < rhs.second;
+    });
 #else
-	std::sort(tmp.begin(), tmp.end(),[](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs){
-		return lhs.second < rhs.second;
-	});
+    std::sort(tmp.begin(), tmp.end(),Pair_less());
 #endif
 	double cdd = (tmp[0].second * tmp[0].second + tmp[1].second * tmp[1].second) / tmp[2].second;
 	vec2(tmp[2].first) = - (double)TraceUtil::sign(vec1[tmp[2].first]) * cdd;
