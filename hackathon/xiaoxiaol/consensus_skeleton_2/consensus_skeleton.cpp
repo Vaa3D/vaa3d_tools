@@ -640,6 +640,10 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	remove_outliers(nt_list, root_x, root_y, root_z);
 	int neuronNum = nt_list.size();
+    if (neuronNum<2){
+        cout<<"not enough neurons left for consensuing...." <<endl;
+        return false;
+    }
 
 	//initialize the image volume to record/accumulate the  location votes from neurons
 	MyBoundingBox bbUnion = neuron_trees_bb(nt_list);
@@ -742,7 +746,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	double mean_vote = mean_image_value(img1d, tol_sz);
 	cout << "mean votes in the vote map:" << mean_vote << endl;
-	double vote_threshold = mean_vote ;
+    double vote_threshold = mean_vote -1 ;
         if (vote_threshold < 1) { vote_threshold = 1.0;}
     int windows_siz = 5;
 	cout << "threshold vote:" << vote_threshold << endl;
@@ -978,7 +982,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	double soma_x = root_x;
 	double soma_y = root_y;
 	double soma_z = root_z;
-	if (   soma_sort(search_distance_th, merge_result, soma_x, soma_y, soma_z, final_consensus, cluster_distance_threshold/2) )
+    if (   soma_sort(search_distance_th, merge_result, soma_x, soma_y, soma_z, final_consensus, 3) )
 	{
 		cout <<"merged swc #nodes = "<< merge_result.size()<<endl<<endl;
 
