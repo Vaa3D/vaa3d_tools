@@ -6,6 +6,8 @@
 #include <sstream>
 
 using namespace std;
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+
 
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
@@ -75,7 +77,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
             return;
         }
-        double dn = pow(2.0, double(8));
+        double dn = pow(2.0, double(5));
         for (V3DLONG i=0;i<tunits;i++)
         {
             double tmp = (double)(total1dData[i]) / dn;
@@ -207,13 +209,24 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             if (childs[i].size()==0)
             {
                 NeuronSWC curr = list.at(i);
-                V3DLONG node_pn = curr.pn;
-                V3DLONG node_pn_2nd = list.at(node_pn).pn;
-                if(node_pn_2nd <0) node_pn_2nd = node_pn;
                 LocationSimple newTip;
-                newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
-                newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
-                newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+                if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > p.p4dImage->getYDim())
+                {
+                    V3DLONG node_pn = getParent(i,nt);
+                    V3DLONG node_pn_2nd;
+                    if( list.at(node_pn).pn < 0)
+                    {
+                        node_pn_2nd = node_pn;
+                    }
+                    else
+                    {
+                        node_pn_2nd = getParent(node_pn,nt);
+                    }
+
+                    newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
+                    newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
+                    newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+                }
                 if( curr.x < 0.05* p.p4dImage->getXDim())
                 {
                     tip_left.push_back(newTip);
