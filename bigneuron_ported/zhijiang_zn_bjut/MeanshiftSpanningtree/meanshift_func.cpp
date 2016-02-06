@@ -3209,7 +3209,7 @@ QList <NeuronSWC > calculate_distance_between_roots(QMap<V3DLONG,QMap<V3DLONG,QL
             QList<Node> distance_list=path_between_each_roots.value(temp1_v3dlong).value(temp2_v3dlong);
             markEdge[i][j]=0;
             if(distance_list.size()==1){
-                printf("1111111111111:%ld  %ld\n",temp1,temp2);
+                printf("1111111111111:(%d,%d,%d),(%d,%d,%d)\n",temp1.x,temp1.y,temp1.z,temp2.x,temp2.y,temp2.z);
 
             }
             if((temp1_v3dlong==GET_IND(distance_list.first().x,distance_list.first().y,distance_list.first().z))&&(temp2_v3dlong==GET_IND(distance_list.last().x,distance_list.last().y,distance_list.last().z))){
