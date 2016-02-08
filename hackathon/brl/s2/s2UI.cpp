@@ -56,6 +56,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(createROIControls(),"ROI Controls");
     localRemoteCB = new QCheckBox;
     localRemoteCB->setText(tr("Local PrairieView"));
+    runAllTargetsPB = new QPushButton;
+    runAllTargetsPB->setText(tr("Scan All Targets"));
     mainLayout = new QGridLayout();
     //mainLayout->addWidget(s2Label, 0, 0);
     //mainLayout->addWidget(s2LineEdit, 0, 1);
@@ -71,7 +73,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,3);
-    mainLayout->addWidget(localRemoteCB,5,0,1,2);
+    mainLayout->addWidget(localRemoteCB,5,0,1,1);
+    mainLayout->addWidget(runAllTargetsPB,5,2);
     mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
     //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
@@ -80,8 +83,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     myTargetTable.show();
-    targetIndex = -1;
-
+    targetIndex = 0;
+    overViewPixelToScanPixel = 256.0/1024.0;
 
     hookUpSignalsAndSlots();
 
@@ -95,6 +98,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     waitingForFile = 0;
     isLocal = false;
     smartScanStatus = 0;
+    allTargetStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     updateLocalRemote(isLocal);
@@ -123,8 +127,9 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(resetToOverviewPB, SIGNAL(clicked()),this, SLOT(resetToOverviewPBCB()));
     connect(resetToScanPB, SIGNAL(clicked()), this, SLOT(resetToScanPBCB()));
 
-
     connect(pickTargetsPB,SIGNAL(clicked()),this, SLOT(pickTargets()));
+    connect(runAllTargetsPB,SIGNAL(clicked()),this,SLOT(startAllTargets()));
+
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -246,9 +251,10 @@ void S2UI::updateLocalRemote(bool state){
 
 
     saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
+    sessionDir = saveDir;
     scanDataFileString = saveDir.absolutePath().append("/").append("_0_scanData.txt");
 
-    myNotes->setSaveDir(saveDir);
+    myNotes->setSaveDir(saveDir); // this gets saved in the parent directory.  scanDataFileString will get modified for each scan
 
 }
 
@@ -603,33 +609,33 @@ void S2UI::loadScanFromFile(QString fileString){
 
 
         }else{// not in smartscan mode
-        status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
-        //            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-        //            cb->setImage(newwin, total4DImage);
-        //            cb->open3DWindow(newwin);
-    }
+            status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
+            //            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
+            //            cb->setImage(newwin, total4DImage);
+            //            cb->open3DWindow(newwin);
+        }
 
 
-    if (waitingForOverview){windowString = "s2 Preview Image";
-        previewWindow = cb->newImageWindow();
-        cb->setImageName(previewWindow,windowString);
-        cb->setImage(previewWindow, total4DImage);
-        cb->open3DWindow(previewWindow);
-        cb->updateImageWindow(previewWindow);
-        havePreview = true;
-        waitingForOverview = false;
-    }else{
-        v3dhandle newwin = cb->newImageWindow();
-        cb->setImageName(newwin,windowString);
-        cb->setImage(newwin, total4DImage);
-        cb->open3DWindow(newwin);
-        if (smartScanStatus==1){
-            cb->setSWC(newwin,nt);
-            cb->setLandmark(newwin,newTargetList);
-            cb->pushObjectIn3DWindow(newwin);}
+        if (waitingForOverview){windowString = "s2 Preview Image";
+            previewWindow = cb->newImageWindow();
+            cb->setImageName(previewWindow,windowString);
+            cb->setImage(previewWindow, total4DImage);
+            cb->open3DWindow(previewWindow);
+            cb->updateImageWindow(previewWindow);
+            havePreview = true;
+            waitingForOverview = false;
+        }else{
+            v3dhandle newwin = cb->newImageWindow();
+            cb->setImageName(newwin,windowString);
+            cb->setImage(newwin, total4DImage);
+            cb->open3DWindow(newwin);
+            if (smartScanStatus==1){
+                cb->setSWC(newwin,nt);
+                cb->setLandmark(newwin,newTargetList);
+                cb->pushObjectIn3DWindow(newwin);}
 
-        cb->updateImageWindow(newwin);
-    }
+            cb->updateImageWindow(newwin);
+        }
 
 
 
@@ -723,6 +729,8 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
             }
         }
     }
+    overViewPixelToScanPixel = uiS2ParameterMap[10].getCurrentValue() / 1024.0;
+
 }
 
 
@@ -733,8 +741,37 @@ void S2UI::updateString(QString broadcastedString){
 
 //  -------  smart scanning stuffs   --------
 //  -----------------------------------------
-void S2UI::startingSmartScan(){
 
+
+void S2UI::startAllTargets(){
+    qDebug()<<"startAllTargets";
+    if (allTargetStatus ==1){
+        allTargetStatus =0;
+        runAllTargetsPB->setText("Scan All Targets");
+        smartScanStatus = 0;
+    }else{
+        runAllTargetsPB->setText("cancel All Targets");
+        targetIndex = -1;
+        allTargetStatus = 1;// running alltargetscan
+        QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+    }
+}
+void S2UI::handleAllTargets(){
+    qDebug()<<"handleAllTargets";
+    targetIndex++;
+    allROILocations->clear();
+    if (targetIndex>=allTargetLocations.length()){
+        v3d_msg("finished with multi-target scan",true);
+        smartScanStatus = 0;
+        allTargetStatus = 0;
+        return;
+    }
+    status("starting all targets");
+    QTimer::singleShot(0, this, SLOT(startingSmartScan()));}
+
+
+void S2UI::startingSmartScan(){
+    qDebug()<<"starting smartscan";
     if (smartScanStatus==1){
         smartScanStatus=0;
         startSmartScanPB->setText("smartScan");
@@ -743,12 +780,16 @@ void S2UI::startingSmartScan(){
         return;
     }
     smartScanStatus = 1;
-    targetIndex++;
+    QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
+    sessionDir.mkdir(timeString);
+    saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
+
     scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
     status(scanDataFileString);
     saveTextFile.setFileName(scanDataFileString);// add currentScanFile
     if (!saveTextFile.isOpen()){
         if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+            qDebug()<<"couldnt open file"<<scanDataFileString;
             return;}     }
 
     outputStream.setDevice(&saveTextFile);
@@ -758,9 +799,18 @@ void S2UI::startingSmartScan(){
         scanList.clear();
         scanNumber = 0;
         status("starting smartScan...");
-        LocationSimple startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
-                uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
-                0);
+        LocationSimple startLocation ;
+        if (allTargetStatus ==0){
+            startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
+                    uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
+                    0);
+        }else{
+            startLocation = allTargetLocations[targetIndex];
+        }
+
+
+
+
         startLocation.mass = 0;
         allROILocations->append(startLocation);
         //allScanLocations.append(allROILocations);
@@ -811,13 +861,21 @@ void S2UI::smartScanHandler(){
         scanNumber = 0;
         saveTextFile.close();
         emit processSmartScanSig(scanDataFileString);
+        if (allTargetStatus ==1){
+            QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+        }
         return;
     }
     if (allROILocations->isEmpty()){
-        v3d_msg("Finished with smartscan !",true);
+        if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
         emit processSmartScanSig(scanDataFileString);
+        if ((allTargetStatus ==1)&&(targetIndex<allTargetLocations.length())){
+            QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+            return;
+        }
+
     }
 
     status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
@@ -843,8 +901,8 @@ void S2UI::smartScanHandler(){
 
         waitingForFile = 1;
         scanList.append(nextLocation);
-        //allScanLocations.value(targetIndex) = scanList;
-        // emit updateTable(allTargetLocations,allScanLocations);
+        allScanLocations.append(scanList);
+        emit updateTable(allTargetLocations,allScanLocations);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
@@ -855,9 +913,9 @@ void S2UI::smartScanHandler(){
 
 
 void S2UI::moveToROI(LocationSimple nextROI){
-    // convert from pixels to microns:
+
     if( posMonStatus){
-        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();
+        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
         float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
         // and now to galvo voltage:
         float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
@@ -912,6 +970,8 @@ void S2UI::overviewHandler(){
             ((int) uiS2ParameterMap[12].getCurrentValue() ==1)&&
             ((int) uiS2ParameterMap[10].getCurrentValue() == 1024)&&
             ((int) uiS2ParameterMap[11].getCurrentValue() == 1024);
+
+
     bool overViewTimedOut = overviewCycles >50;
 
     if (overViewTimedOut){
@@ -1072,16 +1132,23 @@ void S2UI::pickTargets(){
         v3d_msg("please select a target");
         return;
     }
+    resetToScanPB->click();
     LocationSimple startCenter;
     QList<LandmarkList>  startingROIList;
+    LandmarkList targets;
     for (int i =0; i<previewTargets.length();i++){
-        startCenter.x = 0.0+previewTargets.at(i).x;
-        startCenter.y = 0.0+previewTargets.at(i).y;
+        LocationSimple newTarget;
+        newTarget.x = (previewTargets.at(i).x-512.0)*overViewPixelToScanPixel;
+        newTarget.y  = (previewTargets.at(i).y-512.0)*overViewPixelToScanPixel;
+        startCenter.x = 0.0+newTarget.x;
+        startCenter.y = 0.0+newTarget.y;
+        targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
         startingROIList.append(startList);
     }
-    emit updateTable(previewTargets,startingROIList);
+    allTargetLocations = targets;
+    emit updateTable(targets,startingROIList);
 }
 
 

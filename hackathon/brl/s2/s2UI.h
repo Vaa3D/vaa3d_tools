@@ -84,6 +84,8 @@ private slots:
     void resetToOverviewPBCB();
     void resetToScanPBCB();
     void pickTargets();
+    void startAllTargets();
+    void handleAllTargets();
 private:
     V3DPluginCallback2 * cb;
 
@@ -112,12 +114,16 @@ private:
     QGroupBox *createROIControls();
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
+
+
+
     void createButtonBox1();
 	
 
     void createTargetList();
 
 	QCheckBox *localRemoteCB;
+    QPushButton *runAllTargetsPB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
@@ -181,6 +187,9 @@ private:
     int smartScanStatus;
     double scanNumber;
     int resultNumber;
+    int allTargetStatus;
+    float overViewPixelToScanPixel;
+
     LandmarkList scanList;
     QList<LandmarkList> tipList;
 
@@ -189,6 +198,7 @@ private:
     NoteTaker *myNotes;
 
     QDir saveDir;
+    QDir sessionDir;
     QDir currentDirectory;
     QFile saveTextFile;
     QTextStream outputStream;

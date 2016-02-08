@@ -40,23 +40,13 @@ TargetList::TargetList(QWidget *parent) :
     qDebug()<<QString::number(scanLocTable->isVisible());
     LandmarkList fakeTargetList;
     LocationSimple testLoc1;
-    testLoc1.x = 1.0;
-    testLoc1.y = 122.9;
-    testLoc1.ev_pc1 = 230;
-    testLoc1.ev_pc2 = 234;
-    LocationSimple testLoc2;
-    testLoc2.x = 81.0;
-    testLoc2.y = 22.9;
-    testLoc2.ev_pc1 = 20;
-    testLoc2.ev_pc2 = 24;
 
     fakeTargetList.append(testLoc1);
-    fakeTargetList.append(testLoc2);
-    fakeTargetList.append(testLoc1);
+
     QList<LandmarkList> fakeScanLocations;
     fakeScanLocations.append(fakeTargetList);
-    fakeTargetList.append(testLoc1);
-    fakeScanLocations.append(fakeTargetList);
+
+
 
     updateTargetTable(fakeTargetList, fakeScanLocations);
 
@@ -64,7 +54,7 @@ TargetList::TargetList(QWidget *parent) :
 
 void TargetList::updateTargetTable(LandmarkList inputTargetList, QList<LandmarkList> inputScanLocations){
 
-
+    qDebug()<<"updating Table";
     targetList = inputTargetList;
     scanLocations = inputScanLocations;
     if (inputTargetList.isEmpty()){
