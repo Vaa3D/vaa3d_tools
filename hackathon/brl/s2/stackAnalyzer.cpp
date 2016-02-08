@@ -126,7 +126,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         if(total1dData) {delete []total1dData; total1dData = 0;}
 
         PARA_APP2 p;
-        p.is_gsdt = false;
+        p.is_gsdt = true;
         p.is_coverage_prune = true;
         p.is_break_accept = false;
         p.bkg_thresh = background;
