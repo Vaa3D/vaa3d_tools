@@ -14,7 +14,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     cb = &callback;
 }
 
-void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT){
+void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT, bool isSoma){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
 
@@ -131,6 +131,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         //convert to 8bit image using 1percentage saturation
         double apercent = 0.01;
+        if(isSoma) apercent = 0.05;
         V3DLONG maxvv = ceil(p_vmax+1);
         double *hist = 0;
         try
@@ -185,7 +186,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.is_coverage_prune = true;
         p.is_break_accept = false;
         p.bkg_thresh = background;
-        p.length_thresh = 5;
+        p.length_thresh = 10;
         p.cnn_type = 2;
         p.channel = 0;
         p.SR_ratio = 3.0/9.9;

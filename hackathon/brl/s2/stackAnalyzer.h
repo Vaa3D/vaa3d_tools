@@ -19,7 +19,7 @@ signals:
     void messageSignal(QString msg);
     void combinedSWC(QString fileSaveName);
 public slots:
-    void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT);
+    void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
     void processStack(Image4DSimple InputImage);
     void processSmartScan(QString fileWithData);
 private:
