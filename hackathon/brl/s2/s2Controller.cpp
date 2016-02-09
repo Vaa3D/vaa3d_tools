@@ -212,8 +212,8 @@ void S2Controller::overviewSetup(){
     centerGalvos();
     cleanAndSend("-zsz 20");
     cleanAndSend("-oz 1"); // set mag to 1x
-    cleanAndSend("-sts pixelsPerLine 1024"); // set pixels per line to  1024
-    cleanAndSend("-sts linesPerFrame 1024"); // set lines per frame to 1024
+    cleanAndSend("-sts pixelsPerLine 512"); // set pixels per line to 512
+    cleanAndSend("-sts linesPerFrame 512"); // set lines per frame to 512
     cleanAndSend("-sts activeMode Galvo");// set to galvo mode
 
     QTimer::singleShot(10, this, SLOT(overviewHandler()));

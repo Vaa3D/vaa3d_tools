@@ -362,6 +362,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         }
         node_type++;
     }
+    ifs.close();
     for(V3DLONG i = 0; i < outswc.size(); i++)
     {
         outswc[i]->x = outswc[i]->x - offsetX_min;
@@ -388,10 +389,17 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     myfile.open(tc_name.toStdString().c_str(), ios::in);
     if (myfile.is_open()==true)
     {
+        qDebug()<<"initial file can be opened for reading and will be removed";
+
         myfile.close();
         remove(tc_name.toStdString().c_str());
     }
     myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    if (!myfile.is_open()){
+        qDebug()<<"file's not really open...";
+        emit combinedSWC(fileSaveName);
+      return;
+    }
     myfile << "# thumbnail file \n";
     myfile << "NULL \n\n";
     myfile << "# tiles \n";
@@ -415,7 +423,8 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         myfile << imagefilepath.toStdString();
         myfile << "\n";
     }
+    myfile.flush();
     myfile.close();
-
+    ifs_2nd.close();
     emit combinedSWC(fileSaveName);
 }

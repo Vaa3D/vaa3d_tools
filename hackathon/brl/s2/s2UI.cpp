@@ -84,8 +84,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     myTargetTable.show();
     targetIndex = 0;
-    overViewPixelToScanPixel = 256.0/1024.0;
-
+    overViewPixelToScanPixel = (1.0/16.0)*(256.0/512.0);
+    overviewMicronsPerPixel = 1.8;
     hookUpSignalsAndSlots();
 
 
@@ -729,7 +729,7 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
             }
         }
     }
-    overViewPixelToScanPixel = uiS2ParameterMap[10].getCurrentValue() / 1024.0;
+    overViewPixelToScanPixel =  overviewMicronsPerPixel/uiS2ParameterMap[8].getCurrentValue();
 
 }
 
@@ -767,7 +767,7 @@ void S2UI::handleAllTargets(){
         return;
     }
     status("starting all targets");
-    QTimer::singleShot(0, this, SLOT(startingSmartScan()));}
+    QTimer::singleShot(1000, this, SLOT(startingSmartScan()));}
 
 
 void S2UI::startingSmartScan(){
@@ -844,12 +844,18 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             }}
     }
     scanNumber++;
-    smartScanHandler();
+    QTimer::singleShot(10,this, SLOT(smartScanHandler()));
 }
 
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
+    //check against locations already scanned
     for (int i=0; i<scanList.length(); i++){
-        if ((qAbs(inputLocation.x - scanList[i].x)<50) && (qAbs(inputLocation.y - scanList[i].y)<50)){
+        if ((qAbs(inputLocation.x - scanList[i].x)<50.0) && (qAbs(inputLocation.y - scanList[i].y)<50.0)){
+            return true;}
+    }
+    // and locations already queued!
+    for (int i=0; i< allROILocations->length(); i++){
+        if ((qAbs(inputLocation.x - allROILocations->at(i).x)<50.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<50.0)){
             return true;}
     }
     return false;
@@ -901,7 +907,7 @@ void S2UI::smartScanHandler(){
 
         waitingForFile = 1;
         scanList.append(nextLocation);
-        allScanLocations.append(scanList);
+        allScanLocations[targetIndex].append(nextLocation);
         emit updateTable(allTargetLocations,allScanLocations);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
@@ -980,6 +986,7 @@ void S2UI::overviewHandler(){
     }
     if (readyForOverview){
         // set up 3-plane z stack here?
+        overviewMicronsPerPixel = uiS2ParameterMap[8].getCurrentValue();
         waitingForOverview = true;
         QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
         status("starting single scan");
@@ -1138,8 +1145,8 @@ void S2UI::pickTargets(){
     LandmarkList targets;
     for (int i =0; i<previewTargets.length();i++){
         LocationSimple newTarget;
-        newTarget.x = (previewTargets.at(i).x-512.0)*overViewPixelToScanPixel;
-        newTarget.y  = (previewTargets.at(i).y-512.0)*overViewPixelToScanPixel;
+        newTarget.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;
+        newTarget.y  = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
         startCenter.x = 0.0+newTarget.x;
         startCenter.y = 0.0+newTarget.y;
         targets.append(newTarget);

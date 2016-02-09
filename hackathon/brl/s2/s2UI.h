@@ -189,6 +189,7 @@ private:
     int resultNumber;
     int allTargetStatus;
     float overViewPixelToScanPixel;
+    float overviewMicronsPerPixel;
 
     LandmarkList scanList;
     QList<LandmarkList> tipList;
