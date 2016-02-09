@@ -23,7 +23,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
-    //latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -50,6 +50,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
         V3DLONG totalImageIndex = 0;
+        double p_vmax=0;
         for (int f=0; f<nFrames; f++){
             //qDebug()<<fileList[f];
             Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
@@ -59,6 +60,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 data1d = (unsigned short int*)pNewImage->getRawData();
                 for (V3DLONG i = 0; i< (x*y); i++){
                     total1dData[totalImageIndex]= data1d[i];
+                    if(data1d[i] > p_vmax) p_vmax = data1d[i];
                     totalImageIndex++;
                 }
             }else{
@@ -67,30 +69,82 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
 
         //convert to 8bit image using 8 shiftnbits
-        unsigned char * total1dData_8bit = 0;
+//        unsigned char * total1dData_8bit = 0;
+//        try
+//        {
+//            total1dData_8bit = new unsigned char [tunits];
+//        }
+//        catch (...)
+//        {
+//            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+//            return;
+//        }
+//        double dn = pow(2.0, double(5));
+//        for (V3DLONG i=0;i<tunits;i++)
+//        {
+//            double tmp = (double)(total1dData[i]) / dn;
+//            if (tmp>255) total1dData_8bit[i] = 255;
+//            else
+//                total1dData_8bit[i] = (unsigned char)(tmp);
+//        }
+
+//        Image4DSimple* total4DImage = new Image4DSimple;
+//        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
+
+        //convert to 8bit image using 1percentage saturation
+        Image4DSimple* total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        double apercent = 0.01;
+        V3DLONG maxvv = ceil(p_vmax+1);
+        double *hist = 0;
         try
         {
-            total1dData_8bit = new unsigned char [tunits];
+            hist = new double [maxvv];
         }
         catch (...)
         {
-            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            qDebug() << "fail to allocate"; return;
+            v3d_msg("Fail to allocate memory in proj_general_scaleandconvert28bit_1percentage().\n");
             return;
         }
-        double dn = pow(2.0, double(5));
+
+        for (V3DLONG i=0;i<maxvv;i++)
+        {
+            hist[i] = 0;
+        }
+        //find the histogram
         for (V3DLONG i=0;i<tunits;i++)
         {
-            double tmp = (double)(total1dData[i]) / dn;
-            if (tmp>255) total1dData_8bit[i] = 255;
-            else
-                total1dData_8bit[i] = (unsigned char)(tmp);
+            hist[total1dData[i]] += 1;
+        }
+        qDebug() << "Histogram computed.";
+
+        //compute the CDF
+        for (V3DLONG i=1;i<maxvv;i++)
+        {
+            hist[i] += hist[i-1];
+        }
+        for (V3DLONG i=0;i<maxvv;i++)
+        {
+            hist[i] /= hist[maxvv-1];
+        }
+        //now search for the intensity thresholds
+        double lowerth, upperth; lowerth = upperth = 0;
+        for (V3DLONG i=0;i<maxvv-1;i++) //not the most efficient method, but the code should be readable
+        {
+            if (hist[i]<apercent && hist[i+1]>apercent)
+                lowerth = i;
+            if (hist[i]<1-apercent && hist[i+1]>1-apercent)
+                upperth = i;
         }
 
-        Image4DSimple* total4DImage = new Image4DSimple;
-        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
+        //real rescale of intensity
+        scaleintensity(total4DImage,0, lowerth, upperth, double(0), double(255));
+
+        //free space
+        if (hist) {delete []hist; hist=0;}
 
         //new code starts here:
-
 
         QString swcString = saveDirString;
         swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
@@ -340,7 +394,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
-   // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_17_43/scanData.txt";
+    fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
