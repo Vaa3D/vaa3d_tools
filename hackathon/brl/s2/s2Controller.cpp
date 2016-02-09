@@ -226,7 +226,7 @@ void S2Controller::stackSetup(){
                         // a more robust? version could query here instead of in S2UI
     centerGalvos();
     cleanAndSend("-zsz 1.0");
-    cleanAndSend("-oz 18"); // set mag to 18x
+    cleanAndSend("-oz 16"); // set mag to 16x
     cleanAndSend("-sts pixelsPerLine 256"); // set pixels per line to  256
     cleanAndSend("-sts linesPerFrame 256"); // set lines per frame to 256
     cleanAndSend("-sts activeMode Galvo");// set to galvo mode

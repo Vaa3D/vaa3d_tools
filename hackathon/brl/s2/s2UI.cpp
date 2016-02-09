@@ -907,7 +907,13 @@ void S2UI::smartScanHandler(){
 
         waitingForFile = 1;
         scanList.append(nextLocation);
+        if (targetIndex < allScanLocations.length()){
         allScanLocations[targetIndex].append(nextLocation);
+        }else{
+            LandmarkList starterList;
+            starterList.append(nextLocation);
+            allScanLocations.append(starterList);
+        }
         emit updateTable(allTargetLocations,allScanLocations);
         QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
         // how to make this more eventdriven. maybe  wait for move to finish.
