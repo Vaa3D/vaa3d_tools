@@ -340,14 +340,15 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
-   // fileWithData = "/Users/zhiz/Downloads/2016_02_04_Thu_16_00/scanData.txt";
+   // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_17_43/scanData.txt";
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
     string swcfilepath;
     vector<MyMarker*> outswc;
     int node_type = 1;
-    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = 0,offsetY_max =0;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000;
+    int origin_x,origin_y;
     while(ifs && getline(ifs, info_swc))
     {
         std::istringstream iss(info_swc);
@@ -356,6 +357,12 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         if(offsetY < offsetY_min) offsetY_min = offsetY;
         if(offsetX > offsetX_max) offsetX_max = offsetX;
         if(offsetY > offsetY_max) offsetY_max = offsetY;
+
+        if(node_type == 1)
+        {
+            origin_x = offsetX;
+            origin_y = offsetY;
+        }
 
         vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
         for(V3DLONG d = 0; d < inputswc.size(); d++)
@@ -424,7 +431,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         std::istringstream iss(info_swc);
         iss >> offsetX >> offsetY >> swcfilepath;
         QString imagefilepath = QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
-        imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX).arg(offsetY).arg(in_sz[0]-1 + offsetX).arg(in_sz[1]-1 + offsetY).arg(in_sz[2]-1));
+        imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(in_sz[0]-1 + offsetX - origin_x).arg(in_sz[1]-1 + offsetY - origin_y).arg(in_sz[2]-1));
         myfile << imagefilepath.toStdString();
         myfile << "\n";
     }
