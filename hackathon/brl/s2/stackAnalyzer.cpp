@@ -23,7 +23,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
-    latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+ //   latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -68,6 +68,9 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
 
+        Image4DSimple* total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+
         //convert to 8bit image using 8 shiftnbits
 //        unsigned char * total1dData_8bit = 0;
 //        try
@@ -91,9 +94,42 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 //        Image4DSimple* total4DImage = new Image4DSimple;
 //        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
 
+        //new code starts here:
+
+        QString swcString = saveDirString;
+        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
+
+
+        QString scanDataFileString = saveDirString;
+        scanDataFileString.append("/").append("scanData.txt");
+        qDebug()<<scanDataFileString;
+        QFile saveTextFile;
+        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
+        total4DImage->setOriginX(tileLocation.x);
+        total4DImage->setOriginY(tileLocation.y);
+        qDebug()<<total4DImage->getOriginX();
+
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+
+        V3DLONG mysz[4];
+        mysz[0] = total4DImage->getXDim();
+        mysz[1] = total4DImage->getYDim();
+        mysz[2] = total4DImage->getZDim();
+        mysz[3] = total4DImage->getCDim();
+        QString imageSaveString = saveDirString;
+
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+
+//        if(total1dData) {delete []total1dData; total1dData = 0;}
+
         //convert to 8bit image using 1percentage saturation
-        Image4DSimple* total4DImage = new Image4DSimple;
-        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
         double apercent = 0.01;
         V3DLONG maxvv = ceil(p_vmax+1);
         double *hist = 0;
@@ -143,41 +179,6 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         //free space
         if (hist) {delete []hist; hist=0;}
-
-        //new code starts here:
-
-        QString swcString = saveDirString;
-        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
-
-
-        QString scanDataFileString = saveDirString;
-        scanDataFileString.append("/").append("scanData.txt");
-        qDebug()<<scanDataFileString;
-        QFile saveTextFile;
-        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
-        if (!saveTextFile.isOpen()){
-            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-                qDebug()<<"unable to save file!";
-                return;}     }
-        QTextStream outputStream;
-        outputStream.setDevice(&saveTextFile);
-        total4DImage->setOriginX(tileLocation.x);
-        total4DImage->setOriginY(tileLocation.y);
-        qDebug()<<total4DImage->getOriginX();
-
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
-
-        V3DLONG mysz[4];
-        mysz[0] = total4DImage->getXDim();
-        mysz[1] = total4DImage->getYDim();
-        mysz[2] = total4DImage->getZDim();
-        mysz[3] = total4DImage->getCDim();
-        QString imageSaveString = saveDirString;
-
-        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
-        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
-
-        if(total1dData) {delete []total1dData; total1dData = 0;}
 
         PARA_APP2 p;
         p.is_gsdt = useGSDT;
@@ -394,7 +395,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
-    fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
+   // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
