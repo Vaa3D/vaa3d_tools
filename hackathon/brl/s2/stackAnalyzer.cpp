@@ -14,7 +14,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     cb = &callback;
 }
 
-void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString){
+void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
 
@@ -126,7 +126,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         if(total1dData) {delete []total1dData; total1dData = 0;}
 
         PARA_APP2 p;
-        p.is_gsdt = true;
+        p.is_gsdt = useGSDT;
         p.is_coverage_prune = true;
         p.is_break_accept = false;
         p.bkg_thresh = background;
@@ -150,6 +150,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+        LandmarkList imageLandmarks;
 
         if(inputRootList.size() <1)
         {
@@ -158,12 +159,33 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
         else
         {
+
             vector<MyMarker*> tileswc_file;
             int maxRootListSize;// kludge here to make it through debugging. need some more filters on the swc outputs and marker inputs
             if (inputRootList.size()>16){
                 maxRootListSize = 16;
             }else{
                 maxRootListSize = inputRootList.size();}
+
+            QList<ImageMarker> outputLandmarks;
+            for (int i = 0; i<maxRootListSize; i++){
+                    LocationSimple RootNewLocation;
+                    ImageMarker outputMarker;
+                    RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
+                    RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                    RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
+                    imageLandmarks.append(RootNewLocation);
+                    outputMarker.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
+                    outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                    outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
+                    outputLandmarks.append(outputMarker);
+
+            }
+            QString markerSaveString;
+            markerSaveString = swcString;
+            markerSaveString.append(".marker");
+            writeMarker_file(markerSaveString, outputLandmarks);
+
 
             for(int i = 0; i < maxRootListSize; i++)
             {
@@ -185,6 +207,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
             saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
         }
+
 
         NeuronTree nt;
         nt = readSWC_file(swcString);
@@ -292,30 +315,12 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         cb->setImage(newwin, total4DImage);
         //cb->open3DWindow(newwin);
         cb->setSWC(newwin,nt);
-        LandmarkList imageLandmarks;
-        QList<ImageMarker> outputLandmarks;
-        for (int i = 0; i<inputRootList.length(); i++){
-                LocationSimple RootNewLocation;
-                ImageMarker outputMarker;
-                RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
-                RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
-                RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
-                imageLandmarks.append(RootNewLocation);
-                outputMarker.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
-                outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
-                outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
-                outputLandmarks.append(outputMarker);
 
-
-        }
         if (!imageLandmarks.isEmpty()){
             cb->setLandmark(newwin,imageLandmarks);
             cb->pushObjectIn3DWindow(newwin);
             qDebug()<<"set landmark group";
-            QString markerSaveString;
-            markerSaveString = swcString;
-            markerSaveString.append(".marker");
-            writeMarker_file(markerSaveString, outputLandmarks);
+
         }
 
         cb->pushObjectIn3DWindow(newwin);

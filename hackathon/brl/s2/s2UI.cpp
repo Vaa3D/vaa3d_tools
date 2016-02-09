@@ -160,7 +160,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString)));
+    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
@@ -304,13 +304,17 @@ QGroupBox *S2UI::createTracingParameters(){
 
     QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
     QCheckBox *interruptCB = new QCheckBox;
+    useGSDTCB = new QCheckBox;
+    QLabel * labelGSDT = new QLabel(tr("use &GSDT in APP2"));
+    labelGSDT->setBuddy(useGSDTCB);
+    useGSDTCB->setChecked(false);
     labelInterrupt->setBuddy(interruptCB);
     interruptCB->setObjectName("interruptCB");
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
     overlapSpinBox->setMaximum(20 );
-    overlapSpinBox->setValue(5);
+    overlapSpinBox->setValue(10);
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
     overlapSBLabel->setBuddy(overlapSpinBox);
@@ -326,6 +330,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(overlapSBLabel,4,0);
     tPL->addWidget(labelInterrupt,5,0);
     tPL->addWidget(interruptCB, 5,1);
+    tPL->addWidget(labelGSDT,6,0);
+    tPL->addWidget(useGSDTCB,6,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -425,7 +431,7 @@ void S2UI::loadLatest(){
         LocationSimple tileLocation;
         tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(scanNumber).y;
-        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath() );
+        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked() );
     }else{
         loadScanFromFile(getFileString());
     }
@@ -448,7 +454,7 @@ void S2UI::loadForSA(){
         rootList.clear();
     }
 
-    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath() );
+    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  );
 }
 
 void S2UI::loadScanFromFile(QString fileString){
@@ -1165,13 +1171,11 @@ void S2UI::pickTargets(){
 }
 
 
-// handling a list of targets...
+// 1. save marker file before starting to trace
 
-// need:    start sequence button
-//          skip cell button
-//          new directory for each smartscan
-//          listener to handle moving to the next location
-//
+// 2. add gsdt checkbox
+
+
 
 //  set filename in Image4DSimple* using  ->setFileName
 //  BEFORE PASSING TO StackAnalyzer slot.

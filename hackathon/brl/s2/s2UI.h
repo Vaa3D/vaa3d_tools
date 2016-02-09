@@ -48,7 +48,7 @@ public slots:
 signals:
     void startPM();
     void stopPM();
-    void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString);
+    void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
@@ -124,6 +124,7 @@ private:
 
 	QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
+    QCheckBox *useGSDTCB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
