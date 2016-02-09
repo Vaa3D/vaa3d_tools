@@ -974,8 +974,8 @@ void S2UI::collectOverview(){
 void S2UI::overviewHandler(){
     bool readyForOverview = !uiS2ParameterMap[0].getCurrentString().contains("Resonant") &&
             ((int) uiS2ParameterMap[12].getCurrentValue() ==1)&&
-            ((int) uiS2ParameterMap[10].getCurrentValue() == 1024)&&
-            ((int) uiS2ParameterMap[11].getCurrentValue() == 1024);
+            ((int) uiS2ParameterMap[10].getCurrentValue() == 512)&&
+            ((int) uiS2ParameterMap[11].getCurrentValue() == 512);
 
 
     bool overViewTimedOut = overviewCycles >50;
