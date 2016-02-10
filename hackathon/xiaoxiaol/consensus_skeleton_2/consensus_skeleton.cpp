@@ -672,7 +672,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	// step 1: VOTE MAP
         cout <<"\nGenerate vote map "<<endl;
         cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
-	int dilation_radius = 1;
+    int dilation_radius = 0;
 
 	V3DLONG pagesz = sz_x*sz_y;
 
@@ -735,9 +735,9 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	}
 
 	//for debug only
-	// Image4DSimple *image = new Image4DSimple();
-	//image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-	//callback.saveImage(image, "./vote_map.v3draw");
+//    Image4DSimple *image = new Image4DSimple();
+//    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+//    callback.saveImage(image, "./vote_map.v3draw");
 
 
 
