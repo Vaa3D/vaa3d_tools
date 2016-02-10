@@ -15,7 +15,7 @@ public:
 
 
 signals:
-    void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets);
+    void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets, Image4DSimple* total4DImage_mip);
     void messageSignal(QString msg);
     void combinedSWC(QString fileSaveName);
 public slots:

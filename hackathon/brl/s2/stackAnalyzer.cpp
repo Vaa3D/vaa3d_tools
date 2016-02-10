@@ -23,7 +23,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
- //   latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+  //  latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -49,6 +49,9 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
+        unsigned short int * total1dData_mip= new unsigned short int [x*y];
+        for(V3DLONG i =0 ; i < x*y; i++)
+            total1dData_mip[i] = 0;
         V3DLONG totalImageIndex = 0;
         double p_vmax=0;
         for (int f=0; f<nFrames; f++){
@@ -58,11 +61,14 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 unsigned short int * data1d = 0;
                 data1d = new unsigned short int [x*y];
                 data1d = (unsigned short int*)pNewImage->getRawData();
-                for (V3DLONG i = 0; i< (x*y); i++){
+                for (V3DLONG i = 0; i< (x*y); i++)
+                {
                     total1dData[totalImageIndex]= data1d[i];
                     if(data1d[i] > p_vmax) p_vmax = data1d[i];
+                    if(total1dData_mip[i] < data1d[i]) total1dData_mip[i] = data1d[i];
                     totalImageIndex++;
                 }
+                if(data1d) {delete []data1d; data1d = 0;}
             }else{
                 qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
             }
@@ -70,6 +76,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         Image4DSimple* total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+
+        Image4DSimple* total4DImage_mip = new Image4DSimple;
+        total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
+
 
         //convert to 8bit image using 8 shiftnbits
 //        unsigned char * total1dData_8bit = 0;
@@ -381,7 +391,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         cb->pushObjectIn3DWindow(newwin);
         cb->updateImageWindow(newwin);
-        emit analysisDone(newTipsList, newTargetList);
+        emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
 
     }else{
         qDebug()<<"invalid image";
