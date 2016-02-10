@@ -1177,14 +1177,8 @@ void S2UI::pickTargets(){
 }
 
 
-// 1. save marker file before starting to trace
-
-// 2. add gsdt checkbox
 
 
-
-//  set filename in Image4DSimple* using  ->setFileName
-//  BEFORE PASSING TO StackAnalyzer slot.
 
 
 
