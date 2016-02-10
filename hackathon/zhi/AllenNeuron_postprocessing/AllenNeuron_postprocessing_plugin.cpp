@@ -126,8 +126,6 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         NeuronTree nt_smooth = readSWC_file(fileTmpName);
         NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
         export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
-        v3d_msg("part1");
-
 
         vector<MyMarker*> inswc = readSWC_file(fileTmpName.toStdString());
 
@@ -183,21 +181,15 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         saveSWC_file(fileTmpName.toStdString(), inswc);
         for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 
-
-        v3d_msg("out");
         //radius estimation end
 
         NeuronTree nt_radius= readSWC_file(fileTmpName);
         NeuronTree nt_radius_sort = SortSWC(nt_radius.listNeuron,VOID, 0);
         export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
-        v3d_msg("sort");
-
 
         vector<MyMarker*> inswc_radius_sort = readSWC_file(fileTmpName.toStdString());
         vector<MyMarker*> outswc_interprune = internodeprune(inswc_radius_sort, nt_radius_sort);
         saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
-        v3d_msg("prune");
-
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
