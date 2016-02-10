@@ -69,7 +69,14 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
         NeuronTree nt_smooth = readSWC_file(fileTmpName);
         NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
-        export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
+        export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
+
+        vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
+        vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
+        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+
+        NeuronTree nt_inter= readSWC_file(fileTmpName);
+        NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
 
         remove(fileTmpName.toStdString().c_str());
 
@@ -82,7 +89,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
                     ));
         if (fileSaveName.isEmpty())
             return;
-        if (!export_list2file(nt_smooth_sort.listNeuron,fileSaveName,fileOpenName))
+        if (!export_list2file(nt_inter_sort.listNeuron,fileSaveName,fileOpenName))
         {
             v3d_msg("fail to write the output swc file.");
             return;
