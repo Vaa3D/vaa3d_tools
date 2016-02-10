@@ -31,6 +31,7 @@ QStringList GNFPlugin::menulist() const
 {
     return QStringList() 
 	<<tr("compute global features")
+    <<tr("compute global features (only the first connected tree)")
 	<<tr("Help");
 }
 
@@ -49,6 +50,10 @@ void GNFPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 	{
 		nf_main(callback, parent);
 	}
+    else if (menu_name == tr("compute global features (only the first connected tree)"))
+    {
+        nf_first_main(callback, parent);
+    }
 	else if (menu_name == tr("Help"))
 	{
 		v3d_msg("(version 2.0) Compute global features for a certain neuron. Developed by Yinan Wan, 2012-02-20.");
