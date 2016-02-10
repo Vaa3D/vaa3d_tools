@@ -216,6 +216,18 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         analysis_swc(fileSaveName ,1);
 
         NeuronTree nt_final = readSWC_file(fileSaveName);
+        QList<NeuronSWC> list = nt_final.listNeuron;
+        V3DLONG index;
+        for (V3DLONG i=0;i<list.size();i++)
+        {
+            if(i>0 && nt_final.listNeuron[i].pn < 0)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        nt_final.listNeuron.erase(nt_final.listNeuron.begin()+index,nt_final.listNeuron.end());
         double * features = new double[FNUM];
         computeFeature(nt_final,features);
         QMessageBox infoBox;
