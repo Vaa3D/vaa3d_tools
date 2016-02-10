@@ -344,6 +344,8 @@ NeuronTree pruneswc(NeuronTree nt, double length)
 
     for (int i=0;i<list.size();i++)
     {
+        if(i>0 && getParent(i,nt) == 1000000000)
+            break;
         if (childs[i].size()==0)
         {
             int index_tip = 0;
