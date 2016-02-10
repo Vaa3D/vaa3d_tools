@@ -902,152 +902,210 @@ bool assembler_raw(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool
              return false;
         }
 
-
-        ifstream ifs_swc(swcfilename.toStdString().c_str());
-        if(!ifs_swc)
-        {
-            walker = walker->next;
-            continue;
-        }
-
-        NeuronTree nt = readSWC_file(swcfilename);
-        if(nt.listNeuron.empty())
-        {
-            remove(swcfilename.toStdString().c_str());
-            walker = walker->next;
-
-            continue;
-        }
-
-
-        NeuronTree nt_pruned = eliminate(nt,3.0);
-
         struct root_node *walker_inside;
         struct root_node *newNode;
         walker_inside = head;
         while(walker_inside->next != NULL)
         {
-             walker_inside = walker_inside->next;
+            walker_inside = walker_inside->next;
         }
 
-
-        bool left = 0, right = 0,up = 0,down = 0;
-        for(V3DLONG i = 0; i < nt_pruned.listNeuron.size(); i++)
+        if(P.is_entire ==1)
         {
-            NeuronSWC curr = nt_pruned.listNeuron.at(i);
-            newNode =  new root_node[1];
-            if((curr.x < 0.05* P.block_size || P.is_entire ==1) && left == 0 && walker->direction !=2)
+            for (int i =0; i<4; i++)
             {
-                if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)       continue;
-                newNode->start[0] = walker->start[0] - P.block_size;
-                newNode->start[1] = walker->start[1];
-                newNode->start[2] = walker->start[2];
-                newNode->end[0] = newNode->start[0] + P.block_size - 1;;
-                newNode->end[1] = walker->end[1];
-                newNode->end[2] = walker->end[2];
-
-                if( newNode->start[0] < 0)  newNode->start[0] = 0;
-                QString startingpos="", tmps;
-                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                QString region_name = startingpos + ".raw";
-
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
-            //    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
-                newNode->ref_index = walker->tc_index;
-
-                newNode->direction = 2;
-                newNode->next = NULL;
-                walker_inside->next = newNode;
-                walker_inside = walker_inside->next;
-
-                left = 1;
-            }
-            else if((curr.x > 0.95 * P.block_size ||P.is_entire ==1) && right == 0 && walker->direction !=1)
-            {
-                if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)      continue;
-                newNode->start[0] = walker->start[0] + P.block_size;
-                newNode->start[1] = walker->start[1];
-                newNode->start[2] = walker->start[2];
-                newNode->end[0] = newNode->start[0] + P.block_size - 1;
-                newNode->end[1] = walker->end[1];
-                newNode->end[2] = walker->end[2];
-
-                if( newNode->end[0] > in_zz[0] - 1)  newNode->end[0] = in_zz[0] - 1;
-
-                QString startingpos="", tmps;
-                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                QString region_name = startingpos + ".raw";
-
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
-              //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
-                newNode->ref_index = walker->tc_index;
-
-                newNode->direction = 1;
-                newNode->next = NULL;
-                walker_inside->next = newNode;
-                walker_inside = walker_inside->next;
-                right = 1;
-
-
-            }
-            else if((curr.y < 0.05* P.block_size || P.is_entire ==1)&& up == 0 && walker->direction !=4)
-            {
-                if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
-                newNode->start[0] = walker->start[0];
-                newNode->start[1] = walker->start[1] - P.block_size;
-                newNode->start[2] = walker->start[2];
-                newNode->end[0] = walker->end[0];
-                newNode->end[1] = newNode->start[1]+ P.block_size - 1;
-                newNode->end[2] = walker->end[2];
-                if(newNode->start[1] < 0) newNode->start[1] = 0;
+                newNode =  new root_node[1];
+                if(i ==0)
+                {
+                    if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)       continue;
+                    newNode->start[0] = walker->start[0] - P.block_size;
+                    newNode->start[1] = walker->start[1];
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = newNode->start[0] + P.block_size - 1;;
+                    newNode->end[1] = walker->end[1];
+                    newNode->end[2] = walker->end[2];
+                    if( newNode->start[0] < 0)  newNode->start[0] = 0;
+                }else if(i==1)
+                {
+                    if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)      continue;
+                    newNode->start[0] = walker->start[0] + P.block_size;
+                    newNode->start[1] = walker->start[1];
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = newNode->start[0] + P.block_size - 1;
+                    newNode->end[1] = walker->end[1];
+                    newNode->end[2] = walker->end[2];
+                    if( newNode->end[0] > in_zz[0] - 1)  newNode->end[0] = in_zz[0] - 1;
+                }else if(i==2)
+                {
+                    if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+                    newNode->start[0] = walker->start[0];
+                    newNode->start[1] = walker->start[1] - P.block_size;
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = walker->end[0];
+                    newNode->end[1] = newNode->start[1]+ P.block_size - 1;
+                    newNode->end[2] = walker->end[2];
+                    if(newNode->start[1] < 0) newNode->start[1] = 0;
+                }else if(i==3)
+                {
+                    if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+                    newNode->start[0] = walker->start[0];
+                    newNode->start[1] = walker->start[1]  + P.block_size;
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = walker->end[0];
+                    newNode->end[1] = newNode->start[1] + P.block_size - 1;
+                    newNode->end[2] = walker->end[2];
+                    if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
+                }
 
                 QString startingpos="", tmps;
                 tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
 
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
-              //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
 
-                newNode->direction = 4;
                 newNode->next = NULL;
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
-                up = 1;
-
             }
-            else if((curr.y > 0.95 * P.block_size ||P.is_entire ==1) && down == 0 && walker->direction !=3)
+        }else
+        {
+            ifstream ifs_swc(swcfilename.toStdString().c_str());
+            if(!ifs_swc)
             {
-                if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
-                newNode->start[0] = walker->start[0];
-                newNode->start[1] = walker->start[1]  + P.block_size;
-                newNode->start[2] = walker->start[2];
-                newNode->end[0] = walker->end[0];
-                newNode->end[1] = newNode->start[1] + P.block_size - 1;
-                newNode->end[2] = walker->end[2];
-                if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
-
-                QString startingpos="", tmps;
-                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                QString region_name = startingpos + ".raw";
-
-				newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
-               // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
-                newNode->ref_index = walker->tc_index;
-
-                newNode->direction = 3;
-                newNode->next = NULL;
-                walker_inside->next = newNode;
-                walker_inside = walker_inside->next;
-                down = 1;
+                walker = walker->next;
+                continue;
             }
 
+            NeuronTree nt = readSWC_file(swcfilename);
+            if(nt.listNeuron.empty())
+            {
+                remove(swcfilename.toStdString().c_str());
+                walker = walker->next;
+
+                continue;
+            }
+
+
+            NeuronTree nt_pruned = eliminate(nt,3.0);
+            bool left = 0, right = 0,up = 0,down = 0;
+            for(V3DLONG i = 0; i < nt_pruned.listNeuron.size(); i++)
+            {
+                NeuronSWC curr = nt_pruned.listNeuron.at(i);
+                newNode =  new root_node[1];
+                if((curr.x < 0.05* P.block_size || P.is_entire ==1) && left == 0 && walker->direction !=2)
+                {
+                    if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)       continue;
+                    newNode->start[0] = walker->start[0] - P.block_size;
+                    newNode->start[1] = walker->start[1];
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = newNode->start[0] + P.block_size - 1;;
+                    newNode->end[1] = walker->end[1];
+                    newNode->end[2] = walker->end[2];
+
+                    if( newNode->start[0] < 0)  newNode->start[0] = 0;
+                    QString startingpos="", tmps;
+                    tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                    tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                    QString region_name = startingpos + ".raw";
+
+                    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+                    //    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                    newNode->ref_index = walker->tc_index;
+
+                    newNode->direction = 2;
+                    newNode->next = NULL;
+                    walker_inside->next = newNode;
+                    walker_inside = walker_inside->next;
+
+                    left = 1;
+                }
+                else if((curr.x > 0.95 * P.block_size ||P.is_entire ==1) && right == 0 && walker->direction !=1)
+                {
+                    if(walker->end[0] == in_zz[0] - 1|| walker->start[0] == 0)      continue;
+                    newNode->start[0] = walker->start[0] + P.block_size;
+                    newNode->start[1] = walker->start[1];
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = newNode->start[0] + P.block_size - 1;
+                    newNode->end[1] = walker->end[1];
+                    newNode->end[2] = walker->end[2];
+
+                    if( newNode->end[0] > in_zz[0] - 1)  newNode->end[0] = in_zz[0] - 1;
+
+                    QString startingpos="", tmps;
+                    tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                    tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                    QString region_name = startingpos + ".raw";
+
+                    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+                    //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                    newNode->ref_index = walker->tc_index;
+
+                    newNode->direction = 1;
+                    newNode->next = NULL;
+                    walker_inside->next = newNode;
+                    walker_inside = walker_inside->next;
+                    right = 1;
+
+
+                }
+                else if((curr.y < 0.05* P.block_size || P.is_entire ==1)&& up == 0 && walker->direction !=4)
+                {
+                    if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+                    newNode->start[0] = walker->start[0];
+                    newNode->start[1] = walker->start[1] - P.block_size;
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = walker->end[0];
+                    newNode->end[1] = newNode->start[1]+ P.block_size - 1;
+                    newNode->end[2] = walker->end[2];
+                    if(newNode->start[1] < 0) newNode->start[1] = 0;
+
+                    QString startingpos="", tmps;
+                    tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                    tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                    QString region_name = startingpos + ".raw";
+
+                    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+                    //  newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                    newNode->ref_index = walker->tc_index;
+
+                    newNode->direction = 4;
+                    newNode->next = NULL;
+                    walker_inside->next = newNode;
+                    walker_inside = walker_inside->next;
+                    up = 1;
+
+                }
+                else if((curr.y > 0.95 * P.block_size ||P.is_entire ==1) && down == 0 && walker->direction !=3)
+                {
+                    if(walker->end[1] == in_zz[1] - 1 || walker->start[1] == 0)       continue;
+                    newNode->start[0] = walker->start[0];
+                    newNode->start[1] = walker->start[1]  + P.block_size;
+                    newNode->start[2] = walker->start[2];
+                    newNode->end[0] = walker->end[0];
+                    newNode->end[1] = newNode->start[1] + P.block_size - 1;
+                    newNode->end[2] = walker->end[2];
+                    if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
+
+                    QString startingpos="", tmps;
+                    tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                    tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                    QString region_name = startingpos + ".raw";
+
+                    newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp_NeuronAssembler_NeuTube/").append(QString(region_name));
+                    // newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
+                    newNode->ref_index = walker->tc_index;
+
+                    newNode->direction = 3;
+                    newNode->next = NULL;
+                    walker_inside->next = newNode;
+                    walker_inside = walker_inside->next;
+                    down = 1;
+                }
+
+            }
         }
-
         vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
 
         ifstream ifs(finalswcfilename.toStdString().c_str());
