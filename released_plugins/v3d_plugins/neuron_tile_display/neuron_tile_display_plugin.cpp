@@ -158,8 +158,10 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         for(V3DLONG i=0; i < imagelist.size(); i++)
         {
             QString curPathIMAGE = imagelist.at(i);
-            char * inimg_file  = &curPathIMAGE.toStdString()[0];
-            Image4DSimple* p4DImage = callback.loadImage(inimg_file);
+            v3d_msg(curPathIMAGE);
+           // char * inimg_file  = &curPathIMAGE.toStdString()[0];
+          //  v3d_msg(QString("%1").arg(inimg_file));
+            Image4DSimple* p4DImage = callback.loadImage((char *)curPathIMAGE.toStdString().c_str());
             v3dhandle newwin = callback.newImageWindow();
             callback.setImage(newwin, p4DImage);
             callback.setImageName(newwin,curPathIMAGE);
