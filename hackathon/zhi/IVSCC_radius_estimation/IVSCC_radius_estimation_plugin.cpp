@@ -85,7 +85,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
                 p = p->parent;
             }
             seg_markers.push_back(root_marker);
-            smooth_curve_and_radius(seg_markers, 5);
+            smooth_curve_and_radius_Zonly(seg_markers, 5);
         }
         inswc.clear();
         topo_segs2swc(topo_segs, inswc, 0); // no resampling
@@ -166,7 +166,7 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
                 p = p->parent;
             }
             seg_markers.push_back(root_marker);
-            smooth_curve_and_radius(seg_markers, 5);
+            smooth_curve_and_radius_Zonly(seg_markers, 5);
         }
         inswc.clear();
         topo_segs2swc(topo_segs, inswc, 0); // no resampling
