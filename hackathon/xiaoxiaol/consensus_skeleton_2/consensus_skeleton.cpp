@@ -654,7 +654,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	V3DLONG  sz_y = ceil((bbUnion.max_y - bbUnion.min_y ) / closeness) +1;
 	V3DLONG  sz_z = ceil((bbUnion.max_z - bbUnion.min_z ) / closeness) +1;
 	V3DLONG  tol_sz = sz_x * sz_y * sz_z;
-
+    if (tol_sz > 1024*1024*1024){
+          cout << sz_x<<"  "<<sz_y<<"  "<<sz_z<<endl;
+          cout <<"requires too much memory (more than 1 GB) to allocate for the vote map"<<endl;
+          return false;
+    }
 
 
 	unsigned char * img1d = new unsigned char[tol_sz];
