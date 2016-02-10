@@ -158,7 +158,7 @@ void S2UI::hookUpSignalsAndSlots(){
     // communication with  myStackAnalyzer
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
-    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList)));
+    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
     connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
@@ -610,7 +610,7 @@ void S2UI::loadScanFromFile(QString fileString){
                 }
                 QList<LandmarkList> newTipsList;
 
-                handleNewLocation(newTipsList,newTargetList);
+                handleNewLocation(newTipsList,newTargetList, total4DImage);
 
             }
 
@@ -832,7 +832,7 @@ void S2UI::startingSmartScan(){
 
 }
 
-void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks){
+void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip){
 
 
     qDebug()<<"back in S2UI with new locations";

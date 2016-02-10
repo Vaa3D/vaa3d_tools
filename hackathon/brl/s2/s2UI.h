@@ -40,7 +40,7 @@ public:
     StackAnalyzer *myStackAnalyzer;
 public slots:
     void pmStatusHandler(bool pmStatus);
-    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks);
+    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip);
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
