@@ -48,7 +48,7 @@ public slots:
 signals:
     void startPM();
     void stopPM();
-    void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool);
+    void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);

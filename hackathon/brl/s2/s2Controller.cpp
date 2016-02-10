@@ -164,7 +164,7 @@ void S2Controller::initConnection(){
 }
 
 void S2Controller::status(QString statusM){
-	emit statusSig(statusM);
+    emit statusSig(statusM);
 }
 void S2Controller::initializeParameters(){
     S2Parameter tPara =S2Parameter("currentMode","-gts activeMode", 0.0, "","string");
@@ -189,6 +189,7 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(17,S2Parameter("micronsPerVolt","", 0.0, "", "floatderived"));
     s2ParameterMap.insert(18,S2Parameter("galvoXmicrons", "", 0.0, "", "floatderived"));
     s2ParameterMap.insert(19, S2Parameter("galvoYmicrons", "", 0.0, "", "floatderived"));
+    s2ParameterMap.insert(20,S2Parameter("resonantX","-gts currentPanLocationX", 0.0, "float"));
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
@@ -207,8 +208,8 @@ void S2Controller::centerGalvos(){
 
 void S2Controller::overviewSetup(){
     // idea is to just send a bunch of commands and then the main UI will wait until the parameters are correct.
-                        // the return data from PV will likely be lost to processMessage(), but that's OK.
-                        // a more robust? version could query here instead of in S2UI
+    // the return data from PV will likely be lost to processMessage(), but that's OK.
+    // a more robust? version could query here instead of in S2UI
     centerGalvos();
     cleanAndSend("-zsz 20");
     cleanAndSend("-oz 1"); // set mag to 1x
@@ -222,8 +223,8 @@ void S2Controller::overviewSetup(){
 
 void S2Controller::stackSetup(){
     // idea is to just send a bunch of commands and then the main UI will wait until the parameters are correct.
-                        // the return data from PV will likely be lost to processMessage(), but that's OK.
-                        // a more robust? version could query here instead of in S2UI
+    // the return data from PV will likely be lost to processMessage(), but that's OK.
+    // a more robust? version could query here instead of in S2UI
     centerGalvos();
     cleanAndSend("-zsz 1.0");
     cleanAndSend("-oz 16"); // set mag to 16x
@@ -235,7 +236,7 @@ void S2Controller::stackSetup(){
 }
 
 void S2Controller::overviewHandler(){
-// this is now being done in s2UI
+    // this is now being done in s2UI
 }
 
 void S2Controller::connectToS2()
@@ -246,8 +247,8 @@ void S2Controller::connectToS2()
         tcpSocket->connectToHost(hostLineEdit->text(),
                                  portLineEdit->text().toInt());
     }
-	status(QString("tcpSocket isopen: ").append(QString::number(tcpSocket->isOpen())));
-	status(QString("tcpSocket isvalid: ").append(QString::number(tcpSocket->isValid())));
+    status(QString("tcpSocket isopen: ").append(QString::number(tcpSocket->isOpen())));
+    status(QString("tcpSocket isvalid: ").append(QString::number(tcpSocket->isValid())));
 }
 
 void S2Controller::sendCommand()
@@ -357,7 +358,7 @@ void S2Controller::posMonListener(QString messageL){
         }else if (ii == 17){
             newValue = s2ParameterMap[13].getCurrentValue()/(s2ParameterMap[15].getCurrentValue()-s2ParameterMap[16].getCurrentValue());
             if (newValue<0){
-            newValue = -newValue;}
+                newValue = -newValue;}
 
         }else if (ii == 18){
             newValue = s2ParameterMap[17].getCurrentValue()*s2ParameterMap[1].getCurrentValue();
@@ -369,9 +370,9 @@ void S2Controller::posMonListener(QString messageL){
 
     s2ParameterMap[ii].setCurrentString( messageL);
     if (ii==1){
-    s2ParameterMap[ii].setCurrentValue(-newValue); // x galvo is flipped
+        s2ParameterMap[ii].setCurrentValue(-newValue); // x galvo is flipped
     }else{
-            s2ParameterMap[ii].setCurrentValue(newValue);
+        s2ParameterMap[ii].setCurrentValue(newValue);
     }
     // use s2ParameterMap to keep track of parameter values.
     if (inPosMonMode){
@@ -444,24 +445,31 @@ void S2Controller::sessionOpened()
 
 void S2Controller::initROI(LocationSimple nextLoc){
     //    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
-// for now, just move galvos to appropriate location:
-   float x = nextLoc.x;
-   float y = nextLoc.y;
-   status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
+    // for now, just move galvos to appropriate location:
+    float x = nextLoc.x;
+    float y = nextLoc.y;
+    QString toSend;
+    status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
     if ((x<7.6)&(x>-7.6)){
-    QString toSend = QString("-sts currentScanCenter ");
-    toSend.append(QString::number(x));
-    toSend.append(" XAxis");
-    cleanAndSend(toSend);
+        if (s2ParameterMap[0].getCurrentString().contains("Resonant")){
+            toSend = QString("-sts currentPanLocationX ");
+            toSend.append(QString::number(x));
+        }else{
+            toSend = QString("-sts currentScanCenter ");
+            toSend.append(QString::number(x));
+            toSend.append(" XAxis");
+        }
+
+        cleanAndSend(toSend);
     }else{
         status(QString("X out of bounds!"));}
-     if ((y<7.6)&(y>-7.6)){
-    QString toSend = QString("-sts currentScanCenter ") ;
-    toSend.append(QString::number(y));
-    toSend.append(" YAxis");
-    cleanAndSend(toSend);}else{
-         status(QString("Y out of bounds!"));
-     }
+    if ((y<7.6)&(y>-7.6)){
+        QString toSend = QString("-sts currentScanCenter ") ;
+        toSend.append(QString::number(y));
+        toSend.append(" YAxis");
+        cleanAndSend(toSend);}else{
+        status(QString("Y out of bounds!"));
+    }
 
 }
 

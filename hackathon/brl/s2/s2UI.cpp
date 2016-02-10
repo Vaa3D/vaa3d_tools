@@ -160,7 +160,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool)));
+    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
@@ -275,7 +275,7 @@ QGroupBox *S2UI::createS2Monitors(){
 
     QGridLayout *gbMon = new QGridLayout;
 
-    for (int jj=0; jj<=19; jj++){
+    for (int jj=0; jj<=20; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
@@ -299,7 +299,7 @@ QGroupBox *S2UI::createTracingParameters(){
     s2Label->setText("input file path:");
     bkgSpnBx->setMaximum(255);
     bkgSpnBx->setMinimum(0);
-    bkgSpnBx->setValue(10);
+    bkgSpnBx->setValue(250);
     bkgSpnBx->setObjectName("bkgSpinBox");
 
     QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
@@ -307,7 +307,7 @@ QGroupBox *S2UI::createTracingParameters(){
     useGSDTCB = new QCheckBox;
     QLabel * labelGSDT = new QLabel(tr("use &GSDT in APP2"));
     labelGSDT->setBuddy(useGSDTCB);
-    useGSDTCB->setChecked(false);
+    useGSDTCB->setChecked(true);
     labelInterrupt->setBuddy(interruptCB);
     interruptCB->setObjectName("interruptCB");
     overlapSpinBox = new QSpinBox;
@@ -431,7 +431,8 @@ void S2UI::loadLatest(){
         LocationSimple tileLocation;
         tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(scanNumber).y;
-        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked() );
+        bool isSoma = scanNumber==0;
+        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
     }else{
         loadScanFromFile(getFileString());
     }
@@ -453,8 +454,8 @@ void S2UI::loadForSA(){
         tileLocation.y = 0;
         rootList.clear();
     }
-
-    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  );
+    bool isSoma = scanNumber==0;
+    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 }
 
 void S2UI::loadScanFromFile(QString fileString){
@@ -818,6 +819,8 @@ void S2UI::startingSmartScan(){
 
 
         startLocation.mass = 0;
+        startLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+        startLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
         allROILocations->append(startLocation);
         //allScanLocations.append(allROILocations);
         //allTargetLocations.append(startLocation);
@@ -910,7 +913,8 @@ void S2UI::smartScanHandler(){
         allROILocations->removeFirst();
         qDebug()<<nextLocation.x;
         moveToROI(nextLocation);
-
+        nextLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+        nextLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
         waitingForFile = 1;
         scanList.append(nextLocation);
         if (targetIndex < allScanLocations.length()){
@@ -1161,6 +1165,8 @@ void S2UI::pickTargets(){
         newTarget.y  = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
         startCenter.x = 0.0+newTarget.x;
         startCenter.y = 0.0+newTarget.y;
+        startCenter.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
+        startCenter.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
         targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
