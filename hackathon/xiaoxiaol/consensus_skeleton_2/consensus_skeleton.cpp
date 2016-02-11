@@ -114,11 +114,11 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 
 	V3DLONG median_size = median(nt_sizes);
     vector<V3DLONG > rm_ids;
-    cout <<"Median node size (exclude those num_nodes <10 or >10000 ) = " << median_size <<endl;
+    cout <<"Median node size (exclude those num_nodes <10 or >30000 ) = " << median_size <<endl;
     cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
         V3DLONG num_nodes = nt_list[i].listNeuron.size();
-        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 10000 )
+        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 30000 )
 		{
             cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
             rm_ids.push_back(i);
@@ -750,10 +750,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	double mean_vote = mean_image_value(img1d, tol_sz);
 	cout << "mean votes in the vote map:" << mean_vote << endl;
-    double vote_threshold = mean_vote -1 ;
+	double vote_threshold = mean_vote-1;
         if (vote_threshold < 1) { vote_threshold = 1.0;}
-    int windows_siz = 5;
-	cout << "threshold vote:" << vote_threshold << endl;
+        cout << "threshold vote:" << vote_threshold << endl;
+
+	int windows_siz = 5;
 	non_max_suppresion (img1d,sz_x,sz_y,sz_z,vote_threshold, offset,node_list,vote_list,windows_siz);
     cout << "after non_max supression:"<< endl;
 	cout << "number of nodes:"<< node_list.size() << endl;
