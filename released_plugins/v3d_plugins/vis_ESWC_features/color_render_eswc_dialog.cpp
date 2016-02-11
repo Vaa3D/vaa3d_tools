@@ -25,8 +25,8 @@ color_render_ESWC_dialog::color_render_ESWC_dialog(V3DPluginCallback2 * cb, V3dR
         cb_feature->addItem(QString::number(i+1));
 
     cb_colormap= new QComboBox();
-    cb_colormap->addItem(QString("rainbow"));
     cb_colormap->addItem(QString("heatmap"));
+    cb_colormap->addItem(QString("rainbow"));
 
     spin_min = new QDoubleSpinBox();
     spin_max = new QDoubleSpinBox();
@@ -161,9 +161,10 @@ void color_render_ESWC_dialog::update()
                 if(tmp<0) tmp=0;
                 if(tmp>1) tmp=1;
 		if (colormapId == 0 ){
-			tmp=tmp*235+20; // 0~20 are reserved for dendrite types, the real color range is from 20~255  (235 colors from blue to red)
-		}else{
 			tmp=tmp*255+300; //300-555 are reserved for heat colors
+
+		}else{
+			tmp=tmp*235+20; // 0~20 are reserved for dendrite types, the real color range is from 20~255  (235 colors from blue to red)
 		}
       }
         }
