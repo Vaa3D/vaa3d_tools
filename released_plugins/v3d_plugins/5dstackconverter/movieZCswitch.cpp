@@ -66,7 +66,7 @@ bool MovieZCswitchPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 
     else if (func_name==tr("help"))
     {
-        cout<<"Usage : v3d -x 5D_Stack_Converter -f 4D_to_5D -i <inimg_file> -o <outfolder_file> <tp>"<<endl;
+        cout<<"Usage : v3d -x 5D_Stack_Converter -f 4D_to_5D -i <inimg_file> -o <outfolder_file> -p <tp>"<<endl;
         cout<<endl;
         cout<<"outfolder_file          The output folder to save all timepoint image stacks"<<endl;
         cout<<"tp                      timepoints, default 1"<<endl;
