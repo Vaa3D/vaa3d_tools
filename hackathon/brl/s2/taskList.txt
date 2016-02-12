@@ -1,8 +1,27 @@
+2016.02.11  update task list
+
+NEW:
+1. add mode for resonant control. most code is now robust against active mode, but need a button to set active mode
+and ideally a way to assess if it's running properly at the tight zoom
+
+2. Add tab for configuration info, including button to update save directory. also add code to check for existance of .config save directory
+
+/data/mat/BRL/testData/ZSeries-02112016-1549-1076/ZSeries-02112016-1549-1076_Cycle00001_Ch2_000001.ome.tif
+
+REMAINING FROM PREVIOUS:
+add option to run 1 marker or run all markers
+Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
+Try MIP display for each ROI,
+Add ROI controls-  with z scan info.
+allow user to generate block grid based on 2 anchor points in preview scan
+...then Automatically scan the whole grid in full resolution.
+
+
 2015.02.01 meeting generated this chunk of tasks:
 
 # add RESET button to return system (to overview mode?)
-add preview with 3-5 plane MIP
-add cell body markers as starting locations
+#add preview with 3-5 plane MIP
+#add cell body markers as starting locations
 add option to run 1 marker or run all markers
 #add option to pop up window for tracing or not
 # add configuration.

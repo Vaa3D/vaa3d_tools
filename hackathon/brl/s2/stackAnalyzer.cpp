@@ -17,13 +17,12 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT, bool isSoma){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
-
     //QString latestString = getFileString();
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
-  //  latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    //  latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -33,7 +32,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
-        v3dhandle newwin = cb->newImageWindow();
+      //  v3dhandle newwin = cb->newImageWindow();
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
@@ -82,27 +81,27 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
 
         //convert to 8bit image using 8 shiftnbits
-//        unsigned char * total1dData_8bit = 0;
-//        try
-//        {
-//            total1dData_8bit = new unsigned char [tunits];
-//        }
-//        catch (...)
-//        {
-//            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
-//            return;
-//        }
-//        double dn = pow(2.0, double(5));
-//        for (V3DLONG i=0;i<tunits;i++)
-//        {
-//            double tmp = (double)(total1dData[i]) / dn;
-//            if (tmp>255) total1dData_8bit[i] = 255;
-//            else
-//                total1dData_8bit[i] = (unsigned char)(tmp);
-//        }
+        //        unsigned char * total1dData_8bit = 0;
+        //        try
+        //        {
+        //            total1dData_8bit = new unsigned char [tunits];
+        //        }
+        //        catch (...)
+        //        {
+        //            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+        //            return;
+        //        }
+        //        double dn = pow(2.0, double(5));
+        //        for (V3DLONG i=0;i<tunits;i++)
+        //        {
+        //            double tmp = (double)(total1dData[i]) / dn;
+        //            if (tmp>255) total1dData_8bit[i] = 255;
+        //            else
+        //                total1dData_8bit[i] = (unsigned char)(tmp);
+        //        }
 
-//        Image4DSimple* total4DImage = new Image4DSimple;
-//        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
+        //        Image4DSimple* total4DImage = new Image4DSimple;
+        //        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
 
         //new code starts here:
 
@@ -137,7 +136,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
 
-//        if(total1dData) {delete []total1dData; total1dData = 0;}
+        //        if(total1dData) {delete []total1dData; total1dData = 0;}
 
         //convert to 8bit image using 1percentage saturation
         double apercent = 0.01;
@@ -233,26 +232,26 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }else{
                 maxRootListSize = inputRootList.size();}
 
-            QList<ImageMarker> outputLandmarks;
+            QList<ImageMarker> seedsToSave;
             for (int i = 0; i<maxRootListSize; i++){
-                    LocationSimple RootNewLocation;
-                    ImageMarker outputMarker;
-                    RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
-                    RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
-                    RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
-                    imageLandmarks.append(RootNewLocation);
-                    outputMarker.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
-                    outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
-                    outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
-                    outputLandmarks.append(outputMarker);
+                LocationSimple RootNewLocation;
+                ImageMarker outputMarker;
+                RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
+                RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
+                imageLandmarks.append(RootNewLocation);
+                outputMarker.x = inputRootList.at(i).x ;
+                outputMarker.y = inputRootList.at(i).y ;
+                outputMarker.z = inputRootList.at(i).z ;
+                seedsToSave.append(outputMarker);
 
             }
             QString markerSaveString;
             markerSaveString = swcString;
             markerSaveString.append(".marker");
-            writeMarker_file(markerSaveString, outputLandmarks);
+            writeMarker_file(markerSaveString, seedsToSave);
 
-
+            // are ZERO markers here with no coordinates? or do they come back to stackAnalyzer from s2UI??
             for(int i = 0; i < maxRootListSize; i++)
             {
                 p.outswc_file =swcString + (QString::number(i)) + (".swc");
@@ -299,9 +298,9 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             {
                 NeuronSWC curr = list.at(i);
                 LocationSimple newTip;
-                if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > p.p4dImage->getYDim())
+                if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > 0.95* p.p4dImage->getYDim())
                 {
-                    V3DLONG node_pn = getParent(i,nt);
+                    V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
                     V3DLONG node_pn_2nd;
                     if( list.at(node_pn).pn < 0)
                     {
@@ -368,6 +367,9 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             newTargetList.push_back(newTarget);
         }
 
+
+
+
         if (!newTargetList.empty())
         {
             for (int i = 0; i<newTargetList.length(); i++)
@@ -378,25 +380,47 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
         saveTextFile.close();
-        cb->setImage(newwin, total4DImage);
+    //    cb->setImage(newwin, total4DImage);
         //cb->open3DWindow(newwin);
-        cb->setSWC(newwin,nt);
+    //    cb->setSWC(newwin,nt);
 
         if (!imageLandmarks.isEmpty()){
-            cb->setLandmark(newwin,imageLandmarks);
-            cb->pushObjectIn3DWindow(newwin);
+    //        cb->setLandmark(newwin,imageLandmarks);
+    //        cb->pushObjectIn3DWindow(newwin);
             qDebug()<<"set landmark group";
 
         }
 
-        cb->pushObjectIn3DWindow(newwin);
-        cb->updateImageWindow(newwin);
+     //   cb->pushObjectIn3DWindow(newwin);
+    //    cb->updateImageWindow(newwin);
+
+        QList<ImageMarker> tipsToSave;
+        QString markerSaveString2;
+        markerSaveString2 = swcString;
+        markerSaveString2.append("final.marker");
+        for (int i =0; i<newTipsList.length(); i++){
+            LandmarkList iList = newTipsList[i];
+            for (int j = 0; j<iList.length();j++){
+                ImageMarker markerIJ;
+                markerIJ.x = iList[j].x;
+                markerIJ.y = iList[j].y;
+                markerIJ.z = iList[j].z;
+
+                tipsToSave.append(markerIJ);
+            }
+
+        }
+        writeMarker_file(markerSaveString2, tipsToSave);
         emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
 
     }else{
         qDebug()<<"invalid image";
     }
 }
+
+
+
+
 
 void StackAnalyzer::processStack(Image4DSimple InputImage){
 
@@ -406,7 +430,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
-   // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
+    // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
@@ -476,7 +500,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     if (!myfile.is_open()){
         qDebug()<<"file's not really open...";
         emit combinedSWC(fileSaveName);
-      return;
+        return;
     }
     myfile << "# thumbnail file \n";
     myfile << "NULL \n\n";

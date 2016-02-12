@@ -202,6 +202,10 @@ void S2Controller::startScan(){
 
 void S2Controller::centerGalvos(){
     sendCommandButton->setEnabled(false);
+    QString toSend = QString("-sts currentScanCenter ");
+    toSend.append(QString::number(0.0));
+    toSend.append(" XAxis");
+    cleanAndSend(toSend);
     sendAndReceive(QString("-png center"));
 }
 
@@ -215,7 +219,7 @@ void S2Controller::overviewSetup(){
     cleanAndSend("-oz 1"); // set mag to 1x
     cleanAndSend("-sts pixelsPerLine 512"); // set pixels per line to 512
     cleanAndSend("-sts linesPerFrame 512"); // set lines per frame to 512
-    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+ //   cleanAndSend("-sts activeMode Galvo");// set to galvo mode
 
     QTimer::singleShot(10, this, SLOT(overviewHandler()));
 
@@ -227,10 +231,10 @@ void S2Controller::stackSetup(){
     // a more robust? version could query here instead of in S2UI
     centerGalvos();
     cleanAndSend("-zsz 1.0");
-    cleanAndSend("-oz 16"); // set mag to 16x
+    cleanAndSend("-oz 13"); // set mag to 16x
     cleanAndSend("-sts pixelsPerLine 256"); // set pixels per line to  256
     cleanAndSend("-sts linesPerFrame 256"); // set lines per frame to 256
-    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+//    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
 
 
 }

@@ -15,6 +15,8 @@
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
     qRegisterMetaType<LandmarkList>("LandmarkList");
+    qRegisterMetaType<LocationSimple>("LocationSimple");
+    qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new LandmarkList;
@@ -22,7 +24,6 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     previewWindow = new v3dhandle;
     havePreview = false;
-    LandmarkList allTargetLocations;
     QList<LandmarkList>    allScanLocations ;
 
     cb = &callback;
@@ -89,9 +90,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     hookUpSignalsAndSlots();
 
 
-    //    workerThread = new QThread;
-    //    myStackAnalyzer->moveToThread(workerThread);
-    //    workerThread->start();
+        workerThread = new QThread;
+        myStackAnalyzer->moveToThread(workerThread);
+        workerThread->start();
 
 
     posMonStatus = false;
@@ -308,6 +309,13 @@ QGroupBox *S2UI::createTracingParameters(){
     QLabel * labelGSDT = new QLabel(tr("use &GSDT in APP2"));
     labelGSDT->setBuddy(useGSDTCB);
     useGSDTCB->setChecked(true);
+
+
+    runContinuousCB = new QCheckBox;
+    QLabel* runContinuousCBLable = new QLabel(tr("&continuous imaging"));
+    runContinuousCBLable->setBuddy(runContinuousCB);
+
+
     labelInterrupt->setBuddy(interruptCB);
     interruptCB->setObjectName("interruptCB");
     overlapSpinBox = new QSpinBox;
@@ -332,6 +340,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(interruptCB, 5,1);
     tPL->addWidget(labelGSDT,6,0);
     tPL->addWidget(useGSDTCB,6,1);
+    tPL->addWidget(runContinuousCBLable,7,0);
+    tPL->addWidget(runContinuousCB,7,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -420,19 +430,19 @@ void S2UI::loadScan(){
 
 void S2UI::loadLatest(){
     if (smartScanStatus ==1){
-        LandmarkList rootList;
+        LandmarkList seedList;
         qDebug()<<"loadlatest smartscan";
         qDebug()<<"tipList length "<<tipList.length()<<" scannumber "<<scanNumber;
         if (!tipList.isEmpty()){
 
-            rootList = tipList.at(scanNumber);
-            qDebug()<<"rootlist length "<<rootList.length();
+            seedList = tipList.at(scanNumber);
+            qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
         tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(scanNumber).y;
         bool isSoma = scanNumber==0;
-        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
+        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
     }else{
         loadScanFromFile(getFileString());
     }
@@ -442,20 +452,22 @@ void S2UI::toLoad(){
 }
 
 void S2UI::loadForSA(){
-    LandmarkList rootList;
+    LandmarkList seedList;
     LocationSimple tileLocation;
 
     if (smartScanStatus == 1){
-        rootList = tipList.at(scanNumber);
+        seedList = tipList.at(scanNumber);
         tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(scanNumber).y;
     }else{
         tileLocation.x = 0;
         tileLocation.y = 0;
-        rootList.clear();
+        seedList.clear();
     }
     bool isSoma = scanNumber==0;
-    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), rootList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+    qDebug()<<workerThread->currentThreadId();
+
+    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 }
 
 void S2UI::loadScanFromFile(QString fileString){
@@ -756,6 +768,10 @@ void S2UI::startAllTargets(){
         allTargetStatus =0;
         runAllTargetsPB->setText("Scan All Targets");
         smartScanStatus = 0;
+        startSmartScanPB->setText("smartScan");
+        allROILocations->clear();
+        saveTextFile.close();
+        return;
     }else{
         runAllTargetsPB->setText("cancel All Targets");
         targetIndex = -1;
@@ -771,6 +787,9 @@ void S2UI::handleAllTargets(){
         v3d_msg("finished with multi-target scan",true);
         smartScanStatus = 0;
         allTargetStatus = 0;
+        startSmartScanPB->setText("smartScan");
+        allROILocations->clear();
+        saveTextFile.close();
         return;
     }
     status("starting all targets");
@@ -786,6 +805,7 @@ void S2UI::startingSmartScan(){
         saveTextFile.close();
         return;
     }
+
     smartScanStatus = 1;
     QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
     sessionDir.mkdir(timeString);
@@ -811,6 +831,7 @@ void S2UI::startingSmartScan(){
             startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
                     uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
                     0);
+
         }else{
             startLocation = allTargetLocations[targetIndex];
         }
@@ -823,7 +844,7 @@ void S2UI::startingSmartScan(){
         startLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
         allROILocations->append(startLocation);
         //allScanLocations.append(allROILocations);
-        //allTargetLocations.append(startLocation);
+        if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
         qDebug()<<"headed to smartscanHandler";
         QTimer::singleShot(10,this, SLOT(smartScanHandler()));
     }
@@ -853,6 +874,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             }}
     }
     scanNumber++;
+    myNotes->save();
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
 }
 
@@ -900,7 +922,47 @@ void S2UI::smartScanHandler(){
     }
 
     if (!allROILocations->isEmpty()){
-        LocationSimple nextLocation = allROILocations->first();
+
+
+        if (runContinuousCB->isChecked()){
+            qDebug()<<"letting s2ROIMonitor initiate scans";
+        }else{
+            LocationSimple nextLocation = allROILocations->first();
+            LandmarkList  nextLandmarkList;
+            if (allTipsList->isEmpty()){
+                qDebug()<<"no incoming tip locations";
+                // leave nextLandmarkList empty and don't touch allTipsList
+            }else{
+                nextLandmarkList = allTipsList->first();
+                allTipsList->removeFirst();
+            }
+            tipList.append(nextLandmarkList);
+            allROILocations->removeFirst();
+            qDebug()<<nextLocation.x;
+            moveToROI(nextLocation);
+            nextLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+            nextLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+            waitingForFile = 1;
+            scanList.append(nextLocation);
+            if (targetIndex < allScanLocations.length()){
+                allScanLocations[targetIndex].append(nextLocation);
+            }else{
+                LandmarkList starterList;
+                starterList.append(nextLocation);
+                allScanLocations.append(starterList);
+            }
+            emit updateTable(allTargetLocations,allScanLocations);
+            QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
+            // how to make this more eventdriven. maybe  wait for move to finish.
+            status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
+        }
+    }
+
+}
+
+void S2UI::s2ROIMonitor(){ // future version will work like this...
+
+    if ((!allROILocations->isEmpty())&(waitingForFile<1)){
         LandmarkList  nextLandmarkList;
         if (allTipsList->isEmpty()){
             qDebug()<<"no incoming tip locations";
@@ -910,6 +972,8 @@ void S2UI::smartScanHandler(){
             allTipsList->removeFirst();
         }
         tipList.append(nextLandmarkList);
+        LocationSimple nextLocation = allROILocations->first();
+
         allROILocations->removeFirst();
         qDebug()<<nextLocation.x;
         moveToROI(nextLocation);
@@ -918,22 +982,25 @@ void S2UI::smartScanHandler(){
         waitingForFile = 1;
         scanList.append(nextLocation);
         if (targetIndex < allScanLocations.length()){
-        allScanLocations[targetIndex].append(nextLocation);
+            allScanLocations[targetIndex].append(nextLocation);
         }else{
             LandmarkList starterList;
             starterList.append(nextLocation);
             allScanLocations.append(starterList);
         }
+
+
         emit updateTable(allTargetLocations,allScanLocations);
-        QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
-        // how to make this more eventdriven. maybe  wait for move to finish.
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
 
+
+        QTimer::singleShot(100, &myController, SLOT(startZStack()));
+
     }
-
+    if ((smartScanStatus ==1)&&(runContinuousCB->isChecked())) {
+        QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
+    }
 }
-
-
 void S2UI::moveToROI(LocationSimple nextROI){
 
     if( posMonStatus){
@@ -988,7 +1055,7 @@ void S2UI::collectOverview(){
 }
 
 void S2UI::overviewHandler(){
-    bool readyForOverview = !uiS2ParameterMap[0].getCurrentString().contains("Resonant") &&
+    bool readyForOverview =
             ((int) uiS2ParameterMap[12].getCurrentValue() ==1)&&
             ((int) uiS2ParameterMap[10].getCurrentValue() == 512)&&
             ((int) uiS2ParameterMap[11].getCurrentValue() == 512);
@@ -1052,19 +1119,7 @@ void S2UI::updateFileString(QString inputString){
     lastFile = fileString;
 }
 
-void S2UI::s2ROIMonitor(){ // future version will work like this...
 
-    if ((!allROILocations->isEmpty())&(waitingForFile<1)){
-        LocationSimple nextLocation = allROILocations->first();
-        allROILocations->removeFirst();
-        moveToROI(nextLocation);
-        QTimer::singleShot(100, &myController, SLOT(startZStack()));
-
-    }
-
-    QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
-
-}
 
 void S2UI::clearROIPlot(){
     roiGS->clear();
@@ -1119,6 +1174,7 @@ void S2UI::resetToOverviewPBCB(){
 
 void S2UI::resetToScanPBCB(){
     // so start my monitor to see when it's in ready state:
+    centerGalvosPB->click();
     scanStatusWaitCycles = 0;
     QTimer::singleShot(0, this, SLOT(scanStatusHandler()));
 
@@ -1126,8 +1182,8 @@ void S2UI::resetToScanPBCB(){
 
 
 void S2UI::scanStatusHandler(){
-    bool readyForStack = !uiS2ParameterMap[0].getCurrentString().contains("Resonant") &&
-            ((int) uiS2ParameterMap[12].getCurrentValue() ==18)&&
+    bool readyForStack =
+            ((int) uiS2ParameterMap[12].getCurrentValue() >=13.0)&&
             ((int) uiS2ParameterMap[10].getCurrentValue() == 256)&&
             ((int) uiS2ParameterMap[11].getCurrentValue() == 256);
     bool scanStatusTimedOut = scanStatusWaitCycles >50;

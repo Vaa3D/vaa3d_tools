@@ -125,6 +125,7 @@ private:
 	QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;
+    QCheckBox *runContinuousCB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
