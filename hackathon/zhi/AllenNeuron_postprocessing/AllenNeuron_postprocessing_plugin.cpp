@@ -51,6 +51,10 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         if(fileOpenName.isEmpty())
             return;
 
+        int p = 0;
+        if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+
+
         NeuronTree nt = readSWC_file(fileOpenName);
         NeuronTree nt_sort = SortSWC(nt.listNeuron,VOID, 0);
         NeuronTree nt_sort_rs = resample(nt_sort, 10);
@@ -61,18 +65,27 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
         export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
 
-        vector<MyMarker*> inswc;
-        inswc = readSWC_file(fileTmpName.toStdString());
-        smoothswc(inswc,10);
-        saveSWC_file(fileTmpName.toStdString(), inswc);
+        if(p)
+        {
+            vector<MyMarker*> inswc;
+            inswc = readSWC_file(fileTmpName.toStdString());
+            smoothswc(inswc,10);
+            saveSWC_file(fileTmpName.toStdString(), inswc);
 
-        NeuronTree nt_smooth = readSWC_file(fileTmpName);
-        NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
-        export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
+            NeuronTree nt_smooth = readSWC_file(fileTmpName);
+            NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
+            export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
-        vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
-        vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
-        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+            vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
+            vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
+            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+        }else
+        {
+            vector<MyMarker*> inswc_nosmooth_sort = readSWC_file(fileTmpName.toStdString());
+            vector<MyMarker*> outswc_interprune = internodeprune(inswc_nosmooth_sort, nt_sort_rs_sort_prune_sort);
+            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+        }
+
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
@@ -80,7 +93,12 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         remove(fileTmpName.toStdString().c_str());
 
 
-        QString fileDefaultName = fileOpenName+QString("_part1.swc");
+        QString fileDefaultName;
+        if(p)
+            fileDefaultName = fileOpenName+QString("_part1.swc");
+        else
+            fileDefaultName = fileOpenName+QString("_part1_nosmooth.swc");
+
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                 fileDefaultName,
                 QObject::tr("Supported file (*.swc)"
@@ -103,6 +121,10 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
+        int p = 0;
+        if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+
+
         string inswc_file = dialog.inswc_file;
         string outswc_file = dialog.outswc_file;
 
@@ -118,18 +140,26 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
         export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
 
-        vector<MyMarker*> inswc_b4smooth;
-        inswc_b4smooth = readSWC_file(fileTmpName.toStdString());
-        smoothswc(inswc_b4smooth,10);
-        saveSWC_file(fileTmpName.toStdString(), inswc_b4smooth);
+        if(p)
+        {
+            vector<MyMarker*> inswc_b4smooth;
+            inswc_b4smooth = readSWC_file(fileTmpName.toStdString());
+            smoothswc(inswc_b4smooth,10);
+            saveSWC_file(fileTmpName.toStdString(), inswc_b4smooth);
 
-        NeuronTree nt_smooth = readSWC_file(fileTmpName);
-        NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
-        export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
+            NeuronTree nt_smooth = readSWC_file(fileTmpName);
+            NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
+            export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
-        vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
-        vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
-        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+            vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
+            vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
+            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+        }else
+        {
+            vector<MyMarker*> inswc_nosmooth_sort = readSWC_file(fileTmpName.toStdString());
+            vector<MyMarker*> outswc_interprune = internodeprune(inswc_nosmooth_sort, nt_sort_rs_sort_prune_sort);
+            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+        }
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
@@ -200,7 +230,11 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
       //  export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
 
-        QString fileDefaultName = fileOpenName+QString("_processed.swc");
+        QString fileDefaultName;
+        if(p)
+           fileDefaultName = fileOpenName+QString("_processed.swc");
+        else
+            fileDefaultName = fileOpenName+QString("_processed_nosmooth.swc");
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                 fileDefaultName,
