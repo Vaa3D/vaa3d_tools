@@ -23,6 +23,7 @@ QStringList ConsSkelPlugin::funclist() const
         <<tr("consensus_swc")
         <<tr("median_swc")
         <<tr("average_node_position")
+        <<tr("dark_pruning")
 		<<tr("help");
 }
 
@@ -64,6 +65,11 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
   if (func_name == tr("vote_map"))
     {
     vote_map_func(input, output, callback);
+    return true;
+    }
+  if (func_name == tr("dark_pruning"))
+    {
+    dark_pruning_func(input, output, callback);
     return true;
     }
 

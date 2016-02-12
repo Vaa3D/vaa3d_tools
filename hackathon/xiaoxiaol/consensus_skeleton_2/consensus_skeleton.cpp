@@ -107,18 +107,18 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 		NeuronTree tree = nt_list[i];
 		V3DLONG num_nodes = tree.listNeuron.size();
         //cout<<num_nodes<<endl;
-        if (num_nodes> 10 && num_nodes <10000){
+        if (num_nodes> 10 && num_nodes <50000){
               nt_sizes.push_back(num_nodes);
         }
 	}
 
 	V3DLONG median_size = median(nt_sizes);
     vector<V3DLONG > rm_ids;
-    cout <<"Median node size (exclude those num_nodes <10 or >30000 ) = " << median_size <<endl;
+    cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
     cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
         V3DLONG num_nodes = nt_list[i].listNeuron.size();
-        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 30000 )
+        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 50000 )
 		{
             cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
             rm_ids.push_back(i);

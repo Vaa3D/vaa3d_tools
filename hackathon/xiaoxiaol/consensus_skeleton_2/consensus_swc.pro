@@ -8,7 +8,8 @@ INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 HEADERS	+= consensus_skeleton_plugin.h \
     median_swc.h \
     point3d_util.h \
-    sort_eswc.h
+    sort_eswc.h \
+    dark_pruning.h
 HEADERS	+= consensus_skeleton_func.h
 HEADERS	+= consensus_skeleton.h
 HEADERS	+= kcentroid_cluster.h
@@ -17,7 +18,8 @@ HEADERS += mst_prim.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp \
-    point3d_util.cpp
+    point3d_util.cpp \
+    dark_pruning.cpp
 HEADERS	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.h
 
 SOURCES	+= consensus_skeleton_plugin.cpp \

@@ -9,6 +9,7 @@
 #include "consensus_skeleton_func.h"
 #include "consensus_skeleton.h"
 #include "median_swc.h"
+#include  "dark_pruning.h"
 #include <vector>
 #include <iostream>
 using namespace std;
@@ -174,7 +175,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	//parsing parameters
 
     int method_code = 1; //adj matrix
-    int cluster_distance_threshold = 5; // ignore nodes that far away for clustering
+    int cluster_distance_threshold = 10; // ignore nodes that far away for clustering
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -253,6 +254,88 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	return true;
 }
 
+
+
+bool dark_pruning_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+
+        if(input.size() <2 )
+        {
+            cerr<<"You must specify input eswc file and the corresponding image file."<<endl;
+            return false;
+        }
+
+
+
+
+        //parsing input
+        vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+        if (inlist->size()<2)
+        {
+            cerr<<"You must specify input eswc file and the corresponding image file."<<endl;
+            return false;
+        }
+
+        //parsing output
+        vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+        if (outlist->size() > 1)
+        {
+            cerr << "You can only specify one output file"<<endl;
+            return false;
+        }
+
+        //parsing parameters
+        int visible_thre =0;
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() == 1)
+        {
+            visible_thre = atoi(paras->at(0));
+            cout<<"The visible threshold for dark pruning is: "<<visible_thre<<endl;
+
+        }
+        else
+        {
+            cerr<<"One ( and only one) parameter is required."<<endl;
+            return false;
+        }
+
+
+
+        QString input_swc_fn = QString(inlist->at(0));
+        NeuronTree input_nt = readSWC_file(input_swc_fn);
+
+
+         Image4DSimple * p4dImage = callback.loadImage( inlist->at(1) );
+        if (!p4dImage || !p4dImage->valid())
+            return false;
+
+
+
+        QString outfileName;
+        if (outlist->size()==0)
+            outfileName = input_swc_fn + "_dark_pruned.swc";
+        else
+            outfileName = QString(outlist->at(0));
+
+        QList<NeuronSWC> result_swc;
+        if (!dark_pruning (input_nt, result_swc,p4dImage,visible_thre))
+        {
+            cerr<<"Error in dark pruning."<<endl;
+            return false;
+        }
+
+        export_listNeuron_2swc(result_swc,qPrintable(outfileName));
+        printf("%s has been generated successfully\n",qPrintable(outfileName));
+
+        return true;
+
+
+}
+
+
+
+
+
 bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     if(input.size()==0) return false;
@@ -311,6 +394,9 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 }
 
 
+
+
+
 bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     //parsing input
@@ -361,7 +447,6 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
         cout <<" The first input should be a swc file ( median neuron)." <<endl;
         return false;
     }
-
 
     qs_linker = QString(inlist->at(1));
     if (qs_linker.toUpper().endsWith(".ANO"))
@@ -556,10 +641,11 @@ void printHelp()
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
-    cout<<"\t-p <method_code>:  graphy connection method, given the nodes extracted from the confidence map. 1(default): by edge voting  2: minimum spanning tree connection" <<endl;
+    cout<<"\t-p <method_code> <clustering_distance_threshold>:  method: graphy connection method, given the nodes extracted from the confidence map. 1(default): by edge voting  2: minimum spanning tree connection" <<endl;
+    cout<<"\t                                                   clustering_distance_threshold: the distance threshold to map swc nodes to clutered/consensued nodes." <<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
     cout<<"\t                   default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 1 \n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 2 10 \n"<<endl;
 
     cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f vote_map -i <input> -o <output_image_file> "<<endl;
@@ -568,6 +654,15 @@ void printHelp()
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
     cout<<"\t-o <output_image_file>:  output image file name."<<endl;
     cout<<"Example: v3d -x consensus_swc -f vote_map -i mylinker.ano -o vote_map.v3draw\n"<<endl;
+
+    cout<<"\n  5) Prune consensus based on original image" <<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f dark_pruning -i <input_consensus_file> <input_image_file> -o <output_swc_file> "<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  dark_pruning"<<endl;
+    cout<<"\t-i <input_eswc>  <input_image>:  input_consensus_eswc  input_image"<<endl;
+    cout<<"\t-o <output_image_file>:  output image file name."<<endl;
+    cout<<"\t-p <visible_threshold>:  visible threshold for dark pruning."<<endl;
+    cout<<"Example: v3d -x consensus_swc -f dark_pruning -i input_consensus_file  input_image.v3dpbd -o pruned.swc -p 40\n"<<endl;
 
 }
 

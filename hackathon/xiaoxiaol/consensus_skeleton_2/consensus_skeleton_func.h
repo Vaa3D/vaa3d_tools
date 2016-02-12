@@ -10,6 +10,7 @@
 
 int consensus_swc_menu(V3DPluginCallback2 &callback,QWidget * parent);
 bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool dark_pruning_func(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList & output);
