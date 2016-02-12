@@ -127,6 +127,15 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
         export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
+        vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
+        vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
+        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
+
+        NeuronTree nt_inter= readSWC_file(fileTmpName);
+        NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
+        export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
+
+
         vector<MyMarker*> inswc = readSWC_file(fileTmpName.toStdString());
 
         //radius estimation start
@@ -185,14 +194,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
         NeuronTree nt_radius= readSWC_file(fileTmpName);
         NeuronTree nt_radius_sort = SortSWC(nt_radius.listNeuron,VOID, 0);
-        export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
-
-        vector<MyMarker*> inswc_radius_sort = readSWC_file(fileTmpName.toStdString());
-        vector<MyMarker*> outswc_interprune = internodeprune(inswc_radius_sort, nt_radius_sort);
-        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
-
-        NeuronTree nt_inter= readSWC_file(fileTmpName);
-        NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
+//        export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
 
         remove(fileTmpName.toStdString().c_str());
 
@@ -207,7 +209,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
                     ));
         if (fileSaveName.isEmpty())
             return;
-        if (!export_list2file(nt_inter_sort.listNeuron,fileSaveName,fileOpenName))
+        if (!export_list2file(nt_radius_sort.listNeuron,fileSaveName,fileOpenName))
         {
             v3d_msg("fail to write the output swc file.");
             return;
