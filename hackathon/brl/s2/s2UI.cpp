@@ -847,6 +847,9 @@ void S2UI::startingSmartScan(){
         if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
         qDebug()<<"headed to smartscanHandler";
         QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+        if (runContinuousCB->isChecked()){
+            s2ROIMonitor();
+        }
     }
     // append text to noteTaker
     //
@@ -962,7 +965,7 @@ void S2UI::smartScanHandler(){
 
 void S2UI::s2ROIMonitor(){ // future version will work like this...
 
-    if ((!allROILocations->isEmpty())&(waitingForFile<1)){
+    if ((!allROILocations->isEmpty())&&(waitingForFile<1)){
         LandmarkList  nextLandmarkList;
         if (allTipsList->isEmpty()){
             qDebug()<<"no incoming tip locations";
