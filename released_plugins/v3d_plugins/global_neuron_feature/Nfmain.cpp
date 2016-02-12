@@ -142,18 +142,21 @@ void nf_first_main(V3DPluginCallback2 &callback, QWidget *parent)
     if(fileOpenName.isEmpty())
         return;
     NeuronTree nt = readSWC_file(fileOpenName);
+    if(nt.listNeuron[0].pn >=0)
+    {
+        v3d_msg("Please sort the swc file first");
+        return;
+    }
     QList<NeuronSWC> list = nt.listNeuron;
-    V3DLONG index;
     for (int i=0;i<list.size();i++)
     {
         if(i>0 && nt.listNeuron[i].pn < 0)
         {
-            index = i;
+            nt.listNeuron.erase(nt.listNeuron.begin()+i,nt.listNeuron.end());
             break;
         }
     }
 
-    nt.listNeuron.erase(nt.listNeuron.begin()+index,nt.listNeuron.end());
     double * features = new double[FNUM];
     computeFeature(nt,features);
     QMessageBox infoBox;
