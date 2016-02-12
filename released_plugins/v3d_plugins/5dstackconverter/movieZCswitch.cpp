@@ -38,7 +38,7 @@ QStringList MovieZCswitchPlugin::menulist() const
 QStringList MovieZCswitchPlugin::funclist() const
 {
     return QStringList()
-    <<tr("convert")
+    <<tr("4D_to_5D")
     <<tr("help");
 }
 
@@ -59,17 +59,17 @@ void MovieZCswitchPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
 bool MovieZCswitchPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback, QWidget * parent)
 {
-    if (func_name==tr("convert"))
+    if (func_name==tr("4D_to_5D"))
     {
         return changeMS(callback, input, output);
     }
 
     else if (func_name==tr("help"))
     {
-        cout<<"Usage : v3d -x 5D_Stack_Converter -f convert -i <inimg_file> -o <outimg_file> -p <dr> <tp>"<<endl;
+        cout<<"Usage : v3d -x 5D_Stack_Converter -f 4D_to_5D -i <inimg_file> -o <outfolder_file> <tp>"<<endl;
         cout<<endl;
-        cout<<"dr          converter direction, 0: 4D {XYZ,Color} --> 5D {XYZ,Color,Time}, 1: 5D {XYZ,Color,Time}--> 4D {XYZ,Color}, default 0"<<endl;
-        cout<<"tp          timepoints, default 1"<<endl;
+        cout<<"outfolder_file          The output folder to save all timepoint image stacks"<<endl;
+        cout<<"tp                      timepoints, default 1"<<endl;
         cout<<endl;
         return true;
     }
@@ -425,30 +425,20 @@ bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DP
 {
     cout<<"Welcome to 5D Stack Converter plugin"<<endl;
     if (output.size() != 1) return false;
-    unsigned int direction = 0,timepoints = 1;
-    double th = 0;
-    if (input.size()>=2)
+    unsigned int timepoints = 1;
+    if (input.size()>=1)
     {
         vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
         cout<<paras.size()<<endl;
-        if(paras.size() >= 1) direction = atoi(paras.at(0));
-        if(paras.size() >= 2) timepoints = atoi(paras.at(1));
-    }
-
-
-    if(direction < 0 || direction > 1)
-    {
-        cerr<<"Invalid direction, error!"<<endl;
-        return false;
+        if(paras.size() >= 1) timepoints = atoi(paras.at(0));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    char * outfolder_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
-    cout<<"direction = "<<direction<<endl;
     cout<<"timepoints = "<<timepoints<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
-    cout<<"outimg_file = "<<outimg_file<<endl;
+    cout<<"outfolder_file = "<<outfolder_file<<endl;
 
     unsigned char * image1d = 0;
     V3DLONG in_sz[4];
@@ -462,7 +452,6 @@ bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DP
 
     V3DLONG sx=in_sz[0], sy = in_sz[1], sz=in_sz[2], sc=in_sz[3];
     V3DLONG ts_max = (sz>sc)?sz:sc;
-    V3DLONG N = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
 
     if(timepoints < 1 || timepoints > ts_max)
     {
@@ -470,36 +459,34 @@ bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DP
         return false;
     }
 
-    QStringList items;
-    items << QObject::tr("4D {XYZ,Color} Stack --> 5D {XYZ,Color,Time} Stack") << QObject::tr("5D {XYZ,Color,Time} Stack --> 4D {XYZ,Color} Stack");
-    QString item = items.at(direction);
+    V3DLONG pagesz=sx*sy;
+    V3DLONG channelsz=sx*sy*sz;
+    V3DLONG imagecount = timepoints;
 
+    sz /= imagecount;
+    V3DLONG N_times = sx*sy*sz*sc;
 
-    void *pResult = NULL;
+    V3DLONG in_sz_times[4];
+    in_sz_times[0] = sx;
+    in_sz_times[1] = sy;
+    in_sz_times[2] = sz;
+    in_sz_times[3] = sc;
 
-    Image4DSimple p4DImage;
-    //Get the old image info
-    if(!(QString::compare(item, "4D {XYZ,Color} Stack --> 5D {XYZ,Color,Time} Stack")))
+    if(datatype == 1)
     {
-        p4DImage.setTimePackType(TIME_PACK_C);
-        V3DLONG pagesz=sx*sy;
-        V3DLONG channelsz=sx*sy*sz;
-
-        p4DImage.setTDim(timepoints);
-        V3DLONG imagecount = timepoints;
-
-        sz /= imagecount;
-
-        if(datatype == 1)
+        // assign
+        unsigned char *pImg = (unsigned char *)image1d;
+        for(V3DLONG no=0; no<imagecount; no++)
         {
+            V3DLONG d = 0;
             // init
             unsigned char *data1d = NULL;
 
             try
             {
-                data1d = new unsigned char [N];
+                data1d = new unsigned char [N_times];
 
-                memset(data1d, 0, sizeof(unsigned char)*N);
+                memset(data1d, 0, sizeof(unsigned char)*N_times);
             }
             catch (...)
             {
@@ -507,175 +494,39 @@ bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DP
                 return false;
             }
 
-            // assign
-            unsigned char *pImg = (unsigned char *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
+            for(V3DLONG c=0; c<sc; c++)
             {
-                for(V3DLONG c=0; c<sc; c++)
+                for(V3DLONG k =0; k<sz; k++)
                 {
-                    for(V3DLONG k =0; k<sz; k++)
+                    // V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
+                    V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
+                    for(V3DLONG i=0; i<pagesz; i++)
                     {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsetc] = pImg[i + offsets];
-                        }
+                        data1d[d] = pImg[i + offsets];
+                        d++;
                     }
                 }
             }
-
-            sc = sc*imagecount;
-
-            pResult = data1d; //
-        }
-        else if(datatype == 2)
-        {
-            // init
-            unsigned short *data1d = NULL;
-
-            try
-            {
-                data1d = new unsigned short [N];
-
-                memset(data1d, 0, sizeof(unsigned short)*N);
-            }
-            catch (...)
-            {
-                printf("Fail to allocate memory.\n");
-                return false;
-            }
-
-            // assign
-            unsigned short *pImg = (unsigned short *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
-            {
-                for(V3DLONG c=0; c<sc; c++)
-                {
-                    for(V3DLONG k =0; k<sz; k++)
-                    {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsetc] = pImg[i + offsets];
-                        }
-                    }
-                }
-            }
-
-            sc = sc*imagecount;
-
-            pResult = data1d; //
-        }
-        else if(datatype == 4)
-        {
-            // init
-            float *data1d = NULL;
-
-            try
-            {
-                data1d = new float [N];
-
-                memset(data1d, 0, sizeof(float)*N);
-            }
-            catch (...)
-            {
-                printf("Fail to allocate memory.\n");
-                return false;
-            }
-
-            // assign
-            float *pImg = (float *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
-            {
-                for(V3DLONG c=0; c<sc; c++)
-                {
-                    for(V3DLONG k =0; k<sz; k++)
-                    {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsetc] = pImg[i + offsets];
-                        }
-                    }
-                }
-            }
-
-            sc = sc*imagecount;
-
-            pResult = data1d; //
-        }
-        else
-        {
-            printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
-            return false;
+            QString outimg_file = QString(outfolder_file)+ QString("%1.v3draw").arg(no);
+            simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(), (unsigned char *)data1d, in_sz_times, datatype);
+            if(data1d) {delete []data1d; data1d=0;}
         }
     }
-    else if(!(QString::compare(item, "5D {XYZ,Color,Time} Stack --> 4D {XYZ,Color} Stack")))
+    else if(datatype == 2)
     {
-        p4DImage.setTimePackType(TIME_PACK_Z);
-        V3DLONG pagesz=sx*sy;
-        V3DLONG imagecount = timepoints;
-
-        if(imagecount>sc)
+        // assign
+        unsigned short *pImg = (unsigned short *)image1d;
+        for(V3DLONG no=0; no<imagecount; no++)
         {
-            QMessageBox::information(0, title, QObject::tr("# time points should not be greater than # color channel."),0);
-            return -1;
-        }
-
-        sc /= imagecount;
-
-        if(datatype == 1)
-        {
-            // init
-            unsigned char *data1d = NULL;
-
-            try
-            {
-                data1d = new unsigned char [N];
-
-                memset(data1d, 0, sizeof(unsigned char)*N);
-            }
-            catch (...)
-            {
-                printf("Fail to allocate memory.\n");
-                return false;
-            }
-
-            // assign
-            unsigned char *pImg = (unsigned char *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
-            {
-                for(V3DLONG c=0; c<sc; c++)
-                {
-                    for(V3DLONG k =0; k<sz; k++)
-                    {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*pagesz*sz*imagecount + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsets] = pImg[i + offsetc];
-                        }
-                    }
-                }
-            }
-
-            sz = sz*imagecount;
-
-            pResult = data1d; //
-        }
-        else if(datatype == 2)
-        {
+            V3DLONG d = 0;
             // init
             unsigned short *data1d = NULL;
 
             try
             {
-                data1d = new unsigned short [N];
+                data1d = new unsigned short [N_times];
 
-                memset(data1d, 0, sizeof(unsigned short)*N);
+                memset(data1d, 0, sizeof(unsigned short)*N_times);
             }
             catch (...)
             {
@@ -683,80 +534,70 @@ bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DP
                 return false;
             }
 
-            // assign
-            unsigned short *pImg = (unsigned short *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
+            for(V3DLONG c=0; c<sc; c++)
             {
-                for(V3DLONG c=0; c<sc; c++)
+                for(V3DLONG k =0; k<sz; k++)
                 {
-                    for(V3DLONG k =0; k<sz; k++)
+                    // V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
+                    V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
+                    for(V3DLONG i=0; i<pagesz; i++)
                     {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*pagesz*sz*imagecount + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsets] = pImg[i + offsetc];
-                        }
+                        data1d[d] = pImg[i + offsets];
+                        d++;
                     }
                 }
             }
 
-            sz = sz*imagecount;
-
-            pResult = data1d; //
+            QString outimg_file = QString(outfolder_file)+ QString("%1.v3draw").arg(no);
+            simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(), (unsigned char *)data1d, in_sz_times, datatype);
+            if(data1d) {delete []data1d; data1d=0;}
         }
-        else if(datatype == 4)
+    }
+    else if(datatype == 4)
+    {
+        // init
+        // assign
+        float *pImg = (float *)image1d;
+        for(V3DLONG no=0; no<imagecount; no++)
         {
-            // init
+            V3DLONG d = 0;
+
             float *data1d = NULL;
 
             try
             {
-                data1d = new float [N];
+                data1d = new float [N_times];
 
-                memset(data1d, 0, sizeof(float)*N);
+                memset(data1d, 0, sizeof(float)*N_times);
             }
             catch (...)
             {
                 printf("Fail to allocate memory.\n");
-                return -1;
+                return false;
             }
-
-            // assign
-            float *pImg = (float *)image1d;
-            for(V3DLONG no=0; no<imagecount; no++)
+            for(V3DLONG c=0; c<sc; c++)
             {
-                for(V3DLONG c=0; c<sc; c++)
+                for(V3DLONG k =0; k<sz; k++)
                 {
-                    for(V3DLONG k =0; k<sz; k++)
+                    // V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
+                    V3DLONG offsets = k*pagesz + c*channelsz + no*pagesz*sz;
+                    for(V3DLONG i=0; i<pagesz; i++)
                     {
-                        V3DLONG offsetc = k*pagesz + c*pagesz*sz + no*pagesz*sz*sc;
-                        V3DLONG offsets = k*pagesz + c*pagesz*sz*imagecount + no*pagesz*sz;
-                        for(V3DLONG i=0; i<pagesz; i++)
-                        {
-                            data1d[i+offsets] = pImg[i + offsetc];
-                        }
+                        data1d[d] = pImg[i + offsets];
+                        d++;
                     }
                 }
             }
-
-            sz = sz*imagecount;
-
-            pResult = data1d; //
+            QString outimg_file = QString(outfolder_file)+ QString("%1.v3draw").arg(no);
+            simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(), (unsigned char *)data1d, in_sz_times, datatype);
+            if(data1d) {delete []data1d; data1d=0;}
         }
-        else
-        {
-            printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
-            return false;
-        }
-
     }
     else
     {
-        QMessageBox::information(0, title, QObject::tr("This program only supports time series data. Your current image data type is not supported."),0);
-        return -3;
+        printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+        return false;
     }
 
-    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pResult, in_sz, datatype);
     return true;
 }
