@@ -184,6 +184,7 @@ private:
     QString lastFile;
     bool posMonStatus;
     int waitingForFile;//  0 => not waiting.  1 => waiting for image.
+    bool waitingForLast;
     bool waitingForOverview;
 	bool isLocal;
     int smartScanStatus;

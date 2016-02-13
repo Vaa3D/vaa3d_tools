@@ -807,6 +807,7 @@ void S2UI::startingSmartScan(){
     }
 
     smartScanStatus = 1;
+    waitingForLast = false;
     QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
     sessionDir.mkdir(timeString);
     saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
@@ -845,11 +846,11 @@ void S2UI::startingSmartScan(){
         allROILocations->append(startLocation);
         //allScanLocations.append(allROILocations);
         if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
-        qDebug()<<"headed to smartscanHandler";
-        QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+
         if (runContinuousCB->isChecked()){
             s2ROIMonitor();
-        }
+        }else{        qDebug()<<"headed to smartscanHandler";
+            QTimer::singleShot(10,this, SLOT(smartScanHandler()));}
     }
     // append text to noteTaker
     //
@@ -906,7 +907,7 @@ void S2UI::smartScanHandler(){
         }
         return;
     }
-    if (allROILocations->isEmpty()){
+    if ((allROILocations->isEmpty())&&(!waitingForLast)){
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -996,7 +997,7 @@ void S2UI::s2ROIMonitor(){ // future version will work like this...
         emit updateTable(allTargetLocations,allScanLocations);
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
 
-
+        waitingForLast = allROILocations->length()==1;
         QTimer::singleShot(100, &myController, SLOT(startZStack()));
 
     }
