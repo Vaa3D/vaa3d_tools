@@ -964,7 +964,7 @@ void S2UI::smartScanHandler(){
 
 }
 
-void S2UI::s2ROIMonitor(){ // future version will work like this...
+void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
 
     if ((!allROILocations->isEmpty())&&(waitingForFile<1)){
         LandmarkList  nextLandmarkList;
@@ -977,7 +977,7 @@ void S2UI::s2ROIMonitor(){ // future version will work like this...
         }
         tipList.append(nextLandmarkList);
         LocationSimple nextLocation = allROILocations->first();
-
+        waitingForLast = allROILocations->length()==1;
         allROILocations->removeFirst();
         qDebug()<<nextLocation.x;
         moveToROI(nextLocation);
@@ -997,7 +997,6 @@ void S2UI::s2ROIMonitor(){ // future version will work like this...
         emit updateTable(allTargetLocations,allScanLocations);
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
 
-        waitingForLast = allROILocations->length()==1;
         QTimer::singleShot(100, &myController, SLOT(startZStack()));
 
     }
