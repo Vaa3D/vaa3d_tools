@@ -800,6 +800,7 @@ void S2UI::startingSmartScan(){
     qDebug()<<"starting smartscan";
     if (smartScanStatus==1){
         smartScanStatus=0;
+        waitingForLast = false;
         startSmartScanPB->setText("smartScan");
         allROILocations->clear();
         saveTextFile.close();
@@ -907,7 +908,7 @@ void S2UI::smartScanHandler(){
         }
         return;
     }
-    if ((allROILocations->isEmpty())&&(!waitingForLast)){
+    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber+1))){
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -925,7 +926,7 @@ void S2UI::smartScanHandler(){
         status(QString("x= ").append(QString::number(allROILocations->value(i).x)).append(" y = ").append(QString::number(allROILocations->value(i).y)).append(" z= ").append(QString::number(allROILocations->value(i).z)));
     }
 
-    if (!allROILocations->isEmpty()){
+    if ((!allROILocations->isEmpty()) || (waitingForLast)){
 
 
         if (runContinuousCB->isChecked()){
@@ -965,6 +966,7 @@ void S2UI::smartScanHandler(){
 }
 
 void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
+    waitingForLast = allROILocations->length()==1;
 
     if ((!allROILocations->isEmpty())&&(waitingForFile<1)){
         LandmarkList  nextLandmarkList;
@@ -977,7 +979,6 @@ void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
         }
         tipList.append(nextLandmarkList);
         LocationSimple nextLocation = allROILocations->first();
-        waitingForLast = allROILocations->length()==1;
         allROILocations->removeFirst();
         qDebug()<<nextLocation.x;
         moveToROI(nextLocation);
@@ -1000,6 +1001,8 @@ void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
         QTimer::singleShot(100, &myController, SLOT(startZStack()));
 
     }
+
+
     if ((smartScanStatus ==1)&&(runContinuousCB->isChecked())) {
         QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
     }
@@ -1186,7 +1189,7 @@ void S2UI::resetToScanPBCB(){
 
 void S2UI::scanStatusHandler(){
     bool readyForStack =
-            ((int) uiS2ParameterMap[12].getCurrentValue() >=13.0)&&
+            ((int) uiS2ParameterMap[12].getCurrentValue() >=12.0)&&
             ((int) uiS2ParameterMap[10].getCurrentValue() == 256)&&
             ((int) uiS2ParameterMap[11].getCurrentValue() == 256);
     bool scanStatusTimedOut = scanStatusWaitCycles >50;
