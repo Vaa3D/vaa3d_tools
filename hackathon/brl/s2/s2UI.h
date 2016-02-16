@@ -86,6 +86,7 @@ private slots:
     void pickTargets();
     void startAllTargets();
     void handleAllTargets();
+    void loadMIP(int imageIndex, Image4DSimple* mip);
 private:
     V3DPluginCallback2 * cb;
 

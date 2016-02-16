@@ -227,10 +227,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
             vector<MyMarker*> tileswc_file;
             int maxRootListSize;// kludge here to make it through debugging. need some more filters on the swc outputs and marker inputs
-            if (inputRootList.size()>16){
-                maxRootListSize = 16;
-            }else{
-                maxRootListSize = inputRootList.size();}
+//            if (inputRootList.size()>16){
+//                maxRootListSize = 16;
+//            }else{
+                maxRootListSize = inputRootList.size();
 
             QList<ImageMarker> seedsToSave;
             for (int i = 0; i<maxRootListSize; i++){

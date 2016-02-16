@@ -90,9 +90,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     hookUpSignalsAndSlots();
 
 
-        workerThread = new QThread;
-        myStackAnalyzer->moveToThread(workerThread);
-        workerThread->start();
+    workerThread = new QThread;
+    myStackAnalyzer->moveToThread(workerThread);
+    workerThread->start();
 
 
     posMonStatus = false;
@@ -130,6 +130,9 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(pickTargetsPB,SIGNAL(clicked()),this, SLOT(pickTargets()));
     connect(runAllTargetsPB,SIGNAL(clicked()),this,SLOT(startAllTargets()));
+
+
+    connect(runContinuousCB,SIGNAL(clicked()), this, SLOT(s2ROIMonitor()));
 
 
     // communication with myController to send commands
@@ -878,8 +881,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 status("already scanned here!");
             }}
     }
+    loadMIP(scanNumber, mip);
     scanNumber++;
     myNotes->save();
+
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
 }
 
@@ -908,7 +913,7 @@ void S2UI::smartScanHandler(){
         }
         return;
     }
-    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber+1))){
+    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber))){//scanNumber is incremented AFTER the tracing results come in
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -966,6 +971,8 @@ void S2UI::smartScanHandler(){
 }
 
 void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
+    if (!runContinuousCB->isChecked()) return;
+
     waitingForLast = allROILocations->length()==1;
 
     if ((!allROILocations->isEmpty())&&(waitingForFile<1)){
@@ -1020,7 +1027,6 @@ void S2UI::moveToROI(LocationSimple nextROI){
         newLoc.y = nextGalvoY;
         float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
         float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
-        roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
 
         emit moveToNext(newLoc);
@@ -1241,7 +1247,23 @@ void S2UI::pickTargets(){
 
 
 
-
+void S2UI::loadMIP(int imageIndex, Image4DSimple* mip){
+    QImage myMIP;
+    int x = mip->getXDim();
+    int y = mip->getYDim();
+    unsigned short int * total1dData_mip= new unsigned short int [x*y];
+    total1dData_mip = mip->getRawData();
+        V3DLONG total  =0;
+    myMIP = QImage(x, y, QImage::Format_RGB16);
+    for (V3DLONG i=0; i<x; i++){
+        for (V3DLONG j=0; j<y;j++){
+            myMIP.setPixel(i,j,total1dData_mip[total]);
+                    total++;
+        }
+    }
+    QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
+            roiGS->addItem(mipPixmap);
+}
 
 
 
