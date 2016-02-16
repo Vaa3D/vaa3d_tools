@@ -18,13 +18,88 @@
 
 using namespace std;
 
+QStringList importSeriesFileList_addnumbersort(const QString & curFile)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<  QString("*.%1").arg(QFileInfo(curFile).completeSuffix().toStdString().c_str());
+
+    QString curFilePath = QFileInfo(curFile).absolutePath();
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+    myList.sort();
+
+    QStringList sortedList, tmpList;
+
+    //-----------------------------------------------------------------------
+    // 090731 RZC: fixed numerically sorting file names list, for XFormWidget::importGeneralImgSeries
+    //-----------------------------------------------------------------------
+    QString fileNameStr, fileNameDigits;	//absolute file name is separated to 2 parts: strings and digits
+        QRegExp r("(\\d+)");		//find digits
+    QMap<V3DLONG, QString> mapList;
+
+    mapList.clear();
+    for(V3DLONG i=0; i<myList.size(); ++i)
+    {
+        fileNameStr = myList.at(i);
+        QFileInfo fileFullName(myList.at(i));
+        QString fileFullNameStr = fileFullName.completeBaseName();
+
+
+        //extract the fileNameDigits from fileNameStr
+        //e.g. "a9_b2009051801.tif.raw" into "a9_b.tif.raw" & "2009051801"
+
+        V3DLONG pos = 0;
+        fileNameDigits = "";
+        while ((pos = r.indexIn(fileFullNameStr, pos)) != -1)
+        {
+                    fileNameDigits = r.cap(1);
+                    pos += r.matchedLength();
+        }
+
+        if (fileNameDigits.isEmpty()) continue;
+
+
+        V3DLONG num = fileNameDigits.toULong();
+        mapList.insert(num, fileNameStr);
+    }
+    // must be sorted by QMap
+    myList = mapList.values();
+    //foreach (QString qs, myList)  qDebug() << qs;
+
+    //no need to pop-out a dialog if no meaningful file has been detected. 131017
+    if (myList.isEmpty())
+    {
+        v3d_msg("It seems no file contains a digit-portion in the file name. Naming convention should be sth like xxx_000001.yyy, xxx_000002.yyy, .... Check your data before importing.");
+        return myList;
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(movieZCswitch, MovieZCswitchPlugin)
 
 int changeMS(V3DPluginCallback2 &callback, QWidget *parent);
-int packInChannel(V3DPluginCallback2 &callback, QWidget *parent,bool bmenu);
+int packInChannel(V3DPluginCallback2 &callback, QWidget *parent);
+int import5D(V3DPluginCallback2 &callback, QWidget *parent);
+
 
 bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
@@ -35,7 +110,7 @@ QStringList MovieZCswitchPlugin::menulist() const
 {
     return QStringList() << tr("5D Stack Converter")
                          << tr("pack_in_selected_channels")
-                         << tr("pack_in_all_channels")
+                         << tr("import_5D_image")
 						 << tr("about this plugin");
 }
 
@@ -51,13 +126,13 @@ void MovieZCswitchPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	if (menu_name == tr("5D Stack Converter"))
     {
     	changeMS(callback, parent);
-    }else if (menu_name == tr("pack_in_selected_channels"))
+    }else if (menu_name == tr("pack_in_channels"))
     {
-        packInChannel(callback, parent,1);
+        packInChannel(callback, parent);
     }
-    else if (menu_name == tr("pack_in_all_channels"))
+    else if (menu_name == tr("import_5D_image"))
     {
-        packInChannel(callback, parent,0);
+        import5D(callback, parent);
     }
 	else if (menu_name == tr("about this plugin"))
 	{
@@ -430,7 +505,7 @@ int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 	return 0;
 }
 
-int packInChannel(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
+int packInChannel(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle oldwin = callback.currentImageWindow();
     Image4DSimple* image = callback.getImage(oldwin);
@@ -443,20 +518,183 @@ int packInChannel(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
     V3DLONG sz=image->getZDim(), sc=image->getCDim();
     int timepoints=sc;
 
-    if(bmenu)
-    {
-        V3DLONG ts_max = (sz>sc)?sz:sc;
-        bool ok;
-        timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
-                                              QObject::tr("Enter the number of time points:"),
-                                              1, 1, ts_max, 1, &ok);
-        if(!ok)
-            return 0;
-    }
+    V3DLONG ts_max = (sz>sc)?sz:sc;
+    bool ok;
+    timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
+                                          QObject::tr("Enter the number of time points:"),
+                                          1, 1, ts_max, 1, &ok);
+    if(!ok)
+        return -1;
+
     image->setTimePackType(TIME_PACK_C);
     image->setTDim(timepoints);
     callback.updateImageWindow(oldwin);
     callback.open3DWindow(oldwin);
+    return 0;
+}
+
+int import5D(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle oldwin = callback.currentImageWindow();
+    Image4DSimple* image = callback.getImage(oldwin);
+    if (! image)
+    {
+        QMessageBox::information(0, title, QObject::tr("No image is open."));
+        return -1;
+    }
+
+    ImagePixelType imgdatatype = image->getDatatype();
+    V3DLONG sx=image->getXDim(), sy=image->getYDim(), sz=image->getZDim(), sc=image->getCDim();
+
+    QStringList imgList = importSeriesFileList_addnumbersort(callback.getImageName(oldwin));
+    V3DLONG st = imgList.size();
+
+    V3DLONG N = sx*sy*sz*sc*st;
+
+    Image4DSimple p4DImage;
+    void *pResult = NULL;
+
+    if(imgdatatype == V3D_UINT8)
+    {
+        // init
+        unsigned char *data5d = NULL;
+
+        try
+        {
+            data5d = new unsigned char [N];
+
+            memset(data5d, 0, sizeof(unsigned char)*N);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return -1;
+        }
+
+        // assign
+        V3DLONG j = 0;
+        for(V3DLONG no=0; no<st; no++)
+        {
+            unsigned char * data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype;
+
+            if (!simple_loadimage_wrapper(callback,imgList.at(no).toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",imgList.at(no).toStdString().c_str());
+                return -1;
+            }
+
+            for(V3DLONG i=0; i<sx*sy*sz*sc; i++)
+            {
+                data5d[j] = data1d[i];
+                j++;
+            }
+            if(data1d) {delete []data1d; data1d = 0;}
+
+        }
+        pResult = data5d; //
+    }
+    else if(imgdatatype == V3D_UINT16)
+    {
+        // init
+        unsigned short *data5d = NULL;
+
+        try
+        {
+            data5d = new unsigned short [N];
+
+            memset(data5d, 0, sizeof(unsigned short)*N);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return -1;
+        }
+
+        // assign
+        V3DLONG j = 0;
+        for(V3DLONG no=0; no<st; no++)
+        {
+            unsigned short * data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype;
+
+            if (!simple_loadimage_wrapper(callback,imgList.at(no).toStdString().c_str(), (unsigned char * &)data1d, in_sz, datatype))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",imgList.at(no).toStdString().c_str());
+                return -1;
+            }
+
+            for(V3DLONG i=0; i<sx*sy*sz*sc; i++)
+            {
+                data5d[j] = data1d[i];
+                j++;
+            }
+            if(data1d) {delete []data1d; data1d = 0;}
+
+        }
+
+        pResult = data5d; //
+    }
+    else if(imgdatatype == V3D_FLOAT32)
+    {
+        // init
+        float *data5d = NULL;
+
+        try
+        {
+            data5d = new float [N];
+
+            memset(data5d, 0, sizeof(float)*N);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return -1;
+        }
+
+        // assign
+        V3DLONG j = 0;
+        for(V3DLONG no=0; no<st; no++)
+        {
+            float * data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype;
+
+            if (!simple_loadimage_wrapper(callback,imgList.at(no).toStdString().c_str(), (unsigned char * &)data1d, in_sz, datatype))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",imgList.at(no).toStdString().c_str());
+                return -1;
+            }
+
+            for(V3DLONG i=0; i<sx*sy*sz*sc; i++)
+            {
+                data5d[j] = data1d[i];
+                j++;
+            }
+            if(data1d) {delete []data1d; data1d = 0;}
+
+        }
+
+        pResult = data5d; //
+    }
+    else
+    {
+        printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+        return -1;
+    }
+
+    p4DImage.setTimePackType(TIME_PACK_C);
+    p4DImage.setTDim(st);
+    p4DImage.setData((unsigned char*)pResult, sx,sy,sz,sc*st, imgdatatype);
+
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, &p4DImage);
+    callback.setImageName(newwin,  callback.getImageName(oldwin)+"_imported");
+    callback.open3DWindow(newwin);
+    callback.updateImageWindow(newwin);
+
     return 0;
 }
 
