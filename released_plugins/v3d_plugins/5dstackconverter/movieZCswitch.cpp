@@ -24,6 +24,8 @@ using namespace std;
 Q_EXPORT_PLUGIN2(movieZCswitch, MovieZCswitchPlugin)
 
 int changeMS(V3DPluginCallback2 &callback, QWidget *parent);
+int packInChannel(V3DPluginCallback2 &callback, QWidget *parent,bool bmenu);
+
 bool changeMS(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
@@ -32,6 +34,8 @@ const QString title = "5D Stack Converter";
 QStringList MovieZCswitchPlugin::menulist() const
 {
     return QStringList() << tr("5D Stack Converter")
+                         << tr("pack_in_selected_channels")
+                         << tr("pack_in_all_channels")
 						 << tr("about this plugin");
 }
 
@@ -47,6 +51,13 @@ void MovieZCswitchPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	if (menu_name == tr("5D Stack Converter"))
     {
     	changeMS(callback, parent);
+    }else if (menu_name == tr("pack_in_selected_channels"))
+    {
+        packInChannel(callback, parent,1);
+    }
+    else if (menu_name == tr("pack_in_all_channels"))
+    {
+        packInChannel(callback, parent,0);
     }
 	else if (menu_name == tr("about this plugin"))
 	{
@@ -79,7 +90,6 @@ bool MovieZCswitchPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 
 int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 {
-
 	v3dhandle oldwin = callback.currentImageWindow();
 	Image4DSimple* image = callback.getImage(oldwin);
 	if (! image)
@@ -101,25 +111,25 @@ int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 	
 	//get Z->C or C->Z command
 	bool ok1, ok2;
-	int timepoints=0;
+    int timepoints=0;
 
 	QStringList items;
 	items << QObject::tr("4D {XYZ,Color} Stack --> 5D {XYZ,Color,Time} Stack") << QObject::tr("5D {XYZ,Color,Time} Stack --> 4D {XYZ,Color} Stack");
 
-	QString item = QInputDialog::getItem(parent, QObject::tr("Change Movie Stack"),
-										QObject::tr("Which direction do you want to change:"), items, 0, false, &ok1);
+    QString item = QInputDialog::getItem(parent, QObject::tr("Change Movie Stack"),
+                                        QObject::tr("Which direction do you want to change:"), items, 0, false, &ok1);
+
 	
-	
-	if(ok1)
-	{
-		timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
-									  QObject::tr("Enter the number of time points:"),
-									  1, 1, ts_max, 1, &ok2);
-	}
-	else
-	{
-		return -1;
-	}
+    if(ok1)
+    {
+        timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
+                                      QObject::tr("Enter the number of time points:"),
+                                      1, 1, ts_max, 1, &ok2);
+    }
+    else
+    {
+        return -1;
+    }
 	
 	void *pResult = NULL;
 	
@@ -418,6 +428,36 @@ int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 	callback.updateImageWindow(newwin);
 
 	return 0;
+}
+
+int packInChannel(V3DPluginCallback2 &callback, QWidget *parent, bool bmenu)
+{
+    v3dhandle oldwin = callback.currentImageWindow();
+    Image4DSimple* image = callback.getImage(oldwin);
+    if (! image)
+    {
+        QMessageBox::information(0, title, QObject::tr("No image is open."));
+        return -1;
+    }
+
+    V3DLONG sz=image->getZDim(), sc=image->getCDim();
+    int timepoints=sc;
+
+    if(bmenu)
+    {
+        V3DLONG ts_max = (sz>sc)?sz:sc;
+        bool ok;
+        timepoints = QInputDialog::getInteger(parent, QObject::tr("Set time points"),
+                                              QObject::tr("Enter the number of time points:"),
+                                              1, 1, ts_max, 1, &ok);
+        if(!ok)
+            return 0;
+    }
+    image->setTimePackType(TIME_PACK_C);
+    image->setTDim(timepoints);
+    callback.updateImageWindow(oldwin);
+    callback.open3DWindow(oldwin);
+    return 0;
 }
 
 
