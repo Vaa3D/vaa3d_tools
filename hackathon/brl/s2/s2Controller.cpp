@@ -382,7 +382,7 @@ void S2Controller::posMonListener(QString messageL){
     if (inPosMonMode){
         ii = (ii+1) % maxParams;
         emit newS2Parameter(s2ParameterMap);
-        QTimer::singleShot(10, this, SLOT(posMon()));
+        QTimer::singleShot(0, this, SLOT(posMon()));
     }
 
 

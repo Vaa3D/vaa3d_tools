@@ -41,6 +41,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     pickTargetsPB = new QPushButton(tr("pick smartScan starting points"));
 
     myNotes = new NoteTaker;
+    myEventLogger  = new EventLogger();
 
 
     rhTabs = new QTabWidget();
@@ -107,6 +108,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     startSmartScanPB->resize(50,40);
+
 }
 
 void S2UI::hookUpSignalsAndSlots(){
@@ -177,6 +179,11 @@ void S2UI::hookUpSignalsAndSlots(){
 
     // communication with targetList:
     connect(this,SIGNAL(updateTable(LandmarkList,QList<LandmarkList>)),&myTargetTable, SLOT(updateTargetTable(LandmarkList,QList<LandmarkList>)));
+
+    // communicate with eventLogger:
+
+    connect(this,SIGNAL(eventSignal(QString)), myEventLogger, SLOT(logEvent(QString)));
+
 }
 
 
@@ -315,6 +322,7 @@ QGroupBox *S2UI::createTracingParameters(){
 
 
     runContinuousCB = new QCheckBox;
+    runContinuousCB->setChecked(true);
     QLabel* runContinuousCBLable = new QLabel(tr("&continuous imaging"));
     runContinuousCBLable->setBuddy(runContinuousCB);
 
@@ -431,25 +439,7 @@ void S2UI::loadScan(){
     QTimer::singleShot(0, this, SLOT(loadLatest()));
 }
 
-void S2UI::loadLatest(){
-    if (smartScanStatus ==1){
-        LandmarkList seedList;
-        qDebug()<<"loadlatest smartscan";
-        qDebug()<<"tipList length "<<tipList.length()<<" scannumber "<<scanNumber;
-        if (!tipList.isEmpty()){
 
-            seedList = tipList.at(scanNumber);
-            qDebug()<<"seedList length "<<seedList.length();
-        }
-        LocationSimple tileLocation;
-        tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(scanNumber).y;
-        bool isSoma = scanNumber==0;
-        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
-    }else{
-        loadScanFromFile(getFileString());
-    }
-}
 void S2UI::toLoad(){
     loadScanFromFile(s2LineEdit->text());
 }
@@ -459,9 +449,9 @@ void S2UI::loadForSA(){
     LocationSimple tileLocation;
 
     if (smartScanStatus == 1){
-        seedList = tipList.at(scanNumber);
-        tileLocation.x = scanList.value(scanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(scanNumber).y;
+        seedList = tipList.at(loadScanNumber);
+        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(loadScanNumber).y;
     }else{
         tileLocation.x = 0;
         tileLocation.y = 0;
@@ -773,9 +763,15 @@ void S2UI::startAllTargets(){
         smartScanStatus = 0;
         startSmartScanPB->setText("smartScan");
         allROILocations->clear();
+        scanList.clear();
+        allTipsList->clear();
+        tipList.clear();
         saveTextFile.close();
+        emit eventSignal("finishedMultiTarget");
         return;
     }else{
+        emit eventSignal("startMultiTarget");
+
         runAllTargetsPB->setText("cancel All Targets");
         targetIndex = -1;
         allTargetStatus = 1;// running alltargetscan
@@ -792,7 +788,10 @@ void S2UI::handleAllTargets(){
         allTargetStatus = 0;
         startSmartScanPB->setText("smartScan");
         allROILocations->clear();
+        allTipsList->clear();
         saveTextFile.close();
+        emit eventSignal("finishedMultiTarget");
+
         return;
     }
     status("starting all targets");
@@ -806,10 +805,13 @@ void S2UI::startingSmartScan(){
         waitingForLast = false;
         startSmartScanPB->setText("smartScan");
         allROILocations->clear();
+        allTipsList->clear();
         saveTextFile.close();
+        emit eventSignal("finishedSmartScan");
+
         return;
     }
-
+    emit eventSignal("startSmartScan");
     smartScanStatus = 1;
     waitingForLast = false;
     QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
@@ -829,7 +831,9 @@ void S2UI::startingSmartScan(){
     startSmartScanPB->setText("cancel smartScan");
     if (allROILocations->isEmpty()){
         scanList.clear();
+        tipList.clear();
         scanNumber = 0;
+        loadScanNumber = 0;
         status("starting smartScan...");
         LocationSimple startLocation ;
         if (allTargetStatus ==0){
@@ -863,6 +867,7 @@ void S2UI::startingSmartScan(){
 
 void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip){
 
+    emit eventSignal("finishedAnalysis");
 
     qDebug()<<"back in S2UI with new locations";
 
@@ -906,6 +911,7 @@ void S2UI::smartScanHandler(){
     if (smartScanStatus!=1){
         status("smartScan aborted");
         scanNumber = 0;
+        loadScanNumber = 0;
         saveTextFile.close();
         emit processSmartScanSig(scanDataFileString);
         if (allTargetStatus ==1){
@@ -918,6 +924,8 @@ void S2UI::smartScanHandler(){
         saveTextFile.close();
         smartScanStatus = 0;
         emit processSmartScanSig(scanDataFileString);
+        emit eventSignal("finishedSmartScan");
+
         if ((allTargetStatus ==1)&&(targetIndex<allTargetLocations.length())){
             QTimer::singleShot(0, this, SLOT(handleAllTargets()));
             return;
@@ -962,6 +970,7 @@ void S2UI::smartScanHandler(){
                 allScanLocations.append(starterList);
             }
             emit updateTable(allTargetLocations,allScanLocations);
+            emit eventSignal("startZStack");
             QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
             // how to make this more eventdriven. maybe  wait for move to finish.
             status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
@@ -1004,7 +1013,7 @@ void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
 
         emit updateTable(allTargetLocations,allScanLocations);
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
-
+        emit eventSignal("startZStack");
         QTimer::singleShot(100, &myController, SLOT(startZStack()));
 
     }
@@ -1051,6 +1060,31 @@ void S2UI::combinedSmartScan(QString saveFilename){
     new_treeList->push_back(resultTree);
     cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
     cb->update_NeuronBoundingBox(new3DWindow);
+}
+
+
+
+
+void S2UI::loadLatest(){
+    if (smartScanStatus ==1){
+        LandmarkList seedList;
+        qDebug()<<"loadlatest smartscan";
+        qDebug()<<"tipList length "<<tipList.length()<<" loadScanNumber "<<loadScanNumber;
+        if (!tipList.isEmpty()){
+
+            seedList = tipList.at(loadScanNumber);
+            qDebug()<<"seedList length "<<seedList.length();
+        }
+        LocationSimple tileLocation;
+        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(loadScanNumber).y;
+        bool isSoma = scanNumber==0;
+        emit eventSignal("startAnalysis");
+        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
+        loadScanNumber++;
+    }else{
+        loadScanFromFile(getFileString());
+    }
 }
 
 // ------------------------------------
@@ -1106,7 +1140,7 @@ void S2UI::startingZStack(){
 
         sequenceNumberText = new QGraphicsTextItem;
         sequenceNumberText->setPos(leftEdge+10,topEdge);
-        sequenceNumberText->setPlainText(QString::number(scanNumber));
+        sequenceNumberText->setPlainText(QString::number(loadScanNumber));
         roiGS->addItem(sequenceNumberText);
     }
 
@@ -1124,6 +1158,7 @@ void S2UI::updateFileString(QString inputString){
     }
     fileString.append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile>0)){
+        emit eventSignal("finishedZStack");
         waitingForFile = 0;
         QTimer::singleShot(0, this, SLOT(loadScan()));
 
@@ -1247,21 +1282,26 @@ void S2UI::pickTargets(){
 
 
 
-void S2UI::loadMIP(int imageIndex, Image4DSimple* mip){
+void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
+    scaleintensity(mip,0,0,8000,double(0),double(255));
+    scale_img_and_convert28bit(mip, 0, 255) ;
     QImage myMIP;
     int x = mip->getXDim();
     int y = mip->getYDim();
-    unsigned short int * total1dData_mip= new unsigned short int [x*y];
-    total1dData_mip = mip->getRawData();
         V3DLONG total  =0;
     myMIP = QImage(x, y, QImage::Format_RGB16);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
-            myMIP.setPixel(i,j,total1dData_mip[total]);
+          myMIP.setPixel(i,j,mip->getIntensityUnit8(i,j,0,0));
                     total++;
         }
     }
     QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
+    float xPix = scanList.value(imageNumber).x;// this is in pixels, using the expected origin
+    float yPix  = scanList.value(imageNumber).y;
+mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
+    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+                     (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
             roiGS->addItem(mipPixmap);
 }
 

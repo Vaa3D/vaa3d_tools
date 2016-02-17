@@ -17,6 +17,8 @@
 #include "stackAnalyzer.h"
 #include "noteTaker.h"
 #include "targetList.h"
+#include "eventLogger.h"
+
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -38,6 +40,7 @@ public:
     QLineEdit *s2LineEdit;
 
     StackAnalyzer *myStackAnalyzer;
+    EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
     void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip);
@@ -55,6 +58,7 @@ signals:
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
     void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
+    void eventSignal(QString);
 private slots:
     void startS2();
     void startScan();
@@ -86,7 +90,7 @@ private slots:
     void pickTargets();
     void startAllTargets();
     void handleAllTargets();
-    void loadMIP(int imageIndex, Image4DSimple* mip);
+    void loadMIP(int imageNumber, Image4DSimple* mip);
 private:
     V3DPluginCallback2 * cb;
 
@@ -190,6 +194,7 @@ private:
 	bool isLocal;
     int smartScanStatus;
     double scanNumber;
+    double loadScanNumber;
     int resultNumber;
     int allTargetStatus;
     float overViewPixelToScanPixel;

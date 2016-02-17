@@ -32,7 +32,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
-      //  v3dhandle newwin = cb->newImageWindow();
+        //  v3dhandle newwin = cb->newImageWindow();
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
@@ -225,12 +225,44 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         else
         {
 
+
+
+
+            // eliminate markers within some  pixels of any other marker
+            //  well... this does that- getting rid of all markers in clusters!
+            // I need some kind of mean-shift on the guys within a certain radius or keep track of
+            // each cluster separately.
+            LandmarkList betterRootList;
+            for (int i=0;i<inputRootList.length();i++){
+                float minr2 = 10;
+                int timesThrough =0;
+                int notej = -1;
+                for (int j =0; j<inputRootList.length(); j++){
+
+                    float r2ij = (inputRootList.at(i).x - inputRootList.at(j).x)*(inputRootList.at(i).x - inputRootList.at(j).x) +
+                            (inputRootList.at(i).y - inputRootList.at(j).y)* (inputRootList.at(i).y - inputRootList.at(j).y)+
+                            (inputRootList.at(i).z - inputRootList.at(j).z)*(inputRootList.at(i).z - inputRootList.at(j).z);
+                    if ((r2ij<minr2 )&&(i!=j)) {
+                        minr2=r2ij;
+                        qDebug()<<r2ij;
+
+                    }
+
+                }
+                if (minr2==10){
+                    betterRootList.append(inputRootList.at(i));
+                }
+            }
+            inputRootList.clear();
+            inputRootList = betterRootList;
+
+
             vector<MyMarker*> tileswc_file;
             int maxRootListSize;// kludge here to make it through debugging. need some more filters on the swc outputs and marker inputs
-//            if (inputRootList.size()>16){
-//                maxRootListSize = 16;
-//            }else{
-                maxRootListSize = inputRootList.size();
+            //            if (inputRootList.size()>16){
+            //                maxRootListSize = 16;
+            //            }else{
+            maxRootListSize = inputRootList.size();
 
             QList<ImageMarker> seedsToSave;
             for (int i = 0; i<maxRootListSize; i++){
@@ -240,9 +272,9 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
                 RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
                 imageLandmarks.append(RootNewLocation);
-                outputMarker.x = inputRootList.at(i).x ;
-                outputMarker.y = inputRootList.at(i).y ;
-                outputMarker.z = inputRootList.at(i).z ;
+                outputMarker.x = inputRootList.at(i).x  - p.p4dImage->getOriginX();
+                outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
+                outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
                 seedsToSave.append(outputMarker);
 
             }
@@ -380,19 +412,19 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
         saveTextFile.close();
-    //    cb->setImage(newwin, total4DImage);
+        //    cb->setImage(newwin, total4DImage);
         //cb->open3DWindow(newwin);
-    //    cb->setSWC(newwin,nt);
+        //    cb->setSWC(newwin,nt);
 
         if (!imageLandmarks.isEmpty()){
-    //        cb->setLandmark(newwin,imageLandmarks);
-    //        cb->pushObjectIn3DWindow(newwin);
+            //        cb->setLandmark(newwin,imageLandmarks);
+            //        cb->pushObjectIn3DWindow(newwin);
             qDebug()<<"set landmark group";
 
         }
 
-     //   cb->pushObjectIn3DWindow(newwin);
-    //    cb->updateImageWindow(newwin);
+        //   cb->pushObjectIn3DWindow(newwin);
+        //    cb->updateImageWindow(newwin);
 
         QList<ImageMarker> tipsToSave;
         QString markerSaveString2;

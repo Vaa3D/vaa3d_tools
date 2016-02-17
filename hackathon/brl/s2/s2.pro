@@ -16,7 +16,8 @@ HEADERS  = s2_plugin.h \
     s2plot.h \
     stackAnalyzer.h \
     noteTaker.h \
-    targetList.h
+    targetList.h \
+    eventLogger.h
 HEADERS += s2UI.h
 HEADERS += s2Controller.h
 HEADERS += $$VAA3D_DIR/v3d_main/basic_c_fun/customary_structs/vaa3d_neurontoolbox_para.h
@@ -36,7 +37,8 @@ SOURCES = s2_plugin.cpp \
     s2plot.cpp \
     stackAnalyzer.cpp \
     noteTaker.cpp \
-    targetList.cpp
+    targetList.cpp \
+    eventLogger.cpp
 SOURCES += s2UI.cpp
 SOURCES += s2Controller.cpp
 SOURCES += $$VAA3D_DIR/v3d_main/basic_c_fun/basic_surf_objs.cpp
