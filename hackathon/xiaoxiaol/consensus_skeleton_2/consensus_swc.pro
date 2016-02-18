@@ -16,6 +16,7 @@ HEADERS	+= kcentroid_cluster.h
 HEADERS	+= mst_dij.h
 HEADERS += mst_prim.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
 HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp \
     point3d_util.cpp \

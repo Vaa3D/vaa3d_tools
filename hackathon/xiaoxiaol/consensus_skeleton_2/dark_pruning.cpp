@@ -11,7 +11,7 @@
 #endif
 
 
-double get_nearestneighbor_ave_int(Image4DSimple * image, V3DLONG x, V3DLONG y, V3DLONG z){
+double get_nearestneighbor_ave_int(Image4DSimple* image, V3DLONG x, V3DLONG y, V3DLONG z){
     double val = 0;
     V3DLONG x_start = MAX(0,x-1);
     V3DLONG x_end = MIN(x+1, image->getXDim()-1);
@@ -24,7 +24,7 @@ double get_nearestneighbor_ave_int(Image4DSimple * image, V3DLONG x, V3DLONG y, 
         for (V3DLONG j = y_start; j <= y_end; j++)
             for (V3DLONG k = z_start; k <= z_end; k++)
             {
-              val += int(image->getIntensityUnit8(i,j,k,0));
+              val += int(image->getValueUINT8(i,j,k,0));
             }
     return val/27;
 };
@@ -33,6 +33,8 @@ double get_nearestneighbor_ave_int(Image4DSimple * image, V3DLONG x, V3DLONG y, 
 //prune leave nodes iteratively, according to the image intensity value (< threshold are going to be removed)
 bool dark_pruning(NeuronTree input_tree,  QList<NeuronSWC> &output_tree, Image4DSimple * image, int visible_threshold)
 {
+    //scale to 0-255 range
+    image->convert_to_UINT8();
 
     //input tree are sorted
     V3DLONG num_nodes = input_tree.listNeuron.size();
@@ -52,6 +54,7 @@ bool dark_pruning(NeuronTree input_tree,  QList<NeuronSWC> &output_tree, Image4D
         V3DLONG  p = input_tree.hashNeuron[parent];
         num_children[p]++;
     }
+
 
     // tag for prune
     int count = 0;

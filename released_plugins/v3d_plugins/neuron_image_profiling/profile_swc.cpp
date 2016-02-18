@@ -222,6 +222,10 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     Image4DSimple * image = callback.getImage(curwin);
+    if (! image->convert_to_UINT8()){
+        QMessageBox::information(0, "", "Error in converting data into  UINT8 type.");
+        return false;
+    }
 
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 	if (!openDlg->exec())
@@ -339,6 +343,11 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     }
 
     Image4DSimple *image = callback.loadImage((char * )imageFileName.toStdString().c_str());
+
+    if (! image->convert_to_UINT8()){
+        cout<< "Error in converting data into  UINT8 type."<<endl;
+        return false;
+    }
 
     QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert, callback);
     IMAGE_METRICS m_stats = result_metrics[0];
