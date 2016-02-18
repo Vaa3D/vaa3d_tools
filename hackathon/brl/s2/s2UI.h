@@ -52,6 +52,7 @@ signals:
     void startPM();
     void stopPM();
     void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
 	void noteStatus(QString);
@@ -91,6 +92,7 @@ private slots:
     void startAllTargets();
     void handleAllTargets();
     void loadMIP(int imageNumber, Image4DSimple* mip);
+    void loadingDone();
 private:
     V3DPluginCallback2 * cb;
 
@@ -131,6 +133,8 @@ private:
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;
     QCheckBox *runContinuousCB;
+    QCheckBox *gridScanCB;
+    QSpinBox *gridSizeSB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
@@ -193,6 +197,7 @@ private:
     bool waitingForOverview;
 	bool isLocal;
     int smartScanStatus;
+    int gridScanStatus;
     double scanNumber;
     double loadScanNumber;
     int resultNumber;

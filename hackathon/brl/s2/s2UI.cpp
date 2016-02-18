@@ -100,6 +100,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     waitingForFile = 0;
     isLocal = false;
     smartScanStatus = 0;
+    gridScanStatus = 0;
     allTargetStatus = 0;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
@@ -167,10 +168,11 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
     connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+    connect(this, SIGNAL(callSAGridLoad(QString,LocationSimple,QString)), myStackAnalyzer,SLOT(loadGridScan(QString,LocationSimple,QString)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
-
+    connect(myStackAnalyzer,SIGNAL(loadingDone()),this,SLOT(loadingDone()));
 
 
     //communicate with NoteTaker:
@@ -323,8 +325,22 @@ QGroupBox *S2UI::createTracingParameters(){
 
     runContinuousCB = new QCheckBox;
     runContinuousCB->setChecked(true);
-    QLabel* runContinuousCBLable = new QLabel(tr("&continuous imaging"));
-    runContinuousCBLable->setBuddy(runContinuousCB);
+    QLabel* runContinuousCBLabel = new QLabel(tr("&continuous imaging"));
+    runContinuousCBLabel->setBuddy(runContinuousCB);
+
+
+    gridScanCB = new QCheckBox;
+    gridScanCB->setChecked(false);
+    QLabel * gridScanCBLabel = new QLabel(tr("&Grid Scan"));
+    gridScanCBLabel->setBuddy(gridScanCB);
+
+
+    QLabel * gridSizeSBLabel = new QLabel(tr("Grid Size"));
+    gridSizeSB = new QSpinBox;
+    gridSizeSB->setMinimum(3);
+    gridSizeSB->setMaximum(7);
+    gridSizeSB->setSingleStep(2);
+    gridSizeSBLabel->setBuddy(gridSizeSB);
 
 
     labelInterrupt->setBuddy(interruptCB);
@@ -351,8 +367,13 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(interruptCB, 5,1);
     tPL->addWidget(labelGSDT,6,0);
     tPL->addWidget(useGSDTCB,6,1);
-    tPL->addWidget(runContinuousCBLable,7,0);
+    tPL->addWidget(runContinuousCBLabel,7,0);
     tPL->addWidget(runContinuousCB,7,1);
+
+    tPL->addWidget(gridScanCBLabel,8,0);
+    tPL->addWidget(gridScanCB,8,1);
+    tPL->addWidget(gridSizeSBLabel,9,0);
+    tPL->addWidget(gridSizeSB,9,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -512,120 +533,43 @@ void S2UI::loadScanFromFile(QString fileString){
         total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
 
 
-        //        status(QString("loaded file ").append(imageFileInfo.fileName()));
-        //        status(QString("total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-        //        cb->setImage(newwin, total4DImage);
-        //        cb->open3DWindow(newwin);
+        Image4DSimple* total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
 
-        if (smartScanStatus ==1){
+        LocationSimple tileLocation;
+        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(loadScanNumber).y;
 
-
-            status(QString("loaded file ").append(imageFileInfo.fileName()));
-
-            total4DImage->setOriginX(scanList.value(scanNumber).x);// this is in pixels, using the expected origin
-            total4DImage->setOriginY(scanList.value(scanNumber).y);
-
-            if (total4DImage->valid()){
-                QString swcString = saveDir.absolutePath().append("/").append(QString::number(scanNumber)).append("test.swc");
-
-                V3DLONG mysz[4];
-                mysz[0] = total4DImage->getXDim();
-                mysz[1] = total4DImage->getYDim();
-                mysz[2] = total4DImage->getZDim();
-                mysz[3] = total4DImage->getCDim();
-                QString imageSaveString = swcString;
-                simple_saveimage_wrapper(*cb, imageSaveString.append(".v3draw").toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
-                outputStream<<scanList.value(scanNumber).x<<" "<<scanList.value(scanNumber).y<<" "<<swcString<<"\n";
-                PARA_APP2 p;
-                p.is_gsdt = false;
-                p.is_coverage_prune = true;
-                p.is_break_accept = false;
-                p.bkg_thresh = this->findChild<QSpinBox*>("bkgSpinBox")->value();
-                p.length_thresh = 5;
-                p.cnn_type = 2;
-                p.channel = 0;
-                p.SR_ratio = 3.0/9.9;
-                p.b_256cube = 1;
-                p.b_RadiusFrom2D = true;
-                p.b_resample = 1;
-                p.b_intensity = 0;
-                p.b_brightfiled = 0;
-                p.outswc_file =swcString.toLatin1().data();
+        QString swcString = saveDir.absolutePath();
+        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
 
 
-                p.p4dImage = total4DImage;
-                p.xc0 = p.yc0 = p.zc0 = 0;
-                p.xc1 = p.p4dImage->getXDim()-1;
-                p.yc1 = p.p4dImage->getYDim()-1;
-                p.zc1 = p.p4dImage->getZDim()-1;
-
-                QString versionStr = "v2.621";
-                proc_app2(*cb, p, versionStr);
-
-                nt = readSWC_file(p.outswc_file);
-                V3DLONG neuronNum = nt.listNeuron.size();
-                bool scan_left = false, scan_right = false, scan_up = false, scan_down = false;
-                for (V3DLONG i=0;i<neuronNum;i++)
-                {
-                    V3DLONG node_x = nt.listNeuron[i].x;
-                    V3DLONG node_y = nt.listNeuron[i].y;
-                    V3DLONG node_z = nt.listNeuron[i].z;
-
-                    LocationSimple newTarget;
-                    if(node_x <= 0.05*p.p4dImage->getXDim() && !scan_left)
-                    {
-                        newTarget.x = -p.p4dImage->getXDim();
-                        newTarget.y = 0;
-                        newTarget.z = node_z;
-
-                        scan_left = true;
-                        newTargetList.push_back(newTarget);
-                    }
-                    if(node_x >= 0.95*p.p4dImage->getXDim() && !scan_right)
-                    {
-                        newTarget.x = p.p4dImage->getXDim();
-                        newTarget.y = 0;
-                        newTarget.z = node_z;
-                        scan_right = true;
-                        newTargetList.push_back(newTarget);
-                    }
-                    if(node_y <= 0.05*p.p4dImage->getYDim() && !scan_up)
-                    {
-                        newTarget.x = 0;
-                        newTarget.y = -p.p4dImage->getYDim();
-                        newTarget.z = node_z;
-                        scan_up = true;
-                        newTargetList.push_back(newTarget);
-                    }
-                    if(node_y >= 0.95*p.p4dImage->getYDim() && !scan_down)
-                    {
-                        newTarget.x = 0;
-                        newTarget.y = p.p4dImage->getYDim();
-                        newTarget.z = node_z;
-                        scan_down = true;
-                        newTargetList.push_back(newTarget);
-                    }
-                }
-                if (!newTargetList.empty()){
-                    for (int i = 0; i<newTargetList.length(); i++){
-                        newTargetList[i].x = (1.0-overlap)*newTargetList[i].x+p.p4dImage->getOriginX();
-                        newTargetList[i].y=(1.0-overlap)*newTargetList[i].y+p.p4dImage->getOriginY();
-                        newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
-                    }
-                }
-                QList<LandmarkList> newTipsList;
-
-                handleNewLocation(newTipsList,newTargetList, total4DImage);
-
-            }
+        QFile saveTextFile;
+        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
 
 
-        }else{// not in smartscan mode
-            status(QString("not in smartScan mode: loaded file ").append(imageFileInfo.fileName()));
-            //            status(QString("not in smartScan mode: total4DImage is valid: ").append(QString::number(total4DImage->valid())));
-            //            cb->setImage(newwin, total4DImage);
-            //            cb->open3DWindow(newwin);
-        }
+        total4DImage->setOriginX(tileLocation.x);
+        total4DImage->setOriginY(tileLocation.y);
+        qDebug()<<total4DImage->getOriginX();
+
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+
+        V3DLONG mysz[4];
+        mysz[0] = total4DImage->getXDim();
+        mysz[1] = total4DImage->getYDim();
+        mysz[2] = total4DImage->getZDim();
+        mysz[3] = total4DImage->getCDim();
+        QString imageSaveString = saveDir.absolutePath();
+
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+
 
 
         if (waitingForOverview){windowString = "s2 Preview Image";
@@ -640,8 +584,8 @@ void S2UI::loadScanFromFile(QString fileString){
             v3dhandle newwin = cb->newImageWindow();
             cb->setImageName(newwin,windowString);
             cb->setImage(newwin, total4DImage);
-            cb->open3DWindow(newwin);
             if (smartScanStatus==1){
+                cb->open3DWindow(newwin);
                 cb->setSWC(newwin,nt);
                 cb->setLandmark(newwin,newTargetList);
                 cb->pushObjectIn3DWindow(newwin);}
@@ -799,6 +743,75 @@ void S2UI::handleAllTargets(){
 
 
 void S2UI::startingSmartScan(){
+
+    if (gridScanCB->isChecked()){
+        gridScanStatus = 1;
+
+        emit eventSignal("startGridScan");
+        waitingForLast = false;
+        QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
+        sessionDir.mkdir(timeString);
+        saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
+
+        scanDataFileString = saveDir.absolutePath().append("/").append("scanDataGrid.txt");
+        status(scanDataFileString);
+        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+                qDebug()<<"couldnt open file"<<scanDataFileString;
+                return;}     }
+
+        outputStream.setDevice(&saveTextFile);
+        if (allROILocations->isEmpty()){
+            scanList.clear();
+            scanNumber = 0;
+            loadScanNumber = 0;
+            status("starting smartScan...");
+            LocationSimple startLocation ;
+            if (allTargetStatus ==0){
+                startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
+                        uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
+                        0);
+
+            }else{
+                startLocation = allTargetLocations[targetIndex];
+            }
+
+
+
+
+            startLocation.mass = 0;
+            startLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+            startLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+            float tileSize = uiS2ParameterMap[11].getCurrentValue();
+            int minGrid = -(gridSizeSB->value()-1)/2;
+            int maxGrid = -minGrid+1;
+            for (int i=minGrid; i<maxGrid;i++){
+                for (int j=minGrid; j<maxGrid;j++){
+                    LocationSimple gridLoc;
+                    gridLoc.x = startLocation.x+ ((float)i * (1.0-overlap))* tileSize;
+                    gridLoc.y = startLocation.y+ ((float)j * (1.0-overlap))* tileSize;
+                    gridLoc.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+                    gridLoc.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+                    qDebug()<<"grid x = "<< gridLoc.x<<" grid y = "<<gridLoc.y;
+                    allROILocations->append(gridLoc);
+
+                }
+            }
+
+
+            //allScanLocations.append(allROILocations);
+            if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
+
+            if (runContinuousCB->isChecked()){
+                qDebug()<<"allROILocations length "<<allROILocations->length();
+                s2ROIMonitor();
+            }else{        qDebug()<<"headed to smartscanHandler";
+                QTimer::singleShot(10,this, SLOT(smartScanHandler()));}
+        }
+        return;
+    }
+
     qDebug()<<"starting smartscan";
     if (smartScanStatus==1){
         smartScanStatus=0;
@@ -811,6 +824,8 @@ void S2UI::startingSmartScan(){
 
         return;
     }
+
+
     emit eventSignal("startSmartScan");
     smartScanStatus = 1;
     waitingForLast = false;
@@ -1017,9 +1032,9 @@ void S2UI::s2ROIMonitor(){ // this is continuous acquisition mode
         QTimer::singleShot(100, &myController, SLOT(startZStack()));
 
     }
+    if ((gridScanStatus ==1) && (allROILocations->length() == 0)){gridScanStatus = -1; return;}
 
-
-    if ((smartScanStatus ==1)&&(runContinuousCB->isChecked())) {
+    if (((smartScanStatus ==1)&&(runContinuousCB->isChecked()))||(gridScanStatus==1)) {
         QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
     }
 }
@@ -1066,7 +1081,7 @@ void S2UI::combinedSmartScan(QString saveFilename){
 
 
 void S2UI::loadLatest(){
-    if (smartScanStatus ==1){
+    if ((smartScanStatus ==1)||(gridScanStatus!=0)){
         LandmarkList seedList;
         qDebug()<<"loadlatest smartscan";
         qDebug()<<"tipList length "<<tipList.length()<<" loadScanNumber "<<loadScanNumber;
@@ -1079,12 +1094,35 @@ void S2UI::loadLatest(){
         tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(loadScanNumber).y;
         bool isSoma = scanNumber==0;
-        emit eventSignal("startAnalysis");
-        emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
+        if (gridScanStatus!=0){
+            emit eventSignal("startGridLoad");
+
+            emit  callSAGridLoad(getFileString(),   tileLocation, saveDir.absolutePath() );
+
+        }else{
+            emit eventSignal("startAnalysis");
+
+            emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
+        }
+
         loadScanNumber++;
     }else{
         loadScanFromFile(getFileString());
     }
+}
+
+
+void S2UI::loadingDone(){
+    emit eventSignal("finishedGridLoad");
+    if ((gridScanStatus ==-1)&&(waitingForFile<1)){
+        emit eventSignal("finishedGridScan");
+        gridScanStatus = 0;
+        emit processSmartScanSig(scanDataFileString);
+        QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+
+
+    }
+
 }
 
 // ------------------------------------
@@ -1288,21 +1326,21 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     QImage myMIP;
     int x = mip->getXDim();
     int y = mip->getYDim();
-        V3DLONG total  =0;
+    V3DLONG total  =0;
     myMIP = QImage(x, y, QImage::Format_RGB16);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
-          myMIP.setPixel(i,j,mip->getIntensityUnit8(i,j,0,0));
-                    total++;
+            myMIP.setPixel(i,j,mip->getIntensityUnit8(i,j,0,0));
+            total++;
         }
     }
     QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
     float xPix = scanList.value(imageNumber).x;// this is in pixels, using the expected origin
     float yPix  = scanList.value(imageNumber).y;
-mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
+    mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
     mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-                     (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
-            roiGS->addItem(mipPixmap);
+            (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
+    roiGS->addItem(mipPixmap);
 }
 
 

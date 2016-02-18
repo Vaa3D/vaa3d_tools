@@ -195,7 +195,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         p.is_coverage_prune = true;
         p.is_break_accept = false;
         p.bkg_thresh = background;
-        p.length_thresh = 10;
+        p.length_thresh = 20;
         p.cnn_type = 2;
         p.channel = 0;
         p.SR_ratio = 3.0/9.9;
@@ -232,29 +232,29 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             //  well... this does that- getting rid of all markers in clusters!
             // I need some kind of mean-shift on the guys within a certain radius or keep track of
             // each cluster separately.
-            LandmarkList betterRootList;
-            for (int i=0;i<inputRootList.length();i++){
-                float minr2 = 10;
-                int timesThrough =0;
-                int notej = -1;
-                for (int j =0; j<inputRootList.length(); j++){
+            //            LandmarkList betterRootList;
+            //            for (int i=0;i<inputRootList.length();i++){
+            //                float minr2 = 10;
+            //                int timesThrough =0;
+            //                int notej = -1;
+            //                for (int j =0; j<inputRootList.length(); j++){
 
-                    float r2ij = (inputRootList.at(i).x - inputRootList.at(j).x)*(inputRootList.at(i).x - inputRootList.at(j).x) +
-                            (inputRootList.at(i).y - inputRootList.at(j).y)* (inputRootList.at(i).y - inputRootList.at(j).y)+
-                            (inputRootList.at(i).z - inputRootList.at(j).z)*(inputRootList.at(i).z - inputRootList.at(j).z);
-                    if ((r2ij<minr2 )&&(i!=j)) {
-                        minr2=r2ij;
-                        qDebug()<<r2ij;
+            //                    float r2ij = (inputRootList.at(i).x - inputRootList.at(j).x)*(inputRootList.at(i).x - inputRootList.at(j).x) +
+            //                            (inputRootList.at(i).y - inputRootList.at(j).y)* (inputRootList.at(i).y - inputRootList.at(j).y)+
+            //                            (inputRootList.at(i).z - inputRootList.at(j).z)*(inputRootList.at(i).z - inputRootList.at(j).z);
+            //                    if ((r2ij<minr2 )&&(i!=j)) {
+            //                        minr2=r2ij;
+            //                        qDebug()<<r2ij;
 
-                    }
+            //                    }
 
-                }
-                if (minr2==10){
-                    betterRootList.append(inputRootList.at(i));
-                }
-            }
-            inputRootList.clear();
-            inputRootList = betterRootList;
+            //                }
+            //                if (minr2==10){
+            //                    betterRootList.append(inputRootList.at(i));
+            //                }
+            //            }
+            //            inputRootList.clear();
+            //            inputRootList = betterRootList;
 
 
             vector<MyMarker*> tileswc_file;
@@ -451,8 +451,91 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 }
 
 
+void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
+    QFileInfo imageFileInfo = QFileInfo(latestString);
+    QString windowString = latestString;
+
+    if (imageFileInfo.isReadable()){
 
 
+        Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
+        QDir imageDir =  imageFileInfo.dir();
+        QStringList filterList;
+        filterList.append(QString("*Ch2*.tif"));
+        imageDir.setNameFilters(filterList);
+        QStringList fileList = imageDir.entryList();
+
+        //get the parent dir and the list of ch1....ome.tif files
+        //use this to id the number of images in the stack (in one channel?!)
+        V3DLONG x = pNewImage->getXDim();
+        V3DLONG y = pNewImage->getYDim();
+        V3DLONG nFrames = fileList.length();
+
+        V3DLONG tunits = x*y*nFrames;
+        unsigned short int * total1dData = new unsigned short int [tunits];
+        V3DLONG totalImageIndex = 0;
+        for (int f=0; f<nFrames; f++){
+            //status(fileList[f]);
+            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+            if (pNewImage->valid()){
+                unsigned short int * data1d = 0;
+                data1d = new unsigned short int [x*y];
+                data1d = (unsigned short int*)pNewImage->getRawData();
+                for (V3DLONG i = 0; i< (x*y); i++){
+                    total1dData[totalImageIndex]= data1d[i];
+                    totalImageIndex++;
+                }
+            }else{
+                qDebug()<<QString(imageDir.absoluteFilePath(fileList[f])).append(" failed!");
+            }
+
+        }
+
+
+        Image4DSimple* total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+        total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
+
+
+
+        QString swcString = saveDirString;
+        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
+
+        QString scanDataFileString = saveDirString;
+        scanDataFileString.append("/").append("scanDataGrid.txt");
+        QFile saveTextFile;
+        saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
+
+
+        total4DImage->setOriginX(tileLocation.x);
+        total4DImage->setOriginY(tileLocation.y);
+        qDebug()<<total4DImage->getOriginX();
+
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+
+        V3DLONG mysz[4];
+        mysz[0] = total4DImage->getXDim();
+        mysz[1] = total4DImage->getYDim();
+        mysz[2] = total4DImage->getZDim();
+        mysz[3] = total4DImage->getCDim();
+        QString imageSaveString = saveDirString;
+
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.baseName()).append(".ome.tif.v3draw");
+        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+
+        emit loadingDone();
+
+
+    }else{  //initial string is not readable
+        qDebug()<<QString("invalid image path: ").append(latestString);
+    }
+}
 
 void StackAnalyzer::processStack(Image4DSimple InputImage){
 
@@ -462,7 +545,11 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     // zhi add code to generate combined reconstruction from .txt file
     // at location filewith data
     qDebug()<<"caught filename "<<fileWithData;
+    bool gridMode = false;
+    if (fileWithData.contains("Grid")){ gridMode = true;}
+    qDebug()<<gridMode;
     // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
+
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
@@ -485,30 +572,39 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
             origin_x = offsetX;
             origin_y = offsetY;
         }
-
-        vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
-        for(V3DLONG d = 0; d < inputswc.size(); d++)
-        {
-            inputswc[d]->x = inputswc[d]->x + offsetX;
-            inputswc[d]->y = inputswc[d]->y + offsetY;
-            inputswc[d]->type = node_type;
-            outswc.push_back(inputswc[d]);
-        }
-        node_type++;
+        if (!gridMode){
+            vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->x = inputswc[d]->x + offsetX;
+                inputswc[d]->y = inputswc[d]->y + offsetY;
+                inputswc[d]->type = node_type;
+                outswc.push_back(inputswc[d]);
+            }
+            }node_type++;
     }
     ifs.close();
-    for(V3DLONG i = 0; i < outswc.size(); i++)
-    {
-        outswc[i]->x = outswc[i]->x - offsetX_min;
-        outswc[i]->y = outswc[i]->y - offsetY_min;
-    }
+
 
     QString fileSaveName = fileWithData + ".swc";
-    saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
 
+    if (gridMode){
+
+    }else{
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            outswc[i]->x = outswc[i]->x - offsetX_min;
+            outswc[i]->y = outswc[i]->y - offsetY_min;
+        }
+
+        saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+    }
     //write tc file
     QString folderpath = QFileInfo(fileWithData).absolutePath();
-    QString lastImagepath = folderpath + "/" + QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+    QString swcfilepath2 = QString::fromStdString(swcfilepath);
+
+    QString lastImagepath = folderpath + "/" +   QFileInfo(swcfilepath2).baseName().append(".ome.tif.v3draw");
+    qDebug()<<lastImagepath;
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     int datatype;
