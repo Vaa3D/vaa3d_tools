@@ -47,6 +47,7 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
 
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
+    tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
     QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
@@ -78,6 +79,8 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
         }
     }
 
+    processSmartScan(callback, P,tmpfolder +"/scanData.txt");
+
     return true;
 }
 
@@ -87,7 +90,22 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
     QString imageSaveString = saveDirString;
 
-    imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append(".v3draw");
+    V3DLONG start_x,start_y,end_x,end_y;
+    start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
+    start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
+
+    end_x = tileLocation.x+P.block_size;
+    end_y = tileLocation.y+P.block_size;
+    if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
+    if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+
+    if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
+    {
+        printf("hit the boundary");
+        return true;
+    }
+
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
 
     ifstream ifs_image(imageSaveString.toStdString().c_str());
     if(ifs_image)
@@ -100,19 +118,8 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     V3DLONG *in_zz = 0;
     V3DLONG *in_sz = 0;
 
-    if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1)
-    {
-        printf("hit the boundary");
-        return true;
-    }
-    V3DLONG end_x,end_y;
-    end_x = tileLocation.x+P.block_size;
-    end_y = tileLocation.y+P.block_size;
-    if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
-    if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
-
     int datatype;
-    if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,tileLocation.x,tileLocation.y,tileLocation.z,
+    if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
                        end_x,end_y,tileLocation.z + P.in_sz[2]))
     {
         printf("can not load the region");
@@ -122,8 +129,8 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
 
     Image4DSimple* total4DImage = new Image4DSimple;
     total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-    total4DImage->setOriginX(tileLocation.x);
-    total4DImage->setOriginY(tileLocation.y);
+    total4DImage->setOriginX(start_x);
+    total4DImage->setOriginY(start_y);
     total4DImage->setOriginZ(tileLocation.z);
 
     V3DLONG mysz[4];
@@ -137,7 +144,7 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
     QString swcString = saveDirString;
-    swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append(".swc");
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
 
     qDebug()<<scanDataFileString;
@@ -265,15 +272,12 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
             }
         }
     }
-
     double overlap = 0.1;
     LocationSimple newTarget;
     if(tip_left.size()>0)
     {
         newTipsList->push_back(tip_left);
-        newTarget.x = -p.p4dImage->getXDim()*(1.0-overlap) + p.p4dImage->getOriginX();
-        if (newTarget.x < 0) newTarget.x = 0;
-        if (newTarget.x > P.in_sz[0] - 1) newTarget.x = newTarget.x > P.in_sz[0]-1;
+        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
         newTarget.y = p.p4dImage->getOriginY();
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
@@ -281,9 +285,7 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
-        newTarget.x = p.p4dImage->getXDim()*(1.0-overlap) + p.p4dImage->getOriginX();
-        if (newTarget.x < 0) newTarget.x = 0;
-        if (newTarget.x > P.in_sz[0] - 1) newTarget.x = newTarget.x > P.in_sz[0]-1;
+        newTarget.x = floor(P.block_size*(1.0-overlap)) + tileLocation.x;
         newTarget.y = p.p4dImage->getOriginY();
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
@@ -292,9 +294,7 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     {
         newTipsList->push_back(tip_up);
         newTarget.x = p.p4dImage->getOriginX();
-        newTarget.y = -p.p4dImage->getYDim()*(1.0-overlap) + p.p4dImage->getOriginY();
-        if (newTarget.y < 0) newTarget.y = 0;
-        if (newTarget.y > P.in_sz[0] - 1) newTarget.y = newTarget.y > P.in_sz[0]-1;
+        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
@@ -302,13 +302,127 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     {
         newTipsList->push_back(tip_down);
         newTarget.x = p.p4dImage->getOriginX();
-        newTarget.y = p.p4dImage->getYDim()*(1.0-overlap) + p.p4dImage->getOriginY();
-        if (newTarget.y < 0) newTarget.y = 0;
-        if (newTarget.y > P.in_sz[0] - 1) newTarget.y = newTarget.y > P.in_sz[0]-1;
+        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
-
     return true;
 }
 
+void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString fileWithData)
+{
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    int offsetX, offsetY;
+    string swcfilepath;
+    vector<MyMarker*> outswc;
+    int node_type = 1;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000;
+    int origin_x,origin_y;
+
+    QString folderpath = QFileInfo(fileWithData).absolutePath();
+    V3DLONG in_sz[4];
+
+    while(ifs && getline(ifs, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilepath;
+        if(offsetX < offsetX_min) offsetX_min = offsetX;
+        if(offsetY < offsetY_min) offsetY_min = offsetY;
+        if(offsetX > offsetX_max) offsetX_max = offsetX;
+        if(offsetY > offsetY_max) offsetY_max = offsetY;
+
+        if(node_type == 1)
+        {
+            origin_x = offsetX;
+            origin_y = offsetY;
+
+            QString firstImagepath = folderpath + "/" +   QFileInfo(QString::fromStdString(swcfilepath)).baseName().append(".v3draw");
+            unsigned char * data1d = 0;
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, firstImagepath.toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                cerr<<"load image "<<firstImagepath.toStdString()<<" error!"<<endl;
+                return;
+            }
+            if(data1d) {delete []data1d; data1d=0;}
+
+        }
+        vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
+        for(V3DLONG d = 0; d < inputswc.size(); d++)
+        {
+            inputswc[d]->x = inputswc[d]->x + offsetX;
+            inputswc[d]->y = inputswc[d]->y + offsetY;
+            inputswc[d]->type = node_type;
+            outswc.push_back(inputswc[d]);
+        }
+        node_type++;
+    }
+    ifs.close();
+
+
+    QString fileSaveName = fileWithData + ".swc";
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x = outswc[i]->x - offsetX_min;
+        outswc[i]->y = outswc[i]->y - offsetY_min;
+    }
+
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+
+    //write tc file
+
+    QString tc_name = fileWithData + ".tc";
+    ofstream myfile;
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    if (myfile.is_open()==true)
+    {
+        qDebug()<<"initial file can be opened for reading and will be removed";
+
+        myfile.close();
+        remove(tc_name.toStdString().c_str());
+    }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    if (!myfile.is_open()){
+        qDebug()<<"file's not really open...";
+        return;
+    }
+
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << node_type-1 << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+
+    ifstream ifs_2nd(fileWithData.toLatin1());
+    while(ifs_2nd && getline(ifs_2nd, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilepath;
+        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+        QString imagefilepath= folderpath + "/" + imagename;
+
+
+        unsigned char * data1d = 0;
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, imagefilepath.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<imagefilepath.toStdString()<<" error!"<<endl;
+            return;
+        }
+        if(data1d) {delete []data1d; data1d=0;}
+        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(in_sz[0]-1 + offsetX - origin_x).arg(in_sz[1]-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        myfile << imagename.toStdString();
+        myfile << "\n";
+    }
+    myfile.flush();
+    myfile.close();
+    ifs_2nd.close();
+}
