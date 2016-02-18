@@ -74,9 +74,9 @@ public:
 		coord_y = new QSpinBox();
 		coord_z = new QSpinBox();
 
-		coord_x->setMaximum(1500); coord_x->setMinimum(1); coord_x->setValue(11);
-		coord_y->setMaximum(1500); coord_y->setMinimum(1); coord_y->setValue(11);
-		coord_z->setMaximum(1500); coord_z->setMinimum(1); coord_z->setValue(11);
+        coord_x->setMaximum(4000); coord_x->setMinimum(1); coord_x->setValue(11);
+        coord_y->setMaximum(4000); coord_y->setMinimum(1); coord_y->setValue(11);
+        coord_z->setMaximum(4000); coord_z->setMinimum(1); coord_z->setValue(11);
 
 		ok     = new QPushButton("OK");
 		cancel = new QPushButton("Cancel");
