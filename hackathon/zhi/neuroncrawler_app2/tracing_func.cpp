@@ -379,7 +379,7 @@ void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString file
 
     list<string> infostring;
     string tmpstr; QString qtstr;
-    tmpstr =  qPrintable( qtstr.prepend("##Vaa3D-Neuron-APP2 for Large-scale ")); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
@@ -508,4 +508,7 @@ void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString file
     myfile.flush();
     myfile.close();
     ifs_2nd.close();
+
+    v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
+                    ).arg(etime1).arg(fileSaveName), 1);
 }
