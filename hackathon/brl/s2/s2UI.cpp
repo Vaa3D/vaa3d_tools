@@ -1330,7 +1330,7 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     myMIP = QImage(x, y, QImage::Format_RGB16);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
-            myMIP.setPixel(i,j,mip->getIntensityUnit8(i,j,0,0));
+            myMIP.setPixel(i,j,mip->getValueUINT8(i,j,0,0));
             total++;
         }
     }
