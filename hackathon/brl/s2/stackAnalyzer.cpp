@@ -7,7 +7,11 @@
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+template <class T> T pow2(T a)
+{
+    return a*a;
 
+}
 
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
@@ -292,14 +296,31 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 RootNewLocation.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
                 RootNewLocation.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
 
-                p.landmarks.push_back(RootNewLocation);
-                proc_app2(*cb, p, versionStr);
-                p.landmarks.clear();
-                vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());
-                qDebug()<<"ran app2";
-                for(V3DLONG d = 0; d < inputswc.size(); d++)
+                bool flag = false;
+                if(tileswc_file.size()>0)
                 {
-                    tileswc_file.push_back(inputswc[d]);
+                    for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
+                    {
+                        double dis = sqrt(pow2(RootNewLocation.x - tileswc_file.at(dd)->x) + pow2(RootNewLocation.y - tileswc_file.at(dd)->y) + pow2(RootNewLocation.z - tileswc_file.at(dd)->z));
+                        if(dis < 10.0)
+                        {
+                           flag = true;
+                           break;
+                        }
+                    }
+                }
+
+                if(!flag)
+                {
+                    p.landmarks.push_back(RootNewLocation);
+                    proc_app2(*cb, p, versionStr);
+                    p.landmarks.clear();
+                    vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());
+                    qDebug()<<"ran app2";
+                    for(V3DLONG d = 0; d < inputswc.size(); d++)
+                    {
+                        tileswc_file.push_back(inputswc[d]);
+                    }
                 }
             }
             saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
