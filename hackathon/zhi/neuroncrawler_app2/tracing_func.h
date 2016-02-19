@@ -21,7 +21,8 @@ struct APP2_LS_PARA
     int block_size;
     V3DLONG in_sz[3];
 
-
+    Image4DSimple* image;
+    LandmarkList listLandmarks;
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 

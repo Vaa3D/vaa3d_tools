@@ -41,6 +41,9 @@ void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         bool bmenu = true;
         neuroncrawler_app2_raw dialog(callback, parent);
 
+        if (dialog.image && dialog.listLandmarks.size()==0)
+            return;
+
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
@@ -50,13 +53,21 @@ void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &ca
             return;
         }
 
-        if(dialog.markerfilename.isEmpty())
+        if(dialog.markerfilename.isEmpty() && ! dialog.image)
         {
             v3d_msg("Please select the marker file.");
             return;
         }
 
-        P.markerfilename = dialog.markerfilename;
+        if(!dialog.image)
+        {
+            P.markerfilename = dialog.markerfilename;
+            P.image = 0;
+        }else
+        {
+            P.image = dialog.image;
+            P.listLandmarks = dialog.listLandmarks;
+        }
         P.inimg_file = dialog.rawfilename;
         P.is_gsdt = dialog.is_gsdt;
         P.is_break_accept = dialog.is_break_accept;

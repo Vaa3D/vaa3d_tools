@@ -22,31 +22,45 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
 
     QString fileOpenName = P.inimg_file;
 
-    unsigned char * datald = 0;
-    V3DLONG *in_zz = 0;
-    V3DLONG *in_sz = 0;
-
-    int datatype;
-    if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+    if(P.image)
     {
-        return false;
+        P.in_sz[0] = P.image->getXDim();
+        P.in_sz[1] = P.image->getYDim();
+        P.in_sz[2] = P.image->getZDim();
+    }else
+    {
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+        if(datald) {delete []datald; datald = 0;}
+        P.in_sz[0] = in_zz[0];
+        P.in_sz[1] = in_zz[1];
+        P.in_sz[2] = in_zz[2];
+
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+        LocationSimple t;
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            t.x = file_inmarkers[i].x + 1;
+            t.y = file_inmarkers[i].y + 1;
+            t.z = file_inmarkers[i].z + 1;
+            P.listLandmarks.push_back(t);
+        }
     }
-    if(datald) {delete []datald; datald = 0;}
-
-    P.in_sz[0] = in_zz[0];
-    P.in_sz[1] = in_zz[1];
-    P.in_sz[2] = in_zz[2];
-
-    vector<MyMarker> file_inmarkers;
-    file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
 
     LandmarkList allTargetList;
     QList<LandmarkList> allTipsList;
 
     LocationSimple tileLocation;
-    tileLocation.x = file_inmarkers[0].x;
-    tileLocation.y = file_inmarkers[0].y;
-    tileLocation.z = file_inmarkers[0].z;
+    tileLocation.x = P.listLandmarks[0].x;
+    tileLocation.y = P.listLandmarks[0].y;
+    tileLocation.z = P.listLandmarks[0].z;
 
     LandmarkList inputRootList;
     inputRootList.push_back(tileLocation);
@@ -122,16 +136,42 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     }
 
     unsigned char * total1dData = 0;
-    V3DLONG *in_zz = 0;
     V3DLONG *in_sz = 0;
 
-    int datatype;
-    if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
-                       end_x,end_y,tileLocation.z + P.in_sz[2]))
+    if(P.image)
     {
-        printf("can not load the region");
-        if(total1dData) {delete []total1dData; total1dData = 0;}
-        return false;
+        in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = P.in_sz[2];
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        try {total1dData = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+        V3DLONG i = 0;
+        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
+        {
+            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+            for(V3DLONG iy = start_y; iy < end_y; iy++)
+            {
+                V3DLONG offsetj = iy*P.in_sz[0];
+                for(V3DLONG ix = start_x; ix < end_x; ix++)
+                {
+                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+    }else
+    {
+        V3DLONG *in_zz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        {
+            printf("can not load the region");
+            if(total1dData) {delete []total1dData; total1dData = 0;}
+            return false;
+        }
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;

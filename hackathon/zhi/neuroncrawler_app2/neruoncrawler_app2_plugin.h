@@ -31,9 +31,21 @@ class neuroncrawler_app2_raw : public QDialog
     public:
         neuroncrawler_app2_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (curwin)
+            {
+                image = cb.getImage(curwin);
+                listLandmarks = cb.getLandmark(curwin);
+                if(listLandmarks.count() ==0)
+                {
+                    v3d_msg("No markers in the current image, please select a marker.");
+                    return;
+                }
+            }
 
             QGridLayout * layout = new QGridLayout();
-
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,3);
             channel_spinbox->setValue(1);
@@ -60,11 +72,20 @@ class neuroncrawler_app2_raw : public QDialog
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
+            if(curwin)
+            {
+                raw_filepath->setText(cb.getImageName(curwin));
+                raw_filepath->setDisabled(true);
+                openrawFile->setDisabled(true);
+            }
 
             marker_filepath = new QLineEdit();
             openmarkerFile = new QPushButton(QObject::tr("..."));
-
-
+            if(curwin)
+            {
+                openmarkerFile->setDisabled(true);
+                marker_filepath->setDisabled(true);
+            }
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -109,7 +130,7 @@ class neuroncrawler_app2_raw : public QDialog
 
             layout->addLayout(hbox2,9,0,9,6);
             setLayout(layout);
-            setWindowTitle(QString("Vaa3D-Neuron2 Large Scale Image Auto_tracing Based on APP2"));
+            setWindowTitle(QString("NeuronCrawler_APP2"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
