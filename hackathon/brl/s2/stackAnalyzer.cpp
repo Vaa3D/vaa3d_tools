@@ -84,29 +84,6 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
 
 
-        //convert to 8bit image using 8 shiftnbits
-        //        unsigned char * total1dData_8bit = 0;
-        //        try
-        //        {
-        //            total1dData_8bit = new unsigned char [tunits];
-        //        }
-        //        catch (...)
-        //        {
-        //            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
-        //            return;
-        //        }
-        //        double dn = pow(2.0, double(5));
-        //        for (V3DLONG i=0;i<tunits;i++)
-        //        {
-        //            double tmp = (double)(total1dData[i]) / dn;
-        //            if (tmp>255) total1dData_8bit[i] = 255;
-        //            else
-        //                total1dData_8bit[i] = (unsigned char)(tmp);
-        //        }
-
-        //        Image4DSimple* total4DImage = new Image4DSimple;
-        //        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
-
         //new code starts here:
 
         QString swcString = saveDirString;
@@ -142,64 +119,89 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         //        if(total1dData) {delete []total1dData; total1dData = 0;}
 
-        //convert to 8bit image using 1percentage saturation
-        double apercent = 0.01;
-        if(isSoma) apercent = 0.05;
-        V3DLONG maxvv = ceil(p_vmax+1);
-        double *hist = 0;
+        //convert to 8bit image using 8 shiftnbits
+        unsigned char * total1dData_8bit = 0;
         try
         {
-            hist = new double [maxvv];
+            total1dData_8bit = new unsigned char [tunits];
         }
         catch (...)
         {
-            qDebug() << "fail to allocate"; return;
-            v3d_msg("Fail to allocate memory in proj_general_scaleandconvert28bit_1percentage().\n");
+            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
             return;
         }
-
-        for (V3DLONG i=0;i<maxvv;i++)
-        {
-            hist[i] = 0;
-        }
-        //find the histogram
+        double dn = pow(2.0, double(5));
         for (V3DLONG i=0;i<tunits;i++)
         {
-            hist[total1dData[i]] += 1;
-        }
-        qDebug() << "Histogram computed.";
-
-        //compute the CDF
-        for (V3DLONG i=1;i<maxvv;i++)
-        {
-            hist[i] += hist[i-1];
-        }
-        for (V3DLONG i=0;i<maxvv;i++)
-        {
-            hist[i] /= hist[maxvv-1];
-        }
-        //now search for the intensity thresholds
-        double lowerth, upperth; lowerth = upperth = 0;
-        for (V3DLONG i=0;i<maxvv-1;i++) //not the most efficient method, but the code should be readable
-        {
-            if (hist[i]<apercent && hist[i+1]>apercent)
-                lowerth = i;
-            if (hist[i]<1-apercent && hist[i+1]>1-apercent)
-                upperth = i;
+            double tmp = (double)(total1dData[i]) / dn;
+            if (tmp>255) total1dData_8bit[i] = 255;
+            else
+                total1dData_8bit[i] = (unsigned char)(tmp);
         }
 
-        //real rescale of intensity
-        scaleintensity(total4DImage,0, lowerth, upperth, double(0), double(255));
+     //   Image4DSimple* total4DImage = new Image4DSimple;
+        if(total4DImage) {delete []total4DImage; total4DImage = 0;}
+        total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
 
-        //free space
-        if (hist) {delete []hist; hist=0;}
+        //convert to 8bit image using 1percentage saturation
+//        double apercent = 0.01;
+//        if(isSoma) apercent = 0.05;
+//        V3DLONG maxvv = ceil(p_vmax+1);
+//        double *hist = 0;
+//        try
+//        {
+//            hist = new double [maxvv];
+//        }
+//        catch (...)
+//        {
+//            qDebug() << "fail to allocate"; return;
+//            v3d_msg("Fail to allocate memory in proj_general_scaleandconvert28bit_1percentage().\n");
+//            return;
+//        }
+
+//        for (V3DLONG i=0;i<maxvv;i++)
+//        {
+//            hist[i] = 0;
+//        }
+//        //find the histogram
+//        for (V3DLONG i=0;i<tunits;i++)
+//        {
+//            hist[total1dData[i]] += 1;
+//        }
+//        qDebug() << "Histogram computed.";
+
+//        //compute the CDF
+//        for (V3DLONG i=1;i<maxvv;i++)
+//        {
+//            hist[i] += hist[i-1];
+//        }
+//        for (V3DLONG i=0;i<maxvv;i++)
+//        {
+//            hist[i] /= hist[maxvv-1];
+//        }
+//        //now search for the intensity thresholds
+//        double lowerth, upperth; lowerth = upperth = 0;
+//        for (V3DLONG i=0;i<maxvv-1;i++) //not the most efficient method, but the code should be readable
+//        {
+//            if (hist[i]<apercent && hist[i+1]>apercent)
+//                lowerth = i;
+//            if (hist[i]<1-apercent && hist[i+1]>1-apercent)
+//                upperth = i;
+//        }
+
+//        //real rescale of intensity
+//        scaleintensity(total4DImage,0, lowerth, upperth, double(0), double(255));
+
+//        //free space
+//        if (hist) {delete []hist; hist=0;}
 
         PARA_APP2 p;
         p.is_gsdt = useGSDT;
         p.is_coverage_prune = true;
         p.is_break_accept = false;
         p.bkg_thresh = background;
-        p.length_thresh = 20;
+        p.length_thresh = 5;
         p.cnn_type = 2;
         p.channel = 0;
         p.SR_ratio = 3.0/9.9;
