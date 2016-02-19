@@ -34,21 +34,15 @@ template <class T> T pow2(T a)
 
 }
 
-
-QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT) 
+QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT)
 {
-	QHash<V3DLONG, V3DLONG> cp;
+    QHash<V3DLONG, V3DLONG> cp;
     for (V3DLONG i=0;i<neurons.size(); i++)
-    {
-        if (neurons.at(i).pn==-1)
-            cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
-        else if(idlist.indexOf(LUT.value(neurons.at(i).pn)) == 0 && neurons.at(i).pn != neurons.at(0).n)
-            cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
-        else
-            cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), idlist.indexOf(LUT.value(neurons.at(i).pn)));
-    }
-        return cp;
+        if (neurons.at(i).pn==-1) cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
+        else cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), idlist.indexOf(LUT.value(neurons.at(i).pn)));
+    return cp;
 };
+
 
 QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons)
 {
@@ -115,7 +109,7 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 	}
 };
 
-NeuronTree SortSWC(QList<NeuronSWC> & neurons, V3DLONG newrootid, double thres)
+NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, double thres)
 {
     NeuronTree nt_sorted;
 

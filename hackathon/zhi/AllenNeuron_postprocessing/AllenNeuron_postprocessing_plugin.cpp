@@ -56,11 +56,11 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
 
         NeuronTree nt = readSWC_file(fileOpenName);
-        NeuronTree nt_sort = SortSWC(nt.listNeuron,VOID, 0);
+        NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt_sort_rs = resample(nt_sort, 10);
-        NeuronTree nt_sort_rs_sort = SortSWC(nt_sort_rs.listNeuron,VOID,0);
+        NeuronTree nt_sort_rs_sort = SortSWC_pipeline(nt_sort_rs.listNeuron,VOID,0);
         NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,5);
-        NeuronTree nt_sort_rs_sort_prune_sort = SortSWC(nt_sort_rs_sort_prune.listNeuron,VOID,0);
+        NeuronTree nt_sort_rs_sort_prune_sort = SortSWC_pipeline(nt_sort_rs_sort_prune.listNeuron,VOID,0);
 
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
         export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
@@ -73,7 +73,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
             saveSWC_file(fileTmpName.toStdString(), inswc);
 
             NeuronTree nt_smooth = readSWC_file(fileTmpName);
-            NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
+            NeuronTree nt_smooth_sort = SortSWC_pipeline(nt_smooth.listNeuron,VOID, 0);
             export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
             vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
@@ -88,7 +88,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
-        NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
+        NeuronTree nt_inter_sort = SortSWC_pipeline(nt_inter.listNeuron,VOID, 0);
 
         remove(fileTmpName.toStdString().c_str());
 
@@ -131,11 +131,11 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         QString fileOpenName =  QString::fromStdString(inswc_file);
 
         NeuronTree nt = readSWC_file(fileOpenName);
-        NeuronTree nt_sort = SortSWC(nt.listNeuron,VOID, 0);
+        NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt_sort_rs = resample(nt_sort, 10);
-        NeuronTree nt_sort_rs_sort = SortSWC(nt_sort_rs.listNeuron,VOID,0);
+        NeuronTree nt_sort_rs_sort = SortSWC_pipeline(nt_sort_rs.listNeuron,VOID,0);
         NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,5);
-        NeuronTree nt_sort_rs_sort_prune_sort = SortSWC(nt_sort_rs_sort_prune.listNeuron,VOID,0);
+        NeuronTree nt_sort_rs_sort_prune_sort = SortSWC_pipeline(nt_sort_rs_sort_prune.listNeuron,VOID,0);
 
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
         export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
@@ -148,7 +148,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
             saveSWC_file(fileTmpName.toStdString(), inswc_b4smooth);
 
             NeuronTree nt_smooth = readSWC_file(fileTmpName);
-            NeuronTree nt_smooth_sort = SortSWC(nt_smooth.listNeuron,VOID, 0);
+            NeuronTree nt_smooth_sort = SortSWC_pipeline(nt_smooth.listNeuron,VOID, 0);
             export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
 
             vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
@@ -162,7 +162,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         }
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
-        NeuronTree nt_inter_sort = SortSWC(nt_inter.listNeuron,VOID, 0);
+        NeuronTree nt_inter_sort = SortSWC_pipeline(nt_inter.listNeuron,VOID, 0);
         export_list2file(nt_inter_sort.listNeuron,fileTmpName,fileOpenName);
 
 
@@ -223,7 +223,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         //radius estimation end
 
         NeuronTree nt_radius= readSWC_file(fileTmpName);
-        NeuronTree nt_radius_sort = SortSWC(nt_radius.listNeuron,VOID, 0);
+        NeuronTree nt_radius_sort = SortSWC_pipeline(nt_radius.listNeuron,VOID, 0);
 //        export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
 
         remove(fileTmpName.toStdString().c_str());
