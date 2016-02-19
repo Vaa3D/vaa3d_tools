@@ -17,6 +17,9 @@ template <class T> T pow2(T a)
 
 bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,bool bmenu)
 {
+    QElapsedTimer timer1;
+    timer1.start();
+
     QString fileOpenName = P.inimg_file;
 
     unsigned char * datald = 0;
@@ -62,7 +65,6 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
         return false;
     }
 
-
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
 
@@ -83,7 +85,7 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
         }
     }
 
-    processSmartScan(callback, P,tmpfolder +"/scanData.txt");
+    processSmartScan(callback, P,tmpfolder +"/scanData.txt",timer1);
 
     return true;
 }
@@ -91,6 +93,7 @@ bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,b
 
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
+
     QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
     QString imageSaveString = saveDirString;
 
@@ -330,8 +333,27 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
     return true;
 }
 
-void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString fileWithData)
+void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString fileWithData,QElapsedTimer timer1)
 {
+    qint64 etime1 = timer1.elapsed();
+
+    list<string> infostring;
+    string tmpstr; QString qtstr;
+    tmpstr =  qPrintable( qtstr.prepend("##Vaa3D-Neuron-APP2 for Large-scale ")); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+
+    tmpstr =  qPrintable( qtstr.setNum(P.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+
+
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY;
@@ -389,7 +411,7 @@ void processSmartScan(V3DPluginCallback2 &callback, APP2_LS_PARA &P,QString file
         outswc[i]->y = outswc[i]->y - offsetY_min;
     }
 
-    saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
 
     //write tc file
 

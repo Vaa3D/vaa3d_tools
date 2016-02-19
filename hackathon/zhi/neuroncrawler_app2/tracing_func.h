@@ -27,7 +27,7 @@ struct APP2_LS_PARA
 
 bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-void processSmartScan(V3DPluginCallback2 &callback,APP2_LS_PARA &p,QString fileWithData);
+void processSmartScan(V3DPluginCallback2 &callback,APP2_LS_PARA &p,QString fileWithData,QElapsedTimer timer1);
 
 
 #endif
