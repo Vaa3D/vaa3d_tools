@@ -12,7 +12,9 @@ struct PARA_APP1: public PARA_VN
     int  channel;
     int  downsample_factor; //when set to be 0, then set b_256cube to be 1 which means downsample based on fit to a 256px cube automatically
     int  b_256cube;
-    
+
+    bool b_menu;
+
     QString inimg_file, inmarker_file, outswc_file;
     
     PARA_APP1()
@@ -22,7 +24,9 @@ struct PARA_APP1: public PARA_VN
         channel = 0;
         downsample_factor = 2;
         b_256cube = 1; //whether or not preprocessing to downsample to a 256xYxZ cube UINT8 for tracing
-        
+
+        b_menu = true;
+
         inimg_file = "";
         inmarker_file = "";
         outswc_file = "";

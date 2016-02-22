@@ -6,6 +6,7 @@
 #define __TRACING_FUNC_H__
 
 #include <v3d_interface.h>
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 struct APP2_LS_PARA
 {
@@ -26,9 +27,25 @@ struct APP2_LS_PARA
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 
-bool crawler_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
+struct APP1_LS_PARA
+{
+    int  bkg_thresh;
+    int  channel;
+    int  b_256cube;
+    int  visible_thresh;
+    int  block_size;
+    V3DLONG in_sz[3];
+
+    Image4DSimple* image;
+    LandmarkList listLandmarks;
+    QString tcfilename,inimg_file,rawfilename,markerfilename;
+};
+
+bool crawler_raw_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-void processSmartScan(V3DPluginCallback2 &callback,APP2_LS_PARA &p,QString fileWithData,QElapsedTimer timer1);
+bool crawler_raw_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA &p,bool bmenu);
+bool app1_tracing(V3DPluginCallback2 &callback,APP1_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 
 
 #endif

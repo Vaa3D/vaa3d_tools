@@ -247,5 +247,195 @@ class neuroncrawler_app2_raw : public QDialog
 
     };
 
+class neuroncrawler_app1_raw : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        neuroncrawler_app1_raw(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (curwin)
+            {
+                image = cb.getImage(curwin);
+                listLandmarks = cb.getLandmark(curwin);
+                if(listLandmarks.count() ==0)
+                {
+                    v3d_msg("No markers in the current image, please select a marker.");
+                    return;
+                }
+            }
+
+            int chn_num = image->getCDim();
+            QGridLayout * layout = new QGridLayout();
+            channel_spinbox = new QSpinBox();
+            channel_spinbox->setRange(1,chn_num);
+            channel_spinbox->setValue(1);
+
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(-1);
+
+            visthresh_spinbox = new QSpinBox();
+            visthresh_spinbox->setRange(1, 255);
+            visthresh_spinbox->setValue(30);
+
+            downsample_spinbox = new QSpinBox();
+            downsample_spinbox->setRange(0, 10);
+            downsample_spinbox->setValue(2);
+
+            block_spinbox = new QSpinBox();
+            block_spinbox->setRange(1,2048);
+            block_spinbox->setValue(1024);
+
+            raw_filepath = new QLineEdit();
+            openrawFile = new QPushButton(QObject::tr("..."));
+            if(curwin)
+            {
+                raw_filepath->setText(cb.getImageName(curwin));
+                raw_filepath->setDisabled(true);
+                openrawFile->setDisabled(true);
+            }
+
+            marker_filepath = new QLineEdit();
+            openmarkerFile = new QPushButton(QObject::tr("..."));
+            if(curwin)
+            {
+                openmarkerFile->setDisabled(true);
+                marker_filepath->setDisabled(true);
+            }
+
+            layout->addWidget(new QLabel("color channel"),0,0);
+            layout->addWidget(channel_spinbox, 0,1,1,5);
+            layout->addWidget(new QLabel("background_threshold \n  (if set as -1, \nthen auto-thresholding)"),1,0);
+            layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
+            layout->addWidget(new QLabel("visibility threshold \n  (normally do not need to change)"),2,0);
+            layout->addWidget(visthresh_spinbox, 2,1,1,5);
+
+            QHBoxLayout * hbox1 = new QHBoxLayout();
+            hbox1->addWidget(new QLabel("downsample factor \n  (set 0 for auto-downsample)"));
+            hbox1->addWidget(downsample_spinbox);
+
+            layout->addLayout(hbox1,3,0,1,6);
+
+
+            layout->addWidget(new QLabel("block_size"),4,0);
+            layout->addWidget(block_spinbox, 4,1,1,5);
+
+            layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
+            layout->addWidget(raw_filepath,5,1,1,4);
+            layout->addWidget(openrawFile,5,5,1,1);
+
+            layout->addWidget(new QLabel(QObject::tr("marker file:")),6,0);
+            layout->addWidget(marker_filepath,6,1,1,4);
+            layout->addWidget(openmarkerFile,6,5,1,1);
+
+            QHBoxLayout * hbox2 = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox2->addWidget(cancel);
+            hbox2->addWidget(ok);
+
+            layout->addLayout(hbox2,7,0,7,6);
+            setLayout(layout);
+            setWindowTitle(QString("NeuronCrawler_APP1"));
+
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(channel_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(visthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(downsample_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+
+            connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
+            connect(openmarkerFile, SIGNAL(clicked()), this, SLOT(_slots_openmarkerFile()));
+
+            update();
+        }
+
+        ~neuroncrawler_app1_raw(){}
+
+        public slots:
+        void update()
+        {
+            channel = channel_spinbox->value();
+            bkg_thresh = bkgthresh_spinbox->value();
+            block_size = block_spinbox->value();
+            visible_thresh = visthresh_spinbox->value();
+
+            rawfilename = raw_filepath->text();
+            markerfilename = marker_filepath->text();
+            downsample_factor = downsample_spinbox->value();
+
+            b_256cube = (downsample_factor==0) ? 1 : 0;
+
+        }
+
+        void _slots_openrawFile()
+        {
+            QFileDialog d(this);
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+                                                        "",
+                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                                                            ));
+            if(!fileOpenName.isEmpty())
+            {
+                raw_filepath->setText(fileOpenName);
+            }
+            update();
+
+        }
+
+        void _slots_openmarkerFile()
+        {
+            QFileDialog d(this);
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+                                                        "",
+                                                        QObject::tr("Supported file (*.marker *.MARKER)"
+                                                            ));
+            if(!fileOpenName.isEmpty())
+            {
+                marker_filepath->setText(fileOpenName);
+            }
+            update();
+
+        }
+    public:
+
+        QSpinBox * channel_spinbox;
+        QSpinBox * bkgthresh_spinbox;
+        QSpinBox * visthresh_spinbox;
+        QSpinBox * downsample_spinbox;
+
+        QSpinBox * block_spinbox;
+
+
+        QLineEdit * raw_filepath;
+        QLineEdit * marker_filepath;
+        QPushButton *openrawFile;
+        QPushButton *openmarkerFile;
+
+        Image4DSimple* image;
+        LandmarkList listLandmarks;
+        int  bkg_thresh;
+        int  channel;
+        int  visible_thresh;
+        int  b_256cube;
+        int block_size;
+        int downsample_factor;
+
+        QString rawfilename;
+        QString markerfilename;
+
+    };
+
 #endif
 

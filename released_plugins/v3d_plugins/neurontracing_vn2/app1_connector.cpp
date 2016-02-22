@@ -24,15 +24,16 @@ using namespace std;
 
 bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versionStr)
 {
-    bool b_menu = true;
+    //  bool b_menu = true;
+      bool b_dofunc = false;
     
     if (!p.p4dImage || !p.p4dImage->valid())
     {
         if (p.inimg_file.isEmpty())
             return false;
         
-        b_menu = false;
-        
+        b_dofunc = false;
+
         //in this case try to read the image files
         QString infile = p.inimg_file;
         p.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
@@ -495,7 +496,7 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
             fprintf(stderr, "Fail to produce the output file %s.\n", qPrintable(outswc_file));
 
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
+                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
     }
     else //save SWC
     {
@@ -569,7 +570,7 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
         //saveSWC_file(outswc_file.toStdString(), outswc, infostring);//disable for now, as the save function is different now, 2013-02-10
         
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
+                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
         
         if (0) //by PHC 120909
         {
@@ -602,7 +603,7 @@ Label_exit:
 //    for(int i = 0; i < outtree.size(); i++) delete outtree[i];
 //    outtree.clear();
     
-    if (!b_menu)
+    if (b_dofunc)
     {
         if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
     }
@@ -636,7 +637,7 @@ bool PARA_APP1::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     channel = paras.size() >= k+1 ? atoi(paras[k]) : channel;  k++;//0;
     bkg_thresh = paras.size() >= k+1 ? atoi(paras[k]) : bkg_thresh; if(bkg_thresh == atoi("AUTO")) bkg_thresh = -1;k++;// 30;
     b_256cube = paras.size() >= k+1 ? atoi(paras[k]) : b_256cube; k++;// true
-    
+
     return true;
 }
 

@@ -20,8 +20,9 @@ Q_EXPORT_PLUGIN2(neruoncrawler_app2, neruoncrawler_app2);
 QStringList neruoncrawler_app2::menulist() const
 {
 	return QStringList() 
-		<<tr("trace_raw")
-		<<tr("trace_tc")
+        <<tr("trace_APP2")
+        <<tr("trace_APP1")
+        //<<tr("trace_tc")
 		<<tr("about");
 }
 
@@ -35,7 +36,7 @@ QStringList neruoncrawler_app2::funclist() const
 
 void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("trace_raw"))
+    if (menu_name == tr("trace_APP2"))
 	{
         APP2_LS_PARA P;
         bool bmenu = true;
@@ -79,11 +80,48 @@ void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         P.b_256cube = dialog.b_256cube;
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
-        crawler_raw(callback,parent,P,bmenu);
+        crawler_raw_app2(callback,parent,P,bmenu);
 	}
-	else if (menu_name == tr("trace_tc"))
+    else if (menu_name == tr("trace_APP1"))
 	{
-		v3d_msg("To be implemented.");
+        APP1_LS_PARA P;
+        bool bmenu = true;
+        neuroncrawler_app1_raw dialog(callback, parent);
+
+        if (dialog.image && dialog.listLandmarks.size()==0)
+            return;
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
+        if(dialog.rawfilename.isEmpty())
+        {
+            v3d_msg("Please select the image file.");
+            return;
+        }
+
+        if(dialog.markerfilename.isEmpty() && ! dialog.image)
+        {
+            v3d_msg("Please select the marker file.");
+            return;
+        }
+
+        if(!dialog.image)
+        {
+            P.markerfilename = dialog.markerfilename;
+            P.image = 0;
+        }else
+        {
+            P.image = dialog.image;
+            P.listLandmarks = dialog.listLandmarks;
+        }
+        P.inimg_file = dialog.rawfilename;
+        P.bkg_thresh = dialog.bkg_thresh;
+        P.channel = dialog.channel;
+        P.b_256cube = dialog.b_256cube;
+        P.visible_thresh = dialog.visible_thresh;
+        P.block_size = dialog.block_size;
+        crawler_raw_app1(callback,parent,P,bmenu);
 	}
 	else
 	{
