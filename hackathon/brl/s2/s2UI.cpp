@@ -258,6 +258,16 @@ void S2UI::updateLocalRemote(bool state){
 
 
     }
+
+
+    if (resetDir){
+    topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
+                                                  "/",
+                                                  QFileDialog::ShowDirsOnly
+                                                  | QFileDialog::DontResolveSymlinks);
+    settings.setValue("s2_topDir",topDirStr);
+    }
+
     QDir topDir = QDir(topDirStr);
     topDir.mkdir(timeString);
 
@@ -268,7 +278,7 @@ void S2UI::updateLocalRemote(bool state){
     scanDataFileString = saveDir.absolutePath().append("/").append("_0_scanData.txt");
 
     myNotes->setSaveDir(saveDir); // this gets saved in the parent directory.  scanDataFileString will get modified for each scan
-
+    resetDir=true;
 }
 
 
@@ -1115,6 +1125,21 @@ void S2UI::loadLatest(){
     }else{
         loadScanFromFile(getFileString());
     }
+    // if there's an .xml file in the filestring directory, copy it to the save directory:
+    QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
+    QStringList filterList;
+    filterList.append(QString("*.xml"));
+    xmlDir.setNameFilters(filterList);
+    QStringList fileList = xmlDir.entryList();
+    if (!fileList.isEmpty()){
+        QFileInfo xmlInfo = QFileInfo(fileList.at(0));
+        QFile::copy(xmlInfo.absoluteFilePath(), saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+
+
+    }
+
+
+
 }
 
 
@@ -1125,7 +1150,6 @@ void S2UI::loadingDone(){
         gridScanStatus = 0;
         emit processSmartScanSig(scanDataFileString);
         QTimer::singleShot(0, this, SLOT(handleAllTargets()));
-
 
     }
 

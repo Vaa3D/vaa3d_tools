@@ -222,6 +222,7 @@ private:
     int overviewCycles;
     int scanStatusWaitCycles;
     bool havePreview;
+    bool resetDir;
 
 //   vaa3d variables
     v3dhandle previewWindow;
