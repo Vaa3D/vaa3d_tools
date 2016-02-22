@@ -743,6 +743,7 @@ void S2UI::handleAllTargets(){
 
 
 void S2UI::startingSmartScan(){
+    scanVoltageConversion = uiS2ParameterMap[8].getCurrentValue()/uiS2ParameterMap[17].getCurrentValue();  // convert from pixels to microns and to galvo voltage:
 
     if (gridScanCB->isChecked()){
         gridScanStatus = 1;
@@ -1046,6 +1047,11 @@ void S2UI::moveToROI(LocationSimple nextROI){
         // and now to galvo voltage:
         float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
         float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+
+        if ((gridScanStatus==1)||(smartScanStatus==1)){
+            nextGalvoX = nextROI.x*scanVoltageConversion;
+            nextGalvoY = nextROI.y*scanVoltageConversion;
+        }
         LocationSimple newLoc;
         newLoc.x = -nextGalvoX;
         newLoc.y = nextGalvoY;

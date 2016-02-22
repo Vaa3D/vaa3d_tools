@@ -204,7 +204,7 @@ private:
     int allTargetStatus;
     float overViewPixelToScanPixel;
     float overviewMicronsPerPixel;
-
+    float scanVoltageConversion;
     LandmarkList scanList;
     QList<LandmarkList> tipList;
 

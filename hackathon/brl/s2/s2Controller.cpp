@@ -71,7 +71,6 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     statusLabel = new QLabel(tr(" - - - "));
 
     sendCommandButton = new QPushButton(tr("Send Command"));
-    sendCommandButton->setDefault(true);
     sendCommandButton->setEnabled(true);
     connectButton = new QPushButton(tr("connect to PrairieView"));
     connectButton->setEnabled(true);
@@ -382,7 +381,7 @@ void S2Controller::posMonListener(QString messageL){
     if (inPosMonMode){
         ii = (ii+1) % maxParams;
         emit newS2Parameter(s2ParameterMap);
-        QTimer::singleShot(0, this, SLOT(posMon()));
+        QTimer::singleShot(2, this, SLOT(posMon()));
     }
 
 

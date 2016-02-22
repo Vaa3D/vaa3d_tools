@@ -140,8 +140,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
 
      //   Image4DSimple* total4DImage = new Image4DSimple;
-        if(total4DImage) {delete []total4DImage; total4DImage = 0;}
-        total4DImage = new Image4DSimple;
+
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
 
         //convert to 8bit image using 1percentage saturation
