@@ -22,7 +22,7 @@ using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 template <class T> T pow2(T a)
 {
-    return a*a;
+	return a*a;
 
 }
 
@@ -36,54 +36,54 @@ template <class T> T pow2(T a)
 
 
 struct NeuronSize{
-    float x;
-    float y;
-    float z;
+	float x;
+	float y;
+	float z;
 };
 
 
 
 unsigned int v_min(vector<unsigned int> x)
 {
-    sort(x.begin(), x.end());
-    return  x[0];
+	sort(x.begin(), x.end());
+	return  x[0];
 }
 
 unsigned int v_max(vector<unsigned int> x)
 {
-    sort(x.begin(), x.end());
-    return  x[x.size()-1];
+	sort(x.begin(), x.end());
+	return  x[x.size()-1];
 }
 
 int max_image_value( unsigned char *  img1d, V3DLONG siz)
 {
-    int max_v = 0;
-    for(int i = 0; i < siz; i++ )
-    {
-        if (int(img1d[i]) > max_v)
-            max_v = img1d[i];
-    }
-    return max_v;
- }
+	int max_v = 0;
+	for(int i = 0; i < siz; i++ )
+	{
+		if (int(img1d[i]) > max_v)
+			max_v = img1d[i];
+	}
+	return max_v;
+}
 
 double  mean_image_value( unsigned char *  img1d, V3DLONG siz)
 {
-    double sum_v= 0;
-    int count = 0 ;
-    for(int i = 0; i < siz; i++ )
-    {
-	    if (int(img1d[i]) > 1){
-		    sum_v += img1d[i];
-		    count++;
-	    }
-    }
-    return sum_v/count;
+	double sum_v= 0;
+	int count = 0 ;
+	for(int i = 0; i < siz; i++ )
+	{
+		if (int(img1d[i]) > 1){
+			sum_v += img1d[i];
+			count++;
+		}
+	}
+	return sum_v/count;
 }
 
 V3DLONG median(vector<V3DLONG> x)
 {
-    sort(x.begin(), x.end());
-    return  x[x.size()/2];
+	sort(x.begin(), x.end());
+	return  x[x.size()/2];
 }
 
 
@@ -95,37 +95,37 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 	   QList <NeuronSWC>  ln= tree.listNeuron;
 	   for(int ii = 1;ii <ln;ii++){
 	   if (ln[ii].pn == -1){
-             } 
+	   } 
 	   }
 	   }
 	   */
 	//remove statistically outlisers
 	cout<<"\nOutlier detection:"<<endl;
 	vector<V3DLONG> nt_sizes;
-    //cout <<"Dectecting  SWCs have too few nodes (< 10):"<<endl;
+	//cout <<"Dectecting  SWCs have too few nodes (< 10):"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
 		V3DLONG num_nodes = tree.listNeuron.size();
-        //cout<<num_nodes<<endl;
-        if (num_nodes> 10 && num_nodes <50000){
-              nt_sizes.push_back(num_nodes);
-        }
+		//cout<<num_nodes<<endl;
+		if (num_nodes> 10 && num_nodes <50000){
+			nt_sizes.push_back(num_nodes);
+		}
 	}
 
 	V3DLONG median_size = median(nt_sizes);
-    vector<V3DLONG > rm_ids;
-    cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
-    cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
+	vector<V3DLONG > rm_ids;
+	cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
+	cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
-        V3DLONG num_nodes = nt_list[i].listNeuron.size();
-        if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 50000 )
+		V3DLONG num_nodes = nt_list[i].listNeuron.size();
+		if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 50000 )
 		{
-            cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
-            rm_ids.push_back(i);
+			cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
+			rm_ids.push_back(i);
 
 		}
-        if (num_nodes== median_size)
-        {  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
+		if (num_nodes== median_size)
+		{  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
 			NeuronSWC root = nt_list[i].listNeuron.at(0);
 			median_root_x = root.x;
 			median_root_y = root.y;
@@ -133,11 +133,11 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 		}
 	}
 
-    for (int i =0; i< rm_ids.size();i++){
-      nt_list.erase(nt_list.begin()+rm_ids[i]);
-    }
+	for (int i =0; i< rm_ids.size();i++){
+		nt_list.erase(nt_list.begin()+rm_ids[i]);
+	}
 
-    cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
+	cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
 }
 
 struct MyBoundingBox{
@@ -189,24 +189,29 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 			{
 				//nn, find the local max value within window size
 				unsigned char max_val = 0 ;
+				int pre_dis_sqr = 3 * (win_size/2) *(win_size/2)-1;
 				V3DLONG max_idx = 0 ;
 				for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
 					for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
 						for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
 						{
 							V3DLONG idx = zz * (sz_x*sz_y) + yy * sz_x + xx;
-                            if (img1d[idx] < threshold_votes)
-                            {
-                                    img1d[idx] =0;
-                            }
+							int dis_sqr = (xx-id_x)* (xx-id_x)+ (yy-id_y)* (yy-id_y)+ (yy-id_z)* (zz-id_z);
+							if (img1d[idx] < threshold_votes)
+							{
+								img1d[idx] =0;      
+							}
 							if (img1d[idx] > max_val){
 								max_val = img1d[idx] ;
 								max_idx = idx;
+								pre_dis_sqr = dis_sqr;
 							}
+
+
 						}
-                if ( max_val >= threshold_votes)
+				if ( max_val >= threshold_votes)
 				{// found non-zero max that passes the majority votes threshold
-					for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
+					for ( V3DLONG xx =id_x - win_size/2;xx< id_x + win_size/2;xx++)
 						for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
 							for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
 							{
@@ -224,8 +229,8 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 			{
 				V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
 
-                if (img1d[idx] >=threshold_votes)
-                {
+				if (img1d[idx] >=threshold_votes)
+				{
 					num_nodes++;
 					Point3D p;
 					p.x = id_x+offset.x;
@@ -233,7 +238,7 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 					p.z = id_z+offset.z;
 					node_list.push_back(p);
 					vote_list.push_back(img1d[idx]);
-                }
+				}
 			}
 	return;
 }
@@ -640,10 +645,10 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	remove_outliers(nt_list, root_x, root_y, root_z);
 	int neuronNum = nt_list.size();
-    if (neuronNum<2){
-        cout<<"not enough neurons left for consensuing...." <<endl;
-        return false;
-    }
+	if (neuronNum<2){
+		cout<<"not enough neurons left for consensuing...." <<endl;
+		return false;
+	}
 
 	//initialize the image volume to record/accumulate the  location votes from neurons
 	MyBoundingBox bbUnion = neuron_trees_bb(nt_list);
@@ -654,11 +659,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	V3DLONG  sz_y = ceil((bbUnion.max_y - bbUnion.min_y ) / closeness) +1;
 	V3DLONG  sz_z = ceil((bbUnion.max_z - bbUnion.min_z ) / closeness) +1;
 	V3DLONG  tol_sz = sz_x * sz_y * sz_z;
-    if (tol_sz > LONG_MAX){
-          cout << sz_x<<"  "<<sz_y<<"  "<<sz_z<<endl;
-          cout <<"requires too much memory (more than 1 GB) to allocate for the vote map:"<<tol_sz <<endl;
-          return false;
-    }
+	if (tol_sz > LONG_MAX){
+		cout << sz_x<<"  "<<sz_y<<"  "<<sz_z<<endl;
+		cout <<"requires too much memory (more than 1 GB) to allocate for the vote map:"<<tol_sz <<endl;
+		return false;
+	}
 
 
 	unsigned char * img1d = new unsigned char[tol_sz];
@@ -670,9 +675,9 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	//****************************************************
 	// step 1: VOTE MAP
-        cout <<"\nGenerate vote map "<<endl;
-        cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
-    int dilation_radius = 0;
+	cout <<"\nGenerate vote map "<<endl;
+	cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+	int dilation_radius = 0;
 
 	V3DLONG pagesz = sz_x*sz_y;
 
@@ -735,15 +740,15 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	}
 
 	//for debug only
-//    Image4DSimple *image = new Image4DSimple();
-//    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-//    callback.saveImage(image, "./vote_map.v3draw");
+	//    Image4DSimple *image = new Image4DSimple();
+	//    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+	//    callback.saveImage(image, "./vote_map.v3draw");
 
 
 
 	//****************************************************
 	// Step 2:  Consensus Nodes
-        cout <<"\nCompute consensus nodes (non-max_supression)"<<endl;
+	cout <<"\nCompute consensus nodes (non-max_supression)"<<endl;
 	//non-maximum suppresion
 	vector<Point3D>  node_list;
 	vector<unsigned int>  vote_list;
@@ -751,24 +756,24 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	double mean_vote = mean_image_value(img1d, tol_sz);
 	cout << "mean votes in the vote map:" << mean_vote << endl;
 	double vote_threshold = mean_vote-1;
-        if (vote_threshold < 1) { vote_threshold = 1.0;}
-        cout << "threshold vote:" << vote_threshold << endl;
+	if (vote_threshold < 1) { vote_threshold = 1.0;}
+	cout << "threshold vote:" << vote_threshold << endl;
 
 	int windows_siz = 5;
 	non_max_suppresion (img1d,sz_x,sz_y,sz_z,vote_threshold, offset,node_list,vote_list,windows_siz);
-    cout << "after non_max supression:"<< endl;
+	cout << "after non_max supression:"<< endl;
 	cout << "number of nodes:"<< node_list.size() << endl;
 	cout << "maximum votes:" << v_max(vote_list) << endl;
 
 
-	/*
-	   Image4DSimple *image2 = new Image4DSimple();
-	   image2->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-	   callback.saveImage(image2, "./nms_image.v3draw");
-	   */
+
+	Image4DSimple *image2 = new Image4DSimple();
+	image2->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+	callback.saveImage(image2, "./nms_image.v3draw");
+
 
 	// for debug: save node_list to check locations
-	/*
+
 	QList<NeuronSWC> locationTree;
 	for (int i=0;i<node_list.size();i++)
 	{
@@ -779,20 +784,20 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 		tmp.type = 2; //edge votes
 		tmp.pn = -1;  //parent id, form the edge
-		tmp.r = double(vote_list[i])/neuronNum*3; //*3 for visulaization
+		tmp.r = double(vote_list[i]);
 		tmp.n = i+1;
 
 		locationTree.append(tmp);
 	}
 	export_listNeuron_2swc(locationTree, "./test_nms_location.swc");
-        */
+
 
 
 
 
 	//****************************************************
 	// Step 3: adjacency matrix
-        cout <<"\nCompute adjacency matrix (vote for edges)"<<endl;
+	cout <<"\nCompute adjacency matrix (vote for edges)"<<endl;
 
 
 	double * adjMatrix;
@@ -851,8 +856,9 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 			NeuronSWC cur = nt_list[i].listNeuron[j];
 			// if (cur.pn<0) continue;
 			V3DLONG n_id,pn_id;
-			n_id = nodeMap[j];
-			if (n_id > 0){
+			if (nodeMap.contains(j))
+			{
+				n_id = nodeMap[j];
 				V3DLONG pidx = cur.pn-1;//nt_list[i].hashNeuron.value(cur.pn);  // find the index in nueon_list
 
 				pn_id = nodeMap[pidx];
@@ -886,7 +892,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	// MST method
 	if (method_code == 2 ){
 		long rootnode =100;
-                cout <<"\nComputing max-spanning tree" <<endl;
+		cout <<"\nComputing max-spanning tree" <<endl;
 		//if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
 		if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
 
@@ -982,12 +988,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	if (plist) {delete[] plist; plist=0;}
 
 
-        cout <<"\nSort with soma root from median case." <<endl;
+	cout <<"\nSort with soma root from median case." <<endl;
 	double search_distance_th = cluster_distance_threshold;
 	double soma_x = root_x;
 	double soma_y = root_y;
 	double soma_z = root_z;
-    if (   soma_sort(search_distance_th, merge_result, soma_x, soma_y, soma_z, final_consensus, 3) )
+	if (   soma_sort(search_distance_th, merge_result, soma_x, soma_y, soma_z, final_consensus, 3) )
 	{
 		cout <<"merged swc #nodes = "<< merge_result.size()<<endl<<endl;
 
@@ -998,7 +1004,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 		//    }
 		//}
 
-	        //cout <<"final swc #nodes = "<< final_consensus.size()<<endl;
+		//cout <<"final swc #nodes = "<< final_consensus.size()<<endl;
 		return true;
 	}
 
@@ -1013,14 +1019,14 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 {
 	FILE * fp;
 	fp = fopen(filename,"w");
-        QString fn = QString(filename);
+	QString fn = QString(filename);
 	if (fp==NULL)
 	{
 		fprintf(stderr,"ERROR: %s: failed to open file to write!\n",filename);
 		return false;
 	}
 
-        if (fn.endsWith(".eswc"))
+	if (fn.endsWith(".eswc"))
 	{ // eswc
 		fprintf(fp,"#n,type,x,y,z,radius,parent,seg_id,level,edge_vote\n");   //,vote\n");
 		for (int i=0;i<list.size();i++)
