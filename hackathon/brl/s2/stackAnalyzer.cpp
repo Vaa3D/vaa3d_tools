@@ -13,6 +13,52 @@ template <class T> T pow2(T a)
 
 }
 
+bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QString fileOpenName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+
+    QFile qf(fileOpenName);
+    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return false;
+    }
+    QString info;
+    while (! qf.atEnd())
+    {
+        char _buf[1000], *buf;
+        qf.readLine(_buf, sizeof(_buf));
+        for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+
+        if (buf[0]=='\0')	continue;
+        if (buf[0]=='#')
+        {
+           info = buf;
+           myfile<< info.remove('\n') <<endl;
+        }
+
+    }
+
+    map<MyMarker*, int> ind;
+    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+
+    for(V3DLONG i = 0; i < outmarkers.size(); i++)
+    {
+        MyMarker * marker = outmarkers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        myfile<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<"\n";
+    }
+
+    file.close();
+    cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<outmarkers.size()<<endl;
+    return true;
+};
+
+
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
     cb = &callback;
@@ -220,6 +266,22 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
 
         qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+
+        list<string> infostring;
+        string tmpstr; QString qtstr;
+        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+
+        tmpstr =  qPrintable( qtstr.setNum(p.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(p.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
+
+
         LandmarkList imageLandmarks;
 
         if(inputRootList.size() <1)
@@ -229,9 +291,6 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         }
         else
         {
-
-
-
 
             // eliminate markers within some  pixels of any other marker
             //  well... this does that- getting rid of all markers in clusters!
@@ -324,7 +383,8 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                     }
                 }
             }
-            saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+            saveSWC_file(swcString.toStdString().c_str(), tileswc_file,infostring);
+        //    export_list2file(tileswc_file, swcString,p.outswc_file);
         }
 
 
@@ -619,7 +679,9 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
             outswc[i]->y = outswc[i]->y - offsetY_min;
         }
 
-        saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+       // saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+        export_list2file(outswc, fileSaveName,QString::fromStdString(swcfilepath));
+
     }
     //write tc file
     QString folderpath = QFileInfo(fileWithData).absolutePath();
