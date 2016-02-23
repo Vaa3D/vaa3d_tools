@@ -257,7 +257,7 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
         trace_para.sp_graph_background = 0;
     if (trace_para.sp_graph_background)
     {
-        trace_para.imgTH = imgAve;
+        trace_para.imgTH = p.bkg_thresh;
     }
     else
     {
