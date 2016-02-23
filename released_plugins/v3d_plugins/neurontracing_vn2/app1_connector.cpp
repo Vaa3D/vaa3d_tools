@@ -638,6 +638,8 @@ bool PARA_APP1::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     bkg_thresh = paras.size() >= k+1 ? atoi(paras[k]) : bkg_thresh; if(bkg_thresh == atoi("AUTO")) bkg_thresh = -1;k++;// 30;
     b_256cube = paras.size() >= k+1 ? atoi(paras[k]) : b_256cube; k++;// true
 
+    b_menu = false;
+
     return true;
 }
 
