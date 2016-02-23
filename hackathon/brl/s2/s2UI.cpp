@@ -365,6 +365,12 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSBLabel->setBuddy(overlapSpinBox);
     overlap = 0.01* ((float) overlapSpinBox->value());
 
+
+    analysisRunning = new QLabel(tr("0"));
+    QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
+
+
+
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
     tPL->addWidget(s2Label,1,0);
@@ -384,6 +390,9 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(gridScanCB,8,1);
     tPL->addWidget(gridSizeSBLabel,9,0);
     tPL->addWidget(gridSizeSB,9,1);
+
+    tPL->addWidget(analysisRunningLable,10,1);
+    tPL->addWidget(analysisRunning,10,0);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -490,7 +499,7 @@ void S2UI::loadForSA(){
     }
     bool isSoma = scanNumber==0;
     qDebug()<<workerThread->currentThreadId();
-
+    QTimer::singleShot(0,this, SLOT(processingStarted()));
     emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 }
 
@@ -753,6 +762,7 @@ void S2UI::handleAllTargets(){
 
 
 void S2UI::startingSmartScan(){
+    numProcessing=0;
     scanVoltageConversion = uiS2ParameterMap[8].getCurrentValue()/uiS2ParameterMap[17].getCurrentValue();  // convert from pixels to microns and to galvo voltage:
 
     if (gridScanCB->isChecked()){
@@ -894,7 +904,7 @@ void S2UI::startingSmartScan(){
 void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip){
 
     emit eventSignal("finishedAnalysis");
-
+     QTimer::singleShot(0,this, SLOT(processingFinished()));
     qDebug()<<"back in S2UI with new locations";
 
     status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanNumber)));
@@ -1129,6 +1139,7 @@ void S2UI::loadLatest(){
     QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
     QStringList filterList;
     filterList.append(QString("*.xml"));
+    status("xml directory: "+xmlDir.absolutePath());
     xmlDir.setNameFilters(filterList);
     QStringList fileList = xmlDir.entryList();
     if (!fileList.isEmpty()){
@@ -1374,4 +1385,12 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
 }
 
 
+void S2UI::processingStarted(){
+    numProcessing++;
+    analysisRunning->setText(QString::number(numProcessing));
+}
 
+void S2UI::processingFinished(){
+    numProcessing--;
+    analysisRunning->setText(QString::number(numProcessing));
+}

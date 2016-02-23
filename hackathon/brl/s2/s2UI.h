@@ -93,6 +93,8 @@ private slots:
     void handleAllTargets();
     void loadMIP(int imageNumber, Image4DSimple* mip);
     void loadingDone();
+    void processingStarted();
+    void processingFinished();
 private:
     V3DPluginCallback2 * cb;
 
@@ -122,7 +124,7 @@ private:
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
 
-
+    QLabel * analysisRunning;
 
     void createButtonBox1();
 	
@@ -223,6 +225,10 @@ private:
     int scanStatusWaitCycles;
     bool havePreview;
     bool resetDir;
+
+
+
+    int numProcessing;
 
 //   vaa3d variables
     v3dhandle previewWindow;

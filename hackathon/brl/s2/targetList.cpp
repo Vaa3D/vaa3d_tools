@@ -95,6 +95,7 @@ void TargetList::updateTargetTable(LandmarkList inputTargetList, QList<LandmarkL
     }
     targetTable->setCurrentCell(0,0);
     targetTable->adjustSize();
+    scanLocTable->adjustSize();
 }
 
 void TargetList::addTarget(const LocationSimple& newTarget){
