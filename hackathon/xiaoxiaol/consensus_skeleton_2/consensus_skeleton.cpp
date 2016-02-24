@@ -633,9 +633,9 @@ bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, do
 
 }
 
-bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_consensus, int method_code, int cluster_distance_threshold,V3DPluginCallback2 &callback)
+bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_consensus, int max_vote_threshold, int cluster_distance_threshold,V3DPluginCallback2 &callback)
 {
-
+    int method_code = 2; // MST
 	//int cluster_distance_threshold = 10;
 	//threshold to ignore mapping  (too far away) for generting nodeMap below
 	//potentially, there are invalid neuron trees (massive node points, no node points, looping)
@@ -757,10 +757,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	cout << "mean votes in the vote map:" << mean_vote << endl;
 	double vote_threshold = mean_vote-1;
 	if (vote_threshold < 1) { vote_threshold = 1.0;}
+    if (vote_threshold > max_vote_threshold) {vote_threshold = max_vote_threshold;}
 	cout << "threshold vote:" << vote_threshold << endl;
 
-	int windows_siz = 5;
-	non_max_suppresion (img1d,sz_x,sz_y,sz_z,vote_threshold, offset,node_list,vote_list,windows_siz);
+    int windows_siz = 5;
+    non_max_suppresion (img1d,sz_x,sz_y,sz_z,vote_threshold, offset,node_list,vote_list,windows_siz);
 	cout << "after non_max supression:"<< endl;
 	cout << "number of nodes:"<< node_list.size() << endl;
 	cout << "maximum votes:" << v_max(vote_list) << endl;

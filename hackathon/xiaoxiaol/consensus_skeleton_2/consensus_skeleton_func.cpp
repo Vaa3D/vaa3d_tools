@@ -45,14 +45,15 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 
 	bool ok;
-    int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
+    //int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
+    int max_vote_threshold = QInputDialog::getInt(parent, "max_vote_threshold", "FIX ME:vote threshold (to be included for consensusing)", 0, 1, 1, 1, &ok);
     int cluster_distance_threshold = QInputDialog::getInt(parent, "FIX ME:cluster distance threshold", "5~10", 0, 1, 1, 1, &ok);
 
 	if (!ok)
 		return 0;
 	
     QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, method_code, cluster_distance_threshold,  callback))
+    if (!consensus_skeleton(nt_list, merge_result, max_vote_threshold, cluster_distance_threshold,  callback))
     {
         v3d_msg("Error in consensus swc!");
         return -1;
@@ -174,15 +175,15 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
 	//parsing parameters
 
-    int method_code = 1; //adj matrix
+    int max_vote_threshold = 4;
     int cluster_distance_threshold = 10; // ignore nodes that far away for clustering
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
 		{
-            method_code = atoi(paras->at(0));
-            cout<<"method_code = "<<method_code<<endl;
+            max_vote_threshold = atoi(paras->at(0));
+            cout<<"max_vote_threshold = "<<max_vote_threshold<<endl;
             if (paras->size() == 2){
                 cluster_distance_threshold =  atoi(paras->at(1));
                 cout<<"clustering distance threshold = "<<cluster_distance_threshold<<endl;
@@ -242,7 +243,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		outfileName = QString(outlist->at(0));
 
 	QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, method_code,cluster_distance_threshold, callback))
+    if (!consensus_skeleton(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
 	{
 		cerr<<"error in consensus_skeleton"<<endl;
 		return false;
@@ -264,9 +265,6 @@ bool dark_pruning_func(const V3DPluginArgList & input, V3DPluginArgList & output
             cerr<<"You must specify input eswc file and the corresponding image file."<<endl;
             return false;
         }
-
-
-
 
         //parsing input
         vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
@@ -641,11 +639,11 @@ void printHelp()
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
-    cout<<"\t-p <method_code> <clustering_distance_threshold>:  method: graphy connection method, given the nodes extracted from the confidence map. 1(default): by edge voting  2: minimum spanning tree connection" <<endl;
-    cout<<"\t                                                   clustering_distance_threshold: the distance threshold to map swc nodes to clutered/consensued nodes." <<endl;
+    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold>:  max_vote_threshold: votes bigger than this threshold (could be smaller than mean votes) will be "<<endl;
+    cout<<"\t                                                            included for consensing." <<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
     cout<<"\t                   default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 2 10 \n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 4 10 \n"<<endl;
 
     cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f vote_map -i <input> -o <output_image_file> "<<endl;
@@ -663,6 +661,5 @@ void printHelp()
     cout<<"\t-o <output_image_file>:  output image file name."<<endl;
     cout<<"\t-p <visible_threshold>:  visible threshold for dark pruning."<<endl;
     cout<<"Example: v3d -x consensus_swc -f dark_pruning -i input_consensus_file  input_image.v3dpbd -o pruned.swc -p 40\n"<<endl;
-
 }
 
