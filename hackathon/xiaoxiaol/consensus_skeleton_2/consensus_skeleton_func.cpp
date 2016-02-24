@@ -635,7 +635,7 @@ void printHelp()
     cout<<"Example: v3d -x consensus_swc -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
 
     cout<<"\n  3) Generate a consensus neuron skeleton (swc file) from a group of neurons ( radii are ignored)."<<endl;
-    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <input> -o <output_file> "<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <input_folder or ano file> -o <output_file> "<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
@@ -643,7 +643,8 @@ void printHelp()
     cout<<"\t                                                            included for consensing." <<endl;
     cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
     cout<<"\t                   default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 4 10 \n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 3 10 \n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.swc -p 3 10 \n"<<endl;
 
     cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f vote_map -i <input> -o <output_image_file> "<<endl;

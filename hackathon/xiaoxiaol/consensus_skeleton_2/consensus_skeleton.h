@@ -24,6 +24,14 @@ void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3D
 bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileName,V3DPluginCallback2 & callback);
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,
                          int cluster_distance_threshold, V3DPluginCallback2 &callback);
+bool generate_vote_map(vector<NeuronTree> & nt_list, int dialate_radius, unsigned char * img1d,
+                       V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z, Point3D offset);
+
+void label_image(unsigned char * imgid, V3DLONG xs, V3DLONG ys, V3DLONG zs, double rs,
+                 unsigned char * VOTED, V3DLONG sx, V3DLONG sy,V3DLONG sz);
+bool generate_vote_map_resample(vector<NeuronTree> & nt_list, int dialate_radius, unsigned char * img1d,
+                       V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z, Point3D offset);
+
 
 bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, double soma_x, double soma_y, double soma_z,
                QList<NeuronSWC> &out_sorted_consensus_nt_list, double bridge_size);

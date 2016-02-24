@@ -308,7 +308,207 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
 	}
 }
 
+bool generate_vote_map(vector<NeuronTree> & nt_list, int dialate_radius, unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z, Point3D offset)
+{
+        cout <<"\nGenerate vote map "<<endl;
+        long long tol_sz = sz_x* sz_y*sz_z;
+        cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
 
+
+        V3DLONG pagesz = sz_x*sz_y;
+
+        for (int j =0; j < nt_list.size(); j++){
+            NeuronTree nt = nt_list[j];
+
+            for (int i =0; i < nt.listNeuron.size(); i++)
+            {
+                NeuronSWC node = nt.listNeuron.at(i);
+                double xs=node.x-offset.x;
+                double ys=node.y-offset.y;
+                double zs=node.z-offset.z;
+
+
+                double rs = dialate_radius; //expansion
+
+                double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
+
+                ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sz_x-1));
+                ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sz_x-1));
+                if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
+
+                bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sz_y-1));
+                bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sz_y-1));
+                if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
+
+                ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz_z-1));
+                ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz_z-1));
+                if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
+
+                //mark all voxels close to the swc node(s)
+                for (int kk = ballz0; kk <= ballz1; kk++){
+                    for (int jj = bally0; jj <= bally1; jj++){
+                        for (int ii = ballx0; ii <= ballx1; ii++){
+                            V3DLONG ind = (kk)*pagesz + (jj)*sz_x + ii;
+                            ind = MIN(ind,tol_sz);
+                            ind = MAX(ind, 0);
+                            if (img1d[ind]<=j) {
+                                img1d[ind]++;
+                            }
+
+                        }
+                    }
+                }
+
+                //            V3DLONG id_x = (node.x-offset.x) +0.5; //round up
+                //            V3DLONG id_y = (node.y-offset.y) +0.5;
+                //            V3DLONG id_z = (node.z-offset.z) +0.5;
+                //            V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
+
+                //            if (idx <tol_sz &&  VOTED[idx] == 0 ){
+                //                img1d[idx] ++ ;
+                //                VOTED[idx] = 1;
+                //            }
+
+            }
+        }
+
+        //for debug only
+        //    Image4DSimple *image = new Image4DSimple();
+        //    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+        //    callback.saveImage(image, "./vote_map.v3draw");
+
+        return true;
+
+    }
+
+
+
+
+
+
+
+
+
+void label_image(unsigned char * img1d, V3DLONG xs, V3DLONG ys, V3DLONG zs, double rs,
+                 unsigned char * VOTED, V3DLONG sx, V3DLONG sy,V3DLONG sz)
+{
+    double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
+    long long  pagesz = sx*sy;
+    ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sx-1));
+    ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sx-1));
+    if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
+
+    bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sy-1));
+    bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sy-1));
+    if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
+
+    ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz-1));
+    ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
+    if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
+
+    //mark all voxels close to the swc node(s)
+    for (V3DLONG k = ballz0; k <= ballz1; k++){
+        for (V3DLONG j = bally0; j <= bally1; j++){
+            for (V3DLONG i = ballx0; i <= ballx1; i++){
+                long long  ind = (k)*pagesz + (j)*sx + i;
+                if (VOTED[ind] == 0 /* and distance < rs*/) {
+                    img1d[ind]++;
+                    VOTED[ind] = 1;}
+            }
+        }
+    }
+
+
+}
+
+
+
+
+bool generate_vote_map_resample(vector<NeuronTree> & nt_list, int dialate_radius, unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y, V3DLONG sz_z, Point3D offset)
+{
+        cout <<"\nGenerate vote map with resampling "<<endl;
+        long long tol_sz = sz_x* sz_y*sz_z;
+        cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
+        // from leaf nodes to roots, resample between nodes if necessary
+
+
+
+        unsigned char * VOTED = new unsigned char[tol_sz];
+
+        for (V3DLONG n_id =0;n_id <nt_list.size();n_id++){
+            NeuronTree neurons = nt_list[n_id];
+            NeuronSWC *p_cur = 0;
+            //create a LUT
+            QHash<V3DLONG, V3DLONG> neuron_id_table = NeuronNextPn(neurons);
+
+            //compute mask
+            double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
+
+            for(long long i = 0; i < tol_sz; i++) VOTED[i] = 0;
+
+            for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
+            {
+                V3DLONG i,j,k;
+                p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
+                xs = p_cur->x - offset.x;
+                ys = p_cur->y - offset.y;
+                zs = p_cur->z - offset.z;
+                rs = dialate_radius;
+
+                label_image(img1d, xs,  ys,  zs,  rs, VOTED,  sz_x,  sz_y, sz_z);
+
+                //find previous node
+                if (p_cur->pn < 0)
+                    continue;//root node skip the following
+
+                //get the parent info
+                const NeuronSWC & pp  = neurons.listNeuron.at(neuron_id_table.value(p_cur->pn));
+                xe = pp.x- offset.x;
+                ye = pp.y- offset.y;
+                ze = pp.z- offset.z;
+                re = pp.r;
+
+                //judge if two points overlap, if yes, then do nothing as the sphere has already been drawn
+                if (xe==xs && ye==ys && ze==zs)
+                {
+                    continue;
+                }
+
+                // interpolate along the line
+                double l =sqrt((xe-xs)*(xe-xs)+(ye-ys)*(ye-ys)+(ze-zs)*(ze-zs));
+                double dx = (xe - xs);
+                double dy = (ye - ys);
+                double dz = (ze - zs);
+                double x = xs;
+                double y = ys;
+                double z = zs;
+
+                int steps = lroundf(l);
+                steps = (steps < fabs(dx))? fabs(dx):steps;
+                steps = (steps < fabs(dy))? fabs(dy):steps;
+                steps = (steps < fabs(dz))? fabs(dz):steps;
+                if (steps<1)
+                    steps =1;
+
+                double xIncrement = double(dx) / (steps*2);
+                double yIncrement = double(dy) / (steps*2);
+                double zIncrement = double(dz) / (steps*2);
+
+                for (int i = 0; i <= steps; i++)
+                {
+                    x += xIncrement;
+                    y += yIncrement;
+                    z += zIncrement;
+                    label_image(img1d, x,  y,  z,  rs, VOTED, sz_x,  sz_y, sz_z);
+                }
+            }
+
+        }
+
+
+        return true;
+
+    }
 
 void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
 		int imageCount, V3DPluginCallback2 & callback)
@@ -658,91 +858,31 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	V3DLONG  sz_x = ceil((bbUnion.max_x - bbUnion.min_x ) / closeness) +1; //+0.5 to round up from float to V3DLONG
 	V3DLONG  sz_y = ceil((bbUnion.max_y - bbUnion.min_y ) / closeness) +1;
 	V3DLONG  sz_z = ceil((bbUnion.max_z - bbUnion.min_z ) / closeness) +1;
-	V3DLONG  tol_sz = sz_x * sz_y * sz_z;
-	if (tol_sz > LONG_MAX){
+    long long  tol_sz = sz_x * sz_y * sz_z;
+    if (tol_sz > LONG_LONG_MAX){
 		cout << sz_x<<"  "<<sz_y<<"  "<<sz_z<<endl;
-		cout <<"requires too much memory (more than 1 GB) to allocate for the vote map:"<<tol_sz <<endl;
+        cout <<"when allocating for votemap volume: requires too much memory to allocate for the vote map:"<<tol_sz <<endl;
 		return false;
 	}
 
 
-	unsigned char * img1d = new unsigned char[tol_sz];
-	for(V3DLONG i = 0; i < tol_sz; i++) img1d[i] = 0;
-
-
-	//unsigned char * VOTED = new unsigned char[tol_sz];
-	//for(V3DLONG i = 0; i < tol_sz; i++) VOTED[i] = 0;
 
 	//****************************************************
 	// step 1: VOTE MAP
-	cout <<"\nGenerate vote map "<<endl;
-	cout << "vote_map image size(memory) = " << tol_sz<<": " <<sz_x<<"x "<<sz_y<<" x"<<sz_z<< endl;
-	int dilation_radius = 0;
+    unsigned char * img1d = new unsigned char[tol_sz];
+    for(long long i = 0; i < tol_sz; i++) img1d[i] = 0;
 
-	V3DLONG pagesz = sz_x*sz_y;
+    //if (! generate_vote_map(nt_list,0,img1d, sz_x,sz_y,sz_z, offset))
+    if (! generate_vote_map_resample(nt_list,0,img1d, sz_x,sz_y,sz_z, offset))
 
-
-	for (int j =0; j < nt_list.size(); j++){
-		NeuronTree nt = nt_list[j];
-		//keep a record which idx have been voted by previous nodes in the same tree
-		//for(V3DLONG ii = 0; ii< tol_sz; ii++) VOTED[ii] = 0;
-
-		for (int i =0; i < nt.listNeuron.size(); i++)
-		{
-			NeuronSWC node = nt.listNeuron.at(i);
-			double xs=node.x-offset.x;
-			double ys=node.y-offset.y;
-			double zs=node.z-offset.z;
+    {
+        cout <<"error in generating vote map"<<endl;
+        return false;
+    }
 
 
-			double rs = dilation_radius;
 
-			double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
 
-			ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sz_x-1));
-			ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sz_x-1));
-			if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
-
-			bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sz_y-1));
-			bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sz_y-1));
-			if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
-
-			ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz_z-1));
-			ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz_z-1));
-			if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
-
-			//mark all voxels close to the swc node(s)
-			for (int kk = ballz0; kk <= ballz1; kk++){
-				for (int jj = bally0; jj <= bally1; jj++){
-					for (int ii = ballx0; ii <= ballx1; ii++){
-						V3DLONG ind = (kk)*pagesz + (jj)*sz_x + ii;
-						ind = MIN(ind,tol_sz);
-						ind = MAX(ind, 0);
-						if (img1d[ind]<=j) {
-							img1d[ind]++;
-						}
-
-					}
-				}
-			}
-
-			//            V3DLONG id_x = (node.x-offset.x) +0.5; //round up
-			//            V3DLONG id_y = (node.y-offset.y) +0.5;
-			//            V3DLONG id_z = (node.z-offset.z) +0.5;
-			//            V3DLONG idx = id_z * (sz_x*sz_y) + id_y * sz_x + id_x;
-
-			//            if (idx <tol_sz &&  VOTED[idx] == 0 ){
-			//                img1d[idx] ++ ;
-			//                VOTED[idx] = 1;
-			//            }
-
-		}
-	}
-
-	//for debug only
-	//    Image4DSimple *image = new Image4DSimple();
-	//    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
-	//    callback.saveImage(image, "./vote_map.v3draw");
 
 
 
