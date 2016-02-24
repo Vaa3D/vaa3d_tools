@@ -1166,9 +1166,15 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
     strcpy(C_background_th,S_background_th.c_str());
     arg_para.push_back(C_background_th);
 
-    arg_para.push_back("10");
-    arg_para.push_back("10");
+    string S_seed_win = boost::lexical_cast<string>(P.seed_win);
+    char* C_seed_win = new char[S_seed_win.length() + 1];
+    strcpy(C_seed_win,S_seed_win.c_str());
+    arg_para.push_back(C_seed_win);
 
+    string S_slip_win = boost::lexical_cast<string>(P.slip_win);
+    char* C_slip_win = new char[S_slip_win.length() + 1];
+    strcpy(C_slip_win,S_slip_win.c_str());
+    arg_para.push_back(C_slip_win);
 
     full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
     arg.p = (void *) & arg_para; input << arg;
@@ -1215,20 +1221,28 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
             LocationSimple newTip;
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
-                V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
-                V3DLONG node_pn_2nd;
-                if( list.at(node_pn).pn < 0)
-                {
-                    node_pn_2nd = node_pn;
-                }
-                else
-                {
-                    node_pn_2nd = getParent(node_pn,nt);
-                }
+//                V3DLONG node_pn;
+//                V3DLONG node_pn_2nd;
+//                if(curr.pn < 0)
+//                    node_pn_2nd = i;
+//                else
+//                    node_pn = getParent(i,nt);
+//                if( list.at(node_pn).pn < 0)
+//                {
+//                    node_pn_2nd = node_pn;
+//                }
+//                else
+//                {
+//                    node_pn_2nd = getParent(node_pn,nt);
+//                }
 
-                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
-                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
-                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+//                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
+//                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
+//                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+
+                newTip.x = curr.x + total4DImage->getOriginX();
+                newTip.y = curr.y + total4DImage->getOriginY();
+                newTip.z = curr.z + total4DImage->getOriginZ();
             }
             if( curr.x < 0.05* total4DImage->getXDim())
             {
@@ -1245,6 +1259,7 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
             }
         }
     }
+
     double overlap = 0.1;
     LocationSimple newTarget;
     if(tip_left.size()>0)
@@ -1295,39 +1310,49 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
 
     V3DLONG neuronNum = neuron_sorted.size();
     V3DLONG *flag = new V3DLONG[neuronNum];
-    for (V3DLONG i=0;i<neuronNum;i++)
+    if(inputRootList.size() == 1 && (inputRootList.at(0).x - total4DImage->getOriginX()) == (inputRootList.at(0).y - total4DImage->getOriginY()))
     {
-        flag[i] = 0;
-    }
-
-    int root_index = -1;
-    for(V3DLONG i = 0; i<inputRootList.size();i++)
-    {
-        int marker_x = inputRootList.at(i).x - total4DImage->getOriginX();
-        int marker_y = inputRootList.at(i).y - total4DImage->getOriginY();
-        int marker_z = inputRootList.at(i).z - total4DImage->getOriginZ();
-
-        for(V3DLONG j = 0; j<neuronNum;j++)
+        for (V3DLONG i=0;i<neuronNum;i++)
         {
-            NeuronSWC curr = neuron_sorted.at(j);
-            if(curr.pn < 0) root_index = j;
-            double dis = sqrt(pow2(marker_x - curr.x) + pow2(marker_y - curr.y) + pow2(marker_z - curr.z));
+            flag[i] = 1;
+        }
+    }
+    else
+    {
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            flag[i] = 0;
+        }
 
-            if(dis < 20 && flag[j] ==0)
+        int root_index = -1;
+        for(V3DLONG i = 0; i<inputRootList.size();i++)
+        {
+            int marker_x = inputRootList.at(i).x - total4DImage->getOriginX();
+            int marker_y = inputRootList.at(i).y - total4DImage->getOriginY();
+            int marker_z = inputRootList.at(i).z - total4DImage->getOriginZ();
+
+            for(V3DLONG j = 0; j<neuronNum;j++)
             {
-                flag[root_index] = 1;
-                V3DLONG d;
-                for( d = root_index+1; d < neuronNum; d++)
+                NeuronSWC curr = neuron_sorted.at(j);
+                if(curr.pn < 0) root_index = j;
+                double dis = sqrt(pow2(marker_x - curr.x) + pow2(marker_y - curr.y) + pow2(marker_z - curr.z));
+
+                if(dis < 20 && flag[j] ==0)
                 {
-                    if(neuron_sorted.at(d).pn < 0)
-                        break;
-                    else
-                        flag[d] = 1;
+                    flag[root_index] = 1;
+                    V3DLONG d;
+                    for( d = root_index+1; d < neuronNum; d++)
+                    {
+                        if(neuron_sorted.at(d).pn < 0)
+                            break;
+                        else
+                            flag[d] = 1;
 
+                    }
+                    break;
                 }
-                break;
-            }
 
+            }
         }
     }
 

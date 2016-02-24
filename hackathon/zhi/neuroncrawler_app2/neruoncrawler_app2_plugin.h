@@ -255,11 +255,13 @@ class neuroncrawler_app1_raw : public QDialog
         neuroncrawler_app1_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
-
+            int chn_num = 3;
             v3dhandle curwin = cb.currentImageWindow();
             if (curwin)
             {
                 image = cb.getImage(curwin);
+                chn_num = image->getCDim();
+
                 listLandmarks = cb.getLandmark(curwin);
                 if(listLandmarks.count() ==0)
                 {
@@ -268,7 +270,6 @@ class neuroncrawler_app1_raw : public QDialog
                 }
             }
 
-            int chn_num = image->getCDim();
             QGridLayout * layout = new QGridLayout();
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
@@ -445,11 +446,13 @@ class neuroncrawler_most_raw : public QDialog
         neuroncrawler_most_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
-
+            int chn_num = 3;
             v3dhandle curwin = cb.currentImageWindow();
             if (curwin)
             {
                 image = cb.getImage(curwin);
+                chn_num = image->getCDim();
+
                 listLandmarks = cb.getLandmark(curwin);
                 if(listLandmarks.count() ==0)
                 {
@@ -458,7 +461,6 @@ class neuroncrawler_most_raw : public QDialog
                 }
             }
 
-            int chn_num = image->getCDim();
             QGridLayout * layout = new QGridLayout();
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
