@@ -11,7 +11,7 @@
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-#include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neruoncrawler_app2, neruoncrawler_app2);
@@ -22,7 +22,7 @@ QStringList neruoncrawler_app2::menulist() const
 	return QStringList() 
         <<tr("trace_APP2")
         <<tr("trace_APP1")
-        //<<tr("trace_tc")
+        <<tr("trace_MOST")
 		<<tr("about");
 }
 
@@ -123,6 +123,47 @@ void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         P.block_size = dialog.block_size;
         crawler_raw_app1(callback,parent,P,bmenu);
 	}
+    else if (menu_name == tr("trace_MOST"))
+    {
+        MOST_LS_PARA P;
+        bool bmenu = true;
+        neuroncrawler_most_raw dialog(callback, parent);
+
+        if (dialog.image && dialog.listLandmarks.size()==0)
+            return;
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
+        if(dialog.rawfilename.isEmpty())
+        {
+            v3d_msg("Please select the image file.");
+            return;
+        }
+
+        if(dialog.markerfilename.isEmpty() && ! dialog.image)
+        {
+            v3d_msg("Please select the marker file.");
+            return;
+        }
+
+        if(!dialog.image)
+        {
+            P.markerfilename = dialog.markerfilename;
+            P.image = 0;
+        }else
+        {
+            P.image = dialog.image;
+            P.listLandmarks = dialog.listLandmarks;
+        }
+        P.inimg_file = dialog.rawfilename;
+        P.bkg_thresh = dialog.bkg_thresh;
+        P.channel = dialog.channel;
+        P.seed_win = dialog.seed_win;
+        P.slip_win = dialog.slip_win;
+        P.block_size = dialog.block_size;
+        crawler_raw_most(callback,parent,P,bmenu);
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "

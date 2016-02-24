@@ -8,6 +8,7 @@
 #include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
+
 struct APP2_LS_PARA
 {
     int is_gsdt;
@@ -41,10 +42,32 @@ struct APP1_LS_PARA
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 
+struct MOST_LS_PARA
+{
+    int  channel;
+    int  bkg_thresh;
+    int  seed_win;
+    int  slip_win;
+
+    int  block_size;
+    V3DLONG in_sz[3];
+
+    Image4DSimple* image;
+    LandmarkList listLandmarks;
+    QString tcfilename,inimg_file,rawfilename,markerfilename;
+};
+
 bool crawler_raw_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+
 bool crawler_raw_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA &p,bool bmenu);
 bool app1_tracing(V3DPluginCallback2 &callback,APP1_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+
+bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA &p,bool bmenu);
+bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
+
+
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 
 

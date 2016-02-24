@@ -1,6 +1,6 @@
 #ifndef WEAKSWCFILTER
 #define WEAKSWCFILTER
-#include "../ngtypes/basetypes.h"
+#include "../../ngtypes/basetypes.h"
 #include "../ineuronprocessobject.h"
 #include "../../ngtypes/volume.h"
 class Tree;

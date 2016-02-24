@@ -27,7 +27,6 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
 
-
 SOURCES	+= neruoncrawler_app2_plugin.cpp
 SOURCES	+= tracing_func.cpp
 

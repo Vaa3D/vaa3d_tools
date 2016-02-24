@@ -7,16 +7,19 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h"
 
+//#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
 
 
-using namespace std;
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#include <boost/lexical_cast.hpp>
 template <class T> T pow2(T a)
 {
     return a*a;
 
 }
 
+using namespace std;
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QString fileOpenName)
 {
     QFile file(fileSaveName);
@@ -926,5 +929,435 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     myfile.flush();
     myfile.close();
     ifs_2nd.close();
+}
 
+bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA &P,bool bmenu)
+{
+    QElapsedTimer timer1;
+    timer1.start();
+
+    QString fileOpenName = P.inimg_file;
+
+    if(P.image)
+    {
+        P.in_sz[0] = P.image->getXDim();
+        P.in_sz[1] = P.image->getYDim();
+        P.in_sz[2] = P.image->getZDim();
+    }else
+    {
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+        if(datald) {delete []datald; datald = 0;}
+        P.in_sz[0] = in_zz[0];
+        P.in_sz[1] = in_zz[1];
+        P.in_sz[2] = in_zz[2];
+
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+        LocationSimple t;
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            t.x = file_inmarkers[i].x + 1;
+            t.y = file_inmarkers[i].y + 1;
+            t.z = file_inmarkers[i].z + 1;
+            P.listLandmarks.push_back(t);
+        }
+    }
+
+    LandmarkList allTargetList;
+    QList<LandmarkList> allTipsList;
+
+    LocationSimple tileLocation;
+    tileLocation.x = P.listLandmarks[0].x;
+    tileLocation.y = P.listLandmarks[0].y;
+    tileLocation.z = P.listLandmarks[0].z;
+
+    LandmarkList inputRootList;
+    inputRootList.push_back(tileLocation);
+    allTipsList.push_back(inputRootList);
+
+    tileLocation.x = tileLocation.x -int(P.block_size/2);
+    tileLocation.y = tileLocation.y -int(P.block_size/2);
+    tileLocation.z = 0;
+    allTargetList.push_back(tileLocation);
+
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(tmpfolder.isEmpty())
+    {
+        printf("Can not create a tmp folder!\n");
+        return false;
+    }
+
+    LandmarkList newTargetList;
+    QList<LandmarkList> newTipsList;
+
+    while(allTargetList.size()>0)
+    {
+        newTargetList.clear();
+        newTipsList.clear();
+        most_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+        allTipsList.removeAt(0);
+        allTargetList.removeAt(0);
+        if(newTipsList.size()>0)
+        {
+            for(int i = 0; i < newTipsList.size(); i++)
+            {
+                allTargetList.push_back(newTargetList.at(i));
+                allTipsList.push_back(newTipsList.at(i));
+            }
+        }
+    }
+
+
+    qint64 etime1 = timer1.elapsed();
+
+    list<string> infostring;
+    string tmpstr; QString qtstr;
+    tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_MOST")); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+
+    tmpstr =  qPrintable( qtstr.setNum(P.seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+
+
+    processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+
+
+    v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
+                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), 1);
+
+    return true;
+}
+
+bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
+{
+
+    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
+    QString imageSaveString = saveDirString;
+
+    V3DLONG start_x,start_y,end_x,end_y;
+    start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
+    start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
+
+    end_x = tileLocation.x+P.block_size;
+    end_y = tileLocation.y+P.block_size;
+    if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
+    if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+
+    if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
+    {
+        printf("hit the boundary");
+        return true;
+    }
+
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
+
+    ifstream ifs_image(imageSaveString.toStdString().c_str());
+    if(ifs_image)
+    {
+        printf("the tile was scanned");
+        return true;
+    }
+
+    unsigned char * total1dData = 0;
+    V3DLONG *in_sz = 0;
+
+    if(P.image)
+    {
+        in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = P.in_sz[2];
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        try {total1dData = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+        V3DLONG i = 0;
+        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
+        {
+            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+            for(V3DLONG iy = start_y; iy < end_y; iy++)
+            {
+                V3DLONG offsetj = iy*P.in_sz[0];
+                for(V3DLONG ix = start_x; ix < end_x; ix++)
+                {
+                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+    }else
+    {
+        V3DLONG *in_zz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        {
+            printf("can not load the region");
+            if(total1dData) {delete []total1dData; total1dData = 0;}
+            return false;
+        }
+    }
+
+    Image4DSimple* total4DImage = new Image4DSimple;
+    total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    total4DImage->setOriginX(start_x);
+    total4DImage->setOriginY(start_y);
+    total4DImage->setOriginZ(tileLocation.z);
+
+    V3DLONG mysz[4];
+    mysz[0] = total4DImage->getXDim();
+    mysz[1] = total4DImage->getYDim();
+    mysz[2] = total4DImage->getZDim();
+    mysz[3] = total4DImage->getCDim();
+
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+    QString scanDataFileString = saveDirString;
+    scanDataFileString.append("/").append("scanData.txt");
+    QString swcString = saveDirString;
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
+
+
+    qDebug()<<scanDataFileString;
+    QFile saveTextFile;
+    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+    if (!saveTextFile.isOpen()){
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            return false;}     }
+    QTextStream outputStream;
+    outputStream.setDevice(&saveTextFile);
+    outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+    saveTextFile.close();
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    QString full_plugin_name;
+    QString func_name;
+
+    arg.type = "random";std::vector<char*> arg_input;
+    std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+    arg_input.push_back(fileName_string);
+    arg.p = (void *) & arg_input; input<< arg;
+
+    char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
+    arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+    arg.type = "random";
+    std::vector<char*> arg_para;
+    string S_channel = boost::lexical_cast<string>(P.channel);
+    char* C_channel = new char[S_channel.length() + 1];
+    strcpy(C_channel,S_channel.c_str());
+    arg_para.push_back(C_channel);
+
+    string S_background_th = boost::lexical_cast<string>(P.bkg_thresh);
+    char* C_background_th = new char[S_background_th.length() + 1];
+    strcpy(C_background_th,S_background_th.c_str());
+    arg_para.push_back(C_background_th);
+
+    arg_para.push_back("10");
+    arg_para.push_back("10");
+
+
+    full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
+    arg.p = (void *) & arg_para; input << arg;
+
+    if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+    {
+
+         printf("Can not find the tracing plugin!\n");
+         return false;
+    }
+
+    NeuronTree nt_most;
+    QString swcMOST = saveDirString;
+    swcMOST.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+    nt_most = readSWC_file(swcMOST);
+
+    NeuronTree nt;
+    nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage);
+
+    export_list2file(nt.listNeuron, swcString,swcMOST);
+
+   // NeuronTree nt;
+   // nt = readSWC_file(swcString);
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    LandmarkList tip_left;
+    LandmarkList tip_right;
+    LandmarkList tip_up ;
+    LandmarkList tip_down;
+    QList<NeuronSWC> list = nt.listNeuron;
+    for (V3DLONG i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0)
+        {
+            NeuronSWC curr = list.at(i);
+            LocationSimple newTip;
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
+                V3DLONG node_pn_2nd;
+                if( list.at(node_pn).pn < 0)
+                {
+                    node_pn_2nd = node_pn;
+                }
+                else
+                {
+                    node_pn_2nd = getParent(node_pn,nt);
+                }
+
+                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
+                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
+                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+            }
+            if( curr.x < 0.05* total4DImage->getXDim())
+            {
+                tip_left.push_back(newTip);
+            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            {
+                tip_right.push_back(newTip);
+            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            {
+                tip_up.push_back(newTip);
+            }else if (curr.y > 0.95*total4DImage->getYDim())
+            {
+                tip_down.push_back(newTip);
+            }
+        }
+    }
+    double overlap = 0.1;
+    LocationSimple newTarget;
+    if(tip_left.size()>0)
+    {
+        newTipsList->push_back(tip_left);
+        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = total4DImage->getOriginY();
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
+    if(tip_right.size()>0)
+    {
+        newTipsList->push_back(tip_right);
+        newTarget.x = floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = total4DImage->getOriginY();
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
+    if(tip_up.size()>0)
+    {
+        newTipsList->push_back(tip_up);
+        newTarget.x = total4DImage->getOriginX();
+        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
+    if(tip_down.size()>0)
+    {
+        newTipsList->push_back(tip_down);
+        newTarget.x = total4DImage->getOriginX();
+        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
+    return true;
+}
+
+NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage)
+{
+    NeuronTree nt_result;
+    QList<NeuronSWC> neuron_sorted;
+
+    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+        return nt_result;
+    }
+
+    V3DLONG neuronNum = neuron_sorted.size();
+    V3DLONG *flag = new V3DLONG[neuronNum];
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 0;
+    }
+
+    int root_index = -1;
+    for(V3DLONG i = 0; i<inputRootList.size();i++)
+    {
+        int marker_x = inputRootList.at(i).x - total4DImage->getOriginX();
+        int marker_y = inputRootList.at(i).y - total4DImage->getOriginY();
+        int marker_z = inputRootList.at(i).z - total4DImage->getOriginZ();
+
+        for(V3DLONG j = 0; j<neuronNum;j++)
+        {
+            NeuronSWC curr = neuron_sorted.at(j);
+            if(curr.pn < 0) root_index = j;
+            double dis = sqrt(pow2(marker_x - curr.x) + pow2(marker_y - curr.y) + pow2(marker_z - curr.z));
+
+            if(dis < 20 && flag[j] ==0)
+            {
+                flag[root_index] = 1;
+                V3DLONG d;
+                for( d = root_index+1; d < neuronNum; d++)
+                {
+                    if(neuron_sorted.at(d).pn < 0)
+                        break;
+                    else
+                        flag[d] = 1;
+
+                }
+                break;
+            }
+
+        }
+    }
+
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    //set node
+    NeuronSWC S;
+    for (V3DLONG i=0;i<neuron_sorted.size();i++)
+    {
+        if(flag[i] == 1)
+        {
+            NeuronSWC curr = neuron_sorted.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+    nt_result.n = -1;
+    nt_result.on = true;
+    nt_result.listNeuron = listNeuron;
+    nt_result.hashNeuron = hashNeuron;
+    if(flag) {delete[] flag; flag = 0;}
+
+    return nt_result;
 }
