@@ -1302,7 +1302,7 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
     NeuronTree nt_result;
     QList<NeuronSWC> neuron_sorted;
 
-    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
+    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 10))
     {
         v3d_msg("fail to call swc sorting function.",0);
         return nt_result;
