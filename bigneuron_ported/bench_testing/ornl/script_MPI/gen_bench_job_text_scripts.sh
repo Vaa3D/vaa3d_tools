@@ -12,8 +12,10 @@ function write_neuron_tracing_command {
   vaa3dProgramPath=$3;
   inimgfileTracing=$4;
   finalfileFolder=$5;
+  inputSWCfolder=$6;
 
   smooth_inimgfileTracing=${inimgfileTracing}.g.v3draw;
+  consensus_inimgfileTracing=${inimgfileTracing}_consensus_pruned.eswc;
 
 #smooth image only
 
@@ -26,6 +28,12 @@ function write_neuron_tracing_command {
   if [ $METHOD == "aniso" ]; then
    echo "./start_vaa3d.sh -x anisodiff_littlequick -f anisodiff_littlequick_func -i $inimgfileTracing;chmod -R 777 $inimgfileTracing*_anisodiff.raw;mv  $inimgfileTracing*_anisodiff.raw $finalfileFolder" >> $outputScript;
   fi;
+
+#consensus 
+
+  if [ $METHOD == "consensus" ]; then
+   echo "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i $inputSWCfolder/*.swc -o $inputSWCfolder/consensus.eswc -p 3 10;./start_vaa3d.sh -x consensus_swc -f dark_pruning -i $inputSWCfolder/consensus.eswc $inimgfileTracing -o $consensus_inimgfileTracing -p 40; mv $consensus_inimgfileTracing $finalfileFolder">> $outputScript;
+  fi
 
 #APP1
 
@@ -279,6 +287,7 @@ inputImgFile=$2
 finalfileFolder=$3
 vaa3dProgramPath=$4
 jobScriptFile=$5
+inputSWCfolder=$6
 
 
 #generate the batch script configuration
@@ -291,5 +300,5 @@ if [ ! -d $finalfileFolder ]; then
   mkdir $finalfileFolder
 fi
 
-write_neuron_tracing_command $jobScriptFile $tracingMethod $vaa3dProgramPath $inputImgFile $finalfileFolder
+write_neuron_tracing_command $jobScriptFile $tracingMethod $vaa3dProgramPath $inputImgFile $finalfileFolder $inputSWCfolder
 
