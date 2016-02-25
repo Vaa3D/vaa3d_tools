@@ -80,12 +80,34 @@ double  mean_image_value( unsigned char *  img1d, V3DLONG siz)
 	return sum_v/count;
 }
 
-V3DLONG median(vector<V3DLONG> x)
+double median(vector<double> x)
 {
 	sort(x.begin(), x.end());
 	return  x[x.size()/2];
 }
 
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+
+double  computeTotalLength(const NeuronTree & nt)
+{
+    double Length = 0;
+    QList<NeuronSWC> list = nt.listNeuron;
+
+
+    for (int i=0;i<list.size();i++)
+    {
+        NeuronSWC curr = list.at(i);
+
+        int parent = getParent(i,nt);
+        if (parent==VOID) continue;
+        double l = dist(curr,list.at(parent));
+        Length += l;
+
+    }
+    return Length;
+
+}
 
 void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double &median_root_y, double  &median_root_z)
 {  //validate each tree, only keep the first tree
@@ -99,32 +121,37 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 	   }
 	   }
 	   */
-	//remove statistically outlisers
+    //remove statistically outliers
+    // use total length
+
 	cout<<"\nOutlier detection:"<<endl;
-	vector<V3DLONG> nt_sizes;
-	//cout <<"Dectecting  SWCs have too few nodes (< 10):"<<endl;
+    vector<double> valid_nt_sizes;
+    vector<double> nt_sizes;
+
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
-		V3DLONG num_nodes = tree.listNeuron.size();
-		//cout<<num_nodes<<endl;
-		if (num_nodes> 10 && num_nodes <50000){
-			nt_sizes.push_back(num_nodes);
+
+        double len = computeTotalLength(tree);
+        nt_sizes.push_back(len);
+        if (len > 10 && len <50000){
+            valid_nt_sizes.push_back(len);
 		}
 	}
 
-	V3DLONG median_size = median(nt_sizes);
+    V3DLONG median_size = median(valid_nt_sizes);
+
 	vector<V3DLONG > rm_ids;
 	cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
 	cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
 	for(int i = 0; i < nt_list.size(); i++){
-		V3DLONG num_nodes = nt_list[i].listNeuron.size();
-		if ( num_nodes> 3*median_size  ||  num_nodes < double(median_size)/3 || num_nodes > 50000 )
+        double len = nt_sizes[i];
+        if ( len > 3*median_size  ||  len < double(median_size)/3 || len > 50000 )
 		{
-			cout <<"Remove neuron "<< i<< ": "<<  num_nodes<< " nodes"<<endl;
+            cout <<"Remove neuron "<< i<< ": "<<  len<< " in total length"<<endl;
 			rm_ids.push_back(i);
 
 		}
-		if (num_nodes== median_size)
+        if (len == median_size)
 		{  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
 			NeuronSWC root = nt_list[i].listNeuron.at(0);
 			median_root_x = root.x;
@@ -183,32 +210,36 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 { // extract the local maximum voted skelenton node locations : node_list
 	// the corresponding votes are collected in: vote_list
 	V3DLONG num_nodes =0;
-	for (V3DLONG id_x = 0 + win_size/2; id_x <  sz_x- win_size/2; id_x++)
-		for (V3DLONG id_y = 0 + win_size/2; id_y <  sz_y- win_size/2; id_y++)
-			for (V3DLONG id_z = 0 + win_size/2; id_z <  sz_z- win_size/2; id_z++)
+    for (V3DLONG id_x = 0 + win_size/2; id_x <  sz_x- win_size/2; id_x++)
+        for (V3DLONG id_y = 0 + win_size/2; id_y <  sz_y- win_size/2; id_y++)
+            for (V3DLONG id_z = 0 + win_size/2; id_z <  sz_z- win_size/2; id_z++)
 			{
 				//nn, find the local max value within window size
 				unsigned char max_val = 0 ;
-				int pre_dis_sqr = 3 * (win_size/2) *(win_size/2)-1;
+                //int pre_dis_sqr = 3 * (win_size/2) *(win_size/2)-1;
 				V3DLONG max_idx = 0 ;
-				for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
-					for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
-						for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
+                for ( V3DLONG xx = id_x - win_size/2;xx< id_x + win_size/2;xx++)
+                    for ( V3DLONG yy = id_y - win_size/2;yy< id_y + win_size/2;yy++)
+                        for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
 						{
 							V3DLONG idx = zz * (sz_x*sz_y) + yy * sz_x + xx;
-							int dis_sqr = (xx-id_x)* (xx-id_x)+ (yy-id_y)* (yy-id_y)+ (yy-id_z)* (zz-id_z);
-							if (img1d[idx] < threshold_votes)
-							{
-								img1d[idx] =0;      
-							}
-							if (img1d[idx] > max_val){
-								max_val = img1d[idx] ;
-								max_idx = idx;
-								pre_dis_sqr = dis_sqr;
-							}
-
+                            //int dis_sqr = (xx-id_x)* (xx-id_x)+ (yy-id_y)* (yy-id_y)+ (yy-id_z)* (zz-id_z);
+                            //if (dis_sqr <  double(win_size*win_size)/4.0)
+                            //{
+                                if (img1d[idx] < threshold_votes)
+                                {
+                                    img1d[idx] =0;
+                                }
+                                if (img1d[idx] > max_val){
+                                    max_val = img1d[idx] ;
+                                    max_idx = idx;
+                                    //pre_dis_sqr = dis_sqr;
+                                }
+                            //}
 
 						}
+
+
 				if ( max_val >= threshold_votes)
 				{// found non-zero max that passes the majority votes threshold
 					for ( V3DLONG xx =id_x - win_size/2;xx< id_x + win_size/2;xx++)
@@ -216,7 +247,11 @@ void non_max_suppresion( unsigned char * img1d, V3DLONG sz_x, V3DLONG sz_y,V3DLO
 							for ( V3DLONG zz = id_z - win_size/2;zz< id_z + win_size/2;zz++)
 							{
 								V3DLONG idx = zz * (sz_x*sz_y) + yy * sz_x + xx;
-								img1d[idx] = 0;
+                                //int dis_sqr = (xx-id_x)* (xx-id_x)+ (yy-id_y)* (yy-id_y)+ (yy-id_z)* (zz-id_z);
+                                //if (dis_sqr <  double(win_size*win_size)/4.0)
+                                //{
+                                   img1d[idx] = 0;
+                                //}
 							}
 
 					img1d[max_idx] = max_val;
@@ -505,6 +540,11 @@ bool generate_vote_map_resample(vector<NeuronTree> & nt_list, int dialate_radius
 
         }
 
+
+        //for debug only
+        //    Image4DSimple *image = new Image4DSimple();
+        //    image->setData(img1d, sz_x, sz_y, sz_z, 1, V3D_UINT8);
+        //    callback.saveImage(image, "./vote_map.v3draw");
 
         return true;
 
@@ -914,7 +954,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 
 	// for debug: save node_list to check locations
-
+   /*
 	QList<NeuronSWC> locationTree;
 	for (int i=0;i<node_list.size();i++)
 	{
@@ -931,7 +971,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 		locationTree.append(tmp);
 	}
 	export_listNeuron_2swc(locationTree, "./test_nms_location.swc");
-
+   */
 
 
 
@@ -1000,10 +1040,12 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 			if (nodeMap.contains(j))
 			{
 				n_id = nodeMap[j];
-				V3DLONG pidx = cur.pn-1;//nt_list[i].hashNeuron.value(cur.pn);  // find the index in nueon_list
+                //V3DLONG pidx = cur.pn-1;//nt_list[i].hashNeuron.value(cur.pn);  // find the index in nueon_list
+                V3DLONG pidx = nt_list[i].hashNeuron.value(cur.pn);
 
 				pn_id = nodeMap[pidx];
-				if (pn_id > 0  && EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
+                //if (pn_id > -1  && EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
+                if (EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
 					adjMatrix[n_id*num_nodes + pn_id] += 1;
 					adjMatrix[pn_id*num_nodes + n_id] += 1;
 					//cout<<adjMatrix[n_id*num_nodes + pn_id] <<endl;
@@ -1032,7 +1074,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	QList <NeuronSWC> merge_result;
 	// MST method
 	if (method_code == 2 ){
-		long rootnode =100;
+        long rootnode =0;
 		cout <<"\nComputing max-spanning tree" <<endl;
 		//if (!mst_dij(adjMatrix, num_nodes, plist, rootnode))
 		if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))

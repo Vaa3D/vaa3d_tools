@@ -21,6 +21,7 @@ void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3D
                     double origin_x, double origin_y,double origin_z,
                     int imageCount, V3DPluginCallback2 & callback);
 
+double  computeTotalLength(const NeuronTree & nt);
 bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileName,V3DPluginCallback2 & callback);
 bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_result, int method_code,
                          int cluster_distance_threshold, V3DPluginCallback2 &callback);
