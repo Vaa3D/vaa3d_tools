@@ -750,7 +750,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     emit combinedSWC(fileSaveName);
 }
 
-void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int background, int seed_win, int slip_win,LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool isSoma)
+void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma)
 {
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
@@ -759,7 +759,10 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
-    //  latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+    int seed_win = 10;
+    int slip_win = 10;
+    //isSoma = true;
+    //latestString =QString("/data/mat/BRL/testData/ZSeries-02242016-1111-3022/ZSeries-02242016-1111-3022_Cycle00001_Ch1_000001.ome.tif");
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -847,8 +850,8 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         mysz[3] = total4DImage->getCDim();
         QString imageSaveString = saveDirString;
 
-        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
-        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
+//        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+//        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
 
         //        if(total1dData) {delete []total1dData; total1dData = 0;}
 
@@ -875,6 +878,9 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
      //   Image4DSimple* total4DImage = new Image4DSimple;
 
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
+
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
 
         //convert to 8bit image using 1percentage saturation
 //        double apercent = 0.01;
@@ -946,7 +952,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        arg_para.push_back("0");
+        arg_para.push_back("1");
 
         string S_background_th = boost::lexical_cast<string>(background);
         char* C_background_th = new char[S_background_th.length() + 1];
@@ -1019,7 +1025,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         writeMarker_file(markerSaveString, seedsToSave);
 
         NeuronTree nt;
-        nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage);
+        nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
 
         export_list2file(nt.listNeuron, swcString,swcMOST);
 
@@ -1151,7 +1157,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
     }
 }
 
-NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage)
+NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma)
 {
     NeuronTree nt_result;
     QList<NeuronSWC> neuron_sorted;
@@ -1164,7 +1170,7 @@ NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRoo
 
     V3DLONG neuronNum = neuron_sorted.size();
     V3DLONG *flag = new V3DLONG[neuronNum];
-    if(inputRootList.size() == 1 && (inputRootList.at(0).x - total4DImage->getOriginX()) == (inputRootList.at(0).y - total4DImage->getOriginY()))
+    if(isSoma)
     {
         for (V3DLONG i=0;i<neuronNum;i++)
         {
