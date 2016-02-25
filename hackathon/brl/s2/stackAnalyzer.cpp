@@ -555,6 +555,9 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
 
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
+        unsigned short int * total1dData_mip= new unsigned short int [x*y];
+        for(V3DLONG i =0 ; i < x*y; i++)
+            total1dData_mip[i] = 0;
         V3DLONG totalImageIndex = 0;
         for (int f=0; f<nFrames; f++){
             //status(fileList[f]);
@@ -565,6 +568,8 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
                 data1d = (unsigned short int*)pNewImage->getRawData();
                 for (V3DLONG i = 0; i< (x*y); i++){
                     total1dData[totalImageIndex]= data1d[i];
+                    if(total1dData_mip[i] < data1d[i]) total1dData_mip[i] = data1d[i];
+
                     totalImageIndex++;
                 }
             }else{
@@ -578,6 +583,8 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
         total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
 
+        Image4DSimple* total4DImage_mip = new Image4DSimple;
+        total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
 
 
         QString swcString = saveDirString;
@@ -611,7 +618,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.baseName()).append(".ome.tif.v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
 
-        emit loadingDone();
+        emit loadingDone(total4DImage_mip);
 
 
     }else{  //initial string is not readable

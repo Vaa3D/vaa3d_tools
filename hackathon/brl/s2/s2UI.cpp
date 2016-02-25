@@ -172,7 +172,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
-    connect(myStackAnalyzer,SIGNAL(loadingDone()),this,SLOT(loadingDone()));
+    connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
 
 
     //communicate with NoteTaker:
@@ -276,6 +276,7 @@ void S2UI::updateLocalRemote(bool state){
     saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
     sessionDir = saveDir;
     scanDataFileString = saveDir.absolutePath().append("/").append("_0_scanData.txt");
+    eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
 
     myNotes->setSaveDir(saveDir); // this gets saved in the parent directory.  scanDataFileString will get modified for each scan
     resetDir=true;
@@ -747,6 +748,7 @@ void S2UI::handleAllTargets(){
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
         v3d_msg("finished with multi-target scan",true);
+        runAllTargetsPB->setText("Scan All Targets");
         smartScanStatus = 0;
         allTargetStatus = 0;
         startSmartScanPB->setText("smartScan");
@@ -754,7 +756,7 @@ void S2UI::handleAllTargets(){
         allTipsList->clear();
         saveTextFile.close();
         emit eventSignal("finishedMultiTarget");
-
+        myEventLogger->processEvents(eventLogString);
         return;
     }
     status("starting all targets");
@@ -775,6 +777,8 @@ void S2UI::startingSmartScan(){
         saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
 
         scanDataFileString = saveDir.absolutePath().append("/").append("scanDataGrid.txt");
+        eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
+
         status(scanDataFileString);
         saveTextFile.setFileName(scanDataFileString);// add currentScanFile
         if (!saveTextFile.isOpen()){
@@ -855,6 +859,8 @@ void S2UI::startingSmartScan(){
     saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
 
     scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
+    eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
+
     status(scanDataFileString);
     saveTextFile.setFileName(scanDataFileString);// add currentScanFile
     if (!saveTextFile.isOpen()){
@@ -952,7 +958,7 @@ void S2UI::smartScanHandler(){
         emit processSmartScanSig(scanDataFileString);
         if (allTargetStatus ==1){
             QTimer::singleShot(0, this, SLOT(handleAllTargets()));
-        }
+        }else{        myEventLogger->processEvents(eventLogString);}
         return;
     }
     if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber))){//scanNumber is incremented AFTER the tracing results come in
@@ -961,7 +967,7 @@ void S2UI::smartScanHandler(){
         smartScanStatus = 0;
         emit processSmartScanSig(scanDataFileString);
         emit eventSignal("finishedSmartScan");
-
+        myEventLogger->processEvents(eventLogString);
         if ((allTargetStatus ==1)&&(targetIndex<allTargetLocations.length())){
             QTimer::singleShot(0, this, SLOT(handleAllTargets()));
             return;
@@ -1127,6 +1133,7 @@ void S2UI::loadLatest(){
 
         }else{
             emit eventSignal("startAnalysis");
+            QTimer::singleShot(0,this, SLOT(processingStarted()));
 
             emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
         }
@@ -1143,10 +1150,12 @@ void S2UI::loadLatest(){
     xmlDir.setNameFilters(filterList);
     QStringList fileList = xmlDir.entryList();
     if (!fileList.isEmpty()){
-        QFileInfo xmlInfo = QFileInfo(fileList.at(0));
-        QFile::copy(xmlInfo.absoluteFilePath(), saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+        QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( fileList.at(0)));
+        QFile::copy( xmlInfo.absoluteFilePath(),saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+        qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
 
-
+    }else{
+        qDebug()<<"no xml file available";
     }
 
 
@@ -1154,8 +1163,14 @@ void S2UI::loadLatest(){
 }
 
 
-void S2UI::loadingDone(){
+void S2UI::loadingDone(Image4DSimple *mip){
+
+
     emit eventSignal("finishedGridLoad");
+
+    if (gridScanStatus>0){
+    loadMIP(loadScanNumber, mip);
+}
     if ((gridScanStatus ==-1)&&(waitingForFile<1)){
         emit eventSignal("finishedGridScan");
         gridScanStatus = 0;
@@ -1176,6 +1191,8 @@ void S2UI::collectOverview(){
     // so start my monitor to see when it's in ready state:
     overviewCycles = 0;
     status("start overview");
+    emit eventSignal("startZStack");
+
     QTimer::singleShot(0, this, SLOT(overviewHandler()));
 }
 
@@ -1233,6 +1250,9 @@ void S2UI::updateFileString(QString inputString){
     // the streamed image data into files...
     fileString = inputString;
     if (!isLocal){
+        if (fileString.contains("Z:")){
+            fileString.replace("Z:","\\AIBSDATA\\mat\\BRL\\testData");
+        }
         fileString.replace("\\AIBSDATA","\\data").replace("\\","/");
     }
     fileString.append("_Cycle00001_Ch2_000001.ome.tif");
@@ -1368,10 +1388,11 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     int x = mip->getXDim();
     int y = mip->getYDim();
     V3DLONG total  =0;
+    Image4DProxy<Image4DSimple> mipProx(mip);
     myMIP = QImage(x, y, QImage::Format_RGB16);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
-            myMIP.setPixel(i,j,mip->getValueUINT8(i,j,0,0));
+            myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0));
             total++;
         }
     }

@@ -1,6 +1,6 @@
 #include "eventLogger.h"
 #include <QDebug>
-
+#include <QFile>
 
 
 S2Event::S2Event(){
@@ -10,29 +10,34 @@ S2Event::S2Event(){
 }
 
 S2Event::S2Event(QString eString, qint64 msTime){
-   eventName = eString;
-   msEventTime = msTime;
-   timeString = QDateTime::fromMSecsSinceEpoch(msTime).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz");
+    eventName = eString;
+    msEventTime = msTime;
+    timeString = QDateTime::fromMSecsSinceEpoch(msTime).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz");
 }
 
 
 QString S2Event::getEventName(){
-return eventName;
+    return eventName;
 }
 
 QString S2Event::getTimeString(){
-return timeString;
+    return timeString;
 }
 
 void S2Event::setEventString(QString eString){
-eventName = eString;
+    eventName = eString;
 }
 
 void S2Event::setTime(qint64 msTime){
-msEventTime = msTime;
-timeString = QDateTime::fromMSecsSinceEpoch(msTime).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz");
+    msEventTime = msTime;
+    timeString = QDateTime::fromMSecsSinceEpoch(msTime).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz");
 
 }
+
+qint64 S2Event::getTime(){
+    return msEventTime;
+}
+
 
 
 
@@ -42,9 +47,11 @@ EventLogger::EventLogger(QObject *parent) :
 }
 
 
-//how to arrange this?  the eventlogger should have a
-// list of events, with each event consisting of a string and a time (epoch ms)
-//
+// EventLogger contains 3 lists:
+// 1. list of S2Events
+// 2. list of elapsed times between start and stop events in 1.
+// 3. summary list with several quantities as S2Events
+
 void EventLogger::logEvent(QString eventString){
     eventList.append(S2Event(eventString, QDateTime::currentMSecsSinceEpoch()));
     for (int i =0; i<eventList.length(); i++){
@@ -53,22 +60,87 @@ void EventLogger::logEvent(QString eventString){
 }
 
 
-void EventLogger::processEvents(){
-    // log startsmartScan
-    // finishedsmartScan
+void EventLogger::processEvents(QString saveFileString){
 
-    // log startMultiTarget
-    // log finishedMultiTarget
-    // run through the list, looking for particular eventStrings
+    QList<S2Event> eventListCopy = eventList;
+    int   starti = eventListFirstContains(eventListCopy, "start");
 
-    // for each pair of startZStack - finishedZStack
-    // or
-    // startAnalysis -finishedAnalysis
+    while (starti>=0){
 
-    //  then for each pair, determine the elapsed time
+        S2Event startEvent = eventListCopy.value(starti);
+
+        QString startString= startEvent.getEventName().split("start").last();
+        eventListCopy.removeAt(starti);
+        int endj = eventListFirstContains(eventListCopy, "finished"+startString);
+        S2Event endEvent = eventListCopy.value(endj);
+        eventListCopy.removeAt(endj);
+        elapsedList.append(S2Event("elapsed"+startString,endEvent.getTime()-startEvent.getTime())) ;
+
+
+        starti = eventListFirstContains(eventListCopy, "start");
+    }
+    //
+
+    //
+
+
+
+    if (elapsedList.isEmpty()){qDebug()<<"empty elapsedList"; return;}
+
+    QFile saveTextFile;
+    saveTextFile.setFileName(saveFileString);// add currentScanFile
+    bool okToSave = true;
+    if (!saveTextFile.isOpen()){
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            okToSave = false;
+        }
+    }
+    QList<qint64> stackTimeList;
+    for (int i =0; i<elapsedList.length(); i++){
+        if ((elapsedList.value(i).getEventName().contains("Scan"))||
+                (elapsedList.value(i).getEventName().contains("MultiTarget"))){
+
+            summaryList.append(elapsedList.value(i));
+        }
+        if (elapsedList.value(i).getEventName().contains("Stack")){
+            stackTimeList.append(elapsedList.value(i).getTime());
+        }
+
+    }
+
+    QTextStream outputStream;
+    outputStream.setDevice(&saveTextFile);
+    for (int i =0; i<elapsedList.length(); i++){
+
+
+
+
+        QString toWrite = elapsedList[i].getEventName().append(" took ").append(QString::number(elapsedList[i].getTime())).append(" ms");
+
+         if (okToSave){
+                             outputStream<<toWrite<<"\n";
+         }
+        qDebug()<<toWrite;
+    }
+
+
+
+
+    if (okToSave){saveTextFile.close();}
+
 
     // calculate the total time imaging, total time analyzing
     // total time imaging while not analyzing and time analyzing while not imaging
     // calculate the total time for the whole process
 }
 
+int EventLogger::eventListFirstContains(QList<S2Event> inputEventList, QString stringToFind){
+    if (inputEventList.isEmpty()){return -1;}
+    for (int i=0; i<inputEventList.length(); i++){
+        if (inputEventList.value(i).getEventName().contains(stringToFind)){
+            return i;
+        }
+    }
+    return -1;
+}

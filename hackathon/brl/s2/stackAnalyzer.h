@@ -18,7 +18,7 @@ signals:
     void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets, Image4DSimple* total4DImage_mip);
     void messageSignal(QString msg);
     void combinedSWC(QString fileSaveName);
-    void loadingDone();
+    void loadingDone(Image4DSimple* total4DImage_mip);
 public slots:
     void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
     void processStack(Image4DSimple InputImage);

@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QTime>
 #include <QList>
-
+#include <QStringList>
 class S2Event
 {
 public:
@@ -14,7 +14,7 @@ public:
     QString getEventName();
     void setEventString(QString eString);
     void setTime(qint64 msTime);
-
+    qint64 getTime();
  private:
     QString eventName;
     qint64 msEventTime;
@@ -29,11 +29,17 @@ class EventLogger : public QObject
 public:
     explicit EventLogger(QObject *parent = 0);
     QList<S2Event> eventList;
+    QList<S2Event> elapsedList;
+    QList<S2Event> summaryList;
+    int eventListFirstContains(QList<S2Event> inputEventList, QString stringToFind);
 signals:
 
 public slots:
     void logEvent(QString eventString);
-    void processEvents();
+    void processEvents(QString saveFileString);
+
+
+
 
 };
 

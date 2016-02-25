@@ -92,7 +92,7 @@ private slots:
     void startAllTargets();
     void handleAllTargets();
     void loadMIP(int imageNumber, Image4DSimple* mip);
-    void loadingDone();
+    void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
 private:
@@ -220,6 +220,7 @@ private:
     QFile saveTextFile;
     QTextStream outputStream;
     QString scanDataFileString;
+    QString eventLogString;
     float overlap;
     int overviewCycles;
     int scanStatusWaitCycles;
