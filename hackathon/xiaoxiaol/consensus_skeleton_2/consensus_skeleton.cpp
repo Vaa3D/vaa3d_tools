@@ -147,7 +147,7 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
         double len = nt_sizes[i];
         if ( len > 3*median_size  ||  len < double(median_size)/3 || len > 50000 )
 		{
-            cout <<"Remove neuron "<< i<< ": "<<  len<< " in total length"<<endl;
+            cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
 			rm_ids.push_back(i);
 
 		}

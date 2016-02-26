@@ -346,6 +346,15 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
         return false;
     }
 
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr<<"You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+
     V3DLONG neuronNum = 0;
     vector<NeuronTree> nt_list;
     QString qs_linker;
@@ -370,7 +379,7 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
                 nt_list.push_back(tmp);
             }
         }
-        else if (qs_linker.toUpper().endsWith(".SWC"))
+        else if (qs_linker.toUpper().endsWith(".SWC") || qs_linker.toUpper().endsWith(".ESWC"))
         {
             cout<<"(0). reading an swc file"<<endl;
             NeuronTree tmp = readSWC_file(qs_linker);
@@ -380,8 +389,16 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
     }
 
 
+
+    QString outfileName;
+    if (outlist->size()==0)
+        outfileName = qs_linker+ "_sum_dist.csv";
+    else
+        outfileName = QString(outlist->at(0));
+
+
     cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
-    int idx = median_swc(nt_list);
+    int idx = median_swc(nt_list,outfileName);
     if (idx <0){
         cerr << "error in median_swc()" << endl;
         return false;
@@ -585,8 +602,14 @@ int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     v3d_msg( QString("It may take a while to compute pair-wise neuron distances. Please watch the output console for "
-                     "computed metrics." ));
-    int id = median_swc( nt_list);
+                     "computed metrics. Detailed distance reports are saved in "+fileOpenName+"_sum_dist.csv." ));
+
+
+    QString outfileName = fileOpenName + "_sum_dist.csv";
+
+    cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
+    int id = median_swc(nt_list,outfileName);
+
     if (id >=0 )
     {
         v3d_msg( QString("The median swc is : %1").arg( nameList.at(id)) );
@@ -618,10 +641,9 @@ void printHelp()
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  median_swc"<<endl;
     cout<<"\t-i <input_file(s)>:  input linker file (.ano) "<<endl;
-    cout<<"\t-o <output_file>:  output median swc file name, this parameter is optional. "
-          "When not specified, no median swc file will be generated (duplicate of the corresponding median case)."<<endl;
+    cout<<"\t-o <output_csv_file>: print out the total distances for each input neuron to all other neurons."<<endl;
     cout<< " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
-    cout<<"Example: v3d -x consensus_swc -f median_swc -i mylinker.ano  [-o median.swc] \n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f median_swc -i mylinker.ano[myfolder/*.swc]  -o distances.csv \n"<<endl;
 
     cout<<"\n  2) Adjust input neuron node locations by averaging over the matching nodes from the input group of neurons tree."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;

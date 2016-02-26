@@ -5,7 +5,7 @@
 #include "point3d_util.h"
 
 
-int median_swc(vector<NeuronTree> nt_list){
+int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
     int idx1 = -1;
     int idx2 = -1;
     int idx3 = -1;
@@ -42,7 +42,25 @@ int median_swc(vector<NeuronTree> nt_list){
     double min_dis_sum_1 = DBL_MAX;
     double min_dis_sum_2 = DBL_MAX;
     double min_dis_sum_3 = DBL_MAX;
+
+    //report metrics into a csv file
+    QFile file(outputFileName);
+    if (!file.open(QFile::WriteOnly|QFile::Truncate))
+    {
+        cout <<"Error opening the file "<<outputFileName.toStdString().c_str() << endl;
+        return false;
+    }
+
+        QTextStream stream (&file);
+        stream<< "swc_file_name,total_average_distance,total_structure_difference,total_max_distance"<<"\n";
+
+
+
     for (int i = 0; i < nt_list.size(); i++){
+        stream << nt_list[i].file <<","<<dis_sum_1[i]
+                                  <<","<<dis_sum_2[i]
+                                  <<","<<dis_sum_3[i]
+                                  <<"\n";
         if (dis_sum_1[i] < min_dis_sum_1)
         {
             idx1 = i;
@@ -60,6 +78,8 @@ int median_swc(vector<NeuronTree> nt_list){
         }
 
     }
+
+    file.close();
     cout<<"Min total entire-structure-average = "<< min_dis_sum_1<< ", median swc id:" <<idx1 << endl;
     cout<<"Min total differen-structure-average = "<<min_dis_sum_2<< ", median swc id:" <<idx2 << endl;
     cout<<"Min total  percent of different-structure ="<< min_dis_sum_3 << ", median swc id:" << idx3 << endl;
