@@ -173,7 +173,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
-
+    connect(this, SIGNAL(callSALoadMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -323,7 +323,7 @@ QGroupBox *S2UI::createTracingParameters(){
     s2Label->setText("input file path:");
     bkgSpnBx->setMaximum(255);
     bkgSpnBx->setMinimum(0);
-    bkgSpnBx->setValue(250);
+    bkgSpnBx->setValue(30);
     bkgSpnBx->setObjectName("bkgSpinBox");
 
     QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
@@ -367,6 +367,12 @@ QGroupBox *S2UI::createTracingParameters(){
     overlap = 0.01* ((float) overlapSpinBox->value());
 
 
+    tracingMethodComboB = new QComboBox;
+    tracingMethodComboB->addItem("MOST");
+    tracingMethodComboB->addItem("APP2");
+    tracingMethodComboB->setCurrentIndex(0);
+    QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
+
     analysisRunning = new QLabel(tr("0"));
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
 
@@ -394,6 +400,8 @@ QGroupBox *S2UI::createTracingParameters(){
 
     tPL->addWidget(analysisRunningLable,10,1);
     tPL->addWidget(analysisRunning,10,0);
+    tPL->addWidget(tracingMethodComboBLabel,11,0);
+    tPL->addWidget(tracingMethodComboB, 11, 1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -501,7 +509,14 @@ void S2UI::loadForSA(){
     bool isSoma = scanNumber==0;
     qDebug()<<workerThread->currentThreadId();
     QTimer::singleShot(0,this, SLOT(processingStarted()));
-    emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+    if (tracingMethodComboB->currentIndex()==0){
+        emit callSALoadMOST(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+    }
+    if (tracingMethodComboB->currentIndex()==1){
+        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+    }
 }
 
 void S2UI::loadScanFromFile(QString fileString){
@@ -1134,9 +1149,14 @@ void S2UI::loadLatest(){
         }else{
             emit eventSignal("startAnalysis");
             QTimer::singleShot(0,this, SLOT(processingStarted()));
+            if (tracingMethodComboB->currentIndex()==0){
+                emit callSALoadMOST(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
-            emit  callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(), useGSDTCB->isChecked(), isSoma );
-        }
+            }
+            if (tracingMethodComboB->currentIndex()==1){
+                emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+            }        }
 
         loadScanNumber++;
     }else{

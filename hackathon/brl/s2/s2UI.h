@@ -52,6 +52,7 @@ signals:
     void startPM();
     void stopPM();
     void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
     void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
@@ -137,6 +138,7 @@ private:
     QCheckBox *runContinuousCB;
     QCheckBox *gridScanCB;
     QSpinBox *gridSizeSB;
+    QComboBox *tracingMethodComboB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
