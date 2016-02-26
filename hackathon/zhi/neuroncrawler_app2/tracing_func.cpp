@@ -1198,15 +1198,15 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
 
    // NeuronTree nt;
    // nt = readSWC_file(swcString);
-    QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    for (V3DLONG i=0;i<neuronNum;i++)
-    {
-        V3DLONG par = nt.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt.hashNeuron.value(par)].push_back(i);
-    }
+//    QVector<QVector<V3DLONG> > childs;
+//    V3DLONG neuronNum = nt.listNeuron.size();
+//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    for (V3DLONG i=0;i<neuronNum;i++)
+//    {
+//        V3DLONG par = nt.listNeuron[i].pn;
+//        if (par<0) continue;
+//        childs[nt.hashNeuron.value(par)].push_back(i);
+//    }
 
     LandmarkList tip_left;
     LandmarkList tip_right;
@@ -1215,8 +1215,8 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
-        if (childs[i].size()==0)
-        {
+//        if (childs[i].size()==0)
+//        {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
@@ -1257,7 +1257,7 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
             {
                 tip_down.push_back(newTip);
             }
-        }
+//        }
     }
 
     double overlap = 0.1;
@@ -1540,15 +1540,15 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
 
     export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
-    QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    for (V3DLONG i=0;i<neuronNum;i++)
-    {
-        V3DLONG par = nt.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt.hashNeuron.value(par)].push_back(i);
-    }
+//    QVector<QVector<V3DLONG> > childs;
+//    V3DLONG neuronNum = nt.listNeuron.size();
+//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    for (V3DLONG i=0;i<neuronNum;i++)
+//    {
+//        V3DLONG par = nt.listNeuron[i].pn;
+//        if (par<0) continue;
+//        childs[nt.hashNeuron.value(par)].push_back(i);
+//    }
 
     LandmarkList tip_left;
     LandmarkList tip_right;
@@ -1557,8 +1557,8 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
-        if (childs[i].size()==0)
-        {
+//        if (childs[i].size()==0)
+//        {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
@@ -1580,7 +1580,7 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
             {
                 tip_down.push_back(newTip);
             }
-        }
+//        }
     }
 
     double overlap = 0.1;
