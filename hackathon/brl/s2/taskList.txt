@@ -1,3 +1,12 @@
+2016.02.26
+
+ Add tab for configuration info,
+add option to run 1 marker or run all markers
+Add ROI controls-  with z scan info.
+Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
+add mode for resonant control. most code is now robust against active mode, but need a button to set active mode
+and ideally a way to assess if it's running properly at the tight zoom
+
 2016.02.11  update task list
 
 NEW:
@@ -11,10 +20,10 @@ and ideally a way to assess if it's running properly at the tight zoom
 REMAINING FROM PREVIOUS:
 add option to run 1 marker or run all markers
 Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
-Try MIP display for each ROI,
+#Try MIP display for each ROI,
 Add ROI controls-  with z scan info.
-allow user to generate block grid based on 2 anchor points in preview scan
-...then Automatically scan the whole grid in full resolution.
+#allow user to generate block grid based on 2 anchor points in preview scan
+#...then Automatically scan the whole grid in full resolution.
 
 
 2015.02.01 meeting generated this chunk of tasks:
