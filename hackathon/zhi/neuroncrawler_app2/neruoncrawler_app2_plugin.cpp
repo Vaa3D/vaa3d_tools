@@ -23,6 +23,7 @@ QStringList neruoncrawler_app2::menulist() const
         <<tr("trace_APP2")
         <<tr("trace_APP1")
         <<tr("trace_MOST")
+        <<tr("trace_NEUTUBE")
 		<<tr("about");
 }
 
@@ -163,6 +164,43 @@ void neruoncrawler_app2::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         P.slip_win = dialog.slip_win;
         P.block_size = dialog.block_size;
         crawler_raw_most(callback,parent,P,bmenu);
+    }
+    else if (menu_name == tr("trace_NEUTUBE"))
+    {
+        NEUTUBE_LS_PARA P;
+        bool bmenu = true;
+        neuroncrawler_neutube_raw dialog(callback, parent);
+
+        if (dialog.image && dialog.listLandmarks.size()==0)
+            return;
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
+        if(dialog.rawfilename.isEmpty())
+        {
+            v3d_msg("Please select the image file.");
+            return;
+        }
+
+        if(dialog.markerfilename.isEmpty() && ! dialog.image)
+        {
+            v3d_msg("Please select the marker file.");
+            return;
+        }
+
+        if(!dialog.image)
+        {
+            P.markerfilename = dialog.markerfilename;
+            P.image = 0;
+        }else
+        {
+            P.image = dialog.image;
+            P.listLandmarks = dialog.listLandmarks;
+        }
+        P.inimg_file = dialog.rawfilename;
+        P.block_size = dialog.block_size;
+        crawler_raw_neutube(callback,parent,P,bmenu);
     }
 	else
 	{

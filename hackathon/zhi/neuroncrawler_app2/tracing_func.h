@@ -57,6 +57,16 @@ struct MOST_LS_PARA
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 
+struct NEUTUBE_LS_PARA
+{
+    int  block_size;
+    V3DLONG in_sz[3];
+
+    Image4DSimple* image;
+    LandmarkList listLandmarks;
+    QString tcfilename,inimg_file,rawfilename,markerfilename;
+};
+
 bool crawler_raw_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
@@ -67,6 +77,8 @@ bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA
 bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
+bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_LS_PARA &p,bool bmenu);
+bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 
