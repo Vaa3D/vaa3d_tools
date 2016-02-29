@@ -77,8 +77,8 @@ bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA
 bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
-bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_LS_PARA &p,bool bmenu);
-bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_LS_PARA &p,bool bmenu, int method);
+bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
 
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 

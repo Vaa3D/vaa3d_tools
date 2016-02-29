@@ -550,6 +550,8 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
+    total4DImage->deleteRawDataAndSetPointerToNull();
+
     return true;
 }
 
@@ -808,6 +810,8 @@ bool app1_tracing(V3DPluginCallback2 &callback,APP1_LS_PARA &P,LandmarkList inpu
         newTarget.z = p.p4dImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
+    total4DImage->deleteRawDataAndSetPointerToNull();
+
     return true;
 }
 
@@ -1294,10 +1298,12 @@ bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inpu
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
+    total4DImage->deleteRawDataAndSetPointerToNull();
+
     return true;
 }
 
-bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_LS_PARA &P,bool bmenu)
+bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_LS_PARA &P,bool bmenu, int method)
 {
     QElapsedTimer timer1;
     timer1.start();
@@ -1353,7 +1359,12 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
     tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
+    QString tmpfolder;
+    if(method ==1)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
+    else if(method ==2)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
+
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -1368,7 +1379,7 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
     {
         newTargetList.clear();
         newTipsList.clear();
-        neutube_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+        neutube_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList,method);
         allTipsList.removeAt(0);
         allTargetList.removeAt(0);
         if(newTipsList.size()>0)
@@ -1386,7 +1397,13 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
 
     list<string> infostring;
     string tmpstr; QString qtstr;
-    tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NEUTUBE")); infostring.push_back(tmpstr);
+    if(method ==1)
+    {
+        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NEUTUBE")); infostring.push_back(tmpstr);
+    }else if(method ==2)
+    {
+        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_SNAKE")); infostring.push_back(tmpstr);
+    }
     tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
 
@@ -1399,10 +1416,15 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
     return true;
 }
 
-bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
+bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList, int method)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+    QString saveDirString;
+    if(method ==1)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+    else if (method ==2)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -1520,7 +1542,16 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
     arg_para.push_back("1");
     arg_para.push_back("1");
 
-    full_plugin_name = "neuTube";  func_name =  "neutube_trace";
+    if(method ==1)
+    {
+        full_plugin_name = "neuTube";
+        func_name =  "neutube_trace";
+    }else if(method ==2)
+    {
+        full_plugin_name = "snake";
+        func_name =  "snake_trace";
+    }
+
     arg.p = (void *) & arg_para; input << arg;
 
     if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
@@ -1532,7 +1563,11 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
+    if(method ==1)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
+    else if (method ==2)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
+
     nt_neutube = readSWC_file(swcNEUTUBE);
 
     NeuronTree nt;
@@ -1617,6 +1652,8 @@ bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkLis
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
+
+    total4DImage->deleteRawDataAndSetPointerToNull();
     return true;
 }
 
