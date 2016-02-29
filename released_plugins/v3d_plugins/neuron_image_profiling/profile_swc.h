@@ -9,6 +9,7 @@
 
 struct IMAGE_METRICS {
     int type; // segment type: 2-- soma;  2 -- dendrite;3--axon ;4--apical dendrite;  -1 --- not-defined/all types
+    int num_of_nodes;
     double cnr;
     double snr;
     double dy;  //dynamic range

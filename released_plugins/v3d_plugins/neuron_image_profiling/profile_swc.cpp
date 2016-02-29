@@ -187,11 +187,12 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_type,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,bg_mean,bg_std"<<"\n";
+        stream<< "segment_type,num_of_nodes,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,bg_mean,bg_std"<<"\n";
 
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
             stream << result_metrics[i].type       <<","
+                   << result_metrics[i].num_of_nodes <<","
                    << result_metrics[i].dy         <<","
                    << result_metrics[i].cnr        <<","
                    << result_metrics[i].snr        <<","
@@ -387,6 +388,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 
     IMAGE_METRICS metrics;
     metrics.type = neuronSegment.at(0).type;
+    metrics.num_of_nodes = neuronSegment.size();
     metrics.cnr = 0.0;
     metrics.snr = 0.0;
     metrics.dy = 0.0;
@@ -696,11 +698,14 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     {
         current_type = neuronSWCs[i].type;
 
+
+
         if (current_type != pre_type)
-        {// not in map yet, add into map
-            if (!neuronSWC_sameType.isEmpty()){
+        {// change if the type, need to push the previous continues types into the table
+            if (!neuronSWC_sameType.isEmpty())
+            {
                 if ( mapTypeToId.count(pre_type) == 0   )
-                {
+                {// and the type is new
                     neuronSWC_lists.push_back(neuronSWC_sameType);
                     mapTypeToId[pre_type] = count;
                     //cout<<"map "<<pre_type<<" to "<<count<<endl;
@@ -708,19 +713,19 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
                 }
                 else
-                {
-                    int jj = mapTypeToId[current_type];
+                { // type exists, directly append
+                    int jj = mapTypeToId[pre_type];
                     neuronSWC_lists[jj].append(neuronSWC_sameType);;
                 }
+
                 neuronSWC_sameType.clear();
             }
 
-            pre_type = current_type;
 
+            pre_type = current_type;
         }
 
         neuronSWC_sameType.push_back(neuronSWCs.at(i));
-
 
     }
 
