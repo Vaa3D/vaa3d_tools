@@ -727,7 +727,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
     //at the end
     if (!neuronSWC_sameType.isEmpty()){
-        if ( mapTypeToId.count(current_type) == 0)
+        if ( mapTypeToId.count(pre_type) == 0)
         {
             neuronSWC_lists.push_back(neuronSWC_sameType);
             mapTypeToId[current_type] = count;
