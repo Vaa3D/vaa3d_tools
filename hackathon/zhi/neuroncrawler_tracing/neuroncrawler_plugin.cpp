@@ -1,11 +1,11 @@
-/* neruoncrawler_plugin.cpp
+/* neuroncrawler_plugin.cpp
  * This is a test plugin, you can use it as a demo.
  * 2016-2-16 : by Zhi Zhou
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "neruoncrawler_plugin.h"
+#include "neuroncrawler_plugin.h"
 #include "tracing_func.h"
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
@@ -14,10 +14,10 @@
 
 
 using namespace std;
-Q_EXPORT_PLUGIN2(neruoncrawler, neruoncrawler);
+Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
 
  
-QStringList neruoncrawler::menulist() const
+QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
         <<tr("trace_APP2")
@@ -27,7 +27,7 @@ QStringList neruoncrawler::menulist() const
 		<<tr("about");
 }
 
-QStringList neruoncrawler::funclist() const
+QStringList neuroncrawler::funclist() const
 {
 	return QStringList()
 		<<tr("trace_raw")
@@ -35,7 +35,7 @@ QStringList neruoncrawler::funclist() const
 		<<tr("help");
 }
 
-void neruoncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("trace_APP2"))
 	{
@@ -209,7 +209,7 @@ void neruoncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 }
 
-bool neruoncrawler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);

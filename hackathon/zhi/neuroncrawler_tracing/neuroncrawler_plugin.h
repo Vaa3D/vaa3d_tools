@@ -1,4 +1,4 @@
-/* neruoncrawler_app2_plugin.h
+/* neuroncrawler_plugin.h
  * This is a test plugin, you can use it as a demo.
  * 2016-2-16 : by Zhi Zhou
  */
@@ -9,7 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-class neruoncrawler_app2 : public QObject, public V3DPluginInterface2_1
+class neuroncrawler : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
