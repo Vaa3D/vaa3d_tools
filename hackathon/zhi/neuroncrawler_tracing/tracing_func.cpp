@@ -121,7 +121,7 @@ bool crawler_raw_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA
     tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_APP2");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -234,7 +234,7 @@ bool crawler_raw_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA
     tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_APP1");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -287,7 +287,7 @@ bool crawler_raw_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA
 bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
+    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -486,7 +486,7 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
             LocationSimple newTip;
             if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > 0.95* p.p4dImage->getYDim())
             {
-                V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
+                V3DLONG node_pn = getParent(i,nt);
                 V3DLONG node_pn_2nd;
                 if( list.at(node_pn).pn < 0)
                 {
@@ -556,7 +556,7 @@ bool app2_tracing(V3DPluginCallback2 &callback,APP2_LS_PARA &P,LandmarkList inpu
 bool app1_tracing(V3DPluginCallback2 &callback,APP1_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
+    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -987,7 +987,7 @@ bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA
     tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -1041,7 +1041,7 @@ bool crawler_raw_most(V3DPluginCallback2 &callback, QWidget *parent,MOST_LS_PARA
 bool most_tracing(V3DPluginCallback2 &callback,MOST_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
+    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -1353,7 +1353,7 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
     tileLocation.z = 0;
     allTargetList.push_back(tileLocation);
 
-    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
+    QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
@@ -1402,7 +1402,7 @@ bool crawler_raw_neutube(V3DPluginCallback2 &callback, QWidget *parent,NEUTUBE_L
 bool neutube_tracing(V3DPluginCallback2 &callback,NEUTUBE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp");
+    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
