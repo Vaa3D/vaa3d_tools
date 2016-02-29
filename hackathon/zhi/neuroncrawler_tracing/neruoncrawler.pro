@@ -13,7 +13,7 @@ INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
 
 
 
-HEADERS	+= neruoncrawler_app2_plugin.h
+HEADERS	+= neruoncrawler_plugin.h
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
@@ -27,7 +27,7 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
 
-SOURCES	+= neruoncrawler_app2_plugin.cpp
+SOURCES	+= neruoncrawler_plugin.cpp
 SOURCES	+= tracing_func.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
@@ -52,5 +52,5 @@ SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp
 
 
 
-TARGET	= $$qtLibraryTarget(neruoncrawler_app2)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neruoncrawler_app2/
+TARGET	= $$qtLibraryTarget(neruoncrawler)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neruoncrawler/
