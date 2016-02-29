@@ -8,7 +8,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h"
 
 //#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-#include "../../../hackathon/zhi/neuronassembler_plugin_creator/sort_swc.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 
 #include <boost/lexical_cast.hpp>
