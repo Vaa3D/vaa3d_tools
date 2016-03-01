@@ -935,8 +935,8 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	double mean_vote = mean_image_value(img1d, tol_sz);
 	cout << "mean votes in the vote map:" << mean_vote << endl;
-	double vote_threshold = mean_vote-1;
-	if (vote_threshold < 1) { vote_threshold = 1.0;}
+    double vote_threshold = mean_vote;
+    if (vote_threshold < 2) { vote_threshold = 2.0;} //min value = 2.0
     if (vote_threshold > max_vote_threshold) {vote_threshold = max_vote_threshold;}
 	cout << "threshold vote:" << vote_threshold << endl;
 

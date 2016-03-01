@@ -71,17 +71,17 @@ int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
 
     for (int i = 0; i < nt_list.size(); i++){
 
-        if (dis_sum_1[i] < min_dis_sum_1)
+        if (dis_sum_1[i] < min_dis_sum_1  && dis_sum_1[i] >0 )
         {
             idx1 = i;
             min_dis_sum_1 = dis_sum_1[i];
         }
-        if (dis_sum_2[i] < min_dis_sum_2)
+        if (dis_sum_2[i] < min_dis_sum_2 && dis_sum_2[i] >0 )
         {
             idx2 = i;
             min_dis_sum_2 = dis_sum_2[i];
         }
-        if (dis_sum_3[i] < min_dis_sum_3)
+        if (dis_sum_3[i] < min_dis_sum_3 && dis_sum_3[i] >0 )
         {
             idx3 = i;
             min_dis_sum_3 = dis_sum_3[i];
@@ -89,7 +89,7 @@ int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
 
     }
 
-    cout<<"Min total entire-structure-average = "<< min_dis_sum_1<< ", median swc id:" <<idx1 << endl;
+    cout<<"Min total entire-structure-average = "<< min_dis_sum_1<< ", median swc id:" <<idx1  << endl;
     cout<<"Min total differen-structure-average = "<<min_dis_sum_2<< ", median swc id:" <<idx2 << endl;
     cout<<"Min total  percent of different-structure ="<< min_dis_sum_3 << ", median swc id:" << idx3 << endl;
 

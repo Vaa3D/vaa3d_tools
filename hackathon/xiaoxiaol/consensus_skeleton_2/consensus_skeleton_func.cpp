@@ -403,8 +403,8 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
         cerr << "error in median_swc()" << endl;
         return false;
     }
-
-    cout<<"Median swc is " << idx << endl;
+    QString fn = nt_list[idx].file;
+    cout<<"Median swc is neuron " << idx <<" :" <<fn.toStdString().c_str()<< endl;
     return true;
 }
 
