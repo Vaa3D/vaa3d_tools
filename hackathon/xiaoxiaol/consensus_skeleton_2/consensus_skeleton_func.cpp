@@ -637,11 +637,11 @@ void printHelp()
 {
     cout<<"\nConsensus Skeleton: This plugin has the following three functions:"<<endl;
     cout<<"\n  1) Pick the median neuron tree from a group of input neuron tress."<<endl;
-    cout<<"\nUsage: v3d -x consensus_swc -f median_swc -i <input ANO linker file> [-o <output swc file>] "<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f median_swc -i <input ANO linker file> [-o <output csv file>] "<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  median_swc"<<endl;
-    cout<<"\t-i <input_file(s)>:  input linker file (.ano) "<<endl;
-    cout<<"\t-o <output_csv_file>: print out the total distances for each input neuron to all other neurons."<<endl;
+    cout<<"\t-i <input_file(s)>:  an input linker file (.ano) or multiple swc files"<<endl;
+    cout<<"\t-o <output_csv_file>: print out the pair-wise distances for each input neuron to all other neurons."<<endl;
     cout<< " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
     cout<<"Example: v3d -x consensus_swc -f median_swc -i mylinker.ano[myfolder/*.swc]  -o distances.csv \n"<<endl;
 
