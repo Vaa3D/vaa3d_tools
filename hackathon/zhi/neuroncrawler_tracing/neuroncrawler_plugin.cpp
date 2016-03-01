@@ -40,7 +40,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
     if (menu_name == tr("trace_APP2"))
 	{
-        APP2_LS_PARA P;
+        APP_LS_PARA P;
         bool bmenu = true;
         neuroncrawler_app2_raw dialog(callback, parent);
 
@@ -82,11 +82,12 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.b_256cube = dialog.b_256cube;
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
-        crawler_raw_app2(callback,parent,P,bmenu);
+        P.visible_thresh = 0;
+        crawler_raw_app(callback,parent,P,bmenu);
 	}
     else if (menu_name == tr("trace_APP1"))
 	{
-        APP1_LS_PARA P;
+        APP_LS_PARA P;
         bool bmenu = true;
         neuroncrawler_app1_raw dialog(callback, parent);
 
@@ -123,11 +124,11 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.b_256cube = dialog.b_256cube;
         P.visible_thresh = dialog.visible_thresh;
         P.block_size = dialog.block_size;
-        crawler_raw_app1(callback,parent,P,bmenu);
+        crawler_raw_app(callback,parent,P,bmenu);
 	}
     else if (menu_name == tr("trace_MOST"))
     {
-        MOST_LS_PARA P;
+        ALL_LS_PARA P;
         bool bmenu = true;
         neuroncrawler_most_raw dialog(callback, parent);
 
@@ -164,11 +165,11 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.seed_win = dialog.seed_win;
         P.slip_win = dialog.slip_win;
         P.block_size = dialog.block_size;
-        crawler_raw_most(callback,parent,P,bmenu);
+        crawler_raw_all(callback,parent,P,bmenu,3);
     }
     else if (menu_name == tr("trace_NEUTUBE"))
     {
-        NEUTUBE_LS_PARA P;
+        ALL_LS_PARA P;
         bool bmenu = true;
         neuroncrawler_neutube_raw dialog(callback, parent);
 
@@ -201,11 +202,11 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         }
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
-        crawler_raw_neutube(callback,parent,P,bmenu,1);
+        crawler_raw_all(callback,parent,P,bmenu,1);
     }
     else if (menu_name == tr("trace_SNAKE"))
     {
-        NEUTUBE_LS_PARA P;
+        ALL_LS_PARA P;
         bool bmenu = true;
         neuroncrawler_neutube_raw dialog(callback, parent);
 
@@ -238,7 +239,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         }
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
-        crawler_raw_neutube(callback,parent,P,bmenu,2);
+        crawler_raw_all(callback,parent,P,bmenu,2);
     }
 	else
 	{
