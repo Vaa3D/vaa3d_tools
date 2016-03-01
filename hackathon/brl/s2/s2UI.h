@@ -61,6 +61,7 @@ signals:
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
     void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
+    void channelUpdate(QString);
 private slots:
     void startS2();
     void startScan();
@@ -139,6 +140,7 @@ private:
     QCheckBox *gridScanCB;
     QSpinBox *gridSizeSB;
     QComboBox *tracingMethodComboB;
+    QComboBox *channelChoiceComboB;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;

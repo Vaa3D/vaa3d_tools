@@ -65,6 +65,7 @@ bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QStr
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
     cb = &callback;
+    channel = QString("Ch2");
 }
 
 void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT, bool isSoma){
@@ -89,7 +90,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
+        filterList.append(QString("*").append(channel).append("*.tif"));
         imageDir.setNameFilters(filterList);
         QStringList fileList = imageDir.entryList();
 
@@ -543,7 +544,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
+        filterList.append(QString("*").append(channel).append("*.tif"));
         imageDir.setNameFilters(filterList);
         QStringList fileList = imageDir.entryList();
 
@@ -776,7 +777,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
+        filterList.append(QString("*").append(channel).append("*.tif"));
         imageDir.setNameFilters(filterList);
         QStringList fileList = imageDir.entryList();
 
@@ -1155,6 +1156,11 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
     }else{
         qDebug()<<"invalid image";
     }
+}
+
+
+void StackAnalyzer::updateChannel(QString inputChannel){
+    channel = inputChannel;
 }
 
 NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma)

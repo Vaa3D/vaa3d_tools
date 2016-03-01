@@ -25,12 +25,14 @@ public slots:
 
     void processStack(Image4DSimple InputImage);
     void processSmartScan(QString fileWithData);
+
     void loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString);
+    void updateChannel(QString);
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
 
 private:
     V3DPluginCallback2 * cb;
-
+    QString channel;
 };
 
 #endif // STACKANALYZER_H

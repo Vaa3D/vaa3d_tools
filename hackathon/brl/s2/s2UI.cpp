@@ -105,7 +105,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     updateLocalRemote(isLocal);
-
+    channelChoiceComboB->setCurrentIndex(1);
 
 
     startSmartScanPB->resize(50,40);
@@ -174,7 +174,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(this, SIGNAL(callSALoadMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
-
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 
@@ -367,11 +367,23 @@ QGroupBox *S2UI::createTracingParameters(){
     overlap = 0.01* ((float) overlapSpinBox->value());
 
 
+
+
     tracingMethodComboB = new QComboBox;
     tracingMethodComboB->addItem("MOST");
     tracingMethodComboB->addItem("APP2");
     tracingMethodComboB->setCurrentIndex(0);
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
+
+
+
+
+    channelChoiceComboB = new QComboBox;
+    channelChoiceComboB->addItem("Ch1");
+    channelChoiceComboB->addItem("Ch2");
+    channelChoiceComboB->setCurrentIndex(1);
+    QLabel * channelChoiceComboBLabel = new QLabel(tr("Color Channel: "));
+
 
     analysisRunning = new QLabel(tr("0"));
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
@@ -402,6 +414,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(analysisRunning,10,0);
     tPL->addWidget(tracingMethodComboBLabel,11,0);
     tPL->addWidget(tracingMethodComboB, 11, 1);
+    tPL->addWidget(channelChoiceComboBLabel,12,0);
+    tPL->addWidget(channelChoiceComboB,12,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
