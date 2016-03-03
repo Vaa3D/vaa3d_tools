@@ -120,6 +120,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,APP_LS_PARA &
     tileLocation.y = tileLocation.y -int(P.block_size/2);
     tileLocation.z = 0;
     tileLocation.radius = P.block_size;
+    tileLocation.comments = "center";
     allTargetList.push_back(tileLocation);
 
     QString tmpfolder;
@@ -158,7 +159,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,APP_LS_PARA &
             }
         }
     }
-
 
     qint64 etime1 = timer1.elapsed();
 
@@ -728,11 +728,20 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
+    QString finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    vector<MyMarker*> finalswc;
+
+    if(ifs_swc)
+       finalswc = readSWC_file(finaloutputswc.toStdString());
+
     if(P.visible_thresh)
         qDebug()<<"starting app1";
     else
         qDebug()<<"starting app2";
     qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+
+    vector<MyMarker*> tileswc_file;
 
     if(inputRootList.size() <1)
     {
@@ -749,7 +758,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
     }
     else
     {
-        vector<MyMarker*> tileswc_file;
         for(int i = 0; i < inputRootList.size(); i++)
         {
             QString poutswc_file = swcString + (QString::number(i)) + (".swc");
@@ -758,12 +766,12 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
             else
                 p2.outswc_file =poutswc_file;
 
+            bool flag = false;
             LocationSimple RootNewLocation;
             RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
             RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
             RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
 
-            bool flag = false;
             if(tileswc_file.size()>0)
             {
                 for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
@@ -792,6 +800,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
                 }
 
                 vector<MyMarker*> inputswc = readSWC_file(poutswc_file.toStdString());
+
                 for(V3DLONG d = 0; d < inputswc.size(); d++)
                 {
                     tileswc_file.push_back(inputswc[d]);
@@ -823,23 +832,39 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
         {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
+            bool check_tip = false;
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
-                V3DLONG node_pn = getParent(i,nt);
-                V3DLONG node_pn_2nd;
-                if( list.at(node_pn).pn < 0)
-                {
-                    node_pn_2nd = node_pn;
-                }
-                else
-                {
-                    node_pn_2nd = getParent(node_pn,nt);
-                }
+//                V3DLONG node_pn = getParent(i,nt);
+//                V3DLONG node_pn_2nd;
+//                if( list.at(node_pn).pn < 0)
+//                {
+//                    node_pn_2nd = node_pn;
+//                }
+//                else
+//                {
+//                    node_pn_2nd = getParent(node_pn,nt);
+//                }
 
-                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
-                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
-                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+//                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
+//                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
+//                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+
+                newTip.x = curr.x + total4DImage->getOriginX();
+                newTip.y = curr.y + total4DImage->getOriginY();
+                newTip.z = curr.z + total4DImage->getOriginZ();
+
+                for(V3DLONG j = 0; j < finalswc.size(); j++ )
+                {
+                    double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
+                    if(dis < 30.0)
+                    {
+                        check_tip = true;
+                        break;
+                    }
+                }
             }
+            if(check_tip) continue;
             if( curr.x < 0.05* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
@@ -855,6 +880,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
             }
         }
     }
+
     double overlap = 0.1;
     LocationSimple newTarget;
     if(tip_left.size()>0)
@@ -867,24 +893,28 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
             if(tip_left.at(i).y >= max_y) max_y = tip_left.at(i).y;
         }
         double block_size = (max_y - min_y)*1.2;
+        if(block_size <= 256) block_size = 256;
+        if(block_size >= P.block_size) block_size = P.block_size;
         newTarget.x = -floor(block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - block_size)/2) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.radius = block_size;
         newTargetList->push_back(newTarget);
-    }
+   }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
         float min_y = INF, max_y = 0;
-        for(int i = 0; i<tip_left.size();i++)
+        for(int i = 0; i<tip_right.size();i++)
         {
-            if(tip_left.at(i).y <= min_y) min_y = tip_left.at(i).y;
-            if(tip_left.at(i).y >= max_y) max_y = tip_left.at(i).y;
+            if(tip_right.at(i).y <= min_y) min_y = tip_right.at(i).y;
+            if(tip_right.at(i).y >= max_y) max_y = tip_right.at(i).y;
         }
         double block_size = (max_y - min_y)*1.2;
-        newTarget.x = floor(block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - block_size)/2) + tileLocation.y;
+        if(block_size <= 256) block_size = 256;
+        if(block_size >= P.block_size) block_size = P.block_size;
+        newTarget.x = tileLocation.x + tileLocation.radius - floor(block_size*overlap);
+        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.radius = block_size;
         newTargetList->push_back(newTarget);
@@ -893,13 +923,15 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
     {
         newTipsList->push_back(tip_up);
         float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_left.size();i++)
+        for(int i = 0; i<tip_up.size();i++)
         {
-            if(tip_left.at(i).x <= min_x) min_x = tip_left.at(i).x;
-            if(tip_left.at(i).x >= max_x) max_x = tip_left.at(i).x;
+            if(tip_up.at(i).x <= min_x) min_x = tip_up.at(i).x;
+            if(tip_up.at(i).x >= max_x) max_x = tip_up.at(i).x;
         }
         double block_size = (max_x - min_x)*1.2;
-        newTarget.x = floor((min_x + max_x - block_size)/2) + tileLocation.x;
+        if(block_size <= 256) block_size = 256;
+        if(block_size >= P.block_size) block_size = P.block_size;
+        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
         newTarget.y = -floor(block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.radius = block_size;
@@ -909,18 +941,45 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
     {
         newTipsList->push_back(tip_down);
         float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_left.size();i++)
+        for(int i = 0; i<tip_down.size();i++)
         {
-            if(tip_left.at(i).x <= min_x) min_x = tip_left.at(i).x;
-            if(tip_left.at(i).x >= max_x) max_x = tip_left.at(i).x;
+            if(tip_down.at(i).x <= min_x) min_x = tip_down.at(i).x;
+            if(tip_down.at(i).x >= max_x) max_x = tip_down.at(i).x;
         }
         double block_size = (max_x - min_x)*1.2;
-        newTarget.x = floor((min_x + max_x - block_size)/2) + tileLocation.x;
-        newTarget.y = floor(block_size*(1.0-overlap)) + tileLocation.y;
+        if(block_size <= 256) block_size = 256;
+        if(block_size >= P.block_size) block_size = P.block_size;
+
+        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = tileLocation.y + tileLocation.radius - floor(block_size*overlap);
         newTarget.z = total4DImage->getOriginZ();
         newTarget.radius = block_size;
         newTargetList->push_back(newTarget);
     }
+
+    if(ifs_swc)
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+
+            finalswc.push_back(tileswc_file[i]);
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+    }
+    else
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
+    }
+
     total4DImage->deleteRawDataAndSetPointerToNull();
 
     return true;

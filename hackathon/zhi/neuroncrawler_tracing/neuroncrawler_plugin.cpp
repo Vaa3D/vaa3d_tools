@@ -21,6 +21,7 @@ QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
         <<tr("trace_APP2")
+        <<tr("trace_APP2_adap")
         <<tr("trace_APP1")
         <<tr("trace_MOST")
         <<tr("trace_NEUTUBE")
