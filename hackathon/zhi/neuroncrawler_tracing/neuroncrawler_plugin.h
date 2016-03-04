@@ -710,7 +710,7 @@ class neuroncrawler_neutube_raw : public QDialog
             layout->addWidget(new QLabel("block_size"),4,0);
             layout->addWidget(block_spinbox, 4,1,1,3);
             layout->addWidget(new QLabel("adaptive size?"),4,4);
-            layout->addWidget(b_adapWinchecker);
+            layout->addWidget(b_adapWinchecker,4,5);
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
@@ -729,7 +729,7 @@ class neuroncrawler_neutube_raw : public QDialog
 
             layout->addLayout(hbox2,7,0,7,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_APP1"));
+            setWindowTitle(QString("NeuronCrawler"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
