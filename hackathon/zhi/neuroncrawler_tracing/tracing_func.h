@@ -37,6 +37,7 @@ struct ALL_LS_PARA
     int  bkg_thresh;
     int  seed_win;
     int  slip_win;
+    bool adap_win;
 
     int  block_size;
     V3DLONG in_sz[3];
@@ -54,7 +55,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &p,LandmarkLis
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,ALL_LS_PARA &p,bool bmenu, int method);
 bool all_tracing(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
 
-bool all_tracing(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
+bool all_tracing_ada_win(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
 
 
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
