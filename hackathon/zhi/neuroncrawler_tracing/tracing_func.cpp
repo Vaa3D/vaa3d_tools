@@ -835,29 +835,29 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &P,LandmarkLis
             bool check_tip = false;
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
-//                V3DLONG node_pn = getParent(i,nt);
-//                V3DLONG node_pn_2nd;
-//                if( list.at(node_pn).pn < 0)
-//                {
-//                    node_pn_2nd = node_pn;
-//                }
-//                else
-//                {
-//                    node_pn_2nd = getParent(node_pn,nt);
-//                }
+                V3DLONG node_pn = getParent(i,nt);
+                V3DLONG node_pn_2nd;
+                if( list.at(node_pn).pn < 0)
+                {
+                    node_pn_2nd = node_pn;
+                }
+                else
+                {
+                    node_pn_2nd = getParent(node_pn,nt);
+                }
 
-//                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
-//                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
-//                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
+                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
+                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
 
-                newTip.x = curr.x + total4DImage->getOriginX();
-                newTip.y = curr.y + total4DImage->getOriginY();
-                newTip.z = curr.z + total4DImage->getOriginZ();
+//                newTip.x = curr.x + total4DImage->getOriginX();
+//                newTip.y = curr.y + total4DImage->getOriginY();
+//                newTip.z = curr.z + total4DImage->getOriginZ();
 
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 30.0)
+                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
                     {
                         check_tip = true;
                         break;

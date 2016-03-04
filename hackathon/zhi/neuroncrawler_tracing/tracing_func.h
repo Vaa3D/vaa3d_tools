@@ -54,6 +54,9 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &p,LandmarkLis
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,ALL_LS_PARA &p,bool bmenu, int method);
 bool all_tracing(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
 
+bool all_tracing(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
+
+
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
