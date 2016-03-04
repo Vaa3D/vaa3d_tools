@@ -21,11 +21,9 @@ QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
         <<tr("trace_APP2")
-        <<tr("trace_APP2_adap")
         <<tr("trace_APP1")
         <<tr("trace_MOST")
         <<tr("trace_NEUTUBE")
-        <<tr("trace_NEUTUBE_adap")
         <<tr("trace_SNAKE")
 		<<tr("about");
 }
@@ -86,53 +84,6 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.visible_thresh = 0;
         P.adap_win = false;
-        crawler_raw_app(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_APP2_adap"))
-    {
-        APP_LS_PARA P;
-        bool bmenu = true;
-        neuroncrawler_app2_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.is_gsdt = dialog.is_gsdt;
-        P.is_break_accept = dialog.is_break_accept;
-        P.bkg_thresh = dialog.bkg_thresh;
-        P.length_thresh = dialog.length_thresh;
-        P.cnn_type = dialog.cnn_type;
-        P.channel = dialog.channel;
-        P.SR_ratio = dialog.SR_ratio;
-        P.b_256cube = dialog.b_256cube;
-        P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
-        P.block_size = dialog.block_size;
-        P.visible_thresh = 0;
-        P.adap_win = true;
         crawler_raw_app(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_APP1"))
 	{
@@ -254,46 +205,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.adap_win = false;
 
         crawler_raw_all(callback,parent,P,bmenu,1);
-    }
-    else if (menu_name == tr("trace_NEUTUBE_adap"))
-    {
-        ALL_LS_PARA P;
-        bool bmenu = true;
-        neuroncrawler_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = true;
-        crawler_raw_all(callback,parent,P,bmenu,1);
-    }
-    else if (menu_name == tr("trace_SNAKE"))
+    }else if (menu_name == tr("trace_SNAKE"))
     {
         ALL_LS_PARA P;
         bool bmenu = true;

@@ -1604,7 +1604,14 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,ALL_LS_PARA &P,LandmarkLis
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
 
-    QString finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+    QString finaloutputswc;
+    if(method ==1)
+        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+    else if (method ==2)
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+    else if (method ==3)
+        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
+
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
 

@@ -21,7 +21,7 @@ struct APP_LS_PARA
     int  b_256cube;
     int b_RadiusFrom2D;
     int block_size;
-    bool adap_win;
+    int adap_win;
     V3DLONG in_sz[3];
 
     int  visible_thresh;//for APP1 use only
@@ -37,7 +37,7 @@ struct ALL_LS_PARA
     int  bkg_thresh;
     int  seed_win;
     int  slip_win;
-    bool adap_win;
+    int adap_win;
 
     int  block_size;
     V3DLONG in_sz[3];
