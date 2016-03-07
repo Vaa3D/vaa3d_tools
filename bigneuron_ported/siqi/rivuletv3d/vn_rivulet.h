@@ -6,14 +6,14 @@
 struct PARA_RIVULET
 {
     unsigned char threshold;
-    unsigned char stepsize;
+    unsigned char length;
     unsigned char gap; 
     unsigned char dumpbranch; 
     unsigned char connectrate; 
     double percentage;
     double sigmavalue;
-    double alpha_one_value;
-    double alpha_two_value;
+    // double alpha_one_value;
+    // double alpha_two_value;
     V3DLONG channel;
 
     
@@ -22,14 +22,14 @@ struct PARA_RIVULET
     PARA_RIVULET() 
     {
         threshold = 10;
-        stepsize = 1;
+        length = 8;
         gap = 15; 
         dumpbranch = 0; 
         connectrate = 1.5; 
         percentage = 0.98;
         sigmavalue = 3;
-        alpha_one_value = 0.5;
-        alpha_two_value = 1;
+        // alpha_one_value = 0.5;
+        // alpha_two_value = 1;
 
         inimg_file = "";
         inmarker_file = "";
@@ -54,6 +54,10 @@ struct PARA_RIVULET
             bkgthresh_spinbox->setRange(-1, 255);
             bkgthresh_spinbox->setValue(10);
 
+            QSpinBox * length_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(1, 40);
+            bkgthresh_spinbox->setValue(8);
+
             QSpinBox * gap_spinbox = new QSpinBox();
             gap_spinbox->setRange(0,100);
             gap_spinbox->setValue(15);
@@ -71,34 +75,36 @@ struct PARA_RIVULET
 
             QDoubleSpinBox * sigma = new QDoubleSpinBox();
             sigma->setRange(1.0, 6.0);
-            sigma->setValue(3);
+            sigma->setValue(0);
 
-            QDoubleSpinBox * alpha_one = new QDoubleSpinBox();
-            alpha_one->setRange(0.0, 3.0);
-            alpha_one->setValue(0.5);
+            // QDoubleSpinBox * length = new QIntegerSpinBox();
+            // alpha_one->setRange(0.0, 3.0);
+            // alpha_one->setValue(0.5);
 
-            QDoubleSpinBox * alpha_two = new QDoubleSpinBox();
-            alpha_two->setRange(0.0, 3.0);
-            alpha_two->setValue(1);
+            // QDoubleSpinBox * alpha_two = new QDoubleSpinBox();
+            // alpha_two->setRange(0.0, 3.0);
+            // alpha_two->setValue(1);
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
             layout->addWidget(new QLabel("background"),1,0);
             layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
-            layout->addWidget(new QLabel("gap allowed"),2,0);
-            layout->addWidget(gap_spinbox, 2,1,1,5);
-            layout->addWidget(new QLabel("dump unconnected branches"),3,0);
-            layout->addWidget(dump_checker, 3,1,1,5);
-            layout->addWidget(new QLabel("connectrate"),4,0);
-            layout->addWidget(connectrate_spinbox, 4,1,1,5);
-            layout->addWidget(new QLabel("percentage_spinbox"),5,0);
-            layout->addWidget(percentage_spinbox, 5,1,1,5);
-            layout->addWidget(new QLabel("vesselness sigma"),6,0);
-            layout->addWidget(sigma, 6,1,1,5);
-            layout->addWidget(new QLabel("vesselness alpha one"),7,0);
-            layout->addWidget(alpha_one, 7,1,1,5);
-            layout->addWidget(new QLabel("vesselness alpha two"),8,0);
-            layout->addWidget(alpha_two, 8,1,1,5);
+            layout->addWidget(new QLabel("length"),2,0);
+            layout->addWidget(length_spinbox, 2,1,1,5);
+            layout->addWidget(new QLabel("gap allowed"),3,0);
+            layout->addWidget(gap_spinbox, 3,1,1,5);
+            layout->addWidget(new QLabel("dump unconnected branches"),4,0);
+            layout->addWidget(dump_checker, 4,1,1,5);
+            layout->addWidget(new QLabel("connectrate"),5,0);
+            layout->addWidget(connectrate_spinbox, 5,1,1,5);
+            layout->addWidget(new QLabel("percentage_spinbox"),6,0);
+            layout->addWidget(percentage_spinbox, 6,1,1,5);
+            layout->addWidget(new QLabel("vesselness sigma"),7,0);
+            layout->addWidget(sigma, 7,1,1,5);
+            // layout->addWidget(new QLabel("vesselness alpha one"),7,0);
+            // layout->addWidget(alpha_one, 7,1,1,5);
+            // layout->addWidget(new QLabel("vesselness alpha two"),8,0);
+            // layout->addWidget(alpha_two, 8,1,1,5);
             
             QHBoxLayout * hbox3 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
@@ -121,12 +127,13 @@ struct PARA_RIVULET
             channel = channel_spinbox->value() - 1;
             threshold = bkgthresh_spinbox->value();
             gap = gap_spinbox->value();
+            length = length_spinbox->value();
             dumpbranch = dump_checker->isChecked();
             connectrate = connectrate_spinbox->value();
             percentage = percentage_spinbox->value();
             sigmavalue = sigma->value();
-            alpha_one_value = alpha_one->value();
-            alpha_two_value = alpha_two->value();
+            // alpha_one_value = alpha_one->value();
+            // alpha_two_value = alpha_two->value();
 
           
             if (dialog) {delete dialog; dialog=0;}

@@ -31,14 +31,15 @@ struct input_PARA
     QString inimg_file;
     V3DLONG channel;
     unsigned char threshold;
-    unsigned char stepsize;
+    // unsigned char stepsize;
+    unsigned char length;
     unsigned char gap;
     int dumpbranch;
     float connectrate;
     float percentage;
     float sigma;
-    float alpha_one;
-    float alpha_two;
+    // float alpha_one;
+    // float alpha_two;
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -52,7 +53,7 @@ double* distgradient(double* T, V3DLONG* in_sz);
 Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_sz, Point startpoint, Point sourcepoint, unsigned char stepsize, unsigned char gap);
 double* c2mat(double* m, V3DLONG* in_sz);
 void binarysphere3d(bool* tB, V3DLONG* in_sz, vector<Point> l, vector<float> radius);
-float addbranch2tree(vector<swcnode>* tree, Path l, unsigned char connectrate, vector<float> radius, unsigned char *data1d, V3DLONG* in_sz);
+float addbranch2tree(vector<swcnode>* tree, Path l, unsigned char connectrate, vector<float> radius, unsigned char *data1d, V3DLONG* in_sz, unsigned char length);
 void celebrate();
  
 QStringList RivuletPlugin::menulist() const
@@ -90,11 +91,11 @@ void RivuletPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         PARA.percentage = p.percentage;
         PARA.dumpbranch = p.dumpbranch;
         PARA.gap = p.gap;
-        PARA.stepsize = p.stepsize;
+        PARA.length = p.length;
         PARA.channel = p.channel;
         PARA.sigma = p.sigmavalue;
-        PARA.alpha_one = p.alpha_one_value;
-        PARA.alpha_two = p.alpha_two_value;
+        // PARA.alpha_one = p.alpha_one_value;
+        // PARA.alpha_two = p.alpha_two_value;
 
         reconstruction_func(callback,parent,PARA,bmenu);
 
@@ -128,7 +129,8 @@ bool RivuletPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.threshold = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
-        PARA.stepsize = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        // PARA.stepsize = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.length = (paras.size() >= k+1) ? atoi(paras[k]) : 8;  k++;
         PARA.gap = (paras.size() >= k+1) ? atoi(paras[k]) : 15;  k++;
         PARA.dumpbranch = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         PARA.connectrate = (paras.size() >= k+1) ? atof(paras[k]) : 1.5;  k++;
@@ -136,14 +138,14 @@ bool RivuletPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         if (PARA.percentage > 1.0)
             PARA.percentage = 1.0;
         PARA.sigma = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        PARA.alpha_one = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        PARA.alpha_two = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        // PARA.alpha_one = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++; % these two values do not have to be changed
+        // PARA.alpha_two = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
     {
 		printf("**** Usage of Rivulet tracing **** \n");
-		printf("vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold> <stepsize> <gap> <dumpbranch> <connectrate> <percentage>\n");
+		printf("vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold> <length> <gap> <dumpbranch> <connectrate> <percentage> <sigma>\n");
         printf("inimg_file\tThe input image\n");
         printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
         printf("threshold\tThe background threshold for segmentation (default 10).\n");
@@ -152,6 +154,7 @@ bool RivuletPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("dumpbranch\tWhether the unconnected branches will be dumpped. (default 0)\n");
         printf("connectrate\tBranch terminis within connectrate*(radius+3) will be connected to the trunk. (default 1.5)\n");
         printf("percentage\tThe converage expected on the binary image before stopping tracing. (default 0.98)\n");
+        printf("sigma\tThe sigma value for to compute Hessian matrix for image enhancement\n");
         printf("outswc_file\tWill be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 	}
@@ -249,21 +252,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     cout<<"Start Rivulet"<<endl;
     printf("Image Size: %d, %d, %d\n", in_sz[0], in_sz[1], in_sz[2]);
 
-    // Binarize Image with theshold
-    const unsigned char threshold = PARA.threshold;
-    const unsigned char stepsize = PARA.stepsize;
-    const unsigned char gap = PARA.gap; 
-    const unsigned char dumpbranch = PARA.dumpbranch; 
-    const unsigned char connectrate = PARA.connectrate; 
-    const double percentage = PARA.percentage;
-    cout<<"Tracing Parameters:"<<endl;
-    printf("threshold:\t%d", threshold);
-    printf("stepsize:\t%d", stepsize);
-    printf("gap:\t%d", gap);
-    printf("dumpbranch:\t%d", dumpbranch);
-    printf("connectrate:\t%d", connectrate);
-    printf("percentage:\t%f", percentage);
-
     int NVOX = M * N * P;
     
     // Distance Transform
@@ -280,11 +268,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     std::copy(data1d, data1d + NVOX, binary_data1d);
 
     // Fast marching distance transform proposed in APP2 
-    fastmarching_dt(data1d, bdist1d, N, M, P, 2, threshold);
+    fastmarching_dt(data1d, bdist1d, N, M, P, 2, PARA.threshold);
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
-
 
     int in_sz_int[4];
 
@@ -293,40 +280,56 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         in_sz_int[i] = (int)in_sz[i];
     }
 
-    IM->Imcreate(data1d, in_sz_int);
-    // std::cout<<"image operation work or not?"<<std::endl;
-    IM->computeHessian(PARA.sigma, PARA.alpha_one, PARA.alpha_two);
-    std::cout<<"=== Hessian computation Finished..."<<std::endl;
-    //----------------------------vesselness begin
-    V3DLONG l_npixels_vessel;
-    l_npixels_vessel = in_sz_int[0] * in_sz_int[1] * in_sz_int[2];
-    cout<<"l_npixels_vessel"<<l_npixels_vessel<<endl;
-    GradientImageType::IndexType index;
-    unsigned char *p_vessel = new unsigned char[l_npixels_vessel]();
-    unsigned char *vp_tmp = p_vessel;
-    ImageType::RegionType rg = (IM->finalim->GetLargestPossibleRegion());
-    ImageType::SizeType sz = rg.GetSize();
-    for(V3DLONG Z = 0;Z < in_sz[2]; Z++)
-        for(V3DLONG Y = 0;Y < in_sz[1]; Y++)
-            for(V3DLONG X = 0;X < in_sz[0]; X++)
-            {
-                index[0] = X; index[1] = Y; index[2] = Z;
-
-                *vp_tmp = (unsigned char)(IM->finalim->GetPixel(index) * 100);
-                vp_tmp++;
-            }
-    // cout<<"Before the vesselness image is saved."<<endl;
-    // QString str_outimg_filename = PARA.inimg_file + "_vesselness.v3draw";
-    // saveImage(qPrintable(str_outimg_filename), p_vessel, in_sz, V3D_UINT8);
-    // cout<<"After the vesselness image is saved."<<endl;
-    cout<<"the vesselness image is binaried with threshold."<<endl;
-
-    // binarize data
-    for (int i=0; i<NVOX; i++)
+    if (PARA.sigma > 0)
     {
-        // binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
-        binary_data1d[i] = p_vessel[i] > threshold? 1 : 0;
+        IM->Imcreate(data1d, in_sz_int);
+        // std::cout<<"image operation work or not?"<<std::endl;
+        IM->computeHessian(PARA.sigma, 0.5, 1);
+        std::cout<<"=== Hessian computation Finished..."<<std::endl;
+        //----------------------------vesselness begin
+        V3DLONG l_npixels_vessel;
+        l_npixels_vessel = in_sz_int[0] * in_sz_int[1] * in_sz_int[2];
+        cout<<"l_npixels_vessel"<<l_npixels_vessel<<endl;
+        GradientImageType::IndexType index;
+        unsigned char *p_vessel = new unsigned char[l_npixels_vessel]();
+        unsigned char *vp_tmp = p_vessel;
+        ImageType::RegionType rg = (IM->finalim->GetLargestPossibleRegion());
+        ImageType::SizeType sz = rg.GetSize();
+        for(V3DLONG Z = 0;Z < in_sz[2]; Z++)
+            for(V3DLONG Y = 0;Y < in_sz[1]; Y++)
+                for(V3DLONG X = 0;X < in_sz[0]; X++)
+                {
+                    index[0] = X; index[1] = Y; index[2] = Z;
+
+                    *vp_tmp = (unsigned char)(IM->finalim->GetPixel(index) * 100);
+                    vp_tmp++;
+                }
+        // cout<<"Before the vesselness image is saved."<<endl;
+        // QString str_outimg_filename = PARA.inimg_file + "_vesselness.v3draw";
+        // saveImage(qPrintable(str_outimg_filename), p_vessel, in_sz, V3D_UINT8);
+        // cout<<"After the vesselness image is saved."<<endl;
+        cout<<"the vesselness image is binaried with threshold."<<endl;
+        // binarize data
+        for (int i=0; i<NVOX; i++)
+        {
+            // binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
+            binary_data1d[i] = p_vessel[i] > PARA.threshold? 1 : 0;
+        }
     }
+    else
+    {
+        cout<<"Skipped hessian filter since sigma < 0"<<endl;
+        // binarize data
+        for (int i=0; i<NVOX; i++)
+        {
+            // binary_data1d[i] = binary_data1d[i] > threshold? 1 : 0;
+            binary_data1d[i] = data1d[i] > PARA.threshold? 1 : 0;
+        }
+
+    }
+
+
+
 
     // Find the source point
     float maxd;
@@ -336,7 +339,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // Make Speed Image
     for (int i = 0; i < NVOX - 1; i++)
     {   
-        float s = pow(bdist1d[i] / maxd, 4);
+        float s = pow(bdist1d[i] / maxd, 6);
         bdist1d[i] = s == 0 ? 1e-10 : s;
     }
 
@@ -387,13 +390,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     std::clock_t start = std::clock();
     while(true)
     {
-        cout<<".";
+        // cout<<".";
         // cout<<"N Branches:"<<tree.size()<<endl;
         double maxt;
         int maxidx = findmax(T, NVOX, &maxt);
         Point startpoint = ind2sub((V3DLONG)maxidx, in_sz);
         // Trace the shortest path from the farthest point to the source point
-        Path l = shortestpath2(T, grad, binary_data1d, in_sz, startpoint, sourcepoint, stepsize, gap);
+        Path l = shortestpath2(T, grad, binary_data1d, in_sz, startpoint, sourcepoint, 1, PARA.gap);
         // cout<<"after shortestpath2"<<endl;
         int pathlen = l.l.size();
         
@@ -404,7 +407,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             V3DLONG idx = sub2ind(l.l[i].x, l.l[i].y, l.l[i].z, in_sz);
             // radius[i] = bdist1d[idx] < 1.0 ? 1.0 : bdist1d[idx];
             marker.x = l.l[i].x; marker.y = l.l[i].y; marker.z = l.l[i].z;
-            radius[i] = markerRadius(data1d, in_sz, marker, threshold, 2); 
+            radius[i] = markerRadius(data1d, in_sz, marker, PARA.threshold, 2); 
         }
 
         // Remove traced from the time map
@@ -422,9 +425,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
 
         // Add l to tree
-        if ( !(l.dump && dumpbranch) )
+        if ( !(l.dump && PARA.dumpbranch) )
         {
-            float conf = addbranch2tree(&tree, l, connectrate, radius, binary_data1d, in_sz);
+            float conf = addbranch2tree(&tree, l, PARA.connectrate, radius, binary_data1d, in_sz, PARA.length);
             lconfidence.push_back(conf);
         }
         else
@@ -435,7 +438,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         // Compute the coverage percent
         double percent = (double)bsum / (double)vsum;
         // cout<<"Percent:"<<percent* 100<<endl;
-        if (percent >= percentage)
+        if (percent >= PARA.percentage)
         {
             break;
         }
@@ -699,7 +702,7 @@ Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_
         }
 
         // Calculate the next point using runge kutta
-        Point endpoint = rk4(startpoint, grad, in_sz, stepsize);
+        Point endpoint = rk4(startpoint, grad, in_sz, 1);
         if (endpoint.x < 0 || endpoint.x > in_sz[0] ||
             endpoint.y < 0 || endpoint.y > in_sz[1] ||
             endpoint.z < 0 || endpoint.z > in_sz[2]) break;
@@ -826,11 +829,11 @@ V3DLONG findmindist(Point p, vector<swcnode> tree, double* m)
 }
 
 
-float addbranch2tree(vector<swcnode>* tree, Path l, unsigned char connectrate, vector<float> radius, unsigned char *data1d, V3DLONG* in_sz)
+float addbranch2tree(vector<swcnode>* tree, Path l, unsigned char connectrate, vector<float> radius, unsigned char *data1d, V3DLONG* in_sz, unsigned char length)
 {
     float confidence = 0;
     int pathlen = l.l.size();
-    if (pathlen < 4)
+    if (pathlen < length)
     {
         // cout<<"Dump a branch short length:"<<pathlen<<endl;
         return confidence;
