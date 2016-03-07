@@ -9,7 +9,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 
-struct APP_LS_PARA
+struct TRACE_LS_PARA
 {
     int is_gsdt;
     int is_break_accept;
@@ -26,36 +26,25 @@ struct APP_LS_PARA
 
     int  visible_thresh;//for APP1 use only
 
-    Image4DSimple* image;
-    LandmarkList listLandmarks;
-    QString tcfilename,inimg_file,rawfilename,markerfilename;
-};
-
-struct ALL_LS_PARA
-{
-    int  channel;
-    int  bkg_thresh;
     int  seed_win;
-    int  slip_win;
-    int adap_win;
-
-    int  block_size;
-    V3DLONG in_sz[3];
+    int  slip_win; //for MOST use only
+    int  method; //1:app1, 2:app2, 3: neutube, 4:most, 5:snake.
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
     QString tcfilename,inimg_file,rawfilename,markerfilename;
 };
 
-bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,APP_LS_PARA &p,bool bmenu);
-bool app_tracing(V3DPluginCallback2 &callback,APP_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
-bool app_tracing_ada_win(V3DPluginCallback2 &callback,APP_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
+bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
-bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,ALL_LS_PARA &p,bool bmenu, int method);
-bool all_tracing(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
+bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
-bool all_tracing_ada_win(V3DPluginCallback2 &callback,ALL_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,int method);
+bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu, int method);
+bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+
+bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
