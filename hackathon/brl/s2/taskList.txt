@@ -1,3 +1,14 @@
+2016.03.02
+URGENT:  FIX EVENTLOGGER!   time differences are inconsistent, whole file gets appended multiple times, some negative elapsed times, add summary statistics
+
+ Add tab for configuration info,
+add option to run 1 marker or run all markers
+Add ROI controls-  with z scan info.
+Add total info /progress into dialog at ‘click ok’ and maybe add cancel option.
+add mode for resonant control. most code is now robust against active mode, but need a button to set active mode
+and ideally a way to assess if it's running properly at the tight zoom
+
+
 2016.02.26
 
  Add tab for configuration info,

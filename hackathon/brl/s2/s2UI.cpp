@@ -946,9 +946,9 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     for (int i = 0; i<newLandmarks.length(); i++){
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
-            for (int k=0; k<newTipsList.value(i).length();k++){
-                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
-            }
+//            for (int k=0; k<newTipsList.value(i).length();k++){
+//                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
+//            }
 
             if (!isDuplicateROI(newLandmarks.value(i))){
                 allROILocations->append(newLandmarks.value(i));

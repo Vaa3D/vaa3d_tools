@@ -70,6 +70,9 @@ class neuroncrawler_app2_raw : public QDialog
             block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
+            b_adapWinchecker = new QCheckBox();
+            b_adapWinchecker->setChecked(false);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
             if(curwin)
@@ -111,7 +114,9 @@ class neuroncrawler_app2_raw : public QDialog
             layout->addWidget(new QLabel("SR_ratio"),5,0);
             layout->addWidget(srratio_editor, 5,1,1,5);
             layout->addWidget(new QLabel("block_size"),6,0);
-            layout->addWidget(block_spinbox, 6,1,1,5);
+            layout->addWidget(block_spinbox, 6,1,1,3);
+            layout->addWidget(new QLabel("adaptive size?"),6,4);
+            layout->addWidget(b_adapWinchecker);
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),7,0);
             layout->addWidget(raw_filepath,7,1,1,4);
@@ -147,6 +152,8 @@ class neuroncrawler_app2_raw : public QDialog
             connect(iswb_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b256_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_radius2Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
@@ -171,6 +178,7 @@ class neuroncrawler_app2_raw : public QDialog
             iswb_checker->isChecked()? is_break_accept = 1 : is_break_accept = 0;
             b256_checker->isChecked()? b_256cube = 1 : b_256cube = 0;
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
+            b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
 
             block_size = block_spinbox->value();
             rawfilename = raw_filepath->text();
@@ -220,6 +228,8 @@ class neuroncrawler_app2_raw : public QDialog
         QCheckBox * iswb_checker;
         QCheckBox * b256_checker;
         QCheckBox * b_radius2Dchecker;
+        QCheckBox * b_adapWinchecker;
+
 
         QSpinBox * block_spinbox;
 
@@ -241,6 +251,7 @@ class neuroncrawler_app2_raw : public QDialog
         int  b_256cube;
         int b_RadiusFrom2D;
         int block_size;
+        int adap_win;
 
         QString rawfilename;
         QString markerfilename;
@@ -291,6 +302,9 @@ class neuroncrawler_app1_raw : public QDialog
             block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
+            b_adapWinchecker = new QCheckBox();
+            b_adapWinchecker->setChecked(false);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
             if(curwin)
@@ -321,9 +335,10 @@ class neuroncrawler_app1_raw : public QDialog
 
             layout->addLayout(hbox1,3,0,1,6);
 
-
             layout->addWidget(new QLabel("block_size"),4,0);
-            layout->addWidget(block_spinbox, 4,1,1,5);
+            layout->addWidget(block_spinbox, 4,1,1,3);
+            layout->addWidget(new QLabel("adaptive size?"),4,4);
+            layout->addWidget(b_adapWinchecker);
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
@@ -352,6 +367,7 @@ class neuroncrawler_app1_raw : public QDialog
             connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(visthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(downsample_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+            connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
@@ -373,6 +389,8 @@ class neuroncrawler_app1_raw : public QDialog
             rawfilename = raw_filepath->text();
             markerfilename = marker_filepath->text();
             downsample_factor = downsample_spinbox->value();
+
+            b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
 
             b_256cube = (downsample_factor==0) ? 1 : 0;
 
@@ -415,6 +433,7 @@ class neuroncrawler_app1_raw : public QDialog
         QSpinBox * bkgthresh_spinbox;
         QSpinBox * visthresh_spinbox;
         QSpinBox * downsample_spinbox;
+        QCheckBox * b_adapWinchecker;
 
         QSpinBox * block_spinbox;
 
@@ -432,6 +451,7 @@ class neuroncrawler_app1_raw : public QDialog
         int  b_256cube;
         int block_size;
         int downsample_factor;
+        int adap_win;
 
         QString rawfilename;
         QString markerfilename;
@@ -482,6 +502,9 @@ class neuroncrawler_most_raw : public QDialog
             block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
+            b_adapWinchecker = new QCheckBox();
+            b_adapWinchecker->setChecked(false);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
             if(curwin)
@@ -514,7 +537,9 @@ class neuroncrawler_most_raw : public QDialog
 
 
             layout->addWidget(new QLabel("block_size"),4,0);
-            layout->addWidget(block_spinbox, 4,1,1,5);
+            layout->addWidget(block_spinbox, 4,1,1,3);
+            layout->addWidget(new QLabel("adaptive size?"),4,4);
+            layout->addWidget(b_adapWinchecker);
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
@@ -533,7 +558,7 @@ class neuroncrawler_most_raw : public QDialog
 
             layout->addLayout(hbox2,7,0,7,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_APP1"));
+            setWindowTitle(QString("NeuronCrawler_MOST"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -543,6 +568,8 @@ class neuroncrawler_most_raw : public QDialog
             connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(seedwin_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(slipwin_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+
+            connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
@@ -569,6 +596,7 @@ class neuroncrawler_most_raw : public QDialog
 
             slip_win = slipwin_spinbox->value();
 
+            b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
 
         }
 
@@ -609,6 +637,7 @@ class neuroncrawler_most_raw : public QDialog
         QSpinBox * bkgthresh_spinbox;
         QSpinBox * seedwin_spinbox;
         QSpinBox * slipwin_spinbox;
+        QCheckBox * b_adapWinchecker;
 
         QSpinBox * block_spinbox;
 
@@ -626,6 +655,7 @@ class neuroncrawler_most_raw : public QDialog
         int  slip_win;
         int block_size;
         int downsample_factor;
+        int adap_win;
 
         QString rawfilename;
         QString markerfilename;
@@ -657,6 +687,9 @@ class neuroncrawler_neutube_raw : public QDialog
             block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
+            b_adapWinchecker = new QCheckBox();
+            b_adapWinchecker->setChecked(false);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
             if(curwin)
@@ -675,7 +708,9 @@ class neuroncrawler_neutube_raw : public QDialog
             }
 
             layout->addWidget(new QLabel("block_size"),4,0);
-            layout->addWidget(block_spinbox, 4,1,1,5);
+            layout->addWidget(block_spinbox, 4,1,1,3);
+            layout->addWidget(new QLabel("adaptive size?"),4,4);
+            layout->addWidget(b_adapWinchecker,4,5);
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
@@ -694,7 +729,7 @@ class neuroncrawler_neutube_raw : public QDialog
 
             layout->addLayout(hbox2,7,0,7,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_APP1"));
+            setWindowTitle(QString("NeuronCrawler"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -703,6 +738,9 @@ class neuroncrawler_neutube_raw : public QDialog
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
             connect(openmarkerFile, SIGNAL(clicked()), this, SLOT(_slots_openmarkerFile()));
+
+            connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
 
             update();
         }
@@ -715,6 +753,8 @@ class neuroncrawler_neutube_raw : public QDialog
             block_size = block_spinbox->value();
             rawfilename = raw_filepath->text();
             markerfilename = marker_filepath->text();
+
+            b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
 
         }
 
@@ -753,6 +793,7 @@ class neuroncrawler_neutube_raw : public QDialog
 
 
         QSpinBox * block_spinbox;
+        QCheckBox * b_adapWinchecker;
 
 
         QLineEdit * raw_filepath;
@@ -763,6 +804,7 @@ class neuroncrawler_neutube_raw : public QDialog
         Image4DSimple* image;
         LandmarkList listLandmarks;
         int block_size;
+        int adap_win;
 
         QString rawfilename;
         QString markerfilename;
