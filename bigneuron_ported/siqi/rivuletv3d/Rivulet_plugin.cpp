@@ -50,7 +50,10 @@ Point ind2sub(V3DLONG idx, V3DLONG* in_sz);
 template <class T> V3DLONG findmax(T * I, int NVOX, T * max);
 double* float2double(float *f, V3DLONG NVOX);
 double* distgradient(double* T, V3DLONG* in_sz);
-Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_sz, Point startpoint, Point sourcepoint, unsigned char stepsize, unsigned char gap);
+Path shortestpath2(double * T, double *grad, vector<swcnode> swc,
+                   unsigned char *data1d, V3DLONG* in_sz,
+                   Point startpoint, Point sourcepoint, 
+                   unsigned char stepsize, unsigned char gap);
 double* c2mat(double* m, V3DLONG* in_sz);
 void binarysphere3d(bool* tB, V3DLONG* in_sz, vector<Point> l, vector<float> radius);
 float addbranch2tree(vector<swcnode>* tree, Path l, unsigned char connectrate, vector<float> radius, unsigned char *data1d, V3DLONG* in_sz, unsigned char length);
@@ -256,7 +259,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     
     // Distance Transform
     float * bdist1d = 0;
-    cout<<"DT..."<<endl;
     unsigned char* binary_data1d;
 
     try
@@ -267,8 +269,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     std::copy(data1d, data1d + NVOX, binary_data1d);
 
-    // Fast marching distance transform proposed in APP2 
-    fastmarching_dt(data1d, bdist1d, N, M, P, 2, PARA.threshold);
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
@@ -328,8 +328,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     }
 
-
-
+    // Fast marching distance transform proposed in APP2 
+    cout<<"DT..."<<endl;
+    fastmarching_dt(binary_data1d, bdist1d, N, M, P, 2, 0);
 
     // Find the source point
     float maxd;
@@ -396,7 +397,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         int maxidx = findmax(T, NVOX, &maxt);
         Point startpoint = ind2sub((V3DLONG)maxidx, in_sz);
         // Trace the shortest path from the farthest point to the source point
-        Path l = shortestpath2(T, grad, binary_data1d, in_sz, startpoint, sourcepoint, 1, PARA.gap);
+        Path l = shortestpath2(T, grad, tree, binary_data1d, in_sz, startpoint, sourcepoint, 1, PARA.gap);
         // cout<<"after shortestpath2"<<endl;
         int pathlen = l.l.size();
         
@@ -678,7 +679,14 @@ float pointdist(Point p1, Point p2)
 }
 
 
-Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_sz, Point startpoint, Point sourcepoint, unsigned char stepsize, unsigned char gap)
+Path shortestpath2(double * T, double *grad, 
+                   vector<swcnode> swc,
+                   unsigned char *data1d,
+                   V3DLONG* in_sz,
+                   Point startpoint,
+                   Point sourcepoint,
+                   unsigned char stepsize,
+                   unsigned char gap)
 {
     Path path2return;
     int i = 0; // Count movement
@@ -687,6 +695,7 @@ Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_
     vector<Point> shortestline(ifree);
     bool merged = false;
     path2return.l = shortestline;
+    int stepsremain = -1;
 
     // Iteratively trace the shortest line array
     while(true)
@@ -695,10 +704,45 @@ Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_
 
         double dist = T[startidx];
 
-        if (dist == -1)
+        if (stepsremain ==0) // if it did not reach any surface of traced neuron, it decrelent as a negative value
+        {
+            break;
+        }
+
+        stepsremain--;
+
+        if (dist == -1 && stepsremain < 0)
         {
             path2return.merged = true;
+
+            // Find the closest traced node to current node
+            if (swc.size()==0) break;
+            else
+            {
+                double m = 0;
+                V3DLONG maxidx = 0;
+                for (V3DLONG i = 0; i < swc.size(); i++)
+                {
+                    double d = pow(startpoint.x - swc[i].p.x, 2) + 
+                               pow(startpoint.y - swc[i].p.y, 2) +
+                               pow(startpoint.z - swc[i].p.z, 2);
+
+                    if (m < d)
+                    { 
+                        m = d;
+                        maxidx = i;
+                    }
+                }
+
+                stepsremain = ceil(swc[maxidx].radius);
+            }
+            
             break;
+        }
+        else if (dist == -2) // Not yet implemented  
+        {
+            path2return.merged = true;
+            // path2return.somamerged = true;
         }
 
         // Calculate the next point using runge kutta
@@ -757,12 +801,12 @@ Path shortestpath2(double * T, double *grad, unsigned char *data1d, V3DLONG* in_
         }
 
         shortestline[i] = endpoint;
-        // printf("Trace-Point: %d - %f, %f, %f\n", i, endpoint.x, endpoint.y, endpoint.z); 
         i++; // Count number of iterations
     }
 
     shortestline.erase(shortestline.begin() + i, shortestline.end());
     path2return.l = shortestline;
+
     return path2return;
 }
 

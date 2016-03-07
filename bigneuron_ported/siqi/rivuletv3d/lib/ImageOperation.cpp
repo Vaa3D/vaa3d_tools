@@ -1979,16 +1979,15 @@ void ImageOperation::computeHessian(double sigma, double alpha_one, double alpha
     ProbImageType::Pointer pI = castFilter->GetOutput();
 
     hessianFilter->SetInput( pI );
-    if( sigma )
+    if( sigma > 0)
     {
-        hessianFilter->SetSigma(  sigma );
+        hessianFilter->SetSigma( sigma );
     }
     double index[3];
     index[0] = 1;
     index[1] = 1;
     index[2] = 1;
-    double number;
-    number = hessianFilter->GetSigma();
+    double chosensigma = hessianFilter->GetSigma();
     hessianFilter->Update();
     // std::cout<<"print the hessianFilter value: "<<number<<std::endl;
     // std::cout<<hessianFilter->GetNameOfClass()<<"!!!"<<std::endl;
@@ -2036,7 +2035,6 @@ void ImageOperation::computeHessian(double sigma, double alpha_one, double alpha
     vesselnessFilter->SetAlpha1( alpha_one );
     vesselnessFilter->SetAlpha2( alpha_two );
     vesselnessFilter->Update();
-    std::cout<<"question"<<std::endl;
     this->finalim = vesselnessFilter->GetOutput();
 //    value = this->finalim->GetPixel( pixelIndex );
 //    std::cout<<"I can get vesselness pixel out : "<<value<<std::endl;
