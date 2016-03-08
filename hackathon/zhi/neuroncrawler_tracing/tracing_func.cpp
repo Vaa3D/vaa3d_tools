@@ -152,6 +152,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
             else
             {
+                P.seed_win = 5;
+                P.slip_win = 5;
+                P.bkg_thresh = 20;
                 all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
             }
         }
@@ -909,62 +912,26 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         newTarget.z = total4DImage->getOriginZ();
         newTarget.radius = block_size;
         newTargetList->push_back(newTarget);
-   }
+    }
+
+    if(tip_left.size()>0)
+    {
+        ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
     if(tip_right.size()>0)
     {
-        newTipsList->push_back(tip_right);
-        float min_y = INF, max_y = 0;
-        for(int i = 0; i<tip_right.size();i++)
-        {
-            if(tip_right.at(i).y <= min_y) min_y = tip_right.at(i).y;
-            if(tip_right.at(i).y >= max_y) max_y = tip_right.at(i).y;
-        }
-        double block_size = (max_y - min_y)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = tileLocation.x + tileLocation.radius - floor(block_size*overlap);
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
     if(tip_up.size()>0)
     {
-        newTipsList->push_back(tip_up);
-        float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_up.size();i++)
-        {
-            if(tip_up.at(i).x <= min_x) min_x = tip_up.at(i).x;
-            if(tip_up.at(i).x >= max_x) max_x = tip_up.at(i).x;
-        }
-        double block_size = (max_x - min_x)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = -floor(block_size*(1.0-overlap)) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+
     }
     if(tip_down.size()>0)
     {
-        newTipsList->push_back(tip_down);
-        float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_down.size();i++)
-        {
-            if(tip_down.at(i).x <= min_x) min_x = tip_down.at(i).x;
-            if(tip_down.at(i).x >= max_x) max_x = tip_down.at(i).x;
-        }
-        double block_size = (max_x - min_x)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = tileLocation.y + tileLocation.radius - floor(block_size*overlap);
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
+
 
     if(ifs_swc)
     {
@@ -1519,9 +1486,9 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     QString saveDirString;
     if(P.method ==3)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-    else if (P.method ==5)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
     else if (P.method ==4)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+    else if (P.method ==5)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
     else if (P.method ==2)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
@@ -1621,9 +1588,9 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     QString finaloutputswc;
     if(P.method ==3)
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
-    else if (P.method ==5)
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
     else if (P.method ==4)
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+    else if (P.method ==5)
         finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
     else if (P.method ==2)
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
@@ -1652,19 +1619,19 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     arg.type = "random";
     std::vector<char*> arg_para;
 
-    if(P.method ==3 || P.method == 2)
+    if(P.method ==3 )
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "neuTube";
         func_name =  "neutube_trace";
-    }else if(P.method ==5)
+    }else if(P.method ==4)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "snake";
         func_name =  "snake_trace";
-    }else if(P.method ==4)
+    }else if(P.method ==5 || P.method == 2)
     {
         string S_channel = boost::lexical_cast<string>(P.channel);
         char* C_channel = new char[S_channel.length() + 1];
@@ -1702,11 +1669,11 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
+    if(P.method ==3 )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
-    else if (P.method ==5)
+    else if (P.method ==4 )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
-    else if (P.method ==4)
+    else if (P.method ==5 || P.method ==2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -1752,7 +1719,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 20)
+                    if(dis < 2*finalswc.at(j)->radius || dis < 50)
                     {
                         check_tip = true;
                         break;
@@ -1775,80 +1742,22 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
     }
 
-    double overlap = 0.1;
-    LocationSimple newTarget;
     if(tip_left.size()>0)
     {
-        newTipsList->push_back(tip_left);
-        float min_y = INF, max_y = 0;
-        for(int i = 0; i<tip_left.size();i++)
-        {
-            if(tip_left.at(i).y <= min_y) min_y = tip_left.at(i).y;
-            if(tip_left.at(i).y >= max_y) max_y = tip_left.at(i).y;
-        }
-        double block_size = (max_y - min_y)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = -floor(block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
-   }
+        ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
     if(tip_right.size()>0)
     {
-        newTipsList->push_back(tip_right);
-        float min_y = INF, max_y = 0;
-        for(int i = 0; i<tip_right.size();i++)
-        {
-            if(tip_right.at(i).y <= min_y) min_y = tip_right.at(i).y;
-            if(tip_right.at(i).y >= max_y) max_y = tip_right.at(i).y;
-        }
-        double block_size = (max_y - min_y)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = tileLocation.x + tileLocation.radius - floor(block_size*overlap);
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
     if(tip_up.size()>0)
     {
-        newTipsList->push_back(tip_up);
-        float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_up.size();i++)
-        {
-            if(tip_up.at(i).x <= min_x) min_x = tip_up.at(i).x;
-            if(tip_up.at(i).x >= max_x) max_x = tip_up.at(i).x;
-        }
-        double block_size = (max_x - min_x)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = -floor(block_size*(1.0-overlap)) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+
     }
     if(tip_down.size()>0)
     {
-        newTipsList->push_back(tip_down);
-        float min_x = INF, max_x = 0;
-        for(int i = 0; i<tip_down.size();i++)
-        {
-            if(tip_down.at(i).x <= min_x) min_x = tip_down.at(i).x;
-            if(tip_down.at(i).x >= max_x) max_x = tip_down.at(i).x;
-        }
-        double block_size = (max_x - min_x)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = tileLocation.y + tileLocation.radius - floor(block_size*overlap);
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
+        ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
@@ -2017,3 +1926,60 @@ bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName)
     cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
     return true;
 };
+
+bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
+{
+    newTipsList->push_back(tips);
+    double overlap = 0.1;
+
+    float min_y = INF, max_y = 0;
+    float min_x = INF, max_x = 0;
+    double adaptive_size;
+
+    if(direction == 1 || direction == 2)
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
+            if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
+        }
+        adaptive_size = (max_y - min_y)*1.2;
+
+    }else
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
+            if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
+        }
+        adaptive_size = (max_x - min_x)*1.2;
+    }
+
+    if(adaptive_size <= 256) adaptive_size = 256;
+    if(adaptive_size >= block_size) adaptive_size = block_size;
+
+    LocationSimple newTarget;
+
+
+    if(direction == 1)
+    {
+        newTarget.x = -floor(block_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+    }else if(direction == 2)
+    {
+        newTarget.x = tileLocation.x + tileLocation.radius - floor(block_size*overlap);
+        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+    }else if(direction == 3)
+    {
+        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = -floor(block_size*(1.0-overlap)) + tileLocation.y;
+    }else
+    {
+        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = tileLocation.y + tileLocation.radius - floor(block_size*overlap);
+    }
+    newTarget.z = total4DImage->getOriginZ();
+    newTarget.radius = adaptive_size;
+    newTargetList->push_back(newTarget);
+    return true;
+}

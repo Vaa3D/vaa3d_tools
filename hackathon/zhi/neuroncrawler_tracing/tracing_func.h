@@ -28,7 +28,7 @@ struct TRACE_LS_PARA
 
     int  seed_win;
     int  slip_win; //for MOST use only
-    int  method; //1:app1, 2:app2, 3: neutube, 4:most, 5:snake.
+    int  method; //1:app1, 2:app2, 3: neutube, 4:snake, 5:most.
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
@@ -45,7 +45,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
+bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
 
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
