@@ -893,43 +893,49 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         }
     }
 
-    double overlap = 0.1;
-    LocationSimple newTarget;
-    if(tip_left.size()>0)
-    {
-        newTipsList->push_back(tip_left);
-        float min_y = INF, max_y = 0;
-        for(int i = 0; i<tip_left.size();i++)
-        {
-            if(tip_left.at(i).y <= min_y) min_y = tip_left.at(i).y;
-            if(tip_left.at(i).y >= max_y) max_y = tip_left.at(i).y;
-        }
-        double block_size = (max_y - min_y)*1.2;
-        if(block_size <= 256) block_size = 256;
-        if(block_size >= P.block_size) block_size = P.block_size;
-        newTarget.x = -floor(block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTarget.radius = block_size;
-        newTargetList->push_back(newTarget);
-    }
+//    if(tip_left.size()>0)
+//    {
+//            ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+//    }
+//    if(tip_right.size()>0)
+//    {
+//                      ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+//    }
+//    if(tip_up.size()>0)
+//    {
+//                       ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+
+//    }
+//    if(tip_down.size()>0)
+//    {
+
+//            ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+//    }
 
     if(tip_left.size()>0)
     {
-        ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
     }
     if(tip_right.size()>0)
     {
-        ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
+        for(int i = 0; i < group_tips_right.size();i++)
+            ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
     if(tip_up.size()>0)
     {
-        ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
+        for(int i = 0; i < group_tips_up.size();i++)
+            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
     }
     if(tip_down.size()>0)
     {
-        ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
+        for(int i = 0; i < group_tips_down.size();i++)
+            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
 
 
@@ -1619,7 +1625,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     arg.type = "random";
     std::vector<char*> arg_para;
 
-    if(P.method ==3 )
+    if(P.method ==3 || P.method == 2)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
@@ -1631,7 +1637,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         arg_para.push_back("1");
         full_plugin_name = "snake";
         func_name =  "snake_trace";
-    }else if(P.method ==5 || P.method == 2)
+    }else if(P.method ==5 )
     {
         string S_channel = boost::lexical_cast<string>(P.channel);
         char* C_channel = new char[S_channel.length() + 1];
@@ -1669,11 +1675,11 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 )
+    if(P.method ==3 || P.method ==2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
     else if (P.method ==4 )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
-    else if (P.method ==5 || P.method ==2)
+    else if (P.method ==5 )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -1719,7 +1725,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 50)
+                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
                     {
                         check_tip = true;
                         break;
@@ -1742,22 +1748,49 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
     }
 
+//        if(tip_left.size()>0)
+//        {
+//                ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+//        }
+//        if(tip_right.size()>0)
+//        {
+//                          ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+//        }
+//        if(tip_up.size()>0)
+//        {
+//                           ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+
+//        }
+//        if(tip_down.size()>0)
+//        {
+
+//                ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+//        }
+
     if(tip_left.size()>0)
     {
-        ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
     }
     if(tip_right.size()>0)
     {
-        ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
+        for(int i = 0; i < group_tips_right.size();i++)
+            ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
     if(tip_up.size()>0)
     {
-        ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
+        for(int i = 0; i < group_tips_up.size();i++)
+            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
     }
     if(tip_down.size()>0)
     {
-        ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
+        for(int i = 0; i < group_tips_down.size();i++)
+            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
@@ -1960,26 +1993,97 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
 
     LocationSimple newTarget;
 
-
     if(direction == 1)
     {
-        newTarget.x = -floor(block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
     }else if(direction == 2)
     {
-        newTarget.x = tileLocation.x + tileLocation.radius - floor(block_size*overlap);
-        newTarget.y = floor((min_y + max_y - block_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.x = tileLocation.x + tileLocation.radius - floor(adaptive_size*overlap);
+        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
     }else if(direction == 3)
     {
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = -floor(block_size*(1.0-overlap)) + tileLocation.y;
+        newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = -floor(adaptive_size*(1.0-overlap)) + tileLocation.y;
     }else
     {
-        newTarget.x = floor((min_x + max_x - block_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = tileLocation.y + tileLocation.radius - floor(block_size*overlap);
+        newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = tileLocation.y + tileLocation.radius - floor(adaptive_size*overlap);
     }
     newTarget.z = total4DImage->getOriginZ();
     newTarget.radius = adaptive_size;
     newTargetList->push_back(newTarget);
     return true;
+}
+
+QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
+{
+    QList<LandmarkList> groupTips;
+
+   //bubble sort
+   if(direction == 1 || direction == 2)
+   {
+       for(int i = 0; i < tips.size();i++)
+       {
+           for(int j = 0; j < tips.size();j++)
+           {
+               if(tips.at(i).y < tips.at(j).y)
+                   tips.swap(i,j);
+           }
+       }
+//       for(int i = 0; i < tips.size(); i++)
+//               v3d_msg(QString("%1,x%2,y%3").arg(i).arg(tips.at(i).x).arg(tips.at(i).y));
+
+
+       LandmarkList eachGroupList;
+       eachGroupList.push_back(tips.at(0));
+       for(int d = 0; d < tips.size()-1; d++)
+       {
+           if(tips.at(d+1).y - tips.at(d).y < 256)
+           {
+               eachGroupList.push_back(tips.at(d+1));
+           }
+           else
+           {
+               groupTips.push_back(eachGroupList);
+               eachGroupList.erase(eachGroupList.begin(),eachGroupList.end());
+               eachGroupList.push_back(tips.at(d+1));
+           }
+       }
+       groupTips.push_back(eachGroupList);
+   }else
+   {
+       for(int i = 0; i < tips.size();i++)
+       {
+           for(int j = 0; j < tips.size();j++)
+           {
+               if(tips.at(i).x < tips.at(j).x)
+                   tips.swap(i,j);
+           }
+       }
+
+       LandmarkList eachGroupList;
+       eachGroupList.push_back(tips.at(0));
+       for(int d = 0; d < tips.size()-1; d++)
+       {
+           if(tips.at(d+1).x - tips.at(d).x < 256)
+           {
+               eachGroupList.push_back(tips.at(d+1));
+           }
+           else
+           {
+               groupTips.push_back(eachGroupList);
+               eachGroupList.erase(eachGroupList.begin(),eachGroupList.end());
+               eachGroupList.push_back(tips.at(d+1));
+
+           }
+       }
+       groupTips.push_back(eachGroupList);
+   }
+
+
+
+//   v3d_msg(QString("group siz is %1").arg(groupTips.size()));
+
+   return groupTips;
 }

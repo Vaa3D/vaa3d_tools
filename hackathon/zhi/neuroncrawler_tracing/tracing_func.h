@@ -47,6 +47,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inpu
 bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
 
+QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
