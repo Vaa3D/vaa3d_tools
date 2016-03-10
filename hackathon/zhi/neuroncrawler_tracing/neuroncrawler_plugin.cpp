@@ -171,7 +171,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.adap_win = dialog.adap_win;
         P.method = 4;
 
-        crawler_raw_all(callback,parent,P,bmenu,3);
+        crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("trace_NEUTUBE"))
     {
@@ -211,7 +211,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.adap_win = dialog.adap_win;
         P.method = 3;
 
-        crawler_raw_all(callback,parent,P,bmenu,1);
+        crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_SNAKE"))
     {
         TRACE_LS_PARA P;
@@ -251,7 +251,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.method = 5;
 
 
-        crawler_raw_all(callback,parent,P,bmenu,2);
+        crawler_raw_all(callback,parent,P,bmenu);
     }
 	else
 	{
