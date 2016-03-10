@@ -207,7 +207,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
-                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), 1);
+                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), bmenu);
 
     return true;
 }
@@ -219,7 +219,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     if(P.visible_thresh)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
 
     QString imageSaveString = saveDirString;
 
@@ -364,8 +364,6 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         else
             qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-
-       // LandmarkList imageLandmarks;
 
         if(inputRootList.size() <1)
         {
@@ -604,7 +602,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(P.visible_thresh)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
 
     QString imageSaveString = saveDirString;
 
@@ -862,10 +860,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
                 newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
 
-//                newTip.x = curr.x + total4DImage->getOriginX();
-//                newTip.y = curr.y + total4DImage->getOriginY();
-//                newTip.z = curr.z + total4DImage->getOriginZ();
-
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
@@ -892,25 +886,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
         }
     }
-
-//    if(tip_left.size()>0)
-//    {
-//            ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-//    }
-//    if(tip_right.size()>0)
-//    {
-//                      ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
-//    }
-//    if(tip_up.size()>0)
-//    {
-//                       ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
-
-//    }
-//    if(tip_down.size()>0)
-//    {
-
-//            ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
-//    }
 
     if(tip_left.size()>0)
     {
@@ -1025,8 +1000,6 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
         outswc[i]->x = outswc[i]->x - offsetX_min;
         outswc[i]->y = outswc[i]->y - offsetY_min;
     }
-
-    //export_list2file(outswc, fileSaveName,QString::fromStdString(swcfilepath));
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
 
@@ -1149,9 +1122,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     if(P.method ==3)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
     else if(P.method ==4)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
-    else if(P.method ==5)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
+    else if(P.method ==5)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -1189,10 +1163,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     if(P.method ==3)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NEUTUBE")); infostring.push_back(tmpstr);
-    }else if(P.method ==5)
+    }else if(P.method ==4)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_SNAKE")); infostring.push_back(tmpstr);
-    }else if(P.method ==4)
+    }else if(P.method ==5)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_MOST")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -1210,7 +1184,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
-                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), 1);
+                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), bmenu);
 
     return true;
 }
@@ -1221,9 +1195,9 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString saveDirString;
     if(P.method ==3)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-    else if (P.method ==5)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
     else if (P.method ==4)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+    else if (P.method ==5)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
 
     QString imageSaveString = saveDirString;
@@ -1342,13 +1316,13 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             arg_para.push_back("1");
             full_plugin_name = "neuTube";
             func_name =  "neutube_trace";
-        }else if(P.method ==5)
+        }else if(P.method ==4)
         {
             arg_para.push_back("1");
             arg_para.push_back("1");
             full_plugin_name = "snake";
             func_name =  "snake_trace";
-        }else if(P.method ==4)
+        }else if(P.method ==5)
         {
             string S_channel = boost::lexical_cast<string>(P.channel);
             char* C_channel = new char[S_channel.length() + 1];
@@ -1389,9 +1363,9 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString swcNEUTUBE = saveDirString;
     if(P.method ==3)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
-    else if (P.method ==5)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
     else if (P.method ==4)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
+    else if (P.method ==5)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -1748,25 +1722,6 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
     }
 
-//        if(tip_left.size()>0)
-//        {
-//                ada_win_finding(tip_left,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-//        }
-//        if(tip_right.size()>0)
-//        {
-//                          ada_win_finding(tip_right,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
-//        }
-//        if(tip_up.size()>0)
-//        {
-//                           ada_win_finding(tip_up,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
-
-//        }
-//        if(tip_down.size()>0)
-//        {
-
-//                ada_win_finding(tip_down,tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
-//        }
-
     if(tip_left.size()>0)
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
@@ -2031,9 +1986,6 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
                    tips.swap(i,j);
            }
        }
-//       for(int i = 0; i < tips.size(); i++)
-//               v3d_msg(QString("%1,x%2,y%3").arg(i).arg(tips.at(i).x).arg(tips.at(i).y));
-
 
        LandmarkList eachGroupList;
        eachGroupList.push_back(tips.at(0));
@@ -2080,10 +2032,5 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        }
        groupTips.push_back(eachGroupList);
    }
-
-
-
-//   v3d_msg(QString("group siz is %1").arg(groupTips.size()));
-
    return groupTips;
 }
