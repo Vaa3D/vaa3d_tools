@@ -122,7 +122,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     allTargetList.push_back(tileLocation);
 
     QString tmpfolder;
-    if(P.visible_thresh)
+    if(P.method == 1)
         tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
     else
         tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP2");
@@ -217,7 +217,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 {
 
     QString saveDirString;
-    if(P.visible_thresh)
+    if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
@@ -301,7 +301,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-    if(P.visible_thresh)
+    if(P.method == 1)
     {
         p1.bkg_thresh = P.bkg_thresh;
         p1.channel = P.channel-1;
@@ -315,7 +315,6 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         p1.xc1 = p1.p4dImage->getXDim()-1;
         p1.yc1 = p1.p4dImage->getYDim()-1;
         p1.zc1 = p1.p4dImage->getZDim()-1;
-        qDebug()<<"starting app1";
     }
     else
     {
@@ -368,7 +367,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
         if(inputRootList.size() <1)
         {
-            if(P.visible_thresh)
+            if(P.method == 1)
             {
                 p1.outswc_file =swcString;
                 proc_app1(callback, p1, versionStr);
@@ -385,7 +384,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             for(int i = 0; i < inputRootList.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-                if(P.visible_thresh)
+                if(P.method == 1)
                     p1.outswc_file =poutswc_file;
                 else
                     p2.outswc_file =poutswc_file;
@@ -411,7 +410,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
                 if(!flag)
                 {
-                    if(P.visible_thresh)
+                    if(P.method == 1)
                     {
                         p1.landmarks.push_back(RootNewLocation);
                         proc_app1(callback, p1, versionStr);
@@ -447,7 +446,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             for(int i = 0; i < inputRootList_pruned.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + ("_2.swc");
-                if(P.visible_thresh)
+                if(P.method == 1)
                     p1.outswc_file = poutswc_file;
                 else
                     p2.outswc_file = poutswc_file;
@@ -473,7 +472,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
                 if(!flag)
                 {
-                    if(P.visible_thresh)
+                    if(P.method == 1)
                     {
                         p1.landmarks.push_back(RootNewLocation);
                         proc_app1(callback, p1, versionStr);
@@ -698,7 +697,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         p1.xc1 = p1.p4dImage->getXDim()-1;
         p1.yc1 = p1.p4dImage->getYDim()-1;
         p1.zc1 = p1.p4dImage->getZDim()-1;
-        qDebug()<<"starting app1";
     }
     else
     {
@@ -739,14 +737,19 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
-    QString finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+    QString finaloutputswc;
+    if(P.method == 1)
+       finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
+    else
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
+
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
 
     if(ifs_swc)
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
-    if(P.visible_thresh)
+    if(P.method == 1)
         qDebug()<<"starting app1";
     else
         qDebug()<<"starting app2";
@@ -756,7 +759,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(inputRootList.size() <1)
     {
-        if(P.visible_thresh)
+        if(P.method == 1)
         {
             p1.outswc_file =swcString;
             proc_app1(callback, p1, versionStr);
@@ -772,7 +775,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         for(int i = 0; i < inputRootList.size(); i++)
         {
             QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-            if(P.visible_thresh)
+            if(P.method == 1)
                 p1.outswc_file =poutswc_file;
             else
                 p2.outswc_file =poutswc_file;

@@ -20,20 +20,23 @@ Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
 QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
-        <<tr("trace_APP2")
-        <<tr("trace_APP1")
-        <<tr("trace_MOST")
-        <<tr("trace_NEUTUBE")
+            <<tr("trace_APP2")
+           <<tr("trace_APP1")
+          <<tr("trace_MOST")
+         <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
-		<<tr("about");
+       <<tr("about");
 }
 
 QStringList neuroncrawler::funclist() const
 {
-	return QStringList()
-		<<tr("trace_raw")
-		<<tr("trace_tc")
-		<<tr("help");
+    return QStringList()
+            <<tr("trace_APP2")
+           <<tr("trace_APP1")
+          <<tr("trace_MOST")
+         <<tr("trace_NEUTUBE")
+        <<tr("trace_SNAKE")
+       <<tr("help");
 }
 
 void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -82,7 +85,6 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.b_256cube = dialog.b_256cube;
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
-        P.visible_thresh = 0;
         P.adap_win = dialog.adap_win;
         P.method = 2;
         crawler_raw_app(callback,parent,P,bmenu);
@@ -261,22 +263,83 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    TRACE_LS_PARA P;
+    bool bmenu = false;
 
-	if (func_name == tr("trace_raw"))
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+    if (func_name == tr("trace_APP2"))
+	{
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+
+        P.method = 2;
+        crawler_raw_app(callback,parent,P,bmenu);
+	}
+    else if (func_name == tr("trace_APP1"))
 	{
 		v3d_msg("To be implemented.");
 	}
-	else if (func_name == tr("trace_tc"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    else if (func_name == tr("trace_APP2"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("trace_MOST"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("trace_SNAKE"))
+    {
+        v3d_msg("To be implemented.");
+    }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printf("\n**** Usage of NeuronCrawler plugin ****\n");
+        printf("vaa3d -x plugin_name -f trace_APP2 -i <inimg_file> -p <inmarker_file> <block_size> <adaptive_win> <channel> <bkg_thresh> <b_256cube> <b_RadiusFrom2D> <is_gsdt> <is_gap> <length_thresh>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+        printf("block_size       Default 1024\n");
+        printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
+
+        printf("channel          Data channel for tracing. Start from 0 (default 0).\n");
+        printf("bkg_thresh       Default 10 (is specified as AUTO then auto-thresolding)\n");
+        printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
+        printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 2D estimation.)\n");
+        printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
+        printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
+        printf("length_thresh    Default 5\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
 	}
 	else return false;
 
