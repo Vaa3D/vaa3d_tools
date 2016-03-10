@@ -716,6 +716,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
 
         p2.p4dImage = total4DImage;
+        p2.p4dImage->setFileName(imageSaveString.toStdString().c_str());
         p2.xc0 = p2.yc0 = p2.zc0 = 0;
         p2.xc1 = p2.p4dImage->getXDim()-1;
         p2.yc1 = p2.p4dImage->getYDim()-1;
