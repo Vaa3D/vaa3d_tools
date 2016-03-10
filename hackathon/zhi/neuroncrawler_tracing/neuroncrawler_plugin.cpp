@@ -309,9 +309,30 @@ bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & i
 	{
 		v3d_msg("To be implemented.");
 	}
-    else if (func_name == tr("trace_APP2"))
+    else if (func_name == tr("trace_NEUTUBE"))
     {
-        v3d_msg("To be implemented.");
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+        P.method = 3;
+        crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (func_name == tr("trace_MOST"))
     {
@@ -337,6 +358,14 @@ bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
         printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
         printf("length_thresh    Default 5\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+        printf("vaa3d -x plugin_name -f trace_NEUTUBE -i <inimg_file> -p <inmarker_file> <block_size> <adaptive_win>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+        printf("block_size       Default 1024\n");
+        printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
