@@ -7,7 +7,6 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h"
 
-//#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 
@@ -126,7 +125,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     if(P.visible_thresh)
         tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
     else
-        tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_COMBINED");
+        tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP2");
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
@@ -138,25 +137,25 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
-    bool flag = true;
+  //  bool flag = true;
     while(allTargetList.size()>0)
     {
         newTargetList.clear();
         newTipsList.clear();
         if(P.adap_win)
         {
-            if(flag)
-            {
+//            if(flag)
+//            {
                 app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-                flag = false;
-            }
-            else
-            {
-                P.seed_win = 5;
-                P.slip_win = 5;
-                P.bkg_thresh = 20;
-                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            }
+//                flag = false;
+//            }
+//            else
+//            {
+//                P.seed_win = 5;
+//                P.slip_win = 5;
+//                P.bkg_thresh = 20;
+//                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+//            }
         }
         else
             app_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
@@ -176,7 +175,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     list<string> infostring;
     string tmpstr; QString qtstr;
-    if(P.visible_thresh)
+    if(P.method==1)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP1")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -184,6 +183,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.visible_thresh).prepend("#visible_thresh = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
     }else
@@ -200,6 +200,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
     }
 
@@ -320,14 +321,14 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     {
         p2.is_gsdt = P.is_gsdt;
         p2.is_coverage_prune = true;
-        p2.is_break_accept = false;
+        p2.is_break_accept = P.is_break_accept;
         p2.bkg_thresh = P.bkg_thresh;
         p2.length_thresh = P.length_thresh;
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
         p2.b_256cube = P.b_256cube;
-        p2.b_RadiusFrom2D = true;
+        p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
         p2.b_resample = 1;
         p2.b_intensity = 0;
         p2.b_brightfiled = 0;
@@ -359,7 +360,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
-        if(P.visible_thresh)
+        if(P.method == 1)
             qDebug()<<"starting app1";
         else
             qDebug()<<"starting app2";
@@ -599,7 +600,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
     QString saveDirString;
-    if(P.visible_thresh)
+    if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
@@ -683,7 +684,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-    if(P.visible_thresh)
+    if(P.method == 1)
     {
         p1.bkg_thresh = P.bkg_thresh;
         p1.channel = P.channel-1;
@@ -703,14 +704,14 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     {
         p2.is_gsdt = P.is_gsdt;
         p2.is_coverage_prune = true;
-        p2.is_break_accept = false;
+        p2.is_break_accept = P.is_break_accept;
         p2.bkg_thresh = P.bkg_thresh;
         p2.length_thresh = P.length_thresh;
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
         p2.b_256cube = P.b_256cube;
-        p2.b_RadiusFrom2D = true;
+        p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
         p2.b_resample = 1;
         p2.b_intensity = 0;
         p2.b_brightfiled = 0;
@@ -797,7 +798,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
             if(!flag)
             {
-                if(P.visible_thresh)
+                if(P.method == 1)
                 {
                     p1.landmarks.push_back(RootNewLocation);
                     proc_app1(callback, p1, versionStr);
@@ -1177,6 +1178,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     }
 
     tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
 
