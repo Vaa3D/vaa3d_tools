@@ -336,7 +336,34 @@ bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & i
     }
     else if (func_name == tr("trace_MOST"))
     {
-        v3d_msg("To be implemented.");
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.seed_win = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
+        P.slip_win = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
+
+        P.method = 5;
+        crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (func_name == tr("trace_SNAKE"))
     {
@@ -351,7 +378,7 @@ bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("block_size       Default 1024\n");
         printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
 
-        printf("channel          Data channel for tracing. Start from 0 (default 0).\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
         printf("bkg_thresh       Default 10 (is specified as AUTO then auto-thresolding)\n");
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
         printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 2D estimation.)\n");
@@ -366,6 +393,19 @@ bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("inmarker_file    Please specify the path of the marker file\n");
         printf("block_size       Default 1024\n");
         printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+        printf("vaa3d -x plugin_name -f trace_MOST -i <inimg_file> -p <inmarker_file> <block_size> <adaptive_win> <channel> <bkg_thresh> <seed> <slip>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+        printf("block_size       Default 1024\n");
+        printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
+
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10.\n");
+        printf("seed             window size of the seed, default 20.\n");
+        printf("slip             window size to slip from seed, default 20\n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
