@@ -349,7 +349,7 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
     V3DLONG in_sz[4];
     in_sz[0] =  oldimg->getXDim(); in_sz[1] =  oldimg->getYDim(); in_sz[2] =  oldimg->getZDim();in_sz[3] = 1;
 
-    simple_saveimage_wrapper(v3d, "temp.v3draw",  (unsigned char *)output_image, in_sz, pixeltype);
+   // simple_saveimage_wrapper(v3d, "temp.v3draw",  (unsigned char *)output_image, in_sz, pixeltype);
 
 
     MOSTImage img;
