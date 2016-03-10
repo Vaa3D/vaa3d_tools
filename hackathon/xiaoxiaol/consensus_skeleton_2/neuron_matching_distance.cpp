@@ -1,7 +1,8 @@
 
+
 #include <QtGlobal>
 #include <QInputDialog>
-#include "neuron_weighted_distance.h"
+#include "neuron_matching_distance.h"
 #include "v_neuronswc.h"
 #include <iostream>
 
@@ -10,12 +11,12 @@ vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p);
 void neuron_branch_tip_count(V3DLONG &n_branch, V3DLONG &n_tip, const vector<V_NeuronSWC> & segment_list);
 void neuron_branch_tip_count(V3DLONG &n_branch, V3DLONG &n_tip, const V_NeuronSWC & in_swc);
 
-double d_thres = 2.0;
+double d_thres = 10.0;
 
 //round all neuronal node coordinates, and compute the average min distance matches for all places the neurons go through
-NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTree *p1, const NeuronTree *p2,bool bmenu)
+NeuronDist resampled_neuron_matching_distance(const NeuronTree *p1, const NeuronTree *p2,bool bmenu)
 {
-    NeuronDistSimple ss;
+    NeuronDist ss;
 
     //===
     if(bmenu)
@@ -40,17 +41,20 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     V3DLONG p1sz = p1->listNeuron.size(), p2sz = p2->listNeuron.size();
     if (p1sz<1 || p2sz<1) return ss;
 
-    double w_dist_12big = -1, w_dist_21big = -1;
+    double w_dist_12big = -1, w_dist_21big = -1, sum12=-1, sum21=-1;
     double maxdist12 = -1, maxdist21 = -1; //set as some big numbers
     double big_ratio12 = 0.0,big_ratio21 = 0.0;
 
-    double weighted_dist_12 = weighted_dist_directional_swc_1_2( w_dist_12big, big_ratio12, p1, p2, maxdist12);
-    double weighted_dist_21 = weighted_dist_directional_swc_1_2( w_dist_21big, big_ratio21,p2, p1, maxdist21);
+    double weighted_dist_12 = resampled_dist_directional_swc_1_2(sum12, w_dist_12big, big_ratio12, p1, p2, maxdist12, false);
+    double weighted_dist_21 = resampled_dist_directional_swc_1_2(sum21, w_dist_21big, big_ratio21,p2, p1, maxdist21, false);
 
 
     if (weighted_dist_12 < 0 || weighted_dist_21 <0)
     {
         std::cout <<"Error: one of the input neuron probably has less than 2 SWC nodes, cannot computing."<<std::endl;
+        ss.matching_total_dist12 = -1;
+        ss.matching_total_dist21 = -1;
+        ss.matching_total_dist_ave = -1;
         ss.weighted_dist12_allnodes = -1;
         ss.weighted_dist21_allnodes = -1;
         ss.weighted_dist_ave_allnodes = -1;
@@ -61,10 +65,13 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     }
 
 
+    ss.matching_total_dist12 = sum12;
+    ss.matching_total_dist21 = sum21;
+    ss.matching_total_dist_ave = (sum21+sum12)/2.0;
+
+
     ss.weighted_dist12_allnodes = weighted_dist_12;
-
     ss.weighted_dist21_allnodes = weighted_dist_21;
-
     ss.weighted_dist_ave_allnodes = (weighted_dist_12+ weighted_dist_21)/2.0;
 
 
@@ -94,7 +101,8 @@ NeuronDistSimple weighted_neuron_score_rounding_nearest_neighbor(const NeuronTre
     return ss;
 }
 
-double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & difference_ratio12, const NeuronTree *p1, const NeuronTree *p2, double & maxdist)
+double resampled_dist_directional_swc_1_2(double & sum_dist, double & w_dist_12big, double & difference_ratio12, const NeuronTree *p1,
+                                         const NeuronTree *p2, double & maxdist, bool USE_WEIGHT)
 {
     if (!p1 || !p2) return -1;
     V3DLONG p1sz = p1->listNeuron.size(), p2sz = p2->listNeuron.size();
@@ -104,7 +112,7 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
     }
     NeuronSWC *tp1, *tp2;
     V3DLONG i, j;
-    double sum_dist=0, sum_weights=0.0;
+    double sum_weights=0.0;
     double sum_weights_big=0.0;
     w_dist_12big=0;
     difference_ratio12 = 0.0;
@@ -118,76 +126,65 @@ double weighted_dist_directional_swc_1_2( double & w_dist_12big, double & differ
     vector<double> fea_values;
     NeuronSWC t1 = p1->listNeuron.at(0);
     NeuronSWC t2 = p2->listNeuron.at(0);
-    if (t1.fea_val.size()>0 )
-    {
-        std::cout << "Use neuron 1 feature values as the weights."<<std::endl;
-        for (int ii=0;ii<p1->listNeuron.size();ii++){
-            NeuronSWC t = p1->listNeuron.at(ii);
-            fea_values.push_back( t.fea_val[0]);
+
+    if (USE_WEIGHT){
+        if (t1.fea_val.size()>0 )
+        {
+            std::cout << "Use neuron 1 feature values as the weights."<<std::endl;
+            for (int ii=0;ii<p1->listNeuron.size();ii++){
+                NeuronSWC t = p1->listNeuron.at(ii);
+                fea_values.push_back( t.fea_val[0]);
+            }
+
         }
+        else{
+            std::cout << "No weights are provided."<<std::endl;
+            return -1;
 
+        }
     }
-    else{
-        std::cout << "No weights are provided."<<std::endl;
-        return -1;
+    else
+    {
+        for (int ii=0;ii<p1->listNeuron.size();ii++){
+            fea_values.push_back( 1.0);
+        }
     }
 
 
-    double weight = -1;
+    //assuming the input swcs are resampled
+    //no need to interpolate between nodes
     for (i=0;i<p1->listNeuron.size();i++)
     {
-        //first find the two ends of a line seg
+        double weight = fea_values[i];
         tp1 = (NeuronSWC *)(&(p1->listNeuron.at(i)));
 
 
         if (tp1->pn < 0 || tp1->pn >= p1sz)
             continue;
-        tp2 = (NeuronSWC *)(&(p1->listNeuron.at(h1.value(tp1->pn)))); //use hash table
-        //qDebug() << "i="<< i << " pn="<<tp1->pn - 1;
 
-        // take wegiths from feature values
-        weight = fea_values[i];
+        XYZ curpt(tp1->x, tp1->y , tp1->z);
+        double cur_d = dist_pt_to_swc(curpt, p2);
+        sum_dist += cur_d*weight;
+        sum_weights += weight;
+        nseg++;
 
-        //now produce a series of points for the line seg
-        double len=dist_L2(XYZ(tp1->x,tp1->y,tp1->z), XYZ(tp2->x,tp2->y,tp2->z));
-        int N = int(1+len+0.5);
-        XYZ ptdiff;
-        if (N<=1)
-        {
-            //qDebug() << "detect one very short segment, len=" << len;
-            ptdiff = XYZ(0,0,0);
-        }
+        if (maxdist<0) //use <0 as a condition to check if maxdist has been set
+            maxdist = cur_d;
         else
         {
-            double N1=1.0/(N-1);
-            ptdiff = XYZ(N1,N1,N1) * XYZ(tp2->x-tp1->x, tp2->y-tp1->y, tp2->z-tp1->z);
-        }
-        //qDebug() << "N="<<N << "len=" <<len << "xd="<<ptdiff.x << " yd=" << ptdiff.y << " zd=" << ptdiff.z << " ";
-        for (j=0;j<N;j++)
-        {
-            XYZ curpt(tp1->x + ptdiff.x*j, tp1->y + ptdiff.y*j, tp1->z + ptdiff.z*j);
-            double cur_d = dist_pt_to_swc(curpt, p2);
-            sum_dist += cur_d*weight;
-            sum_weights += weight;
-            nseg++;
-
-            if (maxdist<0) //use <0 as a condition to check if maxdist has been set
+            if (maxdist<cur_d)
                 maxdist = cur_d;
-            else
-            {
-                if (maxdist<cur_d)
-                    maxdist = cur_d;
-            }
-
-            if (cur_d>=d_thres)
-            {
-                w_dist_12big += cur_d *weight;
-                sum_weights_big +=  weight;
-                nsegbig++;
-                //qDebug() << "(" << cur_d << ", " << w_dist_nseg1big << ")";
-            }
-
         }
+
+        if (cur_d>=d_thres)
+        {
+            w_dist_12big += cur_d *weight;
+            sum_weights_big +=  weight;
+            nsegbig++;
+            //qDebug() << "(" << cur_d << ", " << w_dist_nseg1big << ")";
+        }
+
+
     }
     //qDebug() << "end directional neuronal distance computing";
 

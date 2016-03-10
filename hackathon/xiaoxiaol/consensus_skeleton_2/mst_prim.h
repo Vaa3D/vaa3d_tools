@@ -33,7 +33,7 @@ public:
   int allocatememory(V3DLONG nodenum);
   void delocatememory();
 
-  int b_disp;
+ //int b_disp;
 
   PrimMSTClass() {
     nnode = 0;
@@ -41,7 +41,7 @@ public:
     adjMatrix2d = 0;
     nodeColor = 0;
     nodeParent = 0;
-    b_disp = 0;
+   // b_disp = 0;
   }
   ~PrimMSTClass() {
     delocatememory();
@@ -78,7 +78,8 @@ void PrimMSTClass::dosearch(V3DLONG r) //r -- root node
 
 	nleftnode = nnode-1;
 	V3DLONG par,child;
-	while (nleftnode>0) {
+    while (nleftnode>0)
+    {
 		par = -1;
 		double max = 0;
 		V3DLONG i,j;

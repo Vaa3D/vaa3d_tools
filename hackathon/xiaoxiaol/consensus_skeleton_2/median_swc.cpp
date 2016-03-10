@@ -1,19 +1,39 @@
 #include "median_swc.h"
-#include  "neuron_sim_scores.h"
+#include  "neuron_matching_distance.h"
 #include "cfloat"
 #include  <iostream>
 #include "point3d_util.h"
-
+#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 
 int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
+
+
+    //resample input swcs, so that the matching total distances are not biased
+    // by the number of nodes
+    vector<NeuronTree> nt_list_resampled;
+    for (int i = 0; i < nt_list.size(); i++){
+        NeuronTree nt = nt_list[i];
+        if (nt.listNeuron.size()>0){
+            //resample with step size 1
+            NeuronTree resampled = resample(nt, 1.0);
+             if (resampled.listNeuron.size()>0){
+                resampled.file = nt.file;
+                nt_list_resampled.push_back(resampled);
+             }
+        }
+    }
+
+
+
     int idx1 = -1;
     int idx2 = -1;
     int idx3 = -1;
+
     //calculate pair-wise distance, pick the one has the min sum distance
-    double dis_sum_1[nt_list.size()];
-    double dis_sum_2[nt_list.size()];
-    double dis_sum_3[nt_list.size()];
-    for (int i = 0; i < nt_list.size(); i++)
+    double dis_sum_1[nt_list_resampled.size()];
+    double dis_sum_2[nt_list_resampled.size()];
+    double dis_sum_3[nt_list_resampled.size()];
+    for (int i = 0; i < nt_list_resampled.size(); i++)
     {
         dis_sum_1[i] =0 ;
         dis_sum_2[i] =0 ;
@@ -30,22 +50,22 @@ int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
     }
 
     QTextStream stream (&file);
-    stream<< "swc_file_name1,swc_file_name2, average_distance,structure_difference,max_distance"<<"\n";
+    stream<< "swc_file_name1,swc_file_name2,average_distance,structure_difference,max_distance"<<"\n";
 
 
 
 
-    for (int i = 0; i < nt_list.size()-1; i++){
-        for (int j = i+1; j < nt_list.size(); j++)
+    for (int i = 0; i < nt_list_resampled.size()-1; i++){
+        for (int j = i+1; j < nt_list_resampled.size(); j++)
         {
-            NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt_list[i], &nt_list[j],false);
+            NeuronDist tmp_score = resampled_neuron_matching_distance(&nt_list_resampled[i], &nt_list_resampled[j],false);
             cout <<"\n\nComputing neuron distance between " <<i<<"  and "<<j <<":"<<endl;
-            cout<<"entire-structure-average = "<<tmp_score.dist_allnodes <<endl;
+            cout<<"bi-direcitonal total matching distance = "<<tmp_score.matching_total_dist_ave <<endl;
             cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
             cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
 
-            dis_sum_1[i] += tmp_score.dist_allnodes;
-            dis_sum_1[j] += tmp_score.dist_allnodes;
+            dis_sum_1[i] += tmp_score.matching_total_dist_ave;
+            dis_sum_1[j] += tmp_score.matching_total_dist_ave;
 
             dis_sum_2[i] += tmp_score.dist_apartnodes;
             dis_sum_2[j] += tmp_score.dist_apartnodes;
@@ -54,8 +74,8 @@ int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
             dis_sum_3[j] += tmp_score.dist_max;
 
 
-            stream << nt_list[i].file <<","<< nt_list[j].file
-                   <<","<< tmp_score.dist_allnodes
+            stream << nt_list_resampled[i].file <<","<< nt_list_resampled[j].file
+                   <<","<< tmp_score.matching_total_dist_ave
                    <<","<<tmp_score.dist_apartnodes
                    <<","<<tmp_score.dist_max
                    <<"\n";
@@ -69,7 +89,7 @@ int median_swc(vector<NeuronTree> nt_list, QString outputFileName){
     double min_dis_sum_3 = DBL_MAX;
 
 
-    for (int i = 0; i < nt_list.size(); i++){
+    for (int i = 0; i < nt_list_resampled.size(); i++){
 
         if (dis_sum_1[i] < min_dis_sum_1  && dis_sum_1[i] >0 )
         {
