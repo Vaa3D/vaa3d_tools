@@ -12,12 +12,16 @@
 #include "mst_prim.h"
 #include <QtGlobal>
 #include <iostream>
-#include <climits>
 #include "basic_4dimage.h"
 #include "algorithm"
 #include <string.h>
 #include <sort_eswc.h>
 #include <cmath>
+#include <climits>
+#include <numeric>
+#include <algorithm>
+#include <string>
+
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 template <class T> T pow2(T a)
@@ -109,7 +113,7 @@ double  computeTotalLength(const NeuronTree & nt)
 
 }
 
-void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double &median_root_y, double  &median_root_z)
+bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFileName)
 {  //validate each tree, only keep the first tree
 	/* 
 	   for(int i = 0; i < nt_list.size(); i++){
@@ -151,13 +155,13 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 			rm_ids.push_back(i);
 
 		}
-		if (len == median_size)
-		{  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
-			NeuronSWC root = nt_list[i].listNeuron.at(0);
-			median_root_x = root.x;
-			median_root_y = root.y;
-			median_root_z = root.z;
-		}
+//		if (len == median_size)
+//		{  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
+//			NeuronSWC root = nt_list[i].listNeuron.at(0);
+//			median_root_x = root.x;
+//			median_root_y = root.y;
+//			median_root_z = root.z;
+//		}
 	}
 
 	for (int i =0; i< rm_ids.size();i++){
@@ -165,6 +169,23 @@ void remove_outliers(vector<NeuronTree> & nt_list ,double &median_root_x, double
 	}
 
 	cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
+
+    QFile file(SelectedNeuronsAnoFileName);
+    if (!file.open(QFile::WriteOnly|QFile::Truncate))
+    {
+        cout <<"Error opening the file "<<SelectedNeuronsAnoFileName.toStdString().c_str() << endl;
+        return false;
+    }
+
+    QTextStream stream (&file);
+    for (int i =0 ; i < nt_list.size(); i++){
+
+        stream<< "SWCFILE="<<nt_list[i].file<<"\n";
+    }
+    file.close();
+    cout<<" output ano file: "<<SelectedNeuronsAnoFileName.toStdString().c_str()<<endl;
+
+    return true;
 }
 
 struct MyBoundingBox{
@@ -540,185 +561,6 @@ bool generate_vote_map_resample(vector<NeuronTree> & nt_list, int dialate_radius
 
 }
 
-void AddToMaskImage_old(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,
-		int imageCount, V3DPluginCallback2 & callback)
-{
-	NeuronSWC *p_cur = 0;
-	//create a LUT
-	QHash<V3DLONG, V3DLONG> neuron_id_table = NeuronNextPn(neurons);
-
-	//compute mask
-	double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
-	V3DLONG pagesz = sx*sy;
-	V3DLONG tol_sz = pagesz*sz;
-
-	for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
-	{
-		V3DLONG i,j,k;
-		p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
-		xs = p_cur->x;
-		ys = p_cur->y;
-		zs = p_cur->z;
-		rs = p_cur->r;
-
-		double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
-
-		ballx0 = xs - rs; ballx0 = qBound(double(0), ballx0, double(sx-1));
-		ballx1 = xs + rs; ballx1 = qBound(double(0), ballx1, double(sx-1));
-		if (ballx0>ballx1) {tmpf = ballx0; ballx0 = ballx1; ballx1 = tmpf;}
-
-		bally0 = ys - rs; bally0 = qBound(double(0), bally0, double(sy-1));
-		bally1 = ys + rs; bally1 = qBound(double(0), bally1, double(sy-1));
-		if (bally0>bally1) {tmpf = bally0; bally0 = bally1; bally1 = tmpf;}
-
-		ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(sz-1));
-		ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(sz-1));
-		if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
-
-		//mark all voxels close to the swc node(s)
-		for (k = ballz0; k <= ballz1; k++){
-			for (j = bally0; j <= bally1; j++){
-				for (i = ballx0; i <= ballx1; i++){
-					V3DLONG ind = (k)*pagesz + (j)*sx + i;
-					ind = MIN(ind,tol_sz);
-					ind = MAX(ind, 0);
-					if (pImMask[ind]>imageCount) continue;
-					double norms10 = (xs-i)*(xs-i) + (ys-j)*(ys-j) + (zs-k)*(zs-k);
-					double dt = sqrt(norms10);
-					if(dt <=rs || dt<=1)
-					{
-						pImMask[ind] +=1;
-					}
-				}
-			}
-		}
-
-		//find previous node
-		if (p_cur->pn < 0) continue;//then it is root node already
-		//get the parent info
-		const NeuronSWC & pp  = neurons.listNeuron.at(neuron_id_table.value(p_cur->pn));
-		xe = pp.x;
-		ye = pp.y;
-		ze = pp.z;
-		re = pp.r;
-
-		//judge if two points overlap, if yes, then do nothing as the sphere has already been drawn
-		if (xe==xs && ye==ys && ze==zs)
-		{
-			v3d_msg(QString("Detect overlapping coordinates of node\n"), 0);
-			continue;
-		}
-
-		double l =sqrt((xe-xs)*(xe-xs)+(ye-ys)*(ye-ys)+(ze-zs)*(ze-zs));
-		double dx = (xe - xs);
-		double dy = (ye - ys);
-		double dz = (ze - zs);
-		double x = xs;
-		double y = ys;
-		double z = zs;
-
-		int steps = lroundf(l);
-		steps = (steps < fabs(dx))? fabs(dx):steps;
-		steps = (steps < fabs(dy))? fabs(dy):steps;
-		steps = (steps < fabs(dz))? fabs(dz):steps;
-		if (steps<1) steps =1;
-
-		double xIncrement = double(dx) / (steps*2);
-		double yIncrement = double(dy) / (steps*2);
-		double zIncrement = double(dz) / (steps*2);
-
-		if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
-		V3DLONG idex1=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-		idex1 = MIN(idex1,tol_sz);
-		idex1 = MAX(idex1, 0);
-
-		pImMask[idex1] += 1;
-
-		for (int i = 0; i <= steps; i++)
-		{
-			x += xIncrement;
-			y += yIncrement;
-			z += zIncrement;
-
-			x = ( x > sx )? sx : x;
-			y = ( y > sy )? sy : y;
-			z = ( z > sz )? sz : z;
-			if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
-			V3DLONG idex=lroundf(z)*sx*sy + lroundf(y)*sx + lroundf(x);
-
-			if (pImMask[idex]> imageCount) continue;
-
-			pImMask[idex] += 1;
-
-		}
-
-		//finding the envelope of the current line segment
-
-		double rbox = (rs>re) ? rs : re;
-		double x_down = (xs < xe) ? xs : xe; x_down -= rbox; x_down = V3DLONG(x_down); if (x_down<0) x_down=0; if (x_down>=sx-1) x_down = sx-1;
-		double x_top  = (xs > xe) ? xs : xe; x_top  += rbox; x_top  = V3DLONG(x_top ); if (x_top<0)  x_top=0;  if (x_top>=sx-1)  x_top  = sx-1;
-		double y_down = (ys < ye) ? ys : ye; y_down -= rbox; y_down = V3DLONG(y_down); if (y_down<0) y_down=0; if (y_down>=sy-1) y_down = sy-1;
-		double y_top  = (ys > ye) ? ys : ye; y_top  += rbox; y_top  = V3DLONG(y_top ); if (y_top<0)  y_top=0;  if (y_top>=sy-1)  y_top = sy-1;
-		double z_down = (zs < ze) ? zs : ze; z_down -= rbox; z_down = V3DLONG(z_down); if (z_down<0) z_down=0; if (z_down>=sz-1) z_down = sz-1;
-		double z_top  = (zs > ze) ? zs : ze; z_top  += rbox; z_top  = V3DLONG(z_top ); if (z_top<0)  z_top=0;  if (z_top>=sz-1)  z_top = sz-1;
-
-		//compute cylinder and flag mask
-
-		for (k=z_down; k<=z_top; k++)
-		{
-			for (j=y_down; j<=y_top; j++)
-			{
-				for (i=x_down; i<=x_top; i++)
-				{
-					double rr = 0;
-					double countxsi = (xs-i);
-					double countysj = (ys-j);
-					double countzsk = (zs-k);
-					double countxes = (xe-xs);
-					double countyes = (ye-ys);
-					double countzes = (ze-zs);
-					double norms10 = countxsi * countxsi + countysj * countysj + countzsk * countzsk;
-					double norms21 = countxes * countxes + countyes * countyes + countzes * countzes;
-					double dots1021 = countxsi * countxes + countysj * countyes + countzsk * countzes;
-					double dist = sqrt( norms10 - (dots1021*dots1021)/(norms21) );
-					double t1 = -dots1021/norms21;
-					if(t1<0) dist = sqrt(norms10);
-					else if(t1>1)
-						dist = sqrt((xe-i)*(xe-i) + (ye-j)*(ye-j) + (ze-k)*(ze-k));
-					//compute rr
-					if (rs==re) rr =rs;
-					else
-					{
-						// compute point of intersection
-						double v1 = xe - xs;
-						double v2 = ye - ys;
-						double v3 = ze - zs;
-						double vpt = v1*v1 + v2*v2 +v3*v3;
-						double t = (double(i-xs)*v1 +double(j-ys)*v2 + double(k-zs)*v3)/vpt;
-						double xc = xs + v1*t;
-						double yc = ys + v2*t;
-						double zc = zs + v3*t;
-						double normssc = sqrt((xs-xc)*(xs-xc)+(ys-yc)*(ys-yc)+(zs-zc)*(zs-zc));
-						double normsce = sqrt((xe-xc)*(xe-xc)+(ye-yc)*(ye-yc)+(ze-zc)*(ze-zc));
-						rr = (rs >= re) ? (rs - ((rs - re)/sqrt(norms21))*normssc) : (re - ((re-rs)/sqrt(norms21))*normsce);
-					}
-					if (lroundf(z)>(sz-1)||lroundf(y)>(sy-1)||lroundf(x)>(sx-1)) continue;
-					V3DLONG ind1 = (k)*sx*sy + (j)*sx + i;
-
-					if (pImMask[ind1]>imageCount) continue;
-
-					if (dist <= rr || dist<=1)
-					{
-						pImMask[ind1] += 1;
-					}
-				}
-			}
-		}
-
-	}
-
-
-}
 
 
 
@@ -861,7 +703,193 @@ bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, do
 
 }
 
-bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_consensus, int max_vote_threshold, int cluster_distance_threshold,V3DPluginCallback2 &callback)
+double dist_pt_to_line_seg(const XYZ p0, const XYZ p1, const XYZ p2, XYZ & closestPt) //p1 and p2 are the two ends of the line segment, and p0 the point
+{
+    if (p1==p2)
+        return norm(p0-p1);
+    else if (p0==p1 || p0==p2) return 0;
+
+    XYZ d12 = p2-p1;
+    XYZ d01 = p1-p0;
+    float v01 = dot(d01, d01);
+    float v12 = dot(d12, d12);
+    float d012 = dot(d12, d01);
+
+    float t = -d012/v12;
+    if (t<0 || t>1) //then no intersection within the lineseg
+    {
+        double d01 = dist_L2(p0, p1);
+        double d02 = dist_L2(p0, p2);
+
+        if (d01<d02){
+          closestPt=XYZ(p1.x,p1.y,p1.z);
+          return d01;
+        }
+        else
+        {
+          closestPt=XYZ(p2.x,p2.y,p2.z);
+          return d02;
+        }
+
+
+    }
+    else
+    {
+        XYZ xpt(p1.x+d12.x*t, p1.y+d12.y*t, p1.z+d12.z*t);
+        closestPt=XYZ(xpt.x,xpt.y,xpt.z);
+        return dist_L2(xpt, p0);
+    }
+}
+
+
+double correspondingPointFromNeuron( XYZ pt, NeuronTree * p_nt, XYZ & closest_p)
+{
+   double min_dist = LONG_MAX;
+   closest_p.x = -1;
+   closest_p.y = -1;
+   closest_p.z = -1;
+
+
+   V3DLONG num_nodes = p_nt->listNeuron.size();
+
+   NeuronSWC *tp1, *tp2;
+   if (num_nodes<2)
+   {
+       tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(0)));
+       return norm(pt - XYZ(tp1->x, tp1->y, tp1->z));
+   }
+
+   QHash<int, int> h =p_nt->hashNeuron;
+   V3DLONG i;
+   bool b_first=false;
+   for (i=0;i<p_nt->listNeuron.size();i++)
+   {
+       //first find the two ends of a line seg
+       tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(i)));
+       if (tp1->pn < 0 || tp1->pn >= num_nodes)
+           continue;
+       tp2 = (NeuronSWC *)(&(p_nt->listNeuron.at(h.value(tp1->pn)))); //use hash table
+
+       //now compute the distance between the pt and the current segment
+       XYZ c_p;
+       double cur_d = dist_pt_to_line_seg(pt, XYZ(tp1->x,tp1->y,tp1->z), XYZ(tp2->x,tp2->y,tp2->z),c_p);
+
+       //now find the min distance
+       if (b_first == false)
+       {
+           min_dist = cur_d;
+           closest_p = c_p;
+           b_first = true;
+       }
+       else
+       {
+           if (min_dist > cur_d){
+               min_dist = cur_d;
+               closest_p = c_p;
+           }
+       }
+   }
+
+   return min_dist;
+}
+
+
+XYZ mean_XYZ(vector<XYZ> points)
+{
+    vector<double> x;
+    vector<double> y;
+    vector<double> z;
+    XYZ averageP;
+    if (points.size() == 0){cout<<"empty point list!" <<endl;}
+    for (int i = 0 ; i < points.size(); i++)
+    {
+        x.push_back(points[i].x);
+        y.push_back(points[i].y);
+        z.push_back(points[i].z);
+    }
+    averageP.x = accumulate( x.begin(), x.end(), 0.0 )/ x.size();
+    averageP.y = accumulate( y.begin(), y.end(), 0.0 )/ y.size();
+    averageP.z = accumulate( z.begin(), z.end(), 0.0 )/ z.size();
+    return averageP;
+}
+
+
+bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron)
+{
+    if(  input_neuron_id > (nt_list.size() -1) )
+    {
+        cout<<"error in match_and_center(): input neuron id is wrong."<<endl;
+        return false;
+    }
+    NeuronTree input_neuron = nt_list[input_neuron_id];
+    adjusted_neuron = input_neuron;
+    vector<XYZ> cluster;
+    for (int i = 0; i <input_neuron.listNeuron.size(); i++)
+    {
+        NeuronSWC s = input_neuron.listNeuron.at(i);
+        XYZ cur;
+        cur.x = s.x;
+        cur.y = s.y;
+        cur.z = s.z;
+
+
+        cluster.clear();
+        for (int j = 0; j < nt_list.size(); j++)
+        {
+
+            if (j == input_neuron_id)
+            {// skip matching with itself,
+                continue;
+            }
+
+            XYZ closest_p;
+            //find closest swc node from resampled tree j
+            double min_dis = correspondingPointFromNeuron(cur, &nt_list.at(j), closest_p);
+            if (min_dis < distance_threshold)
+            {
+                cluster.push_back(closest_p);
+            }
+        }
+
+        //average over the clustered location p
+        if (cluster.size() > 0)
+        {
+            XYZ average_p =  mean_XYZ(cluster);
+            NeuronSWC * s_adjusted = &(adjusted_neuron.listNeuron[i]);
+            s_adjusted->x = average_p.x;
+            s_adjusted->y = average_p.y;
+            s_adjusted->z = average_p.z;
+            s_adjusted->r = cluster.size(); // to record # of matches
+        }
+
+    }
+
+    return true;
+}
+
+
+
+bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSWC> & merge_result,
+               int max_vote_threshold,int cluster_distance_threshold, V3DPluginCallback2 &callback)
+{
+
+   //identify nearest neighbothood, and find the average location
+
+   for (int i =0 ; i < nt_list.size(); i++){
+         NeuronTree nt;
+         match_and_center(nt_list, i,cluster_distance_threshold, nt);
+         char filename[100];
+         sprintf( filename, "%s_adjusted.swc", nt_list[i].file.toStdString().c_str());
+         export_listNeuron_2swc( nt.listNeuron, filename);
+   }
+   merge_result = nt_list[0].listNeuron;
+   return true;
+}
+
+
+
+bool consensus_skeleton_votemap(vector<NeuronTree>  nt_list, QList<NeuronSWC> & final_consensus,
+           int max_vote_threshold,int cluster_distance_threshold,V3DPluginCallback2 &callback)
 {
 	int method_code = 2; // MST
 	//int cluster_distance_threshold = 10;
@@ -871,12 +899,6 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	double root_y = 0;
 	double root_z = 0;
 
-	remove_outliers(nt_list, root_x, root_y, root_z);
-	int neuronNum = nt_list.size();
-	if (neuronNum<2){
-		cout<<"not enough neurons left for consensuing...." <<endl;
-		return false;
-	}
 
 	//initialize the image volume to record/accumulate the  location votes from neurons
 	MyBoundingBox bbUnion = neuron_trees_bb(nt_list);
@@ -991,10 +1013,11 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 	int * EDGE_VOTED = new int[num_nodes*num_nodes];
 
 	//cluster nodes from each neurontree to consensus nodes
+    int neuronNum = nt_list.size();
 	for (int i=0;i<neuronNum;i++)
 	{
 		QHash<V3DLONG, V3DLONG > nodeMap; //maps j node of tree i to consensus node(node_id)
-		for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
+        for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
 		{
 			NeuronSWC s = nt_list[i].listNeuron.at(j);
 			Point3D cur;
@@ -1083,23 +1106,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 			for (V3DLONG i = 0;i <num_nodes;i ++)
 			{
 				V3DLONG p = plist[i];
-				//			//cout <<p<<endl;
-				//            if (p == -1)
-				//            {
-				//                NeuronSWC tmp;
-				//                tmp.x = node_list[i].x;
-				//                tmp.y = node_list[i].y;
-				//                tmp.z = node_list[i].z;
 
-				//                tmp.type = 0; //edge votes
-				//                tmp.pn = -1;  //parent id, form the edge
-				//                tmp.r = double(vote_list[i])/double(neuronNum);
-				//                tmp.n = i+1;
-
-				//                merge_result.append(tmp);
-
-				//                continue;
-				//            }
 				unsigned int edgeVote = adjMatrix[i*num_nodes + p];
 				if (edgeVote > 0)
 				{
@@ -1207,7 +1214,7 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 
 
-	bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
+bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 	{
 		FILE * fp;
 		fp = fopen(filename,"w");

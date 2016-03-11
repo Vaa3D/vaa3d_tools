@@ -28,3 +28,6 @@ Point3D average_point(vector<Point3D> points)
     averageP.z = accumulate( z.begin(), z.end(), 0.0 )/ z.size();
     return averageP;
 }
+
+
+

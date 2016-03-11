@@ -53,11 +53,8 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 		return 0;
 	
     QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, max_vote_threshold, cluster_distance_threshold,  callback))
-    {
-        v3d_msg("Error in consensus swc!");
-        return -1;
-    }
+
+
 
 	QString fileSaveName;
 	QString defaultSaveName = fileOpenName + "_consensus.swc";
@@ -66,6 +63,17 @@ int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 			QObject::tr("Supported file (*.swc)"
 				";;Neuron structure	(*.swc)"
 				));
+
+
+    QString SelectedNeuronsAnoFileName = fileSaveName+"_SelectedNeurons.ano";
+    remove_outliers(nt_list, SelectedNeuronsAnoFileName);
+    //if (!consensus_skeleton_votemap(nt_list, merge_result, max_vote_threshold, cluster_distance_threshold,  callback))
+    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,
+                                         cluster_distance_threshold,  callback))
+    {
+        v3d_msg("Error in consensus swc!");
+        return -1;
+    }
     if (!export_listNeuron_2swc(merge_result,qPrintable(fileSaveName)))
 	{
 		v3d_msg("Unable to save file");
@@ -243,7 +251,11 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		outfileName = QString(outlist->at(0));
 
 	QList<NeuronSWC> merge_result;
-    if (!consensus_skeleton(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
+
+    QString SelectedNeuronsAnoFileName = outfileName+"_SelectedNeurons.ano";
+    remove_outliers(nt_list, SelectedNeuronsAnoFileName);
+    //if (!consensus_skeleton_vote_map(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
+    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
 	{
 		cerr<<"error in consensus_skeleton"<<endl;
 		return false;
