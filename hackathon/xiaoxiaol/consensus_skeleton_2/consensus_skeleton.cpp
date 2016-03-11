@@ -880,7 +880,9 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & final_c
 
 	//initialize the image volume to record/accumulate the  location votes from neurons
 	MyBoundingBox bbUnion = neuron_trees_bb(nt_list);
-
+    bbUnion.min_x = 0;
+    bbUnion.min_y = 0;
+    bbUnion.min_z=0;
 	Point3D offset = {bbUnion.min_x ,bbUnion.min_y ,bbUnion.min_z };
 	float closeness = 1.0;
 	V3DLONG  sz_x = ceil((bbUnion.max_x - bbUnion.min_x ) / closeness) +1; //+0.5 to round up from float to V3DLONG
