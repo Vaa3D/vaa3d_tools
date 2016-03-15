@@ -9,7 +9,7 @@
 #include "consensus_skeleton_func.h"
 #include "consensus_skeleton.h"
 #include "median_swc.h"
-#include  "dark_pruning.h"
+#include "dark_pruning.h"
 #include <vector>
 #include <iostream>
 using namespace std;
@@ -410,6 +410,10 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 
     cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
+
+    QString out_ano_file_name = outfileName + ".SelectedNeurons.ano";
+    remove_outliers(nt_list,out_ano_file_name);
+
     int idx = median_swc(nt_list,outfileName);
     if (idx <0){
         cerr << "error in median_swc()" << endl;
@@ -620,6 +624,10 @@ int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     QString outfileName = fileOpenName + "_sum_dist.csv";
 
     cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
+
+    QString out_ano_file_name = fileOpenName + ".SelectedNeurons.ano";
+    remove_outliers(nt_list,out_ano_file_name);
+
     int id = median_swc(nt_list,outfileName);
 
     if (id >=0 )
