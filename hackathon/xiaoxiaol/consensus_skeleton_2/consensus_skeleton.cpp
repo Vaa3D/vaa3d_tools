@@ -144,29 +144,23 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
 	V3DLONG median_size = median(valid_nt_sizes);
 
-	vector<V3DLONG > rm_ids;
+    vector<V3DLONG > rm_ids;
 	cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
 	cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
-	for(int i = 0; i < nt_list.size(); i++){
-		double len = nt_sizes[i];
-		if ( len > 3*median_size  ||  len < double(median_size)/3 || len > 50000 )
-		{
-			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
-			rm_ids.push_back(i);
+    for(int i = 0; i < nt_list.size(); i++){
+        double len = nt_sizes[i];
+        if ( len > 3*median_size  ||  len < double(median_size)/3 || len > 50000 )
+        {
+            cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
+            rm_ids.push_back(i);
 
-		}
-//		if (len == median_size)
-//		{  cout <<"Will use the median case ("<<i<<") soma location as the soma of the resulting consensus."<<endl;
-//			NeuronSWC root = nt_list[i].listNeuron.at(0);
-//			median_root_x = root.x;
-//			median_root_y = root.y;
-//			median_root_z = root.z;
-//		}
-	}
+        }
+    }
 
-	for (int i =0; i< rm_ids.size();i++){
-		nt_list.erase(nt_list.begin()+rm_ids[i]);
-	}
+    for (int i =rm_ids.size()-1; i>=0 ;i--){
+        // erase in reverse order to avid invalidating the iterator while erasing
+        nt_list.erase(nt_list.begin()+rm_ids[i]);
+    }
 
 	cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
 
@@ -706,8 +700,15 @@ bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, do
 double dist_pt_to_line_seg(const XYZ p0, const XYZ p1, const XYZ p2, XYZ & closestPt) //p1 and p2 are the two ends of the line segment, and p0 the point
 {
     if (p1==p2)
+    {
+        closestPt = p1;
         return norm(p0-p1);
-    else if (p0==p1 || p0==p2) return 0;
+    }
+        else if (p0==p1 || p0==p2)
+    {
+        closestPt = p0;
+        return 0.0;
+    }
 
     XYZ d12 = p2-p1;
     XYZ d01 = p1-p0;
@@ -734,9 +735,9 @@ double dist_pt_to_line_seg(const XYZ p0, const XYZ p1, const XYZ p2, XYZ & close
 
     }
     else
-    {
+    {//intersection
         XYZ xpt(p1.x+d12.x*t, p1.y+d12.y*t, p1.z+d12.z*t);
-        closestPt=XYZ(xpt.x,xpt.y,xpt.z);
+        closestPt=xpt;
         return dist_L2(xpt, p0);
     }
 }
@@ -753,7 +754,7 @@ double correspondingPointFromNeuron( XYZ pt, NeuronTree * p_nt, XYZ & closest_p)
    V3DLONG num_nodes = p_nt->listNeuron.size();
 
    NeuronSWC *tp1, *tp2;
-   if (num_nodes<2)
+   if (num_nodes<2 && num_nodes>0)
    {
        tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(0)));
        return norm(pt - XYZ(tp1->x, tp1->y, tp1->z));
@@ -761,13 +762,20 @@ double correspondingPointFromNeuron( XYZ pt, NeuronTree * p_nt, XYZ & closest_p)
 
    QHash<int, int> h =p_nt->hashNeuron;
    V3DLONG i;
-   bool b_first=false;
+
    for (i=0;i<p_nt->listNeuron.size();i++)
    {
        //first find the two ends of a line seg
        tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(i)));
-       if (tp1->pn < 0 || tp1->pn >= num_nodes)
+       if (tp1->pn < 0 )
+       {
+           double cur_d =dist_L2( XYZ(tp1->x,tp1->y,tp1->z), pt);
+           if (min_dist > cur_d){
+               min_dist = cur_d;
+               closest_p = XYZ(tp1->x,tp1->y,tp1->z);
+           }
            continue;
+       }
        tp2 = (NeuronSWC *)(&(p_nt->listNeuron.at(h.value(tp1->pn)))); //use hash table
 
        //now compute the distance between the pt and the current segment
@@ -775,19 +783,11 @@ double correspondingPointFromNeuron( XYZ pt, NeuronTree * p_nt, XYZ & closest_p)
        double cur_d = dist_pt_to_line_seg(pt, XYZ(tp1->x,tp1->y,tp1->z), XYZ(tp2->x,tp2->y,tp2->z),c_p);
 
        //now find the min distance
-       if (b_first == false)
-       {
+       if (min_dist > cur_d){
            min_dist = cur_d;
            closest_p = c_p;
-           b_first = true;
        }
-       else
-       {
-           if (min_dist > cur_d){
-               min_dist = cur_d;
-               closest_p = c_p;
-           }
-       }
+
    }
 
    return min_dist;
@@ -814,7 +814,7 @@ XYZ mean_XYZ(vector<XYZ> points)
 }
 
 
-bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron)
+bool match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron)
 {
     if(  input_neuron_id > (nt_list.size() -1) )
     {
@@ -822,8 +822,9 @@ bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  
         return false;
     }
     NeuronTree input_neuron = nt_list[input_neuron_id];
-    adjusted_neuron = input_neuron;
+    adjusted_neuron.deepCopy(input_neuron);
     vector<XYZ> cluster;
+
     for (int i = 0; i <input_neuron.listNeuron.size(); i++)
     {
         NeuronSWC s = input_neuron.listNeuron.at(i);
@@ -834,6 +835,8 @@ bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  
 
 
         cluster.clear();
+        cluster.push_back(cur);
+
         for (int j = 0; j < nt_list.size(); j++)
         {
 
@@ -854,12 +857,12 @@ bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  
         //average over the clustered location p
         if (cluster.size() > 0)
         {
-            XYZ average_p =  mean_XYZ(cluster);
-            NeuronSWC * s_adjusted = &(adjusted_neuron.listNeuron[i]);
-            s_adjusted->x = average_p.x;
-            s_adjusted->y = average_p.y;
-            s_adjusted->z = average_p.z;
-            s_adjusted->r = cluster.size(); // to record # of matches
+           XYZ average_p =  mean_XYZ(cluster);
+
+           adjusted_neuron.listNeuron[i].x = average_p.x;
+           adjusted_neuron.listNeuron[i].y = average_p.y;
+           adjusted_neuron.listNeuron[i].z = average_p.z;
+           adjusted_neuron.listNeuron[i].r = cluster.size();
         }
 
     }
@@ -869,19 +872,61 @@ bool match_and_center(vector<NeuronTree> nt_list,unsigned int input_neuron_id,  
 
 
 
+
+
+
+
+
+
+
+
+
+
 bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSWC> & merge_result,
                int max_vote_threshold,int cluster_distance_threshold, V3DPluginCallback2 &callback)
 {
 
    //identify nearest neighbothood, and find the average location
+   vector<NeuronTree> shift_nt_list;
+   NeuronTree nt;
 
-   for (int i =0 ; i < nt_list.size(); i++){
-         NeuronTree nt;
-         match_and_center(nt_list, i,cluster_distance_threshold, nt);
-         char filename[100];
-         sprintf( filename, "%s_adjusted.swc", nt_list[i].file.toStdString().c_str());
-         export_listNeuron_2swc( nt.listNeuron, filename);
+   for (int k =0 ; k<2;k++)
+   { // iterate multiple times, neurons will converge to center locations
+       shift_nt_list.clear();
+       QString anofilename = "./test_adjusted_"+ QVariant(k).toString() +".ano";
+       QFile file(anofilename);
+       if (!file.open(QFile::WriteOnly|QFile::Truncate))
+       {
+           cout <<"Error opening the file "<<"./test_adjusted.ano" << endl;
+           return false;
+       }
+       QTextStream stream (&file);
+       for (int i =0 ; i < nt_list.size(); i++)
+       {
+
+           nt.listNeuron.clear();
+           nt.hashNeuron.clear();
+           int idx = i;
+           if (match_and_center(nt_list, idx,cluster_distance_threshold, nt) == true){
+               char * filename = new char [1000];
+               sprintf( filename, "%s_adjusted%d.swc", nt_list[i].file.toStdString().c_str(),k);
+
+               shift_nt_list.push_back(nt);
+               export_listNeuron_2swc( nt.listNeuron, filename);
+               stream<< "SWCFILE="<<filename<<"\n";
+               delete [] filename;
+           }
+       }
+       file.close();
+
+       nt_list.clear();//for the next iteration
+       for (int j =0 ; j < shift_nt_list.size(); j++)
+       {
+           nt_list.push_back( shift_nt_list[j]);
+       }
    }
+
+
    merge_result = nt_list[0].listNeuron;
    return true;
 }
