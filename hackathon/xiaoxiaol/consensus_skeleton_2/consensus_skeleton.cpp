@@ -874,6 +874,9 @@ bool match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double d
 
 
 
+
+
+
 //void build_tree_from_adj_matrix(QList<NeuronSWC> node_list, double * adjMatrix, QList<NeuronSWC> merge_result){
 
 //    merge_result.clear();
@@ -932,37 +935,91 @@ bool match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double d
 //}
 
 
-double correspondingNodeFromNeuron(XYZ cur, NeuronTree * nt, int &closestNodeId)
+double correspondingNodeFromNeuron(XYZ pt, NeuronTree * p_nt, int &closestNodeId)
 {
 
-     double min_dis = 0.0;
-     closestNodeId = 0;
+     double min_dist = LONG_MAX;
+     closestNodeId = -1;
+
+     V3DLONG num_nodes = p_nt->listNeuron.size();
+
+     NeuronSWC *tp1, *tp2;
+     if (num_nodes<2 && num_nodes>0)
+     {
+         tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(0)));
+         if (tp1->seg_id!=100)
+         {
+             closestNodeId = p_nt->listNeuron.at(0).n;
+             return norm(pt - XYZ(tp1->x, tp1->y, tp1->z));
+         }
+         else{
+             return min_dist;
+         }
+     }
+
+     QHash<int, int> h =p_nt->hashNeuron;
+     V3DLONG i;
+
+     for (i=0;i<p_nt->listNeuron.size();i++)
+     {
+         //first find the two ends of a line seg
+         tp1 = (NeuronSWC *)(&(p_nt->listNeuron.at(i)));
+
+         if (tp1->type==100 ||tp1->pn < 0 )
+         {
+             continue;
+         }
 
 
-     return min_dis;
+         tp2 = (NeuronSWC *)(&(p_nt->listNeuron.at(h.value(tp1->pn)))); //use hash table
+         double d01 = dist_L2(pt, XYZ(tp1->x,tp1->y,tp1->z));
+         if (tp2->seg_id==100  )
+         {
+             closestNodeId = tp1->n;
+             min_dist=d01;
+             continue;
+         }
+
+         double d02 = dist_L2(pt, XYZ(tp2->x,tp2->y,tp2->z));
+
+         if (d01<=d02){
+             closestNodeId = tp1->n;
+             min_dist=d01;
+         }
+         else
+         {
+             closestNodeId = tp2->n;
+             min_dist=d02;
+         }
+
+     }
+
+
+     return min_dist;
 
  }
 
- bool merge_and_vote(vector<NeuronTree>  & nt_list_resampled, QList<NeuronSWC> &merge_result, double * adjMatrix){
+ bool merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshold,  QList<NeuronSWC> &merge_result, double * adjMatrix)
+ {
   //merge range 1.0 diameter nodes into one consensus node
      int merged_node_id = 0 ;
-     for (int k = 0; k< nt_list_resampled.size();k++){
-
-         QHash<V3DLONG, V3DLONG > nodeMap; //maps j node of tree i to consensus node(node_id)
-         NeuronTree input_neuron = nt_list[k];
-
+     for (int k = 0; k< nt_list_resampled.size();k++)
+     {
+         NeuronTree input_neuron = nt_list_resampled[k];
          vector<XYZ> cluster;
 
          for (int i = 0; i <input_neuron.listNeuron.size(); i++)
          {
-             NeuronSWC *  s = & input_neuron.listNeuron[i];
+             NeuronSWC * s = &(input_neuron.listNeuron[i]);
              if (s->type == 100)
              {
                  // already merged, skip the merging
                  continue;
              }
              else{
-                 s->type = 100;//merged
+                 (*s).type = 100;// tag merged status
+                 //map each node to it's consensus node id
+                 (*s).seg_id = merged_node_id;
              }
 
              XYZ cur;
@@ -972,19 +1029,25 @@ double correspondingNodeFromNeuron(XYZ cur, NeuronTree * nt, int &closestNodeId)
 
 
              cluster.clear();
-             cluster.push_back(cur);
 
-             for (int j = k+1; j < nt_list.size(); j++)
+             cluster.push_back(cur);// cluster contains the point itself
+
+             for (int j = k+1; j < nt_list_resampled.size(); j++)
              {// 0~k already merged
 
-                 XYZ closest_p;
                  //find closest swc node from resampled tree j
                  int closestNodeId;
-                 double min_dis = correspondingNodeFromNeuron(cur, &nt_list.at(j), closestNodeId);
-                 if (min_dis < 1.0)
-                 {
-                     cluster.push_back(closest_p);
+                 double min_dis = correspondingNodeFromNeuron(cur, &nt_list_resampled.at(j), closestNodeId);
+                 if (min_dis <= 1.0)
+                 {// only merge the nodes that are close to each other (< 1.0 voxel in distance)
+                     cout<<"find match"<<endl;
+                     int closestNodeIdx = nt_list_resampled.at(j).hashNeuron.value(closestNodeId);
+                     NeuronSWC mergeNode = nt_list_resampled[j].listNeuron[closestNodeIdx];
+                     cluster.push_back(XYZ(mergeNode.x, mergeNode.y, mergeNode.z));
+                     mergeNode.type = 100; //label merged
+                     mergeNode.seg_id = merged_node_id; //label it's corresponding consensus node id
                  }
+
              }
 
              //average over the clustered location p
@@ -996,20 +1059,18 @@ double correspondingNodeFromNeuron(XYZ cur, NeuronTree * nt, int &closestNodeId)
                  S.x = average_p.x;
                  S.y = average_p.y;
                  S.z = average_p.z;
-                 S.r = cluster.size();
+                 S.pn = -1;
+                 S.n = merged_node_id+1;
+                 S.r = cluster.size(); // location votes
 
                  merge_result.append(S);
-
-                 nodeMap.insert(j, merged_node_id);
                  merged_node_id++;
              }
          }
 
-         //accumulate in adjMatrix
-
-
-
      }
+
+     //build adjmatrix
 
 
 
@@ -1042,7 +1103,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    vector<NeuronTree> shift_nt_list;
    NeuronTree nt;
 
-   for (int k =0 ; k<6; k++)
+   for (int k =0 ; k<1; k++)
    { // iterate multiple times, neurons will converge to center locations
        shift_nt_list.clear();
        QString anofilename = "./test_adjusted_"+ QVariant(k).toString() +".ano";
@@ -1081,15 +1142,11 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
    //merge step
    double * adjMatrix;
-   merge_and_vote(nt_list_resampled, merge_result, adjMatrix);
-
-
+   merge_and_vote(nt_list_resampled,max_vote_threshold,  merge_result, adjMatrix);
+   export_listNeuron_2swc( nt_list_resampled[0].listNeuron, "test0nt.swc");
 
 
    //adj matrix
-
-
-   merge_result = nt_list[0].listNeuron;
    return true;
 }
 
