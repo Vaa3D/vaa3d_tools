@@ -51,8 +51,10 @@ XYZ mean_XYZ(vector<XYZ> points);
 bool consensus_skeleton_match_center(vector<NeuronTree> nt_list, QList<NeuronSWC> & final_consensus, int max_vote_threshold,
 int cluster_distance_threshold, V3DPluginCallback2 &callback);
 bool merge_and_vote(vector<NeuronTree> & nt_list_resampled,
-                    int vote_threshold,QList<NeuronSWC> &merge_result);
-double correspondingNodeFromNeuron(XYZ pt, NeuronTree * p_nt, int &closestNodeId,int TYPE_MERGED);
-bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC>  merge_result, double * adjMatrix);
+                    int vote_threshold,QList<NeuronSWC> &merge_result,int TYPE_MERGED);
+double correspondingNodeFromNeuron(XYZ pt,QList<NeuronSWC> listNodes, int &closestNodeIdx,int TYPE_MERGED);
+bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC>  merge_result, double * adjMatrix,int TYPE_MERGED);
 bool build_tree_from_adj_matrix(double * adjMatrix, QList<NeuronSWC> &merge_result,double vote_threshold);
+bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold);
+
 #endif
