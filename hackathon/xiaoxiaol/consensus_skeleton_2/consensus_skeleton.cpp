@@ -905,22 +905,40 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
     for (V3DLONG i = 0;i <num_nodes;i++)
     {
         V3DLONG p = plist[i];
-
         unsigned int edgeVote = adjMatrix[i*num_nodes + p];
 
-        NeuronSWC tmp;
-        tmp.x = node_list[i].x;
-        tmp.y = node_list[i].y;
-        tmp.z = node_list[i].z;
+        if (p == -1){
+            //root
+            NeuronSWC tmp;
+            tmp.x = node_list[i].x;
+            tmp.y = node_list[i].y;
+            tmp.z = node_list[i].z;
 
-        tmp.type = 3;
-        tmp.pn = p + 1;  //parent id, form the edge
-        tmp.r =  node_list[i].r;
-        tmp.n = i+1;
-        tmp.fea_val.push_back(edgeVote);
+            tmp.type = 1;
+            tmp.pn = -1;
+            tmp.r =  node_list[i].r;
+            tmp.n = i+1;
+            tmp.fea_val.push_back(edgeVote);
 
-        merge_result.append(tmp);
+            merge_result.append(tmp);
 
+        }
+
+        if (edgeVote >= vote_threshold ){
+
+            NeuronSWC tmp;
+            tmp.x = node_list[i].x;
+            tmp.y = node_list[i].y;
+            tmp.z = node_list[i].z;
+
+            tmp.type = 3;
+            tmp.pn = p + 1;  //parent id, form the edge
+            tmp.r =  node_list[i].r;
+            tmp.n = i+1;
+            tmp.fea_val.push_back(edgeVote);
+
+            merge_result.append(tmp);
+        }
 
     }
     return true;
@@ -1108,7 +1126,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
                  S.z = average_p.z;
                  S.pn = -1;
                  S.n = merge_result.size()+1;
-                 S.r = cluster.size(); // location votes
+                 S.r = double(cluster.size())/double(nt_list_resampled.size()); // location votes
                  S.seg_id = merge_result.size();
                  S.fea_val.clear();
 
@@ -1227,7 +1245,17 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //DEBUG
    //   file.close();
 
-
+   for (int i = 0; i < nt_list_resampled.size(); i++){
+       NeuronTree nt = nt_list_resampled[i];
+       if (nt.listNeuron.size()>0){
+           //resample with step size 1
+           NeuronTree resampled = resample(nt, 1.0);
+            if (resampled.listNeuron.size()>0){
+               resampled.file = nt.file;
+               nt_list_resampled[i] = resampled;
+            }
+       }
+   }
 
 
    //merge step
