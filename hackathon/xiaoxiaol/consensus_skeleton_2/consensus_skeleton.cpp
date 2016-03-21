@@ -1016,8 +1016,14 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
  bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, double * adjMatrix,int TYPE_MERGED){
      //adjMatrix size is: num_nodes*num_nodes
      int num_nodes = merge_result.size();
+     int * EDGE_VOTED = new int[num_nodes*num_nodes];
+
+
+
      for (int i=0;i<nt_list.size();i++)
      {
+         for (V3DLONG ii=0;ii<num_nodes*num_nodes;ii++) EDGE_VOTED[ii] = 0;
+
          for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
          {
              NeuronSWC cur = nt_list[i].listNeuron[j];
@@ -1027,15 +1033,19 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
              V3DLONG n_id,pn_id;
              n_id = cur.seg_id;// mapped consensu node id
              V3DLONG pidx = nt_list[i].hashNeuron.value(cur.pn);
+
              if (nt_list[i].listNeuron[pidx].seg_id < 0)
              {continue;}
+
              pn_id = nt_list[i].listNeuron[pidx].seg_id;
 
 
              //if (pn_id > -1  && EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
-             if (n_id >=0 &&  n_id< num_nodes  &&  pn_id<num_nodes  &&  pn_id>=0 ){
+             if( EDGE_VOTED[n_id*num_nodes + pn_id] ==0  ){
                  adjMatrix[n_id*num_nodes + pn_id] += 1;
                  adjMatrix[pn_id*num_nodes + n_id] += 1;
+                 EDGE_VOTED[n_id*num_nodes + pn_id] = 1;
+                 EDGE_VOTED[pn_id*num_nodes + n_id] = 1;
              }
 
          }
@@ -1293,7 +1303,39 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
   // export_listNeuron_2swc(merge_result,"./test_merge_results_3.eswc");
    if (   soma_sort(10.0, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
-       cout <<"merged swc #nodes = "<< final_consensus.size()<<endl<<endl;
+       //cout <<"merged swc #nodes = "<< final_consensus.size()<<endl<<endl;
+
+       int end = final_consensus.size()-1;
+       int begin = end;
+       int count = 0;
+       if (final_consensus[0].pn != -1)
+       {
+           cout<< "Error: consensus tree does not start with root!";
+
+       }
+
+       // erase small isolated branches
+       for (int i=final_consensus.size()-1; i>=0; i--)
+       {
+           if (final_consensus[i].pn == -1)
+           {
+               begin = i;
+               //erase the short branches
+               if (count < cluster_distance_threshold*2)
+               {
+                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
+               }
+
+               end = begin-1;
+               count = 0;
+           }
+           else
+           {
+               count ++;
+           }
+       }
+
+
 
        return true;
    }
