@@ -125,7 +125,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     if(P.method == 1)
         tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
     else
-        tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP2");
+        tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_COMBINED");
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
@@ -144,30 +144,30 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         newTipsList.clear();
         if(P.adap_win)
         {
-//            if(flag)
-//            {
+            if(flag)
+            {
                 app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//                flag = false;
-//            }
-//            else
-//            {
-//                P.seed_win = 5;
-//                P.slip_win = 5;
-//                P.bkg_thresh = 20;
-//                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//            }
+                flag = false;
+            }
+            else
+            {
+                P.seed_win = 5;
+                P.slip_win = 5;
+                P.bkg_thresh = 20;
+                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+            }
         }
         else
         {
-//            if(flag)
-//            {
+            if(flag)
+            {
                 app_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//                flag = false;
-//            }
-//            else
-//            {
-//                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//            }
+                flag = false;
+            }
+            else
+            {
+                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+            }
 
 
         }
@@ -232,7 +232,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
 
     QString imageSaveString = saveDirString;
 
@@ -571,14 +571,14 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     }
     double overlap = 0.1;
     LocationSimple newTarget;
-    if(tip_left.size()>0)
-    {
-        newTipsList->push_back(tip_left);
-        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
-        newTarget.z = total4DImage->getOriginZ();
-        newTargetList->push_back(newTarget);
-    }
+//    if(tip_left.size()>0)
+//    {
+//        newTipsList->push_back(tip_left);
+//        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+//        newTarget.y = total4DImage->getOriginY();
+//        newTarget.z = total4DImage->getOriginZ();
+//        newTargetList->push_back(newTarget);
+//    }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
@@ -587,22 +587,22 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
-    if(tip_up.size()>0)
-    {
-        newTipsList->push_back(tip_up);
-        newTarget.x = total4DImage->getOriginX();
-        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTargetList->push_back(newTarget);
-    }
-    if(tip_down.size()>0)
-    {
-        newTipsList->push_back(tip_down);
-        newTarget.x = total4DImage->getOriginX();
-        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
-        newTarget.z = total4DImage->getOriginZ();
-        newTargetList->push_back(newTarget);
-    }
+//    if(tip_up.size()>0)
+//    {
+//        newTipsList->push_back(tip_up);
+//        newTarget.x = total4DImage->getOriginX();
+//        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+//        newTarget.z = total4DImage->getOriginZ();
+//        newTargetList->push_back(newTarget);
+//    }
+//    if(tip_down.size()>0)
+//    {
+//        newTipsList->push_back(tip_down);
+//        newTarget.x = total4DImage->getOriginX();
+//        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+//        newTarget.z = total4DImage->getOriginZ();
+//        newTargetList->push_back(newTarget);
+//    }
     total4DImage->deleteRawDataAndSetPointerToNull();
 
     return true;
@@ -754,7 +754,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(P.method == 1)
        finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
     else
-        finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
+        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -904,31 +904,31 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         }
     }
 
-    if(tip_left.size()>0)
-    {
-        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
-        for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-    }
+//    if(tip_left.size()>0)
+//    {
+//        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+//        for(int i = 0; i < group_tips_left.size();i++)
+//            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+//    }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
-    if(tip_up.size()>0)
-    {
-        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
-        for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+//    if(tip_up.size()>0)
+//    {
+//        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
+//        for(int i = 0; i < group_tips_up.size();i++)
+//            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
-    }
-    if(tip_down.size()>0)
-    {
-        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
-        for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
-    }
+//    }
+//    if(tip_down.size()>0)
+//    {
+//        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
+//        for(int i = 0; i < group_tips_down.size();i++)
+//            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+//    }
 
 
     if(ifs_swc)
@@ -1493,14 +1493,14 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     double overlap = 0.1;
     LocationSimple newTarget;
-    if(tip_left.size()>0)
-    {
-        newTipsList->push_back(tip_left);
-        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
-        newTarget.z = total4DImage->getOriginZ();
-        newTargetList->push_back(newTarget);
-    }
+//    if(tip_left.size()>0)
+//    {
+//        newTipsList->push_back(tip_left);
+//        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+//        newTarget.y = total4DImage->getOriginY();
+//        newTarget.z = total4DImage->getOriginZ();
+//        newTargetList->push_back(newTarget);
+//    }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
@@ -1792,12 +1792,12 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
     }
 
-    if(tip_left.size()>0)
-    {
-        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
-        for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-    }
+//    if(tip_left.size()>0)
+//    {
+//        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+//        for(int i = 0; i < group_tips_left.size();i++)
+//            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+//    }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
@@ -2013,7 +2013,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         adaptive_size = (max_x - min_x)*1.2;
     }
 
-    if(adaptive_size <= 256) adaptive_size = 256;
+    if(adaptive_size <= 384) adaptive_size = 384;
     if(adaptive_size >= block_size) adaptive_size = block_size;
 
     LocationSimple newTarget;
@@ -2061,7 +2061,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        eachGroupList.push_back(tips.at(0));
        for(int d = 0; d < tips.size()-1; d++)
        {
-           if(tips.at(d+1).y - tips.at(d).y < 256)
+           if(tips.at(d+1).y - tips.at(d).y < 384)
            {
                eachGroupList.push_back(tips.at(d+1));
            }
@@ -2088,7 +2088,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        eachGroupList.push_back(tips.at(0));
        for(int d = 0; d < tips.size()-1; d++)
        {
-           if(tips.at(d+1).x - tips.at(d).x < 256)
+           if(tips.at(d+1).x - tips.at(d).x < 384)
            {
                eachGroupList.push_back(tips.at(d+1));
            }

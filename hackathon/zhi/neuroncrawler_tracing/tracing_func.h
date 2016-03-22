@@ -26,7 +26,7 @@ struct TRACE_LS_PARA
 
     int  visible_thresh;//for APP1 use only
 
-    int  seed_win;
+    int  seed_win; //for MOST use only
     int  slip_win; //for MOST use only
     int  method; //1:app1, 2:app2, 3: neutube, 4:snake, 5:most.
 
