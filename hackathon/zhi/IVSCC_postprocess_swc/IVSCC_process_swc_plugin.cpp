@@ -294,10 +294,18 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
             return false;
         }
 
+        QString in2Draw_file = infiles[3];
+        if(in2Draw_file.isEmpty())
+        {
+            cerr<<"Need a 2D raw file"<<endl;
+            return false;
+        }
+
         QString  outswc_file =  outfiles[0];
         cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
         cout<<"inmarkerpath_file = "<<inmarkerpath_file.toStdString().c_str()<<endl;
         cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+        cout<<"in2Draw_file = "<<in2Draw_file.toStdString().c_str()<<endl;
         cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
 
         vector<MyMarker> file_inmarkers;
@@ -324,10 +332,22 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
         vector<MyMarker> center_inmarkers;
         center_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+        int datatype;
+
+        if (!simple_loadimage_wrapper(callback,in2Draw_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",in2Draw_file.toStdString().c_str());
+            return false;
+        }
+
         double soma_x = center_inmarkers[0].x;
-        double soma_y = center_inmarkers[0].y;
+        double soma_y = in_sz[1] - center_inmarkers[0].y;
         double soma_z = center_inmarkers[0].z;
 
+        if(data1d) {delete []data1d; data1d = 0;}
 
         NeuronTree nt = readSWC_file(inswc_file);
         double Dist = 10000000000;

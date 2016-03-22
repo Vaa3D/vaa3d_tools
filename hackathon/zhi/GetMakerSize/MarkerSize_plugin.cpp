@@ -125,7 +125,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         V3DLONG offsetk = iz*M*N;
         V3DLONG offsetj = iy*N;
         V3DLONG PixelValue = data1d[offsetk + offsetj + ix];
-        int Ws = 2*(int)round((log(PixelValue)/log(2)));
+       // int Ws = 2*(int)round((log(PixelValue)/log(2)));
+        int Ws = 20;
         //int Ws = 2*PixelValue;
         printf("window size is %d %d (%d %d %d)\n", Ws,PixelValue,ix,iy,iz);
         NeuronSWC S;
