@@ -891,12 +891,15 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
     plist = new V3DLONG[num_nodes];
 
 
+
     if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
 
     {
         fprintf(stderr,"Error in minimum spanning tree!\n");
         return false;
     }
+
+
 
     // code the edge votes into type for visualization
     //         graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
@@ -1032,15 +1035,18 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
              }
              V3DLONG n_id,pn_id;
              n_id = cur.seg_id;// mapped consensu node id
+
+             if (cur.pn == -1 )
+             {//root, no edge connection
+                 continue;}
+
              V3DLONG pidx = nt_list[i].hashNeuron.value(cur.pn);
-
-             if (nt_list[i].listNeuron[pidx].seg_id < 0)
-             {continue;}
-
              pn_id = nt_list[i].listNeuron[pidx].seg_id;
 
+             if (pn_id < 0)
+             {continue;}
 
-             //if (pn_id > -1  && EDGE_VOTED[n_id*num_nodes + pn_id] ==0 ){
+
              if( EDGE_VOTED[n_id*num_nodes + pn_id] ==0  ){
                  adjMatrix[n_id*num_nodes + pn_id] += 1;
                  adjMatrix[pn_id*num_nodes + n_id] += 1;
@@ -1187,7 +1193,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    int max_num_iters = 5;
 
 
-  // DEBUG
+// DEBUG
 //   QFileInfo info(nt_list_resampled[0].file);
 //   QString anofilename = info.path()+"/max_iter_centered.ano";
 //   QFile file(anofilename);
@@ -1197,6 +1203,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //       return false;
 //   }
 // QTextStream  stream_ano (&file);
+//END
 
    //identify nearest neighbothood, and find the average location
   vector<NeuronTree> shift_nt_list;
@@ -1231,7 +1238,9 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //                   //cout<<"print to ano file: SWCFILE="<<filename<<endl;
 //                   delete [] filename;
 //               }
+ //END
            }
+
        }
 
        nt_list_resampled.clear();//for the next iteration
@@ -1253,7 +1262,8 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
    }
 //DEBUG
-   //   file.close();
+//      file.close();
+//END
 
    for (int i = 0; i < nt_list_resampled.size(); i++){
        NeuronTree nt = nt_list_resampled[i];
@@ -1273,7 +1283,19 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    // save consensued nodes into merge_Results
    QList<NeuronSWC> merge_result;
    int TYPE_MERGED=100;
-   merge_and_vote(nt_list_resampled,max_vote_threshold,  merge_result,TYPE_MERGED);
+
+   int vote_threshold = nt_list_resampled.size()/3;
+   if (vote_threshold > max_vote_threshold)
+   {
+       vote_threshold = max_vote_threshold;
+   }
+
+   if (vote_threshold < 2){
+       vote_threshold = 2;
+   }
+   cout <<" Vote threshold is set at " << vote_threshold<<endl;
+
+   merge_and_vote(nt_list_resampled,vote_threshold,  merge_result,TYPE_MERGED);
 
    // collect the edge votes
    double * adjMatrix;
@@ -1289,18 +1311,20 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        return false;
    }
-  // export_listNeuron_2swc(merge_result,"./test_merge_results_1.eswc");
+   //DEBUG
+   //export_listNeuron_2swc(merge_result,"./test_merge_results_1.eswc");
    build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
 
 
    // connect the consensus nodes with vote confidence
-   build_tree_from_adj_matrix_mst(adjMatrix, merge_result, max_vote_threshold);
+   build_tree_from_adj_matrix_mst(adjMatrix, merge_result, vote_threshold);
 
    double soma_x = merge_result[0].x;
    double soma_y = merge_result[0].y;
    double soma_z = merge_result[0].z;
 
-  // export_listNeuron_2swc(merge_result,"./test_merge_results_3.eswc");
+   //DEBUG
+   //export_listNeuron_2swc(merge_result,"./test_merge_results_3.eswc");
    if (   soma_sort(10.0, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
        //cout <<"merged swc #nodes = "<< final_consensus.size()<<endl<<endl;
