@@ -144,18 +144,18 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         newTipsList.clear();
         if(P.adap_win)
         {
-            if(flag)
-            {
+//            if(flag)
+//            {
                 app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-                flag = false;
-            }
-            else
-            {
-                P.seed_win = 5;
-                P.slip_win = 5;
-                P.bkg_thresh = 20;
-                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            }
+//                flag = false;
+//            }
+//            else
+//            {
+//                P.seed_win = 5;
+//                P.slip_win = 5;
+//                P.bkg_thresh = 20;
+//                all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+//            }
         }
         else
         {
@@ -571,14 +571,14 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     }
     double overlap = 0.1;
     LocationSimple newTarget;
-//    if(tip_left.size()>0)
-//    {
-//        newTipsList->push_back(tip_left);
-//        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-//        newTarget.y = total4DImage->getOriginY();
-//        newTarget.z = total4DImage->getOriginZ();
-//        newTargetList->push_back(newTarget);
-//    }
+    if(tip_left.size()>0)
+    {
+        newTipsList->push_back(tip_left);
+        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = total4DImage->getOriginY();
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
@@ -587,22 +587,22 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
     }
-//    if(tip_up.size()>0)
-//    {
-//        newTipsList->push_back(tip_up);
-//        newTarget.x = total4DImage->getOriginX();
-//        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
-//        newTarget.z = total4DImage->getOriginZ();
-//        newTargetList->push_back(newTarget);
-//    }
-//    if(tip_down.size()>0)
-//    {
-//        newTipsList->push_back(tip_down);
-//        newTarget.x = total4DImage->getOriginX();
-//        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
-//        newTarget.z = total4DImage->getOriginZ();
-//        newTargetList->push_back(newTarget);
-//    }
+    if(tip_up.size()>0)
+    {
+        newTipsList->push_back(tip_up);
+        newTarget.x = total4DImage->getOriginX();
+        newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
+    if(tip_down.size()>0)
+    {
+        newTipsList->push_back(tip_down);
+        newTarget.x = total4DImage->getOriginX();
+        newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
     total4DImage->deleteRawDataAndSetPointerToNull();
 
     return true;
@@ -880,7 +880,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
+                   // if(dis < 2*finalswc.at(j)->radius || dis < 20)
+                    if(dis < 10)
                     {
                         check_tip = true;
                         break;
@@ -904,31 +905,32 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         }
     }
 
-//    if(tip_left.size()>0)
-//    {
-//        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
-//        for(int i = 0; i < group_tips_left.size();i++)
-//            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-//    }
+
+    if(tip_left.size()>0)
+    {
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
-//    if(tip_up.size()>0)
-//    {
-//        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
-//        for(int i = 0; i < group_tips_up.size();i++)
-//            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+    if(tip_up.size()>0)
+    {
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
+        for(int i = 0; i < group_tips_up.size();i++)
+            ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
-//    }
-//    if(tip_down.size()>0)
-//    {
-//        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
-//        for(int i = 0; i < group_tips_down.size();i++)
-//            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
-//    }
+    }
+    if(tip_down.size()>0)
+    {
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
+        for(int i = 0; i < group_tips_down.size();i++)
+            ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+    }
 
 
     if(ifs_swc)
@@ -972,7 +974,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "_withfusion.swc";
+    QString fileSaveName = fileWithData + "wofusion.swc";
 
 
     while(ifs && getline(ifs, info_swc))
@@ -1493,14 +1495,14 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     double overlap = 0.1;
     LocationSimple newTarget;
-//    if(tip_left.size()>0)
-//    {
-//        newTipsList->push_back(tip_left);
-//        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-//        newTarget.y = total4DImage->getOriginY();
-//        newTarget.z = total4DImage->getOriginZ();
-//        newTargetList->push_back(newTarget);
-//    }
+    if(tip_left.size()>0)
+    {
+        newTipsList->push_back(tip_left);
+        newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = total4DImage->getOriginY();
+        newTarget.z = total4DImage->getOriginZ();
+        newTargetList->push_back(newTarget);
+    }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
@@ -1792,12 +1794,12 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
     }
 
-//    if(tip_left.size()>0)
-//    {
-//        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
-//        for(int i = 0; i < group_tips_left.size();i++)
-//            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
-//    }
+    if(tip_left.size()>0)
+    {
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
@@ -2013,7 +2015,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         adaptive_size = (max_x - min_x)*1.2;
     }
 
-    if(adaptive_size <= 384) adaptive_size = 384;
+    if(adaptive_size <= 128) adaptive_size = 128;
     if(adaptive_size >= block_size) adaptive_size = block_size;
 
     LocationSimple newTarget;
@@ -2061,7 +2063,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        eachGroupList.push_back(tips.at(0));
        for(int d = 0; d < tips.size()-1; d++)
        {
-           if(tips.at(d+1).y - tips.at(d).y < 384)
+           if(tips.at(d+1).y - tips.at(d).y < 128)
            {
                eachGroupList.push_back(tips.at(d+1));
            }
@@ -2088,7 +2090,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        eachGroupList.push_back(tips.at(0));
        for(int d = 0; d < tips.size()-1; d++)
        {
-           if(tips.at(d+1).x - tips.at(d).x < 384)
+           if(tips.at(d+1).x - tips.at(d).x < 128)
            {
                eachGroupList.push_back(tips.at(d+1));
            }
