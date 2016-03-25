@@ -1,3 +1,9 @@
+
+ugh.  adaptive window scanning is broken. somehow invalid zooms are being passed to PV.  also PV is not starting the zstack for some reason.
+
+
+
+
 2016.03.02
 URGENT:  FIX EVENTLOGGER!   time differences are inconsistent, whole file gets appended multiple times, some negative elapsed times, add summary statistics
 

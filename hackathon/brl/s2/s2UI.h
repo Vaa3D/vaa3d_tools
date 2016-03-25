@@ -63,6 +63,7 @@ signals:
     void eventSignal(QString);
     void channelUpdate(QString);
     void stackSetupSig(float, float, int, int);
+    void startZStackSig();
 private slots:
     void startS2();
     void startScan();
