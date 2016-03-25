@@ -140,6 +140,7 @@ public slots:
     void startZStack();
     void overviewSetup();
     void stackSetup();
+    void stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame);
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();

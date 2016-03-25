@@ -18,7 +18,7 @@
 #include "noteTaker.h"
 #include "targetList.h"
 #include "eventLogger.h"
-
+#include "tileInfo.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -62,6 +62,7 @@ signals:
     void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
     void channelUpdate(QString);
+    void stackSetupSig(float, float, int, int);
 private slots:
     void startS2();
     void startScan();
@@ -97,6 +98,11 @@ private slots:
     void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
+    void updateZoom();
+    void updateCurrentZoom(int currentIndex);
+    void finalizeZoom();
+    void activeModeChecker();
+    void updateZoomHandler();
 private:
     V3DPluginCallback2 * cb;
 
@@ -130,7 +136,7 @@ private:
 
     void createButtonBox1();
 	
-
+    void initializeROISizes();
     void createTargetList();
 
 	QCheckBox *localRemoteCB;
@@ -139,6 +145,11 @@ private:
     QCheckBox *runContinuousCB;
     QCheckBox *gridScanCB;
     QSpinBox *gridSizeSB;
+
+    QComboBox *tileSizeCB;
+
+    QList<TileInfo> *tileSizeChoices;
+
     QComboBox *tracingMethodComboB;
     QComboBox *channelChoiceComboB;
 
@@ -211,7 +222,12 @@ private:
     float overViewPixelToScanPixel;
     float overviewMicronsPerPixel;
     float scanVoltageConversion;
+    float zoomPixelsProduct;
     LandmarkList scanList;
+
+
+    TileInfo currentTileInfo;
+
     QList<LandmarkList> tipList;
 
     Image4DSimple*  total4DImage;
@@ -228,10 +244,11 @@ private:
     float overlap;
     int overviewCycles;
     int scanStatusWaitCycles;
+    int activeModeChecks;
     bool havePreview;
     bool resetDir;
-
-
+    bool zoomStateOK;
+    bool waitingToStartStack;
 
     int numProcessing;
 

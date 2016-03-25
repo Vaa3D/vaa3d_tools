@@ -238,6 +238,17 @@ void S2Controller::stackSetup(){
 
 }
 
+
+void S2Controller::stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame){
+    centerGalvos();
+    cleanAndSend("-zsz "+QString::number(zsize,'f', 4));
+            cleanAndSend("-oz "+QString::number(zoom, 'f',4)); // set mag to 16x
+    cleanAndSend("-sts pixelsPerLine "+QString::number(pixelsPerLine)); //
+    cleanAndSend("-sts linesPerFrame "+QString::number(linesPerFrame)); //
+
+
+}
+
 void S2Controller::overviewHandler(){
     // this is now being done in s2UI
 }
@@ -530,6 +541,7 @@ void S2Controller::posMon(){
 }
 
 void S2Controller::startZStack(){
+    qDebug()<<"staring z stack in s2Controller";
     sendAndReceive(QString("-zs"));
 }
 
