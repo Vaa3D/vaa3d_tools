@@ -542,7 +542,8 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
-    //  latestString =QString("/data/mat/BRL/testData/ZSeries-01142016-0940-048/ZSeries-01142016-0940-048_Cycle00001_Ch2_000001.ome.tif");
+   // latestString =QString("/data/mat/BRL/testData/ZSeries-02232016-0931-2797/ZSeries-02232016-0931-2797_Cycle00001_Ch1_000001.ome.tif");
+   // saveDirString = "/opt/zhi/Desktop/super_plugin_test/2016_02_05_Fri_13_52/2016_03_25_Fri_09_35";
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
     //   LocationSimple testroot;
@@ -565,6 +566,10 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         V3DLONG x = pNewImage->getXDim();
         V3DLONG y = pNewImage->getYDim();
         V3DLONG nFrames = fileList.length();
+
+        tileLocation.ev_pc1 = x;
+        tileLocation.ev_pc2 = y;
+
 
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
@@ -711,6 +716,8 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         {
             p.outswc_file =swcString;
             proc_app2(*cb, p, versionStr);
+            tileswc_file = readSWC_file(p.outswc_file.toStdString());
+
         }
         else
         {
@@ -925,10 +932,8 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
                 markerIJ.x = iList[j].x;
                 markerIJ.y = iList[j].y;
                 markerIJ.z = iList[j].z;
-
                 tipsToSave.append(markerIJ);
             }
-
         }
         writeMarker_file(markerSaveString2, tipsToSave);
         emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
