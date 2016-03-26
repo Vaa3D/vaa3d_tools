@@ -1047,7 +1047,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     bool gridMode = false;
     if (fileWithData.contains("Grid")){ gridMode = true;}
     qDebug()<<gridMode;
-    // fileWithData = "/opt/zhi/Desktop/test_xiaoxiao/2016_02_08_Mon_15_08/scanData.txt";
+    //fileWithData = "/opt/zhi/Desktop/super_plugin_test/2016_03_25_Fri_15_23/scanData.txt";
 
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
@@ -1150,6 +1150,19 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
         std::istringstream iss(info_swc);
         iss >> offsetX >> offsetY >> swcfilepath;
         QString imagefilepath = QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+        int datatype;
+        QString imagefilepath_abs = folderpath + "/" + imagefilepath;
+        if(!simple_loadimage_wrapper(*cb, imagefilepath_abs.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<imagefilepath_abs.toStdString()<<" error!"<<endl;
+            return;
+        }
+        if(data1d) {delete []data1d; data1d=0;}
+
+
         imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(in_sz[0]-1 + offsetX - origin_x).arg(in_sz[1]-1 + offsetY - origin_y).arg(in_sz[2]-1));
         myfile << imagefilepath.toStdString();
         myfile << "\n";
