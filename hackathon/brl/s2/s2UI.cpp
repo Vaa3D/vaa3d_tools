@@ -160,7 +160,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
     connect(collectOverviewPushButton, SIGNAL(clicked()),this, SLOT(collectOverview()));
     connect(collectOverviewPushButton, SIGNAL(clicked()),&myController, SLOT(overviewSetup()));
-   // connect(resetToScanPB, SIGNAL(clicked()), &myController, SLOT(stackSetup()));
+    // connect(resetToScanPB, SIGNAL(clicked()), &myController, SLOT(stackSetup()));
     connect(this, SIGNAL(stackSetupSig(float,float,int,int)), &myController, SLOT(stackSetup(float,float,int,int)));
     connect(this, SIGNAL(startZStackSig()), &myController, SLOT(startZStack()));
 
@@ -179,12 +179,19 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
     connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+    connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+
+
+
     connect(this, SIGNAL(callSAGridLoad(QString,LocationSimple,QString)), myStackAnalyzer,SLOT(loadGridScan(QString,LocationSimple,QString)));
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(this, SIGNAL(callSALoadMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
+    connect(this, SIGNAL(callSALoadAdaMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST_adaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
+
+
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -403,6 +410,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB = new QComboBox;
     tracingMethodComboB->addItem("MOST");
     tracingMethodComboB->addItem("APP2");
+    tracingMethodComboB->addItem("adaptiveMOST");
+    tracingMethodComboB->addItem("adaptiveAPP2");
     tracingMethodComboB->setCurrentIndex(0);
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
 
@@ -575,6 +584,17 @@ void S2UI::loadForSA(){
         emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
     }
+    if (tracingMethodComboB->currentIndex()==2){
+        emit callSALoadAdaMOST(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+    }
+    if (tracingMethodComboB->currentIndex()==3){
+        emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+    }
+
+
+
 }
 
 void S2UI::loadScanFromFile(QString fileString){
@@ -999,8 +1019,13 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             //            }
 
             if (!isDuplicateROI(newLandmarks.value(i))){
-                newLandmarks[i].ev_pc1 = (double) 128; // temporarily set tile size to 128 here.
-                newLandmarks[i].ev_pc2 = (double) 128;
+                if (tracingMethodComboB->currentIndex()<2){
+                    newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[11].getCurrentValue();
+                    newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
+                }else{
+                    qDebug()  << "adaptive methods should return tile size...";
+                }
+
                 qDebug()<<"new landmark pixel size 1"<<newLandmarks.value(i).ev_pc1;
                 qDebug()<<"new landmark pixel size 2"<<newLandmarks.value(i).ev_pc2;
 
@@ -1233,7 +1258,19 @@ void S2UI::loadLatest(){
             if (tracingMethodComboB->currentIndex()==1){
                 emit callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
-            }        }
+            }
+
+            if (tracingMethodComboB->currentIndex()==2){
+                emit callSALoadAdaMOST(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+            }
+            if (tracingMethodComboB->currentIndex()==3){
+                emit callSALoadAda(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+
+            }
+
+
+        }
 
         loadScanNumber++;
     }else{
@@ -1518,8 +1555,8 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     mipPixmap->setPos((xPix )*uiS2ParameterMap[8].getCurrentValue(),
             (yPix )*uiS2ParameterMap[9].getCurrentValue());
 
-//    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-  //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
+    //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+    //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
     roiGS->addItem(mipPixmap);
 }
 
@@ -1545,13 +1582,13 @@ void S2UI::updateZoom(){
     status("resonantOK: "+QString::number(currentTileInfo.resOK));
     status("current mode? "+uiS2ParameterMap[0].getCurrentString());
     // disable mode changes for now- requires more overhead (turning on pmts, pockels cell, etc)
-//    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
-//        status("changing active mode");
-//        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
-//        }else{
-//            myController.cleanAndSend("-sts activeMode Galvo");
-//        }
-//    }
+    //    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
+    //        status("changing active mode");
+    //        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
+    //        }else{
+    //            myController.cleanAndSend("-sts activeMode Galvo");
+    //        }
+    //    }
     activeModeChecks = 0;
     activeModeChecker();
 

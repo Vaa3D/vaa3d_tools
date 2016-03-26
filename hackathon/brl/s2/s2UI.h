@@ -53,6 +53,8 @@ signals:
     void stopPM();
     void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
     void callSALoadMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadAda(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadAdaMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
     void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
