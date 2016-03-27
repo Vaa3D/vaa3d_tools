@@ -54,7 +54,10 @@ EventLogger::EventLogger(QObject *parent) :
 
 void EventLogger::logEvent(QString eventString){
     eventList.append(S2Event(eventString, QDateTime::currentMSecsSinceEpoch()));
-    for (int i =0; i<eventList.length(); i++){
+    int startingEvent = 0;
+    if (eventList.length() >5){startingEvent = eventList.length()-5;qDebug()<< "most recent events:";}
+
+    for (int i = startingEvent; i<eventList.length(); i++){
         qDebug()<<eventList[i].getEventName()<<" at "<<eventList[i].getTimeString();
     }
 }

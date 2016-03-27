@@ -720,8 +720,9 @@ void S2UI::displayScan(){ // this will listen for a signal from myController
 
 }
 
-
-
+//----------  position monitor stuffs    ---------------
+//
+//======================================================
 void S2UI::pmStatusHandler(bool pmStatus){
     posMonStatus = pmStatus;
     status("pmstatus updated");
@@ -809,9 +810,27 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
 void S2UI::updateString(QString broadcastedString){
 }
 
+//===================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //  -------  smart scanning stuffs   --------
-//  -----------------------------------------
+//
+//======================================================
 
 
 void S2UI::startAllTargets(){
@@ -901,8 +920,8 @@ void S2UI::startingSmartScan(){
 
 
             startLocation.mass = 0;
-            startLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
-            startLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+            startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
+            startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
             float tileSize = uiS2ParameterMap[11].getCurrentValue();
             int minGrid = -(gridSizeSB->value()-1)/2;
             int maxGrid = -minGrid+1;
@@ -911,8 +930,8 @@ void S2UI::startingSmartScan(){
                     LocationSimple gridLoc;
                     gridLoc.x = startLocation.x+ ((float)i * (1.0-overlap))* tileSize;
                     gridLoc.y = startLocation.y+ ((float)j * (1.0-overlap))* tileSize;
-                    gridLoc.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
-                    gridLoc.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+                    gridLoc.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
+                    gridLoc.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
                     qDebug()<<"grid x = "<< gridLoc.x<<" grid y = "<<gridLoc.y;
                     allROILocations->append(gridLoc);
 
@@ -966,7 +985,7 @@ void S2UI::startingSmartScan(){
     outputStream.setDevice(&saveTextFile);
 
     startSmartScanPB->setText("cancel smartScan");
-    if (allROILocations->isEmpty()){
+    if (allROILocations->isEmpty()){ // start smartscan of new target
         scanList.clear();
         tipList.clear();
         scanNumber = 0;
@@ -986,10 +1005,10 @@ void S2UI::startingSmartScan(){
 
 
         startLocation.mass = 0;
-        startLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();// size of first block is set here
-        startLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
-        startLocation.x= startLocation.x-((float) startLocation.ev_pc1)/2.0;
-        startLocation.y= startLocation.y-((float) startLocation.ev_pc2)/2.0;
+        startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here
+        startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
+        startLocation.x= startLocation.x;//-((float) startLocation.ev_pc1)/2.0;//  initial location is center of starting tile in overview coordinates.
+        startLocation.y= startLocation.y;//-((float) startLocation.ev_pc2)/2.0;
         allROILocations->append(startLocation);
         //allScanLocations.append(allROILocations);
         if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
@@ -1017,22 +1036,24 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             //            for (int k=0; k<newTipsList.value(i).length();k++){
             //                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
             //            }
+            if (tracingMethodComboB->currentIndex()<2){
+                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
+                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
+            }
+
+            qDebug()<<"new landmark pixel size 1"<<newLandmarks.value(i).ev_pc1;
+            qDebug()<<"new landmark pixel size 2"<<newLandmarks.value(i).ev_pc2;
+            newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
+            newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//
 
             if (!isDuplicateROI(newLandmarks.value(i))){
-                if (tracingMethodComboB->currentIndex()<2){
-                    newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[11].getCurrentValue();
-                    newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
-                }else{
-                    qDebug()  << "adaptive methods should return tile size...";
-                }
 
-                qDebug()<<"new landmark pixel size 1"<<newLandmarks.value(i).ev_pc1;
-                qDebug()<<"new landmark pixel size 2"<<newLandmarks.value(i).ev_pc2;
 
                 allROILocations->append(newLandmarks.value(i));
                 allTipsList->append(newTipsList.value(i));
             }else{
                 status("already scanned here!");
+                qDebug()<<"already scanned "<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
     loadMIP(scanNumber, mip);
@@ -1045,12 +1066,12 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
     //check against locations already scanned
     for (int i=0; i<scanList.length(); i++){
-        if ((qAbs(inputLocation.x - scanList[i].x)<50.0) && (qAbs(inputLocation.y - scanList[i].y)<50.0)){
+        if ((qAbs(inputLocation.x - scanList[i].x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].y)< (float) 5.0)){
             return true;}
     }
     // and locations already queued!
     for (int i=0; i< allROILocations->length(); i++){
-        if ((qAbs(inputLocation.x - allROILocations->at(i).x)<50.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<50.0)){
+        if ((qAbs(inputLocation.x - allROILocations->at(i).x)<5.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<(float) 5.1)){
             return true;}
     }
     return false;
@@ -1183,8 +1204,8 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
 void S2UI::moveToROI(LocationSimple nextROI){
 
     if( posMonStatus){
-        nextROI.x = nextROI.x+((float) nextROI.ev_pc1)/2.0;// add offset.  PV wants the scan center, ZZ's code and image coordinates use upper left as origin.
-        nextROI.y = nextROI.y+((float) nextROI.ev_pc2)/2.0;
+        //nextROI.x = nextROI.x+((float) nextROI.ev_pc1)/2.0;// add offset.  PV wants the scan center, ZZ's code and image coordinates use upper left as origin.
+        //nextROI.y = nextROI.y+((float) nextROI.ev_pc2)/2.0;
         float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
         float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
         // and now to galvo voltage:
@@ -1240,8 +1261,10 @@ void S2UI::loadLatest(){
             qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
-        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(loadScanNumber).y;
+        tileLocation.x = scanList.value(loadScanNumber).x-((float)  scanList.value(loadScanNumber).ev_pc1)/2.0;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(loadScanNumber).y-((float)  scanList.value(loadScanNumber).ev_pc2)/2.0;// outgoing landmarks are shifted to the tile upper left
+        qDebug()<<"tileLocation.x = "<<tileLocation.x;
+        qDebug()<<"seedList is empty? "<<seedList.isEmpty();
         bool isSoma = scanNumber==0;
         if (gridScanStatus!=0){
             emit eventSignal("startGridLoad");
@@ -1466,12 +1489,12 @@ void S2UI::resetToScanPBCB(){
 void S2UI::scanStatusHandler(){
 
 
-    zoomStateOK = ((int) uiS2ParameterMap[12].getCurrentValue() == currentTileInfo.getTileZoom())&&
-            ((int) uiS2ParameterMap[10].getCurrentValue() == currentTileInfo.getTilePixelsX())&&
-            ((int) uiS2ParameterMap[11].getCurrentValue() == currentTileInfo.getTilePixelsY());
+    zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1)&&
+           ( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
+            (qAbs((int) uiS2ParameterMap[11].getCurrentValue() - currentTileInfo.getTilePixelsY())< 2);
 
 
-    bool scanStatusTimedOut = scanStatusWaitCycles >50;
+    bool scanStatusTimedOut = scanStatusWaitCycles >200;
 
     if (scanStatusTimedOut){
         QString sString = currentTileInfo.getTileInfoString().join("\n");
@@ -1483,6 +1506,9 @@ void S2UI::scanStatusHandler(){
 
     if (!zoomStateOK&&!scanStatusTimedOut){
         scanStatusWaitCycles++;
+        if (scanStatusWaitCycles%20 ==0 ){
+            qDebug()<< "scanStatus wait = "<<QString::number((scanStatusWaitCycles*50)/1000);
+        }
         QTimer::singleShot(50, this, SLOT(scanStatusHandler()));
     }else{
         qDebug()<<"scanStatusHandler says zoomStateOK";
@@ -1520,7 +1546,7 @@ void S2UI::pickTargets(){
         startCenter.x = 0.0+newTarget.x;
         startCenter.y = 0.0+newTarget.y;
         startCenter.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
-        startCenter.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+        startCenter.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
         targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
@@ -1554,6 +1580,7 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
     mipPixmap->setPos((xPix )*uiS2ParameterMap[8].getCurrentValue(),
             (yPix )*uiS2ParameterMap[9].getCurrentValue());
+    mipPixmap->setOffset(-x/2.0,-y/2.0 );
 
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
     //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());

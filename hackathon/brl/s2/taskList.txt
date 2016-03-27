@@ -1,4 +1,21 @@
 
+2016.03.25
+
+current problems with adaptive window:
+1. tile location (in ROI map and in .tc file) is incorrect relative to the image data.
+2. the image data is (probably) what you want (i.e the continuing dendrite in a neighboring area), but the location
+is incorrect.
+
+to be clear: the final stitched data does not accurately show continuous structures because the image tiles are placed at the
+wrong location. as opposed to placing the tiles at the right location with the wrong image data
+
+
+so the tile location between the internal stuff (location.x location.y ,etc) and the scan location
+needs to be figured out.  maybe shifting the coordinates by half the window is not enough?  also need a global origin shift?
+
+---
+
+
 ugh.  adaptive window scanning is broken. somehow invalid zooms are being passed to PV.  also PV is not starting the zstack for some reason.
 
 
