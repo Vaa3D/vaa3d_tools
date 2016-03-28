@@ -92,6 +92,49 @@ double median(vector<double> x)
 	return  x[x.size()/2];
 }
 
+bool tightRange(vector<double> x, double &low, double &high)
+{// to further tighten the diversity for the input swcs
+ // first use median to filter out anything that is > 3* median and < median/3
+ // then calculate the mean and the standard deviation
+ // low = mean - std
+ // hight = mean +std
+   double  median_size = median(x);
+   cout << "median length:"<<median_size<<endl;
+
+   low = median_size/2.0;
+   high = 1.5*median_size;
+
+//   vector<double> valid_x;
+//   double m_mean = 0;
+//   for (int i = 0; i<x.size(); i++)
+//   {
+//       if ( (x[i]< 2* median_size  ) &&  (x[i] > 1/2 *median_size))
+//       {
+//           valid_x.push_back(x[i]);
+//           m_mean += x[i];
+//       }
+
+//   }
+
+//   m_mean = m_mean/valid_x.size();
+//   double variance = 0 ;
+//   for (int i = 0; i<valid_x.size(); i++)
+//   {
+//       variance += (valid_x[i]-m_mean)*(valid_x[i]-m_mean);
+//   }
+
+//   cout << "mean length:"<<m_mean<<endl;
+//   cout << "standard deviation:"<<sqrt(variance)<<endl;
+
+//   variance = variance/valid_x.size();
+//   low = m_mean - sqrt(variance);
+//   high = m_mean + sqrt (variance);
+
+   return true;
+
+}
+
+
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
@@ -131,27 +174,31 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 	// use total length
 
 	cout<<"\nOutlier detection:"<<endl;
-	vector<double> valid_nt_sizes;
-	vector<double> nt_sizes;
+    vector<double> valid_nt_lens;
+    vector<double> nt_lens;
 
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
 
 		double len = computeTotalLength(tree);
-		nt_sizes.push_back(len);
-		if (len > 10 && len <50000){
-			valid_nt_sizes.push_back(len);
+        nt_lens.push_back(len);
+        if (len > 10 && len <50000){
+            valid_nt_lens.push_back(len);
 		}
 	}
 
-	V3DLONG median_size = median(valid_nt_sizes);
+    //V3DLONG median_size = median(valid_nt_lens);
 
-    vector<V3DLONG > rm_ids;
-	cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
-	cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
+    double low=-1, high = -1;
+    tightRange(valid_nt_lens, low, high);
+
+    vector<int > rm_ids;
+    //cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
+    //cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
+    cout <<"Remove SWCs, whose total lengh is > "<< high <<" or <" << low<<endl;
     for(int i = 0; i < nt_list.size(); i++){
-        double len = nt_sizes[i];
-        if ( len > 3*median_size  ||  len < double(median_size)/3 || len > 50000 )
+        double len = nt_lens[i];
+        if ( len > high ||  len < low )
         {
             cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
             rm_ids.push_back(i);
@@ -164,7 +211,7 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
         nt_list.erase(nt_list.begin()+rm_ids[i]);
     }
 
-	cout<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
+    cout<<"\n"<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
 
     QFile file(SelectedNeuronsAnoFileName);
     if (!file.open(QFile::WriteOnly|QFile::Truncate))

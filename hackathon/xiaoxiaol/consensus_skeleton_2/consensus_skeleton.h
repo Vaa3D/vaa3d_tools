@@ -48,6 +48,7 @@ double dist_pt_to_line_seg( XYZ p0, XYZ p1,  XYZ p2, XYZ & closestPt);
 double correspondingPointFromNeuron(XYZ cur,NeuronTree * nt, XYZ & closest_p);
 double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron);
 XYZ mean_XYZ(vector<XYZ> points);
+bool tightRange(vector<double> x, double &low, double &high);
 bool consensus_skeleton_match_center(vector<NeuronTree> nt_list, QList<NeuronSWC> & final_consensus, int max_vote_threshold,
 int cluster_distance_threshold, V3DPluginCallback2 &callback);
 bool merge_and_vote(vector<NeuronTree> & nt_list_resampled,
