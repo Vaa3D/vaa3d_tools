@@ -292,9 +292,27 @@ void reconstruction_func(
 
   // show configure GUI window
   sigen::interface::Options options;
-  bool retval = getConfig(parent, &options);
-  if (!retval) {
-    return;
+  if(via_gui)
+  {
+      bool retval = getConfig(parent, &options);
+      if (!retval) {
+        return;
+      }
+  }else
+  {
+      options.scale_xy = 1.0;
+      options.scale_z = 1.0;
+
+      options.enable_interpolation = true;
+      options.volume_threshold = 0;
+      options.distance_threshold = 0;
+
+      options.enable_smoothing = true;
+      options.smoothing_level = 0;
+
+      options.enable_clipping = true;
+      options.clipping_level = 0;
+
   }
   // check config
   // v3d_msg((retval ? QString("OK") : QString("Cancel")), via_gui);
