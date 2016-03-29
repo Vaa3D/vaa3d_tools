@@ -2056,8 +2056,8 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     newTipsList->push_back(tips);
     double overlap = 0.1;
 
-    float min_y = INF, max_y = 0;
-    float min_x = INF, max_x = 0;
+    float min_y = INF, max_y = -INF;
+    float min_x = INF, max_x = -INF;
     double adaptive_size;
 
     if(direction == 1 || direction == 2)
