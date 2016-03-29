@@ -156,7 +156,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -626,7 +626,7 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -1016,7 +1016,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -1051,7 +1051,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
 
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
-    int offsetX, offsetY;
+    int offsetX, offsetY,sizeX, sizeY;
     string swcfilepath;
     vector<MyMarker*> outswc;
     int node_type = 1;
@@ -1060,7 +1060,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     while(ifs && getline(ifs, info_swc))
     {
         std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> swcfilepath;
+        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
         if(offsetX < offsetX_min) offsetX_min = offsetX;
         if(offsetY < offsetY_min) offsetY_min = offsetY;
         if(offsetX > offsetX_max) offsetX_max = offsetX;
@@ -1148,22 +1148,22 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     while(ifs_2nd && getline(ifs_2nd, info_swc))
     {
         std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> swcfilepath;
+        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
         QString imagefilepath = QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
 
-        unsigned char * data1d = 0;
-        V3DLONG in_sz[4];
-        int datatype;
-        QString imagefilepath_abs = folderpath + "/" + imagefilepath;
-        if(!simple_loadimage_wrapper(*cb, imagefilepath_abs.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            cerr<<"load image "<<imagefilepath_abs.toStdString()<<" error!"<<endl;
-            return;
-        }
-        if(data1d) {delete []data1d; data1d=0;}
+//        unsigned char * data1d = 0;
+//        V3DLONG in_sz[4];
+//        int datatype;
+//        QString imagefilepath_abs = folderpath + "/" + imagefilepath;
+//        if(!simple_loadimage_wrapper(*cb, imagefilepath_abs.toStdString().c_str(), data1d, in_sz, datatype))
+//        {
+//            cerr<<"load image "<<imagefilepath_abs.toStdString()<<" error!"<<endl;
+//            return;
+//        }
+//        if(data1d) {delete []data1d; data1d=0;}
 
 
-        imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(in_sz[0]-1 + offsetX - origin_x).arg(in_sz[1]-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        imagefilepath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX -1 + offsetX - origin_x).arg(sizeY - 1 + offsetY - origin_y).arg(in_sz[2]-1));
         myfile << imagefilepath.toStdString();
         myfile << "\n";
     }
@@ -1264,7 +1264,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -1678,7 +1678,7 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();

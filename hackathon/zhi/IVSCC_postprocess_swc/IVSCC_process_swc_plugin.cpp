@@ -373,7 +373,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         arg_input_sort.push_back(fileName_string);
         arg.p = (void *) & arg_input_sort; input_sort<< arg;
         arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("0");
-        string S_soma_ID = boost::lexical_cast<string>(soma_ID);
+        string S_soma_ID = boost::lexical_cast<string>(soma_ID+1);
         char* C_soma_ID = new char[S_soma_ID.length() + 1];
         strcpy(C_soma_ID,S_soma_ID.c_str());
         arg_sort_para.push_back(C_soma_ID);
