@@ -2157,13 +2157,12 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
     if(direction == 1)
     {
         newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        // Zhi this seems strange to me:
-       // total4DImage->getOriginY())  is already tileLocation.y, so there's no need to add and subtract them
+        newTarget.y = floor((min_y + max_y - 2.0*adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
-        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y - 2.0*adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
 
     }else if(direction == 3)
     {
