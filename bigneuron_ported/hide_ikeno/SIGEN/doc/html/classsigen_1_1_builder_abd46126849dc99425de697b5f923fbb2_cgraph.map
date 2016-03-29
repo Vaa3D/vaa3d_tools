@@ -1,0 +1,8 @@
+<map id="sigen::Builder::CutLoops" name="sigen::Builder::CutLoops">
+<area shape="rect" id="node2" href="$classsigen_1_1_disjoint_set.html#a8b327b4ece9719df8d912a9c2b497b1d" title="sigen::DisjointSet::Add" alt="" coords="256,5,411,31"/>
+<area shape="rect" id="node3" href="$classsigen_1_1_disjoint_set.html#a2f5f7cbcfca0817795cdefdc932ff768" title="sigen::DisjointSet\l::SetUp" alt="" coords="271,55,396,93"/>
+<area shape="rect" id="node4" href="$classsigen_1_1_disjoint_set.html#ae0c7181a0bd108e064c3e55b556a2b6f" title="sigen::DisjointSet\l::IsSame" alt="" coords="271,117,396,156"/>
+<area shape="rect" id="node5" href="$classsigen_1_1_cluster.html#a3615d1143f89ae4245e3523620d80852" title="sigen::Cluster::RemoveConnection" alt="" coords="220,180,447,205"/>
+<area shape="rect" id="node7" href="$classsigen_1_1_disjoint_set.html#a31f1d34e1b65a189403330bb58c78bfd" title="sigen::DisjointSet\l::Merge" alt="" coords="271,229,396,268"/>
+<area shape="rect" id="node6" href="$classsigen_1_1_cluster.html#a5302c7147464cd6f1dfd63a168753fa4" title="sigen::Cluster::HasConnection" alt="" coords="495,180,697,205"/>
+</map>
