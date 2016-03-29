@@ -2126,8 +2126,8 @@ NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRoo
 void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction, float overlap)
 {
     newTipsList->push_back(tips);
-    float min_y = INF, max_y = 0;
-    float min_x = INF, max_x = 0;
+    float min_y = INF, max_y = -INF;
+    float min_x = INF, max_x = -INF;
     double adaptive_size;
 
     if(direction == 1 || direction == 2)
@@ -2157,12 +2157,12 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
     if(direction == 1)
     {
         newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - 2.0*adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y -adaptive_size)/2.0 - total4DImage->getOriginY()) + tileLocation.y;
 
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
-        newTarget.y = floor((min_y + max_y - 2.0*adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y -adaptive_size)/2.0 - total4DImage->getOriginY()) + tileLocation.y;
 
     }else if(direction == 3)
     {

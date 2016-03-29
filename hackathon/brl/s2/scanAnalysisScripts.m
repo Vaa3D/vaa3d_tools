@@ -10,10 +10,11 @@
 %  the post-PV files are stored on my workstation, including .xml files transfered
 %  from the rig machine.
 batch1directory = '/local2/'
-batch1 = dir([batch1directory,'2016*S*'])  % these were collected on Saturday and Sunday.
+batch1 = dir([batch1directory,'2016*Su*'])  % images collected on Sunday.
 batch1 = batch1([batch1(:).isdir]')
     
 tic
+
 for i = 1:numel(batch1)
    sessioniDir = dir([batch1directory,'/', batch1(i).name])
     sessioniDir = sessioniDir([sessioniDir(:).isdir]')  % just get scan directories
@@ -52,7 +53,10 @@ for i = 1:numel(sessionData)
         
         tileSetij = sessionData{i}(j).tileLocations
         nTiles = numel(tileSetij)
-        if nTiles<2
+        sessionData{i}(j).ignore = False
+        
+        if ( nTiles<3 )| (strfind(sessionData{i}(j).folderName, '.'))
+            sessionData{i}(j).ignore = False
             continue
         else
             
@@ -65,7 +69,17 @@ for i = 1:numel(sessionData)
                 
             end
             %figure, imshow(bigRect);
-         
+            if strfind(sessionData{i}(j).folderName,'Sun_09' )
+                sessionData{i}(j).neuronNumber = 1;
+            end
+                if strfind(sessionData{i}(j).folderName,'Sun_10' )  %  this is bad form... I need a cell index that comes from the s2 program.
+                sessionData{i}(j).neuronNumber = 2;
+                end
+                
+                if strfind(sessionData{i}(j).folderName,'Sun_11' )
+                sessionData{i}(j).neuronNumber = 3;
+            end
+            
             sessionData{i}(j).imagedArea = sum(bigRect(:));
             sessionData{i}(j).tileAreas = (allLocations(:,4)-allLocations(:,2)).*(allLocations(:,3)-allLocations(:,1));
             sessionData{i}(j).totalTileArea = sum(sessionData{i}(j).tileAreas);
@@ -98,24 +112,53 @@ end
 %  total volume vs tile size for each neuron (N = 3)
 %% plotting
 figure
-timeSummary = [0,0,0]
+timeSummary{1} = [0,0,0]
+timeSummary{2} = [0,0,0]
+timeSummary{3} = [0,0,0]
+
+neuronData{1} = [0,0, 0,0]
+neuronData{2} = [0,0,0,0]
+neuronData{3} = [0,0,0,0]
 for i = 1:numel(sessionData)
     for j = 1:numel(sessionData{i})
         
         tileSetij = sessionData{i}(j).tileLocations;
         nTiles = numel(tileSetij);
-        if nTiles<3
+        if sessionData{i}(j).ignore
             continue
         else
+            if isfield(sessionData{i}(j),'neuronNumber')
+                if sessionData{i}(j).neuronNumber == 1
+                    neuronData{1} = [neuronData{1} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).imagedArea],i,j]
+                    neuronData{1} = [neuronData{1} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).totalTime],i,j]
+                    timeSummary{1}= [timeSummary{1}; [sessionData{i}(j).estimatedGridTime,sessionData{i}(j).minTotalTime , sessionData{i}(j).totalTime]/( mean((sessionData{i}(j).allTileTimes(:)+sessionData{i}(j).estimatedMinLag)))];
+                end
+                
+                if sessionData{i}(j).neuronNumber == 2
+                    neuronData{2} = [neuronData{2} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).imagedArea],i,j]
+                    neuronData{2} = [neuronData{2} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).totalTime],i,j]
+                    timeSummary{2}= [timeSummary{2}; [sessionData{i}(j).estimatedGridTime,sessionData{i}(j).minTotalTime , sessionData{i}(j).totalTime]/( mean((sessionData{i}(j).allTileTimes(:)+sessionData{i}(j).estimatedMinLag)))];
+                end
+                
+                if sessionData{i}(j).neuronNumber == 3
+                    neuronData{3} = [neuronData{3} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).imagedArea],i,j]
+                    neuronData{3} = [neuronData{3} ; [mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).totalTime],i,j]
+                    timeSummary{3}= [timeSummary{3}; [sessionData{i}(j).estimatedGridTime,sessionData{i}(j).minTotalTime , sessionData{i}(j).totalTime]/( mean((sessionData{i}(j).allTileTimes(:)+sessionData{i}(j).estimatedMinLag)))];
+                end
+                
+            end
+            
             subplot(2,1,1), hold all, plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).imagedArea,'o-', 'DisplayName', sessionData{i}(j).folderName)
             subplot(2,1,2), hold all, plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).totalTime, '*-', 'DisplayName', sessionData{i}(j).folderName)
             plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).minTotalTime, '*-')
-            timeSummary= [timeSummary; [sessionData{i}(j).estimatedGridTime,sessionData{i}(j).minTotalTime , sessionData{i}(j).totalTime]/( mean((sessionData{i}(j).allTileTimes(:)+sessionData{i}(j).estimatedMinLag)))];
-if size(timeSummary,1) == 16
-    i
-    j
-end
-
+            
+            
         end
     end
+end
+
+
+for i = 1:3
+subplot(2,1,2),    plot(neuronData{i}(1:2:end,1),neuronData{i}(1:2:end,2));
+subplot(2,1,1),    plot(neuronData{i}(2:2:end,1),neuronData{i}(2:2:end,2));
 end
