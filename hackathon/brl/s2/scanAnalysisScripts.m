@@ -35,7 +35,7 @@ toc
 
 
 
-% 2.  Analysis
+%% 2.  Analysis
 
 % determine difference between summed tile volume and the actual scanned
 % volume [estimate from (whole micron?) binary images] 
@@ -65,12 +65,13 @@ for i = 1:numel(sessionData)
                 
             end
             %figure, imshow(bigRect);
+         
             sessionData{i}(j).imagedArea = sum(bigRect(:));
             sessionData{i}(j).tileAreas = (allLocations(:,4)-allLocations(:,2)).*(allLocations(:,3)-allLocations(:,1));
             sessionData{i}(j).totalTileArea = sum(sessionData{i}(j).tileAreas);
             sessionData{i}(j).extraScanning = sessionData{i}(j).totalTileArea-sessionData{i}(j).imagedArea;
             sessionData{i}(j).boundingBoxSparsity = sessionData{i}(j).totalTileArea/numel(bigRect);            
-            sessionData{i}(j).lagTimes =  diff(sessionData{i}(j).tileStartTimes)-sessionData{i}(j).allTileTimes(2:end);
+            sessionData{i}(j).lagTimes =  diff(sessionData{i}(j).tileStartTimes)-sessionData{i}(j).allTileTimes(1:end-1);
             sessionData{i}(j).totalTime = sessionData{i}(j).tileStartTimes(end)-sessionData{i}(j).tileStartTimes(1)+sessionData{i}(j).allTileTimes(end)+min(sessionData{i}(j).lagTimes);
             sessionData{i}(j).minTotalTime = sum(sessionData{i}(j).allTileTimes(:)+min(sessionData{i}(j).lagTimes));
             sessionData{i}(j).minImagingOnly = sum(sessionData{i}(j).allTileTimes(:));
@@ -95,4 +96,26 @@ end
 %  total time vs tile size for each neuron (N  = 3)
 
 %  total volume vs tile size for each neuron (N = 3)
+%% plotting
+figure
+timeSummary = [0,0,0]
+for i = 1:numel(sessionData)
+    for j = 1:numel(sessionData{i})
+        
+        tileSetij = sessionData{i}(j).tileLocations;
+        nTiles = numel(tileSetij);
+        if nTiles<3
+            continue
+        else
+            subplot(2,1,1), hold all, plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).imagedArea,'o-', 'DisplayName', sessionData{i}(j).folderName)
+            subplot(2,1,2), hold all, plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).totalTime, '*-', 'DisplayName', sessionData{i}(j).folderName)
+            plot(mean(sqrt(sessionData{i}(j).tileAreas)),sessionData{i}(j).minTotalTime, '*-')
+            timeSummary= [timeSummary; [sessionData{i}(j).estimatedGridTime,sessionData{i}(j).minTotalTime , sessionData{i}(j).totalTime]/( mean((sessionData{i}(j).allTileTimes(:)+sessionData{i}(j).estimatedMinLag)))];
+if size(timeSummary,1) == 16
+    i
+    j
+end
 
+        end
+    end
+end
