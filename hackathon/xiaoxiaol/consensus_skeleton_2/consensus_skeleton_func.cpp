@@ -411,8 +411,8 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
     cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
 
-    QString out_ano_file_name = outfileName + ".SelectedNeurons.ano";
-    remove_outliers(nt_list,out_ano_file_name);
+    //QString out_ano_file_name = outfileName + ".SelectedNeurons.ano";
+    //remove_outliers(nt_list,out_ano_file_name);
 
     int idx = median_swc(nt_list,outfileName);
     if (idx <0){
