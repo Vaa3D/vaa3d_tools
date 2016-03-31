@@ -1741,7 +1741,14 @@ bool consensus_skeleton_votemap(vector<NeuronTree>  nt_list, QList<NeuronSWC> & 
 
 bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 	{
-		FILE * fp;
+
+        if (list.size()<1)
+        {
+            cout <<"empty output NeuronSWC list." <<endl;
+            return false;
+        }
+
+        FILE * fp;
 		fp = fopen(filename,"w");
 		QString fn = QString(filename);
 		if (fp==NULL)
