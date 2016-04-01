@@ -118,7 +118,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
     tileLocation.z = 0;
-    tileLocation.radius = P.block_size;
+    tileLocation.ev_pc1 = P.block_size;
+    tileLocation.ev_pc2 = P.block_size;
     tileLocation.category = 1;
     allTargetList.push_back(tileLocation);
 
@@ -186,7 +187,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             {
                 for(int j = 0; j < allTargetList.size();j++)
                 {
-                    if(allTargetList.at(i).ave > allTargetList.at(j).ave)
+                    if(allTargetList.at(i).radius > allTargetList.at(j).radius)
                     {
                         allTargetList.swap(i,j);
                         allTipsList.swap(i,j);
@@ -639,8 +640,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
     start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
 
-    end_x = tileLocation.x+tileLocation.radius;
-    end_y = tileLocation.y+tileLocation.radius;
+    end_x = tileLocation.x+tileLocation.ev_pc1;
+    end_y = tileLocation.y+tileLocation.ev_pc2;
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
 
@@ -664,12 +665,12 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 //    if(tileLocation.ev_pc3 == 1)
 //    {
 //        start_x_updated = start_x;
-//        end_x_updated = start_x +  floor(tileLocation.radius*(1.0-overlap) - 1);
+//        end_x_updated = start_x +  floor(tileLocation.ev_pc1*(1.0-overlap) - 1);
 //        start_y_updated =  start_y;
 //        end_y_updated = end_y - 1;
 //    }else if(tileLocation.ev_pc3 == 2)
 //    {
-//        start_x_updated = start_x +  floor(tileLocation.radius*(1.0-overlap));
+//        start_x_updated = start_x +  floor(tileLocation.ev_pc1*(1.0-overlap));
 //        end_x_updated = end_x - 1;
 //        start_y_updated =  start_y;
 //        end_y_updated = end_y - 1;
@@ -679,13 +680,13 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 //        start_x_updated = start_x;
 //        end_x_updated = end_x - 1;
 //        start_y_updated =  start_y;
-//        end_y_updated = start_y +  floor(tileLocation.radius*(1.0-overlap) - 1);
+//        end_y_updated = start_y +  floor(tileLocation.ev_pc2*(1.0-overlap) - 1);
 
 //    }else if(tileLocation.ev_pc3 == 4)
 //    {
 //        start_x_updated = start_x;
 //        end_x_updated = end_x - 1;
-//        start_y_updated =  start_y +  floor(tileLocation.radius*(1.0-overlap));
+//        start_y_updated =  start_y +  floor(tileLocation.ev_pc2*(1.0-overlap));
 //        end_y_updated = end_y - 1;
 //    }
 
@@ -1046,7 +1047,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 {
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
-    int offsetX, offsetY;
+    int offsetX, offsetY,sizeX, sizeY;
     string swcfilepath;
     vector<MyMarker*> outswc,inputswc;
     int node_type = 1;
@@ -1061,7 +1062,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     while(ifs && getline(ifs, info_swc))
     {
         std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> swcfilepath;
+        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
         if(offsetX < offsetX_min) offsetX_min = offsetX;
         if(offsetY < offsetY_min) offsetY_min = offsetY;
         if(offsetX > offsetX_max) offsetX_max = offsetX;
@@ -1188,20 +1189,9 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     while(ifs_2nd && getline(ifs_2nd, info_swc))
     {
         std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> swcfilepath;
+        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
         QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
-        QString imagefilepath= folderpath + "/" + imagename;
-
-
-        unsigned char * data1d = 0;
-        int datatype;
-        if(!simple_loadimage_wrapper(callback, imagefilepath.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            cerr<<"load image "<<imagefilepath.toStdString()<<" error!"<<endl;
-            return;
-        }
-        if(data1d) {delete []data1d; data1d=0;}
-        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(in_sz[0]-1 + offsetX - origin_x).arg(in_sz[1]-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
         myfile << imagename.toStdString();
         myfile << "\n";
     }
@@ -1264,7 +1254,8 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
     tileLocation.z = 0;
-    tileLocation.radius = P.block_size;
+    tileLocation.ev_pc1 = P.block_size;
+    tileLocation.ev_pc2 = P.block_size;
 
     allTargetList.push_back(tileLocation);
 
@@ -1309,7 +1300,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             {
                 for(int j = 0; j < allTargetList.size();j++)
                 {
-                    if(allTargetList.at(i).ave > allTargetList.at(j).ave)
+                    if(allTargetList.at(i).radius > allTargetList.at(j).radius)
                     {
                         allTargetList.swap(i,j);
                         allTipsList.swap(i,j);
@@ -1647,8 +1638,8 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
     start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
 
-    end_x = tileLocation.x+tileLocation.radius;
-    end_y = tileLocation.y+tileLocation.radius;
+    end_x = tileLocation.x+tileLocation.ev_pc1;
+    end_y = tileLocation.y+tileLocation.ev_pc2;
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
 
@@ -2124,7 +2115,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         newTarget.ev_pc3 = 1;
     }else if(direction == 2)
     {
-        newTarget.x = tileLocation.x + tileLocation.radius - floor(adaptive_size*overlap);
+        newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
         newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
         newTarget.ev_pc3 = 2;
 
@@ -2137,13 +2128,14 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     }else
     {
         newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
-        newTarget.y = tileLocation.y + tileLocation.radius - floor(adaptive_size*overlap);
+        newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size*overlap);
         newTarget.ev_pc3 = 4;
 
     }
     newTarget.z = total4DImage->getOriginZ();
-    newTarget.radius = adaptive_size;
-    newTarget.ave = max_r;
+    newTarget.ev_pc1 = adaptive_size;
+    newTarget.ev_pc2 = adaptive_size;
+    newTarget.radius = max_r;
 
     newTargetList->push_back(newTarget);
     return true;
