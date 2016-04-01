@@ -397,7 +397,7 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
-    overlapSpinBox->setMaximum(20 );
+    overlapSpinBox->setMaximum(50 );
     overlapSpinBox->setValue(10);
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
@@ -1048,7 +1048,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
             if (!isDuplicateROI(newLandmarks.value(i))){
 
-
+// make a copy of the main list here.
+                // add the new stuff to the copy.
+                // sort the copy based on the category field [annoying?]
+                // and replace the main list with the new one.
                 allROILocations->append(newLandmarks.value(i));
                 allTipsList->append(newTipsList.value(i));
             }else{
@@ -1064,15 +1067,64 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 }
 
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
+    // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
     //check against locations already scanned
+    bool upperLeft =false;
+    bool upperRight = false;
+    bool lowerLeft = false;
+    bool lowerRight = false;
     for (int i=0; i<scanList.length(); i++){
         if ((qAbs(inputLocation.x - scanList[i].x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].y)< (float) 5.0)){
+            return true;
+        }else{
+
+            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+
+            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+        if (upperLeft&&upperRight&lowerLeft&lowerRight){
             return true;}
+        }
     }
     // and locations already queued!
     for (int i=0; i< allROILocations->length(); i++){
         if ((qAbs(inputLocation.x - allROILocations->at(i).x)<5.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<(float) 5.1)){
+            return true;
+        }else{
+
+            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+
+            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+        if (upperLeft&&upperRight&lowerLeft&lowerRight){
             return true;}
+        }
     }
     return false;
 }
@@ -1656,3 +1708,8 @@ void S2UI::updateCurrentZoom(int currentIndex){
 void S2UI::updateZoomHandler(){
 
 }
+
+// next up:  has a tile been scanned?  I need a new version of 'is duplicate' to handle adaptive tile sizes.
+
+// then, use LocationSimple.category as an indicator of topological (branch) order.
+// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
