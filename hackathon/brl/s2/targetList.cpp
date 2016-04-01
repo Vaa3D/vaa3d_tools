@@ -29,8 +29,8 @@ TargetList::TargetList(QWidget *parent) :
     mainLayout = new QGridLayout;
     mainLayout->addWidget(targetTableLabel,0,0);
     mainLayout->addWidget(targetTable, 1,0,3,1);
-    mainLayout->addWidget(scanLocTableLabel,0,1);
-    mainLayout->addWidget(scanLocTable,1,2,3,2 );
+    mainLayout->addWidget(scanLocTableLabel,0,3);
+    mainLayout->addWidget(scanLocTable,1,3,3,1 );
 
     scanLocTable->adjustSize();
     targetTable->adjustSize();

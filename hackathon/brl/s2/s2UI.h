@@ -106,6 +106,7 @@ private slots:
     void finalizeZoom();
     void activeModeChecker();
     void updateZoomHandler();
+    void resetDirectory();
 private:
     V3DPluginCallback2 * cb;
 
@@ -142,6 +143,7 @@ private:
     void initializeROISizes();
     void createTargetList();
 
+    QPushButton *resetDirPB;
 	QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;

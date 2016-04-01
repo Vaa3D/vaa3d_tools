@@ -65,6 +65,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(createROIControls(),"ROI Controls");
     localRemoteCB = new QCheckBox;
     localRemoteCB->setText(tr("Local PrairieView"));
+    resetDirPB = new QPushButton;
+    resetDirPB->setText(tr("set Save Dir"));
+
     runAllTargetsPB = new QPushButton;
     runAllTargetsPB->setText(tr("Scan All Targets"));
     mainLayout = new QGridLayout();
@@ -83,6 +86,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,3);
     mainLayout->addWidget(localRemoteCB,5,0,1,1);
+    mainLayout->addWidget(resetDirPB, 5,1,1,1);
     mainLayout->addWidget(runAllTargetsPB,5,2);
     mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
@@ -108,6 +112,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     waitingForFile = 0;
     waitingToStartStack = false;
     isLocal = false;
+    resetDir = false;
     smartScanStatus = 0;
     gridScanStatus = 0;
     allTargetStatus = 0;
@@ -136,6 +141,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
 
     connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
+
+    connect(resetDirPB, SIGNAL(clicked()), this, SLOT(resetDirectory()));
     connect(overlapSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateOverlap(int)));
 
     connect(resetToOverviewPB, SIGNAL(clicked()),this, SLOT(resetToOverviewPBCB()));
@@ -267,6 +274,11 @@ void S2UI::updateROIPlot(QString ignore){
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
+}
+
+void S2UI::resetDirectory(){
+    resetDir = true;
+            updateLocalRemote(isLocal);
 }
 
 void S2UI::updateLocalRemote(bool state){
