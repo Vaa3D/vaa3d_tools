@@ -1844,27 +1844,11 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
 
         nt_most = readSWC_file(swcMOST);
 
-        NeuronTree nt;
-        ifstream ifs_swcString(swcString.toStdString().c_str());
+        if(swcMOST.size()<1)
+            return;
 
-
-        if(!ifs_swcString)
-        {
-            nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
-            export_list2file(nt.listNeuron, swcString,swcMOST);
-        }else
-        {
-            NeuronTree nt_tile = readSWC_file(swcString);
-            LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
-            if(inputRootList_pruned.size()<1)
-                return;
-            else
-            {
-                nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
-                combine_list2file(nt.listNeuron, swcString);
-
-            }
-        }
+        NeuronTree nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
+        export_list2file(nt.listNeuron, swcString,swcMOST);
 
         LandmarkList imageLandmarks;
         int maxRootListSize;
