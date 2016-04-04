@@ -85,6 +85,11 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
     //   testroot.x = 205;testroot.y = 111;testroot.z = 102;inputRootList.push_back(testroot);
 
 
+    QList<LandmarkList> newTipsList;
+    LandmarkList newTargetList;
+
+
+
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
         //  v3dhandle newwin = cb->newImageWindow();
@@ -149,6 +154,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -179,6 +185,8 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         catch (...)
         {
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+
             return;
         }
         double dn = pow(2.0, double(5));
@@ -405,7 +413,6 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             childs[nt.hashNeuron.value(par)].push_back(i);
         }
 
-        LandmarkList newTargetList;
         LandmarkList tip_left;
         LandmarkList tip_right;
         LandmarkList tip_up ;
@@ -450,8 +457,8 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
             }
         }
 
-        QList<LandmarkList> newTipsList;
         LocationSimple newTarget;
+
 
         if(tip_left.size()>0)
         {
@@ -550,6 +557,9 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
     //   testroot.x = 10;testroot.y = 31;testroot.z = 101;inputRootList.push_back(testroot);
     //   testroot.x = 205;testroot.y = 111;testroot.z = 102;inputRootList.push_back(testroot);
 
+    QList<LandmarkList> newTipsList;
+    LandmarkList newTargetList;
+
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
@@ -619,6 +629,7 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -654,6 +665,8 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         catch (...)
         {
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+
             return;
         }
         double dn = pow(2.0, double(5));
@@ -853,10 +866,6 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
             }
         }
 
-        QList<LandmarkList> newTipsList;
-        LandmarkList newTargetList;
-
-
         if(tip_left.size()>0)
         {
             QList<LandmarkList> group_tips_left = group_tips(tip_left,50,1);
@@ -1008,6 +1017,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
+                emit loadingDone(total4DImage_mip);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -1113,6 +1123,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     if(!simple_loadimage_wrapper(*cb, lastImagepath.toStdString().c_str(), data1d, in_sz, datatype))
     {
         cerr<<"load image "<<lastImagepath.toStdString()<<" error!"<<endl;
+        emit combinedSWC(fileSaveName);
         return;
     }
     if(data1d) {delete []data1d; data1d=0;}
@@ -1182,6 +1193,10 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
 
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
+
+    QList<LandmarkList> newTipsList;
+    LandmarkList newTargetList;
+
 
     int seed_win = 10;
     int slip_win = 10;
@@ -1258,6 +1273,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -1288,6 +1304,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         catch (...)
         {
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
         }
         double dn = pow(2.0, double(5));
@@ -1414,6 +1431,8 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         {
 
              printf("Can not find the tracing plugin!\n");
+
+             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
              return;
         }
 
@@ -1424,8 +1443,6 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
         nt_most = readSWC_file(swcMOST);
 
         if(nt_most.listNeuron.size()<1){
-            QList<LandmarkList> newTipsList;
-            LandmarkList newTargetList;
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
         }
@@ -1469,7 +1486,6 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
             childs[nt.hashNeuron.value(par)].push_back(i);
         }
 
-        LandmarkList newTargetList;
         LandmarkList tip_left;
         LandmarkList tip_right;
         LandmarkList tip_up ;
@@ -1501,8 +1517,8 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
 
         }
 
-        QList<LandmarkList> newTipsList;
         LocationSimple newTarget;
+
 
         if(tip_left.size()>0)
         {
@@ -1591,6 +1607,9 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
     qDebug()<<"overlap input:"<< QString::number(overlap);
     //QString latestString = getFileString();
 
+    QList<LandmarkList> newTipsList;
+    LandmarkList newTargetList;
+
     // Zhi:  this is a stack on AIBSDATA/MAT
     // modify as needed for your local path!
 
@@ -1678,6 +1697,7 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -1716,6 +1736,8 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
         catch (...)
         {
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+
             return;
         }
         double dn = pow(2.0, double(5));
@@ -1842,6 +1864,8 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
         {
 
              printf("Can not find the tracing plugin!\n");
+             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+
              return;
         }
 
@@ -1852,8 +1876,6 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
         nt_most = readSWC_file(swcMOST);
 
         if(nt_most.listNeuron.size()<1){
-            QList<LandmarkList> newTipsList;
-            LandmarkList newTargetList;
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
         }
