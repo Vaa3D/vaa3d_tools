@@ -1844,7 +1844,7 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
 
         nt_most = readSWC_file(swcMOST);
 
-        if(nt_most.size()<1)
+        if(nt_most.listNeuron.size()<1)
             return;
 
         NeuronTree nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
