@@ -1952,10 +1952,6 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
             }
         }
 
-        QList<LandmarkList> newTipsList;
-        LandmarkList newTargetList;
-
-
         if(tip_left.size()>0)
         {
             QList<LandmarkList> group_tips_left = group_tips(tip_left,120,1);
