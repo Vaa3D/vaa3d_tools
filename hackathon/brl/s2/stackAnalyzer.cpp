@@ -1423,6 +1423,12 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
 
         nt_most = readSWC_file(swcMOST);
 
+        if(nt_most.listNeuron.size()<1){
+            QList<LandmarkList> newTipsList;
+            LandmarkList newTargetList;
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            return;
+        }
 
         LandmarkList imageLandmarks;
         int maxRootListSize;
@@ -1845,9 +1851,12 @@ void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, 
 
         nt_most = readSWC_file(swcMOST);
 
-        if(nt_most.listNeuron.size()<1)
+        if(nt_most.listNeuron.size()<1){
+            QList<LandmarkList> newTipsList;
+            LandmarkList newTargetList;
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
-
+        }
         NeuronTree nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
         export_list2file(nt.listNeuron, swcString,swcMOST);
 
