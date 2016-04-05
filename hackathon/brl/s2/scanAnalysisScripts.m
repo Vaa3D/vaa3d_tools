@@ -9,22 +9,23 @@
 
 %  the post-PV files are stored on my workstation, including .xml files transfered
 %  from the rig machine.
-batch1directory = '/local2/'
-batch1 = dir([batch1directory,'2016*Su*'])% images collected on Sunday.
+batchTopDirectory = '/local2/'
+batch1 = dir([batchTopDirectory,'2016*Su*'])% images collected on Sunday.
 batch1 = batch1([batch1(:).isdir]')
-batch2 = dir([batch1directory,'2016_03_29*'])% images collected on Sunday.
+batch2 = dir([batchTopDirectory,'2016_03_29*'])% images collected on Sunday.
 batch2 = batch2([batch2(:).isdir]')
-
-batch1 = [batch1;batch2]
+batch3 = dir([batchTopDirectory,'2016_04_04_Mon_15_02'])% images collected on MOnday.
+batch3 = batch2([batch2(:).isdir]')
+batches = [batch1;batch2;batch3]
 tic
 
-for i = 1:numel(batch1)
-   sessioniDir = dir([batch1directory,'/', batch1(i).name])
+for i = 1:numel(batches)
+   sessioniDir = dir([batchTopDirectory,'/', batches(i).name])
     sessioniDir = sessioniDir([sessioniDir(:).isdir]')  % just get scan directories
    for j = 1:numel(sessioniDir)  %  all scans, even aborted ones
-        scanjDir = dir([batch1directory, '/', batch1(i).name,'/', sessioniDir(j).name,'/','*.xml'])
+        scanjDir = dir([batchTopDirectory, '/', batches(i).name,'/', sessioniDir(j).name,'/','*.xml'])
         if numel(scanjDir)>0
-            sessionData{i}(j) = scanDataFromXMLDir([batch1directory, '/', batch1(i).name,'/', sessioniDir(j).name]);
+            sessionData{i}(j) = scanDataFromXMLDir([batchTopDirectory, '/', batches(i).name,'/', sessioniDir(j).name]);
             
         end
         
