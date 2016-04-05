@@ -52,9 +52,9 @@ signals:
     void startPM();
     void stopPM();
     void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
-    void callSALoadMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadSubtractive(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool,int);
     void callSALoadAda(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
-    void callSALoadAdaMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool,int);
     void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
@@ -220,6 +220,7 @@ private:
 	bool isLocal;
     int smartScanStatus;
     int gridScanStatus;
+    int methodChoice;
     double scanNumber;
     double loadScanNumber;
     int resultNumber;

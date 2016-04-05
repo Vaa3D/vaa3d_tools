@@ -195,8 +195,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
-    connect(this, SIGNAL(callSALoadMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
-    connect(this, SIGNAL(callSALoadAdaMOST(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_MOST_adaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool)));
+    connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+    connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
 
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
@@ -422,9 +422,12 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB = new QComboBox;
     tracingMethodComboB->addItem("MOST");
     tracingMethodComboB->addItem("APP2");
-    tracingMethodComboB->addItem("adaptiveMOST");
-    tracingMethodComboB->addItem("adaptiveAPP2");
+    tracingMethodComboB->addItem("NeuTube");
+    tracingMethodComboB->addItem("adaptive MOST");
+    tracingMethodComboB->addItem("adaptive APP2");
+    tracingMethodComboB->addItem("adaptive NeuTube");
     tracingMethodComboB->setCurrentIndex(0);
+    methodChoice = 0;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
 
 
@@ -589,7 +592,8 @@ void S2UI::loadForSA(){
     qDebug()<<workerThread->currentThreadId();
     QTimer::singleShot(0,this, SLOT(processingStarted()));
     if (tracingMethodComboB->currentIndex()==0){
-        emit callSALoadMOST(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+        methodChoice = 0;
+        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==1){
@@ -597,14 +601,24 @@ void S2UI::loadForSA(){
 
     }
     if (tracingMethodComboB->currentIndex()==2){
-        emit callSALoadAdaMOST(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+        methodChoice = 1;
+        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==3){
+        methodChoice = 0;
+        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+    }
+    if (tracingMethodComboB->currentIndex()==4){
         emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
     }
+    if (tracingMethodComboB->currentIndex()==5){
+        methodChoice= 1;
+        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
+    }
 
 
 }
@@ -1338,23 +1352,36 @@ void S2UI::loadLatest(){
         }else{
             emit eventSignal("startAnalysis");
             QTimer::singleShot(0,this, SLOT(processingStarted()));
+
             if (tracingMethodComboB->currentIndex()==0){
-                emit callSALoadMOST(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+                methodChoice = 0;
+                emit callSALoadSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==1){
                 emit callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
             }
-
             if (tracingMethodComboB->currentIndex()==2){
-                emit callSALoadAdaMOST(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+                methodChoice = 1;
+                emit callSALoadSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==3){
+                methodChoice = 0;
+                emit callSALoadAdaSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+            }
+            if (tracingMethodComboB->currentIndex()==4){
                 emit callSALoadAda(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
             }
+            if (tracingMethodComboB->currentIndex()==5){
+                methodChoice= 1;
+                emit callSALoadAdaSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+            }
+
 
 
         }

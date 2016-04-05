@@ -133,6 +133,39 @@ void EventLogger::processEvents(QString saveFileString){
     if (okToSave){saveTextFile.close();}
 
 
+
+
+
+    QFile saveTextFile2;
+    saveTextFile2.setFileName(saveFileString.append("2.txt"));// add currentScanFile
+     okToSave = true;
+    if (!saveTextFile2.isOpen()){
+        if (!saveTextFile2.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            okToSave = false;
+        }
+    }
+
+    QTextStream outputStream2;
+    outputStream2.setDevice(&saveTextFile2);
+    for (int i =0; i<eventList.length(); i++){
+
+
+
+
+        QString toWrite = eventList[i].getEventName().append(" at ").append(QString::number(eventList[i].getTime())).append(" ms");
+
+         if (okToSave){
+                             outputStream2<<toWrite<<"\n";
+         }
+        qDebug()<<toWrite;
+    }
+
+
+
+
+    if (okToSave){saveTextFile2.close();}
+
     // calculate the total time imaging, total time analyzing
     // total time imaging while not analyzing and time analyzing while not imaging
     // calculate the total time for the whole process

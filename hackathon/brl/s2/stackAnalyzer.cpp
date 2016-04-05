@@ -1185,7 +1185,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     emit combinedSWC(fileSaveName);
 }
 
-void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma)
+void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, int methodChoice)
 {
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
@@ -1601,7 +1601,7 @@ void StackAnalyzer::loadScan_MOST(QString latestString, float overlap, int backg
     }
 }
 
-void StackAnalyzer::loadScan_MOST_adaptive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma)
+void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, int methodChoice)
 {
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
