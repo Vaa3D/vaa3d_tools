@@ -420,26 +420,30 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         QList<NeuronSWC> list = nt.listNeuron;
         for (V3DLONG i=0;i<list.size();i++)
         {
-            if (childs[i].size()==0)
-            {
+//            if (childs[i].size()==0)
+//            {
                 NeuronSWC curr = list.at(i);
                 LocationSimple newTip;
                 if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > 0.95* p.p4dImage->getYDim())
                 {
-                    V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
-                    V3DLONG node_pn_2nd;
-                    if( list.at(node_pn).pn < 0)
-                    {
-                        node_pn_2nd = node_pn;
-                    }
-                    else
-                    {
-                        node_pn_2nd = getParent(node_pn,nt);
-                    }
+//                    V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
+//                    V3DLONG node_pn_2nd;
+//                    if( list.at(node_pn).pn < 0)
+//                    {
+//                        node_pn_2nd = node_pn;
+//                    }
+//                    else
+//                    {
+//                        node_pn_2nd = getParent(node_pn,nt);
+//                    }
 
-                    newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
-                    newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
-                    newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+//                    newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
+//                    newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
+//                    newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+
+                    newTip.x = curr.x + p.p4dImage->getOriginX();
+                    newTip.y = curr.y + p.p4dImage->getOriginY();
+                    newTip.z = curr.z + p.p4dImage->getOriginZ();
                 }
                 if( curr.x < 0.05* p.p4dImage->getXDim())
                 {
@@ -454,7 +458,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
                 {
                     tip_down.push_back(newTip);
                 }
-            }
+//            }
         }
 
         LocationSimple newTarget;
@@ -816,28 +820,32 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         QList<NeuronSWC> list = nt.listNeuron;
         for (V3DLONG i=0;i<list.size();i++)
         {
-            if (childs[i].size()==0)
-            {
+//            if (childs[i].size()==0)
+//            {
                 NeuronSWC curr = list.at(i);
                 LocationSimple newTip;
                 bool check_tip = false;
 
                 if( curr.x < 0.05*  p.p4dImage->getXDim() || curr.x > 0.95 *  p.p4dImage->getXDim() || curr.y < 0.05 * p.p4dImage->getYDim() || curr.y > 0.95* p.p4dImage->getYDim())
                 {
-                    V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
-                    V3DLONG node_pn_2nd;
-                    if( list.at(node_pn).pn < 0)
-                    {
-                        node_pn_2nd = node_pn;
-                    }
-                    else
-                    {
-                        node_pn_2nd = getParent(node_pn,nt);
-                    }
+//                    V3DLONG node_pn = getParent(i,nt);// Zhi, what if there's no parent?
+//                    V3DLONG node_pn_2nd;
+//                    if( list.at(node_pn).pn < 0)
+//                    {
+//                        node_pn_2nd = node_pn;
+//                    }
+//                    else
+//                    {
+//                        node_pn_2nd = getParent(node_pn,nt);
+//                    }
 
-                    newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
-                    newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
-                    newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+//                    newTip.x = list.at(node_pn_2nd).x + p.p4dImage->getOriginX();
+//                    newTip.y = list.at(node_pn_2nd).y + p.p4dImage->getOriginY();
+//                    newTip.z = list.at(node_pn_2nd).z + p.p4dImage->getOriginZ();
+
+                    newTip.x = curr.x + p.p4dImage->getOriginX();
+                    newTip.y = curr.y + p.p4dImage->getOriginY();
+                    newTip.z = curr.z + p.p4dImage->getOriginZ();
 
                     for(V3DLONG j = 0; j < finalswc.size(); j++ )
                     {
@@ -863,7 +871,7 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
                 {
                     tip_down.push_back(newTip);
                 }
-            }
+//            }
         }
 
         if(tip_left.size()>0)

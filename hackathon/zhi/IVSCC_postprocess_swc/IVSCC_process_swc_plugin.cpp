@@ -344,7 +344,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         }
 
         double soma_x = center_inmarkers[0].x;
-        double soma_y = in_sz[1] - center_inmarkers[0].y;
+        double soma_y = center_inmarkers[0].y;
         double soma_z = center_inmarkers[0].z;
 
         if(data1d) {delete []data1d; data1d = 0;}

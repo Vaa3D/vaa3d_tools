@@ -161,15 +161,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
         else
         {
-            if(flag)
-            {
+//            if(flag)
+//            {
                 app_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-                flag = false;
-            }
-            else
-            {
-                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            }
+//                flag = false;
+//            }
+//            else
+//            {
+//                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+//            }
 
 
         }
@@ -1112,17 +1112,17 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
                 inputswc[d]->y = inputswc[d]->y + offsetY;
                 inputswc[d]->type = node_type;
                 int flag_prune = 0;
-                for(int dd = 0; dd < outswc.size();dd++)
-                {
-                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
-                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
-                    {
-                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
-                        flag_prune = 1;
-                        break;
-                    }
+//                for(int dd = 0; dd < outswc.size();dd++)
+//                {
+//                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
+//                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
+//                    {
+//                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
+//                        flag_prune = 1;
+//                        break;
+//                    }
 
-                }
+//                }
                 if(flag_prune == 0)
                 {
                    outswc.push_back(inputswc[d]);
@@ -1976,7 +1976,7 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
                 if(curr.pn < 0) root_index = j;
                 double dis = sqrt(pow2(marker_x - curr.x) + pow2(marker_y - curr.y) + pow2(marker_z - curr.z));
 
-                if(dis < 20 && flag[j] ==0)
+                if(dis < 10 && flag[j] ==0)
                 {
                     flag[root_index] = 1;
                     V3DLONG d;

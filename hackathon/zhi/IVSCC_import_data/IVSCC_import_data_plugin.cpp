@@ -77,8 +77,10 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
         if (output.size() != 1) return false;
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
         char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-        int invert = 1;
+        int invert = 1,flip = 0;
         if(inparas.size() >= 1) invert = atoi(inparas.at(0));
+        if(inparas.size() >= 2) flip = atoi(inparas.at(1));
+
 
         QString m_InputfolderName(inimg_file);
 
@@ -143,15 +145,18 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
                 return false;
             }
 
-            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+            if(flip)
+            {
+                V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
 
-            for (int j=0;j<hsz1;j++)
-                for (int i=0;i<in_sz[0];i++)
-                {
-                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
-                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
-                    data1d[j*in_sz[0] + i] = tmpv;
-                }
+                for (int j=0;j<hsz1;j++)
+                    for (int i=0;i<in_sz[0];i++)
+                    {
+                        unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
+                        data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
+                        data1d[j*in_sz[0] + i] = tmpv;
+                    }
+            }
 
             for(V3DLONG j = 0; j < pagesz_one; j++)
             {
@@ -170,7 +175,7 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
 	}
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x dllname -f import -i <inimg_folder> -o <outimg_file> -p <invert>"<<endl;
+        cout<<"Usage : v3d -x dllname -f import -i <inimg_folder> -o <outimg_file> -p <invert> <flip>"<<endl;
         cout<<endl;
     }
     else return false;;
