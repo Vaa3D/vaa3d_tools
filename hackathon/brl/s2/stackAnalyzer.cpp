@@ -1401,28 +1401,38 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        arg_para.push_back("1");
+        if(methodChoice == 0)
+        {
+            arg_para.push_back("1");
 
-        string S_background_th = boost::lexical_cast<string>(background);
-        char* C_background_th = new char[S_background_th.length() + 1];
-        strcpy(C_background_th,S_background_th.c_str());
-        arg_para.push_back(C_background_th);
+            string S_background_th = boost::lexical_cast<string>(background);
+            char* C_background_th = new char[S_background_th.length() + 1];
+            strcpy(C_background_th,S_background_th.c_str());
+            arg_para.push_back(C_background_th);
 
-        string S_seed_win = boost::lexical_cast<string>(seed_win);
-        char* C_seed_win = new char[S_seed_win.length() + 1];
-        strcpy(C_seed_win,S_seed_win.c_str());
-        arg_para.push_back(C_seed_win);
+            string S_seed_win = boost::lexical_cast<string>(seed_win);
+            char* C_seed_win = new char[S_seed_win.length() + 1];
+            strcpy(C_seed_win,S_seed_win.c_str());
+            arg_para.push_back(C_seed_win);
 
-        string S_slip_win = boost::lexical_cast<string>(slip_win);
-        char* C_slip_win = new char[S_slip_win.length() + 1];
-        strcpy(C_slip_win,S_slip_win.c_str());
-        arg_para.push_back(C_slip_win);
+            string S_slip_win = boost::lexical_cast<string>(slip_win);
+            char* C_slip_win = new char[S_slip_win.length() + 1];
+            strcpy(C_slip_win,S_slip_win.c_str());
+            arg_para.push_back(C_slip_win);
 
-        full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
-        arg.p = (void *) & arg_para; input << arg;
+            full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
+
+            qDebug()<<"starting most";
+        }else if (methodChoice == 1)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            full_plugin_name = "neuTube";
+            func_name =  "neutube_trace";
+            qDebug()<<"starting neutube";
+        }
 
 
-        qDebug()<<"starting most";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
 
 //        list<string> infostring;
@@ -1434,6 +1444,7 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
 //        tmpstr =  qPrintable( qtstr.setNum(seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
 
+        arg.p = (void *) & arg_para; input << arg;
 
         if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
         {
@@ -1446,7 +1457,10 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
 
         NeuronTree nt_most;
         QString swcMOST = saveDirString;
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        if(methodChoice ==0)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        else if(methodChoice ==1)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
 
         nt_most = readSWC_file(swcMOST);
 
@@ -1729,7 +1743,12 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
 
         //convert to 8bit image using 8 shiftnbits
 
-        QString finaloutputswc = saveDirString + ("/most_adaptive.swc");
+        QString finaloutputswc;
+        if(methodChoice ==0)
+            finaloutputswc = saveDirString + ("/most_adaptive.swc");
+        else if (methodChoice ==1)
+            finaloutputswc = saveDirString + ("/neutube_adaptive.swc");
+
         ifstream ifs_swc(finaloutputswc.toStdString().c_str());
         vector<MyMarker*> finalswc;
 
@@ -1834,28 +1853,38 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        arg_para.push_back("1");
+        if(methodChoice == 0)
+        {
+            arg_para.push_back("1");
 
-        string S_background_th = boost::lexical_cast<string>(background);
-        char* C_background_th = new char[S_background_th.length() + 1];
-        strcpy(C_background_th,S_background_th.c_str());
-        arg_para.push_back(C_background_th);
+            string S_background_th = boost::lexical_cast<string>(background);
+            char* C_background_th = new char[S_background_th.length() + 1];
+            strcpy(C_background_th,S_background_th.c_str());
+            arg_para.push_back(C_background_th);
 
-        string S_seed_win = boost::lexical_cast<string>(seed_win);
-        char* C_seed_win = new char[S_seed_win.length() + 1];
-        strcpy(C_seed_win,S_seed_win.c_str());
-        arg_para.push_back(C_seed_win);
+            string S_seed_win = boost::lexical_cast<string>(seed_win);
+            char* C_seed_win = new char[S_seed_win.length() + 1];
+            strcpy(C_seed_win,S_seed_win.c_str());
+            arg_para.push_back(C_seed_win);
 
-        string S_slip_win = boost::lexical_cast<string>(slip_win);
-        char* C_slip_win = new char[S_slip_win.length() + 1];
-        strcpy(C_slip_win,S_slip_win.c_str());
-        arg_para.push_back(C_slip_win);
+            string S_slip_win = boost::lexical_cast<string>(slip_win);
+            char* C_slip_win = new char[S_slip_win.length() + 1];
+            strcpy(C_slip_win,S_slip_win.c_str());
+            arg_para.push_back(C_slip_win);
 
-        full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
-        arg.p = (void *) & arg_para; input << arg;
+            full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
+
+            qDebug()<<"starting most";
+        }else if (methodChoice == 1)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            full_plugin_name = "neuTube";
+            func_name =  "neutube_trace";
+            qDebug()<<"starting neutube";
+        }
 
 
-        qDebug()<<"starting most";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
 
 //        list<string> infostring;
@@ -1867,6 +1896,7 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
 //        tmpstr =  qPrintable( qtstr.setNum(seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
 
+        arg.p = (void *) & arg_para; input << arg;
 
         if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
         {
@@ -1878,8 +1908,12 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
         }
 
         NeuronTree nt_most;
-        QString swcMOST = saveDirString;
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        QString swcMOST = saveDirString;       
+        if(methodChoice ==0)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        else if(methodChoice ==1)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
+
 
         nt_most = readSWC_file(swcMOST);
 
