@@ -380,7 +380,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 return false;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<"\n";
         saveTextFile.close();
 
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
@@ -589,7 +589,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     {
         newTipsList->push_back(tip_left);
         newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
+        newTarget.y = tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.category = tileLocation.category + 1;
         newTargetList->push_back(newTarget);
@@ -598,7 +598,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     {
         newTipsList->push_back(tip_right);
         newTarget.x = floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
+        newTarget.y = tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.category = tileLocation.category + 1;
         newTargetList->push_back(newTarget);
@@ -606,7 +606,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     if(tip_up.size()>0)
     {
         newTipsList->push_back(tip_up);
-        newTarget.x = total4DImage->getOriginX();
+        newTarget.x = tileLocation.x;
         newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.category = tileLocation.category + 1;
@@ -615,7 +615,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     if(tip_down.size()>0)
     {
         newTipsList->push_back(tip_down);
-        newTarget.x = total4DImage->getOriginX();
+        newTarget.x = tileLocation.x;
         newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTarget.category = tileLocation.category + 1;
@@ -1144,15 +1144,15 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     }
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
-    NeuronTree nt_final = readSWC_file(fileSaveName);
-    QList<NeuronSWC> neuron_final_sorted;
+//    NeuronTree nt_final = readSWC_file(fileSaveName);
+//    QList<NeuronSWC> neuron_final_sorted;
 
-    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
-    {
-        v3d_msg("fail to call swc sorting function.",0);
-    }
+//    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
+//    {
+//        v3d_msg("fail to call swc sorting function.",0);
+//    }
 
-    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+//    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
 
     //write tc file
 
@@ -1444,7 +1444,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 return false;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<"\n";
         saveTextFile.close();
 
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
@@ -1584,34 +1584,39 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     {
         newTipsList->push_back(tip_left);
         newTarget.x = -floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
+        newTarget.y = tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
+
     }
     if(tip_right.size()>0)
     {
         newTipsList->push_back(tip_right);
         newTarget.x = floor(P.block_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = total4DImage->getOriginY();
+        newTarget.y = tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
+
     }
     if(tip_up.size()>0)
     {
         newTipsList->push_back(tip_up);
-        newTarget.x = total4DImage->getOriginX();
+        newTarget.x = tileLocation.x;
         newTarget.y = -floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
+
     }
     if(tip_down.size()>0)
     {
         newTipsList->push_back(tip_down);
-        newTarget.x = total4DImage->getOriginX();
+        newTarget.x = tileLocation.x;
         newTarget.y = floor(P.block_size*(1.0-overlap)) + tileLocation.y;
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
+
     }
+
 
     total4DImage->deleteRawDataAndSetPointerToNull();
     return true;
