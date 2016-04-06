@@ -54,12 +54,18 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         int p = 0;
         if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
 
+        bool ok;
+        int length;
+        length = QInputDialog::getInteger(parent, "Please specify the length for pruning","length:",5,0,256,1,&ok);
+        if (!ok)
+            return;
+
 
         NeuronTree nt = readSWC_file(fileOpenName);
         NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt_sort_rs = resample(nt_sort, 10);
         NeuronTree nt_sort_rs_sort = SortSWC_pipeline(nt_sort_rs.listNeuron,VOID,0);
-        NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,5);
+        NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,length);
         NeuronTree nt_sort_rs_sort_prune_sort = SortSWC_pipeline(nt_sort_rs_sort_prune.listNeuron,VOID,0);
 
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
@@ -125,6 +131,12 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
 
 
+        bool ok;
+        int length;
+        length = QInputDialog::getInteger(parent, "Please specify the length for pruning","length:",5,0,256,1,&ok);
+        if (!ok)
+            return;
+
         string inswc_file = dialog.inswc_file;
         string outswc_file = dialog.outswc_file;
 
@@ -134,7 +146,7 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt_sort_rs = resample(nt_sort, 10);
         NeuronTree nt_sort_rs_sort = SortSWC_pipeline(nt_sort_rs.listNeuron,VOID,0);
-        NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,5);
+        NeuronTree nt_sort_rs_sort_prune = pruneswc(nt_sort_rs_sort,length);
         NeuronTree nt_sort_rs_sort_prune_sort = SortSWC_pipeline(nt_sort_rs_sort_prune.listNeuron,VOID,0);
 
         QString fileTmpName = fileOpenName+QString("_tmp.swc");

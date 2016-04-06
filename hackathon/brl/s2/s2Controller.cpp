@@ -149,14 +149,18 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
     //! [5]
     ii =-1;
     okToSend= true;
+    cancelQueue = false;
     cancelPosMon = false;
     inPosMonMode = false;
+    commandQueue = QStringList();
+    newCommandToSend = false;
 }
 
 
 void S2Controller::initializeS2(){
     initializeParameters();
     connectToS2();
+    commandQueueMonitor();
 }
 
 void S2Controller::initConnection(){
@@ -215,10 +219,11 @@ void S2Controller::overviewSetup(){
     // a more robust? version could query here instead of in S2UI
     centerGalvos();
     cleanAndSend("-zsz 20");
-    cleanAndSend("-oz 1"); // set mag to 1x
     cleanAndSend("-sts pixelsPerLine 512"); // set pixels per line to 512
     cleanAndSend("-sts linesPerFrame 512"); // set lines per frame to 512
- //   cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+    cleanAndSend("-oz 1"); // set mag to 1x
+
+    //   cleanAndSend("-sts activeMode Galvo");// set to galvo mode
 
     QTimer::singleShot(10, this, SLOT(overviewHandler()));
 
@@ -233,8 +238,25 @@ void S2Controller::stackSetup(){
     cleanAndSend("-oz 13"); // set mag to 16x
     cleanAndSend("-sts pixelsPerLine 256"); // set pixels per line to  256
     cleanAndSend("-sts linesPerFrame 256"); // set lines per frame to 256
-//    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
+    //    cleanAndSend("-sts activeMode Galvo");// set to galvo mode
 
+
+}
+
+
+void S2Controller::stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame){
+    centerGalvos();
+    addToQueue("-zsz "+QString::number(zsize,'f', 4));
+    addToQueue("-oz "+QString::number(zoom, 'f',4));
+    addToQueue("-sts pixelsPerLine "+QString::number(pixelsPerLine));
+    // set mag to 16x
+    addToQueue("-sts linesPerFrame "+QString::number(linesPerFrame));
+
+//    cleanAndSend("-zsz "+QString::number(zsize,'f', 4));
+//    cleanAndSend("-oz "+QString::number(zoom, 'f',4));
+//    cleanAndSend("-sts pixelsPerLine "+QString::number(pixelsPerLine));
+//    // set mag to 16x
+//    cleanAndSend("-sts linesPerFrame "+QString::number(linesPerFrame));
 
 }
 
@@ -259,12 +281,16 @@ void S2Controller::sendCommand()
     sendCommandButton->setEnabled(false);
     sendAndReceive(cmdLineEdit->text());
 }
-void S2Controller::sendAndReceive(QString inputString){
-    if (!okToSend){return;}
+bool S2Controller::sendAndReceive(QString inputString){
+    if (!okToSend){return false;}
     okToSend = false;
-    if (cleanAndSend(inputString)){
+    if (cleanAndSend(inputString)){return true;
     }
 
+}
+
+void S2Controller::addToQueue(QString cString){
+    commandQueue.append(cString);
 }
 
 bool S2Controller::cleanAndSend(QString inputString)
@@ -347,7 +373,38 @@ void S2Controller::messageHandler(QString messageH){
 
 }
 
-//
+//  new scheme to queue commands:
+
+
+void S2Controller::commandQueueMonitor(){
+
+    // this loop monitors a
+    // queue of commands to send
+    // and takes the top one off if the system is ready to send a command
+if (cancelQueue){return;}
+
+
+// pull off the top message and assign it to an attribute of s2Controller : commandToSend
+// initiate another loop/handler that will send try to sendandrecieve stringToSend every 10ms or so
+if ((commandQueue.length()>0)&&(!newCommandToSend)){
+        commandToSend = commandQueue.at(0);
+        commandQueue.removeAt(0);
+        newCommandToSend = true;
+        tryToSend();
+
+    }
+QTimer::singleShot(2, this, SLOT(commandQueueMonitor()));
+}
+
+
+void S2Controller::tryToSend(){
+
+    if (!sendAndReceive(commandToSend)){
+    QTimer::singleShot(10, this, SLOT(tryToSend()));
+    }else{
+        newCommandToSend = false;
+    }
+}
 
 
 void S2Controller::posMonListener(QString messageL){
@@ -454,7 +511,7 @@ void S2Controller::initROI(LocationSimple nextLoc){
     QString toSend;
     status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
     if ((x<7.6)&(x>-7.6)){
-        if (s2ParameterMap[0].getCurrentString().contains("Resonant")){
+        if (false){//(s2ParameterMap[0].getCurrentString().contains("Resonant")){//this controller may not know about the s2parametermap!
             toSend = QString("-sts currentPanLocationX ");
             toSend.append(QString::number(x));
         }else{
@@ -462,15 +519,18 @@ void S2Controller::initROI(LocationSimple nextLoc){
             toSend.append(QString::number(x));
             toSend.append(" XAxis");
         }
-
-        cleanAndSend(toSend);
+        addToQueue(toSend);
+        //cleanAndSend(toSend);
     }else{
         status(QString("X out of bounds!"));}
     if ((y<7.6)&(y>-7.6)){
         QString toSend = QString("-sts currentScanCenter ") ;
         toSend.append(QString::number(y));
         toSend.append(" YAxis");
-        cleanAndSend(toSend);}else{
+        addToQueue(toSend);
+//        cleanAndSend(toSend);
+
+    }else{
         status(QString("Y out of bounds!"));
     }
 
@@ -530,13 +590,20 @@ void S2Controller::posMon(){
 }
 
 void S2Controller::startZStack(){
-    sendAndReceive(QString("-zs"));
+    qDebug()<<"starting z stack in s2Controller";
+    //sendAndReceive(QString("-zs"));
+    addToQueue(QString("-zs"));
 }
 
 
 // next:
 // add optional 'cancel' to flush read and write buffers and release block
 // of sending commands.
+
+void S2Controller::cancelQueueSlot(){
+    cancelQueue = true;
+}
+
 
 //
 

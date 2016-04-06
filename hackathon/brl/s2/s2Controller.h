@@ -120,7 +120,7 @@ public:
 public slots:
     void sendCommand();
     bool cleanAndSend(QString);
-    void sendAndReceive(QString);
+    bool sendAndReceive(QString);
     void initializeParameters();
     void initializeS2();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
     //             /* some parameters will be stored in a separate class described below
@@ -140,6 +140,9 @@ public slots:
     void startZStack();
     void overviewSetup();
     void stackSetup();
+    void stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame);
+    void cancelQueueSlot();
+    void addToQueue(QString cString);
 signals:
     void newS2Data( S2Data myS2Data);
     void messageIsComplete();
@@ -162,6 +165,8 @@ private slots:
     void posMon();
     void posMonListener(QString messageL);
     void overviewHandler();
+    void commandQueueMonitor();
+    void tryToSend();
 private:
     void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
     void connectToS2();
@@ -181,12 +186,15 @@ private:
     QTcpSocket *tcpSocket;
     QString totalMessage;
     QString currentMessage;
+    QStringList commandQueue;
+    QString commandToSend;
     quint16 blockSize;
     int ii;
     int maxParams;//temp!
     QNetworkSession *networkSession;
 	void status(QString statusM);
-
+    bool cancelQueue;
+    bool newCommandToSend;
 };
 
 

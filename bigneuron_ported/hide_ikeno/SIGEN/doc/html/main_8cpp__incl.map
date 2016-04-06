@@ -1,0 +1,16 @@
+<map id="src/sigen/main.cpp" name="src/sigen/main.cpp">
+<area shape="rect" id="node6" href="$file__loader_8h.html" title="sigen/loader/file_loader.h" alt="" coords="375,159,545,184"/>
+<area shape="rect" id="node9" href="$binarizer_8h.html" title="sigen/binarizer/binarizer.h" alt="" coords="191,79,364,104"/>
+<area shape="rect" id="node11" href="$extractor_8h.html" title="sigen/extractor/extractor.h" alt="" coords="597,79,772,104"/>
+<area shape="rect" id="node25" href="$builder_8h.html" title="sigen/builder/builder.h" alt="" coords="999,79,1150,104"/>
+<area shape="rect" id="node29" href="$swc__writer_8h.html" title="sigen/writer/swc_writer.h" alt="" coords="1713,79,1880,104"/>
+<area shape="rect" id="node31" href="$fileutils_8h.html" title="sigen/writer/fileutils.h" alt="" coords="1973,159,2118,184"/>
+<area shape="rect" id="node32" href="$toolbox_8h.html" title="sigen/toolbox/toolbox.h" alt="" coords="1175,79,1332,104"/>
+<area shape="rect" id="node7" href="$image__sequence_8h.html" title="sigen/common/image\l_sequence.h" alt="" coords="194,239,342,277"/>
+<area shape="rect" id="node10" href="$binary__cube_8h.html" title="sigen/common/binary\l_cube.h" alt="" coords="204,152,352,191"/>
+<area shape="rect" id="node12" href="$cluster_8h.html" title="sigen/common/cluster.h" alt="" coords="1124,159,1285,184"/>
+<area shape="rect" id="node20" href="$voxel_8h.html" title="sigen/common/voxel.h" alt="" coords="898,245,1052,271"/>
+<area shape="rect" id="node21" href="$point_8h.html" title="sigen/common/point.h" alt="" coords="1866,245,2017,271"/>
+<area shape="rect" id="node24" href="$math_8h.html" title="sigen/common/math.h" alt="" coords="671,245,823,271"/>
+<area shape="rect" id="node26" href="$neuron_8h.html" title="sigen/common/neuron.h" alt="" coords="1645,159,1809,184"/>
+</map>

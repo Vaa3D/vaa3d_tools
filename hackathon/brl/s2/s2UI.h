@@ -18,7 +18,7 @@
 #include "noteTaker.h"
 #include "targetList.h"
 #include "eventLogger.h"
-
+#include "tileInfo.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -52,7 +52,9 @@ signals:
     void startPM();
     void stopPM();
     void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
-    void callSALoadMOST(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadSubtractive(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool,int);
+    void callSALoadAda(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
+    void callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool,int);
     void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
@@ -62,6 +64,8 @@ signals:
     void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
     void channelUpdate(QString);
+    void stackSetupSig(float, float, int, int);
+    void startZStackSig();
 private slots:
     void startS2();
     void startScan();
@@ -97,6 +101,12 @@ private slots:
     void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
+    void updateZoom();
+    void updateCurrentZoom(int currentIndex);
+    void finalizeZoom();
+    void activeModeChecker();
+    void updateZoomHandler();
+    void resetDirectory();
 private:
     V3DPluginCallback2 * cb;
 
@@ -130,15 +140,21 @@ private:
 
     void createButtonBox1();
 	
-
+    void initializeROISizes();
     void createTargetList();
 
+    QPushButton *resetDirPB;
 	QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;
     QCheckBox *runContinuousCB;
     QCheckBox *gridScanCB;
     QSpinBox *gridSizeSB;
+
+    QComboBox *tileSizeCB;
+
+    QList<TileInfo> *tileSizeChoices;
+
     QComboBox *tracingMethodComboB;
     QComboBox *channelChoiceComboB;
 
@@ -204,6 +220,7 @@ private:
 	bool isLocal;
     int smartScanStatus;
     int gridScanStatus;
+    int methodChoice;
     double scanNumber;
     double loadScanNumber;
     int resultNumber;
@@ -211,7 +228,12 @@ private:
     float overViewPixelToScanPixel;
     float overviewMicronsPerPixel;
     float scanVoltageConversion;
+    float zoomPixelsProduct;
     LandmarkList scanList;
+
+
+    TileInfo currentTileInfo;
+
     QList<LandmarkList> tipList;
 
     Image4DSimple*  total4DImage;
@@ -228,10 +250,11 @@ private:
     float overlap;
     int overviewCycles;
     int scanStatusWaitCycles;
+    int activeModeChecks;
     bool havePreview;
     bool resetDir;
-
-
+    bool zoomStateOK;
+    bool waitingToStartStack;
 
     int numProcessing;
 

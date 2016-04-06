@@ -1,0 +1,72 @@
+@startuml class.png
+class ImageSequence {
+  value: vector<Mat>
+}
+class FileLoader {
+  +Load(dir_path: string): ImageSequence
+}
+class BinaryCube {
+  value: bool[,,]
+}
+class Binarizer {
+  +constructor(ImageSequence): BinaryCube
+}
+class Extractor {
+  cube_: BinaryCube
+  components_: vector<vector<shared_ptr<Voxel>>>
+  +constructor(BinaryCube)
+  +Extract(): vector<shared_ptr<Cluster>>
+}
+class Voxel {
+  x_, y_, z_: int
+  flag_: bool
+  label_: int
+  adjacent_: vector<Voxel *>
+  +constructor(x: int, y: int, z: int)
+  +AddConnection(Voxel *): void
+}
+class Cluster {
+  gx_, gy_, gz_: double
+  radius_: double
+  points_: vector<IPoint>
+  adjacent_: set<cluster *>
+  +constructor(vector<IPoint>)
+  +AddConnection(Cluster *): void
+  +RemoveConnection(Cluster *): void
+  +HasConnection(Cluster *): void
+  +UpdateGravityPoint(): void
+  +UpdateRadius(): void
+}
+class Builder {
+  +constructor(data: vector<shared_ptr<Cluster *>>, scale_xy: double, scale_z: double)
+  +Build(): vector<Neuron>
+}
+class NeuronNode {
+  id_: int
+  gx_, gy_, gz_: double
+  radius_: double
+  type_: NeuronType
+  adjacent_: set<neuron_node *>
+  +AddConnection(neuron_node *): void
+  +RemoveConnection(neuron_node *): void
+  +HasConnection(neuron_node *): bool
+}
+class Neuron {
+  is_finalized_: bool
+  root_: NeuronNode *
+  data_: vector<shared_ptr<NeuronNode>>
+}
+class IPoint {
+  x_, y_, z_: int
+}
+ImageSequence <-- FileLoader
+ImageSequence <-- Binarizer
+BinaryCube <-- Binarizer
+BinaryCube <-- Extractor
+Voxel <-- Extractor
+Cluster <-- Extractor
+NeuronNode <-- Neuron
+Neuron <-- Builder
+Cluster <-- Builder
+IPoint <-- Cluster
+@enduml

@@ -1,0 +1,20 @@
+include_directories(../src)
+include_directories(../third_party)
+
+add_library(gtest STATIC ../third_party/gtest/gtest-all.cc ../third_party/gtest/gtest_main.cc)
+
+foreach(target binary_cube_test.cpp builder_test.cpp clipping_test.cpp extractor_test.cpp smart_ptr_test.cpp variant_test.cpp math_test.cpp)
+  get_filename_component(basename ${target} NAME_WE)
+  add_executable(${basename} ${target})
+  target_link_libraries(${basename} sigen gtest pthread)
+  add_test(${basename} ${basename})
+endforeach(target)
+
+if(BUILD_MAIN)
+  foreach(target fileutils_test.cpp swc_writer_test.cpp)
+    get_filename_component(basename ${target} NAME_WE)
+    add_executable(${basename} ${target})
+    target_link_libraries(${basename} sigen sigen_io gtest pthread boost_system boost_filesystem glog)
+    add_test(${basename} ${basename})
+  endforeach(target)
+endif(BUILD_MAIN)

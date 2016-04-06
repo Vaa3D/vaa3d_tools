@@ -9,6 +9,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 
+
 struct TRACE_LS_PARA
 {
     int is_gsdt;
@@ -26,7 +27,7 @@ struct TRACE_LS_PARA
 
     int  visible_thresh;//for APP1 use only
 
-    int  seed_win;
+    int  seed_win; //for MOST use only
     int  slip_win; //for MOST use only
     int  method; //1:app1, 2:app2, 3: neutube, 4:snake, 5:most.
 
@@ -53,6 +54,7 @@ LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimp
 bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
 
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
+NeuronTree pruneswc(NeuronTree nt, double length);
 
 
 #endif

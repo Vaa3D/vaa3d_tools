@@ -113,7 +113,7 @@ NeuronTree resample(NeuronTree input, double step)
         if (p->p==NULL) S.pn = -1;
         else
             S.pn = index_map[p->p]+1;
-        if (p->p==p) printf("There is loop in the tree!\n");
+        if (p->p==p) printf("Resample_swc(): There is loop in the tree!\n");
         S.x = p->x;
         S.y = p->y;
         S.z = p->z;
