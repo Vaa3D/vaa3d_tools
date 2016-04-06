@@ -1,0 +1,136 @@
+###############################################################################
+# ConsensusBuilder User Guide
+# Author: Todd Gillette, todd.gillette@gmail.com, http://tgillette.onair.cc
+#
+# Institution: Center for Neural Informatics, Neural Structures, and Neural 
+#	Plasticity; Krasnow Institute for Advanced Study; George Mason University
+#
+# Funded by NSF BRAIN EAGER DBI 1546335 & NIH R01 NS39600
+#
+# In conjunction with the BigNeuron project, led by the Allen Institute for 
+#	Brain Science, http://alleninstitute.org/bigneuron/about/
+#
+###############################################################################
+
+The ConsensusBuilder takes a set of SWC neuron reconstruction files (currently
+only as a directory of such files), aligns them into a single composite, and
+then extracts a consensus given several parameters. It is expected that all 
+reconstructions are scaled equivalently and are resampled at the same 
+frequency. The Bash script detailed below the parameter list can be used to 
+call the Vaa3D resample code and run the ConsensusBuilder.
+
+Additional parameters exist within the algorithm but are not currently 
+accessible to the command line.
+
+Since multiple branches may turn out to be potential matches (with a 
+sufficiently good scoring alignment), there can be match conflicts. Those 
+conflicts may overlap, creating a sort of web of conflicts. All possible sets
+of branch matches are considered to determine the best set. The number of sets
+grows exponentially with the number of branches in the conflict web. Thus,
+with poorly tuned parameters and certain reconstructions, the memory and
+computational complexity grows exponentially and can eat up your system's
+resources. While heuristics for dealing with this problem are being considered, 
+for now it would be best to monitor runs to avoid crashing your system. See 
+after the parameter listing for details of a Bash script which handles this.
+
+Assuming such out of control cases do not occur, and depending on the 
+complexity of the reconstructions (i.e. number of nodes and branches), your 
+runtime should be on the order of seconds to minutes.
+
+./consensusbuilder -d <swc_directory> -o <output_file> -c <confidence proportion>
+
+Required parameters:
+
+-d|--directory		Directory of swc files to include in the consensus
+
+-o|--output			Output file, either an swc or eswc file
+
+-c|--confidence		Branch confidence is given by the number of reconstructions
+					that have a branch matched to a given branch in the 
+					composite. A composite branch is included in the consensus
+					if its confidence is greater than the value of this 
+					parameter. (In the future, multiple values will be 
+					accepted for multiple consensus outputs for the same
+					composite.)
+
+Optional parameters:
+
+-s|--scale			The pixel-to-micron ratio of the x and y axes. [1]
+
+-z|--z-scale		The pixel-to-micron ratio of the z axis. [1]
+
+-l|--log-level		Numbers 0 through 7 specifying how detailed the log output 
+					should be. [0]
+						0	Error
+						1 	Warning
+						2	Info
+						3	Debug
+						4-7	Debug1-Debug4
+
+-e|--euclidean 		Euclidean distance threshold used in branch sequence 
+					alignment. At this distance a pair of nodes will have a
+					score of 0. [3.0]
+
+-a|--angle 			The angle between node vectors, in radians, at which the  
+					alignment score of a node pair is 0. [PI/4]
+
+-r|--rescue			Specifies a confidence value, less than or equal to the
+					'confidence' parameter, which enables a branch to be
+					included if no other branches are available to be
+					an above threshold branch's parent. [0]
+
+--single-tree		A flag which restricts the consensus to a single tree
+					rooted by the root branch with the greatest connection
+					confidence.
+
+###############################################################################
+
+The ConsensusScript.sh Bash script may provide a good starting point for your 
+own script. It's core capability is to run the Vaa3D resample code on all 
+reconstructions in the source directory. The resampled files will go in a 
+different 'target' directory. Gold standard files, identified by their '00' 
+prefix, are resampled and placed in a 'goldstandard' subdirectory to the 
+target. If your gold standard files are labeled in some other manner, you will 
+need to change the value of the GS_REGEX variable to reflect that. This of 
+course all requires Vaa3D to be installed. The first two variables of the 
+script set the directories of thc ConsensusBuilder and Vaa3D.
+
+The script also deletes files that are too large relative to the gold standard 
+(code starting at line 151). Specifically, if the gold standard exists and a 
+resampled reconstruction's node count is more than four times the resampled 
+gold standard, then the resampled and original reconstructions are deleted. 
+The ratio is three times if the number of nodes in the resampled file is 
+greater than 2500 (line 164).
+
+The script also monitors the memory usage of the ConsensusBuilder. If the
+memory usage goes above a set value, the program will be terminated. The 
+value is set in the MB_SIZE_LIMIT variable, which currently is set to
+12GB (12*1024MB).
+
+./ConsensusScript.sh -s <source_dir> -t <target_dir>
+
+Parameters:
+
+-s|--source-dir		The directory of the source swc files.
+
+-t|--target-dir		The directory to which the resampled swc files are 
+					written.
+
+-o|--output-swc		The output file of the consensusbuilder program. 
+					[<target-dir>/consensus/<source-dir base>.swc]
+
+--scale 			Scale parameter passed into consensusbuilder. The 
+					resample rate is set to 1.2 times this scale parameter. 
+					(see RESAMPLE_RATE variable) [1]
+
+-d|--debug 			Passed into consensusbuilder as the log-level parameter. 
+					[1]
+
+-e|--euclidean 		Passed into consensusbuilder as the euclidean parameter.
+					[3.0]
+
+-a|--angle 			Passed into consensusbuilder as the angle parameter. [PI/4]
+
+-f|--force			Flag that causes files to be resampled regardless of 
+					whether they have been resampled previously.
+

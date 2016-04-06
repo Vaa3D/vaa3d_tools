@@ -1,0 +1,188 @@
+###############################################################################
+# Developer Guide for ConsensusBuilder (branch-alignment)
+# Author: Todd Gillette, todd.gillette@gmail.com, http://tgillette.onair.cc
+#
+# Institution: Center for Neural Informatics, Neural Structures, and Neural 
+#	Plasticity; Krasnow Institute for Advanced Study; George Mason University
+#
+# Funded by NSF BRAIN EAGER DBI 1546335 & NIH R01 NS39600
+#
+# In conjunction with the BigNeuron project, led by the Allen Institute for Brain
+#	Science, http://alleninstitute.org/bigneuron/about/
+###############################################################################
+
+This document covers the components of the ConsensusBuilder code for the 
+purposes of supporting, improving, and expanding it. A separate User Guide 
+is available.
+
+The ConsensusBuilder code is composed of four main files, containing the 
+classes and methods at the core of the algorithm:
+Reconstruction.h/.cpp
+Composite.h/.cpp
+ConsensusBuilder.h/.cpp
+align.h/.cpp
+
+Code from the tree_matching directory, a component of BlastNeuron, is called 
+for reading SWC files. Code for sequence alignment and writing swc files was
+adapted and modified from that project and is now found in align.cpp and
+ConsensusBuilder.cpp.
+
+Each file and its classes and major methods will be described below, followed 
+by existing challenges and intended improvements which have not yet been made. 
+Further information on the purposes, capabilities, and remaining challenges 
+can be found in a separate report, to be (or previously) provided to the 
+National Science Foundation, and parts included in a paper to be published 
+on this and other related consensus-generating algorithms built for the 
+BigNeuron project.
+
+###############################################################################
+### Files, classes, and methods ###
+
+## From the tree_matching directory ##
+
+# MyMarker (tree_matching/my_surf_objs.h)
+Represents a reconstructions node as per the SWC file format, except that it 
+contains no id nor parent id. It does contain a pointer to its parent MyMarker. 
+It additionally contains the node's coordinates, radius, and type.
+
+# NeuronSegment (tree_matching/swc_utils.h)
+A segment is a non-branching ordered series of reconstruction nodes. The 
+object is composed of a vector of MyMarker pointers and a vector of 
+NeuronSegment pointers which are the given NeuronSegment's children. 
+
+## Reconstruction.h/.cpp ##
+
+# Reconstruction
+Holds information relevant to the data from an SWC file. It has a vector of 
+root branches, a vector of all NeuronSegments, and a mapping from NeuronSegment 
+to BranchContainer, a wrapper class for the NeuronSegment class. Each 
+Reconstruction object has a name and a confidence value which defaults to 1.
+
+# BranchContainer
+Here a branch is used in the same manner as a segment, where a point at which 
+multiple branches emerge from a single branch is a bifurcation or 
+multifurcation.
+
+A BranchContainer contains a NeuronSegment while also containing a pointer to 
+the parent BranchContainer, a pointer to its Reconstruction, a confidence 
+value (defaulting to the Reconstruction's confidence value), a set of 
+BranchContainer children (which should reflect its NeuronSegment's children), 
+and a pointer to the CompositeBranchContainer to which it is matched.
+
+
+## Composite.h/.cpp ##
+
+The Composite is a collection of branches (CompositeBranchContainer) which 
+each reflects a set of branches from the reconstructions (one branch per 
+reconstruction is assigned to a composite branch) which compose the 
+Composite.
+
+# Composite
+
+Similar to a Reconstruction in form, but composed of CompositeBranchContainer 
+objects in place of BranchContainer objects. Moreover, the Composite has a 
+method (convert_to_composite) for generating one or multiple Consensus trees 
+by choosing connections between its branches. A special method 
+(add_first_reconstruction) turns a Reconstruction into a Composite in order 
+to make it possible to incorporate additional Reconstructions.
+
+# CompositeBranchContainer
+
+Similar to a BranchContainer, but with a set of BranchContainer pointers 
+to which the Composite is matched (one per reconstruction). A 
+CompositeBranchContainer also contains a confidence value based on the 
+cummulative confidence of its matches and the confidence of Reconstructions 
+which have no matching branch to the CompositeBranchContainer. 
+
+In the process of generating a consensus, a CompositeBranchContainer may 
+have the order of its MyMarker nodes reversed. As such there is a boolean 
+segment_reversed member. The match_forward_map maps each matched 
+BranhContainer to a boolean denoting whether the match was made it forward 
+(true) or reverse (false) order.
+
+Most important are the CompositeBranchContainer's connections. These objects 
+denote possible connections that have been seen in the Reconstructions. Each 
+CompositeBranchContainer has a set of parent connections which the branch 
+"owns", as well as sets of potential connections to children stemming from 
+either end of the branch.
+
+# Connection
+
+A connection points to a child and parent branch, and denotes to which end 
+of each the connection is joined (top or bottom of the branch). The object 
+also has a confidence value contributed by the associated branches from 
+each reconstruction. A set of Reconstruction pointers provide information 
+on which reconstructions contributed to a given connection.
+
+## ConsensusBuilder.h/.cpp ##
+
+# ConsensusBuilder
+
+Contains a Composite object, algorithm parameters, and helper objects and 
+methods for preprocessing (including spatial binning). Contains the methods 
+for searching for branch matches, resolving conflicts, creating connections, 
+and updating confidence values.
+
+## align.h/.cpp ##
+
+Methods here are adapted from tree_matching/neuron_tree_align.cpp, 
+simplified in terms of aligning single nodes, but made more complex with 
+node vector/angle information. Methods were added for calculating vectors 
+for a given node using its preceding and following node, or if there are 
+no preceding nodes or multiple (bifurcation), the vector to the node from 
+its parent is returned.
+
+The alignment score for a given node match is given by 
+S = 1 - [ [ D(node1,node2) / euclidean_threshold ] ^ 2 + ( 1 - cos[dot(vector1,vector2)] ) / cos(angle_threshold) ]
+
+This produces a roughly elliptical score function which produces a score 
+closer to 1 as both the euclidean and angle distances go to 0, and a 
+negative score beyond the combined euclidean and angle distnace thresholds.
+
+## logger.h/.cpp ##
+
+Provides method for logging messages depending on the level set when the 
+ConsensusBuilder is initialized (can be altered later). Can take in variable 
+values in the same manner as printf. Automatically appends a line break. The 
+logger object is also passed into Composite, but not any other class.
+	0 	Error
+	1 	Warning
+	2 	Info
+	3 	Debug
+	4-7	Debug1-Debug4
+
+## main.cpp ##
+
+Takes in command line parameters, generates a ConsensuBuilder based on the 
+input directory and relevant parameters, then runs the ConsensusBuilder to 
+generate a composite. Next, a consensus is generated given the related 
+parameters and the resulting tree or trees are written to the proper output 
+file (swc or eswc depending on the type specified).
+
+[See the User Guide for the program's input parameters.]
+
+##TreeConsensusBuilder_plugin.h/.cpp ##
+
+Defines the Vaa3D plugin interface between Vaa3D and ConsensusBuilder. The 
+current version takes in a source directory, then prompts for XY scale, then 
+prompts for a consensus confidence threshold. This has not yet been tested, and 
+it still requires the addition of a prompt for output type (swc or eswc) and 
+location.
+
+Another version has been started using QT Creator which would have all prompts 
+in a single windo with controls for modifying parameters and rerunning specific 
+parts of the process,for instance producing consensus variations from the same 
+composite. This interface code has not yet been hooked into the consensus code, 
+nor as a Vaa3D plugin.
+
+## ActionHook.h/.cpp ##
+
+I had originally intended to include hooks in the code so that other plugins
+could be written which would extend the ConsensusBuilder without having to
+modify it. One example would be code which would use information about 
+branches, their confidences and their topological and geometric features, 
+to better predict how they should connect. Such plugins might add to or change 
+certain methods in the algorithm, similar to actions and filters used in 
+WordPress (with which I am familiar). I never completed this and it is unclear 
+whether that would be the best approach. I leave it to others to determine 
+whether and how to implement this capability.
