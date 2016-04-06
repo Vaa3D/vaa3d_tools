@@ -883,7 +883,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
             const float dd = 0.5;
 
-            if(RootNewLocation.x<p1.xc0-dd || RootNewLocation.x>p1.xc1+dd || RootNewLocation.y<p1.yc0-dd || RootNewLocation.y>p1.yc1+dd || RootNewLocation.z<p1.zc0-dd || RootNewLocation.z>p1.zc1+dd)
+            if(P.method == 1 && (RootNewLocation.x<p1.xc0-dd || RootNewLocation.x>p1.xc1+dd || RootNewLocation.y<p1.yc0-dd || RootNewLocation.y>p1.yc1+dd || RootNewLocation.z<p1.zc0-dd || RootNewLocation.z>p1.zc1+dd))
                 continue;
 
             if(tileswc_file.size()>0)
