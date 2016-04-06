@@ -8,6 +8,11 @@
  *
  */
 
+#ifndef ConsensusBuilder_h
+#define ConsensusBuilder_h
+
+#define MATCH_WEIGHT_BY_BRANCH
+
 #include <map>
 #include <vector>
 #include <dirent.h>
@@ -49,7 +54,7 @@ struct SmallOverlap{
     double score_adjustment;
 };
 
-enum BuilderState {INITIALIZED, RECONSTRUCTIONS_ADDED, PREPROCESSED, BUILT_COMPOSITE};
+enum BuilderState {NONE, INITIALIZED, RECONSTRUCTIONS_ADDED, PREPROCESSED, BUILT_COMPOSITE};
 enum NodeTypeBasis {BRANCH_CONFIDENCE, CONNECTION_CONFIDENCE};
 enum TypeRange {COUNT, PROPORTION};
 
@@ -65,7 +70,7 @@ class ConsensusBuilder{
     BuilderState builder_state;
     bool ready_to_run = false;
     std::map<string,Reconstruction*> cb_reconstructions;
-    Composite * composite;
+    Composite *composite;
     
     std::map<NeuronSegment *,std::vector<MyMarker *> > reversed_segments_map;
     std::map<NeuronSegment *,std::vector<MyMarker *> > segment_vectors_map;
@@ -78,6 +83,7 @@ class ConsensusBuilder{
     
     // Parameters
     double scale; // pixel to micron ratio
+    double z_scale; // amount to scale z relative to xy
     double register_cube_size;
     double match_score_threshold;
     double endpoint_threshold_distance;
@@ -168,6 +174,8 @@ class ConsensusBuilder{
     void preprocess_reconstructions();
     void split_proximal_branches(Reconstruction * reconstruction, float distance_threshold = 2);
     void split_curved_branches(Reconstruction * reconstruction, float curve_distance_threshold = 3); // Default threshold is 3 microns
+    void remove_outliers(std::map<string, Reconstruction *> &recon_map);
+    void scale_z(std::map<string, Reconstruction *> &recon_map);
     
     Reconstruction *current_reconstruction;
     
@@ -229,6 +237,8 @@ public:
     ConsensusBuilder(vector<NeuronSegment*> reconstruction_root_segments, int log_level=1);
     ~ConsensusBuilder();
     
+    BuilderState get_builder_state() { return this->builder_state; };
+    
     void clear(); // Clear reconstructions and composite, allowing for a restart
     
     void set_logger(Logger * logger);
@@ -237,6 +247,7 @@ public:
 
     // Get/set parameters
     double get_scale() { return scale; };
+    double get_z_scale() { return z_scale; };
     double get_register_cube_size() { return register_cube_size; };
     double get_match_score_threshold() { return match_score_threshold; };
     double get_endpoint_threshold_distance() { return endpoint_threshold_distance; };
@@ -244,6 +255,7 @@ public:
     float get_euclidean_dist_threshold() { return euclidean_dist_threshold; };
     float get_cos_angle_threshold() { return cos_angle_threshold; };
     void set_scale(double scale);
+    void set_z_scale(double z_scale);
     void set_register_cube_size(double register_cube_size) { this->register_cube_size = register_cube_size; };
     void set_match_score_threshold(double match_score_threshold) { this->match_score_threshold = match_score_threshold; };
     void set_endpoint_threshold_distance(double endpoint_threshold_distance) { this->endpoint_threshold_distance = endpoint_threshold_distance; };
@@ -274,12 +286,20 @@ public:
     int get_reconstruction_count();
 //    std::vector<Reconstruction*> get_reconstructions();
     std::set<Reconstruction*> get_reconstructions();
+    Reconstruction * get_reconstruction(string name) { return cb_reconstructions[name]; };
+    std::set<string> get_reconstruction_names();
     Composite * get_composite();
 
     // ** Output functions **
-    void write_consensus_to_swc(string filename, double branch_threshold=0, NodeTypeBasis node_type_basis=BRANCH_CONFIDENCE, TypeRange type_range=PROPORTION);
+    void write_consensus_to_swc(string filename, double branch_threshold=0, NodeTypeBasis node_type_basis=BRANCH_CONFIDENCE, TypeRange type_range=PROPORTION, double rescue_threshold=0, bool multiple_roots=false);
 
     // ESWC not ready for use - still need to link to data structures and methods for representing and writing to eswc
-    void write_consensus_to_eswc(string filename, double branch_threshold=0);
+    void write_consensus_to_eswc(string filename, double branch_threshold=0, double rescue_threshold=0, bool multiple_roots=false);
 
 };
+
+bool swc_to_segments_multiroot(vector<MyMarker*> &inmarkers, vector<NeuronSegment*> &tree);
+long median(vector<long> x);
+bool saveESWC_file(string eswc_file, vector<MyMarker*> & outmarkers, vector<string> e_column_headings, vector<vector<string> > e_columns);
+
+#endif

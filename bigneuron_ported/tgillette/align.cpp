@@ -257,28 +257,6 @@ std::vector<MyMarker *> calculate_vectors(vector<MyMarker *> const segment, MyMa
             marker = segment[i];
         
         vectors[i] = calculate_vector(marker, parent);
-        
-        /* Calculating from current node to child
-        vectors[i] = calculate_vector(marker, parent);
-         */
-        /*
-        if (parent){
-            double sum_sq = 0;
-            vectors[i] = new MyMarker();
-            vectors[i]->x = marker->x - parent->x;
-            sum_sq += vectors[i].x * vectors[i].x;
-            vectors[i]->y = marker->y - parent->y;
-            sum_sq += vectors[i].y * vectors[i].y;
-            vectors[i]->z = marker->z - parent->z;
-            sum_sq += vectors[i].z * vectors[i].z;
-            
-            double mag = sqrt(sum_sq);
-            vectors[i]->x /= mag;
-            vectors[i]->y /= mag;
-            vectors[i]->z /= mag;
-        }else{
-            vectors[i] = nullptr;
-        }*/
     }
     return vectors;
 };

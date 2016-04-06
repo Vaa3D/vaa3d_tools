@@ -133,6 +133,27 @@ public:
     {
         return (this->get_confidence() < branch.get_confidence());
     }*/
+    bool operator < (const CompositeBranchContainer& branch) const
+    {
+        if (this == &branch || this->get_segment() == branch.get_segment()) return false;
+        const unsigned long seg_len = min(this->get_segment()->markers.size(),branch.get_segment()->markers.size());
+
+        for (int i = 0; i < seg_len; i++){
+            if (this->get_segment()->markers[0]->x < branch.get_segment()->markers[0]->x)
+                return true;
+            else if (this->get_segment()->markers[0]->x > branch.get_segment()->markers[0]->x)
+                return false;
+            else if (this->get_segment()->markers[0]->y < branch.get_segment()->markers[0]->y)
+                return true;
+            else if (this->get_segment()->markers[0]->y > branch.get_segment()->markers[0]->y)
+                return false;
+            else if (this->get_segment()->markers[0]->z < branch.get_segment()->markers[0]->z)
+                return true;
+            else if (this->get_segment()->markers[0]->z > branch.get_segment()->markers[0]->z)
+                return false;
+        }
+        return this->get_segment()->markers.size() < branch.get_segment()->markers.size();
+    }
     bool operator == (CompositeBranchContainer& rhs) const
     {
         return (this->get_segment() == rhs.get_segment());
@@ -155,6 +176,8 @@ bool creates_loop(CompositeBranchContainer *parent, CompositeBranchContainer *ch
 // Tracks the connection between a child and parent given a particular end (TOP or BOTTOM) for each.
 // Also tracks which reconstructions voted for this connection, and the summed confidence of those contributions.
 class Connection{
+    static unsigned long master_uid;
+    unsigned long uid;
     CompositeBranchContainer * c_child;
     BranchEnd c_child_end;
     CompositeBranchContainer * c_parent;
@@ -170,6 +193,7 @@ public:
     Connection(CompositeBranchContainer *child, BranchEnd child_end, CompositeBranchContainer *parent, BranchEnd parent_end, std::set<Reconstruction *> reconstructions, double confidence);
     Connection(Connection *connection);
 
+    unsigned long get_uid() const { return uid; };
     CompositeBranchContainer * get_child() const;
     BranchEnd get_child_end() const;
     CompositeBranchContainer * get_parent() const;
@@ -223,11 +247,14 @@ typedef pair<CompositeBranchContainer*,Connection*> ParentConnectionPair;
  **   Composite   **
  *******************/
 class Composite{
-    CompositeBranchContainer *c_root;                  // Root composite branch of tree being used as running consensus
+    CompositeBranchContainer *c_root;                  // Primary root composite branch of tree being used as running consensus
+    std::vector<CompositeBranchContainer *> c_roots;   // Root composite branches of tree being used as running consensus
+    NeuronSegment *c_root_segment;                     // Primary root segment of composite tree
+    std::vector<NeuronSegment *> c_root_segments;      // Root segments of composite tree
+
     std::set<CompositeBranchContainer *> c_branches;   // Set of all composite branches
 // #TODO: Need to handle composite_reconstruction - when first is loaded, and with running consensus
     //Reconstruction * composite_reconstruction;          // Reconstruction object used for running consensus
-    NeuronSegment *c_root_segment;                     // Root segment of composite tree
     std::vector<Reconstruction *> reconstructions;      // Vector of contributing reconstructions that have been processed
     double summary_confidence;                          // Total confidence (calculated when asked for)
     SegmentPtrSet c_segments;
@@ -251,6 +278,8 @@ public:
     Composite * copy();
     
     void set_root(CompositeBranchContainer *composite_branch);
+    void add_root(CompositeBranchContainer *composite_branch);
+    void clear_roots();
     void add_reconstruction(Reconstruction *reconstruction);
     void add_branch(CompositeBranchContainer *branch);
     void remove_branch(CompositeBranchContainer *branch);
@@ -258,23 +287,25 @@ public:
 //    void set_onfidence(double confidence);
 
     CompositeBranchContainer * get_root();
+    std::vector<CompositeBranchContainer *> get_roots();
     //Reconstruction * get_composite_reconstruction();
     NeuronSegment * get_root_segment();
+    std::vector<NeuronSegment *> get_root_segments();
     SegmentPtrSet get_segments();
     std::vector<NeuronSegment *> get_segments_ordered();
     std::vector<Reconstruction *> get_reconstructions();
     double get_summary_confidence();
-    CompositeBranchContainer * get_branch_by_segment(NeuronSegment * segment);
+    CompositeBranchContainer * get_branch_by_segment(NeuronSegment *segment);
     std::set<CompositeBranchContainer *> get_branches();
     //std::set<CompositeBranchContainer> get_branches();
     
     // Updates the tree using generate_consensus and a threshold of 0; maintains all connection data
     void update_tree();
     // Returns a new composite with branches below threshold removed and connections chosen
-    Composite * generate_consensus(int branch_vote_threshold);
-    Composite * generate_consensus(double branch_confidence_threshold);
+    Composite * generate_consensus(int inclusion_vote_threshold, int rescue_vote_threshold=0, bool multiple_trees=true);
+    Composite * generate_consensus(double branch_inclusion_threshold, double branch_rescue_threshold=0, bool multiple_trees=true);
     
-    void convert_to_consensus(double branch_confidence_threshold);
+    void convert_to_consensus(double branch_inclusion_threshold, double branch_rescue_threshold=0, bool multiple_trees=true);
     std::map<NeuronSegment *, double> get_segment_confidences();
     std::map<NeuronSegment *, int> get_segment_confidence_counts();
     std::map<NeuronSegment *, double> get_connection_confidences();

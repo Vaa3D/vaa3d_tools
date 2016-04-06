@@ -12,8 +12,10 @@ Q_EXPORT_PLUGIN2(TreeConsensusBuilder, TreeConsensusBuilderPlugin);
 QStringList TreeConsensusBuilderPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+		<<tr("Build Composite")
+		<<tr("Build Consensus")
+        <<tr("Quick Consensus")
+        <<tr("Pick a new dataset")
 		<<tr("about");
 }
 
@@ -27,14 +29,18 @@ QStringList TreeConsensusBuilderPlugin::funclist() const
 
 void TreeConsensusBuilderPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("Build Composite"))
 	{
 		v3d_msg("To be implemented.");
 	}
-	else if (menu_name == tr("menu2"))
+	else if (menu_name == tr("Build Consensus"))
 	{
 		v3d_msg("To be implemented.");
 	}
+    else if (menu_name == tr("Quick Consensus"))
+    {
+        v3d_msg("To be implemented.");
+    }
 	else
 	{
 		v3d_msg(tr("Given multiple reconstructions of the same neuron, produces a consensus given a confidence threshold (some proportion of input reconstructions voting for each branch).. "
@@ -66,3 +72,47 @@ bool TreeConsensusBuilderPlugin::dofunc(const QString & func_name, const V3DPlug
 	return true;
 }
 
+bool new_dataset(V3DPluginCallback2 &callback, QWidget *parent){
+    QString dataset_dir = QFileDialog::getExistingDirectory(0, QObject::tr("Select dataset directory"),""));
+
+    // Set chosen directory
+    
+    builder = CompositeBuilder(dataset_dir.toUtf8().constData());
+    
+    return true;
+}
+
+bool build_composite(V3DPluginCallback2 &callback, QWidget *parent){
+    if (builder.get_builder_state() == INITIALIZED)
+        new_dataset(callback, parent);
+
+    if (builder.get_builder_state() > INITIALIZED){
+        double scale = QInputDialog::getDouble(parent, "SWC Scale", "Specify the swc scale in proportion to microns:",1,0)
+        builder.set_scale(scale);
+        builder.build_composite();
+        
+        v3d_msg("Composite created - consensus and statistics can be generated");
+    }
+
+    return true;
+}
+
+bool build_consensus(V3DPluginCallback2 &callback, QWidget *parent){
+    if (builder.get_builder_state() == INITIALIZED)
+        new_dataset(callback, parent);
+
+    BuilderState state = builder.get_builder_state();
+    if (state > INITIALIZED){
+        if (state < BUILT_COMPOSITE){
+            double scale = QInputDialog::getDouble(parent, "SWC Scale", "Specify the swc scale in proportion to microns:",1,0)
+            builder.set_scale(scale);
+        }
+        
+        double threshold = QInputDialog::getDouble(parent, "Consensus Threshold", "Specify the per-branch consensus threshold as a proportion or minimum number of reconstructions:",1,0,builder.get_reconstructions().size());
+        builder.build_consensus(threshold));
+
+        v3d_msg("Composite created - consensus and statistics can be generated");
+    }
+    
+    return true;
+}

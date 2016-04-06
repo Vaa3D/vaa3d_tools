@@ -8,11 +8,14 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include <ConsensusBuilder.h>
 
 class TreeConsensusBuilderPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
+    
+    ConsensusBuilder builder;
 
 public:
 	float getPluginVersion() const {return 1.0f;}
