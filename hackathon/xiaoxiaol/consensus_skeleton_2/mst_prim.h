@@ -29,7 +29,7 @@ public:
   int * nodeColor; //decide if a node has been visited or not
   V3DLONG * nodeParent; 
 
-  void dosearch(V3DLONG r);//r -- root node
+  bool dosearch(V3DLONG r);//r -- root node
   int allocatememory(V3DLONG nodenum);
   void delocatememory();
 
@@ -49,11 +49,11 @@ public:
   }
 };
 
-void PrimMSTClass::dosearch(V3DLONG r) //r -- root node
+bool PrimMSTClass::dosearch(V3DLONG r) //r -- root node
 {
 	if (nnode<=0 || !adjMatrix1d || !adjMatrix2d) {
 		printf("The input data has not been set yet!\n");
-		return;
+        return false;
 	}
 
 	//make r a reasonable index
@@ -99,7 +99,7 @@ void PrimMSTClass::dosearch(V3DLONG r) //r -- root node
 
 		if (par==-1) {
 			printf("input graph is not connected, please check!\n");
-			return;
+            return false;
 		}
 
 		nodeParent[child] = par;
@@ -108,7 +108,7 @@ void PrimMSTClass::dosearch(V3DLONG r) //r -- root node
 		nleftnode--;
 	}
 
-	return;
+    return true;
 }//%================ end of MST_dosearch()=================
 
 int PrimMSTClass::allocatememory(V3DLONG nodenum) 
@@ -160,7 +160,19 @@ bool mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootno
 		pMST->adjMatrix2d[i] = adj_matrix+i*n_node;
 
 	//begin computation
-	pMST->dosearch(rootnode); //set root as the first node
+    int i = 2; //try three times
+    while (!pMST->dosearch(rootnode))
+    { // make it more robust, in case the initial root is not connected to anyone
+        if (i<5)
+        {
+            rootnode = rootnode + n_node/i;
+            i++;
+        }
+        else{
+            break;
+        }
+
+    } //set root as the first node
 
 	//create the Matlab structure array
 
