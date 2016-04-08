@@ -118,7 +118,7 @@ class neuroncrawler_app2_raw : public QDialog
             layout->addWidget(new QLabel("adaptive size?"),6,4);
             layout->addWidget(b_adapWinchecker);
 
-            layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),7,0);
+            layout->addWidget(new QLabel(QObject::tr("va3draw/raw image or tc file:")),7,0);
             layout->addWidget(raw_filepath,7,1,1,4);
             layout->addWidget(openrawFile,7,5,1,1);
 
@@ -190,9 +190,9 @@ class neuroncrawler_app2_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File/TC File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw *.tc)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -340,7 +340,7 @@ class neuroncrawler_app1_raw : public QDialog
             layout->addWidget(new QLabel("adaptive size?"),4,4);
             layout->addWidget(b_adapWinchecker);
 
-            layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
+            layout->addWidget(new QLabel(QObject::tr("va3draw/raw image or tc file:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
             layout->addWidget(openrawFile,5,5,1,1);
 
@@ -400,9 +400,9 @@ class neuroncrawler_app1_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File/TC File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw *.tc)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -604,9 +604,9 @@ class neuroncrawler_most_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File/TC File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw *.tc)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -762,9 +762,9 @@ class neuroncrawler_neutube_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File/TC File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                                                        QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw *.tc)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {

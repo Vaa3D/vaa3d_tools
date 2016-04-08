@@ -8,6 +8,8 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h"
 
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+
 
 
 #include <boost/lexical_cast.hpp>
@@ -64,13 +66,69 @@ bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QStr
     return true;
 };
 
+// group images blending function
+template <class SDATATYPE>
+int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, unsigned char *relative1d,
+                       V3DLONG vx, V3DLONG vy, V3DLONG vz, V3DLONG vc, V3DLONG rx, V3DLONG ry, V3DLONG rz, V3DLONG rc,
+                       V3DLONG tile2vi_zs, V3DLONG tile2vi_ys, V3DLONG tile2vi_xs,
+                       V3DLONG z_start, V3DLONG z_end, V3DLONG y_start, V3DLONG y_end, V3DLONG x_start, V3DLONG x_end, V3DLONG *start)
+{
+
+    SDATATYPE *prelative = (SDATATYPE *)relative1d;
+
+    if(x_end<x_start || y_end<y_start || z_end<z_start)
+        return false;
+
+    // update virtual image pVImg
+    V3DLONG offset_volume_v = vx*vy*vz;
+    V3DLONG offset_volume_r = rx*ry*rz;
+
+    V3DLONG offset_pagesz_v = vx*vy;
+    V3DLONG offset_pagesz_r = rx*ry;
+
+    for(V3DLONG c=0; c<rc; c++)
+    {
+        V3DLONG o_c = c*offset_volume_v;
+        V3DLONG o_r_c = c*offset_volume_r;
+        for(V3DLONG k=z_start; k<z_end; k++)
+        {
+            V3DLONG o_k = o_c + (k-start[2])*offset_pagesz_v;
+            V3DLONG o_r_k = o_r_c + (k-tile2vi_zs)*offset_pagesz_r;
+
+            for(V3DLONG j=y_start; j<y_end; j++)
+            {
+                V3DLONG o_j = o_k + (j-start[1])*vx;
+                V3DLONG o_r_j = o_r_k + (j-tile2vi_ys)*rx;
+
+                for(V3DLONG i=x_start; i<x_end; i++)
+                {
+                    V3DLONG idx = o_j + i-start[0];
+                    V3DLONG idx_r = o_r_j + (i-tile2vi_xs);
+
+                    if(pVImg[idx])
+                    {
+                        pVImg[idx] = 0.5*(pVImg[idx] + prelative[idx_r]); // Avg. Intensity
+                    }
+                    else
+                    {
+                        pVImg[idx] = prelative[idx_r];
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+
+
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {
     QElapsedTimer timer1;
     timer1.start();
 
     QString fileOpenName = P.inimg_file;
-
     if(P.image)
     {
         P.in_sz[0] = P.image->getXDim();
@@ -78,18 +136,35 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.in_sz[2] = P.image->getZDim();
     }else
     {
-        unsigned char * datald = 0;
-        V3DLONG *in_zz = 0;
-        V3DLONG *in_sz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        if(QFileInfo(fileOpenName).completeSuffix() == "tc")
         {
-            return false;
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            P.in_sz[0] = vim.sz[0];
+            P.in_sz[1] = vim.sz[1];
+            P.in_sz[2] = vim.sz[2];
+
+        }else
+        {
+            unsigned char * datald = 0;
+            V3DLONG *in_zz = 0;
+            V3DLONG *in_sz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+            {
+                return false;
+            }
+            if(datald) {delete []datald; datald = 0;}
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
         }
-        if(datald) {delete []datald; datald = 0;}
-        P.in_sz[0] = in_zz[0];
-        P.in_sz[1] = in_zz[1];
-        P.in_sz[2] = in_zz[2];
 
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
@@ -293,14 +368,40 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         }
     }else
     {
-        V3DLONG *in_zz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
-                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
         {
-            printf("can not load the region");
-            if(total1dData) {delete []total1dData; total1dData = 0;}
-            return false;
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,tileLocation.z,end_x-1,end_y-1,tileLocation.z + P.in_sz[2]-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+
+        }else
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                               end_x,end_y,tileLocation.z + P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }
     }
 
@@ -740,14 +841,40 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         }
     }else
     {
-        V3DLONG *in_zz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
-                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
         {
-            printf("can not load the region");
-            if(total1dData) {delete []total1dData; total1dData = 0;}
-            return false;
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,tileLocation.z,end_x-1,end_y-1,tileLocation.z + P.in_sz[2]-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+
+        }else
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                               end_x,end_y,tileLocation.z + P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }
     }
 
@@ -1220,19 +1347,35 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.in_sz[2] = P.image->getZDim();
     }else
     {
-        unsigned char * datald = 0;
-        V3DLONG *in_zz = 0;
-        V3DLONG *in_sz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        if(QFileInfo(fileOpenName).completeSuffix() == "tc")
         {
-            return false;
-        }
-        if(datald) {delete []datald; datald = 0;}
-        P.in_sz[0] = in_zz[0];
-        P.in_sz[1] = in_zz[1];
-        P.in_sz[2] = in_zz[2];
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            P.in_sz[0] = vim.sz[0];
+            P.in_sz[1] = vim.sz[1];
+            P.in_sz[2] = vim.sz[2];
+
+        }else
+        {
+            unsigned char * datald = 0;
+            V3DLONG *in_zz = 0;
+            V3DLONG *in_sz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+            {
+                return false;
+            }
+            if(datald) {delete []datald; datald = 0;}
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
+        }
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
         LocationSimple t;
@@ -1408,14 +1551,40 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         }
     }else
     {
-        V3DLONG *in_zz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
-                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
         {
-            printf("can not load the region");
-            if(total1dData) {delete []total1dData; total1dData = 0;}
-            return false;
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,tileLocation.z,end_x-1,end_y-1,tileLocation.z + P.in_sz[2]-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+
+        }else
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                               end_x,end_y,tileLocation.z + P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }
     }
 
@@ -1687,14 +1856,40 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         }
     }else
     {
-        V3DLONG *in_zz = 0;
-        int datatype;
-        if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
-                           end_x,end_y,tileLocation.z + P.in_sz[2]))
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
         {
-            printf("can not load the region");
-            if(total1dData) {delete []total1dData; total1dData = 0;}
-            return false;
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,tileLocation.z,end_x-1,end_y-1,tileLocation.z + P.in_sz[2]-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+
+        }else
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
+                               end_x,end_y,tileLocation.z + P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }
     }
 
@@ -2213,4 +2408,159 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
        groupTips.push_back(eachGroupList);
    }
    return groupTips;
+}
+
+bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & pVImg_UINT8,V3DLONG startx, V3DLONG starty, V3DLONG startz,
+                     V3DLONG endx, V3DLONG endy, V3DLONG endz)
+{
+
+    //virtual image
+    V3DLONG vx, vy, vz, vc;
+
+    vx = endx - startx + 1;
+    vy = endy - starty + 1;
+    vz = endz - startz + 1;
+    vc = vim.sz[3];
+
+    V3DLONG pagesz_vim = vx*vy*vz*vc;
+
+    // flu bird algorithm
+    bitset<3> lut_ss, lut_se, lut_es, lut_ee;
+
+    //
+    V3DLONG x_s = startx + vim.min_vim[0];
+    V3DLONG y_s = starty + vim.min_vim[1];
+    V3DLONG z_s = startz + vim.min_vim[2];
+
+    V3DLONG x_e = endx + vim.min_vim[0];
+    V3DLONG y_e = endy + vim.min_vim[1];
+    V3DLONG z_e = endz + vim.min_vim[2];
+    printf("%d, %d, ,%d, %d, %d, %d\n\n\n\n\n",x_s, y_s, z_s, x_e,y_e,z_e);
+
+    bool flag_init = true;
+   // unsigned char *pVImg_UINT8 = NULL;
+
+    QString curFilePath = QFileInfo(tcfile).path();
+    curFilePath.append("/");
+
+    for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+    {
+        int check_lu = 0,check_ru = 0,check_ld = 0,check_rd = 0;
+
+        int check1 = (x_s >=  vim.lut[ii].start_pos[0] && x_s <= vim.lut[ii].end_pos[0])?  1 : 0;
+        int check2 = (x_e >=  vim.lut[ii].start_pos[0] && x_e <= vim.lut[ii].end_pos[0])?  1 : 0;
+        int check3 = (y_s >=  vim.lut[ii].start_pos[1] && y_s <= vim.lut[ii].end_pos[1])?  1 : 0;
+        int check4 = (y_e >=  vim.lut[ii].start_pos[1] && y_e <= vim.lut[ii].end_pos[1])?  1 : 0;
+
+        if(check1*check3) check_lu = 1;
+        if(check2*check3) check_ru = 1;
+        if(check1*check4) check_ld = 1;
+        if(check2*check4) check_rd = 1;
+
+
+//        // init
+//        lut_ss.reset();
+//        lut_se.reset();
+//        lut_es.reset();
+//        lut_ee.reset();
+
+//        //
+//        if(x_s < vim.lut[ii].start_pos[0]) lut_ss[1] = 1; // r  0 l
+//        if(y_s < vim.lut[ii].start_pos[1]) lut_ss[0] = 1; // d  0 u
+//       // if(z_s < vim.lut[ii].start_pos[2]) lut_ss[2] = 1; // b  0 f
+
+//        if(x_e < vim.lut[ii].start_pos[0]) lut_se[1] = 1; // r  0 l
+//        if(y_e < vim.lut[ii].start_pos[1]) lut_se[0] = 1; // d  0 u
+//      //  if(z_e < vim.lut[ii].start_pos[2]) lut_se[2] = 1; // b  0 f
+
+//        if(x_s < vim.lut[ii].end_pos[0]) lut_es[1] = 1; // r  0 l
+//        if(y_s < vim.lut[ii].end_pos[1]) lut_es[0] = 1; // d  0 u
+//      //  if(z_s < vim.lut[ii].end_pos[2]) lut_es[2] = 1; // b  0 f
+
+//        if(x_e < vim.lut[ii].end_pos[0]) lut_ee[1] = 1; // r  0 l
+//        if(y_e < vim.lut[ii].end_pos[1]) lut_ee[0] = 1; // d  0 u
+//      //  if(z_e < vim.lut[ii].end_pos[2]) lut_ee[2] = 1; // b  0 f
+
+//        // copy data
+//        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
+        if(check_lu || check_ru || check_ld || check_rd)
+        {
+            //
+            cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
+
+            // loading relative image files
+            V3DLONG sz_relative[4];
+            int datatype_relative = 0;
+            unsigned char* relative1d = 0;
+
+            QString curPath = curFilePath;
+
+            string fn = curPath.append( QString(vim.lut[ii].fn_img.c_str()) ).toStdString();
+
+            qDebug()<<"testing..."<<curFilePath<< fn.c_str();
+
+
+            if(flag_init)
+            {
+                    try
+                    {
+                        pVImg_UINT8 = new unsigned char [pagesz_vim];
+                    }
+                    catch (...)
+                    {
+                        printf("Fail to allocate memory.\n");
+                        return false;
+                    }
+
+                    // init
+                    memset(pVImg_UINT8, 0, pagesz_vim*sizeof(unsigned char));
+
+                    flag_init = false;
+
+            }
+
+            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                continue;
+            }
+            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
+
+            //
+            V3DLONG tile2vi_xs = vim.lut[ii].start_pos[0]-vim.min_vim[0];
+            V3DLONG tile2vi_xe = vim.lut[ii].end_pos[0]-vim.min_vim[0];
+            V3DLONG tile2vi_ys = vim.lut[ii].start_pos[1]-vim.min_vim[1];
+            V3DLONG tile2vi_ye = vim.lut[ii].end_pos[1]-vim.min_vim[1];
+            V3DLONG tile2vi_zs = vim.lut[ii].start_pos[2]-vim.min_vim[2];
+            V3DLONG tile2vi_ze = vim.lut[ii].end_pos[2]-vim.min_vim[2];
+
+            V3DLONG x_start = (startx > tile2vi_xs) ? startx : tile2vi_xs;
+            V3DLONG x_end = (endx < tile2vi_xe) ? endx : tile2vi_xe;
+            V3DLONG y_start = (starty > tile2vi_ys) ? starty : tile2vi_ys;
+            V3DLONG y_end = (endy < tile2vi_ye) ? endy : tile2vi_ye;
+            V3DLONG z_start = (startz > tile2vi_zs) ? startz : tile2vi_zs;
+            V3DLONG z_end = (endz < tile2vi_ze) ? endz : tile2vi_ze;
+
+            x_end++;
+            y_end++;
+            z_end++;
+
+            V3DLONG start[3];
+            start[0] = startx;
+            start[1] = starty;
+            start[2] = startz;
+
+            //
+            cout << x_start << " " << x_end << " " << y_start << " " << y_end << " " << z_start << " " << z_end << endl;
+            region_groupfusing<unsigned char>(pVImg_UINT8, vim, relative1d,
+                                                  vx, vy, vz, vc, rx, ry, rz, rc,
+                                                  tile2vi_zs, tile2vi_ys, tile2vi_xs,
+                                                  z_start, z_end, y_start, y_end, x_start, x_end, start);
+
+            //de-alloc
+            if(relative1d) {delete []relative1d; relative1d=0;}
+        }
+
+    }
+    return true;
 }
