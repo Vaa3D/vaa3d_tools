@@ -1,14 +1,29 @@
-/* Created by:
+/*
+* N3DFix - automatic removal of swelling artifacts in neuronal 2D/3D reconstructions
+* last update: Mar 2016
+* VERSION 2.0
 *
-* 				Eduardo Conde-Sousa [econdesousa@gmail.com]
-*							and
-*				Paulo de Castro Aguiar [pauloaguiar@ineb.up.pt]
-* 
-* on Dez 10, 2014
-* to visualize and remove artifacts resulting 
-* from the 3D reconstruction of dendrites / axons
+* Authors: Eduardo Conde-Sousa <econdesousa@gmail.com>
+*          Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>
+* Date:    Mar 2016
 *
-* (last update: July 06, 2015)
+* N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)
+* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016
+*
+*    Disclaimer
+*    ----------
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*    any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You can view a copy of the GNU General Public License at
+*    <http://www.gnu.org/licenses/>.
 */
 
 #ifndef __MYFUNCS_H__
@@ -35,61 +50,28 @@ void print_data(std::vector<float> &x, std::vector<float> &y, std::vector<float>
 void find_nodes(std::vector<long> &tree_id, std::vector<long> &ppid, std::vector<long> &nodes, std::vector<long> &endpoints,
                 std::vector<long> &end_sec, std::vector<long> &soma);
 
-bool my_compare( float a, float b);
-
-void diff(std::vector<long> &my_vec);
-
-//float p3Ddist(float x1, float y1, float z1, float x2, float y2, float z2);
 
 void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float> &z, std::vector<float> &r,
                  std::vector<long> &ppid, std::vector<long> &end_sec, struct RawPoints &Point,
                  std::vector<struct RawPoints > &n3d, std::vector< std::vector<struct RawPoints > > &dend, std::vector<long> &pid ,
                  std::vector<long> &tree_id, std::vector<long> &soma);
 
-void remove_points_with_same_coordinates(std::vector< std::vector<struct RawPoints > > &dend,
-                                         bool &preprocessing_flag, unsigned dend_num);
+void write_data(std::vector< std::vector<struct RawPoints > > &dend_original, std::vector< std::vector<struct RawPoints > > &dend,
+                QString &path, QString &fileSaveName);
 
-void deriv_dend(std::vector<double> &dydx, std::vector< std::vector<struct RawPoints > > &dend ,
-                bool &preprocessing_flag, unsigned dend_num,std::vector<double> &ARC,std::vector<double> &DIAM);
+double MEDIAN(std::vector<double> DIAM);
 
-void ups_and_downs(std::vector<double> &dydx, std::vector< std::vector<struct RawPoints > > &dend ,
-                   bool &preprocessing_flag, unsigned dend_num,std::vector<long> &ppslope, std::vector<long> & pnslope,
-                   std::vector<long> &pzslope,std::vector<double> &ARC,std::vector<double> &DIAM);
+double MEAN(std::vector<double> DIAM);
 
-void smooth(std::vector<double> dydx, std::vector< std::vector<struct RawPoints > > &dend ,
-            bool &preprocessing_flag, unsigned dend_num,std::vector<long> &ppslope,
-            std::vector<long> & pnslope, std::vector<long> &pzslope,
-            std::vector<double> &ARC,std::vector<double> &DIAM, long x1, long x2);
-void locate_and_smooth_bumps(std::vector<double> &dydx, std::vector< std::vector<struct RawPoints > > &dend ,
-                             bool &preprocessing_flag, unsigned dend_num,std::vector<long> &ppslope,
-                             std::vector<long> & pnslope, std::vector<long> &pzslope, std::vector<double> &ARC,
-                             std::vector<double> &DIAM, double &thresh,double &max_dist,double &step_min);
+double STDEV(std::vector<double> DIAM);
 
-long maximizante(std::vector<double> &myvec);
+double RandGen(double A, double B);
 
-double maximo(std::vector<double> &myvec);
+void Calculate_Baseline(std::vector<double> DIAM, std::vector<double> ARC, std::vector<double> &baseline , std::vector<double> &weights);
 
-double minimo(std::vector<double> &myvec);
-
-unsigned indexGreaterThan(std::vector<double> myvec, const double Objective);
-
-long indexEqualOrGreaterThan(std::vector<double> myvec, const double Objective);
-
-long indexEqualOrLesserThan(std::vector<double> myvec, const double Objective);
-
-bool test_ascend(std::vector<double> &DIAM,double &step_min,long x1,long x2);
-
-bool test_peak(std::vector<double> Diam, double &step_min); //attention Diam != DIAM; Diam is a truncation of DIAM.
-
-long test_descend(std::vector<double> &DIAM,std::vector<long> & pnslope,std::vector<double> &dydx,
-                  double &thresh,double &step_min,long x1,long x2);
-
-long move_down_right(long x2,long x3,double &thresh,std::vector<double> &DIAM,std::vector<double> &ARC,std::vector<long> & pnslope);
-
-long move_down_left(long x1,long x3_tmp,double &thresh,double &max_dist,
-                    std::vector<double> &DIAM,std::vector<double> &ARC,std::vector<long> & ppslope);
-void write_data(std::vector< std::vector<struct RawPoints > > &dend,QString &path,QString &fileSaveName);
-
+void N3DFix_v2(std::vector< std::vector<struct RawPoints > > &dend , unsigned dend_num, std::vector<double> &ARC,
+               std::vector<double> &DIAM, std::vector<double> &baseline , std::vector<double> &weights,
+               double &bump_rnorm, double &rmin, double &bump_slope, QString fileReport);
 
 #endif
 

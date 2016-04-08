@@ -1,15 +1,32 @@
-/* Created by:
+/*
+* N3DFix - automatic removal of swelling artifacts in neuronal 2D/3D reconstructions
+* last update: Mar 2016
+* VERSION 2.0
 *
-* 				Eduardo Conde-Sousa [econdesousa@gmail.com]
-*							and
-*				Paulo de Castro Aguiar [pauloaguiar@ineb.up.pt]
+* Authors: Eduardo Conde-Sousa <econdesousa@gmail.com>
+*          Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>
+* Date:    Mar 2016
 *
-* on Dez 10, 2014
-* to visualize and remove artifacts resulting
-* from the 3D reconstruction of dendrites / axons
+* N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)
+* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016
 *
-* (last update: July 06, 2015)
+*    Disclaimer
+*    ----------
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*    any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You can view a copy of the GNU General Public License at
+*    <http://www.gnu.org/licenses/>.
 */
+
+
 
 #include <stdio.h>
 #include <iostream>
@@ -20,8 +37,12 @@
 #include "Dend_Section.h"
 #include <cerrno>
 
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void load_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>& z,
-               std::vector<long>& tree_id, std::vector<float>& r, std::vector<long>& ppid, std::vector<long> &pid, QString &path){
+               std::vector<long>& tree_id, std::vector<float>& r, std::vector<long>& ppid,
+               std::vector<long> &pid, QString &path){
 //    printf("\n\n###################################################################\n");
 //    printf("######################## loading data #############################\n");
 //    printf("###################################################################\n\n\n\n");
@@ -69,8 +90,13 @@ void load_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>&
 	}
 	fclose( fin );	
 }
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void print_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>& z,std::vector<long>& tree_id,
                 std::vector<float>& r, std::vector<long>& ppid,std::vector<long> &pid){
 
@@ -88,7 +114,16 @@ void print_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>
 	printf("\t\t\tTotal Number of Points = %d\n",x.size());
 	printf("########################################################################## \n");
 }
-void write_data(std::vector< std::vector<struct RawPoints > > &dend, QString &path, QString &fileSaveName){
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std::vector< std::vector<struct RawPoints > > &dend,
+                QString &path, QString &fileSaveName){
 
 //    printf("\n\n###################################################################\n");
 //    printf("######################## writing data #############################\n");
@@ -108,15 +143,20 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend, QString &pa
         //return -1;
     }else{
         fprintf (fout, "# This file was generated using N3Dfix plugin\n");
-        fprintf (fout, "# Eduardo Conde-Sousa\n");
-        fprintf (fout, "# [econdesousa@gmail.com]\n");
+        fprintf (fout, "#\n");
+        fprintf (fout, "# Eduardo Conde-Sousa <econdesousa@gmail.com>\n");
+        fprintf (fout, "# Paulo Aguiar        <pauloaguiar@ineb.up.pt>\n");
+        fprintf (fout, "#\n");
+        fprintf (fout, "# N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)");
+		fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016");
+        fprintf (fout, "#\n");
         // go through all compartments in neuron and then to all points of the compartment
         long dend_num = 0;
         long point = 0;
         //first compartment is different
         for (unsigned ii =0; ii<1; ii++){
             for (unsigned i=0;i<dend[ii].size();i++){
-                fprintf(fout,"%d %d %f %f %f %f %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
+                fprintf(fout,"%d %d %g %g %g %g %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
                         dend[ii][i].z,dend[ii][i].r/2,dend[ii][i].ppid);
             }
             printf("\n\n");
@@ -124,11 +164,13 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend, QString &pa
         //in all other compartments the first point is a duplicate, so as to be removed
         for (unsigned ii =1; ii<dend.size(); ii++){
             for (unsigned i=1;i<dend[ii].size();i++){
-                fprintf(fout,"%d %d %f %f %f %f %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
+                fprintf(fout,"%d %d %g %g %g %g %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
                         dend[ii][i].z,dend[ii][i].r/2,dend[ii][i].ppid);
             }
         }
     }
     fclose( fout );
 }
-
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////

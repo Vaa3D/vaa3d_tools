@@ -1,15 +1,31 @@
-/* Created by:
+/*
+* N3DFix - automatic removal of swelling artifacts in neuronal 2D/3D reconstructions
+* last update: Mar 2016
+* VERSION 2.0
 *
-* 				Eduardo Conde-Sousa [econdesousa@gmail.com]
-*							and
-*				Paulo de Castro Aguiar [pauloaguiar@ineb.up.pt]
+* Authors: Eduardo Conde-Sousa <econdesousa@gmail.com>
+*          Paulo de Castro Aguiar <pauloaguiar@ineb.up.pt>
+* Date:    Mar 2016
 *
-* on Dez 10, 2014
-* to visualize and remove artifacts resulting
-* from the 3D reconstruction of dendrites / axons
+* N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)
+* Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016
 *
-* (last update: July 06, 2015)
+*    Disclaimer
+*    ----------
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*    any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You can view a copy of the GNU General Public License at
+*    <http://www.gnu.org/licenses/>.
 */
+
 
 #include <stdio.h>
 #include <iostream>
@@ -40,31 +56,6 @@ float p3Ddist(float x1, float y1, float z1, float x2, float y2, float z2){
 
 
 
-bool my_compare( float a, float b){
-	return a < b;
-}
-
-
-void diff(std::vector<double> &my_vec){ //not tested
-
-	printf("my_vec = [  ");
-	for (unsigned it=0; it<my_vec.size(); it++){	
-		printf("%d  ",my_vec.at(it));
-	}
-	printf("]\n\n\n");
-
-	std::vector<double> tmp_vec;
-	for(unsigned it=1; it<my_vec.size(); it++){
-		tmp_vec.push_back(my_vec.at(it)-my_vec.at(it-1));
-	}
-
-	printf("tmp_vec = [  ");
-	for (unsigned it=0; it<tmp_vec.size(); it++){	
-		printf("%d  ",tmp_vec.at(it));
-	}
-	printf("]\n\n\n");
-}
-	
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 // END
@@ -116,27 +107,6 @@ void find_nodes(std::vector<long> &tree_id, std::vector<long> &ppid, std::vector
             }
         }
     }
-//    // PRINT SOMA
-
-//    printf("soma = \n");
-//    for (unsigned it = 0;it<soma.size(); it++){
-//            printf("%d\n",it+1 , soma.at(it));
-//    }
-
-//    // PRINT END_SEC
-
-//    printf("end_sec = \n");
-//    for (unsigned it = 0;it<end_sec.size(); it++){
-//            printf("%d %d\n",it+1 , end_sec.at(it));
-//    }
-
-//    // PRINT TMP_VECTOR
-
-//    printf("tmp_vec = \n");
-//    for (unsigned it = 0;it<tmp_vector.size(); it++){
-//            printf("%d %d\n",it+1 , tmp_vector.at(it));
-//    }
-
 }
 
 
@@ -169,12 +139,6 @@ void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float
             n3d.push_back(Point);
         }
         dend.push_back(n3d);
-//        for (unsigned ii =dend.size()-1; ii< dend.size(); ii++){
-//            for (unsigned i=0;i<dend[ii].size();i++){
-//                printf("dend[%d][%d] = [ %d, %d, %f, %f, %f, %f, %d, %f ]\n",ii, i,dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,dend[ii][i].z,dend[ii][i].r,dend[ii][i].ppid,dend[ii][i].arc);
-//            }
-//            printf("\n\n");
-//        }
     }
 
 
@@ -199,24 +163,15 @@ void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float
             n3d.clear();
             pt = end_sec.at(j);
             if (ppid.at(pt-1) != -1){
-//                std::cout << "last point of section = " << pt << std::endl<< std::endl<< std::endl;
                 tmp_vector.at(pt-1) = 0;
                 while (tmp_vector.at(pt-1) == 0) {
                     tmp_vector.at(pt-1) = 1;
                     tmp_vector_id.push_back(pt);
                     pt = ppid.at(pt-1);
-//                    std::cout << "pt = " << pt << std::endl<< std::endl;
                     if (pt == -1){
                         pt = tmp_vector_id.at(tmp_vector_id.size()-1);
                     }
                 }
-//                std::cout << "exit" << std::endl;
-
-//                printf("tmp_vec_id = \n");
-//                for (unsigned it = 0;it<tmp_vector_id.size(); it++){
-//                    printf("%d %d\n",it+1 , tmp_vector_id.at(it));
-//                }
-
 
                 //find and append the last point of parent dend
                 pt = ppid.at(tmp_vector_id.at(tmp_vector_id.size()-1) - 1)-1;
@@ -244,12 +199,6 @@ void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float
                 }
                 n3d.at(0).r = n3d.at(1).r;
                 dend.push_back(n3d);
-//                for (unsigned ii = dend.size()-1; ii< dend.size(); ii++){
-//                    for (unsigned i=0;i<dend[ii].size();i++){
-//                        printf("dend[%d][%d] = [ %d, %d, %f, %f, %f, %f, %d, %f ]\n",ii, i,dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,dend[ii][i].z,dend[ii][i].r,dend[ii][i].ppid,dend[ii][i].arc);
-//                    }
-//                    printf("\n\n");
-//                }
             }
         }
 
@@ -262,15 +211,6 @@ void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float
                 }
             }
         }
-
-
-//                for (unsigned ii =0; ii< dend.size(); ii++){
-//                    for (unsigned i=0;i<dend[ii].size();i++){
-//                        printf("dend[%d][%d] = [ %d, %d, %f, %f, %f, %f, %d, %f ]\n",ii, i,dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,dend[ii][i].z,dend[ii][i].r,dend[ii][i].ppid,dend[ii][i].arc);
-//                    }
-//                    printf("\n\n");
-//                }
-
 
     }else{
         std::cerr << "impossible to find nodes" << std::endl;
