@@ -881,6 +881,11 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
             RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
 
+            const float dd = 0.5;
+
+            if(P.method == 1 && (RootNewLocation.x<p1.xc0-dd || RootNewLocation.x>p1.xc1+dd || RootNewLocation.y<p1.yc0-dd || RootNewLocation.y>p1.yc1+dd || RootNewLocation.z<p1.zc0-dd || RootNewLocation.z>p1.zc1+dd))
+                continue;
+
             if(tileswc_file.size()>0)
             {
                 for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
@@ -898,6 +903,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             {
                 if(P.method == 1)
                 {
+
                     p1.landmarks.push_back(RootNewLocation);
                     proc_app1(callback, p1, versionStr);
                     p1.landmarks.clear();
@@ -1617,7 +1623,6 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     }
 
-
     total4DImage->deleteRawDataAndSetPointerToNull();
     return true;
 }
@@ -1861,7 +1866,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 10)
+                    if(dis < 20)
                     {
                         check_tip = true;
                         break;

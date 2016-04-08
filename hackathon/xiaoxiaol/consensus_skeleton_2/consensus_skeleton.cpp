@@ -938,7 +938,6 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
     plist = new V3DLONG[num_nodes];
 
 
-
     if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
 
     {
@@ -947,9 +946,8 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
     }
 
 
-
     // code the edge votes into type for visualization
-    //         graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
+    //    graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
     QList<NeuronSWC> node_list = merge_result;
     merge_result.clear();
     for (V3DLONG i = 0;i <num_nodes;i++)
@@ -975,7 +973,7 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
         }
 
         if (edgeVote >= vote_threshold ){
-
+                       cout <<"connect"<<endl;
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
             tmp.y = node_list[i].y;
@@ -1012,11 +1010,13 @@ bool build_tree_from_adj_matrix(double * adjMatrix, QList<NeuronSWC> &merge_resu
                     merge_result[row].type = 3; //edge votes
                     merge_result[row].fea_val.push_back(float(edgeVote)); //edge votes
                     merge_result[row].pn = col + 1;  // from index to node id : "n"
+
                 }
                 else{// row node already has a non-rooted parent, connect the other way
                     merge_result[col].type = 3; //edge votes
                     merge_result[col].fea_val.push_back(float(edgeVote)); //edge votes
                     merge_result[col].pn = row + 1;  //parent id  , form the edge
+
                 }
             }
 
@@ -1098,7 +1098,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
                  adjMatrix[n_id*num_nodes + pn_id] += 1;
                  adjMatrix[pn_id*num_nodes + n_id] += 1;
                  EDGE_VOTED[n_id*num_nodes + pn_id] = 1;
-                 EDGE_VOTED[pn_id*num_nodes + n_id] = 1;
+                 EDGE_VOTED[pn_id*num_nodes + n_id] = 1;     
              }
 
          }
