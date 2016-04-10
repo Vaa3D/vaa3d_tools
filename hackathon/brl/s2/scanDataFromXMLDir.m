@@ -35,14 +35,14 @@ stackStateShard = xmlStructi.PVScan.PVStateShard;
 %  SINGLE TILE DATA:
 tileData.tileString = [xmldir,'/',scanXMLfiles(i).name];
 % active mode
-tileData.activeMode = stackStateShard.PVStateValue{1}.Attributes.value;  % string "Resonant Galvo" or "Galvo"
+tileData.activeMode =findKeyInShard(stackStateShard.PVStateValue, 'activeMode')  % string "Resonant Galvo" or "Galvo"
 clockDateString = datestr(xmlStructi.PVScan.Attributes.date);
 tileData.clockStartTime = 24*60*60*(floor(datenum(clockDateString))+datenum(xmlStructi.PVScan.Sequence.Attributes.time));
 % % optical zoom 
- tileData.opticalZoom = str2double(stackStateShard.PVStateValue{14}.Attributes.value);
+ tileData.opticalZoom = str2double(findKeyInShard(stackStateShard.PVStateValue, 'opticalZoom') );
 % tile dimensions;
-pixelsPerLine = str2double(stackStateShard.PVStateValue{15}.Attributes.value);
-linesPerFrame =    str2double( stackStateShard.PVStateValue{7}.Attributes.value);
+pixelsPerLine = str2double(findKeyInShard(stackStateShard.PVStateValue, 'pixelsPerLine') );
+linesPerFrame =    str2double( findKeyInShard(stackStateShard.PVStateValue, 'linesPerFrame') );
 if ~isfield(xmlStructi.PVScan.Sequence, 'Frame')
 framesPerTile = 0;
 tileData.tileTime = 0;
@@ -62,18 +62,18 @@ tileData.tileDimensions =[pixelsPerLine ,linesPerFrame , framesPerTile];
  % total time per tile
 
 
- xMicronsPerPixel = str2double(stackStateShard.PVStateValue{9}.IndexedValue{1}.Attributes.value);
- yMicronsPerPixel = str2double(stackStateShard.PVStateValue{9}.IndexedValue{1}.Attributes.value);
+ xMicronsPerPixel = str2double(findKeyInShard(stackStateShard.PVStateValue, 'micronsPerPixel', 'XAxis'));
+ yMicronsPerPixel = str2double(findKeyInShard(stackStateShard.PVStateValue, 'micronsPerPixel', 'YAxis'));
  
  % tile microns per pixel
  tileData.micronsPerPixel =  [xMicronsPerPixel, yMicronsPerPixel];
  %tile size in microns
  tileData.tileSizeMicrons=[pixelsPerLine*xMicronsPerPixel,linesPerFrame*yMicronsPerPixel];
  
- xMinVolts = str2double(stackStateShard.PVStateValue{10}.IndexedValue{1}.Attributes.value);
- xMaxVolts = str2double(stackStateShard.PVStateValue{8}.IndexedValue{1}.Attributes.value);
- yMinVolts = str2double(stackStateShard.PVStateValue{10}.IndexedValue{2}.Attributes.value);
- yMaxVolts = str2double(stackStateShard.PVStateValue{8}.IndexedValue{2}.Attributes.value);
+ xMinVolts = str2double(findKeyInShard(stackStateShard.PVStateValue, 'minVoltage', 'XAxis'));
+ xMaxVolts = str2double(findKeyInShard(stackStateShard.PVStateValue, 'maxVoltage', 'XAxis'));
+ yMinVolts = str2double(findKeyInShard(stackStateShard.PVStateValue, 'minVoltage', 'YAxis'));
+ yMaxVolts = str2double(findKeyInShard(stackStateShard.PVStateValue, 'maxVoltage', 'YAxis'));
 % ;
 tileData.tileLocationVolts=[xMinVolts,yMinVolts,xMaxVolts,yMaxVolts];  %  upper left corner is scan center - scanSize/2
 % 
@@ -81,8 +81,8 @@ tileData.tileLocationVolts=[xMinVolts,yMinVolts,xMaxVolts,yMaxVolts];  %  upper 
 tileData.tileLocationVoltsPixels = tileData.tileLocationVolts.*[pixelsPerLine/(xMaxVolts-xMinVolts),linesPerFrame/(yMaxVolts-yMinVolts),pixelsPerLine/(xMaxVolts-xMinVolts), linesPerFrame/(yMaxVolts-yMinVolts)];
 tileData.tileLocationVoltsMicrons = tileData.tileLocationVoltsPixels.*[xMicronsPerPixel, yMicronsPerPixel,xMicronsPerPixel,yMicronsPerPixel];
 % 
-% 
-% 
+
+tileData.tileCenterVolts= [str2double(findKeyInShard(stackStateShard.PVStateValue, 'currentScanCenter', 'XAxis')),str2double(findKeyInShard(stackStateShard.PVStateValue, 'currentScanCenter', 'YAxis'))]
 % 
 % %  tile time (average or all or one?)
  s2ScanData.allTileTimes(i) =  tileData.tileTime ;  % all tile times if applicable
@@ -104,4 +104,3 @@ end
 % 
 % % total time for the whole acquisition
 % s2ScanData(1).totalTime=0;
-
