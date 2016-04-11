@@ -61,7 +61,7 @@ void N3DfixPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     }
 	else
 	{
-        v3d_msg(tr( "\n\n ============================== N3DFix =============================\n\n"
+        v3d_msg(tr( "\n\n ==================== N3DFix ===================\n\n"
 					" Automatic removal of swelling artifacts in neuronal reconstructions\n"
 					" last update: Mar 2016\n"
 					" VERSION 2.0\n"
