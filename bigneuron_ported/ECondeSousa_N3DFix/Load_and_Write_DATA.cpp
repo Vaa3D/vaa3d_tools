@@ -147,8 +147,8 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std
         fprintf (fout, "# Eduardo Conde-Sousa <econdesousa@gmail.com>\n");
         fprintf (fout, "# Paulo Aguiar        <pauloaguiar@ineb.up.pt>\n");
         fprintf (fout, "#\n");
-        fprintf (fout, "# N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)");
-		fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016");
+        fprintf (fout, "# N3DFix v2.0 is described in the following publication (!UNDER REVIEW!)\n");
+        fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016\n");
         fprintf (fout, "#\n");
         // go through all compartments in neuron and then to all points of the compartment
         long dend_num = 0;
