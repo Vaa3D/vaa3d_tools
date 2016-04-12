@@ -1878,6 +1878,11 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 return false;
             }
 
+//            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2];i++)
+//            {
+//                if(total1dData[i] < 100)  total1dData[i] =0;
+//            }
+
 
         }else
         {
