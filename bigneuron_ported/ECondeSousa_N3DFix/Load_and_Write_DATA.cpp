@@ -123,7 +123,8 @@ void print_data(std::vector<float>& x, std::vector<float>& y, std::vector<float>
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std::vector< std::vector<struct RawPoints > > &dend,
-                QString &path, QString &fileSaveName){
+                QString &path, QString &fileSaveName,std::vector<float>& x, std::vector<float>& y, std::vector<float>& z,
+                std::vector<long>& tree_id, std::vector<float>& r, std::vector<long>& ppid, std::vector<long> &pid){
 
 //    printf("\n\n###################################################################\n");
 //    printf("######################## writing data #############################\n");
@@ -138,6 +139,8 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std
     QString dataFile = fileSaveName;//QString dataFile = path.remove(path.size()-4,4)  + name + QLatin1String(".swc");
     fout = fopen(dataFile.toStdString().c_str(), "w");//err = fopen_s(&fout,dataFile.toStdString().c_str(), "w");
 
+    std::vector<long> pid_tmp;
+    long point = 0;
     if (fout == NULL) {//if (err != 0) {
         v3d_msg("The file was not opened\n",1);
         //return -1;
@@ -151,11 +154,12 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std
         fprintf (fout, "# Conde-Sousa E, Szucs P, Peng H, Aguiar P - Neuroinformatics, 2016\n");
         fprintf (fout, "#\n");
         // go through all compartments in neuron and then to all points of the compartment
-        long dend_num = 0;
-        long point = 0;
+
         //first compartment is different
         for (unsigned ii =0; ii<1; ii++){
             for (unsigned i=0;i<dend[ii].size();i++){
+                point = point +1;
+                pid_tmp.push_back(dend[ii][i].pid);
                 fprintf(fout,"%d %d %g %g %g %g %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
                         dend[ii][i].z,dend[ii][i].r/2,dend[ii][i].ppid);
             }
@@ -164,8 +168,28 @@ void write_data(std::vector< std::vector<struct RawPoints > > &dend_original,std
         //in all other compartments the first point is a duplicate, so as to be removed
         for (unsigned ii =1; ii<dend.size(); ii++){
             for (unsigned i=1;i<dend[ii].size();i++){
+                point = point +1;
+                pid_tmp.push_back(dend[ii][i].pid);
                 fprintf(fout,"%d %d %g %g %g %g %d\n",dend[ii][i].pid,dend[ii][i].tid,dend[ii][i].x,dend[ii][i].y,
                         dend[ii][i].z,dend[ii][i].r/2,dend[ii][i].ppid);
+            }
+        }
+    }
+//    std::cout<<"original size = "<<x.size()<<std::endl;
+//    std::cout<<" new size     = "<<point<<std::endl;
+    int print_flag;
+    if(point != pid.size()){
+        for(long ii = 0;ii<pid.size();ii++){
+            print_flag =1;
+            for(long jj =0;jj<pid_tmp.size();jj++){
+                if( pid.at(ii) == pid_tmp.at(jj)){
+                    print_flag =0;
+                    break;
+                }
+            }
+            if(print_flag == 1){
+                fprintf(fout,"%d %d %g %g %g %g %d\n",pid.at(ii),tree_id.at(ii),x.at(ii),y.at(ii),
+                        z.at(ii),r.at(ii)/2,ppid.at(ii));
             }
         }
     }

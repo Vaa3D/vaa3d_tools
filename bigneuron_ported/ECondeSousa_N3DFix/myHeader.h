@@ -48,7 +48,7 @@ void print_data(std::vector<float> &x, std::vector<float> &y, std::vector<float>
                 std::vector<float> &r, std::vector<long> &ppid,std::vector<long> &pid);
 
 void find_nodes(std::vector<long> &tree_id, std::vector<long> &ppid, std::vector<long> &nodes, std::vector<long> &endpoints,
-                std::vector<long> &end_sec, std::vector<long> &soma);
+                std::vector<long> &end_sec, std::vector<long> &soma, std::vector<long> &pid);
 
 
 void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float> &z, std::vector<float> &r,
@@ -57,7 +57,8 @@ void create_tree(std::vector<float> &x, std::vector<float> &y, std::vector<float
                  std::vector<long> &tree_id, std::vector<long> &soma);
 
 void write_data(std::vector< std::vector<struct RawPoints > > &dend_original, std::vector< std::vector<struct RawPoints > > &dend,
-                QString &path, QString &fileSaveName);
+                QString &path, QString &fileSaveName, std::vector<float> &x, std::vector<float> &y, std::vector<float> &z,
+                std::vector<long> &tree_id, std::vector<float> &r, std::vector<long> &ppid, std::vector<long> &pid);
 
 double MEDIAN(std::vector<double> DIAM);
 

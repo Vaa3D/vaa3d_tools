@@ -172,7 +172,80 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
     clock_t begin = clock();
 
     load_data(x,y,z,tree_id,r,ppid,pid,fileOpenName);
-    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma);
+    {
+        // verification steps:
+        // pid.at(0) == 1
+        // ppid.at(0) == -1
+        // MAX(pid) == pid.size()
+
+        if( pid.at(0)!=1){
+            v3d_msg("First point in swc file should have id = 1.\n\n"
+                    "Please fix the input swc file.\n\n"
+                    "See shell for more info.\n\n"
+                    "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+            std::cout<<"\n\n======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"N3DFix interrupted"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout << "first point in swc file should have id = 1" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Please fix the input swc file\n\n" <<std::endl;
+            std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            return 0;
+        }
+        if( ppid.at(0)!=-1){
+            v3d_msg("first point in swc file should be the root.\n\n"
+                    "Please fix the input swc file.\n\nSee shell for more info.\n\n"
+                    "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+            std::cout<<"\n\n======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"N3DFix interrupted"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout << "first point in swc file should be the root" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Please fix the input swc file\n\n" <<std::endl;
+            std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            return 0;
+        }
+        long pidMAX;
+        pidMAX = pid.at(pid.size()-1);
+        for (unsigned it = 0;it<pid.size(); it++){
+            if(pidMAX < pid.at(it)){
+                pidMAX = pid.at(it);
+            }
+        }
+        if(pidMAX != pid.size()){
+            for (long ii=1;ii<pid.size();ii++){
+                if (pid.at(ii)-pid.at(ii-1) != 1){
+                    v3d_msg("Missing points\n\nNumber of points doesn't match the id list\n\n"
+                            "Please fix the input swc file.\n\n"
+                            "See shell for more info.\n\n"
+                            "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+                    std::cout<<"\n\n======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"N3DFix interrupted"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout << "Missing or displaced point with id = " << pid.at(ii-1)+1 << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "Please fix the input swc file\n\n" <<std::endl;
+                    std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc >sort_swc"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    return 0;
+                }
+            }
+        }
+    }
+
+
+    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma,pid);
     create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id, soma);
 
     //Changed
@@ -258,7 +331,7 @@ int _main(V3DPluginCallback2 &callback, QWidget *parent){
         }
 
     }
-    write_data(dend_original,dend,fileOpenName,fileSaveName);
+    write_data(dend_original,dend,fileOpenName,fileSaveName,x, y, z,tree_id,r,ppid,pid);
 
 //    for(long dend_num = 0;dend_num<dend.size();dend_num++){
 //        printf("dend[%d]\n",dend_num);
@@ -543,10 +616,80 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
 
 //    printf("Enter the main function\n");
     load_data(x,y,z,tree_id,r,ppid,pid,fileOpenName);
+    {
+        // verification steps:
+        // pid.at(0) == 1
+        // ppid.at(0) == -1
+        // MAX(pid) == pid.size()
 
-    //    print_data(x,y,z,tree_id,r,ppid,pid);
+        if( pid.at(0)!=1){
+            v3d_msg("First point in swc file should have id = 1.\n\n"
+                    "Please fix the input swc file.\n\n"
+                    "See shell for more info.\n\n"
+                    "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+            std::cout<<"\n\n======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"N3DFix interrupted"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout << "first point in swc file should have id = 1" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Please fix the input swc file\n\n" <<std::endl;
+            std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            return 0;
+        }
+        if( ppid.at(0)!=-1){
+            v3d_msg("first point in swc file should be the root.\n\n"
+                    "Please fix the input swc file.\n\nSee shell for more info.\n\n"
+                    "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+            std::cout<<"\n\n======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"N3DFix interrupted"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout << "first point in swc file should be the root" << std::endl;
+            std::cout << std::endl;
+            std::cout << "Please fix the input swc file\n\n" <<std::endl;
+            std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            std::cout<<"======================================================"<<std::endl;
+            return 0;
+        }
+        long pidMAX;
+        pidMAX = pid.at(pid.size()-1);
+        for (unsigned it = 0;it<pid.size(); it++){
+            if(pidMAX < pid.at(it)){
+                pidMAX = pid.at(it);
+            }
+        }
+        if(pidMAX != pid.size()){
+            for (long ii=1;ii<pid.size();ii++){
+                if (pid.at(ii)-pid.at(ii-1) != 1){
+                    v3d_msg("Missing points\n\nNumber of points doesn't match the id list\n\n"
+                            "Please fix the input swc file.\n\n"
+                            "See shell for more info.\n\n"
+                            "You can use the plug-in neuron_utilities > sort_neuron_swc > sort_swc\n\n");
+                    std::cout<<"\n\n======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"N3DFix interrupted"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout << "Missing or displaced point with id = " << pid.at(ii-1)+1 << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "Please fix the input swc file\n\n" <<std::endl;
+                    std::cout << "You can use the plug-in neuron_utilities > sort_neuron_swc >sort_swc"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    std::cout<<"======================================================"<<std::endl;
+                    return 0;
+                }
+            }
+        }
+    }
 
-    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma);
+
+    find_nodes(tree_id, ppid, nodes, endpoints, end_sec, soma,pid);
 
 
     create_tree(x, y, z, r, ppid, end_sec, Point, n3d, dend, pid,tree_id, soma);
@@ -572,7 +715,7 @@ bool N3DFix_func(const V3DPluginArgList & input, V3DPluginArgList & output){
 
 
 
-    write_data(dend_original,dend,fileOpenName,fileSaveName);
+    write_data(dend_original,dend,fileOpenName,fileSaveName,x, y, z,tree_id,r,ppid,pid);
 
 //    printf("pid = \t \t tid= \t ppid =\n");
 //    for(int i=0;i<pid.size();i++){
