@@ -24,6 +24,7 @@ struct TRACE_LS_PARA
     int b_RadiusFrom2D;
     int block_size;
     int adap_win;
+    int tracing_3D;
     V3DLONG in_sz[3];
 
     int  visible_thresh;//for APP1 use only
@@ -42,12 +43,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+
 
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
+bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
 
 QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
@@ -55,6 +59,7 @@ LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimp
 bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
 
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
+void processSmartScan_3D(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 NeuronTree pruneswc(NeuronTree nt, double length);
 
 bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & img,

@@ -192,9 +192,14 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
-    tileLocation.z = 0;
+    if(P.tracing_3D)
+        tileLocation.z = tileLocation.z -int(P.block_size/2);
+    else
+        tileLocation.z = 0;
     tileLocation.ev_pc1 = P.block_size;
     tileLocation.ev_pc2 = P.block_size;
+    tileLocation.ev_pc3 = P.block_size;
+
     tileLocation.category = 1;
     allTargetList.push_back(tileLocation);
 
@@ -223,7 +228,11 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         {
 //            if(flag)
 //            {
+            if(P.tracing_3D)
+                app_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+            else
                 app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+
 //                flag = false;
 //            }
 //            else
@@ -305,7 +314,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
     }
 
-    processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+    if(P.tracing_3D)
+        processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
+    else
+        processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
@@ -1124,28 +1136,458 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(tip_left.size()>0)
     {
-        QList<LandmarkList> group_tips_left = group_tips(tip_left,256,1);
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,128,1);
         for(int i = 0; i < group_tips_left.size();i++)
             ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
     }
     if(tip_right.size()>0)
     {
-        QList<LandmarkList> group_tips_right = group_tips(tip_right,256,2);
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,128,2);
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
     if(tip_up.size()>0)
     {
-        QList<LandmarkList> group_tips_up = group_tips(tip_up,256,3);
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,128,3);
         for(int i = 0; i < group_tips_up.size();i++)
             ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
     }
     if(tip_down.size()>0)
     {
-        QList<LandmarkList> group_tips_down = group_tips(tip_down,256,4);
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,128,4);
         for(int i = 0; i < group_tips_down.size();i++)
             ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+    }
+
+    if(ifs_swc)
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+
+            finalswc.push_back(tileswc_file[i]);
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+    }
+    else
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
+    }
+
+    total4DImage->deleteRawDataAndSetPointerToNull();
+
+    return true;
+}
+
+bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
+{
+    QString saveDirString;
+    if(P.method == 1)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
+    else
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+
+    QString imageSaveString = saveDirString;
+
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
+    start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
+    start_z = (tileLocation.z < 0)?  0 : tileLocation.z;
+
+
+    end_x = tileLocation.x+tileLocation.ev_pc1;
+    end_y = tileLocation.y+tileLocation.ev_pc2;
+    end_z = tileLocation.z+tileLocation.ev_pc3;
+
+    if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
+    if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+    if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
+
+
+    if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || tileLocation.z >= P.in_sz[2] - 1 || end_x <= 0 || end_y <= 0 || end_z <= 0)
+    {
+        printf("hit the boundary");
+        return true;
+    }
+
+    QString scanDataFileString = saveDirString;
+    scanDataFileString.append("/").append("scanData.txt");
+
+    unsigned char * total1dData = 0;
+    V3DLONG *in_sz = 0;
+
+    if(P.image)
+    {
+        in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = end_z - start_z;
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        try {total1dData = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+        V3DLONG i = 0;
+        for(V3DLONG iz = start_z; iz < end_z; iz++)
+        {
+            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+            for(V3DLONG iy = start_y; iy < end_y; iy++)
+            {
+                V3DLONG offsetj = iy*P.in_sz[0];
+                for(V3DLONG ix = start_x; ix < end_x; ix++)
+                {
+                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+    }else
+    {
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = end_z - start_z;
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,start_z,end_x-1,end_y-1,end_z-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+
+        }else
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,start_z,
+                               end_x,end_y,end_z))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+        }
+    }
+
+    Image4DSimple* total4DImage = new Image4DSimple;
+    total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    total4DImage->setOriginX(start_x);
+    total4DImage->setOriginY(start_y);
+    total4DImage->setOriginZ(start_z);
+
+    V3DLONG mysz[4];
+    mysz[0] = total4DImage->getXDim();
+    mysz[1] = total4DImage->getYDim();
+    mysz[2] = total4DImage->getZDim();
+    mysz[3] = total4DImage->getCDim();
+
+    total4DImage->setRezZ(3.0);//set the flg for 3d crawler
+
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
+
+    QString swcString = saveDirString;
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
+
+    PARA_APP1 p1;
+    PARA_APP2 p2;
+    QString versionStr = "v0.001";
+
+    if(P.method == 1)
+    {
+        p1.bkg_thresh = P.bkg_thresh;
+        p1.channel = P.channel-1;
+        p1.b_256cube = P.b_256cube;
+        p1.visible_thresh = P.visible_thresh;
+
+        p1.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p1.p4dImage = total4DImage;
+        p1.xc0 = p1.yc0 = p1.zc0 = 0;
+        p1.xc1 = p1.p4dImage->getXDim()-1;
+        p1.yc1 = p1.p4dImage->getYDim()-1;
+        p1.zc1 = p1.p4dImage->getZDim()-1;
+    }
+    else
+    {
+        p2.is_gsdt = P.is_gsdt;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = P.is_break_accept;
+        p2.bkg_thresh = P.bkg_thresh;
+        p2.length_thresh = P.length_thresh;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = P.b_256cube;
+        p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = total4DImage;
+        p2.p4dImage->setFileName(imageSaveString.toStdString().c_str());
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+    }
+
+    NeuronTree nt;
+    qDebug()<<scanDataFileString;
+    QFile saveTextFile;
+    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+    if (!saveTextFile.isOpen()){
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            return false;}     }
+    QTextStream outputStream;
+    outputStream.setDevice(&saveTextFile);
+    outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
+    saveTextFile.close();
+
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+    //v3d_msg(QString("%1,%2,%3,%4,%5").arg(start_x_updated).arg(end_x_updated).arg(start_y_updated).arg(end_y_updated).arg(tileLocation.ev_pc3));
+
+
+    QString finaloutputswc;
+    if(P.method == 1)
+       finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
+    else
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    vector<MyMarker*> finalswc;
+
+    if(ifs_swc)
+       finalswc = readSWC_file(finaloutputswc.toStdString());
+
+    if(P.method == 1)
+        qDebug()<<"starting app1";
+    else
+        qDebug()<<"starting app2";
+    qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+
+    vector<MyMarker*> tileswc_file;
+
+    if(inputRootList.size() <1)
+    {
+        if(P.method == 1)
+        {
+            p1.outswc_file =swcString;
+            proc_app1(callback, p1, versionStr);
+        }
+        else
+        {
+            p2.outswc_file =swcString;
+            proc_app2(callback, p2, versionStr);
+        }
+    }
+    else
+    {
+        for(int i = 0; i < inputRootList.size(); i++)
+        {
+            QString poutswc_file = swcString + (QString::number(i)) + (".swc");
+            if(P.method == 1)
+                p1.outswc_file =poutswc_file;
+            else
+                p2.outswc_file =poutswc_file;
+
+            bool flag = false;
+            LocationSimple RootNewLocation;
+            RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
+            RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
+            RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
+
+            const float dd = 0.5;
+
+            if(RootNewLocation.x<-dd || RootNewLocation.x>total4DImage->getXDim()-1+dd || RootNewLocation.y<-dd || RootNewLocation.y>total4DImage->getYDim()-1+dd || RootNewLocation.z<-dd || RootNewLocation.z>total4DImage->getZDim()-1+dd)
+                continue;
+
+            if(tileswc_file.size()>0)
+            {
+                for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
+                {
+                    double dis = sqrt(pow2(RootNewLocation.x - tileswc_file.at(dd)->x) + pow2(RootNewLocation.y - tileswc_file.at(dd)->y) + pow2(RootNewLocation.z - tileswc_file.at(dd)->z));
+                    if(dis < 10.0)
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!flag)
+            {
+                if(P.method == 1)
+                {
+
+                    p1.landmarks.push_back(RootNewLocation);
+                    proc_app1(callback, p1, versionStr);
+                    p1.landmarks.clear();
+                }else
+                {
+//                    v3d_msg(QString("origin is (%1,%2,%3").arg(total4DImage->getOriginX()).arg(total4DImage->getOriginY()).arg(total4DImage->getOriginZ()));
+//                    v3d_msg(QString("rootbefore is (%1,%2,%3").arg(inputRootList.at(i).x).arg(inputRootList.at(i).y).arg(inputRootList.at(i).z));
+
+                    v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
+                    p2.landmarks.push_back(RootNewLocation);
+                    proc_app2(callback, p2, versionStr);
+                    p2.landmarks.clear();
+                }
+
+                vector<MyMarker*> inputswc = readSWC_file(poutswc_file.toStdString());
+
+                for(V3DLONG d = 0; d < inputswc.size(); d++)
+                {
+                    tileswc_file.push_back(inputswc[d]);
+                }
+            }
+        }
+        saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+        nt = readSWC_file(swcString);
+    }
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    LandmarkList tip_left;
+    LandmarkList tip_right;
+    LandmarkList tip_up ;
+    LandmarkList tip_down;
+    LandmarkList tip_out;
+    LandmarkList tip_in;
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    for (V3DLONG i=0;i<list.size();i++)
+    {
+//        if (childs[i].size()==0)
+//        {
+            NeuronSWC curr = list.at(i);
+            LocationSimple newTip;
+            bool check_tip = false;
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim()
+                   || curr.z < 0.05*  total4DImage->getZDim() || curr.z > 0.95 *  total4DImage->getZDim())
+            {
+//                V3DLONG node_pn = getParent(i,nt);
+//                V3DLONG node_pn_2nd;
+//                if( list.at(node_pn).pn < 0)
+//                {
+//                    node_pn_2nd = node_pn;
+//                }
+//                else
+//                {
+//                    node_pn_2nd = getParent(node_pn,nt);
+//                }
+
+//                newTip.x = list.at(node_pn_2nd).x + total4DImage->getOriginX();
+//                newTip.y = list.at(node_pn_2nd).y + total4DImage->getOriginY();
+//                newTip.z = list.at(node_pn_2nd).z + total4DImage->getOriginZ();
+
+//                newTip.radius = list.at(node_pn_2nd).r;
+
+                newTip.x = curr.x + total4DImage->getOriginX();
+                newTip.y = curr.y + total4DImage->getOriginY();
+                newTip.z = curr.z + total4DImage->getOriginZ();
+                newTip.radius = curr.r;
+
+                for(V3DLONG j = 0; j < finalswc.size(); j++ )
+                {
+                    double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
+                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
+                   // if(dis < 10)
+                    {
+                        check_tip = true;
+                        break;
+                    }
+                }
+            }
+            if(check_tip) continue;
+            if( curr.x < 0.05* total4DImage->getXDim())
+            {
+                tip_left.push_back(newTip);
+            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            {
+                tip_right.push_back(newTip);
+            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            {
+                tip_up.push_back(newTip);
+            }else if (curr.y > 0.95*total4DImage->getYDim())
+            {
+                tip_down.push_back(newTip);
+            }else if (curr.z < 0.05 * total4DImage->getZDim())
+            {
+                tip_out.push_back(newTip);
+            }else if (curr.z > 0.95*total4DImage->getZDim())
+            {
+                tip_in.push_back(newTip);
+            }
+
+      //  }
+    }
+
+    if(tip_left.size()>0)
+    {
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,128,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding_3D(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
+    if(tip_right.size()>0)
+    {
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,128,2);
+        for(int i = 0; i < group_tips_right.size();i++)
+            ada_win_finding_3D(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+    }
+    if(tip_up.size()>0)
+    {
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,128,3);
+        for(int i = 0; i < group_tips_up.size();i++)
+            ada_win_finding_3D(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+    }
+    if(tip_down.size()>0)
+    {
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,128,4);
+        for(int i = 0; i < group_tips_down.size();i++)
+            ada_win_finding_3D(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+    }
+
+    if(tip_out.size()>0)
+    {
+        QList<LandmarkList> group_tips_out = group_tips(tip_out,128,5);
+        for(int i = 0; i < group_tips_out.size();i++)
+            ada_win_finding_3D(group_tips_out.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,5);
+    }
+
+    if(tip_in.size()>0)
+    {
+        QList<LandmarkList> group_tips_in = group_tips(tip_in,128,6);
+        for(int i = 0; i < group_tips_in.size();i++)
+            ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
     }
 
     if(ifs_swc)
@@ -1325,6 +1767,172 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
         iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
         QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
         imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        myfile << imagename.toStdString();
+        myfile << "\n";
+    }
+    myfile.flush();
+    myfile.close();
+    ifs_2nd.close();
+}
+
+void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
+{
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    int offsetX, offsetY,offsetZ,sizeX, sizeY, sizeZ;
+    string swcfilepath;
+    vector<MyMarker*> outswc,inputswc;
+    int node_type = 1;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetZ_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000,offsetZ_max =-10000000;
+    int origin_x,origin_y,origin_z;
+
+    QString folderpath = QFileInfo(fileWithData).absolutePath();
+    V3DLONG in_sz[4];
+    QString fileSaveName = fileWithData + "wofusion.swc";
+
+
+    while(ifs && getline(ifs, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> offsetZ >> swcfilepath >> sizeX >> sizeY >> sizeZ;
+        if(offsetX < offsetX_min) offsetX_min = offsetX;
+        if(offsetY < offsetY_min) offsetY_min = offsetY;
+        if(offsetZ < offsetZ_min) offsetZ_min = offsetZ;
+
+        if(offsetX > offsetX_max) offsetX_max = offsetX;
+        if(offsetY > offsetY_max) offsetY_max = offsetY;
+        if(offsetZ > offsetZ_max) offsetZ_max = offsetZ;
+
+
+        if(node_type == 1)
+        {
+            origin_x = offsetX;
+            origin_y = offsetY;
+            origin_z = offsetZ;
+
+
+            QString firstImagepath = folderpath + "/" +   QFileInfo(QString::fromStdString(swcfilepath)).baseName().append(".v3draw");
+            unsigned char * data1d = 0;
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, firstImagepath.toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                cerr<<"load image "<<firstImagepath.toStdString()<<" error!"<<endl;
+                return;
+            }
+            if(data1d) {delete []data1d; data1d=0;}
+
+            inputswc = readSWC_file(swcfilepath);;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->x = inputswc[d]->x + offsetX;
+                inputswc[d]->y = inputswc[d]->y + offsetY;
+                inputswc[d]->z = inputswc[d]->z + offsetZ;
+                inputswc[d]->type = node_type;
+                outswc.push_back(inputswc[d]);
+            }
+            saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
+        }else
+        {
+            inputswc = readSWC_file(swcfilepath);
+            NeuronTree nt = readSWC_file(QString(swcfilepath.c_str()));
+            QVector<QVector<V3DLONG> > childs;
+            V3DLONG neuronNum = nt.listNeuron.size();
+            childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                V3DLONG par = nt.listNeuron[i].pn;
+                if (par<0) continue;
+                childs[nt.hashNeuron.value(par)].push_back(i);
+            }
+            outswc = readSWC_file(fileSaveName.toStdString());
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->x = inputswc[d]->x + offsetX;
+                inputswc[d]->y = inputswc[d]->y + offsetY;
+                inputswc[d]->z = inputswc[d]->z + offsetZ;
+                inputswc[d]->type = node_type;
+                int flag_prune = 0;
+//                for(int dd = 0; dd < outswc.size();dd++)
+//                {
+//                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
+//                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
+//                    {
+//                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
+//                        flag_prune = 1;
+//                        break;
+//                    }
+
+//                }
+                if(flag_prune == 0)
+                {
+                   outswc.push_back(inputswc[d]);
+                }
+
+            }
+            saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
+
+        }
+        node_type++;
+    }
+    ifs.close();
+
+
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x = outswc[i]->x - offsetX_min;
+        outswc[i]->y = outswc[i]->y - offsetY_min;
+        outswc[i]->z = outswc[i]->z - offsetZ_min;
+    }
+
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
+//    NeuronTree nt_final = readSWC_file(fileSaveName);
+//    QList<NeuronSWC> neuron_final_sorted;
+
+//    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
+//    {
+//        v3d_msg("fail to call swc sorting function.",0);
+//    }
+
+//    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+
+    //write tc file
+
+    QString tc_name = fileWithData + ".tc";
+    ofstream myfile;
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    if (myfile.is_open()==true)
+    {
+        qDebug()<<"initial file can be opened for reading and will be removed";
+
+        myfile.close();
+        remove(tc_name.toStdString().c_str());
+    }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    if (!myfile.is_open()){
+        qDebug()<<"file's not really open...";
+        return;
+    }
+
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << node_type-1 << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] + offsetZ_max - offsetZ_min<< " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+
+    ifstream ifs_2nd(fileWithData.toLatin1());
+    while(ifs_2nd && getline(ifs_2nd, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> offsetZ >> swcfilepath >> sizeX >> sizeY >> sizeZ;
+        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+        imagename.append(QString("   ( %1, %2, %3) ( %4, %5, %6)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(offsetZ- origin_z).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(sizeZ-1 + offsetZ - origin_z));
         myfile << imagename.toStdString();
         myfile << "\n";
     }
@@ -2024,6 +2632,8 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
+    if(nt_neutube.listNeuron.size() ==0)
+        return true;
 
     NeuronTree nt;
     ifstream ifs_swcString(swcString.toStdString().c_str());
@@ -2289,6 +2899,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
 
     float min_y = INF, max_y = -INF;
     float min_x = INF, max_x = -INF;
+
     double adaptive_size;
     double max_r = -INF;
 
@@ -2313,7 +2924,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         adaptive_size = (max_x - min_x)*1.2;
     }
 
-    if(adaptive_size <= 256) adaptive_size = 256;
+    if(adaptive_size <= 128) adaptive_size = 128;
     if(adaptive_size >= block_size) adaptive_size = block_size;
 
     LocationSimple newTarget;
@@ -2322,29 +2933,142 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     {
         newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
         newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.ev_pc3 = 1;
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
         newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.ev_pc3 = 2;
 
     }else if(direction == 3)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
         newTarget.y = -floor(adaptive_size*(1.0-overlap)) + tileLocation.y;
-        newTarget.ev_pc3 = 3;
-
-    }else
+    }else if(direction == 4)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
         newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size*overlap);
-        newTarget.ev_pc3 = 4;
-
     }
     newTarget.z = total4DImage->getOriginZ();
     newTarget.ev_pc1 = adaptive_size;
     newTarget.ev_pc2 = adaptive_size;
+    newTarget.ev_pc3 = adaptive_size;
+
+    newTarget.radius = max_r;
+    newTargetList->push_back(newTarget);
+    return true;
+}
+
+bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
+{
+    newTipsList->push_back(tips);
+    double overlap = 0.1;
+
+    float min_x = INF, max_x = -INF;
+    float min_y = INF, max_y = -INF;
+    float min_z = INF, max_z = -INF;
+
+
+    double adaptive_size_x,adaptive_size_y,adaptive_size_z;
+    double max_r = -INF;
+
+    if(direction == 1 || direction == 2)
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
+            if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
+
+            if(tips.at(i).z <= min_z) min_z = tips.at(i).z;
+            if(tips.at(i).z >= max_z) max_z = tips.at(i).z;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_y = (max_y - min_y)*1.2;
+        adaptive_size_z = (max_z - min_z)*1.2;
+        adaptive_size_x = adaptive_size_y;
+
+    }else if(direction == 3 || direction == 4)
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
+            if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
+
+            if(tips.at(i).z <= min_z) min_z = tips.at(i).z;
+            if(tips.at(i).z >= max_z) max_z = tips.at(i).z;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_x = (max_x - min_x)*1.2;
+        adaptive_size_z = (max_z - min_z)*1.2;
+        adaptive_size_y = adaptive_size_x;
+    }else
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
+            if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
+
+            if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
+            if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_x = (max_x - min_x)*1.2;
+        adaptive_size_y = (max_y - min_y)*1.2;
+        adaptive_size_z = adaptive_size_x;
+    }
+
+    adaptive_size_x = (adaptive_size_x <= 128) ? 128 : adaptive_size_x;
+    adaptive_size_y = (adaptive_size_y <= 128) ? 128 : adaptive_size_y;
+    adaptive_size_z = (adaptive_size_z <= 64) ? 64 : adaptive_size_z;
+
+
+    adaptive_size_x = (adaptive_size_x >= block_size) ? block_size : adaptive_size_x;
+    adaptive_size_y = (adaptive_size_y >= block_size) ? block_size : adaptive_size_y;
+    adaptive_size_z = (adaptive_size_z >= block_size) ? block_size : adaptive_size_z;
+
+    LocationSimple newTarget;
+
+    if(direction == 1)
+    {
+        newTarget.x = -floor(adaptive_size_x*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2 - total4DImage->getOriginZ()) + tileLocation.z;
+    }else if(direction == 2)
+    {
+        newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size_x*overlap);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2 - total4DImage->getOriginZ()) + tileLocation.z;
+
+    }else if(direction == 3)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = -floor(adaptive_size_y*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2) - total4DImage->getOriginZ() + tileLocation.z;
+    }else if(direction == 4)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size_y*overlap);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2) - total4DImage->getOriginZ() + tileLocation.z;
+    }else if(direction == 5)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2 - total4DImage->getOriginX()) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.z = -floor(adaptive_size_z*(1.0-overlap)) + tileLocation.z;
+    }else if(direction == 6)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2 - total4DImage->getOriginX()) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.z = tileLocation.z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
+    }
+
+    newTarget.ev_pc1 = adaptive_size_x;
+    newTarget.ev_pc2 = adaptive_size_y;
+    newTarget.ev_pc3 = adaptive_size_z;
+
     newTarget.radius = max_r;
 
     newTargetList->push_back(newTarget);
@@ -2356,7 +3080,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
     QList<LandmarkList> groupTips;
 
    //bubble sort
-   if(direction == 1 || direction == 2)
+   if(direction == 1 || direction == 2 || direction == 5 || direction == 6)
    {
        for(int i = 0; i < tips.size();i++)
        {

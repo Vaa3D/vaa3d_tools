@@ -20,7 +20,7 @@ Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
 QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
-            <<tr("trace_APP2")
+             <<tr("trace_APP2")
            <<tr("trace_APP1")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
@@ -87,6 +87,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 2;
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_app(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_APP1"))
 	{

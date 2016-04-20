@@ -73,6 +73,9 @@ class neuroncrawler_app2_raw : public QDialog
             b_adapWinchecker = new QCheckBox();
             b_adapWinchecker->setChecked(false);
 
+            b_3Dchecker = new QCheckBox();
+            b_3Dchecker->setChecked(false);
+
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
             if(curwin)
@@ -112,11 +115,14 @@ class neuroncrawler_app2_raw : public QDialog
             layout->addWidget(new QLabel("length_thresh"),4,0);
             layout->addWidget(lenthresh_editor, 4,1,1,5);
             layout->addWidget(new QLabel("SR_ratio"),5,0);
-            layout->addWidget(srratio_editor, 5,1,1,5);
+            layout->addWidget(srratio_editor, 5,1,1,3);
+            layout->addWidget(new QLabel("3D crawler?"),5,4);
+            layout->addWidget(b_3Dchecker);
             layout->addWidget(new QLabel("block_size"),6,0);
             layout->addWidget(block_spinbox, 6,1,1,3);
             layout->addWidget(new QLabel("adaptive size?"),6,4);
             layout->addWidget(b_adapWinchecker);
+
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image or tc file:")),7,0);
             layout->addWidget(raw_filepath,7,1,1,4);
@@ -153,6 +159,7 @@ class neuroncrawler_app2_raw : public QDialog
             connect(b256_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_radius2Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(b_3Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
@@ -179,6 +186,8 @@ class neuroncrawler_app2_raw : public QDialog
             b256_checker->isChecked()? b_256cube = 1 : b_256cube = 0;
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
             b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
+            b_3Dchecker->isChecked() ? tracing_3D = 1 : tracing_3D = 0;
+
 
             block_size = block_spinbox->value();
             rawfilename = raw_filepath->text();
@@ -229,6 +238,8 @@ class neuroncrawler_app2_raw : public QDialog
         QCheckBox * b256_checker;
         QCheckBox * b_radius2Dchecker;
         QCheckBox * b_adapWinchecker;
+        QCheckBox * b_3Dchecker;
+
 
 
         QSpinBox * block_spinbox;
@@ -252,6 +263,7 @@ class neuroncrawler_app2_raw : public QDialog
         int b_RadiusFrom2D;
         int block_size;
         int adap_win;
+        int tracing_3D;
 
         QString rawfilename;
         QString markerfilename;
