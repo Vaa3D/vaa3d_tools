@@ -9,7 +9,7 @@
 
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 
 
 #include <boost/lexical_cast.hpp>
@@ -20,6 +20,9 @@ template <class T> T pow2(T a)
 }
 
 using namespace std;
+using namespace iim;
+
+
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QString fileOpenName)
 {
@@ -150,7 +153,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[1] = vim.sz[1];
             P.in_sz[2] = vim.sz[2];
 
-        }else
+        }else if ((QFileInfo(fileOpenName).completeSuffix() == "raw") || (QFileInfo(fileOpenName).completeSuffix() == "v3draw"))
         {
             unsigned char * datald = 0;
             V3DLONG *in_zz = 0;
@@ -164,6 +167,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[0] = in_zz[0];
             P.in_sz[1] = in_zz[1];
             P.in_sz[2] = in_zz[2];
+        }else
+        {
+            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
+            P.in_sz[0] = aVolume->getDIM_H();
+            P.in_sz[1] = aVolume->getDIM_V();
+            P.in_sz[2] = aVolume->getDIM_D();
         }
 
         vector<MyMarker> file_inmarkers;
@@ -874,9 +883,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-
-
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -887,7 +894,17 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
         }
+
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;

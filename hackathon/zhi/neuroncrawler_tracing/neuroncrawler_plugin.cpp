@@ -12,8 +12,12 @@
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+
 
 using namespace std;
+using namespace iim;
+
 Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
 
  
@@ -53,7 +57,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -74,7 +78,11 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
+
         P.is_gsdt = dialog.is_gsdt;
         P.is_break_accept = dialog.is_break_accept;
         P.bkg_thresh = dialog.bkg_thresh;
@@ -89,6 +97,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.method = 2;
         P.tracing_3D = dialog.tracing_3D;
         crawler_raw_app(callback,parent,P,bmenu);
+
     }else if (menu_name == tr("trace_APP1"))
 	{
         TRACE_LS_PARA P;

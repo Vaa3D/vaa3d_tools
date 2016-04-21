@@ -32,7 +32,7 @@ using std::endl;
 // POSIX Threads
 //#include <pthread.h> 
 //#define PROCESSORS 1 // maximum threads
-#define PI 3.14159265
+#define pi 3.14159265
 #define INF 1E10
 #define EPS 1E-10
 #define NPEAKS 8 // numbers of peaks of phase correlation
@@ -4760,7 +4760,7 @@ template <class T1, class T2, class Y_IMG1, class Y_IMG2> void YImg<T1, T2, Y_IM
                     T1 a = pOut.pImg[idx];
                     T1 b = pOut.pImg[idx+1];
                     
-                    T1 phi = 2*PI*(ix*frac_x + jy*frac_y + kz*frac_z); // exp(i*phi)
+                    T1 phi = 2*pi*(ix*frac_x + jy*frac_y + kz*frac_z); // exp(i*phi)
                     
                     T1 c = cos(phi);
                     T1 d = sin(phi);
