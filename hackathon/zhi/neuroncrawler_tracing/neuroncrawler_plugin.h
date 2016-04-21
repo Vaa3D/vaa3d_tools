@@ -267,10 +267,7 @@ class neuroncrawler_app2_raw : public QDialog
         QCheckBox * b_adapWinchecker;
         QCheckBox * b_3Dchecker;
 
-
-
         QSpinBox * block_spinbox;
-
 
         QLineEdit * raw_filepath;
         QLineEdit * terafly_filepath;

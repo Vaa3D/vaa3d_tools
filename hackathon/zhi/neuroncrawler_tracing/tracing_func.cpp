@@ -2972,7 +2972,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     if(direction == 1)
     {
         newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size)/2);
+        newTarget.y = floor((min_y + max_y - adaptive_size)/2;
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
