@@ -411,8 +411,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 return false;
             }
 
-
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -423,6 +422,15 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
         }
     }
 
@@ -755,6 +763,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+
 
     QString imageSaveString = saveDirString;
 
@@ -1213,6 +1222,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
 
+  //  v3d_msg(QString("root is (%1,%2,%3").arg(tileLocation.x).arg(tileLocation.y).arg(tileLocation.z));
+
+
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
@@ -1228,6 +1240,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
     if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
+
+/*    v3d_msg(QString("start is (%1,%2,%3").arg(start_x).arg(start_y).arg(start_z));
+    v3d_msg(QString("end is (%1,%2,%3").arg(end_x).arg(end_y).arg(end_z))*/;
 
 
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || tileLocation.z >= P.in_sz[2] - 1 || end_x <= 0 || end_y <= 0 || end_z <= 0)
@@ -1289,8 +1304,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 return false;
             }
 
-
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -1301,6 +1315,15 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = end_z - start_z;
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
         }
     }
 
@@ -3052,35 +3075,39 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
     if(direction == 1)
     {
         newTarget.x = -floor(adaptive_size_x*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2 - total4DImage->getOriginZ()) + tileLocation.z;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size_x*overlap);
-        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
-        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2 - total4DImage->getOriginZ()) + tileLocation.z;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
 
     }else if(direction == 3)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
         newTarget.y = -floor(adaptive_size_y*(1.0-overlap)) + tileLocation.y;
-        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2) - total4DImage->getOriginZ() + tileLocation.z;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
     }else if(direction == 4)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
         newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size_y*overlap);
-        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2) - total4DImage->getOriginZ() + tileLocation.z;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
     }else if(direction == 5)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2 - total4DImage->getOriginX()) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
         newTarget.z = -floor(adaptive_size_z*(1.0-overlap)) + tileLocation.z;
     }else if(direction == 6)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2 - total4DImage->getOriginX()) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
         newTarget.z = tileLocation.z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
     }
+
+
+   // v3d_msg(QString("zmin is %1, zmax is %2, z is %3, z_winsize is %4").arg(min_z).arg(max_z).arg(tileLocation.z).arg(adaptive_size_z));
+
 
     newTarget.ev_pc1 = adaptive_size_x;
     newTarget.ev_pc2 = adaptive_size_y;
