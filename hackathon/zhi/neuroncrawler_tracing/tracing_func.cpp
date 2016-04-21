@@ -2009,7 +2009,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[1] = vim.sz[1];
             P.in_sz[2] = vim.sz[2];
 
-        }else
+        }else if ((QFileInfo(fileOpenName).completeSuffix() == "raw") || (QFileInfo(fileOpenName).completeSuffix() == "v3draw"))
         {
             unsigned char * datald = 0;
             V3DLONG *in_zz = 0;
@@ -2023,7 +2023,14 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[0] = in_zz[0];
             P.in_sz[1] = in_zz[1];
             P.in_sz[2] = in_zz[2];
+        }else
+        {
+            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
+            P.in_sz[0] = aVolume->getDIM_H();
+            P.in_sz[1] = aVolume->getDIM_V();
+            P.in_sz[2] = aVolume->getDIM_D();
         }
+
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
         LocationSimple t;
@@ -2050,9 +2057,13 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
-    tileLocation.z = 0;
+    if(P.tracing_3D)
+        tileLocation.z = tileLocation.z -int(P.block_size/2);
+    else
+        tileLocation.z = 0;
     tileLocation.ev_pc1 = P.block_size;
     tileLocation.ev_pc2 = P.block_size;
+    tileLocation.ev_pc3 = P.block_size;
 
     allTargetList.push_back(tileLocation);
 
@@ -2080,7 +2091,12 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         newTargetList.clear();
         newTipsList.clear();
         if(P.adap_win)
-            all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+        {
+             if(P.tracing_3D)
+                 all_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+             else
+                 all_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+        }
         else
             all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
         allTipsList.removeAt(0);
@@ -2132,7 +2148,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
 
-    processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+    if(P.tracing_3D)
+        processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
+    else
+        processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
@@ -2763,6 +2782,397 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
         for(int i = 0; i < group_tips_down.size();i++)
             ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+    }
+
+    vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+
+    if(ifs_swc)
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+
+            finalswc.push_back(tileswc_file[i]);
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+    }
+    else
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
+    }
+
+
+    total4DImage->deleteRawDataAndSetPointerToNull();
+    return true;
+}
+
+bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
+{
+
+    QString saveDirString;
+    if(P.method ==3)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+    else if (P.method ==4)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+    else if (P.method ==5)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+    else if (P.method ==2)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+
+
+
+    QString imageSaveString = saveDirString;
+
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
+    start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
+    start_z = (tileLocation.z < 0)?  0 : tileLocation.z;
+
+    end_x = tileLocation.x+tileLocation.ev_pc1;
+    end_y = tileLocation.y+tileLocation.ev_pc2;
+    end_z = tileLocation.z+tileLocation.ev_pc3;
+
+
+    if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
+    if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+    if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
+
+    if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || tileLocation.z >= P.in_sz[2] - 1 || end_x <= 0 || end_y <= 0 || end_z <= 0)
+    {
+        printf("hit the boundary");
+        return true;
+    }
+
+    unsigned char * total1dData = 0;
+    V3DLONG *in_sz = 0;
+
+    if(P.image)
+    {
+        in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = end_z - start_z;
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        try {total1dData = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+        V3DLONG i = 0;
+        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
+        {
+            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+            for(V3DLONG iy = start_y; iy < end_y; iy++)
+            {
+                V3DLONG offsetj = iy*P.in_sz[0];
+                for(V3DLONG ix = start_x; ix < end_x; ix++)
+                {
+                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+    }else
+    {
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = end_z - start_z;
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,start_z,end_x-1,end_y-1,end_z-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+
+//            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2];i++)
+//            {
+//                if(total1dData[i] < 100)  total1dData[i] =0;
+//            }
+
+
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,start_z,
+                               end_x,end_y,end_z))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = end_z - start_z;
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+        }
+    }
+
+    Image4DSimple* total4DImage = new Image4DSimple;
+    total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    total4DImage->setOriginX(start_x);
+    total4DImage->setOriginY(start_y);
+    total4DImage->setOriginZ(start_z);
+
+    V3DLONG mysz[4];
+    mysz[0] = total4DImage->getXDim();
+    mysz[1] = total4DImage->getYDim();
+    mysz[2] = total4DImage->getZDim();
+    mysz[3] = total4DImage->getCDim();
+
+    total4DImage->setRezZ(3.0);//set the flg for 3d crawler
+
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
+
+    QString scanDataFileString = saveDirString;
+    scanDataFileString.append("/").append("scanData.txt");
+    QString swcString = saveDirString;
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
+
+    qDebug()<<scanDataFileString;
+    QFile saveTextFile;
+    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+    if (!saveTextFile.isOpen()){
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            return false;}     }
+    QTextStream outputStream;
+    outputStream.setDevice(&saveTextFile);
+    outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
+    saveTextFile.close();
+
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+
+    QString finaloutputswc;
+    if(P.method ==3)
+        finaloutputswc = P.inimg_file + ("_nc_neutube_adp_3D.swc");
+    else if (P.method ==4)
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp_3D.swc");
+    else if (P.method ==5)
+        finaloutputswc = P.inimg_file + ("_nc_most_adp_3D.swc");
+    else if (P.method ==2)
+        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    vector<MyMarker*> finalswc;
+
+    if(ifs_swc)
+       finalswc = readSWC_file(finaloutputswc.toStdString());
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    QString full_plugin_name;
+    QString func_name;
+
+    arg.type = "random";std::vector<char*> arg_input;
+    std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+    arg_input.push_back(fileName_string);
+    arg.p = (void *) & arg_input; input<< arg;
+
+    char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
+    arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+    arg.type = "random";
+    std::vector<char*> arg_para;
+
+    if(P.method ==3 || P.method == 2)
+    {
+        arg_para.push_back("1");
+        arg_para.push_back("1");
+        full_plugin_name = "neuTube";
+        func_name =  "neutube_trace";
+    }else if(P.method ==4)
+    {
+        arg_para.push_back("1");
+        arg_para.push_back("1");
+        full_plugin_name = "snake";
+        func_name =  "snake_trace";
+    }else if(P.method ==5 )
+    {
+        string S_channel = boost::lexical_cast<string>(P.channel);
+        char* C_channel = new char[S_channel.length() + 1];
+        strcpy(C_channel,S_channel.c_str());
+        arg_para.push_back(C_channel);
+
+        string S_background_th = boost::lexical_cast<string>(P.bkg_thresh);
+        char* C_background_th = new char[S_background_th.length() + 1];
+        strcpy(C_background_th,S_background_th.c_str());
+        arg_para.push_back(C_background_th);
+
+        string S_seed_win = boost::lexical_cast<string>(P.seed_win);
+        char* C_seed_win = new char[S_seed_win.length() + 1];
+        strcpy(C_seed_win,S_seed_win.c_str());
+        arg_para.push_back(C_seed_win);
+
+        string S_slip_win = boost::lexical_cast<string>(P.slip_win);
+        char* C_slip_win = new char[S_slip_win.length() + 1];
+        strcpy(C_slip_win,S_slip_win.c_str());
+        arg_para.push_back(C_slip_win);
+
+        full_plugin_name = "mostVesselTracer";
+        func_name =  "MOST_trace";
+    }
+
+    arg.p = (void *) & arg_para; input << arg;
+
+    if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+    {
+
+        printf("Can not find the tracing plugin!\n");
+        return false;
+    }
+
+
+    NeuronTree nt_neutube;
+    QString swcNEUTUBE = saveDirString;
+    if(P.method ==3 || P.method ==2)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
+    else if (P.method ==4 )
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
+    else if (P.method ==5 )
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
+
+    nt_neutube = readSWC_file(swcNEUTUBE);
+    if(nt_neutube.listNeuron.size() ==0)
+        return true;
+
+    NeuronTree nt;
+    ifstream ifs_swcString(swcString.toStdString().c_str());
+    if(!ifs_swcString)
+    {
+        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
+        export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
+
+    }else
+    {
+        NeuronTree nt_tile = readSWC_file(swcString);
+        LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
+        if(inputRootList_pruned.size()<1)
+            return true;
+        else
+        {
+            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
+            combine_list2file(nt.listNeuron, swcString);
+
+        }
+    }
+
+    LandmarkList tip_left;
+    LandmarkList tip_right;
+    LandmarkList tip_up ;
+    LandmarkList tip_down;
+    LandmarkList tip_out;
+    LandmarkList tip_in;
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    for (V3DLONG i=0;i<list.size();i++)
+    {
+            NeuronSWC curr = list.at(i);
+            LocationSimple newTip;
+            bool check_tip = false;
+
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim()
+                   || curr.z < 0.05*  total4DImage->getZDim() || curr.z > 0.95 *  total4DImage->getZDim())
+            {
+                newTip.x = curr.x + total4DImage->getOriginX();
+                newTip.y = curr.y + total4DImage->getOriginY();
+                newTip.z = curr.z + total4DImage->getOriginZ();
+                newTip.radius = curr.r;
+                for(V3DLONG j = 0; j < finalswc.size(); j++ )
+                {
+                    double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
+                    if(dis < 20)
+                    {
+                        check_tip = true;
+                        break;
+                    }
+                }
+            }
+            if(check_tip) continue;
+            if( curr.x < 0.05* total4DImage->getXDim())
+            {
+                tip_left.push_back(newTip);
+            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            {
+                tip_right.push_back(newTip);
+            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            {
+                tip_up.push_back(newTip);
+            }else if (curr.y > 0.95*total4DImage->getYDim())
+            {
+                tip_down.push_back(newTip);
+            }else if (curr.z < 0.05 * total4DImage->getZDim())
+            {
+                tip_out.push_back(newTip);
+            }else if (curr.z > 0.95*total4DImage->getZDim())
+            {
+                tip_in.push_back(newTip);
+            }
+
+    }
+
+    if(tip_left.size()>0)
+    {
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,128,1);
+        for(int i = 0; i < group_tips_left.size();i++)
+            ada_win_finding_3D(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+    }
+    if(tip_right.size()>0)
+    {
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,128,2);
+        for(int i = 0; i < group_tips_right.size();i++)
+            ada_win_finding_3D(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+    }
+    if(tip_up.size()>0)
+    {
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,128,3);
+        for(int i = 0; i < group_tips_up.size();i++)
+            ada_win_finding_3D(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+    }
+    if(tip_down.size()>0)
+    {
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,128,4);
+        for(int i = 0; i < group_tips_down.size();i++)
+            ada_win_finding_3D(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+    }
+
+    if(tip_out.size()>0)
+    {
+        QList<LandmarkList> group_tips_out = group_tips(tip_out,128,5);
+        for(int i = 0; i < group_tips_out.size();i++)
+            ada_win_finding_3D(group_tips_out.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,5);
+    }
+
+    if(tip_in.size()>0)
+    {
+        QList<LandmarkList> group_tips_in = group_tips(tip_in,128,6);
+        for(int i = 0; i < group_tips_in.size();i++)
+            ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
     }
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());

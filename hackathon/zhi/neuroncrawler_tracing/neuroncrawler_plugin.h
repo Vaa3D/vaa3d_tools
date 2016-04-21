@@ -546,11 +546,21 @@ class neuroncrawler_most_raw : public QDialog
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
+
+            terafly_filepath = new QLineEdit();
+            openteraflyFile = new QPushButton(QObject::tr("..."));
+
+            b_3Dchecker = new QCheckBox();
+            b_3Dchecker->setChecked(false);
+
+
             if(curwin)
             {
                 raw_filepath->setText(cb.getImageName(curwin));
                 raw_filepath->setDisabled(true);
                 openrawFile->setDisabled(true);
+                terafly_filepath->setDisabled(true);
+                openteraflyFile->setDisabled(true);
             }
 
             marker_filepath = new QLineEdit();
@@ -568,12 +578,11 @@ class neuroncrawler_most_raw : public QDialog
             layout->addWidget(new QLabel("seed window size)"),2,0);
             layout->addWidget(seedwin_spinbox, 2,1,1,5);
 
-            QHBoxLayout * hbox1 = new QHBoxLayout();
-            hbox1->addWidget(new QLabel("slip window size"));
-            hbox1->addWidget(slipwin_spinbox);
 
-            layout->addLayout(hbox1,3,0,1,6);
-
+            layout->addWidget(new QLabel("slip window size"),3,0);
+            layout->addWidget(slipwin_spinbox, 3,1,1,3);
+            layout->addWidget(new QLabel("3D crawler?"),3,4);
+            layout->addWidget(b_3Dchecker);
 
             layout->addWidget(new QLabel("block_size"),4,0);
             layout->addWidget(block_spinbox, 4,1,1,3);
@@ -588,6 +597,10 @@ class neuroncrawler_most_raw : public QDialog
             layout->addWidget(marker_filepath,6,1,1,4);
             layout->addWidget(openmarkerFile,6,5,1,1);
 
+            layout->addWidget(new QLabel(QObject::tr("terafly format file:")),7,0);
+            layout->addWidget(terafly_filepath,7,1,1,4);
+            layout->addWidget(openteraflyFile,7,5,1,1);
+
             QHBoxLayout * hbox2 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
@@ -595,7 +608,7 @@ class neuroncrawler_most_raw : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,7,0,7,6);
+            layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
             setWindowTitle(QString("NeuronCrawler_MOST"));
 
@@ -614,6 +627,9 @@ class neuroncrawler_most_raw : public QDialog
             connect(openrawFile, SIGNAL(clicked()), this, SLOT(_slots_openrawFile()));
             connect(openmarkerFile, SIGNAL(clicked()), this, SLOT(_slots_openmarkerFile()));
 
+            connect(b_3Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(openteraflyFile, SIGNAL(clicked()), this, SLOT(_slots_openteraflyFile()));
+
             update();
         }
 
@@ -625,17 +641,17 @@ class neuroncrawler_most_raw : public QDialog
             channel = channel_spinbox->value();
             bkg_thresh = bkgthresh_spinbox->value();
 
-
-
             block_size = block_spinbox->value();
             seed_win = seedwin_spinbox->value();
 
             rawfilename = raw_filepath->text();
             markerfilename = marker_filepath->text();
+            teraflyfilename = terafly_filepath->text();
 
             slip_win = slipwin_spinbox->value();
 
             b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
+            b_3Dchecker->isChecked() ? tracing_3D = 1 : tracing_3D = 0;
 
         }
 
@@ -670,6 +686,20 @@ class neuroncrawler_most_raw : public QDialog
             update();
 
         }
+
+        void _slots_openteraflyFile()
+        {
+            QFileDialog d(this);
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                        "");
+            if(!fileOpenName.isEmpty())
+            {
+                terafly_filepath->setText(fileOpenName);
+            }
+            update();
+
+        }
     public:
 
         QSpinBox * channel_spinbox;
@@ -677,6 +707,8 @@ class neuroncrawler_most_raw : public QDialog
         QSpinBox * seedwin_spinbox;
         QSpinBox * slipwin_spinbox;
         QCheckBox * b_adapWinchecker;
+        QCheckBox * b_3Dchecker;
+
 
         QSpinBox * block_spinbox;
 
@@ -685,6 +717,10 @@ class neuroncrawler_most_raw : public QDialog
         QLineEdit * marker_filepath;
         QPushButton *openrawFile;
         QPushButton *openmarkerFile;
+
+        QLineEdit * terafly_filepath;
+        QPushButton *openteraflyFile;
+
 
         Image4DSimple* image;
         LandmarkList listLandmarks;
@@ -695,9 +731,11 @@ class neuroncrawler_most_raw : public QDialog
         int block_size;
         int downsample_factor;
         int adap_win;
+        int tracing_3D;
 
         QString rawfilename;
         QString markerfilename;
+        QString teraflyfilename;
 
     };
 
@@ -731,11 +769,20 @@ class neuroncrawler_neutube_raw : public QDialog
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
+
+            b_3Dchecker = new QCheckBox();
+            b_3Dchecker->setChecked(false);
+
+            terafly_filepath = new QLineEdit();
+            openteraflyFile = new QPushButton(QObject::tr("..."));
+
             if(curwin)
             {
                 raw_filepath->setText(cb.getImageName(curwin));
                 raw_filepath->setDisabled(true);
                 openrawFile->setDisabled(true);
+                terafly_filepath->setDisabled(true);
+                openteraflyFile->setDisabled(true);
             }
 
             marker_filepath = new QLineEdit();
@@ -747,9 +794,13 @@ class neuroncrawler_neutube_raw : public QDialog
             }
 
             layout->addWidget(new QLabel("block_size"),4,0);
-            layout->addWidget(block_spinbox, 4,1,1,3);
-            layout->addWidget(new QLabel("adaptive size?"),4,4);
-            layout->addWidget(b_adapWinchecker,4,5);
+            layout->addWidget(block_spinbox, 4,1);
+            layout->addWidget(new QLabel("adaptive size?"),4,2);
+            layout->addWidget(b_adapWinchecker,4,3);
+            layout->addWidget(new QLabel("3D crawler?"),4,4);
+            layout->addWidget(b_3Dchecker,4,5);
+
+
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image:")),5,0);
             layout->addWidget(raw_filepath,5,1,1,4);
@@ -759,6 +810,10 @@ class neuroncrawler_neutube_raw : public QDialog
             layout->addWidget(marker_filepath,6,1,1,4);
             layout->addWidget(openmarkerFile,6,5,1,1);
 
+            layout->addWidget(new QLabel(QObject::tr("terafly format file:")),7,0);
+            layout->addWidget(terafly_filepath,7,1,1,4);
+            layout->addWidget(openteraflyFile,7,5,1,1);
+
             QHBoxLayout * hbox2 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
@@ -766,7 +821,7 @@ class neuroncrawler_neutube_raw : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,7,0,7,6);
+            layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
             setWindowTitle(QString("NeuronCrawler"));
 
@@ -779,6 +834,8 @@ class neuroncrawler_neutube_raw : public QDialog
             connect(openmarkerFile, SIGNAL(clicked()), this, SLOT(_slots_openmarkerFile()));
 
             connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(openteraflyFile, SIGNAL(clicked()), this, SLOT(_slots_openteraflyFile()));
+            connect(b_3Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
 
             update();
@@ -794,6 +851,9 @@ class neuroncrawler_neutube_raw : public QDialog
             markerfilename = marker_filepath->text();
 
             b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
+
+            b_3Dchecker->isChecked() ? tracing_3D = 1 : tracing_3D = 0;
+            teraflyfilename = terafly_filepath->text();
 
         }
 
@@ -828,11 +888,26 @@ class neuroncrawler_neutube_raw : public QDialog
             update();
 
         }
+
+        void _slots_openteraflyFile()
+        {
+            QFileDialog d(this);
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                        "");
+            if(!fileOpenName.isEmpty())
+            {
+                terafly_filepath->setText(fileOpenName);
+            }
+            update();
+
+        }
     public:
 
 
         QSpinBox * block_spinbox;
         QCheckBox * b_adapWinchecker;
+        QCheckBox * b_3Dchecker;
 
 
         QLineEdit * raw_filepath;
@@ -840,13 +915,19 @@ class neuroncrawler_neutube_raw : public QDialog
         QPushButton *openrawFile;
         QPushButton *openmarkerFile;
 
+        QLineEdit * terafly_filepath;
+        QPushButton *openteraflyFile;
+
+
         Image4DSimple* image;
         LandmarkList listLandmarks;
         int block_size;
         int adap_win;
+        int tracing_3D;
 
         QString rawfilename;
         QString markerfilename;
+        QString teraflyfilename;
 
     };
 

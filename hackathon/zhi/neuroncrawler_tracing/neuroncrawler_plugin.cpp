@@ -153,7 +153,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -174,7 +174,10 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
         P.bkg_thresh = dialog.bkg_thresh;
         P.channel = dialog.channel;
         P.seed_win = dialog.seed_win;
@@ -182,7 +185,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 5;
-
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("trace_NEUTUBE"))
@@ -197,7 +200,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -218,11 +221,14 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 3;
-
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_SNAKE"))
     {
