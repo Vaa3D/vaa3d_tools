@@ -2972,19 +2972,19 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     if(direction == 1)
     {
         newTarget.x = -floor(adaptive_size*(1.0-overlap)) + tileLocation.x;
-        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y - adaptive_size)/2);
     }else if(direction == 2)
     {
         newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size*overlap);
-        newTarget.y = floor((min_y + max_y - adaptive_size)/2 - total4DImage->getOriginY()) + tileLocation.y;
+        newTarget.y = floor((min_y + max_y - adaptive_size)/2);
 
     }else if(direction == 3)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.x = floor((min_x + max_x - adaptive_size)/2);
         newTarget.y = -floor(adaptive_size*(1.0-overlap)) + tileLocation.y;
     }else if(direction == 4)
     {
-        newTarget.x = floor((min_x + max_x - adaptive_size)/2) - total4DImage->getOriginX() + tileLocation.x;
+        newTarget.x = floor((min_x + max_x - adaptive_size)/2);
         newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size*overlap);
     }
     newTarget.z = total4DImage->getOriginZ();
