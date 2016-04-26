@@ -12,15 +12,19 @@
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+
 
 using namespace std;
+using namespace iim;
+
 Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
 
  
 QStringList neuroncrawler::menulist() const
 {
 	return QStringList() 
-            <<tr("trace_APP2")
+             <<tr("trace_APP2")
            <<tr("trace_APP1")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
@@ -53,7 +57,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -74,7 +78,11 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
+
         P.is_gsdt = dialog.is_gsdt;
         P.is_break_accept = dialog.is_break_accept;
         P.bkg_thresh = dialog.bkg_thresh;
@@ -87,7 +95,9 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 2;
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_app(callback,parent,P,bmenu);
+
     }else if (menu_name == tr("trace_APP1"))
 	{
         TRACE_LS_PARA P;
@@ -143,7 +153,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -164,7 +174,10 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
         P.bkg_thresh = dialog.bkg_thresh;
         P.channel = dialog.channel;
         P.seed_win = dialog.seed_win;
@@ -172,7 +185,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 5;
-
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("trace_NEUTUBE"))
@@ -187,7 +200,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -208,11 +221,14 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             P.image = dialog.image;
             P.listLandmarks = dialog.listLandmarks;
         }
-        P.inimg_file = dialog.rawfilename;
+        if(dialog.teraflyfilename.isEmpty())
+            P.inimg_file = dialog.rawfilename;
+        else
+            P.inimg_file = dialog.teraflyfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 3;
-
+        P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_SNAKE"))
     {

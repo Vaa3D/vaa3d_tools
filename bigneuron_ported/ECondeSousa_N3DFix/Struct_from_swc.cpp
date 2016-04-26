@@ -80,9 +80,18 @@ float p3Ddist(float x1, float y1, float z1, float x2, float y2, float z2){
 //////////////////////////////////////////////////////////////////////////
 
 void find_nodes(std::vector<long> &tree_id, std::vector<long> &ppid, std::vector<long> &nodes, std::vector<long> &endpoints,
-                std::vector<long> &end_sec,  std::vector<long> &soma){
+                std::vector<long> &end_sec,  std::vector<long> &soma,  std::vector<long> &pid){
 
-    std::vector<long> tmp_vector (ppid.size(), 0);
+    long pidMAX;
+    pidMAX = pid.size();
+//    pidMAX= pid.at(pid.size()-1);
+//    for (unsigned it = 0;it<pid.size(); it++){
+//        if(pidMAX < pid.at(it)){
+//            pidMAX = pid.at(it);
+//        }
+//    }
+//    std::cout << "pidMAX = " << pidMAX << std::endl;
+    std::vector<long> tmp_vector (pidMAX, 0);
     long ind;
 
     for (unsigned it = 0;it<ppid.size(); it++){

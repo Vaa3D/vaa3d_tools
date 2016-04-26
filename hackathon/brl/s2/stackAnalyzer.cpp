@@ -1449,7 +1449,7 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
         if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
         {
 
-             printf("Can not find the tracing plugin!\n");
+             qDebug()<<("Can not find the tracing plugin!\n");
 
              emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
              return;
@@ -1465,6 +1465,7 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
         nt_most = readSWC_file(swcMOST);
 
         if(nt_most.listNeuron.size()<1){
+            qDebug()<<"zero size listNeuron!!";
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
         }
