@@ -228,9 +228,9 @@ class neuroncrawler_app2_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker/Point Cloud File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.marker *.MARKER)"
+                                                        QObject::tr("Supported file (*.marker *.MARKER *.apo *.APO)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -455,9 +455,9 @@ class neuroncrawler_app1_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker/Point Cloud File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.marker *.MARKER)"
+                                                        QObject::tr("Supported file (*.marker *.MARKER *.apo *.APO)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -675,9 +675,9 @@ class neuroncrawler_most_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker/Point Cloud File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.marker *.MARKER)"
+                                                        QObject::tr("Supported file (*.marker *.MARKER *.apo *.APO)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
@@ -877,9 +877,9 @@ class neuroncrawler_neutube_raw : public QDialog
         {
             QFileDialog d(this);
             QString fileOpenName;
-            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker/Point Cloud File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.marker *.MARKER)"
+                                                        QObject::tr("Supported file (*.marker *.MARKER *.apo *.APO)"
                                                             ));
             if(!fileOpenName.isEmpty())
             {
