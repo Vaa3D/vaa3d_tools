@@ -487,7 +487,7 @@ template <class T> bool vol3d_exp(T *** res, T *** sa, V3DLONG d0, V3DLONG d1, V
 	return true;
 }
 
-template <class T> bool vol3d_log(T *** res, T *** sa, double V3DLONG d0, V3DLONG d1, V3DLONG d2)
+template <class T> bool vol3d_log(T *** res, T *** sa, V3DLONG d0, V3DLONG d1, V3DLONG d2)
 {
 	if (!res || !sa || d0<=0 || d1<=0 || d2<=0)
 		return false;

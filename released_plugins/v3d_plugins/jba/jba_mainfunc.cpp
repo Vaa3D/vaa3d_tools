@@ -594,8 +594,8 @@ template <class T1, class T2> bool Warp3D::setInitData(
                         //return false;
                 //}
 
-		spos_target[i] = floor((my_sz[i] - img0_sz_target[i])/2);
-		spos_subject[i] = floor((my_sz[i] - img0_sz_subject[i])/2);
+		spos_target[i] = floor((my_sz[i] - img0_sz_target[i])/2.0);
+		spos_subject[i] = floor((my_sz[i] - img0_sz_subject[i])/2.0);
 	}
 
 	img_target = new Vol3DSimple<MYFLOAT_JBA> (my_sz[0], my_sz[1], my_sz[2]);
@@ -1523,11 +1523,11 @@ Vol3DSimple<DisplaceFieldF3D> * Warp3D::do_landmark_warping(const BasicWarpParam
 
 		V3DLONG CPT_STEP=16;
 		MYFLOAT_JBA *** img_target_ref = img_target->getData3dHandle();
-		for (k=1;k<=int(floor(img_target->sz2()/CPT_STEP)-1); k++)
+		for (k=1;k<=int(floor(img_target->sz2()/double(CPT_STEP))-1); k++)
 		{
-			for (j=1;j<=int(floor(img_target->sz1()/CPT_STEP)-1); j++)
+			for (j=1;j<=int(floor(img_target->sz1()/double(CPT_STEP))-1); j++)
 			{
-				for (i=1;i<=int(floor(img_target->sz0()/CPT_STEP)-1); i++)
+				for (i=1;i<=int(floor(img_target->sz0()/double(CPT_STEP))-1); i++)
 				{
 					if (img_target_ref[k*CPT_STEP-1][j*CPT_STEP-1][i*CPT_STEP-1]>0.1) 
 					{
@@ -2762,7 +2762,7 @@ template <class T> bool conv3d_1dvec(MYFLOAT_JBA ***outimg3d, T *** inimg3d, V3D
 		return false;
 	}
 
-	if (lenvec<=0 || V3DLONG(floor(lenvec/2)*2)==lenvec)
+	if (lenvec<=0 || V3DLONG(floor(lenvec/2.0)*2)==lenvec)
 	{
 		fprintf(stderr, "The length of the kernel-vector should be an odd number and >0. The convolution is not done.\n");
 		return false;
@@ -3814,7 +3814,7 @@ Vol3DSimple<DisplaceFieldF3D> * Warp3D::do_local_topdown_blocktps_fast(const Bas
     
 	for (layer=NLayer-1; layer>=0; layer--)
 	{
-		double cur_dfactor = (b_useDownsampling) ? pow(2, layer) : 1; 
+		double cur_dfactor = (b_useDownsampling) ? pow(2.0, double(layer)) : 1; 
 
 		Vol3DSimple<MYFLOAT_JBA> * targetSmall = 0, *warpedSmall = 0, *subjectSmall = 0;
 		Vol3DSimple<unsigned char> * maskSmall = 0; 
@@ -3826,7 +3826,7 @@ Vol3DSimple<DisplaceFieldF3D> * Warp3D::do_local_topdown_blocktps_fast(const Bas
 		Vol3DSimple <DisplaceFieldF3D> * df_array=0; 
 		Vol3DSimple <UINT8_JBA> * df_array_flag=0; 
 
-		V3DLONG KGRID=(V3DLONG)(pow(2,NLayer-layer)), JGRID=(V3DLONG)(2*pow(2,NLayer-layer)), IGRID=(V3DLONG)(2*pow(2,NLayer-layer));
+		V3DLONG KGRID=(V3DLONG)(pow(2.0,double(NLayer-layer))), JGRID=(V3DLONG)(2*pow(2.0,double(NLayer-layer))), IGRID=(V3DLONG)(2*pow(2.0,double(NLayer-layer)));
 
 		V3DLONG sz0, sz1, sz2;
 

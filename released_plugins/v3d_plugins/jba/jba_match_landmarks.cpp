@@ -477,7 +477,7 @@ template <class T> bool detectBestMatchingCpt(vector<Coord3D_JBA> & matchTargetP
 	
 	PointMatchMethodType mMethod = bwp.method_match_landmarks;
 	
-	V3DLONG R_search = V3DLONG(floor(img_target->sz0()/16));
+	V3DLONG R_search = V3DLONG(floor(img_target->sz0()/16.0));
 	V3DLONG R_compare = 48*(double(img_target->sz0())/512);
 	
 	vector<Coord3D_JBA> matchSubjectPos_searchCenter;
@@ -495,7 +495,7 @@ template <class T> bool detectBestMatchingCpt(vector<Coord3D_JBA> & matchTargetP
 	{
 		matchSubjectPos_searchCenter = priorTargetPos0;
 	}
-	const V3DLONG Step_Search_coarse = (V3DLONG)(floor(R_search/2)), Step_Search_fine = 1;
+	const V3DLONG Step_Search_coarse = (V3DLONG)(floor(R_search/2.0)), Step_Search_fine = 1;
 	
 	matchTargetPos.clear();
 	matchSubjectPos.clear();
