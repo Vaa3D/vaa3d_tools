@@ -17,6 +17,12 @@ class TreeConsensusBuilderPlugin : public QObject, public V3DPluginInterface2_1
     
     ConsensusBuilder builder;
 
+    bool build_consensus(const V3DPluginArgList & input, V3DPluginArgList & output);
+
+    bool build_composite(V3DPluginCallback2 &callback, QWidget *parent);
+    bool build_consensus(V3DPluginCallback2 &callback, QWidget *parent);
+    bool new_dataset(V3DPluginCallback2 &callback, QWidget *parent);
+    
 public:
 	float getPluginVersion() const {return 1.0f;}
 
