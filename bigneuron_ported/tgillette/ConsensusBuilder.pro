@@ -4,7 +4,7 @@ TEMPLATE        = app
 #CONFIG  += qt plugin warn_off
 CONFIG  += qt application warn_off
 #CONFIG += x86_64
-VAA3DPATH = ~/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/
 
@@ -41,10 +41,8 @@ win32 {
 }
 
 unix {
-#    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
-#    LIBS += -L$$VAA3DPATH/v3d_main/jba/newmat11 -lv3dnewmat
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/newmat11 -lv3dnewmat
 }
-#TARGET  = $$qtLibraryTarget(consensusbuilder)
-TARGET  = consensusbuilder
-#DESTDIR = $$VAA3DPATH/bin/plugins/consensusbuilder/
-DESTDIR = /Users/toddgillette/workspace/ConsensusBuilder/bin/
+TARGET  = $$qtLibraryTarget(consensusbuilder)
+DESTDIR = $$VAA3DPATH/bin/plugins/consensusbuilder/
