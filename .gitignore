@@ -11,3 +11,6 @@
 bin
 v3d_main
 **/v3d_plugins/neurontracing_neutube/src_neutube
+**/Makefile*
+**/Makefile
+**/release/*
