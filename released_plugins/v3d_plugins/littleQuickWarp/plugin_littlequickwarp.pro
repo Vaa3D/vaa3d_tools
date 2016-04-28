@@ -15,8 +15,25 @@ INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
 INCLUDEPATH  += $$JBADIR/
 INCLUDEPATH  += $$V3DMAINPATH/jba/c++
 
-LIBS 	     += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
-LIBS         += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+}
+
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+    } else {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
+    }
+}
+
+unix:!macx {
+    LIBS += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
+    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+}
 
 FORMS         = q_paradialog_littlequickwarp.ui
 
