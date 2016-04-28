@@ -5,11 +5,26 @@ CONFIG       += qt plugin warn_off
 #CONFIG      += x86_64
 
 V3DMAINPATH = ../../../v3d_main
+QT_DIR = $$[QT_INSTALL_PREFIX]
 
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun 
 INCLUDEPATH  += $$V3DMAINPATH/v3d
 INCLUDEPATH  += $$V3DMAINPATH/neuron_editing
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
+
+USE_Qt5 {
+  INCLUDEPATH += $$QT_DIR/lib/QtConcurrent.framework/Versions/5/Headers  # for QtConcurrent, by PHC 2015May
+  #SHARED_FOLDER = $$QT_DIR/demos/shared # for arthurwidgets
+  SHARED_FOLDER = ./painting/shared/ # for arthurwidgets
+  include($$SHARED_FOLDER/shared.pri)
+  INCLUDEPATH += $$SHARED_FOLDER
+  LIBS += -L$$SHARED_FOLDER
+} else {
+  SHARED_FOLDER = $$QT_DIR/demos/shared # for arthurwidgets
+  include($$SHARED_FOLDER/shared.pri)
+  INCLUDEPATH += $$SHARED_FOLDER
+  LIBS += -L$$SHARED_FOLDER
+}
 
 HEADERS       = mostimage.h
 HEADERS      += tools.h
