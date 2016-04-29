@@ -89,6 +89,7 @@ static bool enforceSingleTree = true; // do not allow more than one tree in the 
 //
 
 
+
 struct input_PARA
 {
     QString inimg_file;
@@ -468,7 +469,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     vector<int> dx_XY, dy_XY;
     for (int dx = -limxy; dx <= limxy; ++dx) {
             for (int dy = -limxy; dy <= limxy; ++dy) {
-                if (pow(dx,2)/pow(limxy,2)+pow(dy,2)/pow(limxy,2)<=1) {
+                if (pow(double(dx),2.0)/pow(double(limxy),2.0)+pow(double(dy),2.0)/pow(double(limxy),2.0)<=1) {
                     dx_XY.push_back(dx);
                     dy_XY.push_back(dy);
                 }
@@ -479,7 +480,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     vector<int> dx_XZ, dz_XZ;
     for (int dx = -limxy; dx <= limxy; ++dx) {
             for (int dz = -limz; dz <= limz; ++dz) {
-                if (pow(dx,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                if (pow(double(dx),2.0)/pow(double(limxy),2.0)+pow(double(dz),2.0)/pow(double(limz),2.0)<=1) {
                     dx_XZ.push_back(dx);
                     dz_XZ.push_back(dz);
                 }
@@ -489,7 +490,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     vector<int> dy_YZ, dz_YZ;
     for (int dy = -limxy; dy <= limxy; ++dy) {
             for (int dz = -limz; dz <= limz; ++dz) {
-                if (pow(dy,2)/pow(limxy,2)+pow(dz,2)/pow(limz,2)<=1) {
+                if (pow(double(dy),2.0)/pow(double(limxy),2.0)+pow(double(dz),2.0)/pow(double(limz),2.0)<=1) {
                     dy_YZ.push_back(dy);
                     dz_YZ.push_back(dz);
                 }
@@ -853,9 +854,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     // set of directions used for gpnt extraction
-    float vx_corr[PARA.Ndir];
-    float vy_corr[PARA.Ndir];
-    float vz_corr[PARA.Ndir];
+    //float vx_corr[PARA.Ndir];
+    //float vy_corr[PARA.Ndir];
+    //float vz_corr[PARA.Ndir];
+	float* vx_corr = new float[PARA.Ndir];
+	float* vy_corr = new float[PARA.Ndir];
+    float* vz_corr = new float[PARA.Ndir];
 
     double h_k, theta_k, phi_k, phi_k_1 = 0;
 
@@ -887,7 +891,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 phi_k_1 = 0;
             }
             else {
-                phi_k = phi_k_1 + 3.6 / ( sqrt(PARA.Ndir) * sqrt(1-h_k*h_k));
+                phi_k = phi_k_1 + 3.6 / ( sqrt(PARA.Ndir*1.0) * sqrt(1.0-h_k*h_k));
                 phi_k_1 = phi_k;
             }
 
@@ -1289,9 +1293,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // ...
     // nodelist[N].nbr will be a list of nodelist indexes of adjacent nodes
 
-    bool        D[nodelist.size()]; // for book-keeping the discovered nodes
+//    bool        D[nodelist.size()]; // for book-keeping the discovered nodes
 //    int         L[nodelist.size()]; // len store the distance to backtrack towards nearest CP
-    int         I2Swc[nodelist.size()];// map node index with corresponding swc index
+//    int         I2Swc[nodelist.size()];// map node index with corresponding swc index
+
+	bool* D=new bool[nodelist.size()]; 
+	int* I2Swc=new int[nodelist.size()];
 
     // reset BFS
     for (int i = 0; i < nodelist.size(); ++i) {
@@ -1625,6 +1632,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+
+	delete vx_corr;
+	delete vy_corr;
+    delete vz_corr;
+	delete D;
+	delete I2Swc;
+
 
     return;
 }

@@ -6,6 +6,8 @@
 
 using namespace std;
 
+int round(float r);
+
 int mode(vector<int> vals);
 
 void selec(vector<int> trctags, vector<int> ndetags, int cntth, int excludetag, vector<int> & rchtrctags, vector<int> & rchndetags);
