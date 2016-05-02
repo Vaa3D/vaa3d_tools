@@ -122,7 +122,6 @@ bool saveMarker_file(string marker_file, vector<MyMarker*> & outmarkers)
 vector<MyMarker*> readSWC_file(string swc_file)
 {
 	vector<MyMarker*> swc;
-
 	ifstream ifs(swc_file.c_str());
 
 	if(ifs.fail()) 
@@ -135,6 +134,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 	map<MyMarker*, int> parid_map;
 	while(ifs.good())
 	{
+
 		if(ifs.peek() == '#'){ifs.ignore(1000,'\n'); continue;}
 		MyMarker *  marker = new MyMarker;
 		int my_id = -1 ; ifs >> my_id;
@@ -151,11 +151,15 @@ vector<MyMarker*> readSWC_file(string swc_file)
 		ifs>> marker->z;
 		ifs>> marker->radius;
 		int par_id = -1; ifs >> par_id;
+        
+        //printf("%i %i %f %f %f %f %i\n",my_id,marker->type,marker->x,marker->y,marker->z,marker->radius,par_id);
 
 		parid_map[marker] = par_id;
 		swc.push_back(marker);
 	}
+
 	ifs.close();
+
 	vector<MyMarker*>::iterator it = swc.begin();
 	while(it != swc.end())
 	{
@@ -163,6 +167,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 		marker->parent = marker_map[parid_map[marker]];
 		it++;
 	}
+
 	return swc;
 }
 

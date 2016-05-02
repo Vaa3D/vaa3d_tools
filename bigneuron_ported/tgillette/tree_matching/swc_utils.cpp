@@ -66,7 +66,7 @@ bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<vector<MyMarker*> > &
 }
 
 // convert to post_order tree
-bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree)
+bool swc_to_segments(vector<MyMarker*> &inmarkers, vector<NeuronSegment*> &tree)
 {
 	map<MyMarker *, int>  childs_num;
 	getLeaf_markers(inmarkers, childs_num);
@@ -74,6 +74,7 @@ bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree
 	map<MyMarker*, NeuronSegment*> marker_seg_map;
 	MyMarker * root_marker;
 
+    // Makes root marker its own segment
 	for (int i=0;i<inmarkers.size();i++)
 	{
 		MyMarker * marker = inmarkers[i];
@@ -88,16 +89,18 @@ bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree
 	for (map<MyMarker*, NeuronSegment*>::iterator it = marker_seg_map.begin(); it != marker_seg_map.end(); it++)
 	{
 		MyMarker * marker = (*it).first;
+        NeuronSegment * seg = marker_seg_map[marker];
 		MyMarker * p = marker;
 		do
 		{
-			marker_seg_map[marker]->markers.push_back(p);
+			seg->markers.push_back(p);
 			p = p->parent;
 		}
 		while (p && marker_seg_map.find(p)==marker_seg_map.end());
+
 		if (!p) continue;
 		NeuronSegment * seg_par = marker_seg_map[p];
-		seg_par->child_list.push_back(marker_seg_map[marker]);
+		seg_par->child_list.push_back(seg);
 	}
 
 	stack<NeuronSegment*> seg_stack;
