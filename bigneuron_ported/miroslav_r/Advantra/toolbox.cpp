@@ -17,6 +17,10 @@ THE COPYRIGHT HOLDER SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT L
 
 using namespace std;
 
+int round(float r) {
+	    return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
+}
+
 int mode(vector<int> vals) {
 
     if (vals.size()>0) {
@@ -36,7 +40,8 @@ int mode(vector<int> vals) {
 
         // draw a histogram
         int hlen = mx-mn+1;
-        int hist[hlen];
+        //int hist[hlen];
+		int* hist = new int[hlen];
         for (int i = 0; i < hlen; ++i)
             hist[i] = 0;
 
@@ -51,6 +56,8 @@ int mode(vector<int> vals) {
                 peakval  = vals[i];
             }
         }
+
+		delete hist;
 
         return peakval;
 
@@ -90,8 +97,10 @@ void selec(vector<int> trctags, vector<int> ndetags, int cntth, int excludetag, 
             // there is range of values, draw a histogram of trace tags within the neighbourhood
             int hlen = mx-mn+1;
 
-            int hist[hlen];
-            int matchnde[hlen];
+            //int hist[hlen];
+            //int matchnde[hlen];
+			int* hist = new int[hlen];
+            int* matchnde = new int[hlen];
 
             for (int i = 0; i < hlen; ++i) {
                 hist[i] = 0;
@@ -111,6 +120,9 @@ void selec(vector<int> trctags, vector<int> ndetags, int cntth, int excludetag, 
                     rchndetags.push_back(matchnde[i]);
                 }
             }
+
+			delete hist;
+			delete matchnde;
 
         }
 
@@ -523,7 +535,8 @@ unsigned char intermodes_th(unsigned char * image1, long size) {
 
     int GRAYLEVEL = 256;
 
-    int hist[GRAYLEVEL];
+//    int hist[GRAYLEVEL];
+	int* hist = new int[GRAYLEVEL];
     for (int i = 0; i < GRAYLEVEL; i++) hist[i] = 0;
     for (long i = 0; i < size; ++i) hist[image1[i]]++;
 
@@ -532,7 +545,7 @@ unsigned char intermodes_th(unsigned char * image1, long size) {
     for (int i=GRAYLEVEL-1; i>=0; i--) if (hist[i]>0) minbin = i;
 
     int length = (maxbin-minbin)+1;
-    float hist1[length];
+    float* hist1 = new float[length];
 
 //    cout << minbin << " -- " << maxbin << " -- " << length << endl;
 
@@ -573,6 +586,10 @@ unsigned char intermodes_th(unsigned char * image1, long size) {
     }
 
     threshold = (int) floor(tt/2.0);
+
+	delete hist;
+	delete hist1;
+
     return threshold+minbin;
 
 }
@@ -582,10 +599,20 @@ unsigned char otsu_th(unsigned char * image1, long size) {
     int GRAYLEVEL = 256;
 
     // binarization by Otsu
-    int hist[GRAYLEVEL];
-    float prob[GRAYLEVEL], omega[GRAYLEVEL];   // prob of graylevels
-    float myu[GRAYLEVEL];                      // mean value for separation
-    float max_sigma, sigma[GRAYLEVEL];         // inter-class variance
+ //   int hist[GRAYLEVEL];
+ //   float prob[GRAYLEVEL];
+	//float omega[GRAYLEVEL];   // prob of graylevels
+ //   float myu[GRAYLEVEL];                      // mean value for separation
+	//float sigma[GRAYLEVEL];         // inter-class variance
+	//float max_sigma;
+
+	int* hist = new int[GRAYLEVEL];
+    float* prob = new float[GRAYLEVEL];
+	float* omega = new float[GRAYLEVEL];   // prob of graylevels
+    float* myu = new float[GRAYLEVEL];                      // mean value for separation
+	float* sigma = new float[GRAYLEVEL];         // inter-class variance
+	float max_sigma;
+
     int i, x, y;                               // loop variable
     unsigned char threshold;                   // threshold for binarization
 
@@ -625,6 +652,12 @@ unsigned char otsu_th(unsigned char * image1, long size) {
         }
     }
 
+	delete hist;
+    delete prob;
+	delete omega;  
+    delete myu;
+	delete sigma;
+
     return threshold;
 
 }
@@ -634,7 +667,7 @@ unsigned char maxentropy_th(unsigned char * image1, long size) {
     // binarization by MaxEntropy
     int GRAYLEVEL = 256;
 
-    int hist[GRAYLEVEL];
+    int* hist = new int[GRAYLEVEL];
     for (int i = 0; i < GRAYLEVEL; i++) hist[i] = 0;
     for (long i = 0; i < size; ++i) {
         hist[image1[i]]++;
@@ -646,12 +679,12 @@ unsigned char maxentropy_th(unsigned char * image1, long size) {
         sum += hist[i];
     }
 
-    float normalizedHist[GRAYLEVEL];
+    float* normalizedHist = new float[GRAYLEVEL];
     for (int i = 0; i < GRAYLEVEL; i++) {
         normalizedHist[i] = hist[i] / sum;
     }
 
-    float pT[GRAYLEVEL];
+    float* pT = new float[GRAYLEVEL];
     pT[0] = normalizedHist[0];
     for (int i = 1; i < GRAYLEVEL; i++) {
         pT[i] = pT[i - 1] + normalizedHist[i];
@@ -659,8 +692,8 @@ unsigned char maxentropy_th(unsigned char * image1, long size) {
 
     // Entropy for black and white parts of the histogram
     float epsilon = FLT_MIN;//Double.MIN_VALUE;
-    float hB[GRAYLEVEL];// = new double[hist.length];
-    float hW[GRAYLEVEL];// = new double[hist.length];
+    float* hB = new float[GRAYLEVEL];// = new double[hist.length];
+    float* hW = new float[GRAYLEVEL];// = new double[hist.length];
 
     for (int t = 0; t < GRAYLEVEL; t++) {
         // Black entropy
@@ -701,6 +734,12 @@ unsigned char maxentropy_th(unsigned char * image1, long size) {
           tMax = t;
         }
       }
+
+	  delete hist;
+	  delete normalizedHist;
+	  delete pT;
+	  delete hB;
+      delete hW;
 
       return tMax;
 

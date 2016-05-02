@@ -41,6 +41,7 @@ SOURCES	+= jba_plugin.cpp
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
     LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
     } else {
     LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibnewmat
     }

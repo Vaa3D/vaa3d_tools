@@ -175,15 +175,29 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = aVolume->getDIM_D();
         }
 
-        vector<MyMarker> file_inmarkers;
-        file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
         LocationSimple t;
-        for(int i = 0; i < file_inmarkers.size(); i++)
+        if((QFileInfo(P.markerfilename).completeSuffix() == "marker") || (QFileInfo(fileOpenName).completeSuffix() == "MARKER"))
         {
-            t.x = file_inmarkers[i].x + 1;
-            t.y = file_inmarkers[i].y + 1;
-            t.z = file_inmarkers[i].z + 1;
-            P.listLandmarks.push_back(t);
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x + 1;
+                t.y = file_inmarkers[i].y + 1;
+                t.z = file_inmarkers[i].z + 1;
+                P.listLandmarks.push_back(t);
+            }
+        }else
+        {
+            QList<CellAPO> file_inmarkers;
+            file_inmarkers = readAPO_file(P.markerfilename);
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x;
+                t.y = file_inmarkers[i].y;
+                t.z = file_inmarkers[i].z;
+                P.listLandmarks.push_back(t);
+            }
         }
     }
 
@@ -2031,15 +2045,29 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = aVolume->getDIM_D();
         }
 
-        vector<MyMarker> file_inmarkers;
-        file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
         LocationSimple t;
-        for(int i = 0; i < file_inmarkers.size(); i++)
+        if((QFileInfo(P.markerfilename).completeSuffix() == "marker") || (QFileInfo(fileOpenName).completeSuffix() == "MARKER"))
         {
-            t.x = file_inmarkers[i].x + 1;
-            t.y = file_inmarkers[i].y + 1;
-            t.z = file_inmarkers[i].z + 1;
-            P.listLandmarks.push_back(t);
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x + 1;
+                t.y = file_inmarkers[i].y + 1;
+                t.z = file_inmarkers[i].z + 1;
+                P.listLandmarks.push_back(t);
+            }
+        }else
+        {
+            QList<CellAPO> file_inmarkers;
+            file_inmarkers = readAPO_file(P.markerfilename);
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x;
+                t.y = file_inmarkers[i].y;
+                t.z = file_inmarkers[i].z;
+                P.listLandmarks.push_back(t);
+            }
         }
     }
 
@@ -3106,7 +3134,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 20)
+                    if(dis < 10)
                     {
                         check_tip = true;
                         break;

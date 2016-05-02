@@ -8,8 +8,9 @@ TARGET = $$qtLibraryTarget(SIGEN)
 # http://stackoverflow.com/questions/2580934
 DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/SIGEN/
 
-
-QMAKE_CXXFLAGS += -Wall -Wextra -Wshadow -Wno-c++11-extensions
+unix{
+    QMAKE_CXXFLAGS += -Wall -Wextra -Wshadow -Wno-c++11-extensions
+}
 
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include

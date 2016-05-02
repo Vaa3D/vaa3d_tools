@@ -51,7 +51,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
     Niterations = _Niterations;
     Nstates = _Nstates;
 
-    N1 = (int) pow(Ndirs, Nsteps);
+    N1 = (int) pow(double(Ndirs), double(Nsteps));
     NN = Nstates * N1;
 
     node_cnt = 0;
@@ -113,7 +113,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
             for (int vv = -V2; vv <= V2; ++vv) {
                 for (int uu = -U2; uu <= U2; ++uu) {
                     //for (int ww = -W2; ww <= W2; ++ww) { // W2=0, W=1
-                        float value = exp(-(pow(uu,2)  )/(2*pow(gcsstd[i],2))); // +pow(ww,2)
+                        float value = exp(-(pow(double(uu),2.0)  )/(2*pow(double(gcsstd[i]),2.0))); // +pow(ww,2)
                         int v1 = vv + V2; // 0-V
                         int u1 = uu + U2; // 0-U
 //                        int w1 = ww + W2; // 0-W
@@ -129,7 +129,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
             for (int vv = -V2; vv <= V2; ++vv) {
                 for (int uu = -U2; uu <= U2; ++uu) {
                     for (int ww = -W2; ww <= W2; ++ww) {
-                        float value = exp(-(pow(uu,2)+pow(ww,2))/(2*pow(gcsstd[i],2)));
+                        float value = exp(-(pow(double(uu),2.0)+pow(double(ww),2.0))/(2*pow(double(gcsstd[i]),2.0)));
                         int v1 = vv + V2; // 0-V
                         int u1 = uu + U2; // 0-U
                         int w1 = ww + W2; // 0-W
@@ -159,7 +159,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
 
     for (int i = 0; i < Nsteps; ++i) {
 
-        int alloc = (int)round(pow(Ndirs,i+1));
+        int alloc = (int)round(pow(double(Ndirs),i+1.0));
         xtt1[i] = new float[alloc];
         ytt1[i] = new float[alloc];
         ztt1[i] = new float[alloc];
@@ -190,7 +190,7 @@ BTracer::BTracer(int _Niterations, int _Nstates, int _scale, bool _is2D, float _
 
     for (int i = 0; i < Nsteps; ++i) {
 
-        int alloc = Nstates * (int)round(pow(Ndirs,i+1));
+        int alloc = Nstates * (int)round(pow(double(Ndirs),i+1.0));
         xttN[i]  = new float[alloc];
         yttN[i]  = new float[alloc];
         zttN[i]  = new float[alloc];
@@ -924,7 +924,7 @@ void BTracer::traceX(
             for (int i_sample = 0; i_sample < Nstates; ++i_sample) { // Nstates highest posteriors
 
                 // values in topIdxs will have different range depending on whether it is first iteration
-                int pp  = topIdxs[i_sample]/(int)round(pow(Ndirs, (Nsteps-1)-i_step));
+                int pp  = topIdxs[i_sample]/(int)round(pow(double(Ndirs), (Nsteps-1.0)-i_step));
                 float sample_w = (is_first)? postrtt1[i_step][pp] : postrttN[i_step][pp];
                 wsum += sample_w;
 
@@ -1221,7 +1221,7 @@ void BTracer::iter_1(float xloc,  float yloc,  float zloc,
 
     for (int i_step = 0; i_step < Nsteps; ++i_step) { // Nsteps cover the scale 2*neuron_diameter+1
 
-        int nsrcs = round(pow(Ndirs,i_step));
+        int nsrcs = round(pow(double(Ndirs),double(i_step)));
 
         for (int i_src = 0; i_src < nsrcs; ++i_src) {
 
@@ -1262,7 +1262,7 @@ void BTracer::iter_1(float xloc,  float yloc,  float zloc,
         }
 
         // likelihood
-        int npreds = round(pow(Ndirs,i_step+1));
+        int npreds = round(pow(double(Ndirs),i_step+1.0));
 
         float prior_sum = 0;
 
@@ -1335,7 +1335,7 @@ void BTracer::iter_N(float *                xlocs,
 
         for (int i_step = 0; i_step < Nsteps; ++i_step) { // Nsteps cover the scale 2*neuron_diameter+1
 
-            int nsrcs = Nstates*round(pow(Ndirs,i_step));
+            int nsrcs = Nstates*round(pow(double(Ndirs),double(i_step)));
 
             for (int i_src = 0; i_src < nsrcs; ++i_src) { // number of sources will depend on the step
 
@@ -1368,7 +1368,7 @@ void BTracer::iter_N(float *                xlocs,
             }
 
             // likelihood
-            int npreds = Nstates*round(pow(Ndirs,i_step+1));
+            int npreds = Nstates*round(pow(double(Ndirs),i_step+1.0));
 
             float prior_sum = 0;
 

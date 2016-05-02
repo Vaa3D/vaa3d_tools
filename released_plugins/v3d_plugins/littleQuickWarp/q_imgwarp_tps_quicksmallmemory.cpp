@@ -321,7 +321,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	{
 		//initialize the bspline basis function
 		V3DLONG sz_gridwnd=szBlock_x;
-		Matrix x_bsplinebasis(pow(sz_gridwnd,3),pow(4,3));
+		Matrix x_bsplinebasis(pow(double(sz_gridwnd),3.0),pow(4.0,3.0));
 		if(!q_nonrigid_ini_bsplinebasis_3D(sz_gridwnd,x_bsplinebasis))
 		{
 			printf("ERROR: q_ini_bsplinebasis_3D() return false!\n");
@@ -403,7 +403,7 @@ bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	for(int i=0;i<3;i++)
 	{
 		sz_img_sub_padding[i]=V3DLONG(ceil(double(sz_img_sub[i])/32))*32;
-		offset_padding[i]=floor((sz_img_sub_padding[i]-sz_img_sub[i])/2);//this sentense has problem! anyway we leave it along since we want to generate same result as jba
+		offset_padding[i]=floor((sz_img_sub_padding[i]-sz_img_sub[i])/2.0);//this sentense has problem! anyway we leave it along since we want to generate same result as jba
 	}
 	printf("sz_img_padding=[%ld,%ld,%ld],offset_padding=[%ld,%ld,%ld]\n",sz_img_sub_padding[0],sz_img_sub_padding[1],sz_img_sub_padding[2],offset_padding[0],offset_padding[1],offset_padding[2]);
 	//allocate memory

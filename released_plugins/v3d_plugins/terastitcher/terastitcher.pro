@@ -73,6 +73,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 #set up Terastitcher core
 RESOURCES += icons.qrc
 DEFINES += _VAA3D_PLUGIN_MODE
+INCLUDEPATH += ./
 INCLUDEPATH += ./include
 INCLUDEPATH += ./src/core/iomanager
 INCLUDEPATH += ./src/core/tinyxml
