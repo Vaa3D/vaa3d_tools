@@ -6,6 +6,17 @@
 **/Makefile
 **/*pro.user
 **/*.autosave
+**/*.sln
+**/*.sdf
+**/*.user
+**/*vcxproj*
+**/*~
+**/*.swp
+**/*.suo
+**/*.pdb
+**/ipch
+
+
 
 #ignore symlink folder
 bin
