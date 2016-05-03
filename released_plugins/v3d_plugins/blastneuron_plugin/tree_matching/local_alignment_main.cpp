@@ -4,6 +4,9 @@ using namespace std;
 
 
 #include <unistd.h>
+#if defined(Q_OS_WIN32)
+#include "getopt_tool.h"
+#endif
 
 int local_alignment_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {

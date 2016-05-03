@@ -41,6 +41,8 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
+    INCLUDEPATH	+= C:/gnuwin32/include
+    INCLUDEPATH	+= ./
     LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
     } else {
     LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib -llibnewmat

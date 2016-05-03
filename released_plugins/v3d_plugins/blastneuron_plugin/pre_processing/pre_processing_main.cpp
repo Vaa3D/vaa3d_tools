@@ -12,6 +12,9 @@
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
 #include <unistd.h>
+#if defined(Q_OS_WIN32)
+#include "getopt_tool.h"
+#endif
 
 bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {

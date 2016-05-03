@@ -14,6 +14,10 @@
 #include "compute_gmi.h"
 #include <QtGlobal>
 #include <vector>
+#if defined(Q_OS_WIN32)
+#include "getopt_tool.h"
+#endif
+
 using namespace std;
 
 

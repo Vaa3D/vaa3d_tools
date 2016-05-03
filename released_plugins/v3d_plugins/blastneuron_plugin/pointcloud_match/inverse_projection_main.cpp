@@ -7,7 +7,9 @@
 
 
 #include <unistd.h>
-
+#if defined(Q_OS_WIN32)
+#include "getopt_tool.h"
+#endif
 int inverse_projection_main(const V3DPluginArgList &input, V3DPluginArgList & output)
 {
 	printf("\nwelcome to inverse_projection\n");
