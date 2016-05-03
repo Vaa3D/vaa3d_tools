@@ -107,6 +107,8 @@ private slots:
     void activeModeChecker();
     void updateZoomHandler();
     void resetDirectory();
+    void resetDataDir();
+    void collectZoomStack();
 private:
     V3DPluginCallback2 * cb;
 
@@ -135,6 +137,7 @@ private:
     QGroupBox *createROIControls();
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
+    QGroupBox *createConfigPanel();
 
     QLabel * analysisRunning;
 
@@ -144,6 +147,7 @@ private:
     void createTargetList();
 
     QPushButton *resetDirPB;
+    QPushButton *setLocalPathToData;
 	QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;
@@ -166,6 +170,8 @@ private:
     QPushButton * resetToScanPB;
     QPushButton * pickTargetsPB;
 
+    QPushButton * collectZoomStackPB;
+
     QPushButton *collectOverviewPushButton;
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
@@ -182,6 +188,12 @@ private:
     QLineEdit *roiZWEdit;
     QSpinBox *overlapSpinBox;
     QLabel *overlapSBLabel;
+
+    QLabel *machineSaveDir;
+    QLabel *localDataDir;
+    QLabel *machineSaveDirLabel;
+    QLabel *localDataDirLabel;
+    QDir localDataDirectory;
 
 // Target and ROI table widget
 
@@ -231,6 +243,7 @@ private:
     float zoomPixelsProduct;
     LandmarkList scanList;
 
+    QString fixFileString(QString inputString);
 
     TileInfo currentTileInfo;
 

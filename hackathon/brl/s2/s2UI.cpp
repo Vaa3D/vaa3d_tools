@@ -43,7 +43,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     resetToOverviewPB = new QPushButton(tr("&RESET to preview"));
     resetToScanPB = new QPushButton(tr("RESET to &SmartScan"));
     pickTargetsPB = new QPushButton(tr("pick smartScan starting points"));
-
+    collectZoomStackPB = new QPushButton(tr("collect zoom stack"));
     myNotes = new NoteTaker;
     myEventLogger  = new EventLogger();
 
@@ -63,10 +63,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(&myController, "s2COM");
     lhTabs->addTab(createTracingParameters(),"tracing");
     lhTabs->addTab(createROIControls(),"ROI Controls");
+    lhTabs->addTab(createConfigPanel(),"Configure");
     localRemoteCB = new QCheckBox;
     localRemoteCB->setText(tr("Local PrairieView"));
-    resetDirPB = new QPushButton;
-    resetDirPB->setText(tr("set Save Dir"));
+
 
     runAllTargetsPB = new QPushButton;
     runAllTargetsPB->setText(tr("Scan All Targets"));
@@ -82,11 +82,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(resetToOverviewPB,2,2);
     mainLayout->addWidget(resetToScanPB,3,2);
     mainLayout->addWidget(pickTargetsPB,4,1);
-
+    mainLayout->addWidget(collectZoomStackPB,4,0);
     //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,3);
     mainLayout->addWidget(localRemoteCB,5,0,1,1);
-    mainLayout->addWidget(resetDirPB, 5,1,1,1);
     mainLayout->addWidget(runAllTargetsPB,5,2);
     mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,9,4);
@@ -143,6 +142,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
 
     connect(resetDirPB, SIGNAL(clicked()), this, SLOT(resetDirectory()));
+    connect(setLocalPathToData, SIGNAL(clicked()), this, SLOT(resetDataDir()));
     connect(overlapSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateOverlap(int)));
 
     connect(resetToOverviewPB, SIGNAL(clicked()),this, SLOT(resetToOverviewPBCB()));
@@ -150,7 +150,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(pickTargetsPB,SIGNAL(clicked()),this, SLOT(pickTargets()));
     connect(runAllTargetsPB,SIGNAL(clicked()),this,SLOT(startAllTargets()));
-
+    connect(collectZoomStackPB, SIGNAL(clicked()), this, SLOT(collectZoomStack()));
 
     connect(runContinuousCB,SIGNAL(clicked()), this, SLOT(s2ROIMonitor()));
 
@@ -281,20 +281,39 @@ void S2UI::resetDirectory(){
             updateLocalRemote(isLocal);
 }
 
+
+void S2UI::resetDataDir(){
+    QSettings settings("HHMI", "Vaa3D");
+
+    QString localDataString = QFileDialog::getExistingDirectory(this, tr("Choose local data directory..."),
+                                                  "/",
+                                                  QFileDialog::ShowDirsOnly
+                                                  | QFileDialog::DontResolveSymlinks);
+    settings.setValue("s2_dataDir",localDataString);
+
+localDataDirectory = QDir(localDataString);
+localDataDir->setText(localDataString);
+
+
+
+}
 void S2UI::updateLocalRemote(bool state){
     isLocal = state;
     status(QString("isLocal ").append(QString::number(isLocal)));
     QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
     QString topDirStr = QString("F:/testData/");
     QSettings settings("HHMI", "Vaa3D");
+    QString localDataString  = QString("");
+
 
     if (isLocal){
         myController.hostLineEdit->setText(QString("local"));
         myPosMon.hostLineEdit->setText(QString("local"));
+        localDataDirectory = QDir("testData");
     }else{
         myController.hostLineEdit->setText(QString("10.128.48.53"));
         myPosMon.hostLineEdit->setText(QString("10.128.48.53"));
-
+        localDataDirectory = QDir("testData");
         if (!settings.contains("s2_topDir")){
             topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
                                                           "/",
@@ -304,7 +323,17 @@ void S2UI::updateLocalRemote(bool state){
         }else{
             topDirStr =  settings.value("s2_topDir").value<QString>();
         }
+        if (!settings.contains("s2_dataDir")){
+            localDataString = QFileDialog::getExistingDirectory(this, tr("Choose local data directory..."),
+                                                          "/",
+                                                          QFileDialog::ShowDirsOnly
+                                                          | QFileDialog::DontResolveSymlinks);
+            settings.setValue("s2_dataDir",localDataString);
+        }else{
+            localDataString =  settings.value("s2_dataDir").value<QString>();
+        }
 
+        localDataDirectory = QDir(localDataString);
 
 
     }
@@ -321,15 +350,16 @@ void S2UI::updateLocalRemote(bool state){
     QDir topDir = QDir(topDirStr);
     topDir.mkdir(timeString);
 
-
+localDataDir->setText(localDataString);
 
     saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
+
     sessionDir = saveDir;
     scanDataFileString = saveDir.absolutePath().append("/").append("_0_scanData.txt");
     eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
 
     myNotes->setSaveDir(saveDir); // this gets saved in the parent directory.  scanDataFileString will get modified for each scan
-    resetDir=true;
+    resetDir=false;
 }
 
 
@@ -488,6 +518,31 @@ QGroupBox *S2UI::createTracingParameters(){
     return tPBox;
 }
 
+QGroupBox *S2UI::createConfigPanel(){
+    QGroupBox *configBox = new QGroupBox(tr("Config"));
+
+    QGridLayout *cBL = new QGridLayout;
+    machineSaveDir = new QLabel(tr("microscope not initialized"));
+    machineSaveDirLabel = new QLabel(tr("Microscope Save Directory : "));
+    resetDirPB = new QPushButton;
+    resetDirPB->setText(tr("set Local Save Directory"));
+
+    localDataDir = new QLabel(tr(""));
+    localDataDirLabel = new QLabel(tr("path to data : "));
+
+    setLocalPathToData = new QPushButton;
+    setLocalPathToData->setText(tr("set local path to data"));
+
+    cBL->addWidget(machineSaveDirLabel,0,0);
+    cBL->addWidget(machineSaveDir, 0,1);
+    cBL->addWidget(localDataDirLabel,1,0);
+    cBL->addWidget(localDataDir,1,1);
+    cBL->addWidget(setLocalPathToData,2,1);
+    cBL->addWidget(resetDirPB, 2,0);
+
+    configBox->setLayout(cBL);
+return configBox;
+}
 
 QGroupBox *S2UI::createROIControls(){
     QGroupBox *gROIBox = new QGroupBox(tr("&ROI Controls"));
@@ -636,7 +691,7 @@ void S2UI::loadScanFromFile(QString fileString){
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*Ch2*.tif"));
+        filterList.append(QString("*").append(channelChoiceComboB->currentText()).append("*.tif"));
         imageDir.setNameFilters(filterList);
         QStringList fileList = imageDir.entryList();
 
@@ -1490,20 +1545,37 @@ void S2UI::startingZStack(){
 
 }
 
+QString S2UI::fixFileString(QString inputString){
+    // take the filestring from the microscope and swap out the path to the directory for the local
+    // path to the data
+    if (!isLocal){
+        //qDebug()<<inputString;
+        QString toSplit = inputString;
+        QStringList splitList =    toSplit.split("\\");
+        QString nameOfFile = splitList.last();// need to pick off the directory above this too!
+        QString dirName= QString("");
+        if (splitList.length() >1){
+            dirName = splitList.at(splitList.length()-2);
 
+        }
+        inputString= QDir(localDataDirectory.absolutePath().append(QDir::separator()).append(dirName)).absoluteFilePath(nameOfFile);
+        //inputString = localDataDirectory.absoluteFilePath(nameOfFile);
+        //inputString.replace("\\AIBSDATA","\\data").replace("\\","/");
+    }
+    return inputString;
+
+
+}
 void S2UI::updateFileString(QString inputString){
     //this means a new file has been created.. it can be late by up to 1 full cycle of s2parametermap updating
     // but it guarantees that the acquisition is done
     // a separate poller of updated filename could be much faster.
     // final version will require much more rigorous timing- it's not clear how we'll parse out
     // the streamed image data into files...
-    fileString = inputString;
-    if (!isLocal){
-        if (fileString.contains("Z:")){
-            fileString.replace("Z:","\\AIBSDATA\\mat\\BRL\\testData");
-        }
-        fileString.replace("\\AIBSDATA","\\data").replace("\\","/");
-    }
+    machineSaveDir->setText(inputString);
+
+
+    fileString = fixFileString(inputString);
     fileString.append("_Cycle00001_Ch2_000001.ome.tif");
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile>0)){
         emit eventSignal("finishedZStack");
@@ -1512,9 +1584,12 @@ void S2UI::updateFileString(QString inputString){
 
     }
     lastFile = fileString;
+    //qDebug()<<lastFile;
 }
 
+// need to correctly pick directories. 1.  show current directory in new config window.  2. in new config window also show current data directory and allow user to easily change.
 
+// for faster version, add ulf's code to rip their raw file into a 1d format with color as last dimension.  rip on analysis machine with 10Gb connectivity to data and put directly in 1ddata format.  leave writing the same as before.
 
 void S2UI::clearROIPlot(){
     roiGS->clear();
@@ -1615,6 +1690,67 @@ void S2UI::scanStatusHandler(){
 }
 
 
+void S2UI::collectZoomStack(){
+    // collect zoom stack based on the coordinates of the Local 3D View  window.
+
+    View3DControl *my3DControl;
+    my3DControl = 0;
+    LocationSimple newTarget;
+
+    // find the latest window and get the 3dcontrol from that...
+    QList<V3dR_MainWindow *  > viewerList;
+    viewerList= cb->getListAll3DViewers();
+    V3dR_MainWindow *localWin;
+    int iWant = 0;
+    if (!viewerList.isEmpty()){
+        qDebug()<<"viewerList not empty";
+        for (int i =0; i<viewerList.length(); i++){
+            QString windowName = cb->getImageName(viewerList.at(i));
+            qDebug()<<windowName;
+            if (windowName.contains("Local 3D View ")) {
+                localWin = viewerList.at(i);
+                iWant = i;
+            }
+        }
+ qDebug()<<"got local window at i = "<<iWant;
+ my3DControl = cb->getView3DControl_Any3DViewer(viewerList[iWant]);
+    qDebug()<<"x start = "<<my3DControl->getLocalStartPosX();
+    qDebug()<<"x end = "<<my3DControl->getLocalEndPosX();
+    qDebug()<<"y start = "<<my3DControl->getLocalStartPosY();
+    qDebug()<<"y end = "<<my3DControl->getLocalEndPosY();
+
+    qDebug()<<"window name "<< cb->getImageName(localWin);
+    float xCenter = ( my3DControl->getLocalEndPosX()+ my3DControl->getLocalStartPosX())/2.0;
+    float yCenter = ( my3DControl->getLocalEndPosY()+ my3DControl->getLocalStartPosY())/2.0;
+    float xWidth = ( my3DControl->getLocalEndPosX()- my3DControl->getLocalStartPosX());
+    float yWidth = ( my3DControl->getLocalEndPosY()- my3DControl->getLocalStartPosY());
+
+    qDebug()<<"x = "<<xCenter<<" y = "<<yCenter<<" x width ="<<xWidth<<" y width = "<<yWidth;
+    newTarget.x = (xCenter-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
+    newTarget.y  = (yCenter-256.0)*overViewPixelToScanPixel;
+
+    int tileWidth = 0;
+    if (xWidth>yWidth){
+            tileWidth =xWidth;
+    }else{
+    tileWidth = yWidth;
+    }
+    newTarget.ev_pc1 = tileWidth * overViewPixelToScanPixel;
+    newTarget.ev_pc2 = tileWidth * overViewPixelToScanPixel;
+
+    currentTileInfo.setPixels((int) tileWidth);
+    }
+
+    QString sString =currentTileInfo.getTileInfoString().join(" _ ");
+    status("currentTileInfo : "+sString);
+    qDebug()<<sString;
+    waitingToStartStack = true;
+
+    //updateZoom(); // Bigtime race here!  I need a delayed/conditional move that waits until the zoom status is settled.
+    moveToROI(newTarget);
+
+}
+
 void S2UI::pickTargets(){
     qDebug()<<"in pickTargets...";
     if (!havePreview){
@@ -1622,6 +1758,8 @@ void S2UI::pickTargets(){
         return;
     }
     LandmarkList previewTargets =  cb->getLandmark(previewWindow);
+
+
     if (previewTargets.isEmpty()){
         v3d_msg("please select a target");
         return;
@@ -1747,8 +1885,6 @@ void S2UI::updateCurrentZoom(int currentIndex){
 void S2UI::updateZoomHandler(){
 
 }
-
-// next up:  has a tile been scanned?  I need a new version of 'is duplicate' to handle adaptive tile sizes.
 
 // then, use LocationSimple.category as an indicator of topological (branch) order.
 // once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class

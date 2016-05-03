@@ -9,6 +9,10 @@
 %  tiles due to xy stage movement after preview was taken.)
 
 
+%  one or two adaptive tiles were also removed 4/12- they didnt' start on
+%  the cell body or they only contained one tile and so would have been
+%  skipped anyway below.
+
 %Data analysis for smartscope 2 
 % starting 2016.03.28
 
@@ -79,9 +83,22 @@ for i = 1:numel(adaptiveScans2)
     end
 adaptiveScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell002','adaptive',adaptiveScans2(i).name)
 end
-adaptiveScans = [adaptiveScans;adaptiveScans2]
 
 
+adaptiveScans3 = dir(fullfile(batchTopDirectory, 'cell003','adaptive'));
+for i = 1:numel(adaptiveScans3)
+    if findstr(adaptiveScans3(i).name, '.')
+                adaptiveScans3(i).isdir = false;
+        continue
+    end
+adaptiveScans3(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','adaptive',adaptiveScans3(i).name)
+end
+
+
+
+adaptiveScans = [adaptiveScans;adaptiveScans2; adaptiveScans3]
+
+adaptiveScans = adaptiveScans([adaptiveScans(:).isdir]')
 
 
 gridScans = dir(fullfile(batchTopDirectory, 'cell001', 'grid'));
@@ -94,9 +111,23 @@ for i = 1:numel(gridScans)
 gridScans(i).fullDirPath = fullfile(batchTopDirectory, 'cell001','grid',gridScans(i).name)
 end
 
+gridScans = gridScans([gridScans(:).isdir]')
 
-otherScans = [adaptiveScans; gridScans]
-otherScans = otherScans([otherScans(:).isdir]')
+
+gridScans2 = dir(fullfile(batchTopDirectory, 'cell003', 'grid'));
+for i = 1:numel(gridScans2)
+    if findstr(gridScans2(i).name, '.')
+        gridScans2(i).isdir = false;
+        continue
+        
+    end
+gridScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','grid',gridScans2(i).name)
+end
+
+gridScans2 = gridScans2([gridScans2(:).isdir]')
+
+otherScans = [adaptiveScans; gridScans;gridScans2]
+nBeforeGrid = numel(adaptiveScans)
 %%  
 
 for i = 1:numel(otherScans)
@@ -155,7 +186,7 @@ for i = 1:numel(cellData)
             
             nnTry = str2double(dString(end-2:end))+1
             if isnan(nnTry)
-                nnTry = 10+(j<=8)
+                nnTry = 10+(j<=nBeforeGrid)
             end
             cellData{i}(j).neuronNumber = nnTry;
  
@@ -242,7 +273,12 @@ end
 a = unique(neuronNumbers)
 for ii = 1:numel(a)
 neuronData{a(ii)} = neuronData{a(ii)}(neuronData{a(ii)}(:,1)~=0,:)
+[rows, cs] = size(neuronData{a(ii)});
+rs= 1:rows;
+if a(ii)~=11
 [ neuronData{a(ii)}, rs] = sortrows(neuronData{a(ii)},1)
+end
+
 timeSummary{a(ii)} = timeSummary{a(ii)}(timeSummary{a(ii)}(:,1)~=0,:);
 timeSummary{a(ii)} = timeSummary{a(ii)}(rs,:)
 % if there are multiple scans at the same tile size, I'll plot the mean and
@@ -255,6 +291,16 @@ yErrorL1 = yErrorU1
 yErrorU2= yErrorU1
 yErrorL2= yErrorU2
 y2ToPlot = yErrorU1
+yErrorU3 = y1ToPlot
+yErrorL3 = yErrorU1
+yErrorU3= yErrorU1
+yErrorL3= yErrorU2
+y3ToPlot = yErrorU1
+yErrorU4 = y1ToPlot
+yErrorL4 = yErrorU1
+yErrorU4= yErrorU1
+yErrorL4= yErrorU2
+y4ToPlot = yErrorU1
 for jj = 1:numel(xVals)
     y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2))
     yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
@@ -268,25 +314,110 @@ for jj = 1:numel(xVals)
     yErrorU2(jj) = yMax2-y2ToPlot(jj)
     yErrorL2(jj) = y2ToPlot(jj)-yMin2 
     
+    y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1))
+    yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+    yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+    yErrorU3(jj) = yMax3-y3ToPlot(jj)
+    yErrorL3(jj) = y3ToPlot(jj)-yMin3 
+    
+        y4ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1)
+    yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+    yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+    yErrorU4(jj) = yMax4-y4ToPlot(jj)
+    yErrorL4(jj) = y4ToPlot(jj)-yMin4 
 end
 
-subplot(2,2,1),  hold all,   plot(neuronData{a(ii)}(:,1),neuronData{a(ii)}(:,2), '*','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1),neuronData{a(ii)}(:,2), '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 errorbar(xToPlot,y1ToPlot, yErrorL1, yErrorU1,'color', myCmap(ii,:))
 bip
-subplot(2,2,2),    hold all, plot(neuronData{a(ii)}(:,3),neuronData{a(ii)}(:,4), '*','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+xlim([0,450])
+xlabel('tile size (pixels)')
+ylabel('imaged area (pixels^2)')
+subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3),neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 errorbar(xToPlot,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
 bip
+xlim([0,450])
+xlabel('tile size (pixels)')
+ylabel('imaging time (s)')
 
-subplot(2,2,3) ,   hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'color', myCmap(ii,:))
+subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
+errorbar(xToPlot,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
+
  bip
-subplot(2,2,4), hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'color', myCmap(ii,:))
+ xlim([0,450])
+xlabel('tile size (pixels)')
+ylabel('normalized imaging time')
+subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
+errorbar(xToPlot,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
+
 bip
+xlim([0,450])
+xlabel('tile size (pixels)')
+ylabel('normalized analysis time')
 end
-subplot(2,2,3) ,  plot([0 500], [1 1],'k')
+subplot(4,1,3) ,  plot([0 450], [1 1],'k')
+xlim([0,450])
+
 %subplot(2,2,3) ,   hold all, plot(neuronData{a(ii)}(:,5),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 %subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 
+
+%% other calculations:
+
+
+% how much additional time is contributed by analysis?  
+
+%  timeSummary 
+smartScanTimes = [timeSummary{1};timeSummary{2};timeSummary{3};timeSummary{4}]
+adaptiveScanTimes = timeSummary{11}
+gridScanTimes5 = [timeSummary{10}]
+
+
+ssAnalysisTimes = smartScanTimes(:,3)./smartScanTimes(:,2)-1
+mean(ssAnalysisTimes)
+std(ssAnalysisTimes)
+
+ssScanTimes = smartScanTimes(:,3)./smartScanTimes(:,1)
+mean(ssScanTimes)
+std(ssScanTimes)
+
+aScanTimes = adaptiveScanTimes(:,3)./adaptiveScanTimes(:,1)
+mean(aScanTimes)
+std(aScanTimes)
+
+ssND = [neuronData{1}; neuronData{2}; neuronData{3}; neuronData{4}]
+aND = neuronData{11};
+gND = neuronData{10};
+ssTotalVolume = ssND(:,2);
+aTotalVolume = aND(:,2);
+gTotalVolume5 = gND(1,2);
+gTotalVolume7 = gND(2,2);
+mean(ssTotalVolume)
+std(ssTotalVolume)
+mean(aTotalVolume)
+std(aTotalVolume)
+
+ssTotalTime = ssND(:,4)
+gTotalTime = gND(:,4)
+aTotalTime = aND(:,4)
+g5nD = neuronData{10}(1,:)
+
+
+mean(ssTotalTime)
+std(ssTotalTime)
+
+
 %%  notes and comments.
+
+% 2016.04.27  figure work
+% in illustrator I modified colors and plot labels (now cell0000 is labeled
+% as neuron 1, etc)  and linked the adaptive plot symbols to the
+% corresponding neuron plot color. I also eliminated the grid plots for the
+% normalized plots -the 7x7 values are way out of whack probably because of
+% a prairieview error or something.  
+
+%%
+
 
 %  cell000 neuronNumber = 1
 %  2016_03_27_Sun_09_45  background was too high. but the tile size is the
