@@ -2,12 +2,14 @@
  * This is a test plugin, you can use it as a demo.
  * 2013-08-29 : by Zhi Zhou
  */
+#include "MultisclaeEnhancement_plugin.h"
+#include "../../../v3d_main/jba/newmat11/newmatap.h"
+#include "../../../v3d_main/jba/newmat11/newmatio.h"
 
 #include <QByteArray>
 
 #include "v3d_message.h"
 #include <vector>
-#include "MultisclaeEnhancement_plugin.h"
 #include <QtGui>
 #include <fstream>
 #include <iostream>
@@ -30,8 +32,7 @@
 
 
 #define WANT_STREAM       // include iostream and iomanipulators
-#include "../../../v3d_main/jba/newmat11/newmatap.h"
-#include "../../../v3d_main/jba/newmat11/newmatio.h"
+
 
 //QString temp_raw,temp_gf,temp_gsdt,temp_gsdt_v2,temp_wogf,temp_soma,temp_gsdtsoma,temp_ds,temp_gsdtds; // FL comment out, for multithreading purpose
 
