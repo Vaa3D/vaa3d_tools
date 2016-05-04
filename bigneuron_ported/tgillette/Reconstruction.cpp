@@ -14,18 +14,20 @@
 NeuronSegment * convert_to_neuron_segment(TreeSegment *root, bool destroy_tree){
     std::stack<TreeSegment *> seg_stack;
     seg_stack.push(root);
-    NeuronSegment *neuron_root = nullptr;
+    NeuronSegment *neuron_root = NULL;
     while (!seg_stack.empty()){
         TreeSegment *seg = seg_stack.top();
         NeuronSegment *neuron_seg = new NeuronSegment();
-        if (neuron_root == nullptr){
+        if (neuron_root == NULL){
             neuron_root = neuron_seg;
         }
-        for (TreeSegment *child : seg->child_list){
+        for (int i =0; i<seg->child_list.size(); i++){
+            TreeSegment * child = seg->child_list[i];
             seg_stack.push(child);
         }
         if (destroy_tree){
-            for (MyMarker *marker : seg->markers){
+           for (int i =0; i< seg->markers.size(); i++){ 
+                MyMarker *marker = seg->markers[i];
                 delete marker;
             }
             delete seg;
@@ -47,7 +49,8 @@ TreeSegment * convert_to_tree_segment(NeuronSegment *root, bool destroy_neuron){
             tree_root = tree_seg;
         }
         tree_seg->markers = seg->markers;
-        for (NeuronSegment *child : seg->child_list){
+        for (int i =0; i<seg->child_list.size(); i++){
+            NeuronSegment *child = seg->child_list[i];
             parent_connector[child] = tree_seg;
             seg_stack.push(child);
         }
@@ -60,14 +63,17 @@ void delete_tree(TreeSegment *root, bool delete_markers){
     seg_stack.push(root);
     while (!seg_stack.empty()){
         TreeSegment *seg = seg_stack.top();
-        for (TreeSegment *child : seg->child_list){
+        for (int i =0; i<seg->child_list.size(); i++){
+            TreeSegment * child = seg->child_list[i];
             seg_stack.push(child);
         }
         if (delete_markers){
-            for (MyMarker *marker : seg->markers){
+            for (int i =0;i<seg->markers.size(); i++){
+                MyMarker *marker =seg->markers[i];
                 delete marker;
             }
         }
+
         delete seg;
     }
 };
@@ -76,11 +82,13 @@ void delete_neuron(NeuronSegment *root, bool delete_markers){
     seg_stack.push(root);
     while (!seg_stack.empty()){
         NeuronSegment *seg = seg_stack.top();
-        for (NeuronSegment *child : seg->child_list){
+        for (int i =0; i<seg->child_list.size(); i++){
+            NeuronSegment *child = seg->child_list[i];
             seg_stack.push(child);
         }
         if (delete_markers){
-            for (MyMarker *marker : seg->markers){
+            for (int i =0;i<seg->markers.size(); i++){
+                MyMarker *marker =seg->markers[i];
                 delete marker;
             }
         }
@@ -94,7 +102,8 @@ NeuronSegment * copy_segment_markers(NeuronSegment *segment){
     MyMarker *new_marker;
     std::map<MyMarker *, MyMarker *> marker_map;
     int ind = 0;
-    for (MyMarker* marker : segment->markers){
+    for (int i =0; i< segment->markers.size(); i++){
+        MyMarker* marker =segment->markers[i];
         new_marker = new MyMarker(*marker);
         if (marker_map.find(marker->parent) != marker_map.end()){
             new_marker->parent = marker_map[marker->parent];
@@ -116,7 +125,8 @@ NeuronSegment * copy_segment_tree(NeuronSegment *root){
         segment = pair.first;
         copy = pair.second;
         seg_stack.pop();
-        for (NeuronSegment *child : segment->child_list){
+        for (int i =0; i<segment->child_list.size(); i++){
+            NeuronSegment *child = segment->child_list[i];
             child_copy = copy_segment_markers(child);
             copy->child_list.push_back(child_copy);
             if (child->child_list.size() > 0){
@@ -135,20 +145,20 @@ NeuronSegment * copy_segment_tree(NeuronSegment *root){
 unsigned long BranchContainer::master_uid = 0;
 
 BranchContainer::BranchContainer(){
-    // Uncertain whether it is necessary to set these, but I want to be certain #CONSIDER: removing the nullptr assignments if they are indeed unncessary
-    bc_reconstruction = nullptr;
-    bc_segment = nullptr;
-    bc_parent = nullptr;
-    bc_composite_match = nullptr;
+    // Uncertain whether it is necessary to set these, but I want to be certain #CONSIDER: removing the NULL assignments if they are indeed unncessary
+    bc_reconstruction = NULL;
+    bc_segment = NULL;
+    bc_parent = NULL;
+    bc_composite_match = NULL;
     bc_confidence = 1;
     uid = BranchContainer::master_uid++;
 };
 BranchContainer::BranchContainer(Reconstruction *reconstruction){
     bc_reconstruction = reconstruction;
     reconstruction->add_branch(this);
-    bc_segment = nullptr;
-    bc_parent = nullptr;
-    bc_composite_match = nullptr;
+    bc_segment = NULL;
+    bc_parent = NULL;
+    bc_composite_match = NULL;
     bc_confidence = reconstruction->get_confidence();
     uid = BranchContainer::master_uid++;
 };
@@ -190,7 +200,7 @@ void BranchContainer::set_parent(BranchContainer *parent){
     // Clear the existing parent relationship if it exists, and if
         if (bc_parent){
             BranchContainer *prev_parent = bc_parent;
-            bc_parent = nullptr; // Avoid endless loop by breaking connection from child to parent
+            bc_parent = NULL; // Avoid endless loop by breaking connection from child to parent
             prev_parent->remove_child(this);
         }
         bc_parent = parent;
@@ -204,7 +214,7 @@ void BranchContainer::set_parent(BranchContainer *parent){
     }
 };
 void BranchContainer::add_child(BranchContainer *child){
-    if (child != nullptr){
+    if (child != NULL){
         bc_children.insert(child);
         // Add segment child, if it isn't already there (BC uses set, but NeuronSegment uses vector)
         std::vector<NeuronSegment *>::iterator position = std::find(bc_segment->child_list.begin(), bc_segment->child_list.end(), child->get_segment());
@@ -223,7 +233,7 @@ void BranchContainer::remove_child(BranchContainer *child){
     if (bc_children.size() < num_children_before) subtree_markers -= child->get_subtree_markers();
     
     if (child->get_parent() == this){
-        child->set_parent(nullptr);
+        child->set_parent(NULL);
     }
     
     // Remove segment child
@@ -231,21 +241,27 @@ void BranchContainer::remove_child(BranchContainer *child){
 };
 
 void BranchContainer::add_children(std::set<BranchContainer *> children){
-    for (BranchContainer *child : children){
-        add_child(child);
-    }
+	std::set<BranchContainer *>::iterator it;
+	for (it = children.begin(); it != children.end(); ++it)
+	{
+		BranchContainer *child =  *it;
+                add_child(child);
+        }
 }
 /*
 void BranchContainer::set_children(std::set<BranchContainer *> children){
     bc_children = children;
 };*/
 void BranchContainer::remove_children(){
-    for (BranchContainer *child : bc_children){
-        remove_child(child);
-    }
+	std::set<BranchContainer *>::iterator it;
+	for (it = bc_children.begin(); it != bc_children.end(); ++it)
+	{
+		BranchContainer *child =  *it;
+		remove_child(child);
+	}
 }
 void BranchContainer::set_composite_match(CompositeBranchContainer *composite_match){
-    bc_composite_match = composite_match;
+	bc_composite_match = composite_match;
 };
 void BranchContainer::set_confidence(double confidence){
     bc_confidence = confidence;
@@ -265,7 +281,7 @@ BranchContainer * BranchContainer::split_branch(){
     //orig_seg->markers.erase(orig_seg->markers.begin(), orig_seg->markers.begin() + split_point_t);
     
     // Create new branch above split
-    BranchContainer *branch_before = new BranchContainer(bc_reconstruction, new_seg_before, nullptr, nullptr, bc_confidence);
+    BranchContainer *branch_before = new BranchContainer(bc_reconstruction, new_seg_before, NULL, NULL, bc_confidence);
     
     BranchContainer *parent = bc_parent;
     set_parent(branch_before);
@@ -289,7 +305,7 @@ BranchContainer * BranchContainer::split_branch(std::size_t const split_point){
     subtree_markers -= split_point;
     
     // Create new branch above split
-    BranchContainer *branch_before = new BranchContainer(bc_reconstruction, new_seg_before, nullptr, nullptr, bc_confidence);
+    BranchContainer *branch_before = new BranchContainer(bc_reconstruction, new_seg_before, NULL, NULL, bc_confidence);
     
     BranchContainer *parent = bc_parent;
     set_parent(branch_before);
@@ -356,8 +372,12 @@ Reconstruction::Reconstruction(string name, std::vector<NeuronSegment *> trees, 
     create_branch_container_trees(r_trees);
     r_segments = produce_segment_set(r_trees);
 };
+
 Reconstruction::~Reconstruction(){
-    for (NeuronSegment *seg : r_segments){
+     
+    std::set<NeuronSegment *> ::iterator it;
+    for (it = r_segments.begin() ; it != r_segments.end(); it++){
+        NeuronSegment *seg  = *it;
         //        printf("~Reconstruction 1\n");
         BranchContainer *branch = get_branch_by_segment(seg);
         //        printf("~Reconstruction 2\n");
@@ -390,7 +410,7 @@ void Reconstruction::update_constituents(){
  vector<NeuronSegment*> children = segment->child_list;
  for (NeuronSegment *child : children){
  // Creates a BC for the child segment as well as pointer to its BC parent, and for its parent back to it
- child_branch = new BranchContainer(this,child,branch,nullptr,r_confidence);
+ child_branch = new BranchContainer(this,child,branch,NULL,r_confidence);
  if (child->child_list.size() > 0){
  stack.push(SCPair(child,child_branch));
  }
@@ -404,9 +424,9 @@ void Reconstruction::create_branch_container_trees(std::vector<NeuronSegment *> 
     SCPair sc_pair;
     NeuronSegment *segment;
     BranchContainer *branch, *child_branch;
-    
-    for (NeuronSegment *segment : trees){
-        child_branch = new BranchContainer(this,segment,nullptr,nullptr,r_confidence);
+    for (int i =0; i< trees.size();i++){ 
+        NeuronSegment *segment = trees[i];
+        child_branch = new BranchContainer(this,segment,NULL,NULL,r_confidence);
         segment_container_map[segment] = child_branch;
         if (segment->child_list.size() > 0)
             stack.push(SCPair(segment,child_branch));
@@ -419,9 +439,10 @@ void Reconstruction::create_branch_container_trees(std::vector<NeuronSegment *> 
         segment = sc_pair.first;
         branch = sc_pair.second;
         vector<NeuronSegment*> children = segment->child_list;
-        for (NeuronSegment *child : children){
+        for (int i =0; i< children.size(); i++){
+            NeuronSegment *child = children[i];
             // Creates a BC for the child segment as well as pointer to its BC parent, and for its parent back to it
-            child_branch = new BranchContainer(this,child,branch,nullptr,r_confidence);
+            child_branch = new BranchContainer(this,child,branch,NULL,r_confidence);
             segment_container_map[child] = child_branch;
             if (child->child_list.size() > 0){
                 stack.push(SCPair(child,child_branch));
@@ -489,7 +510,9 @@ double Reconstruction::get_confidence() const{
 
 long Reconstruction::get_node_count(){
     long node_count = 0;
-    for (NeuronSegment *seg : r_segments){
+    std::set<NeuronSegment *> ::iterator it;
+    for (it = r_segments.begin() ; it != r_segments.end(); it++){
+        NeuronSegment *seg  = *it;
         node_count += seg->markers.size();
     }
     return node_count;
@@ -507,7 +530,8 @@ std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment *root){
         segment = segment_stack.top();
         segment_stack.pop();
         segments.push_back(segment);
-        for (NeuronSegment *child : segment->child_list){
+        for (int i =0; i< segment->child_list.size(); i++){
+            NeuronSegment *child = segment->child_list[i];
             segment_stack.push(child);
         }
     }
@@ -517,7 +541,8 @@ std::vector<NeuronSegment *> produce_segment_vector(NeuronSegment *root){
 
 SegmentPtrSet produce_segment_set(std::vector<NeuronSegment *> roots){
     std::stack<NeuronSegment *> segment_stack;
-    for (NeuronSegment *segment : roots){
+    for (int i =0; i<roots.size(); i++){
+        NeuronSegment *segment = roots[i];
         segment_stack.push(segment);
     }
     SegmentPtrSet segments;
@@ -526,7 +551,9 @@ SegmentPtrSet produce_segment_set(std::vector<NeuronSegment *> roots){
         segment = segment_stack.top();
         segment_stack.pop();
         segments.insert(segment);
-        for (NeuronSegment *child : segment->child_list){
+
+        for (int i =0; i< segment->child_list.size(); i++){
+            NeuronSegment *child = segment->child_list[i];
             segment_stack.push(child);
         }
     }
@@ -542,8 +569,11 @@ std::map<NeuronSegment *, BranchContainer *> produce_segment_container_map(Branc
         branch = branch_stack.top();
         branch_stack.pop();
         sb_map[branch->get_segment()] = branch;
-        for (BranchContainer *child : branch->get_children()){
-            branch_stack.push(child);
+
+        std::set<BranchContainer * >::iterator it;
+	for (it = branch->get_children().begin(); it!= branch->get_children().end(); it++){
+		BranchContainer *child = *it;
+		branch_stack.push(child);
         }
     }
     return sb_map;

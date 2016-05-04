@@ -64,7 +64,7 @@ public:
     // Contructors
     BranchContainer();
     BranchContainer(Reconstruction *reconstruction);
-    BranchContainer(Reconstruction *reconstruction, NeuronSegment *segment, BranchContainer *parent=nullptr, CompositeBranchContainer *composite_match=nullptr, double confidence=-1);
+    BranchContainer(Reconstruction *reconstruction, NeuronSegment *segment, BranchContainer *parent=NULL, CompositeBranchContainer *composite_match=NULL, double confidence=-1);
     ~BranchContainer();
     
     // Setters
