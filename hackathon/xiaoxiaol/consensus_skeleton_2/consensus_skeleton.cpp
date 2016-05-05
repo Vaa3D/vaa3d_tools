@@ -1225,6 +1225,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     vector<NeuronTree> nt_list_resampled;
     if (resample_flag >0)
     {
+        cout<<"Resampling..."<<endl;
         for (int i = 0; i < nt_list.size(); i++)
         {
             NeuronTree nt = nt_list[i];
@@ -1245,7 +1246,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     }
 
 
-    int max_num_iters = 5;
+    int max_num_iters = 3;
 
 
 // DEBUG
@@ -1481,7 +1482,7 @@ bool consensus_skeleton_votemap(vector<NeuronTree>  nt_list, QList<NeuronSWC> & 
 	//****************************************************
 	// Step 2:  Consensus Nodes
 	cout <<"\nCompute consensus nodes (non-max_supression)"<<endl;
-	//non-maximum suppresion
+    //non-mum suppresion
 	vector<Point3D>  node_list;
 	vector<unsigned int>  vote_list;
 
