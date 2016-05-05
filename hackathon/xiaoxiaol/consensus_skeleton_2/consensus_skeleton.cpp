@@ -100,7 +100,7 @@ bool tightRange(vector<double> x, double &low, double &high)
  // hight = mean +std
    double  median_size = median(x);
    cout << "median length:"<<median_size<<endl;
-
+   cout << "range:0.5~1.5"<<endl;
    low = median_size/2.0;
    high = 1.5*median_size;
 
@@ -973,7 +973,6 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
         }
 
         if (edgeVote >= vote_threshold ){
-                       cout <<"connect"<<endl;
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
             tmp.y = node_list[i].y;
@@ -1219,25 +1218,34 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
 
 bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSWC> & final_consensus,
-               int max_vote_threshold,int cluster_distance_threshold, V3DPluginCallback2 &callback)
+               int max_vote_threshold,int cluster_distance_threshold, int resample_flag,V3DPluginCallback2 &callback)
 {
 
     //resample input swcs
     vector<NeuronTree> nt_list_resampled;
-    for (int i = 0; i < nt_list.size(); i++){
-        NeuronTree nt = nt_list[i];
-        if (nt.listNeuron.size()>0){
-            //resample with step size 1
-            NeuronTree resampled = resample(nt, 1.0);
-             if (resampled.listNeuron.size()>0){
-                resampled.file = nt.file;
-                nt_list_resampled.push_back(resampled);
-             }
+    if (resample_flag >0)
+    {
+        for (int i = 0; i < nt_list.size(); i++)
+        {
+            NeuronTree nt = nt_list[i];
+            if (nt.listNeuron.size()>0)
+            {
+                //resample with step size 1
+                NeuronTree resampled = resample(nt, 1.0);
+                if (resampled.listNeuron.size()>0){
+                    resampled.file = nt.file;
+                    nt_list_resampled.push_back(resampled);
+                }
+            }
         }
+    }
+    else
+    {
+        nt_list_resampled=nt_list;
     }
 
 
-   int max_num_iters = 5;
+    int max_num_iters = 5;
 
 
 // DEBUG

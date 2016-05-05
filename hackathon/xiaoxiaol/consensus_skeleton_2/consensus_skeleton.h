@@ -50,7 +50,7 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
 XYZ mean_XYZ(vector<XYZ> points);
 bool tightRange(vector<double> x, double &low, double &high);
 bool consensus_skeleton_match_center(vector<NeuronTree> nt_list, QList<NeuronSWC> & final_consensus, int max_vote_threshold,
-int cluster_distance_threshold, V3DPluginCallback2 &callback);
+int cluster_distance_threshold, int resample_flag, V3DPluginCallback2 &callback);
 bool merge_and_vote(vector<NeuronTree> & nt_list_resampled,
                     int vote_threshold,QList<NeuronSWC> &merge_result,int TYPE_MERGED);
 double correspondingNodeFromNeuron(XYZ pt,QList<NeuronSWC> listNodes, int &closestNodeIdx,int TYPE_MERGED);

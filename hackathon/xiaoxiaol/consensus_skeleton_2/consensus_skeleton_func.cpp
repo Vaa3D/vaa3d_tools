@@ -18,69 +18,70 @@ const QString title = QObject::tr("Consensus Skeleton");
 
 int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	QString fileOpenName;
-	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-			"",
-			QObject::tr("Supported file (*.ano)"
-				";;Neuron structure	(*.ano)"
-				));
-	if(fileOpenName.isEmpty()) 
-		return -1;
+//	QString fileOpenName;
+//	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+//			"",
+//			QObject::tr("Supported file (*.ano)"
+//				";;Neuron structure	(*.ano)"
+//				));
+//	if(fileOpenName.isEmpty())
+//		return -1;
 		
-	P_ObjectFileType linker_object;
-	if (!loadAnoFile(fileOpenName,linker_object))
-	{
-		fprintf(stderr,"Error in reading the linker file.\n");
-		return -1;
-	}
+//	P_ObjectFileType linker_object;
+//	if (!loadAnoFile(fileOpenName,linker_object))
+//	{
+//		fprintf(stderr,"Error in reading the linker file.\n");
+//		return -1;
+//	}
 	
-	QStringList nameList = linker_object.swc_file_list;
-	V3DLONG neuronNum = nameList.size();
-	vector<NeuronTree> nt_list;
+//	QStringList nameList = linker_object.swc_file_list;
+//	V3DLONG neuronNum = nameList.size();
+//	vector<NeuronTree> nt_list;
 	
-	for (V3DLONG i=0;i<neuronNum;i++)
-	{
-		NeuronTree tmp = readSWC_file(nameList.at(i));
-		nt_list.push_back(tmp);
-	}
+//	for (V3DLONG i=0;i<neuronNum;i++)
+//	{
+//		NeuronTree tmp = readSWC_file(nameList.at(i));
+//		nt_list.push_back(tmp);
+//	}
 
-	bool ok;
-    //int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
-    int max_vote_threshold = QInputDialog::getInt(parent, "max_vote_threshold", "FIX ME:vote threshold (to be included for consensusing)", 0, 1, 1, 1, &ok);
-    int cluster_distance_threshold = QInputDialog::getInt(parent, "FIX ME:cluster distance threshold", "5~10", 0, 1, 1, 1, &ok);
+//	bool ok;
+//    //int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
+//    int max_vote_threshold = QInputDialog::getInt(parent, "max_vote_threshold", "FIX ME:vote threshold (to be included for consensusing)", 0, 1, 1, 1, &ok);
+//    int cluster_distance_threshold = QInputDialog::getInt(parent, "FIX ME:cluster distance threshold", "5~10", 0, 1, 1, 1, &ok);
 
-	if (!ok)
-		return 0;
+//	if (!ok)
+//		return 0;
 	
-    QList<NeuronSWC> merge_result;
+//    QList<NeuronSWC> merge_result;
 
 
 
-	QString fileSaveName;
-	QString defaultSaveName = fileOpenName + "_consensus.swc";
-	fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
-			defaultSaveName,
-			QObject::tr("Supported file (*.swc)"
-				";;Neuron structure	(*.swc)"
-				));
+//	QString fileSaveName;
+//	QString defaultSaveName = fileOpenName + "_consensus.swc";
+//	fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
+//			defaultSaveName,
+//			QObject::tr("Supported file (*.swc)"
+//				";;Neuron structure	(*.swc)"
+//				));
 
 
-    QString SelectedNeuronsAnoFileName = fileSaveName+"_SelectedNeurons.ano";
-    remove_outliers(nt_list, SelectedNeuronsAnoFileName);
-    //if (!consensus_skeleton_votemap(nt_list, merge_result, max_vote_threshold, cluster_distance_threshold,  callback))
-    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,
-                                         cluster_distance_threshold,  callback))
-    {
-        v3d_msg("Error in consensus swc!");
-        return -1;
-    }
-    if (!export_listNeuron_2swc(merge_result,qPrintable(fileSaveName)))
-	{
-		v3d_msg("Unable to save file");
-		return -1;
-	}
-    v3d_msg("Consensus swc is saved into: " + fileSaveName + "\n");
-	return 1;
+//    QString SelectedNeuronsAnoFileName = fileSaveName+"_SelectedNeurons.ano";
+//    remove_outliers(nt_list, SelectedNeuronsAnoFileName);
+
+//    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,
+//                                         cluster_distance_threshold,  callback))
+//    {
+//        v3d_msg("Error in consensus swc!");
+//        return -1;
+//    }
+//    if (!export_listNeuron_2swc(merge_result,qPrintable(fileSaveName)))
+//	{
+//		v3d_msg("Unable to save file");
+//		return -1;
+//	}
+//    v3d_msg("Consensus swc is saved into: " + fileSaveName + "\n");
+    v3d_msg(" Not implemented yet.\n");
+    return 0;
 }
 
 bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
@@ -185,6 +186,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
     int max_vote_threshold = 4;
     int cluster_distance_threshold = 10; // ignore nodes that far away for clustering
+    int resample_flag = 1;
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -192,9 +194,13 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		{
             max_vote_threshold = atoi(paras->at(0));
             cout<<"max_vote_threshold = "<<max_vote_threshold<<endl;
-            if (paras->size() == 2){
+            if (paras->size() >= 2){
                 cluster_distance_threshold =  atoi(paras->at(1));
                 cout<<"clustering distance threshold = "<<cluster_distance_threshold<<endl;
+            }
+            if (paras->size() >= 3){
+                resample_flag =  atoi(paras->at(2));
+                cout<<"resample_flag = "<<resample_flag<<endl;
             }
 		}
 		else
@@ -255,7 +261,8 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     QString SelectedNeuronsAnoFileName = outfileName+"_SelectedNeurons.ano";
     remove_outliers(nt_list, SelectedNeuronsAnoFileName);
     //if (!consensus_skeleton_vote_map(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
-    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
+
+    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, resample_flag, callback))
 	{
 		cerr<<"error in consensus_skeleton"<<endl;
 		return false;
@@ -655,8 +662,25 @@ int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 void printHelp()
 {
-    cout<<"\nConsensus Skeleton: This plugin has the following three functions:"<<endl;
-    cout<<"\n  1) Pick the median neuron tree from a group of input neuron tress."<<endl;
+    cout<<"\nConsensus Skeleton: This plugin has the following five functions:"<<endl;
+
+
+    cout<<"\n  1) Generate a consensus neuron skeleton (eswc file) from a group of neurons ( radii are ignored)."<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <*.swc or ano file> -o <output_file> -p <max vote threshold> < clustering distance threshold> <resample flag>"<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  consensus_swc"<<endl;
+    cout<<"\t-i <input>:  input linker file (.ano) or  swc files"<<endl;
+    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <resample_flag>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
+    cout<<"\t                                 included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
+    cout<<"\t                                  b) clustering distance threshold: the maximum voxel distance that are allowed to cluster one swc node to the " <<endl;
+    cout<<"\t                                 consenused node location during the edge voting step. c) resample_falg for preprocessing: 1--resampling, 0--no resampling.Default=1." <<endl;
+    cout<<"\t-o <output_file>:  output consensus eswc file name. The ESWC contains the edge connection confidence/voting value at each swc node."<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 5 1\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 1\n"<<endl;
+
+
+
+    cout<<"\n  2) Pick the median neuron tree from a group of input neuron tress."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f median_swc -i <input ANO linker file> [-o <output csv file>] "<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  median_swc"<<endl;
@@ -665,7 +689,8 @@ void printHelp()
     cout<< " The index number of the median swc in the ano file will be reported in standard output. "<<endl;
     cout<<"Example: v3d -x consensus_swc -f median_swc -i mylinker.ano[myfolder/*.swc]  -o distances.csv \n"<<endl;
 
-    cout<<"\n  2) Adjust input neuron node locations by averaging over the matching nodes from the input group of neurons tree."<<endl;
+
+    cout<<"\n  3) Adjust input neuron node locations by averaging over the matching nodes from the input group of neurons tree."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f average_node_position -i <median swc> <linker ANO file> -o <output_file> -p <distance_threshold>"<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  average_node_position"<<endl;
@@ -675,18 +700,6 @@ void printHelp()
           "not be considered matching for averaging." <<endl;
     cout<<"\t -o <output_file>:  output file name." <<endl;
     cout<<"Example: v3d -x consensus_swc -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
-
-    cout<<"\n  3) Generate a consensus neuron skeleton (swc file) from a group of neurons ( radii are ignored)."<<endl;
-    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <input_folder or ano file> -o <output_file> "<<endl;
-    cout<<"Parameters:"<<endl;
-    cout<<"\t-f <function_name>:  consensus_swc"<<endl;
-    cout<<"\t-i <input>:  input linker file (.ano) or folder path"<<endl;
-    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold>:  max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
-    cout<<"\t                                 included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
-    cout<<"\t-o <output_file>:  output file name. If -i is followd by a linker file name, this parameter can be omitted"<<endl;
-    cout<<"\t                   default result will be generated under the same directory of the ref linkerfile and has a name of 'linkerFileName_consensus.swc'"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.swc -p 6 5 \n"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.swc -p 6 5 \n"<<endl;
 
 
     cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
