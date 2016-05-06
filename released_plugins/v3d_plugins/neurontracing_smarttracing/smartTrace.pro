@@ -8,6 +8,7 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
+INCLUDEPATH += ./
 
 TARGET	= $$qtLibraryTarget(smartTrace)
 DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/smartTrace/
@@ -19,6 +20,7 @@ macx{
 }
 
 win32{
+    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
 }
 
 unix:!macx {

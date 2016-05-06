@@ -1231,6 +1231,8 @@ bool nt_selfcorrect_func::smartTracing_seedstart(){
     saveImage(fname_img.toStdString().c_str(), p_label, sz_img, 1);
     qDebug()<<"smartTracing: Done prediction. Calculate final tracing.";
     //ntmarkers=app2Tracing(fname_img, fname_outswc, 1);
+
+	return true;
 }
 
 void nt_selfcorrect_func::initParameter()

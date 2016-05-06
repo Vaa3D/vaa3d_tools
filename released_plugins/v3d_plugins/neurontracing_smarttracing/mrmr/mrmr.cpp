@@ -734,7 +734,7 @@ compute_mutualinfo (double *pab, long pabhei, long pabwid)
         }
     }
 
-    muInf /= log (2);
+    muInf /= log (2.0);
 
     //free memory
     if (pab2d)

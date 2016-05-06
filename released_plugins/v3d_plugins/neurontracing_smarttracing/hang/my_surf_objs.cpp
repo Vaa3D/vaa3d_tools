@@ -7,6 +7,10 @@
 #include <map>
 #include <cmath>
 
+//#if defined(Q_OS_WIN32)
+#include <string>
+//#endif
+
 #include "common_macro.h"     // MIN MAX
 #include "my_surf_objs.h"
 
