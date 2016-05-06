@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun 
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
@@ -12,7 +12,7 @@ HEADERS	+= fastmarching_spanningtree_plugin.h
 HEADERS += \
     myplugin_func.h \
     global.h \
-    ../../APP2_ported/heap.h \
+    ../../../bigneuron_ported/APP2_ported/heap.h \
     tree.h \
     graph.h \
     node.h
