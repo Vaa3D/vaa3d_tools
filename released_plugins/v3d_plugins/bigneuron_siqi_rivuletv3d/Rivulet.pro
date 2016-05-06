@@ -49,4 +49,4 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
 
 TARGET	= $$qtLibraryTarget(Rivulet)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/Rivulet/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/Rivulet/

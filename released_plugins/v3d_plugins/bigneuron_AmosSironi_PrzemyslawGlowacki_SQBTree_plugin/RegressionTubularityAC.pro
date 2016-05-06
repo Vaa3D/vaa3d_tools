@@ -68,4 +68,4 @@ QMAKE_LFLAGS += -fopenmp
 
 
 TARGET	= $$qtLibraryTarget(RegressionTubularityAC)
-DESTDIR	= $$VAA3DPATH/bin/plugins/RegressionTubularityAC/
+DESTDIR	= $$VAA3DPATH/bin/plugins/image_segmentation/RegressionTubularityAC/

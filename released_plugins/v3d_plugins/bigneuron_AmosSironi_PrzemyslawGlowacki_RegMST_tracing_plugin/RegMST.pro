@@ -117,4 +117,4 @@ QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS += -fopenmp
 
 TARGET	= $$qtLibraryTarget(RegMST)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/RegMST/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/RegMST/

@@ -20,4 +20,4 @@ SOURCES	+= N3DFix_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(N3DFix)
-DESTDIR	= $$VAA3DPATH/bin/plugins/N3DFix/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/N3DFix/

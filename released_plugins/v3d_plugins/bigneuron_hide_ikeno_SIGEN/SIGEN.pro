@@ -6,7 +6,7 @@ CONFIG += qt plugin release
 TARGET = $$qtLibraryTarget(SIGEN)
 
 # http://stackoverflow.com/questions/2580934
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuronhackathon/SIGEN/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/SIGEN/
 
 unix{
     QMAKE_CXXFLAGS += -Wall -Wextra -Wshadow -Wno-c++11-extensions

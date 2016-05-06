@@ -39,4 +39,4 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += ../../../hackathon/zhi/snake_tracing/ITK_include/vcl_deprecated.cxx
 
 TARGET	= $$qtLibraryTarget(SimpleAxisAnalyzer)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/bigneuronhackathon/SimpleAxisAnalyzer
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/SimpleAxisAnalyzer

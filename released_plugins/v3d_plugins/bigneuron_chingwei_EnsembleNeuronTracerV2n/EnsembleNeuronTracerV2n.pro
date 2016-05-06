@@ -21,4 +21,4 @@ SOURCES += my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(EnsembleNeuronTracerV2n)
-DESTDIR	= $$VAA3DPATH/bin/plugins/bigneuron_ported/EnsembleNeuronTracerV2n/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/EnsembleNeuronTracerV2n/

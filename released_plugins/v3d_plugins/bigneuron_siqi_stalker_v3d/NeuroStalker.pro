@@ -62,4 +62,4 @@ LIBS         += -lpthread
 LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
 
 TARGET	= $$qtLibraryTarget(NeuroStalker)
-DESTDIR	= $$VAA3DPATH/bin/plugins/NeuroStalker/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/NeuroStalker/

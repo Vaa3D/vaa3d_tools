@@ -21,4 +21,4 @@ SOURCES += my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(ENT)
-DESTDIR	= $$VAA3DPATH/bin/plugins/ENT/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/ENT/
