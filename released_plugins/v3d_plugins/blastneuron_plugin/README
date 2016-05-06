@@ -1,0 +1,4 @@
+This blastneuron plugin is developed on Linux and uses some Linux-only header files.
+Therefore, in order to build it on Windows, a third-party library such as GnuWin32 needs to be installed.
+GnuWin32 can be obtained at: https://sourceforge.net/projects/getgnuwin32/files/latest/download?source=files
+After download, follow the instructions in the installer to setup.
