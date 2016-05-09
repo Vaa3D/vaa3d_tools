@@ -33,5 +33,5 @@ LIBS         += -L$$V3DMAINDIR/common_lib/lib -lv3dfftw3f_threads
 LIBS         += -lm -lpthread
 
 TARGET        = $$qtLibraryTarget(Janelia_blend_multiscanstacks)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_blending/Janelia_blend_multiscanstacks
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/FlyWorkstation_utilities/Janelia_blend_multiscanstacks
 

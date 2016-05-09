@@ -27,7 +27,7 @@ unix{
 }
 
 TARGET        = $$qtLibraryTarget(Janelia_imageStitch)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_stitching/Janelia_istitch
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/FlyWorkstation_utilities/Janelia_istitch
 
 RESOURCE     += istitch.qrc
 

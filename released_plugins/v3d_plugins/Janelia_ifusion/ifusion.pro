@@ -26,5 +26,5 @@ unix{
 
 
 TARGET        = $$qtLibraryTarget(Janelia_ifusion)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_stitching/Janelia_ifusion
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/FlyWorkstation_utilities/Janelia_ifusion
 

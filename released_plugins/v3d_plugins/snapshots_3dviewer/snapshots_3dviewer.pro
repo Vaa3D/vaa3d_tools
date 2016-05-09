@@ -15,5 +15,5 @@ HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
 SOURCES      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 TARGET        = $$qtLibraryTarget(snapshots_3dviewer)
 
-DESTDIR       = $$VAA3DPATH/bin/plugins/snapshots_3dviewer
+DESTDIR       = $$VAA3DPATH/bin/plugins/movies_and_snapshots/snapshots_3dviewer
 

@@ -18,6 +18,6 @@ LIBS         += -lpthread
 #LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
 
 TARGET        = $$qtLibraryTarget(Janelia_refExtract)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/Janelia_refExtract
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/FlyWorkstation_utilities/Janelia_refExtract
 
 

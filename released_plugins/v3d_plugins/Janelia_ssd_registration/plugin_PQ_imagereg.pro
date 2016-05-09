@@ -31,7 +31,7 @@ HEADERS      += common/q_imresize.h
 HEADERS      += histogram_matching/q_histogram_matching.h
 HEADERS      += q_paradialog_rigidaffine.h
 HEADERS      += q_registration_common.h
-HEADERS      += q_rigidaffine_registration.h
+HEADERS      += q_rigidaffine_registraFlyWorkstation_utilitiestion.h
 HEADERS      += plugin_image_registration.h
 
 SOURCES      += $$V3DPATH/basic_c_fun/v3d_message.cpp
@@ -49,7 +49,7 @@ SOURCES      += plugin_image_registration.cpp
 
 TARGET        = $$qtLibraryTarget(Janelia_plugin_PQ_imagereg)
 
-DESTDIR       = $$V3DPATH/../bin/plugins/image_registration/Janelia_SSD_registration
+DESTDIR       = $$V3DPATH/../bin/plugins/FlyWorkstation_utilities/Janelia_SSD_registration
 
 
 # the following were added for pdb file support, the modularity must be improved in this future!

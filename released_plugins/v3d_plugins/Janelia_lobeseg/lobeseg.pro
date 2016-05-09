@@ -35,5 +35,5 @@ SOURCES += $$V3DMAINFOLER/worm_straighten_c/mst_prim_c.cpp
 SOURCES += $$V3DMAINFOLER/worm_straighten_c/bfs_1root.cpp
 
 TARGET	= $$qtLibraryTarget(Janelia_lobeseg)
-DESTDIR	= $$V3DMAINFOLER/../bin/plugins/image_segmentation/Janelia_lobeseger
+DESTDIR	= $$V3DMAINFOLER/../bin/plugins/FlyWorkstation_utilities/Janelia_lobeseger
  

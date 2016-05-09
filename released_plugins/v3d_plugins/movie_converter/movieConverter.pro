@@ -14,7 +14,7 @@ SOURCES	+= movieConverter_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(movie_format_convert)
-DESTDIR	= $$V3DMAINPATH/../bin/plugins/movies/Movie_Converter
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/movies_and_snapshots/Movie_Converter
 
 macx{
     QMAKE_POST_LINK = cp ./bin/mac_ffmpeg $$V3DMAINPATH/../bin/.

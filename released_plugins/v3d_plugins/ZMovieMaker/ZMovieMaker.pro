@@ -11,4 +11,4 @@ SOURCES	+= ZMovieMaker_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(ZMovieMaker)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/movies/ZMovieMaker/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/movies_and_snapshots/ZMovieMaker/
