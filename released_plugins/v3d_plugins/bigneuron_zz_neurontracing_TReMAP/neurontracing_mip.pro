@@ -17,7 +17,7 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/stackutil.cpp
 SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_utilities.cpp
 SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
-SOURCES += ../APP2_large_scale/readrawfile_func.cpp
+SOURCES += ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
 
 win32{
     LIBS         += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff

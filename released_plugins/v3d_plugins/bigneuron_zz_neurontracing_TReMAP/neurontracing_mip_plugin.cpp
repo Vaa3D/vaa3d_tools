@@ -10,7 +10,7 @@
 #include "smooth_curve.h"
 #include "stackutil.h"
 
-#include "../APP2_large_scale/readRawfile_func.h"
+#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 
 #include "fastmarching_linker.h"
 
