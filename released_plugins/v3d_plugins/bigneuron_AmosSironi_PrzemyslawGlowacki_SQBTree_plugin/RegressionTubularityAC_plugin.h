@@ -10,9 +10,9 @@
 #include "v3d_message.h"
 #include <vector>
 
-#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
-#include "../libs/regression/sep_conv.h"
-#include "../libs/regression/util.h"
+#include "./libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "./libs/regression/sep_conv.h"
+#include "./libs/regression/util.h"
 
 
 class RegressionTubularityACPlugin : public QObject, public V3DPluginInterface2_1

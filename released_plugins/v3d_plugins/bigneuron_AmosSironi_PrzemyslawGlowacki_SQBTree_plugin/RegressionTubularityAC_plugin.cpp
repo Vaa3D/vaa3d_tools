@@ -14,11 +14,11 @@
 #include "RegressionTubularityAC_plugin.h"
 #include <math.h>
 
-#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "./libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-#include "../libs/regression/sep_conv.h"
-#include "../libs/regression/sampling.h"
-#include "../libs/regression/regressor.h"
+#include "./libs/regression/sep_conv.h"
+#include "./libs/regression/sampling.h"
+#include "./libs/regression/regressor.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
