@@ -34,7 +34,7 @@
 #  endif
 # endif
 
-#if  defined(Q_OS_WIN32)
+#ifdef _MSC_VER
     #ifndef _SSIZE_T_DEFINED
     typedef unsigned __int64    ssize_t;
     #define _SSIZE_T_DEFINED
