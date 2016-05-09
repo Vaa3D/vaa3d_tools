@@ -6,7 +6,7 @@ TEMPLATE	= lib
 CONFIG		+= qt plugin warn_off
 #CONFIG		+= x86_64
 
-SRCFOLDER = ../bigneuron_qul_anisodiffusion_general/src/
+SRCFOLDER = ../bigneuron_qul_anisodiffusion/src/
 V3DMAINPATH   = $$SRCFOLDER/../../../../v3d_main
 
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
