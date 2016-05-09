@@ -15,10 +15,10 @@
 //#include "sqb_trees.h"
 
 
-#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-#include "../libs/regression/sep_conv.h"
-#include "../libs/regression/util.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sep_conv.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/util.h"
 //#include "regression/regression_test2.h"
 
 class RegMST : public QObject, public V3DPluginInterface2_1

@@ -16,16 +16,16 @@
 
 #include <math.h>
 
-#include "../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h"
 
-#include "../libs/regression/sep_conv.h"
-#include "../libs/regression/sampling.h"
-#include "../libs/regression/regressor.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sep_conv.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sampling.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/regressor.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "../SQBTree_plugin/RegressionTubularityAC_plugin.h"
+#include "../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/RegressionTubularityAC_plugin.h"
 #include "mst_functions/neurontracing_mst_plugin.h"
 
 

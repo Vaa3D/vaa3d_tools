@@ -5,11 +5,11 @@ CONFIG	+= qt plugin warn_off
 
 mac{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
-    ITKLIBPATH = ../libs/ITKlibs_MAC
+    ITKLIBPATH = ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/ITKlibs_MAC
 }
 else{
-    ITKLIBPATH = ../libs/ITKlibs_Linux
-    SOURCES = ../libs/ITK_include/itkLightProcessObject.cxx
+    ITKLIBPATH = ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/ITKlibs_Linux
+    SOURCES = ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/ITK_include/itkLightProcessObject.cxx
 }
 
 VAA3DPATH = ../../../../v3d_external
@@ -20,34 +20,34 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main/worm_straighten_c
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/cellseg
 
 
-#INCLUDEPATH += ../libs/liblbfgs-1.10/include
-INCLUDEPATH += ../libs/liblbfgs-1.10_include
-INCLUDEPATH += ../libs/sqb_0.1/include
-#INCLUDEPATH += ../libs/libconfig-1.4.9/lib
-INCLUDEPATH += ../libs/libconfig-1.4.9_include
-INCLUDEPATH += ../libs/libconfig-1.4.9/lib
-INCLUDEPATH += ../libs/ITK_include
-INCLUDEPATH += ../libs/regression
-INCLUDEPATH += ../libs/sqb_0.1/src/MatrixSQB
-INCLUDEPATH += ../libs/boost_1_58_0
+#INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/liblbfgs-1.10/include
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/liblbfgs-1.10_include
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/sqb_0.1/include
+#INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/libconfig-1.4.9/lib
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/libconfig-1.4.9_include
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/libconfig-1.4.9/lib
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/ITK_include
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/sqb_0.1/src/MatrixSQB
+INCLUDEPATH += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/boost_1_58_0
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 
-#LIBS += -L"../libs/liblbfgs-1.10/lib"
-LIBS += -L"../libs/liblbfgs-1.10_Linux/lib"
+#LIBS += -L"../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/liblbfgs-1.10/lib"
+LIBS += -L"../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/liblbfgs-1.10_Linux/lib"
 LIBS += -llbfgs
 
-#LIBS += -L"../libs/libconfig-1.4.9/lib/.libs"
-LIBS += -L"../libs/libconfig-1.4.9_Linux"
+#LIBS += -L"../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/libconfig-1.4.9/lib/.libs"
+LIBS += -L"../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/libconfig-1.4.9_Linux"
 LIBS += -lconfig++
 
-HEADERS += ../libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h
-HEADERS += ../libs/regression/sep_conv.h
-HEADERS += ../libs/regression/util.h
-HEADERS += ../libs/regression/sampling.h
-HEADERS += ../libs/regression/regressor.h
+HEADERS += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/sqb_0.1/src/MatrixSQB/vaa3d_link.h
+HEADERS += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sep_conv.h
+HEADERS += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/util.h
+HEADERS += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sampling.h
+HEADERS += ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/regressor.h
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.h \
@@ -82,9 +82,9 @@ HEADERS += mst_functions/neurontracing_mst_plugin.h
 HEADERS	+= RegMST_plugin.h
 
 
-SOURCES	+= ../libs/regression/sep_conv.cpp
-SOURCES	+= ../libs/regression/sampling.cpp
-SOURCES	+= ../libs/regression/regressor.cpp
+SOURCES	+= ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sep_conv.cpp
+SOURCES	+= ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/sampling.cpp
+SOURCES	+= ../bigneuron_AmosSironi_PrzemyslawGlowacki_SQBTree_plugin/libs/regression/regressor.cpp
 
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp \
     $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.cpp \
