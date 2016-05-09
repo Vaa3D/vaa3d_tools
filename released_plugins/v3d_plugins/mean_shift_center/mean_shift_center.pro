@@ -25,4 +25,4 @@ SOURCES	+= \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(mean_shift_center_finder)
-DESTDIR	= $$VAA3DPATH/bin/plugins/mean_shift_center_finder/
+DESTDIR	= $$VAA3DPATH/bin/plugins/image_analysis/mean_shift_center_finder/

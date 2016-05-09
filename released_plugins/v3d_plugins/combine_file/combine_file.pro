@@ -14,4 +14,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(combine_file)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/combine_file/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/misc/combine_file/

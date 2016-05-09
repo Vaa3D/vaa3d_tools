@@ -15,4 +15,4 @@ SOURCES	+= neuronPicker_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_color_seperator)
-DESTDIR = $$VAA3DPATH/bin/plugins/neuron_color_seperator/
+DESTDIR = $$VAA3DPATH/bin/plugins/neuron_utilities/neuron_color_seperator/

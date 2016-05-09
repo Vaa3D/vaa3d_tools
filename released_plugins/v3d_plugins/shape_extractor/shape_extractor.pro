@@ -15,4 +15,4 @@ SOURCES	+= shape_extractor_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(shape_extractor)
-DESTDIR	= $$VAA3DPATH/bin/plugins/shape_extractor/
+DESTDIR	= $$VAA3DPATH/bin/plugins/shape_analysis/shape_extractor/

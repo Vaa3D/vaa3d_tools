@@ -46,4 +46,4 @@ SOURCES      += plugin_principalskeleton_detection.cpp
 
 TARGET        = $$qtLibraryTarget(principalskeleton_detection)
 
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/principal_skeleton_detection #for vaa3d batch build
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/shape_analysis/principal_skeleton_detection #for vaa3d batch build

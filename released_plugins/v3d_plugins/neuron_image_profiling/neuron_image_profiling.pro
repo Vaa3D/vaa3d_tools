@@ -41,4 +41,4 @@ HEADERS	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h
 
 
 TARGET	= $$qtLibraryTarget(neuron_image_profiling)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_image_profiling/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/neuron_image_profiling/

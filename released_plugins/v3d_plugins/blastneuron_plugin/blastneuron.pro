@@ -53,4 +53,4 @@ unix {
     LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 }
 TARGET	= $$qtLibraryTarget(blastneuron)
-DESTDIR	= $$VAA3DPATH/bin/plugins/blastneuron/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/blastneuron/
