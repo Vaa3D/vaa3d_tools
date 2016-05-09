@@ -5,7 +5,7 @@ CONFIG	+= qt plugin warn_off
 
 mac{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
-    ITKLIBPATH = lib/ITKlibs_MAC
+    ITKLIBPATH = ../bigneuron_siqi_stalker_v3d/lib/ITKlibs_MAC
 }
 else{
     ITKLIBPATH = ../bigneuron_siqi_stalker_v3d/lib/ITKlibs_Linux
@@ -41,12 +41,17 @@ HEADERS += lib/ImageOperation.h\
            lib/SnakeOperation.h
 SOURCES	+= lib/ImageOperation.cpp\
            lib/PointOperation.cpp\
-           lib/SnakeOperation.cpp
+           lib/SnakeOperation.cpp\
+	   lib/ITK_include/vcl_deprecated.cxx	
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
+
+LIBS         += -lm -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
+LIBS         += -lpthread
+LIBS         += -lv3dfftw3f -lv3dfftw3f_threads
 
 TARGET	= $$qtLibraryTarget(Rivulet)
 DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/Rivulet/
