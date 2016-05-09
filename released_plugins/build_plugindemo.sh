@@ -61,7 +61,7 @@ for mydir in $ALLDIRS; do
     	  make $MAKE_ARGS 
     done;
     #fi
-  done;
+  fi;
 
   cd ..
 done  
