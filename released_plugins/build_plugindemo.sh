@@ -6,6 +6,10 @@
 # build only 1 sepecifed sub plugin project
 # sh build_plugindemo.sh -ddt
 # add a new -n for mac 32bit make
+#
+# add a new build.sh mechanism for possible auto unzip and other needs of the special building processes. 
+# by Hanchuan Peng, 2016-05-09
+
 
 cd v3d_plugins
  
@@ -47,12 +51,18 @@ for mydir in $ALLDIRS; do
   echo $mydir
   echo ===============================  
   cd $mydir
-  #if [ -f *.pro ]; then
-  for mypro in $( ls *.pro ); do
-  	qmake $QMAKE_ARGS $mypro $QMAKE_CONFIG
-  	make $MAKE_ARGS 
+
+  if [ -f build.sh ]; then
+    sh build.sh;
+  else
+    #if [ -f *.pro ]; then
+    for mypro in $( ls *.pro ); do
+  	  qmake $QMAKE_ARGS $mypro $QMAKE_CONFIG
+    	  make $MAKE_ARGS 
+    done;
+    #fi
   done;
-  #fi
+
   cd ..
 done  
 
