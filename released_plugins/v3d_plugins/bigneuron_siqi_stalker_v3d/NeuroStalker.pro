@@ -2,7 +2,7 @@
 TEMPLATE = lib
 CONFIG	+= qt plugin warn_off
 
-mac{
+macx{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
     ITKLIBPATH = lib/ITKlibs_MAC
 }
