@@ -57,7 +57,7 @@ for mydir in $ALLDIRS; do
   else
     #if [ -f *.pro ]; then
     for mypro in $( ls *.pro ); do
-  	  qmake $QMAKE_ARGS $mypro $QMAKE_CONFIG
+  	  qmake $QMAKE_ARGS $mypro
     	  make $MAKE_ARGS 
     done;
     #fi
