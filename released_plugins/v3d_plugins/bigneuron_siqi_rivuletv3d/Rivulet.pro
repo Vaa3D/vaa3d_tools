@@ -18,7 +18,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += lib/ITK_include
 INCLUDEPATH += lib/Filters
-#LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
+LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 
