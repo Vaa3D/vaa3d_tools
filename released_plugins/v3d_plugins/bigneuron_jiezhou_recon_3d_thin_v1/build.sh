@@ -5,7 +5,7 @@ if [ ! -d ../bigneuron_zz_snake_tracing/ITK_include ]; then
 	mv ITK_include ../bigneuron_zz_snake_tracing/
 fi	
 qmake
-make
+make $*
 
 
 

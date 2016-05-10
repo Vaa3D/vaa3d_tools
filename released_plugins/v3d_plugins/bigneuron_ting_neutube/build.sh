@@ -9,7 +9,7 @@ if [ ! -d NeuTu ]; then
 	cd ..
 fi
 qmake
-make
+make $*
 
 
 

@@ -53,7 +53,7 @@ for mydir in $ALLDIRS; do
   cd $mydir
 
   if [ -f build.sh ]; then
-    sh build.sh;
+    sh build.sh $MAKE_ARGS;
   else
     #if [ -f *.pro ]; then
     for mypro in $( ls *.pro ); do
