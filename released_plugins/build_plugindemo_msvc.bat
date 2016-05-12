@@ -15,6 +15,7 @@ goto :eof
 for /D %%i in ( * ) do (
   cd %%i
   if exist *.pro (
+    nmake clean
   	qmake
   	nmake -f Makefile.Release
   ) 
