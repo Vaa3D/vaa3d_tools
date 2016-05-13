@@ -1306,7 +1306,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
        }
 
        //converage
-       cout<<"Total editing distance is :" <<total_editing_dis<<endl;
+       cout<<"Total matching distance is :" <<total_editing_dis<<endl;
        cout<<"Avearge node editing distance is :" <<total_editing_dis/total_nodes<<endl;
 
        if ( (total_editing_dis / total_nodes) < 0.2)
