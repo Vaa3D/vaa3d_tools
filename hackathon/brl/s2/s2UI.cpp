@@ -1681,7 +1681,7 @@ void S2UI::scanStatusHandler(){
         if (waitingToStartStack){
             emit eventSignal("startZStack");
             waitingForFile = 1;
-            QTimer::singleShot(1000, &myController, SLOT(startZStack()));
+            QTimer::singleShot(1000, &myController, SLOT(startZStack()));//
             //emit startZStackSig();
             waitingToStartStack = false;
             return;
@@ -1738,16 +1738,16 @@ void S2UI::collectZoomStack(){
     newTarget.ev_pc1 = tileWidth * overViewPixelToScanPixel;
     newTarget.ev_pc2 = tileWidth * overViewPixelToScanPixel;
 
-    currentTileInfo.setPixels((int) tileWidth);
+    //currentTileInfo.setPixels((int) tileWidth);
     }
 
-    QString sString =currentTileInfo.getTileInfoString().join(" _ ");
-    status("currentTileInfo : "+sString);
-    qDebug()<<sString;
+    //QString sString =currentTileInfo.getTileInfoString().join(" _ ");
+    //status("currentTileInfo : "+sString);
+    //qDebug()<<sString;
     waitingToStartStack = true;
-
-    //updateZoom(); // Bigtime race here!  I need a delayed/conditional move that waits until the zoom status is settled.
     moveToROI(newTarget);
+    updateZoom(); // Bigtime race here!  I need a delayed/conditional move that waits until the zoom status is settled.
+
 
 }
 

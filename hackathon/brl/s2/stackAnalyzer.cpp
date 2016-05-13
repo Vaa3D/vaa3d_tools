@@ -140,6 +140,10 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
 
 
+        //template <class T> bool downsample3dvol(T *&outdata, T *indata, V3DLONG *szout, V3DLONG *szin, double *dfactor, unsigned char tag)
+
+
+
         //new code starts here:
 
         QString swcString = saveDirString;
