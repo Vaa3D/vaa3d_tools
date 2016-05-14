@@ -12,6 +12,15 @@
 #include <iostream>
 #include "my_surf_objs.h"
 
+template <class T> T local_max(T a, T b)
+{
+    return (a>=b)?a:b;
+}
+
+template <class T> T local_min(T a, T b)
+{
+    return (a<=b)?a:b;
+}
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
@@ -98,6 +107,7 @@ QStringList pruning_swc::menulist() const
         <<tr("pruning")
         <<tr("pruning_nc")
          <<tr("caculate_distance")
+           <<tr("rotation")
 
       //  <<tr("pruning_group")
       //  <<tr("aligning")
@@ -106,7 +116,10 @@ QStringList pruning_swc::menulist() const
 
 QStringList pruning_swc::funclist() const
 {
-	return QStringList()
+    return QStringList()
+        <<tr("pruning_nc")
+        <<tr("caculate_distance")
+       <<tr("rotation")
 		<<tr("help");
 }
 
@@ -374,6 +387,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 for (int i=0;i<list.size();i++)
                 {
+
                     if (childs[i].size()==0)
                     {
                         int index_tip = 0;
@@ -387,7 +401,11 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                         }
 
                         int type1 = list.at(parent_tip).type;
-                        int type2 = list.at(getParent(parent_tip,nt)).type;
+                        int type2;
+                        if(getParent(parent_tip,nt) == 1000000000)
+                            type2 = type1;
+                        else
+                            type2 = list.at(getParent(parent_tip,nt)).type;
                         int type3 = list.at(childs[parent_tip].at(1)).type;
 
 
@@ -456,6 +474,124 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                    return;
                }
 
+
+    }if (menu_name == tr("rotation"))
+    {
+                QString fileOpenName;
+                fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                        "",
+                        QObject::tr("Supported file (*.swc *.eswc)"
+                            ";;Neuron structure	(*.swc)"
+                            ";;Extended neuron structure (*.eswc)"
+                            ));
+                if(fileOpenName.isEmpty())
+                    return;
+                double degree = 0;
+                NeuronTree nt;
+                if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+                {
+                     bool ok;
+                     nt = readSWC_file(fileOpenName);
+                     degree = QInputDialog::getDouble(parent, "Please specify the maximum prunned segment length","segment length:",1,-180,180,0.1,&ok);
+                     if (!ok)
+                         return;
+                }
+
+                double alpha = degree/180.0*3.141592635;
+                double xc = 1055, yc = 1701;
+                V3DLONG nx = 2111;
+                V3DLONG ny = 3403;
+
+                struct PixelPos{double x, y;};
+
+
+                PixelPos e00, e01, e10, e11; //for the four corners
+                e00.x = 0 - xc;
+                e00.y = 0 - yc;
+
+                e01.x = 0 - xc;
+                e01.y = (ny-1) - yc;
+
+                e10.x = (nx-1) - xc;
+                e10.y = 0 - yc;
+
+                e11.x = (nx-1) - xc;
+                e11.y = (ny-1) - yc;
+
+                double c00, c01, c10, c11;
+                c00 = cos(alpha);
+                c01 = sin(alpha);
+                c10 = -sin(alpha);
+                c11 = cos(alpha);
+
+                PixelPos e00t, e01t, e10t, e11t; //the coordinates of the transformed corners
+                e00t.x = c00*e00.x + c01*e00.y;
+                e00t.y = c10*e00.x + c11*e00.y;
+
+                e01t.x = c00*e01.x + c01*e01.y;
+                e01t.y = c10*e01.x + c11*e01.y;
+
+                e10t.x = c00*e10.x + c01*e10.y;
+                e10t.y = c10*e10.x + c11*e10.y;
+
+                e11t.x = c00*e11.x + c01*e11.y;
+                e11t.y = c10*e11.x + c11*e11.y;
+
+                double px_min = local_min(local_min(local_min(e00t.x, e01t.x), e10t.x), e11t.x);
+                double px_max = local_max(local_max(local_max(e00t.x, e01t.x), e10t.x), e11t.x);
+                double py_min = local_min(local_min(local_min(e00t.y, e01t.y), e10t.y), e11t.y);
+                double py_max = local_max(local_max(local_max(e00t.y, e01t.y), e10t.y), e11t.y);
+
+                double c00b, c01b, c10b, c11b;
+                c00b = cos(-alpha); //c00b=(c00b<my_eps)?0:c00b; c00b=(c00b>1-my_eps)?1:c00b;
+                c01b = sin(-alpha); //c01b=(c01b<my_eps)?0:c01b; c01b=(c01b>1-my_eps)?1:c01b;
+                c10b = -sin(-alpha);//c10b=(c10b<my_eps)?0:c10b; c10b=(c10b>1-my_eps)?1:c10b;
+                c11b = cos(-alpha); //c11b=(c11b<my_eps)?0:c11b; c11b=(c11b>1-my_eps)?1:c11b;
+
+
+                QList<NeuronSWC> list = nt.listNeuron;
+
+                //NeutronTree structure
+                NeuronTree nt_rotated;
+                QList <NeuronSWC> listNeuron;
+                QHash <int, int>  hashNeuron;
+                listNeuron.clear();
+                hashNeuron.clear();
+
+                //set node
+
+                NeuronSWC S;
+                for (int i=0;i<list.size();i++)
+                {
+                    NeuronSWC curr = list.at(i);
+                    S.n 	= curr.n;
+                    S.type 	= curr.type;
+                    S.x 	= c00*(curr.x+px_min) + c01*(curr.y+py_min) + xc;
+                    S.y 	= c10*(curr.x+px_min) + c11*(curr.y+py_min) + yc;
+                    S.z 	= curr.z;
+                    S.r 	= curr.r;
+                    S.pn 	= curr.pn;
+                    listNeuron.append(S);
+                    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+                }
+                nt_rotated.n = -1;
+                nt_rotated.on = true;
+                nt_rotated.listNeuron = listNeuron;
+                nt_rotated.hashNeuron = hashNeuron;
+
+               QString fileDefaultName = fileOpenName+QString("_rotated.swc");
+               //write new SWC to file
+               QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                       fileDefaultName,
+                       QObject::tr("Supported file (*.swc)"
+                           ";;Neuron structure	(*.swc)"
+                           ));
+               if (!export_list2file(nt_rotated.listNeuron,fileSaveName,fileOpenName))
+               {
+                   v3d_msg("fail to write the output swc file.");
+                   return;
+               }
 
     }else if(menu_name == tr("pruning_group"))
     {
@@ -758,15 +894,343 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    vector<char*> infiles, paras, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) paras = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("help"))
+    if (func_name == tr("pruning_nc"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<"Welcome to swc retyping plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        int k=0;
+        int length = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;//0;
+
+        QString  outswc_file;
+        if(!outfiles.empty())
+            outswc_file = outfiles[0];
+        else
+            outswc_file = inswc_file + "_pruned.swc";
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"length = "<<length<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt;
+        nt = readSWC_file(inswc_file);
+
+        QVector<QVector<V3DLONG> > childs;
+
+
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        V3DLONG *flag = new V3DLONG[neuronNum];
+
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            flag[i] = 1;
+
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+
+        for (int i=0;i<list.size();i++)
+        {
+            if (childs[i].size()==0)
+            {
+                int index_tip = 0;
+                int parent_tip = getParent(i,nt);
+                while(childs[parent_tip].size()<2)
+                {
+                    parent_tip = getParent(parent_tip,nt);
+                    index_tip++;
+                    if(parent_tip == 1000000000)
+                        break;
+                }
+
+                int type1 = list.at(parent_tip).type;
+                int type2;
+                if(getParent(parent_tip,nt) == 1000000000)
+                    type2 = type1;
+                else
+                    type2 = list.at(getParent(parent_tip,nt)).type;
+                int type3 = list.at(childs[parent_tip].at(1)).type;
+
+
+                if(index_tip < length && (type2 != type1 || type2 != type3))
+                {
+                    flag[i] = -1;
+
+                    int parent_tip = getParent(i,nt);
+                    while(childs[parent_tip].size()<2)
+                   {
+                        flag[parent_tip] = -1;
+                        parent_tip = getParent(parent_tip,nt);
+                        if(parent_tip == 1000000000)
+                            break;
+                   }
+                }
+
+            }
+
+        }
+
+       //NeutronTree structure
+       NeuronTree nt_prunned;
+       QList <NeuronSWC> listNeuron;
+       QHash <int, int>  hashNeuron;
+       listNeuron.clear();
+       hashNeuron.clear();
+
+       //set node
+
+       NeuronSWC S;
+       for (int i=0;i<list.size();i++)
+       {
+           if(flag[i] == 1)
+           {
+                NeuronSWC curr = list.at(i);
+                S.n 	= curr.n;
+                S.type 	= curr.type;
+                S.x 	= curr.x;
+                S.y 	= curr.y;
+                S.z 	= curr.z;
+                S.r 	= curr.r;
+                S.pn 	= curr.pn;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+           }
+
+      }
+       nt_prunned.n = -1;
+       nt_prunned.on = true;
+       nt_prunned.listNeuron = listNeuron;
+       nt_prunned.hashNeuron = hashNeuron;
+
+       if(flag) {delete[] flag; flag = 0;}
+
+        if (!export_list2file(nt_prunned.listNeuron,outswc_file,inswc_file))
+        {
+            v3d_msg("fail to write the output swc file.");
+            return false;
+        }
+    }else if (func_name == tr("caculate_distance"))
+    {
+        cout<<"Welcome to swc caculate_distance plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file1 =  infiles[0];
+        QString  inswc_file2 =  infiles[1];
+
+        NeuronTree nt1 = readSWC_file(inswc_file1);
+        NeuronTree nt2 = readSWC_file(inswc_file2);
+
+        QString  outswc_file = outfiles[0];
+        V3DLONG neuronNum1 = nt1.listNeuron.size();
+        V3DLONG *dis1 = new V3DLONG[neuronNum1];
+        V3DLONG *match1 = new V3DLONG[neuronNum1];
+
+        V3DLONG neuronNum2 = nt2.listNeuron.size();
+        V3DLONG *dis2 = new V3DLONG[neuronNum2];
+
+        for(int i = 0; i < neuronNum1; i++)
+        {
+            double x1 = nt1.listNeuron.at(i).x;
+            double y1 = nt1.listNeuron.at(i).y;
+            double z1 = nt1.listNeuron.at(i).z;
+            double dis_min = 10000000;
+            for(int j = 0; j < neuronNum2; j++)
+            {
+                double x2 = nt2.listNeuron.at(j).x;
+                double y2 = nt2.listNeuron.at(j).y;
+                double z2 = nt2.listNeuron.at(j).z;
+                double dis = sqrt(pow2(x1 -x2 ) + pow2(y1 - y2) + pow2(z1 - z2));
+                if(dis < dis_min)
+                {
+                    dis1[i] = j;
+                    match1[i] = dis;
+                    dis_min = dis;
+                }
+            }
+
+        }
+
+        for(int j = 0; j < neuronNum2; j++)
+        {
+            double x2 = nt2.listNeuron.at(j).x;
+            double y2 = nt2.listNeuron.at(j).y;
+            double z2 = nt2.listNeuron.at(j).z;
+
+            double dis_min = 10000000;
+            for(int i = 0; i < neuronNum1; i++)
+            {
+
+                double x1 = nt1.listNeuron.at(i).x;
+                double y1 = nt1.listNeuron.at(i).y;
+                double z1 = nt1.listNeuron.at(i).z;
+                double dis = sqrt(pow2(x1 -x2 ) + pow2(y1 - y2) + pow2(z1 - z2));
+                if(dis < dis_min)
+                {
+                    dis2[j] = i;
+                    dis_min = dis;
+
+                }
+            }
+        }
+
+        double dis_totle = 0;
+        int d = 0;
+        for(int i = 0; i < neuronNum1; i++)
+        {
+            if(dis2[dis1[i]] == i)
+            {
+                dis_totle = dis_totle + match1[i];
+                d++;
+            }
+
+        }
+
+        double final_distance = dis_totle/d;
+        double matching_per = (double)d/((neuronNum1 + neuronNum2)/2);
+        QFile saveTextFile;
+        saveTextFile.setFileName(outswc_file);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return false;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
+        outputStream << "\n";
+        outputStream << final_distance << ";" << matching_per;
+        saveTextFile.close();
+    }else if (func_name == tr("rotation"))
+    {
+        cout<<"Welcome to swc rotation plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        int k=0;
+        int degree = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;//0;
+
+        QString  outswc_file;
+        if(!outfiles.empty())
+            outswc_file = outfiles[0];
+        else
+            outswc_file = inswc_file + "_rotated.swc";
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"degree = "<<degree<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt;
+        nt = readSWC_file(inswc_file);
+
+        double alpha = -degree/180.0*3.141592635;
+        double xc = 818, yc = 818;
+        V3DLONG nx = 1637;
+        V3DLONG ny = 1637;
+
+        struct PixelPos{double x, y;};
+
+
+        PixelPos e00, e01, e10, e11; //for the four corners
+        e00.x = 0 - xc;
+        e00.y = 0 - yc;
+
+        e01.x = 0 - xc;
+        e01.y = (ny-1) - yc;
+
+        e10.x = (nx-1) - xc;
+        e10.y = 0 - yc;
+
+        e11.x = (nx-1) - xc;
+        e11.y = (ny-1) - yc;
+
+        double c00, c01, c10, c11;
+        c00 = cos(alpha);
+        c01 = sin(alpha);
+        c10 = -sin(alpha);
+        c11 = cos(alpha);
+
+        PixelPos e00t, e01t, e10t, e11t; //the coordinates of the transformed corners
+        e00t.x = c00*e00.x + c01*e00.y;
+        e00t.y = c10*e00.x + c11*e00.y;
+
+        e01t.x = c00*e01.x + c01*e01.y;
+        e01t.y = c10*e01.x + c11*e01.y;
+
+        e10t.x = c00*e10.x + c01*e10.y;
+        e10t.y = c10*e10.x + c11*e10.y;
+
+        e11t.x = c00*e11.x + c01*e11.y;
+        e11t.y = c10*e11.x + c11*e11.y;
+
+        double px_min = local_min(local_min(local_min(e00t.x, e01t.x), e10t.x), e11t.x);
+        double px_max = local_max(local_max(local_max(e00t.x, e01t.x), e10t.x), e11t.x);
+        double py_min = local_min(local_min(local_min(e00t.y, e01t.y), e10t.y), e11t.y);
+        double py_max = local_max(local_max(local_max(e00t.y, e01t.y), e10t.y), e11t.y);
+
+        double c00b, c01b, c10b, c11b;
+        c00b = cos(-alpha); //c00b=(c00b<my_eps)?0:c00b; c00b=(c00b>1-my_eps)?1:c00b;
+        c01b = sin(-alpha); //c01b=(c01b<my_eps)?0:c01b; c01b=(c01b>1-my_eps)?1:c01b;
+        c10b = -sin(-alpha);//c10b=(c10b<my_eps)?0:c10b; c10b=(c10b>1-my_eps)?1:c10b;
+        c11b = cos(-alpha); //c11b=(c11b<my_eps)?0:c11b; c11b=(c11b>1-my_eps)?1:c11b;
+
+
+        QList<NeuronSWC> list = nt.listNeuron;
+
+        //NeutronTree structure
+        NeuronTree nt_rotated;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= c00*(curr.x+px_min) + c01*(curr.y+py_min) + xc;
+            S.y 	= c10*(curr.x+px_min) + c11*(curr.y+py_min) + yc;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+
+        }
+        nt_rotated.n = -1;
+        nt_rotated.on = true;
+        nt_rotated.listNeuron = listNeuron;
+        nt_rotated.hashNeuron = hashNeuron;
+
+        if (!export_list2file(nt_rotated.listNeuron,outswc_file,inswc_file))
+        {
+            v3d_msg("fail to write the output swc file.");
+            return false;
+        }
+    }
 	else return false;
 
 	return true;

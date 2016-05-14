@@ -1689,7 +1689,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "wofusion.swc";
+    QString fileSaveName = fileWithData + "wofusion_shifted.swc";
 
 
     while(ifs && getline(ifs, info_swc))
@@ -1770,11 +1770,11 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     ifs.close();
 
 
-    for(V3DLONG i = 0; i < outswc.size(); i++)
-    {
-        outswc[i]->x = outswc[i]->x - offsetX_min;
-        outswc[i]->y = outswc[i]->y - offsetY_min;
-    }
+//    for(V3DLONG i = 0; i < outswc.size(); i++)
+//    {
+//        outswc[i]->x = outswc[i]->x - offsetX_min;
+//        outswc[i]->y = outswc[i]->y - offsetY_min;
+//    }
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
     NeuronTree nt_final = readSWC_file(fileSaveName);
@@ -1789,48 +1789,48 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
     //write tc file
 
-    QString tc_name = fileWithData + ".tc";
-    ofstream myfile;
-    myfile.open(tc_name.toStdString().c_str(), ios::in);
-    if (myfile.is_open()==true)
-    {
-        qDebug()<<"initial file can be opened for reading and will be removed";
+//    QString tc_name = fileWithData + ".tc";
+//    ofstream myfile;
+//    myfile.open(tc_name.toStdString().c_str(), ios::in);
+//    if (myfile.is_open()==true)
+//    {
+//        qDebug()<<"initial file can be opened for reading and will be removed";
 
-        myfile.close();
-        remove(tc_name.toStdString().c_str());
-    }
-    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
-    if (!myfile.is_open()){
-        qDebug()<<"file's not really open...";
-        return;
-    }
+//        myfile.close();
+//        remove(tc_name.toStdString().c_str());
+//    }
+//    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+//    if (!myfile.is_open()){
+//        qDebug()<<"file's not really open...";
+//        return;
+//    }
 
-    myfile << "# thumbnail file \n";
-    myfile << "NULL \n\n";
-    myfile << "# tiles \n";
-    myfile << node_type-1 << " \n\n";
-    myfile << "# dimensions (XYZC) \n";
-    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
-    myfile << "\n\n";
-    myfile << "# origin (XYZ) \n";
-    myfile << "0.000000 0.000000 0.000000 \n\n";
-    myfile << "# resolution (XYZ) \n";
-    myfile << "1.000000 1.000000 1.000000 \n\n";
-    myfile << "# image coordinates look up table \n";
+//    myfile << "# thumbnail file \n";
+//    myfile << "NULL \n\n";
+//    myfile << "# tiles \n";
+//    myfile << node_type-1 << " \n\n";
+//    myfile << "# dimensions (XYZC) \n";
+//    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
+//    myfile << "\n\n";
+//    myfile << "# origin (XYZ) \n";
+//    myfile << "0.000000 0.000000 0.000000 \n\n";
+//    myfile << "# resolution (XYZ) \n";
+//    myfile << "1.000000 1.000000 1.000000 \n\n";
+//    myfile << "# image coordinates look up table \n";
 
-    ifstream ifs_2nd(fileWithData.toLatin1());
-    while(ifs_2nd && getline(ifs_2nd, info_swc))
-    {
-        std::istringstream iss(info_swc);
-        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
-        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
-        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
-        myfile << imagename.toStdString();
-        myfile << "\n";
-    }
-    myfile.flush();
-    myfile.close();
-    ifs_2nd.close();
+//    ifstream ifs_2nd(fileWithData.toLatin1());
+//    while(ifs_2nd && getline(ifs_2nd, info_swc))
+//    {
+//        std::istringstream iss(info_swc);
+//        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
+//        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+//        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
+//        myfile << imagename.toStdString();
+//        myfile << "\n";
+//    }
+//    myfile.flush();
+//    myfile.close();
+//    ifs_2nd.close();
 }
 
 void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
