@@ -7,8 +7,6 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= IVSCC_sort_swc_plugin.h
 HEADERS += openSWCDialog.h
-HEADERS	+= sort_swc_IVSCC.h
-
 
 SOURCES += openSWCDialog.cpp
 SOURCES	+= IVSCC_sort_swc_plugin.cpp
