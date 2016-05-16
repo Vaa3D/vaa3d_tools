@@ -17,7 +17,7 @@
 #include <vector>
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-#include "../neurontracing_mip/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/smooth_curve.h"
 #include "../../../released_plugins/v3d_plugins/neuron_radius/hierarchy_prune.h"
 
 using namespace std;
