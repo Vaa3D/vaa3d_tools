@@ -12,6 +12,9 @@
 #include "rotate_image.h"
 #include "opt_rotate.h"
 
+#include "../../xiaoxiaol/consensus_skeleton_2/consensus_skeleton.h"
+
+
 Q_EXPORT_PLUGIN2(neurontracing_rotation, neurontracing_rotation);
 
 using namespace std;
@@ -36,6 +39,7 @@ struct input_PARA
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+NeuronTree swc_rotation(NeuronTree nt, V3DLONG *insz, double degree);
  
 QStringList neurontracing_rotation::menulist() const
 {
@@ -190,54 +194,177 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
 
     Options_Rotate r_opt;
-    r_opt.b_keepSameSize = true;
-    r_opt.degree = -PARA.rotation_degree/180.0*3.141592635;
+    r_opt.b_keepSameSize = false;
     r_opt.center_x = (in_sz[0]-1.0)/2;
     r_opt.center_y = (in_sz[1]-1.0)/2;
     r_opt.center_z = (in_sz[2]-1.0)/2;
     r_opt.fillcolor = 0;
 
-    unsigned char * outvol1d=0;
-    V3DLONG *outsz=0;
-    bool b_res=false;
-    b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
+    vector<NeuronTree> nt_list;
 
-    Image4DSimple* total4DImage = new Image4DSimple;
-    total4DImage->setData((unsigned char*)outvol1d, outsz[0], outsz[1], outsz[2], 1, V3D_UINT8);
-
-
-    p2.p4dImage = total4DImage;
-    p2.xc0 = p2.yc0 = p2.zc0 = 0;
-    p2.xc1 = outsz[0]-1;
-    p2.yc1 = outsz[1]-1;
-    p2.zc1 = outsz[2]-1;
-
-    //Output
-  //  NeuronTree nt;
-    QString swc_name = PARA.inimg_file + "_neurontracing_rotation.swc";
-    p2.outswc_file = swc_name;
-
-    for(int i = 0; i <PARA.listLandmarks.size();i++)
+    for(int i = 0; i<360; i=i+PARA.rotation_degree)
     {
-        LocationSimple RootNewLocation;
-        RootNewLocation.x = PARA.listLandmarks.at(i).x;
-        RootNewLocation.y = PARA.listLandmarks.at(i).y;
-        RootNewLocation.z = PARA.listLandmarks.at(i).z;
-        p2.landmarks.push_back(RootNewLocation);
+        double curret_degree = (double)i;
+        if(curret_degree > 180)
+            curret_degree = 180 - curret_degree;
+        p2.outswc_file = PARA.inimg_file + QString("_neurontracing_rotation_%1.swc").arg(curret_degree);
+
+
+        if(i == 0)
+        {
+            p2.p4dImage = PARA.image;
+            p2.xc0 = p2.yc0 = p2.zc0 = 0;
+            p2.xc1 = in_sz[0]-1;
+            p2.yc1 = in_sz[1]-1;
+            p2.zc1 = in_sz[2]-1;
+
+            proc_app2(callback, p2, versionStr);
+            NeuronTree nt = readSWC_file(p2.outswc_file);
+            nt_list.push_back(nt);
+
+        }else
+        {
+            r_opt.degree = -curret_degree/180.0*3.141592635;
+            unsigned char * outvol1d=0;
+            V3DLONG *outsz=0;
+            bool b_res=false;
+            b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
+
+            Image4DSimple* total4DImage = new Image4DSimple;
+            total4DImage->setData((unsigned char*)outvol1d, outsz[0], outsz[1], outsz[2], 1, V3D_UINT8);
+
+            p2.p4dImage = total4DImage;
+            p2.xc0 = p2.yc0 = p2.zc0 = 0;
+            p2.xc1 = outsz[0]-1;
+            p2.yc1 = outsz[1]-1;
+            p2.zc1 = outsz[2]-1;
+
+        //    for(int i = 0; i <PARA.listLandmarks.size();i++)
+        //    {
+        //        LocationSimple RootNewLocation;
+        //        RootNewLocation.x = PARA.listLandmarks.at(i).x;
+        //        RootNewLocation.y = PARA.listLandmarks.at(i).y;
+        //        RootNewLocation.z = PARA.listLandmarks.at(i).z;
+        //        p2.landmarks.push_back(RootNewLocation);
+        //    }
+
+            proc_app2(callback, p2, versionStr);
+
+            NeuronTree nt = readSWC_file(p2.outswc_file);
+            NeuronTree nt_rotated = swc_rotation(nt,in_sz,-curret_degree);
+
+            nt_list.push_back(nt_rotated);
+
+//            QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(curret_degree);
+//            writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_rotated);
+
+            if(outvol1d) {delete []outvol1d; outvol1d = 0;}
+            if(outsz) {delete []outsz; outsz = 0;}
+        }
     }
+    v3d_msg(QString("nt_list size is %1").arg(nt_list.size()),0);
 
-    proc_app2(callback, p2, versionStr);
-    if(outvol1d) {delete []outvol1d; outvol1d = 0;}
-
-//	nt.name = "neurontracing_rotation";
- //   writeSWC_file(swc_name.toStdString().c_str(),nt);
+    QList<NeuronSWC> merge_result;
+    QString outfileName = PARA.inimg_file + "_consesus.swc";
+    if (!consensus_skeleton_match_center(nt_list, merge_result, 3,6, 0, callback))
+    {
+        v3d_msg("error in consensus_skeleton",bmenu);
+        return;
+    }
+    export_listNeuron_2swc(merge_result,qPrintable(outfileName));
 
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outfileName.toStdString().c_str()),bmenu);
 
     return;
+}
+
+NeuronTree swc_rotation(NeuronTree nt, V3DLONG *in_sz, double degree)
+{
+    double alpha = -degree/180.0*3.141592635;
+    double xc = (in_sz[0]-1.0)/2, yc = (in_sz[1]-1.0)/2;
+    V3DLONG nx = in_sz[0];
+    V3DLONG ny = in_sz[1];
+
+    struct PixelPos{double x, y;};
+
+
+    PixelPos e00, e01, e10, e11; //for the four corners
+    e00.x = 0 - xc;
+    e00.y = 0 - yc;
+
+    e01.x = 0 - xc;
+    e01.y = (ny-1) - yc;
+
+    e10.x = (nx-1) - xc;
+    e10.y = 0 - yc;
+
+    e11.x = (nx-1) - xc;
+    e11.y = (ny-1) - yc;
+
+    double c00, c01, c10, c11;
+    c00 = cos(alpha);
+    c01 = sin(alpha);
+    c10 = -sin(alpha);
+    c11 = cos(alpha);
+
+    PixelPos e00t, e01t, e10t, e11t; //the coordinates of the transformed corners
+    e00t.x = c00*e00.x + c01*e00.y;
+    e00t.y = c10*e00.x + c11*e00.y;
+
+    e01t.x = c00*e01.x + c01*e01.y;
+    e01t.y = c10*e01.x + c11*e01.y;
+
+    e10t.x = c00*e10.x + c01*e10.y;
+    e10t.y = c10*e10.x + c11*e10.y;
+
+    e11t.x = c00*e11.x + c01*e11.y;
+    e11t.y = c10*e11.x + c11*e11.y;
+
+    double px_min = local_min(local_min(local_min(e00t.x, e01t.x), e10t.x), e11t.x);
+    double py_min = local_min(local_min(local_min(e00t.y, e01t.y), e10t.y), e11t.y);
+
+    double c00b, c01b, c10b, c11b;
+    c00b = cos(-alpha); //c00b=(c00b<my_eps)?0:c00b; c00b=(c00b>1-my_eps)?1:c00b;
+    c01b = sin(-alpha); //c01b=(c01b<my_eps)?0:c01b; c01b=(c01b>1-my_eps)?1:c01b;
+    c10b = -sin(-alpha);//c10b=(c10b<my_eps)?0:c10b; c10b=(c10b>1-my_eps)?1:c10b;
+    c11b = cos(-alpha); //c11b=(c11b<my_eps)?0:c11b; c11b=(c11b>1-my_eps)?1:c11b;
+
+
+    QList<NeuronSWC> list = nt.listNeuron;
+
+    //NeutronTree structure
+    NeuronTree nt_rotated;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    //set node
+
+    NeuronSWC S;
+    for (int i=0;i<list.size();i++)
+    {
+        NeuronSWC curr = list.at(i);
+        S.n 	= curr.n;
+        S.type 	= curr.type;
+        S.x 	= c00*(curr.x+px_min) + c01*(curr.y+py_min) + xc;
+        S.y 	= c10*(curr.x+px_min) + c11*(curr.y+py_min) + yc;
+        S.z 	= curr.z;
+        S.r 	= curr.r;
+        S.pn 	= curr.pn;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    }
+    nt_rotated.n = -1;
+    nt_rotated.on = true;
+    nt_rotated.listNeuron = listNeuron;
+    nt_rotated.hashNeuron = hashNeuron;
+
+    return nt_rotated;
 }

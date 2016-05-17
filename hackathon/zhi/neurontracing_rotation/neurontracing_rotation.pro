@@ -6,6 +6,7 @@ VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/common_lib/include
 INCLUDEPATH	+= $$VAA3DPATH/v3d
+INCLUDEPATH	+= ../../xiaoxiaol/consensus_skeleton_2
 
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
@@ -24,6 +25,8 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
 
+HEADERS += ../../xiaoxiaol/consensus_skeleton_2/consensus_skeleton.h
+
 SOURCES	+= neurontracing_rotation_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
@@ -40,6 +43,10 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculat
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp
+
+SOURCES += ../../xiaoxiaol/consensus_skeleton_2/consensus_skeleton.cpp
+SOURCES += ../../xiaoxiaol/consensus_skeleton_2/resample_swc.cpp
+
 
 TARGET	= $$qtLibraryTarget(neurontracing_rotation)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neurontracing_rotation/
