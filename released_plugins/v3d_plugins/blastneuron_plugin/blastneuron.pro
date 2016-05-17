@@ -21,6 +21,7 @@ SOURCES += pre_processing/align_axis.cpp
 SOURCES += pre_processing/pca1.cpp
 SOURCES += pre_processing/prune_short_branch.cpp
 SOURCES += pre_processing/resampling.cpp
+HEADERS	+= pre_processing/sort_eswc.h
 
 SOURCES += tree_matching/local_alignment_main.cpp
 SOURCES += tree_matching/my_surf_objs.cpp

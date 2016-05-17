@@ -1,10 +1,10 @@
 #include "pre_process.h"
 
-NeuronTree pre_process(NeuronTree nt, double step_size)
+NeuronTree pre_process(NeuronTree nt, double step_size, double prune_size)
 {
 	NeuronTree result;
 	NeuronTree pruned;
-	if (!prune_branch(nt, pruned))
+    if (!prune_branch(nt, pruned,prune_size))
 	{
 		fprintf(stderr,"Error in prune_short_branch.\n");
 		return result;
@@ -12,10 +12,14 @@ NeuronTree pre_process(NeuronTree nt, double step_size)
 	
 	printf("Resampling along segments\n");
 	NeuronTree resampled = resample(pruned, step_size);
-	
+
+
+//    printf("Sort \n");
+//    NeuronTree sorted = sort(resampled, step_size);
+
 
 	printf("Aligning PCA axis\n");
-	result = align_axis(resampled);
+    result = align_axis(resampled);
 
 	return result;
 }

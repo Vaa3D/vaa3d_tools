@@ -11,6 +11,7 @@
 
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
+#include "sort_eswc.h"
 #include <unistd.h>
 #if defined(Q_OS_WIN32)
 #include "getopt_tool.h"
@@ -74,10 +75,11 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	char *dfile_result = NULL;
 	char *outfile = NULL;
 	double step_size = 2;
+    double prune_size = -1; //default case
 	int skip_rotation = 1;
 	
 	int c;
-    static char optstring[]="i:o:s:r:";
+    static char optstring[]="i:o:l:s:r:";
 	extern char * optarg;
 	extern int optind, opterr;
 		
@@ -113,7 +115,19 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 				}
 				skip_rotation = atoi(optarg);
 				break;
-			case 's':
+             case 'l':
+                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -l.\n");
+                    return 1;
+                }
+                prune_size = atof(optarg);
+                if (prune_size<-1)
+                {
+                    fprintf(stderr, "Illegal prune size. Special case: 0 -- no prunning; -1 -- default prunning size.\n");
+                }
+                  break;
+            case 's':
 				if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
 				{
 					fprintf(stderr, "Found illegal or NULL parameter for the option -s.\n");
@@ -124,7 +138,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 				{
 					fprintf(stderr, "Illegal step size. It must>0.\n");
 				}
-				break;
+                break;
 			case '?':
 				fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
 				return 1;
@@ -143,7 +157,8 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 	printf("Pruning short branches\n");
 	NeuronTree pruned;
-	if (!prune_branch(nt, pruned))
+
+    if (!prune_branch(nt, pruned,prune_size))
 	{
 		fprintf(stderr,"Error in prune_short_branch.\n");
 		return 1;
@@ -151,15 +166,19 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 	printf("Resampling along segments\n");
 	NeuronTree resampled = resample(pruned, step_size);
+
+    printf("Sort \n");
+    NeuronTree sorted = sort(resampled,VOID, step_size);
+
 	
 	NeuronTree result;
 	if (skip_rotation!=1)
 	{
 		printf("Aligning PCA axis\n");
-		result = align_axis(resampled);
+        result = align_axis(sorted);
 	}
 	else
-		result = resampled;
+        result = sorted;
 	if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
 		printf("\t %s has been generated successfully.\n",qPrintable(outfileName));
 
@@ -168,10 +187,16 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 void printHelp_pre_processing()
 {
-	printf("\nVaa3D plugin: Pre-processing step for BlastNeuron pipeline, including: \n\t1) delete the branches in a neuron which have a length smaller than 5 %% of neuron/tree diameter.\n\t2)resample the neurons along the segments with the step size (default: 1). \n\t3) rotate the neuron to align its longest dimension to x axis\n");
+    printf("\nVaa3D plugin: Pre-processing step for BlastNeuron pipeline, including: \n");
+    printf("\t1) delete the branches in a neuron which have a length smaller the prune size ( by default the prune size is 5 %% of neuron/tree diameter.\n");
+    printf("\t2) resample the neurons along the segments with the step size (default: 1). \n");
+    printf("\t3) sort the neurons along the segments with the step size (deyyplt: 1). \n");
+    printf("\t4) rotate the neuron to align its longest dimension to x axis\n");
 	printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
 	printf("\t#o <output_filename> :   output file name.\n");
 	printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
+    printf("\t#p <prune_size> :  prune short branches that has length smaller than prune_size.\n");
+    printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
 	printf("\t                         if not specified, use 2\n");
 	printf("\t#r <skip_rotation_flag = 1>   :   whether or not use PCA for rotation.\n");

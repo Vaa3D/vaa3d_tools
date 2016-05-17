@@ -78,6 +78,7 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	char *dfile_result = NULL;
 
 	double step_size = 2;
+    double prune_size = 2;
 
 	int c;
     static char optstring[] = "h:i:o:";
@@ -138,7 +139,7 @@ bool batch_compute_main(const V3DPluginArgList & input, V3DPluginArgList & outpu
 			printf(qPrintable("calculating features for" + tmp.file +".\n"));
 			filePathList.append(tmp.file);
             // it makes more sense to run pre_processing seperately, so that the pre_processed steps can be adjusted (tuning step size), saved and verified.
-            //NeuronTree tmp_preprocessed = pre_process(tmp, step_size);
+            //NeuronTree tmp_preprocessed = pre_process(tmp, step_size, prune_size);
 			double * feature_morph = new double[21];
 			double * feature_gmi = new double[14];
             computeFeature(tmp, feature_morph);

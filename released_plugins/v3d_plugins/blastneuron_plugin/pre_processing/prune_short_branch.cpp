@@ -3,9 +3,8 @@
 #define DIST(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 
 
-bool prune_branch(NeuronTree nt, NeuronTree & result)
+bool prune_branch(NeuronTree nt, NeuronTree & result, double prune_size)
 {
-	double thres = 0.05;
 
 	V3DLONG siz = nt.listNeuron.size();
 	vector<V3DLONG> branches(siz,0); //number of branches on the pnt: 0-tip, 1-internal, >=2-branch
@@ -19,7 +18,10 @@ bool prune_branch(NeuronTree nt, NeuronTree & result)
 	double diameter = calculate_diameter(nt, branches);
 	printf("diameter=%.3f\n",diameter);
 	
-
+    if (prune_size  == -1 ){
+        double thres = 0.05;
+        prune_size = diameter * thres;
+    }
 	//calculate the shortest edge starting from each tip point
 	vector<bool> to_prune(siz, false);
 	for (V3DLONG i=0;i<siz;i++)
@@ -44,7 +46,7 @@ bool prune_branch(NeuronTree nt, NeuronTree & result)
 			printf("The input tree has only 1 root point. Please check.\n");
 			return false;
 		}
-		if (edge_length < diameter * thres)
+        if (edge_length < prune_size)
 		{
 			for (int j=0;j<segment.size();j++)
 				to_prune[segment[j]] = true;
