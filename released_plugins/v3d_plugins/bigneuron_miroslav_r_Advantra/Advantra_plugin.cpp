@@ -1633,11 +1633,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
-	delete vx_corr;
-	delete vy_corr;
-    delete vz_corr;
-	delete D;
-	delete I2Swc;
+	delete [] vx_corr;
+	delete [] vy_corr;
+    delete [] vz_corr;
+	delete [] D;
+	delete [] I2Swc;
 
 
     return;

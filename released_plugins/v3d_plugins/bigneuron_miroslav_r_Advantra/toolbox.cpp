@@ -57,7 +57,7 @@ int mode(vector<int> vals) {
             }
         }
 
-		delete hist;
+		delete [] hist;
 
         return peakval;
 
@@ -121,8 +121,8 @@ void selec(vector<int> trctags, vector<int> ndetags, int cntth, int excludetag, 
                 }
             }
 
-			delete hist;
-			delete matchnde;
+			delete [] hist;
+			delete [] matchnde;
 
         }
 
@@ -587,8 +587,8 @@ unsigned char intermodes_th(unsigned char * image1, long size) {
 
     threshold = (int) floor(tt/2.0);
 
-	delete hist;
-	delete hist1;
+	delete [] hist;
+	delete [] hist1;
 
     return threshold+minbin;
 
@@ -652,11 +652,11 @@ unsigned char otsu_th(unsigned char * image1, long size) {
         }
     }
 
-	delete hist;
-    delete prob;
-	delete omega;  
-    delete myu;
-	delete sigma;
+	delete [] hist;
+    delete [] prob;
+	delete [] omega;  
+    delete [] myu;
+	delete [] sigma;
 
     return threshold;
 
@@ -735,11 +735,11 @@ unsigned char maxentropy_th(unsigned char * image1, long size) {
         }
       }
 
-	  delete hist;
-	  delete normalizedHist;
-	  delete pT;
-	  delete hB;
-      delete hW;
+	  delete [] hist;
+	  delete [] normalizedHist;
+	  delete [] pT;
+	  delete [] hB;
+      delete [] hW;
 
       return tMax;
 
