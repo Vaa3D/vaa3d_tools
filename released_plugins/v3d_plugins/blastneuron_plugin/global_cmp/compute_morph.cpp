@@ -39,8 +39,15 @@ void computeFeature(const NeuronTree & nt, double * features)
 	rootidx = VOID;
 	QList<NeuronSWC> list = nt.listNeuron;
 	for (int i=0;i<list.size();i++)
-		if (list.at(i).pn==-1) rootidx = i;
-	if (rootidx==VOID){
+    {
+        if (list.at(i).pn==-1){
+            //compute the first tree in the forest
+            rootidx = i;
+            break;
+        }
+    }
+
+    if (rootidx==VOID){
 		cerr<<"the input neuron tree does not have a root, please check your data"<<endl;
 		return;
 	}
