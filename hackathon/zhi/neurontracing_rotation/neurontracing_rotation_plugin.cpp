@@ -14,6 +14,9 @@
 
 #include "../../xiaoxiaol/consensus_skeleton_2/consensus_skeleton.h"
 
+#if  defined(Q_OS_LINUX)
+    #include <omp.h>
+#endif
 
 Q_EXPORT_PLUGIN2(neurontracing_rotation, neurontracing_rotation);
 
@@ -93,7 +96,7 @@ void neurontracing_rotation::domenu(const QString &menu_name, V3DPluginCallback2
 bool neurontracing_rotation::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	if (func_name == tr("tracing_func"))
-	{
+    {
         bool bmenu = false;
         input_PARA PARA;
 
@@ -177,7 +180,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-
     p2.is_gsdt = PARA.is_gsdt;
     p2.is_coverage_prune = true;
     p2.is_break_accept = PARA.is_break_accept;
@@ -201,68 +203,93 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     r_opt.fillcolor = 0;
 
     vector<NeuronTree> nt_list;
+    p2.outswc_file = PARA.inimg_file + "_neurontracing_rotation_0.swc";
+    QString image_name = PARA.inimg_file + "_neurontracing_rotation_0.v3draw";
+    p2.p4dImage = PARA.image;
+    p2.p4dImage->setFileName(image_name.toStdString().c_str());
 
-    for(int i = 0; i<360; i=i+PARA.rotation_degree)
+    p2.xc0 = p2.yc0 = p2.zc0 = 0;
+    p2.xc1 = in_sz[0]-1;
+    p2.yc1 = in_sz[1]-1;
+    p2.zc1 = in_sz[2]-1;
+
+    proc_app2(callback, p2, versionStr);
+    NeuronTree nt = readSWC_file(p2.outswc_file);
+    nt_list.push_back(nt);
+
+
+#if  defined(Q_OS_LINUX)
+    unsigned int numOfThreads = 8; // default value for number of theads
+    omp_set_num_threads(numOfThreads);
+
+    #pragma omp parallel for
+#endif
+
+
+    for(int i = PARA.rotation_degree; i<360; i=i+PARA.rotation_degree)
     {
+        printf("rotation degree is %d\n",i);
         double curret_degree = (double)i;
         if(curret_degree > 180)
             curret_degree = 180 - curret_degree;
-        p2.outswc_file = PARA.inimg_file + QString("_neurontracing_rotation_%1.swc").arg(curret_degree);
 
+        r_opt.degree = -curret_degree/180.0*3.141592635;
+        unsigned char * outvol1d=0;
+        V3DLONG *outsz=0;
+        bool b_res=false;
+        b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
 
-        if(i == 0)
-        {
-            p2.p4dImage = PARA.image;
-            p2.xc0 = p2.yc0 = p2.zc0 = 0;
-            p2.xc1 = in_sz[0]-1;
-            p2.yc1 = in_sz[1]-1;
-            p2.zc1 = in_sz[2]-1;
-
-            proc_app2(callback, p2, versionStr);
-            NeuronTree nt = readSWC_file(p2.outswc_file);
-            nt_list.push_back(nt);
-
-        }else
-        {
-            r_opt.degree = -curret_degree/180.0*3.141592635;
-            unsigned char * outvol1d=0;
-            V3DLONG *outsz=0;
-            bool b_res=false;
-            b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
-
+//        #pragma omp critical
+//        {
             Image4DSimple* total4DImage = new Image4DSimple;
             total4DImage->setData((unsigned char*)outvol1d, outsz[0], outsz[1], outsz[2], 1, V3D_UINT8);
-
             p2.p4dImage = total4DImage;
+            QString image_name = PARA.inimg_file + QString("_neurontracing_rotation_%1.v3draw").arg(curret_degree);
+            p2.p4dImage->setFileName(image_name.toStdString().c_str());
+
+            QString swc_name =  PARA.inimg_file + QString("_neurontracing_rotation_%1.swc").arg(curret_degree);
+            p2.outswc_file = swc_name;
+
+
             p2.xc0 = p2.yc0 = p2.zc0 = 0;
             p2.xc1 = outsz[0]-1;
             p2.yc1 = outsz[1]-1;
             p2.zc1 = outsz[2]-1;
 
-        //    for(int i = 0; i <PARA.listLandmarks.size();i++)
-        //    {
-        //        LocationSimple RootNewLocation;
-        //        RootNewLocation.x = PARA.listLandmarks.at(i).x;
-        //        RootNewLocation.y = PARA.listLandmarks.at(i).y;
-        //        RootNewLocation.z = PARA.listLandmarks.at(i).z;
-        //        p2.landmarks.push_back(RootNewLocation);
-        //    }
+            //    for(int i = 0; i <PARA.listLandmarks.size();i++)
+            //    {
+            //        LocationSimple RootNewLocation;
+            //        RootNewLocation.x = PARA.listLandmarks.at(i).x;
+            //        RootNewLocation.y = PARA.listLandmarks.at(i).y;
+            //        RootNewLocation.z = PARA.listLandmarks.at(i).z;
+            //        p2.landmarks.push_back(RootNewLocation);
+            //    }
 
-            proc_app2(callback, p2, versionStr);
 
-            NeuronTree nt = readSWC_file(p2.outswc_file);
-            NeuronTree nt_rotated = swc_rotation(nt,in_sz,-curret_degree);
+                proc_app2(callback, p2, versionStr);
 
-            nt_list.push_back(nt_rotated);
+                NeuronTree nt = readSWC_file(p2.outswc_file);
+                NeuronTree nt_rotated = swc_rotation(nt,in_sz,-curret_degree);
 
-//            QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(curret_degree);
-//            writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_rotated);
+                nt_list.push_back(nt_rotated);
 
-            if(outvol1d) {delete []outvol1d; outvol1d = 0;}
-            if(outsz) {delete []outsz; outsz = 0;}
-        }
+                if(outvol1d) {delete []outvol1d; outvol1d = 0;}
+                if(outsz) {delete []outsz; outsz = 0;}
+ //       }
+
+        //            QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(curret_degree);
+        //            writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_rotated);
+
+
     }
     v3d_msg(QString("nt_list size is %1").arg(nt_list.size()),0);
+
+//    for(int i = 0; i <nt_list.size(); i++)
+//    {
+//         QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(i);
+//         writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_list.at(i));
+
+//    }
 
     QList<NeuronSWC> merge_result;
     QString outfileName = PARA.inimg_file + "_consesus.swc";

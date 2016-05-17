@@ -14,6 +14,11 @@ INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1
 INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
 
+unix:!macx {
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
+}
+
 
 HEADERS	+= neurontracing_rotation_plugin.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.h
