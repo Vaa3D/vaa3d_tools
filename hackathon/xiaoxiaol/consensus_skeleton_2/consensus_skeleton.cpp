@@ -890,6 +890,7 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
 
 
         cluster.clear();
+        //include itself into the cluster first
         cluster.push_back(cur);
 
         for (int j = 0; j < nt_list.size(); j++)
@@ -953,8 +954,6 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
     for (V3DLONG i = 0;i <num_nodes;i++)
     {
         V3DLONG p = plist[i];
-        unsigned int edgeVote = adjMatrix[i*num_nodes + p];
-
         if (p == -1){
             //root
             NeuronSWC tmp;
@@ -966,12 +965,14 @@ bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_
             tmp.pn = -1;
             tmp.r =  node_list[i].r;
             tmp.n = i+1;
-            tmp.fea_val.push_back(edgeVote);
+            tmp.fea_val.push_back(0);
 
             merge_result.append(tmp);
+            continue;
 
         }
 
+        unsigned int edgeVote = adjMatrix[i*num_nodes + p];
         if (edgeVote >= vote_threshold ){
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
@@ -1067,8 +1068,6 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
      int num_nodes = merge_result.size();
      int * EDGE_VOTED = new int[num_nodes*num_nodes];
 
-
-
      for (int i=0;i<nt_list.size();i++)
      {
          for (V3DLONG ii=0;ii<num_nodes*num_nodes;ii++) EDGE_VOTED[ii] = 0;
@@ -1077,6 +1076,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
          {
              NeuronSWC cur = nt_list[i].listNeuron[j];
              if (cur.seg_id < 0 ){
+                 //didn't get clustered to the consensus node( too far away)
                  continue;
              }
              V3DLONG n_id,pn_id;
@@ -1103,6 +1103,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
          }
      }
 
+     delete [] EDGE_VOTED;
      return true;
  }
 
@@ -1167,7 +1168,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
              int idx = -1;
              double m_dis = correspondingNodeFromNeuron(average_p, merge_result,idx, TYPE_MERGED);
              if (m_dis <= 1.0)
-             {
+             {  // too close to existing merged node, skip appending
 
                  FOUND_MATCH = true;
                  //assign id for edge votes counting
@@ -1246,7 +1247,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     }
 
 
-    int max_num_iters = 3;
+    int max_num_iters = 5;
 
 
 // DEBUG
