@@ -48,6 +48,10 @@ public slots:
     void collectOverview();
     void getCurrentParameters();
     void combinedSmartScan(QString);
+    void monitorLiveFile();
+    void updateLiveFile();
+    void startLiveFile();
+
 signals:
     void startPM();
     void stopPM();
@@ -194,6 +198,12 @@ private:
     QLabel *machineSaveDirLabel;
     QLabel *localDataDirLabel;
     QDir localDataDirectory;
+    QLabel * liveFileStringLabel;
+    QLabel * liveFileString;
+    QPushButton * setLiveFilePath;
+
+
+    QFileInfo *liveFile;
 
 // Target and ROI table widget
 
@@ -216,6 +226,8 @@ private:
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     bool isDuplicateROI(LocationSimple inputLocation);
     void closeEvent(QCloseEvent *event);
+
+
 
     LandmarkList allTargetLocations;
     QList<LandmarkList> allScanLocations;

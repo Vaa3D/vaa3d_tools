@@ -193,6 +193,10 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(18,S2Parameter("galvoXmicrons", "", 0.0, "", "floatderived"));
     s2ParameterMap.insert(19, S2Parameter("galvoYmicrons", "", 0.0, "", "floatderived"));
     s2ParameterMap.insert(20,S2Parameter("resonantX","-gts currentPanLocationX", 0.0, "float"));
+    s2ParameterMap.insert(21,S2Parameter("maxVoltsY", "-gts maxVoltage YAxis ", 0.0, "float"));
+    s2ParameterMap.insert(22,S2Parameter("minVoltsY", "-gts minVoltage YAxis ", 0.0, "float"));
+    s2ParameterMap.insert(23,S2Parameter("micronsPerVoltY","", 0.0, "", "floatderived"));
+
     maxParams = s2ParameterMap.keys().last()+1;
     emit newMessage(QString("initialized"));
 
@@ -424,7 +428,13 @@ void S2Controller::posMonListener(QString messageL){
             newValue = s2ParameterMap[17].getCurrentValue()*s2ParameterMap[1].getCurrentValue();
         }else if (ii == 19){
             newValue = s2ParameterMap[17].getCurrentValue()*s2ParameterMap[2].getCurrentValue();
+        }else if (ii == 23){
+        newValue = s2ParameterMap[13].getCurrentValue()/(s2ParameterMap[21].getCurrentValue()-s2ParameterMap[22].getCurrentValue());
+        if (newValue<0){
+            newValue = -newValue;}
         }
+
+
         messageL = QString::number(newValue);
     }
 

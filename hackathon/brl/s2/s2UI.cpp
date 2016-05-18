@@ -93,7 +93,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     roiGroupBox->show();
 
 
-
+//TODO  ***** ADD COLORED NUMBERS TO ROI OVERVIEW!  they must be visible!
 
     myTargetTable.show();
     targetIndex = 0;
@@ -379,17 +379,18 @@ QGroupBox *S2UI::createS2Monitors(){
 
     QGridLayout *gbMon = new QGridLayout;
 
-    for (int jj=0; jj<=20; jj++){
+    for (int jj=0; jj<=23; jj++){
         QLabel * labeli = new QLabel(tr("test"));
         labeli->setText(QString::number(jj));
         labeli->setObjectName(QString::number(jj));
         labeli->setWordWrap(true);
         labeli->setFont(newFont);
-        gbMon->addWidget(labeli, jj%11, jj/11);
+        gbMon->addWidget(labeli, jj%12, jj/12);
     }
     gMonBox->setLayout(gbMon);
     return gMonBox;
 }
+
 
 
 QGroupBox *S2UI::createTracingParameters(){
@@ -533,13 +534,25 @@ QGroupBox *S2UI::createConfigPanel(){
     setLocalPathToData = new QPushButton;
     setLocalPathToData->setText(tr("set local path to data"));
 
+    liveFileString = new QLabel(tr(""));
+    liveFileStringLabel = new QLabel(tr("LiveFile : "));
+
+    setLiveFilePath = new QPushButton;
+    setLiveFilePath->setText(tr("set LiveFile"));
+
+
+
+
+
     cBL->addWidget(machineSaveDirLabel,0,0);
     cBL->addWidget(machineSaveDir, 0,1);
     cBL->addWidget(localDataDirLabel,1,0);
     cBL->addWidget(localDataDir,1,1);
     cBL->addWidget(setLocalPathToData,2,1);
     cBL->addWidget(resetDirPB, 2,0);
-
+    cBL->addWidget(liveFileStringLabel, 3,0);
+    cBL->addWidget(liveFileString,3,1);
+    cBL->addWidget(setLiveFilePath,4,0);
     configBox->setLayout(cBL);
 return configBox;
 }
@@ -1888,3 +1901,29 @@ void S2UI::updateZoomHandler(){
 
 // then, use LocationSimple.category as an indicator of topological (branch) order.
 // once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
+
+
+
+
+void S2UI::startLiveFile(){
+    QDir liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("PrairieView XML (*.xml);;All Files (*.*)"));
+
+    // this needs to be a binary file if we're going to monitor it directly. otherwise, we will monitor another file (.xml?) and use that signal to update
+    // the image data when that file is updated.
+    liveFile = new QFileInfo(liveFileString->text());
+    // of course this necessitates finally writing a method to load binary data into vaa3d...
+}
+
+
+void S2UI::monitorLiveFile(){
+    // monitor the status of the LiveFile.  if the modified
+
+
+
+    QTimer::singleShot(100, this, SLOT(monitorLiveFile()));//
+}
+
+
+void S2UI::updateLiveFile(){
+
+}
