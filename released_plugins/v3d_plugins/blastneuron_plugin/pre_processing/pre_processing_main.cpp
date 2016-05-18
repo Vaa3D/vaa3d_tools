@@ -195,11 +195,11 @@ void printHelp_pre_processing()
 	printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
 	printf("\t#o <output_filename> :   output file name.\n");
 	printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
-    printf("\t#p <prune_size> :  prune short branches that has length smaller than prune_size.\n");
+    printf("\t#l <prune_size> :  prune short branches that has length smaller than prune_size.\n");
     printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
 	printf("\t                         if not specified, use 2\n");
 	printf("\t#r <skip_rotation_flag = 1>   :   whether or not use PCA for rotation.\n");
 	printf("\t                         if not specified, rotation is not perfored\n");
-    printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #s 2 #r 0\"\n");
+    printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #l 3 #s 2 #r 0\"\n");
 }

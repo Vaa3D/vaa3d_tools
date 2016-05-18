@@ -74,7 +74,7 @@ bool BlastNeuronPlugin::dofunc(const QString & func_name, const V3DPluginArgList
 		printf("\t batch_compute           generate neuron feature database (.nfb) file first to speed up neuron retrieve\n");
 		printf("\t invert_projection       find an optimal affine transform between neuron structures regardless of topology.\n\n");
 		printf("Example: \n");
-        printf("\t vaa3d -x blastneuron -f pre_processing -p  \"#i input.swc #o result.swc #p 3 #s 2 #r 1 \"\n");
+        printf("\t vaa3d -x blastneuron -f pre_processing -p  \"#i input.swc #o result.swc #l 3 #s 2 #r 1 \"\n");
 		printf("\t vaa3d -x blastneuron -f batch_compute -p \"#i mydatabase.ano #o features.nfb\"\n");
 		printf("\t vaa3d -x blastneuron -f global_retrieve -p \"#d features.nfb #q query.swc #n 10 #m 1,2,4 #o retrieve.ano\"\n");
 		printf("\t vaa3d -x blastneuron -f local_alignment -p \"#t target.swc #s subject.swc #o match.swc\"\n");
