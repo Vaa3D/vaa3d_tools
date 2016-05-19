@@ -13,6 +13,9 @@ SOURCES      += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
 SOURCES      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+HEADERS      += $$V3DMAINPATH/neuron_editing/neuron_xforms.h
+SOURCES      += $$V3DMAINPATH/neuron_editing/neuron_xforms.cpp
+
 TARGET        = $$qtLibraryTarget(snapshots_3dviewer)
 
 DESTDIR       = $$VAA3DPATH/bin/plugins/movies_and_snapshots/snapshots_3dviewer
