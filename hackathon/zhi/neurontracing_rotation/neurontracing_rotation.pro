@@ -40,7 +40,7 @@ SOURCES += $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/my_surf_
 
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2_connector.cpp
-SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1_connector.cpp
+#SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1_connector.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculate_cover_scores.cpp

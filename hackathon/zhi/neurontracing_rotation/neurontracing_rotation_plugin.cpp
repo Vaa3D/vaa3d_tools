@@ -9,10 +9,21 @@
 
 #include "neurontracing_rotation_plugin.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
+
 #include "rotate_image.h"
 #include "opt_rotate.h"
 
 #include "../../xiaoxiaol/consensus_skeleton_2/consensus_skeleton.h"
+#include "my_surf_objs.h"
+#include "stackutil.h"
+#include "marker_radius.h"
+#include "smooth_curve.h"
+#include "hierarchy_prune.h"
+
+//#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+
+
+
 
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
@@ -21,6 +32,12 @@
 Q_EXPORT_PLUGIN2(neurontracing_rotation, neurontracing_rotation);
 
 using namespace std;
+
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
 
 struct input_PARA
 {
@@ -298,7 +315,97 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         v3d_msg("error in consensus_skeleton",bmenu);
         return;
     }
+
     export_listNeuron_2swc(merge_result,qPrintable(outfileName));
+
+
+    double bkg_thresh = 40;
+    if(PARA.bkg_thresh > bkg_thresh) bkg_thresh = PARA.bkg_thresh;
+    bool is_2d = PARA.b_RadiusFrom2D;
+
+    vector<MyMarker*> inswc = readSWC_file(outfileName.toStdString());
+    if(inswc.empty()) return;
+    for(int i = 0; i < inswc.size(); i++)
+    {
+        MyMarker * marker = inswc[i];
+        if(is_2d)
+            marker->radius = markerRadiusXY(data1d, in_sz, *marker, bkg_thresh);
+        else
+            marker->radius = markerRadius(data1d, in_sz, *marker, bkg_thresh);
+    }
+
+    vector<HierarchySegment*> topo_segs;
+    swc2topo_segs(inswc, topo_segs, 1, data1d, 0, 0, 0);
+
+    cout<<"Smooth the final curve"<<endl;
+    for(int i = 0; i < topo_segs.size(); i++)
+    {
+        HierarchySegment * seg = topo_segs[i];
+        MyMarker * leaf_marker = seg->leaf_marker;
+        MyMarker * root_marker = seg->root_marker;
+        vector<MyMarker*> seg_markers;
+        MyMarker * p = leaf_marker;
+        while(p != root_marker)
+        {
+            seg_markers.push_back(p);
+            p = p->parent;
+        }
+        seg_markers.push_back(root_marker);
+        smooth_curve_and_radius(seg_markers, 5);
+    }
+    inswc.clear();
+    topo_segs2swc(topo_segs, inswc, 0); // no resampling
+
+    QString outfileName_radius = PARA.inimg_file + "_consesus_radius.swc";
+    saveSWC_file(outfileName_radius.toStdString(), inswc);
+
+    QString outfileName_radius_pruned = PARA.inimg_file + "_consesus_radius_pruned.swc";
+
+    NeuronTree nt_radius = readSWC_file(outfileName_radius);
+    vector<MyMarker*> outswc_interprune;
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt_radius.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt_radius.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt_radius.hashNeuron.value(par)].push_back(i);
+    }
+
+    for(int j = 0; j < inswc.size(); j++)
+    {
+        if(inswc[j]->parent != 0)
+        {
+            int flag_prun = 0;
+            int par_x = inswc[j]->parent->x;
+            int par_y = inswc[j]->parent->y;
+            int par_z = inswc[j]->parent->z;
+            int par_r = inswc[j]->parent->radius;
+
+            int dis_prun = sqrt(pow2(inswc[j]->x - par_x) + pow2(inswc[j]->y - par_y) + pow2(inswc[j]->z - par_z));
+            if( (inswc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+            {
+                if(childs[j].size() > 0)
+                {
+                    for(int jj = 0; jj < childs[j].size(); jj++)
+                        inswc[childs[j].at(jj)]->parent = inswc[j]->parent;
+                }
+                flag_prun = 1;
+            }
+
+            if(flag_prun == 0)
+            {
+                outswc_interprune.push_back(inswc[j]);
+            }
+        }
+        else
+            outswc_interprune.push_back(inswc[j]);
+
+    }
+
+    saveSWC_file(outfileName_radius_pruned.toStdString(), outswc_interprune);
 
     if(!bmenu)
     {

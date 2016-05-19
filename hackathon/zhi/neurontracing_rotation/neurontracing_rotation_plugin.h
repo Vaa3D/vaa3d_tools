@@ -176,9 +176,6 @@ class neuronrotation_app2 : public QDialog
         int  b_256cube;
         int b_RadiusFrom2D;
         int rotation_degree;
-
     };
-
-
 #endif
 

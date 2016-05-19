@@ -148,52 +148,52 @@ template<class T> bool swc2topo_segs(vector<MyMarker*> & inswc, vector<Hierarchy
 
 // 1. will change the type of each segment
 // swc_type : 0 for length heatmap, 1 for level heatmap
-bool topo_segs2swc(vector<HierarchySegment*> & topo_segs, vector<MyMarker*> & outmarkers, int swc_type = 1) 
+template<class T>  bool topo_segs2swc(vector<HierarchySegment*> & topo_segs, vector<MyMarker*> & outmarkers, T swc_type = 1)
 {
-	if(topo_segs.empty()) return false;
+    if(topo_segs.empty()) return false;
 
-	double min_dst = topo_segs[0]->length, max_dst = min_dst;
-	double min_level = topo_segs[0]->level, max_level = min_level;
-	for(int i = 0; i < topo_segs.size(); i++)
-	{
-		double dst = topo_segs[i]->length;
-		min_dst = MIN(min_dst, dst);
-		max_dst = MAX(max_dst, dst);
+    double min_dst = topo_segs[0]->length, max_dst = min_dst;
+    double min_level = topo_segs[0]->level, max_level = min_level;
+    for(int i = 0; i < topo_segs.size(); i++)
+    {
+        double dst = topo_segs[i]->length;
+        min_dst = MIN(min_dst, dst);
+        max_dst = MAX(max_dst, dst);
 
-		int level = topo_segs[i]->level;
-		min_level = MIN(min_level, level);
-		max_level = MAX(max_level, level);
-	}
-	max_level = MIN(max_level, 20);                         // todo1
+        int level = topo_segs[i]->level;
+        min_level = MIN(min_level, level);
+        max_level = MAX(max_level, level);
+    }
+    max_level = MIN(max_level, 20);                         // todo1
 
-	cout<<"min_dst = "<<min_dst<<endl;
-	cout<<"max_dst = "<<max_dst<<endl;
-	cout<<"min_level = "<<min_level<<endl;
-	cout<<"max_level = "<<max_level<<endl;
+    cout<<"min_dst = "<<min_dst<<endl;
+    cout<<"max_dst = "<<max_dst<<endl;
+    cout<<"min_level = "<<min_level<<endl;
+    cout<<"max_level = "<<max_level<<endl;
 
 
-	max_dst -= min_dst; if(max_dst == 0.0) max_dst = 0.0000001;
-	max_level -= min_level; if(max_level == 0) max_level = 1.0;
-	for(int i = 0; i < topo_segs.size(); i++)
-	{
-		double dst = topo_segs[i]->length;
-		int level = MIN(topo_segs[i]->level, max_level);    // todo1
-		int color_id = (swc_type == 0) ? (dst - min_dst) / max_dst * 254.0 + 20.5 : (level - min_level)/max_level * 254.0 + 20.5;
-		vector<MyMarker*> tmp_markers;
-		topo_segs[i]->get_markers(tmp_markers);
-		for(int j = 0; j < tmp_markers.size(); j++)
-		{
-			tmp_markers[j]->type = color_id;
-		}
-		outmarkers.insert(outmarkers.end(), tmp_markers.begin(), tmp_markers.end());
-	}
-	return true;
+    max_dst -= min_dst; if(max_dst == 0.0) max_dst = 0.0000001;
+    max_level -= min_level; if(max_level == 0) max_level = 1.0;
+    for(int i = 0; i < topo_segs.size(); i++)
+    {
+        double dst = topo_segs[i]->length;
+        int level = MIN(topo_segs[i]->level, max_level);    // todo1
+        int color_id = (swc_type == 0) ? (dst - min_dst) / max_dst * 254.0 + 20.5 : (level - min_level)/max_level * 254.0 + 20.5;
+        vector<MyMarker*> tmp_markers;
+        topo_segs[i]->get_markers(tmp_markers);
+        for(int j = 0; j < tmp_markers.size(); j++)
+        {
+            tmp_markers[j]->type = color_id;
+        }
+        outmarkers.insert(outmarkers.end(), tmp_markers.begin(), tmp_markers.end());
+    }
+    return true;
 }
 
 template<class T> bool hierarchy_prune(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc, T * inimg1d, long sz0, long sz1, long sz2, double length_thresh = 10.0)
 {
 	vector<HierarchySegment*> topo_segs;
-	swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
+    swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
 	vector<HierarchySegment*> filter_segs;
 //	if(length_thresh <= 0.0)
 //	{
@@ -211,7 +211,7 @@ template<class T> bool hierarchy_prune(vector<MyMarker*> &inswc, vector<MyMarker
 		if(topo_segs[i]->length >= length_thresh) filter_segs.push_back(topo_segs[i]);
 		//if(topo_segs[i]->length * topo_segs[i]->level >= length_thresh) filter_segs.push_back(topo_segs[i]);
 	}
-	topo_segs2swc(filter_segs, outswc, 0);  
+    topo_segs2swc(filter_segs, outswc, 0);
 	return true;
 }
 
@@ -228,7 +228,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 
 	vector<HierarchySegment*> topo_segs;
 	cout<<"Construct hierarchical segments"<<endl;
-	swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
+    swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
 	vector<HierarchySegment*> filter_segs;
 	for(int i = 0; i < topo_segs.size(); i++)
 	{
@@ -469,7 +469,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	{
 		cout<<"resampling markers"<<endl;
 		vector<MyMarker*> tmp_markers;
-		topo_segs2swc(filter_segs, tmp_markers, 0); // no resampling
+        topo_segs2swc(filter_segs, tmp_markers, 0); // no resampling
 		child_num.clear();
 		getLeaf_markers(tmp_markers, child_num);
 
@@ -832,7 +832,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	}
 	outswc.clear();
 	cout<<filter_segs.size()<<" segments left"<<endl;
-	topo_segs2swc(filter_segs, outswc, 0); // no resampling
+    topo_segs2swc(filter_segs, outswc, 0); // no resampling
 	
 	// release hierarchical segments
 	for(int i = 0; i < topo_segs.size(); i++) delete topo_segs[i];
