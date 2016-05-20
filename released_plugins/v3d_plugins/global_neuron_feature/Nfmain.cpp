@@ -6,6 +6,8 @@
 #include <vector>
 #include <math.h>
 #include <iostream>
+#include "../sort_neuron_swc/openSWCDialog.h"
+
 using namespace std;
 
 void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -66,15 +68,11 @@ void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	QString fileOpenName;
-	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-			"",
-			QObject::tr("Supported file (*.swc)"
-				";;Neuron structure	(*.swc)"
-				));
-	if(fileOpenName.isEmpty()) 
-		return;
-	NeuronTree nt = readSWC_file(fileOpenName);
+    OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+    if (!openDlg->exec())
+        return;
+
+    NeuronTree nt = openDlg->nt;
 	double * features = new double[FNUM];
 	computeFeature(nt,features);
 	QMessageBox infoBox;
@@ -133,15 +131,11 @@ void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
 
 void nf_first_main(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-            "",
-            QObject::tr("Supported file (*.swc)"
-                ";;Neuron structure	(*.swc)"
-                ));
-    if(fileOpenName.isEmpty())
+    OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+    if (!openDlg->exec())
         return;
-    NeuronTree nt = readSWC_file(fileOpenName);
+
+    NeuronTree nt = openDlg->nt;
     if(nt.listNeuron[0].pn >=0)
     {
         v3d_msg("Please sort the swc file first");

@@ -10,11 +10,16 @@ HEADERS      += global_neuron_feature.h
 HEADERS      += Nfmain.h
 HEADERS      += compute.h
 
+HEADERS      += ../sort_neuron_swc/openSWCDialog.h
+
+
 SOURCES      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES      += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES      += global_neuron_feature.cpp
 SOURCES      += Nfmain.cpp
 SOURCES      += compute.cpp
+SOURCES      += ../sort_neuron_swc/openSWCDialog.cpp
+
 
 TARGET        = $$qtLibraryTarget(global_neuron_feature)
 DESTDIR       = $$V3DMAINPATH/../bin/plugins/neuron_utilities/global_neuron_feature
