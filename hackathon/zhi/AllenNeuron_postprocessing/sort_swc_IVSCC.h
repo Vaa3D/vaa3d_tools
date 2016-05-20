@@ -6,8 +6,8 @@
  *  Changed by  Wan, Yinan, on 06/23/11.
  *  Enable processing of .ano file, add threshold parameter by Yinan Wan, on 01/31/12
  */
-#ifndef __SORT_SWC_IVSCC_H_
-#define __SORT_SWC_IVSCC_H_
+#ifndef __SORT_SWC_H_
+#define __SORT_SWC_H_
 
 #include <QtGlobal>
 #include <math.h>

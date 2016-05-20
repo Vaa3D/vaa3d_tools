@@ -19,10 +19,7 @@
 #include "marker_radius.h"
 #include "smooth_curve.h"
 #include "hierarchy_prune.h"
-
-//#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-
-
+#include "../../xiaoxiaol/consensus_skeleton_2/sort_eswc.h"
 
 
 #if  defined(Q_OS_LINUX)
@@ -256,8 +253,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         bool b_res=false;
         b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
 
-//        #pragma omp critical
-//        {
+        #pragma omp critical
+        {
             Image4DSimple* total4DImage = new Image4DSimple;
             total4DImage->setData((unsigned char*)outvol1d, outsz[0], outsz[1], outsz[2], 1, V3D_UINT8);
             p2.p4dImage = total4DImage;
@@ -292,7 +289,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
                 if(outvol1d) {delete []outvol1d; outvol1d = 0;}
                 if(outsz) {delete []outsz; outsz = 0;}
- //       }
+        }
 
         //            QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(curret_degree);
         //            writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_rotated);
@@ -310,7 +307,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     QList<NeuronSWC> merge_result;
     QString outfileName = PARA.inimg_file + "_consesus.swc";
-    if (!consensus_skeleton_match_center(nt_list, merge_result, 3,6, 0, callback))
+    if (!consensus_skeleton_match_center(nt_list, merge_result, 0,6, 0, callback))
     {
         v3d_msg("error in consensus_skeleton",bmenu);
         return;
@@ -359,9 +356,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     QString outfileName_radius = PARA.inimg_file + "_consesus_radius.swc";
     saveSWC_file(outfileName_radius.toStdString(), inswc);
 
+    NeuronTree nt_radius = readSWC_file(outfileName_radius);
+    QList<NeuronSWC> result_radius_sorted;
+    SortESWC(nt_radius.listNeuron, result_radius_sorted ,VOID, 0);
+
     QString outfileName_radius_pruned = PARA.inimg_file + "_consesus_radius_pruned.swc";
 
-    NeuronTree nt_radius = readSWC_file(outfileName_radius);
+
     vector<MyMarker*> outswc_interprune;
 
     QVector<QVector<V3DLONG> > childs;
