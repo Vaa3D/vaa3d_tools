@@ -49,7 +49,7 @@ class swcSortDialog : public QDialog
 
             layout->addWidget(new QLabel("Root number (If you set '0', the first root in file is set as default):"), 1, 0, 1, 1);
             layout->addWidget(rootid_box, 1, 1, 1, 5);
-            layout->addWidget(new QLabel("The new threshold for the newly generated link (If you set '-1', all the points will be connected automated; If you set '0', no new link will be generated):"), 2, 0, 1, 1);
+            layout->addWidget(new QLabel("The new threshold for the newly generated link (If you set '-1', all the points will be connected automatically; If you set '0', no new link will be generated):"), 2, 0, 1, 1);
             layout->addWidget(thres_box, 2, 1, 1, 5);
             QPushButton * ok = new QPushButton("Ok");
             QPushButton * cancel = new QPushButton("Cancel");
