@@ -359,50 +359,53 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     NeuronTree nt_radius = readSWC_file(outfileName_radius);
     QList<NeuronSWC> result_radius_sorted;
     SortESWC(nt_radius.listNeuron, result_radius_sorted ,VOID, 0);
+    export_listNeuron_2swc(result_radius_sorted,qPrintable(outfileName_radius));
 
+
+    vector<MyMarker*> inswc_radius = readSWC_file(outfileName_radius.toStdString());
+    NeuronTree nt_radius_sorted =readSWC_file(outfileName_radius);
     QString outfileName_radius_pruned = PARA.inimg_file + "_consesus_radius_pruned.swc";
-
 
     vector<MyMarker*> outswc_interprune;
 
     QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt_radius.listNeuron.size();
+    V3DLONG neuronNum = nt_radius_sorted.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
     for (V3DLONG i=0;i<neuronNum;i++)
     {
-        V3DLONG par = nt_radius.listNeuron[i].pn;
+        V3DLONG par = nt_radius_sorted.listNeuron[i].pn;
         if (par<0) continue;
-        childs[nt_radius.hashNeuron.value(par)].push_back(i);
+        childs[nt_radius_sorted.hashNeuron.value(par)].push_back(i);
     }
 
-    for(int j = 0; j < inswc.size(); j++)
+    for(int j = 0; j < inswc_radius.size(); j++)
     {
-        if(inswc[j]->parent != 0)
+        if(inswc_radius[j]->parent != 0)
         {
             int flag_prun = 0;
-            int par_x = inswc[j]->parent->x;
-            int par_y = inswc[j]->parent->y;
-            int par_z = inswc[j]->parent->z;
-            int par_r = inswc[j]->parent->radius;
+            int par_x = inswc_radius[j]->parent->x;
+            int par_y = inswc_radius[j]->parent->y;
+            int par_z = inswc_radius[j]->parent->z;
+            int par_r = inswc_radius[j]->parent->radius;
 
-            int dis_prun = sqrt(pow2(inswc[j]->x - par_x) + pow2(inswc[j]->y - par_y) + pow2(inswc[j]->z - par_z));
-            if( (inswc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+            int dis_prun = sqrt(pow2(inswc_radius[j]->x - par_x) + pow2(inswc_radius[j]->y - par_y) + pow2(inswc_radius[j]->z - par_z));
+            if( (inswc_radius[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
             {
                 if(childs[j].size() > 0)
                 {
                     for(int jj = 0; jj < childs[j].size(); jj++)
-                        inswc[childs[j].at(jj)]->parent = inswc[j]->parent;
+                        inswc_radius[childs[j].at(jj)]->parent = inswc_radius[j]->parent;
                 }
                 flag_prun = 1;
             }
 
             if(flag_prun == 0)
             {
-                outswc_interprune.push_back(inswc[j]);
+                outswc_interprune.push_back(inswc_radius[j]);
             }
         }
         else
-            outswc_interprune.push_back(inswc[j]);
+            outswc_interprune.push_back(inswc_radius[j]);
 
     }
 
