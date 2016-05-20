@@ -22,11 +22,14 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
 
 
 bool  remove_outliers(vector<NeuronTree> & nt_list, QString SelectedNeuronsAnoFileName);
-
+void  isIsolated(vector<int>& isolated,vector<double>& nt_lens,vector<double>& nt_N_bifs, double radius, int count);
+void  normalizeVector(vector<double>& original, vector<double>& normalized);
+void  buildDistanceMatrix(vector< vector<double> >& dist, vector<double>& x, vector<double>& y);
 //void build_tree_from_adj_matrix(QList<NeuronSWC> node_list, double * adjMatrix, QList<NeuronSWC> merge_result);
 
 //votemap MST
 double  computeTotalLength(const NeuronTree & nt);
+int  computeNumberOfBifurcations(const NeuronTree & nt);
 bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileName,V3DPluginCallback2 & callback);
 bool consensus_skeleton_votemap(vector<NeuronTree>  nt_list, QList<NeuronSWC> & merge_result,
                                 int max_vote_threshold,int cluster_distance_threshold, V3DPluginCallback2 &callback);
@@ -55,7 +58,8 @@ bool merge_and_vote(vector<NeuronTree> & nt_list_resampled,
                     int vote_threshold,QList<NeuronSWC> &merge_result,int TYPE_MERGED);
 double correspondingNodeFromNeuron(XYZ pt,QList<NeuronSWC> listNodes, int &closestNodeIdx,int TYPE_MERGED);
 bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC>  merge_result, double * adjMatrix,int TYPE_MERGED);
+int postprocessing_neuron_node_list(QList<NeuronSWC>  &merge_result, double*&  adjMatrix, double vote_threshold);
 bool build_tree_from_adj_matrix(double * adjMatrix, QList<NeuronSWC> &merge_result,double vote_threshold);
 bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold);
-
+void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold);
 #endif

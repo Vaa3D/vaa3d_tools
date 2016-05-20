@@ -41,7 +41,7 @@ bool dark_pruning(NeuronTree input_tree,  QList<NeuronSWC> &output_tree, Image4D
     QList<NeuronSWC> list_n= input_tree.listNeuron;
 
     //keep track of children number to identify tip nodes
-    int num_children[num_nodes];
+    int* num_children = new int[num_nodes];
     for (V3DLONG j=0; j<num_nodes; j++)
     {
         num_children[j]=0;
@@ -108,6 +108,8 @@ bool dark_pruning(NeuronTree input_tree,  QList<NeuronSWC> &output_tree, Image4D
     }
 
     //todo:resort
+
+	delete [] num_children;
 
     return true;
 
