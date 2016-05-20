@@ -24,5 +24,65 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+class swcSortDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        swcSortDialog(V3DPluginCallback2 &cb, QWidget *parent,QList<NeuronSWC> neuron)
+        {
+
+            QGridLayout * layout = new QGridLayout();
+            rootid_box = new QSpinBox();
+            thres_box = new QSpinBox();
+
+            rootid_box->setMinimum(0);
+            rootid_box->setMaximum(neuron.size());
+            rootid_box->setValue(1);
+
+
+            thres_box->setMinimum(-1);
+            thres_box->setMaximum(2147483647);
+
+
+            layout->addWidget(new QLabel("Root number (If you set '0', the first root in file is set as default):"), 1, 0, 1, 1);
+            layout->addWidget(rootid_box, 1, 1, 1, 5);
+            layout->addWidget(new QLabel("The new threshold for the newly generated link (If you set '-1', all the points will be connected automatically; If you set '0', no new link will be generated):"), 2, 0, 1, 1);
+            layout->addWidget(thres_box, 2, 1, 1, 5);
+            QPushButton * ok = new QPushButton("Ok");
+            QPushButton * cancel = new QPushButton("Cancel");
+            ok->setDefault(true);
+            layout->addWidget(ok, 3, 0, 1, 3);
+            layout->addWidget(cancel, 3, 3, 1, 3);
+            this->setLayout(layout);
+            setWindowTitle(QString("Sorting options"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(_slot_start()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+        }
+
+        ~swcSortDialog(){}
+
+        public slots:
+        void update()
+        {
+            rootid = atof(rootid_box->text().toStdString().c_str());
+            thres = atof(thres_box->text().toStdString().c_str());
+        }
+
+        void _slot_start()
+        {
+            update();
+            accept();
+        }
+
+    public:
+        QSpinBox * rootid_box;
+        QSpinBox *  thres_box;
+
+        V3DLONG rootid;
+        V3DLONG thres;
+    };
+
 #endif
 

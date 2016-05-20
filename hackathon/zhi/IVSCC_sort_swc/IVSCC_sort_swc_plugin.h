@@ -24,8 +24,6 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-#endif
-
 class swcSortDialog : public QDialog
     {
         Q_OBJECT
@@ -83,3 +81,4 @@ class swcSortDialog : public QDialog
         V3DLONG rootid;
         V3DLONG thres;
     };
+#endif

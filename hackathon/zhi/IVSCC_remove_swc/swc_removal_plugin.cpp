@@ -8,6 +8,9 @@
 #include "swc_removal_plugin.h"
 #include <iostream>
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../IVSCC_sort_swc/openSWCDialog.h"
+
+
 
 
 using namespace std;
@@ -70,21 +73,18 @@ void swc_removal::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 {
 	if (menu_name == tr("remove_swc"))
 	{
-        QString fileOpenName;
-        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                "",
-                QObject::tr("Supported file (*.swc *.eswc)"
-                    ";;Neuron structure	(*.swc)"
-                    ";;Extended neuron structure (*.eswc)"
-                    ));
-        if(fileOpenName.isEmpty())
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
             return;
+
+        QString fileOpenName = openDlg->file_name;
+
         int type;
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
              bool ok;
-             nt = readSWC_file(fileOpenName);
+             nt = openDlg->nt;
              type = QInputDialog::getInteger(parent, "Please specify the node type","type:",2,0,256,1,&ok);
              if (!ok)
                  return;
@@ -134,7 +134,18 @@ void swc_removal::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
              if(flag) {delete[] flag; flag = 0;}
 
-             NeuronTree nt_sort = SortSWC_pipeline(nt_prunned.listNeuron,VOID, 0);     //added one more sorting step by Zhi Zhou
+             swcSortDialog dialog(callback, parent,nt_prunned.listNeuron);
+             if (dialog.exec()!=QDialog::Accepted)
+                 return;
+
+
+             V3DLONG rootid = dialog.rootid;
+             V3DLONG thres = dialog.thres;
+
+             if(rootid == 0)  rootid = VOID;
+             if(thres == -1)  rootid = VOID;
+
+             NeuronTree nt_sort = SortSWC_pipeline(nt_prunned.listNeuron,rootid, thres);     //added one more sorting step by Zhi Zhou
 
 
              QString fileDefaultName = fileOpenName+QString("_removed.swc");
