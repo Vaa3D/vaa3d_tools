@@ -93,7 +93,6 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     roiGroupBox->show();
 
 
-//TODO  ***** ADD COLORED NUMBERS TO ROI OVERVIEW!  they must be visible!
 
     myTargetTable.show();
     targetIndex = 0;
@@ -119,6 +118,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
     updateLocalRemote(isLocal);
+    updateZoomPixelsProduct(1);
     channelChoiceComboB->setCurrentIndex(1);
 
 
@@ -155,6 +155,14 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(runContinuousCB,SIGNAL(clicked()), this, SLOT(s2ROIMonitor()));
 
     connect(tileSizeCB, SIGNAL(currentIndexChanged(int)), this, SLOT(updateCurrentZoom(int)));
+
+
+    connect(zoomSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
+    connect(pixelsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
+    connect(setLiveFilePath,SIGNAL(clicked()), this, SLOT(startLiveFile()));
+
+
+
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -223,6 +231,7 @@ void S2UI::createTargetList(){
 
 
 void S2UI::initializeROISizes(){
+    tileSizeChoices = new QList<TileInfo>;
     TileInfo myTileInfo = TileInfo(zoomPixelsProduct);
     myTileInfo.setZoomPos(8,0,0);
     tileSizeChoices->append(myTileInfo);
@@ -238,6 +247,7 @@ void S2UI::initializeROISizes(){
     myTileInfo.setZoomPos(32,0,0);
     tileSizeChoices->append(myTileInfo);
 
+    currentTileInfo = tileSizeChoices->at(tileSizeCB->currentIndex());
 
 }
 
@@ -472,6 +482,26 @@ QGroupBox *S2UI::createTracingParameters(){
 
 
 
+
+    zoomSpinBox = new QSpinBox;
+    zoomSpinBox->setMaximum(64);
+    zoomSpinBox->setMinimum(1);
+    zoomSpinBox->setValue(13);
+
+    zoomSpinBoxLabel = new QLabel;
+    zoomSpinBoxLabel->setText("zoom");
+
+
+    pixelsSpinBox = new QSpinBox;
+    pixelsSpinBox->setMinimum(50);
+    pixelsSpinBox->setMaximum(1024);
+    pixelsSpinBox->setValue(256);
+
+    pixelsSpinBoxLabel = new QLabel;
+    pixelsSpinBoxLabel->setText("pixels");
+    zoomPixelsProductLabel = new QLabel(tr("zoom*pixels = "));
+
+
     tileSizeCB = new QComboBox;
     initializeROISizes();
     for (int i = 0; i<tileSizeChoices->length(); i++){
@@ -515,6 +545,11 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(channelChoiceComboB,12,1);
     tPL->addWidget(tileSizeCBLabel,13,0);
     tPL->addWidget(tileSizeCB,13,1);
+    tPL->addWidget(zoomSpinBoxLabel,14,0);
+    tPL->addWidget(zoomSpinBox,14,1);
+    tPL->addWidget(pixelsSpinBoxLabel,15,0);
+    tPL->addWidget(pixelsSpinBox,15,1);
+    tPL->addWidget(zoomPixelsProductLabel,16,0);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -1135,8 +1170,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
             }
 
-            qDebug()<<"new landmark pixel size 1"<<newLandmarks.value(i).ev_pc1;
-            qDebug()<<"new landmark pixel size 2"<<newLandmarks.value(i).ev_pc2;
+            qDebug()<<"new landmark pixel size 1 = "<<newLandmarks.value(i).ev_pc1;
+            qDebug()<<"new landmark pixel size 2 = "<<newLandmarks.value(i).ev_pc2;
             newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
             newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//
 
@@ -1149,8 +1184,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 allROILocations->append(newLandmarks.value(i));
                 allTipsList->append(newTipsList.value(i));
             }else{
-                status("already scanned here!");
-                qDebug()<<"already scanned "<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
+                status("skip this tile!");
+                qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
     loadMIP(scanNumber, mip);
@@ -1161,16 +1196,23 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 }
 
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
+
+    // add check of relation to full field scan...
+
+
     // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
     //check against locations already scanned
+
+
     bool upperLeft =false;
     bool upperRight = false;
     bool lowerLeft = false;
     bool lowerRight = false;
     for (int i=0; i<scanList.length(); i++){
+        // first check if the xy coordinates are already in scanList
         if ((qAbs(inputLocation.x - scanList[i].x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].y)< (float) 5.0)){
             return true;
-        }else{
+        }else{// then check if all 4 corners are in any volume in scanList (critical for adaptive scanning)
 
             upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
                     (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
@@ -1193,7 +1235,7 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
             return true;}
         }
     }
-    // and locations already queued!
+    // repeat on locations already queued!
     for (int i=0; i< allROILocations->length(); i++){
         if ((qAbs(inputLocation.x - allROILocations->at(i).x)<5.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<(float) 5.1)){
             return true;
@@ -1220,7 +1262,35 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
             return true;}
         }
     }
+    bool outsideOverview = false;
+    //now check if the tile location is outside the original overview volume
+    int leftSide = ((inputLocation.x-(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
+    qDebug()<<"left side = "<<leftSide;
+    if (leftSide  <= 0){outsideOverview = true;};
+
+    int rightSide = ((inputLocation.x+(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the right side of the tile in overview Pixels
+    qDebug()<<"right side = "<<rightSide;
+    if (leftSide  > 512){outsideOverview = true;};
+
+    int topSide = ((inputLocation.y-(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the top side of the tile in overview Pixels
+    qDebug()<<"top side = "<<topSide;
+    if (topSide  <= 0){outsideOverview = true;};
+
+    int bottomSide = ((inputLocation.y+(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the bottom side of the tile in overview Pixels
+    qDebug()<<"bottom side = "<<bottomSide;
+    if (bottomSide  > 512){outsideOverview = true;};
+
+
+    if (outsideOverview){
+        status("tile outside overview scan area");
+        return true;
+    }
+
+
     return false;
+
+
+
 }
 void S2UI::smartScanHandler(){
 
@@ -1731,7 +1801,6 @@ void S2UI::collectZoomStack(){
     qDebug()<<"x end = "<<my3DControl->getLocalEndPosX();
     qDebug()<<"y start = "<<my3DControl->getLocalStartPosY();
     qDebug()<<"y end = "<<my3DControl->getLocalEndPosY();
-
     qDebug()<<"window name "<< cb->getImageName(localWin);
     float xCenter = ( my3DControl->getLocalEndPosX()+ my3DControl->getLocalStartPosX())/2.0;
     float yCenter = ( my3DControl->getLocalEndPosY()+ my3DControl->getLocalStartPosY())/2.0;
@@ -1904,26 +1973,70 @@ void S2UI::updateZoomHandler(){
 
 
 
+void S2UI::updateZoomPixelsProduct(int ignore){
+
+    zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
+    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328)"));
+    QTimer::singleShot(10, this, SLOT(initializeROISizes()));
+
+}
+
+
+
 
 void S2UI::startLiveFile(){
-    QDir liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("PrairieView XML (*.xml);;All Files (*.*)"));
+    liveFileRunning= !liveFileRunning;
 
-    // this needs to be a binary file if we're going to monitor it directly. otherwise, we will monitor another file (.xml?) and use that signal to update
-    // the image data when that file is updated.
-    liveFile = new QFileInfo(liveFileString->text());
-    // of course this necessitates finally writing a method to load binary data into vaa3d...
+    if (liveFileRunning){
+    QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("PrairieView XML (*.v3draw);;All Files (*.*)"));
+
+    if (liveFilePath.isNull()){ liveFileRunning = false; return;}
+
+    liveFileString->setText(liveFilePath);
+    liveFile = new QFileInfo(liveFilePath);
+    liveFile->setCaching(false);
+    liveFileModified = liveFile->lastModified();
+
+
+    //Ulf's code is now spitting out v3draw files, so we can monitor it directly
+
+
+    // read in the file and display in 3D, returning the 3D viewer.
+
+    Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data() );
+    liveFileWindow = cb->newImageWindow();
+    cb->setImage(liveFileWindow,pNewImage);
+            cb->open3DWindow(liveFileWindow);
+            cb->updateImageWindow(liveFileWindow);
+
+            QTimer::singleShot(0, this, SLOT(monitorLiveFile()));//
+    }
+
 }
 
 
 void S2UI::monitorLiveFile(){
-    // monitor the status of the LiveFile.  if the modified
+    // monitor the status of the LiveFile.  if the file is modified, updateLiveFile(), otherwise, just repeat.
+
+    if ( liveFileRunning) {
 
 
+        if (liveFileModified < liveFile->lastModified()){
+            qDebug()<<"update liveFile!";
+        liveFileModified=liveFile->lastModified();
+            updateLiveFile();
+        }
 
-    QTimer::singleShot(100, this, SLOT(monitorLiveFile()));//
+
+        QTimer::singleShot(100, this, SLOT(monitorLiveFile()));
+    }
 }
 
-
 void S2UI::updateLiveFile(){
+    Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data());
+    cb->setImage(liveFileWindow,pNewImage);
+
+            cb->pushImageIn3DWindow(liveFileWindow);
+
 
 }

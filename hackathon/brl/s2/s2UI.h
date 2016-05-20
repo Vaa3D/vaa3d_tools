@@ -113,6 +113,9 @@ private slots:
     void resetDirectory();
     void resetDataDir();
     void collectZoomStack();
+    void updateZoomPixelsProduct(int ignore);
+    void initializeROISizes();
+
 private:
     V3DPluginCallback2 * cb;
 
@@ -147,7 +150,6 @@ private:
 
     void createButtonBox1();
 	
-    void initializeROISizes();
     void createTargetList();
 
     QPushButton *resetDirPB;
@@ -192,12 +194,18 @@ private:
     QLineEdit *roiZWEdit;
     QSpinBox *overlapSpinBox;
     QLabel *overlapSBLabel;
+    QSpinBox *zoomSpinBox;
+    QSpinBox *pixelsSpinBox;
+    QLabel *zoomSpinBoxLabel;
+    QLabel *pixelsSpinBoxLabel;
+    QLabel * zoomPixelsProductLabel;
 
     QLabel *machineSaveDir;
     QLabel *localDataDir;
     QLabel *machineSaveDirLabel;
     QLabel *localDataDirLabel;
     QDir localDataDirectory;
+
     QLabel * liveFileStringLabel;
     QLabel * liveFileString;
     QPushButton * setLiveFilePath;
@@ -242,6 +250,9 @@ private:
     bool waitingForLast;
     bool waitingForOverview;
 	bool isLocal;
+    bool liveFileRunning;
+    QDateTime liveFileModified;
+
     int smartScanStatus;
     int gridScanStatus;
     int methodChoice;
@@ -285,7 +296,7 @@ private:
 
 //   vaa3d variables
     v3dhandle previewWindow;
-
+    v3dhandle liveFileWindow;
 };
 //! [0]
 

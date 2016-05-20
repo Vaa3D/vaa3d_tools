@@ -170,6 +170,7 @@ void dopush(V3DPluginCallback2 &v3d, QWidget *parent, int method_code)
 			v3d.updateImageWindow(curwin);
 
 			v3d.pushImageIn3DWindow(curwin);
+            qDebug()<<"-------------------"<<curloop;
 		}
 	}
 	else if (method_code==2) //push marker and swc
