@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "inter_node_pruning_plugin.h"
+#include "../sort_neuron_swc/openSWCDialog.h"
 
 #include "my_surf_objs.h"
 using namespace std;
@@ -36,18 +37,15 @@ void inter_node_pruning::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 {
     if (menu_name == tr("inter-node pruning"))
 	{
-        QString fileOpenName;
-        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                "",
-                QObject::tr("Supported file (*.swc *.eswc)"
-                    ";;Neuron structure	(*.swc)"
-                    ";;Extended neuron structure (*.eswc)"
-                    ));
-        if(fileOpenName.isEmpty())
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
             return;
+
+        QString fileOpenName = openDlg->file_name;
+
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
-            NeuronTree nt = readSWC_file(fileOpenName);
+            NeuronTree nt = openDlg->nt;
             if(nt.listNeuron[0].pn >0)
             {
                 v3d_msg("Please sort the swc file first before using this plugin.");

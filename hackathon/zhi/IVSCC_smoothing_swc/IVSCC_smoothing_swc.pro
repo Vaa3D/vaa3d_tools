@@ -6,10 +6,14 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= IVSCC_smoothing_swc_plugin.h
+HEADERS	+= ../IVSCC_sort_swc/openSWCDialog.h
+
 SOURCES	+= IVSCC_smoothing_swc_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= ../eliminate_neuron_swc/my_surf_objs.cpp
+SOURCES	+= ../IVSCC_sort_swc/openSWCDialog.cpp
+
 
 TARGET	= $$qtLibraryTarget(IVSCC_smoothing_swc)
 DESTDIR	= $$VAA3DPATH/bin/plugins/IVSCC_smoothing_swc/

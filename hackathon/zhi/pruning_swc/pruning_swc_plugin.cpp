@@ -11,6 +11,8 @@
 #include "basic_surf_objs.h"
 #include <iostream>
 #include "my_surf_objs.h"
+#include "../IVSCC_sort_swc/openSWCDialog.h"
+
 
 template <class T> T local_max(T a, T b)
 {
@@ -105,9 +107,9 @@ QStringList pruning_swc::menulist() const
 {
 	return QStringList() 
         <<tr("pruning")
-        <<tr("pruning_nc")
-         <<tr("caculate_distance")
-           <<tr("rotation")
+     //   <<tr("pruning_nc")
+      //   <<tr("caculate_distance")
+     //      <<tr("rotation")
 
       //  <<tr("pruning_group")
       //  <<tr("aligning")
@@ -127,21 +129,18 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 {
     if (menu_name == tr("pruning"))
 	{
-                QString fileOpenName;
-                fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                        "",
-                        QObject::tr("Supported file (*.swc *.eswc)"
-                            ";;Neuron structure	(*.swc)"
-                            ";;Extended neuron structure (*.eswc)"
-                            ));
-                if(fileOpenName.isEmpty())
+                OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+                if (!openDlg->exec())
                     return;
+
+                QString fileOpenName = openDlg->file_name;
+
                 double length = 0;
                 NeuronTree nt;
                 if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
                 {
                      bool ok;
-                     nt = readSWC_file(fileOpenName);
+                     nt = openDlg->nt;
                      length = QInputDialog::getDouble(parent, "Please specify the maximum prunned segment length","segment length:",1,0,2147483647,0.1,&ok);
                      if (!ok)
                          return;

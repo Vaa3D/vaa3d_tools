@@ -7,8 +7,9 @@
 #include <vector>
 #include "IVSCC_smoothing_swc_plugin.h"
 #include "../eliminate_neuron_swc/my_surf_objs.h"
-#include "../neurontracing_mip/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/smooth_curve.h"
 #include "../../../released_plugins/v3d_plugins/neuron_radius/hierarchy_prune.h"
+#include "../IVSCC_sort_swc/openSWCDialog.h"
 
 
 using namespace std;
@@ -32,13 +33,12 @@ void IVSCC_smoothing_swc::domenu(const QString &menu_name, V3DPluginCallback2 &c
 {
     if (menu_name == tr("smooth_swc"))
 	{
-        QString fileOpenName;
-        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                "",
-                QObject::tr("Supported file (*.swc *.eswc)"
-                    ";;Neuron structure	(*.swc)"
-                    ";;Extended neuron structure (*.eswc)"
-                    ));
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
+            return;
+
+        QString fileOpenName = openDlg->file_name;
+
         if(fileOpenName.isEmpty())
             return;
         double length = 0;

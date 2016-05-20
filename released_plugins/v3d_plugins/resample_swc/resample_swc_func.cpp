@@ -10,6 +10,8 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
+#include "../sort_neuron_swc/openSWCDialog.h"
+
 using namespace std;
 
 const QString title = QObject::tr("Resample Neuron");
@@ -34,20 +36,16 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
 int resample_swc(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	QString fileOpenName;
-	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-			"",
-			QObject::tr("Supported file (*.swc *.eswc)"
-				";;Neuron structure	(*.swc)"
-				";;Extended neuron structure (*.eswc)"
-				));
-	if(fileOpenName.isEmpty()) 
-		return 0;
+    OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+    if (!openDlg->exec())
+        return 0;
+    fileOpenName = openDlg->file_name;
 	double step = 0;
 	NeuronTree nt;
 	if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
 	{
 		bool ok;
-		nt = readSWC_file(fileOpenName);
+        nt = openDlg->nt;
 		step = QInputDialog::getDouble(parent, "Please specify the resampling step length","Step length:",1,0,2147483647,0.1,&ok);
 		if (!ok)
 			return 0;
