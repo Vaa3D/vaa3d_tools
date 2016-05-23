@@ -298,12 +298,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
     v3d_msg(QString("nt_list size is %1").arg(nt_list.size()),0);
 
-//    for(int i = 0; i <nt_list.size(); i++)
-//    {
-//         QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(i);
-//         writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_list.at(i));
+    for(int i = 0; i <nt_list.size(); i++)
+    {
+         QString swc_rotated_name = PARA.inimg_file + QString("_neurontracing_rotation_%1_back.swc").arg(i);
+         writeSWC_file(swc_rotated_name.toStdString().c_str(),nt_list.at(i));
 
-//    }
+    }
 
     QList<NeuronSWC> merge_result;
     QString outfileName = PARA.inimg_file + "_consesus.swc";
