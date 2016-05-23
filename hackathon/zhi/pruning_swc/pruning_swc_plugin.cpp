@@ -155,7 +155,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 for (V3DLONG i=0;i<neuronNum;i++)
                 {
-                    flag[i] = -1;
+                    flag[i] = 1;
 
                     V3DLONG par = nt.listNeuron[i].pn;
                     if (par<0) continue;
@@ -166,34 +166,32 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 for (int i=0;i<list.size();i++)
                 {
-//                    if (childs[i].size()==0)
-//                    {
-//                        int index_tip = 0;
-//                        int parent_tip = getParent(i,nt);
-//                        while(childs[parent_tip].size()<2)
-//                        {
-//                            parent_tip = getParent(parent_tip,nt);
-//                            index_tip++;
-//                            if(parent_tip == 1000000000)
-//                                break;
-//                        }
-//                        if(index_tip < length)
-//                        {
-//                            flag[i] = -1;
+                    if (childs[i].size()==0)
+                    {
+                        int index_tip = 0;
+                        int parent_tip = getParent(i,nt);
+                        while(childs[parent_tip].size()<2)
+                        {
+                            parent_tip = getParent(parent_tip,nt);
+                            index_tip++;
+                            if(parent_tip == 1000000000)
+                                break;
+                        }
+                        if(index_tip < length)
+                        {
+                            flag[i] = -1;
 
-//                            int parent_tip = getParent(i,nt);
-//                            while(childs[parent_tip].size()<2)
-//                           {
-//                                flag[parent_tip] = -1;
-//                                parent_tip = getParent(parent_tip,nt);
-//                                if(parent_tip == 1000000000)
-//                                    break;
-//                           }
-//                        }
+                            int parent_tip = getParent(i,nt);
+                            while(childs[parent_tip].size()<2)
+                           {
+                                flag[parent_tip] = -1;
+                                parent_tip = getParent(parent_tip,nt);
+                                if(parent_tip == 1000000000)
+                                    break;
+                           }
+                        }
 
-//                    }
-                    if (childs[i].size()>1)
-                        flag[i] = 1;
+                    }
 
                 }
 
@@ -474,7 +472,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                }
 
 
-    }if (menu_name == tr("rotation"))
+    }else if (menu_name == tr("rotation"))
     {
                 QString fileOpenName;
                 fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
@@ -882,8 +880,6 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             }
         }
        }
-
-
     else
 	{
         v3d_msg(tr("This is a plugin to prun the swc file. "
