@@ -1375,6 +1375,11 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
   //merge range 1.0 diameter nodes into one consensus node
 
      merge_result.clear();
+
+	 //which neurons vote for this merged point?
+	 //helps to prevent duplicated votes.
+	 vector < vector <int> > voter;
+	 
      for (int k = 0; k< nt_list_resampled.size();k++)
      {
          printf("\rnow merging neuron: %3d", k);
@@ -1383,7 +1388,10 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
          for (int i = 0; i <input_neuron->listNeuron.size(); i++)
          {
-             NeuronSWC * s = &(input_neuron->listNeuron[i]);
+			 vector <int> v(nt_list_resampled.size(),0);
+			 v[k] = 1;
+			 
+			 NeuronSWC * s = &(input_neuron->listNeuron[i]);
              if (s->type == TYPE_MERGED)
              {
                  // already merged, skip the merging
@@ -1418,6 +1426,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
                      mergeNode->type = TYPE_MERGED; //label merged
                      mergeNode->seg_id = -1;
                      closestNodes.push_back(mergeNode);
+					 v[j] = 1;
                  }
              }
 
@@ -1432,10 +1441,18 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
                  FOUND_MATCH = true;
                  //assign id for edge votes counting
                  s->seg_id = merge_result[idx].seg_id;
-				 merge_result[idx].r += double(cluster.size())/double(nt_list_resampled.size());
-				 if (merge_result[idx].r > 1) merge_result[idx].r = 1;
 
-                 //                     merge_result[idx].x =  (merge_result[idx].x  +average_p.x)/2.0;
+				 //how many unduplicated new votes?
+				 int new_votes = 0;
+				 for (int vid=0; vid<nt_list_resampled.size(); vid++) {
+					 if (v[vid] == 1 && voter[idx][vid] == 0) {
+						 voter[idx][vid] = 1;
+						 new_votes++;
+					 }
+				 }
+				 merge_result[idx].r += double(new_votes)/double(nt_list_resampled.size());
+
+	              //                     merge_result[idx].x =  (merge_result[idx].x  +average_p.x)/2.0;
                  //                     merge_result[idx].y =  (merge_result[idx].y  +average_p.y)/2.0;
                  //                     merge_result[idx].z =  (merge_result[idx].z  +average_p.z)/2.0;
                  //                     merge_result[idx].r += cluster.size();
@@ -1460,6 +1477,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
                  // add a new consensus node
                  merge_result.append(S);
 
+				 voter.push_back(v);
              }
              //map each node to it's consensus node id
 
