@@ -124,10 +124,20 @@ bool neurontracing_rotation::dofunc(const QString & func_name, const V3DPluginAr
             fprintf (stderr, "Need input image. \n");
             return false;
         }
-        else
-            PARA.inimg_file = infiles[0];
+
+        PARA.inimg_file = infiles[0];
+        PARA.image = 0;
         int k=0;
+       // QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        PARA.rotation_degree = (paras.size() >= k+1) ? atoi(paras[k]) : 36;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        PARA.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        PARA.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        PARA.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        PARA.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
@@ -200,11 +210,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     p2.bkg_thresh = PARA.bkg_thresh;
     p2.length_thresh = PARA.length_thresh;
     p2.cnn_type = 2;
-    p2.channel = 0;
+    p2.channel = PARA.channel - 1;
     p2.SR_ratio = 3.0/9.9;
     p2.b_256cube = PARA.b_256cube;
     p2.b_RadiusFrom2D = PARA.b_RadiusFrom2D;
-    p2.b_resample = 1;
+    p2.b_resample = 0;
     p2.b_intensity = 0;
     p2.b_brightfiled = 0;
     p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
@@ -219,9 +229,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     vector<NeuronTree> nt_list;
     p2.outswc_file = PARA.inimg_file + "_neurontracing_rotation_0.swc";
     QString image_name = PARA.inimg_file + "_neurontracing_rotation_0.v3draw";
-    p2.p4dImage = PARA.image;
-    p2.p4dImage->setFileName(image_name.toStdString().c_str());
-
+    if(bmenu)
+    {
+        p2.p4dImage = PARA.image;
+        p2.p4dImage->setFileName(image_name.toStdString().c_str());
+    }
+    else
+    {
+        Image4DSimple* total4DImage = new Image4DSimple;
+        total4DImage->setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        p2.p4dImage = total4DImage;
+        p2.p4dImage->setFileName(PARA.inimg_file.toStdString().c_str());
+    }
     p2.xc0 = p2.yc0 = p2.zc0 = 0;
     p2.xc1 = in_sz[0]-1;
     p2.yc1 = in_sz[1]-1;
@@ -230,7 +249,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     proc_app2(callback, p2, versionStr);
     NeuronTree nt = readSWC_file(p2.outswc_file);
     nt_list.push_back(nt);
-
 
 #if  defined(Q_OS_LINUX)
     unsigned int numOfThreads = 8; // default value for number of theads
@@ -251,7 +269,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         unsigned char * outvol1d=0;
         V3DLONG *outsz=0;
         bool b_res=false;
-        b_res = rotate_inPlaneZ(PARA.image->getRawData(), in_sz, r_opt, outvol1d, outsz);
+        b_res = rotate_inPlaneZ(data1d, in_sz, r_opt, outvol1d, outsz);
 
         #pragma omp critical
         {
