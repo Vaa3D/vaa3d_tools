@@ -47,7 +47,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         V3DLONG thres = dialog.thres;
 
         if(rootid == 0)  rootid = VOID;
-        if(thres == -1)  rootid = VOID;
+        if(thres == -1)  thres = VOID;
 
         QString fileOpenName = openDlg->file_name;
         NeuronTree nt_sort = SortSWC_pipeline(neuron,rootid, thres);

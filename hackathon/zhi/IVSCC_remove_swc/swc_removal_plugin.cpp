@@ -143,7 +143,7 @@ void swc_removal::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
              V3DLONG thres = dialog.thres;
 
              if(rootid == 0)  rootid = VOID;
-             if(thres == -1)  rootid = VOID;
+             if(thres == -1)  thres = VOID;
 
              NeuronTree nt_sort = SortSWC_pipeline(nt_prunned.listNeuron,rootid, thres);     //added one more sorting step by Zhi Zhou
 
