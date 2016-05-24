@@ -131,7 +131,7 @@ bool neurontracing_rotation::dofunc(const QString & func_name, const V3DPluginAr
        // QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         PARA.rotation_degree = (paras.size() >= k+1) ? atoi(paras[k]) : 36;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        PARA.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        PARA.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; if(PARA.bkg_thresh == atoi("AUTO")) PARA.bkg_thresh = -1;k++;
         PARA.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         PARA.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;

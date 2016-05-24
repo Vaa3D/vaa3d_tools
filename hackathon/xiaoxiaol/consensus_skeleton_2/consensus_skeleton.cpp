@@ -1185,7 +1185,7 @@ void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double ini
 		QList<NeuronSWC> node_list = nt.listNeuron;
 		trim_unconfident_branches(node_list, initial_threshold+itr*0.1);
 		char * newfilename = new char [1000];
-	    sprintf( newfilename, "%s_%.1f.swc", outfileName.toStdString().c_str(),initial_threshold+itr*0.1);
+        sprintf( newfilename, "%s_%.2f.swc", outfileName.toStdString().c_str(),initial_threshold+itr*0.1);
 	    export_listNeuron_2swc(node_list, newfilename);
 		printf("%s has been generated successfully\n",newfilename);
 		delete [] newfilename;

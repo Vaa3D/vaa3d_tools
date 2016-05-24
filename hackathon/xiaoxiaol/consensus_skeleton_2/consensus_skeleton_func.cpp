@@ -276,7 +276,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
 bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	if(input.size()==0 || output.size() != 1) return false;
+    if(input.size()==0) return false;
 	char * paras = NULL;
 
 	//parsing input
@@ -287,15 +287,25 @@ bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & 
 		return false;
 	}
 
-	//parsing output
-	vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
-	if (outlist->size()>1)
-	{
-        cerr << "You cannot specify more than 1 output files"<<endl;
-		return false;
-	}
+    QString qs_linker;
+    NeuronTree nt;
+    qs_linker = QString(inlist->at(0));
+    if (qs_linker.toUpper().endsWith(".SWC") || qs_linker.toUpper().endsWith(".ESWC"))
+    {
+        cout<<"(0). reading an swc file"<<endl;
+        nt = readSWC_file(qs_linker);
+    }
 
-	//parsing parameters
+    QString outfileName;
+    if (output.size()==0)
+        outfileName = qs_linker + "_trim.swc";
+    else
+    {
+        vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+        outfileName = QString(outlist->at(0));
+    }
+
+    //parsing parameters
 
     //int steps = 5;
 	double threshold = 0.3;
@@ -313,23 +323,6 @@ bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & 
 			return false;
 		}
 	}
-
-
-	QString qs_linker;
-	NeuronTree nt;
-	qs_linker = QString(inlist->at(0));
-	if (qs_linker.toUpper().endsWith(".SWC") || qs_linker.toUpper().endsWith(".ESWC"))
-	{
-		cout<<"(0). reading an swc file"<<endl;
-		nt = readSWC_file(qs_linker);
-	}
-
-
-	QString outfileName;
-	if (outlist->size()==0)
-		outfileName = qs_linker + "_trim.swc";
-	else
-		outfileName = QString(outlist->at(0));
 
 	generate_batch_trimmed_results(nt,outfileName,threshold,1);
 	return true;
