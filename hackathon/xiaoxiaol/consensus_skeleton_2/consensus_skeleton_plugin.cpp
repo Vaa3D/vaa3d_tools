@@ -72,7 +72,10 @@ bool ConsSkelPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     dark_pruning_func(input, output, callback);
     return true;
     }
-
+  if (func_name == tr("post_trimming"))
+    {
+    return post_consensus_trimming(input, output);
+    }
   printHelp();
   return true;
 }

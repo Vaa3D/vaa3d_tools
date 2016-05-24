@@ -62,4 +62,5 @@ int postprocessing_neuron_node_list(QList<NeuronSWC>  &merge_result, double*&  a
 bool build_tree_from_adj_matrix(double * adjMatrix, QList<NeuronSWC> &merge_result,double vote_threshold);
 bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold);
 void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold);
+void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double initial_threshold, int steps);
 #endif

@@ -16,6 +16,7 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList & output);
 int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);
 int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent);
+bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp();
 
 #endif
