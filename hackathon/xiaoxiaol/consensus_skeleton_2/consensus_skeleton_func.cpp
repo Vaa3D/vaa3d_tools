@@ -771,5 +771,15 @@ void printHelp()
     cout<<"\t-o <output_image_file>:  output image file name."<<endl;
     cout<<"\t-p <visible_threshold>:  visible threshold for dark pruning."<<endl;
     cout<<"Example: v3d -x consensus_swc -f dark_pruning -i input_consensus_file  input_image.v3dpbd -o pruned.swc -p 40\n"<<endl;
+
+    cout<<"\n  6) Post-processing: trim the less significant nodes in a given tree, with specified threshold" <<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f post_trimming -i <input_neuron_file> [-o <output_swc_file>] -p threshold"<<endl;
+    cout<<"Parameters:"<<endl;
+    cout<<"\t-f <function_name>:  post_trimming"<<endl;
+    cout<<"\t-i <input_neuron_file>:  input_neuron_file, swc or eswc"<<endl;
+    cout<<"\t-o <output_swc_file>:  output file name."<<endl;
+    cout<<"\t-p <threshold>:  threshold for trimming."<<endl;
+    cout<<"Example: v3d /x consensus_swc /f post_trimming /i consensus_untrim.eswc /o consensus_trimmed /p 0.5\n"<<endl;
+
 }
 
