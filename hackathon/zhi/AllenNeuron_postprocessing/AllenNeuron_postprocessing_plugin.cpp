@@ -15,11 +15,40 @@
 #include "../IVSCC_radius_estimation/smooth_curve.h"
 #include "../IVSCC_radius_estimation/hierarchy_prune.h"
 #include "../../../released_plugins/v3d_plugins/global_neuron_feature/compute.h"
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
 #define FNUM 22
 
 using namespace std;
 Q_EXPORT_PLUGIN2(AllenNeuron_postprocessing, AllenNeuron_postprocessing);
+
+QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<"*.tif"<<"*.raw"<<"*.v3draw"<<"*.lsm"
+            <<"*.TIF"<<"*.RAW"<<"*.V3DRAW"<<"*.LSM";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
  
 QStringList AllenNeuron_postprocessing::menulist() const
 {
@@ -121,24 +150,130 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 	}
     else if (menu_name == tr("whole_process"))
 	{
-        radiusEstimationDialog dialog(callback, parent);
-        if (!dialog.image)
-            return;
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        int p = 0;
-        if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
-
-
+        v3dhandle curwin = callback.currentImageWindow();
+        string inswc_file;
+        bool is_2d;
+        double bkg_thresh, stop_thresh;
+        V3DLONG  in_sz[4];
+        unsigned char* inimg1d = 0;
+        int p = 0,length;
         bool ok;
-        int length;
-        length = QInputDialog::getInteger(parent, "Please specify the length for pruning","length:",5,0,256,1,&ok);
-        if (!ok)
-            return;
 
-        string inswc_file = dialog.inswc_file;
-        string outswc_file = dialog.outswc_file;
+        if(curwin)
+        {
+            radiusEstimationDialog dialog(callback, parent);
+            if (!dialog.image)
+                return;
+            if (dialog.exec()!=QDialog::Accepted)
+                return;
+
+            if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+            length = QInputDialog::getInteger(parent, "Please specify the length for pruning","length:",5,0,256,1,&ok);
+            if (!ok)
+                return;
+
+            inswc_file = dialog.inswc_file;
+            is_2d = dialog.is_2d;
+            bkg_thresh = dialog.bkg_thresh;
+            stop_thresh = dialog.stop_thresh/100;
+            Image4DSimple* p4DImage = dialog.image;
+            inimg1d = p4DImage->getRawData();
+            in_sz[0] = p4DImage->getXDim();
+            in_sz[1] = p4DImage->getYDim();
+            in_sz[2] = p4DImage->getZDim();
+            in_sz[3] = p4DImage->getCDim();
+        }else
+        {
+            radiusEstimationFolderDialog dialog(callback, parent);
+            if (dialog.exec()!=QDialog::Accepted)
+                return;
+            if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Smooth the swc file?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+            length = QInputDialog::getInteger(parent, "Please specify the length for pruning","length:",5,0,256,1,&ok);
+            if (!ok)
+                return;
+
+            inswc_file = dialog.inswc_file;
+            inswc_file = dialog.inswc_file;
+            is_2d = dialog.is_2d;
+            bkg_thresh = dialog.bkg_thresh;
+            stop_thresh = dialog.stop_thresh/100;
+
+            QString m_InputfolderName(dialog.image_folder.c_str());
+            QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+            V3DLONG count=0;
+            foreach (QString img_str, imgList)
+            {
+                V3DLONG offset[3];
+                offset[0]=0; offset[1]=0; offset[2]=0;
+                indexed_t<V3DLONG, REAL> idx_t(offset);
+                idx_t.n = count;
+                idx_t.ref_n = 0; // init with default values
+                idx_t.fn_image = img_str.toStdString();
+                idx_t.score = 0;
+                vim.tilesList.push_back(idx_t);
+                count++;
+            }
+            int NTILES  = vim.tilesList.size();
+            unsigned char * data1d_1st = 0;
+            V3DLONG sz[4];
+            int datatype;
+            if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(0).fn_image.c_str()), data1d_1st, sz, datatype))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
+                return;
+            }
+            if(data1d_1st) {delete []data1d_1st; data1d_1st = 0;}
+
+            in_sz[0] = sz[0];
+            in_sz[1] = sz[1];
+            in_sz[2] = NTILES;
+            in_sz[3] = 1;//sz[3];
+
+        //    unsigned char *inimg1d = 0;
+            V3DLONG pagesz = in_sz[0]* in_sz[1]* in_sz[2]*in_sz[3];
+            try {inimg1d = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for inimg1d."); return;}
+
+            V3DLONG pagesz_one = sz[0]*sz[1]*sz[2]*1;//sz[3];
+
+            V3DLONG i = 0;
+            for(V3DLONG ii = 0; ii < NTILES; ii++)
+            {
+                unsigned char * data1d = 0;
+                V3DLONG sz[4];
+                int datatype;
+
+                if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(ii).fn_image.c_str()), data1d, sz, datatype))
+                {
+                    fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                    return;
+                }
+
+                if(1)
+                {
+                    V3DLONG hsz1=floor((double)(sz[1]-1)/2.0); if (hsz1*2<sz[1]-1) hsz1+=1;
+
+                    for (int j=0;j<hsz1;j++)
+                        for (int i=0;i<sz[0];i++)
+                        {
+                            unsigned char tmpv = data1d[(sz[1]-j-1)*sz[0] + i];
+                            data1d[(sz[1]-j-1)*sz[0] + i] = data1d[j*sz[0] + i];
+                            data1d[j*sz[0] + i] = tmpv;
+                        }
+                }
+
+                for(V3DLONG j = 0; j < pagesz_one; j++)
+                {
+                     inimg1d[i] = data1d[j];
+                     i++;
+                }
+                if(data1d) {delete []data1d; data1d = 0;}
+            }
+        }
+
+       // string outswc_file = dialog.outswc_file;
 
         QString fileOpenName =  QString::fromStdString(inswc_file);
 
@@ -181,19 +316,6 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         vector<MyMarker*> inswc = readSWC_file(fileTmpName.toStdString());
 
         //radius estimation start
-        bool is_2d = dialog.is_2d;
-        double bkg_thresh = dialog.bkg_thresh;
-        double stop_thresh = dialog.stop_thresh/100;
-
-        V3DLONG  in_sz[4];
-        Image4DSimple* p4DImage = dialog.image;
-        unsigned char* inimg1d = p4DImage->getRawData();
-
-        in_sz[0] = p4DImage->getXDim();
-        in_sz[1] = p4DImage->getYDim();
-        in_sz[2] = p4DImage->getZDim();
-        in_sz[3] = p4DImage->getCDim();
-
         if(inswc.empty()) return;
         for(int i = 0; i < inswc.size(); i++)
         {

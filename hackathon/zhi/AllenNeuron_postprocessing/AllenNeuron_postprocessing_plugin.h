@@ -132,6 +132,124 @@ class radiusEstimationDialog : public QDialog
         double stop_thresh;
     };
 
+class radiusEstimationFolderDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        radiusEstimationFolderDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+
+            QGridLayout * layout = new QGridLayout();
+            infolder_box = new QLineEdit("");
+            inswc_box = new QLineEdit("");
+            outswc_box = new QLineEdit("(optional)");
+            bkg_thresh_box = new QLineEdit("5");
+            stop_thresh_box = new QDoubleSpinBox();
+            stop_thresh_box->setMinimum(0.1);
+            stop_thresh_box->setMaximum(10);
+
+            is2d_checker = new QCheckBox("Is 2D radius");
+            is2d_checker->setChecked(true);
+            pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
+            pPushButton_openImageDlg = new QPushButton(QObject::tr("..."));
+
+
+            layout->addWidget(new QLabel("Input IVSCC image folder path"), 0, 0, 1, 1);
+            layout->addWidget(infolder_box, 0, 1, 1, 3);
+            layout->addWidget(pPushButton_openImageDlg,0, 4, 1, 2);
+            layout->addWidget(new QLabel("Input swc path"), 1, 0, 1, 1);
+            layout->addWidget(inswc_box, 1, 1, 1, 3);
+            layout->addWidget(pPushButton_openFileDlg,1, 4, 1, 2);
+            layout->addWidget(new QLabel("Background Threshold"), 2, 0, 1, 1);
+            layout->addWidget(bkg_thresh_box, 2, 1, 1, 5);
+            layout->addWidget(new QLabel("Stopping Threshold(%)"), 3, 0, 1, 1);
+            layout->addWidget(stop_thresh_box, 3, 1, 1, 5);
+            layout->addWidget(new QLabel("Out swc path"), 4, 0, 1, 1);
+            layout->addWidget(outswc_box, 4, 1, 1, 5);
+            layout->addWidget(is2d_checker, 5, 0, 1, 6);
+            QPushButton * ok = new QPushButton("Ok");
+            QPushButton * cancel = new QPushButton("Cancel");
+            ok->setDefault(true);
+            layout->addWidget(ok, 7, 0, 1, 3);
+            layout->addWidget(cancel, 7, 3, 1, 3);
+            this->setLayout(layout);
+            connect(ok, SIGNAL(clicked()), this, SLOT(_slot_start()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+            connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg()));
+            connect(pPushButton_openImageDlg, SIGNAL(clicked()), this, SLOT(_slots_openImageDlg()));
+
+        }
+
+        ~radiusEstimationFolderDialog(){}
+
+        public slots:
+        void update()
+        {
+            inswc_file = inswc_box->text().toStdString();
+            image_folder = infolder_box->text().toStdString();
+
+            outswc_file =outswc_box->text().toStdString();
+            if(outswc_file == "" || outswc_file == "(optional)") outswc_file = inswc_file + ".out.swc";
+            is_2d = is2d_checker->isChecked();
+            bkg_thresh = atof(bkg_thresh_box->text().toStdString().c_str());
+            stop_thresh = atof(stop_thresh_box->text().toStdString().c_str());
+        }
+        void _slots_openFileDlg()
+        {
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Choose swc file:"),
+                                                        "",
+                                                        QObject::tr("Supported file (*.swc *.eswc)"
+                                                            ));
+            if(!fileOpenName.isEmpty())
+            {
+                inswc_box->setText(fileOpenName);
+            }
+            update();
+        }
+        void _slots_openImageDlg()
+        {
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getExistingDirectory(0, QObject::tr("Choose the directory including all IVSCC images "),
+                                                             QDir::currentPath(),
+                                                             QFileDialog::ShowDirsOnly);
+            if(!fileOpenName.isEmpty())
+            {
+                infolder_box->setText(fileOpenName);
+            }
+            update();
+        }
+        void _slot_start()
+        {
+            update();
+            if(inswc_file == "" || image_folder == "")
+            {
+                v3d_msg("Please select the input swc file and input IVSCC image folder.");
+                return;
+            }
+            else
+                accept();
+        }
+    public:
+        QLineEdit * inswc_box;
+        QLineEdit * outswc_box;
+        QLineEdit * bkg_thresh_box;
+        QDoubleSpinBox *  stop_thresh_box;
+        QCheckBox * is2d_checker;
+        QPushButton *pPushButton_openFileDlg;
+        QPushButton *pPushButton_openImageDlg;
+
+
+        QLineEdit * infolder_box;
+
+        string inswc_file;
+        string outswc_file;
+        string image_folder;
+        bool is_2d;
+        double bkg_thresh;
+        double stop_thresh;
+    };
 
 #endif
 
