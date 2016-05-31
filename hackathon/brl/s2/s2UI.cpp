@@ -93,8 +93,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     roiGroupBox->show();
 
 
-
-    myTargetTable.show();
+    myTargetTable = new TargetList;
+    myTargetTable->show();
     targetIndex = 0;
     overViewPixelToScanPixel = (1.0/16.0)*(256.0/512.0);
     overviewMicronsPerPixel = 1.8;
@@ -213,7 +213,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     // communication with targetList:
-    connect(this,SIGNAL(updateTable(LandmarkList,QList<LandmarkList>)),&myTargetTable, SLOT(updateTargetTable(LandmarkList,QList<LandmarkList>)));
+    connect(this,SIGNAL(updateTable(LandmarkList,QList<LandmarkList>)),myTargetTable, SLOT(updateTargetTable(LandmarkList,QList<LandmarkList>)));
 
     // communicate with eventLogger:
 
@@ -225,7 +225,7 @@ void S2UI::hookUpSignalsAndSlots(){
 void S2UI::createTargetList(){
 
     //  myTargetTable.show();
-
+    qDebug()<<"empty S2UI::createTargetList method";
 
 }
 
@@ -413,7 +413,7 @@ QGroupBox *S2UI::createTracingParameters(){
     QSpinBox *bkgSpnBx = new QSpinBox(0);
     s2Label->setText("input file path:");
     bkgSpnBx->setMaximum(255);
-    bkgSpnBx->setMinimum(0);
+    bkgSpnBx->setMinimum(-1);
     bkgSpnBx->setValue(30);
     bkgSpnBx->setObjectName("bkgSpinBox");
 
@@ -978,11 +978,12 @@ void S2UI::startAllTargets(){
         return;
     }else{
         emit eventSignal("startMultiTarget");
+        scanVoltageConversion = uiS2ParameterMap[8].getCurrentValue()/uiS2ParameterMap[17].getCurrentValue();  // convert from pixels to microns and to galvo voltage:
 
         runAllTargetsPB->setText("cancel All Targets");
         targetIndex = -1;
         allTargetStatus = 1;// running alltargetscan
-        QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+        QTimer::singleShot(50, this, SLOT(handleAllTargets()));
     }
 }
 void S2UI::handleAllTargets(){
@@ -1003,12 +1004,12 @@ void S2UI::handleAllTargets(){
         return;
     }
     status("starting all targets");
+    updateCurrentZoom(2);
     QTimer::singleShot(1000, this, SLOT(startingSmartScan()));}
 
 
 void S2UI::startingSmartScan(){
     numProcessing=0;
-    scanVoltageConversion = uiS2ParameterMap[8].getCurrentValue()/uiS2ParameterMap[17].getCurrentValue();  // convert from pixels to microns and to galvo voltage:
 
     if (gridScanCB->isChecked()){
         gridScanStatus = 1;
@@ -1715,6 +1716,7 @@ void S2UI::closeEvent(QCloseEvent *){
     myNotes->close();
     myPosMon.close();
     myController.close();
+    myTargetTable->close();
 
 }
 
@@ -1994,8 +1996,13 @@ void S2UI::startLiveFile(){
 
     liveFileString->setText(liveFilePath);
     liveFile = new QFileInfo(liveFilePath);
+
+
+
+    liveFileStatus = new QFileInfo(liveFile->absolutePath().append(QDir::separator()).append(liveFile->completeBaseName()).append(".status"));
     liveFile->setCaching(false);
-    liveFileModified = liveFile->lastModified();
+    liveFileStatus->setCaching(false);
+    liveFileModified = liveFileStatus->lastModified();
 
 
     //Ulf's code is now spitting out v3draw files, so we can monitor it directly
@@ -2021,9 +2028,9 @@ void S2UI::monitorLiveFile(){
     if ( liveFileRunning) {
 
 
-        if (liveFileModified < liveFile->lastModified()){
+        if (liveFileModified < liveFileStatus->lastModified()){
             qDebug()<<"update liveFile!";
-        liveFileModified=liveFile->lastModified();
+        liveFileModified=liveFileStatus->lastModified();
             updateLiveFile();
         }
 

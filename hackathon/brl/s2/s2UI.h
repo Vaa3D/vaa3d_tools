@@ -212,10 +212,10 @@ private:
 
 
     QFileInfo *liveFile;
-
+    QFileInfo *liveFileStatus;
 // Target and ROI table widget
 
-    TargetList myTargetTable;
+    TargetList* myTargetTable;
     int targetIndex;
 
 
