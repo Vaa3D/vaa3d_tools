@@ -75,6 +75,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	char *dfile_result = NULL;
 	char *outfile = NULL;
 	double step_size = 2;
+    double thres = 2;
     double prune_size = -1; //default case
 	int skip_rotation = 1;
 	
@@ -134,11 +135,15 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 					return 1;
 				}
 				step_size = atof(optarg);
-				if (step_size<=0)
-				{
-					fprintf(stderr, "Illegal step size. It must>0.\n");
-				}
                 break;
+            case 't':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -t.\n");
+                    return 1;
+                }
+                thres = atof(optarg);
+            break;
 			case '?':
 				fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
 				return 1;
@@ -164,14 +169,23 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		return 1;
 	}
 
+    NeuronTree resampled;
+    if (step_size>0){
+        printf("Resampling along segments\n");
+        resampled = resample(pruned, step_size);
+    }else{
+        printf("Skip Resampling\n");
+        resampled=pruned;
+    }
+    NeuronTree sorted;
+    if (step_size>0){
+        printf("Sort \n");
+        sorted = sort(resampled,VOID, step_size);
+    }else{
+        printf("Skip sorting\n");
+        sorted=resampled;
 
-	printf("Resampling along segments\n");
-    NeuronTree resampled = resample(pruned, step_size);
-
-
-    printf("Sort \n");
-    NeuronTree sorted = sort(resampled,VOID, step_size);
-
+    }
 
 	NeuronTree result;
 	if (skip_rotation!=1)
@@ -179,9 +193,12 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		printf("Aligning PCA axis\n");
         result = align_axis(sorted);
 	}
-	else
+    else{
+        printf("Skip PCA alignment\n");
         result = sorted;
-	if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
+    }
+
+    if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
 		printf("\t %s has been generated successfully.\n",qPrintable(outfileName));
 
 	return 1;
@@ -201,7 +218,10 @@ void printHelp_pre_processing()
     printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
     printf("\t                         use 0 to skip, if not specified, use 2.\n");
+    printf("\t#s <thres>       :    gap threshold for connecting during the sorting procedure.\n");
+    printf("\t                         use 0 to skip, if not specified, use 2.\n");
     printf("\t#r <skip_rotation_flag = 1>   :   whether to skip PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
-    printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #l 3 #s 2 #r 0\"\n");
+
+    printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #l 3 #s 2 #t 2 #r 0\"\n");
 }
