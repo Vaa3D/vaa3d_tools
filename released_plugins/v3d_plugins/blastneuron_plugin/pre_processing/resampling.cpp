@@ -31,7 +31,8 @@ void resample_path(Segment * seg, double step)
 			pt->y = start->y + rate*(start->p->y-start->y);
 			pt->z = start->z + rate*(start->p->z-start->z);
 			pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
-			pt->p = start->p;
+            pt->type = start->type;
+            pt->p = start->p;
 			seg_r.back()->p = pt;
 			seg_r.push_back(pt);
 			path_length += DISTP(start,pt);
@@ -46,6 +47,9 @@ void resample_path(Segment * seg, double step)
 
 NeuronTree resample(NeuronTree input, double step)
 {
+    if (step <=0)
+         return input;
+
 	NeuronTree result;
 	V3DLONG siz = input.listNeuron.size();
 	Tree tree;
@@ -57,6 +61,7 @@ NeuronTree resample(NeuronTree input, double step)
 		pt->y = s.y;
 		pt->z = s.z;
 		pt->r = s.r;
+        pt->type = s.type;
 		pt->p = NULL;
 		pt->childNum = 0;
 		tree.push_back(pt);
@@ -113,7 +118,8 @@ NeuronTree resample(NeuronTree input, double step)
 		S.y = p->y;
 		S.z = p->z;
 		S.r = p->r;
-		S.type = 2;
+        S.type = p->type;
+
 		result.listNeuron.push_back(S);
 	}
 	for (V3DLONG i=0;i<tree.size();i++)

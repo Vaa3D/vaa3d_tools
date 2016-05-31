@@ -11,6 +11,7 @@ struct Point
 {
 	double x,y,z,r;
 	Point* p;
+        int type;
 	V3DLONG childNum;
 };
 typedef vector<Point*> Segment;

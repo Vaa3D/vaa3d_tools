@@ -4,7 +4,8 @@
 
 NeuronTree align_axis(NeuronTree input)
 {
-	NeuronTree result = input;
+    NeuronTree result;
+    result.deepCopy(input);
 	V3DLONG siz = input.listNeuron.size();
 	printf("size=%d\n", siz);
 	
@@ -30,6 +31,7 @@ NeuronTree align_axis(NeuronTree input)
 		result.listNeuron[i].x = coord_pca[i];
 		result.listNeuron[i].y = coord_pca[siz + i];
 		result.listNeuron[i].z = coord_pca[2*siz + i];
+        result.listNeuron[i].type=input.listNeuron[i].type;
 	}
 
 	delete []coord;
