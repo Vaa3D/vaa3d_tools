@@ -200,7 +200,7 @@ void printHelp_pre_processing()
     printf("\t#l <prune_size> :  prune short branches that has length smaller than prune_size.\n");
     printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
-	printf("\t                         if not specified, use 2\n");
+    printf("\t                         use 0 to skip, if not specified, use 2.\n");
     printf("\t#r <skip_rotation_flag = 1>   :   whether to skip PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
     printf("Usage: vaa3d -x blastneuron -f pre_processing -p \"#i input.swc #o result.swc #l 3 #s 2 #r 0\"\n");
