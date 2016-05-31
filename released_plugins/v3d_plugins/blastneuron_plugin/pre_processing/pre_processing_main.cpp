@@ -80,7 +80,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	int skip_rotation = 1;
 	
 	int c;
-    static char optstring[]="i:o:l:s:r:";
+    static char optstring[]="i:o:l:s:t:r:";
 	extern char * optarg;
 	extern int optind, opterr;
 		
@@ -108,14 +108,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 				}
 				dfile_result = optarg;
 				break;
-			case 'r':
-				if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-				{
-					fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
-					return 1;
-				}
-				skip_rotation = atoi(optarg);
-				break;
+
              case 'l':
                  if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -135,6 +128,10 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 					return 1;
 				}
 				step_size = atof(optarg);
+                if (step_size<0)
+                {
+                    fprintf(stderr, "Illegal step_size.\n");
+                }
                 break;
             case 't':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
@@ -143,7 +140,19 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
                     return 1;
                 }
                 thres = atof(optarg);
-            break;
+                if (thres<-1)
+                {
+                    fprintf(stderr, "Illegal thres.\n");
+                }
+                break;
+           case 'r':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
+                    return 1;
+                }
+                skip_rotation = atoi(optarg);
+                break;
 			case '?':
 				fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
 				return 1;
@@ -178,9 +187,9 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
         resampled=pruned;
     }
     NeuronTree sorted;
-    if (step_size>0){
+    if (thres>0){
         printf("Sort \n");
-        sorted = sort(resampled,VOID, step_size);
+        sorted = sort(resampled,VOID, thres);
     }else{
         printf("Skip sorting\n");
         sorted=resampled;
@@ -218,7 +227,7 @@ void printHelp_pre_processing()
     printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
 	printf("\t#s <step_size>       :   step size for resampling.\n");
     printf("\t                         use 0 to skip, if not specified, use 2.\n");
-    printf("\t#s <thres>       :    gap threshold for connecting during the sorting procedure.\n");
+    printf("\t#t <thres>       :    gap threshold for connecting during the sorting procedure.\n");
     printf("\t                         use 0 to skip, if not specified, use 2.\n");
     printf("\t#r <skip_rotation_flag = 1>   :   whether to skip PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
