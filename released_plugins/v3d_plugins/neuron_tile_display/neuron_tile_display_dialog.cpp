@@ -351,3 +351,189 @@ void NeuronXYTileDialog::tile()
         callback->update_3DViewer(v3dwin);
     }
 }
+
+
+
+//*************************************************
+NeuronTileGroupsDialog::NeuronTileGroupsDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
+{
+
+    v3dwin=inwin;
+    callback=cb;
+
+    //create
+    radio_x = new QRadioButton(tr("tile rows along x"));
+    radio_y = new QRadioButton(tr("tile rows along y"));
+    radio_z = new QRadioButton(tr("tile rows along z"));
+
+    radio_x->setChecked(true);
+    radio_y->setChecked(false);
+    radio_z->setChecked(false);
+
+    spin_x = new QDoubleSpinBox();
+    spin_x->setRange(0,100000); spin_x->setValue(1000);
+    spin_y = new QDoubleSpinBox();
+    spin_y->setRange(0,100000); spin_y->setValue(400);
+    spin_z = new QDoubleSpinBox();
+    spin_z->setRange(0,100000); spin_z->setValue(0);
+
+
+
+    btn_quit = new QPushButton("Quit");
+    connect(btn_quit, SIGNAL(clicked()), this, SLOT(reject()));
+    btn_tile = new QPushButton("Tile");
+    connect(btn_tile, SIGNAL(clicked()), this, SLOT(tile()));
+    btn_reset = new QPushButton("Reset");
+    connect(btn_reset, SIGNAL(clicked()), this, SLOT(slot_reset()));
+
+    //layout
+    QGridLayout * gridLayout = new QGridLayout();
+
+    gridLayout->addWidget(radio_x,1,0,1,1);
+    gridLayout->addWidget(radio_y,1,1,1,1);
+    gridLayout->addWidget(radio_z,1,2,1,1);
+
+    QLabel* label_1 = new QLabel("X direction steps:");
+    gridLayout->addWidget(label_1,2,0,1,2);
+    gridLayout->addWidget(spin_x,2,2,1,1);
+    QLabel* label_2 = new QLabel("Y direction steps:");
+    gridLayout->addWidget(label_2,3,0,1,2);
+    gridLayout->addWidget(spin_y,3,2,1,1);
+    QLabel* label_3 = new QLabel("Z direction steps:");
+    gridLayout->addWidget(label_3,4,0,1,2);
+    gridLayout->addWidget(spin_z,4,2,1,1);
+    gridLayout->addWidget(btn_tile,5,0,1,1);
+    gridLayout->addWidget(btn_reset,5,1,1,1);
+    gridLayout->addWidget(btn_quit,5,2,1,1);
+
+    setLayout(gridLayout);
+
+    //load neuron tree
+    ntList=callback->getHandleNeuronTrees_Any3DViewer(v3dwin);
+
+    cur_x.clear();
+    cur_y.clear();
+    cur_num = ntList->size();
+}
+
+void NeuronTileGroupsDialog::enterEvent(QEvent *e)
+{
+    checkwindow();
+
+    QDialog::enterEvent(e);
+}
+
+void NeuronTileGroupsDialog::reject()
+{
+    reset();
+
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
+        callback->update_3DViewer(v3dwin);
+    }
+
+    QDialog::reject();
+}
+
+void NeuronTileGroupsDialog::checkwindow()
+{
+    //check if current window is closed
+    if (!callback){
+        this->hide();
+        return;
+    }
+
+    bool isclosed = true;
+    //search to see if the window is still open
+    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(allWindowList.at(i)==v3dwin){
+            isclosed = false;
+            break;
+        }
+    }
+
+    //close the window
+    if(isclosed){
+        this->hide();
+        return;
+    }
+}
+
+void NeuronTileGroupsDialog::reset()
+{
+    if(cur_x.size()>0 && (cur_y.size() == cur_x.size())){
+        double move_x, move_y, move_z=0;
+        for(int i=1; i<ntList->size() && i<cur_num; i++){
+            move_x = -cur_x[i];
+            move_y = -cur_y[i];
+            NeuronTree* p = (NeuronTree*)&(ntList->at(i));
+            proc_neuron_add_offset(p, move_x, move_y, move_z);
+        }
+    }
+    cur_x.clear();
+    cur_y.clear();
+    cur_num=ntList->size();
+}
+
+void NeuronTileGroupsDialog::slot_reset()
+{
+    checkwindow();
+
+    reset();
+
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
+        callback->update_3DViewer(v3dwin);
+    }
+}
+
+void NeuronTileGroupsDialog::tile()
+{
+    checkwindow();
+
+    reset();
+    ntList = callback->getHandleNeuronTrees_Any3DViewer(v3dwin);
+
+    ntList->clear();
+
+    double spacing_x = spin_x->value();
+    double spacing_y = spin_y->value();
+    double spacing_z = spin_z->value();
+    for(int i = 0; i <ano_file_list.size(); i++)
+    {
+
+        QString ano_file = ano_file_list[i];
+        //std::cout<<"read ano file:"<<ano_file.toStdString().c_str()<<std::endl;
+       // read ano file
+
+        P_ObjectFileType linker_object;
+        if (!loadAnoFile(ano_file,linker_object))
+        {
+            fprintf(stderr,"Error in reading the linker file.\n");
+            return ;
+        }
+        QStringList nameList = linker_object.swc_file_list;
+        int neuronNum = nameList.size();
+
+        for (V3DLONG j=0;j<neuronNum;j++)
+        {
+            NeuronTree tmp = readSWC_file(nameList.at(j));
+             double move_x, move_y,move_z;
+             if (radio_x->isChecked()){move_x = spacing_x *i;} else {move_x=spacing_x*j;}
+             if (radio_y->isChecked()){move_y = spacing_y *i;} else {move_y=spacing_y*j;}
+             if (radio_z->isChecked()){move_z = spacing_z *i;} else {move_z=spacing_z*j;}
+
+            proc_neuron_add_offset(&tmp, move_x, move_y, move_z);
+            ntList->push_back(tmp);
+        }
+
+
+    }
+
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
+        callback->update_3DViewer(v3dwin);
+    }
+}

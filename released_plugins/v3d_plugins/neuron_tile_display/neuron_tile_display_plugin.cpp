@@ -6,7 +6,8 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuron_tile_display_plugin.h"
-
+#include "basic_surf_objs.h"
+#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
  
@@ -15,6 +16,7 @@ QStringList neuron_tile_display::menulist() const
 	return QStringList() 
 		<<tr("neuron_tile_display")
         <<tr("neuron_tile_XY")
+        <<tr("neuron_tile_groups")
         <<tr("tile_multi_windows (swc and image files selected)")
         <<tr("tile_multi_windows (swc and image files under one folder)")
         <<tr("set configuration (tile_multi_windows options only)")
@@ -67,6 +69,10 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     else if (menu_name == tr("neuron_tile_XY"))
     {
         doxytile(callback, parent);
+    }
+    else if (menu_name == tr("neuron_tile_groups"))
+    {
+        dotile_groups(callback, parent);
     }
     else if (menu_name == tr("tile_multi_windows (swc and image files selected)"))
     {
@@ -299,6 +305,28 @@ void neuron_tile_display::dotile(V3DPluginCallback2 &callback, QWidget *parent)
     myDialog = new NeuronTileDisplayDialog(&callback, v3dwin);
     myDialog->show();
 }
+
+
+void neuron_tile_display::dotile_groups(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QStringList ano_file_list = QFileDialog::getOpenFileNames(parent,"ano files",
+                      QDir::currentPath(),"ano files (*.ano);;All files (*.*)" );
+
+
+    V3dR_MainWindow * surface_win = callback.createEmpty3DViewer();
+    if (!surface_win)
+    {
+        v3d_msg(QString("Failed to open an empty window!"));
+        return;
+    }
+    callback.setWindowDataTitle(surface_win, QFileInfo(ano_file_list[0]).absoluteDir().absolutePath());
+    NeuronTileGroupsDialog * myDialog = NULL;
+    myDialog = new NeuronTileGroupsDialog(&callback, surface_win);
+    myDialog->setAnoFileList(ano_file_list);
+    myDialog->show();
+
+}
+
 
 void neuron_tile_display::doxytile(V3DPluginCallback2 &callback, QWidget *parent)
 {

@@ -26,6 +26,7 @@ public:
 
     void dotile(V3DPluginCallback2 &callback, QWidget *parent);
     void doxytile(V3DPluginCallback2 &callback, QWidget *parent);
+    void dotile_groups(V3DPluginCallback2 &callback, QWidget *parent);
 };
 
 #endif

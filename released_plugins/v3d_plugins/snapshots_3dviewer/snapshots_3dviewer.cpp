@@ -33,6 +33,7 @@ void SnapShots_3Dviewer::domenu(const QString & menu_name,	V3DPluginCallback2 & 
     {
         snapShots3Dviewer_tiled_groups(v3d, parent);
     }
+
 }
 
 void SnapShots_3Dviewer(V3DPluginCallback2 & v3d, QWidget * parent)
@@ -213,3 +214,5 @@ void  snapShots3Dviewer_tiled_groups(V3DPluginCallback2 & v3d, QWidget * parent)
 
 
 }
+
+

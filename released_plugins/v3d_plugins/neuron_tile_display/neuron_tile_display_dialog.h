@@ -77,4 +77,60 @@ private:
     V3dR_MainWindow * v3dwin;
     V3DPluginCallback2 * callback;
 };
+
+
+class NeuronTileGroupsDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    NeuronTileGroupsDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
+    void enterEvent(QEvent *e);
+
+public slots:
+    void tile();
+    void slot_reset();
+    void reject();
+
+protected:
+    void reset();
+    void checkwindow();
+
+public:
+//    QCheckBox *check_boundbox;
+//    QcheckBox *check_hide;
+    QDoubleSpinBox *spin_x;
+    QDoubleSpinBox *spin_y;
+    QDoubleSpinBox *spin_z;
+    QPushButton *btn_quit;
+    QPushButton *btn_tile;
+    QPushButton *btn_reset;
+    QRadioButton *radio_x;
+    QRadioButton *radio_y;
+    QRadioButton *radio_z;
+
+    void setAnoFileList(QStringList anofilelist){
+        this->ano_file_list = anofilelist;
+    }
+
+    QStringList getAnoFileList(){
+        return (this->ano_file_list);
+    }
+
+private:
+    QList<NeuronTree> * ntList;
+    QStringList  ano_file_list;
+
+    vector<double> cur_x, cur_y;
+    int cur_num;
+
+    V3dR_MainWindow * v3dwin;
+    V3DPluginCallback2 * callback;
+};
+
+
+
+
+
+
 #endif // NEURON_TILE_DISPLAY_DIALOG_H
