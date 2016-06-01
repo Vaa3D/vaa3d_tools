@@ -82,6 +82,7 @@ private slots:
     void startingSmartScan();
     void startingZStack();
     void updateROIPlot(QString ignore);
+    void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
     void moveToROI(LocationSimple);
     void clearROIPlot();
@@ -140,6 +141,9 @@ private:
     QGraphicsScene * roiGS;
     QGraphicsView * roiGV;
     QGraphicsRectItem *newRect;
+    QSlider *zoomSlider;
+    QTransform originalTransform;
+
 
     QGroupBox *createROIControls();
     QGroupBox *createS2Monitors();

@@ -138,6 +138,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(roiYWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiZWEdit, SIGNAL(textChanged(QString)), this, SLOT(updateROIPlot(QString)));
     connect(roiClearPB, SIGNAL(clicked()),this,SLOT(clearROIPlot()));
+    connect(zoomSlider, SIGNAL(sliderMoved(int)), this, SLOT(updateGVZoom(int)));
 
     connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
 
@@ -266,9 +267,24 @@ QGroupBox *S2UI::createROIMonitor(){
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
     roiGV->setDragMode(QGraphicsView::ScrollHandDrag);
+
+    originalTransform = roiGV->transform();
+
     gl->addWidget(roiGV,0,0,4,4);
     roiClearPB = new QPushButton(tr("clear ROIs"));
+
+
+
     gl->addWidget(roiClearPB, 4,0);
+
+    zoomSlider = new QSlider();
+    zoomSlider->setOrientation(Qt::Horizontal);
+    zoomSlider->setMaximum(100);
+    zoomSlider->setMinimum(1);
+    zoomSlider->setValue(10);
+
+    gl->addWidget(zoomSlider,4,1);
+
 
     roiGroupBox->setLayout(gl);
     return roiGroupBox;
@@ -284,6 +300,15 @@ void S2UI::updateROIPlot(QString ignore){
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
+}
+
+void S2UI::updateGVZoom(int sliderValue){
+    qreal xyscale =1.0;
+    xyscale = qreal( sliderValue) / 10.0;
+    QTransform newTransform;
+    newTransform = originalTransform;
+    newTransform.scale(xyscale,xyscale);
+   roiGV->setTransform(newTransform);
 }
 
 void S2UI::resetDirectory(){

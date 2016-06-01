@@ -1465,7 +1465,7 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
         else if(methodChoice ==1)
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
-
+        qDebug()<<"reading SWC file ... "<<swcMOST;
         nt_most = readSWC_file(swcMOST);
 
         if(nt_most.listNeuron.size()<1){
