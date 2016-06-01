@@ -238,14 +238,22 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     ZSwcTree *tree = tracer.trace(&stack, true);
 
     std::cout << "Total tracing time: " << timer.elapsed() << std::endl;
+    QString swc_name = PARA.inimg_file + "_neutube.swc";
 
-    if (xintv > 0 || yintv > 0 || zintv > 0) {
-      tree->rescale(xintv + 1, yintv + 1, zintv + 1);
+    if(tree != NULL)
+    {
+        if (xintv > 0 || yintv > 0 || zintv > 0) {
+          tree->rescale(xintv + 1, yintv + 1, zintv + 1);
+        }
+
+        tree->save(swc_name.toStdString().c_str());
+        delete tree;
+    }else
+    {
+        NeuronTree nt;
+        writeSWC_file(swc_name.toStdString().c_str(),nt);
     }
 
-    QString swc_name = PARA.inimg_file + "_neutube.swc";
-    tree->save(swc_name.toStdString().c_str());
-    delete tree;
 
 
     v3d_msg(QString("Now you can drag and drop the generated swc file [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
