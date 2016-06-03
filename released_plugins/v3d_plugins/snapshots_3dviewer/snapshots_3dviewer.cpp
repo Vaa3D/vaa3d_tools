@@ -107,8 +107,16 @@ void tile(V3DPluginCallback2 & callback,    V3dR_MainWindow * v3dwin, double spa
         double move_x, move_y, move_z;
 
         for(int i=0; i<ntList->size(); i++){
-            move_x = spacing_x*(i%num_per_row);
-            move_y = spacing_y*(i/num_per_row);
+            if (spacing_x ==0){
+                //row by row display
+                move_x = spacing_x*(i/num_per_row);
+                move_y = spacing_y*(i%num_per_row);
+
+            }else{
+                move_x = spacing_x*(i%num_per_row);
+                move_y = spacing_y*(i/num_per_row);
+            }
+
             move_z = 0;
             NeuronTree* p = (NeuronTree*)&(ntList->at(i));
             proc_neuron_add_offset(p, move_x, move_y, move_z);
@@ -142,6 +150,8 @@ void  snapShots3Dviewer_tiled_groups(V3DPluginCallback2 & v3d, QWidget * parent)
     float z_rot = QInputDialog::getDouble(parent, "Roation about z axis",
                                  "Rotation about z :",
                                  0, -180, 180);
+
+
     double spacing_x = QInputDialog::getDouble(parent, "Spacing in x",
                                                "Spacing in x :",
                                                200, 0, 100000);
