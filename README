@@ -14,7 +14,12 @@ Please follow the build instructions here to build released plugins along with t
 If you would like to build plugins in the hackathon folder or plugins for bigneuron project, please follow
 this wiki page:
      https://github.com/Vaa3D/Vaa3D_Wiki/wiki/CompilePlugins.wiki
+
+* License
+
+Vaa3D and various Vaa3D tools (including plugins etc) used a slightly modified revised MIT license unless specifically stated for some rare cases, see detail here https://github.com/Vaa3D/Vaa3D_Wiki/wiki/LicenseAndAgreement.wiki .
      
+* Questions
 
 If you have questions, please check the documentations on the Vaa3D website: http://vaa3d.org , 
 and the wiki pages: https://github.com/Vaa3D/Vaa3D_Wiki/wiki/.
