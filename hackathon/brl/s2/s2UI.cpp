@@ -1209,6 +1209,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 // and replace the main list with the new one.
                 allROILocations->append(newLandmarks.value(i));
                 allTipsList->append(newTipsList.value(i));
+                // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
+                // keeping track of a bunch of ROIs.
+                roiGS->addRect((newLandmarks[i].x-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(), (newLandmarks[i].y-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+                        newLandmarks[i].ev_pc1*uiS2ParameterMap[8].getCurrentValue(), newLandmarks[i].ev_pc2*uiS2ParameterMap[8].getCurrentValue(),  QPen::QPen(Qt::green, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
             }else{
                 status("skip this tile!");
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
@@ -1905,7 +1909,7 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     int y = mip->getYDim();
     V3DLONG total  =0;
     Image4DProxy<Image4DSimple> mipProx(mip);
-    myMIP = QImage(x, y, QImage::Format_RGB16);
+    myMIP = QImage(x, y, QImage::Format_RGB888);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
             myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0));
