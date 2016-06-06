@@ -1008,7 +1008,7 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
 
     for (int i = 0; i <input_neuron.listNeuron.size(); i++)
     {
-        printf("\rnow processing neuron: %3d, node: %5d",input_neuron_id, i);
+        //printf("\rnow processing neuron: %3d, node: %5d",input_neuron_id, i);
 
 		
 		NeuronSWC s = input_neuron.listNeuron.at(i);
