@@ -210,13 +210,29 @@ int  computeNumberOfBifurcations(const NeuronTree & nt)
 bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
 
     // to avoid processing huge input swcs
-    for(int i = 0; i < nt_list.size(); i++){
+
+    vector<int > rm_ids;
+
+    for(int i = 0; i < nt_list.size(); i++) {
         NeuronTree tree = nt_list[i];
-        if (tree.listNeuron.size()> 100000)
+        if (tree.listNeuron.size()> 10000 )
         {
-            cout<<"This neuron is too big to process: likely to be an outlier anyway."<<endl;
-            nt_list.erase(nt_list.begin()+i);
+            cout<<"This neuron is too big to process: likely to be an outlier anyway.Otherwise, please resample it "
+                  "to have less than 10000 nodes"<<endl;
+            rm_ids.push_back(i);
         }
+
+        if ( tree.listNeuron.size() <1)
+        {
+            cout<<"This neuron is empty."<<endl;
+            rm_ids.push_back(i);
+        }
+
+    }
+
+    for (int i = rm_ids.size()-1; i>=0 ;i--){
+        // erase in reverse order to avid invalidating the iterator while erasing
+        nt_list.erase(nt_list.begin()+rm_ids[i]);
     }
 
     cout<<"Sort all input neurons:"<<endl;
@@ -224,7 +240,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         QList<NeuronSWC> sorted;
         if (!SortESWC (nt_list[i].listNeuron, sorted, VOID, bridge_gap))
         {
-            cout <<"fail to sort neuron " << i <<endl;
+            cout <<"fail to sort neuron (idx starts at 1):" << i+1 <<endl;
         }
         cout<<"assign"<<endl;
         nt_list[i].listNeuron=sorted;

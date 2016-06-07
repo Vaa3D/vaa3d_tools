@@ -81,8 +81,14 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
     }
 };
 
-bool SortESWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
+bool    SortESWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
+    if (neurons.size()<1){
+        cout <<"sorteswc(): empty input neuron."<<endl;
+        return false;
+    }
+
+
 
     //create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
     QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons);
