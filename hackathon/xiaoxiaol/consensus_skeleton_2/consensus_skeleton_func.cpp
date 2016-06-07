@@ -72,7 +72,7 @@ bool vote_map_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         }
         else if (qs_linker.toUpper().endsWith(".SWC"))
         {
-            cout<<"(0). reading an swc file"<<endl;
+            //cout<<"(0). reading an swc file"<<endl;
             NeuronTree tmp = readSWC_file(qs_linker);
             nt_list.push_back(tmp);
             neuronNum++;
@@ -181,7 +181,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 		}
 		else if (qs_linker.toUpper().endsWith(".SWC"))
 		{
-			cout<<"(0). reading an swc file"<<endl;
+            //cout<<"(0). reading an swc file"<<endl;
 			NeuronTree tmp = readSWC_file(qs_linker);
 			nt_list.push_back(tmp);
 			neuronNum++;
@@ -240,7 +240,7 @@ bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & 
     qs_linker = QString(inlist->at(0));
     if (qs_linker.toUpper().endsWith(".SWC") || qs_linker.toUpper().endsWith(".ESWC"))
     {
-        cout<<"(0). reading an swc file"<<endl;
+        //cout<<"(0). reading an swc file"<<endl;
         nt = readSWC_file(qs_linker);
     }
 
@@ -401,7 +401,7 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
         }
         else if (qs_linker.toUpper().endsWith(".SWC") || qs_linker.toUpper().endsWith(".ESWC"))
         {
-            cout<<"(0). reading an swc file"<<endl;
+            //cout<<"(0). reading an swc file"<<endl;
             NeuronTree tmp = readSWC_file(qs_linker);
             nt_list.push_back(tmp);
             neuronNum++;
@@ -476,7 +476,7 @@ bool average_node_position_func(const V3DPluginArgList & input, V3DPluginArgList
     qs_linker = QString(inlist->at(0));
     if (qs_linker.toUpper().endsWith(".SWC"))
     {
-        cout<<"(0). reading an swc file"<<endl;
+        //cout<<"(0). reading an swc file"<<endl;
         median_neuron= readSWC_file(qs_linker);
     }
     else{

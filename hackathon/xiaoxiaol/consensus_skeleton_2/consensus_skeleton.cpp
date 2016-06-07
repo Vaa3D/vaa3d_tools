@@ -242,7 +242,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         {
             cout <<"fail to sort neuron (idx starts at 1):" << i+1 <<endl;
         }
-        cout<<"assign"<<endl;
+
         nt_list[i].listNeuron=sorted;
     }
     cout<<"Done sorting."<<endl;
@@ -1603,8 +1603,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
        int total_nodes = 0;
        for (int i = 0; i < nt_list_resampled.size(); i++)
        {
-           printf("\rnow processing neuron: %3d", i);
-		   
+           printf("\r now processing neuron: %3d", i);
 		   total_nodes += nt_list_resampled[i].listNeuron.size();
            nt.listNeuron.clear();
            nt.hashNeuron.clear();
