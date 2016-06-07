@@ -106,45 +106,56 @@ double median(vector<double> x)
 
 bool tightRange(vector<double> x, double &low, double &high)
 {// to further tighten the diversity for the input swcs
- // first use median to filter out anything that is > 3* median and < median/3
- // then calculate the mean and the standard deviation
- // low = mean - std
- // hight = mean +std
-   double  median_size = median(x);
-   cout << "median length:"<<median_size<<endl;
+ // first use median to filter out anything that is not in the range of the input [low, high]
 
-   cout << "range:"<< low <<"~"<<high<<endl;
-   low = median_size*low;
-   high = median_size*high;
+    double  median_size = median(x);
+    cout << "median:"<<median_size<<endl;
+    cout << "filtering with the max range:"<< low <<"~"<<high<<endl;
+    low = median_size*low;
+    high = median_size*high;
 
-//   vector<double> valid_x;
-//   double m_mean = 0;
-//   for (int i = 0; i<x.size(); i++)
-//   {
-//       if ( (x[i]< 2* median_size  ) &&  (x[i] > 1/2 *median_size))
-//       {
-//           valid_x.push_back(x[i]);
-//           m_mean += x[i];
-//       }
+//Not typical gaussian, so the gaussian range it is not well suited:
+// then calculate the mean and the standard deviation
+// low = mean - 3*std
+// hight = mean + 3*std
+//    vector<double> valid_x;
+//    double sum = 0;
+//    for (int i = 0; i<x.size(); i++)
+//    {
+//        if ( (x[i]> low  ) &&  (x[i] < high))
+//        {
+//            valid_x.push_back(x[i]);
+//            sum += x[i];
+//        }
 
-//   }
+//    }
 
-//   m_mean = m_mean/valid_x.size();
-//   double variance = 0 ;
-//   for (int i = 0; i<valid_x.size(); i++)
-//   {
-//       variance += (valid_x[i]-m_mean)*(valid_x[i]-m_mean);
-//   }
+//    //reset and return the statistical range
+//    low = 0;
+//    high = 0;
+//    if ( valid_x.size() >0)
+//    {
+//        double m_mean = sum/valid_x.size();
+//        double variance = 0 ;
+//        for (int i = 0; i<valid_x.size(); i++)
+//        {
+//            variance += (valid_x[i]-m_mean)*(valid_x[i]-m_mean);
+//        }
 
-//   cout << "mean length:"<<m_mean<<endl;
-//   cout << "standard deviation:"<<sqrt(variance)<<endl;
 
-//   variance = variance/valid_x.size();
-//   low = m_mean - sqrt(variance);
-//   high = m_mean + sqrt (variance);
+//        variance = variance/valid_x.size();
+//        double std = sqrt(variance);
+//        cout << "mean:"<<m_mean<<endl;
+//        cout << "standard deviation:"<<std<<endl;
 
-   return true;
+//        low = m_mean - 3*std;
+//        high = m_mean + 3*std;
+//    }
 
+//    cout << "low:"<<low<<endl;
+//    cout << "high:"<<high<<endl;
+
+    return true;
 }
 
 
@@ -195,23 +206,41 @@ int  computeNumberOfBifurcations(const NeuronTree & nt)
 	return N_bifs;
 }
 
-bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFileName)
-{  //validate each tree, only keep the first tree
-	/* 
-	   for(int i = 0; i < nt_list.size(); i++){
-	   NeuronTree tree = nt_list[i];
-	   QList <NeuronSWC>  ln= tree.listNeuron;
-	   for(int ii = 1;ii <ln;ii++){
-	   if (ln[ii].pn == -1){
-	   } 
-	   }
-	   }
-	   */
 
+bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
+
+    // to avoid processing huge input swcs
+    for(int i = 0; i < nt_list.size(); i++){
+        NeuronTree tree = nt_list[i];
+        if (tree.listNeuron.size()> 100000)
+        {
+            cout<<"This neuron is too big to process: likely to be an outlier anyway."<<endl;
+            nt_list.erase(nt_list.begin()+i);
+        }
+    }
+
+    cout<<"Sort all input neurons:"<<endl;
+    for(int i = 0; i < nt_list.size(); i++){
+        QList<NeuronSWC> sorted;
+        if (!SortESWC (nt_list[i].listNeuron, sorted, VOID, bridge_gap))
+        {
+            cout <<"fail to sort neuron " << i <<endl;
+        }
+        cout<<"assign"<<endl;
+        nt_list[i].listNeuron=sorted;
+    }
+    cout<<"Done sorting."<<endl;
+    return true;
+
+}
+
+
+
+bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFileName)
+{
     // use total length and # of bifurcations to remove outliers
 
 	cout<<"\nOutlier detection:"<<endl;
-    vector<double> valid_nt_lens;
     vector<double> nt_lens;
     vector<double> nt_N_bifs;
 
@@ -220,69 +249,60 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
 		double len = computeTotalLength(tree);
         nt_lens.push_back(len);
-        if (len > 10 && len <50000){
-            valid_nt_lens.push_back(len);
-            int N_bifs = computeNumberOfBifurcations(tree);
-            nt_N_bifs.push_back(N_bifs+0.0);
-        }
-        else
-        {
-            cout<<"Tree "<<i<<" :total Length is outside the range of [10,50000]."<<endl;
-        }
 
+        int N_bifs = computeNumberOfBifurcations(tree);
+        nt_N_bifs.push_back(N_bifs+0.0);
 	}
 
     //criteria 1: total length
-    double low=0.25, high = 4;
-    tightRange(valid_nt_lens, low, high);
+    double low_len=0.25, high_len = 4;
+    tightRange(nt_lens, low_len, high_len);
     //criteria 2: # of bifurcations
-    double low2 = 0.25, high2 = 4;
-    tightRange(nt_N_bifs, low2, high2);
+    double low_bi = 0.25, high_bi = 4;
+    tightRange(nt_N_bifs, low_bi, high_bi);
 
-	// calculate for each SWC if it is isolated, and store the result in isolated[]
-	vector<int> isolated;
-	isolated.resize(nt_list.size());
-	isIsolated(isolated,nt_lens,nt_N_bifs,0.25,2); 
+//	// calculate for each SWC if it is isolated, and store the result in isolated[]
+//	vector<int> isolated;
+//	isolated.resize(nt_list.size());
+//	isIsolated(isolated,nt_lens,nt_N_bifs,0.25,2);
 
     vector<int > rm_ids;
-    //cout <<"Median node size (exclude those num_nodes <10 or >50000 ) = " << median_size <<endl;
-    //cout <<"Detecting SWCs have nodes > 3*Median_size or nodes < Median_size/3:"<<endl;
-    cout <<"Remove SWCs, whose total lengh is > "<< high <<" or <" << low<<endl;
-	cout <<"Remove SWCs, whose total number of bifurcations is > "<< high2 <<" or <" << low2<<endl;
+    cout <<"Remove SWCs, whose total lengh is > "<< high_len <<" or <" << low_len<<endl;
+    cout <<"Remove SWCs, whose total number of bifurcations is > "<< high_bi <<" or <" << low_bi<<endl;
     
-	cout <<"total length"<<endl;
+    cout <<"total length:"<<endl;
 	for(int i=0; i < nt_list.size(); i++){
-		cout << nt_lens[i]<<endl;
+        cout << nt_lens[i]<<" ";
 	}
-
-	cout <<"number of bifurcations"<<endl;
+    cout << endl;
+    cout <<"number of bifurcations:"<<endl;
 	for(int i=0; i < nt_list.size(); i++){
-		cout << nt_N_bifs[i]<<endl;
+        cout << nt_N_bifs[i]<<" ";
 	}
-	
+    cout << endl;
 
 	for(int i = 0; i < nt_list.size(); i++){
         double len = nt_lens[i];
 		double N_bifs = nt_N_bifs[i];
-        if ( len > high ||  len < low )
+        if ( len > high_len ||  len < low_len )
         {
             cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
             rm_ids.push_back(i);
 
         } 
 		else 
-		if (N_bifs > high2 || N_bifs < low2)
+        if (N_bifs > high_bi || N_bifs < low_bi)
 		{
 			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  N_bifs<< " total bifurcations"<<endl;
             rm_ids.push_back(i);
 		}
-		else
-		if (isolated[i])
-		{
-			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " - it's isolated. ("<<len<<"," <<N_bifs<<")."<<endl;
-            rm_ids.push_back(i);
+//		else
+//		if (isolated[i])
+//		{
+//			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " - it's isolated. ("<<len<<"," <<N_bifs<<")."<<endl;
+//            rm_ids.push_back(i);
 
-		}
+//		}
     }
 
     for (int i =rm_ids.size()-1; i>=0 ;i--){
@@ -328,7 +348,8 @@ void  isIsolated(vector<int>& isolated,vector<double>& nt_lens,vector<double>& n
 		for (int j=0; j<n; j++) {
 			if (i!=j && dist[i][j]<radius) neighborCount++;
 		}
-		if (neighborCount < count) isolated[i] = 1; 
+        if (neighborCount < count)
+            isolated[i] = 1;
 	}
 }
 
@@ -1182,7 +1203,7 @@ void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double ini
 	for (int itr=0; itr<steps; itr++) {
 		QList<NeuronSWC> node_list = nt.listNeuron;
 		trim_unconfident_branches(node_list, initial_threshold+itr*0.1);
-		char * newfilename = new char [1000];
+        char * newfilename = new char [1000];
         sprintf( newfilename, "%s_%.2f.swc", outfileName.toStdString().c_str(),initial_threshold+itr*0.1);
 	    export_listNeuron_2swc(node_list, newfilename);
 		printf("%s has been generated successfully\n",newfilename);
@@ -1688,9 +1709,9 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
-   trim_unconfident_branches(merge_result,0.3);
+   trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
 
-   if (   soma_sort(10.0, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
+   if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
        //cout <<"merged swc #nodes = "<< final_consensus.size()<<endl<<endl;
 

@@ -202,8 +202,12 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	QList<NeuronSWC> merge_result;
 
     QString SelectedNeuronsAnoFileName = outfileName+"_SelectedNeurons.ano";
-    if (REMOVE_OUTLIER >0)
-            remove_outliers(nt_list, SelectedNeuronsAnoFileName);
+
+    double bridge_gap = 1.0;
+    sort_all_inputs(nt_list, bridge_gap);
+
+    if (REMOVE_OUTLIER >0){
+            remove_outliers(nt_list, SelectedNeuronsAnoFileName);}
 
 
     if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, resample_flag, callback))

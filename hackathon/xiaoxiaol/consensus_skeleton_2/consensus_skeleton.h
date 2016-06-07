@@ -19,8 +19,7 @@ void AddToMaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG
                     double origin_x, double origin_y,double origin_z,
                     int imageCount, V3DPluginCallback2 & callback);
 
-
-
+bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap);
 bool  remove_outliers(vector<NeuronTree> & nt_list, QString SelectedNeuronsAnoFileName);
 void  isIsolated(vector<int>& isolated,vector<double>& nt_lens,vector<double>& nt_N_bifs, double radius, int count);
 void  normalizeVector(vector<double>& original, vector<double>& normalized);

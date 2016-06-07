@@ -119,7 +119,7 @@ bool SortESWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG new
 
 
     //do a DFS for the the matrix and re-allocate ids for all the nodes
-    V3DLONG root;
+    V3DLONG root = idlist.indexOf(LUT.value(1)); //default value: the first node, in case there is no root defined in the input swc
     if (newrootid==VOID)
     {
         for (V3DLONG i=0;i<neurons.size();i++)
@@ -137,7 +137,6 @@ bool SortESWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG new
             return(false);
         }
     }
-
 
     V3DLONG* neworder = new V3DLONG[siz];
     int* numbered = new int[siz];
