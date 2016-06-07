@@ -18,69 +18,7 @@ const QString title = QObject::tr("Consensus Skeleton");
 
 int consensus_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-//	QString fileOpenName;
-//	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-//			"",
-//			QObject::tr("Supported file (*.ano)"
-//				";;Neuron structure	(*.ano)"
-//				));
-//	if(fileOpenName.isEmpty())
-//		return -1;
-		
-//	P_ObjectFileType linker_object;
-//	if (!loadAnoFile(fileOpenName,linker_object))
-//	{
-//		fprintf(stderr,"Error in reading the linker file.\n");
-//		return -1;
-//	}
-	
-//	QStringList nameList = linker_object.swc_file_list;
-//	V3DLONG neuronNum = nameList.size();
-//	vector<NeuronTree> nt_list;
-	
-//	for (V3DLONG i=0;i<neuronNum;i++)
-//	{
-//		NeuronTree tmp = readSWC_file(nameList.at(i));
-//		nt_list.push_back(tmp);
-//	}
-
-//	bool ok;
-//    //int method_code = QInputDialog::getInt(parent, "method", "FIX ME: 1:direct vote; 2: maximum spanning tree", 0, 1, 1, 1, &ok);
-//    int max_vote_threshold = QInputDialog::getInt(parent, "max_vote_threshold", "FIX ME:vote threshold (to be included for consensusing)", 0, 1, 1, 1, &ok);
-//    int cluster_distance_threshold = QInputDialog::getInt(parent, "FIX ME:cluster distance threshold", "5~10", 0, 1, 1, 1, &ok);
-
-//	if (!ok)
-//		return 0;
-	
-//    QList<NeuronSWC> merge_result;
-
-
-
-//	QString fileSaveName;
-//	QString defaultSaveName = fileOpenName + "_consensus.swc";
-//	fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
-//			defaultSaveName,
-//			QObject::tr("Supported file (*.swc)"
-//				";;Neuron structure	(*.swc)"
-//				));
-
-
-//    QString SelectedNeuronsAnoFileName = fileSaveName+"_SelectedNeurons.ano";
-//    remove_outliers(nt_list, SelectedNeuronsAnoFileName);
-
-//    if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,
-//                                         cluster_distance_threshold,  callback))
-//    {
-//        v3d_msg("Error in consensus swc!");
-//        return -1;
-//    }
-//    if (!export_listNeuron_2swc(merge_result,qPrintable(fileSaveName)))
-//	{
-//		v3d_msg("Unable to save file");
-//		return -1;
-//	}
-//    v3d_msg("Consensus swc is saved into: " + fileSaveName + "\n");
-    v3d_msg(" Not implemented yet.\n");
+    v3d_msg("Not implemented yet. Please use the command line option.");
     return 0;
 }
 
@@ -183,10 +121,10 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	}
 
 	//parsing parameters
-
-    int max_vote_threshold = 4;
+    int max_vote_threshold = 4; //>= max_vote_threshold votes, definitely included as part of the final consensus
     int cluster_distance_threshold = 10; // ignore nodes that far away for clustering
-    int resample_flag = 1;
+    int resample_flag = 0;
+    int REMOVE_OUTLIER = 1;
 	if (input.size()==2)
 	{
 		vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -202,6 +140,11 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 resample_flag =  atoi(paras->at(2));
                 cout<<"resample_flag = "<<resample_flag<<endl;
             }
+            if (paras->size() >= 4){
+                REMOVE_OUTLIER =  atoi(paras->at(3));
+                cout<<"remove_outliers = "<<REMOVE_OUTLIER<<endl;
+            }
+
 		}
 		else
 		{
@@ -259,8 +202,9 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	QList<NeuronSWC> merge_result;
 
     QString SelectedNeuronsAnoFileName = outfileName+"_SelectedNeurons.ano";
-    //remove_outliers(nt_list, SelectedNeuronsAnoFileName);
-    //if (!consensus_skeleton_vote_map(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, callback))
+    if (REMOVE_OUTLIER >0)
+            remove_outliers(nt_list, SelectedNeuronsAnoFileName);
+
 
     if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, resample_flag, callback))
 	{
@@ -471,9 +415,6 @@ bool median_swc_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
     cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
 
-    //QString out_ano_file_name = outfileName + ".SelectedNeurons.ano";
-    //remove_outliers(nt_list,out_ano_file_name);
-
     int idx = median_swc(nt_list,outfileName);
     if (idx <0){
         cerr << "error in median_swc()" << endl;
@@ -651,66 +592,8 @@ int average_node_position_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 int median_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open the ANO File that contains all input SWC files"),
-            "",
-            QObject::tr("Supported file (*.ano)"
-                ";;Neuron structure	(*.ano)"
-                ));
-    if(fileOpenName.isEmpty())
-        return -1;
-
-    P_ObjectFileType linker_object;
-    if (!loadAnoFile(fileOpenName,linker_object))
-    {
-        fprintf(stderr,"Error in reading the linker file.\n");
-        return -1;
-    }
-
-    QStringList nameList = linker_object.swc_file_list;
-    V3DLONG neuronNum = nameList.size();
-    vector<NeuronTree> nt_list;
-
-    for (V3DLONG i=0;i<neuronNum;i++)
-    {
-        NeuronTree tmp = readSWC_file(nameList.at(i));
-        nt_list.push_back(tmp);
-    }
-
-    v3d_msg( QString("It may take a while to compute pair-wise neuron distances. Please watch the output console for "
-                     "computed metrics. Detailed distance reports are saved in "+fileOpenName+"_sum_dist.csv." ));
-
-
-    QString outfileName = fileOpenName + "_sum_dist.csv";
-
-    cout << "There are "<<nt_list.size() <<" input neurons."<<endl;
-
-    QString out_ano_file_name = fileOpenName + ".SelectedNeurons.ano";
-    remove_outliers(nt_list,out_ano_file_name);
-
-    int id = median_swc(nt_list,outfileName);
-
-    if (id >=0 )
-    {
-        v3d_msg( QString("The median swc is : %1").arg( nameList.at(id)) );
-    }
-
-    /*
-    QString fileSaveName;
-    QString defaultSaveName = fileOpenName + "_consensus.swc";
-    fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save merged neuron to file:"),
-            defaultSaveName,
-            QObject::tr("Supported file (*.swc)"
-                ";;Neuron structure	(*.swc)"
-                ));
-    if ( !writeSWC_file(fiveSaveName, median_neuron))
-    {
-        v3d_msg("Unable to save file");
-        return -1;
-    }
-
-    */
-    return 1;
+    v3d_msg("Not implemented yet. Please use the command line option.");
+    return 0;
 }
 
 void printHelp()
@@ -723,13 +606,14 @@ void printHelp()
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or  swc files"<<endl;
-    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <resample_flag>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
+    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <resample_flag> <remove_outliers>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
     cout<<"\t                                 included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
     cout<<"\t                                  b) clustering distance threshold: the maximum voxel distance that are allowed to cluster one swc node to the " <<endl;
-    cout<<"\t                                 consenused node location during the edge voting step. c) resample_falg for preprocessing: 1--resampling, 0--no resampling.Default=1." <<endl;
+    cout<<"\t                                 consenused node location during the edge voting step. c) resample_falg for preprocessing: 1--resampling, 0--no resampling.Default=0." <<endl;
+    cout<<"\t                                 d) remove_outeliers: for preprocessing:1--remove outliers based on total length and birfircations, 0-- Keep all entries.Default=1." <<endl;
     cout<<"\t-o <output_file>:  output consensus eswc file name. The ESWC contains the edge connection confidence/voting value at each swc node."<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 5 1\n"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 1\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 5 0 1\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0 0\n"<<endl;
 
 
 

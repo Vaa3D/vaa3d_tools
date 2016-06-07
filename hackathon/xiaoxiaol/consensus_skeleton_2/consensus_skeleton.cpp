@@ -112,9 +112,6 @@ bool tightRange(vector<double> x, double &low, double &high)
  // hight = mean +std
    double  median_size = median(x);
    cout << "median length:"<<median_size<<endl;
-   //cout << "range:0.5~1.5"<<endl;
-   //low = median_size/2.0;
-   //high = 1.5*median_size;
 
    cout << "range:"<< low <<"~"<<high<<endl;
    low = median_size*low;
@@ -210,8 +207,8 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 	   }
 	   }
 	   */
-	//remove statistically outliers
-	// use total length
+
+    // use total length and # of bifurcations to remove outliers
 
 	cout<<"\nOutlier detection:"<<endl;
     vector<double> valid_nt_lens;
@@ -225,20 +222,21 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
         nt_lens.push_back(len);
         if (len > 10 && len <50000){
             valid_nt_lens.push_back(len);
-		}
+            int N_bifs = computeNumberOfBifurcations(tree);
+            nt_N_bifs.push_back(N_bifs+0.0);
+        }
+        else
+        {
+            cout<<"Tree "<<i<<" :total Length is outside the range of [10,50000]."<<endl;
+        }
 
-		int N_bifs = computeNumberOfBifurcations(tree);
-		nt_N_bifs.push_back(N_bifs+0.0);
 	}
 
-    //V3DLONG median_size = median(valid_nt_lens);
-
-    double low=-1, high = -1;
-	low = 0.25, high = 4;
+    //criteria 1: total length
+    double low=0.25, high = 4;
     tightRange(valid_nt_lens, low, high);
-
-	double low2=-1, high2 = -1;
-	low2 = 0.25, high2 = 4;
+    //criteria 2: # of bifurcations
+    double low2 = 0.25, high2 = 4;
     tightRange(nt_N_bifs, low2, high2);
 
 	// calculate for each SWC if it is isolated, and store the result in isolated[]
