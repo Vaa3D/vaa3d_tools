@@ -7,7 +7,7 @@ end
 
 % fix the font size of text
 
-texth = findobj(axishandle, 'type', 'text')
+texth = findobj(axishandle, 'type', 'text');
 
 for i = 1:numel(texth)
     set(texth(i), 'fontsize', 16);
@@ -22,7 +22,7 @@ set(get(gca,'zlabel'), 'FontSize', 16)
 set(get(gca,'title'), 'FontSize', 16)
 
 
-linehandles = findobj(axishandle, 'type', 'line')
+linehandles = findobj(axishandle, 'type', 'line');
 for i=1:numel(linehandles)
     set(linehandles(i), 'linewidth', 2)
 end
