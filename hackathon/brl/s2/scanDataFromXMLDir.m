@@ -15,12 +15,15 @@ function s2ScanData  = scanDataFromXMLDir(xmldir)
 
 
 scanXMLfiles = dir([xmldir,'/*.xml']);
-
+scanGridFiles = dir([xmldir,'/scanDataGrid.txt']);
+scanAdaptiveFiles = dir([xmldir,'/*adaptive*.*']);
 % folder name
 s2ScanData.folderName = xmldir;
 % number of tiles
 s2ScanData.nTiles= numel(scanXMLfiles);
-
+% is a gridscan
+s2ScanData.isGridScan = numel(scanGridFiles)>0;
+s2ScanData.isAdaptive = numel(scanAdaptiveFiles)>0;
 
 
 %  From each xml file, I need

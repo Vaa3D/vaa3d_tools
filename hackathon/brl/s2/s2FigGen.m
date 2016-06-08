@@ -60,7 +60,7 @@ end
 toc
 % 914s for 25 cells
 normalScans = numel(cellData)
-%%  now add the adaptive and grid scans for comparison
+% now add the adaptive and grid scans for comparison
 
 
 
@@ -128,7 +128,13 @@ gridScans2 = gridScans2([gridScans2(:).isdir]')
 
 otherScans = [adaptiveScans; gridScans;gridScans2]
 nBeforeGrid = numel(adaptiveScans)
-%%  
+
+%
+
+
+
+
+%
 
 for i = 1:numel(otherScans)
 
@@ -141,7 +147,8 @@ for i = 1:numel(otherScans)
 end
 
 
-
+aScanNN = normalScans+2
+gScanNN = normalScans+3
 %% 2.  Analysis
 
 % determine difference between summed tile volume and the actual scanned
@@ -163,16 +170,6 @@ for i = 1:numel(cellData)
             cellData{i}(j).ignore = true;
             continue
         else
-            ijdir = dir(cellData{i}(j).folderName)
-            isGrid = false;
-            for s = 1:numel(ijdir)
-                isGrid = isGrid || (sum(strfind( ijdir(s).name, 'Grid'))>0);
-            end
-            cellData{i}(j).isGridScan = isGrid;
-            
-            if cellData{i}(j).isGridScan
-                'gridscan'
-            end
             allLocations = cell2mat(tileSetij');
             [bigRectx, bigRecty] = meshgrid(floor(min(allLocations(:,1))):ceil(max(allLocations(:,3))),floor(min(allLocations(:,2))):ceil(max(allLocations(:,4))));
             bigRect = false(size(bigRectx));
@@ -186,7 +183,7 @@ for i = 1:numel(cellData)
             
             nnTry = str2double(dString(end-2:end))+1
             if isnan(nnTry)
-                nnTry = 10+(j<=nBeforeGrid)
+                nnTry = normalScans+2+(j>nBeforeGrid) % extra number here because there's one number missing.  files should be organized better
             end
             cellData{i}(j).neuronNumber = nnTry;
  
@@ -198,12 +195,34 @@ for i = 1:numel(cellData)
             cellData{i}(j).extraScanning = cellData{i}(j).totalTileArea-cellData{i}(j).imagedArea;
             cellData{i}(j).boundingBoxSparsity = cellData{i}(j).totalTileArea/numel(bigRect);
             cellData{i}(j).lagTimes =  diff(cellData{i}(j).tileStartTimes)-cellData{i}(j).allTileTimes(1:end-1);
+            %  early on, there were some extraneous delays due to
+            %  instabilities of the code on Windows.  The result was an
+            %  error message that popped up and stopped the scan unless it
+            %  was clicked.  this can be seen in /local2/s2Data/cell003/grid/2016_04_15_Fri_11_13
+            % where tiles ZSeries-04152016-0942-3972.xml and
+            % ZSeries-04152016-0942-3971.xml differ by ~30 min, completely
+            % screwing up the timing data.   
+            %  also, if the .xml file of an overview tile gets stuck in this folder, all the results are off.
+            % The following lines at least warn you
+            checkLags = cellData{i}(j).lagTimes > 1200;
+            longLagLocs = find(checkLags);
+            longLags = cellData{i}(j).lagTimes(checkLags);
+            if sum(checkLags) >0
+                'LAG TIME PROBLEM!!!!!!'
+                'REVISING LAG TIMES!!!!'
+                for jjj = 1:numel(longLagLocs)  % fix the lags
+                    cellData{i}(j).lagTimes(longLagLocs(jjj)) = mean(cellData{i}(j).lagTimes(~checkLags));
+                end
+                % and fix the total time..
+                
+            end   
             cellData{i}(j).totalTime = cellData{i}(j).tileStartTimes(end)-cellData{i}(j).tileStartTimes(1)+cellData{i}(j).allTileTimes(end)+min(cellData{i}(j).lagTimes);
             cellData{i}(j).minTotalTime = sum(cellData{i}(j).allTileTimes(:)+min(cellData{i}(j).lagTimes));
             cellData{i}(j).minImagingOnly = sum(cellData{i}(j).allTileTimes(:));
             cellData{i}(j).estimatedMinLag = min( cellData{i}(j).lagTimes);
             cellData{i}(j).estimatedTimePerTileArea = mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag)./cellData{i}(j).tileAreas);
             cellData{i}(j).estimatedGridTime = numel(bigRect)*cellData{i}(j).estimatedTimePerTileArea;
+            cellData{i}(j).micronsPerPixel = cellData{i}(j).allTileInfo{1}.micronsPerPixel(1);
         end
     end
 end
@@ -222,11 +241,29 @@ cd(fullfile(batchTopDirectory))
 %  total time vs tile size for each neuron (N  = 3)
 
 %  total volume vs tile size for each neuron (N = 3)
+
+
+%%  OK, there are two data points that need to be removed-  the 7x7 grid scan time data is way wrong due to the
+% Windows glitch where PV stops accepting new commands until a dialog box
+% is clicked. the gaps in the xml dates is obvious in the 7x7 grid  AND in
+% the largest tile scan of Neuron 4  (cell003 in the data).  BOTH of these
+% datapoints are eliminated below:
+%  
+
+cellData{} = cellData{}(1:)
+cellData{} = cellData{}(1:)
+
+% there were a few other problems due to .xml files from previews getting
+% stuck in the data directories, but those files were moved, so that
+% shouldnt be a problem any longer
+
 %% plotting
 figure
 neuronNumbers = []
 neuronData={}
 timeSummary = {}
+neuronScale = {}
+scanMode={}
 for i = 1:numel(cellData)
     for j = 1:numel(cellData{i})
                           if isfield(cellData{i}(j),'neuronNumber')    
@@ -242,9 +279,11 @@ a = unique(neuronNumbers)
 for ii = 1:numel(a)
     neuronData{a(ii)}=[0,0,0,0,0,0,0,0]
                 timeSummary{a(ii)} = [0,0,0]
+                neuronScale{a(ii)} = [];
+                scanMode{a(ii)}= []
 end
 
-                myCmap = colormap(jet(numel(a)+1));
+myCmap = colormap(jet(numel(a)+1));
 for i = 1:numel(cellData)
     for j = 1:numel(cellData{i})
         
@@ -253,18 +292,26 @@ for i = 1:numel(cellData)
         if cellData{i}(j).ignore
             continue
         else
-            if isfield(cellData{i}(j),'neuronNumber')    
+            if isfield(cellData{i}(j),'neuronNumber')
                 nn  = cellData{i}(j).neuronNumber;
-
-                    neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j]]
-
-                    timeSummary{nn}= [timeSummary{nn}; [cellData{i}(j).estimatedGridTime,cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag)))];
-           
-
-%                     subplot(2,1,1), hold all, plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,'o-', 'DisplayName', cellData{i}(j).folderName, 'color', myCmap(nn,:))
-%                     subplot(2,1,2), hold all, plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, '*-', 'DisplayName', cellData{i}(j).folderName, 'color', myCmap(nn,:))
-%                     plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).minTotalTime, '*-','color', myCmap(nn,:))
-                end 
+                
+                neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j]]
+                
+                timeSummary{nn}= [timeSummary{nn}; [cellData{i}(j).estimatedGridTime,cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag)))];
+                neuronScale{nn} = [neuronScale{nn}; cellData{i}(j).micronsPerPixel];
+                
+                if cellData{i}(j).isGridScan
+                    thisMode = 2;
+                elseif cellData{i}(j).isAdaptive
+                    thisMode(nn) = 1;
+                else
+                    thisMode(nn) = 0;
+                end
+                scanMode{nn} = [scanMode{nn}; thisMode];
+                %                     subplot(2,1,1), hold all, plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,'o-', 'DisplayName', cellData{i}(j).folderName, 'color', myCmap(nn,:))
+                %                     subplot(2,1,2), hold all, plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, '*-', 'DisplayName', cellData{i}(j).folderName, 'color', myCmap(nn,:))
+                %                     plot(mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).minTotalTime, '*-','color', myCmap(nn,:))
+            end
             
         end
     end
@@ -275,12 +322,16 @@ for ii = 1:numel(a)
 neuronData{a(ii)} = neuronData{a(ii)}(neuronData{a(ii)}(:,1)~=0,:)
 [rows, cs] = size(neuronData{a(ii)});
 rs= 1:rows;
-if a(ii)~=11
+if a(ii)~=aScanNN
 [ neuronData{a(ii)}, rs] = sortrows(neuronData{a(ii)},1)
 end
 
 timeSummary{a(ii)} = timeSummary{a(ii)}(timeSummary{a(ii)}(:,1)~=0,:);
-timeSummary{a(ii)} = timeSummary{a(ii)}(rs,:)
+timeSummary{a(ii)} = timeSummary{a(ii)}(rs,:);
+
+
+scanMode{a(ii)} = scanMode{a(ii)}(rs,:);
+
 % if there are multiple scans at the same tile size, I'll plot the mean and
 % min-max as errorbars.
 xVals = unique(neuronData{a(ii)}(:,1))
@@ -342,11 +393,13 @@ ylabel('imaging time (s)')
 
 subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
 errorbar(xToPlot,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
-
  bip
  xlim([0,450])
 xlabel('tile size (pixels)')
 ylabel('normalized imaging time')
+
+
+
 subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
 errorbar(xToPlot,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
 
@@ -361,6 +414,89 @@ xlim([0,450])
 %subplot(2,2,3) ,   hold all, plot(neuronData{a(ii)}(:,5),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 %subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 
+%%  now repeat with microns on the x axis.  and y axis where applicable
+figure
+for ii = 1:numel(a)
+
+xVals = unique(neuronData{a(ii)}(:,1))
+xToPlot = unique(neuronData{a(ii)}(:,1).*neuronScale{a(ii)})
+y1ToPlot = zeros(size(xToPlot))
+yErrorU1 = y1ToPlot
+yErrorL1 = yErrorU1
+yErrorU2= yErrorU1
+yErrorL2= yErrorU2
+y2ToPlot = yErrorU1
+yErrorU3 = y1ToPlot
+yErrorL3 = yErrorU1
+yErrorU3= yErrorU1
+yErrorL3= yErrorU2
+y3ToPlot = yErrorU1
+yErrorU4 = y1ToPlot
+yErrorL4 = yErrorU1
+yErrorU4= yErrorU1
+yErrorL4= yErrorU2
+y4ToPlot = yErrorU1
+for jj = 1:numel(xVals)
+    y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2))
+    yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
+    yMin1 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
+    yErrorU1(jj) = yMax1-y1ToPlot(jj)
+    yErrorL1(jj) = y1ToPlot(jj)-yMin1
+    
+    y2ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4))
+    yMax2 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
+    yMin2 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
+    yErrorU2(jj) = yMax2-y2ToPlot(jj)
+    yErrorL2(jj) = y2ToPlot(jj)-yMin2 
+    
+    y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1))
+    yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+    yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+    yErrorU3(jj) = yMax3-y3ToPlot(jj)
+    yErrorL3(jj) = y3ToPlot(jj)-yMin3 
+    
+        y4ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1)
+    yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+    yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+    yErrorU4(jj) = yMax4-y4ToPlot(jj)
+    yErrorL4(jj) = y4ToPlot(jj)-yMin4 
+end
+
+subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)},neuronData{a(ii)}(:,2)*neuronScale{a(ii)}^2, '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+errorbar(xToPlot,y1ToPlot.*neuronScale{a(ii)}.*neuronScale{a(ii)}, yErrorL1.*neuronScale{a(ii)}.*neuronScale{a(ii)}, yErrorU1.*neuronScale{a(ii)}.*neuronScale{a(ii)},'color', myCmap(ii,:))
+bip
+xlim([0,120])
+xlabel('tile size (microns)')
+ylabel('imaged area (microns^2)')
+subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3).*neuronScale{a(ii)},neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+errorbar(xToPlot,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
+bip
+xlim([0,120])
+xlabel('tile size (microns)')
+ylabel('imaging time (s)')
+
+subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
+errorbar(xToPlot,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
+
+ bip
+ xlim([0,120])
+xlabel('tile size (microns)')
+ylabel('normalized imaging time')
+subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
+errorbar(xToPlot,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
+
+bip
+xlim([0,120])
+xlabel('tile size (microns)')
+ylabel('normalized analysis time')
+end
+subplot(4,1,3) ,  plot([0 120], [1 1],'k')
+xlim([0,120])
+bip
+%subplot(2,2,3) ,   hold all, plot(neuronData{a(ii)}(:,5),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+%subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+
+%%  
 
 %% other calculations:
 
@@ -368,9 +504,10 @@ xlim([0,450])
 % how much additional time is contributed by analysis?  
 
 %  timeSummary 
+
 smartScanTimes = [timeSummary{1};timeSummary{2};timeSummary{3};timeSummary{4}]
-adaptiveScanTimes = timeSummary{11}
-gridScanTimes5 = [timeSummary{10}]
+adaptiveScanTimes = timeSummary{aScanNN}
+gridScanTimes5 = [timeSummary{gScanNN}]
 
 
 ssAnalysisTimes = smartScanTimes(:,3)./smartScanTimes(:,2)-1
@@ -386,8 +523,8 @@ mean(aScanTimes)
 std(aScanTimes)
 
 ssND = [neuronData{1}; neuronData{2}; neuronData{3}; neuronData{4}]
-aND = neuronData{11};
-gND = neuronData{10};
+aND = neuronData{aScanNN};
+gND = neuronData{gScanNN};
 ssTotalVolume = ssND(:,2);
 aTotalVolume = aND(:,2);
 gTotalVolume5 = gND(1,2);
@@ -400,12 +537,35 @@ std(aTotalVolume)
 ssTotalTime = ssND(:,4)
 gTotalTime = gND(:,4)
 aTotalTime = aND(:,4)
-g5nD = neuronData{10}(1,:)
+g5nD = neuronData{gScanNN}(1,:)
 
 
 mean(ssTotalTime)
 std(ssTotalTime)
+gTotalTime
+gTotalTime(2)/mean(aTotalTime)
+gTotalVolume7/mean(aTotalVolume)
+mean(gTotalVolume7)/mean(ssTotalVolume)
+mean(gTotalVolume5)/mean(aTotalVolume)
+mean(gTotalVolume7)/mean(aTotalVolume)
+mean(gTotalTime)/mean(aTotalTime)
 
+
+%% now organize everything by scan mode field
+
+allData = -1*ones(1,12)
+for i = 1:numel(a)
+    allData = [allData; [neuronData{a(i)}, timeSummary{a(i)},scanMode{a(i)}]];
+end
+
+%[mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime,
+%                                                                         cellData{i}(j).totalTileArea,
+%                                                                         cellData{i}(j).boundingBoxArea,i,j,
+%                                                     cellData{i}(j).estimatedGridTime,
+%              cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))), scanMode];
+
+%                                                                         
+                
 
 %%  notes and comments.
 
