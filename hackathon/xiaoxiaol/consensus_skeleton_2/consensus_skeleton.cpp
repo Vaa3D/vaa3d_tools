@@ -1092,7 +1092,7 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
     return total_editing_dis;
 }
 
-bool build_tree_from_adj_matrix_mst(double * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
+bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
 {
     long rootnode =0;
 
@@ -1227,7 +1227,7 @@ void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double ini
 	}
 }
 
-bool build_tree_from_adj_matrix(double * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
+bool build_tree_from_adj_matrix(unsigned short * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
 {
     //output edges, go through half of the symmetric matrix, not directed graph
     V3DLONG num_nodes = merge_result.size();
@@ -1295,7 +1295,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
 
 
- bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, double * adjMatrix,int TYPE_MERGED){
+ bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, unsigned short * adjMatrix,int TYPE_MERGED){
      //adjMatrix size is: num_nodes*num_nodes
      int num_nodes = merge_result.size();
      int * EDGE_VOTED = new int[num_nodes*num_nodes];
@@ -1344,7 +1344,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
  //discard small disconnected sub-graphs
  //return the number of remaining sub-graphs
- int postprocessing_neuron_node_list(QList<NeuronSWC>  &merge_result, double*& adjMatrix, double threshold) {
+ int postprocessing_neuron_node_list(QList<NeuronSWC>  &merge_result, unsigned short*& adjMatrix, double threshold) {
 	 int oldSize = merge_result.size();
 
 	 vector <int> groupId;
@@ -1387,7 +1387,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
 	 QList<NeuronSWC>  oldNodeList = merge_result;
 	 merge_result.clear();
-	 double *oldAdjMatrix = adjMatrix;
+     unsigned short *oldAdjMatrix = adjMatrix;
 
 	 for (int i=0; i<oldSize; i++) {
 		 if(groupSize[groupId[i]] > threshold) {
@@ -1398,7 +1398,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 	 }
 
 	 int newSize = merge_result.size();
-	 adjMatrix = new double[newSize*newSize];
+     adjMatrix = new unsigned short[newSize*newSize];
 	 int idx = 0;
 	 for (int i=0; i<oldSize; i++) {
 		 if (groupId[i] == -2) continue;
@@ -1691,10 +1691,10 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    merge_and_vote(nt_list_resampled,vote_threshold,  merge_result,TYPE_MERGED);
 
    // collect the edge votes
-   double * adjMatrix;
+   unsigned short * adjMatrix;
    V3DLONG num_nodes = merge_result.size();
    try{
-       adjMatrix = new double[num_nodes*num_nodes];
+       adjMatrix = new unsigned short[num_nodes*num_nodes];
        for (V3DLONG i=0;i<num_nodes*num_nodes;i++) adjMatrix[i] = 0;
    }
    catch (...)
@@ -1874,11 +1874,11 @@ bool consensus_skeleton_votemap(vector<NeuronTree>  nt_list, QList<NeuronSWC> & 
 	cout <<"\nCompute adjacency matrix (vote for edges)"<<endl;
 
 
-	double * adjMatrix;
+    unsigned short * adjMatrix;
 	V3DLONG * plist;
 	V3DLONG num_nodes = node_list.size();
 	try{
-		adjMatrix = new double[num_nodes*num_nodes];
+        adjMatrix = new unsigned short [num_nodes*num_nodes];
 		plist = new V3DLONG[num_nodes];
 		for (V3DLONG i=0;i<num_nodes*num_nodes;i++) adjMatrix[i] = 0;
 	}

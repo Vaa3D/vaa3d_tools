@@ -24,7 +24,7 @@ class PrimMSTClass //the Prim's MST algorithm
 public:
   V3DLONG nnode;
 
-  double * adjMatrix1d,  ** adjMatrix2d;
+  unsigned short * adjMatrix1d,  ** adjMatrix2d;
 
   int * nodeColor; //decide if a node has been visited or not
   V3DLONG * nodeParent; 
@@ -122,7 +122,7 @@ int PrimMSTClass::allocatememory(V3DLONG nodenum)
 		delocatememory();
 		try{
 			nodeColor = new int[nnode];
-			adjMatrix2d = new double*[nnode];
+            adjMatrix2d = new unsigned short *[nnode];
 			nodeParent = new V3DLONG[nnode];
 		}
 		catch(...){
@@ -145,7 +145,7 @@ void PrimMSTClass::delocatememory()
 
 //main program
 
-bool mst_prim(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnode)
+bool mst_prim(unsigned short * adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnode)
 {
 	//copy data
 
