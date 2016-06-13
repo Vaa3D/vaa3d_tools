@@ -1,8 +1,7 @@
 #include "tileInfo.h"
 
-
 TileInfo::TileInfo(){
-
+    qDebug()<<"TileInfo constructor...";
 }
 
 TileInfo::TileInfo(float zoomPixelsProduct)

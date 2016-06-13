@@ -248,9 +248,9 @@ void S2UI::initializeROISizes(){
     tileSizeChoices->append(myTileInfo);
     myTileInfo.setZoomPos(32,0,0);
     tileSizeChoices->append(myTileInfo);
-
-    currentTileInfo = tileSizeChoices->at(tileSizeCB->currentIndex());
-
+    qDebug()<<"setting currentTileInfo";
+    // currentTileInfo = tileSizeChoices->at(tileSizeCB->currentIndex());
+    qDebug()<<"set currentTileinfo";
 }
 
 

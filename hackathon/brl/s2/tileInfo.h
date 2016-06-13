@@ -2,6 +2,7 @@
 #define TILEINFO_H
 #include <QString>
 #include <QStringList>
+#include <QDebug>
 
 class TileInfo
 {
