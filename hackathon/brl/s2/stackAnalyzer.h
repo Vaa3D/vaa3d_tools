@@ -40,6 +40,8 @@ public slots:
 
     QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
 
+    int methodSelection(QString latestString,int background, LandmarkList inputRootList,bool isSoma);
+
 private:
     V3DPluginCallback2 * cb;
     QString channel;

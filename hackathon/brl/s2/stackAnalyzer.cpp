@@ -2360,6 +2360,20 @@ LandmarkList StackAnalyzer::eliminate_seed(NeuronTree nt,LandmarkList inputRootL
 }
 
 
+int methodSelection(QString latestString,int background, LandmarkList inputRootList,bool isSoma)
+{
+    int methodChoice = 1; //0 for MOST, 1 for Neutube, and 2 for APP2
+    if(isSoma)
+        methodChoice = 2;
+    else
+    {
+        if(inputRootList.size()<5)
+            methodChoice = 2;
+    }
+
+    return methodChoice
+
+}
 
 
 template <class T> void StackAnalyzer::gaussian_filter(T* data1d,
