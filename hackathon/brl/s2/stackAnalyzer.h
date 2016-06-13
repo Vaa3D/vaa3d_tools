@@ -40,7 +40,11 @@ public slots:
 
     QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
 
-    int methodSelection(QString latestString,int background, LandmarkList inputRootList,bool isSoma);
+    void startTracing(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, bool isAdpative, int methodChoice);
+   // void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
+    void APP2Tracing(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma);
+    void APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
+
 
 private:
     V3DPluginCallback2 * cb;
