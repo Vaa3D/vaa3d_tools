@@ -166,7 +166,7 @@ void StackAnalyzer::loadScan(QString latestString, float overlap, int background
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" A O"<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -645,7 +645,7 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
+        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" A 1"<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -1293,7 +1293,11 @@ void StackAnalyzer::loadScanSubtractive(QString latestString, float overlap, int
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
+        if(methodChoice == 0)
+            outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" M 0"<<"\n";
+        else if(methodChoice == 1)
+            outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" N 0"<<"\n";
+
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();
@@ -1732,7 +1736,10 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
         total4DImage->setOriginY(tileLocation.y);
         qDebug()<<total4DImage->getOriginX();
 
-        outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<"\n";
+        if(methodChoice == 0)
+            outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" M 1"<<"\n";
+        else if(methodChoice == 1)
+            outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) x<<" "<< (int) y<<" N 1"<<"\n";
 
         V3DLONG mysz[4];
         mysz[0] = total4DImage->getXDim();

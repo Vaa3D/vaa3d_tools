@@ -250,12 +250,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     NeuronTree nt = readSWC_file(p2.outswc_file);
     nt_list.push_back(nt);
 
-#if  defined(Q_OS_LINUX)
-    unsigned int numOfThreads = 8; // default value for number of theads
-    omp_set_num_threads(numOfThreads);
+//#if  defined(Q_OS_LINUX)
+//    unsigned int numOfThreads = 8; // default value for number of theads
+//    omp_set_num_threads(numOfThreads);
 
-    #pragma omp parallel for
-#endif
+//    #pragma omp parallel for
+//#endif
 
 
     for(int i = PARA.rotation_degree; i<360; i=i+PARA.rotation_degree)
