@@ -500,8 +500,6 @@ xlim([0,120])
 bip
 %subplot(2,2,3) ,   hold all, plot(neuronData{a(ii)}(:,5),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 %subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
-
-%%  
 %% 2016.06.07 now organize everything by scan mode field
 
 allData = -1*ones(1,15)
@@ -523,12 +521,27 @@ end
 
 %                                                                         
                 
-%
+
 
 s2 = allData(allData(:,end)==0,:)
 s2A= allData(allData(:,end)==1,:)
 s2G = allData(allData(:,end)==2,:)
+%% then manually plot over with the s2A scans as grey circles:
 
+subplot(4,1,1)
+hold all, plot(s2A(:,9), s2A(:,10),'o', 'markersize',10, 'color', [.5,.5,.5])
+
+subplot(4,1,2)
+hold all, plot(s2A(:,9), s2A(:,4),'o', 'markersize',10, 'color', [.5,.5,.5])
+subplot(4,1,3)
+hold all, plot(s2A(:,9), s2A(:,14)./s2A(:,12),'o', 'markersize',10, 'color', [.5,.5,.5])
+subplot(4,1,4)
+hold all, plot(s2A(:,9), s2A(:,14)./s2A(:,13)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
+
+
+%%  
+
+%%
 mean(s2(:,14)./s2(:,12))  % normalized imaging times
 std(s2(:,14)./s2(:,12))
 
@@ -589,6 +602,33 @@ ylim([0,1])
 xlim([0.5, 2.5])
 
 bip
+%  and of course the requisite 'fold' version
+figure
+subplot(2,1,1)
+errorbar([mean(s2(:,11)./s2(:,10)),mean(s2A(:,11)./s2A(:,10)) ],[std(s2(:,11)./s2(:,10)), std(s2A(:,11)./s2A(:,10))])
+hold all
+bar([1,2], [mean(s2(:,11)./s2(:,10)),mean(s2A(:,11)./s2A(:,10)) ])
+text(.6,6,['S2: ',num2str(mean(s2(:,11)./s2(:,10))), ' \pm ', num2str(std(s2(:,11)./s2(:,10))), ' N = ', num2str(numel(s2(:,1))) ])
+text(1.6,6,['S2Adaptive: ',num2str(mean(s2A(:,11)./s2A(:,10))), ' \pm ', num2str(std(s2A(:,11)./s2A(:,10))), ' N = ', num2str(numel(s2A(:,1))) ])
+title('S2 Scan Area Improvement')
+ylim([0,7])
+xlim([0.5, 2.5])
+
+bip
+
+
+
+subplot(2,1,2)
+errorbar([mean(s2(:,12)./s2(:,14)),mean(s2A(:,12)./s2A(:,14)) ],[std(s2(:,12)./s2(:,14)), std(s2A(:,12)./s2A(:,14))])
+hold all
+bar([1,2], [mean(s2(:,12)./s2(:,14)),mean(s2A(:,12)./s2A(:,14)) ])
+text(.6,7,['S2: ',num2str(mean(s2(:,12)./s2(:,14))), ' \pm ', num2str(std(s2(:,12)./s2(:,14))), ' N = ', num2str(numel(s2(:,1))) ])
+text(1.6,7,['S2Adaptive: ',num2str(mean(s2A(:,12)./s2A(:,14))), ' \pm ', num2str(std(s2A(:,12)./s2A(:,14))), ' N = ', num2str(numel(s2A(:,1))) ])
+title('S2 Imaging Time Improvement')
+xlim([0.5, 2.5])
+ylim([0,8])
+
+bip
 
 
 figure, 
@@ -605,9 +645,18 @@ hold all,
 plot(s2(:,12), s2(:,14),'.')
 
  plot([0, max(s2A(:,12))], [0, max(s2A(:,12))])
-xlabel('estimated minimal imaging time (s)')
-ylabel('actual imaging time (s)')
+xlabel('estimated minimal imaging time (average tile time)')
+ylabel('actual imaging time (average tile time)')
 bip
+
+%%  scaling analysis
+
+figure,
+subplot(2,1,1)
+plot(log10(s2(:,9)),log10(s2(:,10)),'.')
+subplot(2,1,2)
+plot((s2(:,9)),(s2(:,10)),'.')
+
 
 %% other calculations:
 

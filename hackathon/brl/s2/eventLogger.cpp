@@ -180,3 +180,7 @@ int EventLogger::eventListFirstContains(QList<S2Event> inputEventList, QString s
     }
     return -1;
 }
+//  THIS NEEDS BIGTIME IMPROVEMENT!
+//  maybe I need a hash for each event start and then a matching code for the event finish
+//  when finished events come in, they get queued and written when a new event is finished and processed.
+// why is this so complicated?  the alternative is for the actual processing module to have its own timer and spit back total times.  maybe the stackanalyzer module is the place to do that....

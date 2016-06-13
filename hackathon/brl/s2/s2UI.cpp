@@ -96,6 +96,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myTargetTable = new TargetList;
     myTargetTable->show();
     targetIndex = 0;
+    colorIndex = 0;
     overViewPixelToScanPixel = (1.0/16.0)*(256.0/512.0);
     overviewMicronsPerPixel = 1.8;
     hookUpSignalsAndSlots();
@@ -832,7 +833,7 @@ void S2UI::loadScanFromFile(QString fileString){
         mysz[1] = total4DImage->getYDim();
         mysz[2] = total4DImage->getZDim();
         mysz[3] = total4DImage->getCDim();
-        QString imageSaveString = saveDir.absolutePath();
+        QString imageSaveString = sessionDir.absolutePath();
 
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
@@ -1014,6 +1015,7 @@ void S2UI::startAllTargets(){
 void S2UI::handleAllTargets(){
     qDebug()<<"handleAllTargets";
     targetIndex++;
+    colorIndex++;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
         v3d_msg("finished with multi-target scan",true);
@@ -1211,8 +1213,12 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
                 // keeping track of a bunch of ROIs.
+
+                QPen myPen;
+                myPen.setColor(QColor(colorIndex%16+3));
+
                 roiGS->addRect((newLandmarks[i].x-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(), (newLandmarks[i].y-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-                        newLandmarks[i].ev_pc1*uiS2ParameterMap[8].getCurrentValue(), newLandmarks[i].ev_pc2*uiS2ParameterMap[8].getCurrentValue(),  QPen::QPen(Qt::green, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                        newLandmarks[i].ev_pc1*uiS2ParameterMap[8].getCurrentValue(), newLandmarks[i].ev_pc2*uiS2ParameterMap[8].getCurrentValue(),  myPen);
             }else{
                 status("skip this tile!");
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
@@ -1628,6 +1634,7 @@ void S2UI::overviewHandler(){
     if (readyForOverview){
         // set up 3-plane z stack here?
         overviewMicronsPerPixel = uiS2ParameterMap[8].getCurrentValue();
+        waitingForFile = 0;
         waitingForOverview = true;
         QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
         status("starting single scan");
@@ -1912,7 +1919,7 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     myMIP = QImage(x, y, QImage::Format_RGB888);
     for (V3DLONG i=0; i<x; i++){
         for (V3DLONG j=0; j<y;j++){
-            myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0));
+            myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0)+mipProx.value8bit_at(i,j,0,0)*256);
             total++;
         }
     }
@@ -2019,7 +2026,7 @@ void S2UI::startLiveFile(){
     liveFileRunning= !liveFileRunning;
 
     if (liveFileRunning){
-    QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("PrairieView XML (*.v3draw);;All Files (*.*)"));
+    QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("vaa3d raw format (*.v3draw);;All Files (*.*)"));
 
     if (liveFilePath.isNull()){ liveFileRunning = false; return;}
 
@@ -2076,3 +2083,4 @@ void S2UI::updateLiveFile(){
 
 
 }
+

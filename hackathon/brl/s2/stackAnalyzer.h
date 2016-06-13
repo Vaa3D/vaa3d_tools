@@ -43,6 +43,21 @@ public slots:
 private:
     V3DPluginCallback2 * cb;
     QString channel;
+
+
+
+    template <class T> void gaussian_filter(T* data1d,
+                         V3DLONG *in_sz,
+                         unsigned int Wx,
+                         unsigned int Wy,
+                         unsigned int Wz,
+                         unsigned int c,
+                         double sigma,
+                         float* &outimg);
+
+
+
+
 };
 
 #endif // STACKANALYZER_H

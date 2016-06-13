@@ -221,6 +221,7 @@ private:
 
     TargetList* myTargetTable;
     int targetIndex;
+    int colorIndex;
 
 
 // External S2 controllers
@@ -297,6 +298,7 @@ private:
     bool waitingToStartStack;
 
     int numProcessing;
+
 
 //   vaa3d variables
     v3dhandle previewWindow;
