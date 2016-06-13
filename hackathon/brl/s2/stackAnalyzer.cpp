@@ -2371,7 +2371,7 @@ int methodSelection(QString latestString,int background, LandmarkList inputRootL
             methodChoice = 2;
     }
 
-    return methodChoice
+    return methodChoice;
 
 }
 
