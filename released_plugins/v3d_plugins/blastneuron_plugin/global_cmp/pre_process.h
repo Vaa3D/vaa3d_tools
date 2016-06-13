@@ -7,7 +7,7 @@
 #include "../pre_processing/align_axis.h"
 
 
-NeuronTree pre_process(NeuronTree nt, double step_size);
+NeuronTree pre_process(NeuronTree nt, double step_size, double prune_size);
 #endif
 
 

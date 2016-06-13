@@ -27,7 +27,8 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	V3DLONG neuronNum = feature_list.size();
 
 	//pre-process the query neuron
-	NeuronTree query_preprocessed = pre_process(query, step_size);
+    double prune_size = 2.0;
+    NeuronTree query_preprocessed = pre_process(query, step_size,prune_size);
 	
 	double *qf;
 	int *sbj;
