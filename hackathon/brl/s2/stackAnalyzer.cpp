@@ -657,7 +657,7 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
 
-        QString finaloutputswc = saveDirString + ("/app2_adaptive.swc");
+        QString finaloutputswc = saveDirString + ("/s2.swc");
         ifstream ifs_swc(finaloutputswc.toStdString().c_str());
         vector<MyMarker*> finalswc;
 
@@ -1759,9 +1759,9 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
 
         QString finaloutputswc;
         if(methodChoice ==0)
-            finaloutputswc = saveDirString + ("/most_adaptive.swc");
+            finaloutputswc = saveDirString + ("/s2.swc");
         else if (methodChoice ==1)
-            finaloutputswc = saveDirString + ("/neutube_adaptive.swc");
+            finaloutputswc = saveDirString + ("/s2.swc");
 
         ifstream ifs_swc(finaloutputswc.toStdString().c_str());
         vector<MyMarker*> finalswc;
@@ -1924,9 +1924,9 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
         NeuronTree nt_most;
         QString swcMOST = saveDirString;       
         if(methodChoice ==0)
-            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_s2.swc");
         else if(methodChoice ==1)
-            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_s2.swc");
 
 
         nt_most = readSWC_file(swcMOST);

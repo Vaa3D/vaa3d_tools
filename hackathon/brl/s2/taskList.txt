@@ -1,4 +1,10 @@
 
+>>>>>>>>>>>   add point-and-click for 'new tile'  or 're-image' or whatever.   this could be eventually hooked up to a 're-image' option.
+
+
+
+
+
 2016.03.25
 
 current problems with adaptive window:
