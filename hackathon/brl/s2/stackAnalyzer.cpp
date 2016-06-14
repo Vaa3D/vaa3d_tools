@@ -69,7 +69,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     channel = QString("Ch2");
 }
 
-void StackAnalyzer::loadScan1(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT, bool isSoma){
+void StackAnalyzer::loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation , QString saveDirString, bool useGSDT, bool isSoma){
     qDebug()<<"loadScan input: "<<latestString;
     qDebug()<<"overlap input:"<< QString::number(overlap);
     //QString latestString = getFileString();
