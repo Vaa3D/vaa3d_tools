@@ -27,7 +27,7 @@ bool export_list2file_retype(QList<NeuronSWC> & lN, QString fileSaveName, int so
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
     QTextStream myfile(&file);
-
+    myfile << "#n,type,x,y,z,radius,parent"<< "\n";
     for (V3DLONG i=0;i<lN.size();i++)
     {
         if(i == soma_ID){
@@ -120,7 +120,7 @@ bool standardize::dofunc(const QString & func_name, const V3DPluginArgList & inp
         cout<<"inswc_file = "<<inputswc_file.toStdString().c_str()<<endl;
         cout<<"gap threshold = "<<dis_th<<endl;
         cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
-
+        cout<<"new type code = "<<type<<endl;
 
         NeuronTree nt_input = readSWC_file(inputswc_file);
 //        cout<<" Standardize: 1) resample"<<endl;
