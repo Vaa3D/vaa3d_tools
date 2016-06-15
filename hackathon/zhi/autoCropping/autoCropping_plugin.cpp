@@ -1,0 +1,141 @@
+/* autoCropping_plugin.cpp
+ * This is a test plugin, you can use it as a demo.
+ * 2016-6-15 : by YourName
+ */
+ 
+#include "v3d_message.h"
+#include <vector>
+#include "autoCropping_plugin.h"
+using namespace std;
+Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
+ 
+QStringList autoCropping::menulist() const
+{
+	return QStringList() 
+        <<tr("Crop")
+		<<tr("about");
+}
+
+QStringList autoCropping::funclist() const
+{
+	return QStringList()
+		<<tr("func1")
+		<<tr("func2")
+		<<tr("help");
+}
+
+void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+{
+    if (menu_name == tr("Crop"))
+	{
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imgname = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        int tmpx,tmpy,tmpz;
+        LandmarkList listLandmarks = callback.getLandmark(curwin);
+        LocationSimple tmpLocation(0,0,0);
+        int marknum = listLandmarks.count();
+        if(marknum ==0)
+        {
+            v3d_msg("No markers in the current image, please double check.");
+            return;
+        }
+        bool ok;
+        int winSize = QInputDialog::getInteger(parent, "Please specify the block size","size:",50,0,256,1,&ok);
+        if (!ok)
+            return;
+
+        for (int i=0;i<marknum;i++)
+        {
+            tmpLocation = listLandmarks.at(i);
+            tmpLocation.getCoord(tmpx,tmpy,tmpz);
+
+            V3DLONG xb = tmpx-1-winSize; if(xb<0) xb = 0;
+            V3DLONG xe = tmpx-1+winSize; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-winSize; if(yb<0) yb = 0;
+            V3DLONG ye = tmpy-1+winSize; if(ye>=M-1) ye = M-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = P;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
+            V3DLONG j = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                         im_cropped[j] = data1d[offsetk + offsetj + ix];
+                         j++;
+                    }
+                }
+            }
+            QString outimg_file = imgname + QString("_x%1_x%2_y%3_y%4.tif").arg(xb).arg(xe).arg(yb).arg(ye);
+            simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+            if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+        }
+        v3d_msg("Done!");
+	}
+	else
+	{
+		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+			"Developed by YourName, 2016-6-15"));
+	}
+}
+
+bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+{
+	vector<char*> infiles, inparas, outfiles;
+	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+	if (func_name == tr("func1"))
+	{
+		v3d_msg("To be implemented.");
+	}
+	else if (func_name == tr("func2"))
+	{
+		v3d_msg("To be implemented.");
+	}
+	else if (func_name == tr("help"))
+	{
+		v3d_msg("To be implemented.");
+	}
+	else return false;
+
+	return true;
+}
+
