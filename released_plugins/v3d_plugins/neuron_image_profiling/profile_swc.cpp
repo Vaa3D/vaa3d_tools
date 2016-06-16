@@ -30,11 +30,11 @@ const QString title = QObject::tr("Image Profile with SWC ROI");
 #define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
 #endif
 
-static void cutoff_outliers(vector<double> & x)
+static void cutoff_outliers(vector<double> & x, float cut_off_ratio)
 {
     //remove the top and bottom 10% data, to be more robust
     sort(x.begin(), x.end());
-    int num_to_remove = x.size()*0.1;
+    int num_to_remove = x.size()*cut_off_ratio;
 
     // erase the top and bottom N elements:
     x.erase( x.begin(), x.begin()+ num_to_remove);
@@ -75,7 +75,7 @@ static double standard_dev(vector<double> x)
     return x_std;
 }
 
-static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
+static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics,double cut_off_ratio)
 {  // aggregate all segment stats into one stats
     ENSEMBLE_METRICS stats; // average stats over all segments
     vector <double> cnrs;
@@ -95,11 +95,12 @@ static ENSEMBLE_METRICS stats_ensemble(QList<IMAGE_METRICS> result_metrics)
         fgs.push_back(result_metrics[i].fg_mean);
     }
 
-    cutoff_outliers(cnrs);
-    cutoff_outliers(dys);
-    cutoff_outliers(tubus);
-    cutoff_outliers(bgs);
-    cutoff_outliers(fgs);
+
+    cutoff_outliers(cnrs,cut_off_ratio);
+    cutoff_outliers(dys,cut_off_ratio);
+    cutoff_outliers(tubus,cut_off_ratio);
+    cutoff_outliers(bgs,cut_off_ratio);
+    cutoff_outliers(fgs,cut_off_ratio);
 
 
     stats.mean_cnr = mean(cnrs);
@@ -248,8 +249,10 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
     int invert = QInputDialog::getInteger(parent, "invert intensity ? (for calculating tubularities, signals should be brighter than background",
                                  "Invert Intensity (0/1):",
                                  0, 0, 1);
-
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip,invert,callback);
+    float cut_off_ratio = QInputDialog::getDouble(parent, "cut off outliers ? (for more robust results againt ROI errors",
+                                 "Cut off the top and bottom (%5)percentage:",
+                                 0.05, 0, 0.2);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip,invert,cut_off_ratio,callback);
 
     if (result_metrics.isEmpty())
     {
@@ -275,7 +278,7 @@ bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     /*
-    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics,cut_off_ratio);
 
 
     //display metrics to the msg window
@@ -323,14 +326,14 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
     int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
     int  invert = (inparas.size() >= 3) ? atoi(inparas[2]) : 1;
-
+    float  cut_off_ratio = (inparas.size() >= 4) ? atoi(inparas[3]) : 0.05;
     cout<<"inimg_file = "<< imageFileName.toStdString()<<endl;
     cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
     cout<<"output_file = "<< output_csv_file.toStdString()<<endl;
     cout<<"dilate_ratio = "<< dilate_ratio<<endl;
     cout<<"flip y = "<< flip <<endl;
     cout<<"invert intensity = "<< invert <<endl;
-
+    cout<<"cut_off_ratio = "<< cut_off_ratio <<endl;
     NeuronTree  neuronTree;
 
     if (swcFileName.endsWith(".swc") || swcFileName.endsWith(".SWC"))
@@ -350,11 +353,11 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
         return false;
     }
 
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert, callback);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert,cut_off_ratio, callback);
     IMAGE_METRICS m_stats = result_metrics[0];
 
     /*
-    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics);
+    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics,cut_off_ratio);
     */
 
     cout << "Overall Contrast-to-Background Ratio:" << m_stats.cnr << "\n"
@@ -383,7 +386,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
 
 
 
-IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, V3DPluginCallback2 &callback)
+IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, float cut_off_ratio,V3DPluginCallback2 &callback)
 {
 
     IMAGE_METRICS metrics;
@@ -616,9 +619,9 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 
     // compute metrics
     // remove the top and bottom 5% data to be robust
-    cutoff_outliers(fg_1d);
-    cutoff_outliers(bg_1d);
-    cutoff_outliers(tubularities);
+    cutoff_outliers(fg_1d,cut_off_ratio);
+    cutoff_outliers(bg_1d,cut_off_ratio);
+    cutoff_outliers(tubularities,cut_off_ratio);
 
     double max_fg =  *( max_element(fg_1d.begin(), fg_1d.end()));
     double min_fg =  * (min_element(fg_1d.begin(), fg_1d.end()));
@@ -637,9 +640,9 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         metrics.snr = fg_mean/metrics.bg_std;
     }
     else {
-        metrics.cnr  = 10000;
-        metrics.snr =  10000;
-        cout<<"warning! background deviation is zero"<<endl;
+        metrics.cnr  = INT_MAX;
+        metrics.snr =  INT_MAX;
+        cout<<"warning! background std is zero"<<endl;
     }
 
     //average tubularity
@@ -663,7 +666,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 
 }
 
-QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, int invert, V3DPluginCallback2 &callback)
+QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, int invert, float cut_off_ratio, V3DPluginCallback2 &callback)
 {
     if(flip > 0)
     {
@@ -682,7 +685,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
 
     QList<IMAGE_METRICS> result_metrics;
     // all types
-    IMAGE_METRICS metrics = compute_metrics( image, neuronSWCs,dilate_ratio, callback );
+    IMAGE_METRICS metrics = compute_metrics( image, neuronSWCs,dilate_ratio, cut_off_ratio,callback );
     metrics.type = -1;  //all types
     result_metrics.push_back(metrics);
 
@@ -752,7 +755,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     {
         if (!neuronSWC_lists[j].isEmpty() )
         {
-            IMAGE_METRICS metrics = compute_metrics( image, neuronSWC_lists[j] ,dilate_ratio, callback );
+            IMAGE_METRICS metrics = compute_metrics( image, neuronSWC_lists[j] ,dilate_ratio,cut_off_ratio,callback );
             result_metrics.push_back(metrics);
         }
 
@@ -817,14 +820,16 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"This plugin is used for profiling 2D images with SWC specified ROIs.\n";
     cout<<"usage:\n";
-    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_ratio>  <flip>"
-    <<endl;
+    cout<<"v3d -x neuron_image_profiling -f profile_swc -i <inimg_file> <inswc_file> -o <out_file> -p <dilation_ratio>  <flip> <cut_off_ratio> \n";
+    cout<<"For example :\n";
+    cout<<"v3d -x neuron_image_profiling -f profile_swc -i a.v3dpbd a.swc -o profile.csv -p 3.0 0 0 0.05\n";
     cout<<"inimg_file:\t\t input image file\n";
     cout<<"inswc_file:\t\t input .swc file\n";
     cout<<"out_file:\t\t (not required) output statistics of intensities into a csv file. DEFAUTL: '<inswc_file>.csv'\n";
     cout<<"dilation_radius :\t (not required) the dilation ratio to expand the radius for background ROI extraction\n";
     cout<<"flip in y [0 or 1]\t (not required)\n";
     cout<<"invert intensity [0 or 1]\t (not required, signal should have higher intensties than background, for tubuliarty calculation)"<<endl;
+    cout<<"cutoff ratio[default 0.05]\t (not required) to make the stats more robust due to ROI errors, you can specify the ratio to remove the top and bottom outliers.\n";
 }
 
 
