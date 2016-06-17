@@ -3,7 +3,7 @@
 TargetList::TargetList(QWidget *parent) :
     QWidget(parent)
 {
-
+    this->setWindowTitle("Target List");
     targetTable = new QTableWidget(1,3,this);
     scanLocTable = new QTableWidget(1,5,this);
     QLabel* targetTableLabel = new QLabel("&Targets");

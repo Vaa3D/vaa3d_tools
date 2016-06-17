@@ -2205,7 +2205,7 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
             if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
             if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
         }
-        adaptive_size = (max_y - min_y)*(1.0+2.0*overlap);
+        adaptive_size = (max_y - min_y)*(1.0+3.0*overlap);
 
     }else
     {
@@ -2214,7 +2214,7 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
             if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
             if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
         }
-        adaptive_size = (max_x - min_x)*(1.0+2.0*overlap);
+        adaptive_size = (max_x - min_x)*(1.0+3.0*overlap);
     }
 
     if(adaptive_size <= 50) adaptive_size = 50;
@@ -2370,7 +2370,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     //LandmarkList inputRootList;
     qDebug()<<"loadScan input: "<<latestString;
-
+    qDebug()<<"isAdaptive "<<isAdaptive;
+    qDebug()<<"methodChoice "<<methodChoice;
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
 
@@ -2440,6 +2441,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         outputStream.setDevice(&saveTextFile);
         total4DImage->setOriginX(tileLocation.x);
         total4DImage->setOriginY(tileLocation.y);
+
         qDebug()<<total4DImage->getOriginX();
 
         if(methodChoice ==-1)
@@ -2455,6 +2457,11 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         mysz[1] = total4DImage->getYDim();
         mysz[2] = total4DImage->getZDim();
         mysz[3] = total4DImage->getCDim();
+
+        tileLocation.ev_pc1 = (double) total4DImage->getXDim();
+        tileLocation.ev_pc2 = (double) total4DImage->getYDim();
+
+
         QString imageSaveString = saveDirString;
 
         //convert to 8bit image using 8 shiftnbits
@@ -2482,6 +2489,10 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
+        qDebug()<<"=== immediately before tracing =====";
+        qDebug()<<"isAdaptive "<<isAdaptive;
+        qDebug()<<"methodChoice "<<methodChoice;
+
         if(isAdaptive)
         {
             if(methodChoice == 2)
@@ -2705,6 +2716,8 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             newTargetList[i].x = (1.0-overlap)*newTargetList[i].x+p.p4dImage->getOriginX();
             newTargetList[i].y=(1.0-overlap)*newTargetList[i].y+p.p4dImage->getOriginY();
             newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
+            newTargetList[i].ev_pc1 =(float) total4DImage->getXDim();
+            newTargetList[i].ev_pc2 = (float) total4DImage->getYDim();
         }
     }
 
@@ -2922,26 +2935,27 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,50,1);
         for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,1,overlap);
+            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,1,overlap);
+//    /tileLocation.ev_pc1
     }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,50,2);
         for(int i = 0; i < group_tips_right.size();i++)
-            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,2,overlap);
+            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,2,overlap);
     }
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,50,3);
         for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,3,overlap);
+            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,3,overlap);
 
     }
     if(tip_down.size()>0)
     {
         QList<LandmarkList> group_tips_down = group_tips(tip_down,50,4);
         for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,4,overlap);
+            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,4,overlap);
     }
 
 
@@ -3190,6 +3204,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].x = (1.0-overlap)*newTargetList[i].x+total4DImage->getOriginX();
             newTargetList[i].y=(1.0-overlap)*newTargetList[i].y+total4DImage->getOriginY();
             newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+total4DImage->getOriginZ();
+            newTargetList[i].ev_pc1 = (double) total4DImage->getXDim();
+            newTargetList[i].ev_pc2 = (double) total4DImage->getYDim();
         }
     }
     if (!imageLandmarks.isEmpty()){
@@ -3383,26 +3399,26 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,120,1);
         for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,1,overlap);
+            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,1,overlap);
     }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,120,2);
         for(int i = 0; i < group_tips_right.size();i++)
-            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,2,overlap);
+            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,2,overlap);
     }
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,120,3);
         for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,3,overlap);
+            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,3,overlap);
 
     }
     if(tip_down.size()>0)
     {
         QList<LandmarkList> group_tips_down = group_tips(tip_down,120,4);
         for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,4,overlap);
+            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,4,overlap);
     }
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());

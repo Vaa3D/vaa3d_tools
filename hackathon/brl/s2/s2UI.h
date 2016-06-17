@@ -70,6 +70,7 @@ signals:
     void channelUpdate(QString);
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
+    void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
 private slots:
     void startS2();
     void startScan();

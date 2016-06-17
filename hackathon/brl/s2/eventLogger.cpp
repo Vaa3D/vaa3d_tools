@@ -124,7 +124,7 @@ void EventLogger::processEvents(QString saveFileString){
          if (okToSave){
                              outputStream<<toWrite<<"\n";
          }
-        qDebug()<<toWrite;
+        //qDebug()<<toWrite;
     }
 
 
@@ -158,7 +158,7 @@ void EventLogger::processEvents(QString saveFileString){
          if (okToSave){
                              outputStream2<<toWrite<<"\n";
          }
-        qDebug()<<toWrite;
+        //qDebug()<<toWrite;
     }
 
 

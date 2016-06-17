@@ -195,8 +195,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
-    connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+   // connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+   // connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
 
 
 
@@ -205,9 +205,9 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
-    connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
-    connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
-
+   // connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+   // connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
     //communicate with NoteTaker:
@@ -493,6 +493,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB->addItem("adaptive MOST");
     tracingMethodComboB->addItem("adaptive APP2");
     tracingMethodComboB->addItem("adaptive NeuTube");
+    tracingMethodComboB->addItem("automatic");
     tracingMethodComboB->setCurrentIndex(0);
     methodChoice = 0;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
@@ -521,7 +522,7 @@ QGroupBox *S2UI::createTracingParameters(){
     pixelsSpinBox = new QSpinBox;
     pixelsSpinBox->setMinimum(50);
     pixelsSpinBox->setMaximum(1024);
-    pixelsSpinBox->setValue(256);
+    pixelsSpinBox->setValue(180);
 
     pixelsSpinBoxLabel = new QLabel;
     pixelsSpinBoxLabel->setText("pixels");
@@ -720,37 +721,55 @@ void S2UI::loadForSA(){
     bool isSoma = scanNumber==0;
     qDebug()<<workerThread->currentThreadId();
     QTimer::singleShot(0,this, SLOT(processingStarted()));
+    bool isAdaptive = false;
+    methodChoice = 2;
+
     if (tracingMethodComboB->currentIndex()==0){
         methodChoice = 0;
-        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        isAdaptive = false;
+        //emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==1){
-        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
-
+//        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+    methodChoice = 2;
+            isAdaptive = false;
     }
     if (tracingMethodComboB->currentIndex()==2){
         methodChoice = 1;
-        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+//        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==3){
         methodChoice = 0;
-        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        isAdaptive  = true;
+//        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==4){
-        emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+        methodChoice = 2;
+        isAdaptive = true;
+        //emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
     }
     if (tracingMethodComboB->currentIndex()==5){
         methodChoice= 1;
-        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        isAdaptive = true;
+     //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
+    if (tracingMethodComboB->currentIndex()==6){
+     methodChoice= -1;
+     //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
+    }
+    emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                     this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
 }
+
+
+
 
 void S2UI::loadScanFromFile(QString fileString){
     QString latestString = fileString;
@@ -1193,13 +1212,13 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             //            for (int k=0; k<newTipsList.value(i).length();k++){
             //                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
             //            }
-            if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
-                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
-                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
-            }
+          //  if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
+//                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
+//                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
+            //}
 
-            qDebug()<<"new landmark pixel size 1 = "<<newLandmarks.value(i).ev_pc1;
-            qDebug()<<"new landmark pixel size 2 = "<<newLandmarks.value(i).ev_pc2;
+            qDebug()<<"new landmark pixel size 1 = "<<newLandmarks[i].ev_pc1;
+            qDebug()<<"new landmark pixel size 2 = "<<newLandmarks[i].ev_pc2;
             newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
             newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//
 
@@ -1524,38 +1543,55 @@ void S2UI::loadLatest(){
             emit  callSAGridLoad(getFileString(),   tileLocation, saveDir.absolutePath() );
 
         }else{
+            bool isAdaptive = false;
+            int methodChoice = 0;
             emit eventSignal("startAnalysis");
             QTimer::singleShot(0,this, SLOT(processingStarted()));
 
+
             if (tracingMethodComboB->currentIndex()==0){ //MOST
                 methodChoice = 0;
-                emit callSALoadSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                isAdaptive = false;
+                //emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
-            if (tracingMethodComboB->currentIndex()==1){ // APP2
-                emit callSALoad(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
-
+            if (tracingMethodComboB->currentIndex()==1){ //APP2
+        //        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+            methodChoice = 2;
+                    isAdaptive = false;
             }
-            if (tracingMethodComboB->currentIndex()==2){ //NeuTube
+            if (tracingMethodComboB->currentIndex()==2){ //Neutube
                 methodChoice = 1;
-                emit callSALoadSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        //        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
                 methodChoice = 0;
-                emit callSALoadAdaSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                isAdaptive  = true;
+        //        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
-            if (tracingMethodComboB->currentIndex()==4){ // adaptive APP2
-                emit callSALoadAda(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+            if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
+                methodChoice = 2;
+                isAdaptive = true;
+                //emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
             }
-            if (tracingMethodComboB->currentIndex()==5){ //adaptive NeuTube
+            if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
                 methodChoice= 1;
-                emit callSALoadAdaSubtractive(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                isAdaptive = true;
+             //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
+            if (tracingMethodComboB->currentIndex()==6){ //automatic
+             methodChoice= -1;
+             //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
+            }
+            qDebug()<<"isadaptive = "<<isAdaptive;
+            qDebug()<<"methodChoice = "<<methodChoice;
+            emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                             this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
 
         }
@@ -2084,3 +2120,7 @@ void S2UI::updateLiveFile(){
 
 }
 
+// new or move to config parameters:
+// min and maximum adaptive tile size
+// pixel-zoom product stuff
+//

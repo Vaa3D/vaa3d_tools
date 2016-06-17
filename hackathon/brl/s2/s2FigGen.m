@@ -126,7 +126,7 @@ end
 
 gridScans2 = gridScans2([gridScans2(:).isdir]')
 
-otherScans = [adaptiveScans; gridScans;gridScans2]
+otherScans = [adaptiveScans; gridScans]
 nBeforeGrid = numel(adaptiveScans)
 
 %
@@ -227,6 +227,9 @@ for i = 1:numel(cellData)
             cellData{i}(j).estimatedTimePerTileArea = mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag)./cellData{i}(j).tileAreas);
             cellData{i}(j).estimatedGridTime = numel(bigRect)*cellData{i}(j).estimatedTimePerTileArea;
             cellData{i}(j).micronsPerPixel = cellData{i}(j).allTileInfo{1}.micronsPerPixel(1);
+            cellData{i}(j).imagingOnlyTimePerTileArea = mean((cellData{i}(j).allTileTimes(:))./cellData{i}(j).tileAreas);
+            cellData{i}(j).boundingBoxImagingOnly = numel(bigRect)*cellData{i}(j).imagingOnlyTimePerTileArea;
+            cellData{i}(j).zDepthVoxels = cellData{i}(j).allTileInfo{1}.tileDimensions(3);
         end
     end
 end
@@ -254,12 +257,18 @@ cd(fullfile(batchTopDirectory))
 % datapoints are eliminated below:
 %  
 
-cellData{27} = cellData{27}(1:8)
-cellData{4} = cellData{4}(1:2)
+%cellData{27} = cellData{27}(1:5)
+%cellData{4} = cellData{4}(1:2)
 
 % there were a few other problems due to .xml files from previews getting
 % stuck in the data directories, but those files were moved, so that
 % shouldnt be a problem any longer
+
+% this data was curated out of the s2data directory june 14 along with some
+% failed experiments where imaging or unusual tracing errors resulted in missing a
+% key process (or outright missing a stem from the soma) so that the
+% resulting stitched images were very small
+
 
 %% plotting
 figure
@@ -281,8 +290,8 @@ end
 
 a = unique(neuronNumbers)
 for ii = 1:numel(a)
-    neuronData{a(ii)}=[0,0,0,0,0,0,0,0]
-                timeSummary{a(ii)} = [0,0,0]
+    neuronData{a(ii)}=[0,0,0,0,0,0,0,0,0]
+                timeSummary{a(ii)} = [0,0,0,0,0]
                 neuronScale{a(ii)} = [];
                 scanMode{a(ii)}= []
 end
@@ -299,9 +308,9 @@ for i = 1:numel(cellData)
             if isfield(cellData{i}(j),'neuronNumber')
                 nn  = cellData{i}(j).neuronNumber;
                 
-                neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j]]
+                neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j,cellData{i}(j).zDepthVoxels]]
                 
-                timeSummary{nn}= [timeSummary{nn}; [cellData{i}(j).estimatedGridTime,cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag)))];
+                timeSummary{nn}= [timeSummary{nn}; [[cellData{i}(j).estimatedGridTime,cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),cellData{i}(j).estimatedGridTime,cellData{i}(j).boundingBoxImagingOnly]];
                 neuronScale{nn} = [neuronScale{nn}; cellData{i}(j).micronsPerPixel];
                 
                 if cellData{i}(j).isGridScan
@@ -502,7 +511,7 @@ bip
 %subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 %% 2016.06.07 now organize everything by scan mode field
 
-allData = -1*ones(1,15)
+allData = -1*ones(1,18)
 for i = 1:numel(a)
     allData = [allData; [neuronData{a(i)}, neuronData{a(i)}(:,1).*neuronScale{a(i)},neuronData{a(i)}(:,2).*neuronScale{a(i)}.*neuronScale{a(ii)},neuronData{a(i)}(:,6).*neuronScale{a(i)}.*neuronScale{a(ii)}, timeSummary{a(i)},scanMode{a(i)}]];
 end
@@ -510,12 +519,14 @@ end
 %[mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime,
 %                                                                         cellData{i}(j).totalTileArea,
 %                                                                         cellData{i}(j).boundingBoxArea,i,j,
+%                                                                         cellData{i}(j).zDepthVoxels
 %                                                                          
 %    micron versions of columns 1, 2, and 6
 %  cellData{i}(j).estimatedGridTime/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
 %  cellData{i}(j).minTotalTime /( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))), 
 %  cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
-%  
+% cellData{i}(j).estimatedGridTime
+%  cellData{i}(j).imagingOnlyGridTime 
 
 % scanMode ;
 
@@ -529,17 +540,68 @@ s2G = allData(allData(:,end)==2,:)
 %% then manually plot over with the s2A scans as grey circles:
 
 subplot(4,1,1)
-hold all, plot(s2A(:,9), s2A(:,10),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,10), s2A(:,11),'o', 'markersize',10, 'color', [.5,.5,.5])
 
 subplot(4,1,2)
-hold all, plot(s2A(:,9), s2A(:,4),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,10), s2A(:,4),'o', 'markersize',10, 'color', [.5,.5,.5])
 subplot(4,1,3)
-hold all, plot(s2A(:,9), s2A(:,14)./s2A(:,12),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,10), s2A(:,15)./s2A(:,13),'o', 'markersize',10, 'color', [.5,.5,.5])
 subplot(4,1,4)
-hold all, plot(s2A(:,9), s2A(:,14)./s2A(:,13)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,10), s2A(:,15)./s2A(:,14)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
 
 
-%%  
+%%  for Hanchuan,simplified matrices with all scan data:
+
+
+% 
+s2PHC = s2(:,[1, 2, 5, 6, 10,11,12, 16,17, 7,8, 9])
+% |1: average tile side|2: imaged area (no doublecounting) |3: total tile area (incl doublecounting) |4: bounding box area |5: average tile side (microns) 
+% |6: imaged area (microns) |7: bounding box area (microns) |8:
+% estimatedGridTime |9: imagingOnlyGridTime|10: ignore|11: ignore|12:
+% zDepthVoxels
+% 
+%  "estimatedGridTime" includes the time for .tif conversion, (which can  be comparable to imaging times), and does not include any image overlap.  
+% "imagingOnlyGridTime" would be if there  is no time for .tif conversion.
+%
+%  
+s2APHC = s2A(:,[1, 2, 5, 6, 10,11,12, 16,17, 7,8,9])
+
+
+
+%  add string with file name.
+[r,c] = size(s2PHC);
+for i = 1:r
+s2PHCNames{i} = cellData{s2PHC(i,10)}(s2PHC(i,11)).folderName;
+end
+
+[r,c] = size(s2APHC);
+for i = 1:r
+s2APHCNames{i} = cellData{s2APHC(i,10)}(s2APHC(i,11)).folderName;
+end
+
+
+
+
+%% sorted versions:
+
+[s2APHCSorted, rowsA] = sortrows(s2APHC,4)
+[s2PHCSorted, rows] = sortrows(s2PHC,4)
+
+
+% now the lowest, middle and highest boundingbox areas for adaptive scans
+lowestAName = s2APHCNames{rowsA(1)}
+middleAName = s2APHCNames{rowsA(10)}
+highestAName = s2APHCNames{rowsA(end)}
+
+% now the lowest, middle and highest boundingbox areas for regular scans
+lowestName = s2PHCNames{rows(1)}
+middleName = s2PHCNames{rows(15)}
+highestName = s2PHCNames{rows(end)}
+
+
+
+
+
 
 %%
 mean(s2(:,14)./s2(:,12))  % normalized imaging times
