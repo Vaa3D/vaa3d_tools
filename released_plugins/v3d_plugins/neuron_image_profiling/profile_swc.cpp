@@ -326,7 +326,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
     float  dilate_ratio = (inparas.size() >= 1) ? atof(inparas[0]) : 3.0;
     int  flip = (inparas.size() >= 2) ? atoi(inparas[1]) : 1;
     int  invert = (inparas.size() >= 3) ? atoi(inparas[2]) : 1;
-    float  cut_off_ratio = (inparas.size() >= 4) ? atoi(inparas[3]) : 0.05;
+    float  cut_off_ratio = (inparas.size() >= 4) ? atof(inparas[3]) : 0.05;
     cout<<"inimg_file = "<< imageFileName.toStdString()<<endl;
     cout<<"inswc_file = "<< swcFileName.toStdString()<<endl;
     cout<<"output_file = "<< output_csv_file.toStdString()<<endl;
