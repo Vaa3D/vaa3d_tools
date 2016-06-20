@@ -6,6 +6,11 @@
 #include "v3d_message.h"
 #include <vector>
 #include "autoCropping_plugin.h"
+
+#include "basic_surf_objs.h"
+#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+
+
 using namespace std;
 Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
  
@@ -23,6 +28,9 @@ QStringList autoCropping::funclist() const
 		<<tr("func2")
 		<<tr("help");
 }
+
+NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye);
+
 
 void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -68,6 +76,41 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (!ok)
             return;
 
+        QString APP2fileName;
+        APP2fileName = QFileDialog::getOpenFileName(0, QObject::tr("Open APP2 SWC File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(APP2fileName.isEmpty())
+            return;
+
+        QString NeutubefileName;
+        NeutubefileName = QFileDialog::getOpenFileName(0, QObject::tr("Open Neutube SWC File"),
+                APP2fileName,
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(NeutubefileName.isEmpty())
+            return;
+
+        QString GSfileName;
+        GSfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open Gold Standard SWC File"),
+                APP2fileName,
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(GSfileName.isEmpty())
+            return;
+
+        NeuronTree nt_app2, nt_neutube, nt_gs;
+        nt_app2 = readSWC_file(APP2fileName);
+        nt_neutube = readSWC_file(NeutubefileName);
+        nt_gs = readSWC_file(GSfileName);
+
         for (int i=0;i<marknum;i++)
         {
             tmpLocation = listLandmarks.at(i);
@@ -77,6 +120,37 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             V3DLONG xe = tmpx-1+winSize; if(xe>=N-1) xe = N-1;
             V3DLONG yb = tmpy-1-winSize; if(yb<0) yb = 0;
             V3DLONG ye = tmpy-1+winSize; if(ye>=M-1) ye = M-1;
+
+
+            QString outimg_file_app2 = imgname + QString("_x%1_x%2_y%3_y%4_app2.swc").arg(xb).arg(xe).arg(yb).arg(ye);
+            QString outimg_file_neutube = imgname + QString("_x%1_x%2_y%3_y%4_neutube.swc").arg(xb).arg(xe).arg(yb).arg(ye);
+            QString outimg_file_gs = imgname + QString("_x%1_x%2_y%3_y%4_gs.swc").arg(xb).arg(xe).arg(yb).arg(ye);
+
+
+            NeuronTree nt_app2_cropped =  cropSWCfile(nt_app2,xb,xe,yb,ye);
+            if(nt_app2_cropped.listNeuron.size()>0)
+            {
+                NeuronTree nt_app2_sort = SortSWC_pipeline(nt_app2_cropped.listNeuron,VOID, 0);
+                writeSWC_file(outimg_file_app2,nt_app2_sort);
+            }
+            else
+                writeSWC_file(outimg_file_app2,nt_app2_cropped);
+
+            NeuronTree nt_neutube_cropped =  cropSWCfile(nt_neutube,xb,xe,yb,ye);
+            if(nt_neutube_cropped.listNeuron.size()>0)
+            {
+                NeuronTree nt_neutube_sort = SortSWC_pipeline(nt_neutube_cropped.listNeuron,VOID, 0);
+                writeSWC_file(outimg_file_neutube,nt_neutube_sort);
+            }else
+                writeSWC_file(outimg_file_neutube,nt_neutube_cropped);
+
+            NeuronTree nt_gs_cropped =  cropSWCfile(nt_gs,xb,xe,yb,ye);
+            if(nt_gs_cropped.listNeuron.size()>0)
+            {
+                NeuronTree nt_gs_sort = SortSWC_pipeline(nt_gs_cropped.listNeuron,VOID, 0);
+                writeSWC_file(outimg_file_gs,nt_gs_sort);
+            }else
+                writeSWC_file(outimg_file_gs,nt_gs_cropped);
 
             V3DLONG im_cropped_sz[4];
             im_cropped_sz[0] = xe - xb + 1;
@@ -113,6 +187,51 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by YourName, 2016-6-15"));
 	}
+}
+
+NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
+{
+    //NeutronTree structure
+    NeuronTree nt_prunned;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    //set node
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    NeuronSWC S;
+    bool flag = true;
+    for (int i=0;i<list.size();i++)
+    {
+        NeuronSWC curr = list.at(i);
+        S.x 	= curr.x;
+        S.y 	= curr.y;
+
+        if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb)
+        {
+             S.n 	= curr.n;
+             S.type = curr.type;
+             S.z 	= curr.z;
+             S.r 	= curr.r;
+             if(flag)
+             {
+                 S.pn = -1;
+                 flag = false;
+             }
+             else
+                S.pn 	= curr.pn;
+             listNeuron.append(S);
+             hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+   }
+   nt_prunned.n = -1;
+   nt_prunned.on = true;
+   nt_prunned.listNeuron = listNeuron;
+   nt_prunned.hashNeuron = hashNeuron;
+
+   return nt_prunned;
 }
 
 bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

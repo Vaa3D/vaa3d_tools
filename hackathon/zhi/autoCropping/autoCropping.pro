@@ -9,6 +9,8 @@ INCLUDEPATH     += $$VAA3DPATH/common_lib/include
 HEADERS	+= autoCropping_plugin.h
 SOURCES	+= autoCropping_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
+
 
 TARGET	= $$qtLibraryTarget(autoCropping)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/autoCropping/
