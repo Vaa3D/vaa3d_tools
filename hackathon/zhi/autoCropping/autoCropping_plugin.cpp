@@ -9,7 +9,7 @@
 
 #include "basic_surf_objs.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-
+#include "neuron_sim_scores.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
@@ -128,29 +128,38 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
             NeuronTree nt_app2_cropped =  cropSWCfile(nt_app2,xb,xe,yb,ye);
+            NeuronTree nt_app2_sort;
             if(nt_app2_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_app2_sort = SortSWC_pipeline(nt_app2_cropped.listNeuron,nt_app2_cropped.listNeuron.at(0).n, 0);
-                writeSWC_file(outimg_file_app2,nt_app2_sort);
+                nt_app2_sort = SortSWC_pipeline(nt_app2_cropped.listNeuron,nt_app2_cropped.listNeuron.at(0).n, 0);
             }
             else
-                writeSWC_file(outimg_file_app2,nt_app2_cropped);
+                nt_app2_sort = nt_app2_cropped;
 
             NeuronTree nt_neutube_cropped =  cropSWCfile(nt_neutube,xb,xe,yb,ye);
+            NeuronTree nt_neutube_sort;
             if(nt_neutube_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_neutube_sort = SortSWC_pipeline(nt_neutube_cropped.listNeuron,nt_neutube_cropped.listNeuron.at(0).n, 0);
-                writeSWC_file(outimg_file_neutube,nt_neutube_sort);
+                nt_neutube_sort = SortSWC_pipeline(nt_neutube_cropped.listNeuron,nt_neutube_cropped.listNeuron.at(0).n, 0);
             }else
-                writeSWC_file(outimg_file_neutube,nt_neutube_cropped);
+                nt_neutube_sort = nt_neutube_cropped;
 
             NeuronTree nt_gs_cropped =  cropSWCfile(nt_gs,xb,xe,yb,ye);
+            NeuronTree nt_gs_sort;
             if(nt_gs_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_gs_sort = SortSWC_pipeline(nt_gs_cropped.listNeuron,nt_gs_cropped.listNeuron.at(0).n, 0);
-                writeSWC_file(outimg_file_gs,nt_gs_sort);
+                nt_gs_sort = SortSWC_pipeline(nt_gs_cropped.listNeuron,nt_gs_cropped.listNeuron.at(0).n, 0);
             }else
-                writeSWC_file(outimg_file_gs,nt_gs_cropped);
+                nt_gs_sort = nt_gs_cropped;
+
+            writeSWC_file(outimg_file_app2,nt_app2_sort);
+            writeSWC_file(outimg_file_neutube,nt_neutube_sort);
+            writeSWC_file(outimg_file_gs,nt_gs_sort);
+
+
+            NeuronDistSimple score_app2 = neuron_score_rounding_nearest_neighbor(&nt_gs_sort, &nt_app2_sort,false);
+            NeuronDistSimple score_neutube = neuron_score_rounding_nearest_neighbor(&nt_gs_sort, &nt_neutube_sort,false);
+
 
             V3DLONG im_cropped_sz[4];
             im_cropped_sz[0] = xe - xb + 1;
@@ -176,7 +185,12 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                     }
                 }
             }
-            QString outimg_file = imgname + QString("_x%1_x%2_y%3_y%4.tif").arg(xb).arg(xe).arg(yb).arg(ye);
+            QString outimg_file;
+            if(score_app2.dist_allnodes < score_neutube.dist_allnodes)
+                outimg_file = imgname + QString("_x%1_x%2_y%3_y%4_APP2.tif").arg(xb).arg(xe).arg(yb).arg(ye);
+            else
+                outimg_file = imgname + QString("_x%1_x%2_y%3_y%4_NEUTUBE.tif").arg(xb).arg(xe).arg(yb).arg(ye);
+
             simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
             if(im_cropped) {delete []im_cropped; im_cropped = 0;}
         }
