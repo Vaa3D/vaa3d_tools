@@ -130,7 +130,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             NeuronTree nt_app2_cropped =  cropSWCfile(nt_app2,xb,xe,yb,ye);
             if(nt_app2_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_app2_sort = SortSWC_pipeline(nt_app2_cropped.listNeuron,VOID, 0);
+                NeuronTree nt_app2_sort = SortSWC_pipeline(nt_app2_cropped.listNeuron,nt_app2_cropped.listNeuron.at(0).n, 0);
                 writeSWC_file(outimg_file_app2,nt_app2_sort);
             }
             else
@@ -139,7 +139,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             NeuronTree nt_neutube_cropped =  cropSWCfile(nt_neutube,xb,xe,yb,ye);
             if(nt_neutube_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_neutube_sort = SortSWC_pipeline(nt_neutube_cropped.listNeuron,VOID, 0);
+                NeuronTree nt_neutube_sort = SortSWC_pipeline(nt_neutube_cropped.listNeuron,nt_neutube_cropped.listNeuron.at(0).n, 0);
                 writeSWC_file(outimg_file_neutube,nt_neutube_sort);
             }else
                 writeSWC_file(outimg_file_neutube,nt_neutube_cropped);
@@ -147,7 +147,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             NeuronTree nt_gs_cropped =  cropSWCfile(nt_gs,xb,xe,yb,ye);
             if(nt_gs_cropped.listNeuron.size()>0)
             {
-                NeuronTree nt_gs_sort = SortSWC_pipeline(nt_gs_cropped.listNeuron,VOID, 0);
+                NeuronTree nt_gs_sort = SortSWC_pipeline(nt_gs_cropped.listNeuron,nt_gs_cropped.listNeuron.at(0).n, 0);
                 writeSWC_file(outimg_file_gs,nt_gs_sort);
             }else
                 writeSWC_file(outimg_file_gs,nt_gs_cropped);
@@ -202,7 +202,6 @@ NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
 
     QList<NeuronSWC> list = nt.listNeuron;
     NeuronSWC S;
-    bool flag = true;
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
@@ -215,13 +214,7 @@ NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
              S.type = curr.type;
              S.z 	= curr.z;
              S.r 	= curr.r;
-             if(flag)
-             {
-                 S.pn = -1;
-                 flag = false;
-             }
-             else
-                S.pn 	= curr.pn;
+             S.pn 	= curr.pn;
              listNeuron.append(S);
              hashNeuron.insert(S.n, listNeuron.size()-1);
         }
