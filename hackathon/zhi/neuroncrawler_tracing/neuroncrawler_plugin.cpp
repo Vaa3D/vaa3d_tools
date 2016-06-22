@@ -267,7 +267,6 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 4;
-
         crawler_raw_all(callback,parent,P,bmenu);
     }
 	else

@@ -2117,9 +2117,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
-
-    while(allTargetList.size()>0)
+    int iii = 0;
+    while(allTargetList.size()>0 && iii <10)
     {
+        iii++;
         newTargetList.clear();
         newTipsList.clear();
         if(P.adap_win)
@@ -2271,9 +2272,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-
-
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -2284,7 +2283,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
         }
+
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
@@ -2402,25 +2411,27 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     nt_neutube = readSWC_file(swcNEUTUBE);
 
     NeuronTree nt;
-    ifstream ifs_swcString(swcString.toStdString().c_str());
-    if(!ifs_swcString)
-    {
-        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
-        export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
+    nt = nt_neutube;
+    combine_list2file(nt.listNeuron, swcString);
+//    ifstream ifs_swcString(swcString.toStdString().c_str());
+//    if(!ifs_swcString)
+//    {
+//        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
+//        export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
-    }else
-    {
-        NeuronTree nt_tile = readSWC_file(swcString);
-        LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
-        if(inputRootList_pruned.size()<1)
-            return true;
-        else
-        {
-            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
-            combine_list2file(nt.listNeuron, swcString);
+//    }else
+//    {
+//        NeuronTree nt_tile = readSWC_file(swcString);
+//        LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
+//        if(inputRootList_pruned.size()<1)
+//            return true;
+//        else
+//        {
+//            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
+//            combine_list2file(nt.listNeuron, swcString);
 
-        }
-    }
+//        }
+//    }
 
     LandmarkList tip_left;
     LandmarkList tip_right;
