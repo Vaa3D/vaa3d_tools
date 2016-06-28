@@ -366,14 +366,14 @@ NeuronTileGroupsDialog::NeuronTileGroupsDialog(V3DPluginCallback2 * cb, V3dR_Mai
     radio_y = new QRadioButton(tr("tile rows along y"));
     radio_z = new QRadioButton(tr("tile rows along z"));
 
-    radio_x->setChecked(true);
-    radio_y->setChecked(false);
+    radio_x->setChecked(false);
+    radio_y->setChecked(true);
     radio_z->setChecked(false);
 
     spin_x = new QDoubleSpinBox();
-    spin_x->setRange(0,100000); spin_x->setValue(1000);
+    spin_x->setRange(0,100000); spin_x->setValue(400);
     spin_y = new QDoubleSpinBox();
-    spin_y->setRange(0,100000); spin_y->setValue(400);
+    spin_y->setRange(0,100000); spin_y->setValue(1000);
     spin_z = new QDoubleSpinBox();
     spin_z->setRange(0,100000); spin_z->setValue(0);
 
