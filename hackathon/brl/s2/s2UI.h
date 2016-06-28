@@ -72,6 +72,7 @@ signals:
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
 private slots:
+    void runBoundingBox();
     void startS2();
     void startScan();
     void loadScan();
@@ -172,6 +173,8 @@ private:
 
     QComboBox *tracingMethodComboB;
     QComboBox *channelChoiceComboB;
+    QCheckBox *addBoundingBoxScan;
+    QLabel *addBoundingBoxScanLabel;
 
     QLabel *s2Label;
     QPushButton *startS2PushButton;
@@ -215,7 +218,8 @@ private:
     QLabel * liveFileString;
     QPushButton * setLiveFilePath;
 
-
+    QSpinBox * startZStackDelaySB;
+    QLabel * startZStackDelayLabel;
     QFileInfo *liveFile;
     QFileInfo *liveFileStatus;
 // Target and ROI table widget
@@ -257,6 +261,7 @@ private:
     bool waitingForOverview;
 	bool isLocal;
     bool liveFileRunning;
+    bool haventRunBoundingBox;
     QDateTime liveFileModified;
 
     int smartScanStatus;

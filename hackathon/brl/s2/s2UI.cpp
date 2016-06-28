@@ -109,6 +109,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     posMonStatus = false;
     waitingForFile = 0;
+    haventRunBoundingBox = true;
     waitingToStartStack = false;
     isLocal = false;
     resetDir = false;
@@ -195,8 +196,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-   // connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
-   // connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+    // connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
+    // connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
 
 
 
@@ -205,8 +206,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
-   // connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
-   // connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+    // connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+    // connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
     connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
@@ -309,12 +310,12 @@ void S2UI::updateGVZoom(int sliderValue){
     QTransform newTransform;
     newTransform = originalTransform;
     newTransform.scale(xyscale,xyscale);
-   roiGV->setTransform(newTransform);
+    roiGV->setTransform(newTransform);
 }
 
 void S2UI::resetDirectory(){
     resetDir = true;
-            updateLocalRemote(isLocal);
+    updateLocalRemote(isLocal);
 }
 
 
@@ -322,13 +323,13 @@ void S2UI::resetDataDir(){
     QSettings settings("HHMI", "Vaa3D");
 
     QString localDataString = QFileDialog::getExistingDirectory(this, tr("Choose local data directory..."),
-                                                  "/",
-                                                  QFileDialog::ShowDirsOnly
-                                                  | QFileDialog::DontResolveSymlinks);
+                                                                "/",
+                                                                QFileDialog::ShowDirsOnly
+                                                                | QFileDialog::DontResolveSymlinks);
     settings.setValue("s2_dataDir",localDataString);
 
-localDataDirectory = QDir(localDataString);
-localDataDir->setText(localDataString);
+    localDataDirectory = QDir(localDataString);
+    localDataDir->setText(localDataString);
 
 
 
@@ -361,9 +362,9 @@ void S2UI::updateLocalRemote(bool state){
         }
         if (!settings.contains("s2_dataDir")){
             localDataString = QFileDialog::getExistingDirectory(this, tr("Choose local data directory..."),
-                                                          "/",
-                                                          QFileDialog::ShowDirsOnly
-                                                          | QFileDialog::DontResolveSymlinks);
+                                                                "/",
+                                                                QFileDialog::ShowDirsOnly
+                                                                | QFileDialog::DontResolveSymlinks);
             settings.setValue("s2_dataDir",localDataString);
         }else{
             localDataString =  settings.value("s2_dataDir").value<QString>();
@@ -386,7 +387,7 @@ void S2UI::updateLocalRemote(bool state){
     QDir topDir = QDir(topDirStr);
     topDir.mkdir(timeString);
 
-localDataDir->setText(localDataString);
+    localDataDir->setText(localDataString);
 
     saveDir =QDir(topDir.absolutePath().append("/").append(timeString));
 
@@ -484,7 +485,11 @@ QGroupBox *S2UI::createTracingParameters(){
     overlap = 0.01* ((float) overlapSpinBox->value());
 
 
-
+    addBoundingBoxScan = new QCheckBox;
+    addBoundingBoxScan->setChecked(true);
+    addBoundingBoxScanLabel  = new QLabel;
+    addBoundingBoxScan->setText("scan &bounding box");
+    addBoundingBoxScanLabel->setBuddy(addBoundingBoxScan);
 
     tracingMethodComboB = new QComboBox;
     tracingMethodComboB->addItem("MOST");
@@ -508,25 +513,6 @@ QGroupBox *S2UI::createTracingParameters(){
     QLabel * channelChoiceComboBLabel = new QLabel(tr("Color Channel: "));
 
 
-
-
-    zoomSpinBox = new QSpinBox;
-    zoomSpinBox->setMaximum(64);
-    zoomSpinBox->setMinimum(1);
-    zoomSpinBox->setValue(13);
-
-    zoomSpinBoxLabel = new QLabel;
-    zoomSpinBoxLabel->setText("zoom");
-
-
-    pixelsSpinBox = new QSpinBox;
-    pixelsSpinBox->setMinimum(50);
-    pixelsSpinBox->setMaximum(1024);
-    pixelsSpinBox->setValue(180);
-
-    pixelsSpinBoxLabel = new QLabel;
-    pixelsSpinBoxLabel->setText("pixels");
-    zoomPixelsProductLabel = new QLabel(tr("zoom*pixels = "));
 
 
     tileSizeCB = new QComboBox;
@@ -556,27 +542,25 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(interruptCB, 5,1);
     tPL->addWidget(labelGSDT,6,0);
     tPL->addWidget(useGSDTCB,6,1);
-    tPL->addWidget(runContinuousCBLabel,7,0);
-    tPL->addWidget(runContinuousCB,7,1);
+    tPL->addWidget(addBoundingBoxScanLabel,7,0);
+    tPL->addWidget(addBoundingBoxScan,7,1);
+    tPL->addWidget(runContinuousCBLabel,8,0);
+    tPL->addWidget(runContinuousCB,8,1);
 
-    tPL->addWidget(gridScanCBLabel,8,0);
-    tPL->addWidget(gridScanCB,8,1);
-    tPL->addWidget(gridSizeSBLabel,9,0);
-    tPL->addWidget(gridSizeSB,9,1);
+    tPL->addWidget(gridScanCBLabel,9,0);
+    tPL->addWidget(gridScanCB,9,1);
+    tPL->addWidget(gridSizeSBLabel,10,0);
+    tPL->addWidget(gridSizeSB,10,1);
 
-    tPL->addWidget(analysisRunningLable,10,1);
-    tPL->addWidget(analysisRunning,10,0);
-    tPL->addWidget(tracingMethodComboBLabel,11,0);
-    tPL->addWidget(tracingMethodComboB, 11, 1);
-    tPL->addWidget(channelChoiceComboBLabel,12,0);
-    tPL->addWidget(channelChoiceComboB,12,1);
-    tPL->addWidget(tileSizeCBLabel,13,0);
-    tPL->addWidget(tileSizeCB,13,1);
-    tPL->addWidget(zoomSpinBoxLabel,14,0);
-    tPL->addWidget(zoomSpinBox,14,1);
-    tPL->addWidget(pixelsSpinBoxLabel,15,0);
-    tPL->addWidget(pixelsSpinBox,15,1);
-    tPL->addWidget(zoomPixelsProductLabel,16,0);
+    tPL->addWidget(analysisRunningLable,11,1);
+    tPL->addWidget(analysisRunning,11,0);
+    tPL->addWidget(tracingMethodComboBLabel,12,0);
+    tPL->addWidget(tracingMethodComboB, 12, 1);
+    tPL->addWidget(channelChoiceComboBLabel,13,0);
+    tPL->addWidget(channelChoiceComboB,13,1);
+    tPL->addWidget(tileSizeCBLabel,14,0);
+    tPL->addWidget(tileSizeCB,14,1);
+
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -603,7 +587,31 @@ QGroupBox *S2UI::createConfigPanel(){
     setLiveFilePath->setText(tr("set LiveFile"));
 
 
+    startZStackDelaySB = new QSpinBox;
+    startZStackDelaySB->setMinimum(0);
+    startZStackDelaySB->setMaximum(1000);
+    startZStackDelaySB->setValue(200);
+    startZStackDelaySB->setSuffix("ms");
+    startZStackDelayLabel = new QLabel(tr("start stack delay"));
 
+
+    zoomSpinBox = new QSpinBox;
+    zoomSpinBox->setMaximum(64);
+    zoomSpinBox->setMinimum(1);
+    zoomSpinBox->setValue(13);
+
+    zoomSpinBoxLabel = new QLabel;
+    zoomSpinBoxLabel->setText("zoom");
+
+
+    pixelsSpinBox = new QSpinBox;
+    pixelsSpinBox->setMinimum(50);
+    pixelsSpinBox->setMaximum(1024);
+    pixelsSpinBox->setValue(180);
+
+    pixelsSpinBoxLabel = new QLabel;
+    pixelsSpinBoxLabel->setText("pixels");
+    zoomPixelsProductLabel = new QLabel(tr("zoom*pixels = "));
 
 
     cBL->addWidget(machineSaveDirLabel,0,0);
@@ -615,8 +623,16 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(liveFileStringLabel, 3,0);
     cBL->addWidget(liveFileString,3,1);
     cBL->addWidget(setLiveFilePath,4,0);
+    cBL->addWidget(startZStackDelayLabel,5,0);
+    cBL->addWidget(startZStackDelaySB, 5,1);
+    cBL->addWidget(zoomSpinBoxLabel,6,0);
+    cBL->addWidget(zoomSpinBox,6,1);
+    cBL->addWidget(pixelsSpinBoxLabel,7,0);
+    cBL->addWidget(pixelsSpinBox,7,1);
+    cBL->addWidget(zoomPixelsProductLabel,8,0);
+
     configBox->setLayout(cBL);
-return configBox;
+    return configBox;
 }
 
 QGroupBox *S2UI::createROIControls(){
@@ -731,19 +747,19 @@ void S2UI::loadForSA(){
 
     }
     if (tracingMethodComboB->currentIndex()==1){
-//        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
-    methodChoice = 2;
-            isAdaptive = false;
+        //        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+        methodChoice = 2;
+        isAdaptive = false;
     }
     if (tracingMethodComboB->currentIndex()==2){
         methodChoice = 1;
-//        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        //        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==3){
         methodChoice = 0;
         isAdaptive  = true;
-//        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        //        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==4){
@@ -755,12 +771,14 @@ void S2UI::loadForSA(){
     if (tracingMethodComboB->currentIndex()==5){
         methodChoice= 1;
         isAdaptive = true;
-     //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     if (tracingMethodComboB->currentIndex()==6){
-     methodChoice= -1;
-     //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+        methodChoice= -1;
+        isAdaptive = true;
+
+        //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
     emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
@@ -878,6 +896,21 @@ void S2UI::loadScanFromFile(QString fileString){
                 cb->pushObjectIn3DWindow(newwin);}
 
             cb->updateImageWindow(newwin);
+        }
+
+        QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
+        QStringList newFilterList;
+        newFilterList.append(QString("*.xml"));
+        status("xml directory: "+xmlDir.absolutePath());
+        xmlDir.setNameFilters(newFilterList);
+        QStringList newFileList = xmlDir.entryList();
+        if (!newFileList.isEmpty()){
+            QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( newFileList.at(0)));
+            QFile::copy( xmlInfo.absoluteFilePath(),sessionDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+            qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< sessionDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
+
+        }else{
+            qDebug()<<"no xml file available";
         }
 
 
@@ -1033,8 +1066,29 @@ void S2UI::startAllTargets(){
 }
 void S2UI::handleAllTargets(){
     qDebug()<<"handleAllTargets";
+    if (waitingForFile==1){
+        qDebug()<<"new delay loop in handleAllTargets...";
+        QTimer::singleShot(1000, this, SLOT(handleAllTargets()));
+        return;
+    }
+
+
+
+
+    if ((addBoundingBoxScan->isChecked()) & (targetIndex >=0) & (haventRunBoundingBox)){
+        smartScanStatus = 0;
+        emit runBoundingBox();
+        haventRunBoundingBox = false;
+        QTimer::singleShot(100, this, SLOT(handleAllTargets()));
+        return;
+    }
+
+
+
+
     targetIndex++;
     colorIndex++;
+    haventRunBoundingBox = true;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
         v3d_msg("finished with multi-target scan",true);
@@ -1113,6 +1167,9 @@ void S2UI::startingSmartScan(){
 
                 }
             }
+
+
+
 
 
             //allScanLocations.append(allROILocations);
@@ -1209,12 +1266,13 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     for (int i = 0; i<newLandmarks.length(); i++){
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
+            status(QString("and ").append(QString::number(newTipsList.length())).append(" tips"));
             //            for (int k=0; k<newTipsList.value(i).length();k++){
             //                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
             //            }
-          //  if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
-//                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
-//                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
+            //  if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
+            //                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
+            //                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
             //}
 
             qDebug()<<"new landmark pixel size 1 = "<<newLandmarks[i].ev_pc1;
@@ -1224,7 +1282,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
             if (!isDuplicateROI(newLandmarks.value(i))){
 
-// make a copy of the main list here.
+                // make a copy of the main list here.
                 // add the new stuff to the copy.
                 // sort the copy based on the category field [annoying?]
                 // and replace the main list with the new one.
@@ -1250,6 +1308,54 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
 }
 
+
+void S2UI::runBoundingBox(){
+    LocationSimple boundingBoxLocation;
+    if (scanList.length()==0) return;
+    float leftEdge = 10000;
+    float topEdge = -10000;
+    float bottomEdge = 10000;
+    float rightEdge = -10000;
+    for (int i = 0; i<scanList.length(); i++){
+        if ( (scanList[i].x-(scanList[i].ev_pc1/2.0))<leftEdge ) leftEdge = scanList[i].x-(scanList[i].ev_pc1/2.0);
+        if ( (scanList[i].x+(scanList[i].ev_pc1/2.0))>rightEdge) rightEdge = scanList[i].x+(scanList[i].ev_pc1/2.0);
+        if ( (scanList[i].y+(scanList[i].ev_pc2/2.0))>topEdge ) topEdge = scanList[i].y+(scanList[i].ev_pc2/2.0);
+        if ( (scanList[i].y-(scanList[i].ev_pc2/2.0))<bottomEdge ) bottomEdge = scanList[i].y-(scanList[i].ev_pc2/2.0);
+
+
+    }
+
+    qDebug()<<"leftEdge = "<<leftEdge;
+    qDebug()<<"rightEdge= "<<rightEdge;
+    qDebug()<<"topEdge = "<<topEdge;
+    qDebug()<<"bottomEdge ="<<bottomEdge;
+    boundingBoxLocation.x = (leftEdge +rightEdge)/2.0;
+    boundingBoxLocation.y = (topEdge + bottomEdge)/2.0;
+
+    boundingBoxLocation.ev_pc1 = rightEdge -leftEdge;
+    boundingBoxLocation.ev_pc2 = topEdge-bottomEdge;
+    if (boundingBoxLocation.ev_pc1 > boundingBoxLocation.ev_pc2){
+        boundingBoxLocation.ev_pc2 = boundingBoxLocation.ev_pc1;
+    }else{
+        boundingBoxLocation.ev_pc1 = boundingBoxLocation.ev_pc2;
+    }
+    qDebug()<<"boundingboxlocation.x "<<boundingBoxLocation.x;
+    qDebug()<<"boundingboxlocation.y "<<boundingBoxLocation.y;
+    qDebug()<<"boundingboxlocation.ev_pc1 "<<boundingBoxLocation.ev_pc1;
+    qDebug()<<"boundingboxlocation.ev_pc2 "<<boundingBoxLocation.ev_pc2;
+
+
+    allROILocations->append(boundingBoxLocation);
+
+    // create single location with the appropriate size and location based on previous smartscan tile locations.
+    // use scanList which should be complete at this point...
+    // add them to the list and set a flag...
+
+    //
+
+}
+
+
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
 
     // add check of relation to full field scan...
@@ -1270,24 +1376,24 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
         }else{// then check if all 4 corners are in any volume in scanList (critical for adaptive scanning)
 
             upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
 
             upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
             lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
             lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
-        if (upperLeft&&upperRight&lowerLeft&lowerRight){
-            return true;}
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+                return true;}
         }
     }
     // repeat on locations already queued!
@@ -1297,24 +1403,24 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
         }else{
 
             upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
 
             upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                    (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
             lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
             lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                    (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
-        if (upperLeft&&upperRight&lowerLeft&lowerRight){
-            return true;}
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+                return true;}
         }
     }
     bool outsideOverview = false;
@@ -1462,7 +1568,6 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         emit updateTable(allTargetLocations,allScanLocations);
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
         waitingToStartStack = true;
-        // QTimer::singleShot(0,this,SLOT(updateZoom()));
         emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
 
     }
@@ -1556,19 +1661,19 @@ void S2UI::loadLatest(){
 
             }
             if (tracingMethodComboB->currentIndex()==1){ //APP2
-        //        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
-            methodChoice = 2;
-                    isAdaptive = false;
+                //        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
+                methodChoice = 2;
+                isAdaptive = false;
             }
             if (tracingMethodComboB->currentIndex()==2){ //Neutube
                 methodChoice = 1;
-        //        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                //        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
                 methodChoice = 0;
                 isAdaptive  = true;
-        //        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                //        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
@@ -1580,18 +1685,37 @@ void S2UI::loadLatest(){
             if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
                 methodChoice= 1;
                 isAdaptive = true;
-             //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==6){ //automatic
-             methodChoice= -1;
-             //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+                methodChoice= -1;
+                isAdaptive = true;
+
+                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             qDebug()<<"isadaptive = "<<isAdaptive;
             qDebug()<<"methodChoice = "<<methodChoice;
             emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
+            QStringList newFilterList;
+            newFilterList.append(QString("*.xml"));
+            status("xml directory: "+xmlDir.absolutePath());
+            xmlDir.setNameFilters(newFilterList);
+            QStringList newFileList = xmlDir.entryList();
+            if (!newFileList.isEmpty()){
+                QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( newFileList.at(0)));
+                QFile::copy( xmlInfo.absoluteFilePath(),saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+                qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
+
+            }else{
+                qDebug()<<"no xml file available";
+            }
+
 
 
         }
@@ -1601,21 +1725,6 @@ void S2UI::loadLatest(){
         loadScanFromFile(getFileString());
     }
     // if there's an .xml file in the filestring directory, copy it to the save directory:
-    QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
-    QStringList filterList;
-    filterList.append(QString("*.xml"));
-    status("xml directory: "+xmlDir.absolutePath());
-    xmlDir.setNameFilters(filterList);
-    QStringList fileList = xmlDir.entryList();
-    if (!fileList.isEmpty()){
-        QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( fileList.at(0)));
-        QFile::copy( xmlInfo.absoluteFilePath(),saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
-        qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
-
-    }else{
-        qDebug()<<"no xml file available";
-    }
-
 
 
 }
@@ -1813,7 +1922,7 @@ void S2UI::scanStatusHandler(){
 
 
     zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1)&&
-           ( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
+            ( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
             (qAbs((int) uiS2ParameterMap[11].getCurrentValue() - currentTileInfo.getTilePixelsY())< 2);
 
 
@@ -1838,7 +1947,7 @@ void S2UI::scanStatusHandler(){
         if (waitingToStartStack){
             emit eventSignal("startZStack");
             waitingForFile = 1;
-            QTimer::singleShot(1000, &myController, SLOT(startZStack()));//
+            QTimer::singleShot(startZStackDelaySB->value(), &myController, SLOT(startZStack()));//
             //emit startZStackSig();
             waitingToStartStack = false;
             return;
@@ -1869,32 +1978,32 @@ void S2UI::collectZoomStack(){
                 iWant = i;
             }
         }
- qDebug()<<"got local window at i = "<<iWant;
- my3DControl = cb->getView3DControl_Any3DViewer(viewerList[iWant]);
-    qDebug()<<"x start = "<<my3DControl->getLocalStartPosX();
-    qDebug()<<"x end = "<<my3DControl->getLocalEndPosX();
-    qDebug()<<"y start = "<<my3DControl->getLocalStartPosY();
-    qDebug()<<"y end = "<<my3DControl->getLocalEndPosY();
-    qDebug()<<"window name "<< cb->getImageName(localWin);
-    float xCenter = ( my3DControl->getLocalEndPosX()+ my3DControl->getLocalStartPosX())/2.0;
-    float yCenter = ( my3DControl->getLocalEndPosY()+ my3DControl->getLocalStartPosY())/2.0;
-    float xWidth = ( my3DControl->getLocalEndPosX()- my3DControl->getLocalStartPosX());
-    float yWidth = ( my3DControl->getLocalEndPosY()- my3DControl->getLocalStartPosY());
+        qDebug()<<"got local window at i = "<<iWant;
+        my3DControl = cb->getView3DControl_Any3DViewer(viewerList[iWant]);
+        qDebug()<<"x start = "<<my3DControl->getLocalStartPosX();
+        qDebug()<<"x end = "<<my3DControl->getLocalEndPosX();
+        qDebug()<<"y start = "<<my3DControl->getLocalStartPosY();
+        qDebug()<<"y end = "<<my3DControl->getLocalEndPosY();
+        qDebug()<<"window name "<< cb->getImageName(localWin);
+        float xCenter = ( my3DControl->getLocalEndPosX()+ my3DControl->getLocalStartPosX())/2.0;
+        float yCenter = ( my3DControl->getLocalEndPosY()+ my3DControl->getLocalStartPosY())/2.0;
+        float xWidth = ( my3DControl->getLocalEndPosX()- my3DControl->getLocalStartPosX());
+        float yWidth = ( my3DControl->getLocalEndPosY()- my3DControl->getLocalStartPosY());
 
-    qDebug()<<"x = "<<xCenter<<" y = "<<yCenter<<" x width ="<<xWidth<<" y width = "<<yWidth;
-    newTarget.x = (xCenter-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
-    newTarget.y  = (yCenter-256.0)*overViewPixelToScanPixel;
+        qDebug()<<"x = "<<xCenter<<" y = "<<yCenter<<" x width ="<<xWidth<<" y width = "<<yWidth;
+        newTarget.x = (xCenter-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
+        newTarget.y  = (yCenter-256.0)*overViewPixelToScanPixel;
 
-    int tileWidth = 0;
-    if (xWidth>yWidth){
+        int tileWidth = 0;
+        if (xWidth>yWidth){
             tileWidth =xWidth;
-    }else{
-    tileWidth = yWidth;
-    }
-    newTarget.ev_pc1 = tileWidth * overViewPixelToScanPixel;
-    newTarget.ev_pc2 = tileWidth * overViewPixelToScanPixel;
+        }else{
+            tileWidth = yWidth;
+        }
+        newTarget.ev_pc1 = tileWidth * overViewPixelToScanPixel;
+        newTarget.ev_pc2 = tileWidth * overViewPixelToScanPixel;
 
-    //currentTileInfo.setPixels((int) tileWidth);
+        //currentTileInfo.setPixels((int) tileWidth);
     }
 
     //QString sString =currentTileInfo.getTileInfoString().join(" _ ");
@@ -2050,7 +2159,7 @@ void S2UI::updateZoomHandler(){
 void S2UI::updateZoomPixelsProduct(int ignore){
 
     zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
-    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328)"));
+    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2340)"));
     QTimer::singleShot(10, this, SLOT(initializeROISizes()));
 
 }
@@ -2062,33 +2171,33 @@ void S2UI::startLiveFile(){
     liveFileRunning= !liveFileRunning;
 
     if (liveFileRunning){
-    QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("vaa3d raw format (*.v3draw);;All Files (*.*)"));
+        QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("vaa3d raw format (*.v3draw);;All Files (*.*)"));
 
-    if (liveFilePath.isNull()){ liveFileRunning = false; return;}
+        if (liveFilePath.isNull()){ liveFileRunning = false; return;}
 
-    liveFileString->setText(liveFilePath);
-    liveFile = new QFileInfo(liveFilePath);
-
-
-
-    liveFileStatus = new QFileInfo(liveFile->absolutePath().append(QDir::separator()).append(liveFile->completeBaseName()).append(".status"));
-    liveFile->setCaching(false);
-    liveFileStatus->setCaching(false);
-    liveFileModified = liveFileStatus->lastModified();
+        liveFileString->setText(liveFilePath);
+        liveFile = new QFileInfo(liveFilePath);
 
 
-    //Ulf's code is now spitting out v3draw files, so we can monitor it directly
+
+        liveFileStatus = new QFileInfo(liveFile->absolutePath().append(QDir::separator()).append(liveFile->completeBaseName()).append(".status"));
+        liveFile->setCaching(false);
+        liveFileStatus->setCaching(false);
+        liveFileModified = liveFileStatus->lastModified();
 
 
-    // read in the file and display in 3D, returning the 3D viewer.
+        //Ulf's code is now spitting out v3draw files, so we can monitor it directly
 
-    Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data() );
-    liveFileWindow = cb->newImageWindow();
-    cb->setImage(liveFileWindow,pNewImage);
-            cb->open3DWindow(liveFileWindow);
-            cb->updateImageWindow(liveFileWindow);
 
-            QTimer::singleShot(0, this, SLOT(monitorLiveFile()));//
+        // read in the file and display in 3D, returning the 3D viewer.
+
+        Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data() );
+        liveFileWindow = cb->newImageWindow();
+        cb->setImage(liveFileWindow,pNewImage);
+        cb->open3DWindow(liveFileWindow);
+        cb->updateImageWindow(liveFileWindow);
+
+        QTimer::singleShot(0, this, SLOT(monitorLiveFile()));//
     }
 
 }
@@ -2102,7 +2211,7 @@ void S2UI::monitorLiveFile(){
 
         if (liveFileModified < liveFileStatus->lastModified()){
             qDebug()<<"update liveFile!";
-        liveFileModified=liveFileStatus->lastModified();
+            liveFileModified=liveFileStatus->lastModified();
             updateLiveFile();
         }
 
@@ -2115,7 +2224,7 @@ void S2UI::updateLiveFile(){
     Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data());
     cb->setImage(liveFileWindow,pNewImage);
 
-            cb->pushImageIn3DWindow(liveFileWindow);
+    cb->pushImageIn3DWindow(liveFileWindow);
 
 
 }
@@ -2124,3 +2233,8 @@ void S2UI::updateLiveFile(){
 // min and maximum adaptive tile size
 // pixel-zoom product stuff
 //
+//  configure multi-tile scan of bounding box...?
+
+// configure single-tile scan of bounding box for galvo scans.
+
+// start by centering scan

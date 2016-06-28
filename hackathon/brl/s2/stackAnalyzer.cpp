@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(500000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define INF 1E10
 template <class T> T pow2(T a)
 {
@@ -32,7 +32,7 @@ bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QStr
     QString info;
     while (! qf.atEnd())
     {
-        char _buf[1000], *buf;
+        char _buf[500], *buf;
         qf.readLine(_buf, sizeof(_buf));
         for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
 
@@ -1078,7 +1078,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     string swcfilepath;
     vector<MyMarker*> outswc;
     int node_type = 1;
-    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000;
+    int offsetX_min = 5000000,offsetY_min = 5000000,offsetX_max = -5000000,offsetY_max =-5000000;
     int origin_x,origin_y;
     while(ifs && getline(ifs, info_swc))
     {
@@ -1907,7 +1907,7 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
 //        tmpstr =  qPrintable( qtstr.setNum(0).prepend("#channel = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
-//        tmpstr =  qPrintable( qtstr.setNum(seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(50).prepend("#50 = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
 
         arg.p = (void *) & arg_para; input << arg;

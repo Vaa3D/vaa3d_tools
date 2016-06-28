@@ -172,13 +172,36 @@ for i = 1:numel(cellData)
             continue
         else
             allLocations = cell2mat(tileSetij');
-            [bigRectx, bigRecty] = meshgrid(floor(min(allLocations(:,1))):ceil(max(allLocations(:,3))),floor(min(allLocations(:,2))):ceil(max(allLocations(:,4))));
+            lowerx = floor(min(allLocations(:,1)));
+            upperx = ceil(max(allLocations(:,3)));
+            lowery =floor(min(allLocations(:,2)));
+            uppery = ceil(max(allLocations(:,4)));
+            
+            if (upperx-lowerx) < (uppery-lowery)
+                upperxS = lowerx+uppery-lowery;
+                upperyS = uppery;
+            else
+                upperxS = upperx;
+                upperyS = lowery+upperx-lowerx;
+            end
+            
+            [bigRectx, bigRecty] = meshgrid(lowerx:upperx,lowery:uppery);
             bigRect = false(size(bigRectx));
             for k = 1:nTiles
                 bigRect(:) = bigRect(:)| ((bigRectx(:)>allLocations(k,1)) &( bigRectx(:)<=allLocations(k,3) )& (bigRecty(:)>allLocations(k,2)) &( bigRecty(:)<=allLocations(k,4) ));
                 
                 
             end
+            
+               [bigRectxS, bigRectyS] = meshgrid(lowerx:upperxS,lowery:upperyS);
+            bigRectS = false(size(bigRectxS));
+            for k = 1:nTiles
+                bigRectS(:) = bigRectS(:)| ((bigRectxS(:)>allLocations(k,1)) &( bigRectxS(:)<=allLocations(k,3) )& (bigRectyS(:)>allLocations(k,2)) &( bigRectyS(:)<=allLocations(k,4) ));
+                
+                
+            end         
+            
+            
             cd(fullfile(cellData{i}(j).folderName,'..'))
             dString = pwd;
             
@@ -190,11 +213,14 @@ for i = 1:numel(cellData)
  
             
             cellData{i}(j).boundingBoxArea = numel(bigRect);
+            cellData{i}(j).boundingBoxAreaSquare = numel(bigRectS);
             cellData{i}(j).imagedArea = sum(bigRect(:));
             cellData{i}(j).tileAreas = (allLocations(:,4)-allLocations(:,2)).*(allLocations(:,3)-allLocations(:,1));
             cellData{i}(j).totalTileArea = sum(cellData{i}(j).tileAreas);
             cellData{i}(j).extraScanning = cellData{i}(j).totalTileArea-cellData{i}(j).imagedArea;
             cellData{i}(j).boundingBoxSparsity = cellData{i}(j).totalTileArea/numel(bigRect);
+             cellData{i}(j).boundingBoxSparsityS = cellData{i}(j).totalTileArea/numel(bigRectS);
+           
             cellData{i}(j).lagTimes =  diff(cellData{i}(j).tileStartTimes)-cellData{i}(j).allTileTimes(1:end-1);
             %  early on, there were some extraneous delays due to
             %  instabilities of the code on Windows.  The result was an
@@ -290,7 +316,7 @@ end
 
 a = unique(neuronNumbers)
 for ii = 1:numel(a)
-    neuronData{a(ii)}=[0,0,0,0,0,0,0,0,0]
+    neuronData{a(ii)}=[0,0,0,0,0,0,0,0,0,0]
                 timeSummary{a(ii)} = [0,0,0,0,0]
                 neuronScale{a(ii)} = [];
                 scanMode{a(ii)}= []
@@ -308,7 +334,7 @@ for i = 1:numel(cellData)
             if isfield(cellData{i}(j),'neuronNumber')
                 nn  = cellData{i}(j).neuronNumber;
                 
-                neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j,cellData{i}(j).zDepthVoxels]]
+                neuronData{nn} = [neuronData{nn} ; [mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime, cellData{i}(j).totalTileArea, cellData{i}(j).boundingBoxArea,i,j,cellData{i}(j).zDepthVoxels, cellData{i}(j).boundingBoxAreaSquare]]
                 
                 timeSummary{nn}= [timeSummary{nn}; [[cellData{i}(j).estimatedGridTime,cellData{i}(j).minTotalTime , cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),cellData{i}(j).estimatedGridTime,cellData{i}(j).boundingBoxImagingOnly]];
                 neuronScale{nn} = [neuronScale{nn}; cellData{i}(j).micronsPerPixel];
@@ -511,7 +537,7 @@ bip
 %subplot(2,2,4) ,   hold all, plot(neuronData{a(ii)}(:,2),neuronData{a(ii)}(:,6), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
 %% 2016.06.07 now organize everything by scan mode field
 
-allData = -1*ones(1,18)
+allData = -1*ones(1,19)
 for i = 1:numel(a)
     allData = [allData; [neuronData{a(i)}, neuronData{a(i)}(:,1).*neuronScale{a(i)},neuronData{a(i)}(:,2).*neuronScale{a(i)}.*neuronScale{a(ii)},neuronData{a(i)}(:,6).*neuronScale{a(i)}.*neuronScale{a(ii)}, timeSummary{a(i)},scanMode{a(i)}]];
 end
@@ -525,7 +551,7 @@ end
 %  cellData{i}(j).estimatedGridTime/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
 %  cellData{i}(j).minTotalTime /( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))), 
 %  cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
-% cellData{i}(j).estimatedGridTime
+%  cellData{i}(j).estimatedGridTime
 %  cellData{i}(j).imagingOnlyGridTime 
 
 % scanMode ;
@@ -540,31 +566,31 @@ s2G = allData(allData(:,end)==2,:)
 %% then manually plot over with the s2A scans as grey circles:
 
 subplot(4,1,1)
-hold all, plot(s2A(:,10), s2A(:,11),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,11), s2A(:,12),'o', 'markersize',10, 'color', [.5,.5,.5])
 
 subplot(4,1,2)
-hold all, plot(s2A(:,10), s2A(:,4),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,11), s2A(:,4),'o', 'markersize',10, 'color', [.5,.5,.5])
 subplot(4,1,3)
-hold all, plot(s2A(:,10), s2A(:,15)./s2A(:,13),'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,11), s2A(:,16)./s2A(:,14),'o', 'markersize',10, 'color', [.5,.5,.5])
 subplot(4,1,4)
-hold all, plot(s2A(:,10), s2A(:,15)./s2A(:,14)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
+hold all, plot(s2A(:,11), s2A(:,16)./s2A(:,15)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
 
 
 %%  for Hanchuan,simplified matrices with all scan data:
 
 
 % 
-s2PHC = s2(:,[1, 2, 5, 6, 10,11,12, 16,17, 7,8, 9])
+s2PHC = s2(:,[1, 2, 5, 6, 11,12,13, 17,18, 7,8, 9,4,10])
 % |1: average tile side|2: imaged area (no doublecounting) |3: total tile area (incl doublecounting) |4: bounding box area |5: average tile side (microns) 
 % |6: imaged area (microns) |7: bounding box area (microns) |8:
-% estimatedGridTime |9: imagingOnlyGridTime|10: ignore|11: ignore|12:
-% zDepthVoxels
+% estimatedGridTime |9: imagingOnlyGridTime |10: ignore |11: ignore |12:
+% zDepthVoxels |13: actual time | 14: square boundingbox area (voxels)
 % 
 %  "estimatedGridTime" includes the time for .tif conversion, (which can  be comparable to imaging times), and does not include any image overlap.  
-% "imagingOnlyGridTime" would be if there  is no time for .tif conversion.
+% "imagingOnlyGridTime" would be if there is no time for .tif conversion.
 %
 %  
-s2APHC = s2A(:,[1, 2, 5, 6, 10,11,12, 16,17, 7,8,9])
+s2APHC = s2A(:,[1, 2, 5, 6, 11,12,13, 17,18, 7,8, 9,4,10])
 
 
 
@@ -720,57 +746,57 @@ subplot(2,1,2)
 plot((s2(:,9)),(s2(:,10)),'.')
 
 
-%% other calculations:
-
-
-% how much additional time is contributed by analysis?  
-
-%  timeSummary 
-
-smartScanTimes = [timeSummary{1};timeSummary{2};timeSummary{3};timeSummary{4}]
-adaptiveScanTimes = timeSummary{aScanNN}
-gridScanTimes5 = [timeSummary{gScanNN}]
-
-
-ssAnalysisTimes = smartScanTimes(:,3)./smartScanTimes(:,2)-1
-mean(ssAnalysisTimes)
-std(ssAnalysisTimes)
-
-ssScanTimes = smartScanTimes(:,3)./smartScanTimes(:,1)
-mean(ssScanTimes)
-std(ssScanTimes)
-
-aScanTimes = adaptiveScanTimes(:,3)./adaptiveScanTimes(:,1)
-mean(aScanTimes)
-std(aScanTimes)
-
-ssND = [neuronData{1}; neuronData{2}; neuronData{3}; neuronData{4}]
-aND = neuronData{aScanNN};
-gND = neuronData{gScanNN};
-ssTotalVolume = ssND(:,2);
-aTotalVolume = aND(:,2);
-gTotalVolume5 = gND(1,2);
-gTotalVolume7 = gND(2,2);
-mean(ssTotalVolume)
-std(ssTotalVolume)
-mean(aTotalVolume)
-std(aTotalVolume)
-
-ssTotalTime = ssND(:,4)
-gTotalTime = gND(:,4)
-aTotalTime = aND(:,4)
-g5nD = neuronData{gScanNN}(1,:)
-
-
-mean(ssTotalTime)
-std(ssTotalTime)
-gTotalTime
-gTotalTime(2)/mean(aTotalTime)
-gTotalVolume7/mean(aTotalVolume)
-mean(gTotalVolume7)/mean(ssTotalVolume)
-mean(gTotalVolume5)/mean(aTotalVolume)
-mean(gTotalVolume7)/mean(aTotalVolume)
-mean(gTotalTime)/mean(aTotalTime)
+%% other  previous calculations:
+% 
+% 
+% % how much additional time is contributed by analysis?  
+% 
+% %  timeSummary 
+% 
+% smartScanTimes = [timeSummary{1};timeSummary{2};timeSummary{3};timeSummary{4}]
+% adaptiveScanTimes = timeSummary{aScanNN}
+% gridScanTimes5 = [timeSummary{gScanNN}]
+% 
+% 
+% ssAnalysisTimes = smartScanTimes(:,3)./smartScanTimes(:,2)-1
+% mean(ssAnalysisTimes)
+% std(ssAnalysisTimes)
+% 
+% ssScanTimes = smartScanTimes(:,3)./smartScanTimes(:,1)
+% mean(ssScanTimes)
+% std(ssScanTimes)
+% 
+% aScanTimes = adaptiveScanTimes(:,3)./adaptiveScanTimes(:,1)
+% mean(aScanTimes)
+% std(aScanTimes)
+% 
+% ssND = [neuronData{1}; neuronData{2}; neuronData{3}; neuronData{4}]
+% aND = neuronData{aScanNN};
+% gND = neuronData{gScanNN};
+% ssTotalVolume = ssND(:,2);
+% aTotalVolume = aND(:,2);
+% gTotalVolume5 = gND(1,2);
+% gTotalVolume7 = gND(2,2);
+% mean(ssTotalVolume)
+% std(ssTotalVolume)
+% mean(aTotalVolume)
+% std(aTotalVolume)
+% 
+% ssTotalTime = ssND(:,4)
+% gTotalTime = gND(:,4)
+% aTotalTime = aND(:,4)
+% g5nD = neuronData{gScanNN}(1,:)
+% 
+% 
+% mean(ssTotalTime)
+% std(ssTotalTime)
+% gTotalTime
+% gTotalTime(2)/mean(aTotalTime)
+% gTotalVolume7/mean(aTotalVolume)
+% mean(gTotalVolume7)/mean(ssTotalVolume)
+% mean(gTotalVolume5)/mean(aTotalVolume)
+% mean(gTotalVolume7)/mean(aTotalVolume)
+% mean(gTotalTime)/mean(aTotalTime)
 
 
 
