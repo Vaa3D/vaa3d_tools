@@ -634,14 +634,20 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     metrics.bg_std = standard_dev(bg_1d);
     metrics.fg_std = standard_dev(fg_1d);
     metrics.tubularity_std  = standard_dev(tubularities);
+    
+    if (metrics.fg_std != 0.0){
+        metrics.snr = fabs(fg_mean - bg_mean)/metrics.fg_std;
+    }
+    else {
+        metrics.snr  = INT_MAX;
+        cout<<"warning! foreground std is zero"<<endl;
+    }
 
     if (metrics.bg_std != 0.0){
         metrics.cnr = fabs(fg_mean - bg_mean)/metrics.bg_std;
-        metrics.snr = fg_mean/metrics.bg_std;
     }
     else {
         metrics.cnr  = INT_MAX;
-        metrics.snr =  INT_MAX;
         cout<<"warning! background std is zero"<<endl;
     }
 
