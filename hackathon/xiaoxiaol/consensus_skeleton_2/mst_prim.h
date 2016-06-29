@@ -11,6 +11,7 @@
 #ifndef __MST_PRIM_H_
 #define __MST_PRIM_H_
 
+#include <iostream>
 
 //global variables
 
@@ -178,6 +179,7 @@ bool mst_prim(unsigned short * adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLO
 
 	for (V3DLONG i=0;i<pMST->nnode;i++) {
 		plist[i] = pMST->nodeParent[i];
+        cout << "reg: parent[" << i << "] = " << plist[i] << endl;
 	}
 
 	//free memory and return

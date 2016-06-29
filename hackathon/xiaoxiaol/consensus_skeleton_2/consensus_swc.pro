@@ -4,6 +4,8 @@ CONFIG	+= qt plugin warn_off
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
+INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
+INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
 
 HEADERS	+= consensus_skeleton_plugin.h \
     median_swc.h \
@@ -17,9 +19,13 @@ HEADERS	+= consensus_skeleton.h
 HEADERS	+= kcentroid_cluster.h
 HEADERS	+= mst_dij.h
 HEADERS += mst_prim.h
+HEADERS += mst_boost_prim.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
 HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
+HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/prim_minimum_spanning_tree.hpp
+HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/adjacency_list.hpp
+HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/config.hpp
 
 SOURCES	+= point3d_util.cpp \
     dark_pruning.cpp \
@@ -32,6 +38,7 @@ SOURCES	+= consensus_skeleton_plugin.cpp \
 SOURCES	+= consensus_skeleton_func.cpp
 SOURCES	+= consensus_skeleton.cpp
 SOURCES	+= sort_eswc.cpp
+SOURCES += mst_boost_prim.cpp
 
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
