@@ -1097,13 +1097,9 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC>
 {
     long rootnode =0;
 
-    cout << "ok?" << endl;
-    cout <<"\nComputing max-spanning tree\n CHECK" <<endl;
-    cout << "here?\n";
+    cout <<"\nComputing max-spanning tree" <<endl;
     V3DLONG * plist;
-    cout << "a\n";
     V3DLONG num_nodes = merge_result.size();
-    cout << "b\n";
     try {
         plist = new V3DLONG[num_nodes];
     } catch (...) {
@@ -1130,6 +1126,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC>
         V3DLONG p = plist[i];
 
         if (p == -1){
+            cout << i << " is a root node" << endl;
             //root
             NeuronSWC tmp;
             tmp.x = node_list[i].x;

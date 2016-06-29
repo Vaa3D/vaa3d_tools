@@ -4,6 +4,7 @@
 #include "boost/graph/prim_minimum_spanning_tree.hpp"
 #include "boost/config.hpp"
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/kruskal_min_spanning_tree.hpp"
 #include "basic_surf_objs.h"
 
 using namespace boost;
