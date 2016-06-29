@@ -1160,7 +1160,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC>
 
             merge_result.append(tmp);
         } else {
-		    printf("an edge with vote %d is discarded.\n",edgeVote);
+            printf("edge connecting %d and %d with vote %d is discarded.\n",i, p, edgeVote);
 		}
     }
     return true;
@@ -1739,7 +1739,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
-   trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
+  //trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
 
    if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {

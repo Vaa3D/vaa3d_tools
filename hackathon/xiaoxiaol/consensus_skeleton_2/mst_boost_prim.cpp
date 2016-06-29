@@ -5,6 +5,7 @@
 using namespace std;
 using namespace boost;
 
+//unused kruskal method
 int getkruskalMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
 
     typedef graph_traits < UndirectedGraph >::edge_descriptor Edge;
@@ -68,38 +69,45 @@ int getprimMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLON
     float weights[max_edges];
     int c = 0;
 
-    cout << "extracting matrix\n";
+    //extract information from matrix into boost graph adjacency list input format
     for (int i = 0; i < num_nodes; ++i){
         for (int j = 0; j < i; ++j) { //to avoid repeat edges
             if (matrix[i*num_nodes + j] > 0) { //if edge present
                 edges[c] = E(i, j);
-                weights[c] = 1/matrix[i*num_nodes + j]; // 1/weight to build a max span tree
+                /* to make a max spanning tree, + 100 so all positive b/c boost implementation uses Djikstra
+                 * which asserts all numbers > 0
+                 * not cumulative so doesn't impact anything
+                 */
+                weights[c] = -matrix[i*num_nodes + j] + 100;
                 c++;
             }
         }
     }
 
+    //definitions
     UndirectedGraph g(edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
     property_map<UndirectedGraph, edge_weight_t>::type weightmap = get(edge_weight, g);
-
     std::vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(g));
 
     prim_minimum_spanning_tree(g, &p[rootnode]);
 
+
     for (std::size_t i = 0; i != p.size(); ++i) {
+        //boost denotes a root node by it's parent being itself where v3d denotes it by parent = 1
         if (p[i] == i) {
             plist[i] = -1;
         } else
             plist[i] = p[i];
+        cout << "parent of " << i << " = " << plist[i] << endl;
     }
+
     return EXIT_SUCCESS;
 }
 
 bool boost_mst_prim(unsigned short *adjMatrix, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode)
 {
 
-  cout << "1\n";
-
+    printf("1\n");
   getprimMST(adjMatrix, num_nodes, plist, rootnode);
 
   return true;
