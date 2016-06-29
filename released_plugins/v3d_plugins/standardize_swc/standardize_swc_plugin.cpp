@@ -112,7 +112,7 @@ bool standardize::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if (inparas.size() ==2)
            type =  atof(inparas.at(1));
 
-        double sort_th = dis_th * 2; //the parameter in sort_neuron_swc plugin, specifying the length threshold to bridge the gap
+        double sort_th = dis_th ; //the parameter in sort_neuron_swc plugin, specifying the length threshold to bridge the gap
 
         QString  outswc_file =  outfiles[0];
 
