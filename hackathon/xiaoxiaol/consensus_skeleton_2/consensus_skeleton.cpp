@@ -1677,15 +1677,23 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    QList<NeuronSWC> merge_result;
    int TYPE_MERGED=100;
 
-   int vote_threshold = nt_list_resampled.size()/3;
+   int  vote_threshold = 1;
+
+   if (nt_list_resampled.size()>=3)
+   {
+       vote_threshold = nt_list_resampled.size()/3;
+   }
+   else
+   {
+       cout <<"\n inputs number <3"<<endl;
+   }
+
    if (vote_threshold > max_vote_threshold)
    {
        vote_threshold = max_vote_threshold;
    }
 
-   if (vote_threshold < 2){
- //      vote_threshold = 2;
-   }
+
    cout <<"\nVote threshold is set at " << vote_threshold<<endl;
 
    merge_and_vote(nt_list_resampled,vote_threshold,  merge_result,TYPE_MERGED);
