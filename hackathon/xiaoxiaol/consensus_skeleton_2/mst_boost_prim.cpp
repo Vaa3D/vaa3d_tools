@@ -6,7 +6,7 @@ using namespace std;
 using namespace boost;
 
 //unused kruskal method
-int getkruskalMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
+int getkruskalMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
 
     typedef graph_traits < UndirectedGraph >::edge_descriptor Edge;
     typedef graph_traits < UndirectedGraph >::vertex_descriptor Vertex;
@@ -14,7 +14,7 @@ int getkruskalMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3D
 
     //generate list of edges and weights from adjacency matrix
 
-    int max_edges = (num_nodes * num_nodes)/2;
+    //int max_edges = (num_nodes * num_nodes)/2;
 
     E edges[max_edges];
     float weights[max_edges];
@@ -59,15 +59,22 @@ int getkruskalMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3D
     return EXIT_SUCCESS;
 }
 
-int getprimMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
+int getprimMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
 
     //generate list of edges and weights from adjacency matrix
 
-    int max_edges = (num_nodes * num_nodes)/2;
+    printf("2\n");
+
+    //int max_edges = (num_nodes * num_nodes)/2;
+
+    printf("max edges is %d\n", max_edges);
 
     E edges[max_edges];
+     printf("2.5\n");
     float weights[max_edges];
     int c = 0;
+
+    printf("3\n");
 
     //extract information from matrix into boost graph adjacency list input format
     for (int i = 0; i < num_nodes; ++i){
@@ -84,6 +91,8 @@ int getprimMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLON
         }
     }
 
+    printf("4\n");
+
     //definitions
     UndirectedGraph g(edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
     property_map<UndirectedGraph, edge_weight_t>::type weightmap = get(edge_weight, g);
@@ -91,6 +100,7 @@ int getprimMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLON
 
     prim_minimum_spanning_tree(g, &p[rootnode]);
 
+    printf("5\n");
 
     for (std::size_t i = 0; i != p.size(); ++i) {
         //boost denotes a root node by it's parent being itself where v3d denotes it by parent = 1
@@ -104,11 +114,11 @@ int getprimMST(unsigned short *matrix, V3DLONG num_nodes, V3DLONG *plist, V3DLON
     return EXIT_SUCCESS;
 }
 
-bool boost_mst_prim(unsigned short *adjMatrix, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode)
+bool boost_mst_prim(unsigned short *adjMatrix, int n_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode)
 {
 
-    printf("1\n");
-  getprimMST(adjMatrix, num_nodes, plist, rootnode);
+  printf("1\n");
+  getprimMST(adjMatrix, n_edges, num_nodes, plist, rootnode);
 
   return true;
 }

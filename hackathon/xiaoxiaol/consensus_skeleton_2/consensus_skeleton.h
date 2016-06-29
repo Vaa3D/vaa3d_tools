@@ -56,10 +56,10 @@ int cluster_distance_threshold, int resample_flag, V3DPluginCallback2 &callback)
 bool merge_and_vote(vector<NeuronTree> & nt_list_resampled,
                     int vote_threshold,QList<NeuronSWC> &merge_result,int TYPE_MERGED);
 double correspondingNodeFromNeuron(XYZ pt,QList<NeuronSWC> listNodes, int &closestNodeIdx,int TYPE_MERGED);
-bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC>  merge_result, unsigned short * adjMatrix,int TYPE_MERGED);
+int build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC>  merge_result, unsigned short * adjMatrix,int TYPE_MERGED);
 int postprocessing_neuron_node_list(QList<NeuronSWC>  &merge_result, unsigned short*&  adjMatrix, double vote_threshold);
 bool build_tree_from_adj_matrix(unsigned short * adjMatrix, QList<NeuronSWC> &merge_result,double vote_threshold);
-bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold);
+bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int n_edges, QList<NeuronSWC> &merge_result, double vote_threshold);
 void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold);
 void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double initial_threshold, int steps);
 #endif

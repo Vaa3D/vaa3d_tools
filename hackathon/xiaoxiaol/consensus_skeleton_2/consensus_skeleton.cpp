@@ -1093,7 +1093,7 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
     return total_editing_dis;
 }
 
-bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
+bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, QList<NeuronSWC> &merge_result, double vote_threshold)
 {
     long rootnode =0;
 
@@ -1109,7 +1109,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, QList<NeuronSWC>
 
     cout << "using boost version\n";
     //if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
-    if (!boost_mst_prim(adjMatrix, num_nodes, plist, rootnode))
+    if (!boost_mst_prim(adjMatrix, num_edges, num_nodes, plist, rootnode))
 
     {
         fprintf(stderr,"Error in minimum spanning tree!\n");
@@ -1302,10 +1302,11 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
 
 
- bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, unsigned short * adjMatrix,int TYPE_MERGED){
+int build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, unsigned short * adjMatrix,int TYPE_MERGED){
      //adjMatrix size is: num_nodes*num_nodes
      int num_nodes = merge_result.size();
      int * EDGE_VOTED = new int[num_nodes*num_nodes];
+     int num_edges = 0;
 
      for (int i=0;i<nt_list.size();i++)
      {
@@ -1334,6 +1335,9 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 			 if (pn_id == n_id) continue;
 
              if( EDGE_VOTED[n_id*num_nodes + pn_id] ==0  ){
+                 if (adjMatrix[n_id*num_nodes + pn_id] == 0) {//new edge
+                     num_edges++;
+                 }
                  adjMatrix[n_id*num_nodes + pn_id] += 1;
                  adjMatrix[pn_id*num_nodes + n_id] += 1;
                  EDGE_VOTED[n_id*num_nodes + pn_id] = 1;
@@ -1346,7 +1350,7 @@ double correspondingNodeFromNeuron(XYZ pt, QList<NeuronSWC> listNodes, int &clos
 
 	 delete [] EDGE_VOTED;
 
-     return true;
+     return num_edges;
  }
 
  //discard small disconnected sub-graphs
@@ -1721,7 +1725,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    }
    //DEBUG
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
-   build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
+   int n_edges = build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
 
    cout <<"\nRemoving isolated subgraphs"<<endl;
    cout <<"Number of nodes before postprocessing is: "<<merge_result.size() <<endl;
@@ -1730,7 +1734,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
    // connect the consensus nodes with vote confidence
-   build_tree_from_adj_matrix_mst(adjMatrix, merge_result, vote_threshold);
+   build_tree_from_adj_matrix_mst(adjMatrix, n_edges, merge_result, vote_threshold);
 
    double soma_x = merge_result[0].x;
    double soma_y = merge_result[0].y;
