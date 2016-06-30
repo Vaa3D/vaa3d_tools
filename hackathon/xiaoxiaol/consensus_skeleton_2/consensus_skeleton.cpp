@@ -161,7 +161,7 @@ bool tightRange(vector<double> x, double &low, double &high)
 
 
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(INT_MAX):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 double  computeTotalLength(const NeuronTree & nt)
 {
@@ -858,8 +858,8 @@ bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, do
 	}
 
 
-	double Dist = 10000000000;
-	double Dist_inrange = 10000000000;
+    double Dist = INT_MAX;
+    double Dist_inrange = INT_MAX;
 	V3DLONG soma_ID = -1;
 	V3DLONG dist_ID = -1;
 	int children_num = 0;
@@ -1126,7 +1126,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, Q
         V3DLONG p = plist[i];
 
         if (p == -1){
-            cout << i << " is a root node" << endl;
+            //cout << i << " is a root node" << endl;
             //root
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
@@ -1167,7 +1167,8 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, Q
 }
 
 //discard all the unconfident nodes without affecting the connectness of the tree.
-void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold) {
+//remove leaf nodes
+void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold) {
 	cout <<"\ndiscard all the unconfident nodes without affecting the connectness of the tree."<<endl;
 	int treeSize = merge_result.size();
 	vector<int> deleteFlag(treeSize,0);
@@ -1192,7 +1193,7 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold) {
 	//push all the end tips w/ low radius (votes) to a queue/stack;
 	QStack<int> stack;
 	for (int i=0; i<treeSize; i++) {
-		if (numOfChildren[i] == 0 && merge_result[i].r < threshold)
+        if (numOfChildren[i] == 0 && merge_result[i].fea_val[0] < vote_threshold )
 			stack.push(i);
 	}
 
@@ -1204,7 +1205,7 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold) {
 
 		int pn_pos = hashNeuron.value(merge_result[cur].pn);
 		numOfChildren[pn_pos]--;
-		if (numOfChildren[pn_pos] == 0 && merge_result[pn_pos].r < threshold)
+        if (numOfChildren[pn_pos] == 0 && merge_result[cur].fea_val[0]< vote_threshold)
 			stack.push(pn_pos);
 	}
 
@@ -1221,13 +1222,15 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,float threshold) {
 	cout <<"Now, number of nodes: "<<merge_result.size()<<endl;
 }
 
-void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double initial_threshold, int steps)
+
+//not used
+void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,int vote_threshold, int steps)
 {
 	for (int itr=0; itr<steps; itr++) {
 		QList<NeuronSWC> node_list = nt.listNeuron;
-		trim_unconfident_branches(node_list, initial_threshold+itr*0.1);
+        trim_unconfident_branches(node_list, vote_threshold);
         char * newfilename = new char [1000];
-        sprintf( newfilename, "%s_%.2f.swc", outfileName.toStdString().c_str(),initial_threshold+itr*0.1);
+        sprintf( newfilename, "%s_%.2f.swc", outfileName.toStdString().c_str(),vote_threshold);
 	    export_listNeuron_2swc(node_list, newfilename);
 		printf("%s has been generated successfully\n",newfilename);
 		delete [] newfilename;
@@ -1557,157 +1560,153 @@ int build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result
  }
 
 
-bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSWC> & final_consensus,
-               int max_vote_threshold,int cluster_distance_threshold, int resample_flag,V3DPluginCallback2 &callback)
-{
 
-    //resample input swcs
-    vector<NeuronTree> nt_list_resampled;
-    if (resample_flag >0)
+void  resample_neurons(vector<NeuronTree> nt_list,  vector<NeuronTree> * nt_list_resampled){
+
+    cout<<"Resampling..."<<endl;
+    for (int i = 0; i < nt_list.size(); i++)
     {
-        cout<<"Resampling..."<<endl;
-        for (int i = 0; i < nt_list.size(); i++)
+        NeuronTree nt = nt_list[i];
+        if (nt.listNeuron.size()>0)
         {
-            NeuronTree nt = nt_list[i];
-            if (nt.listNeuron.size()>0)
-            {
-                //resample with step size 1
-                NeuronTree resampled = resample(nt, 1.0);
-                if (resampled.listNeuron.size()>0){
-                    resampled.file = nt.file;
-                    nt_list_resampled.push_back(resampled);
-                }
+            //resample with step size 1
+            NeuronTree resampled = resample(nt, 1.0);
+            if (resampled.listNeuron.size()>0){
+                resampled.file = nt.file;
+                nt_list_resampled->push_back(resampled);
             }
         }
     }
-    else
-    {
-        nt_list_resampled=nt_list;
-    }
+     return;
+ }
 
 
-    int max_num_iters = 5;
 
-///*
-//DEBUG
- //  QFileInfo info(nt_list_resampled[0].file);
- //  QString anofilename = info.path()+"/max_iter_centered.ano";
- //  QFile file(anofilename);
- //  if (!file.open(QFile::WriteOnly|QFile::Truncate))
- //  {
- //      cout <<"Error opening the file "<<"./test_adjusted.ano" << endl;
- //      return false;
- //  }
- //QTextStream  stream_ano (&file);
-//END
+void run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double cluster_distance_threshold){
+     //DEBUG
+     //  QFileInfo info(nt_list[0].file);
+     //  QString anofilename = info.path()+"/max_iter_centered.ano";
+     //  QFile file(anofilename);
+     //  if (!file.open(QFile::WriteOnly|QFile::Truncate))
+     //  {
+     //      cout <<"Error opening the file "<<"./test_adjusted.ano" << endl;
+     //      return false;
+     //  }
+     //QTextStream  stream_ano (&file);
+     //END
 
-   //identify nearest neighbothood, and find the average location
-  vector<NeuronTree> shift_nt_list;
-  NeuronTree nt;
+       //identify nearest neighbothood, and find the average location
+      vector<NeuronTree> shift_nt_list;
+      NeuronTree nt;
 
-   cout<<"\n\nMatch and center:"<<endl;
-   for (int k = 0 ; k<max_num_iters; k++)
-   { // iterate multiple times, neurons will converge to center locations
-       cout<<"Iteration " <<k<<":"<<endl;
-       shift_nt_list.clear();
-       double total_editing_dis = 0.0;
-       int total_nodes = 0;
-       for (int i = 0; i < nt_list_resampled.size(); i++)
-       {
-           printf("\r now processing neuron: %3d", i);
-		   total_nodes += nt_list_resampled[i].listNeuron.size();
-           nt.listNeuron.clear();
-           nt.hashNeuron.clear();
-           int idx = i;
-           double editing_dis = match_and_center(nt_list_resampled, idx,cluster_distance_threshold, nt);
-           total_editing_dis += editing_dis;
-           if (editing_dis > 0)
+       cout<<"\n\nMatch and center:"<<endl;
+       for (int k = 0 ; k<max_num_iters; k++)
+       { // iterate multiple times, neurons will converge to center locations
+           cout<<"Iteration " <<k<<":"<<endl;
+           shift_nt_list.clear();
+           double total_editing_dis = 0.0;
+           int total_nodes = 0;
+           for (int i = 0; i < nt_list.size(); i++)
            {
-               shift_nt_list.push_back(nt);
-//DEBUG
-               //if ( k == (max_num_iters -1))
-               //{
-               //    char * filename = new char [1000];
-               //    sprintf( filename, "%s_adjusted%d.swc", nt_list_resampled[i].file.toStdString().c_str(),k);
+               printf("\r now processing neuron: %3d", i);
+               total_nodes += nt_list[i].listNeuron.size();
+               nt.listNeuron.clear();
+               nt.hashNeuron.clear();
+               int idx = i;
+               double editing_dis = match_and_center(nt_list, idx,cluster_distance_threshold, nt);
+               total_editing_dis += editing_dis;
+               if (editing_dis > 0)
+               {
+                   shift_nt_list.push_back(nt);
+      //DEBUG
+                   //if ( k == (max_num_iters -1))
+                   //{
+                   //    char * filename = new char [1000];
+                   //    sprintf( filename, "%s_adjusted%d.swc", nt_list[i].file.toStdString().c_str(),k);
 
-               //    export_listNeuron_2swc( nt.listNeuron, filename);
-               //    stream_ano<< "SWCFILE="<<QString(filename)<<"\n";
-               //    //cout<<"print to ano file: SWCFILE="<<filename<<endl;
-               //    delete [] filename;
-               //}
- //END
+                   //    export_listNeuron_2swc( nt.listNeuron, filename);
+                   //    stream_ano<< "SWCFILE="<<QString(filename)<<"\n";
+                   //    //cout<<"print to ano file: SWCFILE="<<filename<<endl;
+                   //    delete [] filename;
+                   //}
+      //END
+               }
+
+           }
+           printf("\n");
+
+           nt_list.clear();//for the next iteration
+           for (int j =0 ; j < shift_nt_list.size(); j++)
+           {
+               nt_list.push_back( shift_nt_list[j]);
            }
 
+           //converage
+           cout<<"Total matching distance is :" <<total_editing_dis<<endl;
+           cout<<"Avearge node editing distance is :" <<total_editing_dis/total_nodes<<endl;
+
+           if ( (total_editing_dis / total_nodes) < 0.2)
+           {
+             cout<<"Converged: stop the iterations.\n";
+             break;
+           }
+
+
        }
-	   printf("\n");
+     //DEBUG
+     //      file.close();
+     //END
 
-       nt_list_resampled.clear();//for the next iteration
-       for (int j =0 ; j < shift_nt_list.size(); j++)
-       {
-           nt_list_resampled.push_back( shift_nt_list[j]);
-       }
-
-       //converage
-       cout<<"Total matching distance is :" <<total_editing_dis<<endl;
-       cout<<"Avearge node editing distance is :" <<total_editing_dis/total_nodes<<endl;
-
-       if ( (total_editing_dis / total_nodes) < 0.2)
-       {
-         cout<<"Converged: stop the iterations.\n";
-         break;
-       }
+       // at the end of the iteration, resample nodes before merging
+       vector<NeuronTree> nt_list_resampled;
+       resample_neurons(nt_list, &nt_list_resampled);
+       nt_list = nt_list_resampled;
 
 
-   }
-//DEBUG
-//      file.close();
-//END
+       //DEBUG
+       //for (int i = 0; i < nt_list.size(); i++){
+           //char * filename = new char [1000];
+           //sprintf( filename, "%s_before_merge.swc", nt_list[i].file.toStdString().c_str());
+           //export_listNeuron_2swc( nt_list[i].listNeuron, filename);
+           //delete [] filename;
+       //}
+       //END
 
-   for (int i = 0; i < nt_list_resampled.size(); i++){
-       NeuronTree nt = nt_list_resampled[i];
-       if (nt.listNeuron.size()>0){
-           //resample with step size 1
-           NeuronTree resampled = resample(nt, 1.0);
-            if (resampled.listNeuron.size()>0){
-               resampled.file = nt.file;
-               nt_list_resampled[i] = resampled;
-            }
-       }
+    return;
+}
 
-	   //DEBUG
-	   //char * filename = new char [1000];
-	   //sprintf( filename, "%s_before_merge.swc", nt_list_resampled[i].file.toStdString().c_str());
-	   //export_listNeuron_2swc( nt_list_resampled[i].listNeuron, filename);
-	   //delete [] filename;
-	   //END
-   }
-//*/
-   //merge step
 
-   // save consensued nodes into merge_Results
-   QList<NeuronSWC> merge_result;
-   int TYPE_MERGED=100;
 
-   int  vote_threshold = 1;
+/////////////////////////////////////   MAIN FUNCTION ///////////////////////////////////////////////////////////
+bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSWC> & final_consensus,
+               int max_vote_threshold,double  cluster_distance_threshold, int resample_flag,V3DPluginCallback2 &callback)
+{
+    int max_num_iters = 5;
 
-   if (nt_list_resampled.size()>=3)
+    //overwrite input neuron list with shifted trees towards the center locations
+    run_match_center(nt_list, max_num_iters,cluster_distance_threshold);
+
+   //bound vote threshold by [1,max_vote_threshold]
+   int  vote_threshold = 1;//minmum vote
+   if (nt_list.size()>=3)
    {
-       vote_threshold = nt_list_resampled.size()/3;
+       vote_threshold = nt_list.size()/3;
    }
    else
    {
-       cout <<"\n inputs number <3"<<endl;
+       cout <<"\n number of inputs < 3"<<endl;
    }
-
-   if (vote_threshold > max_vote_threshold)
-   {
-       vote_threshold = max_vote_threshold;
-   }
-
-
+   if (vote_threshold > max_vote_threshold){vote_threshold = max_vote_threshold;}
    cout <<"\nVote threshold is set at " << vote_threshold<<endl;
 
-   merge_and_vote(nt_list_resampled,vote_threshold,  merge_result,TYPE_MERGED);
+
+   //merge the shifted neurons into a consensus node list
+   QList<NeuronSWC> merge_result;
+   int TYPE_MERGED=100;
+   merge_and_vote(nt_list,vote_threshold,  merge_result,TYPE_MERGED);
+
+
+
 
    // collect the edge votes
    unsigned short * adjMatrix;
@@ -1725,7 +1724,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    }
    //DEBUG
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
-   int n_edges = build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
+   int n_edges = build_adj_matrix(nt_list, merge_result, adjMatrix,TYPE_MERGED);
 
 
 // Yimin's contribution:
@@ -1747,7 +1746,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
-   trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
+   trim_unconfident_branches(merge_result,vote_threshold);
 
    if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
@@ -1762,26 +1761,26 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        }
 
-//       // erase small isolated branches
-//       for (int i=final_consensus.size()-1; i>=0; i--)
-//       {
-//           if (final_consensus[i].pn == -1)
-//           {
-//               begin = i;
-//               //erase the short branches
-//               if (count < cluster_distance_threshold*2)
-//               {
-//                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
-//               }
+       // erase small isolated branches
+       for (int i=final_consensus.size()-1; i>=0; i--)
+       {
+           if (final_consensus[i].pn == -1)
+           {
+               begin = i;
+               //erase the short branches
+               if (count < cluster_distance_threshold*2)
+               {
+                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
+               }
 
-//               end = begin-1;
-//               count = 0;
-//           }
-//           else
-//           {
-//               count ++;
-//           }
-//       }
+               end = begin-1;
+               count = 0;
+           }
+           else
+           {
+               count ++;
+           }
+       }
 
 
 

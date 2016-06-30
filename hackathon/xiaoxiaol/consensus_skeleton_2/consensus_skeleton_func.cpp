@@ -121,8 +121,8 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	}
 
 	//parsing parameters
-    int max_vote_threshold = 4; //>= max_vote_threshold votes, definitely included as part of the final consensus
-    int cluster_distance_threshold = 10; // ignore nodes that far away for clustering
+    int max_vote_threshold = 3; //>= max_vote_threshold votes, definitely included as part of the final consensus
+    double cluster_distance_threshold = 5; // ignore nodes that far away for clustering
     int resample_flag = 0;
     int REMOVE_OUTLIER = 1;
 	if (input.size()==2)
