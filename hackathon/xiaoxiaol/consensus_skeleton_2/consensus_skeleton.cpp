@@ -219,7 +219,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         if (tree.listNeuron.size()> MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY )
         {
             cout<<"This neuron is too big to process: likely to be an outlier anyway.Otherwise, please resample it "
-                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY nodes"<<endl;
+                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY(50000) nodes"<<endl;
             rm_ids.push_back(i);
         }
 
@@ -236,7 +236,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         nt_list.erase(nt_list.begin()+rm_ids[i]);
     }
 
-    cout<<"Sort all input neurons:"<<endl;
+    cout<<"Sort all input neurons (in order to compute correct number of bifurcations):"<<endl;
     for(int i = 0; i < nt_list.size(); i++){
         QList<NeuronSWC> sorted;
         if (!SortESWC (nt_list[i].listNeuron, sorted, VOID, bridge_gap))
@@ -1727,6 +1727,10 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
    int n_edges = build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
 
+
+// Yimin's contribution:
+//  previous version of prim mst implmentation is very sensitive, prune to disconnection errors
+// call the following function to make sure the graph is connected:
 //   cout <<"\nRemoving isolated subgraphs"<<endl;
 //   cout <<"Number of nodes before postprocessing is: "<<merge_result.size() <<endl;
 //   int numberOfSubGraphs = postprocessing_neuron_node_list(merge_result, adjMatrix, cluster_distance_threshold);
@@ -1743,7 +1747,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
-  //trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
+   trim_unconfident_branches(merge_result,double(vote_threshold)/double(nt_list_resampled.size()));
 
    if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
@@ -1758,26 +1762,26 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        }
 
-       // erase small isolated branches
-       for (int i=final_consensus.size()-1; i>=0; i--)
-       {
-           if (final_consensus[i].pn == -1)
-           {
-               begin = i;
-               //erase the short branches
-               if (count < cluster_distance_threshold*2)
-               {
-                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
-               }
+//       // erase small isolated branches
+//       for (int i=final_consensus.size()-1; i>=0; i--)
+//       {
+//           if (final_consensus[i].pn == -1)
+//           {
+//               begin = i;
+//               //erase the short branches
+//               if (count < cluster_distance_threshold*2)
+//               {
+//                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
+//               }
 
-               end = begin-1;
-               count = 0;
-           }
-           else
-           {
-               count ++;
-           }
-       }
+//               end = begin-1;
+//               count = 0;
+//           }
+//           else
+//           {
+//               count ++;
+//           }
+//       }
 
 
 
