@@ -209,17 +209,17 @@ int  computeNumberOfBifurcations(const NeuronTree & nt)
 
 
 bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
-
+    int MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY = 50000;
     // to avoid processing huge input swcs
 
     vector<int > rm_ids;
 
     for(int i = 0; i < nt_list.size(); i++) {
         NeuronTree tree = nt_list[i];
-        if (tree.listNeuron.size()> 10000 )
+        if (tree.listNeuron.size()> MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY )
         {
             cout<<"This neuron is too big to process: likely to be an outlier anyway.Otherwise, please resample it "
-                  "to have less than 10000 nodes"<<endl;
+                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY nodes"<<endl;
             rm_ids.push_back(i);
         }
 
@@ -1727,11 +1727,11 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
    int n_edges = build_adj_matrix(nt_list_resampled, merge_result, adjMatrix,TYPE_MERGED);
 
-   cout <<"\nRemoving isolated subgraphs"<<endl;
-   cout <<"Number of nodes before postprocessing is: "<<merge_result.size() <<endl;
-   int numberOfSubGraphs = postprocessing_neuron_node_list(merge_result, adjMatrix, cluster_distance_threshold);
-   cout <<"Number of nodes after postprocessing is: "<<merge_result.size() <<endl;
-   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
+//   cout <<"\nRemoving isolated subgraphs"<<endl;
+//   cout <<"Number of nodes before postprocessing is: "<<merge_result.size() <<endl;
+//   int numberOfSubGraphs = postprocessing_neuron_node_list(merge_result, adjMatrix, cluster_distance_threshold);
+//   cout <<"Number of nodes after postprocessing is: "<<merge_result.size() <<endl;
+//   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
    // connect the consensus nodes with vote confidence
    build_tree_from_adj_matrix_mst(adjMatrix, n_edges, merge_result, vote_threshold);
