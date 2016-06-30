@@ -13,7 +13,7 @@ typedef std::pair<int, int> E;
 typedef property < edge_weight_t, double >  Weight;
 typedef adjacency_list < vecS, vecS, undirectedS, no_property, Weight > UndirectedGraph;
 
-int getMST(unsigned short *matrix, int n_edges, V3DLONG n_nodes, V3DLONG *plist, V3DLONG rootnode);
+int getMST(unsigned short *matrix, int n_edges, int n_neurons, V3DLONG n_nodes, V3DLONG *plist, V3DLONG rootnode);
 bool boost_mst_prim(unsigned short *adjMatrix, int n_edges, V3DLONG n_nodes, V3DLONG *plist, V3DLONG rootnode);
 
 

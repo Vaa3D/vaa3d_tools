@@ -19,8 +19,7 @@ int getkruskalMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DL
     E edges[max_edges];
     float weights[max_edges];
     int c = 0;
-
-    cout << "extracting matrix\n";
+    
     for (int i = 0; i < num_nodes; ++i){
         for (int j = 0; j < i; ++j) { //to avoid repeat edges
             if (matrix[i*num_nodes + j] > 0) { //if edge present
@@ -59,39 +58,28 @@ int getkruskalMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DL
     return EXIT_SUCCESS;
 }
 
-int getprimMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
+int getprimMST(unsigned short *matrix, int max_edges, int num_neurons, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
 
     //generate list of edges and weights from adjacency matrix
 
-    printf("2\n");
-
-    //int max_edges = (num_nodes * num_nodes)/2;
-
-    printf("max edges is %d\n", max_edges);
-
     E edges[max_edges];
-     printf("2.5\n");
     float weights[max_edges];
     int c = 0;
-
-    printf("3\n");
 
     //extract information from matrix into boost graph adjacency list input format
     for (int i = 0; i < num_nodes; ++i){
         for (int j = 0; j < i; ++j) { //to avoid repeat edges
             if (matrix[i*num_nodes + j] > 0) { //if edge present
                 edges[c] = E(i, j);
-                /* to make a max spanning tree, + 100 so all positive b/c boost implementation uses Djikstra
+                /* to make a max spanning tree, + number of neurons so all positive b/c boost implementation uses Djikstra
                  * which asserts all numbers > 0
                  * not cumulative so doesn't impact anything
                  */
-                weights[c] = -matrix[i*num_nodes + j] + 100;
+                weights[c] = num_neurons - matrix[i*num_nodes + j];
                 c++;
             }
         }
     }
-
-    printf("4\n");
 
     //definitions
     UndirectedGraph g(edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
@@ -100,15 +88,13 @@ int getprimMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DLONG
 
     prim_minimum_spanning_tree(g, &p[rootnode]);
 
-    printf("5\n");
-
     for (std::size_t i = 0; i != p.size(); ++i) {
         //boost denotes a root node by it's parent being itself where v3d denotes it by parent = 1
         if (p[i] == i) {
             plist[i] = -1;
         } else
             plist[i] = p[i];
-        cout << "parent of " << i << " = " << plist[i] << endl;
+        //cout << "parent of " << i << " = " << plist[i] << endl;
     }
 
     return EXIT_SUCCESS;
@@ -117,8 +103,10 @@ int getprimMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DLONG
 bool boost_mst_prim(unsigned short *adjMatrix, int n_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode)
 {
 
-  printf("1\n");
-  getprimMST(adjMatrix, n_edges, num_nodes, plist, rootnode);
+  //placeholder - value will be passed in
+  int neuron_trees = 100;
+
+  getprimMST(adjMatrix, n_edges, neuron_trees, num_nodes, plist, rootnode);
 
   return true;
 }
