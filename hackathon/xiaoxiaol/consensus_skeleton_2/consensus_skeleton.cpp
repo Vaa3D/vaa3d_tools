@@ -39,6 +39,8 @@ inline long   lroundf(float num) { return static_cast<long>(roundf(num)); }
 #endif
 
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
 template <class T> T pow2(T a)
 {
 	return a*a;
@@ -160,8 +162,6 @@ bool tightRange(vector<double> x, double &low, double &high)
 }
 
 
-#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(INT_MAX):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 double  computeTotalLength(const NeuronTree & nt)
 {
@@ -263,10 +263,8 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
-
 		double len = computeTotalLength(tree);
         nt_lens.push_back(len);
-
         int N_bifs = computeNumberOfBifurcations(tree);
         nt_N_bifs.push_back(N_bifs+0.0);
 	}
@@ -274,9 +272,12 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
     //criteria 1: total length
     double low_len=0.25, high_len = 4;
     tightRange(nt_lens, low_len, high_len);
+
+
     //criteria 2: # of bifurcations
-    double low_bi = 0.25, high_bi = 4;
+    double low_bi = 0.25, high_bi = 8;//many trees have smaller branches which cause big #bifurcations
     tightRange(nt_N_bifs, low_bi, high_bi);
+
 
 //	// calculate for each SWC if it is isolated, and store the result in isolated[]
 //	vector<int> isolated;
@@ -1044,9 +1045,6 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
 
     for (int i = 0; i <input_neuron.listNeuron.size(); i++)
     {
-        //printf("\rnow processing neuron: %3d, node: %5d",input_neuron_id, i);
-
-		
 		NeuronSWC s = input_neuron.listNeuron.at(i);
         XYZ cur;
         cur.x = s.x;
@@ -1608,7 +1606,6 @@ void run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double cl
            int total_nodes = 0;
            for (int i = 0; i < nt_list.size(); i++)
            {
-               printf("\r now processing neuron: %3d", i);
                total_nodes += nt_list[i].listNeuron.size();
                nt.listNeuron.clear();
                nt.hashNeuron.clear();
@@ -1633,7 +1630,6 @@ void run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double cl
                }
 
            }
-           printf("\n");
 
            nt_list.clear();//for the next iteration
            for (int j =0 ; j < shift_nt_list.size(); j++)
@@ -1684,6 +1680,8 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     int max_num_iters = 5;
 
     //overwrite input neuron list with shifted trees towards the center locations
+    cout<<"run mater and center iterations:"<<endl;
+
     run_match_center(nt_list, max_num_iters,cluster_distance_threshold);
 
    //bound vote threshold by [1,max_vote_threshold]
@@ -1746,7 +1744,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
-   trim_unconfident_branches(merge_result,vote_threshold);
+ //  trim_unconfident_branches(merge_result,vote_threshold);
 
    if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
