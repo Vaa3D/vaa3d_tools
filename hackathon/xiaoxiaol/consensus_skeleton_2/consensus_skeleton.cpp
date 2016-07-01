@@ -275,7 +275,7 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
 
     //criteria 2: # of bifurcations
-    double low_bi = 0.25, high_bi = 8;//many trees have smaller branches which cause big #bifurcations
+    double low_bi = 0.1, high_bi = 10;//many trees have smaller branches which cause big #bifurcations
     tightRange(nt_N_bifs, low_bi, high_bi);
 
 
