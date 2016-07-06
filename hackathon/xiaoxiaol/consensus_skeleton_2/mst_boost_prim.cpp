@@ -58,36 +58,80 @@ int getkruskalMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DL
     return EXIT_SUCCESS;
 }
 
+int find_edge(std::vector<E> edges, int id,  int pid){
+
+
+
+    return 0;
+}
+
+
 
 int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_result, UndirectedGraph &g ){
-
-    //MERGE Code from Build adj matrix
-
-
-
-
-
-
     //generate list of edges and weights from adjacency matrix
-    E edges[max_edges];
-    float weights[max_edges];
-    int c = 0;
+    int max_edges = merge_result.size()-1;
+    std::vector<E >edges;
+    edges.resize(max_edges);
 
-    //extract information from matrix into boost graph adjacency list input format
-    for (int i = 0; i < num_nodes; ++i){
-        for (int j = 0; j < i; ++j) { //to avoid repeat edges
-            if (matrix[i*num_nodes + j] > 0) { //if edge present
-                edges[c] = E(i, j);
-                /* to make a max spanning tree, + number of neurons so all positive b/c boost implementation uses Djikstra
-                 * which asserts all numbers > 0
-                 * not cumulative so doesn't impact anything
-                 */
-                weights[c] = num_neurons - matrix[i*num_nodes + j];
-                c++;
-            }
-        }
+    /* to make a max spanning tree, + number of neurons so all positive b/c boost implementation uses Djikstra
+     * which asserts all numbers > 0
+     * not cumulative so doesn't impact anything
+     */
+    int weights[max_edges];
+    for (int i=0; i< max_edges; i++){
+        weights[i] = nt_list.size();//maximum weights
     }
 
+    int c = 0;
+    for (int i=0;i<nt_list.size();i++)
+    {
+        int voted[max_edges];
+        for (int i=0; i< max_edges; i++){
+            voted[i] = 0;
+        }
+
+        for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
+        {
+            NeuronSWC cur = nt_list[i].listNeuron[j];
+            if (cur.seg_id < 0 ){
+                //didn't get clustered to the consensus node( too far away)
+                continue;
+            }
+            V3DLONG n_id,pn_id;
+            n_id = cur.seg_id;// mapped consensu node id
+
+            if (cur.pn == -1 )
+            {//root, no edge connection
+                continue;}
+
+            V3DLONG pidx = nt_list[i].hashNeuron.value(cur.pn);
+            pn_id = nt_list[i].listNeuron[pidx].seg_id;
+
+            if (pn_id < 0  || pn_id == n_id){continue;} //skip
+
+            int c_found = find_edge(edges,n_id, pn_id);
+            if (c_found <= 0 /*E() not existing*/ )
+            {//new edge
+                edges.push_back( E(n_id, pn_id));
+                weights[c] -= 1;
+                voted[c] =1;
+                c++;
+
+            }
+            else
+            {// edge existing
+                if( voted[c_found]==0 ){
+                   //E(n_id, pn_id) not voted by the same tree
+                    weights[c_found] -= 1;
+                    voted[c_found] =1;
+                }
+
+            }
+
+        }
+
+
+    // weights[c] = num_neurons -edge_votes;
     //definitions
     g = new UndirectedGraph (edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
     property_map<UndirectedGraph, edge_weight_t>::type weightmap = get(edge_weight, g);
