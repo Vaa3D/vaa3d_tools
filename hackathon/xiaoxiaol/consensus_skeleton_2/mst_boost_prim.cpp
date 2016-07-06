@@ -13,65 +13,6 @@ int find_edge(std::vector<E> edges, int id,  int pid){
     return 0;
 }
 
-
-/*
- * bool build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result, UndirectedGraph * graph,int TYPE_MERGED){
-     //adjMatrix size is: num_nodes*num_nodes
-     int num_nodes = merge_result.size();
-     int * EDGE_VOTED = new int[num_nodes*num_nodes];
-     int num_edges = 0;
-     int neuron_trees = 100; //need to pass this through if we want to get actual weights out on the other side
-
-     for (int i=0;i<nt_list.size();i++)
-     {
-         for (V3DLONG ii=0;ii<num_nodes*num_nodes;ii++) EDGE_VOTED[ii] = 0;
-
-         for (V3DLONG j=0;j<nt_list[i].listNeuron.size();j++)
-         {
-             NeuronSWC cur = nt_list[i].listNeuron[j];
-             if (cur.seg_id < 0 ){
-                 //didn't get clustered to the consensus node( too far away)
-                 continue;
-             }
-             V3DLONG n_id,pn_id;
-             n_id = cur.seg_id;// mapped consensu node id
-
-             if (cur.pn == -1 )
-             {//root, no edge connection
-                 continue;}
-
-             V3DLONG pidx = nt_list[i].hashNeuron.value(cur.pn);
-             pn_id = nt_list[i].listNeuron[pidx].seg_id;
-
-             if (pn_id < 0)
-             {continue;}
-
-                         if (pn_id == n_id) continue;
-
-             if( EDGE_VOTED[n_id*num_nodes + pn_id] ==0  ){
-
-                 EdgeQuery edgeq = edge(n_id, pn_id, *graph);
-                 if (edgeq.second) {
-                     int weight = get(edge_weight_t(), *graph, edgeq.first);
-                     put(edge_weight_t(), *graph, edgeq.first, weight-1); //min tree so decrease weight
-                 } else add_edge(n_id, pn_id, neuron_trees - 1, *graph); //number of neuron trees minus weight to convert to a min tree
-
-                 /*
-                 adjMatrix[n_id*num_nodes + pn_id] += 1;
-                 adjMatrix[pn_id*num_nodes + n_id] += 1;
-
-                 EDGE_VOTED[n_id*num_nodes + pn_id] = 1;
-                 EDGE_VOTED[pn_id*num_nodes + n_id] = 1;
-             }
-
-         }
-     }
-
-         delete [] EDGE_VOTED;
-     return true;
- }
-//
- */
 int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_result, int max_weight, UndirectedGraph *g){
     //generate list of edges and weights from adjacency matrix
     int max_edges = merge_result.size()-1;
@@ -81,12 +22,6 @@ int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_resu
      * not cumulative so doesn't impact anything
      */
 
-//    int weights[max_edges];
-//    for (int i=0; i< max_edges; i++){
-//        weights[i] = nt_list.size();//maximum weights
-//    }
-
-    int c = 0;
     for (int i=0;i<nt_list.size();i++)
     {
         /*
@@ -148,10 +83,6 @@ int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_resu
 
         }
 
-
-    // weights[c] = num_neurons -edge_votes;
-    //definitions
-
     return 0;
 }
 
@@ -210,7 +141,6 @@ bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result,
         V3DLONG p = plist[i];
 
         if (p == -1){
-            //cout << i << " is a root node" << endl;
             //root
             NeuronSWC tmp;
             tmp.x = node_list[i].x;
@@ -246,9 +176,9 @@ bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result,
             tmp.fea_val.push_back(edgeVote);
 
             merge_result.append(tmp);
-        } else {
+        } /*else {
             printf("edge connecting %d and %d with vote %d is discarded.\n",i, p, edgeVote);
-        }
+        }*/
     }
     return true;
 }
