@@ -22,6 +22,7 @@ HEADERS += mst_prim.h
 HEADERS += mst_boost_prim.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.h
 HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/prim_minimum_spanning_tree.hpp
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/kruskal_min_spanning_tree.hpp

@@ -1091,7 +1091,8 @@ double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double
     return total_editing_dis;
 }
 
-bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, QList<NeuronSWC> &merge_result, double vote_threshold)
+/*
+bool (unsigned short * adjMatrix, QList<NeuronSWC> &merge_result, double vote_threshold)
 {
     long rootnode =0;
 
@@ -1107,7 +1108,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, Q
 
     cout << "using boost version\n";
     //if (!mst_prim(adjMatrix, num_nodes, plist, rootnode))
-    if (!boost_mst_prim(adjMatrix, num_edges, num_nodes, plist, rootnode))
+    if (!boost_mst_prim(adjMatrix, num_nodes, plist, rootnode))
 
     {
         fprintf(stderr,"Error in minimum spanning tree!\n");
@@ -1163,6 +1164,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int num_edges, Q
     }
     return true;
 }
+*/
 
 //discard all the unconfident nodes without affecting the connectness of the tree.
 //remove leaf nodes
@@ -1708,22 +1710,21 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
 
    // collect the edge votes
-   unsigned short * adjMatrix;
-   V3DLONG num_nodes = merge_result.size();
-   try{
-       adjMatrix = new unsigned short[num_nodes*num_nodes];
-       for (V3DLONG i=0;i<num_nodes*num_nodes;i++) adjMatrix[i] = 0;
-   }
-   catch (...)
-   {
-       fprintf(stderr,"fail to allocate memory.\n");
-       if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
+   //unsigned short * adjMatrix;
+   //V3DLONG num_nodes = merge_result.size();
+//   try{
+//       adjMatrix = new unsigned short[num_nodes*num_nodes];
+//       for (V3DLONG i=0;i<num_nodes*num_nodes;i++) adjMatrix[i] = 0;
+//   }
+//   catch (...)
+//   {
+//       fprintf(stderr,"fail to allocate memory.\n");
+//       if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
 
-       return false;
-   }
+//       return false;
+//   }
 
-
-   boost_mst_prim(nt_list, merge_result,TYPE_MERGED);
+   boost_mst_prim(nt_list, merge_result, vote_threshold);
 
 
 
