@@ -58,10 +58,17 @@ int getkruskalMST(unsigned short *matrix, int max_edges, V3DLONG num_nodes, V3DL
     return EXIT_SUCCESS;
 }
 
-int getprimMST(unsigned short *matrix, int max_edges, int num_neurons, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
+
+int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_result, UndirectedGraph &g ){
+
+    //MERGE Code from Build adj matrix
+
+
+
+
+
 
     //generate list of edges and weights from adjacency matrix
-
     E edges[max_edges];
     float weights[max_edges];
     int c = 0;
@@ -82,9 +89,15 @@ int getprimMST(unsigned short *matrix, int max_edges, int num_neurons, V3DLONG n
     }
 
     //definitions
-    UndirectedGraph g(edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
+    g = new UndirectedGraph (edges, edges + sizeof(edges) / sizeof(E), weights, num_nodes);
     property_map<UndirectedGraph, edge_weight_t>::type weightmap = get(edge_weight, g);
     std::vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(g));
+
+    return 0;
+}
+
+
+int getprimMST( UndirectedGraph g, int max_edges, int num_neurons, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode) {
 
     prim_minimum_spanning_tree(g, &p[rootnode]);
 
@@ -100,13 +113,78 @@ int getprimMST(unsigned short *matrix, int max_edges, int num_neurons, V3DLONG n
     return EXIT_SUCCESS;
 }
 
-bool boost_mst_prim(unsigned short *adjMatrix, int n_edges, V3DLONG num_nodes, V3DLONG *plist, V3DLONG rootnode)
+
+
+bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result, int TYPE_MERGED)
 {
+    long rootnode =0;
 
-  //placeholder - value will be passed in
-  int neuron_trees = 100;
+    cout <<"\nComputing max-spanning tree" <<endl;
+    V3DLONG * plist;
+    V3DLONG num_nodes = merge_result.size();
+    try {
+        plist = new V3DLONG[num_nodes];
+    } catch (...) {
+        cout << "out of memory" << endl;
+        return false;
+    }
 
-  getprimMST(adjMatrix, n_edges, neuron_trees, num_nodes, plist, rootnode);
+    UndirectedGraph g;
+    build_adjacency_list(nt_list,merge_result, TYPE_MERGED, g);
 
-  return true;
+
+    getprimMST(g, n_edges, nt_list.size(), num_nodes, plist, rootnode);
+
+
+    // code the edge votes into type for visualization
+    //    graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
+    QList<NeuronSWC> node_list = merge_result;
+    merge_result.clear();
+    for (V3DLONG i = 0;i <num_nodes;i++)
+    {
+        V3DLONG p = plist[i];
+
+        if (p == -1){
+            //cout << i << " is a root node" << endl;
+            //root
+            NeuronSWC tmp;
+            tmp.x = node_list[i].x;
+            tmp.y = node_list[i].y;
+            tmp.z = node_list[i].z;
+
+            tmp.type = 1;
+            tmp.pn = -1;
+            tmp.r =  node_list[i].r;
+            tmp.n = i+1;
+            tmp.fea_val.push_back(0);
+
+            merge_result.append(tmp);
+
+            continue;
+        }
+
+        unsigned int edgeVote = adjMatrix[i*num_nodes + p];
+
+        if (edgeVote >= vote_threshold ){
+            NeuronSWC tmp;
+            tmp.x = node_list[i].x;
+            tmp.y = node_list[i].y;
+            tmp.z = node_list[i].z;
+
+            tmp.type = 3;
+            tmp.pn = p + 1;  //parent id, form the edge
+            tmp.r =  node_list[i].r;
+            tmp.n = i+1;
+            tmp.fea_val.push_back(edgeVote);
+
+            merge_result.append(tmp);
+        } else {
+            printf("edge connecting %d and %d with vote %d is discarded.\n",i, p, edgeVote);
+        }
+    }
+    return true;
+
+
+
+
 }

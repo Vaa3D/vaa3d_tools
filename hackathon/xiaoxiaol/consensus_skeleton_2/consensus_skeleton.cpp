@@ -1694,13 +1694,14 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    {
        cout <<"\n number of inputs < 3"<<endl;
    }
+
    if (vote_threshold > max_vote_threshold){vote_threshold = max_vote_threshold;}
    cout <<"\nVote threshold is set at " << vote_threshold<<endl;
 
 
    //merge the shifted neurons into a consensus node list
    QList<NeuronSWC> merge_result;
-   int TYPE_MERGED=100;
+   int TYPE_MERGED = 100;
    merge_and_vote(nt_list,vote_threshold,  merge_result,TYPE_MERGED);
 
 
@@ -1720,9 +1721,15 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        return false;
    }
+
+
+   boost_mst_prim(nt_list, merge_result,TYPE_MERGED);
+
+
+
    //DEBUG
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
-   int n_edges = build_adj_matrix(nt_list, merge_result, adjMatrix,TYPE_MERGED);
+ //  int n_edges = build_adj_matrix(nt_list, merge_result, adjMatrix,TYPE_MERGED);
 
 
 // Yimin's contribution:
@@ -1735,7 +1742,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
    // connect the consensus nodes with vote confidence
-   build_tree_from_adj_matrix_mst(adjMatrix, n_edges, merge_result, vote_threshold);
+   //build_tree_from_adj_matrix_mst(adjMatrix, n_edges, merge_result, vote_threshold);
 
    double soma_x = merge_result[0].x;
    double soma_y = merge_result[0].y;
