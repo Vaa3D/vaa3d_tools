@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
-#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(500000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define INF 1E10
 template <class T> T pow2(T a)
 {
@@ -32,7 +32,7 @@ bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QStr
     QString info;
     while (! qf.atEnd())
     {
-        char _buf[500], *buf;
+        char _buf[1000], *buf;
         qf.readLine(_buf, sizeof(_buf));
         for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
 
@@ -880,26 +880,26 @@ void StackAnalyzer::loadScan_adaptive(QString latestString, float overlap, int b
 
         if(tip_left.size()>0)
         {
-            QList<LandmarkList> group_tips_left = group_tips(tip_left,50,1);
+            QList<LandmarkList> group_tips_left = group_tips(tip_left,100,1);
             for(int i = 0; i < group_tips_left.size();i++)
                 ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,1,overlap);
         }
         if(tip_right.size()>0)
         {
-            QList<LandmarkList> group_tips_right = group_tips(tip_right,50,2);
+            QList<LandmarkList> group_tips_right = group_tips(tip_right,100,2);
             for(int i = 0; i < group_tips_right.size();i++)
                 ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,2,overlap);
         }
         if(tip_up.size()>0)
         {
-            QList<LandmarkList> group_tips_up = group_tips(tip_up,50,3);
+            QList<LandmarkList> group_tips_up = group_tips(tip_up,100,3);
             for(int i = 0; i < group_tips_up.size();i++)
                 ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,3,overlap);
 
         }
         if(tip_down.size()>0)
         {
-            QList<LandmarkList> group_tips_down = group_tips(tip_down,50,4);
+            QList<LandmarkList> group_tips_down = group_tips(tip_down,100,4);
             for(int i = 0; i < group_tips_down.size();i++)
                 ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,tileLocation.ev_pc1,4,overlap);
         }
@@ -1078,7 +1078,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     string swcfilepath;
     vector<MyMarker*> outswc;
     int node_type = 1;
-    int offsetX_min = 5000000,offsetY_min = 5000000,offsetX_max = -5000000,offsetY_max =-5000000;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000;
     int origin_x,origin_y;
     while(ifs && getline(ifs, info_swc))
     {
@@ -1907,7 +1907,7 @@ void StackAnalyzer::loadScanSubtractiveAdaptive(QString latestString, float over
 //        tmpstr =  qPrintable( qtstr.setNum(0).prepend("#channel = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
-//        tmpstr =  qPrintable( qtstr.setNum(50).prepend("#50 = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(100).prepend("#100 = ") ); infostring.push_back(tmpstr);
 //        tmpstr =  qPrintable( qtstr.setNum(slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
 
         arg.p = (void *) & arg_para; input << arg;
@@ -2217,7 +2217,7 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
         adaptive_size = (max_x - min_x)*(1.0+3.0*overlap);
     }
 
-    if(adaptive_size <= 50) adaptive_size = 50;
+    if(adaptive_size <= 100) adaptive_size = 100;
     if(adaptive_size >= block_size) adaptive_size = block_size;
 
     LocationSimple newTarget;
@@ -2933,27 +2933,27 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
 
     if(tip_left.size()>0)
     {
-        QList<LandmarkList> group_tips_left = group_tips(tip_left,50,1);
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,100,1);
         for(int i = 0; i < group_tips_left.size();i++)
             ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,1,overlap);
 //    /tileLocation.ev_pc1
     }
     if(tip_right.size()>0)
     {
-        QList<LandmarkList> group_tips_right = group_tips(tip_right,50,2);
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,100,2);
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,2,overlap);
     }
     if(tip_up.size()>0)
     {
-        QList<LandmarkList> group_tips_up = group_tips(tip_up,50,3);
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,100,3);
         for(int i = 0; i < group_tips_up.size();i++)
             ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,3,overlap);
 
     }
     if(tip_down.size()>0)
     {
-        QList<LandmarkList> group_tips_down = group_tips(tip_down,50,4);
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,100,4);
         for(int i = 0; i < group_tips_down.size();i++)
             ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,4,overlap);
     }

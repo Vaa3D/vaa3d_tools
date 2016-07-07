@@ -29,7 +29,7 @@
 batchTopDirectory = '/local2/s2Data'
 cd(fullfile(batchTopDirectory))
 
-batch = dir(fullfile(batchTopDirectory,'cell*'))
+batch = dir(fullfile(batchTopDirectory,'cell0*'))
 tic
 
 
@@ -41,7 +41,7 @@ for i = 1:numel(batch)
     celliDir = celliDir([celliDir(:).isdir]') ; % just get scan directories
     keepList = true(1,numel(celliDir));
    for j = 1:numel(celliDir)  %  all scans, even aborted ones
-       if (sum(findstr(celliDir(j).name, '2016'))==0)  % not a normal scan folder
+       if (sum(findstr(celliDir(j).name, '2016_'))==0)  % not a normal scan folder
            keepList(j) = false;
        end
    end
@@ -53,7 +53,11 @@ for i = 1:numel(batch)
             
         end
         
-   end
+    end
+   
+    
+    
+    
    
 
 end
@@ -219,9 +223,11 @@ for i = 1:numel(cellData)
             cellData{i}(j).totalTileArea = sum(cellData{i}(j).tileAreas);
             cellData{i}(j).extraScanning = cellData{i}(j).totalTileArea-cellData{i}(j).imagedArea;
             cellData{i}(j).boundingBoxSparsity = cellData{i}(j).totalTileArea/numel(bigRect);
-             cellData{i}(j).boundingBoxSparsityS = cellData{i}(j).totalTileArea/numel(bigRectS);
-           
+            cellData{i}(j).boundingBoxSparsityS = cellData{i}(j).totalTileArea/numel(bigRectS);
+            
             cellData{i}(j).lagTimes =  diff(cellData{i}(j).tileStartTimes)-cellData{i}(j).allTileTimes(1:end-1);
+            
+
             %  early on, there were some extraneous delays due to
             %  instabilities of the code on Windows.  The result was an
             %  error message that popped up and stopped the scan unless it
@@ -256,6 +262,21 @@ for i = 1:numel(cellData)
             cellData{i}(j).imagingOnlyTimePerTileArea = mean((cellData{i}(j).allTileTimes(:))./cellData{i}(j).tileAreas);
             cellData{i}(j).boundingBoxImagingOnly = numel(bigRect)*cellData{i}(j).imagingOnlyTimePerTileArea;
             cellData{i}(j).zDepthVoxels = cellData{i}(j).allTileInfo{1}.tileDimensions(3);
+            
+            
+        if       cellData{i}(j).neuronNumber >= 28  % add BB scans for most recent dataset.
+
+            xmlFile = dir(fullfile(pwd, 'ZSeries*'));
+            if numel(xmlFile)>0
+            if xmlFile(1).isdir
+                xmlDir = xmlFile(1);
+            else
+                xmlDir.name = '';
+            end
+            cellData{i}(j).BBdata = scanDataFromXMLDir(fullfile(batchTopDirectory, batch(i).name, xmlDir.name))
+            end
+            
+        end
         end
     end
 end
@@ -342,7 +363,7 @@ for i = 1:numel(cellData)
                 if cellData{i}(j).isGridScan
                     thisMode = 2;
                 elseif cellData{i}(j).isAdaptive
-                    thisMode = 1;
+                    thisMode = 1;neuronScale
                 else
                     thisMode = 0;
                 end
@@ -539,7 +560,10 @@ bip
 
 allData = -1*ones(1,19)
 for i = 1:numel(a)
-    allData = [allData; [neuronData{a(i)}, neuronData{a(i)}(:,1).*neuronScale{a(i)},neuronData{a(i)}(:,2).*neuronScale{a(i)}.*neuronScale{a(ii)},neuronData{a(i)}(:,6).*neuronScale{a(i)}.*neuronScale{a(ii)}, timeSummary{a(i)},scanMode{a(i)}]];
+    allData = [allData; [neuronData{a(i)}, neuronData{a(i)}(:,1).*neuronScale{a(i)},neuronData{a(i)}(:,2).*neuronScale{a(i)}.*neuronScale{a(i)},neuronData{a(i)}(:,6).*neuronScale{a(i)}.*neuronScale{a(ii)}, timeSummary{a(i)},scanMode{a(i)}]];
+
+
+
 end
 
 %[mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime,
@@ -574,6 +598,142 @@ subplot(4,1,3)
 hold all, plot(s2A(:,11), s2A(:,16)./s2A(:,14),'o', 'markersize',10, 'color', [.5,.5,.5])
 subplot(4,1,4)
 hold all, plot(s2A(:,11), s2A(:,16)./s2A(:,15)-1,'o', 'markersize',10, 'color', [.5,.5,.5])
+
+
+%%  now go into detail on the standardized data set with square boundingbox acquisitions.
+
+
+
+bbCells = 27:48
+summaryData = zeros(numel(bbCells),18);
+for i = 1:numel(bbCells)
+    bbDatai = cellData{bbCells(i)};
+    nBBTiles = numel( bbDatai.BBdata.allTileInfo)
+    totalBBAreai = nBBTiles*bbDatai.BBdata.allTileInfo{1}.tileDimensions(1)*bbDatai.BBdata.allTileInfo{1}.tileDimensions(2); % true only for grid acquisitions
+    zDepth = bbDatai.BBdata.allTileInfo{1}.tileDimensions(3);
+    totalBBTimei  =  nBBTiles* bbDatai.BBdata.allTileInfo{1}.tileTime;
+
+    
+    %  summary information:
+    
+    %   |1: rectangular boundingBoxArea |2: Square BB Area| 3: Actual BB area | 4: total BB time (imaging only) |
+    %    5: z depth | 6: total s2 scan time | 7: s2 imaged Area | 8: mean S2 tile area
+    %    9: s2 total tile area|10: microns per pixel |11: index i for  cellData{i}| 12: index j for cellData{i}(j) |
+    %    13: estimated Rectangular BB Time |14: minimum S2 time (imaging
+    %    and min. lag) | 15: Rectangular BB Imaging Only time | 16: actual imaging time
+    %    per tile area of BB |
+    %   17: S2 time per tile area Imaging Only |18: S2 estimated time per tile  area
+    s2Infoi = [bbDatai.boundingBoxArea, bbDatai.boundingBoxAreaSquare,totalBBAreai, totalBBTimei,...
+                zDepth , bbDatai.totalTime, bbDatai.imagedArea,  mean(sqrt(bbDatai.tileAreas)), ...
+                bbDatai.totalTileArea,bbDatai.micronsPerPixel,i,j,...
+               bbDatai.estimatedGridTime,bbDatai.minTotalTime ,  bbDatai.boundingBoxImagingOnly  , totalBBTimei/totalBBAreai       ,...
+               bbDatai.imagingOnlyTimePerTileArea, bbDatai.estimatedTimePerTileArea];
+
+    
+    summaryData(i,:) = s2Infoi;
+    
+end
+
+
+%%   plot stuffs
+
+%  1.  overall imaging timefigure, plot(
+%   estimated Grid Time is the time to image the rectangular boundingbox
+%   assuming a time-per-image-area that is constant across tile sizes.
+
+%   how does this time compare to the actual time to image the square
+%   boundingbox?
+
+figure, 
+subplot(3,1,1)
+plot(summaryData(:,4), summaryData(:,15).*(summaryData(:,2)./summaryData(:,1)), 'o')  %  'imaging only' boundingbox estimate, normalized to the actual bounding box size.  plotted vs. actual imaging time for square BB
+hold all,
+
+plot(summaryData(:,4), summaryData(:,13).*(summaryData(:,2)./summaryData(:,1)), '*')  %  same idea, but including the estimated minimum lag time in the estimated boundingbox time.   plotted vs. actual imaging time for square BB
+hold all, plot([0 1000], [0 1000])
+
+
+%  added 'basic fitting' for imaging only data and saved fig.
+
+% the time/area is about 4.3x higher for small tiles than the whole BB,
+% which is even more than the worst estimates from single tiles (2.8us adds
+% about ~1.75x slowdown per line for small tiles).  there is still a factor
+% of 2.45x missing WITHOUT COUNTING ANY TIME TO PROCESS INDIVIDUAL TILES.  
+%  part of the problem is that file transfer, stack setup time and .tif conversion probably both
+%  increase as a fraction of acquisition time as you get to smaller tiles.
+
+
+%  2.  now what about actual s2 scan time compared to sparseness?
+subplot(3,1,2)
+
+hold all, plot(summaryData(:,7)./summaryData(:,3), summaryData(:,6)./summaryData(:,4),'o')  %plot  (S2 imaging time / BB Imaging Time)   vs imagedArea/BBArea
+%  the line of y = 1  is the break-even point.
+hold all, plot([0, .5], [1, 1])
+
+
+%3.  now lets go check for the actual difference in scan time/area.   this
+% should be available from the data already here.  in fact, there is a
+% clear bimodal distribution of this ratio.  comparing to 'imaging only' the average is about 4.2
+% and with the 'estimated' it's about 6.7.  both are clearly bimodal.
+lowgroup = (summaryData(:,17)./summaryData(:,16))<4;
+
+mean(summaryData(lowgroup,17)./summaryData(lowgroup,16))
+std(summaryData(lowgroup,17)./summaryData(lowgroup,16))
+mean(summaryData(~lowgroup,17)./summaryData(~lowgroup,16))
+
+std(summaryData(~lowgroup,17)./summaryData(~lowgroup,16))
+
+
+
+% this doesn't correlate with the small variation in z depth (whew)  
+%  but may be correlated somehow with imaging session?
+
+
+%  yes. it turns out that 12 of these were imaged with minimum tile size of
+%  50, while the remaining 10 of them were imaged with minimum tile size of
+%  100.  The time per area is so nonlinear at these small tiles that the
+%  change in tile size results in a ~3x worse time/area compared to BB
+%  scanning when you go from 50 to 100pixel tiles. 
+
+%  how did my other calculations miss this dramatic increase?  I
+%  double-checked the displayed frame rate and there is no appreciable lag
+%  for each frame (i.e. the frame period is within a few percent of
+%  N_lines*linePeriod even for small tiles)
+% what about z wait times?  
+%  yes. of course.  it's the 30ms delay waiting for the piezo to settle.
+%  This time is necessary to get a nice clean frame and accounts for the
+%  rest of the discrepancy between scan times / area.
+
+%  There would be room to do this differently with a
+%  fixed tile size, but with changing tile size, the piezo has to calculate
+%  a new pattern for each tile.  perhaps 20ms would be ok, but I want to
+%  keep data collection as consistent as possible.
+
+
+% which cells need to be re-imaged?
+
+
+
+% cell032 - cell039
+6/27 16:43
+6/27 17:15
+6/28 11:05
+6/28 11:24
+6/28 13:06
+6/28 13:42
+6/28 14:30
+6/28 14:41
+
+
+
+% cell041 cell042
+6/28 16:52
+6/28 17:01
+
+% cell047-cell048
+6/28 17:28
+6/28 18:12
+
 
 
 %%  for Hanchuan,simplified matrices with all scan data:
