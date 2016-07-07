@@ -1682,7 +1682,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     int max_num_iters = 5;
 
     //overwrite input neuron list with shifted trees towards the center locations
-    cout<<"run mater and center iterations:"<<endl;
+    cout<<"run match and center iterations:"<<endl;
 
     run_match_center(nt_list, max_num_iters,cluster_distance_threshold);
 
