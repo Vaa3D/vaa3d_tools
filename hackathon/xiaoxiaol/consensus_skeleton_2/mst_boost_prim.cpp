@@ -6,12 +6,6 @@
 using namespace std;
 using namespace boost;
 
-int find_edge(std::vector<E> edges, int id,  int pid){
-
-
-
-    return 0;
-}
 
 int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_result, int max_weight, UndirectedGraph *g){
     //generate list of edges and weights from adjacency matrix
@@ -60,23 +54,6 @@ int build_adjacency_list(vector<NeuronTree> nt_list, QList<NeuronSWC> merge_resu
             } else add_edge(n_id, pn_id, LastVoted(i, Weight(max_weight - 1)), *g); //number of neuron trees minus weight to convert to a min tree
 
 
-            //commenting out for version without a voted marker
-            //int c_found = find_edge(edges,n_id, pn_id);
-            //if (c_found <= 0 /*E() not existing*/ )
-            //{//new edge
-            //    edges.push_back( E(n_id, pn_id));
-            //    weights[c] -= 1;
-            //    voted[c] =1;
-            //    c++;
-            //
-            //}
-            //else
-            //{// edge existing
-            //    if( voted[c_found]==0 ){
-            //       //E(n_id, pn_id) not voted by the same tree
-            //        weights[c_found] -= 1;
-            //        voted[c_found] =1;
-            //    }
 
             }
 
