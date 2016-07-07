@@ -1608,7 +1608,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
     int max_num_iters = 5;
 
     //overwrite input neuron list with shifted trees towards the center locations
-    cout<<"run match and center iterations:"<<endl;
+    cout<<"1) Run match-and-center iterations:"<<endl;
 
     run_match_center(nt_list, max_num_iters,cluster_distance_threshold);
 
@@ -1626,30 +1626,15 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    if (vote_threshold > max_vote_threshold){vote_threshold = max_vote_threshold;}
    cout <<"\nVote threshold is set at " << vote_threshold<<endl;
 
-
-   //merge the shifted neurons into a consensus node list
    QList<NeuronSWC> merge_result;
    int TYPE_MERGED = 100;
+   cout <<"\n  2) Merge the deformed neuron nodes to a list of consensused nodes with vote info:" <<endl;
    merge_and_vote(nt_list,vote_threshold,  merge_result,TYPE_MERGED);
 
 
 
 
-   // collect the edge votes
-   //unsigned short * adjMatrix;
-   //V3DLONG num_nodes = merge_result.size();
-//   try{
-//       adjMatrix = new unsigned short[num_nodes*num_nodes];
-//       for (V3DLONG i=0;i<num_nodes*num_nodes;i++) adjMatrix[i] = 0;
-//   }
-//   catch (...)
-//   {
-//       fprintf(stderr,"fail to allocate memory.\n");
-//       if (adjMatrix) {delete[] adjMatrix; adjMatrix=0;}
-
-//       return false;
-//   }
-
+   cout <<"\n 3)Connect consensus nodes using edge votes (collected from original individual neuron trees) via MST: " <<endl;
    boost_mst_prim(nt_list, merge_result, vote_threshold);
 
 
@@ -1668,8 +1653,6 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //   cout <<"Number of nodes after postprocessing is: "<<merge_result.size() <<endl;
 //   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
-   // connect the consensus nodes with vote confidence
-   //build_tree_from_adj_matrix_mst(adjMatrix, n_edges, merge_result, vote_threshold);
 
    double soma_x = merge_result[0].x;
    double soma_y = merge_result[0].y;
@@ -1678,7 +1661,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
- //  trim_unconfident_branches(merge_result,vote_threshold);
+ // trim_unconfident_branches(merge_result,vote_threshold);
 
    if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
    {
