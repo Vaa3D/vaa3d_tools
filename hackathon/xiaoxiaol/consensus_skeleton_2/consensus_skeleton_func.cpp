@@ -205,6 +205,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
     double bridge_gap = 1.0;
     sort_all_inputs(nt_list, bridge_gap);
+    prune_all_inputs(nt_list, 3.0);
 
     if (REMOVE_OUTLIER >0){
             remove_outliers(nt_list, SelectedNeuronsAnoFileName);}

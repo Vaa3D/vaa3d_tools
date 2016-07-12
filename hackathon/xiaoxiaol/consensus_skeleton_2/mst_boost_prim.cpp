@@ -109,7 +109,6 @@ bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result,
     getprimMST(&g, plist, rootnode);
 
     // code the edge votes into type for visualization
-    //    graph: duplicate swc nodes are allowed to accomandate mutiple parents for the child node, no root id,
     QList<NeuronSWC> node_list = merge_result;
     merge_result.clear();
 
@@ -140,22 +139,21 @@ bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result,
 
         unsigned int edgeVote = max_weight - edge_weight; //getting the difference gives us back the number of votes
 
-        if (edgeVote >= vote_threshold ){
-            NeuronSWC tmp;
-            tmp.x = node_list[i].x;
-            tmp.y = node_list[i].y;
-            tmp.z = node_list[i].z;
 
-            tmp.type = 3;
-            tmp.pn = p + 1;  //parent id, form the edge
-            tmp.r =  node_list[i].r;
-            tmp.n = i+1;
-            tmp.fea_val.push_back(edgeVote);
+        NeuronSWC tmp;
+        tmp.x = node_list[i].x;
+        tmp.y = node_list[i].y;
+        tmp.z = node_list[i].z;
 
-            merge_result.append(tmp);
-        } /*else {
-            printf("edge connecting %d and %d with vote %d is discarded.\n",i, p, edgeVote);
-        }*/
+        tmp.type = 3;
+        tmp.pn = p + 1;  //parent id, form the edge
+        tmp.r =  node_list[i].r;
+        tmp.n = i+1;
+        tmp.fea_val.push_back(edgeVote);
+
+        merge_result.append(tmp);
+
+
     }
     return true;
 }

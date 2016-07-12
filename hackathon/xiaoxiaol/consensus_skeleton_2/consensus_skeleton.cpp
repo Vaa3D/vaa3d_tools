@@ -7,9 +7,6 @@
 
 
 #include "consensus_skeleton.h"
-
-#include "mst_dij.h"
-#include "mst_prim.h"
 #include "mst_boost_prim.h"
 #include <QtGlobal>
 #include <iostream>
@@ -208,6 +205,170 @@ int  computeNumberOfBifurcations(const NeuronTree & nt)
 }
 
 
+
+
+
+double computeFragmentation(const NeuronTree & nt)
+{
+    double Fragmentation = 0.0;
+    int N_branch = 0;
+    QList<NeuronSWC> list = nt.listNeuron;
+
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    QVector<QVector<V3DLONG> > childs;
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    //find the root
+    int rootidx = VOID;
+    for (int i=0;i<list.size();i++)
+    {
+        if (list.at(i).pn==-1){
+            //compute the first tree in the forest
+            rootidx = i;
+            break;
+        }
+    }
+
+    QStack<int> stack = QStack<int>();
+    stack.push(rootidx);
+
+
+    int t,tmp,fragment;
+    while (!stack.isEmpty())
+    {
+        t = stack.pop();
+        QVector<V3DLONG> child = childs[t];
+        for (int i=0;i<child.size();i++)
+        {
+            N_branch++;
+            tmp = child[i];
+
+            fragment = 0;
+            while (childs[tmp].size()==1)
+            {
+                int ch = childs[tmp].at(0);
+
+                fragment++;
+                tmp = ch;
+            }
+
+            Fragmentation += fragment;
+
+
+            //we are reaching a tip point or another branch point, computation for this branch is over
+            int chsz = childs[tmp].size();
+            if (chsz>1)  //another branch
+            {
+                stack.push(tmp);
+            }
+
+        }
+    }
+
+
+
+    if (N_branch>0)
+    {
+        Fragmentation /= N_branch;
+    }
+    else
+    {
+        Fragmentation=0.0;
+    }
+
+    return Fragmentation;
+
+
+}
+
+
+
+#define DIST(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
+bool prune_branch(NeuronTree nt, NeuronTree & result, double prune_size)
+{
+
+    V3DLONG siz = nt.listNeuron.size();
+    vector<V3DLONG> branches(siz,0); //number of branches on the pnt: 0-tip, 1-internal, >=2-branch
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (nt.listNeuron[i].pn<0) continue;
+        V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+        branches[pid]++;
+    }
+
+
+    //calculate the shortest edge starting from each tip point
+    vector<bool> to_prune(siz, false);
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (branches[i]!=0) continue;
+        //only consider tip points
+        vector<V3DLONG> segment;
+        double edge_length = 0;
+        V3DLONG cur = i;
+        V3DLONG pid;
+        do
+        {
+            NeuronSWC s = nt.listNeuron[cur];
+            segment.push_back(cur);
+            pid = nt.hashNeuron.value(s.pn);
+            edge_length += DIST(s, nt.listNeuron[pid]);
+            cur = pid;
+        }
+        while (branches[pid]==1 && pid>0);
+        if (pid<0)
+        {
+            printf("The input tree has only 1 root point. Please check.\n");
+            return false;
+        }
+        if (edge_length < prune_size)
+        {
+            for (int j=0;j<segment.size();j++)
+                to_prune[segment[j]] = true;
+        }
+    }
+
+
+
+    //prune branches
+    result.listNeuron.clear();
+    result.hashNeuron.clear();
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (!to_prune[i])
+        {
+            NeuronSWC s = nt.listNeuron[i];
+            result.listNeuron.append(s);
+            result.hashNeuron.insert(nt.listNeuron[i].n, result.listNeuron.size()-1);
+        }
+    }
+
+    return true;
+}
+
+
+bool prune_all_inputs(vector<NeuronTree> & nt_list, double prune_length){
+   cout<<"Prune short branches ( lengh < clustering distance) to have meaninful bifurcation comparisons:"<<endl;
+    for(int i = 0; i < nt_list.size(); i++) {
+        NeuronTree result;
+        prune_branch(nt_list[i], result, prune_length);
+        result.file = nt_list[i].file;//keep the file name info
+        nt_list[i].copy(result);
+
+    }
+    return true;
+
+}
+
+
 bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
     int MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY = 50000;
     // to avoid processing huge input swcs
@@ -265,35 +426,31 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 		NeuronTree tree = nt_list[i];
 		double len = computeTotalLength(tree);
         nt_lens.push_back(len);
-        int N_bifs = computeNumberOfBifurcations(tree);
+        //int N_bifs = computeNumberOfBifurcations(tree);
+        double N_bifs = computeFragmentation(tree);
         nt_N_bifs.push_back(N_bifs+0.0);
 	}
 
     //criteria 1: total length
-    double low_len=0.25, high_len = 4;
+    double low_len=0.33, high_len = 3;
     tightRange(nt_lens, low_len, high_len);
 
 
     //criteria 2: # of bifurcations
-    double low_bi = 0.1, high_bi = 10;//many trees have smaller branches which cause big #bifurcations
+    double low_bi = 0.33, high_bi = 3;//many trees have smaller branches which cause big #bifurcations
     tightRange(nt_N_bifs, low_bi, high_bi);
 
 
-//	// calculate for each SWC if it is isolated, and store the result in isolated[]
-//	vector<int> isolated;
-//	isolated.resize(nt_list.size());
-//	isIsolated(isolated,nt_lens,nt_N_bifs,0.25,2);
-
     vector<int > rm_ids;
-    cout <<"Remove SWCs, whose total lengh is > "<< high_len <<" or <" << low_len<<endl;
-    cout <<"Remove SWCs, whose total funumber of bifurcations is > "<< high_bi <<" or <" << low_bi<<endl;
+    cout <<"Remove SWCs, whose total length is > "<< high_len <<" or <" << low_len<<endl;
+    cout <<"Remove SWCs, whose Fragmentation is > "<< high_bi <<" or <" << low_bi<<endl;
     
-    cout <<"total length:"<<endl;
+    cout <<"Total lengths:"<<endl;
 	for(int i=0; i < nt_list.size(); i++){
         cout << nt_lens[i]<<" ";
 	}
     cout << endl;
-    cout <<"number of bifurcations:"<<endl;
+    cout <<"Fragmentations:"<<endl;
 	for(int i=0; i < nt_list.size(); i++){
         cout << nt_N_bifs[i]<<" ";
 	}
@@ -311,16 +468,10 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 		else 
         if (N_bifs > high_bi || N_bifs < low_bi)
 		{
-			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  N_bifs<< " total bifurcations"<<endl;
+            cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  N_bifs<< "fragmentation"<<endl;
             rm_ids.push_back(i);
 		}
-//		else
-//		if (isolated[i])
-//		{
-//			cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " - it's isolated. ("<<len<<"," <<N_bifs<<")."<<endl;
-//            rm_ids.push_back(i);
 
-//		}
     }
 
     for (int i =rm_ids.size()-1; i>=0 ;i--){
@@ -813,7 +964,7 @@ bool vote_map(vector<NeuronTree> & nt_list, int dialate_radius, QString outfileN
 
 bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, double soma_x, double soma_y, double soma_z, QList<NeuronSWC> &out_sorted_consensus_nt_list, double bridge_size)
 {
-	cout<<"\nSoma sorting: matching soma from the median-sized swc"<<endl;
+    cout<<"\nsorting:"<<endl;
 
 	NeuronTree consensus_nt;
 	QList <NeuronSWC> listNeuron;
@@ -1370,7 +1521,7 @@ int build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result
 	 
      for (int k = 0; k< nt_list_resampled.size();k++)
      {
-         printf("\rnow merging neuron: %3d", k);
+
 		 NeuronTree *input_neuron = &(nt_list_resampled[k]);
          vector<XYZ> cluster;
 
@@ -1476,11 +1627,9 @@ int build_adj_matrix( vector<NeuronTree>  nt_list, QList<NeuronSWC> merge_result
              }
 
 
-
-
          }
      }
-	 printf("\n");
+
 
      return true;
  }
@@ -1628,15 +1777,15 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
    QList<NeuronSWC> merge_result;
    int TYPE_MERGED = 100;
-   cout <<"\n  2) Merge the deformed neuron nodes to a list of consensused nodes with vote info:" <<endl;
+   cout <<"\n2) Merge the deformed neuron nodes to a list of consensused nodes with vote info:" <<endl;
    merge_and_vote(nt_list,vote_threshold,  merge_result,TYPE_MERGED);
 
 
 
 
-   cout <<"\n 3)Connect consensus nodes using edge votes (collected from original individual neuron trees) via MST: " <<endl;
+   cout <<"\n3)Connect consensus nodes using edge votes (collected from original individual neuron trees) via MST: " <<endl;
    boost_mst_prim(nt_list, merge_result, vote_threshold);
-
+   trim_unconfident_branches(merge_result,vote_threshold);
 
 
    //DEBUG
@@ -1654,18 +1803,18 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 //   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
 
-   double soma_x = merge_result[0].x;
-   double soma_y = merge_result[0].y;
-   double soma_z = merge_result[0].z;
+   double soma_x = nt_list[0].listNeuron[0].x;
+   double soma_y = nt_list[0].listNeuron[0].y;
+   double soma_z = nt_list[0].listNeuron[0].z;
 
    //DEBUG
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
- // trim_unconfident_branches(merge_result,vote_threshold);
 
-   if (   soma_sort(cluster_distance_threshold, merge_result, soma_x, soma_y, soma_z, final_consensus,1.0) )
+
+   if (   soma_sort(cluster_distance_threshold*3, merge_result, soma_x, soma_y, soma_z, final_consensus,2.0) )
    {
-       //cout <<"merged swc #nodes = "<< final_consensus.size()<<endl<<endl;
+       cout <<"merged swc #nodes = "<< final_consensus.size()<<endl;
 
        int end = final_consensus.size()-1;
        int begin = end;
@@ -1676,14 +1825,14 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        }
 
-       // erase small isolated branches
+//       // erase small isolated branches
        for (int i=final_consensus.size()-1; i>=0; i--)
        {
            if (final_consensus[i].pn == -1)
            {
                begin = i;
                //erase the short branches
-               if (count < cluster_distance_threshold*2)
+               if (count < cluster_distance_threshold*2.0)
                {
                    final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
                }

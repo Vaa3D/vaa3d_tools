@@ -6,7 +6,7 @@ INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
-
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/blastneuron_plugin/pre_processing
 HEADERS	+= consensus_skeleton_plugin.h \
     median_swc.h \
     point3d_util.h \
@@ -17,8 +17,6 @@ HEADERS	+= consensus_skeleton_plugin.h \
 HEADERS	+= consensus_skeleton_func.h
 HEADERS	+= consensus_skeleton.h
 HEADERS	+= kcentroid_cluster.h
-HEADERS	+= mst_dij.h
-HEADERS += mst_prim.h
 HEADERS += mst_boost_prim.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
