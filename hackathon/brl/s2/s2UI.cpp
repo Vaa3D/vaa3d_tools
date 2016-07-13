@@ -31,6 +31,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     QList<LandmarkList>    allScanLocations ;
 
     cb = &callback;
+
     myStackAnalyzer = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("");
@@ -222,6 +223,8 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(this,SIGNAL(eventSignal(QString)), myEventLogger, SLOT(logEvent(QString)));
 
+
+    connect(tTracePB, SIGNAL(clicked()), this, SLOT(tTrace()));
 }
 
 
@@ -586,6 +589,10 @@ QGroupBox *S2UI::createConfigPanel(){
     setLiveFilePath = new QPushButton;
     setLiveFilePath->setText(tr("set LiveFile"));
 
+    tTracePB = new QPushButton;
+    tTracePB->setText("tTrace");
+
+
 
     startZStackDelaySB = new QSpinBox;
     startZStackDelaySB->setMinimum(0);
@@ -630,6 +637,7 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(pixelsSpinBoxLabel,7,0);
     cBL->addWidget(pixelsSpinBox,7,1);
     cBL->addWidget(zoomPixelsProductLabel,8,0);
+    cBL->addWidget(tTracePB,9,0);
 
     configBox->setLayout(cBL);
     return configBox;
@@ -2228,6 +2236,22 @@ void S2UI::updateLiveFile(){
 
 
 }
+
+
+void S2UI::tTrace(){
+    qDebug()<<"tTrace hooked up";
+    int tileNumber;
+    tileNumber= 1;
+    LocationSimple tileLocation;
+    ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), 1);
+    myTracer->run();
+//    QThreadPool::globalInstance()->start(myTracer);
+ //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+   //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+}
+
 
 // new or move to config parameters:
 // min and maximum adaptive tile size

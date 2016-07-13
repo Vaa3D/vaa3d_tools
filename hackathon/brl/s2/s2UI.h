@@ -19,6 +19,7 @@
 #include "targetList.h"
 #include "eventLogger.h"
 #include "tileInfo.h"
+#include "threadedTracer.h"
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -51,7 +52,7 @@ public slots:
     void monitorLiveFile();
     void updateLiveFile();
     void startLiveFile();
-
+    void tTrace();
 signals:
     void startPM();
     void stopPM();
@@ -121,7 +122,6 @@ private slots:
 
 private:
     V3DPluginCallback2 * cb;
-
    QThread *workerThread;
 
  // Layout and buttons
@@ -222,6 +222,10 @@ private:
     QLabel * startZStackDelayLabel;
     QFileInfo *liveFile;
     QFileInfo *liveFileStatus;
+
+    QPushButton * tTracePB;
+
+
 // Target and ROI table widget
 
     TargetList* myTargetTable;

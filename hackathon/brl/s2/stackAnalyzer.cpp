@@ -2464,6 +2464,13 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
         QString imageSaveString = saveDirString;
 
+
+        // add bit of code to image green - red channels. This will require an additional argument or another signal/slot combination to monitor the value of a combobox in the GUI...
+        // add button to do || nT on mXtls
+
+
+
+
         //convert to 8bit image using 8 shiftnbits
         unsigned char * total1dData_8bit = 0;
         try
@@ -2485,6 +2492,9 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             else
                 total1dData_8bit[i] = (unsigned char)(tmp);
         }
+
+
+
 
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
