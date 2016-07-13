@@ -5,6 +5,7 @@
 #include "v3d_interface.h"  // use call back to save image for debugging purpose
 #include "basic_surf_objs.h"
 #include "point3d_util.h"
+#include "ANN/ANN.h"
 
 using namespace std;
 
@@ -72,4 +73,8 @@ bool build_tree_from_adj_matrix(unsigned short * adjMatrix, QList<NeuronSWC> &me
 bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int n_edges, QList<NeuronSWC> &merge_result, double vote_threshold);
 void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold);
 void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double initial_threshold, int steps);
+
+double kd_match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron);\
+void kd_run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double cluster_distance_threshold);
+bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshold,  QList<NeuronSWC> &merge_result, int TYPE_MERGED);
 #endif
