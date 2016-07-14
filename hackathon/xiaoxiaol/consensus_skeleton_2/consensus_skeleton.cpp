@@ -2610,7 +2610,6 @@ bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshol
 
     for (int k = 0; k< nt_list_resampled.size();k++)
     {
-        printf("\rnow merging neuron: %3d", k);
         NeuronTree *input_neuron = &(nt_list_resampled[k]);
         vector<XYZ> cluster;
 
@@ -2732,8 +2731,6 @@ bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshol
     kd_nt_list.clear();
     tree_points.clear();
     annClose();
-
-    printf("\n");
 
     return true;
 }
