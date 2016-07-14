@@ -1781,14 +1781,14 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
 
        }
 
-//       // erase small isolated branches
+       cout<<"erase small isolated branches( < 0.05 *total nodes)"<<endl;
        for (int i=final_consensus.size()-1; i>=0; i--)
        {
            if (final_consensus[i].pn == -1)
            {
                begin = i;
                //erase the short branches
-               if (count < cluster_distance_threshold*2.0)
+               if (count < final_consensus.size()*0.05)
                {
                    final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
                }
@@ -2378,7 +2378,6 @@ bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshol
 
     for (int k = 0; k< nt_list_resampled.size();k++)
     {
-        printf("\rnow merging neuron: %3d", k);
         NeuronTree *input_neuron = &(nt_list_resampled[k]);
         vector<XYZ> cluster;
 
@@ -2499,8 +2498,6 @@ bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshol
     }
     kd_nt_list.clear();
     annClose();
-
-    printf("\n");
 
     return true;
 }
