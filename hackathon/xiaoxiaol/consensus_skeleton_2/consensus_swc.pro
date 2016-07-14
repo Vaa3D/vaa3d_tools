@@ -31,8 +31,9 @@ SOURCES += ann/src/ANN.cpp \
 
 LIBS            += ann/lib/libANN.a
 
+
 ANN.target = ann/lib/libANN.a
-ANN.commands = cd ann && make linux-g++
+ANN.commands = mkdir ann/lib && cd ann && make linux-g++
 ANN.depends = ann/Makefile
 QMAKE_EXTRA_TARGETS += ANN
 
