@@ -3,7 +3,6 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
 #ann-config aspects
-PRE_TARGETDEPS = ann/lib/libANN.a
 INCLUDEPATH     += ann/include
 HEADERS += ann/include/ANN/ANN.h
 HEADERS += ann/src/bd_tree.h \
@@ -29,22 +28,27 @@ SOURCES += ann/src/ANN.cpp \
     ann/src/kd_util.cpp \
     ann/src/perf.cpp
 
-LIBS            += ann/lib/libANN.a
-
-
-ANN.target = ann/lib/libANN.a
-
 unix:!macx{
-    ANN.commands = mkdir ann/lib && cd ann && make linux-g++
+    PRE_TARGETDEPS = ann/lib/libANN.a
+    LIBS            += ann/lib/libANN.a
+    ANN.target = ann/lib/libANN.a
+    ANN.commands = cd ann && make linux-g++
+    ANN.depends = ann/Makefile
+    QMAKE_EXTRA_TARGETS += ANN
 }
-
 macx {
-    ANN.commands = mkdir ann/lib && cd ann && make macosx-g++
+    PRE_TARGETDEPS = ann/lib/libANN.a
+    LIBS            += ann/lib/libANN.a
+    ANN.target = ann/lib/libANN.a
+    ANN.commands = cd ann && make macosx-g++
+    ANN.depends = ann/Makefile
+    QMAKE_EXTRA_TARGETS += ANN
+
 }
-
-ANN.depends = ann/Makefile
-QMAKE_EXTRA_TARGETS += ANN
-
+win32 {
+    win32-msvc:LIBS += ann/lib/ANN.lib
+    INCLUDEPATH += ann/MS_Win32/dll/
+}
 
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
