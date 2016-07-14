@@ -123,7 +123,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 	//parsing parameters
     int max_vote_threshold = 3; //>= max_vote_threshold votes, definitely included as part of the final consensus
     double cluster_distance_threshold = 5; // ignore nodes that far away for clustering
-    int resample_flag = 0;
+    int resample_flag = 0;//no longer used
     int REMOVE_OUTLIER = 1;
 	if (input.size()==2)
 	{
@@ -137,11 +137,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 cout<<"clustering distance threshold = "<<cluster_distance_threshold<<endl;
             }
             if (paras->size() >= 3){
-                resample_flag =  atoi(paras->at(2));
-                cout<<"resample_flag = "<<resample_flag<<endl;
-            }
-            if (paras->size() >= 4){
-                REMOVE_OUTLIER =  atoi(paras->at(3));
+                REMOVE_OUTLIER =  atoi(paras->at(2));
                 cout<<"remove_outliers = "<<REMOVE_OUTLIER<<endl;
             }
 
@@ -205,7 +201,7 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
     double bridge_gap = 1.0;
     sort_all_inputs(nt_list, bridge_gap);
-    prune_all_inputs(nt_list, 3.0);
+    prune_all_inputs(nt_list, cluster_distance_threshold);
 
     if (REMOVE_OUTLIER >0){
             remove_outliers(nt_list, SelectedNeuronsAnoFileName);}
@@ -614,11 +610,10 @@ void printHelp()
     cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <resample_flag> <remove_outliers>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
     cout<<"\t                                 included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
     cout<<"\t                                  b) clustering distance threshold: the maximum voxel distance that are allowed to cluster one swc node to the " <<endl;
-    cout<<"\t                                 consenused node location during the edge voting step. c) resample_falg for preprocessing: 1--resampling, 0--no resampling.Default=0." <<endl;
-    cout<<"\t                                 d) remove_outeliers: for preprocessing:1--remove outliers based on total length and birfircations, 0-- Keep all entries.Default=1." <<endl;
+    cout<<"\t                                 consenused node location during the edge voting step. c)remove_outeliers: for preprocessing:1--remove outliers based on total length and birfircations, 0-- Keep all entries.Default=1." <<endl;
     cout<<"\t-o <output_file>:  output consensus eswc file name. The ESWC contains the edge connection confidence/voting value at each swc node."<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 5 0 1\n"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0 0\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 4 1\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 4 0\n"<<endl;
 
 
 

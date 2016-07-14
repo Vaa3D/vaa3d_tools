@@ -1311,14 +1311,15 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold
 	for (int i=0; i<treeSize; i++) {
 		if (merge_result[i].pn == -1) continue;
 
-		int pn_pos = hashNeuron.value(merge_result[i].pn);
-		numOfChildren[pn_pos]++;
+        int pn_pos = hashNeuron.value(merge_result[i].pn) ;
+        numOfChildren[pn_pos]++;
 	}
 
 
 	//push all the end tips w/ low radius (votes) to a queue/stack;
 	QStack<int> stack;
 	for (int i=0; i<treeSize; i++) {
+
         if (numOfChildren[i] == 0 && merge_result[i].fea_val[0] < vote_threshold )
 			stack.push(i);
 	}
@@ -1345,7 +1346,7 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold
 		if (deleteFlag[i] == 0)
 			merge_result.push_back(node_list[i]);
 	}
-	cout <<"Now, number of nodes: "<<merge_result.size()<<endl;
+    cout <<"Now, after trimming the unconfident branches: number of nodes = "<<merge_result.size()<<endl;
 }
 
 
