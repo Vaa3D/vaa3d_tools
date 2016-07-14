@@ -2,14 +2,45 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
+#ann-config aspects
+PRE_TARGETDEPS = ann/lib/libANN.a
+INCLUDEPATH     += ann/include
+HEADERS += ann/include/ANN/ANN.h
+HEADERS += ann/src/bd_tree.h \
+    ann/src/kd_fix_rad_search.h \
+    ann/src/kd_pr_search.h \
+    ann/src/kd_search.h \
+    ann/src/kd_split.h \
+    ann/src/kd_tree.h \
+    ann/src/kd_util.h \
+    ann/src/pr_queue.h
+SOURCES += ann/src/ANN.cpp \
+    ann/src/bd_fix_rad_search.cpp \
+    ann/src/bd_pr_search.cpp \
+    ann/src/bd_search.cpp \
+    ann/src/bd_tree.cpp \
+    ann/src/brute.cpp \
+    ann/src/kd_dump.cpp \
+    ann/src/kd_fix_rad_search.cpp \
+    ann/src/kd_pr_search.cpp \
+    ann/src/kd_search.cpp \
+    ann/src/kd_split.cpp \
+    ann/src/kd_tree.cpp \
+    ann/src/kd_util.cpp \
+    ann/src/perf.cpp
+
+LIBS            += ann/lib/libANN.a
+
+ANN.target = ann/lib/libANN.a
+ANN.commands = cd ann && make linux-g++
+ANN.depends = ann/Makefile
+QMAKE_EXTRA_TARGETS += ANN
+
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
-INCLUDEPATH     += ann/include
-
-LIBS            += -Lann/lib -lANN
 
 HEADERS	+= consensus_skeleton_plugin.h \
     median_swc.h \
@@ -31,8 +62,7 @@ HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/prim_minimum_spanning_
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/kruskal_min_spanning_tree.hpp
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/adjacency_list.hpp
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/config.hpp
-HEADERS += ann/include/ANN/ANN.h
-#HEADERS += ann/src/kd_tree.h
+
 #HEADERS += ann/src/kd_search.h
 
 SOURCES	+= point3d_util.cpp \
