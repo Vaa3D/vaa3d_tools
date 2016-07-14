@@ -54,8 +54,6 @@ bool generate_vote_map_resample(vector<NeuronTree> & nt_list, int dialate_radius
 bool soma_sort(double search_distance_th, QList<NeuronSWC> consensus_nt_list, double soma_x, double soma_y, double soma_z,
                QList<NeuronSWC> &out_sorted_consensus_nt_list, double bridge_size);
 
-double dist_pt_to_line_seg( XYZ p0, XYZ p1,  XYZ p2, XYZ & closestPt);
-double correspondingPointFromNeuron(XYZ cur,NeuronTree * nt, XYZ & closest_p);
 double match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron);
 XYZ mean_XYZ(vector<XYZ> points);
 bool tightRange(vector<double> x, double &low, double &high);
@@ -74,7 +72,7 @@ bool build_tree_from_adj_matrix_mst(unsigned short * adjMatrix, int n_edges, QLi
 void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold);
 void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double initial_threshold, int steps);
 
-double kd_match_and_center(vector<NeuronTree> nt_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron);\
+double kd_match_and_center(vector<NeuronTree> nt_list, vector<ANNkd_tree *>kd_list, int input_neuron_id,  double distance_threshold, NeuronTree & adjusted_neuron);
 void kd_run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double cluster_distance_threshold);
 bool kd_merge_and_vote(vector<NeuronTree>  & nt_list_resampled,int vote_threshold,  QList<NeuronSWC> &merge_result, int TYPE_MERGED);
 #endif

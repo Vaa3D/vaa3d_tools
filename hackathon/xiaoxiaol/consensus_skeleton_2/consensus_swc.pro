@@ -33,9 +33,18 @@ LIBS            += ann/lib/libANN.a
 
 
 ANN.target = ann/lib/libANN.a
-ANN.commands = mkdir ann/lib && cd ann && make linux-g++
+
+unix:!macx{
+    ANN.commands = mkdir ann/lib && cd ann && make linux-g++
+}
+
+macx {
+    ANN.commands = mkdir ann/lib && cd ann && make macosx-g++
+}
+
 ANN.depends = ann/Makefile
 QMAKE_EXTRA_TARGETS += ANN
+
 
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
@@ -54,7 +63,7 @@ HEADERS	+= consensus_skeleton_func.h
 HEADERS	+= consensus_skeleton.h
 HEADERS	+= kcentroid_cluster.h
 HEADERS += mst_boost_prim.h
-HEADERS += converge_trees.h
+HEADERS += kd-tree.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.h
@@ -78,7 +87,7 @@ SOURCES	+= consensus_skeleton_func.cpp
 SOURCES	+= consensus_skeleton.cpp
 SOURCES	+= sort_eswc.cpp
 SOURCES += mst_boost_prim.cpp
-SOURCES += converge_trees.cpp
+SOURCES += kd-tree.cpp
 
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
