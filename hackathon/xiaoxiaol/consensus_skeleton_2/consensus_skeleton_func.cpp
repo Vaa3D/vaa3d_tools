@@ -240,6 +240,10 @@ bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & 
         //cout<<"(0). reading an swc file"<<endl;
         nt = readSWC_file(qs_linker);
     }
+    else
+    {
+        return false;
+    }
 
     QString outfileName;
     if (output.size()==0)
@@ -269,10 +273,9 @@ bool post_consensus_trimming(const V3DPluginArgList & input, V3DPluginArgList & 
 		}
 	}
 
-	generate_batch_trimmed_results(nt,outfileName,threshold,1);
+    generate_batch_trimmed_results(nt,outfileName,threshold,1);
 	return true;
 }
-
 
 bool dark_pruning_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {

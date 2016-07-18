@@ -1256,10 +1256,10 @@ void trim_unconfident_branches(QList<NeuronSWC> &merge_result,int vote_threshold
 }
 
 
-//not used
-void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,int vote_threshold, int steps)
+void generate_batch_trimmed_results(NeuronTree nt,QString outfileName,double vote_threshold, int steps)
 {
-	for (int itr=0; itr<steps; itr++) {
+    for (int itr=0; itr<steps; itr++)
+    {
 		QList<NeuronSWC> node_list = nt.listNeuron;
         trim_unconfident_branches(node_list, vote_threshold);
         char * newfilename = new char [1000];
