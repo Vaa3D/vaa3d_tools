@@ -217,6 +217,8 @@ double computeFragmentation(const NeuronTree & nt)
 
 
     V3DLONG neuronNum = nt.listNeuron.size();
+    if (neuronNum <1)
+       return 0;
     QVector<QVector<V3DLONG> > childs;
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
     for (V3DLONG i=0;i<neuronNum;i++)
@@ -227,7 +229,7 @@ double computeFragmentation(const NeuronTree & nt)
     }
 
     //find the root
-    int rootidx = VOID;
+    int rootidx = 0;
     for (int i=0;i<list.size();i++)
     {
         if (list.at(i).pn==-1){
@@ -398,7 +400,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         nt_list.erase(nt_list.begin()+rm_ids[i]);
     }
 
-    cout<<"Sort all input neurons (in order to compute correct number of bifurcations):"<<endl;
+    cout<<"Sort all input neurons:"<<endl;
     for(int i = 0; i < nt_list.size(); i++){
         QList<NeuronSWC> sorted;
         if (!SortESWC (nt_list[i].listNeuron, sorted, VOID, bridge_gap))
@@ -421,15 +423,18 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
 	cout<<"\nOutlier detection:"<<endl;
     vector<double> nt_lens;
-    vector<double> nt_N_bifs;
+    vector<double> nt_N_frags;
 
 	for(int i = 0; i < nt_list.size(); i++){
 		NeuronTree tree = nt_list[i];
 		double len = computeTotalLength(tree);
+
+        cout<<"len ="<< len<<endl;
         nt_lens.push_back(len);
         //int N_bifs = computeNumberOfBifurcations(tree);
-        double N_bifs = computeFragmentation(tree);
-        nt_N_bifs.push_back(N_bifs+0.0);
+        double N_frags = computeFragmentation(tree);
+        cout<<"N_frags ="<< N_frags<<endl;
+        nt_N_frags.push_back(N_frags+0.0);
 	}
 
     //criteria 1: total length
@@ -437,9 +442,10 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
     tightRange(nt_lens, low_len, high_len);
 
 
-    //criteria 2: # of bifurcations
-    double low_bi = 0.33, high_bi = 3;//many trees have smaller branches which cause big #bifurcations
-    tightRange(nt_N_bifs, low_bi, high_bi);
+    //criteria 2: fragmentations  (fragmentation:number of compartments that constitute a branch between two bifurcation points or between a bifurcation point and a terminal tip.)
+    double low_bi = 0.33, high_bi = 5;//many trees have smaller branches which cause small fragmentation, allow bigger fragmentations ( long branches, even though it might overtrace,
+    //but by allowing the long branches, we can include more candidates if the center/core branches are there.
+    tightRange(nt_N_frags, low_bi, high_bi);
 
 
     vector<int > rm_ids;
@@ -453,13 +459,13 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
     cout << endl;
     cout <<"Fragmentations:"<<endl;
 	for(int i=0; i < nt_list.size(); i++){
-        cout << nt_N_bifs[i]<<" ";
+        cout << nt_N_frags[i]<<" ";
 	}
     cout << endl;
 
 	for(int i = 0; i < nt_list.size(); i++){
         double len = nt_lens[i];
-		double N_bifs = nt_N_bifs[i];
+        double N_frags = nt_N_frags[i];
         if ( len > high_len ||  len < low_len )
         {
             cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  len<< " in total length"<<endl;
@@ -467,9 +473,9 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 
         } 
 		else 
-        if (N_bifs > high_bi || N_bifs < low_bi)
+        if (N_frags > high_bi || N_frags < low_bi)
 		{
-            cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  N_bifs<< "fragmentation"<<endl;
+            cout <<"Remove neuron "<< i<<":"<< nt_list[i].file.toStdString().c_str() << " with "<<  N_frags<< "fragmentation"<<endl;
             rm_ids.push_back(i);
 		}
 
@@ -1726,6 +1732,12 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    else
    {
        cout <<"\n number of inputs < 3"<<endl;
+       if (nt_list.size() == 1){
+           cout <<"\n only one neuron remains, return this neuron as the consensus result"<<endl;
+           final_consensus = nt_list[0].listNeuron;
+
+           return true;
+       }
    }
 
    if (vote_threshold > max_vote_threshold){vote_threshold = max_vote_threshold;}
