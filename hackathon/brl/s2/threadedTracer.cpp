@@ -18,7 +18,8 @@ qDebug()<<"loadScan input: "<<latestString;
 //    int methodChoice = 1;
 
 //LandmarkList inputRootList;
-
+QString fString;
+fString = QString("Cycle%1").arg(tileNumber,5,10,QLatin1Char('0'));
 qDebug()<<tileNumber;
 
 QList<LandmarkList> newTipsList;
@@ -29,7 +30,7 @@ if (imageFileInfo.isReadable()){
     Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
     QDir imageDir =  imageFileInfo.dir();
     QStringList filterList;
-    filterList.append(QString("*").append("Cycle%1").arg(tileNumber,5,10,QLatin1Char('0')).append("_Ch").append(channel).append("*.tif"));
+    filterList.append(QString("*").append(fString).append("_Ch").append(channel).append("*.tif"));
     qDebug()<<"filterlist.first()"<<filterList.first();
     imageDir.setNameFilters(filterList);
     QStringList fileList = imageDir.entryList();
@@ -75,7 +76,7 @@ if (imageFileInfo.isReadable()){
 
 
     QString swcString = saveDirString;
-    swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
+    swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(fString).append(".swc");
 
 
     QString scanDataFileString = saveDirString;
@@ -142,7 +143,8 @@ if (imageFileInfo.isReadable()){
 
 
     total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
-    imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+
+    imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(imageFileInfo.fileName()).append(fString).append(".v3draw");
     simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
     qDebug()<<"=== immediately before tracing =====";
 //-------------

@@ -2240,12 +2240,12 @@ void S2UI::updateLiveFile(){
 
 void S2UI::tTrace(){
     qDebug()<<"tTrace hooked up";
-    int tileNumber;
-    tileNumber= 1;
     LocationSimple tileLocation;
-    ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), 1);
-    myTracer->run();
-//    QThreadPool::globalInstance()->start(myTracer);
+    for (int tileNumber = 0; tileNumber<604; tileNumber++){
+    ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
+//    myTracer->run();
+   QThreadPool::globalInstance()->start(myTracer);
+    }
  //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
