@@ -1827,7 +1827,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    }
    else {
        //report the mst results without sorting
-       cout<< "Warning: no sorting is done at the end due to the large number of nodes!";
+       cout<< "Warning: no sorting is done at the end due to the large number of nodes!"<<endl;
        final_consensus = merge_result;
        return true;
    }
