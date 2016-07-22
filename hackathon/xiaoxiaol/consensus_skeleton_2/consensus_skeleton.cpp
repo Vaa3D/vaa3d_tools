@@ -23,13 +23,15 @@
 #include "resample_swc.h"
 
 
+
+#define  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY 10000
+
 using namespace std;
 
 #ifdef _MSC_VER
 #define  LONG_LONG_MAX _I64_MAX
 
 
-#define  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY  10000
 
 inline float  roundf(float num)  
 {
@@ -386,7 +388,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         if (tree.listNeuron.size()> MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY )
         {
             cout<<"This neuron is too big to process: likely to be an outlier anyway.Otherwise, please resample it "
-                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY(50000) nodes"<<endl;
+                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY(10000) nodes"<<endl;
             rm_ids.push_back(i);
         }
 
@@ -2282,7 +2284,7 @@ void kd_run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double
      //END
       if (nt_list.size()<2)
       {
-          cout<<"only one neuron, skip the match and center step..."<<Endl;
+          cout<<"only one neuron, skip the match and center step..."<<endl;
           return;
       }
 
