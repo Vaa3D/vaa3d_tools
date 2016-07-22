@@ -28,6 +28,9 @@ using namespace std;
 #ifdef _MSC_VER
 #define  LONG_LONG_MAX _I64_MAX
 
+
+#define  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY  10000
+
 inline float  roundf(float num)  
 {
    return num > 0 ? std::floor(num + 0.5f) : std::ceil(num - 0.5f);
@@ -373,7 +376,7 @@ bool prune_all_inputs(vector<NeuronTree> & nt_list, double prune_length){
 
 
 bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
-    int MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY = 50000;
+
     // to avoid processing huge input swcs
 
     vector<int > rm_ids;
@@ -1740,6 +1743,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
        }
    }
 
+
    if (vote_threshold > max_vote_threshold){vote_threshold = max_vote_threshold;}
    cout <<"\nVote threshold is set at " << vote_threshold<<endl;
 
@@ -1779,43 +1783,48 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    //export_listNeuron_2swc(merge_result,"./test_merge_results_mst.eswc");
 
 
-
-   if (   soma_sort(cluster_distance_threshold*3, merge_result, soma_x, soma_y, soma_z, final_consensus,2.0) )
+   if ( merge_result.size() <=  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY)
    {
-       cout <<"merged swc #nodes = "<< final_consensus.size()<<endl;
-
-       int end = final_consensus.size()-1;
-       int begin = end;
-       int count = 0;
-       if (final_consensus[0].pn != -1)
+       if (   soma_sort(cluster_distance_threshold*3, merge_result, soma_x, soma_y, soma_z, final_consensus,2.0) )
        {
-           cout<< "Error: consensus tree does not start with root!";
+           cout <<"merged swc #nodes = "<< final_consensus.size()<<endl;
 
-       }
-
-       cout<<"erase small isolated branches( < 0.05 *total nodes)"<<endl;
-       for (int i=final_consensus.size()-1; i>=0; i--)
-       {
-           if (final_consensus[i].pn == -1)
+           int end = final_consensus.size()-1;
+           int begin = end;
+           int count = 0;
+           if (final_consensus[0].pn != -1)
            {
-               begin = i;
-               //erase the short branches
-               if (count < final_consensus.size()*0.05)
+               cout<< "Error: consensus tree does not start with root!";
+
+           }
+
+           cout<<"erase small isolated branches( < 0.05 *total nodes)"<<endl;
+           for (int i=final_consensus.size()-1; i>=0; i--)
+           {
+               if (final_consensus[i].pn == -1)
                {
-                   final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
-               }
+                   begin = i;
+                   //erase the short branches
+                   if (count < final_consensus.size()*0.05)
+                   {
+                       final_consensus.erase(final_consensus.begin()+begin, final_consensus.begin() +end+1);
+                   }
 
-               end = begin-1;
-               count = 0;
-           }
-           else
-           {
-               count ++;
+                   end = begin-1;
+                   count = 0;
+               }
+               else
+               {
+                   count ++;
+               }
            }
        }
-
-
-
+       return true;
+   }
+   else {
+       //report the mst results without sorting
+       cout<< "Warning: no sorting is done at the end due to the large number of nodes!";
+       final_consensus = merge_result;
        return true;
    }
 
@@ -2271,6 +2280,11 @@ void kd_run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double
      //  }
      //QTextStream  stream_ano (&file);
      //END
+      if (nt_list.size()<2)
+      {
+          cout<<"only one neuron, skip the match and center step..."<<Endl;
+          return;
+      }
 
        //identify nearest neighbothood, and find the average location
       vector<NeuronTree> shift_nt_list;
