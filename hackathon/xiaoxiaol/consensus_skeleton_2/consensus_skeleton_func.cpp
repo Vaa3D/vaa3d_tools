@@ -204,7 +204,12 @@ bool consensus_swc_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     prune_all_inputs(nt_list, cluster_distance_threshold);
 
     if (REMOVE_OUTLIER >0){
-            remove_outliers(nt_list, SelectedNeuronsAnoFileName);}
+          if( ! remove_outliers(nt_list, SelectedNeuronsAnoFileName))
+          {
+              cout<<"Error: failed at remove outlier step." <<endl;
+              return false;
+          }
+    }
 
 
     if (!consensus_skeleton_match_center(nt_list, merge_result, max_vote_threshold,cluster_distance_threshold, resample_flag, callback))

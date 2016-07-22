@@ -443,12 +443,12 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
 	}
 
     //criteria 1: total length
-    double low_len=0.33, high_len = 3;
+    double low_len=0.25, high_len = 4;
     tightRange(nt_lens, low_len, high_len);
 
 
     //criteria 2: fragmentations  (fragmentation:number of compartments that constitute a branch between two bifurcation points or between a bifurcation point and a terminal tip.)
-    double low_bi = 0.33, high_bi = 5;//many trees have smaller branches which cause small fragmentation, allow bigger fragmentations ( long branches, even though it might overtrace,
+    double low_bi = 0.25, high_bi = 4;//many trees have smaller branches which cause small fragmentation, allow bigger fragmentations ( long branches, even though it might overtrace,
     //but by allowing the long branches, we can include more candidates if the center/core branches are there.
     tightRange(nt_N_frags, low_bi, high_bi);
 
@@ -492,6 +492,8 @@ bool remove_outliers(vector<NeuronTree> & nt_list,QString SelectedNeuronsAnoFile
     }
 
     cout<<"\n"<< nt_list.size()<< " neurons left are going to be included for consensus."<<endl;
+    if (nt_list.size()<1)
+        return false;
 
     QFile file(SelectedNeuronsAnoFileName);
     if (!file.open(QFile::WriteOnly|QFile::Truncate))
@@ -1736,7 +1738,7 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
    }
    else
    {
-       cout <<"\n number of inputs < 3"<<endl;
+       cout <<"\n number of inputs="<<nt_list.size()<<endl;
        if (nt_list.size() == 1){
            cout <<"\n only one neuron remains, return this neuron as the consensus result"<<endl;
            final_consensus = nt_list[0].listNeuron;
@@ -2282,7 +2284,7 @@ void kd_run_match_center(vector<NeuronTree> & nt_list, int max_num_iters, double
      //  }
      //QTextStream  stream_ano (&file);
      //END
-      if (nt_list.size()<2)
+      if (nt_list.size() == 1)
       {
           cout<<"only one neuron, skip the match and center step..."<<endl;
           return;
