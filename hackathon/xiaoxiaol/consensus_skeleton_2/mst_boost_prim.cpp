@@ -127,7 +127,7 @@ bool boost_mst_prim(vector<NeuronTree>  nt_list, QList<NeuronSWC> &merge_result,
             tmp.pn = -1;
             tmp.r =  node_list[i].r;
             tmp.n = i+1;
-            tmp.fea_val.push_back(tmp.r*nt_list.size());// use the location votes
+            tmp.fea_val.push_back(1.0);//a default edge vote for root
             merge_result.append(tmp);
 
             continue;

@@ -24,7 +24,7 @@
 
 
 
-#define  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY 10000
+#define  MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY 20000
 
 using namespace std;
 
@@ -388,7 +388,7 @@ bool sort_all_inputs(vector<NeuronTree> & nt_list, double bridge_gap){
         if (tree.listNeuron.size()> MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY )
         {
             cout<<"This neuron is too big to process: likely to be an outlier anyway.Otherwise, please resample it "
-                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY(10000) nodes"<<endl;
+                  "to have less than MAX_NUM_OF_NODES_CAN_HANDLE_EFFICIENTLY(20000) nodes"<<endl;
             rm_ids.push_back(i);
         }
 
@@ -1299,6 +1299,8 @@ bool build_tree_from_adj_matrix(unsigned short * adjMatrix, QList<NeuronSWC> &me
                     merge_result[row].fea_val.push_back(float(edgeVote)); //edge votes
                     merge_result[row].pn = col + 1;  // from index to node id : "n"
 
+
+
                 }
                 else{// row node already has a non-rooted parent, connect the other way
                     merge_result[col].type = 3; //edge votes
@@ -1768,15 +1770,6 @@ bool consensus_skeleton_match_center(vector<NeuronTree>  nt_list, QList<NeuronSW
   // export_listNeuron_2swc(merge_result,"./test_merge_results_merged.eswc");
  //  int n_edges = build_adj_matrix(nt_list, merge_result, adjMatrix,TYPE_MERGED);
 
-
-// Yimin's contribution:
-//  previous version of prim mst implmentation is very sensitive, prune to disconnection errors
-// call the following function to make sure the graph is connected:
-//   cout <<"\nRemoving isolated subgraphs"<<endl;
-//   cout <<"Number of nodes before postprocessing is: "<<merge_result.size() <<endl;
-//   int numberOfSubGraphs = postprocessing_neuron_node_list(merge_result, adjMatrix, cluster_distance_threshold);
-//   cout <<"Number of nodes after postprocessing is: "<<merge_result.size() <<endl;
-//   if (numberOfSubGraphs > 1) cout <<"Number of sub-graphs is larger than 1." <<endl;
 
 
    double soma_x = nt_list[0].listNeuron[0].x;
