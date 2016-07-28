@@ -10,6 +10,12 @@
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
+
+
+#if  defined(Q_OS_LINUX)
+    #include <omp.h>
+#endif
 
 
 #include <boost/lexical_cast.hpp>
@@ -230,8 +236,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     if(P.method == 1)
         tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
     else
-     //   tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_COMBINED");
-        tmpfolder= fileOpenName +("_tmp_APP2");
+        tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_COMBINED");
+     //   tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP2");
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
 
@@ -257,7 +263,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 else
                     app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
 
-                flag = true;
+                flag = false;
             }
             else
             {
@@ -272,17 +278,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
         else
         {
-//            if(flag)
-//            {
+            if(flag)
+            {
                 app_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//                flag = false;
-//            }
-//            else
-//            {
-//                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-//            }
-
-
+                flag = false;
+            }
+            else
+            {
+                all_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
+            }
         }
         allTipsList.removeAt(0);
         allTargetList.removeAt(0);
@@ -360,7 +364,8 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+       // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
 
     QString imageSaveString = saveDirString;
 
@@ -780,7 +785,9 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = P.inimg_file +("_tmp_APP2");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+     // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
+
 
     QString imageSaveString = saveDirString;
 
@@ -1125,8 +1132,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
-        if (childs[i].size()==0)
-        {
+//        if (childs[i].size()==0)
+//        {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             bool check_tip = false;
@@ -1173,7 +1180,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             {
                 tip_down.push_back(newTip);
             }
-        }
+//        }
     }
 
 
@@ -1770,11 +1777,11 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
     ifs.close();
 
 
-//    for(V3DLONG i = 0; i < outswc.size(); i++)
-//    {
-//        outswc[i]->x = outswc[i]->x - offsetX_min;
-//        outswc[i]->y = outswc[i]->y - offsetY_min;
-//    }
+    for(V3DLONG i = 0; i < outswc.size(); i++)
+    {
+        outswc[i]->x = outswc[i]->x - offsetX_min;
+        outswc[i]->y = outswc[i]->y - offsetY_min;
+    }
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
     NeuronTree nt_final = readSWC_file(fileSaveName);
@@ -1789,48 +1796,48 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
     //write tc file
 
-//    QString tc_name = fileWithData + ".tc";
-//    ofstream myfile;
-//    myfile.open(tc_name.toStdString().c_str(), ios::in);
-//    if (myfile.is_open()==true)
-//    {
-//        qDebug()<<"initial file can be opened for reading and will be removed";
+    QString tc_name = fileWithData + ".tc";
+    ofstream myfile;
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    if (myfile.is_open()==true)
+    {
+        qDebug()<<"initial file can be opened for reading and will be removed";
 
-//        myfile.close();
-//        remove(tc_name.toStdString().c_str());
-//    }
-//    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
-//    if (!myfile.is_open()){
-//        qDebug()<<"file's not really open...";
-//        return;
-//    }
+        myfile.close();
+        remove(tc_name.toStdString().c_str());
+    }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    if (!myfile.is_open()){
+        qDebug()<<"file's not really open...";
+        return;
+    }
 
-//    myfile << "# thumbnail file \n";
-//    myfile << "NULL \n\n";
-//    myfile << "# tiles \n";
-//    myfile << node_type-1 << " \n\n";
-//    myfile << "# dimensions (XYZC) \n";
-//    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
-//    myfile << "\n\n";
-//    myfile << "# origin (XYZ) \n";
-//    myfile << "0.000000 0.000000 0.000000 \n\n";
-//    myfile << "# resolution (XYZ) \n";
-//    myfile << "1.000000 1.000000 1.000000 \n\n";
-//    myfile << "# image coordinates look up table \n";
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << node_type-1 << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
 
-//    ifstream ifs_2nd(fileWithData.toLatin1());
-//    while(ifs_2nd && getline(ifs_2nd, info_swc))
-//    {
-//        std::istringstream iss(info_swc);
-//        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
-//        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
-//        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
-//        myfile << imagename.toStdString();
-//        myfile << "\n";
-//    }
-//    myfile.flush();
-//    myfile.close();
-//    ifs_2nd.close();
+    ifstream ifs_2nd(fileWithData.toLatin1());
+    while(ifs_2nd && getline(ifs_2nd, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilepath >> sizeX >> sizeY;
+        QString imagename= QFileInfo(QString::fromStdString(swcfilepath)).completeBaseName() + ".v3draw";
+        imagename.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        myfile << imagename.toStdString();
+        myfile << "\n";
+    }
+    myfile.flush();
+    myfile.close();
+    ifs_2nd.close();
 }
 
 void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
@@ -1910,17 +1917,17 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
                 inputswc[d]->z = inputswc[d]->z + offsetZ;
                 inputswc[d]->type = node_type;
                 int flag_prune = 0;
-//                for(int dd = 0; dd < outswc.size();dd++)
-//                {
-//                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
-//                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
-//                    {
-//                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
-//                        flag_prune = 1;
-//                        break;
-//                    }
+                for(int dd = 0; dd < outswc.size();dd++)
+                {
+                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
+                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
+                    {
+                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
+                        flag_prune = 1;
+                        break;
+                    }
 
-//                }
+                }
                 if(flag_prune == 0)
                 {
                    outswc.push_back(inputswc[d]);
@@ -1943,15 +1950,15 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     }
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
-//    NeuronTree nt_final = readSWC_file(fileSaveName);
-//    QList<NeuronSWC> neuron_final_sorted;
+    NeuronTree nt_final = readSWC_file(fileSaveName);
+    QList<NeuronSWC> neuron_final_sorted;
 
-//    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
-//    {
-//        v3d_msg("fail to call swc sorting function.",0);
-//    }
+    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
 
-//    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
 
     //write tc file
 
@@ -2118,7 +2125,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
     int iii = 0;
-    while(allTargetList.size()>0 && iii <10)
+    while(allTargetList.size()>0)
     {
         iii++;
         newTargetList.clear();
@@ -2216,6 +2223,16 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     end_y = tileLocation.y+P.block_size;
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+
+    QString imagechecking = saveDirString;
+
+    imagechecking.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
+//    ifstream ifs_check(imagechecking.toStdString().c_str());
+//    if(ifs_check)
+//    {
+//        printf("scanned before");
+//        return true;
+//    }
 
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
     {
@@ -2411,27 +2428,27 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     nt_neutube = readSWC_file(swcNEUTUBE);
 
     NeuronTree nt;
-    nt = nt_neutube;
+    //nt = nt_neutube;
     combine_list2file(nt.listNeuron, swcString);
-//    ifstream ifs_swcString(swcString.toStdString().c_str());
-//    if(!ifs_swcString)
-//    {
-//        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
-//        export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
+    ifstream ifs_swcString(swcString.toStdString().c_str());
+    if(!ifs_swcString)
+    {
+        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
+        export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
-//    }else
-//    {
-//        NeuronTree nt_tile = readSWC_file(swcString);
-//        LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
-//        if(inputRootList_pruned.size()<1)
-//            return true;
-//        else
-//        {
-//            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
-//            combine_list2file(nt.listNeuron, swcString);
+    }else
+    {
+        NeuronTree nt_tile = readSWC_file(swcString);
+        LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
+        if(inputRootList_pruned.size()<1)
+            return true;
+        else
+        {
+            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
+            combine_list2file(nt.listNeuron, swcString);
 
-//        }
-//    }
+        }
+    }
 
     LandmarkList tip_left;
     LandmarkList tip_right;
@@ -2813,6 +2830,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
+
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
@@ -2826,6 +2844,8 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         for(int i = 0; i < group_tips_down.size();i++)
             ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
+
+
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
 
@@ -2853,6 +2873,18 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     }
 
 
+//    QString marker_name = imageSaveString + ".marker";
+//    QList<ImageMarker> seedsToSave;
+//    for(V3DLONG i = 0; i<inputRootList.size();i++)
+//    {
+//        ImageMarker outputMarker;
+//        outputMarker.x = inputRootList.at(i).x;
+//        outputMarker.y = inputRootList.at(i).y;
+//        outputMarker.z = inputRootList.at(i).z;
+//        seedsToSave.append(outputMarker);
+//    }
+
+//    writeMarker_file(marker_name, seedsToSave);
     total4DImage->deleteRawDataAndSetPointerToNull();
     return true;
 }
@@ -3252,9 +3284,10 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage)
 {
     NeuronTree nt_result;
+    NeuronTree nt_resampled = resample(nt, 10);
     QList<NeuronSWC> neuron_sorted;
 
-    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 10))
+    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))
     {
         v3d_msg("fail to call swc sorting function.",0);
         return nt_result;
@@ -3282,7 +3315,6 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
             int marker_x = inputRootList.at(i).x - total4DImage->getOriginX();
             int marker_y = inputRootList.at(i).y - total4DImage->getOriginY();
             int marker_z = inputRootList.at(i).z - total4DImage->getOriginZ();
-
             for(V3DLONG j = 0; j<neuronNum;j++)
             {
                 NeuronSWC curr = neuron_sorted.at(j);
@@ -3789,4 +3821,307 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
     }
     return true;
+}
+
+
+bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
+{
+    QElapsedTimer timer1;
+    timer1.start();
+
+    QString fileOpenName = P.inimg_file;
+
+    if(P.image)
+    {
+        P.in_sz[0] = P.image->getXDim();
+        P.in_sz[1] = P.image->getYDim();
+        P.in_sz[2] = P.image->getZDim();
+    }else
+    {
+        if(QFileInfo(fileOpenName).completeSuffix() == "tc")
+        {
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            P.in_sz[0] = vim.sz[0];
+            P.in_sz[1] = vim.sz[1];
+            P.in_sz[2] = vim.sz[2];
+
+        }else if ((QFileInfo(fileOpenName).completeSuffix() == "raw") || (QFileInfo(fileOpenName).completeSuffix() == "v3draw"))
+        {
+            unsigned char * datald = 0;
+            V3DLONG *in_zz = 0;
+            V3DLONG *in_sz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+            {
+                return false;
+            }
+            if(datald) {delete []datald; datald = 0;}
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
+        }else
+        {
+            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
+            P.in_sz[0] = aVolume->getDIM_H();
+            P.in_sz[1] = aVolume->getDIM_V();
+            P.in_sz[2] = aVolume->getDIM_D();
+        }
+
+        LocationSimple t;
+        if((QFileInfo(P.markerfilename).completeSuffix() == "marker") || (QFileInfo(fileOpenName).completeSuffix() == "MARKER"))
+        {
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x + 1;
+                t.y = file_inmarkers[i].y + 1;
+                t.z = file_inmarkers[i].z + 1;
+                P.listLandmarks.push_back(t);
+            }
+        }else
+        {
+            QList<CellAPO> file_inmarkers;
+            file_inmarkers = readAPO_file(P.markerfilename);
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers[i].x;
+                t.y = file_inmarkers[i].y;
+                t.z = file_inmarkers[i].z;
+                P.listLandmarks.push_back(t);
+            }
+        }
+    }
+
+    QString tmpfolder;
+    if(P.method ==3)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
+    else if(P.method ==4)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
+    else if(P.method ==5)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+
+
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(tmpfolder.isEmpty())
+    {
+        printf("Can not create a tmp folder!\n");
+        return false;
+    }
+
+    unsigned int numOfThreads = 8; // default value for number of theads
+    omp_set_num_threads(numOfThreads);
+
+    #pragma omp parallel for
+
+    for(V3DLONG ix = (int)P.listLandmarks[0].x; ix<= (int)P.listLandmarks[1].x; ix += P.block_size)
+    {
+        printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+        #pragma omp parallel for
+        for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
+        {
+            all_tracing_grid(callback,P,ix,iy);
+        }
+    }
+
+    return true;
+}
+
+bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy)
+{
+    QString saveDirString;
+    if(P.method ==3)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+    else if (P.method ==4)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+    else if (P.method ==5)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+    else if (P.method ==2)
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+
+    QString imageSaveString = saveDirString;
+
+    V3DLONG start_x,start_y,end_x,end_y;
+    start_x = ix;
+    start_y = iy;
+    end_x = ix + P.block_size;
+    end_y = iy + P.block_size;
+
+    unsigned char * total1dData = 0;
+    V3DLONG *in_sz = 0;
+
+    if(P.image)
+    {
+        in_sz = new V3DLONG[4];
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = P.in_sz[2];
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+        try {total1dData = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+        V3DLONG i = 0;
+        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
+        {
+            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+            for(V3DLONG iy = start_y; iy < end_y; iy++)
+            {
+                V3DLONG offsetj = iy*P.in_sz[0];
+                for(V3DLONG ix = start_x; ix < end_x; ix++)
+                {
+                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+    }else
+    {
+        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.inimg_file.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,0,end_x-1,end_y-1,P.in_sz[2]-1))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,0,
+                               end_x,end_y,P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+        }
+
+    }
+
+
+    V3DLONG mysz[4];
+    mysz[0] = in_sz[0];
+    mysz[1] = in_sz[1];
+    mysz[2] = in_sz[2];
+    mysz[3] = 1;
+
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
+    QString swcString = saveDirString;
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    QString full_plugin_name;
+    QString func_name;
+
+    arg.type = "random";std::vector<char*> arg_input;
+    std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+    arg_input.push_back(fileName_string);
+    arg.p = (void *) & arg_input; input<< arg;
+
+    char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
+    arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+    arg.type = "random";
+    std::vector<char*> arg_para;
+
+    if(P.method ==3 || P.method == 2)
+    {
+        arg_para.push_back("1");
+        arg_para.push_back("1");
+        full_plugin_name = "neuTube";
+        func_name =  "neutube_trace";
+    }else if(P.method ==4)
+    {
+        arg_para.push_back("1");
+        arg_para.push_back("1");
+        full_plugin_name = "snake";
+        func_name =  "snake_trace";
+    }else if(P.method ==5)
+    {
+        string S_channel = boost::lexical_cast<string>(P.channel);
+        char* C_channel = new char[S_channel.length() + 1];
+        strcpy(C_channel,S_channel.c_str());
+        arg_para.push_back(C_channel);
+
+        string S_background_th = boost::lexical_cast<string>(P.bkg_thresh);
+        char* C_background_th = new char[S_background_th.length() + 1];
+        strcpy(C_background_th,S_background_th.c_str());
+        arg_para.push_back(C_background_th);
+
+        string S_seed_win = boost::lexical_cast<string>(P.seed_win);
+        char* C_seed_win = new char[S_seed_win.length() + 1];
+        strcpy(C_seed_win,S_seed_win.c_str());
+        arg_para.push_back(C_seed_win);
+
+        string S_slip_win = boost::lexical_cast<string>(P.slip_win);
+        char* C_slip_win = new char[S_slip_win.length() + 1];
+        strcpy(C_slip_win,S_slip_win.c_str());
+        arg_para.push_back(C_slip_win);
+
+        full_plugin_name = "mostVesselTracer";
+        func_name =  "MOST_trace";
+    }
+
+    arg.p = (void *) & arg_para; input << arg;
+
+    if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+    {
+
+        printf("Can not find the tracing plugin!\n");
+        return false;
+    }
+
+    QString swcNEUTUBE = saveDirString;
+    if(P.method ==3 || P.method ==2)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
+    else if (P.method ==4)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
+    else if (P.method ==5)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+
+    vector<MyMarker*> inputswc;
+    inputswc = readSWC_file(swcNEUTUBE.toStdString());;
+    for(V3DLONG d = 0; d < inputswc.size(); d++)
+    {
+        inputswc[d]->x = inputswc[d]->x + start_x;
+        inputswc[d]->y = inputswc[d]->y + start_y;
+    }
+    saveSWC_file(swcString.toStdString().c_str(), inputswc);
+    system(qPrintable(QString("rm %1").arg(swcNEUTUBE.toStdString().c_str())));
+    system(qPrintable(QString("rm %1").arg(imageSaveString.toStdString().c_str())));
 }

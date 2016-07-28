@@ -66,5 +66,10 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
                     V3DLONG startx, V3DLONG starty, V3DLONG startz, V3DLONG endx, V3DLONG endy, V3DLONG endz);
 
 
+bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
+bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy);
+
+
+
 #endif
 

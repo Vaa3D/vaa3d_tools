@@ -229,7 +229,10 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.adap_win = dialog.adap_win;
         P.method = 3;
         P.tracing_3D = dialog.tracing_3D;
-        crawler_raw_all(callback,parent,P,bmenu);
+        if(!dialog.grid_trace)
+            crawler_raw_all(callback,parent,P,bmenu);
+        else
+            grid_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_SNAKE"))
     {
         TRACE_LS_PARA P;

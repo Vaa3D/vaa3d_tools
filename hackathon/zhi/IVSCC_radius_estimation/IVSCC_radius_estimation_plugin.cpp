@@ -74,7 +74,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         string outswc_file = dialog.outswc_file;
         bool is_2d = dialog.is_2d;
         double bkg_thresh = dialog.bkg_thresh;
-        double stop_thresh = dialog.stop_thresh/100;
+        double stop_thresh = dialog.stop_thresh;
 
         V3DLONG  in_sz[4];
         Image4DSimple* p4DImage = dialog.image;
@@ -90,12 +90,19 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         for(int i = 0; i < inswc.size(); i++)
         {
             MyMarker * marker = inswc[i];
+            double root_x = inswc[0]->x;
+            double root_y = inswc[0]->y;
+            double bkg_thresh_updated;
+            if(marker->x > root_x - 150 && marker->x < root_x + 150 && marker->y > root_y - 150 && marker->y < root_y + 150)
+                bkg_thresh_updated = stop_thresh;
+            else
+                bkg_thresh_updated = bkg_thresh;
             if(marker->parent > 0)
             {
                 if(is_2d)
-                    marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh,stop_thresh);
+                    marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh_updated,0.001);
                 else
-                    marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh);
+                    marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh_updated);
             }
         }
 

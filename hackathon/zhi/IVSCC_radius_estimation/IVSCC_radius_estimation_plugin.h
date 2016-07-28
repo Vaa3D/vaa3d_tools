@@ -54,7 +54,7 @@ class radiusEstimationDialog : public QDialog
             bkg_thresh_box = new QLineEdit("5");
             stop_thresh_box = new QDoubleSpinBox();
             stop_thresh_box->setMinimum(0.1);
-            stop_thresh_box->setMaximum(10);
+            stop_thresh_box->setMaximum(1000);
 
             is2d_checker = new QCheckBox("Is 2D radius");
             is2d_checker->setChecked(true);

@@ -773,6 +773,10 @@ class neuroncrawler_neutube_raw : public QDialog
             b_3Dchecker = new QCheckBox();
             b_3Dchecker->setChecked(false);
 
+
+            b_grid = new QCheckBox();
+            b_grid->setChecked(false);
+
             terafly_filepath = new QLineEdit();
             openteraflyFile = new QPushButton(QObject::tr("..."));
 
@@ -799,6 +803,8 @@ class neuroncrawler_neutube_raw : public QDialog
             layout->addWidget(b_adapWinchecker,4,3);
             layout->addWidget(new QLabel("3D crawler?"),4,4);
             layout->addWidget(b_3Dchecker,4,5);
+            layout->addWidget(new QLabel("Grid trace?"),4,6);
+            layout->addWidget(b_grid,4,7);
 
 
 
@@ -836,6 +842,8 @@ class neuroncrawler_neutube_raw : public QDialog
             connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(openteraflyFile, SIGNAL(clicked()), this, SLOT(_slots_openteraflyFile()));
             connect(b_3Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(b_grid, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
 
 
             update();
@@ -851,8 +859,8 @@ class neuroncrawler_neutube_raw : public QDialog
             markerfilename = marker_filepath->text();
 
             b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
-
             b_3Dchecker->isChecked() ? tracing_3D = 1 : tracing_3D = 0;
+            b_grid->isChecked() ? grid_trace = 1 : grid_trace = 0;
             teraflyfilename = terafly_filepath->text();
 
         }
@@ -908,6 +916,8 @@ class neuroncrawler_neutube_raw : public QDialog
         QSpinBox * block_spinbox;
         QCheckBox * b_adapWinchecker;
         QCheckBox * b_3Dchecker;
+        QCheckBox * b_grid;
+
 
 
         QLineEdit * raw_filepath;
@@ -924,6 +934,7 @@ class neuroncrawler_neutube_raw : public QDialog
         int block_size;
         int adap_win;
         int tracing_3D;
+        int grid_trace;
 
         QString rawfilename;
         QString markerfilename;
