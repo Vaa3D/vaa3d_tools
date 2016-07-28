@@ -611,19 +611,17 @@ void printHelp()
 
 
     cout<<"\n  1) Generate a consensus neuron skeleton (eswc file) from a group of neurons ( radii are ignored)."<<endl;
-    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <*.swc or ano file> -o <output_file> -p <max vote threshold> < clustering distance threshold> <resample flag>"<<endl;
+    cout<<"\nUsage: v3d -x consensus_swc -f consensus_swc -i <*.swc or ano file> -o <output_file> -p <max vote threshold> < clustering distance threshold> <remove outliers>"<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  consensus_swc"<<endl;
     cout<<"\t-i <input>:  input linker file (.ano) or  swc files"<<endl;
-    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <resample_flag> <remove_outliers>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
-    cout<<"\t                                 included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
-    cout<<"\t                                  b) clustering distance threshold: the maximum voxel distance that are allowed to cluster one swc node to the " <<endl;
-    cout<<"\t                                 consenused node location during the edge voting step. c)remove_outeliers: for preprocessing:1--remove outliers based on total length and birfircations, 0-- Keep all entries.Default=1." <<endl;
+    cout<<"\t-p <max_vote_threshold> <clustering_distance_threshold> <remove_outliers>: a) max_vote_threshold: by default votes bigger than 1/3 of valid inputs will be "<<endl;
+    cout<<"\t included for consensing, this max_vote_threshold is setting the upper bound such voting threshold." <<endl;
+    cout<<"\t b) clustering distance threshold: the maximum voxel distance that are allowed to cluster one swc node to the " <<endl;
+    cout<<"\t consensused node location during the edge voting step. c)remove_outeliers: for preprocessing:1--remove outliers based on total length and birfircations, 0-- Keep all entries.Default=1." <<endl;
     cout<<"\t-o <output_file>:  output consensus eswc file name. The ESWC contains the edge connection confidence/voting value at each swc node."<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 4 1\n"<<endl;
-    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 4 0\n"<<endl;
-
-
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i mylinker.ano -o consensus.eswc -p 3 5 1\n"<<endl;
+    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
 
     cout<<"\n  2) Pick the median neuron tree from a group of input neuron tress."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f median_swc -i <input ANO linker file> [-o <output csv file>] "<<endl;
@@ -647,7 +645,7 @@ void printHelp()
     cout<<"Example: v3d -x consensus_swc -f average_node_position -i median.swc mylinker.ano -p 8 -o median_adjusted.swc\n"<<endl;
 
 
-    cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons ( radii are considered)."<<endl;
+    cout<<"\n  4) Generate a vote map volume (aggregated mask images) from multiple neurons (radii are considered)."<<endl;
     cout<<"\nUsage: v3d -x consensus_swc -f vote_map -i <input> -o <output_image_file> "<<endl;
     cout<<"Parameters:"<<endl;
     cout<<"\t-f <function_name>:  vote_map"<<endl;
