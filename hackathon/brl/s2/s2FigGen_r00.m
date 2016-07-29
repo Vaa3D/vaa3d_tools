@@ -18,7 +18,7 @@
 %Figure generation for smartscope 2 data
 % based on scanAnalysisScripts, this script will be updated as changes are
 % made to output figures, but figure generation should be accomplished
-% simply by running this script. 
+% simply by running this script.
 %   Sun April 10 2016
 
 %  reviewing data again 4/11 further reduced the number of legitimate scans
@@ -30,14 +30,14 @@
 %  the cell body or they only contained one tile and so would have been
 %  skipped anyway below.
 
-%Data analysis for smartscope 2 
+%Data analysis for smartscope 2
 % starting 2016.03.28
 
 % 1. Data Entry
 
 
 
-%   only a subset of data is worth analyzing for s2 performance.  
+%   only a subset of data is worth analyzing for s2 performance.
 %  these data will be copied into a special directory, /local2/s2Data/  and
 %  organized into directories for each cell imaged.
 
@@ -51,19 +51,19 @@ tic
 
 
 for i = 1:numel(batch)
-
-
-   celliDir = dir(fullfile(batchTopDirectory, batch(i).name));
-
+    
+    
+    celliDir = dir(fullfile(batchTopDirectory, batch(i).name));
+    
     celliDir = celliDir([celliDir(:).isdir]') ; % just get scan directories
     keepList = true(1,numel(celliDir));
-   for j = 1:numel(celliDir)  %  all scans, even aborted ones
-       if (sum(findstr(celliDir(j).name, '2016_'))==0)  % not a normal scan folder
-           keepList(j) = false;
-       end
-   end
-   celliDir = celliDir(keepList);
-    for j = 1:numel(celliDir)  %  all scans, even aborted ones    
+    for j = 1:numel(celliDir)  %  all scans, even aborted ones
+        if (sum(findstr(celliDir(j).name, '2016_'))==0)  % not a normal scan folder
+            keepList(j) = false;
+        end
+    end
+    celliDir = celliDir(keepList);
+    for j = 1:numel(celliDir)  %  all scans, even aborted ones
         scanjDir = dir(fullfile(batchTopDirectory, batch(i).name, celliDir(j).name,'*.xml'));
         if numel(scanjDir)>0
             cellData{i}(j) = scanDataFromXMLDir(fullfile(batchTopDirectory, batch(i).name, celliDir(j).name));
@@ -71,12 +71,12 @@ for i = 1:numel(batch)
         end
         
     end
-   
     
     
     
-   
-
+    
+    
+    
 end
 
 % 914s for 25 cells
@@ -88,31 +88,31 @@ normalScans = numel(cellData)
 adaptiveScans = dir(fullfile(batchTopDirectory, 'cell001','adaptive'));
 for i = 1:numel(adaptiveScans)
     if findstr(adaptiveScans(i).name, '.')
-                adaptiveScans(i).isdir = false;
+        adaptiveScans(i).isdir = false;
         continue
-        else
+    else
     end
-adaptiveScans(i).fullDirPath = fullfile(batchTopDirectory, 'cell001','adaptive',adaptiveScans(i).name)
+    adaptiveScans(i).fullDirPath = fullfile(batchTopDirectory, 'cell001','adaptive',adaptiveScans(i).name)
 end
 
 
 adaptiveScans2 = dir(fullfile(batchTopDirectory, 'cell002','adaptive'));
 for i = 1:numel(adaptiveScans2)
     if findstr(adaptiveScans2(i).name, '.')
-                adaptiveScans2(i).isdir = false;
+        adaptiveScans2(i).isdir = false;
         continue
     end
-adaptiveScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell002','adaptive',adaptiveScans2(i).name)
+    adaptiveScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell002','adaptive',adaptiveScans2(i).name)
 end
 
 
 adaptiveScans3 = dir(fullfile(batchTopDirectory, 'cell003','adaptive'));
 for i = 1:numel(adaptiveScans3)
     if findstr(adaptiveScans3(i).name, '.')
-                adaptiveScans3(i).isdir = false;
+        adaptiveScans3(i).isdir = false;
         continue
     end
-adaptiveScans3(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','adaptive',adaptiveScans3(i).name)
+    adaptiveScans3(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','adaptive',adaptiveScans3(i).name)
 end
 
 
@@ -129,7 +129,7 @@ for i = 1:numel(gridScans)
         continue
         
     end
-gridScans(i).fullDirPath = fullfile(batchTopDirectory, 'cell001','grid',gridScans(i).name)
+    gridScans(i).fullDirPath = fullfile(batchTopDirectory, 'cell001','grid',gridScans(i).name)
 end
 
 gridScans = gridScans([gridScans(:).isdir]')
@@ -142,7 +142,7 @@ for i = 1:numel(gridScans2)
         continue
         
     end
-gridScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','grid',gridScans2(i).name)
+    gridScans2(i).fullDirPath = fullfile(batchTopDirectory, 'cell003','grid',gridScans2(i).name)
 end
 
 gridScans2 = gridScans2([gridScans2(:).isdir]')
@@ -158,23 +158,23 @@ nBeforeGrid = numel(adaptiveScans)
 %
 
 for i = 1:numel(otherScans)
-
-
-            cellData{1+normalScans}(i) = scanDataFromXMLDir(fullfile(otherScans(i).fullDirPath));
-       
-  
-   
-
+    
+    
+    cellData{1+normalScans}(i) = scanDataFromXMLDir(fullfile(otherScans(i).fullDirPath));
+    
+    
+    
+    
 end
 
 
 aScanNN = normalScans+2
 gScanNN = normalScans+3
 toc
-% 2.  Analysis
+%% 2.  Analysis
 
 % determine difference between summed tile volume and the actual scanned
-% volume [estimate from (whole micron?) binary images] 
+% volume [estimate from (whole micron?) binary images]
 
 
 
@@ -192,6 +192,23 @@ for i = 1:numel(cellData)
             cellData{i}(j).ignore = true;
             continue
         else
+            
+            
+            
+            
+            cd(fullfile(cellData{i}(j).folderName,'..'))
+            dString = pwd;
+            
+            nnTry = str2double(dString(end-2:end))+1
+            if isnan(nnTry)
+                nnTry = normalScans+2+(j>nBeforeGrid) % extra number here because there's one number missing.  files should be organized better
+            end
+            cellData{i}(j).neuronNumber = nnTry;
+            
+            if       cellData{i}(j).neuronNumber <28  % add BB scans for most recent dataset.
+                continue
+            end
+            
             allLocations = cell2mat(tileSetij');
             lowerx = floor(min(allLocations(:,1)));
             upperx = ceil(max(allLocations(:,3)));
@@ -214,25 +231,16 @@ for i = 1:numel(cellData)
                 
             end
             
-               [bigRectxS, bigRectyS] = meshgrid(lowerx:upperxS,lowery:upperyS);
+            [bigRectxS, bigRectyS] = meshgrid(lowerx:upperxS,lowery:upperyS);
             bigRectS = false(size(bigRectxS));
             for k = 1:nTiles
                 bigRectS(:) = bigRectS(:)| ((bigRectxS(:)>allLocations(k,1)) &( bigRectxS(:)<=allLocations(k,3) )& (bigRectyS(:)>allLocations(k,2)) &( bigRectyS(:)<=allLocations(k,4) ));
                 
                 
-            end         
-            
-            
-            cd(fullfile(cellData{i}(j).folderName,'..'))
-            dString = pwd;
-            
-            nnTry = str2double(dString(end-2:end))+1
-            if isnan(nnTry)
-                nnTry = normalScans+2+(j>nBeforeGrid) % extra number here because there's one number missing.  files should be organized better
             end
-            cellData{i}(j).neuronNumber = nnTry;
- 
             
+            
+            cellData{i}(j).s2Footprint = bigRectS;
             cellData{i}(j).boundingBoxArea = numel(bigRect);
             cellData{i}(j).boundingBoxAreaSquare = numel(bigRectS);
             cellData{i}(j).imagedArea = sum(bigRect(:));
@@ -244,14 +252,14 @@ for i = 1:numel(cellData)
             
             cellData{i}(j).lagTimes =  diff(cellData{i}(j).tileStartTimes)-cellData{i}(j).allTileTimes(1:end-1);
             
-
+            
             %  early on, there were some extraneous delays due to
             %  instabilities of the code on Windows.  The result was an
             %  error message that popped up and stopped the scan unless it
             %  was clicked.  this can be seen in /local2/s2Data/cell003/grid/2016_04_15_Fri_11_13
             % where tiles ZSeries-04152016-0942-3972.xml and
             % ZSeries-04152016-0942-3971.xml differ by ~30 min, completely
-            % screwing up the timing data.   
+            % screwing up the timing data.
             %  also, if the .xml file of an overview tile gets stuck in this folder, all the results are off.
             % The following lines at least warn you
             checkLags = cellData{i}(j).lagTimes > 300;
@@ -268,7 +276,7 @@ for i = 1:numel(cellData)
                 end
                 % and fix the total time..
                 
-            end   
+            end
             cellData{i}(j).totalTime = cellData{i}(j).tileStartTimes(end)-cellData{i}(j).tileStartTimes(1)+cellData{i}(j).allTileTimes(end)+min(cellData{i}(j).lagTimes);
             cellData{i}(j).minTotalTime = sum(cellData{i}(j).allTileTimes(:)+min(cellData{i}(j).lagTimes));
             cellData{i}(j).minImagingOnly = sum(cellData{i}(j).allTileTimes(:));
@@ -281,47 +289,286 @@ for i = 1:numel(cellData)
             cellData{i}(j).zDepthVoxels = cellData{i}(j).allTileInfo{1}.tileDimensions(3);
             
             
-        if       cellData{i}(j).neuronNumber >= 28  % add BB scans for most recent dataset.
+            if       cellData{i}(j).neuronNumber >= 28  % add BB scans for most recent dataset.
+                
+                xmlFile = dir(fullfile(pwd, 'ZSeries*'));
+                if numel(xmlFile)>0
+                    if xmlFile(1).isdir
+                        xmlDir = xmlFile(1);
+                    else
+                        xmlDir.name = '';
+                    end
+                    cellData{i}(j).BBdata = scanDataFromXMLDir(fullfile(batchTopDirectory, batch(i).name, xmlDir.name))
+                    % now check the .tif conversion time using the timestamps on
+                    % the .tif files in the original directory.  the latest time
+                    % on a .tif file - the earliest time stamp on a .tif file gives a
+                    % very good estimate of the total .tif conversion time.
+                    zSeriesName = dir(fullfile(fileparts(cellData{i}(1).folderName),'ZSeries*'))
+                    [ig, cellData{i}(j).BBName, nore] = fileparts(zSeriesName(1).name)
+                    oDataDir = dir(fullfile('/local3/testNAS/data000/', cellData{i}(j).BBName, '*.tif'));
+                    cellData{i}(j).BBTiffTime = 24*60*60*(max([oDataDir(:).datenum]')-min([oDataDir(:).datenum]'));
+                    
+                    
+                    %  now add code to analyze the  sparsity for different BB
+                    %  sizes.  This is essentially the box-counting method of
+                    %  estimating the fractal dimension,
+                    
+                    %  there are 2 different outputs of interest for each Scan Unit
+                    %  (SU) size:
+                    
+                    %  1. how many SUs have any signal in them?
+                    %  2. What is the mass of small(s2) tiles in each SU?
+                    %
+                    %  so just start with 2. and binarize to get 1.
+                    
+                    %  This needs to be organized for a fixed set SU sizes across
+                    %  samples, regardless of original BB size.
+                    
+                    [sBBrows, sBBcols] = size(cellData{i}(j).s2Footprint);
+                    suSizes =  floor(logspace(3,2,20));%[1000, 900, 800,700, 600, 500, 400,300, 200, 100]; 
+                    cellData{i}(j).suSizes = suSizes;
+                    cellData{i}(j).suData={};
+                        suData= {};
+                    for ss = 1:numel(suSizes)
+                        nSUs = ceil(sBBrows/suSizes(ss))
+                        if nSUs <2
+                            continue
+                        end
+                        
 
-            xmlFile = dir(fullfile(pwd, 'ZSeries*'));
-            if numel(xmlFile)>0
-            if xmlFile(1).isdir
-                xmlDir = xmlFile(1);
-            else
-                xmlDir.name = '';
+                        suData{ss,1} = zeros(nSUs);
+                        %  start in the upper left corner with an even SU
+                        %  tesselate them until you include all of the s2 SUs,
+                        
+                        for suRows = 1:nSUs
+                            for suColumns = 1:nSUs
+                                minRow =    ((suRows-1)*suSizes(ss)+1)
+                                maxRow = min(sBBrows, suRows*suSizes(ss));
+                                
+                                
+                                minCol = ((suColumns-1)*suSizes(ss)+1)
+                                maxCol =  min(sBBcols, suColumns*suSizes(ss));
+                                
+                                suData{ss,1}(suRows,suColumns) = sum(sum(cellData{i}(j).s2Footprint(minRow:maxRow,minCol:maxCol)>0))/suSizes(ss).^2;
+                                
+                            end
+                        end
+                        figure(ss), imagesc(suData{ss,1})
+                        
+                        
+                        cellData{i}(j).s2Footprint = fliplr(cellData{i}(j).s2Footprint);
+                        
+                        
+                        suData{ss,2} = zeros(nSUs);
+                        %  start in the upper left corner with an even SU
+                        %  tesselate them until you include all of the s2 SUs,
+                        
+                        for suRows = 1:nSUs
+                            for suColumns = 1:nSUs
+                                minRow =    ((suRows-1)*suSizes(ss)+1)
+                                maxRow = min(sBBrows, suRows*suSizes(ss));
+                                
+                                
+                                minCol = ((suColumns-1)*suSizes(ss)+1)
+                                maxCol =  min(sBBcols, suColumns*suSizes(ss));
+                                
+                                suData{ss,2}(suRows,suColumns) = sum(sum(cellData{i}(j).s2Footprint(minRow:maxRow,minCol:maxCol)>0))/suSizes(ss).^2;
+                                
+                            end
+                        end
+                        figure(ss), imagesc(suData{ss,2})
+                        
+                        
+                        
+                        cellData{i}(j).s2Footprint = flipud(cellData{i}(j).s2Footprint);
+                        
+                        
+                        suData{ss,3} = zeros(nSUs);
+                        %  start in the upper left corner with an even SU
+                        %  tesselate them until you include all of the s2 SUs,
+                        
+                        for suRows = 1:nSUs
+                            for suColumns = 1:nSUs
+                                minRow =    ((suRows-1)*suSizes(ss)+1)
+                                maxRow = min(sBBrows, suRows*suSizes(ss));
+                                
+                                
+                                minCol = ((suColumns-1)*suSizes(ss)+1)
+                                maxCol =  min(sBBcols, suColumns*suSizes(ss));
+                                
+                                suData{ss,3}(suRows,suColumns) = sum(sum(cellData{i}(j).s2Footprint(minRow:maxRow,minCol:maxCol)>0))/suSizes(ss).^2;
+                                
+                            end
+                        end
+                        figure(ss), imagesc(suData{ss,3})
+                        
+                        
+                        cellData{i}(j).s2Footprint = fliplr(cellData{i}(j).s2Footprint);
+                        
+                        
+                        suData{ss,4} = zeros(nSUs);
+                        %  start in the upper left corner with an even SU
+                        %  tesselate them until you include all of the s2 SUs,
+                        
+                        for suRows = 1:nSUs
+                            for suColumns = 1:nSUs
+                                minRow =    ((suRows-1)*suSizes(ss)+1)
+                                maxRow = min(sBBrows, suRows*suSizes(ss));
+                                
+                                
+                                minCol = ((suColumns-1)*suSizes(ss)+1)
+                                maxCol =  min(sBBcols, suColumns*suSizes(ss));
+                                
+                                suData{ss,4}(suRows,suColumns) = sum(sum(cellData{i}(j).s2Footprint(minRow:maxRow,minCol:maxCol)>0))/suSizes(ss).^2;
+                                
+                            end
+                        end
+                        figure(ss), imagesc(suData{ss,4})
+                        
+                        
+                    end
+                    cellData{i}(j).suData = suData;
+                    
+                    %  then go to each of the
+                    %  other corners and calculate again
+                    %             s2Footprint = fliplr(s2Footprint);
+                    %
+                    %             for suRows = 1:nSUs
+                    %                 for suColumns = 1:nSUs
+                    %                     minRow =    ((suRows-1)*suSizes(ss)+1)
+                    %                     maxRow = min(sBBrows, suRows*suSizes);
+                    %
+                    %
+                    %                     minCol = ((suColumns-1)*suSizes(ss)+1)
+                    %                     maxCol =  min(sBBcols, suColumns*suSizes);
+                    %
+                    %                     suData{1}(suRows,suColumns) = sum(s2Footprint(minRow:maxRow,minCol:maxCol)>0);
+                    %
+                    %                 end
+                    %             end
+                    
+                    
+                    
+                    %here I need to
+                    %  generate a curve of ScanUnitArea/s2Area vs sparsity for each
+                    %  ScanUnitArea.
+                    %  the problem is that these two things are the same thing
+                    %  unless the sparsity is calculated some other way
+                    
+                    %
+                    
+                    
+                end
+                
             end
-            cellData{i}(j).BBdata = scanDataFromXMLDir(fullfile(batchTopDirectory, batch(i).name, xmlDir.name))
-            % now check the .tif conversion time using the timestamps on
-            % the .tif files in the original directory.  the latest time
-            % on a .tif file - the earliest time stamp on a .tif file gives a
-            % very good estimate of the total .tif conversion time.
-            zSeriesName = dir(fullfile(fileparts(cellData{i}(1).folderName),'ZSeries*'))
-            [ig, cellData{i}(j).BBName, nore] = fileparts(zSeriesName(1).name)
-            oDataDir = dir(fullfile('/local3/testNAS/data000/', cellData{i}(j).BBName, '*.tif'));
-            cellData{i}(j).BBTiffTime = 24*60*60*(max([oDataDir(:).datenum]')-min([oDataDir(:).datenum]'));
-            end
-            
-        end
         end
     end
 end
 
 cd(fullfile(batchTopDirectory))
+%%   analyze the SU data.
 
-% extract lag times = (difference between sequential tiles) - tiletime.
-% this will include convert/load times but should also show initial big lag
-% followed by minimal lags in continuous imaging mode. tough to extract necessary from unnecessary
-% delays, though.
+% first, for each SU, plot the mean sparsity per SU
+
+aH = figure;
+bH = figure; 
+cH = figure;
+oneList=[];
+xdata={}
+ydata={}
+for k = numel(suSizes):-1:1
+xdata{k}=[]
+ydata{k}=[]
+for i = 1:numel(cellData)
+    for j = numel(cellData{i})
+        
+        if isfield(cellData{i}(j), 'suData')
+            %  suData is a density map:  what is the density of s2 tiles in
+            %  each SU?  % the different columns of suData are for
+            %  different orientations (to reduce boundary effects)
+            %  the different rows of suData are the different SU sizes.
+            
+            %  for each SU, we want a curve with whole-scan sparsity on the
+            %  x axis (S2Mass/SquareBB)b
+            
+            xdata{k} = [xdata{k}, cellData{i}(j).boundingBoxSparsityS] 
+            %  and SU sparsity on the y axis sum(SUmass>0)/sum(SUmass>=0)
+            dat = zeros(4,3);
+            for orientation = 1:4
+                
+                dat(orientation,1) =sum( cellData{i}(j).suData{k,orientation}(:)>0)/numel(cellData{i}(j).suData{k,orientation}(:));  % density of nonzero ScanUnits
+                dat(orientation,2) = sum( cellData{i}(j).suData{k,orientation}(:)*(suSizes(k).^2))/numel(cellData{i}(j).suData{k,orientation}(:));  %  total mass/total area.  would be fixed for fixed boundingbox size, right?
+                dat(orientation,3) = numel(cellData{i}(j).suData{k,orientation}(:)); %  total number of pixels in scanunit
+            end
+                ydata{k} = [ydata{k}; [mean(dat(:,1)), mean(dat(:,2)), mean(dat(:,3))]];
+            
+                if mean(dat(:,1))==1
+                    oneList = [oneList(:); i];
+                figure
+                imagesc(cellData{i}(j).suData{k,1})
+                title(cellData{i}(j).neuronNumber)
+                
+                end
+                
+    
+        else
+            continue
+        end
+        
+    end
+end
+figure(aH)
+[sydata, order ] =sort(ydata{numel(suSizes)}(:,1));
+hold all, plot(xdata{k}(:), ydata{k}(:,2),'o')   % 
+figure(bH)
+hold all, plot(xdata{k}(:), ydata{k}(:,1),'o')
+figure(cH)
+hold all, plot(ydata{k}(order,1))
+end
+
+% there is very weak correlation between the ydata(:,1) values across SU
+% size, or that the internal structure scaling dominates between-structure
+% variations?
+
+%%  lets get at fractal scaling for this data:
+
+figure
+for i = 1:numel(suSizes)
+    iXVals = suSizes;
+    iyVal0 = cell2mat(ydata);
+    iyVals = iyVal0(:,1:3:end);
+    iyVals2 = iyVal0(:,3:3:end);
+    hold all, plot(log(suSizes),log(iyVals(i,:).*(suSizes.^2).*iyVals2(i,:)))  %  mass is tile size * fractionNonZero*nTiles
+end
+
+figure
+for i = 1:numel(suSizes)
+    iXVals = suSizes;
+    iyVal0 = cell2mat(ydata);
+    iyVals = iyVal0(:,1:3:end);
+    iyVals2 = iyVal0(:,3:3:end);
+    hold all, plot((suSizes),iyVals(i,:).*iyVals2(i,:),'o')  %  mass is tile size * fractionNonZero*nTiles
+end
+
+figure
+for i = 1:numel(suSizes)
+    iXVals = suSizes;
+    iyVal0 = cell2mat(ydata);
+    iyVals = iyVal0(:,1:3:end);
+    iyVals2 = iyVal0(:,3:3:end);
+    hold all, plot((suSizes),iyVals2(i,:).*(suSizes.^2),'-o')  %  mass is tile size * fractionNonZero*nTiles
+end
 
 
-
-% extract 'extra' time (difference between tiletime*N and total time)
-
-%  total time vs tile size for each neuron (N  = 3)
-
-%  total volume vs tile size for each neuron (N = 3)
-
-
+%%
+sList = [0,0, 0,0,0];
+for i= 1:numel(cellData)
+    
+    if       cellData{i}(end).neuronNumber >= 28 & isfield(cellData{i}(end), 'BBdata') % add BB scans for most recent dataset.
+        
+        sList = [sList; [size(cellData{i}(end).s2Footprint), cellData{i}(end).BBdata.allTileInfo{1}.tileDimensions]]
+    end
+end
 
 
 
@@ -334,11 +581,11 @@ neuronScale = {}
 scanMode={}
 for i = 1:numel(cellData)
     for j = 1:numel(cellData{i})
-                          if isfield(cellData{i}(j),'neuronNumber')    
-                nn  = cellData{i}(j).neuronNumber;
-neuronNumbers = [neuronNumbers; nn];
-
-                          end
+        if isfield(cellData{i}(j),'neuronNumber')
+            nn  = cellData{i}(j).neuronNumber;
+            neuronNumbers = [neuronNumbers; nn];
+            
+        end
     end
 end
 
@@ -346,9 +593,9 @@ end
 a = unique(neuronNumbers)
 for ii = 1:numel(a)
     neuronData{a(ii)}=[0,0,0,0,0,0,0,0,0,0]
-                timeSummary{a(ii)} = [0,0,0,0,0]
-                neuronScale{a(ii)} = [];
-                scanMode{a(ii)}= []
+    timeSummary{a(ii)} = [0,0,0,0,0]
+    neuronScale{a(ii)} = [];
+    scanMode{a(ii)}= []
 end
 
 myCmap = colormap(jet(numel(a)+1));
@@ -387,94 +634,94 @@ end
 %
 a = unique(neuronNumbers)
 for ii = 1:numel(a)
-neuronData{a(ii)} = neuronData{a(ii)}(neuronData{a(ii)}(:,1)~=0,:)
-[rows, cs] = size(neuronData{a(ii)});
-rs= 1:rows;
-%if a(ii)~=aScanNN
-[ neuronData{a(ii)}, rs] = sortrows(neuronData{a(ii)},1)
-%end
-
-timeSummary{a(ii)} = timeSummary{a(ii)}(timeSummary{a(ii)}(:,1)~=0,:);
-timeSummary{a(ii)} = timeSummary{a(ii)}(rs,:);
-
-
-scanMode{a(ii)} = scanMode{a(ii)}(rs,:);
-
-% if there are multiple scans at the same tile size, I'll plot the mean and
-% min-max as errorbars.
-xVals = unique(neuronData{a(ii)}(:,1))
-xToPlot = xVals
-y1ToPlot = zeros(size(xToPlot))
-yErrorU1 = y1ToPlot
-yErrorL1 = yErrorU1
-yErrorU2= yErrorU1
-yErrorL2= yErrorU2
-y2ToPlot = yErrorU1
-yErrorU3 = y1ToPlot
-yErrorL3 = yErrorU1
-yErrorU3= yErrorU1
-yErrorL3= yErrorU2
-y3ToPlot = yErrorU1
-yErrorU4 = y1ToPlot
-yErrorL4 = yErrorU1
-yErrorU4= yErrorU1
-yErrorL4= yErrorU2
-y4ToPlot = yErrorU1
-for jj = 1:numel(xVals)
-    y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2))
-    yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
-    yMin1 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
-    yErrorU1(jj) = yMax1-y1ToPlot(jj)
-    yErrorL1(jj) = y1ToPlot(jj)-yMin1
+    neuronData{a(ii)} = neuronData{a(ii)}(neuronData{a(ii)}(:,1)~=0,:)
+    [rows, cs] = size(neuronData{a(ii)});
+    rs= 1:rows;
+    %if a(ii)~=aScanNN
+    [ neuronData{a(ii)}, rs] = sortrows(neuronData{a(ii)},1)
+    %end
     
-    y2ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4))
-    yMax2 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
-    yMin2 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
-    yErrorU2(jj) = yMax2-y2ToPlot(jj)
-    yErrorL2(jj) = y2ToPlot(jj)-yMin2 
+    timeSummary{a(ii)} = timeSummary{a(ii)}(timeSummary{a(ii)}(:,1)~=0,:);
+    timeSummary{a(ii)} = timeSummary{a(ii)}(rs,:);
     
-    y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1))
-    yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
-    yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
-    yErrorU3(jj) = yMax3-y3ToPlot(jj)
-    yErrorL3(jj) = y3ToPlot(jj)-yMin3 
     
+    scanMode{a(ii)} = scanMode{a(ii)}(rs,:);
+    
+    % if there are multiple scans at the same tile size, I'll plot the mean and
+    % min-max as errorbars.
+    xVals = unique(neuronData{a(ii)}(:,1))
+    xToPlot = xVals
+    y1ToPlot = zeros(size(xToPlot))
+    yErrorU1 = y1ToPlot
+    yErrorL1 = yErrorU1
+    yErrorU2= yErrorU1
+    yErrorL2= yErrorU2
+    y2ToPlot = yErrorU1
+    yErrorU3 = y1ToPlot
+    yErrorL3 = yErrorU1
+    yErrorU3= yErrorU1
+    yErrorL3= yErrorU2
+    y3ToPlot = yErrorU1
+    yErrorU4 = y1ToPlot
+    yErrorL4 = yErrorU1
+    yErrorU4= yErrorU1
+    yErrorL4= yErrorU2
+    y4ToPlot = yErrorU1
+    for jj = 1:numel(xVals)
+        y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2))
+        yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
+        yMin1 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2));
+        yErrorU1(jj) = yMax1-y1ToPlot(jj)
+        yErrorL1(jj) = y1ToPlot(jj)-yMin1
+        
+        y2ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4))
+        yMax2 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
+        yMin2 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),4));
+        yErrorU2(jj) = yMax2-y2ToPlot(jj)
+        yErrorL2(jj) = y2ToPlot(jj)-yMin2
+        
+        y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1))
+        yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+        yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),1));
+        yErrorU3(jj) = yMax3-y3ToPlot(jj)
+        yErrorL3(jj) = y3ToPlot(jj)-yMin3
+        
         y4ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1)
-    yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
-    yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
-    yErrorU4(jj) = yMax4-y4ToPlot(jj)
-    yErrorL4(jj) = y4ToPlot(jj)-yMin4 
-end
-
-subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1),neuronData{a(ii)}(:,2), '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
-errorbar(xToPlot,y1ToPlot, yErrorL1, yErrorU1,'color', myCmap(ii,:))
-bip
-xlim([0,450])
-xlabel('tile size (pixels)')
-ylabel('imaged area (pixels^2)')
-subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3),neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
-errorbar(xToPlot,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
-bip
-xlim([0,450])
-xlabel('tile size (pixels)')
-ylabel('imaging time (s)')
-
-subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
-errorbar(xToPlot,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
- bip
- xlim([0,450])
-xlabel('tile size (pixels)')
-ylabel('normalized imaging time')
-
-
-
-subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
-errorbar(xToPlot,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
-
-bip
-xlim([0,450])
-xlabel('tile size (pixels)')
-ylabel('normalized analysis time')
+        yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+        yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1)==xVals(jj),2)-1);
+        yErrorU4(jj) = yMax4-y4ToPlot(jj)
+        yErrorL4(jj) = y4ToPlot(jj)-yMin4
+    end
+    
+    subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1),neuronData{a(ii)}(:,2), '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+    errorbar(xToPlot,y1ToPlot, yErrorL1, yErrorU1,'color', myCmap(ii,:))
+    bip
+    xlim([0,450])
+    xlabel('tile size (pixels)')
+    ylabel('imaged area (pixels^2)')
+    subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3),neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+    errorbar(xToPlot,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
+    bip
+    xlim([0,450])
+    xlabel('tile size (pixels)')
+    ylabel('imaging time (s)')
+    
+    subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
+    errorbar(xToPlot,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
+    bip
+    xlim([0,450])
+    xlabel('tile size (pixels)')
+    ylabel('normalized imaging time')
+    
+    
+    
+    subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1), timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
+    errorbar(xToPlot,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
+    
+    bip
+    xlim([0,450])
+    xlabel('tile size (pixels)')
+    ylabel('normalized analysis time')
 end
 subplot(4,1,3) ,  plot([0 450], [1 1],'k')
 xlim([0,450])
@@ -485,79 +732,79 @@ xlim([0,450])
 %%  now repeat with microns on the x axis.  and y axis where applicable
 figure
 for ii = 1:numel(a)
-
-%xVals = unique(neuronData{a(ii)}(:,1))
-[xVals, indx] = unique(neuronData{a(ii)}(:,1).*neuronScale{a(ii)})
-scaleToUse = neuronScale{a(ii)}(indx);
-y1ToPlot = zeros(size(xVals))
-yErrorU1 = y1ToPlot;
-yErrorL1 = yErrorU1;
-yErrorU2= yErrorU1;
-yErrorL2= yErrorU2;
-y2ToPlot = yErrorU1;
-yErrorU3 = y1ToPlot;
-yErrorL3 = yErrorU1;
-yErrorU3= yErrorU1;
-yErrorL3= yErrorU2;
-y3ToPlot = yErrorU1;
-yErrorU4 = y1ToPlot;
-yErrorL4 = yErrorU1;
-yErrorU4= yErrorU1;
-yErrorL4= yErrorU2;
-y4ToPlot = yErrorU1;
-for jj = 1:numel(xVals)
-    y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
-    yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
-    yMin1 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
-    yErrorU1(jj) = yMax1-y1ToPlot(jj);
-    yErrorL1(jj) = y1ToPlot(jj)-yMin1;
     
-    y2ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
-    yMax2 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
-    yMin2 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
-    yErrorU2(jj) = yMax2-y2ToPlot(jj);
-    yErrorL2(jj) = y2ToPlot(jj)-yMin2 ;
-    
-    y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
-    yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
-    yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
-    yErrorU3(jj) = yMax3-y3ToPlot(jj);
-    yErrorL3(jj) = y3ToPlot(jj)-yMin3 ;
-    
+    %xVals = unique(neuronData{a(ii)}(:,1))
+    [xVals, indx] = unique(neuronData{a(ii)}(:,1).*neuronScale{a(ii)})
+    scaleToUse = neuronScale{a(ii)}(indx);
+    y1ToPlot = zeros(size(xVals))
+    yErrorU1 = y1ToPlot;
+    yErrorL1 = yErrorU1;
+    yErrorU2= yErrorU1;
+    yErrorL2= yErrorU2;
+    y2ToPlot = yErrorU1;
+    yErrorU3 = y1ToPlot;
+    yErrorL3 = yErrorU1;
+    yErrorU3= yErrorU1;
+    yErrorL3= yErrorU2;
+    y3ToPlot = yErrorU1;
+    yErrorU4 = y1ToPlot;
+    yErrorL4 = yErrorU1;
+    yErrorU4= yErrorU1;
+    yErrorL4= yErrorU2;
+    y4ToPlot = yErrorU1;
+    for jj = 1:numel(xVals)
+        y1ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
+        yMax1 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
+        yMin1 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2));
+        yErrorU1(jj) = yMax1-y1ToPlot(jj);
+        yErrorL1(jj) = y1ToPlot(jj)-yMin1;
+        
+        y2ToPlot(jj)   = mean(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
+        yMax2 = max(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
+        yMin2 = min(neuronData{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),4));
+        yErrorU2(jj) = yMax2-y2ToPlot(jj);
+        yErrorL2(jj) = y2ToPlot(jj)-yMin2 ;
+        
+        y3ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
+        yMax3 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
+        yMin3 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),1));
+        yErrorU3(jj) = yMax3-y3ToPlot(jj);
+        yErrorL3(jj) = y3ToPlot(jj)-yMin3 ;
+        
         y4ToPlot(jj)   = mean(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2)-1);
-    yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2)-1);
-    yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2)-1);
-    yErrorU4(jj) = yMax4-y4ToPlot(jj);
-    yErrorL4(jj) = y4ToPlot(jj)-yMin4 ;
-end
-
-subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)},neuronData{a(ii)}(:,2).*neuronScale{a(ii)}.^2, '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
-errorbar(xVals,y1ToPlot.*scaleToUse.^2, yErrorL1.*scaleToUse.^2, yErrorU1.*scaleToUse.^2,'color', myCmap(ii,:))
-bip
-xlim([0,120])
-xlabel('tile size (microns)')
-ylabel('imaged area (microns^2)')
-subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3).*neuronScale{a(ii)},neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
-errorbar(xVals,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
-bip
-xlim([0,120])
-xlabel('tile size (microns)')
-ylabel('imaging time (s)')
-
-subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
-errorbar(xVals,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
-
- bip
- xlim([0,120])
-xlabel('tile size (microns)')
-ylabel('normalized imaging time')
-subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
-errorbar(xVals,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
-
-bip
-xlim([0,120])
-xlabel('tile size (microns)')
-ylabel('normalized analysis time')
+        yMax4 = max(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2)-1);
+        yMin4 = min(timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),3)./timeSummary{a(ii)}(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}==xVals(jj),2)-1);
+        yErrorU4(jj) = yMax4-y4ToPlot(jj);
+        yErrorL4(jj) = y4ToPlot(jj)-yMin4 ;
+    end
+    
+    subplot(4,1,1),  hold all,   plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)},neuronData{a(ii)}(:,2).*neuronScale{a(ii)}.^2, '*-','color', myCmap(ii,:),'DisplayName', cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+    errorbar(xVals,y1ToPlot.*scaleToUse.^2, yErrorL1.*scaleToUse.^2, yErrorU1.*scaleToUse.^2,'color', myCmap(ii,:))
+    bip
+    xlim([0,120])
+    xlabel('tile size (microns)')
+    ylabel('imaged area (microns^2)')
+    subplot(4,1,2),    hold all, plot(neuronData{a(ii)}(:,3).*neuronScale{a(ii)},neuronData{a(ii)}(:,4), '*-','color', myCmap(ii,:),'DisplayName',cellData{neuronData{a(ii)}(end,7)}(neuronData{a(ii)}(end,8)).folderName);
+    errorbar(xVals,y2ToPlot, yErrorL2, yErrorU2,'color', myCmap(ii,:))
+    bip
+    xlim([0,120])
+    xlabel('tile size (microns)')
+    ylabel('imaging time (s)')
+    
+    subplot(4,1,3) ,   hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,1),'*-','color', myCmap(ii,:))
+    errorbar(xVals,y3ToPlot, yErrorL3, yErrorU3,'color', myCmap(ii,:))
+    
+    bip
+    xlim([0,120])
+    xlabel('tile size (microns)')
+    ylabel('normalized imaging time')
+    subplot(4,1,4), hold all, plot(neuronData{a(ii)}(:,1).*neuronScale{a(ii)}, timeSummary{a(ii)}(:,3)./timeSummary{a(ii)}(:,2)-1,'*-','color', myCmap(ii,:))
+    errorbar(xVals,y4ToPlot, yErrorL4, yErrorU4,'color', myCmap(ii,:))
+    
+    bip
+    xlim([0,120])
+    xlabel('tile size (microns)')
+    ylabel('normalized analysis time')
 end
 subplot(4,1,3) ,  plot([0 120], [1 1],'k')
 xlim([0,120])
@@ -569,27 +816,27 @@ bip
 allData = -1*ones(1,19)
 for i = 1:numel(a)
     allData = [allData; [neuronData{a(i)}, neuronData{a(i)}(:,1).*neuronScale{a(i)},neuronData{a(i)}(:,2).*neuronScale{a(i)}.*neuronScale{a(i)},neuronData{a(i)}(:,6).*neuronScale{a(i)}.*neuronScale{a(i)}, timeSummary{a(i)},scanMode{a(i)}]];
-
-
-
+    
+    
+    
 end
 
 %[mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).imagedArea,mean(sqrt(cellData{i}(j).tileAreas)),cellData{i}(j).totalTime,
 %                                                                         cellData{i}(j).totalTileArea,
 %                                                                         cellData{i}(j).boundingBoxArea,i,j,
 %                                                                         cellData{i}(j).zDepthVoxels
-%                                                                          
+%
 %    micron versions of columns 1, 2, and 6
 %  cellData{i}(j).estimatedGridTime/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
-%  cellData{i}(j).minTotalTime /( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))), 
+%  cellData{i}(j).minTotalTime /( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
 %  cellData{i}(j).totalTime]/( mean((cellData{i}(j).allTileTimes(:)+cellData{i}(j).estimatedMinLag))),
 %  cellData{i}(j).estimatedGridTime
-%  cellData{i}(j).imagingOnlyGridTime 
+%  cellData{i}(j).imagingOnlyGridTime
 
 % scanMode ;
 
-%                                                                         
-                
+%
+
 
 
 s2 = allData(allData(:,end)==0,:)
@@ -619,7 +866,7 @@ for i = 1:numel(bbCells)
         bbDatai = cellData{bbCells(i)}(2);
     else
         
-    bbDatai = cellData{bbCells(i)}(1);
+        bbDatai = cellData{bbCells(i)}(1);
     end
     nBBTiles = numel( bbDatai.BBdata.allTileInfo)
     totalBBAreai = nBBTiles*bbDatai.BBdata.allTileInfo{1}.tileDimensions(1)*bbDatai.BBdata.allTileInfo{1}.tileDimensions(2); % true only for grid acquisitions
@@ -635,13 +882,13 @@ for i = 1:numel(bbCells)
     %    13: estimated Rectangular BB Time |14: minimum S2 time (imaging
     %    and min. lag) | 15: Rectangular BB Imaging Only time | 16: actual imaging time
     %    per tile area of BB |
-    %   17: S2 time per tile area Imaging Only |18: S2 estimated time per tile  area |19: BB imaging + Tif conversion 
+    %   17: S2 time per tile area Imaging Only |18: S2 estimated time per tile  area |19: BB imaging + Tif conversion
     s2Infoi = [bbDatai.boundingBoxArea, bbDatai.boundingBoxAreaSquare,totalBBAreai, totalBBTimei,...
-                zDepth , bbDatai.totalTime, bbDatai.imagedArea,  mean(sqrt(bbDatai.tileAreas)), ...
-                bbDatai.totalTileArea,bbDatai.micronsPerPixel,i,j,...
-               bbDatai.estimatedGridTime,bbDatai.minTotalTime ,  bbDatai.boundingBoxImagingOnly  , totalBBTimei/totalBBAreai       ,...
-               bbDatai.imagingOnlyTimePerTileArea, bbDatai.estimatedTimePerTileArea, totalBBTimeWithTif];
-
+        zDepth , bbDatai.totalTime, bbDatai.imagedArea,  mean(sqrt(bbDatai.tileAreas)), ...
+        bbDatai.totalTileArea,bbDatai.micronsPerPixel,i,j,...
+        bbDatai.estimatedGridTime,bbDatai.minTotalTime ,  bbDatai.boundingBoxImagingOnly  , totalBBTimei/totalBBAreai       ,...
+        bbDatai.imagingOnlyTimePerTileArea, bbDatai.estimatedTimePerTileArea, totalBBTimeWithTif];
+    
     
     summaryData(i,:) = s2Infoi;
     
@@ -656,7 +903,7 @@ end
 
 
 
-figure, 
+figure,
 subplot(3,1,1)
 hold all, plot(summaryData(:,7)./summaryData(:,3), summaryData(:,6)./summaryData(:,19),'o')  %plot  (S2 imaging time / BB Imaging Time)   vs imagedArea/BBArea
 %  the line of y = 1  is the break-even point.
@@ -692,17 +939,17 @@ ylabel('small-tile scan of bounding box (s)')
 
 subplot(3,1,3)
 
-% 3.  show just how bad this by plotting the 
+% 3.  show just how bad this by plotting the
 %   plot scan effect from other script, scanCheckData.m
 
 
 
 hold all, plot(dt1p2(:,1), dt1p2(:,6)./(dt1p2(:,5)), 'DisplayName', '1.2 us dwell time')
- plot(dt2p8(:,1), dt2p8(:,6)./(dt2p8(:,5)), 'DisplayName', '2.8 us dwell time')
- plot(dt10(:,1), dt10(:,6)./(dt10(:,5)), 'DisplayName', '10.0 us dwell time')
- 
+plot(dt2p8(:,1), dt2p8(:,6)./(dt2p8(:,5)), 'DisplayName', '2.8 us dwell time')
+plot(dt10(:,1), dt10(:,6)./(dt10(:,5)), 'DisplayName', '10.0 us dwell time')
 
- 
+
+
 xlabel('x pixels')
 ylabel('slowdown factor normalized to nominal dwell time')
 legend toggle
@@ -717,9 +964,9 @@ title({'performance decline for smaller tiles',['nSlices = ',num2str(nSlices), '
 
 %  added 'basic fitting' for imaging only data and saved fig.
 
-% the last entry was using 4 big tiles to capture all the FOV at full resolution 
+% the last entry was using 4 big tiles to capture all the FOV at full resolution
 
-figure, 
+figure,
 subplot(3,1,1)
 hold all, plot(summaryData(:,7)./summaryData(end,3), summaryData(:,6)./summaryData(end,19),'o')  %plot  (S2 imaging time / BB Imaging Time)   vs imagedArea/BBArea
 %  the line of y = 1  is the break-even point.
@@ -755,17 +1002,17 @@ ylabel('small-tile scan of bounding box (s)')
 
 subplot(3,1,3)
 
-% 3.  show just how bad this by plotting the 
+% 3.  show just how bad this by plotting the
 %   plot scan effect from other script, scanCheckData.m
 
 
 
 hold all, plot(dt1p2(:,1), dt1p2(:,6)./(dt1p2(:,5)), 'DisplayName', '1.2 us dwell time')
- plot(dt2p8(:,1), dt2p8(:,6)./(dt2p8(:,5)), 'DisplayName', '2.8 us dwell time')
- plot(dt10(:,1), dt10(:,6)./(dt10(:,5)), 'DisplayName', '10.0 us dwell time')
- 
+plot(dt2p8(:,1), dt2p8(:,6)./(dt2p8(:,5)), 'DisplayName', '2.8 us dwell time')
+plot(dt10(:,1), dt10(:,6)./(dt10(:,5)), 'DisplayName', '10.0 us dwell time')
 
- 
+
+
 xlabel('x pixels')
 ylabel('slowdown factor normalized to nominal dwell time')
 legend toggle
@@ -780,7 +1027,7 @@ title({'performance decline for smaller tiles',['nSlices = ',num2str(nSlices), '
 %  data for PHC (summaryData above) with all the column information
 
 %  1. bar plots with growing sparsity (volume/scanned volume)
-%  
+%
 
 sparsityMetric = summaryData(:,3)./summaryData(:,7);
 bbArea = summaryData(:,3);
@@ -789,7 +1036,7 @@ s2Time = summaryData(:,6); % plot this
 s2Area = summaryData(:,7); % and this.
 
 
-figure, 
+figure,
 
 p1data = [bbArea, bbTotalTime, s2Time, s2Area, sparsityMetric];
 p1DataSorted = sortrows(p1data, 5);
@@ -799,7 +1046,7 @@ plotyy(1:20, p1DataSorted(:,3)./p1DataSorted(:,2), 1:20, p1DataSorted(:,5))
 %%hold all, plot(p1DataSorted(:,5))
 
 % for supplemental:
-% 
+%
 %  explanation of S2 taking longer than bounding box:
 %
 
@@ -809,7 +1056,7 @@ plotyy(1:20, p1DataSorted(:,3)./p1DataSorted(:,2), 1:20, p1DataSorted(:,5))
 %  BB?   19-21%
 
 %   tif conversion for small tiles is less than 1s, hard to tell because it's
-%   only based on system file dates.  
+%   only based on system file dates.
 
 % other times (turnaround, sensing file change, initializing and starting
 % stack) are about 0.6s
@@ -818,7 +1065,7 @@ plotyy(1:20, p1DataSorted(:,3)./p1DataSorted(:,2), 1:20, p1DataSorted(:,5))
 
 %  note that my system can never acheive this because we have to convert
 %  the file BEFORE I KNOW THE IMAGING IS DONE!  so the .tif conversion
-%  should be counted into the imaging time, not the 'lag' time.  
+%  should be counted into the imaging time, not the 'lag' time.
 %  so that lag includes .tif conversion (before trigger) and time to sense
 %  the .tif conversion is done (cycles through a long list, could be 10s of
 %  ms) and internal state processing (is there a new location? move to a
