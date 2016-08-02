@@ -45,7 +45,7 @@
 %  from the rig machine.
 batchTopDirectory = '/local2/s2Data'
 cd(fullfile(batchTopDirectory))
-
+rawDataDir = '/local3/NAS/data000/'
 batch = dir(fullfile(batchTopDirectory,'cell0*'))
 tic
 
@@ -305,7 +305,7 @@ for i = 1:numel(cellData)
                     % very good estimate of the total .tif conversion time.
                     zSeriesName = dir(fullfile(fileparts(cellData{i}(1).folderName),'ZSeries*'))
                     [ig, cellData{i}(j).BBName, nore] = fileparts(zSeriesName(1).name)
-                    oDataDir = dir(fullfile('/local3/testNAS/data000/', cellData{i}(j).BBName, '*.tif'));
+                    oDataDir = dir(fullfile(rawDataDir, cellData{i}(j).BBName, '*.tif'));
                     cellData{i}(j).BBTiffTime = 24*60*60*(max([oDataDir(:).datenum]')-min([oDataDir(:).datenum]'));
                     
                     

@@ -136,8 +136,12 @@ for i = 1:numel(cellData)
     end
     out = inTimes
     out = inSig
-    f = figure, subplot(2,2,1), imagesc(inTimes),subplot(2,2,2)    , imagesc(inSig)
-    subplot(2,2,3), imagesc(max(bbImage,[],3)), colormap hot
-    subplot(2,2,4), imagesc(iDat.s2Footprint)
+    f = figure, subplot(2,2,1), imagesc(inTimes), title(['s2 times in Scan Unit =', num2str(scanUnitLength),'^{2}'])
+    colorbar, axis image, 
+    subplot(2,2,2)    , imagesc(inSig), title([ num2str(sigFactor), '\sigma foreground map']), axis image
+    subplot(2,2,3), imagesc(max(bbImage,[],3)), title('Max Projection'),axis image, 
+    
+    colormap hot
+    subplot(2,2,4), imagesc(iDat.s2Footprint), title('s2 tile map'), axis image, 
 
 end
