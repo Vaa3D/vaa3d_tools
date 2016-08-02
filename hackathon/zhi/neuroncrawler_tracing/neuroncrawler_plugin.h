@@ -56,7 +56,7 @@ class neuroncrawler_app2_raw : public QDialog
             bkgthresh_spinbox->setRange(-1, 255);
             bkgthresh_spinbox->setValue(10);
             lenthresh_editor = new QLineEdit(QString("").setNum(5));
-            srratio_editor = new QLineEdit(QString("").setNum(3.0/9.0));
+         //   srratio_editor = new QLineEdit(QString("").setNum(3.0/9.0));
             isgsdt_checker = new QCheckBox();
             isgsdt_checker->setChecked(false);
             iswb_checker = new QCheckBox();
@@ -75,6 +75,9 @@ class neuroncrawler_app2_raw : public QDialog
 
             b_3Dchecker = new QCheckBox();
             b_3Dchecker->setChecked(false);
+
+            b_multiTracerchecker = new QCheckBox();
+            b_multiTracerchecker->setChecked(false);
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
@@ -120,14 +123,27 @@ class neuroncrawler_app2_raw : public QDialog
             layout->addWidget(cnntype_spinbox, 3,1,1,5);
             layout->addWidget(new QLabel("length_thresh"),4,0);
             layout->addWidget(lenthresh_editor, 4,1,1,5);
-            layout->addWidget(new QLabel("SR_ratio"),5,0);
-            layout->addWidget(srratio_editor, 5,1,1,3);
-            layout->addWidget(new QLabel("3D crawler?"),5,4);
-            layout->addWidget(b_3Dchecker);
+
+            QHBoxLayout * hbox2 = new QHBoxLayout();
+            hbox2->addWidget(new QLabel("adaptive size?"));
+            hbox2->addWidget(b_adapWinchecker);
+            hbox2->addWidget(new QLabel("3D crawler?"));
+            hbox2->addWidget(b_3Dchecker);
+            hbox2->addWidget(new QLabel("multiple tracers?"));
+            hbox2->addWidget(b_multiTracerchecker);
+//            hbox2->addWidget(new QLabel("allow gap"));
+//            hbox2->addWidget(iswb_checker);
+            layout->addLayout(hbox2,5,0,1,6);
+
+
+//            layout->addWidget(new QLabel("SR_ratio"),5,0);
+//            layout->addWidget(srratio_editor, 5,1,1,3);
+//            layout->addWidget(new QLabel("3D crawler?"),5,0);
+//            layout->addWidget(b_3Dchecker);
             layout->addWidget(new QLabel("block_size"),6,0);
             layout->addWidget(block_spinbox, 6,1,1,3);
-            layout->addWidget(new QLabel("adaptive size?"),6,4);
-            layout->addWidget(b_adapWinchecker);
+//            layout->addWidget(new QLabel("adaptive size?"),5,2);
+//            layout->addWidget(b_adapWinchecker);
 
 
             layout->addWidget(new QLabel(QObject::tr("va3draw/raw image or tc file:")),7,0);
@@ -142,14 +158,14 @@ class neuroncrawler_app2_raw : public QDialog
             layout->addWidget(terafly_filepath,9,1,1,4);
             layout->addWidget(openteraflyFile,9,5,1,1);
 
-            QHBoxLayout * hbox2 = new QHBoxLayout();
+            QHBoxLayout * hbox3 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
             QPushButton * cancel = new QPushButton("cancel");
-            hbox2->addWidget(cancel);
-            hbox2->addWidget(ok);
+            hbox3->addWidget(cancel);
+            hbox3->addWidget(ok);
 
-            layout->addLayout(hbox2,10,0,10,6);
+            layout->addLayout(hbox3,10,0,10,6);
             setLayout(layout);
             setWindowTitle(QString("NeuronCrawler_APP2"));
 
@@ -162,7 +178,7 @@ class neuroncrawler_app2_raw : public QDialog
             connect(bkgthresh_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
 
             connect(lenthresh_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
-            connect(srratio_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+          //  connect(srratio_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
 
             connect(isgsdt_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(iswb_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
@@ -170,6 +186,7 @@ class neuroncrawler_app2_raw : public QDialog
             connect(b_radius2Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_adapWinchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_3Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(b_multiTracerchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
 
 
             connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
@@ -191,7 +208,7 @@ class neuroncrawler_app2_raw : public QDialog
             bkg_thresh = bkgthresh_spinbox->value();
 
             length_thresh = lenthresh_editor->text().toInt();
-            SR_ratio = srratio_editor->text().toInt();
+            SR_ratio = 0.333333;
 
             isgsdt_checker->isChecked()? is_gsdt = 1 : is_gsdt = 0;
             iswb_checker->isChecked()? is_break_accept = 1 : is_break_accept = 0;
@@ -199,6 +216,7 @@ class neuroncrawler_app2_raw : public QDialog
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
             b_adapWinchecker->isChecked() ? adap_win = 1 : adap_win = 0;
             b_3Dchecker->isChecked() ? tracing_3D = 1 : tracing_3D = 0;
+            b_multiTracerchecker->isChecked() ? tracing_comb = 1 : tracing_comb = 0;
 
 
             block_size = block_spinbox->value();
@@ -259,13 +277,15 @@ class neuroncrawler_app2_raw : public QDialog
         QSpinBox * cnntype_spinbox;
         QSpinBox * bkgthresh_spinbox;
         QLineEdit * lenthresh_editor;
-        QLineEdit * srratio_editor;
+       // QLineEdit * srratio_editor;
         QCheckBox * isgsdt_checker;
         QCheckBox * iswb_checker;
         QCheckBox * b256_checker;
         QCheckBox * b_radius2Dchecker;
         QCheckBox * b_adapWinchecker;
         QCheckBox * b_3Dchecker;
+        QCheckBox * b_multiTracerchecker;
+
 
         QSpinBox * block_spinbox;
 
@@ -290,6 +310,7 @@ class neuroncrawler_app2_raw : public QDialog
         int block_size;
         int adap_win;
         int tracing_3D;
+        int tracing_comb;
 
         QString rawfilename;
         QString markerfilename;

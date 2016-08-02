@@ -23,6 +23,7 @@ struct TRACE_LS_PARA
     int block_size;
     int adap_win;
     int tracing_3D;
+    int tracing_comb;
     V3DLONG in_sz[3];
 
     int  visible_thresh;//for APP1 use only
@@ -69,6 +70,7 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy);
 
+bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
 
 #endif

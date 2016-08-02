@@ -96,6 +96,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.adap_win = dialog.adap_win;
         P.method = 2;
         P.tracing_3D = dialog.tracing_3D;
+        P.tracing_comb = dialog.tracing_comb;
         crawler_raw_app(callback,parent,P,bmenu);
 
     }else if (menu_name == tr("trace_APP1"))
@@ -139,6 +140,8 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 1;
+        P.tracing_3D = false;
+
         crawler_raw_app(callback,parent,P,bmenu);
 	}
     else if (menu_name == tr("trace_MOST"))
