@@ -68,3 +68,6 @@ done
 
 cd ..
 
+cd ../../v3d_external/bin/plugins
+echo $( find -depth -empty -type d -delete )
+
