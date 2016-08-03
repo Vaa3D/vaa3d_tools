@@ -3770,22 +3770,34 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
     NeuronTree nt_neutube_final = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
 
     NeuronTree nt;
-
-    if(nt_app2_final.listNeuron.size() > 0 && nt_neutube_final.listNeuron.size() > 0)
+    if(nt_app2_final.listNeuron.size() == 0 && nt_neutube_final.listNeuron.size() == 0)
     {
-        QList<IMAGE_METRICS> result_metrics_app2 = intensity_profile(nt_app2_final, total4DImage_mip, 3,0,0,0,callback);
-        QList<IMAGE_METRICS> result_metrics_neutube = intensity_profile(nt_neutube_final, total4DImage_mip, 3,0,0,0,callback);
-        if(result_metrics_app2[0].cnr > result_metrics_neutube[0].cnr)
-            nt = nt_app2_final;
-        else
-            nt = nt_neutube_final;
-    }else if (nt_app2_final.listNeuron.size() <= 0 && nt_neutube_final.listNeuron.size() > 0)
-        nt = nt_neutube_final;
-    else if (nt_app2_final.listNeuron.size() > 0 && nt_neutube_final.listNeuron.size() <= 0)
+        combine_list2file(nt.listNeuron, swcString);
+        return true;
+    }else if(nt_app2_final.listNeuron.size() > nt_neutube_final.listNeuron.size())
         nt = nt_app2_final;
     else
-        return true;
+        nt =  nt_neutube_final;
 
+//    if(nt_app2_final.listNeuron.size() > 0 && nt_neutube_final.listNeuron.size() > 0)
+//    {
+//        QList<IMAGE_METRICS> result_metrics_app2 = intensity_profile(nt_app2_final, total4DImage_mip, 3,0,0,0,callback);
+//        QList<IMAGE_METRICS> result_metrics_neutube = intensity_profile(nt_neutube_final, total4DImage_mip, 3,0,0,0,callback);
+//        if(result_metrics_app2[0].cnr > result_metrics_neutube[0].cnr)
+//            nt = nt_app2_final;
+//        else
+//            nt = nt_neutube_final;
+//    }else if (nt_app2_final.listNeuron.size() <= 0 && nt_neutube_final.listNeuron.size() > 0)
+//        nt = nt_neutube_final;
+//    else if (nt_app2_final.listNeuron.size() > 0 && nt_neutube_final.listNeuron.size() <= 0)
+//        nt = nt_app2_final;
+//    else
+//    {
+//        combine_list2file(nt.listNeuron, swcString);
+//        return true;
+//    }
+
+    combine_list2file(nt.listNeuron, swcString);
 
 //    QString swcMOST = saveDirString;
 //    swcMOST.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
@@ -3796,7 +3808,6 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 //    v3d_msg(QString("APP2 is %1, neutube is %2, most is %3").arg(result_metrics_app2[0].cnr).arg(result_metrics_neutube[0].cnr).arg(result_metrics_most[0].cnr));
 
 
-    combine_list2file(nt.listNeuron, swcString);
     LandmarkList tip_left;
     LandmarkList tip_right;
     LandmarkList tip_up ;

@@ -10,6 +10,7 @@
 #include "neuron_dist_gui.h"
 #include "neuron_sim_scores.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include "../swc_to_maskimage/filter_dialog.h"
 #include <vector>
 #include <iostream>
 
@@ -126,6 +127,102 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 
 	return true;
 
+}
+
+int neuron_dist_mask(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    SelectNeuronDlg * selectDlg = new SelectNeuronDlg(parent);
+    selectDlg->exec();
+
+    NeuronTree nt1 = selectDlg->nt1;
+    NeuronTree nt2 = selectDlg->nt2;
+
+    float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
+                                 "Enter dialate ratio:",
+                                 3.0, 1.0, 100.0);
+    for(V3DLONG i = 0; i <nt1.listNeuron.size(); i++)
+        nt1.listNeuron[i].r = dilate_ratio;
+    for(V3DLONG i = 0; i <nt2.listNeuron.size(); i++)
+        nt2.listNeuron[i].r = dilate_ratio;
+
+    double x_min,x_max,y_min,y_max,z_min,z_max;
+    x_min=x_max=y_min=y_max=z_min=z_max=0;
+    V3DLONG sx,sy,sz;
+    unsigned char *pImMask_nt1 = 0;
+    BoundNeuronCoordinates(nt1,x_min,x_max,y_min,y_max,z_min,z_max);
+    sx=x_max;
+    sy=y_max;
+    sz=z_max;
+    V3DLONG stacksz = sx*sy*sz;
+    pImMask_nt1 = new unsigned char [stacksz];
+    memset(pImMask_nt1,0,stacksz*sizeof(unsigned char));
+    ComputemaskImage(nt1, pImMask_nt1, sx, sy, sz);
+
+    double x_min_2,x_max_2,y_min_2,y_max_2,z_min_2,z_max_2;
+    x_min_2=x_max_2=y_min_2=y_max_2=z_min_2=z_max_2=0;
+    V3DLONG sx_2,sy_2,sz_2;
+
+    unsigned char *pImMask_nt2 = 0;
+    BoundNeuronCoordinates(nt2,x_min_2,x_max_2,y_min_2,y_max_2,z_min_2,z_max_2);
+    sx_2=x_max_2;
+    sy_2=y_max_2;
+    sz_2=z_max_2;
+    V3DLONG stacksz_2 = sx_2*sy_2*sz_2;
+    pImMask_nt2 = new unsigned char [stacksz_2];
+    memset(pImMask_nt2,0,stacksz_2*sizeof(unsigned char));
+    ComputemaskImage(nt2, pImMask_nt2, sx_2, sy_2, sz_2);
+
+    unsigned int nx=sx, ny=sy, nz=sz;
+    if(sx_2 > nx) nx = sx_2;
+    if(sy_2 > ny) ny = sy_2;
+    if(sz_2 > nz) nz = sz_2;
+
+
+    unsigned char *pData = new unsigned char[nx*ny*nz];
+    memset(pData,0,nx*ny*nz*sizeof(unsigned char));
+
+    for (V3DLONG k1 = 0; k1 < sz; k1++){
+       for(V3DLONG j1 = 0; j1 < sy; j1++){
+           for(V3DLONG i1 = 0; i1 < sx; i1++){
+               if(pImMask_nt1[k1*sx*sy + j1*sx +i1] == 255)
+                    pData[k1 * nx*ny + j1*nx + i1] = 127;
+           }
+       }
+    }
+
+    for (V3DLONG k1 = 0; k1 < sz_2; k1++){
+       for(V3DLONG j1 = 0; j1 < sy_2; j1++){
+           for(V3DLONG i1 = 0; i1 < sx_2; i1++){
+               if(pImMask_nt2[k1*sx_2*sy_2 + j1*sx_2 +i1] == 255)
+                    pData[k1 * nx*ny + j1*nx + i1] += 127;
+           }
+       }
+    }
+
+
+    V3DLONG AandB = 0, AorB = 0;
+    for(V3DLONG i = 0; i < nx*ny*nz; i++)
+    {
+        if(pData[i] > 0) AorB++;
+        if(pData[i] == 254) AandB++;
+
+    }
+
+    if(pImMask_nt1) {delete []pImMask_nt1; pImMask_nt1 = 0;}
+    if(pImMask_nt2) {delete []pImMask_nt2; pImMask_nt2 = 0;}
+
+
+    v3d_msg(QString("score is %1, %2").arg(AandB).arg(AorB));
+    Image4DSimple tmp;
+    tmp.setData(pData, nx, ny, nz, 1, V3D_UINT8);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, &tmp);
+    callback.setImageName(newwin, QString("Output_swc_mask"));
+    callback.updateImageWindow(newwin);
+    callback.open3DWindow(newwin);
+
+
+    return 1;
 }
 
 void printHelp()
