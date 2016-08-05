@@ -580,7 +580,7 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
     LandmarkList LList_in;
-
+    QList<NeuronTree> * mTreeList;
     if (v3dhandleList_current.size()==0){
         v3d_msg("Please open image and select markers");
         return false;
@@ -590,9 +590,10 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         //get markers and check markers
         LList_in.clear();
         LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        if (LList_in.size()==0)
+        mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+        if (LList_in.size()==0 && mTreeList->size()==0)
         {
-            v3d_msg("Please load markers");
+            v3d_msg("Please load markers or the swc file");
             return false;
         }
         curwin=v3dhandleList_current[0];
@@ -654,9 +655,11 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         //get markers and check markers
         LList_in.clear();
         LList_in = callback->getLandmark(curwin);
-        if (LList_in.size()==0)
+        mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+
+        if (LList_in.size()==0 || mTreeList->size()==0)
         {
-            v3d_msg("Please load markers");
+            v3d_msg("Please load markers or the swc file");
             return false;
         }
     }
@@ -686,10 +689,27 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
     memcpy(image1Dc_in,ptmp,size_tmp*pixeltype);
 
     LList.clear();
-    for(int i=0; i<LList_in.size(); i++){
-        LList.append(LList_in.at(i));
-        LList[i].color.r=196;
-        LList[i].color.g=LList[i].color.b=0;
+    if(LList_in.size() > 0)
+    {
+        for(int i=0; i<LList_in.size(); i++){
+            LList.append(LList_in.at(i));
+            LList[i].color.r=196;
+            LList[i].color.g=LList[i].color.b=0;
+        }
+    }else
+    {
+        for(int i=0; i<mTreeList->at(0).listNeuron.size(); i++)
+        {
+            LocationSimple swc_node;
+            swc_node.x = mTreeList->at(0).listNeuron.at(i).x + 1;
+            swc_node.y = mTreeList->at(0).listNeuron.at(i).y + 1;
+            swc_node.z = mTreeList->at(0).listNeuron.at(i).z + 1;
+            swc_node.radius = mTreeList->at(0).listNeuron.at(i).r;
+            LList.append(swc_node);
+            LList[i].color.r=196;
+            LList[i].color.g=LList[i].color.b=0;
+        }
     }
+
     return true;
 }

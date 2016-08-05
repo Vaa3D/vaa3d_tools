@@ -3762,14 +3762,20 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
         saveSWC_file(swcAPP2.toStdString().c_str(), tileswc_app2);
     }
 
+    NeuronTree nt;
     NeuronTree nt_app2_final = readSWC_file(swcAPP2);
 
     QString swcNEUTUBE = saveDirString;
     swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
     NeuronTree nt_neutube = readSWC_file(swcNEUTUBE);
+    if(nt_neutube.listNeuron.size()<=0)
+    {
+        nt = nt_app2_final;
+        combine_list2file(nt.listNeuron, swcString);
+        return true;
+    }
     NeuronTree nt_neutube_final = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
 
-    NeuronTree nt;
     if(nt_app2_final.listNeuron.size() == 0 && nt_neutube_final.listNeuron.size() == 0)
     {
         combine_list2file(nt.listNeuron, swcString);
@@ -3828,7 +3834,7 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 20)
+                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
                     {
                         check_tip = true;
                         break;
