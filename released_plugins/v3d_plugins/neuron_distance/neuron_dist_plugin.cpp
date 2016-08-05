@@ -14,6 +14,7 @@ QStringList NeuronDistPlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("neuron_dist")
+        <<tr("neuron_dist_mask_area")
 		<<tr("about");
 }
 
@@ -29,7 +30,10 @@ void NeuronDistPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 	if (menu_name == tr("neuron_dist"))
 	{
 		neuron_dist_io(callback,parent);
-	}
+    }else if (menu_name == tr("neuron_dist_mask_area"))
+    {
+        neuron_dist_mask(callback,parent);
+    }
 	else
 	{
 		v3d_msg(tr("The plugin to calculate distance between two neurons. Distance is defined as the average distance among all nearest pairs in two neurons.. "
