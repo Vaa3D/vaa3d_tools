@@ -33,7 +33,8 @@ done
 if [ ${#MYDIR} -gt 0 ]; then
   ALLDIRS=$MYDIR
 else
-  ALLDIRS=$( ls -d */ )	
+  #ALLDIRS=$( ls -d */ )
+  ALLDIRS=$( cat ../linux_plugins.txt )  
 fi
 
 # CMB 01 Dec, 2010
