@@ -4,7 +4,4 @@ bigneuron_pengyu_zhihao_3DTraceSWC
 bigneuron_ting_neutube
 bigneuron_zhouhang_hust_NeuroGPSTree
 bigneuron_zz_neurontracing_TReMAP
-bioformat
-CMakeLists.txt
 standardize_swc
-teramanager
