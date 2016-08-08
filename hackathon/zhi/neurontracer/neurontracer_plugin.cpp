@@ -1,11 +1,11 @@
-/* neuroncrawler_plugin.cpp
+/* neurontracer_plugin.cpp
  * This is a test plugin, you can use it as a demo.
  * 2016-2-16 : by Zhi Zhou
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "neuroncrawler_plugin.h"
+#include "neurontracer_plugin.h"
 #include "tracing_func.h"
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
@@ -18,10 +18,10 @@
 using namespace std;
 using namespace iim;
 
-Q_EXPORT_PLUGIN2(neuroncrawler, neuroncrawler);
+Q_EXPORT_PLUGIN2(neurontracer, neurontracer);
 
  
-QStringList neuroncrawler::menulist() const
+QStringList neurontracer::menulist() const
 {
 	return QStringList() 
              <<tr("trace_APP2")
@@ -32,7 +32,7 @@ QStringList neuroncrawler::menulist() const
        <<tr("about");
 }
 
-QStringList neuroncrawler::funclist() const
+QStringList neurontracer::funclist() const
 {
     return QStringList()
             <<tr("trace_APP2")
@@ -43,13 +43,13 @@ QStringList neuroncrawler::funclist() const
        <<tr("help");
 }
 
-void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("trace_APP2"))
 	{
         TRACE_LS_PARA P;
         bool bmenu = true;
-        neuroncrawler_app2_raw dialog(callback, parent);
+        neurontracer_app2_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
             return;
@@ -103,7 +103,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	{
         TRACE_LS_PARA P;
         bool bmenu = true;
-        neuroncrawler_app1_raw dialog(callback, parent);
+        neurontracer_app1_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
             return;
@@ -148,7 +148,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         TRACE_LS_PARA P;
         bool bmenu = true;
-        neuroncrawler_most_raw dialog(callback, parent);
+        neurontracer_most_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
             return;
@@ -195,7 +195,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         TRACE_LS_PARA P;
         bool bmenu = true;
-        neuroncrawler_neutube_raw dialog(callback, parent);
+        neurontracer_neutube_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
             return;
@@ -240,7 +240,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         TRACE_LS_PARA P;
         bool bmenu = true;
-        neuroncrawler_neutube_raw dialog(callback, parent);
+        neurontracer_neutube_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
             return;
@@ -282,7 +282,7 @@ void neuroncrawler::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 }
 
-bool neuroncrawler::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     TRACE_LS_PARA P;
     bool bmenu = false;

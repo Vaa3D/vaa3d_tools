@@ -1,4 +1,4 @@
-/* neuroncrawler_plugin.h
+/* neurontracer_plugin.h
  * This is a test plugin, you can use it as a demo.
  * 2016-2-16 : by Zhi Zhou
  */
@@ -9,7 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-class neuroncrawler : public QObject, public V3DPluginInterface2_1
+class neurontracer : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
@@ -24,12 +24,12 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-class neuroncrawler_app2_raw : public QDialog
+class neurontracer_app2_raw : public QDialog
     {
         Q_OBJECT
 
     public:
-        neuroncrawler_app2_raw(V3DPluginCallback2 &cb, QWidget *parent)
+        neurontracer_app2_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
 
@@ -198,7 +198,7 @@ class neuroncrawler_app2_raw : public QDialog
             update();
         }
 
-        ~neuroncrawler_app2_raw(){}
+        ~neurontracer_app2_raw(){}
 
         public slots:
         void update()
@@ -318,12 +318,12 @@ class neuroncrawler_app2_raw : public QDialog
 
     };
 
-class neuroncrawler_app1_raw : public QDialog
+class neurontracer_app1_raw : public QDialog
     {
         Q_OBJECT
 
     public:
-        neuroncrawler_app1_raw(V3DPluginCallback2 &cb, QWidget *parent)
+        neurontracer_app1_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
             int chn_num = 3;
@@ -436,7 +436,7 @@ class neuroncrawler_app1_raw : public QDialog
             update();
         }
 
-        ~neuroncrawler_app1_raw(){}
+        ~neurontracer_app1_raw(){}
 
         public slots:
         void update()
@@ -518,12 +518,12 @@ class neuroncrawler_app1_raw : public QDialog
 
     };
 
-class neuroncrawler_most_raw : public QDialog
+class neurontracer_most_raw : public QDialog
     {
         Q_OBJECT
 
     public:
-        neuroncrawler_most_raw(V3DPluginCallback2 &cb, QWidget *parent)
+        neurontracer_most_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
             int chn_num = 3;
@@ -654,7 +654,7 @@ class neuroncrawler_most_raw : public QDialog
             update();
         }
 
-        ~neuroncrawler_most_raw(){}
+        ~neurontracer_most_raw(){}
 
         public slots:
         void update()
@@ -760,12 +760,12 @@ class neuroncrawler_most_raw : public QDialog
 
     };
 
-class neuroncrawler_neutube_raw : public QDialog
+class neurontracer_neutube_raw : public QDialog
     {
         Q_OBJECT
 
     public:
-        neuroncrawler_neutube_raw(V3DPluginCallback2 &cb, QWidget *parent)
+        neurontracer_neutube_raw(V3DPluginCallback2 &cb, QWidget *parent)
         {
             image = 0;
             v3dhandle curwin = cb.currentImageWindow();
@@ -870,7 +870,7 @@ class neuroncrawler_neutube_raw : public QDialog
             update();
         }
 
-        ~neuroncrawler_neutube_raw(){}
+        ~neurontracer_neutube_raw(){}
 
         public slots:
         void update()

@@ -25,7 +25,7 @@ unix:!macx {
 
 
 
-HEADERS	+= neuroncrawler_plugin.h
+HEADERS	+= neurontracer_plugin.h
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
@@ -39,7 +39,7 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
 
-SOURCES	+= neuroncrawler_plugin.cpp
+SOURCES	+= neurontracer_plugin.cpp
 SOURCES	+= tracing_func.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
@@ -169,5 +169,5 @@ SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
 SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
 
-TARGET	= $$qtLibraryTarget(neuroncrawler)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neuroncrawler/
+TARGET	= $$qtLibraryTarget(neurontracer)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neurontracer/
