@@ -29,7 +29,7 @@ bioformatio_simple_bind
 bioformats_loader
 blastneuron_plugin
 blend_multiscanstacks
-canvas_erase
+canvas_eraser
 celegans_seganno
 celegans_straighten
 cellseg_gvf
@@ -134,3 +134,4 @@ v3dplugin_single_image_interface_example
 vis_ESWC_features
 ZMovieMaker
 z_sync
+
