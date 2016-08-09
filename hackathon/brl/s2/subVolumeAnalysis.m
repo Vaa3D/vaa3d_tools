@@ -77,9 +77,9 @@ for i = 1:numel(cellData)
         nrows = ncols;
         rowStep = scanUnitLength;
         colStep = scanUnitLength;
-    elseif ((NSubs <=4) && (NSubs >0))
+    elseif ((NSubs <=5) && (NSubs >0))
                 
-        ncols = NSubs*ceil(bbSize(1)/scanUnitLength);
+        ncols = NSubs*floor(bbSize(1)/scanUnitLength);
         nrows = ncols;
         rowStep = floor(scanUnitLength/NSubs);
         colStep = rowStep;
@@ -124,7 +124,7 @@ for i = 1:numel(cellData)
                 end
             end
             if writeOutput
-                ijFileName = fullfile(BBdir, scanUnitFolder, ['_r_', num2str(k,'%05.0f'), '_c_', num2str(j,'%05.0f'),'_time_',num2str(inTimes(k,j),'%03.0f'), '.v3draw']);
+                ijFileName = fullfile(BBdir, scanUnitFolder, ['_s_',num2str(scanUnitLength, '%05.0f'), '_r_', num2str(k,'%05.0f'), '_c_', num2str(j,'%05.0f'),'_time_',num2str(inTimes(k,j),'%03.0f'), '.v3draw']);
                 save_v3d_raw_img_file(subVolumeij, ijFileName);
             end
             
@@ -134,8 +134,9 @@ for i = 1:numel(cellData)
         
         
     end
-    out = inTimes
-    out = inSig
+    o.inTimes=inTimes;
+    o.inSig = inSig;
+    out{i} = o;
     f = figure, subplot(2,2,1), imagesc(inTimes), title(['s2 times in Scan Unit =', num2str(scanUnitLength),'^{2}'])
     colorbar, axis image, 
     subplot(2,2,2)    , imagesc(inSig), title([ num2str(sigFactor), '\sigma foreground map']), axis image
