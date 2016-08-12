@@ -254,8 +254,8 @@ class regionAPP2Dialog : public QDialog
             cnn_type = cnntype_spinbox->value();
             bkg_thresh = bkgthresh_spinbox->value();
 
-            length_thresh = lenthresh_editor->text().toInt();
-            SR_ratio = srratio_editor->text().toInt();
+            length_thresh = lenthresh_editor->text().toFloat();
+            SR_ratio = srratio_editor->text().toFloat();
             region_number = region_editor->text().toInt();
 
             isgsdt_checker->isChecked()? is_gsdt = 1 : is_gsdt = 0;
@@ -289,6 +289,557 @@ class regionAPP2Dialog : public QDialog
         int  b_256cube;
         int b_RadiusFrom2D;
         int region_number;
+
+    };
+
+class regionADVANTRADialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionADVANTRADialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+
+            scale_editor = new QLineEdit(QString("").setNum(10));
+            background_ratio_editor = new QLineEdit(QString("").setNum(0.5));
+            correlation_thresh_editor = new QLineEdit(QString("").setNum(0.75));
+            nr_directions_editor = new QLineEdit(QString("").setNum(20));
+            angular_sigma_editor = new QLineEdit(QString("").setNum(60));
+            nr_iters_editor = new QLineEdit(QString("").setNum(5));
+            nr_states_editor = new QLineEdit(QString("").setNum(5));
+            z_layer_dist_editor = new QLineEdit(QString("").setNum(1));
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(55);
+            region_editor = new QLineEdit(QString("").setNum(10000));
+
+            layout->addWidget(new QLabel("scale pix (5, 20]"),0,0);
+            layout->addWidget(scale_editor, 0,1,1,5);
+            layout->addWidget(new QLabel("background ratio (0, 1]"), 1, 0);
+            layout->addWidget(background_ratio_editor, 1, 1, 1, 5);
+            layout->addWidget(new QLabel("correlation threshold [0.5, 1.0)"),2,0);
+            layout->addWidget(correlation_thresh_editor, 2,1,1,5);
+            layout->addWidget(new QLabel("nr directions [5, 20]"),3,0);
+            layout->addWidget(nr_directions_editor, 3,1,1,5);
+            layout->addWidget(new QLabel("angular sigma degs [20, 90]"),4,0);
+            layout->addWidget(angular_sigma_editor, 4,1,1,5);
+            layout->addWidget(new QLabel("nr iterations [20, 50]"),5,0);
+            layout->addWidget(nr_iters_editor, 5,1,1,5);
+            layout->addWidget(new QLabel("nr states [1, 20]"),6,0);
+            layout->addWidget(nr_states_editor, 6,1,1,5);
+            layout->addWidget(new QLabel("z layer dist pixels [1, 4]"),7,0);
+            layout->addWidget(z_layer_dist_editor, 7,1,1,5);
+            layout->addWidget(new QLabel("background threshold"),8,0);
+            layout->addWidget(bkgthresh_spinbox,8,1,1,5);
+            layout->addWidget(new QLabel("region number"),9,0);
+            layout->addWidget(region_editor,9,1,1,5);
+
+            QHBoxLayout * hbox = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox->addWidget(cancel);
+            hbox->addWidget(ok);
+
+            layout->addLayout(hbox,10,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions using Advantra"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(scale_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(background_ratio_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(correlation_thresh_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_directions_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(angular_sigma_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_iters_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_states_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(z_layer_dist_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(bkgthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+            update();
+        }
+
+        ~regionADVANTRADialog(){}
+
+        public slots:
+        void update()
+        {
+            scale = scale_editor->text().toInt();
+            bkg_ratio = background_ratio_editor->text().toFloat();
+            correlation_thresh = correlation_thresh_editor->text().toFloat();
+            nr_dirs = nr_directions_editor->text().toInt();
+            angular_sigma = angular_sigma_editor->text().toFloat();
+            nr_iters = nr_iters_editor->text().toInt();
+            nr_states = nr_states_editor->text().toInt();
+            z_dist = z_layer_dist_editor->text().toFloat();
+            bkgd_thresh = bkgthresh_spinbox->value();
+            region_num = region_editor->text().toInt();
+        }
+    public:
+
+        QLineEdit * scale_editor;
+        QLineEdit * background_ratio_editor;
+        QLineEdit * correlation_thresh_editor;
+        QLineEdit * nr_directions_editor;
+        QLineEdit * angular_sigma_editor;
+        QLineEdit * nr_iters_editor;
+        QLineEdit * nr_states_editor;
+        QLineEdit * z_layer_dist_editor;
+        QSpinBox * bkgthresh_spinbox;
+        QLineEdit * region_editor;
+
+
+        Image4DSimple* image;
+
+        int scale;
+        double bkg_ratio;
+        double correlation_thresh;
+        int nr_dirs;
+        double angular_sigma;
+        int nr_iters;
+        int nr_states;
+        double z_dist;
+        int bkgd_thresh;
+        int region_num;
+
+    };
+
+class regionMSTDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionMSTDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(55);
+            region_editor = new QLineEdit(QString("").setNum(10000));
+            window_size_spinbox = new QSpinBox();
+            window_size_spinbox->setRange(1, 1000);
+            window_size_spinbox->setValue(10);
+
+
+            layout->addWidget(new QLabel("Background Threshold"),0,0);
+            layout->addWidget(bkgthresh_spinbox,0,1,1,5);
+            layout->addWidget(new QLabel("Region Number"), 1, 0);
+            layout->addWidget(region_editor,1,1,1,5);
+            layout->addWidget(new QLabel("Window Size"),2,0);
+            layout->addWidget(window_size_spinbox,2,1,1,5);
+
+            QHBoxLayout * hbox = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox->addWidget(cancel);
+            hbox->addWidget(ok);
+
+            layout->addLayout(hbox,3,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions using MST"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(bkgthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(window_size_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+            update();
+
+        }
+
+        ~regionMSTDialog(){}
+
+        public slots:
+        void update()
+        {
+            bkgd_thresh = bkgthresh_spinbox->value();
+            region_num = region_editor->text().toInt();
+            window_sz = window_size_spinbox->value();
+        }
+
+    public:
+
+        QSpinBox * bkgthresh_spinbox;
+        QLineEdit * region_editor;
+        QSpinBox * window_size_spinbox;
+
+        Image4DSimple* image;
+
+        int bkgd_thresh;
+        int region_num;
+        int window_sz;
+
+    };
+
+class regionNCDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionNCDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(55);
+            region_editor = new QLineEdit(QString("").setNum(10000));
+            channel_editor = new QLineEdit(QString("").setNum(1));
+            scale_editor = new QLineEdit(QString("").setNum(12));
+            corr_thresh_editor = new QLineEdit(QString("").setNum(.6));
+            nr_dirs_spinbox = new QLineEdit(QString("").setNum(15));
+            angsig_editor = new QLineEdit(QString("").setNum(60));
+            nr_iter_spinbox = new QSpinBox();
+            nr_iter_spinbox->setRange(2, 50);
+            nr_iter_spinbox->setValue(30);
+            nr_states_spinbox = new QSpinBox();
+            nr_states_spinbox->setRange(1, 20);
+            nr_states_spinbox->setValue(5);
+            z_dist_editor = new QLineEdit(QString("").setNum(1));
+            save_spinbox = new QSpinBox();
+            save_spinbox->setRange(0, 1);
+            save_spinbox->setValue(0);
+
+
+
+            layout->addWidget(new QLabel("Background Threshold"),0,0);
+            layout->addWidget(bkgthresh_spinbox,0,1,1,5);
+            layout->addWidget(new QLabel("Region Number"), 1, 0);
+            layout->addWidget(region_editor,1,1,1,5);
+            layout->addWidget(new QLabel("Channel"),2,0);
+            layout->addWidget(channel_editor,2,1,1,5);
+            layout->addWidget(new QLabel("Scale pix (5, 20]"),3,0);
+            layout->addWidget(scale_editor,3,1,1,5);
+            layout->addWidget(new QLabel("Correlation Threshold [0.5, 1.0)"),4,0);
+            layout->addWidget(corr_thresh_editor,4,1,1,5);
+            layout->addWidget(new QLabel("nr. Directions"),5,0);
+            layout->addWidget(nr_dirs_spinbox,5,1,1,5);
+            layout->addWidget(new QLabel("Angular Sigma degrees [1, 60]"),6,0);
+            layout->addWidget(angsig_editor,6,1,1,5);
+            layout->addWidget(new QLabel("nr. Iterations"),7,0);
+            layout->addWidget(nr_iter_spinbox,7,1,1,5);
+            layout->addWidget(new QLabel("nr. States"),8,0);
+            layout->addWidget(nr_states_spinbox,8,1,1,5);
+            layout->addWidget(new QLabel("Z Layer Dist. pixels [1, 4]"), 9, 0);
+            layout->addWidget(z_dist_editor,9,1,1,5);
+            layout->addWidget(new QLabel("Save Midresults 0-No/1-Yes"),10,0);
+            layout->addWidget(save_spinbox,10,1,1,5);
+
+            QHBoxLayout * hbox = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox->addWidget(cancel);
+            hbox->addWidget(ok);
+
+            layout->addLayout(hbox,11,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions using NeuronChaser"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(bkgthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(channel_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(scale_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(corr_thresh_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_dirs_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(angsig_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_iter_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(nr_states_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(z_dist_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(save_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+            update();
+
+        }
+
+        ~regionNCDialog(){}
+
+        public slots:
+        void update()
+        {
+            bkgd_thresh = bkgthresh_spinbox->value();
+            region_num = region_editor->text().toInt();
+            channel = channel_editor->text().toInt();
+            scale = scale_editor->text().toInt();
+            corr_thresh = corr_thresh_editor->text().toFloat();
+            nr_dirs = nr_dirs_spinbox->text().toInt();
+            angular_sigma = angsig_editor->text().toFloat();
+            nr_iters = nr_iter_spinbox->value();
+            nr_states = nr_states_spinbox->value();
+            z_dist = z_dist_editor->text().toFloat();
+            save_midres = save_spinbox->value();
+        }
+
+    public:
+
+        QSpinBox * bkgthresh_spinbox;
+        QLineEdit * region_editor;
+        QLineEdit * channel_editor;
+        QLineEdit * scale_editor;
+        QLineEdit * corr_thresh_editor;
+        QLineEdit * nr_dirs_spinbox;
+        QLineEdit * angsig_editor;
+        QSpinBox * nr_iter_spinbox;
+        QSpinBox * nr_states_spinbox;
+        QLineEdit * z_dist_editor;
+        QSpinBox * save_spinbox;
+
+        Image4DSimple* image;
+
+        int bkgd_thresh;
+        int region_num;
+        int channel;
+        int scale;
+        double corr_thresh;
+        int nr_dirs;
+        double angular_sigma;
+        int nr_iters;
+        int nr_states;
+        double z_dist;\
+        int save_midres;
+
+
+    };
+
+class regionMOSTDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionMOSTDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(55);
+            region_editor = new QLineEdit(QString("").setNum(10000));
+            thresh_spinbox = new QSpinBox();
+            thresh_spinbox->setRange(1, 255);
+            thresh_spinbox->setValue(20);
+            seed_spinbox = new QSpinBox();
+            seed_spinbox->setRange(1,5000);
+            seed_spinbox->setValue(20);
+            slip_spinbox = new QSpinBox();
+            slip_spinbox->setRange(1, 5000);
+            slip_spinbox->setValue(20);
+
+
+            layout->addWidget(new QLabel("Background Threshold"),0,0);
+            layout->addWidget(bkgthresh_spinbox,0,1,1,5);
+            layout->addWidget(new QLabel("Region Number"), 1, 0);
+            layout->addWidget(region_editor,1,1,1,5);
+            layout->addWidget(new QLabel("Threshold"),2,0);
+            layout->addWidget(thresh_spinbox,2,1,1,5);
+            layout->addWidget(new QLabel("Seed Size"),3,0);
+            layout->addWidget(seed_spinbox,3,1,1,5);
+            layout->addWidget(new QLabel("Slip Size"),4,0);
+            layout->addWidget(slip_spinbox,4,1,1,5);
+
+            QHBoxLayout * hbox = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox->addWidget(cancel);
+            hbox->addWidget(ok);
+
+            layout->addLayout(hbox,3,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions using MST"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(bkgthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(thresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(seed_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(slip_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+            update();
+
+        }
+
+        ~regionMOSTDialog(){}
+
+        public slots:
+        void update()
+        {
+            bkgd_thresh = bkgthresh_spinbox->value();
+            region_num = region_editor->text().toInt();
+            thresh = thresh_spinbox->value();
+            seed = seed_spinbox->value();
+            slip = slip_spinbox->value();
+        }
+
+    public:
+
+        QSpinBox * bkgthresh_spinbox;
+        QLineEdit * region_editor;
+        QSpinBox * thresh_spinbox;
+        QSpinBox * seed_spinbox;
+        QSpinBox * slip_spinbox;
+
+        Image4DSimple* image;
+
+        int bkgd_thresh;
+        int region_num;
+        int thresh;
+        int seed;
+        int slip;
+
+    };
+
+class regionBasicDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        regionBasicDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            image = 0;
+
+            v3dhandle curwin = cb.currentImageWindow();
+            if (!curwin)
+            {
+                v3d_msg("You don't have any images open in the main window.");
+                return;
+            }
+
+            image = cb.getImage(curwin);
+
+            if (!image)
+            {
+                v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+                return;
+            }
+
+            QGridLayout * layout = new QGridLayout();
+            bkgthresh_spinbox = new QSpinBox();
+            bkgthresh_spinbox->setRange(-1, 255);
+            bkgthresh_spinbox->setValue(55);
+            region_editor = new QLineEdit(QString("").setNum(10000));
+
+            layout->addWidget(new QLabel("Background Threshold"),0,0);
+            layout->addWidget(bkgthresh_spinbox,0,1,1,5);
+            layout->addWidget(new QLabel("Region Number"), 1, 0);
+            layout->addWidget(region_editor,1,1,1,5);
+
+            QHBoxLayout * hbox = new QHBoxLayout();
+            QPushButton * ok = new QPushButton(" ok ");
+            ok->setDefault(true);
+            QPushButton * cancel = new QPushButton("cancel");
+            hbox->addWidget(cancel);
+            hbox->addWidget(ok);
+
+            layout->addLayout(hbox,2,0,1,6);
+            setLayout(layout);
+            setWindowTitle(QString("Neuron Tracing based on Different Regions"));
+
+            connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+
+            connect(bkgthresh_spinbox, SIGNAL(selectionChanged ()), this, SLOT(update()));
+            connect(region_editor, SIGNAL(selectionChanged ()), this, SLOT(update()));
+
+            update();
+
+        }
+
+        ~regionBasicDialog(){}
+
+        public slots:
+        void update()
+        {
+            bkgd_thresh = bkgthresh_spinbox->value();
+            region_num = region_editor->text().toInt();
+        }
+
+    public:
+
+        QSpinBox * bkgthresh_spinbox;
+        QLineEdit * region_editor;
+
+        Image4DSimple* image;
+
+        int bkgd_thresh;
+        int region_num;
 
     };
 
