@@ -512,6 +512,8 @@ QGroupBox *S2UI::createTracingParameters(){
     channelChoiceComboB = new QComboBox;
     channelChoiceComboB->addItem("Ch1");
     channelChoiceComboB->addItem("Ch2");
+    channelChoiceComboB->addItem("G-R");
+
     channelChoiceComboB->setCurrentIndex(1);
     QLabel * channelChoiceComboBLabel = new QLabel(tr("Color Channel: "));
 
