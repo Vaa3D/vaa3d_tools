@@ -20,15 +20,9 @@ signals:
     void combinedSWC(QString fileSaveName);
     void loadingDone(Image4DSimple* total4DImage_mip);
 public slots:
-    void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
-    void loadScan_adaptive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
 
-    void loadScanSubtractive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, int methodChoice);
-    void loadScanSubtractiveAdaptive(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, int methodChoice);
 
-    void processStack(Image4DSimple InputImage);
     void processSmartScan(QString fileWithData);
-
     void loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString);
     void updateChannel(QString);
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
@@ -53,7 +47,8 @@ public slots:
 private:
     V3DPluginCallback2 * cb;
     QString channel;
-
+    unsigned short int redThreshold;
+    float redAlpha;
 
 
     template <class T> void gaussian_filter(T* data1d,
