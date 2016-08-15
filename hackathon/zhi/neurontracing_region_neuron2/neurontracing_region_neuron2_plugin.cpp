@@ -104,13 +104,8 @@ struct APP1_LS_PARA
     QString inimg_file;
 };
 
-void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,ADVANTRA_LS_PARA &p,bool bmenu);
-void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 void autotrace_region_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS_PARA &p,bool bmenu);
-void autotrace_region_advantra(V3DPluginCallback2 &callback, QWidget *parent,ADVANTRA_LS_PARA &Para,bool bmenu);
-void autotrace_region_mst(V3DPluginCallback2 &callback, QWidget *parent,MST_LS_PARA &Para,bool bmenu);
-void autotrace_region_nc(V3DPluginCallback2 &callback, QWidget *parent,NC_LS_PARA &Para,bool bmenu);
-void autotrace_region_basic(V3DPluginCallback2 &callback, QWidget *parent,BASIC_LS_PARA &Para,bool bmenu,string trace);
+void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,bool bmenu,const QString trace);
 
 template <class T> void app2_tracing(const T* image_region,
                                      unsigned char * data1d,
@@ -245,7 +240,8 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.region_number = dialog.region_number;
 
-        autotrace_region_app2(callback,parent,P,bmenu);
+        //autotrace_region_app2(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
 	}
     else if (menu_name == tr("trace_advantra"))
     {
@@ -270,7 +266,8 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.bkgd_thresh = dialog.bkgd_thresh;
         P.region_num = dialog.region_num;
 
-        autotrace_region_advantra(callback,parent,P,bmenu);
+        //autotrace_region_advantra(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
     else if (menu_name == tr("trace_ent"))
     {
@@ -286,7 +283,9 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.bkg_thresh = dialog.bkgd_thresh;
         P.region_number = dialog.region_num;
 
-        autotrace_region_basic(callback,parent,P,bmenu,"ent");
+        //autotrace_region_basic(callback,parent,P,bmenu,"ent");
+        //autotrace_region(callback,parent,&P,bmenu,P.inimg_file,P.bkg_thresh,P.region_number,4);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
     else if (menu_name == tr("trace_gd"))
     {
@@ -302,7 +301,9 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.bkg_thresh = dialog.bkgd_thresh;
         P.region_number = dialog.region_num;
 
-        autotrace_region_basic(callback,parent,P,bmenu,"gd");
+        //autotrace_region_basic(callback,parent,P,bmenu,"gd");
+        //autotrace_region(callback,parent,&P,bmenu,P.inimg_file,P.bkg_thresh,P.region_number,5);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
     else if (menu_name == tr("trace_mst"))
     {
@@ -319,7 +320,9 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.region_number = dialog.region_num;
         P.window_size = dialog.window_sz;
 
-        autotrace_region_mst(callback,parent,P,bmenu);
+        //autotrace_region_mst(callback,parent,P,bmenu);
+        //autotrace_region(callback,parent,&P,bmenu,P.inimg_file,P.bkg_thresh,P.region_number,6);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
     else if (menu_name == tr("trace_neuronchaser"))
     {
@@ -344,7 +347,9 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
         P.z_dist = dialog.z_dist;
         P.save_midres = dialog.save_midres;
 
-        autotrace_region_nc(callback,parent,P,bmenu);
+        //autotrace_region_nc(callback,parent,P,bmenu);
+        //autotrace_region(callback,parent,P,bmenu,P.inimg_file,P.bkgd_thresh,P.region_num,7);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
 	else
 	{
@@ -401,7 +406,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.SR_ratio = 3.0/9.0;
         P.b_RadiusFrom2D = 1;
 
-        autotrace_region_app2(callback,parent,P,bmenu);
+        //autotrace_region_app2(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
     else if (func_name == tr("trace_advantra"))
@@ -428,7 +434,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.bkgd_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 55; k++;
         P.region_num = (paras.size() >= k+1) ? atoi(paras[k]) : 10000; k++;
 
-        autotrace_region_advantra(callback,parent,P,bmenu);
+        //autotrace_region_advantra(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
     else if (func_name == tr("trace_ent"))
@@ -447,7 +454,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 55;  k++;
         P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 10000; k++;
 
-        autotrace_region_basic(callback,parent,P,bmenu,"ent");
+        //autotrace_region_basic(callback,parent,P,bmenu,"ent");
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
     else if (func_name == tr("trace_gd"))
@@ -466,7 +474,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 55;  k++;
         P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 10000; k++;
 
-        autotrace_region_basic(callback,parent,P,bmenu,"gd");
+        //autotrace_region_basic(callback,parent,P,bmenu,"gd");
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
     else if (func_name == tr("trace_mst"))
@@ -486,7 +495,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 10000; k++;
         P.window_size = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
 
-        autotrace_region_mst(callback,parent,P,bmenu);
+        //autotrace_region_mst(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
     else if (func_name == tr("trace_neuronchaser"))
@@ -514,7 +524,8 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         P.z_dist = (paras.size() >= k+1) ? atof(paras[k]) : 1.0; k++;
         P.save_midres = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
 
-        autotrace_region_nc(callback,parent,P,bmenu);
+        //autotrace_region_nc(callback,parent,P,bmenu);
+        autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
 	else if (func_name == tr("help"))
@@ -793,531 +804,6 @@ void autotrace_region_app1(V3DPluginCallback2 &callback, QWidget *parent,APP1_LS
    return;
 }
 
-
-
-void autotrace_region_app2(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &Para,bool bmenu)
-{
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,C;
-    QString image_name = Para.inimg_file;
-
-    if(bmenu)
-    {
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        data1d = p4DImage->getRawData();
-
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        C = p4DImage->getCDim();
-    }
-    else
-    {
-        V3DLONG *im_sz = 0;
-        int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
-            return;
-        }
-        N = im_sz[0];
-        M = im_sz[1];
-        P = im_sz[2];
-        C = im_sz[3];
-
-    }
-
-    int th = Para.bkg_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-
-        printf("Can not create a tmp folder!\n");
-        return;
-    }
-
-    V3DLONG pagesz = N*M*P;
-    unsigned char *image_binary=0;
-    try {image_binary = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
-    for(V3DLONG i = 0; i < pagesz; i++)
-    {
-        if(data1d[i] > th)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = 1;
-
-    QString input_image_name = tmpfolder + "/binary.raw";
-    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
-
-    if(image_binary) {delete []image_binary; image_binary = 0;}
-
-    QString output_image_name = tmpfolder +"/region.raw";
-
-    #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #else
-        v3d_msg("The OS is not Linux or Mac. Do nothing.");
-        return;
-    #endif
-
-   unsigned char * image_region = 0;
-   int datatype;
-   V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
-   {
-       v3d_msg("Fail to load image");
-       return;
-   }
-
-   switch (datatype)
-   {
-   case 1: app2_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-   case 2: app2_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-   default: v3d_msg("Invalid data type. Do nothing."); return;
-   }
-
-
-   if(image_region) {delete []image_region; image_region = 0;}
-   if(~bmenu)
-       if(data1d) {delete []data1d; data1d = 0;}
-
-   return;
-}
-
-void autotrace_region_advantra(V3DPluginCallback2 &callback, QWidget *parent,ADVANTRA_LS_PARA &Para,bool bmenu)
-{
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,C;
-    QString image_name = Para.inimg_file;
-
-    if(bmenu)
-    {
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        data1d = p4DImage->getRawData();
-
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        C = p4DImage->getCDim();
-    }
-    else
-    {
-        V3DLONG *im_sz = 0;
-        int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
-            return;
-        }
-        N = im_sz[0];
-        M = im_sz[1];
-        P = im_sz[2];
-        C = im_sz[3];
-
-    }
-
-    int th = Para.bkgd_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-
-        printf("Can not create a tmp folder!\n");
-        return;
-    }
-
-    V3DLONG pagesz = N*M*P;
-    unsigned char *image_binary=0;
-    try {image_binary = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
-    for(V3DLONG i = 0; i < pagesz; i++)
-    {
-        if(data1d[i] > th)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = 1;
-
-    QString input_image_name = tmpfolder + "/binary.raw";
-    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
-
-    if(image_binary) {delete []image_binary; image_binary = 0;}
-
-    QString output_image_name = tmpfolder +"/region.raw";
-
-    #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_num);
-        system(qPrintable(cmd_region));
-    #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_num);
-        system(qPrintable(cmd_region));
-    #else
-        v3d_msg("The OS is not Linux or Mac. Do nothing.");
-        return;
-    #endif
-
-   unsigned char * image_region = 0;
-   int datatype;
-   V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
-   {
-       v3d_msg("Fail to load image");
-       return;
-   }
-
-   switch (datatype)
-   {
-   case 1: advantra_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-   case 2: advantra_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-   default: v3d_msg("Invalid data type. Do nothing."); return;
-   }
-
-
-   if(image_region) {delete []image_region; image_region = 0;}
-   if(~bmenu)
-       if(data1d) {delete []data1d; data1d = 0;}
-
-   return;
-}
-
-void autotrace_region_basic(V3DPluginCallback2 &callback, QWidget *parent,BASIC_LS_PARA &Para,bool bmenu, string trace)
-{
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,C;
-    QString image_name = Para.inimg_file;
-
-    if(bmenu)
-    {
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        data1d = p4DImage->getRawData();
-
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        C = p4DImage->getCDim();
-    }
-    else
-    {
-        V3DLONG *im_sz = 0;
-        int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
-            return;
-        }
-        N = im_sz[0];
-        M = im_sz[1];
-        P = im_sz[2];
-        C = im_sz[3];
-
-    }
-
-    int th = Para.bkg_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-
-        printf("Can not create a tmp folder!\n");
-        return;
-    }
-
-    V3DLONG pagesz = N*M*P;
-    unsigned char *image_binary=0;
-    try {image_binary = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
-    for(V3DLONG i = 0; i < pagesz; i++)
-    {
-        if(data1d[i] > th)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = 1;
-
-    QString input_image_name = tmpfolder + "/binary.raw";
-    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
-
-    if(image_binary) {delete []image_binary; image_binary = 0;}
-
-    QString output_image_name = tmpfolder +"/region.raw";
-
-    #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #else
-        v3d_msg("The OS is not Linux or Mac. Do nothing.");
-        return;
-    #endif
-
-   unsigned char * image_region = 0;
-   int datatype;
-   V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
-   {
-       v3d_msg("Fail to load image");
-       return;
-   }
-
-   if (trace.compare("ent") == 0) {
-       switch (datatype)
-       {
-       case 1: ent_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-       case 2: ent_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-       default: v3d_msg("Invalid data type. Do nothing."); return;
-       }
-   } else if (trace.compare("gd") == 0) {
-       switch (datatype)
-       {
-       case 1: gd_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-       case 2: gd_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-       default: v3d_msg("Invalid data type. Do nothing."); return;
-       }
-   } else v3d_msg("Invalid trace type.");
-
-
-
-   if(image_region) {delete []image_region; image_region = 0;}
-   if(~bmenu)
-       if(data1d) {delete []data1d; data1d = 0;}
-
-   return;
-}
-
-void autotrace_region_mst(V3DPluginCallback2 &callback, QWidget *parent,MST_LS_PARA &Para,bool bmenu)
-{
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,C;
-    QString image_name = Para.inimg_file;
-
-    if(bmenu)
-    {
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        data1d = p4DImage->getRawData();
-
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        C = p4DImage->getCDim();
-    }
-    else
-    {
-        V3DLONG *im_sz = 0;
-        int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
-            return;
-        }
-        N = im_sz[0];
-        M = im_sz[1];
-        P = im_sz[2];
-        C = im_sz[3];
-
-    }
-
-    int th = Para.bkg_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-
-        printf("Can not create a tmp folder!\n");
-        return;
-    }
-
-    V3DLONG pagesz = N*M*P;
-    unsigned char *image_binary=0;
-    try {image_binary = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
-    for(V3DLONG i = 0; i < pagesz; i++)
-    {
-        if(data1d[i] > th)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = 1;
-
-    QString input_image_name = tmpfolder + "/binary.raw";
-    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
-
-    if(image_binary) {delete []image_binary; image_binary = 0;}
-
-    QString output_image_name = tmpfolder +"/region.raw";
-
-    #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_number);
-        system(qPrintable(cmd_region));
-    #else
-        v3d_msg("The OS is not Linux or Mac. Do nothing.");
-        return;
-    #endif
-
-   unsigned char * image_region = 0;
-   int datatype;
-   V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
-   {
-       v3d_msg("Fail to load image");
-       return;
-   }
-
-   switch (datatype)
-   {
-   case 1: mst_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-   case 2: mst_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-   default: v3d_msg("Invalid data type. Do nothing."); return;
-   }
-
-   if(image_region) {delete []image_region; image_region = 0;}
-   if(~bmenu)
-       if(data1d) {delete []data1d; data1d = 0;}
-
-   return;
-}
-
-void autotrace_region_nc(V3DPluginCallback2 &callback, QWidget *parent,NC_LS_PARA &Para,bool bmenu)
-{
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,C;
-    QString image_name = Para.inimg_file;
-
-    if(bmenu)
-    {
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        data1d = p4DImage->getRawData();
-
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        C = p4DImage->getCDim();
-    }
-    else
-    {
-        V3DLONG *im_sz = 0;
-        int datatype = 0;
-        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
-            return;
-        }
-        N = im_sz[0];
-        M = im_sz[1];
-        P = im_sz[2];
-        C = im_sz[3];
-
-    }
-
-    int th = Para.bkgd_thresh;
-    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+("_tmp");
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-
-        printf("Can not create a tmp folder!\n");
-        return;
-    }
-
-    V3DLONG pagesz = N*M*P;
-    unsigned char *image_binary=0;
-    try {image_binary = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
-    for(V3DLONG i = 0; i < pagesz; i++)
-    {
-        if(data1d[i] > th)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = 1;
-
-    QString input_image_name = tmpfolder + "/binary.raw";
-    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
-
-    if(image_binary) {delete []image_binary; image_binary = 0;}
-
-    QString output_image_name = tmpfolder +"/region.raw";
-
-    #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_num);
-        system(qPrintable(cmd_region));
-    #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(Para.region_num);
-        system(qPrintable(cmd_region));
-    #else
-        v3d_msg("The OS is not Linux or Mac. Do nothing.");
-        return;
-    #endif
-
-   unsigned char * image_region = 0;
-   int datatype;
-   V3DLONG in_zz[4];
-   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
-   {
-       v3d_msg("Fail to load image");
-       return;
-   }
-
-   switch (datatype)
-   {
-   case 1: nc_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
-   case 2: nc_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
-   default: v3d_msg("Invalid data type. Do nothing."); return;
-   }
-
-   if(image_region) {delete []image_region; image_region = 0;}
-   if(~bmenu)
-       if(data1d) {delete []data1d; data1d = 0;}
-
-   return;
-}
-
 QString getAppPath()
 {
     QString v3dAppPath("~/Work/v3d_external/v3d");
@@ -1346,10 +832,10 @@ template <class T> void app2_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     APP2_LS_PARA &Para,
+                                     void * para,
                                      bool bmenu)
 {
-
+    APP2_LS_PARA Para = *(APP2_LS_PARA *)para;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
     for(V3DLONG i = 0; i < pagesz; i++)
@@ -1457,9 +943,11 @@ template <class T> void advantra_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     ADVANTRA_LS_PARA &Para,
+                                     void * para,
                                      bool bmenu)
 {
+
+    ADVANTRA_LS_PARA Para = * (ADVANTRA_LS_PARA *) para;
 
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
@@ -1568,10 +1056,11 @@ template <class T> void ent_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     BASIC_LS_PARA &Para,
+                                     void * para,
                                      bool bmenu)
 {
 
+    BASIC_LS_PARA Para = *(BASIC_LS_PARA *)para;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
     for(V3DLONG i = 0; i < pagesz; i++)
@@ -1676,10 +1165,11 @@ template <class T> void gd_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     BASIC_LS_PARA &Para,
+                                     void * para,
                                      bool bmenu)
 {
 
+    BASIC_LS_PARA Para = *(BASIC_LS_PARA *)para;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
     for(V3DLONG i = 0; i < pagesz; i++)
@@ -1784,10 +1274,11 @@ template <class T> void mst_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     MST_LS_PARA &Para,
+                                     void *para,
                                      bool bmenu)
 {
 
+    MST_LS_PARA Para = *(MST_LS_PARA *)para;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
     for(V3DLONG i = 0; i < pagesz; i++)
@@ -1892,10 +1383,11 @@ template <class T> void nc_tracing(const T* image_region,
                                      V3DLONG *in_sz,
                                      V3DPluginCallback2 &callback,
                                      QString tmpfolder,
-                                     NC_LS_PARA &Para,
+                                     void *para,
                                      bool bmenu)
 {
 
+    NC_LS_PARA Para = *(NC_LS_PARA *)para;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     int groupNum = 0;
     for(V3DLONG i = 0; i < pagesz; i++)
@@ -1998,3 +1490,195 @@ template <class T> void nc_tracing(const T* image_region,
 
 }
 
+void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,bool bmenu, QString image_name, const QString trace)
+{
+    int trace_num;
+    int th;
+    int region_num;
+
+    if (trace == QString("trace_advantra")) {
+        ADVANTRA_LS_PARA * para = (ADVANTRA_LS_PARA *) Para;
+        th = para->bkgd_thresh;
+        region_num = para->region_num;
+        trace_num = 1;
+    }
+    else if (trace == QString("trace_app2")) {
+        APP2_LS_PARA * para = (APP2_LS_PARA *) Para;
+        th = para->bkg_thresh;
+        region_num = para->region_number;
+        trace_num = 3;
+    }
+    else if (trace == QString("trace_ent")) {
+        BASIC_LS_PARA * para = (BASIC_LS_PARA *) Para;
+        th = para->bkg_thresh;
+        region_num = para->region_number;
+        trace_num = 4;
+    }
+    else if (trace == QString("trace_gd")) {
+        BASIC_LS_PARA * para = (BASIC_LS_PARA *) Para;
+        th = para->bkg_thresh;
+        region_num = para->region_number;
+        trace_num = 5;
+    }
+    else if (trace == QString("trace_mst")) {
+        MST_LS_PARA * para = (MST_LS_PARA *) Para;
+        th = para->bkg_thresh;
+        region_num = para->region_number;
+        trace_num = 6;
+    }
+    else if (trace == QString("trace_neuronchaser")) {
+        NC_LS_PARA * para = (NC_LS_PARA *) Para;
+        th = para->bkgd_thresh;
+        region_num = para->region_num;
+        trace_num = 7;
+    }
+    else {
+        v3d_msg("Invalid menu option");
+    }
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,C;
+
+    if(bmenu)
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+        data1d = p4DImage->getRawData();
+
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        C = p4DImage->getCDim();
+    }
+    else
+    {
+        V3DLONG *im_sz = 0;
+        int datatype = 0;
+        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
+            return;
+        }
+        N = im_sz[0];
+        M = im_sz[1];
+        P = im_sz[2];
+        C = im_sz[3];
+
+    }
+
+    QString tmp = "_tmp_";
+    QString tmpfolder = QFileInfo(image_name).path()+("/") + QFileInfo(image_name).completeBaseName()+ tmp.append(trace);
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(tmpfolder.isEmpty())
+    {
+
+        printf("Can not create a tmp folder!\n");
+        return;
+    }
+
+    V3DLONG pagesz = N*M*P;
+    unsigned char *image_binary=0;
+    try {image_binary = new unsigned char [pagesz];}
+    catch(...)  {v3d_msg("cannot allocate memory for image_binary."); return;}
+    for(V3DLONG i = 0; i < pagesz; i++)
+    {
+        if(data1d[i] > th)
+            image_binary[i] = 255;
+        else
+            image_binary[i] = 0;
+    }
+
+    V3DLONG in_sz[4];
+    in_sz[0] = N;
+    in_sz[1] = M;
+    in_sz[2] = P;
+    in_sz[3] = 1;
+
+    QString input_image_name = tmpfolder + "/binary.raw";
+    simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary, in_sz, V3D_UINT8);
+
+    if(image_binary) {delete []image_binary; image_binary = 0;}
+
+    QString output_image_name = tmpfolder +"/region.raw";
+
+    #if  defined(Q_OS_LINUX)
+        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(region_num);
+        system(qPrintable(cmd_region));
+    #elif defined(Q_OS_MAC)
+        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(region_num);
+        system(qPrintable(cmd_region));
+    #else
+        v3d_msg("The OS is not Linux or Mac. Do nothing.");
+        return;
+    #endif
+
+   unsigned char * image_region = 0;
+   int datatype;
+   V3DLONG in_zz[4];
+   if(!simple_loadimage_wrapper(callback, output_image_name.toStdString().c_str(), image_region, in_zz, datatype))
+   {
+       v3d_msg("Fail to load image");
+       return;
+   }
+
+   switch (trace_num)
+   {
+   case 1:
+       switch (datatype)
+       {
+       case 1: advantra_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: advantra_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   case 3:
+       switch (datatype)
+       {
+       case 1: app2_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: app2_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   case 4:
+       switch (datatype)
+       {
+       case 1: ent_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: ent_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   case 5:
+       switch (datatype)
+       {
+       case 1: gd_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: gd_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   case 6:
+       switch (datatype)
+       {
+       case 1: mst_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: mst_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   case 7:
+       switch (datatype)
+       {
+       case 1: nc_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: nc_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
+   default:
+       v3d_msg("invalid trace type. Do nothing.");
+       return;
+   }
+
+
+   if(image_region) {delete []image_region; image_region = 0;}
+   if(~bmenu)
+       if(data1d) {delete []data1d; data1d = 0;}
+
+   return;
+}
