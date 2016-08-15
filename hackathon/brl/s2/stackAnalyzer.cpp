@@ -2377,17 +2377,29 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     if (imageFileInfo.isReadable()){
+        QStringList fileList;
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*").append(channel).append("*.tif"));
+        filterList.append(QString("*").append("Ch1").append("*.tif"));
         imageDir.setNameFilters(filterList);
-        QStringList fileList = imageDir.entryList();
+        QStringList fileList1 = imageDir.entryList();
+
+        QStringList filterList2;
+        filterList2.append(QString("*").append("Ch2").append("*.tif"));
+        imageDir.setNameFilters(filterList2);
+        QStringList fileList2 = imageDir.entryList();
+
+        if (channel=="Ch1"){
+            fileList = fileList1;
+        }else if (channel=="Ch2"){
+            fileList = fileList2;
+        }
 
         //use this to id the number of images in the stack (in one channel?!)
         V3DLONG x = pNewImage->getXDim();
         V3DLONG y = pNewImage->getYDim();
-        V3DLONG nFrames = fileList.length();
+        V3DLONG nFrames = fileList1.length();
 
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
@@ -2396,24 +2408,61 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             total1dData_mip[i] = 0;
         V3DLONG totalImageIndex = 0;
         double p_vmax=0;
+        qDebug()<<channel;
         for (int f=0; f<nFrames; f++){
             //qDebug()<<fileList[f];
-            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-            if (pNewImage->valid()){
-                unsigned short int * data1d = 0;
-                data1d = new unsigned short int [x*y];
-                data1d = (unsigned short int*)pNewImage->getRawData();
-                for (V3DLONG i = 0; i< (x*y); i++)
-                {
-                    total1dData[totalImageIndex]= data1d[i];
-                    if(data1d[i] > p_vmax) p_vmax = data1d[i];
-                    if(total1dData_mip[i] < data1d[i]) total1dData_mip[i] = data1d[i];
-                    totalImageIndex++;
+            if (channel=="G-R") {
+                Image4DSimple * pNewImage1 = cb->loadImage(imageDir.absoluteFilePath(fileList1[f]).toLatin1().data());
+                Image4DSimple * pNewImage2 = cb->loadImage(imageDir.absoluteFilePath(fileList2[f]).toLatin1().data());
+
+                if (pNewImage1->valid()){
+                    unsigned short int * data1d1 = 0;
+                    data1d1 = new unsigned short int [x*y];
+                    data1d1 = (unsigned short int*)pNewImage1->getRawData();
+                    unsigned short int * data1d2 = 0;
+                    data1d2 = new unsigned short int [x*y];
+                    data1d2 = (unsigned short int*)pNewImage2->getRawData();
+                    for (V3DLONG i = 0; i< (x*y); i++)
+                    {
+                        if (data1d1[i] >= data1d2[i]){
+                            total1dData[totalImageIndex]= 0;
+
+                        }else{
+                            total1dData[totalImageIndex]= data1d2[i]-data1d1[i];
+
+                        }
+                        if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
+                        if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                        totalImageIndex++;
+                    }
+                    if(data1d1) {delete []data1d1; data1d1 = 0;}
+                    if(data1d2) {delete []data1d2; data1d2 = 0;}
+
+                }else{
+                    qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
                 }
-                if(data1d) {delete []data1d; data1d = 0;}
+
             }else{
-                qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+
+                Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+                if (pNewImage->valid()){
+                    unsigned short int * data1d = 0;
+                    data1d = new unsigned short int [x*y];
+                    data1d = (unsigned short int*)pNewImage->getRawData();
+                    for (V3DLONG i = 0; i< (x*y); i++)
+                    {
+                        total1dData[totalImageIndex]= data1d[i];
+                        if(data1d[i] > p_vmax) p_vmax = data1d[i];
+                        if(total1dData_mip[i] < data1d[i]) total1dData_mip[i] = data1d[i];
+                        totalImageIndex++;
+                    }
+                    if(data1d) {delete []data1d; data1d = 0;}
+                }else{
+                    qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+                }
+
             }
+
         }
 
         Image4DSimple* total4DImage = new Image4DSimple;
@@ -3493,6 +3542,8 @@ int StackAnalyzer::methodSelection(Image4DSimple* total4DImage,LandmarkList inpu
     return methodChoice;
 
 }
+
+
 template <class T> void StackAnalyzer::gaussian_filter(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int Wx,
