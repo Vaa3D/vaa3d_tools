@@ -115,9 +115,6 @@ template <class T> void app2_tracing(const T* image_region,
                                      APP2_LS_PARA &Para,
                                      bool bmenu);
 
-
-QString getAppPath();
-
 template <class T> void advantra_tracing(const T* image_region,
                                      unsigned char * data1d,
                                      V3DLONG *in_sz,
@@ -126,8 +123,13 @@ template <class T> void advantra_tracing(const T* image_region,
                                      ADVANTRA_LS_PARA &Para,
                                      bool bmenu);
 
-
-QString getAppPath();
+template <class T> void cw_tracing(const T* image_region,
+                                     unsigned char * data1d,
+                                     V3DLONG *in_sz,
+                                     V3DPluginCallback2 &callback,
+                                     QString tmpfolder,
+                                     BASIC_LS_PARA &Para,
+                                     bool bmenu);
 
 template <class T> void ent_tracing(const T* image_region,
                                      unsigned char * data1d,
@@ -137,9 +139,6 @@ template <class T> void ent_tracing(const T* image_region,
                                      BASIC_LS_PARA &Para,
                                      bool bmenu);
 
-
-QString getAppPath();
-
 template <class T> void gd_tracing(const T* image_region,
                                      unsigned char * data1d,
                                      V3DLONG *in_sz,
@@ -147,9 +146,6 @@ template <class T> void gd_tracing(const T* image_region,
                                      QString tmpfolder,
                                      BASIC_LS_PARA &Para,
                                      bool bmenu);
-
-
-QString getAppPath();
 
 template <class T> void mst_tracing(const T* image_region,
                                      unsigned char * data1d,
@@ -159,9 +155,6 @@ template <class T> void mst_tracing(const T* image_region,
                                      MST_LS_PARA &Para,
                                      bool bmenu);
 
-
-QString getAppPath();
-
 template <class T> void nc_tracing(const T* image_region,
                                      unsigned char * data1d,
                                      V3DLONG *in_sz,
@@ -170,10 +163,7 @@ template <class T> void nc_tracing(const T* image_region,
                                      NC_LS_PARA &Para,
                                      bool bmenu);
 
-
 QString getAppPath();
-
-
  
 QStringList neurontracing_region_neuron2::menulist() const
 {
@@ -181,6 +171,7 @@ QStringList neurontracing_region_neuron2::menulist() const
         <<tr("trace_advantra")
         <<tr("trace_app1")
         <<tr("trace_app2")
+        <<tr("trace_cwlab")
         <<tr("trace_ent")
         <<tr("trace_gd")
         <<tr("trace_mst")
@@ -349,6 +340,25 @@ void neurontracing_region_neuron2::domenu(const QString &menu_name, V3DPluginCal
 
         //autotrace_region_nc(callback,parent,P,bmenu);
         //autotrace_region(callback,parent,P,bmenu,P.inimg_file,P.bkgd_thresh,P.region_num,7);
+        autotrace_region(callback,parent,&P,bmenu,menu_name);
+    }
+    else if (menu_name == tr("trace_cwlab"))
+    {
+        BASIC_LS_PARA P;
+        bool bmenu = true;
+
+        regionBasicDialog dialog(callback, parent);
+        if (!dialog.image)
+            return;
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+        P.inimg_file = dialog.image->getFileName();
+        P.bkg_thresh = dialog.bkgd_thresh;
+        P.region_number = dialog.region_num;
+
+        printf("3\n");
+
         autotrace_region(callback,parent,&P,bmenu,menu_name);
     }
 	else
@@ -528,43 +538,29 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         autotrace_region(callback,parent,&P,bmenu,func_name);
 
     }
+    else if (func_name == tr("trace_cwlab"))
+    {
+        BASIC_LS_PARA P;
+        bool bmenu = false;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        P.inimg_file = infiles[0];
+        int k=0;
+         //try to use as much as the default value as possible
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 55;  k++;
+        P.region_number = (paras.size() >= k+1) ? atoi(paras[k]) : 10000; k++;
+
+        //autotrace_region_basic(callback,parent,P,bmenu,"gd");
+        autotrace_region(callback,parent,&P,bmenu,func_name);
+
+    }
 	else if (func_name == tr("help"))
 	{
         printf("\n**** Usage of Region based Neuron2 tracing ****\n");
-
-        printf("vaa3d -x plugin_name -f trace_neuronchaser -i <inimg_file> -p <bkg_thresh> <region_number> <channel> <scale> <cor_thresh> <nr_dirs> <ang_sig> <nr_it> <nr_states> <z_dist> <save_mid> \n");
-        printf("inimg_file       The input image\n");
-        printf("bkg_thresh       Default 10\n");
-        printf("region_number    Default 10000\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("scale            Scale (5, 20] pix.\n");
-        printf("cor_thresh       Correlation threshold [0.5, 1.0).\n");
-        printf("nr_dirs          nr. directions [5, 20].\n");
-        printf("ang_sig          Angular sigma [1,90] degs.\n");
-        printf("nr_it            nr. iterations [2, 50].\n");
-        printf("nr_states        nr. states [1, 20].\n");
-        printf("z_dist           z layer dist [1, 4] pix.\n");
-        printf("save_mid         Save midresults 0-no, 1 -yes.\n");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
-
-        printf("vaa3d -x plugin_name -f trace_mst -i <inimg_file> -p <bkg_thresh> <region_number> <window_size> \n");
-        printf("inimg_file       The input image\n");
-        printf("bkg_thresh       Default 10\n");
-        printf("region_number    Default 10000\n");
-        printf("window_size      Window size for seed detection. Default 10");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
-
-        printf("vaa3d -x plugin_name -f trace_gd -i <inimg_file> -p <bkg_thresh> <region_number> \n");
-        printf("inimg_file       The input image\n");
-        printf("bkg_thresh       Default 10\n");
-        printf("region_number    Default 10000\n");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
-
-        printf("vaa3d -x plugin_name -f trace_ent -i <inimg_file> -p <bkg_thresh> <region_number> \n");
-        printf("inimg_file       The input image\n");
-        printf("bkg_thresh       Default 10\n");
-        printf("region_number    Default 10000\n");
-        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
         printf("vaa3d -x plugin_name -f trace_advantra -i <inimg_file> -p  <scale> <bkg_ratio> <corr_thresh> <nr_directions> <ang_sig> <nr_iters> <nr_states> <z_dist> <bkgd_thrsh> <region_n> \n");
         printf("inimg_file       The input image\n");
@@ -580,6 +576,15 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         printf("region_number    Default 10000\n");
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
+        printf("vaa3d -x plugin_name -f trace_app1 -i <inimg_file> -p  <channel> <bkg_thresh> <b_256cube> <region_number>\n");
+        printf("inimg_file       Should be 8/16/32bit image\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10\n");
+        printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 0.)\n");
+        printf("region_number    Default 10000\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
         printf("vaa3d -x plugin_name -f trace_app2 -i <inimg_file> -p  <channel> <bkg_thresh> <b_256cube> <is_gsdt> <is_gap> <length_thresh> <region_number>\n");
         printf("inimg_file       Should be 8/16/32bit image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
@@ -590,18 +595,47 @@ bool neurontracing_region_neuron2::dofunc(const QString & func_name, const V3DPl
         printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
         printf("length_thresh    Default 5\n");
         printf("region_number    Default 10000\n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
-        printf("vaa3d -x plugin_name -f trace_app1 -i <inimg_file> -p  <channel> <bkg_thresh> <b_256cube> <region_number>\n");
-        printf("inimg_file       Should be 8/16/32bit image\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("bkg_thresh       Default 10\n");
-        printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 0.)\n");
+        printf("vaa3d -x plugin_name -f trace_cwlab -i <inimg_file> -p <bkg_thresh> <region_number> \n");
+        printf("inimg_file       The input image\n");
+        printf("bkg_thresh       Default 55\n");
         printf("region_number    Default 10000\n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
+        printf("vaa3d -x plugin_name -f trace_ent -i <inimg_file> -p <bkg_thresh> <region_number> \n");
+        printf("inimg_file       The input image\n");
+        printf("bkg_thresh       Default 55\n");
+        printf("region_number    Default 10000\n");
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+        printf("vaa3d -x plugin_name -f trace_gd -i <inimg_file> -p <bkg_thresh> <region_number> \n");
+        printf("inimg_file       The input image\n");
+        printf("bkg_thresh       Default 55\n");
+        printf("region_number    Default 10000\n");
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+        printf("vaa3d -x plugin_name -f trace_mst -i <inimg_file> -p <bkg_thresh> <region_number> <window_size> \n");
+        printf("inimg_file       The input image\n");
+        printf("bkg_thresh       Default 55\n");
+        printf("region_number    Default 10000\n");
+        printf("window_size      Window size for seed detection. Default 10");
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+        printf("vaa3d -x plugin_name -f trace_neuronchaser -i <inimg_file> -p <bkg_thresh> <region_number> <channel> <scale> <cor_thresh> <nr_dirs> <ang_sig> <nr_it> <nr_states> <z_dist> <save_mid> \n");
+        printf("inimg_file       The input image\n");
+        printf("bkg_thresh       Default 55\n");
+        printf("region_number    Default 10000\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("scale            Scale (5, 20] pix.\n");
+        printf("cor_thresh       Correlation threshold [0.5, 1.0).\n");
+        printf("nr_dirs          nr. directions [5, 20].\n");
+        printf("ang_sig          Angular sigma [1,90] degs.\n");
+        printf("nr_it            nr. iterations [2, 50].\n");
+        printf("nr_states        nr. states [1, 20].\n");
+        printf("z_dist           z layer dist [1, 4] pix.\n");
+        printf("save_mid         Save midresults 0-no, 1 -yes.\n");
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 	}
 	else return false;
@@ -1051,6 +1085,118 @@ template <class T> void advantra_tracing(const T* image_region,
 
 }
 
+template <class T> void cw_tracing(const T* image_region,
+                                     unsigned char* data1d,
+                                     V3DLONG *in_sz,
+                                     V3DPluginCallback2 &callback,
+                                     QString tmpfolder,
+                                     void * para,
+                                     bool bmenu)
+{
+
+    printf("in cs tracing\n");
+    BASIC_LS_PARA Para = *(BASIC_LS_PARA *)para;
+    V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+    int groupNum = 0;
+    for(V3DLONG i = 0; i < pagesz; i++)
+    {
+        if((unsigned short int)image_region[i] > groupNum)
+            groupNum = image_region[i];
+    }
+
+    int *groupArray = new int[groupNum];
+    int *groupIndex = new int[groupNum];
+
+    for(int i = 0; i < groupNum; i++)
+    {
+        groupArray[i] = 0;
+        groupIndex[i] = i+1;
+    }
+
+    for(V3DLONG i = 0; i < pagesz; i++)
+    {
+        if((unsigned short int)image_region[i] > 0)
+            groupArray[(unsigned short int)image_region[i] - 1] += 1;
+    }
+
+    int tmp,tmp_index;
+    for(V3DLONG i = 0; i < groupNum; i++)
+    {
+        if (i > 0)
+        {
+            V3DLONG j = i;
+            while(j > 0 && groupArray[j-1]<groupArray[j])
+            {
+                tmp = groupArray[j];
+                groupArray[j] = groupArray[j-1];
+                groupArray[j-1] = tmp;
+
+                tmp_index = groupIndex[j];
+                groupIndex[j] = groupIndex[j-1];
+                groupIndex[j-1] = tmp_index;
+
+                j--;
+            }
+        }
+    }
+
+    int groupmax = 50;
+    if(groupNum <= groupmax) groupmax = groupNum;
+
+    vector<MyMarker*> outswc_final;
+
+    for(int dd = 0; dd < groupmax; dd++)
+    {
+        unsigned char *image_region_one = new unsigned char [pagesz];
+        V3DLONG group_type = groupIndex[dd];
+
+
+        for(V3DLONG i = 0; i < pagesz; i++)
+        {
+
+            if(image_region[i] == group_type)
+                image_region_one[i] = data1d[i];
+            else
+                image_region_one[i] = 0;
+        }
+
+        QString CWLAB_image_name = tmpfolder + "/group_one.raw";
+        simple_saveimage_wrapper(callback, CWLAB_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
+        if(image_region_one) {delete []image_region_one; image_region_one = 0;}
+
+        QString CWLAB_swc =  CWLAB_image_name + "_Cwlab_ver1.swc";
+
+    #if  defined(Q_OS_LINUX)
+        QString cmd_CWLAB = QString("%1/vaa3d -x CWlab -f tracing_func -i %2").arg(getAppPath().toStdString().c_str()).arg(CWLAB_image_name.toStdString().c_str());
+        system(qPrintable(cmd_CWLAB));
+    #elif defined(Q_OS_MAC)
+        QString cmd_CWLAB = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x CWlab -f tracing_func -i %2").arg(getAppPath().toStdString().c_str()).arg(CWLAB_image_name.toStdString().c_str())
+        system(qPrintable(cmd_CWLAB));
+    #else
+        v3d_msg("The OS is not Linux or Mac. Do nothing.");
+        return;
+    #endif
+
+        vector<MyMarker*> temp_out_swc = readSWC_file(CWLAB_swc.toStdString());
+
+        for(V3DLONG d = 0; d <temp_out_swc.size(); d++)
+        {
+            outswc_final.push_back(temp_out_swc[d]);
+
+        }
+
+    }
+
+    QString final_swc = Para.inimg_file + "_region_CWLab.swc";
+    saveSWC_file(final_swc.toStdString(), outswc_final);
+
+    printf("in cw tracing2\n");
+
+    system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
+
+}
+
 template <class T> void ent_tracing(const T* image_region,
                                      unsigned char* data1d,
                                      V3DLONG *in_sz,
@@ -1490,46 +1636,60 @@ template <class T> void nc_tracing(const T* image_region,
 
 }
 
-void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,bool bmenu, QString image_name, const QString trace)
+void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,bool bmenu, const QString trace)
 {
     int trace_num;
     int th;
     int region_num;
+    QString image_name;
 
     if (trace == QString("trace_advantra")) {
         ADVANTRA_LS_PARA * para = (ADVANTRA_LS_PARA *) Para;
         th = para->bkgd_thresh;
         region_num = para->region_num;
+        image_name = para->inimg_file;
         trace_num = 1;
     }
     else if (trace == QString("trace_app2")) {
         APP2_LS_PARA * para = (APP2_LS_PARA *) Para;
         th = para->bkg_thresh;
         region_num = para->region_number;
+        image_name = para->inimg_file;
         trace_num = 3;
+    }
+    else if (trace == QString("trace_cwlab")) {
+        BASIC_LS_PARA * para = (BASIC_LS_PARA *) Para;
+        th = para->bkg_thresh;
+        region_num = para->region_number;
+        image_name = para->inimg_file;
+        trace_num = 8;
     }
     else if (trace == QString("trace_ent")) {
         BASIC_LS_PARA * para = (BASIC_LS_PARA *) Para;
         th = para->bkg_thresh;
         region_num = para->region_number;
+        image_name = para->inimg_file;
         trace_num = 4;
     }
     else if (trace == QString("trace_gd")) {
         BASIC_LS_PARA * para = (BASIC_LS_PARA *) Para;
         th = para->bkg_thresh;
         region_num = para->region_number;
+        image_name = para->inimg_file;
         trace_num = 5;
     }
     else if (trace == QString("trace_mst")) {
         MST_LS_PARA * para = (MST_LS_PARA *) Para;
         th = para->bkg_thresh;
         region_num = para->region_number;
+        image_name = para->inimg_file;
         trace_num = 6;
     }
     else if (trace == QString("trace_neuronchaser")) {
         NC_LS_PARA * para = (NC_LS_PARA *) Para;
         th = para->bkgd_thresh;
         region_num = para->region_num;
+        image_name = para->inimg_file;
         trace_num = 7;
     }
     else {
@@ -1670,11 +1830,18 @@ void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,
        default: v3d_msg("Invalid data type. Do nothing."); return;
        }
        break;
+   case 8:
+       switch (datatype)
+       {
+       case 1: cw_tracing(image_region, data1d,in_zz, callback,tmpfolder,Para,bmenu); break;
+       case 2: cw_tracing((unsigned short int *)image_region,data1d,in_zz,callback,tmpfolder,Para,bmenu); break;
+       default: v3d_msg("Invalid data type. Do nothing."); return;
+       }
+       break;
    default:
        v3d_msg("invalid trace type. Do nothing.");
        return;
    }
-
 
    if(image_region) {delete []image_region; image_region = 0;}
    if(~bmenu)
