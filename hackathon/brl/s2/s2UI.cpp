@@ -165,6 +165,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(pixelsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
     connect(setLiveFilePath,SIGNAL(clicked()), this, SLOT(startLiveFile()));
 
+    connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
+    connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
 
 
 
@@ -175,6 +177,7 @@ void S2UI::hookUpSignalsAndSlots(){
     //connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
     connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
+    connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
 
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
     connect(collectOverviewPushButton, SIGNAL(clicked()),this, SLOT(collectOverview()));
@@ -193,25 +196,23 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     // communication with  myStackAnalyzer
-    connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
-    connect(this, SIGNAL(newImageData(Image4DSimple)), myStackAnalyzer, SLOT(processStack(Image4DSimple)) );
-    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
-    connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
-    // connect(this, SIGNAL(callSALoad(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
-    // connect(this, SIGNAL(callSALoadAda(QString,float,int,bool, LandmarkList, LocationSimple,QString,bool,bool)), myStackAnalyzer, SLOT(loadScan_adaptive(QString,float,int,bool,LandmarkList, LocationSimple, QString,bool,bool)));
 
+    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
 
 
     connect(this, SIGNAL(callSAGridLoad(QString,LocationSimple,QString)), myStackAnalyzer,SLOT(loadGridScan(QString,LocationSimple,QString)));
-    connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
     connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
-    // connect(this, SIGNAL(callSALoadSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
-    // connect(this, SIGNAL(callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)), myStackAnalyzer, SLOT(loadScanSubtractiveAdaptive(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,int)));
+
+
     connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
+
+
+
+
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 
