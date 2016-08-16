@@ -64,8 +64,10 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
     cout<<"entire-structure-average (from neuron 2 to 1)= "<<tmp_score.dist_21_allnodes <<endl;
     cout<<"average of bi-directional entire-structure-averages = "<<tmp_score.dist_allnodes <<endl;
-	cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
-	cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
+    cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
+    cout<<"percent of different-structure (from neuron 1 to 2) = "<<tmp_score.percent_12_apartnodes<<endl<<endl;
+    cout<<"percent of different-structure (from neuron 2 to 1) = "<<tmp_score.percent_21_apartnodes<<endl<<endl;
+    cout<<"percent of different-structure (average) = "<<tmp_score.percent_apartnodes<<endl<<endl;
 
     if (output.size() == 1)
     {
@@ -85,7 +87,11 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
         myfile << tmp_score.dist_allnodes;
         myfile << "\ndifferen-structure-average = ";
         myfile << tmp_score.dist_apartnodes;
-        myfile << "\npercent of different-structure = ";
+        myfile << "\npercent of different-structure (from neuron 1 to 2) = ";
+        myfile << tmp_score.percent_12_apartnodes;
+        myfile << "\npercent of different-structure (from neuron 2 to 1) = ";
+        myfile << tmp_score.percent_21_apartnodes;
+        myfile << "\npercent of different-structure (average)= ";
         myfile << tmp_score.percent_apartnodes;
         myfile << "\n";
         myfile.close();
