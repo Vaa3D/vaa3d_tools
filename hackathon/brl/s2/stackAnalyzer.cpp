@@ -67,6 +67,21 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
 {
     cb = &callback;
     channel = QString("Ch2");
+    redThreshold = 0;
+    redAlpha = 1.0;
+}
+
+void StackAnalyzer::updateChannel(QString newChannel){
+    channel = newChannel;
+}
+
+void StackAnalyzer::updateRedThreshold(int rThresh){
+    redThreshold = rThresh;
+    qDebug()<<"redThreshold in StackAnalyzer = "<<redThreshold;
+
+}
+void StackAnalyzer::updateRedAlpha(float rAlpha){
+    redAlpha=rAlpha;
 }
 
 
@@ -85,7 +100,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         QStringList fileList = imageDir.entryList();
 
         //get the parent dir and the list of ch1....ome.tif files
-        //use this to id the number of images in the stack (in one channel?!)
+        //use this to id the number of images in the stack (in one channel)
         V3DLONG x = pNewImage->getXDim();
         V3DLONG y = pNewImage->getYDim();
         V3DLONG nFrames = fileList.length();
@@ -153,7 +168,7 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
         mysz[3] = total4DImage->getCDim();
         QString imageSaveString = saveDirString;
 
-        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.baseName()).append(".ome.tif.v3draw");
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.baseName()).append(channel).append(".ome.tif.v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, V3D_UINT16);
 
         emit loadingDone(total4DImage_mip);
@@ -746,7 +761,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
 
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
-        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw");
+        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw");
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
         qDebug()<<"=== immediately before tracing =====";
         qDebug()<<"isAdaptive "<<isAdaptive;

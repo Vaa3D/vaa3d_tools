@@ -24,7 +24,9 @@ public slots:
 
     void processSmartScan(QString fileWithData);
     void loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString);
-    void updateChannel(QString);
+    void updateChannel(QString newChannel);
+    void updateRedThreshold(int rThresh);
+    void updateRedAlpha(float rAlpha);
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 

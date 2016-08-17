@@ -68,7 +68,10 @@ signals:
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
     void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
-    void channelUpdate(QString);
+
+    void updateLipoFactorInSA(float);
+    void updateRedThreshInSA(int);
+
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
@@ -120,6 +123,11 @@ private slots:
     void updateZoomPixelsProduct(int ignore);
     void initializeROISizes();
 
+    void updateLipoFactor(int ignore);
+    void updateRedThreshold(int ignore);
+
+
+
 private:
     V3DPluginCallback2 * cb;
    QThread *workerThread;
@@ -153,6 +161,16 @@ private:
     QGroupBox *createConfigPanel();
 
     QLabel * analysisRunning;
+
+    QSlider * redThresholdSlider;
+    QLabel * redThresholdSliderLabel;
+
+    QSlider * lipoFactorSlider;
+    QLabel * lipoFactorSliderLabel;
+
+    QComboBox * chooseLipoMethod;
+    QLabel * chooseLipoMethodLabel;
+
 
     void createButtonBox1();
 	

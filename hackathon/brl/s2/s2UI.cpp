@@ -18,6 +18,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<LandmarkList>("LandmarkList");
     qRegisterMetaType<LocationSimple>("LocationSimple");
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
+    qRegisterMetaType<unsigned short int>("unsignedShortInt");
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new LandmarkList;
@@ -169,6 +170,12 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
 
 
+    connect(lipoFactorSlider,SIGNAL(valueChanged(int)), this, SLOT(updateLipoFactor(int)));
+    connect(redThresholdSlider, SIGNAL(valueChanged(int)),this,SLOT(updateRedThreshold(int)));
+
+
+
+
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -211,7 +218,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
 
 
-
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer,SLOT(updateRedThreshold(int)));
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -334,8 +342,6 @@ void S2UI::resetDataDir(){
 
     localDataDirectory = QDir(localDataString);
     localDataDir->setText(localDataString);
-
-
 
 }
 void S2UI::updateLocalRemote(bool state){
@@ -535,6 +541,27 @@ QGroupBox *S2UI::createTracingParameters(){
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
 
 
+    redThresholdSlider = new QSlider;
+    redThresholdSlider->setOrientation(Qt::Horizontal);
+
+    redThresholdSlider->setMaximum(100);
+    redThresholdSlider->setMinimum(0);
+    redThresholdSliderLabel = new QLabel(tr("red threshold"));
+
+
+
+    lipoFactorSlider = new QSlider;
+    lipoFactorSlider->setOrientation(Qt::Horizontal);
+    lipoFactorSlider->setMaximum(100);
+    lipoFactorSlider->setMinimum(0);
+    lipoFactorSliderLabel = new QLabel(tr("alpha for G-alphaR"));
+
+
+    chooseLipoMethod = new QComboBox;
+    chooseLipoMethod->addItem("subtraction");
+    chooseLipoMethod->addItem("obscuration");
+    chooseLipoMethod->setCurrentIndex(0);
+    chooseLipoMethodLabel = new QLabel(tr("Lipofuscin method"));
 
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
@@ -566,6 +593,12 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(channelChoiceComboB,13,1);
     tPL->addWidget(tileSizeCBLabel,14,0);
     tPL->addWidget(tileSizeCB,14,1);
+    tPL->addWidget(chooseLipoMethod,15,0);
+    tPL->addWidget(chooseLipoMethodLabel,15,1);
+    tPL->addWidget(lipoFactorSlider,16,0);
+    tPL->addWidget(lipoFactorSliderLabel,16,1);
+    tPL->addWidget(redThresholdSlider,17,0);
+    tPL->addWidget(redThresholdSliderLabel,17,1);
 
     tPBox->setLayout(tPL);
     return tPBox;
@@ -2176,7 +2209,35 @@ void S2UI::updateZoomPixelsProduct(int ignore){
 }
 
 
+// =================================  UPDATERS
 
+
+
+void S2UI::updateLipoFactor(int ignore){
+    emit updateLipoFactorInSA(((float) lipoFactorSlider->value() )*2.0/100.0);
+    lipoFactorSliderLabel->setText(QString("alpha = ").append(QString::number(((float) lipoFactorSlider->value() )*2.0/100.0)));
+}
+
+
+void S2UI::updateRedThreshold(int ignore){
+    emit updateRedThreshInSA((int) redThresholdSlider->value()*80);
+    redThresholdSliderLabel->setText(QString("red threshold = ").append(QString::number(( redThresholdSlider->value() )*8000/100)));
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// +++++++++++++++++++++++++++++++
 
 void S2UI::startLiveFile(){
     liveFileRunning= !liveFileRunning;
