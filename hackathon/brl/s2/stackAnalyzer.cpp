@@ -69,6 +69,8 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     channel = QString("Ch2");
     redThreshold = 0;
     redAlpha = 1.0;
+    lipofuscinMethod = 0; // lipofuscinMethod   = 0 :  subtract using alpha value to scale red channel
+    //                    = 1 :  set green channel to zero wherever red channel is above redThreshold
 }
 
 void StackAnalyzer::updateChannel(QString newChannel){
@@ -77,13 +79,16 @@ void StackAnalyzer::updateChannel(QString newChannel){
 
 void StackAnalyzer::updateRedThreshold(int rThresh){
     redThreshold = rThresh;
-    qDebug()<<"redThreshold in StackAnalyzer = "<<redThreshold;
 
 }
 void StackAnalyzer::updateRedAlpha(float rAlpha){
     redAlpha=rAlpha;
 }
 
+
+void StackAnalyzer::updateLipoMethod(int lipoMethod){
+    lipofuscinMethod = lipoMethod;
+}
 
 void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
     QFileInfo imageFileInfo = QFileInfo(latestString);
@@ -637,18 +642,42 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
                     unsigned short int * data1d2 = 0;
                     data1d2 = new unsigned short int [x*y];
                     data1d2 = (unsigned short int*)pNewImage2->getRawData();
-                    for (V3DLONG i = 0; i< (x*y); i++)
-                    {
-                        if (data1d1[i] >= data1d2[i]){
-                            total1dData[totalImageIndex]= 0;
+                    if (lipofuscinMethod==0){  // Green - alpha*Red
+                        for (V3DLONG i = 0; i< (x*y); i++)
+                        {
+                            if (data1d1[i] >= data1d2[i]){
+                                total1dData[totalImageIndex]= 0;
 
-                        }else{
-                            total1dData[totalImageIndex]= data1d2[i]-data1d1[i];
+                            }else{
+                                float tmp = (float)(data1d2[i])-(float)(data1d1[i])*redAlpha;
 
+                                if (tmp<0) total1dData[totalImageIndex]=0;
+                                else total1dData[totalImageIndex]= (unsigned short int) tmp;
+
+                            }
+                            if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
+                            if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                            totalImageIndex++;
                         }
-                        if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
-                        if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
-                        totalImageIndex++;
+
+                    } else if (lipofuscinMethod==1){ //obscuration
+
+                        for (V3DLONG i = 0; i< (x*y); i++)
+                        {
+                            if ((data1d1[i] >= data1d2[i])|(data1d1[i]>redThreshold)){
+                                total1dData[totalImageIndex]= 0;
+
+                            }else{
+                                total1dData[totalImageIndex]= data1d2[i];
+
+                            }
+                            if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
+                            if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                            totalImageIndex++;
+                        }
+
+
+
                     }
                     if(data1d1) {delete []data1d1; data1d1 = 0;}
                     if(data1d2) {delete []data1d2; data1d2 = 0;}
@@ -688,7 +717,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
 
         QString swcString = saveDirString;
-        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
+        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".swc");
 
 
         QString scanDataFileString = saveDirString;
@@ -753,6 +782,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         {
             double tmp = (double)(total1dData[i]) / dn;
             if (tmp>255) total1dData_8bit[i] = 255;
+            else if (tmp<1) total1dData_8bit[i] = 0;
             else
                 total1dData_8bit[i] = (unsigned char)(tmp);
         }
@@ -1353,9 +1383,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     NeuronTree nt_most;
     QString swcMOST = saveDirString;
     if(methodChoice ==0)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
     else if(methodChoice ==1)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
     qDebug()<<"reading SWC file ... "<<swcMOST;
     nt_most = readSWC_file(swcMOST);
 
@@ -1586,9 +1616,9 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     NeuronTree nt_most;
     QString swcMOST = saveDirString;
     if(methodChoice ==0)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_MOST.swc");
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
     else if(methodChoice ==1)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".v3draw_neutube.swc");
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
 
     nt_most = readSWC_file(swcMOST);
 

@@ -71,6 +71,7 @@ signals:
 
     void updateLipoFactorInSA(float);
     void updateRedThreshInSA(int);
+    void updateLipoModeInSA(int);
 
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
@@ -125,7 +126,6 @@ private slots:
 
     void updateLipoFactor(int ignore);
     void updateRedThreshold(int ignore);
-
 
 
 private:
