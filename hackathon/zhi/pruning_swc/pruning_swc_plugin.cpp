@@ -1032,26 +1032,76 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         NeuronTree nt1 = readSWC_file(inswc_file1);
         NeuronTree nt2 = readSWC_file(inswc_file2);
+        V3DLONG neuronNum1 = nt1.listNeuron.size();
+        V3DLONG neuronNum2 = nt2.listNeuron.size();
+
+        QVector<QVector<V3DLONG> > childs1,childs2;
+
+        childs1 = QVector< QVector<V3DLONG> >(neuronNum1, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum1;i++)
+        {
+            V3DLONG par = nt1.listNeuron[i].pn;
+            if (par<0) continue;
+            childs1[nt1.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<ImageMarker> bifur_marker1;
+        for (V3DLONG i=0;i<neuronNum1;i++)
+        {
+            ImageMarker t;
+            if (childs1[i].size()>1)
+            {
+                t.x = nt1.listNeuron.at(i).x;
+                t.y = nt1.listNeuron.at(i).y;
+                t.z = nt1.listNeuron.at(i).z;
+                bifur_marker1.append(t);
+            }
+        }
+
+        writeMarker_file("test1.marker", bifur_marker1);
+//        v3d_msg("test!!");
+
+        childs2 = QVector< QVector<V3DLONG> >(neuronNum2, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum2;i++)
+        {
+            V3DLONG par = nt2.listNeuron[i].pn;
+            if (par<0) continue;
+            childs2[nt2.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<ImageMarker> bifur_marker2;
+        for (V3DLONG i=0;i<neuronNum2;i++)
+        {
+            ImageMarker t;
+            if (childs2[i].size()>1)
+            {
+                t.x = nt2.listNeuron.at(i).x;
+                t.y = nt2.listNeuron.at(i).y;
+                t.z = nt2.listNeuron.at(i).z;
+                bifur_marker2.append(t);
+            }
+        }
+
+        writeMarker_file("test2.marker", bifur_marker2);
+//        v3d_msg("test!!");
 
         QString  outswc_file = outfiles[0];
-        V3DLONG neuronNum1 = nt1.listNeuron.size();
-        V3DLONG *dis1 = new V3DLONG[neuronNum1];
-        V3DLONG *match1 = new V3DLONG[neuronNum1];
+        V3DLONG *dis1 = new V3DLONG[bifur_marker1.size()];
+        V3DLONG *match1 = new V3DLONG[bifur_marker1.size()];
 
-        V3DLONG neuronNum2 = nt2.listNeuron.size();
-        V3DLONG *dis2 = new V3DLONG[neuronNum2];
+        V3DLONG *dis2 = new V3DLONG[bifur_marker2.size()];
 
-        for(int i = 0; i < neuronNum1; i++)
+        for(int i = 0; i < bifur_marker1.size(); i++)
         {
-            double x1 = nt1.listNeuron.at(i).x;
-            double y1 = nt1.listNeuron.at(i).y;
-            double z1 = nt1.listNeuron.at(i).z;
+            double x1 = bifur_marker1.at(i).x;
+            double y1 = bifur_marker1.at(i).y;
+            double z1 = bifur_marker1.at(i).z;
             double dis_min = 10000000;
-            for(int j = 0; j < neuronNum2; j++)
+            for(int j = 0; j < bifur_marker2.size(); j++)
             {
-                double x2 = nt2.listNeuron.at(j).x;
-                double y2 = nt2.listNeuron.at(j).y;
-                double z2 = nt2.listNeuron.at(j).z;
+                double x2 = bifur_marker2.at(j).x;
+                double y2 = bifur_marker2.at(j).y;
+                double z2 = bifur_marker2.at(j).z;
                 double dis = sqrt(pow2(x1 -x2 ) + pow2(y1 - y2) + pow2(z1 - z2));
                 if(dis < dis_min)
                 {
@@ -1063,19 +1113,19 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         }
 
-        for(int j = 0; j < neuronNum2; j++)
+        for(int j = 0; j < bifur_marker2.size(); j++)
         {
-            double x2 = nt2.listNeuron.at(j).x;
-            double y2 = nt2.listNeuron.at(j).y;
-            double z2 = nt2.listNeuron.at(j).z;
+            double x2 = bifur_marker2.at(j).x;
+            double y2 = bifur_marker2.at(j).y;
+            double z2 = bifur_marker2.at(j).z;
 
             double dis_min = 10000000;
-            for(int i = 0; i < neuronNum1; i++)
+            for(int i = 0; i < bifur_marker1.size(); i++)
             {
 
-                double x1 = nt1.listNeuron.at(i).x;
-                double y1 = nt1.listNeuron.at(i).y;
-                double z1 = nt1.listNeuron.at(i).z;
+                double x1 = bifur_marker1.at(i).x;
+                double y1 = bifur_marker1.at(i).y;
+                double z1 = bifur_marker1.at(i).z;
                 double dis = sqrt(pow2(x1 -x2 ) + pow2(y1 - y2) + pow2(z1 - z2));
                 if(dis < dis_min)
                 {
@@ -1088,7 +1138,7 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         double dis_totle = 0;
         int d = 0;
-        for(int i = 0; i < neuronNum1; i++)
+        for(int i = 0; i < bifur_marker1.size(); i++)
         {
             if(dis2[dis1[i]] == i)
             {
@@ -1099,7 +1149,7 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
         }
 
         double final_distance = dis_totle/d;
-        double matching_per = (double)d/((neuronNum1 + neuronNum2)/2);
+        double matching_per = (double)d/((bifur_marker1.size() + bifur_marker2.size())/2);
         QFile saveTextFile;
         saveTextFile.setFileName(outswc_file);// add currentScanFile
         if (!saveTextFile.isOpen()){

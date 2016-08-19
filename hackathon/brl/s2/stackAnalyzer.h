@@ -24,7 +24,11 @@ public slots:
 
     void processSmartScan(QString fileWithData);
     void loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString);
-    void updateChannel(QString);
+    void updateChannel(QString newChannel);
+    void updateRedThreshold(int rThresh);
+    void updateRedAlpha(float rAlpha);
+    void updateLipoMethod(int lipoMethod);
+
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
@@ -49,7 +53,7 @@ private:
     QString channel;
     unsigned short int redThreshold;
     float redAlpha;
-
+    int lipofuscinMethod;
 
     template <class T> void gaussian_filter(T* data1d,
                          V3DLONG *in_sz,

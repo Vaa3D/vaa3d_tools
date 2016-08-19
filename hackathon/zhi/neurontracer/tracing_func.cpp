@@ -3763,27 +3763,67 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
     }
 
     NeuronTree nt;
-    NeuronTree nt_app2_final = readSWC_file(swcAPP2);
+//    NeuronTree nt_app2_final = readSWC_file(swcAPP2);
 
     QString swcNEUTUBE = saveDirString;
     swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
     NeuronTree nt_neutube = readSWC_file(swcNEUTUBE);
     if(nt_neutube.listNeuron.size()<=0)
     {
-        nt = nt_app2_final;
+        nt = readSWC_file(swcAPP2);
+        //nt = nt_app2_final;
         combine_list2file(nt.listNeuron, swcString);
         return true;
     }
     NeuronTree nt_neutube_final = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
+    system(qPrintable(QString("rm %1").arg(swcNEUTUBE.toStdString().c_str())));
 
-    if(nt_app2_final.listNeuron.size() == 0 && nt_neutube_final.listNeuron.size() == 0)
+    combine_list2file(nt_neutube_final.listNeuron, swcNEUTUBE);
+
+    vector<MyMarker*> swc_neutube = readSWC_file(swcNEUTUBE.toStdString());
+    vector<MyMarker*> swc_app2= readSWC_file(swcAPP2.toStdString());
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt_neutube_final.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
     {
-        combine_list2file(nt.listNeuron, swcString);
-        return true;
-    }else if(nt_app2_final.listNeuron.size() > nt_neutube_final.listNeuron.size())
-        nt = nt_app2_final;
-    else
-        nt =  nt_neutube_final;
+        V3DLONG par = nt_neutube_final.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt_neutube_final.hashNeuron.value(par)].push_back(i);
+    }
+    for(V3DLONG d = 0; d < swc_neutube.size(); d++)
+    {
+        int flag_prune = 0;
+        for(int dd = 0; dd < swc_app2.size();dd++)
+        {
+            int dis_prun = sqrt(pow2(swc_neutube[d]->x - swc_app2[dd]->x) + pow2(swc_neutube[d]->y - swc_app2[dd]->y) + pow2(swc_neutube[d]->z - swc_app2[dd]->z));
+            if( (swc_neutube[d]->radius + swc_app2[dd]->radius - dis_prun)/dis_prun > 0.05 || dis_prun < 20)
+            {
+                if(childs[d].size() > 0) swc_neutube[childs[d].at(0)]->parent = swc_app2[dd];
+                flag_prune = 1;
+                break;
+            }
+
+        }
+        if(flag_prune == 0)
+        {
+           swc_app2.push_back(swc_neutube[d]);
+        }
+
+    }
+    saveSWC_file(swcString.toStdString().c_str(), swc_app2);
+    nt = readSWC_file(swcAPP2);
+
+
+//    if(nt_app2_final.listNeuron.size() == 0 && nt_neutube_final.listNeuron.size() == 0)
+//    {
+//        combine_list2file(nt.listNeuron, swcString);
+//        return true;
+//    }else if(nt_app2_final.listNeuron.size() > nt_neutube_final.listNeuron.size())
+//        nt = nt_app2_final;
+//    else
+//        nt =  nt_neutube_final;
 
 //    if(nt_app2_final.listNeuron.size() > 0 && nt_neutube_final.listNeuron.size() > 0)
 //    {
@@ -3803,7 +3843,7 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 //        return true;
 //    }
 
-    combine_list2file(nt.listNeuron, swcString);
+ //   combine_list2file(nt.listNeuron, swcString);
 
 //    QString swcMOST = saveDirString;
 //    swcMOST.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");

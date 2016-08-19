@@ -18,6 +18,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<LandmarkList>("LandmarkList");
     qRegisterMetaType<LocationSimple>("LocationSimple");
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
+    qRegisterMetaType<unsigned short int>("unsignedShortInt");
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new LandmarkList;
@@ -169,6 +170,12 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
 
 
+    connect(lipoFactorSlider,SIGNAL(valueChanged(int)), this, SLOT(updateLipoFactor(int)));
+    connect(redThresholdSlider, SIGNAL(valueChanged(int)),this,SLOT(updateRedThreshold(int)));
+
+
+
+
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -209,6 +216,12 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
+
+
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer,SLOT(updateRedThreshold(int)));
+
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer, SLOT(updateLipoMethod(int)));
 
 
 
@@ -334,8 +347,6 @@ void S2UI::resetDataDir(){
 
     localDataDirectory = QDir(localDataString);
     localDataDir->setText(localDataString);
-
-
 
 }
 void S2UI::updateLocalRemote(bool state){
@@ -535,6 +546,29 @@ QGroupBox *S2UI::createTracingParameters(){
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
 
 
+    redThresholdSlider = new QSlider;
+    redThresholdSlider->setOrientation(Qt::Horizontal);
+
+    redThresholdSlider->setMaximum(100);
+    redThresholdSlider->setMinimum(0);
+    redThresholdSlider->setValue(100);
+    redThresholdSliderLabel = new QLabel(tr("red threshold"));
+
+
+
+    lipoFactorSlider = new QSlider;
+    lipoFactorSlider->setOrientation(Qt::Horizontal);
+    lipoFactorSlider->setMaximum(100);
+    lipoFactorSlider->setMinimum(0);
+    lipoFactorSlider->setValue(50);
+    lipoFactorSliderLabel = new QLabel(tr("alpha for G-alphaR"));
+
+
+    chooseLipoMethod = new QComboBox;
+    chooseLipoMethod->addItem("subtraction: image = G-alpha*R");
+    chooseLipoMethod->addItem("obscuration: image = G where R<threshold, 0 else");
+    chooseLipoMethod->setCurrentIndex(0);
+    chooseLipoMethodLabel = new QLabel(tr("Lipofuscin method"));
 
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
@@ -566,6 +600,12 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(channelChoiceComboB,13,1);
     tPL->addWidget(tileSizeCBLabel,14,0);
     tPL->addWidget(tileSizeCB,14,1);
+    tPL->addWidget(chooseLipoMethod,15,0);
+    tPL->addWidget(chooseLipoMethodLabel,15,1);
+    tPL->addWidget(lipoFactorSlider,16,0);
+    tPL->addWidget(lipoFactorSliderLabel,16,1);
+    tPL->addWidget(redThresholdSlider,17,0);
+    tPL->addWidget(redThresholdSliderLabel,17,1);
 
     tPBox->setLayout(tPL);
     return tPBox;
@@ -807,50 +847,129 @@ void S2UI::loadScanFromFile(QString fileString){
     NeuronTree nt;
     LandmarkList newTargetList;
 
+
+    float redAlpha =    ((float) lipoFactorSlider->value() )*2.0/100.0;
+    int redThreshold = ((int) redThresholdSlider->value()*80);
+
+
     if (imageFileInfo.isReadable()){
-
-
+        QStringList fileList;
         Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
         QDir imageDir =  imageFileInfo.dir();
         QStringList filterList;
-        filterList.append(QString("*").append(channelChoiceComboB->currentText()).append("*.tif"));
+        filterList.append(QString("*").append("Ch1").append("*.tif"));
         imageDir.setNameFilters(filterList);
-        QStringList fileList = imageDir.entryList();
+        QStringList fileList1 = imageDir.entryList();
 
+        QStringList filterList2;
+        filterList2.append(QString("*").append("Ch2").append("*.tif"));
+        imageDir.setNameFilters(filterList2);
+        QStringList fileList2 = imageDir.entryList();
+
+        if (channelChoiceComboB->currentText()=="Ch1"){
+            fileList = fileList1;
+        }else if (channelChoiceComboB->currentText()=="Ch2"){
+            fileList = fileList2;
+        }
         //get the parent dir and the list of ch1....ome.tif files
         //use this to id the number of images in the stack (in one channel?!)
         V3DLONG x = pNewImage->getXDim();
         V3DLONG y = pNewImage->getYDim();
-        V3DLONG nFrames = fileList.length();
+        V3DLONG nFrames = fileList1.length();
 
         V3DLONG tunits = x*y*nFrames;
         unsigned short int * total1dData = new unsigned short int [tunits];
+        unsigned short int * total1dData_mip= new unsigned short int [x*y];
+        for(V3DLONG i =0 ; i < x*y; i++)
+            total1dData_mip[i] = 0;
         V3DLONG totalImageIndex = 0;
+        double p_vmax=0;
+        qDebug()<<channelChoiceComboB->currentText();
+        qDebug()<<"nFrames = "<<nFrames;
         for (int f=0; f<nFrames; f++){
-            //status(fileList[f]);
-            Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-            if (pNewImage->valid()){
-                unsigned short int * data1d = 0;
-                data1d = new unsigned short int [x*y];
-                data1d = (unsigned short int*)pNewImage->getRawData();
-                for (V3DLONG i = 0; i< (x*y); i++){
-                    total1dData[totalImageIndex]= data1d[i];
-                    totalImageIndex++;
+            if (channelChoiceComboB->currentText()=="G-R") {
+                Image4DSimple * pNewImage1 = cb->loadImage(imageDir.absoluteFilePath(fileList1[f]).toLatin1().data());
+                Image4DSimple * pNewImage2 = cb->loadImage(imageDir.absoluteFilePath(fileList2[f]).toLatin1().data());
+
+                if (pNewImage1->valid()){
+                    unsigned short int * data1d1 = 0;
+                    data1d1 = new unsigned short int [x*y];
+                    data1d1 = (unsigned short int*)pNewImage1->getRawData();
+                    unsigned short int * data1d2 = 0;
+                    data1d2 = new unsigned short int [x*y];
+                    data1d2 = (unsigned short int*)pNewImage2->getRawData();
+                    if (chooseLipoMethod->currentIndex() ==0){  // Green - alpha*Red
+                        for (V3DLONG i = 0; i< (x*y); i++)
+                        {
+                            if (data1d1[i] >= data1d2[i]){
+                                total1dData[totalImageIndex]= 0;
+
+                            }else{
+                                float tmp = (float)(data1d2[i])-(float)(data1d1[i])*redAlpha;
+
+                                if (tmp<0) total1dData[totalImageIndex]=0;
+                                else total1dData[totalImageIndex]= (unsigned short int) tmp;
+
+                            }
+                            if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
+                            if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                            totalImageIndex++;
+                        }
+
+                    } else if (chooseLipoMethod->currentIndex()==1){ //obscuration
+
+                        for (V3DLONG i = 0; i< (x*y); i++)
+                        {
+                            if ((data1d1[i] >= data1d2[i])|(data1d1[i]> redThreshold)){
+                                total1dData[totalImageIndex]= 0;
+
+                            }else{
+                                total1dData[totalImageIndex]= data1d2[i];
+
+                            }
+                            if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
+                            if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                            totalImageIndex++;
+                        }
+
+
+
+                    }
+                    if(data1d1) {delete []data1d1; data1d1 = 0;}
+                    if(data1d2) {delete []data1d2; data1d2 = 0;}
+
+                }else{
+                    qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
                 }
+
             }else{
-                status(QString(imageDir.absoluteFilePath(fileList[f])).append(" failed!"));
+
+                Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+                if (pNewImage->valid()){
+                    unsigned short int * data1d = 0;
+                    data1d = new unsigned short int [x*y];
+                    data1d = (unsigned short int*)pNewImage->getRawData();
+                    for (V3DLONG i = 0; i< (x*y); i++)
+                    {
+                        total1dData[totalImageIndex]= data1d[i];
+                        if(data1d[i] > p_vmax) p_vmax = data1d[i];
+                        if(total1dData_mip[i] < data1d[i]) total1dData_mip[i] = data1d[i];
+                        totalImageIndex++;
+                    }
+                    if(data1d) {delete []data1d; data1d = 0;}
+                }else{
+                    qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+                }
+
             }
 
         }
 
 
-        total4DImage = new Image4DSimple;
-        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage->setFileName(imageFileInfo.absoluteFilePath().toLatin1().data());
-
-
         Image4DSimple* total4DImage = new Image4DSimple;
         total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+
+        if (!total4DImage->valid()){qDebug()<<"invalid preview image pointer!"; return;}
 
         LocationSimple tileLocation;
         tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
@@ -2176,7 +2295,35 @@ void S2UI::updateZoomPixelsProduct(int ignore){
 }
 
 
+// =================================  UPDATERS
 
+
+
+void S2UI::updateLipoFactor(int ignore){
+    emit updateLipoFactorInSA(((float) lipoFactorSlider->value() )*2.0/100.0);
+    lipoFactorSliderLabel->setText(QString("alpha = ").append(QString::number(((float) lipoFactorSlider->value() )*2.0/100.0)));
+}
+
+
+void S2UI::updateRedThreshold(int ignore){
+    emit updateRedThreshInSA((int) redThresholdSlider->value()*80);
+    redThresholdSliderLabel->setText(QString("red threshold = ").append(QString::number(( redThresholdSlider->value() )*8000/100)));
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// +++++++++++++++++++++++++++++++
 
 void S2UI::startLiveFile(){
     liveFileRunning= !liveFileRunning;
@@ -2236,7 +2383,6 @@ void S2UI::updateLiveFile(){
     cb->setImage(liveFileWindow,pNewImage);
 
     cb->pushImageIn3DWindow(liveFileWindow);
-
 
 }
 
