@@ -3240,7 +3240,7 @@ void autotrace_region(V3DPluginCallback2 &callback, QWidget *parent,void * Para,
     QString output_image_name = tmpfolder +"/region.raw";
 
     #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4 > region_grow.log").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(region_num);
+        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(region_num);
         system(qPrintable(cmd_region));
     #elif defined(Q_OS_MAC)
         QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 %4").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str()).arg(region_num);
