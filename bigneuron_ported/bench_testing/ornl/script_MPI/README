@@ -44,5 +44,15 @@ sh gen_bench_pbs_scripts.sh 2000 400 /global/project/projectdirs/m2043/BigNeuron
 
 4. qsub test.pbs
 
+5. sh gen_bench_job_text_scripts_enhancetrace.sh <Vaa3D executable folder path> <output script file path> <input image folder path> <marker file path> <output folder path>
+<Vaa3D executable folder path>: path to start_vaa3d.sh
+<output script file path>: where to store the output scipt
+<input image folder path>: the folder that contains the 2D image slices
+<marker file path>: the marker file denoting the soma
+<output folder path>: the folder all trace results should be moved to (will be create by script if doesn't already exist)
 
+This is one example to generate a script called trace_516509259.sh that will run all traces for the image stored in /data/mat/zhi/IVSCC_testing/BigNeuron_test/516509259 and store the results in /data/mat/zhi/IVSCC_testing/BigNeuron_test/results.
+
+cd /data/mat/zhi/IVSCC_testing/BigNeuron_test/
+sh gen_bench_job_text_scripts_enhancetrace.sh /data/mat/zhi/VAA3D/Vaa3D_CentOS_64bit_pipeline/start_vaa3d.sh trace_516509259.sh 516509259 516509259_3D.v3draw.marker results
 
