@@ -190,7 +190,7 @@ if [ ! $# -ge 3 ]; then
 	exit
 else
     if [ ! -d $3 ]; then
-        echo "Cannot find input image folder"
+        echo "Cannot find input image folder $3"
         exit
     fi
 fi
@@ -240,12 +240,10 @@ then
     echo "$vaa3dProgramPath -x IVSCC_import -f import -i $inputFolderName -o $imagename;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x mipZ -f mip_zslices -i $imagename -p 1:1:e -o ${imagename}_mip.raw;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x multiscaleEnhancement -f adaptive_auto_2D -i ${imagename}_mip.raw -o ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
-    echo "$vaa3dProgramPath -x multiscaleEnhancement -f soma_detection_2D -i ${imagename}_mip.raw -p $markerfile ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
+    echo "$vaa3dProgramPath -x multiscaleEnhancement -f soma_detection_2D -i ${imagename}_mip.raw -p $markerFile ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
 else
-    echo "cd $outputFolderPath;" >> $jobScriptFile
     write_neuron_tracing_command $vaa3dProgramPath $jobScriptFile ${imagename}_mip.raw_enhanced.raw_soma.raw $traceMethod
+    echo "mv ${imagename}*.swc $outputFolderPath;" >> $jobScriptFile;
 fi
-
-echo "mv ${imagename}* $outputFolderPath;" >> $jobScriptFile;
 
 chmod 777 $jobScriptFile
