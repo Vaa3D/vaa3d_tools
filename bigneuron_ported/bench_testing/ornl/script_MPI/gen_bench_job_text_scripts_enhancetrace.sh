@@ -235,12 +235,14 @@ fi;
 
 imagename=${inputFolderName}_3D.raw
 
-if [traceMethod == 'preprocessing'] then
+if [traceMethod == 'preprocessing']
+then
     echo "$vaa3dProgramPath -x IVSCC_import -f import -i $inputFolderName -o $imagename;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x mipZ -f mip_zslices -i $imagename -p 1:1:e -o ${imagename}_mip.raw;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x multiscaleEnhancement -f adaptive_auto_2D -i ${imagename}_mip.raw -o ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x multiscaleEnhancement -f soma_detection_2D -i ${imagename}_mip.raw -p $markerfile ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
 else
+    echo "cd $outputFolderPath;" >> $jobScriptFile
     write_neuron_tracing_command $vaa3dProgramPath $jobScriptFile ${imagename}_mip.raw_enhanced.raw_soma.raw
 fi
 
