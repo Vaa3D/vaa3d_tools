@@ -235,7 +235,7 @@ fi;
 
 imagename=${inputFolderName}_3D.raw
 
-if [ $traceMethod == 'pre' ]
+if [ $traceMethod == 'preprocessing' ]
 then
     echo "$vaa3dProgramPath -x IVSCC_import -f import -i $inputFolderName -o $imagename;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x mipZ -f mip_zslices -i $imagename -p 1:1:e -o ${imagename}_mip.raw;" >> $jobScriptFile;
