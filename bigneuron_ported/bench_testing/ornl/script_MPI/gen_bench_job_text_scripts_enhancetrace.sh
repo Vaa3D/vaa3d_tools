@@ -31,14 +31,14 @@ function write_neuron_tracing_command {
   trace=$4
 
   #Advantra tracing
-  if [$trace == "1"]
+  if [ $trace == "1" ]
   then
       echo "$vaa3d -x Region_Neuron2 -f trace_advantra -i $image;" >> $outputScript;
       write_trace_spec_commands $vaa3d $outputScript $image ${image}_region_Advantra.swc
   fi
 
   #APP1 tracing
-  if [$trace == "2"]
+  if [ $trace == "2" ]
   then
       trace_img=${image}_region_APP1.swc
       echo "$vaa3d -x Region_Neuron2 -f trace_app1 -i $image;" >> $outputScript;
@@ -46,7 +46,7 @@ function write_neuron_tracing_command {
   fi
 
   #APP2 tracing
-  if [$trace == '3']
+  if [ $trace == '3' ]
   then
     trace_img=${image}_region_APP2.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_app2 -i $image;" >> $outputScript;
@@ -54,7 +54,7 @@ function write_neuron_tracing_command {
   fi
 
   #Axis Analyzer tracing
-  if [$trace == '4']
+  if [ $trace == '4' ]
   then
     trace_img=${image}_region_axis_analyzer.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_axis_analyzer -i $image;" >> $outputScript;
@@ -62,7 +62,7 @@ function write_neuron_tracing_command {
   fi
 
   #fastmarching_spanningtree tracing
-  if [$trace == '5']
+  if [ $trace == '5' ]
   then
     trace_img=${image}_region_fastmarching_spanningtree.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_bjut_fast_mst -i $image;" >> $outputScript;
@@ -70,7 +70,7 @@ function write_neuron_tracing_command {
   fi
 
   #meanshift MST tracing
-  if [$trace == '6']
+  if [ $trace == '6' ]
   then
     trace_img=${image}_region_meanshift.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_bjut_meanshift_mst -i $image" >> $outputScript;
@@ -78,7 +78,7 @@ function write_neuron_tracing_command {
   fi
 
   #CW Lab tracing
-  if [$trace == '7']
+  if [ $trace == '7' ]
   then
     trace_img=${image}_region_CWLab.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_cwlab -i $image;" >> $outputScript;
@@ -86,7 +86,7 @@ function write_neuron_tracing_command {
   fi
 
   #ENT tracing
-  if [$trace == '8']
+  if [ $trace == '8' ]
   then
     trace_img=${image}_region_ENT.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_ent -i $image;" >> $outputScript;
@@ -95,7 +95,7 @@ function write_neuron_tracing_command {
 
   #NTSUT Ensemble Basic tracing
 
-  if [$trace == '9']
+  if [ $trace == '9' ]
   then
     trace_img=${image}_region_EnsembleNeuronTracerBasic.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_ent_basic -i $image;" >> $outputScript;
@@ -103,7 +103,7 @@ function write_neuron_tracing_command {
   fi
 
   #NTSUT Ensemble V2n tracing
-  if [$trace == '10']
+  if [ $trace == '10' ]
   then
     trace_img=${image}_region_EnsembleNeuronTracerV2n.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_ent_v2n -i $image;" >> $outputScript;
@@ -111,7 +111,7 @@ function write_neuron_tracing_command {
   fi
 
   #NTSUT Ensemble V2s tracing
-  if [$trace == '11']
+  if [ $trace == '11' ]
   then
     trace_img=${image}_region_EnsembleNeuronTracerV2s.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_ent_v2s -i $image;" >> $outputScript;
@@ -119,7 +119,7 @@ function write_neuron_tracing_command {
   fi
 
   #nctuTW GD tracing
-  if [$trace == '12']
+  if [ $trace == '12' ]
   then
     trace_img=${image}_region_nctuTW_GD.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_gd -i $image;" >> $outputScript;
@@ -127,7 +127,7 @@ function write_neuron_tracing_command {
   fi
 
   #Simple MST tracing
-  if [$trace == '13']
+  if [ $trace == '13' ]
   then
     trace_img=${image}_region_MST_Tracing.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_mst -i $image;" >> $outputScript;
@@ -135,7 +135,7 @@ function write_neuron_tracing_command {
   fi
 
   #nctuTW tracing
-  if [$trace == '14']
+  if [ $trace == '14' ]
   then
     trace_img=${image}_region_nctuTW.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_nctutw -i $image;" >> $outputScript;
@@ -143,7 +143,7 @@ function write_neuron_tracing_command {
   fi
 
   #NeuronChaser tracing
-  if [$trace == '15']
+  if [ $trace == '15' ]
   then
     trace_img=${image}_region_NeuronChaser.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_neuronchaser -i $image;" >> $outputScript;
@@ -151,7 +151,7 @@ function write_neuron_tracing_command {
   fi
 
   #NeuTu tracing
-  if [$trace == '16']
+  if [ $trace == '16' ]
   then
     trace_img=${image}_region_neutu_autotrace.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_neutu -i $image;" >> $outputScript;
@@ -159,7 +159,7 @@ function write_neuron_tracing_command {
   fi
 
   #SmartTrace tracing
-  if [$trace == '17']
+  if [ $trace == '17' ]
   then
     trace_img=${image}_region_smartTrace.swc
     echo "$vaa3d -x Region_Neuron2 -f trace_smart_trace -i $image;" >> $outputScript;
@@ -235,7 +235,7 @@ fi;
 
 imagename=${inputFolderName}_3D.raw
 
-if [traceMethod == 'preprocessing']
+if [ $traceMethod == 'pre' ]
 then
     echo "$vaa3dProgramPath -x IVSCC_import -f import -i $inputFolderName -o $imagename;" >> $jobScriptFile;
     echo "$vaa3dProgramPath -x mipZ -f mip_zslices -i $imagename -p 1:1:e -o ${imagename}_mip.raw;" >> $jobScriptFile;
@@ -243,7 +243,7 @@ then
     echo "$vaa3dProgramPath -x multiscaleEnhancement -f soma_detection_2D -i ${imagename}_mip.raw -p $markerfile ${imagename}_mip.raw_enhanced.raw;" >> $jobScriptFile;
 else
     echo "cd $outputFolderPath;" >> $jobScriptFile
-    write_neuron_tracing_command $vaa3dProgramPath $jobScriptFile ${imagename}_mip.raw_enhanced.raw_soma.raw
+    write_neuron_tracing_command $vaa3dProgramPath $jobScriptFile ${imagename}_mip.raw_enhanced.raw_soma.raw $traceMethod
 fi
 
 echo "mv ${imagename}* $outputFolderPath;" >> $jobScriptFile;
