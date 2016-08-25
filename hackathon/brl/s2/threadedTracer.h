@@ -12,6 +12,8 @@ class ThreadedTracer : public QRunnable
 public:
     explicit ThreadedTracer(V3DPluginCallback2 &callback, QString latestString, LocationSimple tileLocation, QString saveDirString, QString channel, int tileNumber);
     void run();
+signals:
+    void done();
 private:
     V3DPluginCallback2 * cb;
     QString latestString;

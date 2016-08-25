@@ -250,7 +250,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     QString swcfilepath2 = QString::fromStdString(swcfilepath);
 
-    QString lastImagepath = folderpath + "/" +   QFileInfo(swcfilepath2).baseName().append(".ome.tif.v3draw");
+    QString lastImagepath = folderpath + "/" +   QFileInfo(swcfilepath2).baseName().append(".ome.tif").append(channel).append(".v3draw");
     qDebug()<<lastImagepath;
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];

@@ -9,6 +9,8 @@ ThreadedTracer::ThreadedTracer(V3DPluginCallback2 &callback,QString latestString
         this->tileNumber = tileNumber;
 }
 
+
+
 void ThreadedTracer::run(){
 
 qDebug()<<"loadScan input: "<<latestString;
@@ -182,8 +184,10 @@ if (imageFileInfo.isReadable()){
 
          return;
     }
+    emit done();
 
 }else{
     qDebug()<<"invalid image";
 }
 }
+

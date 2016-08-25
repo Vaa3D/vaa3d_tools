@@ -2393,6 +2393,7 @@ void S2UI::tTrace(){
     for (int tileNumber = 0; tileNumber<604; tileNumber++){
     ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
 //    myTracer->run();
+  //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
    QThreadPool::globalInstance()->start(myTracer);
     }
  //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
