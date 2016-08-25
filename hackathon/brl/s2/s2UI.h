@@ -19,7 +19,7 @@
 #include "targetList.h"
 #include "eventLogger.h"
 #include "tileInfo.h"
-#include "threadedTracer.h"
+
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
