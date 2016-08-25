@@ -776,8 +776,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(P.method == 1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-     // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
+     //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
 
 
     QString imageSaveString = saveDirString;
@@ -1016,7 +1016,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(P.method == 1)
        finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
     else
-        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -1121,10 +1121,11 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     LandmarkList tip_up ;
     LandmarkList tip_down;
     QList<NeuronSWC> list = nt.listNeuron;
+
     for (V3DLONG i=0;i<list.size();i++)
     {
-//        if (childs[i].size()==0)
-//        {
+        if (childs[i].size()==0)
+        {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             bool check_tip = false;
@@ -1149,8 +1150,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 20)
-                   // if(dis < 10)
+                   // if(dis < 2*finalswc.at(j)->radius || dis < 20)
+                    if(dis < 10)
                     {
                         check_tip = true;
                         break;
@@ -1171,9 +1172,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             {
                 tip_down.push_back(newTip);
             }
-//        }
+        }
     }
-
 
     if(tip_left.size()>0)
     {
@@ -3419,6 +3419,12 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
     double adaptive_size;
     double max_r = -INF;
 
+   // double window_size[6] = {1023.999814,698.1053667,490.1445791,351.6972784,256.7910738,194.147554};  //human
+
+ //   double window_size[6] = {1024.000304,585.8401591,352.995627,233.5811987,168.0319363,128.6192806};  //mouse
+
+ //   double distance_soma = 0;
+
     if(direction == 1 || direction == 2)
     {
         for(int i = 0; i<tips.size();i++)
@@ -3439,6 +3445,23 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         }
         adaptive_size = (max_x - min_x)*1.2;
     }
+
+//    for(int i = 0; i<tips.size();i++)
+//    {
+//        double x1 = tileLocation.x + tips.at(i).x;
+//        double y1 = tileLocation.y + tips.at(i).y;
+//        double z1 = tips.at(i).z;
+//      //  distance_soma += sqrt(pow2(0.24*(x1 -1038.555)) + pow2(0.24*(y1 - 1237.994)) + pow2(0.42*(z1 - 23.044))); //human
+//        distance_soma += sqrt(pow2(0.143*(x1 -1745.392)) + pow2(0.143*(y1 - 1607.064)) + pow2(0.28*(z1 - 61.541)));
+//    }
+
+//    double avarge_distance = distance_soma/tips.size();
+//    int index_dis = floor (avarge_distance/50);
+
+//    if(index_dis>5) index_dis = 5;
+//    if(adaptive_size <= window_size[index_dis])
+//        adaptive_size = window_size[index_dis];
+
 
     if(adaptive_size <= 256) adaptive_size = 256;
     if(adaptive_size >= block_size) adaptive_size = block_size;

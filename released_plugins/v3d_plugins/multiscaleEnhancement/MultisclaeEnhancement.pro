@@ -59,4 +59,4 @@ SOURCES += ../neurontracing_vn2/app2/my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(multiscaleEnhancement)
-DESTDIR	= ../../../bin/plugins/image_analysis/muitiscaleEnhancement
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_analysis/muitiscaleEnhancement
