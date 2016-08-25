@@ -73,6 +73,8 @@ signals:
     void updateRedThreshInSA(int);
     void updateLipoModeInSA(int);
 
+    void updateMinMaxBlockSizes(int, int);
+
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
@@ -126,7 +128,7 @@ private slots:
 
     void updateLipoFactor(int ignore);
     void updateRedThreshold(int ignore);
-
+    void updateMinMaxBlock(int ignore);
 
 private:
     V3DPluginCallback2 * cb;
@@ -159,6 +161,13 @@ private:
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
     QGroupBox *createConfigPanel();
+
+
+
+    QSpinBox * minBlockSizeSB;
+    QLabel * minBlockSizeSBLabel;
+    QSpinBox * maxBlockSizeSB;
+    QLabel * maxBlockSizeSBLabel;
 
     QLabel * analysisRunning;
 

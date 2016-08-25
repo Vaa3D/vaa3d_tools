@@ -173,7 +173,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(lipoFactorSlider,SIGNAL(valueChanged(int)), this, SLOT(updateLipoFactor(int)));
     connect(redThresholdSlider, SIGNAL(valueChanged(int)),this,SLOT(updateRedThreshold(int)));
 
-
+    connect(minBlockSizeSB, SIGNAL(valueChanged(int)), this, SLOT(updateMinMaxBlock(int)));
+    connect(maxBlockSizeSB, SIGNAL(valueChanged(int)), this, SLOT(updateMinMaxBlock(int)));
 
 
 
@@ -224,7 +225,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer, SLOT(updateLipoMethod(int)));
 
 
-
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -546,6 +547,22 @@ QGroupBox *S2UI::createTracingParameters(){
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
 
 
+
+    minBlockSizeSB = new QSpinBox;
+    minBlockSizeSB->setMaximum(512);
+    minBlockSizeSB->setMinimum(50);
+    minBlockSizeSB->setValue(100);
+    minBlockSizeSBLabel = new QLabel(tr("minimum block size"));
+
+    maxBlockSizeSB = new QSpinBox;
+    maxBlockSizeSB->setMaximum(512);
+    maxBlockSizeSB->setMinimum(50);
+    maxBlockSizeSB->setValue(180);
+    maxBlockSizeSBLabel = new QLabel(tr("maximum block size"));
+
+
+
+
     redThresholdSlider = new QSlider;
     redThresholdSlider->setOrientation(Qt::Horizontal);
 
@@ -600,12 +617,20 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(channelChoiceComboB,13,1);
     tPL->addWidget(tileSizeCBLabel,14,0);
     tPL->addWidget(tileSizeCB,14,1);
-    tPL->addWidget(chooseLipoMethod,15,0);
-    tPL->addWidget(chooseLipoMethodLabel,15,1);
-    tPL->addWidget(lipoFactorSlider,16,0);
-    tPL->addWidget(lipoFactorSliderLabel,16,1);
-    tPL->addWidget(redThresholdSlider,17,0);
-    tPL->addWidget(redThresholdSliderLabel,17,1);
+    tPL->addWidget(minBlockSizeSB,15,1);
+    tPL->addWidget(minBlockSizeSBLabel,15,0);
+    tPL->addWidget(maxBlockSizeSB,16,1);
+    tPL->addWidget(maxBlockSizeSBLabel,16,0) ;
+
+
+    tPL->addWidget(chooseLipoMethod,17,0);
+    tPL->addWidget(chooseLipoMethodLabel,17,1);
+    tPL->addWidget(lipoFactorSlider,18,0);
+    tPL->addWidget(lipoFactorSliderLabel,18,1);
+    tPL->addWidget(redThresholdSlider,19,0);
+    tPL->addWidget(redThresholdSliderLabel,19,1);
+
+
 
     tPBox->setLayout(tPL);
     return tPBox;
@@ -2315,7 +2340,14 @@ void S2UI::updateRedThreshold(int ignore){
 
 
 
-
+void S2UI::updateMinMaxBlock(int ignore){
+    int maxBlock = maxBlockSizeSB->value();
+    int minBlock = minBlockSizeSB->value();
+    if (maxBlock < minBlock){ maxBlock = minBlock;}
+    emit updateMinMaxBlockSizes(minBlock,maxBlock );
+    minBlockSizeSBLabel->setText(QString("min block= ").append(QString::number(minBlock)).append(" pixels"));
+    maxBlockSizeSBLabel->setText(QString("max block= ").append(QString::number(maxBlock)).append(" pixels"));
+}
 
 
 
