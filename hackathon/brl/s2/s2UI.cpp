@@ -101,6 +101,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     colorIndex = 0;
     overViewPixelToScanPixel = (1.0/16.0)*(256.0/512.0);
     overviewMicronsPerPixel = 1.8;
+    zStepSize = 1.0;
+
     hookUpSignalsAndSlots();
 
 
@@ -176,7 +178,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(minBlockSizeSB, SIGNAL(valueChanged(int)), this, SLOT(updateMinMaxBlock(int)));
     connect(maxBlockSizeSB, SIGNAL(valueChanged(int)), this, SLOT(updateMinMaxBlock(int)));
 
-
+    connect(stackZStepSizeSlider, SIGNAL(valueChanged(int)),this, SLOT(updateZStepSize(int)));
 
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
@@ -587,6 +589,17 @@ QGroupBox *S2UI::createTracingParameters(){
     chooseLipoMethod->setCurrentIndex(0);
     chooseLipoMethodLabel = new QLabel(tr("Lipofuscin method"));
 
+
+
+    stackZStepSizeSlider = new QSlider;
+    stackZStepSizeSlider->setOrientation(Qt::Horizontal);
+    stackZStepSizeSlider->setMinimum(1);
+    stackZStepSizeSlider->setMaximum(50);
+    stackZStepSizeSlider->setValue(10);
+    stackZStepSizeLabel = new QLabel(tr("z stack step size = 1.0 um"));
+
+
+
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
     tPL->addWidget(s2Label,1,0);
@@ -629,6 +642,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(lipoFactorSliderLabel,18,1);
     tPL->addWidget(redThresholdSlider,19,0);
     tPL->addWidget(redThresholdSliderLabel,19,1);
+    tPL->addWidget(stackZStepSizeSlider,20,0);
+    tPL->addWidget(stackZStepSizeLabel,20,1);
 
 
 
@@ -2290,7 +2305,7 @@ void S2UI::activeModeChecker(){
 
 void S2UI::finalizeZoom(){
     qDebug()<<"setting up stack in finalizeZoom...";
-    emit stackSetupSig(1.0,currentTileInfo.getTileZoom(), currentTileInfo.getTilePixelsX(), currentTileInfo.getTilePixelsY() );
+    emit stackSetupSig(zStepSize ,currentTileInfo.getTileZoom(), currentTileInfo.getTilePixelsX(), currentTileInfo.getTilePixelsY() );
     zoomStateOK = false;
     scanStatusWaitCycles = 0;
     scanStatusHandler();
@@ -2352,9 +2367,13 @@ void S2UI::updateMinMaxBlock(int ignore){
 
 
 
+void S2UI::updateZStepSize(int ignore){
+    zStepSize = ((float) stackZStepSizeSlider->value())/10.0;
+    stackZStepSizeLabel->setText(QString("z step size = ").append(QString::number(zStepSize)).append(" um"));
 
+}
 
-
+// =================================
 // +++++++++++++++++++++++++++++++
 
 void S2UI::startLiveFile(){

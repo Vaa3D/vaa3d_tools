@@ -129,7 +129,7 @@ private slots:
     void updateLipoFactor(int ignore);
     void updateRedThreshold(int ignore);
     void updateMinMaxBlock(int ignore);
-
+    void updateZStepSize(int ignore);
 private:
     V3DPluginCallback2 * cb;
    QThread *workerThread;
@@ -179,6 +179,11 @@ private:
 
     QComboBox * chooseLipoMethod;
     QLabel * chooseLipoMethodLabel;
+
+
+    QSlider * stackZStepSizeSlider;
+    QLabel * stackZStepSizeLabel;
+
 
 
     void createButtonBox1();
@@ -306,6 +311,8 @@ private:
     float overviewMicronsPerPixel;
     float scanVoltageConversion;
     float zoomPixelsProduct;
+    float zStepSize;
+
     LandmarkList scanList;
 
     QString fixFileString(QString inputString);
