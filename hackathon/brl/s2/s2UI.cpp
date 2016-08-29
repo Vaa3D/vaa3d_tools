@@ -256,6 +256,12 @@ void S2UI::createTargetList(){
 void S2UI::initializeROISizes(){
     tileSizeChoices = new QList<TileInfo>;
     TileInfo myTileInfo = TileInfo(zoomPixelsProduct);
+    myTileInfo.setZoomPos(2,0,0);
+    tileSizeChoices->append(myTileInfo);
+    myTileInfo.setZoomPos(4,0,0);
+    tileSizeChoices->append(myTileInfo);
+    myTileInfo.setZoomPos(6,0,0);
+    tileSizeChoices->append(myTileInfo);
     myTileInfo.setZoomPos(8,0,0);
     tileSizeChoices->append(myTileInfo);
     myTileInfo.setZoomPos(10,0,0);
@@ -1274,7 +1280,7 @@ void S2UI::handleAllTargets(){
         return;
     }
     status("starting all targets");
-    updateCurrentZoom(2);
+    updateCurrentZoom(tileSizeCB->currentIndex());
     QTimer::singleShot(1000, this, SLOT(startingSmartScan()));}
 
 
