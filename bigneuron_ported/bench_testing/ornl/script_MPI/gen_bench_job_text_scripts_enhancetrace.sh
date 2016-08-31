@@ -43,7 +43,7 @@ function write_neuron_tracing_command {
   if [ $trace == "2" ]
   then
       trace_img=${image}_region_APP1.swc
-      echo "$vaa3d -x Region_Neuron2 -f trace_app1 -i $image -p 20 0 1000;" >> $outputScript;
+      echo "$vaa3d -x Region_Neuron2 -f trace_app1 -i $image -p 0 40 1 1000;" >> $outputScript;
       write_trace_spec_commands $vaa3d $outputScript $img $trace_img
   fi
 
