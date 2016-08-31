@@ -28,12 +28,13 @@ public slots:
     void updateRedThreshold(int rThresh);
     void updateRedAlpha(float rAlpha);
     void updateLipoMethod(int lipoMethod);
+    void updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMaxBlockSize);
 
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
 
-    void ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction,float overlap);
+    void ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int max_block_size,int direction,float overlap, int min_block_size);
     bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
 
     QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
@@ -54,6 +55,8 @@ private:
     unsigned short int redThreshold;
     float redAlpha;
     int lipofuscinMethod;
+    int globalMaxBlockSize;
+    int globalMinBlockSize;
 
     template <class T> void gaussian_filter(T* data1d,
                          V3DLONG *in_sz,

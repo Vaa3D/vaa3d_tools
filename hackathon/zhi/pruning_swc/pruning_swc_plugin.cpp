@@ -1142,6 +1142,8 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
         {
             if(dis2[dis1[i]] == i)
             {
+                v3d_msg(QString("(%1,%2)").arg(i).arg(dis1[i]));
+
                 dis_totle = dis_totle + match1[i];
                 d++;
             }
@@ -1275,6 +1277,45 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
             v3d_msg("fail to write the output swc file.");
             return false;
         }
+    }else if (func_name == tr("caculate_density"))
+    {
+        cout<<"Welcome to swc density plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        QString  outtext_file = outfiles[0];
+
+        QFile saveTextFile;
+        saveTextFile.setFileName(outtext_file);// add currentScanFile
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return false;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        V3DLONG neuronNum = nt.listNeuron.size();
+        for (V3DLONG i=1;i<neuronNum;i++)
+        {
+            double x1 = nt.listNeuron.at(0).x;
+            double y1 = nt.listNeuron.at(0).y;
+            double z1 = nt.listNeuron.at(0).z;
+            double x2 = nt.listNeuron.at(i).x;
+            double y2 = nt.listNeuron.at(i).y;
+            double z2 = nt.listNeuron.at(i).z;
+            double dis = sqrt(pow2(x1 -x2 ) + pow2(y1 - y2) + pow2(z1 - z2));
+            outputStream << dis ;
+            outputStream << "\n";
+
+        }
+        saveTextFile.close();
+
+
     }
 	else return false;
 

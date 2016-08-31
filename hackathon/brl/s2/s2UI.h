@@ -73,6 +73,8 @@ signals:
     void updateRedThreshInSA(int);
     void updateLipoModeInSA(int);
 
+    void updateMinMaxBlockSizes(int, int);
+
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
@@ -126,8 +128,8 @@ private slots:
 
     void updateLipoFactor(int ignore);
     void updateRedThreshold(int ignore);
-
-
+    void updateMinMaxBlock(int ignore);
+    void updateZStepSize(int ignore);
 private:
     V3DPluginCallback2 * cb;
    QThread *workerThread;
@@ -160,6 +162,13 @@ private:
     QGroupBox *createTracingParameters();
     QGroupBox *createConfigPanel();
 
+
+
+    QSpinBox * minBlockSizeSB;
+    QLabel * minBlockSizeSBLabel;
+    QSpinBox * maxBlockSizeSB;
+    QLabel * maxBlockSizeSBLabel;
+
     QLabel * analysisRunning;
 
     QSlider * redThresholdSlider;
@@ -170,6 +179,11 @@ private:
 
     QComboBox * chooseLipoMethod;
     QLabel * chooseLipoMethodLabel;
+
+
+    QSlider * stackZStepSizeSlider;
+    QLabel * stackZStepSizeLabel;
+
 
 
     void createButtonBox1();
@@ -297,6 +311,8 @@ private:
     float overviewMicronsPerPixel;
     float scanVoltageConversion;
     float zoomPixelsProduct;
+    float zStepSize;
+
     LandmarkList scanList;
 
     QString fixFileString(QString inputString);

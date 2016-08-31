@@ -71,6 +71,8 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     redAlpha = 1.0;
     lipofuscinMethod = 0; // lipofuscinMethod   = 0 :  subtract using alpha value to scale red channel
     //                    = 1 :  set green channel to zero wherever red channel is above redThreshold
+    globalMaxBlockSize = 180;
+    globalMinBlockSize = 100;
 }
 
 void StackAnalyzer::updateChannel(QString newChannel){
@@ -81,14 +83,20 @@ void StackAnalyzer::updateRedThreshold(int rThresh){
     redThreshold = rThresh;
 
 }
+
 void StackAnalyzer::updateRedAlpha(float rAlpha){
     redAlpha=rAlpha;
 }
 
-
 void StackAnalyzer::updateLipoMethod(int lipoMethod){
     lipofuscinMethod = lipoMethod;
 }
+
+void StackAnalyzer::updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMaxBlockSize){
+    globalMinBlockSize = newMinBlockSize;
+    globalMaxBlockSize = newMaxBlockSize;
+}
+
 
 void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
     QFileInfo imageFileInfo = QFileInfo(latestString);
@@ -250,7 +258,7 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     QString swcfilepath2 = QString::fromStdString(swcfilepath);
 
-    QString lastImagepath = folderpath + "/" +   QFileInfo(swcfilepath2).baseName().append(".ome.tif.v3draw");
+    QString lastImagepath = folderpath + "/" +   QFileInfo(swcfilepath2).baseName().append(".ome.tif").append(channel).append(".v3draw");
     qDebug()<<lastImagepath;
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
@@ -411,8 +419,7 @@ NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRoo
     return nt_result;
 }
 
-void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction, float overlap)
-{
+void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int max_block_size,int direction, float overlap, int min_block_size){
     newTipsList->push_back(tips);
     float min_y = INF, max_y = -INF;
     float min_x = INF, max_x = -INF;
@@ -437,8 +444,8 @@ void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocatio
         adaptive_size = (max_x - min_x)*(1.0+3.0*overlap);
     }
 
-    if(adaptive_size <= 100) adaptive_size = 100;
-    if(adaptive_size >= block_size) adaptive_size = block_size;
+    if(adaptive_size <= globalMinBlockSize) adaptive_size = globalMinBlockSize;
+    if(adaptive_size >= max_block_size) adaptive_size = max_block_size;
 
     LocationSimple newTarget;
 
@@ -1239,27 +1246,27 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,100,1);
         for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,1,overlap);
+            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,1,overlap, globalMinBlockSize);
         //    /tileLocation.ev_pc1
     }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,100,2);
         for(int i = 0; i < group_tips_right.size();i++)
-            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,2,overlap);
+            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,2,overlap, globalMinBlockSize);
     }
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,100,3);
         for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,3,overlap);
+            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,3,overlap, globalMinBlockSize);
 
     }
     if(tip_down.size()>0)
     {
         QList<LandmarkList> group_tips_down = group_tips(tip_down,100,4);
         for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,4,overlap);
+            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,4,overlap, globalMinBlockSize);
     }
 
 
@@ -1703,26 +1710,26 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,120,1);
         for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,1,overlap);
+            ada_win_finding(group_tips_left.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,1,overlap, globalMinBlockSize);
     }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,120,2);
         for(int i = 0; i < group_tips_right.size();i++)
-            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,2,overlap);
+            ada_win_finding(group_tips_right.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,2,overlap, globalMinBlockSize);
     }
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,120,3);
         for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,3,overlap);
+            ada_win_finding(group_tips_up.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,3,overlap, globalMinBlockSize);
 
     }
     if(tip_down.size()>0)
     {
         QList<LandmarkList> group_tips_down = group_tips(tip_down,120,4);
         for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,180,4,overlap);
+            ada_win_finding(group_tips_down.at(i),tileLocation,&newTargetList,&newTipsList,total4DImage,globalMaxBlockSize,4,overlap, globalMinBlockSize);
     }
 
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
