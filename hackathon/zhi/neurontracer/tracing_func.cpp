@@ -1687,7 +1687,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "wofusion_shifted.swc";
+    QString fileSaveName = fileWithData + ".swc";
 
 
     while(ifs && getline(ifs, info_swc))
@@ -3421,9 +3421,9 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
 
    // double window_size[6] = {1023.999814,698.1053667,490.1445791,351.6972784,256.7910738,194.147554};  //
 
-    double window_size[6] = {1024.000304,585.8401591,352.995627,233.5811987,168.0319363,128.6192806};  //mouse
+  //  double window_size[6] = {1024.000304,585.8401591,352.995627,233.5811987,168.0319363,128.6192806};  //mouse
 
-    double distance_soma = 0;
+  //  double distance_soma = 0;
 
     if(direction == 1 || direction == 2)
     {
@@ -3446,24 +3446,24 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
         adaptive_size = (max_x - min_x)*1.2;
     }
 
-    for(int i = 0; i<tips.size();i++)
-    {
-        double x1 = tileLocation.x + tips.at(i).x;
-        double y1 = tileLocation.y + tips.at(i).y;
-        double z1 = tips.at(i).z;
-      //  distance_soma += sqrt(pow2(0.24*(x1 -1038.555)) + pow2(0.24*(y1 - 1237.994)) + pow2(0.42*(z1 - 23.044))); //
-        distance_soma += sqrt(pow2(0.143*(x1 -1745.392)) + pow2(0.143*(y1 - 1607.064)) + pow2(0.28*(z1 - 61.541)));
-    }
+//    for(int i = 0; i<tips.size();i++)
+//    {
+//        double x1 = tileLocation.x + tips.at(i).x;
+//        double y1 = tileLocation.y + tips.at(i).y;
+//        double z1 = tips.at(i).z;
+//      //  distance_soma += sqrt(pow2(0.24*(x1 -1038.555)) + pow2(0.24*(y1 - 1237.994)) + pow2(0.42*(z1 - 23.044))); //
+//        distance_soma += sqrt(pow2(0.143*(x1 -1745.392)) + pow2(0.143*(y1 - 1607.064)) + pow2(0.28*(z1 - 61.541)));
+//    }
 
-    double avarge_distance = distance_soma/tips.size();
-    int index_dis = floor (avarge_distance/50);
+//    double avarge_distance = distance_soma/tips.size();
+//    int index_dis = floor (avarge_distance/50);
 
-    if(index_dis>5) index_dis = 5;
-    if(adaptive_size <= window_size[index_dis])
-        adaptive_size = window_size[index_dis];
+//    if(index_dis>5) index_dis = 5;
+//    if(adaptive_size <= window_size[index_dis])
+//        adaptive_size = window_size[index_dis];
 
 
-//    if(adaptive_size <= 256) adaptive_size = 256;
+    if(adaptive_size <= 256) adaptive_size = 256;
     if(adaptive_size >= block_size) adaptive_size = block_size;
 
     LocationSimple newTarget;

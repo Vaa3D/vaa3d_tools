@@ -54,7 +54,7 @@ class neurontracer_app2_raw : public QDialog
             cnntype_spinbox->setValue(2);
             bkgthresh_spinbox = new QSpinBox();
             bkgthresh_spinbox->setRange(-1, 255);
-            bkgthresh_spinbox->setValue(10);
+            bkgthresh_spinbox->setValue(13);
             lenthresh_editor = new QLineEdit(QString("").setNum(5));
          //   srratio_editor = new QLineEdit(QString("").setNum(3.0/9.0));
             isgsdt_checker = new QCheckBox();
@@ -62,7 +62,7 @@ class neurontracer_app2_raw : public QDialog
             iswb_checker = new QCheckBox();
             iswb_checker->setChecked(false);
             b256_checker = new QCheckBox();
-            b256_checker->setChecked(true);
+            b256_checker->setChecked(false);
             b_radius2Dchecker = new QCheckBox();
             b_radius2Dchecker->setChecked(true);
 
@@ -71,7 +71,7 @@ class neurontracer_app2_raw : public QDialog
             block_spinbox->setValue(1024);
 
             b_adapWinchecker = new QCheckBox();
-            b_adapWinchecker->setChecked(false);
+            b_adapWinchecker->setChecked(true);
 
             b_3Dchecker = new QCheckBox();
             b_3Dchecker->setChecked(false);
@@ -167,7 +167,7 @@ class neurontracer_app2_raw : public QDialog
 
             layout->addLayout(hbox3,10,0,10,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_APP2"));
+            setWindowTitle(QString("UltraTracer_APP2"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -363,7 +363,7 @@ class neurontracer_app1_raw : public QDialog
             block_spinbox->setValue(1024);
 
             b_adapWinchecker = new QCheckBox();
-            b_adapWinchecker->setChecked(false);
+            b_adapWinchecker->setChecked(true);
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
@@ -417,7 +417,7 @@ class neurontracer_app1_raw : public QDialog
 
             layout->addLayout(hbox2,7,0,7,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_APP1"));
+            setWindowTitle(QString("UltraTracer_APP1"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -563,7 +563,7 @@ class neurontracer_most_raw : public QDialog
             block_spinbox->setValue(1024);
 
             b_adapWinchecker = new QCheckBox();
-            b_adapWinchecker->setChecked(false);
+            b_adapWinchecker->setChecked(true);
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
@@ -631,7 +631,7 @@ class neurontracer_most_raw : public QDialog
 
             layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler_MOST"));
+            setWindowTitle(QString("UltraTracer_MOST"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
@@ -783,10 +783,10 @@ class neurontracer_neutube_raw : public QDialog
             QGridLayout * layout = new QGridLayout();
             block_spinbox = new QSpinBox();
             block_spinbox->setRange(1,2048);
-            block_spinbox->setValue(1024);
+            block_spinbox->setValue(768);
 
             b_adapWinchecker = new QCheckBox();
-            b_adapWinchecker->setChecked(false);
+            b_adapWinchecker->setChecked(true);
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
@@ -850,7 +850,7 @@ class neurontracer_neutube_raw : public QDialog
 
             layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
-            setWindowTitle(QString("NeuronCrawler"));
+            setWindowTitle(QString("UltraTracer_neutube"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));

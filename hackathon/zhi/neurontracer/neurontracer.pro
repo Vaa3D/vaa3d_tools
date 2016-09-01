@@ -169,5 +169,5 @@ SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
 SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
 
-TARGET	= $$qtLibraryTarget(neurontracer)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neurontracer/
+TARGET	= $$qtLibraryTarget(ultratracer)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/ultratracer/

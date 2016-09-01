@@ -28,7 +28,7 @@ QStringList neurontracer::menulist() const
            <<tr("trace_APP1")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
-        <<tr("trace_SNAKE")
+      //  <<tr("trace_SNAKE")
        <<tr("about");
 }
 
@@ -39,7 +39,7 @@ QStringList neurontracer::funclist() const
            <<tr("trace_APP1")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
-        <<tr("trace_SNAKE")
+      //  <<tr("trace_SNAKE")
        <<tr("help");
 }
 
