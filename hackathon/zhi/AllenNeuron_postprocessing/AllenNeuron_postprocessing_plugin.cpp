@@ -287,26 +287,9 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
         QString fileTmpName = fileOpenName+QString("_tmp.swc");
         export_list2file(nt_sort_rs_sort_prune_sort.listNeuron,fileTmpName,fileOpenName);
 
-        if(p)
-        {
-            vector<MyMarker*> inswc_b4smooth;
-            inswc_b4smooth = readSWC_file(fileTmpName.toStdString());
-            smoothswc(inswc_b4smooth,10);
-            saveSWC_file(fileTmpName.toStdString(), inswc_b4smooth);
-
-            NeuronTree nt_smooth = readSWC_file(fileTmpName);
-            NeuronTree nt_smooth_sort = SortSWC_pipeline(nt_smooth.listNeuron,VOID, 0);
-            export_list2file(nt_smooth_sort.listNeuron,fileTmpName,fileOpenName);
-
-            vector<MyMarker*> inswc_smooth_sort = readSWC_file(fileTmpName.toStdString());
-            vector<MyMarker*> outswc_interprune = internodeprune(inswc_smooth_sort, nt_smooth_sort);
-            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
-        }else
-        {
-            vector<MyMarker*> inswc_nosmooth_sort = readSWC_file(fileTmpName.toStdString());
-            vector<MyMarker*> outswc_interprune = internodeprune(inswc_nosmooth_sort, nt_sort_rs_sort_prune_sort);
-            saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
-        }
+        vector<MyMarker*> inswc_nosmooth_sort = readSWC_file(fileTmpName.toStdString());
+        vector<MyMarker*> outswc_interprune = internodeprune(inswc_nosmooth_sort, nt_sort_rs_sort_prune_sort);
+        saveSWC_file(fileTmpName.toStdString(), outswc_interprune);
 
         NeuronTree nt_inter= readSWC_file(fileTmpName);
         NeuronTree nt_inter_sort = SortSWC_pipeline(nt_inter.listNeuron,VOID, 0);
@@ -358,7 +341,19 @@ void AllenNeuron_postprocessing::domenu(const QString &menu_name, V3DPluginCallb
 
         NeuronTree nt_radius= readSWC_file(fileTmpName);
         NeuronTree nt_radius_sort = SortSWC_pipeline(nt_radius.listNeuron,VOID, 0);
-//        export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
+
+        if(p)
+        {
+            export_list2file(nt_radius_sort.listNeuron,fileTmpName,fileOpenName);
+            vector<MyMarker*> inswc_b4smooth;
+            inswc_b4smooth = readSWC_file(fileTmpName.toStdString());
+            smoothswc(inswc_b4smooth,10);
+            saveSWC_file(fileTmpName.toStdString(), inswc_b4smooth);
+
+            NeuronTree nt_smooth = readSWC_file(fileTmpName);
+            NeuronTree nt_smooth_sort = SortSWC_pipeline(nt_smooth.listNeuron,VOID, 0);
+            nt_radius_sort = nt_smooth_sort;
+        }
 
         remove(fileTmpName.toStdString().c_str());
 
