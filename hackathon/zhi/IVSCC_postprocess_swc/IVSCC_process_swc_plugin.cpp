@@ -11,18 +11,22 @@
 
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
-template <class T> T pow2(T a)
-{
-    return a*a;
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 
-}
+//template <class T> T pow2(T a)
+//{
+//    return a*a;
+
+//}
 
 Q_EXPORT_PLUGIN2(IVSCC_process_swc, IVSCC_process_swc);
  
-bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
+bool export_list2file_IVSCC(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
 {
     QFile file(fileSaveName);
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
@@ -72,6 +76,7 @@ QStringList IVSCC_process_swc::funclist() const
 	return QStringList()
         <<tr("process")
         <<tr("process_v2")
+        <<tr("process_2D")
 		<<tr("help");
 }
 
@@ -225,7 +230,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
        if(flag) {delete[] flag; flag = 0;}
 
-       export_list2file(nt_prunned.listNeuron,outswc_file,inswc_file);
+       export_list2file_IVSCC(nt_prunned.listNeuron,outswc_file,inswc_file);
 
        nt = nt_prunned;
        neuronNum = nt.listNeuron.size();
@@ -395,6 +400,75 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                 temp_out_swc[i]->type = 3;
         }
         saveSWC_file(outswc_file.toStdString(), temp_out_swc);
+    }
+    else if (func_name == tr("process_2D"))
+    {
+        cout<<"Welcome to IVSCC 2D swc post processing plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        QString  outswc_file =  outfiles[0];
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        V3DLONG end_ID = 0,start_ID = 0;
+        for (V3DLONG i = 1; i<nt.listNeuron.size(); i++)
+        {
+            if(nt.listNeuron.at(i).parent <= 0)
+            {
+                NeuronTree sub_nt = nt;
+                sub_nt.listNeuron.erase(sub_nt.listNeuron.begin()+i,sub_nt.listNeuron.end());
+                if(end_ID > 0)
+                {
+                    sub_nt.listNeuron.erase(sub_nt.listNeuron.begin(),sub_nt.listNeuron.begin()+ end_ID);
+                    start_ID = end_ID;
+                }
+                end_ID = i;
+
+                NeuronTree sub_nt_sort = SortSWC_pipeline(sub_nt.listNeuron,1000000000, 0);
+                double max_distance = 0;
+                double total_length = 0;
+                double max_x = 0;
+                double max_y = 0;
+
+                for(V3DLONG ii = 0; ii <sub_nt_sort.listNeuron.size();ii++)
+                {
+                    double x_ii = sub_nt_sort.listNeuron[ii].x;
+                    double y_ii = sub_nt_sort.listNeuron[ii].y;
+                    int parent = getParent(ii,sub_nt_sort);
+                    if (parent==1000000000) continue;
+                    total_length += dist(sub_nt_sort.listNeuron.at(ii),sub_nt_sort.listNeuron.at(parent));
+                    for(V3DLONG jj = ii+1; jj <sub_nt.listNeuron.size();jj++)
+                    {
+                        double x_jj = sub_nt_sort.listNeuron[jj].x;
+                        double y_jj = sub_nt_sort.listNeuron[jj].y;
+                        if(sqrt(pow2(x_ii - x_jj) + pow2(y_ii - y_jj)) > max_distance)
+                            max_distance = sqrt(pow2(x_ii - x_jj) + pow2(y_ii - y_jj));
+                        if(fabs(x_ii - x_jj) > max_x) max_x = fabs(x_ii - x_jj);
+                        if(fabs(y_ii - y_jj) > max_y) max_y = fabs(y_ii - y_jj);
+
+                    }
+                }
+
+                double ratio_check = (total_length-max_distance)/max_distance;
+                if(ratio_check < 0.1 && (max_x/max_y < 0.1 || max_y/max_x < 0.1))
+                {
+             //       v3d_msg(QString("ratio is %1,max_x is %2, max_y is %3").arg(ratio_check).arg(max_x).arg(max_y));
+
+                    for(V3DLONG d = start_ID; d < i; d++)
+                        nt.listNeuron[d].type = 0;
+                }
+
+
+            }
+        }
+        writeSWC_file(outswc_file,nt);
+
     }
     else if (func_name == tr("help"))
     {
