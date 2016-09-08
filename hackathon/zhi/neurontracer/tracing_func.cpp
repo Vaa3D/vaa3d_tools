@@ -4414,15 +4414,24 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
     }
 
     unsigned int numOfThreads = 8; // default value for number of theads
+
+#if  defined(Q_OS_LINUX)
+
     omp_set_num_threads(numOfThreads);
 
     #pragma omp parallel for
 
+#endif
+
     for(V3DLONG ix = (int)P.listLandmarks[0].x; ix<= (int)P.listLandmarks[1].x; ix += P.block_size)
     {
+#if  defined(Q_OS_LINUX)
+
         printf("number of threads for iy = %d\n", omp_get_num_threads());
 
         #pragma omp parallel for
+#endif
+
         for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
         {
             all_tracing_grid(callback,P,ix,iy);

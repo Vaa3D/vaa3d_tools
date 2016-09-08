@@ -16,6 +16,11 @@ INCLUDEPATH	+= $$VAA3DPATH/jba/newmat11
 INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
 
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+}
+
 unix:!macx {
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
@@ -38,6 +43,7 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
+HEADERS += ../../../released_plugins/v3d_plugins/neuron_image_profiling/openSWCDialog.h
 
 SOURCES	+= neurontracer_plugin.cpp
 SOURCES	+= tracing_func.cpp
@@ -61,9 +67,13 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculat
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/swc_convert.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neuron_image_profiling/profile_swc.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neuron_image_profiling/compute_tubularity.cpp
+SOURCES += ../../../released_plugins/v3d_plugins/neuron_image_profiling/openSWCDialog.cpp
+
 
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
-SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp
+SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp \
+    $$VAA3DPATH/graph/dijk.cpp
+
 
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/terastitcher/include
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
