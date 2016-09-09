@@ -348,7 +348,7 @@ class neurontracer_app1_raw : public QDialog
 
             bkgthresh_spinbox = new QSpinBox();
             bkgthresh_spinbox->setRange(-1, 255);
-            bkgthresh_spinbox->setValue(-1);
+            bkgthresh_spinbox->setValue(20);
 
             visthresh_spinbox = new QSpinBox();
             visthresh_spinbox->setRange(1, 255);
@@ -360,7 +360,7 @@ class neurontracer_app1_raw : public QDialog
 
             block_spinbox = new QSpinBox();
             block_spinbox->setRange(1,2048);
-            block_spinbox->setValue(1024);
+            block_spinbox->setValue(768);
 
             b_adapWinchecker = new QCheckBox();
             b_adapWinchecker->setChecked(true);
@@ -548,7 +548,7 @@ class neurontracer_most_raw : public QDialog
 
             bkgthresh_spinbox = new QSpinBox();
             bkgthresh_spinbox->setRange(0, 255);
-            bkgthresh_spinbox->setValue(10);
+            bkgthresh_spinbox->setValue(20);
 
             seedwin_spinbox = new QSpinBox();
             seedwin_spinbox->setRange(1, 100);
@@ -560,7 +560,7 @@ class neurontracer_most_raw : public QDialog
 
             block_spinbox = new QSpinBox();
             block_spinbox->setRange(1,2048);
-            block_spinbox->setValue(1024);
+            block_spinbox->setValue(768);
 
             b_adapWinchecker = new QCheckBox();
             b_adapWinchecker->setChecked(true);

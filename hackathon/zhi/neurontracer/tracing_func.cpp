@@ -2011,7 +2011,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.in_sz[2] = P.image->getZDim();
     }else
     {
-        if(QFileInfo(fileOpenName).completeSuffix() == "tc")
+        if(fileOpenName.endsWith(".tc",Qt::CaseSensitive))
         {
             Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
@@ -2025,7 +2025,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[1] = vim.sz[1];
             P.in_sz[2] = vim.sz[2];
 
-        }else if ((QFileInfo(fileOpenName).completeSuffix() == "raw") || (QFileInfo(fileOpenName).completeSuffix() == "v3draw"))
+        }else if (fileOpenName.endsWith(".raw",Qt::CaseSensitive) || fileOpenName.endsWith(".v3draw",Qt::CaseSensitive))
         {
             unsigned char * datald = 0;
             V3DLONG *in_zz = 0;
@@ -2048,7 +2048,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
 
         LocationSimple t;
-        if((QFileInfo(P.markerfilename).completeSuffix() == "marker") || (QFileInfo(fileOpenName).completeSuffix() == "MARKER"))
+        if(P.markerfilename.endsWith(".marker",Qt::CaseSensitive))
         {
             vector<MyMarker> file_inmarkers;
             file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
@@ -2786,7 +2786,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 20)
+                    if(dis < 10)
                     {
                         check_tip = true;
                         break;
@@ -2811,27 +2811,27 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(tip_left.size()>0)
     {
-        QList<LandmarkList> group_tips_left = group_tips(tip_left,P.block_size,1);
+        QList<LandmarkList> group_tips_left = group_tips(tip_left,256,1);
         for(int i = 0; i < group_tips_left.size();i++)
             ada_win_finding(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
     }
     if(tip_right.size()>0)
     {
-        QList<LandmarkList> group_tips_right = group_tips(tip_right,P.block_size,2);
+        QList<LandmarkList> group_tips_right = group_tips(tip_right,256,2);
         for(int i = 0; i < group_tips_right.size();i++)
             ada_win_finding(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
     }
 
     if(tip_up.size()>0)
     {
-        QList<LandmarkList> group_tips_up = group_tips(tip_up,P.block_size,3);
+        QList<LandmarkList> group_tips_up = group_tips(tip_up,256,3);
         for(int i = 0; i < group_tips_up.size();i++)
             ada_win_finding(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
 
     }
     if(tip_down.size()>0)
     {
-        QList<LandmarkList> group_tips_down = group_tips(tip_down,P.block_size,4);
+        QList<LandmarkList> group_tips_down = group_tips(tip_down,256,4);
         for(int i = 0; i < group_tips_down.size();i++)
             ada_win_finding(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
     }
