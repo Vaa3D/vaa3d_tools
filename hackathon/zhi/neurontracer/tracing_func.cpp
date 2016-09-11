@@ -244,8 +244,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP2");
     }
 
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(!tmpfolder.isEmpty())
+       system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
     {
         printf("Can not create a tmp folder!\n");
@@ -773,12 +775,20 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
     QString saveDirString;
+    QString finaloutputswc;
+
     if(P.method == 1)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
+        finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
+    }
     else
+    {
+
      //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
-
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
+    }
 
     QString imageSaveString = saveDirString;
 
@@ -799,6 +809,8 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 //    ifstream ifs(scanDataFileString.toLatin1());
 //    int offsetX, offsetY,sizeX,sizeY;
 //    string swcfilepath;
@@ -944,9 +956,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     mysz[3] = total4DImage->getCDim();
 
     imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
-
-//    QString scanDataFileString = saveDirString;
-//    scanDataFileString.append("/").append("scanData.txt");
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
@@ -1010,13 +1019,6 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
     //v3d_msg(QString("%1,%2,%3,%4,%5").arg(start_x_updated).arg(end_x_updated).arg(start_y_updated).arg(end_y_updated).arg(tileLocation.ev_pc3));
-
-
-    QString finaloutputswc;
-    if(P.method == 1)
-       finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
-    else
-        finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -1232,10 +1234,19 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
     QString saveDirString;
+    QString finaloutputswc;
+
     if(P.method == 1)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
+        finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
+    }
     else
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
+    }
+
 
   //  v3d_msg(QString("root is (%1,%2,%3").arg(tileLocation.x).arg(tileLocation.y).arg(tileLocation.z));
 
@@ -1268,6 +1279,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
@@ -1422,13 +1435,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
     //v3d_msg(QString("%1,%2,%3,%4,%5").arg(start_x_updated).arg(end_x_updated).arg(start_y_updated).arg(end_y_updated).arg(tileLocation.ev_pc3));
-
-
-    QString finaloutputswc;
-    if(P.method == 1)
-       finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
-    else
-        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -2105,6 +2111,8 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     else if(P.method ==5)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
 
+    if(!tmpfolder.isEmpty())
+       system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -2320,6 +2328,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
@@ -2518,16 +2527,28 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 {
 
     QString saveDirString;
+    QString finaloutputswc;
+
     if(P.method ==3)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+    }
     else if (P.method ==4)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+    }
     else if (P.method ==5)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
+    }
     else if (P.method ==2)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-
-
+        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+    }
 
     QString imageSaveString = saveDirString;
 
@@ -2632,6 +2653,10 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
+
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
@@ -2648,17 +2673,6 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-
-    QString finaloutputswc;
-    if(P.method ==3)
-        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
-    else if (P.method ==4)
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
-    else if (P.method ==5)
-        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
-    else if (P.method ==2)
-        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -2884,14 +2898,27 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 {
 
     QString saveDirString;
+    QString finaloutputswc;
     if(P.method ==3)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+        finaloutputswc = P.inimg_file + ("_nc_neutube_adp_3D.swc");
+    }
     else if (P.method ==4)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp_3D.swc");
+    }
     else if (P.method ==5)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+        finaloutputswc = P.inimg_file + ("_nc_most_adp_3D.swc");
+    }
     else if (P.method ==2)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
+    }
 
 
 
@@ -3014,6 +3041,10 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
+
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
@@ -3030,17 +3061,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-
-    QString finaloutputswc;
-    if(P.method ==3)
-        finaloutputswc = P.inimg_file + ("_nc_neutube_adp_3D.swc");
-    else if (P.method ==4)
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp_3D.swc");
-    else if (P.method ==5)
-        finaloutputswc = P.inimg_file + ("_nc_most_adp_3D.swc");
-    else if (P.method ==2)
-        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -3501,6 +3521,8 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 {
 
     QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+    QString finaloutputswc = P.inimg_file + ("_nc_combo.swc");
+
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -3619,6 +3641,8 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
@@ -3635,9 +3659,6 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-
-    QString finaloutputswc = P.inimg_file + ("_nc_combo.swc");
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
