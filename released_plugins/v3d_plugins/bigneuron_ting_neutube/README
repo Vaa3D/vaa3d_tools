@@ -5,8 +5,26 @@ This new neutube tracing plugin can be built successfully on MAC OS X 10.9.5 and
 
 3. Go to NeuTu/neurolabi/, and run buildlib.sh. In Linux CentOS, you may have to run "yum install python-argparse" to install python-argparse first.   
 
-4. Go to neutube_v2/
+4. If you are using Qt 4.7.1, please comment two lines (line 50 and 51) in /usr/local/Trolltech/Qt-4.7.1/include/QtCore/qiterator.h
+
+Examples:
+
+Before:
+
+namespace std {
+   struct bidirectional_iterator_tag;
+   struct random_access_iterator_tag;
+}
+
+After comments:
+
+namespace std {
+  //  struct bidirectional_iterator_tag;
+   // struct random_access_iterator_tag;
+}
+
+5. Go to neutube_v2/
    run qmake & make 
 
 
-note added by Zhi Zhou, 02/10/2015
+note added by Zhi Zhou, 02/10/2015; 09/12/2016
