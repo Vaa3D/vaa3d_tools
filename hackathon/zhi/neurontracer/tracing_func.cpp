@@ -2203,14 +2203,28 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 {
 
     QString saveDirString;
+    QString finaloutputswc;
+
     if(P.method ==3)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+    }
     else if (P.method ==4)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+    }
     else if (P.method ==5)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
+    }
     else if (P.method ==2)
+    {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+    }
 
     QString imageSaveString = saveDirString;
 
@@ -2288,7 +2302,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
+
+        }else
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -2299,17 +2314,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-        }else
-        {
-            in_sz = new V3DLONG[4];
-            in_sz[0] = end_x - start_x;
-            in_sz[1] = end_y - start_y;
-            in_sz[2] = P.in_sz[2];
-
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
         }
-
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
@@ -2329,8 +2334,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
 
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
+
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    vector<MyMarker*> finalswc;
+
+    if(ifs_swc)
+       finalswc = readSWC_file(finaloutputswc.toStdString());
 
     ifstream ifs_image(imageSaveString.toStdString().c_str());
     if(!ifs_image)
@@ -2517,6 +2531,31 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         newTarget.z = total4DImage->getOriginZ();
         newTargetList->push_back(newTarget);
 
+    }
+
+    vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+
+    if(ifs_swc)
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+
+            finalswc.push_back(tileswc_file[i]);
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+    }
+    else
+    {
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        {
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
     }
 
     total4DImage->deleteRawDataAndSetPointerToNull();

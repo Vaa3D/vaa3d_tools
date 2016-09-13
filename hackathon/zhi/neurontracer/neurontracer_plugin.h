@@ -786,7 +786,7 @@ class neurontracer_neutube_raw : public QDialog
             block_spinbox->setValue(768);
 
             b_adapWinchecker = new QCheckBox();
-            b_adapWinchecker->setChecked(true);
+            b_adapWinchecker->setChecked(false);
 
             raw_filepath = new QLineEdit();
             openrawFile = new QPushButton(QObject::tr("..."));
