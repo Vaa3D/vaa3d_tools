@@ -458,31 +458,31 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                         if(fabs(y_ii - y_jj) > max_y) max_y = fabs(y_ii - y_jj);
                     }
 
-                    if(!flag_90)
-                    {
-                        int parent_2nd = getParent(parent,sub_nt_sort);
-                        if (parent_2nd==1000000000) continue;
+//                    if(!flag_90)
+//                    {
+//                        int parent_2nd = getParent(parent,sub_nt_sort);
+//                        if (parent_2nd==1000000000) continue;
 
-                        double length1 = dist2D(sub_nt_sort.listNeuron[ii],sub_nt_sort.listNeuron[parent]);
-                        double length2 = dist2D(sub_nt_sort.listNeuron[parent],sub_nt_sort.listNeuron[parent_2nd]);
-                        double cosAng=DOTP(sub_nt_sort.listNeuron[ii],sub_nt_sort.listNeuron[parent],sub_nt_sort.listNeuron[parent_2nd])/(length1*length2);
+//                        double length1 = dist2D(sub_nt_sort.listNeuron[ii],sub_nt_sort.listNeuron[parent]);
+//                        double length2 = dist2D(sub_nt_sort.listNeuron[parent],sub_nt_sort.listNeuron[parent_2nd]);
+//                        double cosAng=DOTP(sub_nt_sort.listNeuron[ii],sub_nt_sort.listNeuron[parent],sub_nt_sort.listNeuron[parent_2nd])/(length1*length2);
 
-                        if(fabs(cosAng) < 0.15 && before_angle > 0.95)
-                        {
-                            v3d_msg(QString("angle is %1, before is %2,id is %3,").arg(cosAng).arg(start_ID+ii).arg(before_angle),0);
-                            nt.listNeuron[start_ID+ii].radius = 30;
-                            flag_90 = true;
-                           // break;
-                        }
+//                        if(fabs(cosAng) < 0.15 && before_angle > 0.95)
+//                        {
+//                            v3d_msg(QString("angle is %1, before is %2,id is %3,").arg(cosAng).arg(start_ID+ii).arg(before_angle),0);
+//                            nt.listNeuron[start_ID+ii].radius = 30;
+//                            flag_90 = true;
+//                           // break;
+//                        }
 
-                        before_angle = cosAng;
-                    }
+//                        before_angle = cosAng;
+//                    }
 
 
                 }
 
                 double ratio_check = (total_length-max_distance)/max_distance;
-                if(flag_90 ||(ratio_check < 0.1 && (max_x/max_y < 0.1 || max_y/max_x < 0.1)))
+                if(flag_90 ||(ratio_check < 0.2 && (max_x/max_y < 0.1 || max_y/max_x < 0.1)))
                 {
              //       v3d_msg(QString("ratio is %1,max_x is %2, max_y is %3").arg(ratio_check).arg(max_x).arg(max_y));
 
