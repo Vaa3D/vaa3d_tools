@@ -12,6 +12,8 @@
 #include <iostream>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../APP2_large_scale/readRawfile_func.h"
+
 
 
 using namespace std;
@@ -411,11 +413,35 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
             cerr<<"Need input swc file"<<endl;
             return false;
         }
-
         QString  inswc_file =  infiles[0];
+
+
+        QString  inimage_file = infiles[1];
+        if(inimage_file.isEmpty())
+        {
+            cerr<<"Need an 3D image path file"<<endl;
+            return false;
+        }
+
         QString  outswc_file =  outfiles[0];
         cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"inimage_file = "<<inimage_file.toStdString().c_str()<<endl;
         cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+
+        int datatype;
+
+        if (!loadRawRegion(const_cast<char *>(inimage_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+
+        if(datald) {delete []datald; datald = 0;}
+        if(in_sz) {delete []in_sz; in_sz = 0;}
 
         NeuronTree nt = readSWC_file(inswc_file);
         V3DLONG end_ID = 0,start_ID = 0;
@@ -437,14 +463,15 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                 double total_length = 0;
                 double max_x = 0;
                 double max_y = 0;
-                bool flag_90 = false;
-                double before_angle = 0;
-                double after_angle = 0;
-
+                double z_step = 0;
+ //               bool flag_90 = false;
+                V3DLONG d = 0;
                 for(V3DLONG ii = 0; ii <sub_nt_sort.listNeuron.size();ii++)
                 {
                     double x_ii = sub_nt_sort.listNeuron[ii].x;
                     double y_ii = sub_nt_sort.listNeuron[ii].y;
+                    z_step += sub_nt_sort.listNeuron[ii].z;
+                    d++;
                     int parent = getParent(ii,sub_nt_sort);
                     if (parent==1000000000) continue;
                     total_length += dist2D(sub_nt_sort.listNeuron.at(ii),sub_nt_sort.listNeuron.at(parent));
@@ -457,7 +484,6 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                         if(fabs(x_ii - x_jj) > max_x) max_x = fabs(x_ii - x_jj);
                         if(fabs(y_ii - y_jj) > max_y) max_y = fabs(y_ii - y_jj);
                     }
-
 //                    if(!flag_90)
 //                    {
 //                        int parent_2nd = getParent(parent,sub_nt_sort);
@@ -482,7 +508,8 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                 }
 
                 double ratio_check = (total_length-max_distance)/max_distance;
-                if(flag_90 ||(ratio_check < 0.2 && (max_x/max_y < 0.1 || max_y/max_x < 0.1)))
+                double avarge_zstep = z_step/d;
+                if(avarge_zstep > 0.9* in_zz[2]||(ratio_check < 0.2 && (max_x/max_y < 0.05 || max_y/max_x < 0.05)) || (total_length <300 && max_x < 100 && max_y < 100))
                 {
              //       v3d_msg(QString("ratio is %1,max_x is %2, max_y is %3").arg(ratio_check).arg(max_x).arg(max_y));
 
