@@ -80,7 +80,7 @@ QStringList IVSCC_process_swc::funclist() const
 	return QStringList()
         <<tr("process")
         <<tr("process_v2")
-        <<tr("process_2D")
+        <<tr("process_remove_artifacts")
 		<<tr("help");
 }
 
@@ -405,7 +405,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         }
         saveSWC_file(outswc_file.toStdString(), temp_out_swc);
     }
-    else if (func_name == tr("process_2D"))
+    else if (func_name == tr("process_remove_artifacts"))
     {
         cout<<"Welcome to IVSCC 2D swc post processing plugin"<<endl;
         if(infiles.empty())
@@ -444,6 +444,8 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         if(in_sz) {delete []in_sz; in_sz = 0;}
 
         NeuronTree nt = readSWC_file(inswc_file);
+        nt = SortSWC_pipeline(nt.listNeuron,1000000000, 0);
+
         V3DLONG end_ID = 0,start_ID = 0;
         for (V3DLONG i = 1; i<nt.listNeuron.size(); i++)
         {
@@ -520,7 +522,40 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
             }
         }
-        writeSWC_file(outswc_file,nt);
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronTree nt_prunned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            if(list.at(i).type != 0)
+            {
+                 NeuronSWC curr = list.at(i);
+                 S.n 	= curr.n;
+                 S.type 	= curr.type;
+                 S.x 	= curr.x;
+                 S.y 	= curr.y;
+                 S.z 	= curr.z;
+                 S.r 	= curr.r;
+                 S.pn 	= curr.pn;
+                 listNeuron.append(S);
+                 hashNeuron.insert(S.n, listNeuron.size()-1);
+            }
+
+       }
+        nt_prunned.n = -1;
+        nt_prunned.on = true;
+        nt_prunned.listNeuron = listNeuron;
+        nt_prunned.hashNeuron = hashNeuron;
+
+        writeSWC_file(outswc_file,nt_prunned);
 
     }
     else if (func_name == tr("help"))
