@@ -1,3 +1,82 @@
+2016.09.15
+uhh  adding stage control to s2...
+1. add new s2controller instance to handle the position polling and another to handle the xy position commands
+
+2016.08.30
+
+adding stage control to S2:
+
+1. add relative move commands and stage position updates to s2controller obviously units are important here and have to be tested at the rig with no chance of crashing objective or condenser
+
+2. add hard limits to stage move positions, i.e. a check in s2controller to not allow relative moves or absolute moves beyond certain coordinates.
+
+3. add stage coordinates conversion to pixels and RESET button to 'zero'.  add button to mark stage position by dropping full FOV square on graphicsScene
+
+when you start s2, you should store the current xy position and somehow keep track of difference between planned coordinates (relative movements) and current reported coordinates so you don't end up
+with problems if someone zeros the manipulator (!)
+>>>> IS THE REPORTED XY STAGE POSITION THE ABSOLUTE VALUE OR THE 'ZERO'd' VALUE?   if it's in relation to a user-set zero, I need to somehow disable that button on the GUI... or constantly poll the above condition
+and stop all stage movement if the stage was zeroed.
+
+VERDICT:  zero button on ASI controller = zero on PV GUI, meaning that the zero can be changed at any time by clicking or by zeroing on the ASI box!!
+
+so...
+add constant polling to check difference between current location reported by PV and the dead-reckoning location based on s2-initiated movements.  THIS WILL TRIGGER IF SOMEONE EVEN TOUCHES THE JOYSTICK!
+
+wtf. now I have to constantly poll and make sure the current location never gets near zero (?!)  or something to try to ID spurious 'zero' button clicks.
+
+I suppose it's OK-  the idea is that the stage has to be where s2 thinks it is, otherwise it should stop the acquisition.
+
+
+
+4. add stage coordinates to s2 sequence... ?
+rules:  A. EVERYTHING in each stage location has to be traced before moving stage
+        B. stage coordinates will be kept track of during each phase-  you can end up with 4 stage locations from a starting tile...
+        C. anything returning back to a previous stage location... ?  check...
+        D. add stage coordinates to image tile locations
+        E. ALSO keep track of image and stage coordinates separately because you will need both bits of info for debugging.
+
+
+
+
+
+
+
+
+
+one way to do this is to essentially add another state to the s2 handler (akin to the automatic BB scan) that only runs after an s2 scan is complete.
+
+basically, the pixel locations we've been using (within one scan unit) and the framework we have currently, the seed locations and tile locations just keep on trucking beyond the limits of the scanunit.
+the problem is that once the stage moves, those pixel locations will still be within one scan unit (for the pan galvo commands and tile locations) but the offset will be needed to match them all up.
+
+so the 3 new parameters will be
+
+1.  scanUnitOffset [x,y] set to [0,0] for the first tile
+2.  currentStageLocation [x,y] should be constantly polled and kept up-to-date
+3.  offsetOffset [x,y] is the 'currentStageLocation' for the first tile... this should be reset at the start of s2scan
+
+
+the s2scan stuff will only know about the scanUnitOffset
+currentStageLocation-offsetOffset will be used to plot scanUnits on the graphicsScene
+
+
+
+
+get this to work, then try to handle multiple starting points...
+remember that the xy stage location data is in the .xml file...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 >>>>>>>>>>>   add point-and-click for 'new tile'  or 're-image' or whatever.   this could be eventually hooked up to a 're-image' option.
 

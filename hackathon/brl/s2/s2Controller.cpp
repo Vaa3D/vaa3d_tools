@@ -546,17 +546,50 @@ void S2Controller::initROI(LocationSimple nextLoc){
 
 }
 
-void S2Controller::startROI(){ //    set a target file location and trigger the 3D ROI.
+void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float yStage){
+    QString toSend;
+
+
+    // first move the stage in x and y.
+    toSend = QString("-ma x ");
+    toSend.append(QString::number(xStage));
+    addToQueue(toSend);
+    toSend = QString("-ma y ");
+    toSend.append(QString::number(yStage));
+    addToQueue(toSend);
+
+
+    //    set up the microscope with appropriate parameters for small 3D ROI.
+    float x = nextLoc.x;
+    float y = nextLoc.y;
+    status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
+    if ((x<7.6)&(x>-7.6)){
+        if (false){//(s2ParameterMap[0].getCurrentString().contains("Resonant")){//this controller may not know about the s2parametermap!
+            toSend = QString("-sts currentPanLocationX ");
+            toSend.append(QString::number(x));
+        }else{
+            toSend = QString("-sts currentScanCenter ");
+            toSend.append(QString::number(x));
+            toSend.append(" XAxis");
+        }
+        addToQueue(toSend);
+        //cleanAndSend(toSend);
+    }else{
+        status(QString("X out of bounds!"));}
+    if ((y<7.6)&(y>-7.6)){
+        QString toSend = QString("-sts currentScanCenter ") ;
+        toSend.append(QString::number(y));
+        toSend.append(" YAxis");
+        addToQueue(toSend);
+//        cleanAndSend(toSend);
+
+    }else{
+        status(QString("Y out of bounds!"));
+    }
+
 }
 
-void S2Controller::getROIData(){ //    FILE VERSION: Wait for PV to signal ROI completion (?), wait for arbitrary delay or poll filesystem for available file
-    //                        //SHARED MEMORY VERSION: during ROI initiation, Vaa3D will allocate a new 1d byte array and send the address and length to PV. It might be a bit tricky to know when this data is valid.
-}
 
-void S2Controller::processROIData(){ //Process image data and return 1 or more next locations.  Many alternative approaches could be used here, including: Run APP2 and locate ends of structure on boundary.  Identify foreground blobs in 1-D max or sum projections of ROI faces. Identify total intensity and variance in the entire ROI. Identify total tubularity in the ROI or near the edges, etc etc.  In any case, the resulting image coordinates will be transformed into coordinates that PV understands for (e.g.) "PanXY"  commands.
-}
-void S2Controller::startNextROI(){//   Move to the next ROI location and start the scan.  With the new 'PanXY' command, this should be trivial.
-}
 
 void S2Controller::startPosMon(){
     status(QString(" start in myPosMon"));

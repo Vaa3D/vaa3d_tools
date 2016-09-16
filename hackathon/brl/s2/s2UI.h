@@ -63,6 +63,7 @@ signals:
     void callSAGridLoad(QString, LocationSimple, QString);
     void newImageData(Image4DSimple);
     void moveToNext(LocationSimple);
+    void moveToNextWithStage(LocationSimple, float, float);
 	void noteStatus(QString);
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
@@ -78,6 +79,8 @@ signals:
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+
+
 private slots:
     void runBoundingBox();
     void startS2();
@@ -94,6 +97,7 @@ private slots:
     void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
     void moveToROI(LocationSimple);
+    void moveToROIWithStage(LocationSimple, float xStage, float yStage);
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
@@ -130,6 +134,10 @@ private slots:
     void updateRedThreshold(int ignore);
     void updateMinMaxBlock(int ignore);
     void updateZStepSize(int ignore);
+
+    void tryXYMove();
+
+
 private:
     V3DPluginCallback2 * cb;
    QThread *workerThread;
@@ -192,7 +200,7 @@ private:
 
     QPushButton *resetDirPB;
     QPushButton *setLocalPathToData;
-	QCheckBox *localRemoteCB;
+    QCheckBox *localRemoteCB;
     QPushButton *runAllTargetsPB;
     QCheckBox *useGSDTCB;
     QCheckBox *runContinuousCB;
@@ -256,6 +264,13 @@ private:
     QFileInfo *liveFileStatus;
 
     QPushButton * tTracePB;
+
+
+    QPushButton *tryStageMove;
+    QLineEdit *tryStageXEdit;
+    QLineEdit *tryStageYEdit;
+
+
 
 
 // Target and ROI table widget

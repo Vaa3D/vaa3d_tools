@@ -180,14 +180,19 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(stackZStepSizeSlider, SIGNAL(valueChanged(int)),this, SLOT(updateZStepSize(int)));
 
+
+    connect(tryStageMove,SIGNAL(clicked()),this, SLOT(tryXYMove()));
+
+
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
     connect(centerGalvosPB, SIGNAL(clicked()), &myController, SLOT(centerGalvos()));
-    //connect(startZStackPushButton, SIGNAL(clicked()), &myController, SLOT(startZStack()));
     connect(startZStackPushButton, SIGNAL(clicked()), this, SLOT(startingZStack()));
     connect(&myController, SIGNAL(statusSig(QString)), myNotes, SLOT(status(QString)));
     connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
+    connect(this, SIGNAL(moveToNextWithStage(LocationSimple,float,float)), &myController, SLOT(initROIwithStage(LocationSimple,float,float)));
+
 
     connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
     connect(collectOverviewPushButton, SIGNAL(clicked()),this, SLOT(collectOverview()));
@@ -710,23 +715,38 @@ QGroupBox *S2UI::createConfigPanel(){
     zoomPixelsProductLabel = new QLabel(tr("zoom*pixels = "));
 
 
+
+    tryStageMove  = new QPushButton;
+    tryStageMove->setText("try stage move");
+    tryStageXEdit = new QLineEdit;
+    tryStageXEdit->setText("0.0");
+    tryStageYEdit = new QLineEdit;
+    tryStageYEdit->setText("0.0");
+
+
+
+
+
     cBL->addWidget(machineSaveDirLabel,0,0);
-    cBL->addWidget(machineSaveDir, 0,1);
-    cBL->addWidget(localDataDirLabel,1,0);
-    cBL->addWidget(localDataDir,1,1);
-    cBL->addWidget(setLocalPathToData,2,1);
-    cBL->addWidget(resetDirPB, 2,0);
-    cBL->addWidget(liveFileStringLabel, 3,0);
-    cBL->addWidget(liveFileString,3,1);
-    cBL->addWidget(setLiveFilePath,4,0);
-    cBL->addWidget(startZStackDelayLabel,5,0);
-    cBL->addWidget(startZStackDelaySB, 5,1);
-    cBL->addWidget(zoomSpinBoxLabel,6,0);
-    cBL->addWidget(zoomSpinBox,6,1);
-    cBL->addWidget(pixelsSpinBoxLabel,7,0);
-    cBL->addWidget(pixelsSpinBox,7,1);
-    cBL->addWidget(zoomPixelsProductLabel,8,0);
-    cBL->addWidget(tTracePB,9,0);
+    cBL->addWidget(machineSaveDir, 1,0);
+    cBL->addWidget(localDataDirLabel,2,0);
+    cBL->addWidget(localDataDir,2,1);
+    cBL->addWidget(setLocalPathToData,3,1);
+    cBL->addWidget(resetDirPB, 3,0);
+    cBL->addWidget(liveFileStringLabel, 4,0);
+    cBL->addWidget(liveFileString,4,1);
+    cBL->addWidget(setLiveFilePath,5,0);
+    cBL->addWidget(startZStackDelayLabel,6,0);
+    cBL->addWidget(startZStackDelaySB, 6,1);
+    cBL->addWidget(zoomSpinBoxLabel,7,0);
+    cBL->addWidget(zoomSpinBox,7,1);
+    cBL->addWidget(pixelsSpinBoxLabel,8,0);
+    cBL->addWidget(pixelsSpinBox,8,1);
+    cBL->addWidget(zoomPixelsProductLabel,9,0);
+    cBL->addWidget(tTracePB,10,0);
+    cBL->addWidget(tryStageMove,11,0);
+    cBL->addWidget(tryStageXEdit,11,1);
+    cBL->addWidget(tryStageYEdit,11,2);
 
     configBox->setLayout(cBL);
     return configBox;
@@ -1201,6 +1221,16 @@ void S2UI::updateString(QString broadcastedString){
 
 
 
+void S2UI::tryXYMove(){
+    LocationSimple testL;
+    testL.x = 100.0;
+    testL.y = 200.0;
+    testL.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+    testL.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+    float xStage = tryStageXEdit->text().toFloat() ;
+    float yStage= tryStageYEdit->text().toFloat();
+    moveToROIWithStage(testL, xStage, yStage);
+}
 
 
 
@@ -1756,8 +1786,6 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
 void S2UI::moveToROI(LocationSimple nextROI){
 
     if( posMonStatus){
-        //nextROI.x = nextROI.x+((float) nextROI.ev_pc1)/2.0;// add offset.  PV wants the scan center, ZZ's code and image coordinates use upper left as origin.
-        //nextROI.y = nextROI.y+((float) nextROI.ev_pc2)/2.0;
         float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
         float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
         // and now to galvo voltage:
@@ -1782,6 +1810,47 @@ void S2UI::moveToROI(LocationSimple nextROI){
     }
 }
 
+void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage){
+    if( posMonStatus){
+
+
+    // First check the stage position arguments.  Is the move too big?
+
+    float xDiff = xStage-uiS2ParameterMap[5].getCurrentValue();
+    float yDiff = yStage-uiS2ParameterMap[6].getCurrentValue();
+    qDebug()<<"xDiff = "<<xDiff;
+    qDebug()<<"yDiff = "<<yDiff;
+    if ((xDiff<-1000.0) || (xDiff > 1000.0) || (yDiff<-1000.0) || (yDiff > 1000.0)){
+        qDebug()<<"stage move too large!";
+        return;
+
+     }
+
+
+
+        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
+        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
+        // and now to galvo voltage:
+        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
+        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+
+        if ((gridScanStatus==1)||(smartScanStatus==1)){
+            nextGalvoX = nextROI.x*scanVoltageConversion;
+            nextGalvoY = nextROI.y*scanVoltageConversion;
+        }
+        LocationSimple newLoc;
+        newLoc.x = -nextGalvoX;
+        newLoc.y = nextGalvoY;
+        float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
+        float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
+
+
+        emit moveToNextWithStage(newLoc, xStage, yStage);
+    }else{
+        status("start PosMon before moving galvos");
+        smartScanStatus = -1;
+    }
+}
 
 void S2UI::combinedSmartScan(QString saveFilename){
     V3dR_MainWindow * new3DWindow = NULL;
@@ -2458,6 +2527,7 @@ void S2UI::tTrace(){
 
 
 }
+
 
 
 // new or move to config parameters:
