@@ -1802,7 +1802,6 @@ void S2UI::moveToROI(LocationSimple nextROI){
         float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
         float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
 
-
         emit moveToNext(newLoc);
     }else{
         status("start PosMon before moving galvos");
@@ -1851,6 +1850,91 @@ void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage
         smartScanStatus = -1;
     }
 }
+
+
+
+
+
+/* sketch for integrating stage information:
+ option 1:  always include stage information in all tileLocation data
+ option 2:  add/account for stage information at the movetoroi time.
+
+o1:   this is conceptually the most straightforward but introduces potential race conditions with stage locations at the exact moment
+when the locationSimple.mcenter.x is set.
+    basically, now the locationSimple stuff is all just calculated (after the first one which is set by user clicking) and doesn't depend on any
+    other events/timing/etc.   the new locations are calculated based on previous ones, regardless of the state of the system
+
+o2:  conceptually more messy and likely to insert itself in many places in the codebase with additional conditional statements...
+'switch stageMoveMode  0{asdsdfe}   1{sdfasdf} 2{asdfasdf}
+   this would allow you to retain some kind of control over exactly when the stage position is considered, when it's reported, when it's ignored
+   etc.
+   but it will definitely add another wrinkle into an already messy codebase.
+
+   back to o1:
+        you really want 3 things for every tile:
+            1. stage Location
+            2. galvo location (in pixels is OK)
+            3. stage+galvo location in pixels
+
+   for the tile locations in stackAnalyzer,  use (3)
+   for the steering of the galvo, use (2)
+   for the stage positioning, use (1).
+
+   the problem is:
+    when do you convert between them?
+
+1. a new location is determined solely based on (3).  then when the new location comes back, determine if it's outside the current scanUnit
+if so, bump it to the next scanUnit, maintaining its (3) but adjusting 1 and 2.
+
+2. this would allow you to maintain both stage info and the correct pixel location.
+
+3. act on the stage location as follows:
+   when you're looking through the allLocations for more tiles, you first have to consider the stage position
+   basically, i need to make some new methods that act like we're looking for new/any tiles, but are really looking for new/any tiles
+   IN THAT STAGE POSITION!
+either make some new methods here and use them
+or
+subclass the list, including methods to return just the list itself
+
+or make a new class that has the list as an attribute...? that's a little dumb.  then this object will end up with multiple copies of the list
+
+I think it's probably simplest to just make the relevant methods here and apply them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+While I'm at it,  is there some of this stuff that could be moved into a separate class?  Like all the locations, lists, etc being
+processed by a single object. eventloop problems perhaps? mostly just rewiring to communicate between the s2scan object and this class
+
+it would bascially take:
+loadLatest
+handleNewLocation
+and several other methods
+
+and clean up a bunch of existing methods to turn them from code here into emitting signals from here to the new class.
+
+
+
+
+probably the next best thing would be the ROImonitor.  it has its own graphicsScene, blah blah blah and really not related to running the scope.
+
+Other possibilities:
+
+
+*/
+
+
 
 void S2UI::combinedSmartScan(QString saveFilename){
     V3dR_MainWindow * new3DWindow = NULL;

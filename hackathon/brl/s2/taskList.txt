@@ -1,3 +1,16 @@
+2016.09.16
+yesterday
+1.  xy stage info was already being monitored in posMon mode so it's already just as fast as the galvo monitoring.
+2. I added xy moves to the various moveToROI methods in s2controller and s2ui signals and hooked it up to a simple testing field/button/whatever
+
+NOW:
+1. incorporate stage location into tile location...
+locationSimple has .x .y .ev_pc1 .ev_pc2  in use
+but there is also
+locationSimple.mcenter  which is a 3d coordinate...
+locationSimple.mcenter.x .y .z  will represent the current stage motor positions
+
+
 2016.09.15
 uhh  adding stage control to s2...
 1. add new s2controller instance to handle the position polling and another to handle the xy position commands
