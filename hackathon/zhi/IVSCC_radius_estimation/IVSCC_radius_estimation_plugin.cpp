@@ -132,11 +132,11 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
             double root_x = inswc[0]->x;
             double root_y = inswc[0]->y;
             double bkg_thresh_updated;
-            if(marker->x > root_x - 150 && marker->x < root_x + 150 && marker->y > root_y - 150 && marker->y < root_y + 150)
-                bkg_thresh_updated = stop_thresh;
-            else
+            if(marker->x > root_x - 500 && marker->x < root_x + 500 && marker->y > root_y - 500 && marker->y < root_y + 500)
                 bkg_thresh_updated = bkg_thresh;
-            if(marker->parent > 0)
+            else
+                bkg_thresh_updated = stop_thresh;
+            if(marker->parent > 0 && marker->type != 2)
             {
                 if(is_2d)
                     marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh_updated,0.001);
@@ -179,7 +179,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         string outswc_file = dialog.outswc_file;
         bool is_2d = dialog.is_2d;
         double bkg_thresh = dialog.bkg_thresh;
-        double stop_thresh = dialog.stop_thresh/100;
+        double stop_thresh = dialog.stop_thresh;
         QString m_InputfolderName(dialog.image_folder.c_str());
 
         QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
@@ -270,12 +270,20 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         for(int i = 0; i < inswc.size(); i++)
         {
             MyMarker * marker = inswc[i];
-            if(marker->parent > 0)
+            double root_x = inswc[0]->x;
+            double root_y = inswc[0]->y;
+            double bkg_thresh_updated;
+            if(marker->x > root_x - 500 && marker->x < root_x + 500 && marker->y > root_y - 500 && marker->y < root_y + 500)
+                bkg_thresh_updated = bkg_thresh;
+            else
+                bkg_thresh_updated = stop_thresh;
+
+            if(marker->parent > 0 && marker->type != 2)
             {
                 if(is_2d)
-                    marker->radius = markerRadiusXY(im_imported, sz, *marker, bkg_thresh,stop_thresh);
+                    marker->radius = markerRadiusXY(im_imported, sz, *marker, bkg_thresh_updated,0.001);
                 else
-                    marker->radius = markerRadius(im_imported, sz, *marker, bkg_thresh);
+                    marker->radius = markerRadius(im_imported, sz, *marker, bkg_thresh_updated);
             }
         }
 
@@ -469,7 +477,7 @@ NeuronTree interpolate_radius(NeuronTree input)
 //	printf("segment list constructed.\n");
     for (V3DLONG i=0;i<seg_list.size();i++)
     {
-        if(seg_list[i]->at(0)->type ==1)
+        if(seg_list[i]->at(0)->type ==1 || seg_list[i]->at(0)->type ==2)
             continue;
         interpolate_path(seg_list[i]);
     }

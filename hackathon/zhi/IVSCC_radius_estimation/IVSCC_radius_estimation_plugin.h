@@ -51,10 +51,15 @@ class radiusEstimationDialog : public QDialog
             QGridLayout * layout = new QGridLayout();
             inswc_box = new QLineEdit("");
             outswc_box = new QLineEdit("(optional)");
-            bkg_thresh_box = new QLineEdit("5");
+            bkg_thresh_box = new QDoubleSpinBox();
+            bkg_thresh_box->setMinimum(0);
+            bkg_thresh_box->setMaximum(255);
+            bkg_thresh_box->setValue(5);
+
             stop_thresh_box = new QDoubleSpinBox();
-            stop_thresh_box->setMinimum(0.1);
-            stop_thresh_box->setMaximum(1000);
+            stop_thresh_box->setMinimum(0);
+            stop_thresh_box->setMaximum(255);
+            stop_thresh_box->setValue(5);
 
             is2d_checker = new QCheckBox("Is 2D radius");
             is2d_checker->setChecked(true);
@@ -63,9 +68,9 @@ class radiusEstimationDialog : public QDialog
             layout->addWidget(new QLabel("In swc path"), 0, 0, 1, 1);
             layout->addWidget(inswc_box, 0, 1, 1, 3);
             layout->addWidget(pPushButton_openFileDlg,0, 4, 1, 2);
-            layout->addWidget(new QLabel("Background Threshold"), 1, 0, 1, 1);
+            layout->addWidget(new QLabel("Background Threshold (soma area)"), 1, 0, 1, 1);
             layout->addWidget(bkg_thresh_box, 1, 1, 1, 5);
-            layout->addWidget(new QLabel("Stopping Threshold(%)"), 2, 0, 1, 1);
+            layout->addWidget(new QLabel("Background Threshold (other areas)"), 2, 0, 1, 1);
             layout->addWidget(stop_thresh_box, 2, 1, 1, 5);
             layout->addWidget(new QLabel("Out swc path"), 3, 0, 1, 1);
             layout->addWidget(outswc_box, 3, 1, 1, 5);
@@ -119,7 +124,7 @@ class radiusEstimationDialog : public QDialog
     public:
         QLineEdit * inswc_box;
         QLineEdit * outswc_box;
-        QLineEdit * bkg_thresh_box;
+        QDoubleSpinBox * bkg_thresh_box;
         QDoubleSpinBox *  stop_thresh_box;
         QCheckBox * is2d_checker;
         QPushButton *pPushButton_openFileDlg;
@@ -144,16 +149,20 @@ class radiusEstimationFolderDialog : public QDialog
             infolder_box = new QLineEdit("");
             inswc_box = new QLineEdit("");
             outswc_box = new QLineEdit("(optional)");
-            bkg_thresh_box = new QLineEdit("5");
+            bkg_thresh_box = new QDoubleSpinBox();
+            bkg_thresh_box->setMinimum(0);
+            bkg_thresh_box->setMaximum(255);
+            bkg_thresh_box->setValue(5);
+
             stop_thresh_box = new QDoubleSpinBox();
-            stop_thresh_box->setMinimum(0.1);
-            stop_thresh_box->setMaximum(10);
+            stop_thresh_box->setMinimum(0);
+            stop_thresh_box->setMaximum(255);
+            stop_thresh_box->setValue(5);
 
             is2d_checker = new QCheckBox("Is 2D radius");
             is2d_checker->setChecked(true);
             pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
             pPushButton_openImageDlg = new QPushButton(QObject::tr("..."));
-
 
             layout->addWidget(new QLabel("Input IVSCC image folder path"), 0, 0, 1, 1);
             layout->addWidget(infolder_box, 0, 1, 1, 3);
@@ -161,9 +170,9 @@ class radiusEstimationFolderDialog : public QDialog
             layout->addWidget(new QLabel("Input swc path"), 1, 0, 1, 1);
             layout->addWidget(inswc_box, 1, 1, 1, 3);
             layout->addWidget(pPushButton_openFileDlg,1, 4, 1, 2);
-            layout->addWidget(new QLabel("Background Threshold"), 2, 0, 1, 1);
+            layout->addWidget(new QLabel("Background Threshold (soma area)"), 2, 0, 1, 1);
             layout->addWidget(bkg_thresh_box, 2, 1, 1, 5);
-            layout->addWidget(new QLabel("Stopping Threshold(%)"), 3, 0, 1, 1);
+            layout->addWidget(new QLabel("Stopping Threshold (other areas)"), 3, 0, 1, 1);
             layout->addWidget(stop_thresh_box, 3, 1, 1, 5);
             layout->addWidget(new QLabel("Out swc path"), 4, 0, 1, 1);
             layout->addWidget(outswc_box, 4, 1, 1, 5);
@@ -234,12 +243,11 @@ class radiusEstimationFolderDialog : public QDialog
     public:
         QLineEdit * inswc_box;
         QLineEdit * outswc_box;
-        QLineEdit * bkg_thresh_box;
-        QDoubleSpinBox *  stop_thresh_box;
+        QDoubleSpinBox * bkg_thresh_box;
+        QDoubleSpinBox * stop_thresh_box;
         QCheckBox * is2d_checker;
         QPushButton *pPushButton_openFileDlg;
         QPushButton *pPushButton_openImageDlg;
-
 
         QLineEdit * infolder_box;
 
