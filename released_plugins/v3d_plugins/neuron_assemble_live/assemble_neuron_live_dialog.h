@@ -45,9 +45,9 @@ private:
     QString winname_main, winname_3d, winname_roi;
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
-        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin;
+        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly;
     QTabWidget * tab;
-    QListWidget * list_edge, * list_link;
+    QListWidget * list_edge, * list_link, *list_marker;
     QComboBox * cb_color;
     QCheckBox * check_loop, * check_zoomin;
     QSpinBox * spin_zoomin;
@@ -57,6 +57,7 @@ signals:
 public slots:
     void setColor(int i);
     void syncMarker();
+    void syncMarkerOnly();
     void pairMarker();
     void delPair();
     void connectPair();

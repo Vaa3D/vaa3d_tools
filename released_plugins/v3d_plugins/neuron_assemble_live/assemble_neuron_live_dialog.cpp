@@ -39,7 +39,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     layout->addWidget(btn_link,1,0,1,2);
     layout->addWidget(btn_loop,1,2,1,2);
     check_zoomin = new QCheckBox("auto sync zoomin view");
-    spin_zoomin = new QSpinBox; spin_zoomin->setValue(30); spin_zoomin->setRange(0,10000000);
+    spin_zoomin = new QSpinBox; spin_zoomin->setValue(101); spin_zoomin->setRange(0,10000000);
     btn_zoomin = new QPushButton("sync zoomin view");
     cb_color = new QComboBox();
     cb_color->addItem("color by type");
@@ -98,6 +98,18 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     connect(btn_syncmarker,SIGNAL(clicked()),this,SLOT(syncMarker()));
     connect(btn_break,SIGNAL(clicked()),this,SLOT(breakEdge()));
     connect(list_edge, SIGNAL(currentRowChanged(int)), this, SLOT(highlightEdge()));
+
+    //radius annotation
+    QDialog * dialog_radius = new QDialog(tab);
+    QGridLayout * layout_radius = new QGridLayout();
+    list_marker = new QListWidget();
+    btn_syncmarkeronly = new QPushButton("update markers");
+    layout_radius->addWidget(list_marker,0,0,6,1);
+    layout_radius->addWidget(btn_syncmarkeronly,1,2,1,1);
+    dialog_radius->setLayout(layout_radius);
+    tab->addTab(dialog_radius,tr("radius"));
+
+    connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -994,6 +1006,29 @@ void assemble_neuron_live_dialog::syncMarker()
     }
 }
 
+void assemble_neuron_live_dialog::syncMarkerOnly()
+{
+    LandmarkList * mList = getMarkerList();
+
+    list_marker->clear();
+    for(V3DLONG i=0; i<mList->size(); i++){
+        QList<int> info;
+        get_marker_info(mList->at(i), info);
+        double radius =  spin_zoomin->value()*atoi(mList->at(i).comments.c_str())/1000;
+        if(mList->at(i).comments.size()>0) nodes[info.at(0)]->r = radius;
+        QString tmp="Marker "+QString::number(i+1)+" x "+
+                QString::number(i+1)+" (Node "+QString::number(info.at(0))+" x "+
+                QString::number(info.at(0))+" ), " + "radius size: " + QString::number(radius);
+        list_marker->addItem(tmp);
+    }
+
+    if(list_marker->count()==0){
+        v3d_msg("Not marker in the 3D viewer.");
+    }else{
+        list_marker->setCurrentRow(0);
+    }
+}
+
 void assemble_neuron_live_dialog::pairMarker()
 {
     LandmarkList * mList = getMarkerList();
@@ -1495,6 +1530,7 @@ void assemble_neuron_live_dialog::zoomin()
     V3DLONG pid1=-1, pid2=-1;
     QString tmp="";
     //get the node to zoomin
+
     if(tab->currentIndex()==0){
         int idx=list_link->currentRow();
         if(idx<0){
@@ -1502,14 +1538,23 @@ void assemble_neuron_live_dialog::zoomin()
             return;
         }
         tmp=list_link->currentItem()->text();
-    }else{
+    }else if (tab->currentIndex()==1){
         int idx=list_edge->currentRow();
         if(idx<0){
             v3d_msg("Please select the edge to zoomin. You can manually define markers on both side of the edge and then click load_edge button.");
             return;
         }
         tmp=list_edge->currentItem()->text();
+    }else{
+        int idx=list_marker->currentRow();
+        if(idx<0){
+            v3d_msg("Please select the marker to zoomin.");
+            return;
+        }
+        tmp=list_marker->currentItem()->text();
+
     }
+
     QStringList items = tmp.split(" ", QString::SkipEmptyParts);
     if(items.size()>8){
         bool check;
@@ -1524,10 +1569,12 @@ void assemble_neuron_live_dialog::zoomin()
             return;
         }
     }
+
     if(pid1<0 || pid2<0){
         v3d_msg("Please select the pair of node to zoomin.");
         return;
     }
+
     QList<V3DLONG> pids;
     pids.push_back(pid1);
     pids.push_back(pid2);
