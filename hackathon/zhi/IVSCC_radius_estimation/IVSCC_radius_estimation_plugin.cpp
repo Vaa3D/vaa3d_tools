@@ -339,6 +339,37 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
                     ";;Neuron structure	(*.swc)"
                     ));
         writeSWC_file(fileSaveName,nt_result);
+
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt_result.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt_result.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt_result.hashNeuron.value(par)].push_back(i);
+        }
+        QList<NeuronSWC> list = nt_result.listNeuron;
+        QList<ImageMarker> bifur_marker;
+
+        for (int i=0;i<list.size();i++)
+        {
+            ImageMarker t;
+            if ((childs[i].size()>1 || childs[i].size() ==0) && nt_result.listNeuron.at(i).type != 1 && nt_result.listNeuron.at(i).type != 2)
+            {
+                if(nt_result.listNeuron.at(i).r < 2)
+                {
+                    t.x = nt_result.listNeuron.at(i).x;
+                    t.y = nt_result.listNeuron.at(i).y;
+                    t.z = nt_result.listNeuron.at(i).z;
+                    bifur_marker.append(t);
+                }
+            }
+        }
+
+        QString MarkerfileName = fileSaveName+QString(".marker");
+        writeMarker_file(MarkerfileName, bifur_marker);
     }
 	else
 	{
