@@ -188,32 +188,36 @@ void OpenSWCDialog::getImage()
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Set Image", "Do you want to set an image of reconstructions to display?",QMessageBox::Yes|QMessageBox::No);
     if(reply == QMessageBox::Yes){
-        QString fname_input;
-        while(1){
-            QSettings settings("V3D plugin","neuron_live_assembler");
-            QString prevFile = "";
-            if(settings.contains("fname_img"))
-                prevFile = settings.value("fname_img").toString();
-            else
-                prevFile = fileinfo.dir().path();
-            fname_input = QFileDialog::getOpenFileName(this, QObject::tr("Choose the Image of Bottom Section "),
-                                                       prevFile,
-                                                       QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
-            if(!fname_input.isEmpty()){
-                unsigned char * p_data = 0;
-                V3DLONG sz_img[4];
-                int type_img;
-                if(!simple_loadimage_wrapper(*callback, fname_input.toStdString().c_str(), p_data, sz_img, type_img)){
-                    v3d_msg("failed to load image: "+fname_input);
+        if(callback->currentImageWindow())
+            p_img4d = callback->getImage(callback->currentImageWindow());
+        else{
+            QString fname_input;
+            while(1){
+                QSettings settings("V3D plugin","neuron_live_assembler");
+                QString prevFile = "";
+                if(settings.contains("fname_img"))
+                    prevFile = settings.value("fname_img").toString();
+                else
+                    prevFile = fileinfo.dir().path();
+                fname_input = QFileDialog::getOpenFileName(this, QObject::tr("Choose the Image of Bottom Section "),
+                                                           prevFile,
+                                                           QObject::tr("Images (*.raw *.tif *.lsm *.v3dpbd *.v3draw);;All(*)"));
+                if(!fname_input.isEmpty()){
+                    unsigned char * p_data = 0;
+                    V3DLONG sz_img[4];
+                    int type_img;
+                    if(!simple_loadimage_wrapper(*callback, fname_input.toStdString().c_str(), p_data, sz_img, type_img)){
+                        v3d_msg("failed to load image: "+fname_input);
+                    }else{
+                        p_img4d = new Image4DSimple();
+                        p_img4d->setFileName(fname_input.toStdString().c_str());
+                        p_img4d->setData(p_data, sz_img[0], sz_img[1], sz_img[2], sz_img[3], (ImagePixelType)type_img);
+                        settings.setValue("fname_img",fname_input);
+                        break;
+                    }
                 }else{
-                    p_img4d = new Image4DSimple();
-                    p_img4d->setFileName(fname_input.toStdString().c_str());
-                    p_img4d->setData(p_data, sz_img[0], sz_img[1], sz_img[2], sz_img[3], (ImagePixelType)type_img);
-                    settings.setValue("fname_img",fname_input);
                     break;
                 }
-            }else{
-                break;
             }
         }
     }

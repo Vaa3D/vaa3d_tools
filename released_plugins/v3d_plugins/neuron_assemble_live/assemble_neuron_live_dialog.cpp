@@ -39,7 +39,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     layout->addWidget(btn_link,1,0,1,2);
     layout->addWidget(btn_loop,1,2,1,2);
     check_zoomin = new QCheckBox("auto sync zoomin view");
-    spin_zoomin = new QSpinBox; spin_zoomin->setValue(101); spin_zoomin->setRange(0,10000000);
+    spin_zoomin = new QSpinBox; spin_zoomin->setValue(90); spin_zoomin->setRange(0,10000000);
     btn_zoomin = new QPushButton("sync zoomin view");
     cb_color = new QComboBox();
     cb_color->addItem("color by type");
@@ -100,16 +100,18 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     connect(list_edge, SIGNAL(currentRowChanged(int)), this, SLOT(highlightEdge()));
 
     //radius annotation
-    QDialog * dialog_radius = new QDialog(tab);
-    QGridLayout * layout_radius = new QGridLayout();
-    list_marker = new QListWidget();
-    btn_syncmarkeronly = new QPushButton("update markers");
-    layout_radius->addWidget(list_marker,0,0,6,1);
-    layout_radius->addWidget(btn_syncmarkeronly,1,2,1,1);
-    dialog_radius->setLayout(layout_radius);
-    tab->addTab(dialog_radius,tr("radius"));
-
-    connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
+    if(p_img4d)
+    {
+        QDialog * dialog_radius = new QDialog(tab);
+        QGridLayout * layout_radius = new QGridLayout();
+        list_marker = new QListWidget();
+        btn_syncmarkeronly = new QPushButton("update markers");
+        layout_radius->addWidget(list_marker,0,0,6,1);
+        layout_radius->addWidget(btn_syncmarkeronly,2,2,1,1);
+        dialog_radius->setLayout(layout_radius);
+        tab->addTab(dialog_radius,tr("radius"));
+        connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
+    }
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -1285,22 +1287,31 @@ v3dhandle assemble_neuron_live_dialog::updateImageWindow()
 {
     if(!p_img4d)
         return 0;
-    v3dhandle winhandle = getImageWindow();
-    if(winhandle == 0){
-        winhandle = callback->newImageWindow(WINNAME_ASSEM);
-        callback->setImage(winhandle, p_img4d);
-        callback->updateImageWindow(winhandle);
-        callback->open3DWindow(winhandle);
-
+    v3dhandle winhandle = callback->currentImageWindow();
+    if(!winhandle)
+    {
+        winhandle = getImageWindow();
+        if(winhandle == 0){
+            winhandle = callback->newImageWindow(WINNAME_ASSEM);
+            callback->setImage(winhandle, p_img4d);
+            callback->updateImageWindow(winhandle);
+            callback->open3DWindow(winhandle);
+            winname_main = WINNAME_ASSEM; winname_main += "_processed";
+            winname_3d = "3D View [" + winname_main + "]";
+            winname_roi = "Local 3D View [" + winname_main + "]";
+        }else{
+            callback->setImage(winhandle, p_img4d);
+            callback->updateImageWindow(winhandle);
+            callback->open3DWindow(winhandle);
+        }
+    }else{
         winname_main = WINNAME_ASSEM; winname_main += "_processed";
         winname_3d = "3D View [" + winname_main + "]";
         winname_roi = "Local 3D View [" + winname_main + "]";
-    }else{
-        callback->setImage(winhandle, p_img4d);
+        callback->setImageName(winhandle,winname_main);
         callback->updateImageWindow(winhandle);
         callback->open3DWindow(winhandle);
     }
-
     return winhandle;
 }
 
@@ -1308,18 +1319,28 @@ v3dhandle assemble_neuron_live_dialog::checkImageWindow()
 {
     if(!p_img4d)
         return 0;
-    v3dhandle winhandle = getImageWindow();
-    if(winhandle == 0){
-        winhandle = callback->newImageWindow(WINNAME_ASSEM);
-        callback->setImage(winhandle, p_img4d);
-        callback->updateImageWindow(winhandle);
-        callback->open3DWindow(winhandle);
+    v3dhandle winhandle = callback->currentImageWindow();
+    if(!winhandle)
+    {
+        v3dhandle winhandle = getImageWindow();
+        if(winhandle == 0){
+            winhandle = callback->newImageWindow(WINNAME_ASSEM);
+            callback->setImage(winhandle, p_img4d);
+            callback->updateImageWindow(winhandle);
+            callback->open3DWindow(winhandle);
 
+            winname_main = WINNAME_ASSEM; winname_main += "_processed";
+            winname_3d = "3D View [" + winname_main + "]";
+            winname_roi = "Local 3D View [" + winname_main + "]";
+        }
+    }else{
         winname_main = WINNAME_ASSEM; winname_main += "_processed";
         winname_3d = "3D View [" + winname_main + "]";
         winname_roi = "Local 3D View [" + winname_main + "]";
+        callback->setImageName(winhandle,winname_main);
+        callback->updateImageWindow(winhandle);
+        callback->open3DWindow(winhandle);
     }
-
     return winhandle;
 }
 
