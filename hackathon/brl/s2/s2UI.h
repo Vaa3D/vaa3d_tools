@@ -97,7 +97,7 @@ private slots:
     void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
     void moveToROI(LocationSimple);
-    void moveToROIWithStage(LocationSimple, float xStage, float yStage);
+    void moveToROIWithStage(LocationSimple);
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
@@ -195,7 +195,6 @@ private:
 
     QCheckBox * stageOnlyCB;
     QLabel * stageOnlyCBLabel;
-
 
     void createButtonBox1();
 	

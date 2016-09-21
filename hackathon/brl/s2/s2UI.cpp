@@ -294,7 +294,7 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV = new QGraphicsView();
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
-    roiRect = QRectF(-400, -400, 800, 800);
+    roiRect = QRectF(-250, -250, 500, 500);
     roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
@@ -312,9 +312,9 @@ QGroupBox *S2UI::createROIMonitor(){
 
     zoomSlider = new QSlider();
     zoomSlider->setOrientation(Qt::Horizontal);
-    zoomSlider->setMaximum(100);
+    zoomSlider->setMaximum(500);
     zoomSlider->setMinimum(1);
-    zoomSlider->setValue(10);
+    zoomSlider->setValue(50);
 
     gl->addWidget(zoomSlider,4,1);
 
@@ -328,8 +328,8 @@ void S2UI::updateROIPlot(QString ignore){
     //roiRect.setY(roiYEdit->text().toFloat());
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
-    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0-uiS2ParameterMap[5].getCurrentValue();
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
@@ -337,7 +337,7 @@ void S2UI::updateROIPlot(QString ignore){
 
 void S2UI::updateGVZoom(int sliderValue){
     qreal xyscale =1.0;
-    xyscale = qreal( sliderValue) / 10.0;
+    xyscale = qreal( sliderValue) / 50.0;
     QTransform newTransform;
     newTransform = originalTransform;
     newTransform.scale(xyscale,xyscale);
@@ -853,8 +853,7 @@ void S2UI::loadForSA(){
 
     if (smartScanStatus == 1){
         seedList = tipList.at(loadScanNumber);
-        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(loadScanNumber).y;
+        tileLocation = scanList.value(loadScanNumber);
     }else{
         tileLocation.x = 0;
         tileLocation.y = 0;
@@ -1199,17 +1198,19 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
     for (int i= 0; i <maxVal ; i++){
         if (i ==0){ uiS2ParameterMap[i].setCurrentString(currentParameterMap[i].getCurrentString());}
         if (currentParameterMap[i].getExpectedType().contains("float")){
-            if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
+            if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue()){
                 uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if (i==18){
-                //updateROIPlot(QString("ignore"));
-                roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==19){
-                roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==13){
-                roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==14){
-                roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                if (i==18){
+                    roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==19){
+                    roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==13){
+                    roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==14){
+                    roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if ((i==5)||(i==6)){
+                    updateROIPlot("");
+                }
             }
         }
     }
@@ -1236,9 +1237,9 @@ void S2UI::tryXYMove(){
     testL.y = 200.0;
     testL.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
     testL.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
-    float xStage = tryStageXEdit->text().toFloat() ;
-    float yStage= tryStageYEdit->text().toFloat();
-    moveToROIWithStage(testL, xStage, yStage);
+    testL.mcenter.x = tryStageXEdit->text().toFloat() ;
+    testL.mcenter.y = tryStageYEdit->text().toFloat();
+    moveToROIWithStage(testL);
 }
 
 
@@ -1574,9 +1575,11 @@ void S2UI::runBoundingBox(){
 
 
 bool S2UI::isDuplicateROI(LocationSimple inputLocation){
-
-    // add check of relation to full field scan...
-
+//  I have stage-based scanning working, but it's overscanning because
+ //  the stage-specific coordinate handling here is broken- this stuff isn't catching duplicate tiles because their .x locations in allROIlocations and/or scanList
+    //  are inconsistent with their physical space locations
+//again, may be time to subclass the location stuff or add locationsimple as an attribute of my own class that can package up ALL the necessary coordinate systems into one tile location.
+    // might work to keep track of this new tileInfo thing in all my lists and internal methods but then when I communicate with external stuff I pass it only the relevant locationsimple.
 
     // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
     //check against locations already scanned
@@ -1641,6 +1644,11 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
         }
     }
     bool outsideOverview = false;
+    if (stageOnlyCB->isChecked()){ //ignore overview boundaries for stage-only scans.
+        return false;
+    }
+
+
     //now check if the tile location is outside the original overview volume
     int leftSide = ((inputLocation.x-(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
     qDebug()<<"left side = "<<leftSide;
@@ -1671,7 +1679,7 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
 
 }
 void S2UI::smartScanHandler(){
-
+// this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
     if (smartScanStatus!=1){
         status("smartScan aborted");
         scanNumber = 0;
@@ -1762,6 +1770,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         qDebug()<<"s2ROImonitor nextLocation.x = "<<nextLocation.x;
         qDebug()<<"s2ROImonitor nextLocation.ev_pc1 = "<<nextLocation.ev_pc1;
 
+        if (stageOnlyCB->isChecked()){ // set galvo position to zero and adjust stage position accordingly...
+            nextLocation.mcenter.x = nextLocation.mcenter.x+ nextLocation.x*uiS2ParameterMap[8].getCurrentValue(); // there may be a tile size issue here
+            nextLocation.mcenter.y = nextLocation.mcenter.y+ nextLocation.y*uiS2ParameterMap[9].getCurrentValue();
+            nextLocation.x =0.0;
+            nextLocation.y = 0.0;
+        }
         moveToROI(nextLocation);
         TileInfo nextTileInfo = TileInfo(zoomPixelsProduct);
         nextTileInfo.setPixels((int) nextLocation.ev_pc1);
@@ -1796,6 +1810,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
 }
 void S2UI::moveToROI(LocationSimple nextROI){
 
+
+    if (stageOnlyCB->isChecked()){
+        moveToROIWithStage(nextROI);
+        return;
+    }
+
     if( posMonStatus){
         float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
         float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
@@ -1820,17 +1840,21 @@ void S2UI::moveToROI(LocationSimple nextROI){
     }}
 
 
-void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage){
+void S2UI::moveToROIWithStage(LocationSimple nextROI){
+
+
+    float xStage = nextROI.mcenter.x;
+    float yStage = nextROI.mcenter.y;
     if( posMonStatus){
 
 
     // First check the stage position arguments.  Is the move too big?
 
-    float xDiff = xStage-uiS2ParameterMap[5].getCurrentValue();
-    float yDiff = yStage-uiS2ParameterMap[6].getCurrentValue();
+    float xDiff = qAbs(xStage-(-uiS2ParameterMap[5].getCurrentValue()));
+    float yDiff = qAbs(yStage-uiS2ParameterMap[6].getCurrentValue());
     qDebug()<<"xDiff = "<<xDiff;
     qDebug()<<"yDiff = "<<yDiff;
-    if ((xDiff<-1000.0) || (xDiff > 1000.0) || (yDiff<-1000.0) || (yDiff > 1000.0)){
+    if ((xDiff>1000.0)|| (yDiff > 1000.0)){
         qDebug()<<"stage move too large!";
         return;
 
@@ -1849,8 +1873,8 @@ void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage
             nextGalvoY = nextROI.y*scanVoltageConversion;
         }
         LocationSimple newLoc;
-        newLoc.x = -nextGalvoX;
-        newLoc.y = nextGalvoY;
+        newLoc.x = 0;//-nextGalvoX;   this is an ugly way to force stage-only scans.  the alternative is to
+        newLoc.y = 0;//nextGalvoY;
         float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
         float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
 
@@ -1862,146 +1886,6 @@ void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage
     }
 }
 
-
-
-// for the current scheme, we need to
-// log the stage position for each overview.[DONE]
-// then assume it's the same for the first tile,  adding the stage position into the location struct for that tile. [DONE]
-
-// basically, at this point,
-// the stage info will be incorporated into the .x and .y fields, with the initial stage position set to 0,0  or based on a global coordinate system
-// probably centered on the middle of the stage travel.
-//
-
-
-// the problem is just sorting out who pays attention to .x and who pays attention to .mcenter.x and how they're related.
-// right now stackAnalyzer only cares about .x and treats all coordinates in relation to the upper left corner of the image data.
-// when the coordinates come back, I shift them to the center (handleNewLocations) and when they leave, I shift them to the upper left corner
-// (loadlatest)
-
-// I guess I could just add and subtract at those same points...  stackAnalyzer wont know anything about the stage business (good) and I can
-// keep track of the stage vs galvo stuff in my move command
-
-
-
-
-
-
-
-
-// once the tiles come back, how will I be able to check if they've been scanned or not?
-
-
-
-
-
-
-
-
-
-
-
-
-
-// basically, the .x and .y will be the x_stage*pixels/micron  + x_galvo_pixels  and same for y.
-//
-//  when the locations return, the handler will see .x (pixels, including offset of the source tile) and .xStage from the source tile.
-// then, in stage-only mode, the moveLocation command will only adjust the stage, not the galvo. at the same time, the .x and .y values for the location will
-// remain the same, but the .xStage will now be updated in the location list, so that info will be passed along to the next location calculation
-
-// possible problem with center vs upper left coordinates here... .x and .y are upper left, but galvo coordinates are centered.  this is handled in the moveTo
-
-
-//
-// modify the stackanalyzer code to keep track of the stage info, basically
-
-
-//  next phase:  when do you set the stage position?
-// the first tile (starting location) can be safely accompanied by a stage location iff the stage location is latched when the image is collected
-// the stage information is stored in the .xml file, but that's not currently accessed.
-//  for now, this information can be integrated into the 'collectOverview' method.
-
-//  the problem is that this information has to be integrated into the position list
-//
-
-/* sketch for integrating stage information:
- option 1:  always include stage information in all tileLocation data
- option 2:  add/account for stage information at the movetoroi time.
-
-o1:   this is conceptually the most straightforward but introduces potential race conditions with stage locations at the exact moment
-when the locationSimple.mcenter.x is set.
-    basically, now the locationSimple stuff is all just calculated (after the first one which is set by user clicking) and doesn't depend on any
-    other events/timing/etc.   the new locations are calculated based on previous ones, regardless of the state of the system
-
-o2:  conceptually more messy and likely to insert itself in many places in the codebase with additional conditional statements...
-'switch stageMoveMode  0{asdsdfe}   1{sdfasdf} 2{asdfasdf}
-   this would allow you to retain some kind of control over exactly when the stage position is considered, when it's reported, when it's ignored
-   etc.
-   but it will definitely add another wrinkle into an already messy codebase.
-
-   back to o1:
-        you really want 3 things for every tile:
-            1. stage Location
-            2. galvo location (in pixels is OK)
-            3. stage+galvo location in pixels
-
-   for the tile locations in stackAnalyzer,  use (3)
-   for the steering of the galvo, use (2)
-   for the stage positioning, use (1).
-
-   the problem is:
-    when do you convert between them?
-
-1. a new location is determined solely based on (3).  then when the new location comes back, determine if it's outside the current scanUnit
-if so, bump it to the next scanUnit, maintaining its (3) but adjusting 1 and 2.
-
-2. this would allow you to maintain both stage info and the correct pixel location.
-
-3. act on the stage location as follows:
-   when you're looking through the allLocations for more tiles, you first have to consider the stage position
-   basically, i need to make some new methods that act like we're looking for new/any tiles, but are really looking for new/any tiles
-   IN THAT STAGE POSITION!
-either make some new methods here and use them
-or
-subclass the list, including methods to return just the list itself
-
-or make a new class that has the list as an attribute...? that's a little dumb.  then this object will end up with multiple copies of the list
-
-I think it's probably simplest to just make the relevant methods here and apply them.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-While I'm at it,  is there some of this stuff that could be moved into a separate class?  Like all the locations, lists, etc being
-processed by a single object. eventloop problems perhaps? mostly just rewiring to communicate between the s2scan object and this class
-
-it would bascially take:
-loadLatest
-handleNewLocation
-and several other methods
-
-and clean up a bunch of existing methods to turn them from code here into emitting signals from here to the new class.
-
-
-
-
-probably the next best thing would be the ROImonitor.  it has its own graphicsScene, blah blah blah and really not related to running the scope.
-
-Other possibilities:
-
-
-*/
 
 
 
@@ -2187,6 +2071,9 @@ void S2UI::overviewHandler(){
         return;
     }
     if (readyForOverview){
+
+
+        roiGS->addRect(allOverviewStageLocations.last().mcenter.x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().mcenter.y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
         // set up 3-plane z stack here?
         overviewMicronsPerPixel = uiS2ParameterMap[8].getCurrentValue();
         waitingForFile = 0;
@@ -2206,8 +2093,8 @@ void S2UI::startingZStack(){
     waitingForFile = 1;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     status("start single z Stack");
-    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
-    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0 -uiS2ParameterMap[5].getCurrentValue();
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
     colorIndex++;
     roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (smartScanStatus==1){
@@ -2216,6 +2103,7 @@ void S2UI::startingZStack(){
         sequenceNumberText = new QGraphicsTextItem;
         sequenceNumberText->setPos(leftEdge+10,topEdge);
         sequenceNumberText->setPlainText(QString::number(loadScanNumber));
+        sequenceNumberText->setDefaultTextColor(Qt::green);
         roiGS->addItem(sequenceNumberText);
     }
 
@@ -2292,10 +2180,6 @@ void S2UI::runSAStuffClicked(){
     emit processSmartScanSig(s2LineEdit->text());
 }
 
-void S2UI::updateOverlap(int value){
-    overlap = 0.01* ((float) value);
-
-}
 
 
 void S2UI::getCurrentParameters(){
@@ -2485,8 +2369,8 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
     float xPix = scanList.value(imageNumber).x;// this is in pixels, using the expected origin
     float yPix  = scanList.value(imageNumber).y;
     mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
-    mipPixmap->setPos((xPix )*uiS2ParameterMap[8].getCurrentValue(),
-            (yPix )*uiS2ParameterMap[9].getCurrentValue());
+    mipPixmap->setPos((xPix )*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).mcenter.x,
+            (yPix )*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).mcenter.y);
     mipPixmap->setOffset(-x/2.0,-y/2.0 );
 
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
@@ -2506,27 +2390,6 @@ void S2UI::processingFinished(){
 }
 
 
-void S2UI::updateZoom(){
-
-    if (!posMonStatus){
-        status("zoom update failed- posMon inactive");
-        return;
-    }
-    // update current mode only if necessary
-    status("resonantOK: "+QString::number(currentTileInfo.resOK));
-    status("current mode? "+uiS2ParameterMap[0].getCurrentString());
-    // disable mode changes for now- requires more overhead (turning on pmts, pockels cell, etc)
-    //    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
-    //        status("changing active mode");
-    //        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
-    //        }else{
-    //            myController.cleanAndSend("-sts activeMode Galvo");
-    //        }
-    //    }
-    activeModeChecks = 0;
-    activeModeChecker();
-
-}
 
 void S2UI::activeModeChecker(){
     // short-circuit here to disable mode changes
@@ -2555,6 +2418,52 @@ void S2UI::finalizeZoom(){
     status("tileInfo resonantOK: "+currentTileInfo.getTileInfoString().at(5));
 }
 
+
+
+// then, use LocationSimple.category as an indicator of topological (branch) order.
+// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
+
+
+
+
+// =================================  UPDATERS
+// this is both GUI updaters and content/parameter updaters that interact with various handlers
+
+
+
+void S2UI::updateOverlap(int value){
+    overlap = 0.01* ((float) value);
+
+}
+
+void S2UI::updateZoom(){
+
+    if (!posMonStatus){
+        status("zoom update failed- posMon inactive");
+        return;
+    }
+    // update current mode only if necessary
+    status("resonantOK: "+QString::number(currentTileInfo.resOK));
+    status("current mode? "+uiS2ParameterMap[0].getCurrentString());
+    // disable mode changes for now- requires more overhead (turning on pmts, pockels cell, etc)
+    //    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
+    //        status("changing active mode");
+    //        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
+    //        }else{
+    //            myController.cleanAndSend("-sts activeMode Galvo");
+    //        }
+    //    }
+    activeModeChecks = 0;
+    activeModeChecker();
+
+}
+void S2UI::updateZoomPixelsProduct(int ignore){
+
+    zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
+    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2340)"));
+    QTimer::singleShot(10, this, SLOT(initializeROISizes()));
+
+}
 void S2UI::updateCurrentZoom(int currentIndex){
 
     currentTileInfo = tileSizeChoices->at(currentIndex);
@@ -2563,24 +2472,6 @@ void S2UI::updateCurrentZoom(int currentIndex){
 void S2UI::updateZoomHandler(){
 
 }
-
-// then, use LocationSimple.category as an indicator of topological (branch) order.
-// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
-
-
-
-void S2UI::updateZoomPixelsProduct(int ignore){
-
-    zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
-    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2340)"));
-    QTimer::singleShot(10, this, SLOT(initializeROISizes()));
-
-}
-
-
-// =================================  UPDATERS
-
-
 
 void S2UI::updateLipoFactor(int ignore){
     emit updateLipoFactorInSA(((float) lipoFactorSlider->value() )*2.0/100.0);
