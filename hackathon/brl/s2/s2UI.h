@@ -193,6 +193,9 @@ private:
     QLabel * stackZStepSizeLabel;
 
 
+    QCheckBox * stageOnlyCB;
+    QLabel * stageOnlyCBLabel;
+
 
     void createButtonBox1();
 	
@@ -296,7 +299,7 @@ private:
     bool isDuplicateROI(LocationSimple inputLocation);
     void closeEvent(QCloseEvent *event);
 
-
+    LandmarkList allOverviewStageLocations;
 
     LandmarkList allTargetLocations;
     QList<LandmarkList> allScanLocations;

@@ -609,6 +609,13 @@ QGroupBox *S2UI::createTracingParameters(){
     stackZStepSizeSlider->setValue(10);
     stackZStepSizeLabel = new QLabel(tr("z stack step size = 1.0 um"));
 
+    stageOnlyCB = new QCheckBox;
+    stageOnlyCB->setChecked(false);
+    stageOnlyCBLabel = new QLabel(tr("stage-only S2scan"));
+
+
+
+
 
 
     tPL->addWidget(labeli,0,0);
@@ -656,6 +663,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(stackZStepSizeSlider,20,0);
     tPL->addWidget(stackZStepSizeLabel,20,1);
 
+    tPL->addWidget(stageOnlyCB,21,0);
+    tPL->addWidget(stageOnlyCBLabel,21,1);
 
 
     tPBox->setLayout(tPL);
@@ -1293,7 +1302,7 @@ void S2UI::handleAllTargets(){
 
 
     targetIndex++;
-    colorIndex++;
+    colorIndex= colorIndex+20;
     haventRunBoundingBox = true;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
@@ -1378,7 +1387,6 @@ void S2UI::startingSmartScan(){
 
 
 
-            //allScanLocations.append(allROILocations);
             if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
 
             if (runContinuousCB->isChecked()){
@@ -1446,11 +1454,15 @@ void S2UI::startingSmartScan(){
         startLocation.mass = 0;
         startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here
         startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
-        startLocation.x= startLocation.x;//-((float) startLocation.ev_pc1)/2.0;//  initial location is center of starting tile in overview coordinates.
-        startLocation.y= startLocation.y;//-((float) startLocation.ev_pc2)/2.0;
+
+
+
+        // add the starting location to the ROI queue:
+
         allROILocations->append(startLocation);
-        //allScanLocations.append(allROILocations);
-        if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
+
+
+                if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
 
         if (runContinuousCB->isChecked()){
             s2ROIMonitor();
@@ -1473,18 +1485,19 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
             status(QString("and ").append(QString::number(newTipsList.length())).append(" tips"));
-            //            for (int k=0; k<newTipsList.value(i).length();k++){
-            //                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
-            //            }
-            //  if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
-            //                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
-            //                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
-            //}
+
+
 
             qDebug()<<"new landmark pixel size 1 = "<<newLandmarks[i].ev_pc1;
             qDebug()<<"new landmark pixel size 2 = "<<newLandmarks[i].ev_pc2;
             newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
             newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//
+
+            // and remove the stage position offset
+
+            newLandmarks[i].x =newLandmarks[i].x - (newLandmarks[i].mcenter.x / uiS2ParameterMap[8].getCurrentValue());
+            newLandmarks[i].y = newLandmarks[i].y -( newLandmarks[i].mcenter.y/ uiS2ParameterMap[9].getCurrentValue());
+
 
             if (!isDuplicateROI(newLandmarks.value(i))){
 
@@ -1496,10 +1509,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
                 // keeping track of a bunch of ROIs.
-
-                QPen myPen;
-                myPen.setColor(QColor(colorIndex%16+3));
-
+                colorIndex++;
+                QPen myPen =  QPen::QPen(QColor(qAbs(((colorIndex%64)*63+3))%256,qAbs((255-(colorIndex%64)*63+3))%256,qAbs((128+(colorIndex%64)*63+3))%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
                 roiGS->addRect((newLandmarks[i].x-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(), (newLandmarks[i].y-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(),
                         newLandmarks[i].ev_pc1*uiS2ParameterMap[8].getCurrentValue(), newLandmarks[i].ev_pc2*uiS2ParameterMap[8].getCurrentValue(),  myPen);
             }else{
@@ -1806,8 +1817,8 @@ void S2UI::moveToROI(LocationSimple nextROI){
     }else{
         status("start PosMon before moving galvos");
         smartScanStatus = -1;
-    }
-}
+    }}
+
 
 void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage){
     if( posMonStatus){
@@ -1853,7 +1864,65 @@ void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage
 
 
 
+// for the current scheme, we need to
+// log the stage position for each overview.[DONE]
+// then assume it's the same for the first tile,  adding the stage position into the location struct for that tile. [DONE]
 
+// basically, at this point,
+// the stage info will be incorporated into the .x and .y fields, with the initial stage position set to 0,0  or based on a global coordinate system
+// probably centered on the middle of the stage travel.
+//
+
+
+// the problem is just sorting out who pays attention to .x and who pays attention to .mcenter.x and how they're related.
+// right now stackAnalyzer only cares about .x and treats all coordinates in relation to the upper left corner of the image data.
+// when the coordinates come back, I shift them to the center (handleNewLocations) and when they leave, I shift them to the upper left corner
+// (loadlatest)
+
+// I guess I could just add and subtract at those same points...  stackAnalyzer wont know anything about the stage business (good) and I can
+// keep track of the stage vs galvo stuff in my move command
+
+
+
+
+
+
+
+
+// once the tiles come back, how will I be able to check if they've been scanned or not?
+
+
+
+
+
+
+
+
+
+
+
+
+
+// basically, the .x and .y will be the x_stage*pixels/micron  + x_galvo_pixels  and same for y.
+//
+//  when the locations return, the handler will see .x (pixels, including offset of the source tile) and .xStage from the source tile.
+// then, in stage-only mode, the moveLocation command will only adjust the stage, not the galvo. at the same time, the .x and .y values for the location will
+// remain the same, but the .xStage will now be updated in the location list, so that info will be passed along to the next location calculation
+
+// possible problem with center vs upper left coordinates here... .x and .y are upper left, but galvo coordinates are centered.  this is handled in the moveTo
+
+
+//
+// modify the stackanalyzer code to keep track of the stage info, basically
+
+
+//  next phase:  when do you set the stage position?
+// the first tile (starting location) can be safely accompanied by a stage location iff the stage location is latched when the image is collected
+// the stage information is stored in the .xml file, but that's not currently accessed.
+//  for now, this information can be integrated into the 'collectOverview' method.
+
+//  the problem is that this information has to be integrated into the position list
+//
 
 /* sketch for integrating stage information:
  option 1:  always include stage information in all tileLocation data
@@ -1968,6 +2037,11 @@ void S2UI::loadLatest(){
         LocationSimple tileLocation;
         tileLocation.x = scanList.value(loadScanNumber).x-((float)  scanList.value(loadScanNumber).ev_pc1)/2.0;// this is in pixels, using the expected origin
         tileLocation.y = scanList.value(loadScanNumber).y-((float)  scanList.value(loadScanNumber).ev_pc2)/2.0;// outgoing landmarks are shifted to the tile upper left
+        // and the stage location is added
+        tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).mcenter.x/ uiS2ParameterMap[8].getCurrentValue());
+        tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).mcenter.y/ uiS2ParameterMap[9].getCurrentValue());
+
+
         qDebug()<<"tileLocation.x = "<<tileLocation.x;
         qDebug()<<"seedList is empty? "<<seedList.isEmpty();
         bool isSoma = scanNumber==0;
@@ -2088,7 +2162,14 @@ void S2UI::collectOverview(){
     overviewCycles = 0;
     status("start overview");
     emit eventSignal("startZStack");
-
+    LocationSimple overviewLocation;
+    overviewLocation.x = 0.;
+    overviewLocation.y = 0.;
+    overviewLocation.ev_pc1 = 512.0;
+    overviewLocation.ev_pc1 = 512.0;
+    overviewLocation.mcenter.x = -uiS2ParameterMap[5].getCurrentValue();
+    overviewLocation.mcenter.y =  uiS2ParameterMap[6].getCurrentValue();
+    allOverviewStageLocations.append(overviewLocation);
     QTimer::singleShot(0, this, SLOT(overviewHandler()));
 }
 
@@ -2127,7 +2208,8 @@ void S2UI::startingZStack(){
     status("start single z Stack");
     float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
-    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    colorIndex++;
+    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (smartScanStatus==1){
         QGraphicsTextItem* sequenceNumberText;
 
@@ -2366,6 +2448,8 @@ void S2UI::pickTargets(){
         LocationSimple newTarget;
         newTarget.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
         newTarget.y  = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
+        newTarget.mcenter.x = allOverviewStageLocations.last().mcenter.x; // this is the right idea to use the latest overview, but depends on sequential overview imaging and target selection.
+        newTarget.mcenter.y = allOverviewStageLocations.last().mcenter.y;
         startCenter.x = 0.0+newTarget.x;
         startCenter.y = 0.0+newTarget.y;
         startCenter.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
