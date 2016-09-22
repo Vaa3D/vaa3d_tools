@@ -38,13 +38,15 @@ TargetList::TargetList(QWidget *parent) :
     setLayout(mainLayout);
     qDebug()<<"constructed targettable";
     qDebug()<<QString::number(scanLocTable->isVisible());
-    LandmarkList fakeTargetList;
+    QList<TileInfo> fakeTargetList;
     LocationSimple testLoc1;
-
-    fakeTargetList.append(testLoc1);
-
+    TileInfo testInfo;
+    testInfo.setGalvoLocation(testLoc1);
+    fakeTargetList.append(testInfo);
+    LandmarkList fakeList;
+    fakeList.append(testLoc1);
     QList<LandmarkList> fakeScanLocations;
-    fakeScanLocations.append(fakeTargetList);
+    fakeScanLocations.append(fakeList);
 
 
 
@@ -52,10 +54,9 @@ TargetList::TargetList(QWidget *parent) :
 
 }
 
-void TargetList::updateTargetTable(LandmarkList inputTargetList, QList<LandmarkList> inputScanLocations){
+void TargetList::updateTargetTable(QList<TileInfo> inputTargetList, QList<LandmarkList> inputScanLocations){
 
     qDebug()<<"updating Table";
-    targetList = inputTargetList;
     scanLocations = inputScanLocations;
     if (inputTargetList.isEmpty()){
         qDebug()<<"no targets";
@@ -81,14 +82,14 @@ void TargetList::updateTargetTable(LandmarkList inputTargetList, QList<LandmarkL
             cell = new QTableWidgetItem;
             targetTable->setItem(i,1,cell);
         }
-        cell->setText(QString::number(inputTargetList.value(i).x));
+        cell->setText(QString::number(inputTargetList.value(i).getGalvoLocation().x));
 
         cell =   targetTable->item(i,2);
         if (!cell){
             cell = new QTableWidgetItem;
             targetTable->setItem(i,2,cell);
         }
-        cell->setText(QString::number(inputTargetList.value(i).y));
+        cell->setText(QString::number(inputTargetList.value(i).getGalvoLocation().y));
 
 
 

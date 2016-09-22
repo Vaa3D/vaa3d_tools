@@ -249,13 +249,15 @@ void S2Controller::stackSetup(){
 
 
 void S2Controller::stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame){
+    qDebug()<<"caught stackSetup signal";
     centerGalvos();
+    qDebug()<<"centered galvos";
     addToQueue("-zsz "+QString::number(zsize,'f', 4));
     addToQueue("-oz "+QString::number(zoom, 'f',4));
     addToQueue("-sts pixelsPerLine "+QString::number(pixelsPerLine));
     // set mag to 16x
     addToQueue("-sts linesPerFrame "+QString::number(linesPerFrame));
-
+    qDebug()<<"done adding commands to queue";
 //    cleanAndSend("-zsz "+QString::number(zsize,'f', 4));
 //    cleanAndSend("-oz "+QString::number(zoom, 'f',4));
 //    cleanAndSend("-sts pixelsPerLine "+QString::number(pixelsPerLine));

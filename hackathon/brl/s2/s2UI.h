@@ -67,7 +67,7 @@ signals:
 	void noteStatus(QString);
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
-    void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
+    void updateTable(QList<TileInfo> allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
 
     void updateLipoFactorInSA(float);
@@ -96,8 +96,8 @@ private slots:
     void updateROIPlot(QString ignore);
     void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
-    void moveToROI(LocationSimple);
-    void moveToROIWithStage(LocationSimple);
+    void moveToROI(TileInfo);
+    void moveToROIWithStage(TileInfo);
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
@@ -140,7 +140,7 @@ private slots:
 
 private:
     V3DPluginCallback2 * cb;
-   QThread *workerThread;
+    QThread *workerThread;
 
  // Layout and buttons
 
@@ -298,12 +298,24 @@ private:
     bool isDuplicateROI(LocationSimple inputLocation);
     void closeEvent(QCloseEvent *event);
 
-    LandmarkList allOverviewStageLocations;
+    QList<TileInfo> allOverviewStageLocations;
 
-    LandmarkList allTargetLocations;
+    QList<TileInfo> allTargetLocations;
+    QList<TileInfo> *allROILocations;
+
+
     QList<LandmarkList> allScanLocations;
-    LandmarkList *allROILocations;
+
+
+
     QList<LandmarkList> *allTipsList;
+    QList<TileInfo> scanList;
+
+    TileInfo currentTileInfo;
+
+    QList<LandmarkList> tipList;
+
+
     QMap<int, S2Parameter> uiS2ParameterMap;
 
     QString fileString ;
@@ -330,13 +342,9 @@ private:
     float zoomPixelsProduct;
     float zStepSize;
 
-    LandmarkList scanList;
 
     QString fixFileString(QString inputString);
 
-    TileInfo currentTileInfo;
-
-    QList<LandmarkList> tipList;
 
     Image4DSimple*  total4DImage;
 

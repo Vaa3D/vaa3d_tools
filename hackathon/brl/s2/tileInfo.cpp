@@ -9,14 +9,14 @@ TileInfo::TileInfo(float zoomPixelsProduct)
     this->zoomPixelsProduct = zoomPixelsProduct;
     zoomSet = false;
     resOK = false;
+    setZoomPos(6.0);// set default zoom so this constructor actually populates everything needed in getTileInfoString
 }
 
 
-void TileInfo::setZoomPos( float tileZoom, float xPos, float yPos){
+void TileInfo::setZoomPos( float tileZoom){
 
     this->tileZoom = tileZoom;
-    this->xPos = xPos;
-    this->yPos = yPos;
+
     this->pixelsX = zoomPixelsProduct/tileZoom;
     this->pixelsY = pixelsX;
     if (tileZoom<=13.1){resOK = true;}else{resOK =false;}
@@ -36,8 +36,6 @@ QStringList TileInfo::getTileInfoString(){
     a.append(QString::number(pixelsX));
     a.append(QString::number(pixelsY));
     a.append(QString::number(tileZoom));
-    a.append(QString::number(xPos));
-    a.append(QString::number(yPos));
     a.append(QString::number(resOK));
     }
 return a;
@@ -45,6 +43,13 @@ return a;
 float TileInfo::getTileZoom(){if (zoomSet){return tileZoom;}else{return -1;}}
 int TileInfo::getTilePixelsX(){if (zoomSet){return pixelsX;}else{return -1;}}
 int TileInfo::getTilePixelsY(){if (zoomSet){return pixelsY;}else{return -1;}}
+LocationSimple TileInfo::getPixelLocation(){return pixelLocation;}
+LocationSimple TileInfo::getStageLocation(){return stageLocation;}
+LocationSimple TileInfo::getGalvoLocation(){return galvoLocation;}
 
 
+
+void TileInfo::setPixelLocation(LocationSimple loc){pixelLocation=loc;}
+void TileInfo::setStageLocation(LocationSimple loc){stageLocation=loc;}
+void TileInfo::setGalvoLocation(LocationSimple loc){galvoLocation=loc;}
 
