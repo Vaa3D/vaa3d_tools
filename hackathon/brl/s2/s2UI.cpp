@@ -1514,7 +1514,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
 
 
-            LocationSimple pixelsLandmark = newLandmarks[i];   // pixelsLandmark is the tile position in pixels, including the stage information
+            LocationSimple pixelsLandmark = newLandmarks.value(i);   // pixelsLandmark is the tile position in pixels, including the stage information
 
             // and remove the stage position offset
             newLandmarks[i].x =newLandmarks[i].x - (newLandmarks[i].mcenter.x / uiS2ParameterMap[8].getCurrentValue());
@@ -1537,7 +1537,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 // keeping track of a bunch of ROIs.
                 colorIndex++;
                 QPen myPen =  QPen::QPen(QColor(qAbs(((colorIndex%64)*63+3))%256,qAbs((255-(colorIndex%64)*63+3))%256,qAbs((128+(colorIndex%64)*63+3))%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-                roiGS->addRect(pixelsLandmark.x-(((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), pixelsLandmark.y-(((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+                roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[8].getCurrentValue(),
                         ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[8].getCurrentValue(),  myPen);
             }else{
                 status("skip this tile!");
@@ -1584,7 +1584,9 @@ void S2UI::runBoundingBox(){
     }
 
     LocationSimple boundingBoxStageLocation = scanList[0].getStageLocation();  // boundingboxes are ill-defined for stage scans.  this will just put the stage at the position it was for the first tile.
-
+    LocationSimple boundingBoxPixelLocation = boundingBoxLocation;
+    boundingBoxPixelLocation.x = boundingBoxLocation.x+boundingBoxStageLocation.x/uiS2ParameterMap[8].getCurrentValue();
+    boundingBoxPixelLocation.y = boundingBoxLocation.y+boundingBoxStageLocation.y/uiS2ParameterMap[9].getCurrentValue();
 
 
     qDebug()<<"boundingboxlocation.x "<<boundingBoxLocation.x;
@@ -1594,6 +1596,7 @@ void S2UI::runBoundingBox(){
     TileInfo bbTileInfo = TileInfo(zoomPixelsProduct);
     bbTileInfo.setGalvoLocation(boundingBoxLocation);
     bbTileInfo.setStageLocation(boundingBoxStageLocation);
+    bbTileInfo.setPixelLocation(boundingBoxLocation);
     allROILocations->append(bbTileInfo);
 
 
@@ -2354,14 +2357,21 @@ void S2UI::pickTargets(){
     for (int i =0; i<previewTargets.length();i++){
         LocationSimple newTargetGalvo;
         LocationSimple newTargetStage;
+        LocationSimple newTargetPixels;
         TileInfo newTarget = TileInfo(zoomPixelsProduct);
+
         newTargetGalvo.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
 
         newTargetGalvo.y = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
-
+        newTargetGalvo.ev_pc1  = uiS2ParameterMap[10].getCurrentValue();
+        newTargetGalvo.ev_pc2  = uiS2ParameterMap[11].getCurrentValue();
 
         newTargetStage.x = allOverviewStageLocations.last().getStageLocation().x; // this is the right idea to use the latest overview, but depends on sequential overview imaging and target selection.
         newTargetStage.y = allOverviewStageLocations.last().getStageLocation().y;
+
+        newTargetPixels = newTargetGalvo;
+        newTargetPixels.x = newTargetGalvo.x + newTargetStage.x/uiS2ParameterMap[8].getCurrentValue();
+        newTargetPixels.y = newTargetGalvo.y + newTargetStage.y/uiS2ParameterMap[9].getCurrentValue();
 
 
         startCenter.x = 0.0+newTargetGalvo.x;
@@ -2371,7 +2381,7 @@ void S2UI::pickTargets(){
 
         newTarget.setGalvoLocation(newTargetGalvo);
         newTarget.setStageLocation(newTargetStage);
-
+        newTarget.setPixelLocation(newTargetPixels);
 
         targets.append(newTarget);
         LandmarkList startList;
@@ -2453,7 +2463,7 @@ void S2UI::finalizeZoom(){
     scanStatusWaitCycles = 0;
     qDebug()<<"firing singleshot...";
 
-    QTimer::singleShot(5000,this,SLOT(scanStatusHandler()));
+    QTimer::singleShot(50,this,SLOT(scanStatusHandler()));
    // status("tileInfo resonantOK: "+currentTileInfo.getTileInfoString().at(5));
   //  qDebug()<<currentTileInfo.getTileInfoString().at(3);
 }
