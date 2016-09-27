@@ -33,6 +33,8 @@ public slots:
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
+    NeuronTree generate_crossing_swc(Image4DSimple* total4DImage);
+
 
     void ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int max_block_size,int direction,float overlap, int min_block_size);
     bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);

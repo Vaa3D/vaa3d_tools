@@ -419,6 +419,60 @@ NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRoo
     return nt_result;
 }
 
+NeuronTree StackAnalyzer::generate_crossing_swc(Image4DSimple* total4DImage)
+{
+    NeuronTree nt_result;
+
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    //set center node
+    NeuronSWC S;
+    S.n 	= 1;
+    S.type 	= 2;
+    S.x 	= total4DImage->getXDim()/2;
+    S.y 	= total4DImage->getYDim()/2;
+    S.z 	= total4DImage->getZDim()/2;
+    S.r 	= 1;
+    S.pn    = -1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    //set left node
+    S.n 	= 2;
+    S.x 	= 0;
+    S.pn    = 1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    //set right node
+    S.n 	= 3;
+    S.x 	= total4DImage->getXDim()-1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    //set up node
+    S.n 	= 4;
+    S.x 	= total4DImage->getXDim()/2;
+    S.y 	= 0;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    //set down node
+    S.n 	= 5;
+    S.y 	= total4DImage->getYDim()-1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+    nt_result.n = -1;
+    nt_result.on = true;
+    nt_result.listNeuron = listNeuron;
+    nt_result.hashNeuron = hashNeuron;
+
+    return nt_result;
+}
+
 void StackAnalyzer::ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int max_block_size,int direction, float overlap, int min_block_size){
     newTipsList->push_back(tips);
     float min_y = INF, max_y = -INF;
@@ -1374,32 +1428,41 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         qDebug()<<"starting neutube";
     }
 
-
-    qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-    arg.p = (void *) & arg_para; input << arg;
-
-    if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
+    NeuronTree nt;
+    if(methodChoice == 3)
     {
+        nt = generate_crossing_swc(total4DImage);
+        export_list2file(nt.listNeuron, swcString,swcString);
+    }else
+    {
+        qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+        arg.p = (void *) & arg_para; input << arg;
 
-        qDebug()<<("Can not find the tracing plugin!\n");
+        if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
+        {
 
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
-        return;
-    }
+            qDebug()<<("Can not find the tracing plugin!\n");
 
-    NeuronTree nt_most;
-    QString swcMOST = saveDirString;
-    if(methodChoice ==0)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
-    else if(methodChoice ==1)
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-    qDebug()<<"reading SWC file ... "<<swcMOST;
-    nt_most = readSWC_file(swcMOST);
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            return;
+        }
+        NeuronTree nt_most;
+        QString swcMOST = saveDirString;
+        if(methodChoice ==0)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
+        else if(methodChoice ==1)
+            swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
+        qDebug()<<"reading SWC file ... "<<swcMOST;
+        nt_most = readSWC_file(swcMOST);
 
-    if(nt_most.listNeuron.size()<1){
-        qDebug()<<"zero size listNeuron!!";
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
-        return;
+        if(nt_most.listNeuron.size()<1){
+            qDebug()<<"zero size listNeuron!!";
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            return;
+        }
+
+        nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
+        export_list2file(nt.listNeuron, swcString,swcMOST);
     }
 
     LandmarkList imageLandmarks;
@@ -1425,11 +1488,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     markerSaveString = swcString;
     markerSaveString.append(".marker");
     writeMarker_file(markerSaveString, seedsToSave);
-
-    NeuronTree nt;
-    nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
-
-    export_list2file(nt.listNeuron, swcString,swcMOST);
 
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();

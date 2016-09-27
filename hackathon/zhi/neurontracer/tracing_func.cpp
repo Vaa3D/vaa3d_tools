@@ -4395,7 +4395,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         P.in_sz[2] = P.image->getZDim();
     }else
     {
-        if(QFileInfo(fileOpenName).completeSuffix() == "tc")
+        if(fileOpenName.endsWith(".tc",Qt::CaseSensitive))
         {
             Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
@@ -4409,7 +4409,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             P.in_sz[1] = vim.sz[1];
             P.in_sz[2] = vim.sz[2];
 
-        }else if ((QFileInfo(fileOpenName).completeSuffix() == "raw") || (QFileInfo(fileOpenName).completeSuffix() == "v3draw"))
+        }else if (fileOpenName.endsWith(".raw",Qt::CaseSensitive) || fileOpenName.endsWith(".v3draw",Qt::CaseSensitive))
         {
             unsigned char * datald = 0;
             V3DLONG *in_zz = 0;
@@ -4432,7 +4432,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         }
 
         LocationSimple t;
-        if((QFileInfo(P.markerfilename).completeSuffix() == "marker") || (QFileInfo(fileOpenName).completeSuffix() == "MARKER"))
+        if(P.markerfilename.endsWith(".marker",Qt::CaseSensitive))
         {
             vector<MyMarker> file_inmarkers;
             file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
