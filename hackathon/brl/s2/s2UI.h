@@ -295,7 +295,7 @@ private:
 
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
-    bool isDuplicateROI(LocationSimple inputLocation);
+    bool isDuplicateROI(TileInfo inputTileInfo);
     void closeEvent(QCloseEvent *event);
 
     QList<TileInfo> allOverviewStageLocations;

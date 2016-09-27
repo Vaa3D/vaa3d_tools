@@ -292,7 +292,7 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
     roiRect = QRectF(-250, -250, 500, 500);
-    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    //roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
@@ -1525,7 +1525,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
 
-            if (!isDuplicateROI(landmarkTileInfo.getPixelLocation())){
+            if (!isDuplicateROI(landmarkTileInfo)){
 
                 // make a copy of the main list here.
                 // add the new stuff to the copy.
@@ -1537,8 +1537,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 // keeping track of a bunch of ROIs.
                 colorIndex++;
                 QPen myPen =  QPen::QPen(QColor(qAbs(((colorIndex%64)*63+3))%256,qAbs((255-(colorIndex%64)*63+3))%256,qAbs((128+(colorIndex%64)*63+3))%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-                roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-                        ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[8].getCurrentValue(),  myPen);
+                roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
+                        ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
                 status("skip this tile!");
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
@@ -1603,7 +1603,7 @@ void S2UI::runBoundingBox(){
 }
 
 
-bool S2UI::isDuplicateROI(LocationSimple inputLocation){
+bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
 //  I have stage-based scanning working, but it's overscanning because
  //  the stage-specific coordinate handling here is broken- this stuff isn't catching duplicate tiles because their .x locations in allROIlocations and/or scanList
     //  are inconsistent with their physical space locations
@@ -1613,6 +1613,7 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
     // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
     //check against locations already scanned
 
+    LocationSimple inputLocation = inputTileInfo.getPixelLocation();
 
     bool upperLeft =false;
     bool upperRight = false;
@@ -1678,21 +1679,21 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
         return false;
     }
 
-
+LocationSimple    inputGalvoLocation = inputTileInfo.getGalvoLocation();
     //now check if the tile location is outside the original overview volume
-    int leftSide = ((inputLocation.x-(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
+    int leftSide = ((inputGalvoLocation.x-(inputGalvoLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
     qDebug()<<"left side = "<<leftSide;
     if (leftSide  <= 0){outsideOverview = true;};
 
-    int rightSide = ((inputLocation.x+(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the right side of the tile in overview Pixels
+    int rightSide = ((inputGalvoLocation.x+(inputGalvoLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the right side of the tile in overview Pixels
     qDebug()<<"right side = "<<rightSide;
     if (leftSide  > 512){outsideOverview = true;};
 
-    int topSide = ((inputLocation.y-(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the top side of the tile in overview Pixels
+    int topSide = ((inputGalvoLocation.y-(inputGalvoLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the top side of the tile in overview Pixels
     qDebug()<<"top side = "<<topSide;
     if (topSide  <= 0){outsideOverview = true;};
 
-    int bottomSide = ((inputLocation.y+(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the bottom side of the tile in overview Pixels
+    int bottomSide = ((inputGalvoLocation.y+(inputGalvoLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the bottom side of the tile in overview Pixels
     qDebug()<<"bottom side = "<<bottomSide;
     if (bottomSide  > 512){outsideOverview = true;};
 
@@ -2170,7 +2171,7 @@ void S2UI::updateFileString(QString inputString){
 void S2UI::clearROIPlot(){
     roiGS->clear();
     roiRect = QRectF(-400, -400, 800, 800);
-    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+   // roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,10,10);
 }
 
@@ -2411,8 +2412,8 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
         }
     }
     QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
-    float xPixMicrons = scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
-    float yPixMicrons  = scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//
+    float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
+    float yPixMicrons  = scanList.value(imageNumber).getPixelLocation().y*uiS2ParameterMap[9].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//
     mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
     mipPixmap->setPos(xPixMicrons,
             yPixMicrons);
