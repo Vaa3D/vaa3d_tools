@@ -525,6 +525,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB->addItem("adaptive APP2");
     tracingMethodComboB->addItem("adaptive NeuTube");
     tracingMethodComboB->addItem("automatic");
+    tracingMethodComboB->addItem("debugging mode");
     tracingMethodComboB->setCurrentIndex(0);
     methodChoice = 0;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
@@ -903,6 +904,16 @@ void S2UI::loadForSA(){
         //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
+
+    if (tracingMethodComboB->currentIndex()==7){
+        methodChoice= 3;
+        isAdaptive = false;
+
+        //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+    }
+    qDebug()<<"methodChoice "<<methodChoice;
+    qDebug()<<"comboboxCurrentIndex  "<<tracingMethodComboB->currentIndex();
     emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
@@ -1987,6 +1998,14 @@ void S2UI::loadLatest(){
             if (tracingMethodComboB->currentIndex()==6){ //automatic
                 methodChoice= -1;
                 isAdaptive = true;
+
+                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+            }
+
+            if (tracingMethodComboB->currentIndex()==7){ //debugging mode
+                methodChoice= 3;
+                isAdaptive = false;
 
                 //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
