@@ -96,8 +96,8 @@ private slots:
     void updateROIPlot(QString ignore);
     void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
-    void moveToROI(TileInfo);
-    void moveToROIWithStage(TileInfo);
+    void moveToROI(const TileInfo nextROI);
+    void moveToROIWithStage(const TileInfo nextROI);
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();

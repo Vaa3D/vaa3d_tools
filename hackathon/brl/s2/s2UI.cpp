@@ -1842,8 +1842,8 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
     }
 }
-void S2UI::moveToROI(TileInfo nextROI){
-
+void S2UI::moveToROI(const TileInfo nextROI){
+TileInfo myNextROI = nextROI;
 
     if( posMonStatus){
 
@@ -1852,21 +1852,21 @@ void S2UI::moveToROI(TileInfo nextROI){
         LocationSimple nextGalvoLocation = nextROI.getGalvoLocation();
 
         nextStageLocation.x = nextROI.getStageLocation().x+ nextROI.getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue(); // there may be a tile size issue here
-        nextStageLocation.y = nextROI.getStageLocation().y+ nextROI.getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue();
+        nextStageLocation.y = nextROI.getStageLocation().y- nextROI.getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue();
         nextGalvoLocation.x =0.0;
         nextGalvoLocation.y = 0.0;
 
-        nextROI.setGalvoLocation(nextGalvoLocation);
-        nextROI.setStageLocation(nextStageLocation);
+        myNextROI.setGalvoLocation(nextGalvoLocation);
+        myNextROI.setStageLocation(nextStageLocation);
 
 
-        moveToROIWithStage(nextROI);
+        moveToROIWithStage(myNextROI);
         return;
     }
 
         LocationSimple newLoc;
-        newLoc.x = -nextROI.getGalvoLocation().x*scanVoltageConversion;
-        newLoc.y = nextROI.getGalvoLocation().y*scanVoltageConversion;
+        newLoc.x = -myNextROI.getGalvoLocation().x*scanVoltageConversion;
+        newLoc.y = myNextROI.getGalvoLocation().y*scanVoltageConversion;
         emit moveToNext(newLoc);
     }else{
         status("start PosMon before moving galvos");
@@ -1874,7 +1874,7 @@ void S2UI::moveToROI(TileInfo nextROI){
     }}
 
 
-void S2UI::moveToROIWithStage(TileInfo nextROI){
+void S2UI::moveToROIWithStage(const TileInfo nextROI){
     if( posMonStatus){
 
     float xStage = nextROI.getStageLocation().x;

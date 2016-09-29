@@ -40,12 +40,12 @@ QStringList TileInfo::getTileInfoString(){
     }
 return a;
 }
-float TileInfo::getTileZoom(){if (zoomSet){return tileZoom;}else{return -1;}}
-int TileInfo::getTilePixelsX(){if (zoomSet){return pixelsX;}else{return -1;}}
-int TileInfo::getTilePixelsY(){if (zoomSet){return pixelsY;}else{return -1;}}
-LocationSimple TileInfo::getPixelLocation(){return pixelLocation;}
-LocationSimple TileInfo::getStageLocation(){return stageLocation;}
-LocationSimple TileInfo::getGalvoLocation(){return galvoLocation;}
+float TileInfo::getTileZoom()const{if (zoomSet){return tileZoom;}else{return -1;}}
+int TileInfo::getTilePixelsX()const{if (zoomSet){return pixelsX;}else{return -1;}}
+int TileInfo::getTilePixelsY()const{if (zoomSet){return pixelsY;}else{return -1;}}
+LocationSimple TileInfo::getPixelLocation()const{return pixelLocation;}
+LocationSimple TileInfo::getStageLocation()const{return stageLocation;}
+LocationSimple TileInfo::getGalvoLocation()const{return galvoLocation;}
 
 
 

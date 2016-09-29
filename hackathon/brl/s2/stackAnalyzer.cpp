@@ -1431,10 +1431,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     NeuronTree nt;
     if(methodChoice == 3)
     {
-        nt = generate_crossing_swc(total4DImage);
+        if (background<150){ nt = generate_crossing_swc(total4DImage); }
         export_list2file(nt.listNeuron, swcString,swcString);
-    }else
-    {
+    }else{
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
         arg.p = (void *) & arg_para; input << arg;
 

@@ -16,15 +16,15 @@ public:
     void setStageLocation(LocationSimple loc);
     void setGalvoLocation(LocationSimple loc);
 
-    LocationSimple getPixelLocation();
-    LocationSimple getStageLocation();
-    LocationSimple getGalvoLocation();
+    LocationSimple getPixelLocation() const;
+    LocationSimple getStageLocation() const;
+    LocationSimple getGalvoLocation() const;
 
     void setPixels(int pixelNumber);
     QStringList getTileInfoString();
-    float getTileZoom();
-    int getTilePixelsX();
-    int getTilePixelsY();
+    float getTileZoom() const;
+    int getTilePixelsX() const;
+    int getTilePixelsY() const;
     bool resOK;
 
 
