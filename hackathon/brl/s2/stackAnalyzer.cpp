@@ -869,7 +869,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         {
             if(methodChoice == 2)
             {
-                APP2Tracing(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, useGSDT, isSoma);
+                APP2Tracing(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, useGSDT, isSoma, tileLocation);
             }
             else
                 SubtractiveTracing(latestString,imageSaveString, total4DImage, total4DImage_mip, swcString,overlap, background, interrupt,  inputRootList, tileLocation, saveDirString,useGSDT, isSoma, methodChoice);
@@ -881,7 +881,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
     }
 }
 
-void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma)
+void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation)
 {
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
@@ -1083,6 +1083,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
             newTargetList[i].ev_pc1 =(float) total4DImage->getXDim();
             newTargetList[i].ev_pc2 = (float) total4DImage->getYDim();
+            newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }
 
@@ -1295,7 +1296,13 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
             tip_down.push_back(newTip);
         }
     }
-
+    if (!newTargetList.empty())
+    {
+        for (int i = 0; i<newTargetList.length(); i++)
+        {
+            newTargetList[i].mcenter = tileLocation.mcenter;
+        }
+    }
     if(tip_left.size()>0)
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,100,1);
@@ -1574,6 +1581,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+total4DImage->getOriginZ();
             newTargetList[i].ev_pc1 = (double) total4DImage->getXDim();
             newTargetList[i].ev_pc2 = (double) total4DImage->getYDim();
+            newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }
     if (!imageLandmarks.isEmpty()){
@@ -1760,6 +1768,14 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
             {
                 tip_down.push_back(newTip);
             }
+        }
+    }
+
+    if (!newTargetList.empty())
+    {
+        for (int i = 0; i<newTargetList.length(); i++)
+        {
+            newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }
 
