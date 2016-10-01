@@ -78,15 +78,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
-    V3DLONG * plist;
-    try {
-        plist = new V3DLONG[marknum];
-    } catch (...) {
-        cout << "out of memory" << endl;
-        return;
-    }
-
-
     UndirectedGraph g(marknum);
 
     for (int i=0;i<marknum;i++)

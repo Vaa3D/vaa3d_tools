@@ -9,10 +9,42 @@ INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
 INCLUDEPATH     += $$VAA3DPATH/cellseg
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
+INCLUDEPATH     += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/include
+HEADERS += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/include/ANN/ANN.h
+HEADERS += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/bd_tree.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_fix_rad_search.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_pr_search.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_search.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_split.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_tree.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_util.h \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/pr_queue.h
+SOURCES += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/ANN.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/bd_fix_rad_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/bd_pr_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/bd_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/bd_tree.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/brute.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_dump.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_fix_rad_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_pr_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_search.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_split.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_tree.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/kd_util.cpp \
+    $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/src/perf.cpp
+
 
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+
+    PRE_TARGETDEPS = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    LIBS            += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    ANN.target = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    ANN.commands = cd $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann && make macosx-g++
+    ANN.depends = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/Makefile
+    QMAKE_EXTRA_TARGETS += ANN
 }
 
 win32 {
@@ -30,6 +62,13 @@ unix:!macx {
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
+
+    PRE_TARGETDEPS = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    LIBS            += $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    ANN.target = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/lib/libANN.a
+    ANN.commands = cd $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann && make linux-g++
+    ANN.depends = $$VAA3DPATH/../../vaa3d_tools/hackathon/xiaoxiaol/consensus_skeleton_2/ann/Makefile
+    QMAKE_EXTRA_TARGETS += ANN
 }
 
 

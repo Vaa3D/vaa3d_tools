@@ -8,6 +8,28 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "boost/graph/prim_minimum_spanning_tree.hpp"
+#include "boost/config.hpp"
+#include "boost/graph/adjacency_list.hpp"
+
+using namespace boost;
+
+typedef std::pair<int, int> E;
+
+enum edge_lastvoted_t { edge_lastvoted };
+
+namespace boost {
+    BOOST_INSTALL_PROPERTY(edge, lastvoted);
+}
+
+typedef property < edge_weight_t, double >  WeightNew;
+typedef property < edge_lastvoted_t, int, WeightNew> LastVoted;
+
+typedef adjacency_list < vecS, vecS, undirectedS, no_property, LastVoted > UndirectedGraph;
+typedef UndirectedGraph::edge_descriptor EdgeNew;
+typedef std::pair<EdgeNew, bool> EdgeQuery;
+
+
 
 class axon_tracing : public QObject, public V3DPluginInterface2_1
 {

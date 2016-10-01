@@ -16,9 +16,13 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 #include <boost/lexical_cast.hpp>
 
+
+
 Q_EXPORT_PLUGIN2(axon_tracing, axon_tracing);
 
 using namespace std;
+using namespace boost;
+
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 #define INF 1E29
@@ -560,13 +564,7 @@ template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,
 
     V3DLONG marknum = seeds.size();
 
-    double** markEdge = new double*[marknum];
-    for(int i = 0; i < marknum; i++)
-    {
-        markEdge[i] = new double[marknum];
-
-    }
-
+    UndirectedGraph g(marknum);
     double x1,y1,z1;
     for (int i=0;i<marknum;i++)
     {
@@ -575,80 +573,50 @@ template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,
         z1 = seeds.at(i).z;
         for (int j=0;j<marknum;j++)
         {
-            markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
+            EdgeQuery edgeq= edge(i, j, *&g);
+            if (!edgeq.second && i!=j)
+            {
+                int Vedge = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
+                add_edge(i, j, LastVoted(i, WeightNew(Vedge)), *&g);
+            }
         }
     }
-     //NeutronTree structure
+
+    vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(*&g));
+    prim_minimum_spanning_tree(*&g, &p[0]);
+
     NeuronTree marker_MST;
     QList <NeuronSWC> listNeuron;
     QHash <int, int>  hashNeuron;
     listNeuron.clear();
     hashNeuron.clear();
 
-    //set node
-
-    NeuronSWC S;
-    S.n 	= 1;
-    S.type 	= 3;
-    S.x 	= seeds.at(0).x;
-    S.y 	= seeds.at(0).y;
-    S.z 	= seeds.at(0).z;
-    S.r 	= 1;
-    S.pn 	= -1;
-    listNeuron.append(S);
-    hashNeuron.insert(S.n, listNeuron.size()-1);
-
-    int* pi = new int[marknum];
-    for(int i = 0; i< marknum;i++)
-        pi[i] = 0;
-    pi[0] = 1;
-    int indexi,indexj;
-    for(int loop = 0; loop<marknum;loop++)
+    for (std::size_t i = 0; i != p.size(); ++i)
     {
-        double min = INF;
-        for(int i = 0; i<marknum; i++)
-        {
-            if (pi[i] == 1)
-            {
-                for(int j = 0;j<marknum; j++)
-                {
-                    if(pi[j] == 0 && min > markEdge[i][j])
-                    {
-                        min = markEdge[i][j];
-                        indexi = i;
-                        indexj = j;
-                    }
-                }
-            }
+        NeuronSWC S;
+        int pn;
+        if(p[i] == i)
+            pn = -1;
+        else
+            pn = p[i] + 1;
 
-        }
-        if(indexi>=0)
-        {
-            S.n 	= indexj+1;
-            S.type 	= 7;
-            S.x 	= seeds.at(indexj).x;
-            S.y 	= seeds.at(indexj).y;
-            S.z 	= seeds.at(indexj).z;
-            S.r 	= 1;
-            S.pn 	= indexi+1;
-            listNeuron.append(S);
-            hashNeuron.insert(S.n, listNeuron.size()-1);
-
-        }else
-        {
-            break;
-        }
-        pi[indexj] = 1;
-        indexi = -1;
-        indexj = -1;
+        S.n 	= i+1;
+        S.type 	= 7;
+        S.x 	= seeds.at(i).x;
+        S.y 	= seeds.at(i).y;
+        S.z 	= seeds.at(i).z;;
+        S.r 	= 1;
+        S.pn 	= pn;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, listNeuron.size()-1);
     }
+
     marker_MST.n = -1;
     marker_MST.on = true;
     marker_MST.listNeuron = listNeuron;
     marker_MST.hashNeuron = hashNeuron;
 
-    if(markEdge) {delete []markEdge, markEdge = 0;}
-  //  writeSWC_file("mst.swc",marker_MST);
+
     QList<NeuronSWC> marker_MST_sorted;
     if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
     return marker_MST_sorted;
