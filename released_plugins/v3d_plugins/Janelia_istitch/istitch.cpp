@@ -9048,31 +9048,45 @@ int region_navigating(V3DPluginCallback2 &callback, QWidget *parent)
     // look up lut
     for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
     {
-        // init
-        lut_ss.reset();
-        lut_se.reset();
-        lut_es.reset();
-        lut_ee.reset();
+        int check_lu = 0,check_ru = 0,check_ld = 0,check_rd = 0;
 
-        //
-        if(x_s < vim.lut[ii].start_pos[0]) lut_ss[1] = 1; // r  0 l
-        if(y_s < vim.lut[ii].start_pos[1]) lut_ss[0] = 1; // d  0 u
-        if(z_s < vim.lut[ii].start_pos[2]) lut_ss[2] = 1; // b  0 f
+        int check1 = (x_s >=  vim.lut[ii].start_pos[0] && x_s <= vim.lut[ii].end_pos[0])?  1 : 0;
+        int check2 = (x_e >=  vim.lut[ii].start_pos[0] && x_e <= vim.lut[ii].end_pos[0])?  1 : 0;
+        int check3 = (y_s >=  vim.lut[ii].start_pos[1] && y_s <= vim.lut[ii].end_pos[1])?  1 : 0;
+        int check4 = (y_e >=  vim.lut[ii].start_pos[1] && y_e <= vim.lut[ii].end_pos[1])?  1 : 0;
 
-        if(x_e < vim.lut[ii].start_pos[0]) lut_se[1] = 1; // r  0 l
-        if(y_e < vim.lut[ii].start_pos[1]) lut_se[0] = 1; // d  0 u
-        if(z_e < vim.lut[ii].start_pos[2]) lut_se[2] = 1; // b  0 f
+        if(check1*check3) check_lu = 1;
+        if(check2*check3) check_ru = 1;
+        if(check1*check4) check_ld = 1;
+        if(check2*check4) check_rd = 1;
 
-        if(x_s < vim.lut[ii].end_pos[0]) lut_es[1] = 1; // r  0 l
-        if(y_s < vim.lut[ii].end_pos[1]) lut_es[0] = 1; // d  0 u
-        if(z_s < vim.lut[ii].end_pos[2]) lut_es[2] = 1; // b  0 f
 
-        if(x_e < vim.lut[ii].end_pos[0]) lut_ee[1] = 1; // r  0 l
-        if(y_e < vim.lut[ii].end_pos[1]) lut_ee[0] = 1; // d  0 u
-        if(z_e < vim.lut[ii].end_pos[2]) lut_ee[2] = 1; // b  0 f
+//        // init
+//        lut_ss.reset();
+//        lut_se.reset();
+//        lut_es.reset();
+//        lut_ee.reset();
 
-        // copy data
-        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
+//        //
+//        if(x_s < vim.lut[ii].start_pos[0]) lut_ss[1] = 1; // r  0 l
+//        if(y_s < vim.lut[ii].start_pos[1]) lut_ss[0] = 1; // d  0 u
+//        if(z_s < vim.lut[ii].start_pos[2]) lut_ss[2] = 1; // b  0 f
+
+//        if(x_e < vim.lut[ii].start_pos[0]) lut_se[1] = 1; // r  0 l
+//        if(y_e < vim.lut[ii].start_pos[1]) lut_se[0] = 1; // d  0 u
+//        if(z_e < vim.lut[ii].start_pos[2]) lut_se[2] = 1; // b  0 f
+
+//        if(x_s < vim.lut[ii].end_pos[0]) lut_es[1] = 1; // r  0 l
+//        if(y_s < vim.lut[ii].end_pos[1]) lut_es[0] = 1; // d  0 u
+//        if(z_s < vim.lut[ii].end_pos[2]) lut_es[2] = 1; // b  0 f
+
+//        if(x_e < vim.lut[ii].end_pos[0]) lut_ee[1] = 1; // r  0 l
+//        if(y_e < vim.lut[ii].end_pos[1]) lut_ee[0] = 1; // d  0 u
+//        if(z_e < vim.lut[ii].end_pos[2]) lut_ee[2] = 1; // b  0 f
+
+//        // copy data
+//        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
+        if(check_lu || check_ru || check_ld || check_rd)
         {
             //
             cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
