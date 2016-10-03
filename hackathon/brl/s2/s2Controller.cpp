@@ -443,7 +443,7 @@ void S2Controller::posMonListener(QString messageL){
     }
 
     s2ParameterMap[ii].setCurrentString( messageL);
-    if ((ii==1)||(ii==5)||(ii==6)){
+    if ((ii==1)||(ii==6)){  //||(ii==5)
         s2ParameterMap[ii].setCurrentValue(-newValue); // x galvo is flipped, stage coordinates are 'move the image' not 'move the stage'
     }else{
         s2ParameterMap[ii].setCurrentValue(newValue);

@@ -55,7 +55,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     createTargetList();
-    zoomPixelsProduct = 13.0*256;
+    zoomPixelsProduct = 2048.0; //13.0*256;
     currentTileInfo = TileInfo(zoomPixelsProduct);
 
     lhTabs = new QTabWidget();
@@ -98,7 +98,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myTargetTable->show();
     targetIndex = 0;
     colorIndex = 0;
-    overViewPixelToScanPixel = (.926/.204);
+    overViewPixelToScanPixel = (.926/.231);
     overviewMicronsPerPixel  = .926;
     zStepSize = 1.0;
 
@@ -260,6 +260,8 @@ void S2UI::createTargetList(){
 void S2UI::initializeROISizes(){
     tileSizeChoices = new QList<TileInfo>;
     TileInfo myTileInfo = TileInfo(zoomPixelsProduct);
+    myTileInfo.setZoomPos(1);
+    tileSizeChoices->append(myTileInfo);
     myTileInfo.setZoomPos(2);
     tileSizeChoices->append(myTileInfo);
     myTileInfo.setZoomPos(4);
@@ -325,7 +327,7 @@ void S2UI::updateROIPlot(QString ignore){
     //roiRect.setY(roiYEdit->text().toFloat());
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0-uiS2ParameterMap[5].getCurrentValue();
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0+uiS2ParameterMap[5].getCurrentValue();
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
@@ -701,8 +703,8 @@ QGroupBox *S2UI::createConfigPanel(){
 
     startZStackDelaySB = new QSpinBox;
     startZStackDelaySB->setMinimum(0);
-    startZStackDelaySB->setMaximum(1000);
-    startZStackDelaySB->setValue(200);
+    startZStackDelaySB->setMaximum(2000);
+    startZStackDelaySB->setValue(1000);
     startZStackDelaySB->setSuffix("ms");
     startZStackDelayLabel = new QLabel(tr("start stack delay"));
 
@@ -710,7 +712,7 @@ QGroupBox *S2UI::createConfigPanel(){
     zoomSpinBox = new QSpinBox;
     zoomSpinBox->setMaximum(64);
     zoomSpinBox->setMinimum(1);
-    zoomSpinBox->setValue(13);
+    zoomSpinBox->setValue(1);
 
     zoomSpinBoxLabel = new QLabel;
     zoomSpinBoxLabel->setText("zoom");
@@ -718,8 +720,8 @@ QGroupBox *S2UI::createConfigPanel(){
 
     pixelsSpinBox = new QSpinBox;
     pixelsSpinBox->setMinimum(50);
-    pixelsSpinBox->setMaximum(1024);
-    pixelsSpinBox->setValue(180);
+    pixelsSpinBox->setMaximum(2048);
+    pixelsSpinBox->setValue(2048);
 
     pixelsSpinBoxLabel = new QLabel;
     pixelsSpinBoxLabel->setText("pixels");
@@ -1935,7 +1937,7 @@ void S2UI::moveToROIWithStage(const TileInfo nextROI){
 
         // First check the stage position arguments.  Is the move too big?
 
-        float xDiff = qAbs(xStage-(-uiS2ParameterMap[5].getCurrentValue()));
+        float xDiff = qAbs(xStage-(uiS2ParameterMap[5].getCurrentValue()));
         float yDiff = qAbs(yStage-uiS2ParameterMap[6].getCurrentValue());
         qDebug()<<"xDiff = "<<xDiff;
         qDebug()<<"yDiff = "<<yDiff;
@@ -2201,7 +2203,7 @@ void S2UI::startingZStack(){
     waitingForFile = 1;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     status("start single z Stack");
-    float leftEdge = roiXEdit->text().toFloat() - roiXWEdit->text().toFloat()/2.0 -uiS2ParameterMap[5].getCurrentValue();
+    float leftEdge = roiXEdit->text().toFloat() - roiXWEdit->text().toFloat()/2.0 +uiS2ParameterMap[5].getCurrentValue();
     float topEdge =  roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
   //  colorIndex++;
    // roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
@@ -2605,7 +2607,7 @@ void S2UI::updateZoom(){
 void S2UI::updateZoomPixelsProduct(int ignore){
 
     zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
-    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2340)"));
+    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2048)"));
     QTimer::singleShot(10, this, SLOT(initializeROISizes()));
     overViewPixelToScanPixel = ((float) zoomSpinBox->value())*((float) pixelsSpinBox->value()/512.0);
 

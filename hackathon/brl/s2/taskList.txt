@@ -1,3 +1,5 @@
+FINALLY FIXED Monday 9AM
+
 TO DO ON MONDAY:
 
 void S2UI::updateROIPlot(QString ignore){
