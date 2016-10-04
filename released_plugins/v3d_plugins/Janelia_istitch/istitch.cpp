@@ -9049,6 +9049,8 @@ int region_navigating(V3DPluginCallback2 &callback, QWidget *parent)
     for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
     {
         int check_lu = 0,check_ru = 0,check_ld = 0,check_rd = 0;
+        int check_lu2 = 0,check_ru2 = 0,check_ld2 = 0,check_rd2 = 0;
+
 
         int check1 = (x_s >=  vim.lut[ii].start_pos[0] && x_s <= vim.lut[ii].end_pos[0])?  1 : 0;
         int check2 = (x_e >=  vim.lut[ii].start_pos[0] && x_e <= vim.lut[ii].end_pos[0])?  1 : 0;
@@ -9059,6 +9061,22 @@ int region_navigating(V3DPluginCallback2 &callback, QWidget *parent)
         if(check2*check3) check_ru = 1;
         if(check1*check4) check_ld = 1;
         if(check2*check4) check_rd = 1;
+
+        int check5 = (vim.lut[ii].start_pos[0] >= x_s && vim.lut[ii].start_pos[0] <= x_e)?  1 : 0;
+        int check6 = (vim.lut[ii].end_pos[0] >= x_s && vim.lut[ii].end_pos[0] <= x_e)?  1 : 0;
+        int check7 = (vim.lut[ii].start_pos[1] >= y_s && vim.lut[ii].start_pos[1] <= y_e)?  1 : 0;
+        int check8 = (vim.lut[ii].end_pos[1] >= y_s && vim.lut[ii].end_pos[1] <= y_e)?  1 : 0;
+
+        if(check1*check3) check_lu = 1;
+        if(check2*check3) check_ru = 1;
+        if(check1*check4) check_ld = 1;
+        if(check2*check4) check_rd = 1;
+
+        if(check5*check7) check_lu2 = 1;
+        if(check6*check7) check_ru2 = 1;
+        if(check5*check8) check_ld2 = 1;
+        if(check6*check8) check_rd2 = 1;
+
 
 
 //        // init
@@ -9086,7 +9104,7 @@ int region_navigating(V3DPluginCallback2 &callback, QWidget *parent)
 
 //        // copy data
 //        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
-        if(check_lu || check_ru || check_ld || check_rd)
+        if(check_lu || check_ru || check_ld || check_rd || check_lu2 || check_ru2 || check_ld2 || check_rd2)
         {
             //
             cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;

@@ -12,6 +12,8 @@
 #include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "../../../released_plugins/v3d_plugins/neuron_image_profiling/profile_swc.h"
+#include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+
 
 
 #if  defined(Q_OS_LINUX)
@@ -4225,7 +4227,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
    return groupTips;
 }
 
-bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & pVImg_UINT8,V3DLONG startx, V3DLONG starty, V3DLONG startz,
+bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & pVImg_TC,V3DLONG startx, V3DLONG starty, V3DLONG startz,
                      V3DLONG endx, V3DLONG endy, V3DLONG endz)
 {
 
@@ -4252,8 +4254,12 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
     V3DLONG z_e = endz + vim.min_vim[2];
     printf("%d, %d, ,%d, %d, %d, %d\n\n\n\n\n",x_s, y_s, z_s, x_e,y_e,z_e);
 
+    ImagePixelType datatype;
     bool flag_init = true;
-   // unsigned char *pVImg_UINT8 = NULL;
+
+    unsigned char *pVImg_UINT8 = NULL;
+    unsigned short *pVImg_UINT16 = NULL;
+    float *pVImg_FLOAT32 = NULL;
 
     QString curFilePath = QFileInfo(tcfile).path();
     curFilePath.append("/");
@@ -4261,6 +4267,8 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
     for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
     {
         int check_lu = 0,check_ru = 0,check_ld = 0,check_rd = 0;
+        int check_lu2 = 0,check_ru2 = 0,check_ld2 = 0,check_rd2 = 0;
+
 
         int check1 = (x_s >=  vim.lut[ii].start_pos[0] && x_s <= vim.lut[ii].end_pos[0])?  1 : 0;
         int check2 = (x_e >=  vim.lut[ii].start_pos[0] && x_e <= vim.lut[ii].end_pos[0])?  1 : 0;
@@ -4272,33 +4280,22 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
         if(check1*check4) check_ld = 1;
         if(check2*check4) check_rd = 1;
 
+        int check5 = (vim.lut[ii].start_pos[0] >= x_s && vim.lut[ii].start_pos[0] <= x_e)?  1 : 0;
+        int check6 = (vim.lut[ii].end_pos[0] >= x_s && vim.lut[ii].end_pos[0] <= x_e)?  1 : 0;
+        int check7 = (vim.lut[ii].start_pos[1] >= y_s && vim.lut[ii].start_pos[1] <= y_e)?  1 : 0;
+        int check8 = (vim.lut[ii].end_pos[1] >= y_s && vim.lut[ii].end_pos[1] <= y_e)?  1 : 0;
 
-//        // init
-//        lut_ss.reset();
-//        lut_se.reset();
-//        lut_es.reset();
-//        lut_ee.reset();
+        if(check1*check3) check_lu = 1;
+        if(check2*check3) check_ru = 1;
+        if(check1*check4) check_ld = 1;
+        if(check2*check4) check_rd = 1;
 
-//        //
-//        if(x_s < vim.lut[ii].start_pos[0]) lut_ss[1] = 1; // r  0 l
-//        if(y_s < vim.lut[ii].start_pos[1]) lut_ss[0] = 1; // d  0 u
-//       // if(z_s < vim.lut[ii].start_pos[2]) lut_ss[2] = 1; // b  0 f
+        if(check5*check7) check_lu2 = 1;
+        if(check6*check7) check_ru2 = 1;
+        if(check5*check8) check_ld2 = 1;
+        if(check6*check8) check_rd2 = 1;
 
-//        if(x_e < vim.lut[ii].start_pos[0]) lut_se[1] = 1; // r  0 l
-//        if(y_e < vim.lut[ii].start_pos[1]) lut_se[0] = 1; // d  0 u
-//      //  if(z_e < vim.lut[ii].start_pos[2]) lut_se[2] = 1; // b  0 f
-
-//        if(x_s < vim.lut[ii].end_pos[0]) lut_es[1] = 1; // r  0 l
-//        if(y_s < vim.lut[ii].end_pos[1]) lut_es[0] = 1; // d  0 u
-//      //  if(z_s < vim.lut[ii].end_pos[2]) lut_es[2] = 1; // b  0 f
-
-//        if(x_e < vim.lut[ii].end_pos[0]) lut_ee[1] = 1; // r  0 l
-//        if(y_e < vim.lut[ii].end_pos[1]) lut_ee[0] = 1; // d  0 u
-//      //  if(z_e < vim.lut[ii].end_pos[2]) lut_ee[2] = 1; // b  0 f
-
-//        // copy data
-//        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
-        if(check_lu || check_ru || check_ld || check_rd)
+        if(check_lu || check_ru || check_ld || check_rd || check_lu2 || check_ru2 || check_ld2 || check_rd2)
         {
             //
             cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
@@ -4314,9 +4311,20 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
             qDebug()<<"testing..."<<curFilePath<< fn.c_str();
 
+            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                continue;
+            }
+            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
+
 
             if(flag_init)
             {
+                if(datatype_relative == V3D_UINT8)
+                {
+                    datatype = V3D_UINT8;
+
                     try
                     {
                         pVImg_UINT8 = new unsigned char [pagesz_vim];
@@ -4332,14 +4340,51 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
                     flag_init = false;
 
-            }
+                }
+                else if(datatype_relative == V3D_UINT16)
+                {
+                    datatype = V3D_UINT16;
 
-            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
-            {
-                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
-                continue;
+                    try
+                    {
+                        pVImg_UINT16 = new unsigned short [pagesz_vim];
+                    }
+                    catch (...)
+                    {
+                        printf("Fail to allocate memory.\n");
+                        return false;
+                    }
+
+                    // init
+                    memset(pVImg_UINT16, 0, pagesz_vim*sizeof(unsigned short));
+
+                    flag_init = false;
+                }
+                else if(datatype_relative == V3D_FLOAT32)
+                {
+                    datatype = V3D_FLOAT32;
+
+                    try
+                    {
+                        pVImg_FLOAT32 = new float [pagesz_vim];
+                    }
+                    catch (...)
+                    {
+                        printf("Fail to allocate memory.\n");
+                        return false;
+                    }
+
+                    // init
+                    memset(pVImg_FLOAT32, 0, pagesz_vim*sizeof(float));
+
+                    flag_init = false;
+                }
+                else
+                {
+                    printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                    return false;
+                }
             }
-            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
 
             //
             V3DLONG tile2vi_xs = vim.lut[ii].start_pos[0]-vim.min_vim[0];
@@ -4367,16 +4412,64 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
             //
             cout << x_start << " " << x_end << " " << y_start << " " << y_end << " " << z_start << " " << z_end << endl;
-            region_groupfusing<unsigned char>(pVImg_UINT8, vim, relative1d,
+            try
+            {
+                pVImg_TC = new unsigned char [pagesz_vim];
+            }
+            catch (...)
+            {
+                printf("Fail to allocate memory.\n");
+                return false;
+            }
+            double min,max;
+            if(datatype == V3D_UINT8)
+            {
+                region_groupfusing<unsigned char>(pVImg_UINT8, vim, relative1d,
                                                   vx, vy, vz, vc, rx, ry, rz, rc,
                                                   tile2vi_zs, tile2vi_ys, tile2vi_xs,
-                                                  z_start, z_end, y_start, y_end, x_start, x_end, start);
+                                                  z_start, z_end, y_start, y_end, x_start, x_end, start);            }
+            else if(datatype == V3D_UINT16)
+            {
+                region_groupfusing<unsigned short>(pVImg_UINT16, vim, relative1d,
+                                                   vx, vy, vz, vc, rx, ry, rz, rc,
+                                                   tile2vi_zs, tile2vi_ys, tile2vi_xs,
+                                                   z_start, z_end, y_start, y_end, x_start, x_end, start);
+            }
+            else if(datatype == V3D_FLOAT32)
+            {
+                region_groupfusing<float>(pVImg_FLOAT32, vim, relative1d,
+                                          vx, vy, vz, vc, rx, ry, rz, rc,
+                                          tile2vi_zs, tile2vi_ys, tile2vi_xs,
+                                          z_start, z_end, y_start, y_end, x_start, x_end, start);            }
+            else
+            {
+                printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                return false;
+            }
+
 
             //de-alloc
             if(relative1d) {delete []relative1d; relative1d=0;}
         }
 
     }
+
+    double min,max;
+    if(datatype == V3D_UINT8)
+    {
+        memcpy(pVImg_TC, pVImg_UINT8, pagesz_vim);
+    }else if(datatype == V3D_UINT16)
+    {
+        rescale_to_0_255_and_copy(pVImg_UINT16,pagesz_vim,min,max,pVImg_TC);
+    }else if(datatype == V3D_FLOAT32)
+    {
+        rescale_to_0_255_and_copy(pVImg_FLOAT32,pagesz_vim,min,max,pVImg_TC);
+    }
+
+    if(pVImg_UINT8) {delete []pVImg_UINT8; pVImg_UINT8=0;}
+    if(pVImg_UINT16) {delete []pVImg_UINT16; pVImg_UINT16 =0;}
+    if(pVImg_FLOAT32) {delete []pVImg_FLOAT32; pVImg_FLOAT32 =0;}
+
     return true;
 }
 
