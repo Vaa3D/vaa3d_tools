@@ -1083,6 +1083,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
             newTargetList[i].ev_pc1 =(float) total4DImage->getXDim();
             newTargetList[i].ev_pc2 = (float) total4DImage->getYDim();
+            newTargetList[i].ave = tileLocation.ave;
             newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }
@@ -1300,6 +1301,7 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
     {
         for (int i = 0; i<newTargetList.length(); i++)
         {
+            newTargetList[i].ave = tileLocation.ave;
             newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }
@@ -1582,6 +1584,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].ev_pc1 = (double) total4DImage->getXDim();
             newTargetList[i].ev_pc2 = (double) total4DImage->getYDim();
             newTargetList[i].mcenter = tileLocation.mcenter;
+            newTargetList[i].ave = tileLocation.ave;
         }
     }
     if (!imageLandmarks.isEmpty()){
@@ -1775,6 +1778,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
         for (int i = 0; i<newTargetList.length(); i++)
         {
+            newTargetList[i].ave = tileLocation.ave;
             newTargetList[i].mcenter = tileLocation.mcenter;
         }
     }

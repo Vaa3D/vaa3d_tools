@@ -41,6 +41,10 @@ public:
     QLineEdit *s2LineEdit;
 
     StackAnalyzer *myStackAnalyzer;
+    StackAnalyzer *myStackAnalyzer0;
+    StackAnalyzer *myStackAnalyzer1;
+    StackAnalyzer *myStackAnalyzer2;
+
     EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
@@ -79,6 +83,9 @@ signals:
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
 
 
 private slots:
@@ -115,7 +122,7 @@ private slots:
     void pickTargets();
     void startAllTargets();
     void handleAllTargets();
-    void loadMIP(int imageNumber, Image4DSimple* mip);
+    void loadMIP(double imageNumber, Image4DSimple* mip);
     void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
@@ -141,6 +148,9 @@ private slots:
 private:
     V3DPluginCallback2 * cb;
     QThread *workerThread;
+    QThread *workerThread0;
+    QThread *workerThread1;
+    QThread *workerThread2;
 
  // Layout and buttons
 
@@ -342,6 +352,8 @@ private:
     float zoomPixelsProduct;
     float zStepSize;
 
+
+    int traceThreadNumber;
 
     QString fixFileString(QString inputString);
 

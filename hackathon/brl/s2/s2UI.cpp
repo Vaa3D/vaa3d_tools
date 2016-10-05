@@ -33,6 +33,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     cb = &callback;
 
     myStackAnalyzer = new StackAnalyzer(callback);
+
+    myStackAnalyzer0 = new StackAnalyzer(callback);
+    myStackAnalyzer1 = new StackAnalyzer(callback);
+    myStackAnalyzer2 = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("");
 
@@ -109,6 +113,19 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer->moveToThread(workerThread);
     workerThread->start();
 
+    workerThread0 = new QThread;
+    myStackAnalyzer0->moveToThread(workerThread0);
+    workerThread0->start();
+
+    workerThread1 = new QThread;
+    myStackAnalyzer1->moveToThread(workerThread1);
+    workerThread1->start();
+
+    workerThread2 = new QThread;
+    myStackAnalyzer2->moveToThread(workerThread2);
+    workerThread2->start();
+
+    traceThreadNumber =0;
 
     posMonStatus = false;
     waitingForFile = 0;
@@ -212,26 +229,86 @@ void S2UI::hookUpSignalsAndSlots(){
     // communication with  myStackAnalyzer
 
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer1,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer2,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+
+    connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer0, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer1, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer2, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+
 
 
     connect(this, SIGNAL(callSAGridLoad(QString,LocationSimple,QString)), myStackAnalyzer,SLOT(loadGridScan(QString,LocationSimple,QString)));
+
+
+
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
-    connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
 
 
-    connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
-
-
     connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer, SLOT(updateRedAlpha(float)));
     connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer,SLOT(updateRedThreshold(int)));
-
     connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer, SLOT(updateLipoMethod(int)));
-
-
     connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer0,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer0, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer0,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer0, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer0, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer1,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer1, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer1,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer1, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer1, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer2,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer2, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer2,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer2, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer2, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
@@ -863,7 +940,7 @@ void S2UI::loadForSA(){
         tileLocation.y = 0;
         seedList.clear();
     }
-    bool isSoma = scanNumber==0;
+    bool isSoma = loadScanNumber==0;
     qDebug()<<workerThread->currentThreadId();
     QTimer::singleShot(0,this, SLOT(processingStarted()));
     bool isAdaptive = false;
@@ -920,9 +997,28 @@ void S2UI::loadForSA(){
     }
     qDebug()<<"methodChoice "<<methodChoice;
     qDebug()<<"comboboxCurrentIndex  "<<tracingMethodComboB->currentIndex();
+
+    if (traceThreadNumber==0){
     emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+    }else if (traceThreadNumber==1){
+        emit callSATrace0(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
+    }else if (traceThreadNumber==2){
+        emit callSATrace1(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+    }else if (traceThreadNumber==3){
+        emit callSATrace2(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+    }
+    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+    traceThreadNumber++;
+    traceThreadNumber = traceThreadNumber%4;
+    qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
 }
 
 
@@ -1370,7 +1466,7 @@ void S2UI::startingSmartScan(){
         outputStream.setDevice(&saveTextFile);
         if (allROILocations->isEmpty()){
             scanList.clear();
-            scanNumber = 0;
+            //scanNumber = 0;
             loadScanNumber = 0;
             status("starting smartScan...");
             if (allTargetStatus ==0){
@@ -1460,7 +1556,7 @@ void S2UI::startingSmartScan(){
     if (allROILocations->isEmpty()){ // start smartscan of new target
         scanList.clear();
         tipList.clear();
-        scanNumber = 0;
+        //scanNumber = 0;
         loadScanNumber = 0;
         status("starting smartScan...");
 
@@ -1511,7 +1607,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     QTimer::singleShot(0,this, SLOT(processingFinished()));
     qDebug()<<"back in S2UI with new locations";
 
-    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanNumber)));
+    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
     for (int i = 0; i<newLandmarks.length(); i++){
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
@@ -1580,8 +1676,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
-    loadMIP(scanNumber, mip);
-    scanNumber++;
+    loadMIP(newLandmarks.first().ave, mip);
+    //scanNumber++;
     myNotes->save();
 
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
@@ -1749,7 +1845,7 @@ void S2UI::smartScanHandler(){
     // this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
     if (smartScanStatus!=1){
         status("smartScan aborted");
-        scanNumber = 0;
+        //scanNumber = 0;
         loadScanNumber = 0;
         saveTextFile.close();
         emit processSmartScanSig(scanDataFileString);
@@ -1758,7 +1854,7 @@ void S2UI::smartScanHandler(){
         }else{        myEventLogger->processEvents(eventLogString);}
         return;
     }
-    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber))){//scanNumber is incremented AFTER the tracing results come in
+    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(loadScanNumber))){//scanNumber is incremented AFTER the tracing results come in
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -1930,15 +2026,15 @@ void S2UI::moveToROI(const TileInfo nextROI){
 void S2UI::moveToROIWithStage(const TileInfo nextROI){
     if( posMonStatus){
 
-        float xStage = nextROI.getStageLocation().x;
+        float xStage =  nextROI.getStageLocation().x;
         float yStage = -nextROI.getStageLocation().y;
 
 
 
         // First check the stage position arguments.  Is the move too big?
 
-        float xDiff = qAbs(xStage-(uiS2ParameterMap[5].getCurrentValue()));
-        float yDiff = qAbs(yStage-uiS2ParameterMap[6].getCurrentValue());
+        float xDiff = qAbs(xStage -uiS2ParameterMap[5].getCurrentValue());
+        float yDiff = qAbs(yStage -uiS2ParameterMap[6].getCurrentValue());
         qDebug()<<"xDiff = "<<xDiff;
         qDebug()<<"yDiff = "<<yDiff;
         if ((xDiff>1000.0)|| (yDiff > 1000.0)){
@@ -2011,10 +2107,10 @@ void S2UI::loadLatest(){
         // throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
         tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
         tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
-
+        tileLocation.ave= loadScanNumber;
         qDebug()<<"tileLocation.x = "<<tileLocation.x;
         qDebug()<<"seedList is empty? "<<seedList.isEmpty();
-        bool isSoma = scanNumber==0;
+        bool isSoma = loadScanNumber==0;
         if (gridScanStatus!=0){
             emit eventSignal("startGridLoad");
 
@@ -2078,8 +2174,38 @@ void S2UI::loadLatest(){
             }
             qDebug()<<"isadaptive = "<<isAdaptive;
             qDebug()<<"methodChoice = "<<methodChoice;
-            emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                             this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+
+
+            if (traceThreadNumber==0){
+                emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+             }else if (traceThreadNumber==1){
+                emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }else if (traceThreadNumber==2){
+                emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }else if (traceThreadNumber==3){
+                emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }
+
+
+            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+            traceThreadNumber++;
+            traceThreadNumber = traceThreadNumber%4;
+            qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+
 
 
             QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
@@ -2117,7 +2243,7 @@ void S2UI::loadingDone(Image4DSimple *mip){
     emit eventSignal("finishedGridLoad");
 
     if (gridScanStatus>0){
-        loadMIP(loadScanNumber, mip);
+        loadMIP((double) loadScanNumber, mip);
     }
     if ((gridScanStatus ==-1)&&(waitingForFile<1)){
         emit eventSignal("finishedGridScan");
@@ -2492,7 +2618,7 @@ void S2UI::pickTargets(){
 
 
 
-void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
+void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
     scaleintensity(mip,0,0,8000,double(0),double(255));
     scale_img_and_convert28bit(mip, 0, 255) ;
     QImage myMIP;

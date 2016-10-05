@@ -1,3 +1,26 @@
+fudge.  I tried 1.2 below with 4 threads for tracing, but of course they're truly asynchronous and converge back into one node that's trying
+to run a  FIFO list based on scan order.  if a tile comes back faster because it's more sparse or whatever, the result is garbage because
+my code expects it to be the tile last picked from the list!
+
+need to revise this scheme to instead have a growing list of tiles and when the data is sent over to stackAnalyzer, add the index of that list to
+some field in the location struct.
+
+
+
+
+NEXT:
+1.  get more cores involved in tracing.  either 1) figure out how to spawn, connect, run and destroy a stackAnalyzer for each image or
+2.) hand-code N = 3? threads for this purpose.
+
+improve timing documentation and online metaAnalysis
+1. add a simple clock for each s2scan.  this is like 2 calls to qt.time and recording the data in a new txt file
+2. add a simple clock for each tile.  this will be more tricky, but relatively straightforward. up to 100s of tiles, so each s2 scan can have a summary
+file that includes this stuff, I think.  relevant data: start signal time, analysis start time, analysis finish time.  the hangup here is that
+everything needs to be asynchronous and previously I just relied on serial ordering to try to sort things out.  It should be done with a hash of somekind
+or even just a unique identifier generated for each tile (good idea)
+3. other tile info?  area, nVoxels, npixXY, some filename info...
+
+
 FINALLY FIXED Monday 9AM
 
 TO DO ON MONDAY:
