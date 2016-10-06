@@ -1245,7 +1245,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
     else
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+       // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
         finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
     }
 

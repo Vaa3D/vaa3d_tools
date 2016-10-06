@@ -62,6 +62,13 @@ void interpolate_path(Segment * seg)
     Segment seg_r;
     Point* seg_par = seg->back()->p;
     seg_r.push_back(seg->at(0));
+    double start_radius;
+    Point* start_node = seg->at(seg->size()-1);
+    if(start_node->p->type == 1)
+        start_radius = start_node->r;
+    else
+        start_radius = start_node->p->r;
+
     for(V3DLONG iter_old = 1;iter_old < seg->size();iter_old++)
     {
         Point* start = seg->at(iter_old);
@@ -69,7 +76,7 @@ void interpolate_path(Segment * seg)
         pt->x = start->x;
         pt->y = start->y;
         pt->z = start->z;
-        pt->r = seg->at(0)->r + iter_old*(seg->at(seg->size()-1)->r-seg->at(0)->r)/(seg->size()-1);
+        pt->r = seg->at(0)->r + iter_old*(start_radius-seg->at(0)->r)/(seg->size()-1);
         pt->p = start->p;
         pt->type = start->type;
         seg_r.back()->p = pt;
