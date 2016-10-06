@@ -1,3 +1,230 @@
+fudge.  I tried 1.2 below with 4 threads for tracing, but of course they're truly asynchronous and converge back into one node that's trying
+to run a  FIFO list based on scan order.  if a tile comes back faster because it's more sparse or whatever, the result is garbage because
+my code expects it to be the tile last picked from the list!
+
+need to revise this scheme to instead have a growing list of tiles and when the data is sent over to stackAnalyzer, add the index of that list to
+some field in the location struct.
+
+
+
+
+NEXT:
+1.  get more cores involved in tracing.  either 1) figure out how to spawn, connect, run and destroy a stackAnalyzer for each image or
+2.) hand-code N = 3? threads for this purpose.
+
+improve timing documentation and online metaAnalysis
+1. add a simple clock for each s2scan.  this is like 2 calls to qt.time and recording the data in a new txt file
+2. add a simple clock for each tile.  this will be more tricky, but relatively straightforward. up to 100s of tiles, so each s2 scan can have a summary
+file that includes this stuff, I think.  relevant data: start signal time, analysis start time, analysis finish time.  the hangup here is that
+everything needs to be asynchronous and previously I just relied on serial ordering to try to sort things out.  It should be done with a hash of somekind
+or even just a unique identifier generated for each tile (good idea)
+3. other tile info?  area, nVoxels, npixXY, some filename info...
+
+
+FINALLY FIXED Monday 9AM
+
+TO DO ON MONDAY:
+
+void S2UI::updateROIPlot(QString ignore){
+    //roiRect.moveLeft(roiXEdit->text().toFloat());
+    //roiRect.setY(roiYEdit->text().toFloat());
+    //qDebug()<<"y="<<roiYEdit->text().toFloat();
+    roiGS->removeItem(newRect);
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0-uiS2ParameterMap[5].getCurrentValue();
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
+    newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
+    //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+
+
+    //this value for x and y stage is correct (i.e. it moves to the right location in the sample as the microscope galvo or stage changes.
+    //however, the x position of the overview tile location is mirrored in x about the stage x = 0 axis.  this error propagates into subsequent locations some of the time!
+
+}
+
+ grabbed a bunch of notes/comments from the s2ui.cpp
+
+AS OF NOW  2016.09.20 17:13
+the tile stage data is being collected from the scope when an overview is collected.
+the target selection is linked to the stage coordinates of the last overview.
+inside s2ui, the galvo location is .x and the stage location is .mcenter.x
+when I pass the tile location information to stackAnalyzer, I make .x and .y the global pixel coordinates
+                (i.e. account for stage location and account for upper-left origin of the image pixels)
+when new locations come back from stackanalyzer, I undo this process, based on the .ev_pc1 and .mcenter.x data from those new locations.
+
+
+this scheme should work and keeps the stackanalyzer code ignorant of the stage/galvo/whatever and allows it to just spit back image coordinates
+
+remaining work:
+0. add stage info to graphicsScene
+1. implement stage-only move commands within the s2scan process.  these will be based on the returning .x (after the above corrections)
+
+2. modify the duplicateROI method to first shift to global pixel coordinates before checking.  THIS is really where it's clear that all 3 coordinate
+systems should be stored in the struct.  now I'll have to do the subtraction, multiplication, etc for every tile location every time I cycle through them checking for duplicate locations.
+
+3.  test stage-only scans.
+
+
+4.  how can I work out the case with BOTH modalities?  it really sucks- you have to keep track of edge tiles, bump to the next stage location,
+handle all the borderline cases, probably need different logic to prevent retracing.
+
+
+
+
+// for the current scheme, we need to
+// log the stage position for each overview.[DONE]
+// then assume it's the same for the first tile,  adding the stage position into the location struct for that tile. [DONE]
+
+// basically, at this point,
+// the stage info will be incorporated into the .x and .y fields, with the initial stage position set to 0,0  or based on a global coordinate system
+// probably centered on the middle of the stage travel.
+//
+
+
+// the problem is just sorting out who pays attention to .x and who pays attention to .mcenter.x and how they're related.
+// right now stackAnalyzer only cares about .x and treats all coordinates in relation to the upper left corner of the image data.
+// when the coordinates come back, I shift them to the center (handleNewLocations) and when they leave, I shift them to the upper left corner
+// (loadlatest)
+
+// I guess I could just add and subtract at those same points...  stackAnalyzer wont know anything about the stage business (good) and I can
+// keep track of the stage vs galvo stuff in my move command
+
+
+
+
+
+
+
+
+// once the tiles come back, how will I be able to check if they've been scanned or not?
+
+
+
+
+
+
+
+
+
+
+
+
+
+// basically, the .x and .y will be the x_stage*pixels/micron  + x_galvo_pixels  and same for y.
+//
+//  when the locations return, the handler will see .x (pixels, including offset of the source tile) and .xStage from the source tile.
+// then, in stage-only mode, the moveLocation command will only adjust the stage, not the galvo. at the same time, the .x and .y values for the location will
+// remain the same, but the .xStage will now be updated in the location list, so that info will be passed along to the next location calculation
+
+// possible problem with center vs upper left coordinates here... .x and .y are upper left, but galvo coordinates are centered.  this is handled in the moveTo
+
+
+//
+// modify the stackanalyzer code to keep track of the stage info, basically
+
+
+//  next phase:  when do you set the stage position?
+// the first tile (starting location) can be safely accompanied by a stage location iff the stage location is latched when the image is collected
+// the stage information is stored in the .xml file, but that's not currently accessed.
+//  for now, this information can be integrated into the 'collectOverview' method.
+
+//  the problem is that this information has to be integrated into the position list
+//
+
+/* sketch for integrating stage information:
+ option 1:  always include stage information in all tileLocation data
+ option 2:  add/account for stage information at the movetoroi time.
+
+o1:   this is conceptually the most straightforward but introduces potential race conditions with stage locations at the exact moment
+when the locationSimple.mcenter.x is set.
+    basically, now the locationSimple stuff is all just calculated (after the first one which is set by user clicking) and doesn't depend on any
+    other events/timing/etc.   the new locations are calculated based on previous ones, regardless of the state of the system
+
+o2:  conceptually more messy and likely to insert itself in many places in the codebase with additional conditional statements...
+'switch stageMoveMode  0{asdsdfe}   1{sdfasdf} 2{asdfasdf}
+   this would allow you to retain some kind of control over exactly when the stage position is considered, when it's reported, when it's ignored
+   etc.
+   but it will definitely add another wrinkle into an already messy codebase.
+
+   back to o1:
+        you really want 3 things for every tile:
+            1. stage Location
+            2. galvo location (in pixels is OK)
+            3. stage+galvo location in pixels
+
+   for the tile locations in stackAnalyzer,  use (3)
+   for the steering of the galvo, use (2)
+   for the stage positioning, use (1).
+
+   the problem is:
+    when do you convert between them?
+
+1. a new location is determined solely based on (3).  then when the new location comes back, determine if it's outside the current scanUnit
+if so, bump it to the next scanUnit, maintaining its (3) but adjusting 1 and 2.
+
+2. this would allow you to maintain both stage info and the correct pixel location.
+
+3. act on the stage location as follows:
+   when you're looking through the allLocations for more tiles, you first have to consider the stage position
+   basically, i need to make some new methods that act like we're looking for new/any tiles, but are really looking for new/any tiles
+   IN THAT STAGE POSITION!
+either make some new methods here and use them
+or
+subclass the list, including methods to return just the list itself
+
+or make a new class that has the list as an attribute...? that's a little dumb.  then this object will end up with multiple copies of the list
+
+I think it's probably simplest to just make the relevant methods here and apply them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+While I'm at it,  is there some of this stuff that could be moved into a separate class?  Like all the locations, lists, etc being
+processed by a single object. eventloop problems perhaps? mostly just rewiring to communicate between the s2scan object and this class
+
+it would bascially take:
+loadLatest
+handleNewLocation
+and several other methods
+
+and clean up a bunch of existing methods to turn them from code here into emitting signals from here to the new class.
+
+
+
+
+probably the next best thing would be the ROImonitor.  it has its own graphicsScene, blah blah blah and really not related to running the scope.
+
+Other possibilities:
+
+
+*/
+
+
+
+
+2016.09.16
+yesterday
+1.  xy stage info was already being monitored in posMon mode so it's already just as fast as the galvo monitoring.
+2. I added xy moves to the various moveToROI methods in s2controller and s2ui signals and hooked it up to a simple testing field/button/whatever
+
+NOW:
+1. incorporate stage location into tile location...
+locationSimple has .x .y .ev_pc1 .ev_pc2  in use
+but there is also
+locationSimple.mcenter  which is a 3d coordinate...
+locationSimple.mcenter.x .y .z  will represent the current stage motor positions
+
+
 2016.09.15
 uhh  adding stage control to s2...
 1. add new s2controller instance to handle the position polling and another to handle the xy position commands

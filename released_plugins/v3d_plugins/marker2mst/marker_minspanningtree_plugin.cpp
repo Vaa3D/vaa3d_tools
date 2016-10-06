@@ -8,6 +8,7 @@
 #include <vector>
 #include "marker_minspanningtree_plugin.h"
 #include "basic_surf_objs.h"
+#include "../../../hackathon/xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
 
 #include <iostream>
 
@@ -19,6 +20,8 @@
 
 #define INF 1E9
 using namespace std;
+using namespace boost;
+
 Q_EXPORT_PLUGIN2(marker2mst, markertree);
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 
@@ -74,6 +77,67 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         v3d_msg("No markers in the current image, please double check.");
         return;
     }
+
+    UndirectedGraph g(marknum);
+
+    for (int i=0;i<marknum;i++)
+    {
+        tmpLocation = listLandmarks.at(i);
+        tmpLocation.getCoord(tmpx,tmpy,tmpz);
+        x1 = tmpx;
+        y1 = tmpy;
+        z1 = tmpz;
+        for (int j=0;j<marknum;j++)
+        {
+            EdgeQuery edgeq = edge(i, j, *&g);
+            if (!edgeq.second && i!=j)
+            {
+                tmpLocation = listLandmarks.at(j);
+                tmpLocation.getCoord(tmpx,tmpy,tmpz);
+                double Vedge = sqrt(double(x1-tmpx)*double(x1-tmpx) + double(y1-tmpy)*double(y1-tmpy) + double(z1-tmpz)*double(z1-tmpz));
+                add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
+            }
+        }
+    }
+
+ //   property_map<UndirectedGraph, edge_weight_t>::type weightmap = get(edge_weight, *&g);
+    vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(*&g));
+    prim_minimum_spanning_tree(*&g, &p[0]);
+
+    NeuronTree marker_MST;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    for (std::size_t i = 0; i != p.size(); ++i)
+    {
+        NeuronSWC S;
+        tmpLocation = listLandmarks.at(i);
+        tmpLocation.getCoord(tmpx,tmpy,tmpz);
+        int pn;
+        if(p[i] == i)
+            pn = -1;
+        else
+            pn = p[i] + 1;
+
+        S.n 	= i+1;
+        S.type 	= 7;
+        S.x 	= tmpx;
+        S.y 	= tmpy;
+        S.z 	= tmpz;
+        S.r 	= 1;
+        S.pn 	= pn;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, listNeuron.size()-1);
+    }
+
+    marker_MST.n = -1;
+    marker_MST.on = true;
+    marker_MST.listNeuron = listNeuron;
+    marker_MST.hashNeuron = hashNeuron;
+
+    /*
 	double** markEdge = new double*[marknum];
 	for(int i = 0; i < marknum; i++)
 	{
@@ -120,59 +184,59 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     listNeuron.append(S);
     hashNeuron.insert(S.n, listNeuron.size()-1);
 
-        int* pi = new int[marknum];
-        for(int i = 0; i< marknum;i++)
-            pi[i] = 0;
-        pi[0] = 1;
-        int indexi,indexj;
-        for(int loop = 0; loop<marknum;loop++)
+    int* pi = new int[marknum];
+    for(int i = 0; i< marknum;i++)
+        pi[i] = 0;
+    pi[0] = 1;
+    int indexi,indexj;
+    for(int loop = 0; loop<marknum;loop++)
+    {
+        double min = INF;
+        for(int i = 0; i<marknum; i++)
         {
-            double min = INF;
-              for(int i = 0; i<marknum; i++)
-              {
-                if (pi[i] == 1)
+            if (pi[i] == 1)
+            {
+                for(int j = 0;j<marknum; j++)
                 {
-                    for(int j = 0;j<marknum; j++)
+                    if(pi[j] == 0 && min > markEdge[i][j])
                     {
-                        if(pi[j] == 0 && min > markEdge[i][j])
-                        {
-                            min = markEdge[i][j];
-                            indexi = i;
-                            indexj = j;
-                        }
+                        min = markEdge[i][j];
+                        indexi = i;
+                        indexj = j;
                     }
                 }
+            }
 
-              }
-              if(indexi>=0)
-              {
-                tmpLocation = listLandmarks.at(indexj);
-                tmpLocation.getCoord(tmpx,tmpy,tmpz);
-                S.n 	= indexj+1;
-                S.type 	= 7;
-                S.x 	= tmpx;
-                S.y 	= tmpy;
-                S.z 	= tmpz;
-                S.r 	= 1;
-                S.pn 	= indexi+1;
-                listNeuron.append(S);
-                hashNeuron.insert(S.n, listNeuron.size()-1);
-
-              }else
-              {
-                  break;
-              }
-            pi[indexj] = 1;
-            indexi = -1;
-            indexj = -1;
         }
+        if(indexi>=0)
+        {
+            tmpLocation = listLandmarks.at(indexj);
+            tmpLocation.getCoord(tmpx,tmpy,tmpz);
+            S.n 	= indexj+1;
+            S.type 	= 7;
+            S.x 	= tmpx;
+            S.y 	= tmpy;
+            S.z 	= tmpz;
+            S.r 	= 1;
+            S.pn 	= indexi+1;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+
+        }else
+        {
+            break;
+        }
+        pi[indexj] = 1;
+        indexi = -1;
+        indexj = -1;
+    }
     marker_MST.n = -1;
     marker_MST.on = true;
     marker_MST.listNeuron = listNeuron;
     marker_MST.hashNeuron = hashNeuron;
 
-
-    QString outfilename = imgname + "_marker.swc";
+*/
+    QString outfilename = imgname + "_boost_marker.swc";
     if (outfilename.startsWith("http", Qt::CaseInsensitive))
     {
         QFileInfo ii(outfilename);

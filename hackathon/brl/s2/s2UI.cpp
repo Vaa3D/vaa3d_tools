@@ -21,7 +21,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
     fileString =QString("");
     lastFile = QString("");
-    allROILocations = new LandmarkList;
+    allROILocations = new QList<TileInfo>;
     allTipsList = new QList<LandmarkList>;
 
     tileSizeChoices = new QList<TileInfo>;
@@ -29,11 +29,14 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     previewWindow = new v3dhandle;
     havePreview = false;
-    QList<LandmarkList>    allScanLocations ;
 
     cb = &callback;
 
     myStackAnalyzer = new StackAnalyzer(callback);
+
+    myStackAnalyzer0 = new StackAnalyzer(callback);
+    myStackAnalyzer1 = new StackAnalyzer(callback);
+    myStackAnalyzer2 = new StackAnalyzer(callback);
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("");
 
@@ -56,7 +59,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     createTargetList();
-    zoomPixelsProduct = 13.0*256;
+    zoomPixelsProduct = 2048.0; //13.0*256;
     currentTileInfo = TileInfo(zoomPixelsProduct);
 
     lhTabs = new QTabWidget();
@@ -99,8 +102,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myTargetTable->show();
     targetIndex = 0;
     colorIndex = 0;
-    overViewPixelToScanPixel = (1.0/16.0)*(256.0/512.0);
-    overviewMicronsPerPixel = 1.8;
+    overViewPixelToScanPixel = (.926/.231);
+    overviewMicronsPerPixel  = .926;
     zStepSize = 1.0;
 
     hookUpSignalsAndSlots();
@@ -110,6 +113,19 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer->moveToThread(workerThread);
     workerThread->start();
 
+    workerThread0 = new QThread;
+    myStackAnalyzer0->moveToThread(workerThread0);
+    workerThread0->start();
+
+    workerThread1 = new QThread;
+    myStackAnalyzer1->moveToThread(workerThread1);
+    workerThread1->start();
+
+    workerThread2 = new QThread;
+    myStackAnalyzer2->moveToThread(workerThread2);
+    workerThread2->start();
+
+    traceThreadNumber =0;
 
     posMonStatus = false;
     waitingForFile = 0;
@@ -213,33 +229,93 @@ void S2UI::hookUpSignalsAndSlots(){
     // communication with  myStackAnalyzer
 
     connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer1,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+    connect(myStackAnalyzer2,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+
+    connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer0, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer1, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+    connect(this, SIGNAL(callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer2, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+
 
 
     connect(this, SIGNAL(callSAGridLoad(QString,LocationSimple,QString)), myStackAnalyzer,SLOT(loadGridScan(QString,LocationSimple,QString)));
+
+
+
     connect(this, SIGNAL(processSmartScanSig(QString)), myStackAnalyzer, SLOT(processSmartScan(QString)));
     connect(myStackAnalyzer, SIGNAL(combinedSWC(QString)),this, SLOT(combinedSmartScan(QString)));
-    connect(myStackAnalyzer,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
 
 
-    connect(this, SIGNAL(callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
 
     connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer,SLOT(updateChannel(QString)));
-
-
     connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer, SLOT(updateRedAlpha(float)));
     connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer,SLOT(updateRedThreshold(int)));
-
     connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer, SLOT(updateLipoMethod(int)));
-
-
     connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer0,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer0, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer0,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer0, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer0, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer1,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer1, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer1,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer1, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer1, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+    connect(channelChoiceComboB,SIGNAL(currentIndexChanged(QString)),myStackAnalyzer2,SLOT(updateChannel(QString)));
+    connect(this,SIGNAL(updateLipoFactorInSA(float)), myStackAnalyzer2, SLOT(updateRedAlpha(float)));
+    connect(this, SIGNAL(updateRedThreshInSA(int)),myStackAnalyzer2,SLOT(updateRedThreshold(int)));
+    connect(chooseLipoMethod, SIGNAL(currentIndexChanged(int)), myStackAnalyzer2, SLOT(updateLipoMethod(int)));
+    connect(this,SIGNAL(updateMinMaxBlockSizes(int,int)), myStackAnalyzer2, SLOT(updateGlobalMinMaxBlockSizes(int,int)));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //communicate with NoteTaker:
     connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 
 
     // communication with targetList:
-    connect(this,SIGNAL(updateTable(LandmarkList,QList<LandmarkList>)),myTargetTable, SLOT(updateTargetTable(LandmarkList,QList<LandmarkList>)));
+    connect(this,SIGNAL(updateTable(QList<TileInfo>,QList<LandmarkList>)),myTargetTable, SLOT(updateTargetTable(QList<TileInfo>,QList<LandmarkList>)));
 
     // communicate with eventLogger:
 
@@ -261,28 +337,28 @@ void S2UI::createTargetList(){
 void S2UI::initializeROISizes(){
     tileSizeChoices = new QList<TileInfo>;
     TileInfo myTileInfo = TileInfo(zoomPixelsProduct);
-    myTileInfo.setZoomPos(2,0,0);
+    myTileInfo.setZoomPos(1);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(4,0,0);
+    myTileInfo.setZoomPos(2);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(6,0,0);
+    myTileInfo.setZoomPos(4);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(8,0,0);
+    myTileInfo.setZoomPos(6);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(10,0,0);
+    myTileInfo.setZoomPos(8);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(13,0,0);
+    myTileInfo.setZoomPos(10);
+    tileSizeChoices->append(myTileInfo);
+    myTileInfo.setZoomPos(13);
     tileSizeChoices->append(myTileInfo);
 
-    myTileInfo.setZoomPos(16,0,0);
+    myTileInfo.setZoomPos(16);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(24,0,0);
+    myTileInfo.setZoomPos(24);
     tileSizeChoices->append(myTileInfo);
-    myTileInfo.setZoomPos(32,0,0);
+    myTileInfo.setZoomPos(32);
     tileSizeChoices->append(myTileInfo);
-    qDebug()<<"setting currentTileInfo";
-    // currentTileInfo = tileSizeChoices->at(tileSizeCB->currentIndex());
-    qDebug()<<"set currentTileinfo";
+
 }
 
 
@@ -294,8 +370,8 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV = new QGraphicsView();
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
-    roiRect = QRectF(-400, -400, 800, 800);
-    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    roiRect = QRectF(-250, -250, 500, 500);
+    //roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
@@ -312,9 +388,9 @@ QGroupBox *S2UI::createROIMonitor(){
 
     zoomSlider = new QSlider();
     zoomSlider->setOrientation(Qt::Horizontal);
-    zoomSlider->setMaximum(100);
+    zoomSlider->setMaximum(500);
     zoomSlider->setMinimum(1);
-    zoomSlider->setValue(10);
+    zoomSlider->setValue(50);
 
     gl->addWidget(zoomSlider,4,1);
 
@@ -328,16 +404,20 @@ void S2UI::updateROIPlot(QString ignore){
     //roiRect.setY(roiYEdit->text().toFloat());
     //qDebug()<<"y="<<roiYEdit->text().toFloat();
     roiGS->removeItem(newRect);
-    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
-    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0+uiS2ParameterMap[5].getCurrentValue();
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+
+
+    //this value for x and y stage is correct (i.e. it moves to the right location in the sample as the microscope galvo or stage changes.
+    //however, the x position of the overview tile location is mirrored in x about the stage x = 0 axis.  this error propagates into subsequent locations some of the time!
 
 }
 
 void S2UI::updateGVZoom(int sliderValue){
     qreal xyscale =1.0;
-    xyscale = qreal( sliderValue) / 10.0;
+    xyscale = qreal( sliderValue) / 50.0;
     QTransform newTransform;
     newTransform = originalTransform;
     newTransform.scale(xyscale,xyscale);
@@ -528,6 +608,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB->addItem("adaptive APP2");
     tracingMethodComboB->addItem("adaptive NeuTube");
     tracingMethodComboB->addItem("automatic");
+    tracingMethodComboB->addItem("debugging mode");
     tracingMethodComboB->setCurrentIndex(0);
     methodChoice = 0;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
@@ -609,6 +690,13 @@ QGroupBox *S2UI::createTracingParameters(){
     stackZStepSizeSlider->setValue(10);
     stackZStepSizeLabel = new QLabel(tr("z stack step size = 1.0 um"));
 
+    stageOnlyCB = new QCheckBox;
+    stageOnlyCB->setChecked(false);
+    stageOnlyCBLabel = new QLabel(tr("stage-only S2scan"));
+
+
+
+
 
 
     tPL->addWidget(labeli,0,0);
@@ -656,6 +744,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(stackZStepSizeSlider,20,0);
     tPL->addWidget(stackZStepSizeLabel,20,1);
 
+    tPL->addWidget(stageOnlyCB,21,0);
+    tPL->addWidget(stageOnlyCBLabel,21,1);
 
 
     tPBox->setLayout(tPL);
@@ -690,8 +780,8 @@ QGroupBox *S2UI::createConfigPanel(){
 
     startZStackDelaySB = new QSpinBox;
     startZStackDelaySB->setMinimum(0);
-    startZStackDelaySB->setMaximum(1000);
-    startZStackDelaySB->setValue(200);
+    startZStackDelaySB->setMaximum(2000);
+    startZStackDelaySB->setValue(1000);
     startZStackDelaySB->setSuffix("ms");
     startZStackDelayLabel = new QLabel(tr("start stack delay"));
 
@@ -699,7 +789,7 @@ QGroupBox *S2UI::createConfigPanel(){
     zoomSpinBox = new QSpinBox;
     zoomSpinBox->setMaximum(64);
     zoomSpinBox->setMinimum(1);
-    zoomSpinBox->setValue(13);
+    zoomSpinBox->setValue(1);
 
     zoomSpinBoxLabel = new QLabel;
     zoomSpinBoxLabel->setText("zoom");
@@ -707,8 +797,8 @@ QGroupBox *S2UI::createConfigPanel(){
 
     pixelsSpinBox = new QSpinBox;
     pixelsSpinBox->setMinimum(50);
-    pixelsSpinBox->setMaximum(1024);
-    pixelsSpinBox->setValue(180);
+    pixelsSpinBox->setMaximum(2048);
+    pixelsSpinBox->setValue(2048);
 
     pixelsSpinBoxLabel = new QLabel;
     pixelsSpinBoxLabel->setText("pixels");
@@ -844,14 +934,13 @@ void S2UI::loadForSA(){
 
     if (smartScanStatus == 1){
         seedList = tipList.at(loadScanNumber);
-        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(loadScanNumber).y;
+        tileLocation = scanList.value(loadScanNumber).getPixelLocation();
     }else{
         tileLocation.x = 0;
         tileLocation.y = 0;
         seedList.clear();
     }
-    bool isSoma = scanNumber==0;
+    bool isSoma = loadScanNumber==0;
     qDebug()<<workerThread->currentThreadId();
     QTimer::singleShot(0,this, SLOT(processingStarted()));
     bool isAdaptive = false;
@@ -898,9 +987,38 @@ void S2UI::loadForSA(){
         //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
     }
+
+    if (tracingMethodComboB->currentIndex()==7){
+        methodChoice= 3;
+        isAdaptive = false;
+
+        //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+    }
+    qDebug()<<"methodChoice "<<methodChoice;
+    qDebug()<<"comboboxCurrentIndex  "<<tracingMethodComboB->currentIndex();
+
+    if (traceThreadNumber==0){
     emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+    }else if (traceThreadNumber==1){
+        emit callSATrace0(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
+    }else if (traceThreadNumber==2){
+        emit callSATrace1(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+    }else if (traceThreadNumber==3){
+        emit callSATrace2(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+    }
+    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+    traceThreadNumber++;
+    traceThreadNumber = traceThreadNumber%4;
+    qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
 }
 
 
@@ -1038,8 +1156,8 @@ void S2UI::loadScanFromFile(QString fileString){
         if (!total4DImage->valid()){qDebug()<<"invalid preview image pointer!"; return;}
 
         LocationSimple tileLocation;
-        tileLocation.x = scanList.value(loadScanNumber).x;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(loadScanNumber).y;
+        tileLocation.x = scanList.value(loadScanNumber).getPixelLocation().x;// this is in pixels, using the expected origin
+        tileLocation.y = scanList.value(loadScanNumber).getPixelLocation().y;
 
         QString swcString = saveDir.absolutePath();
         swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(".swc");
@@ -1139,7 +1257,9 @@ void S2UI::posMonButtonClicked(){
         status("Position Monitor started");
         startPosMonButton->setText(tr("stop position monitor"));
         startSmartScanPB->setEnabled(true);
+        qDebug()<<"posMonButtonClicked... about to updateCurrentZoom with tileSizeCB index "<<tileSizeCB->currentIndex();
         updateCurrentZoom(tileSizeCB->currentIndex());
+
     }else{
         emit stopPM();
         startPosMonButton->setText(tr("start position monitor"));
@@ -1190,21 +1310,22 @@ void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
     for (int i= 0; i <maxVal ; i++){
         if (i ==0){ uiS2ParameterMap[i].setCurrentString(currentParameterMap[i].getCurrentString());}
         if (currentParameterMap[i].getExpectedType().contains("float")){
-            if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
+            if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue()){
                 uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-            if (i==18){
-                //updateROIPlot(QString("ignore"));
-                roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==19){
-                roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==13){
-                roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-            }else if (i==14){
-                roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                if (i==18){
+                    roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==19){
+                    roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==13){
+                    roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if (i==14){
+                    roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+                }else if ((i==5)||(i==6)){
+                    updateROIPlot("");
+                }
             }
         }
     }
-    overViewPixelToScanPixel =  overviewMicronsPerPixel/uiS2ParameterMap[8].getCurrentValue();
 
 }
 
@@ -1222,14 +1343,17 @@ void S2UI::updateString(QString broadcastedString){
 
 
 void S2UI::tryXYMove(){
-    LocationSimple testL;
-    testL.x = 100.0;
-    testL.y = 200.0;
-    testL.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
-    testL.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
-    float xStage = tryStageXEdit->text().toFloat() ;
-    float yStage= tryStageYEdit->text().toFloat();
-    moveToROIWithStage(testL, xStage, yStage);
+    LocationSimple testLG, testLS;
+    testLG.x = 0;
+    testLG.y = 0;
+    testLG.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
+    testLG.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+    testLS.x = tryStageXEdit->text().toFloat() ;
+    testLS.y = tryStageYEdit->text().toFloat();
+    TileInfo testTI = TileInfo(zoomPixelsProduct);
+    testTI.setGalvoLocation(testLG);
+    testTI.setStageLocation(testLS);
+    moveToROIWithStage(testTI);
 }
 
 
@@ -1293,7 +1417,7 @@ void S2UI::handleAllTargets(){
 
 
     targetIndex++;
-    colorIndex++;
+    colorIndex= colorIndex+20;
     haventRunBoundingBox = true;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
@@ -1316,6 +1440,9 @@ void S2UI::handleAllTargets(){
 
 void S2UI::startingSmartScan(){
     numProcessing=0;
+    LocationSimple startLocation ;
+    TileInfo startTileInfo = TileInfo(zoomPixelsProduct);
+
 
     if (gridScanCB->isChecked()){
         gridScanStatus = 1;
@@ -1339,17 +1466,16 @@ void S2UI::startingSmartScan(){
         outputStream.setDevice(&saveTextFile);
         if (allROILocations->isEmpty()){
             scanList.clear();
-            scanNumber = 0;
+            //scanNumber = 0;
             loadScanNumber = 0;
             status("starting smartScan...");
-            LocationSimple startLocation ;
             if (allTargetStatus ==0){
                 startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
                         uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
                         0);
 
             }else{
-                startLocation = allTargetLocations[targetIndex];
+                startLocation = allTargetLocations[targetIndex].getGalvoLocation();
             }
 
 
@@ -1358,6 +1484,7 @@ void S2UI::startingSmartScan(){
             startLocation.mass = 0;
             startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
             startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
+            startTileInfo.setGalvoLocation(startLocation);
             float tileSize = uiS2ParameterMap[11].getCurrentValue();
             int minGrid = -(gridSizeSB->value()-1)/2;
             int maxGrid = -minGrid+1;
@@ -1369,7 +1496,9 @@ void S2UI::startingSmartScan(){
                     gridLoc.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
                     gridLoc.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
                     qDebug()<<"grid x = "<< gridLoc.x<<" grid y = "<<gridLoc.y;
-                    allROILocations->append(gridLoc);
+                    TileInfo gridTileInfo = TileInfo(zoomPixelsProduct);
+                    gridTileInfo.setGalvoLocation(gridLoc);
+                    allROILocations->append(gridTileInfo);
 
                 }
             }
@@ -1378,9 +1507,9 @@ void S2UI::startingSmartScan(){
 
 
 
-            //allScanLocations.append(allROILocations);
-            if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
+            if (allTargetStatus ==0)   {allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
 
+            }
             if (runContinuousCB->isChecked()){
                 qDebug()<<"allROILocations length "<<allROILocations->length();
                 s2ROIMonitor();
@@ -1427,30 +1556,40 @@ void S2UI::startingSmartScan(){
     if (allROILocations->isEmpty()){ // start smartscan of new target
         scanList.clear();
         tipList.clear();
-        scanNumber = 0;
+        //scanNumber = 0;
         loadScanNumber = 0;
         status("starting smartScan...");
-        LocationSimple startLocation ;
+
         if (allTargetStatus ==0){
             startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
                     uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
                     0);
+            startLocation.mass = 0;
+            startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here for these non-target scans
+            startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
+            startTileInfo.setGalvoLocation(startLocation);
 
         }else{
-            startLocation = allTargetLocations[targetIndex];
+            startTileInfo = allTargetLocations[targetIndex];
         }
 
 
 
 
-        startLocation.mass = 0;
-        startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here
-        startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
-        startLocation.x= startLocation.x;//-((float) startLocation.ev_pc1)/2.0;//  initial location is center of starting tile in overview coordinates.
-        startLocation.y= startLocation.y;//-((float) startLocation.ev_pc2)/2.0;
-        allROILocations->append(startLocation);
-        //allScanLocations.append(allROILocations);
-        if (allTargetStatus ==0)   allTargetLocations.append(startLocation); // keep track of targets, even when not using the multi-target sequence
+
+
+
+
+        // add the starting location to the ROI queue:
+
+        allROILocations->append(startTileInfo);
+
+
+
+
+
+
+        if (allTargetStatus ==0)   allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
 
         if (runContinuousCB->isChecked()){
             s2ROIMonitor();
@@ -1468,47 +1607,77 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     QTimer::singleShot(0,this, SLOT(processingFinished()));
     qDebug()<<"back in S2UI with new locations";
 
-    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanNumber)));
+    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
     for (int i = 0; i<newLandmarks.length(); i++){
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
             status(QString("and ").append(QString::number(newTipsList.length())).append(" tips"));
-            //            for (int k=0; k<newTipsList.value(i).length();k++){
-            //                status(QString("tipList point ").append(QString::number(k)).append(" x =").append(QString::number(newTipsList.value(i).value(k).x)).append(" y = ").append(QString::number(newTipsList.value(i).value(k).y)));
-            //            }
-            //  if (tracingMethodComboB->currentIndex()<3){ //  THIS NEEDS TO BE CHANGED IF NEW TRACING METHODS ARE ADDED!  might be better to add internal code for adaptive and nonadaptive methods
-            //                newLandmarks[i].ev_pc1 = (double) uiS2ParameterMap[10].getCurrentValue();
-            //                newLandmarks[i].ev_pc2 = (double) uiS2ParameterMap[11].getCurrentValue();
-            //}
+            TileInfo landmarkTileInfo = TileInfo(zoomPixelsProduct);
+            LocationSimple stageLandmark;
+            stageLandmark.x = newLandmarks[i].mcenter.x; // this is the stage location of the tile that is the PARENT OF THIS TILE!
+            stageLandmark.y = newLandmarks[i].mcenter.y; // this will work fine for the fixed-stage scans because the stage won't move.
+
+
+
+            qDebug()<<"stageLandmark.x = "<<stageLandmark.x;
+            qDebug()<<"newLandmarks[i].x = "<<newLandmarks[i].x;
 
             qDebug()<<"new landmark pixel size 1 = "<<newLandmarks[i].ev_pc1;
             qDebug()<<"new landmark pixel size 2 = "<<newLandmarks[i].ev_pc2;
             newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
-            newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//
+            newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//  this is the conversion from upper left (image) coordinates used in stackAnalyzer back to center-of-scan coordinates
 
-            if (!isDuplicateROI(newLandmarks.value(i))){
+
+
+
+            LocationSimple pixelsLandmark = newLandmarks.value(i);   // pixelsLandmark is the tile position in pixels, including the stage information
+
+            // and remove the stage position offset to get the galvo-only position
+
+
+            newLandmarks[i].x =newLandmarks[i].x - (newLandmarks[i].mcenter.x / uiS2ParameterMap[8].getCurrentValue());
+            newLandmarks[i].y = newLandmarks[i].y -(newLandmarks[i].mcenter.y/ uiS2ParameterMap[9].getCurrentValue());
+
+
+            if (stageOnlyCB->isChecked()){  // but for the stage-only scans, we need the stageLandmark to reflect the center of the tile position
+                // and the galvo position to be zero.
+
+                stageLandmark.x = pixelsLandmark.x*uiS2ParameterMap[8].getCurrentValue();
+                stageLandmark.y = pixelsLandmark.y*uiS2ParameterMap[9].getCurrentValue();
+                newLandmarks[i].x = 0; //galvo position
+                newLandmarks[i].y = 0;
+                newLandmarks[i].mcenter.x=stageLandmark.x;
+                newLandmarks[i].mcenter.y=stageLandmark.y;
+
+            }
+
+
+
+            landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
+            landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
+            landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
+
+            if (!isDuplicateROI(landmarkTileInfo)){ // this currently ONLY checks based on pixelLocation.
 
                 // make a copy of the main list here.
                 // add the new stuff to the copy.
                 // sort the copy based on the category field [annoying?]
                 // and replace the main list with the new one.
-                allROILocations->append(newLandmarks.value(i));
+                allROILocations->append(landmarkTileInfo);
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
                 // keeping track of a bunch of ROIs.
-
-                QPen myPen;
-                myPen.setColor(QColor(colorIndex%16+3));
-
-                roiGS->addRect((newLandmarks[i].x-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(), (newLandmarks[i].y-newLandmarks[i].ev_pc1/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-                        newLandmarks[i].ev_pc1*uiS2ParameterMap[8].getCurrentValue(), newLandmarks[i].ev_pc2*uiS2ParameterMap[8].getCurrentValue(),  myPen);
+                colorIndex++;
+                QPen myPen =  QPen::QPen(QColor(qAbs(((colorIndex%64)*63+3))%256,qAbs((255-(colorIndex%64)*63+3))%256,qAbs((128+(colorIndex%64)*63+3))%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+                roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
+                        ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
                 status("skip this tile!");
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
-    loadMIP(scanNumber, mip);
-    scanNumber++;
+    loadMIP(newLandmarks.first().ave, mip);
+    //scanNumber++;
     myNotes->save();
 
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
@@ -1523,10 +1692,10 @@ void S2UI::runBoundingBox(){
     float bottomEdge = 10000;
     float rightEdge = -10000;
     for (int i = 0; i<scanList.length(); i++){
-        if ( (scanList[i].x-(scanList[i].ev_pc1/2.0))<leftEdge ) leftEdge = scanList[i].x-(scanList[i].ev_pc1/2.0);
-        if ( (scanList[i].x+(scanList[i].ev_pc1/2.0))>rightEdge) rightEdge = scanList[i].x+(scanList[i].ev_pc1/2.0);
-        if ( (scanList[i].y+(scanList[i].ev_pc2/2.0))>topEdge ) topEdge = scanList[i].y+(scanList[i].ev_pc2/2.0);
-        if ( (scanList[i].y-(scanList[i].ev_pc2/2.0))<bottomEdge ) bottomEdge = scanList[i].y-(scanList[i].ev_pc2/2.0);
+        if ( (scanList[i].getGalvoLocation().x-(scanList[i].getGalvoLocation().ev_pc1/2.0))<leftEdge ) leftEdge = scanList[i].getGalvoLocation().x-(scanList[i].getGalvoLocation().ev_pc1/2.0);
+        if ( (scanList[i].getGalvoLocation().x+(scanList[i].getGalvoLocation().ev_pc1/2.0))>rightEdge) rightEdge = scanList[i].getGalvoLocation().x+(scanList[i].getGalvoLocation().ev_pc1/2.0);
+        if ( (scanList[i].getGalvoLocation().y+(scanList[i].getGalvoLocation().ev_pc2/2.0))>topEdge ) topEdge = scanList[i].getGalvoLocation().y+(scanList[i].getGalvoLocation().ev_pc2/2.0);
+        if ( (scanList[i].getGalvoLocation().y-(scanList[i].getGalvoLocation().ev_pc2/2.0))<bottomEdge ) bottomEdge = scanList[i].getGalvoLocation().y-(scanList[i].getGalvoLocation().ev_pc2/2.0);
 
 
     }
@@ -1545,105 +1714,118 @@ void S2UI::runBoundingBox(){
     }else{
         boundingBoxLocation.ev_pc1 = boundingBoxLocation.ev_pc2;
     }
+
+    LocationSimple boundingBoxStageLocation = scanList[0].getStageLocation();  // boundingboxes are ill-defined for stage scans.  this will just put the stage at the position it was for the first tile.
+    LocationSimple boundingBoxPixelLocation = boundingBoxLocation;
+    boundingBoxPixelLocation.x = boundingBoxLocation.x+boundingBoxStageLocation.x/uiS2ParameterMap[8].getCurrentValue();
+    boundingBoxPixelLocation.y = boundingBoxLocation.y+boundingBoxStageLocation.y/uiS2ParameterMap[9].getCurrentValue();
+
+
     qDebug()<<"boundingboxlocation.x "<<boundingBoxLocation.x;
     qDebug()<<"boundingboxlocation.y "<<boundingBoxLocation.y;
     qDebug()<<"boundingboxlocation.ev_pc1 "<<boundingBoxLocation.ev_pc1;
     qDebug()<<"boundingboxlocation.ev_pc2 "<<boundingBoxLocation.ev_pc2;
+    TileInfo bbTileInfo = TileInfo(zoomPixelsProduct);
+    bbTileInfo.setGalvoLocation(boundingBoxLocation);
+    bbTileInfo.setStageLocation(boundingBoxStageLocation);
+    bbTileInfo.setPixelLocation(boundingBoxLocation);
+    allROILocations->append(bbTileInfo);
 
-
-    allROILocations->append(boundingBoxLocation);
-
-    // create single location with the appropriate size and location based on previous smartscan tile locations.
-    // use scanList which should be complete at this point...
-    // add them to the list and set a flag...
-
-    //
 
 }
 
 
-bool S2UI::isDuplicateROI(LocationSimple inputLocation){
-
-    // add check of relation to full field scan...
-
+bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
+    //  I have stage-based scanning working, but it's overscanning because
+    //  the stage-specific coordinate handling here is broken- this stuff isn't catching duplicate tiles because their .x locations in allROIlocations and/or scanList
+    //  are inconsistent with their physical space locations
+    //again, may be time to subclass the location stuff or add locationsimple as an attribute of my own class that can package up ALL the necessary coordinate systems into one tile location.
+    // might work to keep track of this new tileInfo thing in all my lists and internal methods but then when I communicate with external stuff I pass it only the relevant locationsimple.
 
     // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
     //check against locations already scanned
 
+    LocationSimple inputLocation = inputTileInfo.getPixelLocation();
 
     bool upperLeft =false;
     bool upperRight = false;
     bool lowerLeft = false;
     bool lowerRight = false;
     for (int i=0; i<scanList.length(); i++){
-        // first check if the xy coordinates are already in scanList
-        if ((qAbs(inputLocation.x - scanList[i].x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].y)< (float) 5.0)){
+        // first check if the xy coordinates are already in scanList  this is IN PIXELS, including stage info.
+        if ((qAbs(inputLocation.x - scanList[i].getPixelLocation().x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].getPixelLocation().y)< (float) 5.0)){
             return true;
         }else{// then check if all 4 corners are in any volume in scanList (critical for adaptive scanning)
 
-            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
 
-            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
-            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
-            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].x+(scanList[i].ev_pc1/2.0) ) &&
-                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].x-(scanList[i].ev_pc1/2.0) ) &&
-                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].y+(scanList[i].ev_pc2/2.0) ) &&
-                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].y-(scanList[i].ev_pc2/2.0)));
+            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
             if (upperLeft&&upperRight&lowerLeft&lowerRight){
                 return true;}
         }
     }
     // repeat on locations already queued!
     for (int i=0; i< allROILocations->length(); i++){
-        if ((qAbs(inputLocation.x - allROILocations->at(i).x)<5.0) && (qAbs(inputLocation.y - allROILocations->at(i).y)<(float) 5.1)){
+        LocationSimple iPixelLoc = allROILocations->value(i).getPixelLocation();
+        if ((qAbs(inputLocation.x - iPixelLoc.x)<5.0) && (qAbs(inputLocation.y - iPixelLoc.y)<(float) 5.1)){
             return true;
         }else{
 
-            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+            upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
 
-            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
-            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
-            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= allROILocations->at(i).x+(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= allROILocations->at(i).x-(allROILocations->at(i).ev_pc1/2.0) ) &&
-                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= allROILocations->at(i).y+(allROILocations->at(i).ev_pc2/2.0) ) &&
-                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= allROILocations->at(i).y-(allROILocations->at(i).ev_pc2/2.0)));
+            upperRight = upperRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerLeft = lowerLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerRight = lowerRight || ((inputLocation.x+(inputLocation.ev_pc1/2.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
             if (upperLeft&&upperRight&lowerLeft&lowerRight){
                 return true;}
         }
     }
     bool outsideOverview = false;
+    if (stageOnlyCB->isChecked()){ //ignore overview boundaries for stage-only scans.
+        return false;
+    }
+
+    LocationSimple    inputGalvoLocation = inputTileInfo.getGalvoLocation();
     //now check if the tile location is outside the original overview volume
-    int leftSide = ((inputLocation.x-(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
+    int leftSide = ((inputGalvoLocation.x-(inputGalvoLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the left side of the tile in overview Pixels
     qDebug()<<"left side = "<<leftSide;
     if (leftSide  <= 0){outsideOverview = true;};
 
-    int rightSide = ((inputLocation.x+(inputLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the right side of the tile in overview Pixels
+    int rightSide = ((inputGalvoLocation.x+(inputGalvoLocation.ev_pc1/2.0))/overViewPixelToScanPixel +256);// this is the right side of the tile in overview Pixels
     qDebug()<<"right side = "<<rightSide;
     if (leftSide  > 512){outsideOverview = true;};
 
-    int topSide = ((inputLocation.y-(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the top side of the tile in overview Pixels
+    int topSide = ((inputGalvoLocation.y-(inputGalvoLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the top side of the tile in overview Pixels
     qDebug()<<"top side = "<<topSide;
     if (topSide  <= 0){outsideOverview = true;};
 
-    int bottomSide = ((inputLocation.y+(inputLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the bottom side of the tile in overview Pixels
+    int bottomSide = ((inputGalvoLocation.y+(inputGalvoLocation.ev_pc2/2.0))/overViewPixelToScanPixel +256);// this is the bottom side of the tile in overview Pixels
     qDebug()<<"bottom side = "<<bottomSide;
     if (bottomSide  > 512){outsideOverview = true;};
 
@@ -1660,10 +1842,10 @@ bool S2UI::isDuplicateROI(LocationSimple inputLocation){
 
 }
 void S2UI::smartScanHandler(){
-
+    // this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
     if (smartScanStatus!=1){
         status("smartScan aborted");
-        scanNumber = 0;
+        //scanNumber = 0;
         loadScanNumber = 0;
         saveTextFile.close();
         emit processSmartScanSig(scanDataFileString);
@@ -1672,7 +1854,7 @@ void S2UI::smartScanHandler(){
         }else{        myEventLogger->processEvents(eventLogString);}
         return;
     }
-    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(scanNumber))){//scanNumber is incremented AFTER the tracing results come in
+    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(loadScanNumber))){//scanNumber is incremented AFTER the tracing results come in
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -1689,7 +1871,8 @@ void S2UI::smartScanHandler(){
     status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
     qDebug()<<QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs...");
     for (int i = 0; i<allROILocations->length(); i++){
-        status(QString("x= ").append(QString::number(allROILocations->value(i).x)).append(" y = ").append(QString::number(allROILocations->value(i).y)).append(" z= ").append(QString::number(allROILocations->value(i).z)));
+        LocationSimple iPixelLoc  = allROILocations->value(i).getPixelLocation();
+        status(QString("x= ").append(QString::number(iPixelLoc.x)).append(" y = ").append(QString::number(iPixelLoc.y)).append(" z= ").append(QString::number(iPixelLoc.z)));
     }
 
     if ((!allROILocations->isEmpty()) || (waitingForLast)){
@@ -1698,7 +1881,7 @@ void S2UI::smartScanHandler(){
         if (runContinuousCB->isChecked()){
             qDebug()<<"letting s2ROIMonitor initiate scans";
         }else{
-            LocationSimple nextLocation = allROILocations->first();
+            TileInfo nextLocation = allROILocations->first();
             LandmarkList  nextLandmarkList;
             if (allTipsList->isEmpty()){
                 qDebug()<<"no incoming tip locations";
@@ -1708,24 +1891,23 @@ void S2UI::smartScanHandler(){
                 allTipsList->removeFirst();
             }
             allROILocations->removeFirst();
-            qDebug()<<nextLocation.x;
             moveToROI(nextLocation);
-            // nextLocation.ev_pc1 = uiS2ParameterMap[11].getCurrentValue();
-            // nextLocation.ev_pc2 = uiS2ParameterMap[12].getCurrentValue();
+
+
             waitingForFile = 1;
             scanList.append(nextLocation);
             if (targetIndex < allScanLocations.length()){
-                allScanLocations[targetIndex].append(nextLocation);
+                allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
             }else{
                 LandmarkList starterList;
-                starterList.append(nextLocation);
+                starterList.append(nextLocation.getPixelLocation());
                 allScanLocations.append(starterList);
             }
             emit updateTable(allTargetLocations,allScanLocations);
             emit eventSignal("startZStack");
             QTimer::singleShot(100, &myController, SLOT(startZStack())); //hardcoded delay here... not sure
             // how to make this more eventdriven. maybe  wait for move to finish.
-            status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
+            status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
         }
     }
 
@@ -1746,14 +1928,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
             allTipsList->removeFirst();
         }
         tipList.append(nextLandmarkList);
-        LocationSimple nextLocation = allROILocations->first();
+        TileInfo nextLocation = allROILocations->first();
         allROILocations->removeFirst();
-        qDebug()<<"s2ROImonitor nextLocation.x = "<<nextLocation.x;
-        qDebug()<<"s2ROImonitor nextLocation.ev_pc1 = "<<nextLocation.ev_pc1;
 
         moveToROI(nextLocation);
         TileInfo nextTileInfo = TileInfo(zoomPixelsProduct);
-        nextTileInfo.setPixels((int) nextLocation.ev_pc1);
+        nextTileInfo.setPixels((int) nextLocation.getPixelLocation().ev_pc1);
 
 
         currentTileInfo = nextTileInfo;
@@ -1763,16 +1943,16 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         waitingForFile = 1;
         scanList.append(nextLocation);
         if (targetIndex < allScanLocations.length()){
-            allScanLocations[targetIndex].append(nextLocation);
+            allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
         }else{
             LandmarkList starterList;
-            starterList.append(nextLocation);
+            starterList.append(nextLocation.getPixelLocation());
             allScanLocations.append(starterList);
         }
 
 
         emit updateTable(allTargetLocations,allScanLocations);
-        status(QString("start next ROI at x = ").append(QString::number(nextLocation.x)).append("  y = ").append(QString::number(nextLocation.y)));
+        status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
         waitingToStartStack = true;
         emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
 
@@ -1783,67 +1963,90 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
     }
 }
-void S2UI::moveToROI(LocationSimple nextROI){
+void S2UI::moveToROI(const TileInfo nextROI){
+    TileInfo myNextROI = nextROI;
+
+    //  currently the stage info is not actually making it out to the stackAnalyzer, so the code is actually working only based on turning the 'pixel location'
+    // sent to stackAnalyzer into the  stage location, with the galvo location = 0  as done here.
+    // somehow this is broken for the first location, probably because I'm actually trying to use the stageLocation information.
+
+    // critical: with only galvo scanning, the initial tile is correct but subsequent s2 tiles are inverted in y relative to the original tile
+    //           with only stage scanning, the initial tile is wrong in its physical location (the tile is collected roughly 1/2 tile south of the intended
+    //            location.)  but all other scans are correctly located.
+
+
+    // more checking indicates that both schemes are really quite screwed up.  a complete rework is necessary.
+
+    //  1. pass the stage information with each tile to stackAnalyzer.
+    //     If I need a new list for this, so be it.  THIS INFORMATION WILL BE IGNORED BY stackAnalyzer
+    //  2. there are some sign errors with the stage coordinates that are screwing up pretty much everything.
+    //     the discrepancy needs to be fixed in one place, not smeared all over the code.
+    //     right now the information (including sign) is correct for the live data (uis2parametermap) and the ROI plotter
+    //     right now the stage-based scanning generates correct relation between mip tile and planned location.  galvo version swaps y coordinate around the starting tile.
+
+
+    // 1. is done, using the .mcenter field of the struct.
+    // 2. still needs work.  the 'pixel' stuff basically guarantees correct relative placement now, but the absolute location is wrong.
+    //  also, the width parameter of the live thing may need to be corrected in the x direction. if something is being abs() to make a width, but the
+    // direction is reversed, the plot needs to show that.
+
+    //  the y sign flip may be fixed.  now it's just x?
+
 
     if( posMonStatus){
-        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
-        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
-        // and now to galvo voltage:
-        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
-        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
 
-        if ((gridScanStatus==1)||(smartScanStatus==1)){
-            nextGalvoX = nextROI.x*scanVoltageConversion;
-            nextGalvoY = nextROI.y*scanVoltageConversion;
+        if (stageOnlyCB->isChecked()){     // for stage mode, set galvo position to zero and adjust stage position accordingly...
+            LocationSimple nextStageLocation;
+            LocationSimple nextGalvoLocation = nextROI.getGalvoLocation();
+            qDebug()<<"initial stageLocation.x ="<<nextStageLocation.x;
+            nextStageLocation.x = nextROI.getStageLocation().x+ nextROI.getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue(); // there may be a tile size issue here
+            nextStageLocation.y = nextROI.getStageLocation().y+ nextROI.getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue();
+            nextGalvoLocation.x = 0.0;
+            nextGalvoLocation.y = 0.0;
+            qDebug()<<"final stageLocation.x ="<<nextStageLocation.x;
+
+            myNextROI.setGalvoLocation(nextGalvoLocation);
+            myNextROI.setStageLocation(nextStageLocation);
+
+
+            moveToROIWithStage(myNextROI);
+            return;
         }
+
         LocationSimple newLoc;
-        newLoc.x = -nextGalvoX;
-        newLoc.y = nextGalvoY;
-        float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
-        float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
-
-
+        newLoc.x = -myNextROI.getGalvoLocation().x*scanVoltageConversion;
+        newLoc.y = myNextROI.getGalvoLocation().y*scanVoltageConversion;
         emit moveToNext(newLoc);
     }else{
         status("start PosMon before moving galvos");
         smartScanStatus = -1;
-    }
-}
+    }}
 
-void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage){
+
+void S2UI::moveToROIWithStage(const TileInfo nextROI){
     if( posMonStatus){
 
-
-    // First check the stage position arguments.  Is the move too big?
-
-    float xDiff = xStage-uiS2ParameterMap[5].getCurrentValue();
-    float yDiff = yStage-uiS2ParameterMap[6].getCurrentValue();
-    qDebug()<<"xDiff = "<<xDiff;
-    qDebug()<<"yDiff = "<<yDiff;
-    if ((xDiff<-1000.0) || (xDiff > 1000.0) || (yDiff<-1000.0) || (yDiff > 1000.0)){
-        qDebug()<<"stage move too large!";
-        return;
-
-     }
+        float xStage =  nextROI.getStageLocation().x;
+        float yStage = -nextROI.getStageLocation().y;
 
 
 
-        float nextXMicrons = nextROI.x * uiS2ParameterMap[8].getCurrentValue();  // convert from pixels to microns:
-        float nextYMicrons = nextROI.y* uiS2ParameterMap[9].getCurrentValue();
-        // and now to galvo voltage:
-        float nextGalvoX = nextXMicrons/uiS2ParameterMap[17].getCurrentValue();
-        float nextGalvoY = nextYMicrons/uiS2ParameterMap[17].getCurrentValue();
+        // First check the stage position arguments.  Is the move too big?
 
-        if ((gridScanStatus==1)||(smartScanStatus==1)){
-            nextGalvoX = nextROI.x*scanVoltageConversion;
-            nextGalvoY = nextROI.y*scanVoltageConversion;
+        float xDiff = qAbs(xStage -uiS2ParameterMap[5].getCurrentValue());
+        float yDiff = qAbs(yStage -uiS2ParameterMap[6].getCurrentValue());
+        qDebug()<<"xDiff = "<<xDiff;
+        qDebug()<<"yDiff = "<<yDiff;
+        if ((xDiff>1000.0)|| (yDiff > 1000.0)){
+            qDebug()<<"stage move too large!";
+            return;
+
         }
-        LocationSimple newLoc;
-        newLoc.x = -nextGalvoX;
-        newLoc.y = nextGalvoY;
-        float leftEdge = nextXMicrons -roiXWEdit->text().toFloat()/2.0;
-        float topEdge = nextYMicrons - roiYWEdit->text().toFloat()/2.0;
 
+
+        LocationSimple newLoc;
+        newLoc.x = -nextROI.getGalvoLocation().x*scanVoltageConversion;
+        newLoc.y = nextROI.getGalvoLocation().y*scanVoltageConversion;
 
         emit moveToNextWithStage(newLoc, xStage, yStage);
     }else{
@@ -1851,6 +2054,9 @@ void S2UI::moveToROIWithStage(LocationSimple nextROI, float xStage, float yStage
         smartScanStatus = -1;
     }
 }
+
+
+
 
 void S2UI::combinedSmartScan(QString saveFilename){
     V3dR_MainWindow * new3DWindow = NULL;
@@ -1868,7 +2074,16 @@ void S2UI::combinedSmartScan(QString saveFilename){
     cb->update_NeuronBoundingBox(new3DWindow);
 }
 
+// still a huge mess.  I can bring the stage position along for the ride to stackAnalyzer and back, but that really doesn't solve the problem.
+// when I get back here I have two choices:
+//  ignore the stage position and leave it the same.
+//  set the galvo position to zero and adjust the stageposition to reflect the tilelocation.
 
+//  in either case, you should be able to recreate the tile by going to that stage location and imaging at that galvo location.
+// the trick will be in the (eventual) case of trying to move the stage while doing a galvo scan.  then there will have to be a procedure for
+// moving the stage to an adjacent location, translating the original galvo location to the correct galvo coordinates while moving the stage, etc.
+
+//
 
 
 void S2UI::loadLatest(){
@@ -1882,11 +2097,20 @@ void S2UI::loadLatest(){
             qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
-        tileLocation.x = scanList.value(loadScanNumber).x-((float)  scanList.value(loadScanNumber).ev_pc1)/2.0;// this is in pixels, using the expected origin
-        tileLocation.y = scanList.value(loadScanNumber).y-((float)  scanList.value(loadScanNumber).ev_pc2)/2.0;// outgoing landmarks are shifted to the tile upper left
+
+        // outgoing landmarks are shifted to the tile upper left
+        tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
+        tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
+        // and the stage location is added to the tile landmark
+        tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
+        tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
+        // throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
+        tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
+        tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
+        tileLocation.ave= loadScanNumber;
         qDebug()<<"tileLocation.x = "<<tileLocation.x;
         qDebug()<<"seedList is empty? "<<seedList.isEmpty();
-        bool isSoma = scanNumber==0;
+        bool isSoma = loadScanNumber==0;
         if (gridScanStatus!=0){
             emit eventSignal("startGridLoad");
 
@@ -1940,10 +2164,48 @@ void S2UI::loadLatest(){
                 //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
+
+            if (tracingMethodComboB->currentIndex()==7){ //debugging mode
+                methodChoice= 3;
+                isAdaptive = false;
+
+                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
+
+            }
             qDebug()<<"isadaptive = "<<isAdaptive;
             qDebug()<<"methodChoice = "<<methodChoice;
-            emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                             this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+
+
+            if (traceThreadNumber==0){
+                emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+             }else if (traceThreadNumber==1){
+                emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }else if (traceThreadNumber==2){
+                emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }else if (traceThreadNumber==3){
+                emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+
+            }
+
+
+            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+            traceThreadNumber++;
+            traceThreadNumber = traceThreadNumber%4;
+            qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+
 
 
             QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
@@ -1981,7 +2243,7 @@ void S2UI::loadingDone(Image4DSimple *mip){
     emit eventSignal("finishedGridLoad");
 
     if (gridScanStatus>0){
-        loadMIP(loadScanNumber, mip);
+        loadMIP((double) loadScanNumber, mip);
     }
     if ((gridScanStatus ==-1)&&(waitingForFile<1)){
         emit eventSignal("finishedGridScan");
@@ -1999,13 +2261,30 @@ void S2UI::loadingDone(Image4DSimple *mip){
 void S2UI::collectOverview(){
     // collect overview stack at lowest mag and high spatial resolution.
     // this is called at the same time that a signal is sent to the controller to setup for an overview
-
+    qDebug()<<"overview pixel to scan pixel "<<overViewPixelToScanPixel;
     // so start my monitor to see when it's in ready state:
     overviewCycles = 0;
     status("start overview");
     emit eventSignal("startZStack");
-
-    QTimer::singleShot(0, this, SLOT(overviewHandler()));
+    LocationSimple overviewGalvoLocation;
+    overviewGalvoLocation.x = 0.;
+    overviewGalvoLocation.y = 0.;
+    overviewGalvoLocation.ev_pc1 = 512.0*overViewPixelToScanPixel;;
+    overviewGalvoLocation.ev_pc2 = 512.0*overViewPixelToScanPixel;;
+    LocationSimple overviewStageLocation;
+    overviewStageLocation.x =  uiS2ParameterMap[5].getCurrentValue();
+    overviewStageLocation.y =  uiS2ParameterMap[6].getCurrentValue();
+    LocationSimple overviewPixelLocation;
+    overviewPixelLocation.x = uiS2ParameterMap[5].getCurrentValue()*overViewPixelToScanPixel / overviewMicronsPerPixel;
+    overviewPixelLocation.y = uiS2ParameterMap[6].getCurrentValue()*overViewPixelToScanPixel / overviewMicronsPerPixel;
+    overviewPixelLocation.ev_pc1 = 512.0*overViewPixelToScanPixel;
+    overviewPixelLocation.ev_pc2 = 512.0*overViewPixelToScanPixel;
+    TileInfo overviewTileInfo = TileInfo(zoomPixelsProduct/overViewPixelToScanPixel);
+    overviewTileInfo.setGalvoLocation(overviewGalvoLocation);
+    overviewTileInfo.setStageLocation(overviewStageLocation);
+    overviewTileInfo.setPixelLocation(overviewPixelLocation);
+    allOverviewStageLocations.append(overviewTileInfo);
+    QTimer::singleShot(10, this, SLOT(overviewHandler()));
 }
 
 void S2UI::overviewHandler(){
@@ -2022,8 +2301,17 @@ void S2UI::overviewHandler(){
         return;
     }
     if (readyForOverview){
+        qDebug()<<"allOverviewStageLocations.last().getPixelLocation().x,y"<<allOverviewStageLocations.last().getPixelLocation().x<<","<<allOverviewStageLocations.last().getPixelLocation().y;
+        qDebug()<<"overviewMicronsperPixl = "<<overviewMicronsPerPixel<<"  overviewpixeltoscanpixel "<<overViewPixelToScanPixel;
+
+        roiGS->addRect((overviewMicronsPerPixel/overViewPixelToScanPixel)*( allOverviewStageLocations.last().getPixelLocation().x- allOverviewStageLocations.last().getPixelLocation().ev_pc1/2.0),
+                       (overviewMicronsPerPixel/overViewPixelToScanPixel)*( allOverviewStageLocations.last().getPixelLocation().y- allOverviewStageLocations.last().getPixelLocation().ev_pc2/2.0),
+                       (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc1,
+                       (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc2,
+                       QPen::QPen(Qt::magenta, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+   //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+
         // set up 3-plane z stack here?
-        overviewMicronsPerPixel = uiS2ParameterMap[8].getCurrentValue();
         waitingForFile = 0;
         waitingForOverview = true;
         QTimer::singleShot(100, startZStackPushButton, SLOT(click()));
@@ -2041,15 +2329,17 @@ void S2UI::startingZStack(){
     waitingForFile = 1;
     QTimer::singleShot(100, &myController, SLOT(startZStack()));
     status("start single z Stack");
-    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
-    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
-    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    float leftEdge = roiXEdit->text().toFloat() - roiXWEdit->text().toFloat()/2.0 +uiS2ParameterMap[5].getCurrentValue();
+    float topEdge =  roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
+  //  colorIndex++;
+   // roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (smartScanStatus==1){
         QGraphicsTextItem* sequenceNumberText;
 
         sequenceNumberText = new QGraphicsTextItem;
         sequenceNumberText->setPos(leftEdge+10,topEdge);
         sequenceNumberText->setPlainText(QString::number(loadScanNumber));
+        sequenceNumberText->setDefaultTextColor(Qt::green);
         roiGS->addItem(sequenceNumberText);
     }
 
@@ -2104,7 +2394,7 @@ void S2UI::updateFileString(QString inputString){
 void S2UI::clearROIPlot(){
     roiGS->clear();
     roiRect = QRectF(-400, -400, 800, 800);
-    roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    // roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,10,10);
 }
 
@@ -2126,10 +2416,6 @@ void S2UI::runSAStuffClicked(){
     emit processSmartScanSig(s2LineEdit->text());
 }
 
-void S2UI::updateOverlap(int value){
-    overlap = 0.01* ((float) value);
-
-}
 
 
 void S2UI::getCurrentParameters(){
@@ -2164,12 +2450,16 @@ void S2UI::resetToScanPBCB(){
 
 
 void S2UI::scanStatusHandler(){
+    qDebug()<<"scanStatusHandler ...0";
+
+    qDebug()<< uiS2ParameterMap[12].getCurrentValue() <<"  "<< currentTileInfo.getTileZoom() <<"  "<< currentTileInfo.getTilePixelsX();
 
 
     zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1)&&
             ( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
             (qAbs((int) uiS2ParameterMap[11].getCurrentValue() - currentTileInfo.getTilePixelsY())< 2);
 
+    qDebug()<<"scanStatusHandler ...1";
 
     bool scanStatusTimedOut = scanStatusWaitCycles >200;
 
@@ -2180,13 +2470,21 @@ void S2UI::scanStatusHandler(){
         status("scan status timeout!");
         return;
     }
+    qDebug()<<"scanStatusHandler ...2";
 
     if (!zoomStateOK&&!scanStatusTimedOut){
         scanStatusWaitCycles++;
+        qDebug()<<"scanStatusHandler ...3..."<<scanStatusWaitCycles;
+        qDebug()<<"scanStatusHandler ...4..."<<zoomStateOK;
         if (scanStatusWaitCycles%20 ==0 ){
             qDebug()<< "scanStatus wait = "<<QString::number((scanStatusWaitCycles*50)/1000);
         }
+        qDebug()<<"scanStatusHandler ...5..."<<zoomStateOK;
+
         QTimer::singleShot(50, this, SLOT(scanStatusHandler()));
+
+        qDebug()<<"scanStatusHandler ...6..."<<zoomStateOK;
+
     }else{
         qDebug()<<"scanStatusHandler says zoomStateOK";
         if (waitingToStartStack){
@@ -2255,7 +2553,9 @@ void S2UI::collectZoomStack(){
     //status("currentTileInfo : "+sString);
     //qDebug()<<sString;
     waitingToStartStack = true;
-    moveToROI(newTarget);
+    TileInfo newTargetTI = TileInfo(zoomPixelsProduct);
+    newTargetTI.setGalvoLocation(newTarget);
+    moveToROI(newTargetTI);
     updateZoom(); // Bigtime race here!  I need a delayed/conditional move that waits until the zoom status is settled.
 
 
@@ -2277,15 +2577,35 @@ void S2UI::pickTargets(){
     resetToScanPB->click();
     LocationSimple startCenter;
     QList<LandmarkList>  startingROIList;
-    LandmarkList targets;
+    QList<TileInfo> targets;
     for (int i =0; i<previewTargets.length();i++){
-        LocationSimple newTarget;
-        newTarget.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
-        newTarget.y  = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
-        startCenter.x = 0.0+newTarget.x;
-        startCenter.y = 0.0+newTarget.y;
+        LocationSimple newTargetGalvo;
+        LocationSimple newTargetStage;
+        LocationSimple newTargetPixels;
+        TileInfo newTarget = TileInfo(zoomPixelsProduct);
+
+        newTargetGalvo.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
+        newTargetGalvo.y = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
+
+        newTargetGalvo.ev_pc1  = uiS2ParameterMap[10].getCurrentValue();
+        newTargetGalvo.ev_pc2  = uiS2ParameterMap[11].getCurrentValue();
+
+        newTargetStage.x = allOverviewStageLocations.last().getStageLocation().x; // this is the right idea to use the latest overview, but depends on sequential overview imaging and target selection.
+        newTargetStage.y = allOverviewStageLocations.last().getStageLocation().y;
+
+        newTargetPixels =   newTargetGalvo;
+        newTargetPixels.x = newTargetGalvo.x + newTargetStage.x/uiS2ParameterMap[8].getCurrentValue();
+        newTargetPixels.y = newTargetGalvo.y + newTargetStage.y/uiS2ParameterMap[9].getCurrentValue();
+
+        startCenter.x = 0.0+newTargetGalvo.x;
+        startCenter.y = 0.0+newTargetGalvo.y;
         startCenter.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
         startCenter.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
+
+        newTarget.setGalvoLocation(newTargetGalvo);
+        newTarget.setStageLocation(newTargetStage);
+        newTarget.setPixelLocation(newTargetPixels);
+
         targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
@@ -2298,7 +2618,7 @@ void S2UI::pickTargets(){
 
 
 
-void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
+void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
     scaleintensity(mip,0,0,8000,double(0),double(255));
     scale_img_and_convert28bit(mip, 0, 255) ;
     QImage myMIP;
@@ -2314,11 +2634,11 @@ void S2UI::loadMIP(int imageNumber, Image4DSimple* mip){
         }
     }
     QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
-    float xPix = scanList.value(imageNumber).x;// this is in pixels, using the expected origin
-    float yPix  = scanList.value(imageNumber).y;
+    float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
+    float yPixMicrons  = scanList.value(imageNumber).getPixelLocation().y*uiS2ParameterMap[9].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//
     mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
-    mipPixmap->setPos((xPix )*uiS2ParameterMap[8].getCurrentValue(),
-            (yPix )*uiS2ParameterMap[9].getCurrentValue());
+    mipPixmap->setPos(xPixMicrons,
+                      yPixMicrons);
     mipPixmap->setOffset(-x/2.0,-y/2.0 );
 
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
@@ -2338,27 +2658,6 @@ void S2UI::processingFinished(){
 }
 
 
-void S2UI::updateZoom(){
-
-    if (!posMonStatus){
-        status("zoom update failed- posMon inactive");
-        return;
-    }
-    // update current mode only if necessary
-    status("resonantOK: "+QString::number(currentTileInfo.resOK));
-    status("current mode? "+uiS2ParameterMap[0].getCurrentString());
-    // disable mode changes for now- requires more overhead (turning on pmts, pockels cell, etc)
-    //    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
-    //        status("changing active mode");
-    //        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
-    //        }else{
-    //            myController.cleanAndSend("-sts activeMode Galvo");
-    //        }
-    //    }
-    activeModeChecks = 0;
-    activeModeChecker();
-
-}
 
 void S2UI::activeModeChecker(){
     // short-circuit here to disable mode changes
@@ -2381,12 +2680,64 @@ void S2UI::activeModeChecker(){
 void S2UI::finalizeZoom(){
     qDebug()<<"setting up stack in finalizeZoom...";
     emit stackSetupSig(zStepSize ,currentTileInfo.getTileZoom(), currentTileInfo.getTilePixelsX(), currentTileInfo.getTilePixelsY() );
+    qDebug()<<"emitted signal to set up stack in finalizeZoom...";
+
     zoomStateOK = false;
     scanStatusWaitCycles = 0;
-    scanStatusHandler();
-    status("tileInfo resonantOK: "+currentTileInfo.getTileInfoString().at(5));
+    qDebug()<<"firing singleshot...";
+
+    QTimer::singleShot(50,this,SLOT(scanStatusHandler()));
+    // status("tileInfo resonantOK: "+currentTileInfo.getTileInfoString().at(5));
+    //  qDebug()<<currentTileInfo.getTileInfoString().at(3);
 }
 
+
+
+// then, use LocationSimple.category as an indicator of topological (branch) order.
+// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
+
+
+
+
+// =================================  UPDATERS
+// this is both GUI updaters and content/parameter updaters that interact with various handlers
+
+
+
+void S2UI::updateOverlap(int value){
+    overlap = 0.01* ((float) value);
+
+}
+
+void S2UI::updateZoom(){
+
+    if (!posMonStatus){
+        status("zoom update failed- posMon inactive");
+        return;
+    }
+    // update current mode only if necessary
+    status("resonantOK: "+QString::number(currentTileInfo.resOK));
+    status("current mode? "+uiS2ParameterMap[0].getCurrentString());
+    // disable mode changes for now- requires more overhead (turning on pmts, pockels cell, etc)
+    //    if (uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK){
+    //        status("changing active mode");
+    //        if (currentTileInfo.resOK){ myController.cleanAndSend("-sts activeMode ResonantGalvo");
+    //        }else{
+    //            myController.cleanAndSend("-sts activeMode Galvo");
+    //        }
+    //    }
+    activeModeChecks = 0;
+    activeModeChecker();
+
+}
+void S2UI::updateZoomPixelsProduct(int ignore){
+
+    zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
+    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2048)"));
+    QTimer::singleShot(10, this, SLOT(initializeROISizes()));
+    overViewPixelToScanPixel = ((float) zoomSpinBox->value())*((float) pixelsSpinBox->value()/512.0);
+
+}
 void S2UI::updateCurrentZoom(int currentIndex){
 
     currentTileInfo = tileSizeChoices->at(currentIndex);
@@ -2395,24 +2746,6 @@ void S2UI::updateCurrentZoom(int currentIndex){
 void S2UI::updateZoomHandler(){
 
 }
-
-// then, use LocationSimple.category as an indicator of topological (branch) order.
-// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
-
-
-
-void S2UI::updateZoomPixelsProduct(int ignore){
-
-    zoomPixelsProduct = zoomSpinBox->value()*pixelsSpinBox->value();
-    zoomPixelsProductLabel->setText(QString("zoom*pixels = ").append(QString::number(zoomPixelsProduct)).append("   (default for 16x objective: 3328, for 25x: 2340)"));
-    QTimer::singleShot(10, this, SLOT(initializeROISizes()));
-
-}
-
-
-// =================================  UPDATERS
-
-
 
 void S2UI::updateLipoFactor(int ignore){
     emit updateLipoFactorInSA(((float) lipoFactorSlider->value() )*2.0/100.0);
@@ -2515,6 +2848,7 @@ void S2UI::updateLiveFile(){
 
 void S2UI::tTrace(){
     qDebug()<<"tTrace hooked up";
+<<<<<<< HEAD
    // LocationSimple tileLocation;
    // for (int tileNumber = 0; tileNumber<604; tileNumber++){
     //ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
@@ -2524,6 +2858,17 @@ void S2UI::tTrace(){
    // }
  //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+=======
+    LocationSimple tileLocation;
+    for (int tileNumber = 0; tileNumber<604; tileNumber++){
+        ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
+        //    myTracer->run();
+        //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
+        QThreadPool::globalInstance()->start(myTracer);
+    }
+    //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+>>>>>>> d2bf096cf1d4327184668f0c53b800feef2b757c
 
 
 }

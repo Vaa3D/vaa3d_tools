@@ -107,7 +107,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
         list_marker = new QListWidget();
         btn_syncmarkeronly = new QPushButton("update markers");
         layout_radius->addWidget(list_marker,0,0,6,1);
-        layout_radius->addWidget(btn_syncmarkeronly,2,2,1,1);
+        layout_radius->addWidget(btn_syncmarkeronly,1,2,1,1);
         dialog_radius->setLayout(layout_radius);
         tab->addTab(dialog_radius,tr("radius"));
         connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));

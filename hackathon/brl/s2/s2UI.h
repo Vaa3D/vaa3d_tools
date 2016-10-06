@@ -41,6 +41,10 @@ public:
     QLineEdit *s2LineEdit;
 
     StackAnalyzer *myStackAnalyzer;
+    StackAnalyzer *myStackAnalyzer0;
+    StackAnalyzer *myStackAnalyzer1;
+    StackAnalyzer *myStackAnalyzer2;
+
     EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
@@ -67,7 +71,7 @@ signals:
 	void noteStatus(QString);
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
-    void updateTable(LandmarkList allTargetLocations,QList<LandmarkList> allScanLocations);
+    void updateTable(QList<TileInfo> allTargetLocations,QList<LandmarkList> allScanLocations);
     void eventSignal(QString);
 
     void updateLipoFactorInSA(float);
@@ -79,6 +83,9 @@ signals:
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
+    void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
 
 
 private slots:
@@ -96,8 +103,8 @@ private slots:
     void updateROIPlot(QString ignore);
     void updateGVZoom(int sliderValue);
     void s2ROIMonitor();
-    void moveToROI(LocationSimple);
-    void moveToROIWithStage(LocationSimple, float xStage, float yStage);
+    void moveToROI(const TileInfo nextROI);
+    void moveToROIWithStage(const TileInfo nextROI);
     void clearROIPlot();
     void smartScanHandler();
     QString getFileString();
@@ -115,7 +122,7 @@ private slots:
     void pickTargets();
     void startAllTargets();
     void handleAllTargets();
-    void loadMIP(int imageNumber, Image4DSimple* mip);
+    void loadMIP(double imageNumber, Image4DSimple* mip);
     void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
@@ -140,7 +147,10 @@ private slots:
 
 private:
     V3DPluginCallback2 * cb;
-   QThread *workerThread;
+    QThread *workerThread;
+    QThread *workerThread0;
+    QThread *workerThread1;
+    QThread *workerThread2;
 
  // Layout and buttons
 
@@ -193,6 +203,8 @@ private:
     QLabel * stackZStepSizeLabel;
 
 
+    QCheckBox * stageOnlyCB;
+    QLabel * stageOnlyCBLabel;
 
     void createButtonBox1();
 	
@@ -293,15 +305,27 @@ private:
 
 //  internal methods and important parameters
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
-    bool isDuplicateROI(LocationSimple inputLocation);
+    bool isDuplicateROI(TileInfo inputTileInfo);
     void closeEvent(QCloseEvent *event);
 
+    QList<TileInfo> allOverviewStageLocations;
+
+    QList<TileInfo> allTargetLocations;
+    QList<TileInfo> *allROILocations;
 
 
-    LandmarkList allTargetLocations;
     QList<LandmarkList> allScanLocations;
-    LandmarkList *allROILocations;
+
+
+
     QList<LandmarkList> *allTipsList;
+    QList<TileInfo> scanList;
+
+    TileInfo currentTileInfo;
+
+    QList<LandmarkList> tipList;
+
+
     QMap<int, S2Parameter> uiS2ParameterMap;
 
     QString fileString ;
@@ -328,13 +352,11 @@ private:
     float zoomPixelsProduct;
     float zStepSize;
 
-    LandmarkList scanList;
+
+    int traceThreadNumber;
 
     QString fixFileString(QString inputString);
 
-    TileInfo currentTileInfo;
-
-    QList<LandmarkList> tipList;
 
     Image4DSimple*  total4DImage;
 
