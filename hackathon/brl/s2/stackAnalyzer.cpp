@@ -1438,6 +1438,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     }
 
     NeuronTree nt;
+    NeuronTree nt_most;
+
     if(methodChoice == 3)
     {
         if (background<150){ nt = generate_crossing_swc(total4DImage); }
@@ -1454,7 +1456,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
             return;
         }
-        NeuronTree nt_most;
         QString swcMOST = saveDirString;
         if(methodChoice ==0)
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
@@ -1589,8 +1590,96 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     }
     if (!imageLandmarks.isEmpty()){
         qDebug()<<"set landmark group";
+    }
+
+    QString finaloutputswc = saveDirString + ("/s2.swc");
+    QString finaloutputswc_left = saveDirString + ("/s2_nontraced.swc");
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    NeuronTree finalswc;
+    NeuronTree finalswc_left;
+    vector<QList<NeuronSWC> > nt_list;
+    vector<QList<NeuronSWC> > nt_list_left;
+
+    if(ifs_swc)
+    {
+        finalswc = readSWC_file(finaloutputswc);
+        nt_list.push_back(finalswc.listNeuron);
+        finalswc_left = readSWC_file(finaloutputswc_left);
+        nt_list_left.push_back(finalswc_left.listNeuron);
+    }
+
+    NeuronTree nt_traced = readSWC_file(swcString);
+    NeuronTree nt_left = neuron_sub(nt_most, nt_traced);
+    if(ifs_swc)
+    {
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+            nt.listNeuron[i].type = 3;
+        }
+        nt_list.push_back(nt.listNeuron);
+        QList<NeuronSWC> finalswc_updated;
+        if (combine_linker(nt_list, finalswc_updated))
+        {
+            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
+        }
+
+        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+        {
+            NeuronSWC curr = nt_left.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt_left.listNeuron[i].type = 1;
+            }else
+                nt_left.listNeuron[i].type = 2;
+
+            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+        }
+
+        QList<NeuronSWC> nt_left_sorted;
+        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+            nt_list_left.push_back(nt_left_sorted);
+        QList<NeuronSWC> finalswc_left_updated_added;
+        if (combine_linker(nt_list_left, finalswc_left_updated_added))
+        {
+            export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+        }
 
     }
+    else
+    {
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+            nt.listNeuron[i].type = 3;
+        }
+        export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
+
+        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+        {
+            NeuronSWC curr = nt_left.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt_left.listNeuron[i].type = 1;
+            }else
+                nt_left.listNeuron[i].type = 2;
+
+            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+        }
+        QList<NeuronSWC> nt_left_sorted;
+        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+    }
+
     QList<ImageMarker> tipsToSave;
     QString markerSaveString2;
     markerSaveString2 = swcString;
@@ -2236,5 +2325,47 @@ template <class T> void StackAnalyzer::gaussian_filter(T* data1d,
     return;
 }
 
+NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt)
+{
+    V3DLONG neuronNum = nt_total.listNeuron.size();
+    NeuronTree nt_left;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    //set node
+    NeuronSWC S;
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        NeuronSWC curr = nt_total.listNeuron.at(i);
+        S.n 	= curr.n;
+        S.type 	= curr.type;
+        S.x 	= curr.x;
+        S.y 	= curr.y;
+        S.z 	= curr.z;
+        S.r 	= curr.r;
+        S.pn 	= curr.pn;
+        bool flag = false;
+        for(V3DLONG j=0;j<nt.listNeuron.size();j++)
+        {
+            double dis = sqrt(pow2(nt.listNeuron[j].x - curr.x) + pow2(nt.listNeuron[j].y - curr.y) + pow2(nt.listNeuron[j].z - curr.z));
+            if(dis < 5)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+        {
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+    nt_left.n = -1;
+    nt_left.on = true;
+    nt_left.listNeuron = listNeuron;
+    nt_left.hashNeuron = hashNeuron;
+    return nt_left;
+}
 
 

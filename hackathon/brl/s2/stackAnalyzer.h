@@ -34,6 +34,7 @@ public slots:
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
 
     NeuronTree generate_crossing_swc(Image4DSimple* total4DImage);
+    NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt);
 
 
     void ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int max_block_size,int direction,float overlap, int min_block_size);
