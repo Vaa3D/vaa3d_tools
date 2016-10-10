@@ -789,7 +789,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         if (!saveTextFile.isOpen()){
             if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                 qDebug()<<"unable to save file!";
-                emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
                 return;}     }
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
@@ -834,7 +834,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         catch (...)
         {
             v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 
             return;
         }
@@ -1110,7 +1110,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 
 
 }
@@ -1376,7 +1376,7 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
         }
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 }
 
 void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveString, Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip,QString swcString,float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString,bool useGSDT, bool isSoma, int methodChoice)
@@ -1453,7 +1453,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
             qDebug()<<("Can not find the tracing plugin!\n");
 
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
             return;
         }
         QString swcMOST = saveDirString;
@@ -1466,7 +1466,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
         if(nt_most.listNeuron.size()<1){
             qDebug()<<"zero size listNeuron!!";
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
             return;
         }
 
@@ -1695,7 +1695,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 }
 
 void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString imageSaveString, Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip,QString swcString,float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString,bool useGSDT, bool isSoma, int methodChoice)
@@ -1772,7 +1772,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
 
         printf("Can not find the tracing plugin!\n");
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 
         return;
     }
@@ -1787,7 +1787,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     nt_most = readSWC_file(swcMOST);
 
     if(nt_most.listNeuron.size()<1){
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
         return;
     }
     NeuronTree nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
@@ -1944,7 +1944,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
 }
 
 int StackAnalyzer::methodSelection(Image4DSimple* total4DImage,LandmarkList inputRootList, int background, bool isSoma)

@@ -102,8 +102,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myTargetTable->show();
     targetIndex = 0;
     colorIndex = 0;
-    overViewPixelToScanPixel = (.926/.231);
-    overviewMicronsPerPixel  = .926;
+    overViewPixelToScanPixel = (.915/.229);
+    overviewMicronsPerPixel  = .915;
     zStepSize = 1.0;
 
     hookUpSignalsAndSlots();
@@ -228,10 +228,10 @@ void S2UI::hookUpSignalsAndSlots(){
 
     // communication with  myStackAnalyzer
 
-    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
-    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
-    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
-    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*)));
+    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
+    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
+    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
+    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
     connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer1,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
@@ -694,7 +694,9 @@ QGroupBox *S2UI::createTracingParameters(){
     stageOnlyCB->setChecked(false);
     stageOnlyCBLabel = new QLabel(tr("stage-only S2scan"));
 
-
+    multiThreadTracingCB = new QCheckBox;
+    multiThreadTracingCB->setChecked(false);
+    multiThreadTracingCBLabel = new QLabel(tr("multiThread tracing"));
 
 
 
@@ -746,6 +748,8 @@ QGroupBox *S2UI::createTracingParameters(){
 
     tPL->addWidget(stageOnlyCB,21,0);
     tPL->addWidget(stageOnlyCBLabel,21,1);
+    tPL->addWidget(multiThreadTracingCB, 22, 0);
+    tPL->addWidget(multiThreadTracingCBLabel, 22,1);
 
 
     tPBox->setLayout(tPL);
@@ -998,28 +1002,35 @@ void S2UI::loadForSA(){
     qDebug()<<"methodChoice "<<methodChoice;
     qDebug()<<"comboboxCurrentIndex  "<<tracingMethodComboB->currentIndex();
 
-    if (traceThreadNumber==0){
-    emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                     this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-    }else if (traceThreadNumber==1){
-        emit callSATrace0(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
-    }else if (traceThreadNumber==2){
-        emit callSATrace1(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+    if (multiThreadTracingCB->isChecked()){    if (traceThreadNumber==0){
+            emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                             this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+        }else if (traceThreadNumber==1){
+            emit callSATrace0(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
-    }else if (traceThreadNumber==3){
-        emit callSATrace2(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+        }else if (traceThreadNumber==2){
+            emit callSATrace1(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+        }else if (traceThreadNumber==3){
+            emit callSATrace2(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+
+        }
+        status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+        traceThreadNumber++;
+        traceThreadNumber = traceThreadNumber%4;
+        qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+        status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+
+    }else{
+        emit callSATrace(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                          this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
     }
-    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
-    traceThreadNumber++;
-    traceThreadNumber = traceThreadNumber%4;
-    qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
-    status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
-}
+ }
 
 
 
@@ -1601,13 +1612,14 @@ void S2UI::startingSmartScan(){
 
 }
 
-void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip){
+void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex){
 
     emit eventSignal("finishedAnalysis");
     QTimer::singleShot(0,this, SLOT(processingFinished()));
     qDebug()<<"back in S2UI with new locations";
 
     status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
+    qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber));
     for (int i = 0; i<newLandmarks.length(); i++){
         if (!newTipsList.value(i).empty()){
             status(QString("x= ").append(QString::number(newLandmarks.value(i).x)).append(" y = ").append(QString::number(newLandmarks.value(i).y)).append(" z= ").append(QString::number(newLandmarks.value(i).z)));
@@ -1676,7 +1688,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
-    loadMIP(newLandmarks.first().ave, mip);
+    loadMIP(scanIndex, mip);
     //scanNumber++;
     myNotes->save();
 
@@ -2175,36 +2187,35 @@ void S2UI::loadLatest(){
             qDebug()<<"isadaptive = "<<isAdaptive;
             qDebug()<<"methodChoice = "<<methodChoice;
 
+            if (multiThreadTracingCB->isChecked()){
+
+                if (traceThreadNumber==0){
+                    emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                     this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+                }else if (traceThreadNumber==1){
+                    emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+                }else if (traceThreadNumber==2){
+                    emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+                }else if (traceThreadNumber==3){
+                    emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+                }
+
+
+                status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+                traceThreadNumber++;
+                traceThreadNumber = traceThreadNumber%4;
+                qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+                status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
 
 
 
-            if (traceThreadNumber==0){
+            }else{
                 emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-             }else if (traceThreadNumber==1){
-                emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-
-            }else if (traceThreadNumber==2){
-                emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-
-            }else if (traceThreadNumber==3){
-                emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-                                 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-
             }
-
-
-            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
-            traceThreadNumber++;
-            traceThreadNumber = traceThreadNumber%4;
-            qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
-            status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
 
 
 
@@ -2309,7 +2320,7 @@ void S2UI::overviewHandler(){
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc1,
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc2,
                        QPen::QPen(Qt::magenta, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-   //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+        //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
         // set up 3-plane z stack here?
         waitingForFile = 0;
@@ -2331,8 +2342,8 @@ void S2UI::startingZStack(){
     status("start single z Stack");
     float leftEdge = roiXEdit->text().toFloat() - roiXWEdit->text().toFloat()/2.0 +uiS2ParameterMap[5].getCurrentValue();
     float topEdge =  roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
-  //  colorIndex++;
-   // roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    //  colorIndex++;
+    // roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (smartScanStatus==1){
         QGraphicsTextItem* sequenceNumberText;
 
@@ -2450,16 +2461,11 @@ void S2UI::resetToScanPBCB(){
 
 
 void S2UI::scanStatusHandler(){
-    qDebug()<<"scanStatusHandler ...0";
-
-    qDebug()<< uiS2ParameterMap[12].getCurrentValue() <<"  "<< currentTileInfo.getTileZoom() <<"  "<< currentTileInfo.getTilePixelsX();
-
 
     zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1)&&
             ( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
             (qAbs((int) uiS2ParameterMap[11].getCurrentValue() - currentTileInfo.getTilePixelsY())< 2);
 
-    qDebug()<<"scanStatusHandler ...1";
 
     bool scanStatusTimedOut = scanStatusWaitCycles >200;
 
@@ -2470,23 +2476,17 @@ void S2UI::scanStatusHandler(){
         status("scan status timeout!");
         return;
     }
-    qDebug()<<"scanStatusHandler ...2";
 
     if (!zoomStateOK&&!scanStatusTimedOut){
         scanStatusWaitCycles++;
-        qDebug()<<"scanStatusHandler ...3..."<<scanStatusWaitCycles;
-        qDebug()<<"scanStatusHandler ...4..."<<zoomStateOK;
         if (scanStatusWaitCycles%20 ==0 ){
             qDebug()<< "scanStatus wait = "<<QString::number((scanStatusWaitCycles*50)/1000);
         }
-        qDebug()<<"scanStatusHandler ...5..."<<zoomStateOK;
 
         QTimer::singleShot(50, this, SLOT(scanStatusHandler()));
 
-        qDebug()<<"scanStatusHandler ...6..."<<zoomStateOK;
 
     }else{
-        qDebug()<<"scanStatusHandler says zoomStateOK";
         if (waitingToStartStack){
             emit eventSignal("startZStack");
             waitingForFile = 1;

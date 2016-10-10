@@ -48,7 +48,7 @@ public:
     EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
-    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip);
+    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex);
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
@@ -205,6 +205,9 @@ private:
 
     QCheckBox * stageOnlyCB;
     QLabel * stageOnlyCBLabel;
+
+    QCheckBox * multiThreadTracingCB;
+    QLabel * multiThreadTracingCBLabel;
 
     void createButtonBox1();
 	

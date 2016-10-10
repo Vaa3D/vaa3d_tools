@@ -1,3 +1,12 @@
+
+
+
+
+keep everything by modifying flag and distance in stackAnalyzer L335...
+
+
+
+
 fudge.  I tried 1.2 below with 4 threads for tracing, but of course they're truly asynchronous and converge back into one node that's trying
 to run a  FIFO list based on scan order.  if a tile comes back faster because it's more sparse or whatever, the result is garbage because
 my code expects it to be the tile last picked from the list!
