@@ -2539,13 +2539,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
    // vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
-    vector<MyMarker*> finalswc;
-    vector<MyMarker*> finalswc_left;
+    NeuronTree finalswc;
+    NeuronTree finalswc_left;
+    vector<QList<NeuronSWC> > nt_list;
+    vector<QList<NeuronSWC> > nt_list_left;
 
     if(ifs_swc)
     {
-       finalswc = readSWC_file(finaloutputswc.toStdString());
-       finalswc_left = readSWC_file(finaloutputswc_left.toStdString());
+       finalswc = readSWC_file(finaloutputswc);
+       nt_list.push_back(finalswc.listNeuron);
+       finalswc_left = readSWC_file(finaloutputswc_left);
+       nt_list_left.push_back(finalswc_left.listNeuron);
     }
 
 
@@ -2556,33 +2560,47 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     {
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            MyMarker* node_global = new MyMarker;
-            node_global->x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            node_global->y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            node_global->z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            node_global->type = 3;
-            finalswc.push_back(node_global);
+            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+            nt.listNeuron[i].type = 3;
         }
-        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+        nt_list.push_back(nt.listNeuron);
+        QList<NeuronSWC> finalswc_updated;
+        if (combine_linker(nt_list, finalswc_updated))
+        {
+            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
+        }
 
         for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
         {
-            MyMarker* node_global = new MyMarker;
             NeuronSWC curr = nt_left.listNeuron.at(i);
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
-                node_global->type = 1;
-            }
-            else
-                node_global->type = 2;
+                nt_left.listNeuron[i].type = 1;
+            }else
+                nt_left.listNeuron[i].type = 2;
 
-            node_global->x = curr.x + total4DImage->getOriginX();
-            node_global->y = curr.y + total4DImage->getOriginY();
-            node_global->z = curr.z + total4DImage->getOriginZ();
-            finalswc_left.push_back(node_global);
+            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
         }
-        saveSWC_file(finaloutputswc_left.toStdString().c_str(), finalswc_left);
 
+        if(!ifs_image)
+        {
+            QList<NeuronSWC> nt_left_sorted;
+            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+                nt_list_left.push_back(nt_left_sorted);
+            QList<NeuronSWC> finalswc_left_updated_added;
+            if (combine_linker(nt_list_left, finalswc_left_updated_added))
+            {
+                export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+            }
+        }else
+        {
+            NeuronTree finalswc_left_updated_minus = neuron_sub(finalswc_left, nt);
+            export_list2file(finalswc_left_updated_minus.listNeuron, finaloutputswc_left,finaloutputswc_left);
+        }
     }
     else
     {
@@ -2608,7 +2626,9 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
             nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
         }
-        export_list2file(nt_left.listNeuron, finaloutputswc_left,finaloutputswc_left);
+        QList<NeuronSWC> nt_left_sorted;
+        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
     }
 
 
