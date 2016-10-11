@@ -70,9 +70,6 @@ private:
                          double sigma,
                          float* &outimg);
 
-
-
-
 };
 
 #endif // STACKANALYZER_H

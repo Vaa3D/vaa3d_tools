@@ -1629,6 +1629,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
         for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
         {
+            qDebug()<<"nt_left...i="<<i;
             NeuronSWC curr = nt_left.listNeuron.at(i);
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
@@ -2325,7 +2326,7 @@ template <class T> void StackAnalyzer::gaussian_filter(T* data1d,
     return;
 }
 
-NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt)
+NeuronTree StackAnalyzer::neuron_sub(NeuronTree nt_total, NeuronTree nt)
 {
     V3DLONG neuronNum = nt_total.listNeuron.size();
     NeuronTree nt_left;
