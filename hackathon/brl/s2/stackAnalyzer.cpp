@@ -1642,15 +1642,17 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
         }
 
-        QList<NeuronSWC> nt_left_sorted;
-        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
-            nt_list_left.push_back(nt_left_sorted);
-        QList<NeuronSWC> finalswc_left_updated_added;
-        if (combine_linker(nt_list_left, finalswc_left_updated_added))
+        if(nt_left.listNeuron.size()>0)
         {
-            export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+            QList<NeuronSWC> nt_left_sorted;
+            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+                nt_list_left.push_back(nt_left_sorted);
+            QList<NeuronSWC> finalswc_left_updated_added;
+            if (combine_linker(nt_list_left, finalswc_left_updated_added))
+            {
+                export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+            }
         }
-
     }
     else
     {
@@ -1676,9 +1678,16 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
             nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
         }
-        QList<NeuronSWC> nt_left_sorted;
-        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
-            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+        if(nt_left.listNeuron.size()>0)
+        {
+            QList<NeuronSWC> nt_left_sorted;
+            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+                export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+        }
+        else
+        {
+            export_list2file(nt_left.listNeuron, finaloutputswc_left,finaloutputswc_left);
+        }
     }
 
     QList<ImageMarker> tipsToSave;
