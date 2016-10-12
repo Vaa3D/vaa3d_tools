@@ -699,7 +699,9 @@ QGroupBox *S2UI::createTracingParameters(){
     multiThreadTracingCBLabel = new QLabel(tr("multiThread tracing"));
 
 
-
+    sendThemAllCB = new QCheckBox;
+    sendThemAllCB->setChecked(true);
+    sendThemAllCBLabel = new QLabel(tr("send them all!"));
 
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
@@ -750,6 +752,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(stageOnlyCBLabel,21,1);
     tPL->addWidget(multiThreadTracingCB, 22, 0);
     tPL->addWidget(multiThreadTracingCBLabel, 22,1);
+    tPL->addWidget(sendThemAllCB, 23, 0);
+    tPL->addWidget(sendThemAllCBLabel,23,1);
 
 
     tPBox->setLayout(tPL);
@@ -1416,7 +1420,7 @@ void S2UI::handleAllTargets(){
 
 
 
-    if ((addBoundingBoxScan->isChecked()) & (targetIndex >=0) & (haventRunBoundingBox)){
+    if ((addBoundingBoxScan->isChecked()) & (targetIndex >=0) & (haventRunBoundingBox) & (!stageOnlyCB->isChecked())){
         smartScanStatus = 0;
         emit runBoundingBox();
         haventRunBoundingBox = false;
@@ -1428,7 +1432,7 @@ void S2UI::handleAllTargets(){
 
 
     targetIndex++;
-    colorIndex= colorIndex+20;
+    colorIndex= colorIndex+1;
     haventRunBoundingBox = true;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
@@ -1669,7 +1673,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
 
-            if (!isDuplicateROI(landmarkTileInfo)){ // this currently ONLY checks based on pixelLocation.
+            if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
 
                 // make a copy of the main list here.
                 // add the new stuff to the copy.
@@ -2046,10 +2050,10 @@ void S2UI::moveToROIWithStage(const TileInfo nextROI){
         // First check the stage position arguments.  Is the move too big?
 
         float xDiff = qAbs(xStage -uiS2ParameterMap[5].getCurrentValue());
-        float yDiff = qAbs(yStage -uiS2ParameterMap[6].getCurrentValue());
+        float yDiff = qAbs(yStage +uiS2ParameterMap[6].getCurrentValue());
         qDebug()<<"xDiff = "<<xDiff;
         qDebug()<<"yDiff = "<<yDiff;
-        if ((xDiff>1000.0)|| (yDiff > 1000.0)){
+        if ((xDiff>2000.0)|| (yDiff > 2000.0)){
             qDebug()<<"stage move too large!";
             return;
 
@@ -2619,6 +2623,7 @@ void S2UI::pickTargets(){
 
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
+    if (!mip==0){
     scaleintensity(mip,0,0,8000,double(0),double(255));
     scale_img_and_convert28bit(mip, 0, 255) ;
     QImage myMIP;
@@ -2644,6 +2649,9 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
     //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
     roiGS->addItem(mipPixmap);
+    }else{
+        qDebug()<<"not displaying MIP of area already scanned";
+    }
 }
 
 

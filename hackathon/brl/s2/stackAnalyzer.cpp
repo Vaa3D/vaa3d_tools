@@ -1629,7 +1629,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
         for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
         {
-            qDebug()<<"nt_left...i="<<i;
             NeuronSWC curr = nt_left.listNeuron.at(i);
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {

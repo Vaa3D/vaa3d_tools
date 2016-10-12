@@ -209,6 +209,9 @@ private:
     QCheckBox * multiThreadTracingCB;
     QLabel * multiThreadTracingCBLabel;
 
+    QCheckBox * sendThemAllCB;
+    QLabel * sendThemAllCBLabel;
+
     void createButtonBox1();
 	
     void createTargetList();
