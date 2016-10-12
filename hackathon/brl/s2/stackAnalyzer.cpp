@@ -658,7 +658,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     Image4DSimple* total4DImage = new Image4DSimple;
-    Image4DSimple* total4DImage_mip = new Image4DSimple;
+    Image4DSimple* total4DImage_mip = new Image4DSimple;    
+    total4DImage_mip = 0;
 
     if (imageFileInfo.isReadable()){
         QString imageSaveString = saveDirString;
