@@ -29,6 +29,7 @@ public slots:
     void updateRedAlpha(float rAlpha);
     void updateLipoMethod(int lipoMethod);
     void updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMaxBlockSize);
+    void updateSearchRadius(double inputRadius);
 
     NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage,bool isSoma);
     LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
@@ -60,7 +61,7 @@ private:
     int lipofuscinMethod;
     int globalMaxBlockSize;
     int globalMinBlockSize;
-
+    double radius;
     template <class T> void gaussian_filter(T* data1d,
                          V3DLONG *in_sz,
                          unsigned int Wx,

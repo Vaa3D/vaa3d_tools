@@ -19,6 +19,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<LocationSimple>("LocationSimple");
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
+    versionString =QString("%1").arg(GIT_CURRENT_SHA1);
+    qDebug()<<"S2 git repo hash at build time = "<<versionString;
     fileString =QString("");
     lastFile = QString("");
     allROILocations = new QList<TileInfo>;
@@ -198,6 +200,9 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
     connect(tryStageMove,SIGNAL(clicked()),this, SLOT(tryXYMove()));
+    connect(searchPixelRadiusSB, SIGNAL(valueChanged(int)), this, SLOT(updateSearchRadiusCallback(int)));
+
+
 
 
     // communication with myController to send commands
@@ -241,6 +246,11 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this, SIGNAL(callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer0, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
     connect(this, SIGNAL(callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer1, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
     connect(this, SIGNAL(callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)), myStackAnalyzer2, SLOT(startTracing(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int)));
+
+    connect(this, SIGNAL(updateSearchRadius(double)), myStackAnalyzer, SLOT(updateSearchRadius(double)));
+    connect(this, SIGNAL(updateSearchRadius(double)), myStackAnalyzer0, SLOT(updateSearchRadius(double)));
+    connect(this, SIGNAL(updateSearchRadius(double)), myStackAnalyzer1, SLOT(updateSearchRadius(double)));
+    connect(this, SIGNAL(updateSearchRadius(double)), myStackAnalyzer2, SLOT(updateSearchRadius(double)));
 
 
 
@@ -609,8 +619,8 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB->addItem("adaptive NeuTube");
     tracingMethodComboB->addItem("automatic");
     tracingMethodComboB->addItem("debugging mode");
-    tracingMethodComboB->setCurrentIndex(0);
-    methodChoice = 0;
+    tracingMethodComboB->setCurrentIndex(2);
+    methodChoice = 2;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
 
 
@@ -698,10 +708,12 @@ QGroupBox *S2UI::createTracingParameters(){
     multiThreadTracingCB->setChecked(false);
     multiThreadTracingCBLabel = new QLabel(tr("multiThread tracing"));
 
-
-    sendThemAllCB = new QCheckBox;
-    sendThemAllCB->setChecked(true);
-    sendThemAllCBLabel = new QLabel(tr("send them all!"));
+    searchPixelRadiusSB = new QSpinBox;
+    searchPixelRadiusSB->setMaximum(1000);
+    searchPixelRadiusSB->setMinimum(0);
+    searchPixelRadiusSB->setValue(10);
+    searchPixelRadiusSB->setSuffix(" pixels");
+    searchPixelRadiusSBLabel = new QLabel(tr("segment search radius "));
 
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
@@ -752,8 +764,9 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(stageOnlyCBLabel,21,1);
     tPL->addWidget(multiThreadTracingCB, 22, 0);
     tPL->addWidget(multiThreadTracingCBLabel, 22,1);
-    tPL->addWidget(sendThemAllCB, 23, 0);
-    tPL->addWidget(sendThemAllCBLabel,23,1);
+
+    tPL->addWidget(searchPixelRadiusSB, 23, 0);
+    tPL->addWidget(searchPixelRadiusSBLabel,23,1);
 
 
     tPBox->setLayout(tPL);
@@ -824,6 +837,11 @@ QGroupBox *S2UI::createConfigPanel(){
 
 
 
+    sendThemAllCB = new QCheckBox;
+    sendThemAllCB->setChecked(false);
+    sendThemAllCBLabel = new QLabel(tr("send them all!"));
+
+
 
     cBL->addWidget(machineSaveDirLabel,0,0);
     cBL->addWidget(machineSaveDir, 1,0);
@@ -845,7 +863,8 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(tryStageMove,11,0);
     cBL->addWidget(tryStageXEdit,11,1);
     cBL->addWidget(tryStageYEdit,11,2);
-
+    cBL->addWidget(sendThemAllCB, 12, 0);
+    cBL->addWidget(sendThemAllCBLabel,12,1);
     configBox->setLayout(cBL);
     return configBox;
 }
@@ -2781,6 +2800,10 @@ void S2UI::updateMinMaxBlock(int ignore){
 }
 
 
+void S2UI::updateSearchRadiusCallback(int ignore){
+    emit updateSearchRadius((double) searchPixelRadiusSB->value());
+}
+
 
 
 void S2UI::updateZStepSize(int ignore){
@@ -2788,6 +2811,9 @@ void S2UI::updateZStepSize(int ignore){
     stackZStepSizeLabel->setText(QString("z step size = ").append(QString::number(zStepSize)).append(" um"));
 
 }
+
+
+
 
 // =================================
 // +++++++++++++++++++++++++++++++

@@ -79,7 +79,7 @@ signals:
     void updateLipoModeInSA(int);
 
     void updateMinMaxBlockSizes(int, int);
-
+    void updateSearchRadius(double);
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int);
@@ -141,6 +141,7 @@ private slots:
     void updateRedThreshold(int ignore);
     void updateMinMaxBlock(int ignore);
     void updateZStepSize(int ignore);
+    void updateSearchRadiusCallback(int ignore);
 
     void tryXYMove();
 
@@ -151,6 +152,9 @@ private:
     QThread *workerThread0;
     QThread *workerThread1;
     QThread *workerThread2;
+
+    QString versionString;
+
 
  // Layout and buttons
 
@@ -211,6 +215,9 @@ private:
 
     QCheckBox * sendThemAllCB;
     QLabel * sendThemAllCBLabel;
+
+    QSpinBox * searchPixelRadiusSB;
+    QLabel * searchPixelRadiusSBLabel;
 
     void createButtonBox1();
 	

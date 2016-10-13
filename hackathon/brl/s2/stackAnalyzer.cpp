@@ -60,7 +60,7 @@ bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QStr
     file.close();
     cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<outmarkers.size()<<endl;
     return true;
-};
+}
 
 
 StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
@@ -73,6 +73,7 @@ StackAnalyzer::StackAnalyzer(V3DPluginCallback2 &callback)
     //                    = 1 :  set green channel to zero wherever red channel is above redThreshold
     globalMaxBlockSize = 180;
     globalMinBlockSize = 100;
+    radius = 20;
 }
 
 void StackAnalyzer::updateChannel(QString newChannel){
@@ -97,6 +98,10 @@ void StackAnalyzer::updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMax
     globalMaxBlockSize = newMaxBlockSize;
 }
 
+void StackAnalyzer::updateSearchRadius(double inputRadius){
+radius = inputRadius;
+qDebug()<<"radius is "<<QString::number(radius);
+}
 
 void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
     QFileInfo imageFileInfo = QFileInfo(latestString);
@@ -369,7 +374,7 @@ NeuronTree StackAnalyzer::sort_eliminate_swc(NeuronTree nt,LandmarkList inputRoo
                 if(curr.pn < 0) root_index = j;
                 double dis = sqrt(pow2(marker_x - curr.x) + pow2(marker_y - curr.y) + pow2(marker_z - curr.z));
 
-                if(dis < 20 && flag[j] ==0)
+                if(dis < radius && flag[j] ==0)
                 {
                     flag[root_index] = 1;
                     V3DLONG d;
@@ -659,14 +664,14 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
     QFileInfo imageFileInfo = QFileInfo(latestString);
     Image4DSimple* total4DImage = new Image4DSimple;
     Image4DSimple* total4DImage_mip = new Image4DSimple;    
-    total4DImage_mip = 0;
 
     if (imageFileInfo.isReadable()){
         QString imageSaveString = saveDirString;
         imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw");
         QString swcString = saveDirString;
         swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".swc");
-
+        qDebug()<<"swcString= "<<swcString;
+        qDebug()<<"imageSaveString= "<<imageSaveString;
         ifstream ifs_image(imageSaveString.toStdString().c_str());
         if(!ifs_image){
             QStringList fileList;
@@ -840,6 +845,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
         }else{
             unsigned char* data1d = 0;
+            total4DImage->deleteRawDataAndSetPointerToNull();
             V3DLONG in_sz[4];
             int datatype = 0;
             if (!simple_loadimage_wrapper(*cb,imageSaveString.toLatin1().data(), data1d, in_sz, datatype))

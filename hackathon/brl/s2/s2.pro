@@ -60,3 +60,4 @@ FORMS += \
 
 OTHER_FILES += \
     taskList.txt
+DEFINES += GIT_CURRENT_SHA1="\\\"$(shell git rev-parse HEAD)\\\""

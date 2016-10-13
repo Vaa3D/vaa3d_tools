@@ -1,4 +1,29 @@
+Things are working OK now with Zhi's added code to try to avoid rescanning areas where we already have reconstructions.
 
+biggest task today is to get a legitimate logging system working that can
+
+1. maintain relevant information for each tile in a centralized location
+2. maintain global information and current statistics
+3. constantly write info to a file that can be easily interpretted by external programs
+
+specifics:
+0. Global info
+pixel size, acquisition info? (no, just use .xml file)
+s2 plugin application start time
+scan start time
+?current repo commit hash [system dependent call, ideally at compile time, but that seems a little tricky.  ]
+
+
+
+1. Tile Info:
+tile area (pixels)
+tile location (pixels)
+
+
+
+
+
+-----------
 
 
 
