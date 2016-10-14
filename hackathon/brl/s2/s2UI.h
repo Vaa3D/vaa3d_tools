@@ -19,6 +19,7 @@
 #include "targetList.h"
 #include "eventLogger.h"
 #include "tileInfo.h"
+#include "s2monitor.h"
 
 QT_BEGIN_NAMESPACE
 class QWidget;
@@ -155,6 +156,8 @@ private:
 
     QString versionString;
 
+
+    S2ScanData * myScanData;
 
  // Layout and buttons
 

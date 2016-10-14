@@ -34,6 +34,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     cb = &callback;
 
+
+    myScanData = new S2ScanData();
+
     myStackAnalyzer = new StackAnalyzer(callback);
 
     myStackAnalyzer0 = new StackAnalyzer(callback);
@@ -1990,7 +1993,7 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
         waitingToStartStack = true;
         emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
-
+        myScanData->addNewTile(nextLocation);
     }
     if ((gridScanStatus ==1) && (allROILocations->length() == 0)){gridScanStatus = -1; return;}
 
@@ -2365,8 +2368,8 @@ void S2UI::startingZStack(){
     status("start single z Stack");
     float leftEdge = roiXEdit->text().toFloat() - roiXWEdit->text().toFloat()/2.0 +uiS2ParameterMap[5].getCurrentValue();
     float topEdge =  roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
-    //  colorIndex++;
-    // roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(QColor(qAbs((colorIndex%64)*63+3)%256,qAbs(255-(colorIndex%64)*63+3)%256,qAbs(128+(colorIndex%64)*63+3)%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); //QPen::QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
+
     if (smartScanStatus==1){
         QGraphicsTextItem* sequenceNumberText;
 
@@ -2374,6 +2377,7 @@ void S2UI::startingZStack(){
         sequenceNumberText->setPos(leftEdge+10,topEdge);
         sequenceNumberText->setPlainText(QString::number(loadScanNumber));
         sequenceNumberText->setDefaultTextColor(Qt::green);
+        sequenceNumberText->setZValue(100);
         roiGS->addItem(sequenceNumberText);
     }
 
@@ -2668,6 +2672,18 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
     //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
     roiGS->addItem(mipPixmap);
+    QGraphicsTextItem* sequenceNumberText;
+
+    sequenceNumberText = new QGraphicsTextItem;
+    sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
+    sequenceNumberText->setPlainText(QString::number(loadScanNumber));
+    sequenceNumberText->setTextWidth(30);
+    sequenceNumberText->setDefaultTextColor(Qt::green);
+    sequenceNumberText->setZValue(1000);
+    sequenceNumberText->setScale(0.8);
+    roiGS->addItem(sequenceNumberText);
+
+
     }else{
         qDebug()<<"not displaying MIP of area already scanned";
     }

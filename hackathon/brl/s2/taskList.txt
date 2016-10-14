@@ -10,12 +10,19 @@ specifics:
 0. Global info
 pixel size, acquisition info? (no, just use .xml file)
 s2 plugin application start time
-scan start time
-?current repo commit hash [system dependent call, ideally at compile time, but that seems a little tricky.  ]
+?compile-time repo commit hash [added, doesn't know when hash has actually changed]
+
+1. s2scan info
+start time, tile info (see below) for each tile [there is actually sequential numbers for this now]
+ongoing, updated at defined reference times like right after each stack collection.
+nTiles in queue to image
+nTiles in analysis
+nTiles
+
+final versions of ongoing (above)
 
 
-
-1. Tile Info:
+2. Tile Info:
 tile area (pixels)
 tile location (pixels)
 
