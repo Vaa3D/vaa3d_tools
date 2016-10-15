@@ -158,6 +158,7 @@ private:
 
 
     S2ScanData * myScanData;
+    S2Monitor * myScanMonitor;
 
  // Layout and buttons
 
@@ -324,6 +325,12 @@ private:
     bool isDuplicateROI(TileInfo inputTileInfo);
     void closeEvent(QCloseEvent *event);
 
+    QString fixFileString(QString inputString);
+
+    QColor makeQColorFromIndex(int maxIndex, int index);
+
+
+
     QList<TileInfo> allOverviewStageLocations;
 
     QList<TileInfo> allTargetLocations;
@@ -370,9 +377,6 @@ private:
 
 
     int traceThreadNumber;
-
-    QString fixFileString(QString inputString);
-
 
     Image4DSimple*  total4DImage;
 

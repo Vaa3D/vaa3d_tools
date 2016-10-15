@@ -25,6 +25,8 @@ public:
     float getTileZoom() const;
     int getTilePixelsX() const;
     int getTilePixelsY() const;
+    void setFileString(QString inputString);
+    QString getFileString() const;
     bool resOK;
 
 
@@ -37,6 +39,7 @@ private:
     float tileZoom;
     float zoomPixelsProduct;
     bool zoomSet;
+    QString tilev3drawFileString;
 
 };
 

@@ -16,20 +16,20 @@
 #include <QImage>
 
 
-class S2ScanData : public QObject{
-    Q_OBJECT
+class S2ScanData{
+
 public:
 S2ScanData();
 QList<TileInfo> getAllTileInfo()const;
 QImage getS2ScanImage()const;
 
-public slots:
 void addNewTile(TileInfo newTileInfo);
 void updateS2ScanImage();
 private:
 QList<TileInfo> allTiles;
 QImage s2ScanImage;
-
+QDir s2ScanDir;
+QString currentRepoHash;
 
 
 };
@@ -49,7 +49,8 @@ class S2Monitor : public QWidget
     Q_OBJECT
 public:
     explicit S2Monitor(QWidget *parent = 0);
-    
+    QList<S2ScanData> allScanData;
+
 signals:
 
 public slots:
@@ -57,10 +58,11 @@ public slots:
     void writeAllScanData();
     void setSaveDir(QDir directory);
     void updateScanData(int scanNumber, TileInfo newTileInfo);
+    void startNewScan();
+    void addNewTile(TileInfo newTileInfo);
 private:
-QList<S2ScanData> allScanData;
 QDir saveDir;
-    
+    int currentScanNumber;
 };
 
 #endif // S2MONITOR_H

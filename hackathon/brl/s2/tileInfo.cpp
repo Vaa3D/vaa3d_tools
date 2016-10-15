@@ -10,6 +10,7 @@ TileInfo::TileInfo(float zoomPixelsProduct)
     zoomSet = false;
     resOK = false;
     setZoomPos(6.0);// set default zoom so this constructor actually populates everything needed in getTileInfoString
+    tilev3drawFileString = "noFileStringYet.v3draw";
 }
 
 
@@ -46,10 +47,10 @@ int TileInfo::getTilePixelsY()const{if (zoomSet){return pixelsY;}else{return -1;
 LocationSimple TileInfo::getPixelLocation()const{return pixelLocation;}
 LocationSimple TileInfo::getStageLocation()const{return stageLocation;}
 LocationSimple TileInfo::getGalvoLocation()const{return galvoLocation;}
-
+QString TileInfo::getFileString()const{return tilev3drawFileString;}
 
 
 void TileInfo::setPixelLocation(LocationSimple loc){pixelLocation=loc;}
 void TileInfo::setStageLocation(LocationSimple loc){stageLocation=loc;}
 void TileInfo::setGalvoLocation(LocationSimple loc){galvoLocation=loc;}
-
+void TileInfo::setFileString(QString inputString){tilev3drawFileString=inputString;}

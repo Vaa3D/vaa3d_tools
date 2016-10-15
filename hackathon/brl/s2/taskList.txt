@@ -1,3 +1,38 @@
+progress so far 10/14
+1. have s2monitor and s2scandata classes sketched out
+2. s2scandata can write images of scans updated for each added tile
+
+
+next
+
+3. should just write the same filename for each scan, updating continuously
+
+
+4. should add tile number in different color DONE
+
+
+
+5. should link tile number to rows in a summary file with
+a. tile number
+b. actual path to .v3draw file
+c. time for imaging
+d. time for analysis
+
+
+
+
+and other updates to UI:
+single color for each s2scan, same color for tiles and text numbers DONE
+can I get a rollover to spit back the tile filename?  DONE
+
+
+
+
+
+
+
+
+
 Things are working OK now with Zhi's added code to try to avoid rescanning areas where we already have reconstructions.
 
 biggest task today is to get a legitimate logging system working that can

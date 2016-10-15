@@ -34,7 +34,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
     cb = &callback;
 
-
+    myScanMonitor = new S2Monitor();
     myScanData = new S2ScanData();
 
     myStackAnalyzer = new StackAnalyzer(callback);
@@ -420,6 +420,7 @@ void S2UI::updateROIPlot(QString ignore){
     float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0+uiS2ParameterMap[5].getCurrentValue();
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
     newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
+
     //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
 
 
@@ -1454,7 +1455,7 @@ void S2UI::handleAllTargets(){
 
 
     targetIndex++;
-    colorIndex= colorIndex+1;
+    colorIndex++;
     haventRunBoundingBox = true;
     allROILocations->clear();
     if (targetIndex>=allTargetLocations.length()){
@@ -1470,6 +1471,10 @@ void S2UI::handleAllTargets(){
         myEventLogger->processEvents(eventLogString);
         return;
     }
+
+
+    myScanMonitor->startNewScan();
+
     status("starting all targets");
     updateCurrentZoom(tileSizeCB->currentIndex());
     QTimer::singleShot(1000, this, SLOT(startingSmartScan()));}
@@ -1694,7 +1699,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
-
+            landmarkTileInfo.setFileString(QString::fromStdString(newLandmarks[i].name));
             if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
 
                 // make a copy of the main list here.
@@ -1705,8 +1710,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
                 // keeping track of a bunch of ROIs.
-                colorIndex++;
-                QPen myPen =  QPen::QPen(QColor(qAbs(((colorIndex%64)*63+3))%256,qAbs((255-(colorIndex%64)*63+3))%256,qAbs((128+(colorIndex%64)*63+3))%256), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+                QPen myPen =  QPen::QPen(makeQColorFromIndex(10, colorIndex), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
                 roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
                         ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
@@ -1993,7 +1997,7 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
         waitingToStartStack = true;
         emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
-        myScanData->addNewTile(nextLocation);
+        myScanMonitor->addNewTile(nextLocation);
     }
     if ((gridScanStatus ==1) && (allROILocations->length() == 0)){gridScanStatus = -1; return;}
 
@@ -2135,7 +2139,6 @@ void S2UI::loadLatest(){
             qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
-
         // outgoing landmarks are shifted to the tile upper left
         tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
         tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
@@ -2671,6 +2674,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
 
     //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
     //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
+    //mipPixmap->acceptHoverEvents();
+    //mipPixmap->setToolTip(scanList.value(imageNumber).getFileString());
     roiGS->addItem(mipPixmap);
     QGraphicsTextItem* sequenceNumberText;
 
@@ -2678,7 +2683,7 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
     sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
     sequenceNumberText->setPlainText(QString::number(loadScanNumber));
     sequenceNumberText->setTextWidth(30);
-    sequenceNumberText->setDefaultTextColor(Qt::green);
+    sequenceNumberText->setDefaultTextColor(makeQColorFromIndex(10,colorIndex));
     sequenceNumberText->setZValue(1000);
     sequenceNumberText->setScale(0.8);
     roiGS->addItem(sequenceNumberText);
@@ -2831,8 +2836,27 @@ void S2UI::updateZStepSize(int ignore){
 
 
 
+
+
 // =================================
 // +++++++++++++++++++++++++++++++
+
+
+
+
+
+
+QColor S2UI::makeQColorFromIndex(int maxIndex, int index){
+return    QColor((index%maxIndex)*255/maxIndex,qAbs((256-(index%maxIndex)*255/maxIndex))%256,qAbs((index%(maxIndex/2))*512/maxIndex)%256);
+}
+
+
+
+
+
+
+
+
 
 void S2UI::startLiveFile(){
     liveFileRunning= !liveFileRunning;

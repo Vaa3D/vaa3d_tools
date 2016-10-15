@@ -4,10 +4,12 @@
 S2ScanData::S2ScanData(){
     s2ScanImage = QImage(1,1,QImage::Format_RGB888);
     s2ScanImage.setPixel(0,0,0);
+    currentRepoHash = GIT_CURRENT_SHA1;
 }
 
 void S2ScanData::addNewTile(TileInfo newTileInfo){
     allTiles.append(newTileInfo);
+    s2ScanDir = QFileInfo(newTileInfo.getFileString()).absoluteDir();
     updateS2ScanImage();
 }
 
@@ -49,7 +51,7 @@ void S2ScanData::updateS2ScanImage(){
         }
     }
 
-    s2ScanImage.save(QString("/local1/dump/testS2Image").append(QString::number(imageLocations.length())).append(".tif"));
+    s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
 }
 
 QImage S2ScanData::getS2ScanImage()const{
@@ -68,4 +70,34 @@ QList<TileInfo> S2ScanData::getAllTileInfo()const{
 S2Monitor::S2Monitor(QWidget *parent) :
     QWidget(parent)
 {
+    currentScanNumber =0;
+}
+
+void S2Monitor::setSaveDir(QDir directory){
+    saveDir = directory;
+}
+
+void S2Monitor::writeAllScanData(){
+    for (int i=0; i<allScanData.length();i++){
+        writeScanData(i);
+    }
+}
+
+void S2Monitor::writeScanData(int scanNumber){
+    // write summary data for a single s2scan  to saveDir
+}
+
+void S2Monitor::startNewScan(){
+    currentScanNumber++;
+}
+
+
+void S2Monitor::addNewTile(TileInfo newTileInfo){
+    if (currentScanNumber>allScanData.length()) {
+        S2ScanData newS2ScanData = S2ScanData();
+        newS2ScanData.addNewTile(newTileInfo);
+        allScanData.append(newS2ScanData);
+    }else{
+        allScanData.last().addNewTile(newTileInfo);
+    }
 }
