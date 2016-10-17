@@ -11,6 +11,13 @@ TileInfo::TileInfo(float zoomPixelsProduct)
     resOK = false;
     setZoomPos(6.0);// set default zoom so this constructor actually populates everything needed in getTileInfoString
     tilev3drawFileString = "noFileStringYet.v3draw";
+    timeStampCategory = 0;
+    tileTimes.clear();
+    elapsedTimes.clear();
+    // 1st timestamp is when tile is added to queue  S2UI::handleNewLocation or S2UI::startingSmartScan
+    // 2nd timestamp when tile is sent to the microscope for imaging S2UI::s2ROIMonitor
+    // 3rd timestamp is when the tile  is done imaging and sent for analysis.
+    //
 }
 
 
@@ -41,6 +48,32 @@ QStringList TileInfo::getTileInfoString(){
     }
 return a;
 }
+
+void TileInfo::setTimeStamp(QDateTime timeNow){
+    tileTimes.append(timeNow);
+    if (tileTimes.length()==1){
+        elapsedTimes.append(0.0);
+    }else{
+        quint64 timeSinceLast = tileTimes.at(timeStampCategory).toMSecsSinceEpoch() - tileTimes.at(timeStampCategory-1).toMSecsSinceEpoch();
+        elapsedTimes.append((float) timeSinceLast);
+
+    }
+    timeStampCategory++;
+
+}
+
+QList<float> TileInfo::getElapsedTimes(){
+    return elapsedTimes;
+}
+
+QStringList TileInfo::getTimeStrings(){
+    QStringList outputTimeStrings;
+    for (int i=0; i<tileTimes.length(); i++){
+        outputTimeStrings.append(tileTimes.at(i).toString("yyyy_MM_dd_ddd_hh_mm_zzz"));
+    }
+
+}
+
 float TileInfo::getTileZoom()const{if (zoomSet){return tileZoom;}else{return -1;}}
 int TileInfo::getTilePixelsX()const{if (zoomSet){return pixelsX;}else{return -1;}}
 int TileInfo::getTilePixelsY()const{if (zoomSet){return pixelsY;}else{return -1;}}

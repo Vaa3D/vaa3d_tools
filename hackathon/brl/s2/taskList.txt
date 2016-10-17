@@ -1,3 +1,22 @@
+TUESDAY:
+figure out conditions of waitingforlast etc under multithreading.
+how can we be sure the scan is over?  allroilocations is empty AND there are no more pending analyses
+
+NOW:
+
+Add time data to tileInfo.
+just use time::whatever() to put current clock time into the tileInfo when:
+
+0. target is chosen from overview [multiple targets share this starting time]
+1. tile is added to queue  << S2UI::handleNewLocation
+2. tile is sent to microscope
+3. tile is returned from microscope
+4. tile is sent to analysis
+5. tile is returned from analysis :  this is made more difficult if there are recurrent returns of tiles.
+
+
+
+
 progress so far 10/14
 1. have s2monitor and s2scandata classes sketched out
 2. s2scandata can write images of scans updated for each added tile

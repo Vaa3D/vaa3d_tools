@@ -3,6 +3,7 @@
 #include <QString>
 #include <QStringList>
 #include <QDebug>
+#include <QDateTime>
 #include <v3d_interface.h>
 
 class TileInfo
@@ -28,7 +29,9 @@ public:
     void setFileString(QString inputString);
     QString getFileString() const;
     bool resOK;
-
+    void setTimeStamp(QDateTime timeNow);
+    QList<float> getElapsedTimes();
+    QStringList getTimeStrings();
 
 private:
     LocationSimple pixelLocation;
@@ -40,6 +43,9 @@ private:
     float zoomPixelsProduct;
     bool zoomSet;
     QString tilev3drawFileString;
+    int timeStampCategory;
+    QList<QDateTime> tileTimes;
+    QList<float> elapsedTimes;
 
 };
 

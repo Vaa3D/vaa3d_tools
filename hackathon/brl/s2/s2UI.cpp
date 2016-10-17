@@ -1527,6 +1527,7 @@ void S2UI::startingSmartScan(){
             startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
             startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
             startTileInfo.setGalvoLocation(startLocation);
+
             float tileSize = uiS2ParameterMap[11].getCurrentValue();
             int minGrid = -(gridSizeSB->value()-1)/2;
             int maxGrid = -minGrid+1;
@@ -1623,7 +1624,7 @@ void S2UI::startingSmartScan(){
 
 
         // add the starting location to the ROI queue:
-
+        startTileInfo.setTimeStamp(QDateTime::currentDateTime());
         allROILocations->append(startTileInfo);
 
 
@@ -1648,6 +1649,11 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     emit eventSignal("finishedAnalysis");
     QTimer::singleShot(0,this, SLOT(processingFinished()));
     qDebug()<<"back in S2UI with new locations";
+
+
+    //  add end-time for analysis of tile scanIndex
+
+
 
     status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
     qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber));
@@ -1700,12 +1706,17 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
             landmarkTileInfo.setFileString(QString::fromStdString(newLandmarks[i].name));
+            // add zero-time for tile imaging
+
+
             if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
 
                 // make a copy of the main list here.
                 // add the new stuff to the copy.
                 // sort the copy based on the category field [annoying?]
                 // and replace the main list with the new one.
+
+                landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());                        // 1st timestamp is when tile is added to queue
                 allROILocations->append(landmarkTileInfo);
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
@@ -1718,6 +1729,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
     }
+
+
     loadMIP(scanIndex, mip);
     //scanNumber++;
     myNotes->save();
@@ -1883,6 +1896,11 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
 
 
 }
+
+
+
+
+
 void S2UI::smartScanHandler(){
     // this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
     if (smartScanStatus!=1){
@@ -1983,6 +2001,8 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         status("currentTileInfo : "+sString);
         qDebug()<<sString;
         waitingForFile = 1;
+        nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
+
         scanList.append(nextLocation);
         if (targetIndex < allScanLocations.length()){
             allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
@@ -2139,6 +2159,7 @@ void S2UI::loadLatest(){
             qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
+        scanList.value(loadScanNumber).setTimeStamp(QDateTime::currentDateTime());
         // outgoing landmarks are shifted to the tile upper left
         tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
         tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
@@ -2635,7 +2656,7 @@ void S2UI::pickTargets(){
         newTarget.setGalvoLocation(newTargetGalvo);
         newTarget.setStageLocation(newTargetStage);
         newTarget.setPixelLocation(newTargetPixels);
-
+        newTarget.setTimeStamp(QDateTime::currentDateTime()); // first timestamp is when the starting location is selected
         targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
@@ -2649,6 +2670,20 @@ void S2UI::pickTargets(){
 
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
+
+    scanList.value(imageNumber).setTimeStamp(QDateTime::currentDateTime());
+    QStringList testOutput =     scanList.value(imageNumber).getTimeStrings();
+    for (int i=0; i<testOutput.length(); i++){
+        qDebug()<<testOutput.at(i);
+    }
+    QList<float> testElapsed = scanList.value(imageNumber).getElapsedTimes();
+    for (int j =0;j<testElapsed.length(); j++){
+        qDebug()<<"elapsed time "<<j<<" = "<<QString::number(testElapsed.at(j));
+        qDebug()<<testElapsed.at(j);
+    }
+
+
+
     if (!mip==0){
     scaleintensity(mip,0,0,8000,double(0),double(255));
     scale_img_and_convert28bit(mip, 0, 255) ;
