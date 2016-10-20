@@ -11,6 +11,7 @@ void S2ScanData::addNewTile(TileInfo newTileInfo){
     allTiles.append(newTileInfo);
     s2ScanDir = QFileInfo(newTileInfo.getFileString()).absoluteDir();
     updateS2ScanImage();
+    updateS2Summary();
 }
 
 void S2ScanData::updateS2ScanImage(){
@@ -21,6 +22,7 @@ void S2ScanData::updateS2ScanImage(){
     long sizex=0;
     long sizey=0;
     QList<LocationSimple> imageLocations;
+    totalTileArea=0;
     for (int i = 0; i<allTiles.length(); i++){
         LocationSimple locationi = allTiles.at(i).getPixelLocation();
         locationi.ev_pc1 = allTiles.at(i).getGalvoLocation().ev_pc1;
@@ -32,7 +34,11 @@ void S2ScanData::updateS2ScanImage(){
 
         sizex = (long)  (maxx-minx+1.);
         sizey = (long)  (maxy-miny+1.);
+        totalTileArea = totalTileArea+ (float) locationi.ev_pc2 * (float) locationi.ev_pc1;
     }
+
+
+
     for (int i = 0; i<allTiles.length(); i++){
         LocationSimple locationi = allTiles.at(i).getPixelLocation();
         locationi.x = locationi.x-minx;
@@ -42,17 +48,45 @@ void S2ScanData::updateS2ScanImage(){
     s2ScanImage  = QImage(sizex,sizey,QImage::Format_RGB888);
     s2ScanImage.fill(0);
     for (int i = 0; i<imageLocations.length(); i++){
-        for (long k = imageLocations.at(i).x; k<= (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
-            for (long j = imageLocations.at(i).y; j<= (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
+        for (long k = imageLocations.at(i).x; k< (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
+            for (long j = imageLocations.at(i).y; j< (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
                 QRgb pixelValue =  s2ScanImage.pixel(k,j);
                 pixelValue = ((uint) pixelValue ) + (uint) 1;
                 s2ScanImage.setPixel(k,j,pixelValue);
+
             }
         }
     }
 
     s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
+
+
+
+
+    boundingBoxX = (float) sizex;
+    boundingBoxY = (float) sizey;
+
+    imagedArea = 0;
+    for (long imi=0; imi<sizex; imi++){
+        for (long imj=0; imj<sizey; imj++){
+            int imijpixel =  qBlue( s2ScanImage.pixel(imi, imj));
+
+            if ( imijpixel > 0) imagedArea++;
+        }
+    }
+
+
+
+
 }
+
+
+void S2ScanData::updateS2Summary(){
+    //
+
+
+}
+
 
 QImage S2ScanData::getS2ScanImage()const{
     return s2ScanImage;

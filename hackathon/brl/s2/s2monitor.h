@@ -22,9 +22,13 @@ public:
 S2ScanData();
 QList<TileInfo> getAllTileInfo()const;
 QImage getS2ScanImage()const;
-
+float boundingBoxX;
+float boundingBoxY;
+float totalTileArea;
+float imagedArea;
 void addNewTile(TileInfo newTileInfo);
 void updateS2ScanImage();
+void updateS2Summary();
 private:
 QList<TileInfo> allTiles;
 QImage s2ScanImage;

@@ -100,7 +100,6 @@ void StackAnalyzer::updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMax
 
 void StackAnalyzer::updateSearchRadius(double inputRadius){
 radius = inputRadius;
-qDebug()<<"radius is "<<QString::number(radius);
 }
 
 void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
@@ -732,8 +731,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
                                     else total1dData[totalImageIndex]= (unsigned short int) tmp;
 
                                 }
-                                if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
-                                if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                                if(total1dData[totalImageIndex] > p_vmax) p_vmax = total1dData[totalImageIndex];
+                                if(total1dData_mip[i] < total1dData[totalImageIndex]) total1dData_mip[i] = total1dData[totalImageIndex];
                                 totalImageIndex++;
                             }
 
@@ -748,8 +747,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
                                     total1dData[totalImageIndex]= data1d2[i];
 
                                 }
-                                if(data1d2[i] > p_vmax) p_vmax = data1d2[i];
-                                if(total1dData_mip[i] < data1d2[i]) total1dData_mip[i] = data1d2[i];
+                                if(total1dData[totalImageIndex] > p_vmax) p_vmax =total1dData[totalImageIndex];
+                                if(total1dData_mip[i] < total1dData[totalImageIndex]) total1dData_mip[i] = total1dData[totalImageIndex];
                                 totalImageIndex++;
                             }
 
@@ -797,7 +796,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             if (!saveTextFile.isOpen()){
                 if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
                     qDebug()<<"unable to save file!";
-                    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+                    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,imageSaveString);
                     return;}     }
             QTextStream outputStream;
             outputStream.setDevice(&saveTextFile);
@@ -827,7 +826,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             catch (...)
             {
                 v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
-                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
 
                 return;
             }
@@ -851,7 +850,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             if (!simple_loadimage_wrapper(*cb,imageSaveString.toLatin1().data(), data1d, in_sz, datatype))
             {
                 qDebug()<<"unable to load file!";
-                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
                 return;
             }
             total4DImage->setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
@@ -871,11 +870,13 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         qDebug()<<"=== immediately before tracing =====";
         qDebug()<<"isAdaptive "<<isAdaptive;
         qDebug()<<"methodChoice "<<methodChoice;
+        qDebug()<<"tileLocation.name "<<QString::fromStdString(tileLocation.name);
+
 
         if(isAdaptive)
         {
             if(methodChoice == 2)
-                APP2Tracing_adaptive(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, tileLocation, saveDirString,useGSDT, isSoma);
+                APP2Tracing_adaptive(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, tileLocation, saveDirString,useGSDT, isSoma,imageSaveString);
             else
                 SubtractiveTracing_adaptive(latestString,imageSaveString, total4DImage, total4DImage_mip, swcString,overlap, background, interrupt,  inputRootList, tileLocation, saveDirString,useGSDT, isSoma, methodChoice);
         }
@@ -883,7 +884,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         {
             if(methodChoice == 2)
             {
-                APP2Tracing(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, useGSDT, isSoma, tileLocation);
+                APP2Tracing(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, useGSDT, isSoma, tileLocation,imageSaveString);
             }
             else
                 SubtractiveTracing(latestString,imageSaveString, total4DImage, total4DImage_mip, swcString,overlap, background, interrupt,  inputRootList, tileLocation, saveDirString,useGSDT, isSoma, methodChoice);
@@ -895,7 +896,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
     }
 }
 
-void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation)
+void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation, QString tileSaveString)
 {
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
@@ -1125,12 +1126,12 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString);
 
 
 }
 
-void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma)
+void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, QString tileSaveString)
 {
     QString finaloutputswc = saveDirString + ("/s2.swc");
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
@@ -1392,7 +1393,7 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
         }
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, tileSaveString);
 }
 
 void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveString, Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip,QString swcString,float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString,bool useGSDT, bool isSoma, int methodChoice)
@@ -1473,7 +1474,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
                 qDebug()<<("Can not find the tracing plugin!\n");
 
-                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
                 return;
             }
         }
@@ -1488,7 +1489,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
         if(nt_most.listNeuron.size()<1){
             qDebug()<<"zero size listNeuron!!";
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
             return;
         }
 
@@ -1502,7 +1503,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
             if(inputRootList_pruned.size()<1)
             {
-                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+                emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
                 return;
             }else
             {
@@ -1624,7 +1625,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].ev_pc2 = (double) total4DImage->getYDim();
             newTargetList[i].mcenter = tileLocation.mcenter;
             newTargetList[i].ave = tileLocation.ave;
-            newTargetList[i].name =tileLocation.name;
+            newTargetList[i].name =imageSaveString.toStdString();
         }
     }
     if (!imageLandmarks.isEmpty()){
@@ -1750,7 +1751,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
 }
 
 void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString imageSaveString, Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip,QString swcString,float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString,bool useGSDT, bool isSoma, int methodChoice)
@@ -1827,7 +1828,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
 
         printf("Can not find the tracing plugin!\n");
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
 
         return;
     }
@@ -1842,7 +1843,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     nt_most = readSWC_file(swcMOST);
 
     if(nt_most.listNeuron.size()<1){
-        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+        emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
         return;
     }
     NeuronTree nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
@@ -1924,7 +1925,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
         {
             newTargetList[i].ave = tileLocation.ave;
             newTargetList[i].mcenter = tileLocation.mcenter;
-            newTargetList[i].name = tileLocation.name;
+            newTargetList[i].name = imageSaveString.toStdString();
         }
     }
 
@@ -2000,7 +2001,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
 }
 
 int StackAnalyzer::methodSelection(Image4DSimple* total4DImage,LandmarkList inputRootList, int background, bool isSoma)

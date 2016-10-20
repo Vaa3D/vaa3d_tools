@@ -49,29 +49,31 @@ QStringList TileInfo::getTileInfoString(){
 return a;
 }
 
-void TileInfo::setTimeStamp(QDateTime timeNow){
+int TileInfo::setTimeStamp(QDateTime timeNow){
     tileTimes.append(timeNow);
     if (tileTimes.length()==1){
         elapsedTimes.append(0.0);
     }else{
         quint64 timeSinceLast = tileTimes.at(timeStampCategory).toMSecsSinceEpoch() - tileTimes.at(timeStampCategory-1).toMSecsSinceEpoch();
         elapsedTimes.append((float) timeSinceLast);
-
+        qDebug()<<"timesinceLast"<<timeSinceLast;
     }
     timeStampCategory++;
-
+    qDebug()<<"nTileTimes = "<<tileTimes.length();
+return tileTimes.length();
 }
 
-QList<float> TileInfo::getElapsedTimes(){
+QList<float> TileInfo::getElapsedTimes()const{
     return elapsedTimes;
 }
 
-QStringList TileInfo::getTimeStrings(){
+QStringList TileInfo::getTimeStrings()const{
     QStringList outputTimeStrings;
+    qDebug()<<"getTimeStrings length of tileTimes? "<<tileTimes.length();
     for (int i=0; i<tileTimes.length(); i++){
-        outputTimeStrings.append(tileTimes.at(i).toString("yyyy_MM_dd_ddd_hh_mm_zzz"));
+        outputTimeStrings.append(tileTimes.at(i).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz"));
     }
-
+return outputTimeStrings;
 }
 
 float TileInfo::getTileZoom()const{if (zoomSet){return tileZoom;}else{return -1;}}
@@ -81,7 +83,7 @@ LocationSimple TileInfo::getPixelLocation()const{return pixelLocation;}
 LocationSimple TileInfo::getStageLocation()const{return stageLocation;}
 LocationSimple TileInfo::getGalvoLocation()const{return galvoLocation;}
 QString TileInfo::getFileString()const{return tilev3drawFileString;}
-
+QList<QDateTime> TileInfo::getTileTimes()const{return tileTimes;};
 
 void TileInfo::setPixelLocation(LocationSimple loc){pixelLocation=loc;}
 void TileInfo::setStageLocation(LocationSimple loc){stageLocation=loc;}

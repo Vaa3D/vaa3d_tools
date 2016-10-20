@@ -1,3 +1,19 @@
+TileInfo readout:  append current tile info to a file in loadMIP. this should include
+1. tile filename
+2. tile location in pixels
+3. tile size in pixels
+4. tile times 0-3
+5. optical zoom
+6. current mode
+
+file should be initiated at the beginning of the s2scan, and should contain
+
+1. current time
+2. git hash
+3. scan save directory (to validate location)
+
+
+
 TUESDAY:
 figure out conditions of waitingforlast etc under multithreading.
 how can we be sure the scan is over?  allroilocations is empty AND there are no more pending analyses

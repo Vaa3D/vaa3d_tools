@@ -236,10 +236,10 @@ void S2UI::hookUpSignalsAndSlots(){
 
     // communication with  myStackAnalyzer
 
-    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
-    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
-    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
-    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double)));
+    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString)));
+    connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString)));
+    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString)));
+    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString)));
     connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer1,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
@@ -1420,6 +1420,7 @@ void S2UI::startAllTargets(){
         allTipsList->clear();
         tipList.clear();
         saveTextFile.close();
+        summaryTextFile.close();
         emit eventSignal("finishedMultiTarget");
         return;
     }else{
@@ -1467,13 +1468,13 @@ void S2UI::handleAllTargets(){
         allROILocations->clear();
         allTipsList->clear();
         saveTextFile.close();
+        summaryTextFile.close();
         emit eventSignal("finishedMultiTarget");
         myEventLogger->processEvents(eventLogString);
         return;
     }
 
 
-    myScanMonitor->startNewScan();
 
     status("starting all targets");
     updateCurrentZoom(tileSizeCB->currentIndex());
@@ -1484,7 +1485,6 @@ void S2UI::startingSmartScan(){
     numProcessing=0;
     LocationSimple startLocation ;
     TileInfo startTileInfo = TileInfo(zoomPixelsProduct);
-
 
     if (gridScanCB->isChecked()){
         gridScanStatus = 1;
@@ -1561,7 +1561,7 @@ void S2UI::startingSmartScan(){
         }
         return;
     }
-
+    myScanMonitor->startNewScan();
     qDebug()<<"starting smartscan";
     if (smartScanStatus==1){
         smartScanStatus=0;
@@ -1570,6 +1570,7 @@ void S2UI::startingSmartScan(){
         allROILocations->clear();
         allTipsList->clear();
         saveTextFile.close();
+        summaryTextFile.close();
         emit eventSignal("finishedSmartScan");
 
         return;
@@ -1594,6 +1595,24 @@ void S2UI::startingSmartScan(){
             return;}     }
 
     outputStream.setDevice(&saveTextFile);
+
+
+    // new file with scan summary information
+
+    QString summaryFileString =saveDir.absolutePath().append("/").append("s2Summary.txt");
+
+    summaryTextFile.setFileName(summaryFileString);
+    if (!summaryTextFile.isOpen()){
+        if (!summaryTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+            qDebug()<<"couldnt open file"<<summaryFileString;
+            return;}     }
+
+    QTextStream summaryTextStream;
+    summaryTextStream.setDevice(&summaryTextFile);
+    summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
+    summaryTextStream<<"s2Scan start time: "<<";"<< QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
+    summaryTextStream<<"s2Scan Save Directory: "<<";"<< saveDir.absolutePath()<<"\n";
+
 
     startSmartScanPB->setText("cancel smartScan");
     if (allROILocations->isEmpty()){ // start smartscan of new target
@@ -1621,10 +1640,12 @@ void S2UI::startingSmartScan(){
 
 
 
-
-
+        totalImagingTime=0.0;
+        totalAnalysisTime=0.0;
+        scanStartTime = QDateTime::currentDateTime();
         // add the starting location to the ROI queue:
-        startTileInfo.setTimeStamp(QDateTime::currentDateTime());
+        int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
+        qDebug()<<"nTileTimes at start = "<<v;
         allROILocations->append(startTileInfo);
 
 
@@ -1644,7 +1665,7 @@ void S2UI::startingSmartScan(){
 
 }
 
-void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex){
+void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex, QString tileSaveString){
 
     emit eventSignal("finishedAnalysis");
     QTimer::singleShot(0,this, SLOT(processingFinished()));
@@ -1705,18 +1726,14 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
-            landmarkTileInfo.setFileString(QString::fromStdString(newLandmarks[i].name));
-            // add zero-time for tile imaging
+
+
 
 
             if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
 
-                // make a copy of the main list here.
-                // add the new stuff to the copy.
-                // sort the copy based on the category field [annoying?]
-                // and replace the main list with the new one.
-
-                landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());                        // 1st timestamp is when tile is added to queue
+                int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
+                qDebug()<<"n tiletimes when new tile is added, should be 1, is "<<v;
                 allROILocations->append(landmarkTileInfo);
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
@@ -1731,7 +1748,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     }
 
 
-    loadMIP(scanIndex, mip);
+    loadMIP(scanIndex, mip, tileSaveString);
     //scanNumber++;
     myNotes->save();
 
@@ -1908,13 +1925,14 @@ void S2UI::smartScanHandler(){
         //scanNumber = 0;
         loadScanNumber = 0;
         saveTextFile.close();
+        summaryTextFile.close();
         emit processSmartScanSig(scanDataFileString);
         if (allTargetStatus ==1){
             QTimer::singleShot(0, this, SLOT(handleAllTargets()));
         }else{        myEventLogger->processEvents(eventLogString);}
         return;
     }
-    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(loadScanNumber))){//scanNumber is incremented AFTER the tracing results come in
+    if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(myScanMonitor->allScanData.last().getAllTileInfo().length()))){//scanNumber is incremented AFTER the tracing results come in
         if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
         saveTextFile.close();
         smartScanStatus = 0;
@@ -1950,6 +1968,8 @@ void S2UI::smartScanHandler(){
                 nextLandmarkList = allTipsList->first();
                 allTipsList->removeFirst();
             }
+            QStringList a = allROILocations->first().getTimeStrings();
+            for (int i = 0; i<a.length(); i++) qDebug()<<a.at(i);
             allROILocations->removeFirst();
             moveToROI(nextLocation);
 
@@ -1991,6 +2011,7 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         TileInfo nextLocation = allROILocations->first();
         allROILocations->removeFirst();
 
+
         moveToROI(nextLocation);
         TileInfo nextTileInfo = TileInfo(zoomPixelsProduct);
         nextTileInfo.setPixels((int) nextLocation.getPixelLocation().ev_pc1);
@@ -2001,7 +2022,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         status("currentTileInfo : "+sString);
         qDebug()<<sString;
         waitingForFile = 1;
-        nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
+        int v = nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
+
+        qDebug()<<"ntiletimes should be 2, is "<<v;
+
+
+
 
         scanList.append(nextLocation);
         if (targetIndex < allScanLocations.length()){
@@ -2013,11 +2039,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         }
 
 
+
+
         emit updateTable(allTargetLocations,allScanLocations);
         status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
         waitingToStartStack = true;
         emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
-        myScanMonitor->addNewTile(nextLocation);
     }
     if ((gridScanStatus ==1) && (allROILocations->length() == 0)){gridScanStatus = -1; return;}
 
@@ -2159,7 +2186,13 @@ void S2UI::loadLatest(){
             qDebug()<<"seedList length "<<seedList.length();
         }
         LocationSimple tileLocation;
-        scanList.value(loadScanNumber).setTimeStamp(QDateTime::currentDateTime());
+        int v = scanList[loadScanNumber].setTimeStamp(QDateTime::currentDateTime()); //3rd timestamp when imaging is done
+        qDebug()<<"nTileTimes should be 3, is "<<v;
+        QStringList  tlist = scanList[loadScanNumber].getTimeStrings();
+        qDebug()<<"getTimeStrings length is "<<tlist.length();
+        for (int i=0; i<tlist.length();i++) qDebug()<<tlist.at(i);
+
+
         // outgoing landmarks are shifted to the tile upper left
         tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
         tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
@@ -2188,50 +2221,40 @@ void S2UI::loadLatest(){
             if (tracingMethodComboB->currentIndex()==0){ //MOST
                 methodChoice = 0;
                 isAdaptive = false;
-                //emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==1){ //APP2
-                //        emit callSALoad(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
                 methodChoice = 2;
                 isAdaptive = false;
             }
             if (tracingMethodComboB->currentIndex()==2){ //Neutube
                 methodChoice = 1;
-                //        emit callSALoadSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
                 methodChoice = 0;
                 isAdaptive  = true;
-                //        emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
                 methodChoice = 2;
                 isAdaptive = true;
-                //emit callSALoadAda(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma);
 
             }
             if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
                 methodChoice= 1;
                 isAdaptive = true;
-                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             if (tracingMethodComboB->currentIndex()==6){ //automatic
                 methodChoice= -1;
                 isAdaptive = true;
 
-                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
-
             }
 
             if (tracingMethodComboB->currentIndex()==7){ //debugging mode
                 methodChoice= 3;
                 isAdaptive = false;
-
-                //   emit callSALoadAdaSubtractive(s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(), seedList, tileLocation, saveDir.absolutePath(),useGSDTCB->isChecked()  , isSoma, methodChoice);
 
             }
             qDebug()<<"isadaptive = "<<isAdaptive;
@@ -2304,7 +2327,7 @@ void S2UI::loadingDone(Image4DSimple *mip){
     emit eventSignal("finishedGridLoad");
 
     if (gridScanStatus>0){
-        loadMIP((double) loadScanNumber, mip);
+        loadMIP((double) loadScanNumber, mip, "ignore");
     }
     if ((gridScanStatus ==-1)&&(waitingForFile<1)){
         emit eventSignal("finishedGridScan");
@@ -2656,7 +2679,6 @@ void S2UI::pickTargets(){
         newTarget.setGalvoLocation(newTargetGalvo);
         newTarget.setStageLocation(newTargetStage);
         newTarget.setPixelLocation(newTargetPixels);
-        newTarget.setTimeStamp(QDateTime::currentDateTime()); // first timestamp is when the starting location is selected
         targets.append(newTarget);
         LandmarkList startList;
         startList.append(startCenter);
@@ -2669,19 +2691,68 @@ void S2UI::pickTargets(){
 
 
 
-void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
+void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString){
+    qDebug()<<"loadMIP";
 
-    scanList.value(imageNumber).setTimeStamp(QDateTime::currentDateTime());
+    if (scanList.isEmpty()) return;
+
+    int v = scanList[imageNumber].setTimeStamp(QDateTime::currentDateTime()); // fourth timestamp when analysis is done.
+    scanList[imageNumber].setFileString(tileSaveString); // this is the string for the individual tile, generated in stackanalyzer and sent back here.
+
+    myScanMonitor->addNewTile(scanList.at(imageNumber)); // this tileInfo is the final data for this tile, so const is ok.
+
+// append this final tile info to our summary file
+
+    // possibly include some running totals: sum of tile area, scanned area, boundingbox size, total time, total imaging time.
+    QTextStream summaryTextStream;
+    summaryTextStream.setDevice(&summaryTextFile);
+    summaryTextStream<<"@@@@@@@@@@@;@@@@@@@@@@@"<<"\n";
+    summaryTextStream<<"tile number ;"<<imageNumber<<"\n";
+    summaryTextStream<<"tile mode ;"<<uiS2ParameterMap[0].getCurrentString()<<"\n";
+    summaryTextStream<<"tile zoom ;"<<uiS2ParameterMap[12].getCurrentValue()<<"\n";
+    summaryTextStream<<"microns per pixel ;"<<uiS2ParameterMap[8].getCurrentValue()<<"\n";
+    summaryTextStream<<"tracing algorithm ;"<<tracingMethodComboB->currentText()<<"\n";
     QStringList testOutput =     scanList.value(imageNumber).getTimeStrings();
-    for (int i=0; i<testOutput.length(); i++){
-        qDebug()<<testOutput.at(i);
+
+    for (int ii=0; ii<testOutput.length(); ii++){
+        qDebug()<<testOutput.at(ii);
+        summaryTextStream<<"tile event "<<ii<<" ;"<<testOutput.at(ii)<<"\n";
+
     }
     QList<float> testElapsed = scanList.value(imageNumber).getElapsedTimes();
-    for (int j =0;j<testElapsed.length(); j++){
-        qDebug()<<"elapsed time "<<j<<" = "<<QString::number(testElapsed.at(j));
-        qDebug()<<testElapsed.at(j);
+    for (int jj =0;jj<testElapsed.length(); jj++){
+        qDebug()<<"elapsed time "<<jj<<" = "<<QString::number(testElapsed.at(jj));
+        summaryTextStream<<"elapsed time "<<jj<<" ;"<< QString::number(testElapsed.at(jj))<<"\n";
+        if (jj==2) totalImagingTime=totalImagingTime+testElapsed.at(jj);
+        if (jj==3) totalAnalysisTime=totalAnalysisTime+testElapsed.at(jj);
     }
 
+    QList<qint64> msTileStartEvents;
+    msTileStartEvents.clear();
+    for (int kk=0; kk<scanList.length(); kk++){
+        msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch());
+    }
+
+
+
+
+    summaryTextStream<<"@@  running totals ;    @@"<<"\n";
+    //  some of these (total imaging time and total analysis time) are based on the tiles that have made it here, whereas others (anything from myScanMonitor) is based on
+    // data submitted to that object immediately before imaging.  bottom line is that the last entry of these totals should be spot-on but other entries are just to give a sense
+    // of what's happening.
+    summaryTextStream<<"imaged area ;"<< myScanMonitor->allScanData.last().imagedArea<<"\n";
+    summaryTextStream<<"sum of tile areas ;"<<myScanMonitor->allScanData.last().totalTileArea<<"\n"  ;
+    summaryTextStream<<"boundingBoxX ;"<<myScanMonitor->allScanData.last().boundingBoxX<<"\n";
+    summaryTextStream<<"boundingBoxY ;"<<myScanMonitor->allScanData.last().boundingBoxY<<"\n";
+    summaryTextStream<<"boundingBox Area ;"<<myScanMonitor->allScanData.last().boundingBoxX*myScanMonitor->allScanData.last().boundingBoxY<<"\n";
+    summaryTextStream<<"tiles in queue ;"  <<  allROILocations->length()<<"\n";
+    summaryTextStream<<"tiles imaged ;"  <<  scanList.length()<<"\n";
+    summaryTextStream<<"total imaging time ;"<<totalImagingTime<<"\n";
+    summaryTextStream<<"total analysis time ;"<<totalAnalysisTime<<"\n";
+    summaryTextStream<<"ms since start ;" <<  QDateTime::currentDateTime().toMSecsSinceEpoch()-scanStartTime.toMSecsSinceEpoch()<<"\n";
+
+    // get the average difference by finding the total time delay between first and last  signals
+    summaryTextStream<<"average ms between tile starts ;"<<((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1)<<"\n";
 
 
     if (!mip==0){
@@ -2716,7 +2787,7 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip){
 
     sequenceNumberText = new QGraphicsTextItem;
     sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
-    sequenceNumberText->setPlainText(QString::number(loadScanNumber));
+    sequenceNumberText->setPlainText(QString::number(imageNumber));
     sequenceNumberText->setTextWidth(30);
     sequenceNumberText->setDefaultTextColor(makeQColorFromIndex(10,colorIndex));
     sequenceNumberText->setZValue(1000);

@@ -29,9 +29,10 @@ public:
     void setFileString(QString inputString);
     QString getFileString() const;
     bool resOK;
-    void setTimeStamp(QDateTime timeNow);
-    QList<float> getElapsedTimes();
-    QStringList getTimeStrings();
+    int setTimeStamp(QDateTime timeNow);
+    QList<float> getElapsedTimes() const;
+    QStringList getTimeStrings() const;
+    QList<QDateTime> getTileTimes() const;
 
 private:
     LocationSimple pixelLocation;

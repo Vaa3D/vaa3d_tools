@@ -49,7 +49,7 @@ public:
     EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
-    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex);
+    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString);
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
@@ -123,7 +123,7 @@ private slots:
     void pickTargets();
     void startAllTargets();
     void handleAllTargets();
-    void loadMIP(double imageNumber, Image4DSimple* mip);
+    void loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString);
     void loadingDone(Image4DSimple* mip);
     void processingStarted();
     void processingFinished();
@@ -386,9 +386,13 @@ private:
     QDir sessionDir;
     QDir currentDirectory;
     QFile saveTextFile;
+    QFile summaryTextFile;
     QTextStream outputStream;
     QString scanDataFileString;
     QString eventLogString;
+    QDateTime scanStartTime;
+    float totalImagingTime;
+    float totalAnalysisTime;
     float overlap;
     int overviewCycles;
     int scanStatusWaitCycles;
