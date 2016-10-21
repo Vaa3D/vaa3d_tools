@@ -121,6 +121,8 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         bool is_2d = dialog.is_2d;
         double bkg_thresh = dialog.bkg_thresh;
         double stop_thresh = dialog.stop_thresh;
+        double winX = dialog.winX_size/2;
+        double winY = dialog.winY_size/2;
 
         V3DLONG  in_sz[4];
         Image4DSimple* p4DImage = dialog.image;
@@ -139,7 +141,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
             double root_x = inswc[0]->x;
             double root_y = inswc[0]->y;
             double bkg_thresh_updated;
-            if(marker->x > root_x - 500 && marker->x < root_x + 500 && marker->y > root_y - 500 && marker->y < root_y + 500)
+            if(marker->x > root_x - winX && marker->x < root_x + winX && marker->y > root_y - winY && marker->y < root_y + winY)
                 bkg_thresh_updated = bkg_thresh;
             else
                 bkg_thresh_updated = stop_thresh;

@@ -2880,9 +2880,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(ifs_swc)
     {
        finalswc = readSWC_file(finaloutputswc);
-       nt_list.push_back(finalswc.listNeuron);
        finalswc_left = readSWC_file(finaloutputswc_left);
-       nt_list_left.push_back(finalswc_left.listNeuron);
     }
 
 
@@ -2912,11 +2910,12 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     LandmarkList tip_up ;
     LandmarkList tip_down;
     QList<NeuronSWC> list = nt.listNeuron;
+    LandmarkList tip_visited;
     for (V3DLONG i=0;i<list.size();i++)
     {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
-            bool check_tip = false;
+            bool check_tip = false, check_visited= false;
 
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
@@ -2933,8 +2932,22 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                         break;
                     }
                 }
+
+                if(!check_tip)
+                {
+                    for(V3DLONG j = 0; j < finalswc_left.listNeuron.size(); j++ )
+                    {
+                        double dis = sqrt(pow2(newTip.x - finalswc_left.listNeuron.at(j).x) + pow2(newTip.y - finalswc_left.listNeuron.at(j).y) + pow2(newTip.z - finalswc_left.listNeuron.at(j).z));
+                        if(dis < 10)
+                        {
+                            check_visited = true;
+                            tip_visited.push_back(newTip);
+                            break;
+                        }
+                    }
+                }
             }
-            if(check_tip) continue;
+            if(check_tip || check_visited) continue;
             if( curr.x < 0.05* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
@@ -2985,6 +2998,20 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(ifs_swc)
     {
+        nt_list.push_back(finalswc.listNeuron);
+        NeuronTree nt_visited;
+        NeuronTree finalswc_left_nonvisited;
+        if(tip_visited.size()>0)
+        {
+            nt_visited = sort_eliminate_swc(finalswc_left,tip_visited,total4DImage);
+        }
+        if(nt_visited.listNeuron.size()>0)
+        {
+            finalswc_left_nonvisited = neuron_sub(finalswc_left,nt_visited);
+            nt_list_left.push_back(finalswc_left_nonvisited.listNeuron);
+        }else
+            nt_list_left.push_back(finalswc_left.listNeuron);
+
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
             nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
@@ -3001,6 +3028,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
         if(nt_left.listNeuron.size()>0)
         {
+            v3d_msg("check1",0);
             for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
             {
                 NeuronSWC curr = nt_left.listNeuron.at(i);
@@ -3016,19 +3044,31 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             }
 
             NeuronTree nt_left_left = neuron_sub(nt_left, finalswc);
+            v3d_msg("check2",0);
+
             if(nt_left_left.listNeuron.size()>0)
             {
                 QList<NeuronSWC> nt_left_sorted;
                 if(SortSWC(nt_left_left.listNeuron, nt_left_sorted,VOID, 0))
                     nt_list_left.push_back(nt_left_sorted);
+                v3d_msg("check3",0);
+
 
                 QList<NeuronSWC> finalswc_left_updated_added;
                 if (combine_linker(nt_list_left, finalswc_left_updated_added))
                 {
-                    export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+                    QList<NeuronSWC> finalswc_left_updated_added_sorted;
+                    v3d_msg("check4",0);
+
+                    if(SortSWC(finalswc_left_updated_added, finalswc_left_updated_added_sorted,VOID, 10))
+                        export_list2file(finalswc_left_updated_added_sorted, finaloutputswc_left,finaloutputswc_left);
                 }
             }
+        }else if(nt_visited.listNeuron.size()>0)
+        {
+            export_list2file(finalswc_left_nonvisited.listNeuron, finaloutputswc_left,finaloutputswc_left);
         }
+
     }
     else
     {
@@ -3059,7 +3099,6 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
             export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
     }
-
 
 //    QString marker_name = imageSaveString + ".marker";
 //    QList<ImageMarker> seedsToSave;
