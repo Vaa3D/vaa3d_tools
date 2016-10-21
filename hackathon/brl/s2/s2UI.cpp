@@ -1726,14 +1726,13 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
-
+            landmarkTileInfo.setFileString(tileSaveString);
 
 
 
             if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
 
                 int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
-                qDebug()<<"n tiletimes when new tile is added, should be 1, is "<<v;
                 allROILocations->append(landmarkTileInfo);
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
@@ -1742,6 +1741,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
                         ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
+                loadDuplicateTile(landmarkTileInfo, newTipsList.at(i));
                 status("skip this tile!");
                 qDebug()<<"skipped tile"<<"x "<< newLandmarks.value(i).x<<" y "<<newLandmarks.value(i).y;
             }}
@@ -2187,10 +2187,7 @@ void S2UI::loadLatest(){
         }
         LocationSimple tileLocation;
         int v = scanList[loadScanNumber].setTimeStamp(QDateTime::currentDateTime()); //3rd timestamp when imaging is done
-        qDebug()<<"nTileTimes should be 3, is "<<v;
-        QStringList  tlist = scanList[loadScanNumber].getTimeStrings();
-        qDebug()<<"getTimeStrings length is "<<tlist.length();
-        for (int i=0; i<tlist.length();i++) qDebug()<<tlist.at(i);
+
 
 
         // outgoing landmarks are shifted to the tile upper left
@@ -2316,6 +2313,106 @@ void S2UI::loadLatest(){
         loadScanFromFile(getFileString());
     }
     // if there's an .xml file in the filestring directory, copy it to the save directory:
+
+
+}
+
+
+void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList){
+
+    QString tileFileString = duplicateTile.getFileString();
+
+    LocationSimple tileLocation;
+
+    // outgoing landmarks are shifted to the tile upper left
+    tileLocation.x = duplicateTile.getGalvoLocation().x-((float)  duplicateTile.getGalvoLocation().ev_pc1)/2.0;
+    tileLocation.y = duplicateTile.getGalvoLocation().y-((float)  duplicateTile.getGalvoLocation().ev_pc2)/2.0;
+    // and the stage location is added to the tile landmark
+    tileLocation.x = tileLocation.x + (duplicateTile.getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
+    tileLocation.y = tileLocation.y + (duplicateTile.getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
+    // throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
+    tileLocation.mcenter.x = duplicateTile.getStageLocation().x;
+    tileLocation.mcenter.y = duplicateTile.getStageLocation().y;
+    tileLocation.ave= -1;
+
+
+
+
+    bool isSoma = false;
+    bool isAdaptive = false;
+    int methodChoice = 0;
+    emit eventSignal("startAnalysis");
+    QTimer::singleShot(0,this, SLOT(processingStarted()));
+
+
+    if (tracingMethodComboB->currentIndex()==0){ //MOST
+        methodChoice = 0;
+        isAdaptive = false;
+
+    }
+    if (tracingMethodComboB->currentIndex()==1){ //APP2
+        methodChoice = 2;
+        isAdaptive = false;
+    }
+    if (tracingMethodComboB->currentIndex()==2){ //Neutube
+        methodChoice = 1;
+
+    }
+    if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
+        methodChoice = 0;
+        isAdaptive  = true;
+
+    }
+    if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
+        methodChoice = 2;
+        isAdaptive = true;
+
+    }
+    if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
+        methodChoice= 1;
+        isAdaptive = true;
+
+    }
+    if (tracingMethodComboB->currentIndex()==6){ //automatic
+        methodChoice= -1;
+        isAdaptive = true;
+
+    }
+
+    if (tracingMethodComboB->currentIndex()==7){ //debugging mode
+        methodChoice= 3;
+        isAdaptive = false;
+
+    }
+    if (multiThreadTracingCB->isChecked()){
+
+        if (traceThreadNumber==0){
+            emit callSATrace(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                             this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+        }else if (traceThreadNumber==1){
+            emit callSATrace0(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+        }else if (traceThreadNumber==2){
+            emit callSATrace1(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+        }else if (traceThreadNumber==3){
+            emit callSATrace2(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+        }
+
+
+        status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+        traceThreadNumber++;
+        traceThreadNumber = traceThreadNumber%4;
+        qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
+        status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
+
+
+
+    }else{
+        emit callSATrace(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                         this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+    }
 
 
 }
@@ -2696,15 +2793,22 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 
     if (scanList.isEmpty()) return;
 
-    int v = scanList[imageNumber].setTimeStamp(QDateTime::currentDateTime()); // fourth timestamp when analysis is done.
-    scanList[imageNumber].setFileString(tileSaveString); // this is the string for the individual tile, generated in stackanalyzer and sent back here.
+    QTextStream summaryTextStream;
 
+    if (imageNumber==-1){
+        summaryTextStream.setDevice(&summaryTextFile);
+        summaryTextStream<<"@@@@@@@@@@@;@@@@@@@@@@@"<<"\n";
+        summaryTextStream<<"tile number ;"<<imageNumber<<"\n";
+        summaryTextStream<<"double-checked tile "<<tileSaveString<<" at "<<QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
+        return;}
+
+    int v = scanList[imageNumber].setTimeStamp(QDateTime::currentDateTime()); // fourth timestamp when analysis is done.
+    scanList[imageNumber].setScanIndex(imageNumber);
     myScanMonitor->addNewTile(scanList.at(imageNumber)); // this tileInfo is the final data for this tile, so const is ok.
 
 // append this final tile info to our summary file
 
     // possibly include some running totals: sum of tile area, scanned area, boundingbox size, total time, total imaging time.
-    QTextStream summaryTextStream;
     summaryTextStream.setDevice(&summaryTextFile);
     summaryTextStream<<"@@@@@@@@@@@;@@@@@@@@@@@"<<"\n";
     summaryTextStream<<"tile number ;"<<imageNumber<<"\n";
@@ -2712,6 +2816,7 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
     summaryTextStream<<"tile zoom ;"<<uiS2ParameterMap[12].getCurrentValue()<<"\n";
     summaryTextStream<<"microns per pixel ;"<<uiS2ParameterMap[8].getCurrentValue()<<"\n";
     summaryTextStream<<"tracing algorithm ;"<<tracingMethodComboB->currentText()<<"\n";
+    summaryTextStream<<"tile filename ;"<<tileSaveString<<"\n";
     QStringList testOutput =     scanList.value(imageNumber).getTimeStrings();
 
     for (int ii=0; ii<testOutput.length(); ii++){
@@ -2770,6 +2875,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
             total++;
         }
     }
+
+
     QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
     float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
     float yPixMicrons  = scanList.value(imageNumber).getPixelLocation().y*uiS2ParameterMap[9].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//

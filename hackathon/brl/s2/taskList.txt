@@ -1,3 +1,7 @@
+
+
+DONEDONEDONE.  for future versions, this can
+
 TileInfo readout:  append current tile info to a file in loadMIP. this should include
 1. tile filename
 2. tile location in pixels

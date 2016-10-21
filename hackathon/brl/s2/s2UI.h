@@ -147,6 +147,9 @@ private slots:
     void tryXYMove();
 
 
+    void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList);
+
+
 private:
     V3DPluginCallback2 * cb;
     QThread *workerThread;

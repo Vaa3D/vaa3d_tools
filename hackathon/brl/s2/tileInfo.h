@@ -16,7 +16,7 @@ public:
     void setPixelLocation(LocationSimple loc);
     void setStageLocation(LocationSimple loc);
     void setGalvoLocation(LocationSimple loc);
-
+    void setScanIndex(long sIndex);
     LocationSimple getPixelLocation() const;
     LocationSimple getStageLocation() const;
     LocationSimple getGalvoLocation() const;
@@ -33,7 +33,7 @@ public:
     QList<float> getElapsedTimes() const;
     QStringList getTimeStrings() const;
     QList<QDateTime> getTileTimes() const;
-
+    long getScanIndex() const;
 private:
     LocationSimple pixelLocation;
     LocationSimple stageLocation;
@@ -47,6 +47,7 @@ private:
     int timeStampCategory;
     QList<QDateTime> tileTimes;
     QList<float> elapsedTimes;
+    long scanIndex;
 
 };
 

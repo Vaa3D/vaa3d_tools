@@ -47,6 +47,7 @@ void S2ScanData::updateS2ScanImage(){
     }
     s2ScanImage  = QImage(sizex,sizey,QImage::Format_RGB888);
     s2ScanImage.fill(0);
+
     for (int i = 0; i<imageLocations.length(); i++){
         for (long k = imageLocations.at(i).x; k< (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
             for (long j = imageLocations.at(i).y; j< (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
@@ -54,11 +55,12 @@ void S2ScanData::updateS2ScanImage(){
                 pixelValue = ((uint) pixelValue ) + (uint) 1;
                 s2ScanImage.setPixel(k,j,pixelValue);
 
+
+
             }
         }
-    }
+     }
 
-    s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
 
 
 
@@ -76,6 +78,13 @@ void S2ScanData::updateS2ScanImage(){
     }
 
 
+    QPainter myPainter;
+    myPainter.begin(&s2ScanImage);
+    myPainter.setPen(Qt::yellow);
+    for (int i = 0; i<imageLocations.length(); i++){
+        myPainter.drawText( QRectF(imageLocations.at(i).x+30, imageLocations.at(i).y+10, imageLocations.at(i).ev_pc1, imageLocations.at(i).ev_pc2), QString::number(allTiles.at(i).getScanIndex()));
+    }
+    s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
 
 
 }

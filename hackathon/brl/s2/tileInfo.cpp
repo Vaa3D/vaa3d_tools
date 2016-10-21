@@ -14,6 +14,7 @@ TileInfo::TileInfo(float zoomPixelsProduct)
     timeStampCategory = 0;
     tileTimes.clear();
     elapsedTimes.clear();
+    scanIndex =0;
     // 1st timestamp is when tile is added to queue  S2UI::handleNewLocation or S2UI::startingSmartScan
     // 2nd timestamp when tile is sent to the microscope for imaging S2UI::s2ROIMonitor
     // 3rd timestamp is when the tile  is done imaging and sent for analysis.
@@ -83,9 +84,11 @@ LocationSimple TileInfo::getPixelLocation()const{return pixelLocation;}
 LocationSimple TileInfo::getStageLocation()const{return stageLocation;}
 LocationSimple TileInfo::getGalvoLocation()const{return galvoLocation;}
 QString TileInfo::getFileString()const{return tilev3drawFileString;}
-QList<QDateTime> TileInfo::getTileTimes()const{return tileTimes;};
+QList<QDateTime> TileInfo::getTileTimes()const{return tileTimes;}
+long TileInfo::getScanIndex()const{return scanIndex;}
 
 void TileInfo::setPixelLocation(LocationSimple loc){pixelLocation=loc;}
 void TileInfo::setStageLocation(LocationSimple loc){stageLocation=loc;}
 void TileInfo::setGalvoLocation(LocationSimple loc){galvoLocation=loc;}
 void TileInfo::setFileString(QString inputString){tilev3drawFileString=inputString;}
+void TileInfo::setScanIndex(long sIndex){scanIndex = sIndex;}

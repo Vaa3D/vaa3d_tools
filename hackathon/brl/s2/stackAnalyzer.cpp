@@ -99,7 +99,7 @@ void StackAnalyzer::updateGlobalMinMaxBlockSizes(int newMinBlockSize, int newMax
 }
 
 void StackAnalyzer::updateSearchRadius(double inputRadius){
-radius = inputRadius;
+    radius = inputRadius;
 }
 
 void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocation, QString saveDirString){
@@ -662,16 +662,26 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     QFileInfo imageFileInfo = QFileInfo(latestString);
     Image4DSimple* total4DImage = new Image4DSimple;
-    Image4DSimple* total4DImage_mip = new Image4DSimple;    
+    Image4DSimple* total4DImage_mip = new Image4DSimple;
 
     if (imageFileInfo.isReadable()){
         QString imageSaveString = saveDirString;
-        imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw");
         QString swcString = saveDirString;
-        swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".swc");
+
+        if (imageFileInfo.suffix().contains("v3draw")){
+            imageSaveString = imageFileInfo.absoluteFilePath();
+            swcString = imageFileInfo.absolutePath().append(QDir::separator()).append(  imageFileInfo.completeBaseName().append(".swc"));
+
+        }else{
+            imageSaveString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw");
+            swcString.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".swc");
+        }
         qDebug()<<"swcString= "<<swcString;
         qDebug()<<"imageSaveString= "<<imageSaveString;
         ifstream ifs_image(imageSaveString.toStdString().c_str());
+
+
+
         if(!ifs_image){
             QStringList fileList;
             Image4DSimple * pNewImage = cb->loadImage(latestString.toLatin1().data());
@@ -849,7 +859,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             int datatype = 0;
             if (!simple_loadimage_wrapper(*cb,imageSaveString.toLatin1().data(), data1d, in_sz, datatype))
             {
-                qDebug()<<"unable to load file!";
+                qDebug()<<"unable to load file in stackAnalyzer::startTracing";
+                qDebug()<<imageSaveString;
                 emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
                 return;
             }
@@ -892,7 +903,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
         }
     }else{
-        qDebug()<<"invalid image";
+        qDebug()<<"invalid image in stackAnalyzer::startTracing";
+        qDebug()<<latestString;
     }
 }
 
@@ -1406,14 +1418,16 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     NeuronTree nt_most;
     ifstream ifs_swcString(swcString.toStdString().c_str());
 
-    if(methodChoice == 3)
-    {
-        if (background<150){ nt = generate_crossing_swc(total4DImage); }
-        export_list2file(nt.listNeuron, swcString,swcString);
-    }else
-    {
+
         if(!ifs_swcString)
         {
+            if(methodChoice == 3)
+            {
+                if (background<150){ nt = generate_crossing_swc(total4DImage); }
+                export_list2file(nt.listNeuron, swcString,swcString);
+
+            }else{
+
             int seed_win = 10;
             int slip_win = 10;
 
@@ -1477,15 +1491,24 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
                 emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString);
                 return;
             }
+            }
         }
 
         QString swcMOST = saveDirString;
-        if(methodChoice ==0)
+        if(methodChoice ==0){
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
-        else if(methodChoice ==1)
+            qDebug()<<"reading SWC file ... "<<swcMOST;
+            nt_most = readSWC_file(swcMOST);
+        }else if(methodChoice ==1){
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-        qDebug()<<"reading SWC file ... "<<swcMOST;
-        nt_most = readSWC_file(swcMOST);
+            qDebug()<<"reading SWC file ... "<<swcMOST;
+            nt_most = readSWC_file(swcMOST);
+        }else if(methodChoice==3){
+            qDebug()<<"reading SWC file ... "<<swcString;
+            nt_most = readSWC_file(swcString);
+            swcMOST=swcString;
+        }
+
 
         if(nt_most.listNeuron.size()<1){
             qDebug()<<"zero size listNeuron!!";
@@ -1511,7 +1534,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
                 combine_list2file(nt.listNeuron, swcString);
             }
         }
-    }
+
 
     LandmarkList imageLandmarks;
     int maxRootListSize;
