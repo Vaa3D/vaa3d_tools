@@ -138,7 +138,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 
 
 	//do a DFS for the the matrix and re-allocate ids for all the nodes
-	V3DLONG root;
+    V3DLONG root=0;
 	if (newrootid==VOID)
 	{
 		for (V3DLONG i=0;i<neurons.size();i++)
