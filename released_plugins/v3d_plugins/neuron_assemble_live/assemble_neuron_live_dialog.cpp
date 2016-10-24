@@ -1016,11 +1016,11 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
     for(V3DLONG i=0; i<mList->size(); i++){
         QList<int> info;
         get_marker_info(mList->at(i), info);
-        double radius =  spin_zoomin->value()*atoi(mList->at(i).comments.c_str())/1000;
+        double radius =  spin_zoomin->value()*atof(mList->at(i).comments.c_str())/1000;
         if(mList->at(i).comments.size()>0) nodes[info.at(0)]->r = radius;
         QString tmp="Marker "+QString::number(i+1)+" x "+
                 QString::number(i+1)+" (Node "+QString::number(info.at(0))+" x "+
-                QString::number(info.at(0))+" ), " + "radius size: " + QString::number(radius);
+                QString::number(info.at(0))+" ), " + "radius size: " + QString::number(radius,'f',2);
         list_marker->addItem(tmp);
     }
 
