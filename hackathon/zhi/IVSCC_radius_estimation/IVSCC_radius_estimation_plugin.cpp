@@ -148,7 +148,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
             if(marker->parent > 0 && marker->type != 2)
             {
                 if(is_2d)
-                    marker->radius = markerRadiusXY(inimg1d, in_sz, *marker, bkg_thresh_updated,0.001);
+                    marker->radius = markerRadius_XY_IVSCC(inimg1d, in_sz, *marker, bkg_thresh_updated,0.001,2.0,6.0);
                 else
                     marker->radius = markerRadius(inimg1d, in_sz, *marker, bkg_thresh_updated);
             }
