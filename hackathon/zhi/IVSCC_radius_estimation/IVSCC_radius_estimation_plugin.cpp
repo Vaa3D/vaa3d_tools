@@ -361,24 +361,31 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         }
         QList<NeuronSWC> list = nt_result.listNeuron;
         QList<ImageMarker> bifur_marker;
+        QList<ImageMarker> all_bifur_marker;
+
 
         for (int i=0;i<list.size();i++)
         {
             ImageMarker t;
             if ((childs[i].size()>1 || childs[i].size() ==0) && nt_result.listNeuron.at(i).type != 1 && nt_result.listNeuron.at(i).type != 2)
             {
-                if(nt_result.listNeuron.at(i).r < 2)
+                t.x = nt_result.listNeuron.at(i).x;
+                t.y = nt_result.listNeuron.at(i).y;
+                t.z = nt_result.listNeuron.at(i).z;
+                all_bifur_marker.append(t);
+                if(nt_result.listNeuron.at(i).r <= 2)
                 {
-                    t.x = nt_result.listNeuron.at(i).x;
-                    t.y = nt_result.listNeuron.at(i).y;
-                    t.z = nt_result.listNeuron.at(i).z;
                     bifur_marker.append(t);
                 }
             }
         }
 
         QString MarkerfileName = fileSaveName+QString(".marker");
+        QString AllmarkerfileName = fileSaveName+QString("_all.marker");
+
         writeMarker_file(MarkerfileName, bifur_marker);
+        writeMarker_file(AllmarkerfileName, all_bifur_marker);
+
     }
 	else
 	{
