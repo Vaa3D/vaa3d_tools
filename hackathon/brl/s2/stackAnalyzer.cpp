@@ -1418,8 +1418,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     NeuronTree nt_most;
     ifstream ifs_swcString(swcString.toStdString().c_str());
 
-
-        if(!ifs_swcString)
+    bool alreadyBeenTraced = !(!(ifs_swcString));
+        if(!alreadyBeenTraced)
         {
             if(methodChoice == 3)
             {
@@ -1495,20 +1495,20 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }
 
         QString swcMOST = saveDirString;
+
         if(methodChoice ==0){
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
             qDebug()<<"reading SWC file ... "<<swcMOST;
-            nt_most = readSWC_file(swcMOST);
         }else if(methodChoice ==1){
             swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
             qDebug()<<"reading SWC file ... "<<swcMOST;
-            nt_most = readSWC_file(swcMOST);
         }else if(methodChoice==3){
             qDebug()<<"reading SWC file ... "<<swcString;
-            nt_most = readSWC_file(swcString);
             swcMOST=swcString;
         }
+        if (alreadyBeenTraced) swcMOST = swcString;
 
+        nt_most= readSWC_file(swcMOST);
 
         if(nt_most.listNeuron.size()<1){
             qDebug()<<"zero size listNeuron!!";
@@ -1516,7 +1516,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             return;
         }
 
-        if(!ifs_swcString)
+        if(!alreadyBeenTraced)
         {
             nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
             export_list2file(nt.listNeuron, swcString,swcMOST);
@@ -1848,7 +1848,6 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
 
         return;
     }
-
     NeuronTree nt_most;
     QString swcMOST = saveDirString;
     if(methodChoice ==0)
