@@ -1,3 +1,14 @@
+the fundamental problem is that for a child of a duplicate tile that is already scanned you don't know what to call the full filename (e.g. you scan tile 0, and then tile 1 to its right.  then you may be prompted to
+go back into tile 0, which has already been scanned. if the .swc file exists, you check that .swc file in tile 0.  then what?  you may be prompted to check again in tile 1.
+
+tile 1 is already scanned, but tile 0 doesn't know the full filename of the .swc file for tile 1, and it uses the filename from the last real .v3draw file which is propagated through the locationSimple struct.
+
+the solution to this is to check for the existance of an .swc file with the same tile coordinates, ignoring the intervening filename info which is acquisition specific.
+that way, when you come back around to tile 1, you can check for its existance without paying attention to the full filename of the last real .v3draw file.
+
+
+
+
 
 
 DONEDONEDONE.  for future versions, this can

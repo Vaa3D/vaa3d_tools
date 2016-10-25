@@ -40,7 +40,21 @@ QString currentRepoHash;
 
 
 
-
+class S2ScanImageUpdater: public QObject
+{
+    Q_OBJECT
+public:
+    S2ScanImageUpdater();
+    void initialize(QList<LocationSimple> pixelLocations, QList<LocationSimple> galvoLocations, QList<long> scanNumbers, QDir saveDirectory);
+public slots:
+    void createScanImage();
+private:
+QImage scanImage;
+QList<LocationSimple> pixelLocations;
+QList<LocationSimple> galvoLocations;
+QList<long> scanNumbers;
+QDir saveDir;
+};
 
 
 

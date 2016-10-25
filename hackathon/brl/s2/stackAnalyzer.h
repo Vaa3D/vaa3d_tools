@@ -19,6 +19,7 @@ signals:
     void messageSignal(QString msg);
     void combinedSWC(QString fileSaveName);
     void loadingDone(Image4DSimple* total4DImage_mip);
+    void bail();
 public slots:
 
 
@@ -43,7 +44,7 @@ public slots:
 
     QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
 
-    void startTracing(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, bool isAdaptive, int methodChoice);
+    void startTracing(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, bool isAdaptive, int methodChoice, bool isDuplicate);
 
     //void loadScan(QString latestString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma);
     void APP2Tracing(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation, QString tileSaveString);

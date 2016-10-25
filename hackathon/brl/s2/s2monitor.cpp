@@ -10,11 +10,25 @@ S2ScanData::S2ScanData(){
 void S2ScanData::addNewTile(TileInfo newTileInfo){
     allTiles.append(newTileInfo);
     s2ScanDir = QFileInfo(newTileInfo.getFileString()).absoluteDir();
-    updateS2ScanImage();
-    updateS2Summary();
+    QList<LocationSimple> pixelLocations;
+    QList<LocationSimple> galvoLocations;
+    QList<long> scanNumbers;
+    for (int i = 0; i<allTiles.length(); i++){
+        pixelLocations.append(allTiles.at(i).getPixelLocation());
+        galvoLocations.append(allTiles.at(i).getGalvoLocation());
+        scanNumbers.append(allTiles.at(i).getScanIndex());
+    }
+    if (allTiles.length()>0) {
+        qDebug()<<"not updating our scan image...";
+//       S2ScanImageUpdater newUpdater;
+// newUpdater.initialize(pixelLocations,galvoLocations,scanNumbers,s2ScanDir);
+//  QTimer::singleShot(10,&newUpdater,SLOT(createScanImage()));
+    }
+    //updateS2Summary();
 }
 
 void S2ScanData::updateS2ScanImage(){
+
     float minx = 1000000.0;
     float maxx = -1000000.0;
     float miny = 1000000.0;
@@ -59,7 +73,7 @@ void S2ScanData::updateS2ScanImage(){
 
             }
         }
-     }
+    }
 
 
 
@@ -104,6 +118,112 @@ QImage S2ScanData::getS2ScanImage()const{
 QList<TileInfo> S2ScanData::getAllTileInfo()const{
     return allTiles;
 }
+
+
+
+
+
+
+S2ScanImageUpdater::S2ScanImageUpdater(){}
+
+
+
+void S2ScanImageUpdater::initialize(QList<LocationSimple> pixelLocations, QList<LocationSimple> galvoLocations,QList<long> scanNumbers, QDir saveDirectory){
+    this->pixelLocations = pixelLocations;
+    this->galvoLocations = galvoLocations;
+    this->scanNumbers = scanNumbers;
+    saveDir = saveDirectory;
+}
+
+void S2ScanImageUpdater::createScanImage(){
+    QImage s2ScanImage;
+    float minx = 1000000.0;
+    float maxx = -1000000.0;
+    float miny = 1000000.0;
+    float maxy = -1000000.0;
+    long sizex=0;
+    long sizey=0;
+    float boundingBoxX;
+    float boundingBoxY;
+    float totalTileArea;
+    float imagedArea;
+    QList<LocationSimple> imageLocations;
+    totalTileArea=0;
+    for (int i = 0; i<pixelLocations.length(); i++){
+        LocationSimple locationi = pixelLocations.at(i);
+        locationi.ev_pc1 = galvoLocations.at(i).ev_pc1;
+        locationi.ev_pc2 = galvoLocations.at(i).ev_pc2;
+        if (locationi.x<minx) minx = locationi.x;
+        if (locationi.x+locationi.ev_pc1>maxx) maxx = locationi.x+locationi.ev_pc1;
+        if (locationi.y<miny) miny = locationi.y;
+        if (locationi.y+ locationi.ev_pc2 >maxy) maxy = locationi.y+locationi.ev_pc1;
+
+        sizex = (long)  (maxx-minx+1.);
+        sizey = (long)  (maxy-miny+1.);
+        totalTileArea = totalTileArea+ (float) locationi.ev_pc2 * (float) locationi.ev_pc1;
+    }
+
+
+
+    for (int i = 0; i<pixelLocations.length(); i++){
+        LocationSimple locationi = pixelLocations.at(i);
+        locationi.x = locationi.x-minx;
+        locationi.y = locationi.y-miny;
+        imageLocations.append(locationi);
+    }
+    s2ScanImage  = QImage(sizex,sizey,QImage::Format_RGB888);
+    s2ScanImage.fill(0);
+
+    for (int i = 0; i<imageLocations.length(); i++){
+        for (long k = imageLocations.at(i).x; k< (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
+            for (long j = imageLocations.at(i).y; j< (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
+                QRgb pixelValue =  s2ScanImage.pixel(k,j);
+                pixelValue = ((uint) pixelValue ) + (uint) 1;
+                s2ScanImage.setPixel(k,j,pixelValue);
+
+
+
+            }
+        }
+    }
+
+
+
+
+
+    boundingBoxX = (float) sizex;
+    boundingBoxY = (float) sizey;
+
+    imagedArea = 0;
+    for (long imi=0; imi<sizex; imi++){
+        for (long imj=0; imj<sizey; imj++){
+            int imijpixel =  qBlue( s2ScanImage.pixel(imi, imj));
+
+            if ( imijpixel > 0) imagedArea++;
+        }
+    }
+
+
+    QPainter myPainter;
+    myPainter.begin(&s2ScanImage);
+    myPainter.setPen(Qt::yellow);
+    for (int i = 0; i<imageLocations.length(); i++){
+        myPainter.drawText( QRectF(imageLocations.at(i).x+30, imageLocations.at(i).y+10, imageLocations.at(i).ev_pc1, imageLocations.at(i).ev_pc2), QString::number(scanNumbers.at(i)));
+    }
+    s2ScanImage.save(saveDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
+
+
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
