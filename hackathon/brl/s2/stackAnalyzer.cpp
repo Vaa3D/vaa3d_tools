@@ -1704,10 +1704,16 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            NeuronSWC curr = nt.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt.listNeuron[i].type = 1;
+            }else
+                nt.listNeuron[i].type = 2;
+
+            nt.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
         }
         nt_list.push_back(nt.listNeuron);
         QList<NeuronSWC> finalswc_updated;
@@ -1753,10 +1759,17 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            NeuronSWC curr = nt.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt.listNeuron[i].type = 1;
+            }else
+                nt.listNeuron[i].type = 2;
+
+            nt.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+
         }
         export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
 
@@ -2053,10 +2066,17 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
 
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            NeuronSWC curr = nt.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt.listNeuron[i].type = 1;
+            }else
+                nt.listNeuron[i].type = 2;
+
+            nt.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+
         }
         nt_list.push_back(nt.listNeuron);
         QList<NeuronSWC> finalswc_updated;
@@ -2106,10 +2126,17 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
         for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            NeuronSWC curr = nt.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt.listNeuron[i].type = 1;
+            }else
+                nt.listNeuron[i].type = 2;
+
+            nt.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+
         }
         export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
 
