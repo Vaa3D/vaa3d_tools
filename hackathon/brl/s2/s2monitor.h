@@ -29,32 +29,32 @@ float imagedArea;
 void addNewTile(TileInfo newTileInfo);
 void updateS2ScanImage();
 void updateS2Summary();
-private:
+
 QList<TileInfo> allTiles;
+private:
 QImage s2ScanImage;
 QDir s2ScanDir;
 QString currentRepoHash;
-
+QList<QPainterPath> numberPPList;
 
 };
 
 
 
-class S2ScanImageUpdater: public QObject
-{
-    Q_OBJECT
-public:
-    S2ScanImageUpdater();
-    void initialize(QList<LocationSimple> pixelLocations, QList<LocationSimple> galvoLocations, QList<long> scanNumbers, QDir saveDirectory);
-public slots:
-    void createScanImage();
-private:
-QImage scanImage;
-QList<LocationSimple> pixelLocations;
-QList<LocationSimple> galvoLocations;
-QList<long> scanNumbers;
-QDir saveDir;
-};
+//class S2ScanImageUpdater: public QObject
+//{
+//    Q_OBJECT
+//public:
+//    S2ScanImageUpdater();
+//    void initialize(QList<LocationSimple> pixelLocations, QList<LocationSimple> galvoLocations, QList<long> scanNumbers, QDir saveDirectory);
+//public slots:
+//    void createScanImage(QImage blankInputImage, QPainter testPainter);
+//private:
+//QList<LocationSimple> pixelLocations;
+//QList<LocationSimple> galvoLocations;
+//QList<long> scanNumbers;
+//QDir saveDir;
+//};
 
 
 

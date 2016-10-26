@@ -12,6 +12,7 @@
 #include "s2plot.h"
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
+#include <QMutex>
 
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
@@ -150,6 +151,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     startSmartScanPB->resize(50,40);
+
+
 
 }
 
@@ -1061,7 +1064,7 @@ void S2UI::loadForSA(){
                          this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, isDuplicate);
 
     }
- }
+}
 
 
 
@@ -1649,7 +1652,6 @@ void S2UI::startingSmartScan(){
         scanStartTime = QDateTime::currentDateTime();
         // add the starting location to the ROI queue:
         int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
-        qDebug()<<"nTileTimes at start = "<<v;
         allROILocations->append(startTileInfo);
 
 
@@ -1678,6 +1680,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
     //  add end-time for analysis of tile scanIndex
 
+    myMutex.lock();
 
 
     status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
@@ -1757,6 +1760,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     myNotes->save();
 
     QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+    myMutex.unlock();
+
 }
 
 
@@ -2028,7 +2033,6 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
         waitingForFile = 1;
         int v = nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
 
-        qDebug()<<"ntiletimes should be 2, is "<<v;
 
 
 
@@ -2796,6 +2800,7 @@ void S2UI::pickTargets(){
 
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString){
+
     qDebug()<<"loadMIP";
 
     if (scanList.isEmpty()) return;
@@ -2809,11 +2814,108 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
         summaryTextStream<<"double-checked tile "<<tileSaveString<<" at "<<QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
         return;}
 
+
+
+
     int v = scanList[imageNumber].setTimeStamp(QDateTime::currentDateTime()); // fourth timestamp when analysis is done.
     scanList[imageNumber].setScanIndex(imageNumber);
-    myScanMonitor->addNewTile(scanList.at(imageNumber)); // this tileInfo is the final data for this tile, so const is ok.
+    //    myScanData->addNewTile(scanList.at(imageNumber)); // this tileInfo is the final data for this tile, so const is ok.
 
-// append this final tile info to our summary file
+
+
+    myScanMonitor->addNewTile(scanList.at(imageNumber));
+    QDir s2ScanDir = QFileInfo(scanList.at(imageNumber).getFileString()).absoluteDir();
+    QList<LocationSimple> pixelLocations;
+    QList<LocationSimple> galvoLocations;
+    QList<long> scanNumbers;
+    for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+        pixelLocations.append(myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation());
+        galvoLocations.append(myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation());
+        scanNumbers.append(myScanMonitor->allScanData.last().allTiles.at(i).getScanIndex());
+    }
+    QImage s2ScanImage;
+    myScanMonitor->allScanData.last().boundingBoxX=0;
+    myScanMonitor->allScanData.last().boundingBoxY=0;
+    long sizex=0;
+    long sizey=0;
+    myScanMonitor->allScanData.last().imagedArea=0;
+    if (myScanMonitor->allScanData.last().allTiles.length()>0) {
+
+        float minx = 1000000.0;
+        float maxx = -1000000.0;
+        float miny = 1000000.0;
+        float maxy = -1000000.0;
+
+        QList<LocationSimple> imageLocations;
+        myScanMonitor->allScanData.last().totalTileArea=0;
+        for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+            LocationSimple locationi = myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation();
+            locationi.ev_pc1 = myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation().ev_pc1;
+            locationi.ev_pc2 = myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation().ev_pc2;
+            if (locationi.x<minx) minx = locationi.x;
+            if (locationi.x+locationi.ev_pc1>maxx) maxx = locationi.x+locationi.ev_pc1;
+            if (locationi.y<miny) miny = locationi.y;
+            if (locationi.y+ locationi.ev_pc2 >maxy) maxy = locationi.y+locationi.ev_pc1;
+
+            sizex = (long)  (maxx-minx+1.);
+            sizey = (long)  (maxy-miny+1.);
+            myScanMonitor->allScanData.last().totalTileArea = myScanMonitor->allScanData.last().totalTileArea+ (float) locationi.ev_pc2 * (float) locationi.ev_pc1;
+        }
+
+
+
+        for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+            LocationSimple locationi = myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation();
+            locationi.x = locationi.x-minx;
+            locationi.y = locationi.y-miny;
+            imageLocations.append(locationi);
+        }
+        s2ScanImage  = QImage(sizex,sizey,QImage::Format_RGB888);
+        s2ScanImage.fill(0);
+
+        for (int i = 0; i<imageLocations.length(); i++){
+            for (long k = imageLocations.at(i).x; k< (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
+                for (long j = imageLocations.at(i).y; j< (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
+                    QRgb pixelValue =  s2ScanImage.pixel(k,j);
+                    pixelValue = ((uint) pixelValue ) + (uint) 1;
+                    s2ScanImage.setPixel(k,j,pixelValue);
+
+
+
+                }
+            }
+        }
+
+
+
+        for (long imi=0; imi<sizex; imi++){
+            for (long imj=0; imj<sizey; imj++){
+                int imijpixel =  qBlue( s2ScanImage.pixel(imi, imj));
+
+                if ( imijpixel > 0)  myScanMonitor->allScanData.last().imagedArea++;
+            }
+        }
+
+        myScanMonitor->allScanData.last().boundingBoxX=(float) sizex;
+        myScanMonitor->allScanData.last().boundingBoxY=(float) sizey;
+        // all because the stupid qpainter operations involving QFont have to happen in the GUI thread...
+
+
+        QPainter testPainter;
+        testPainter.begin(&s2ScanImage);
+        testPainter.setPen(Qt::yellow);
+        for (int i = 0; i<imageLocations.length(); i++){
+            testPainter.drawText( QRectF(imageLocations.at(i).x+30, imageLocations.at(i).y+10, imageLocations.at(i).ev_pc1, imageLocations.at(i).ev_pc2), QString::number(scanNumbers.at(i)));
+        }
+        s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
+
+
+
+    }
+
+
+
+    // append this final tile info to our summary file
 
     // possibly include some running totals: sum of tile area, scanned area, boundingbox size, total time, total imaging time.
     summaryTextStream.setDevice(&summaryTextFile);
@@ -2868,48 +2970,48 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 
 
     if ((!mip==0)||(mip->getTotalBytes()==0)){
-    scaleintensity(mip,0,0,8000,double(0),double(255));
-    scale_img_and_convert28bit(mip, 0, 255) ;
-    QImage myMIP;
-    int x = mip->getXDim();
-    int y = mip->getYDim();
-    V3DLONG total  =0;
-    Image4DProxy<Image4DSimple> mipProx(mip);
-    myMIP = QImage(x, y, QImage::Format_RGB888);
-    for (V3DLONG i=0; i<x; i++){
-        for (V3DLONG j=0; j<y;j++){
-            myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0)+mipProx.value8bit_at(i,j,0,0)*256);
-            total++;
+        scaleintensity(mip,0,0,8000,double(0),double(255));
+        scale_img_and_convert28bit(mip, 0, 255) ;
+        QImage myMIP;
+        int x = mip->getXDim();
+        int y = mip->getYDim();
+        V3DLONG total  =0;
+        Image4DProxy<Image4DSimple> mipProx(mip);
+        myMIP = QImage(x, y, QImage::Format_RGB888);
+        for (V3DLONG i=0; i<x; i++){
+            for (V3DLONG j=0; j<y;j++){
+                myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0)+mipProx.value8bit_at(i,j,0,0)*256);
+                total++;
+            }
         }
-    }
 
 
-    QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
-    float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
-    float yPixMicrons  = scanList.value(imageNumber).getPixelLocation().y*uiS2ParameterMap[9].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//
-    mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
-    mipPixmap->setPos(xPixMicrons,
-                      yPixMicrons);
-    mipPixmap->setOffset(-x/2.0,-y/2.0 );
+        QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
+        float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
+        float yPixMicrons  = scanList.value(imageNumber).getPixelLocation().y*uiS2ParameterMap[9].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().y*uiS2ParameterMap[9].getCurrentValue()+scanList.value(imageNumber).getStageLocation().y;//
+        mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
+        mipPixmap->setPos(xPixMicrons,
+                          yPixMicrons);
+        mipPixmap->setOffset(-x/2.0,-y/2.0 );
 
-    //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
-    //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
-    //mipPixmap->acceptHoverEvents();
-    //mipPixmap->setToolTip(scanList.value(imageNumber).getFileString());
+        //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+        //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
+        //mipPixmap->acceptHoverEvents();
+        //mipPixmap->setToolTip(scanList.value(imageNumber).getFileString());
 
 
 
-    roiGS->addItem(mipPixmap);
-    QGraphicsTextItem* sequenceNumberText;
+        roiGS->addItem(mipPixmap);
+        QGraphicsTextItem* sequenceNumberText;
 
-    sequenceNumberText = new QGraphicsTextItem;
-    sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
-    sequenceNumberText->setPlainText(QString::number(imageNumber));
-    sequenceNumberText->setTextWidth(30);
-    sequenceNumberText->setDefaultTextColor(makeQColorFromIndex(10,colorIndex));
-    sequenceNumberText->setZValue(1000);
-    sequenceNumberText->setScale(0.8);
-    roiGS->addItem(sequenceNumberText);
+        sequenceNumberText = new QGraphicsTextItem;
+        sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
+        sequenceNumberText->setPlainText(QString::number(imageNumber));
+        sequenceNumberText->setTextWidth(30);
+        sequenceNumberText->setDefaultTextColor(makeQColorFromIndex(10,colorIndex));
+        sequenceNumberText->setZValue(1000);
+        sequenceNumberText->setScale(0.8);
+        roiGS->addItem(sequenceNumberText);
 
 
     }else{
@@ -3070,7 +3172,7 @@ void S2UI::updateZStepSize(int ignore){
 
 
 QColor S2UI::makeQColorFromIndex(int maxIndex, int index){
-return    QColor((index%maxIndex)*255/maxIndex,qAbs((256-(index%maxIndex)*255/maxIndex))%256,qAbs((index%(maxIndex/2))*512/maxIndex)%256);
+    return    QColor((index%maxIndex)*255/maxIndex,qAbs((256-(index%maxIndex)*255/maxIndex))%256,qAbs((index%(maxIndex/2))*512/maxIndex)%256);
 }
 
 
@@ -3145,15 +3247,15 @@ void S2UI::updateLiveFile(){
 
 void S2UI::tTrace(){
     qDebug()<<"tTrace hooked up";
-   // LocationSimple tileLocation;
-   // for (int tileNumber = 0; tileNumber<604; tileNumber++){
+    // LocationSimple tileLocation;
+    // for (int tileNumber = 0; tileNumber<604; tileNumber++){
     //ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
-//    myTracer->run();
-  //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
-  // QThreadPool::globalInstance()->start(myTracer);
-   // }
- //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-   //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
+    //    myTracer->run();
+    //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
+    // QThreadPool::globalInstance()->start(myTracer);
+    // }
+    //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
 
 }
 

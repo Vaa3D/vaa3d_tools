@@ -20,7 +20,7 @@
 #include "eventLogger.h"
 #include "tileInfo.h"
 #include "s2monitor.h"
-
+#include <QMutex>
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -165,6 +165,7 @@ private:
     S2ScanData * myScanData;
     S2Monitor * myScanMonitor;
 
+    QMutex myMutex;
  // Layout and buttons
 
     QTabWidget * lhTabs;
