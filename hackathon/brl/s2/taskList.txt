@@ -1,3 +1,38 @@
+NEW PLAN:
+
+1. eliminate all the checking of .v3draw and .swc files as flow control within SA::startTracing.  It doesnt belong there.
+2. instead, use isDuplicate input (currently bool, should be int) to control action of starTracing
+3. use the flow from s2ui to Stackanalyzer and back as the loop to check for .swc status with tileStatus = -1.  The checking of the .swc file will be done in
+stackanalyzer- whenever a tileStatus = -1 signal comes in, (tileStatus needs to be kept track of...) check for the .swc file, if it's not there, wait and then check again.
+
+CRITICAL:   3. relies on there being a single sequence of events for each tile that can lead it from tileStatus = -1 to tileStatus = 1 without generating any changes to the lists, etc
+
+
+
+whew!  so finally got the not-ready-yet locations to flow through successfully, but flow through they do and clog up the whole system
+2 possibilities:
+1. keep track of times
+2. modify loadDuplicate to behave differently for these locations
+3. make new Queue to handle exactly this kind of
+
+ALSO
+the multithreaded endgame isnt really all tied up.  problem with residual tiles that are being waited for or analysis that's still running.
+NOTE: this is due to the tiles in the ether not being contained in either the scanlist or the tilelist
+ALSO
+
+what if a tile location is off by an integer due to some stupid rounding shit?
+
+
+
+OK, solution time!
+1. race condition where s2UI thinks tile 'isDuplicate' because of allROI and scanList data, but .swc doesnt actually exist yet
+2. make .marker file name change when 'isDuplicate'
+
+
+
+
+
+
 the fundamental problem is that for a child of a duplicate tile that is already scanned you don't know what to call the full filename (e.g. you scan tile 0, and then tile 1 to its right.  then you may be prompted to
 go back into tile 0, which has already been scanned. if the .swc file exists, you check that .swc file in tile 0.  then what?  you may be prompted to check again in tile 1.
 
@@ -86,6 +121,8 @@ can I get a rollover to spit back the tile filename?  DONE
 Things are working OK now with Zhi's added code to try to avoid rescanning areas where we already have reconstructions.
 
 biggest task today is to get a legitimate logging system working that can
+
+
 
 1. maintain relevant information for each tile in a centralized location
 2. maintain global information and current statistics

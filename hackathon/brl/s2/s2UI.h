@@ -49,7 +49,7 @@ public:
     EventLogger* myEventLogger;
 public slots:
     void pmStatusHandler(bool pmStatus);
-    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString);
+    void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
     void loadLatest();
     void collectOverview();
     void getCurrentParameters();
@@ -83,10 +83,10 @@ signals:
     void updateSearchRadius(double);
     void stackSetupSig(float, float, int, int);
     void startZStackSig();
-    void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, bool);
-    void callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, bool);
-    void callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, bool);
-    void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, bool);
+    void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
+    void callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
+    void callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
+    void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
 
     void loadMIPSignal(double imageNumber, Image4DSimple* mip, QString tileSaveString);
 
@@ -149,7 +149,7 @@ private slots:
     void tryXYMove();
 
 
-    void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList);
+    void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus);
 
 
 private:

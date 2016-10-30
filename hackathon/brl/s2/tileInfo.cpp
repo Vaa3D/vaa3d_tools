@@ -1,7 +1,6 @@
 #include "tileInfo.h"
 
 TileInfo::TileInfo(){
-    qDebug()<<"TileInfo constructor...";
 }
 
 TileInfo::TileInfo(float zoomPixelsProduct)
@@ -57,10 +56,8 @@ int TileInfo::setTimeStamp(QDateTime timeNow){
     }else{
         quint64 timeSinceLast = tileTimes.at(timeStampCategory).toMSecsSinceEpoch() - tileTimes.at(timeStampCategory-1).toMSecsSinceEpoch();
         elapsedTimes.append((float) timeSinceLast);
-        qDebug()<<"timesinceLast"<<timeSinceLast;
     }
     timeStampCategory++;
-    qDebug()<<"nTileTimes = "<<tileTimes.length();
 return tileTimes.length();
 }
 
@@ -70,7 +67,6 @@ QList<float> TileInfo::getElapsedTimes()const{
 
 QStringList TileInfo::getTimeStrings()const{
     QStringList outputTimeStrings;
-    qDebug()<<"getTimeStrings length of tileTimes? "<<tileTimes.length();
     for (int i=0; i<tileTimes.length(); i++){
         outputTimeStrings.append(tileTimes.at(i).toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz"));
     }
