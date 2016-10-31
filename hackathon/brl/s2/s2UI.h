@@ -202,6 +202,7 @@ private:
     QLabel * maxBlockSizeSBLabel;
 
     QLabel * analysisRunning;
+    QLabel * tileNotes;
 
     QSlider * redThresholdSlider;
     QLabel * redThresholdSliderLabel;

@@ -726,6 +726,9 @@ QGroupBox *S2UI::createTracingParameters(){
     searchPixelRadiusSB->setSuffix(" pixels");
     searchPixelRadiusSBLabel = new QLabel(tr("segment search radius "));
 
+    tileNotes = new QLabel(tr("tracing info: "));
+
+
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
     tPL->addWidget(s2Label,1,0);
@@ -778,7 +781,7 @@ QGroupBox *S2UI::createTracingParameters(){
 
     tPL->addWidget(searchPixelRadiusSB, 23, 0);
     tPL->addWidget(searchPixelRadiusSBLabel,23,1);
-
+    tPL->addWidget(tileNotes,24,0,1,2);
 
     tPBox->setLayout(tPL);
     return tPBox;
@@ -1775,7 +1778,7 @@ int incomingTileStatus= tileStatus;
 
                 if (fileInfoList.isEmpty()){
                     //  wait until tracing is done
-                    qDebug()<<"waiting for .swc "<<putativeSWC<<" scanIndex "<<scanIndex;
+                    tileNotes->setText(QString("tracing info : waiting for .swc ").append(putativeSWC));
                     tileStatus = -1;
                 } else if (fileInfoList.at(0).isReadable()){
                     tileStatus = 1;

@@ -1684,8 +1684,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         for (int i = 0; i<newTargetList.length(); i++)
         {
             newTargetList[i].x = newTargetList[i].x+total4DImage->getOriginX();
-            newTargetList[i].y=newTargetList[i].y+total4DImage->getOriginY();
-            newTargetList[i].z =newTargetList[i].z+total4DImage->getOriginZ();
+            newTargetList[i].y = newTargetList[i].y+total4DImage->getOriginY();
+            newTargetList[i].z = newTargetList[i].z+total4DImage->getOriginZ();
             newTargetList[i].ev_pc1 = tileLocation.ev_pc1;
             newTargetList[i].ev_pc2 = tileLocation.ev_pc2;
             newTargetList[i].mcenter = tileLocation.mcenter;
