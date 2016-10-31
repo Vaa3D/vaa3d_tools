@@ -1817,8 +1817,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     QList<ImageMarker> tipsToSave;
     QString markerSaveString2;
     markerSaveString2 = swcString;
-    if (tileStatus==1) markerSaveString2.append("D");
-    markerSaveString2.append("final.marker");
     for (int i =0; i<newTipsList.length(); i++){
         LandmarkList iList = newTipsList[i];
         for (int j = 0; j<iList.length();j++){
@@ -1829,6 +1827,13 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             tipsToSave.append(markerIJ);
         }
     }
+
+    if(tipsToSave.size()>=1)
+        markerSaveString2.append(QString("%1_%2_%3").arg(tipsToSave.at(0).x).arg(tipsToSave.at(0).y).arg(tipsToSave.at(0).z));
+    else
+        markerSaveString2.append("0");
+    markerSaveString2.append("_final.marker");
+
     writeMarker_file(markerSaveString2, tipsToSave);
     emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
 }
