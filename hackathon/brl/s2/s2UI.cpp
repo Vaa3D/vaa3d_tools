@@ -1775,7 +1775,7 @@ int incomingTileStatus= tileStatus;
 
                 if (fileInfoList.isEmpty()){
                     //  wait until tracing is done
-                    qDebug()<<"waiting for .swc "<<putativeSWC;
+                    qDebug()<<"waiting for .swc "<<putativeSWC<<" scanIndex "<<scanIndex;
                     tileStatus = -1;
                 } else if (fileInfoList.at(0).isReadable()){
                     tileStatus = 1;

@@ -649,10 +649,10 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     QDir saveDir(saveDirString);
     if (tileStatus!=-1){
-    qDebug()<<"loadScan input: "<<latestString;
-    qDebug()<<"isAdaptive "<<isAdaptive;
-    qDebug()<<"methodChoice "<<methodChoice;
-    qDebug()<<"tileStatus "<<tileStatus;
+        qDebug()<<"loadScan input: "<<latestString;
+        qDebug()<<"isAdaptive "<<isAdaptive;
+        qDebug()<<"methodChoice "<<methodChoice;
+        qDebug()<<"tileStatus "<<tileStatus;
     }
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
@@ -1446,9 +1446,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     NeuronTree nt;
     NeuronTree nt_most;
-    ifstream ifs_swcString(swcString.toStdString().c_str());
 
-    bool alreadyBeenTraced = !(!(ifs_swcString));
+    bool alreadyBeenTraced = tileStatus==1;
     if(!alreadyBeenTraced)
     {
         if(methodChoice == 3)
@@ -1529,16 +1528,24 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     if(methodChoice ==0){
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
-        qDebug()<<"reading SWC file ... "<<swcMOST;
     }else if(methodChoice ==1){
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-        qDebug()<<"reading SWC file ... "<<swcMOST;
     }else if(methodChoice==3){
-        qDebug()<<"reading SWC file ... "<<swcString;
         swcMOST=swcString;
     }
-    if (alreadyBeenTraced) swcMOST = swcString;
 
+    if (alreadyBeenTraced) {
+        swcMOST = swcString;
+        if (methodChoice==0){
+            swcMOST.chop(4);
+            swcMOST.append(".v3draw_MOST.swc");
+        }else if(methodChoice==1){
+            swcMOST.chop(4);
+            swcMOST.append(".v3draw_neutube.swc");
+        }
+    }
+
+    qDebug()<<"reading SWC file ... "<<swcMOST;
     nt_most= readSWC_file(swcMOST);
 
     if(nt_most.listNeuron.size()<1){
@@ -1553,17 +1560,20 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         export_list2file(nt.listNeuron, swcString,swcMOST);
     }else
     {
+        sAMutex.lock();
         NeuronTree nt_tile = readSWC_file(swcString);
         LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
         if(inputRootList_pruned.size()<1)
         {
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
+            sAMutex.unlock();
             return;
         }else
         {
             nt = sort_eliminate_swc(nt_most,inputRootList_pruned,total4DImage,isSoma);
             combine_list2file(nt.listNeuron, swcString);
         }
+        sAMutex.unlock();
     }
 
 
@@ -1744,7 +1754,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
         if(nt_left.listNeuron.size()>0)
         {
-            if(!ifs_swcString)
+            if(tileStatus!=1)
             {
                 QList<NeuronSWC> nt_left_sorted;
                 if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
