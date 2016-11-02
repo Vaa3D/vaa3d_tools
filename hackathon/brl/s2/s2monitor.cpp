@@ -20,9 +20,9 @@ void S2ScanData::addNewTile(TileInfo newTileInfo){
     }
     if (allTiles.length()>0) {
         qDebug()<<"not updating our scan image...";
-//       S2ScanImageUpdater newUpdater;
-// newUpdater.initialize(pixelLocations,galvoLocations,scanNumbers,s2ScanDir);
-//  QTimer::singleShot(10,&newUpdater,SLOT(createScanImage()));
+        //       S2ScanImageUpdater newUpdater;
+        // newUpdater.initialize(pixelLocations,galvoLocations,scanNumbers,s2ScanDir);
+        //  QTimer::singleShot(10,&newUpdater,SLOT(createScanImage()));
     }
     //updateS2Summary();
 }
@@ -90,7 +90,7 @@ void S2ScanData::updateS2ScanImage(){
             if ( imijpixel > 0) imagedArea++;
         }
     }
-/*
+    /*
 
     QPainter myPainter;
     myPainter.begin(&s2ScanImage);
@@ -262,4 +262,49 @@ void S2Monitor::addNewTile(TileInfo newTileInfo){
     }else{
         allScanData.last().addNewTile(newTileInfo);
     }
+}
+
+TileInfoMonitor::TileInfoMonitor(){
+    tileInfoList.clear();
+    seedListList.clear();
+    intList.clear();
+    tracingMethodStrings.clear();
+    running = false;
+}
+
+void TileInfoMonitor::addTileData(TileInfo incomingTile, LandmarkList seedList, int tileStatus, int correctX, int correctY, QString tracingMethod){
+    tileInfoList.append(incomingTile);
+    seedListList.append(seedList);
+    QList<int> triplet;
+    triplet.append(tileStatus);
+    triplet.append(correctX);
+    triplet.append(correctY);
+    intList.append(triplet);
+    tracingMethodStrings.append(tracingMethod);
+    if (!running)     QTimer::singleShot(0,this,SLOT(searchForTiles()));
+
+}
+
+QList<TileInfo> TileInfoMonitor::getTileInfoList() const{
+    return tileInfoList;
+}
+void TileInfoMonitor::searchForTiles(){
+running = true;
+    if (! tileInfoList.isEmpty()){
+        for (int i =0; i<tileInfoList.length(); i++){
+            QFileInfo iFileInfo(tileInfoList.at(i).getFileString());
+            QString swcString = iFileInfo.absolutePath().append(QDir::separator()).append(iFileInfo.completeBaseName()).append(".swc");
+                    iFileInfo = QFileInfo(swcString);
+            if (iFileInfo.isReadable()){
+                emit foundTile(tileInfoList.at(i), seedListList.at(i), 1, intList.at(i).at(1), intList.at(i).at(2)) ;
+                tileInfoList.removeAt(i);
+                break;
+            }
+
+        }
+
+    }
+
+    QTimer::singleShot(100,this,SLOT(searchForTiles()));
+
 }

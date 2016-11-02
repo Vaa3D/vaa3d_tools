@@ -43,6 +43,12 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer0 = new StackAnalyzer(callback);
     myStackAnalyzer1 = new StackAnalyzer(callback);
     myStackAnalyzer2 = new StackAnalyzer(callback);
+
+
+    myTileInfoMonitor = new TileInfoMonitor();
+
+
+
     s2Label = new QLabel(tr("smartScope 2"));
     s2LineEdit = new QLineEdit("");
 
@@ -131,6 +137,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer2->moveToThread(workerThread2);
     workerThread2->start();
 
+    swcWatchThread = new QThread;
+    myTileInfoMonitor->moveToThread(swcWatchThread);
+    swcWatchThread->start();
     traceThreadNumber =0;
 
     posMonStatus = false;
@@ -318,7 +327,9 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
 
-
+// communicate with my swc file monitor
+    connect(this,SIGNAL(waitForDuplicate(TileInfo,LandmarkList,int,int,int,QString)),myTileInfoMonitor,SLOT(addTileData(TileInfo,LandmarkList,int,int,int,QString)));
+    connect(myTileInfoMonitor,SIGNAL(foundTile(TileInfo,LandmarkList,int,int,int)),this, SLOT(loadDuplicateTile(TileInfo,LandmarkList,int,int,int)));
 
 
 
@@ -1822,9 +1833,11 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                     //  wait until tracing is done
                     tileNotes->setText(QString("tracing info : waiting for .swc ").append(putativeSWC));
                     tileStatus = -1;
+                    emit waitForDuplicate(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY, tracingMethodComboB->currentText());
                 } else if (fileInfoList.at(0).isReadable()){
                     tileStatus = 1;
                     //   tracing is done, .swc is readable, send it back for analysis
+                    loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY);
                 } else{
                     qDebug()<<"SWC file exists but isnt readable "<<fileInfoList.at(0).absoluteFilePath();
 
@@ -1834,7 +1847,6 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 qDebug()<<"duplicate tile "<<scanIndex;
                 qDebug()<<QString("dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
                 }
-                loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY);
 
             }
         }
@@ -2297,6 +2309,9 @@ void S2UI::loadLatest(){
         tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
         tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
         tileLocation.ave= loadScanNumber;
+
+        tileLocation.pixmax = scanList.value(loadScanNumber).getGalvoLocation().pixmax;
+        tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
         qDebug()<<"tileLocation.x = "<<tileLocation.x;
         qDebug()<<"seedList is empty? "<<seedList.isEmpty();
         bool isSoma = loadScanNumber==0;
@@ -2434,6 +2449,8 @@ void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int 
     tileLocation.mcenter.x = duplicateTile.getStageLocation().x;
     tileLocation.mcenter.y = duplicateTile.getStageLocation().y;
     tileLocation.ave= -1;
+    tileLocation.pixmax = duplicateTile.getGalvoLocation().pixmax;
+    tileLocation.pixval = duplicateTile.getGalvoLocation().pixval;
 
     bool isSoma = false;
     bool isAdaptive = false;

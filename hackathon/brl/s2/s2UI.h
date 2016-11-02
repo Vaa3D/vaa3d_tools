@@ -47,6 +47,7 @@ public:
     StackAnalyzer *myStackAnalyzer2;
 
     EventLogger* myEventLogger;
+    TileInfoMonitor* myTileInfoMonitor;
 public slots:
     void pmStatusHandler(bool pmStatus);
     void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
@@ -89,7 +90,7 @@ signals:
     void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
 
     void loadMIPSignal(double imageNumber, Image4DSimple* mip, QString tileSaveString);
-
+    void waitForDuplicate(TileInfo, LandmarkList, int , int, int, QString);
 
 private slots:
     void runBoundingBox();
@@ -158,6 +159,8 @@ private:
     QThread *workerThread0;
     QThread *workerThread1;
     QThread *workerThread2;
+
+    QThread *swcWatchThread;
 
     QString versionString;
 

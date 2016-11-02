@@ -83,4 +83,25 @@ QDir saveDir;
     int currentScanNumber;
 };
 
+
+class TileInfoMonitor : public QWidget{
+    Q_OBJECT
+public:
+    TileInfoMonitor();
+signals:
+    void foundTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY);
+public slots:
+    void addTileData(TileInfo incomingTile, LandmarkList seedList, int tileStatus, int correctX, int correctY, QString tracingMethod);
+    QList<TileInfo> getTileInfoList()const;
+private slots:
+    void searchForTiles();
+private:
+    QList<TileInfo> tileInfoList;
+    QList<LandmarkList> seedListList;
+    QList<QList<int> > intList;
+    QList<QString> tracingMethodStrings;
+    bool running;
+};
+
+
 #endif // S2MONITOR_H
