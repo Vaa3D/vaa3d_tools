@@ -1613,9 +1613,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     QString markerSaveString;
     markerSaveString = swcString;
     if(seedsToSave.size()>=1)
-        markerSaveString.append(QString("%1_%2_%3").arg(seedsToSave.at(0).x).arg(seedsToSave.at(0).y).arg(seedsToSave.at(0).z));
+        markerSaveString.append(QString("%1_%2_%3_x%4_y%5").arg(seedsToSave.at(0).x).arg(seedsToSave.at(0).y).arg(seedsToSave.at(0).z).arg((int)tileLocation.pixmax).arg((int)tileLocation.pixval));
     else
-        markerSaveString.append("0");
+        markerSaveString.append("0_x%1_y%2").arg((int)tileLocation.pixmax).arg((int)tileLocation.pixval);
     markerSaveString.append("_initial.marker");
     writeMarker_file(markerSaveString, seedsToSave);
 
@@ -1708,6 +1708,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].mcenter = tileLocation.mcenter;
             newTargetList[i].ave = tileLocation.ave;
             newTargetList[i].name =imageSaveString.toStdString();
+            newTargetList[i].pixmax = tileLocation.x;
+            newTargetList[i].pixval = tileLocation.y;
         }
     }
 
