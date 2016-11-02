@@ -149,7 +149,7 @@ private slots:
     void tryXYMove();
 
 
-    void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus);
+    void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY);
 
 
 private:

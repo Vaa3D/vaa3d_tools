@@ -239,14 +239,16 @@ void S2UI::hookUpSignalsAndSlots(){
 
     // communication with  myStackAnalyzer
 
-    connect(myStackAnalyzer, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+    connect(myStackAnalyzer,  SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
     connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
-    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString,int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
-    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString,int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+    connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+    connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+
     connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer1,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer2,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
+
     connect(myStackAnalyzer ,SIGNAL(bail()),this,SLOT(processingFinished()));
     connect(myStackAnalyzer0,SIGNAL(bail()),this,SLOT(processingFinished()));
     connect(myStackAnalyzer1,SIGNAL(bail()),this,SLOT(processingFinished()));
@@ -1676,24 +1678,32 @@ void S2UI::startingSmartScan(){
 void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex, QString tileSaveString, int tileStatus){
 
 
-int incomingTileStatus= tileStatus;
+    int incomingTileStatus= tileStatus;
 
     if (incomingTileStatus!=-1){
-    emit eventSignal("finishedAnalysis");
-    QTimer::singleShot(0,this, SLOT(processingFinished()));
-    qDebug()<<"back in S2UI with new locations";
-    status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
-    qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber));
-}
+        QTimer::singleShot(0,this, SLOT(processingFinished()));
+        qDebug()<<"back in S2UI with new locations, incoming tilestatus = "<<incomingTileStatus ;
+        status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
+        qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber));
+    }
 
 
 
 
-
+    tileNotes->setText(QString("tracing info : "));
 
     //  add end-time for analysis of tile scanIndex
 
+
     myMutex.lock();
+
+
+
+
+
+
+
+
 
 
     for (int i = 0; i<newLandmarks.length(); i++){
@@ -1726,14 +1736,12 @@ int incomingTileStatus= tileStatus;
 
             if (stageOnlyCB->isChecked()){  // but for the stage-only scans, we need the stageLandmark to reflect the center of the tile position
                 // and the galvo position to be zero.
-
                 stageLandmark.x = pixelsLandmark.x*uiS2ParameterMap[8].getCurrentValue();
                 stageLandmark.y = pixelsLandmark.y*uiS2ParameterMap[9].getCurrentValue();
                 newLandmarks[i].x = 0; //galvo position
                 newLandmarks[i].y = 0;
                 newLandmarks[i].mcenter.x=stageLandmark.x;
                 newLandmarks[i].mcenter.y=stageLandmark.y;
-
             }
 
 
@@ -1745,7 +1753,9 @@ int incomingTileStatus= tileStatus;
 
 
 
-            if ((!isDuplicateROI(landmarkTileInfo))|(sendThemAllCB->isChecked())){ // this currently ONLY checks based on pixelLocation.
+            if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked()){ // this currently ONLY checks based on pixelLocation.
+                qDebug()<<"NOT duplicate tile "<<scanIndex;
+                qDebug()<<QString("NOT dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
 
                 int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
                 allROILocations->append(landmarkTileInfo);
@@ -1757,21 +1767,53 @@ int incomingTileStatus= tileStatus;
                         ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
 
+
+
                 //check for the .v3draw file
-                QString putativeV3draw;
-                putativeV3draw = QString("x_").append(QString::number(incomingX)).append("_y_").append(QString::number(incomingY)).append("*.v3draw");
+                QString fileFinder;
                 QStringList fileFilter;
-                fileFilter.append(putativeV3draw);
                 QFileInfoList fileInfoList;
+                int correctX = incomingX;
+                int correctY = incomingY;
+                bool foundIt = false;
+                fileFilter.clear();
+                // need to check for +/- 2 due to vaguely rounded tile locations.
+
+                for (int jj = incomingX-2; jj<=incomingX+2; jj++){
+                    for (int kk = incomingY-2; kk<= incomingY+2; kk++){
+                        fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
+                        fileFilter.append(fileFinder);
+                        fileInfoList = saveDir.entryInfoList(fileFilter);
+                        if (!fileInfoList.isEmpty()){
+                            correctX = jj;
+                            correctY = kk;
+                            foundIt=true;
+                            break;
+                        }else{
+                            correctX = incomingX;
+                            correctY = incomingY;
+                        }
+                    }
+                    if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) {
+                        qDebug()<<"original xy location "<<incomingX<<" "<<incomingY<<" final location "<<correctX<<" "<<correctY;
+
+                        break;}
+                    if (foundIt) break;
+                }
+
+                QString putativeV3draw;
+                putativeV3draw = QString("x_").append(QString::number(correctX)).append("_y_").append(QString::number(correctY)).append("*.v3draw");
+                fileFilter.append(putativeV3draw);
                 fileInfoList = saveDir.entryInfoList(fileFilter);
                 if (fileInfoList.isEmpty()){
                     tileStatus = -1;
                 }
 
+
                 //check for swc file
                 QString putativeSWC;
                 fileFilter.clear();
-                putativeSWC = QString("x_").append(QString::number(incomingX)).append("_y_").append(QString::number(incomingY)).append("*.swc");
+                putativeSWC = QString("x_").append(QString::number(correctX)).append("_y_").append(QString::number(correctY)).append("*").append(channelChoiceComboB->currentText()).append(".swc");
                 fileFilter.append(putativeSWC);
                 fileInfoList = saveDir.entryInfoList(fileFilter);
 
@@ -1787,15 +1829,21 @@ int incomingTileStatus= tileStatus;
                     qDebug()<<"SWC file exists but isnt readable "<<fileInfoList.at(0).absoluteFilePath();
 
                 }
-                loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus);
+
+                if (tileStatus !=-1){
+                qDebug()<<"duplicate tile "<<scanIndex;
+                qDebug()<<QString("dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
+                }
+
+                loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY);
 
             }
         }
     }
-
-    if (incomingTileStatus != -1){
-    emit loadMIPSignal(scanIndex, mip, tileSaveString);
-    QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+    //
+    if (tileStatus !=-1){
+        emit loadMIPSignal(scanIndex, mip, tileSaveString);
+        QTimer::singleShot(10,this, SLOT(smartScanHandler()));
     }
     myMutex.unlock();
 
@@ -2307,29 +2355,25 @@ void S2UI::loadLatest(){
             }
             qDebug()<<"isadaptive = "<<isAdaptive;
             qDebug()<<"methodChoice = "<<methodChoice;
+            int internalThreadNumber = traceThreadNumber; // otherwise traceThreadNumber can be incremented during this sequence by other calls/threads
 
             if (multiThreadTracingCB->isChecked()){
-
-                if (traceThreadNumber==0){
+                if (internalThreadNumber==0){
                     emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
-                }else if (traceThreadNumber==1){
+
+
+                }else if (internalThreadNumber==1){
                     emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
-                }else if (traceThreadNumber==2){
+                }else if (internalThreadNumber==2){
                     emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
-                }else if (traceThreadNumber==3){
+                }else if (internalThreadNumber==3){
                     emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
                 }
 
-
-                status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
-                traceThreadNumber++;
-                traceThreadNumber = traceThreadNumber%4;
-                qDebug()<<"traceThreadNUmber="<<traceThreadNumber;
-                status(QString("traceThreadNumber =").append(QString::number(traceThreadNumber)));
 
 
 
@@ -2338,6 +2382,10 @@ void S2UI::loadLatest(){
                                  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
             }
 
+
+            internalThreadNumber++;
+            internalThreadNumber = internalThreadNumber%4;
+            traceThreadNumber = internalThreadNumber;
 
 
             QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
@@ -2369,7 +2417,8 @@ void S2UI::loadLatest(){
 }
 
 
-void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus){
+void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY){
+
     QString tileFileString = duplicateTile.getFileString();
 
 
@@ -2377,17 +2426,15 @@ void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int 
     tileLocation.ev_pc1 = duplicateTile.getGalvoLocation().ev_pc1;
     tileLocation.ev_pc2 = duplicateTile.getGalvoLocation().ev_pc2;
     // outgoing landmarks are shifted to the tile upper left
-    tileLocation.x = duplicateTile.getGalvoLocation().x-((float)  duplicateTile.getGalvoLocation().ev_pc1)/2.0;
-    tileLocation.y = duplicateTile.getGalvoLocation().y-((float)  duplicateTile.getGalvoLocation().ev_pc2)/2.0;
+   // tileLocation.x = duplicateTile.getGalvoLocation().x-((float)  duplicateTile.getGalvoLocation().ev_pc1)/2.0;
+   // tileLocation.y = duplicateTile.getGalvoLocation().y-((float)  duplicateTile.getGalvoLocation().ev_pc2)/2.0;
     // and the stage location is added to the tile landmark
-    tileLocation.x = tileLocation.x + (duplicateTile.getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
-    tileLocation.y = tileLocation.y + (duplicateTile.getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
+    tileLocation.x = correctX; //tileLocation.x + (duplicateTile.getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
+    tileLocation.y = correctY; // tileLocation.y + (duplicateTile.getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
     // throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
     tileLocation.mcenter.x = duplicateTile.getStageLocation().x;
     tileLocation.mcenter.y = duplicateTile.getStageLocation().y;
     tileLocation.ave= -1;
-
-
 
     bool isSoma = false;
     bool isAdaptive = false;
@@ -2437,24 +2484,39 @@ void S2UI::loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int 
 
     }
     if (multiThreadTracingCB->isChecked()){
-
-        if (traceThreadNumber==0){
+        int internalThreadNumber = traceThreadNumber;  // otherwise traceThreadNumber could be incremented during the checks below
+        if (internalThreadNumber==0){
             emit callSATrace(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                              this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
-        }else if (traceThreadNumber==1){
+
+            internalThreadNumber++;
+            internalThreadNumber = internalThreadNumber%4;
+            traceThreadNumber = internalThreadNumber;
+            return;
+        }else if (internalThreadNumber==1){
             emit callSATrace0(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                               this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
-        }else if (traceThreadNumber==2){
+            internalThreadNumber++;
+            internalThreadNumber = internalThreadNumber%4;
+            traceThreadNumber = internalThreadNumber;
+            return;
+        }else if (internalThreadNumber==2){
             emit callSATrace1(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                               this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
-        }else if (traceThreadNumber==3){
+            internalThreadNumber++;
+            internalThreadNumber = internalThreadNumber%4;
+            traceThreadNumber = internalThreadNumber;
+            return;
+        }else if (internalThreadNumber==3){
             emit callSATrace2(tileFileString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                               this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
+            internalThreadNumber++;
+            internalThreadNumber = internalThreadNumber%4;
+            traceThreadNumber = internalThreadNumber;
+            return;
         }
 
 
-        traceThreadNumber++;
-        traceThreadNumber = traceThreadNumber%4;
 
 
 
@@ -2805,8 +2867,8 @@ void S2UI::pickTargets(){
         LocationSimple newTargetPixels;
         TileInfo newTarget = TileInfo(zoomPixelsProduct);
 
-        newTargetGalvo.x = (previewTargets.at(i).x-256.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
-        newTargetGalvo.y = (previewTargets.at(i).y-256.0)*overViewPixelToScanPixel;
+        newTargetGalvo.x = (previewTargets.at(i).x-255.0)*overViewPixelToScanPixel;// the scan origin is at the center of the overview image.
+        newTargetGalvo.y = (previewTargets.at(i).y-255.0)*overViewPixelToScanPixel;
 
         newTargetGalvo.ev_pc1  = uiS2ParameterMap[10].getCurrentValue();
         newTargetGalvo.ev_pc2  = uiS2ParameterMap[11].getCurrentValue();

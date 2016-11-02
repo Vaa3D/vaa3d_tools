@@ -1,4 +1,26 @@
 
+current problem:
+1.I'm ending up with multiple nearly-simultaneous returns from stackAnalyzer threads to s2UI, even for basic one-tile-at-a-time scenarios.
+
+>>>>>DO THIS NOWWWWWW  >>>>>
+2.handleNewLocations will run loadMIP for tiles that have already been imaged and traced, which is very bad for my scanList queueing!!!!!
+
+
+
+I need a way to keep track of how many times a tile has been run through the system.  the logical way is to increment tileStatus each time it goes around the loop WITH DATA.
+but this might not actually increment since it's from multiple threads.  e.g. these cases tonight where there are 2x or 4x stackAnalyzer calls on something that has just been scanned.
+
+
+I corrected a couple spots in the calls to SATrace stuff where multiple calls could be generated if the trace thread number was incremented while it was being evaluated;
+
+
+
+
+
+
+That was likely due in part to missed numbers (rounding to integer), although I'm not totally sure. there was no obvious miss-location information
+
+
 CURRENT PROBLEM:
 tile location on secondary wait-for-.swc files is incorrect, resulting in incoming D.marker files that are incorrectly located?!
 1. make sure the offset back and forth are consistently handled

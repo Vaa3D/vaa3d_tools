@@ -691,7 +691,6 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
     }
 
 
-    // critical:  the only way to reach these debug() statements is if the file is newly scanned and is not flagged as a duplicate.
 
     qDebug()<<"swcString= "<<swcString;
     qDebug()<<"imageSaveString= "<<imageSaveString;
@@ -895,10 +894,10 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             return;
         }
         total4DImage->setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-        total4DImage->setOriginX(tileLocation.x);
-        total4DImage->setOriginY(tileLocation.y);
-    }
 
+    }
+    total4DImage->setOriginX(tileLocation.x);
+    total4DImage->setOriginY(tileLocation.y);
 
     tileLocation.name = imageSaveString.toStdString(); // this is critical-  the outgoing tileLocation will be linked back to the .v3draw file location which is either
     // the new .v3draw file that was just read in for the first time
@@ -918,18 +917,23 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     if(isAdaptive)
     {
-        if(methodChoice == 2)
+        if(methodChoice == 2){
             APP2Tracing_adaptive(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, tileLocation, saveDirString,useGSDT, isSoma,imageSaveString,tileStatus);
-        else
+            return;
+        }
+        else{
             SubtractiveTracing_adaptive(latestString,imageSaveString, total4DImage, total4DImage_mip, swcString,overlap, background, interrupt,  inputRootList, tileLocation, saveDirString,useGSDT, isSoma, methodChoice,tileStatus);
+            return;
+        }
     }
     else
     {
-        if(methodChoice == 2)
+        if(methodChoice == 2){
             APP2Tracing(total4DImage, total4DImage_mip, swcString, overlap, background, interrupt, inputRootList, useGSDT, isSoma, tileLocation,imageSaveString,tileStatus);
-        else
+            return;
+        }    else{
             SubtractiveTracing(latestString,imageSaveString, total4DImage, total4DImage_mip, swcString,overlap, background, interrupt,  inputRootList, tileLocation, saveDirString,useGSDT, isSoma, methodChoice,tileStatus);
-
+            return;}
 
     }
 
@@ -1448,12 +1452,27 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     NeuronTree nt_most;
 
     bool alreadyBeenTraced = tileStatus==1;
+
+
+
+    QString swcMOST = saveDirString;
+
+    if(methodChoice ==0){
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
+    }else if(methodChoice ==1){
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
+    }else if(methodChoice==3){
+        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_debug.swc");
+    }
+
+
     if(!alreadyBeenTraced)
     {
         if(methodChoice == 3)
         {
+
             if (background<150){ nt = generate_crossing_swc(total4DImage); }
-            export_list2file(nt.listNeuron, swcString,swcString);
+            export_list2file(nt.listNeuron, swcMOST,swcMOST);
 
         }else{
 
@@ -1524,15 +1543,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }
     }
 
-    QString swcMOST = saveDirString;
-
-    if(methodChoice ==0){
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
-    }else if(methodChoice ==1){
-        swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-    }else if(methodChoice==3){
-        swcMOST=swcString;
-    }
 
     if (alreadyBeenTraced) {
         swcMOST = swcString;
@@ -1542,7 +1552,10 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }else if(methodChoice==1){
             swcMOST.chop(4);
             swcMOST.append(".v3draw_neutube.swc");
-        }
+        }else if(methodChoice==3){
+        swcMOST.chop(4);
+        swcMOST.append(".v3draw_debug.swc");
+    }
     }
 
     qDebug()<<"reading SWC file ... "<<swcMOST;
@@ -1550,6 +1563,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     if(nt_most.listNeuron.size()<1){
         qDebug()<<"zero size listNeuron!!";
+        export_list2file(nt.listNeuron, swcString,swcMOST);
         emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
         return;
     }
@@ -1565,8 +1579,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
         if(inputRootList_pruned.size()<1)
         {
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
             sAMutex.unlock();
+            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
             return;
         }else
         {
@@ -1589,17 +1603,20 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
         RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
         imageLandmarks.append(RootNewLocation);
-        outputMarker.x = inputRootList.at(i).x  - total4DImage->getOriginX();
-        outputMarker.y = inputRootList.at(i).y - total4DImage->getOriginY();
-        outputMarker.z = inputRootList.at(i).z - total4DImage->getOriginZ();
+        outputMarker.x = inputRootList.at(i).x- (float) total4DImage->getOriginX(); ;
+        outputMarker.y = inputRootList.at(i).y- (float) total4DImage->getOriginY(); ;
+        outputMarker.z = inputRootList.at(i).z - (float) total4DImage->getOriginZ();;
         seedsToSave.append(outputMarker);
 
     }
 
     QString markerSaveString;
     markerSaveString = swcString;
-    if (tileStatus==1) markerSaveString.append("D");
-    markerSaveString.append(".marker");
+    if(seedsToSave.size()>=1)
+        markerSaveString.append(QString("%1_%2_%3").arg(seedsToSave.at(0).x).arg(seedsToSave.at(0).y).arg(seedsToSave.at(0).z));
+    else
+        markerSaveString.append("0");
+    markerSaveString.append("_initial.marker");
     writeMarker_file(markerSaveString, seedsToSave);
 
     QVector<QVector<V3DLONG> > childs;
@@ -1693,9 +1710,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].name =imageSaveString.toStdString();
         }
     }
-    if (!imageLandmarks.isEmpty()){
-        qDebug()<<"set landmark group";
-    }
+
 
     QString finaloutputswc = saveDirString + ("/s2.swc");
     QString finaloutputswc_left = saveDirString + ("/s2_nontraced.swc");
@@ -1821,9 +1836,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         LandmarkList iList = newTipsList[i];
         for (int j = 0; j<iList.length();j++){
             ImageMarker markerIJ;
-            markerIJ.x = iList[j].x;
-            markerIJ.y = iList[j].y;
-            markerIJ.z = iList[j].z;
+            markerIJ.x = iList[j].x-total4DImage->getOriginX();
+            markerIJ.y = iList[j].y-total4DImage->getOriginY();
+            markerIJ.z = iList[j].z-total4DImage->getOriginZ();
             tipsToSave.append(markerIJ);
         }
     }
