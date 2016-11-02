@@ -1683,8 +1683,8 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     if (incomingTileStatus!=-1){
         QTimer::singleShot(0,this, SLOT(processingFinished()));
         qDebug()<<"back in S2UI with new locations, incoming tilestatus = "<<incomingTileStatus ;
-        status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber)));
-        qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(loadScanNumber));
+        status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanIndex)));
+        qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanIndex));
     }
 
 
@@ -1749,7 +1749,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
             landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
-            landmarkTileInfo.setFileString(tileSaveString);
+            landmarkTileInfo.setFileString(tileSaveString); // careful, this is the parent savestring
 
 
 
@@ -1807,9 +1807,9 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 fileInfoList = saveDir.entryInfoList(fileFilter);
                 if (fileInfoList.isEmpty()){
                     tileStatus = -1;
+                }else{
+                    landmarkTileInfo.setFileString(fileInfoList.at(0).absoluteFilePath());
                 }
-
-
                 //check for swc file
                 QString putativeSWC;
                 fileFilter.clear();
@@ -1834,7 +1834,6 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 qDebug()<<"duplicate tile "<<scanIndex;
                 qDebug()<<QString("dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
                 }
-
                 loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY);
 
             }
