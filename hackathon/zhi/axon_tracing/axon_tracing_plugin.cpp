@@ -254,7 +254,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     printf("\nhistogram equalization ...\n");
 
-    int lowerbound = 20, higherbound = 255;
+    int lowerbound = 30, higherbound = 255;
     if (!hist_eq_range_uint8( (unsigned char *)data1d_th, N*M*P, lowerbound, higherbound))
     {
         v3d_msg("Error happens in proj_general_hist_equalization();\n");
@@ -298,6 +298,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     QList<NeuronSWC> nt_seed = seed_detection(callback,data1d_th, in_sz, Ws, c, th);
+    QString tmp_name = PARA.inimg_file + "_mst_only.swc";
+    export_list2file(nt_seed,tmp_name,tmp_name);
+
+    return;
 
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
