@@ -282,29 +282,91 @@ void TileInfoMonitor::addTileData(TileInfo incomingTile, LandmarkList seedList, 
     intList.append(triplet);
     tracingMethodStrings.append(tracingMethod);
     if (!running)     QTimer::singleShot(0,this,SLOT(searchForTiles()));
-
+    qDebug()<<"ADD TILE TO TILEMONITOR: "<<incomingTile.getFileString();
 }
 
 QList<TileInfo> TileInfoMonitor::getTileInfoList() const{
     return tileInfoList;
 }
 void TileInfoMonitor::searchForTiles(){
-running = true;
+    running = true;
+    QString realFileString;
+    QDir saveDir;
+    QStringList fileFilter;
+    QFileInfoList fileInfoList;
+    QString fileFinder;
+    bool foundIt =false;
+    bool useNewXY =false;
+    int correctX;
+    int correctY;
+myMutex.lock();
     if (! tileInfoList.isEmpty()){
         for (int i =0; i<tileInfoList.length(); i++){
-            QFileInfo iFileInfo(tileInfoList.at(i).getFileString());
+            useNewXY = false;
+            // if the desired tile hasn't been imaged yet, the actual filename is unknown.
+            if (tileInfoList.at(i).getFileString().contains("*")){
+                // need to check for +/- 2 due to vaguely rounded tile locations.
+                saveDir = QFileInfo(tileInfoList.at(i).getFileString()).absoluteDir();
+                int incomingX = intList.at(i).at(1);
+                int incomingY = intList.at(i).at(2);
+                foundIt = false;
+                for (int jj = incomingX-2; jj<=incomingX+2; jj++){
+                    for (int kk = incomingY-2; kk<= incomingY+2; kk++){
+                        fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
+                        fileFilter.append(fileFinder);
+                        fileInfoList = saveDir.entryInfoList(fileFilter);
+                        if (!fileInfoList.isEmpty()){
+                            correctX = jj;
+                            correctY = kk;
+                            foundIt=true;
+                            break;
+                        }else{
+                            correctX = incomingX;
+                            correctY = incomingY;
+                        }
+                    }
+                    if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) {
+                        qDebug()<<"original xy location "<<incomingX<<" "<<incomingY<<" final location "<<correctX<<" "<<correctY;
+                        useNewXY = true;
+                        break;}
+                    if (foundIt) break;
+                }
+                if (foundIt){
+                    realFileString = fileInfoList.at(0).absoluteFilePath();
+                }else{
+                    realFileString = "";
+                    continue;
+                }
+            }else{
+                realFileString = tileInfoList.at(i).getFileString();
+            }
+
+            QFileInfo iFileInfo(realFileString);
+
             QString swcString = iFileInfo.absolutePath().append(QDir::separator()).append(iFileInfo.completeBaseName()).append(".swc");
-                    iFileInfo = QFileInfo(swcString);
+            iFileInfo = QFileInfo(swcString);
             if (iFileInfo.isReadable()){
-                emit foundTile(tileInfoList.at(i), seedListList.at(i), 1, intList.at(i).at(1), intList.at(i).at(2)) ;
+                TileInfo toEmit= tileInfoList.at(i);
+                toEmit.setFileString(realFileString);
+                if (useNewXY){
+                    emit foundTile(toEmit, seedListList.at(i), 1, correctX, correctY) ;
+
+                }else{
+                    emit foundTile(toEmit, seedListList.at(i), 1, intList.at(i).at(1), intList.at(i).at(2)) ;
+                }
+                qDebug()<<"REMOVE tilE FROM TILEMONITOR: "<<toEmit.getFileString();
+
                 tileInfoList.removeAt(i);
+                seedListList.removeAt(i);
+                intList.removeAt(i);
+                tracingMethodStrings.removeAt(i);
                 break;
             }
 
         }
 
     }
-
+myMutex.unlock();
     QTimer::singleShot(100,this,SLOT(searchForTiles()));
 
 }

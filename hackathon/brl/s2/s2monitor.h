@@ -14,6 +14,7 @@
 #include <QList>
 #include <tileInfo.h>
 #include <QImage>
+#include <QMutex>
 
 
 class S2ScanData{
@@ -84,7 +85,7 @@ QDir saveDir;
 };
 
 
-class TileInfoMonitor : public QWidget{
+class TileInfoMonitor : public QObject{
     Q_OBJECT
 public:
     TileInfoMonitor();
@@ -101,6 +102,7 @@ private:
     QList<QList<int> > intList;
     QList<QString> tracingMethodStrings;
     bool running;
+    QMutex myMutex;
 };
 
 

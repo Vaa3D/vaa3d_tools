@@ -20,6 +20,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<LocationSimple>("LocationSimple");
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
+    qRegisterMetaType<TileInfo>("TileInfo");
     versionString =QString("%1").arg(GIT_CURRENT_SHA1);
     qDebug()<<"S2 git repo hash at build time = "<<versionString;
     fileString =QString("");
@@ -220,6 +221,9 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(this, SIGNAL(loadMIPSignal(double,Image4DSimple*,QString)), this, SLOT(loadMIP(double,Image4DSimple*,QString)));
 
+    connect(this, SIGNAL(loadLatestSig(QString)),this,SLOT(loadLatest(QString)));
+
+
     // communication with myController to send commands
     connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
     connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -400,6 +404,7 @@ QGroupBox *S2UI::createROIMonitor(){
     gl = new QGridLayout();
     roiGS = new QGraphicsScene();
     roiGS->setObjectName("roiGS");
+    roiGS->setBackgroundBrush(Qt::black);
     roiGV = new QGraphicsView();
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
@@ -974,7 +979,7 @@ void S2UI::startScan()
 
 
 void S2UI::loadScan(){
-    QTimer::singleShot(0, this, SLOT(loadLatest()));
+    loadLatest(getFileString());
 }
 
 
@@ -1818,6 +1823,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 fileInfoList = saveDir.entryInfoList(fileFilter);
                 if (fileInfoList.isEmpty()){
                     tileStatus = -1;
+                    landmarkTileInfo.setFileString(saveDir.absoluteFilePath("unknownV3DRaw*"));
                 }else{
                     landmarkTileInfo.setFileString(fileInfoList.at(0).absoluteFilePath());
                 }
@@ -1834,6 +1840,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                     tileNotes->setText(QString("tracing info : waiting for .swc ").append(putativeSWC));
                     tileStatus = -1;
                     emit waitForDuplicate(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY, tracingMethodComboB->currentText());
+                    qDebug()<<"waitForDuplicate...";
                 } else if (fileInfoList.at(0).isReadable()){
                     tileStatus = 1;
                     //   tracing is done, .swc is readable, send it back for analysis
@@ -2283,7 +2290,7 @@ void S2UI::combinedSmartScan(QString saveFilename){
 //
 
 
-void S2UI::loadLatest(){
+void S2UI::loadLatest(QString inputString){
     if ((smartScanStatus ==1)||(gridScanStatus!=0)){
         LandmarkList seedList;
         qDebug()<<"loadlatest smartscan";
@@ -2373,18 +2380,18 @@ void S2UI::loadLatest(){
 
             if (multiThreadTracingCB->isChecked()){
                 if (internalThreadNumber==0){
-                    emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                    emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
 
 
                 }else if (internalThreadNumber==1){
-                    emit callSATrace0(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                    emit callSATrace0(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
                 }else if (internalThreadNumber==2){
-                    emit callSATrace1(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                    emit callSATrace1(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
                 }else if (internalThreadNumber==3){
-                    emit callSATrace2(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                    emit callSATrace2(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                       this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
                 }
 
@@ -2392,7 +2399,7 @@ void S2UI::loadLatest(){
 
 
             }else{
-                emit callSATrace(getFileString(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+                emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
                                  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
             }
 
@@ -2402,7 +2409,7 @@ void S2UI::loadLatest(){
             traceThreadNumber = internalThreadNumber;
 
 
-            QDir xmlDir = QFileInfo(getFileString()).absoluteDir();
+            QDir xmlDir = QFileInfo(inputString).absoluteDir();
             QStringList newFilterList;
             newFilterList.append(QString("*.xml"));
             status("xml directory: "+xmlDir.absolutePath());
@@ -2423,7 +2430,7 @@ void S2UI::loadLatest(){
 
         loadScanNumber++;
     }else{
-        loadScanFromFile(getFileString());
+        loadScanFromFile(inputString);
     }
     // if there's an .xml file in the filestring directory, copy it to the save directory:
 
@@ -2690,8 +2697,7 @@ void S2UI::updateFileString(QString inputString){
     if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile>0)){
         emit eventSignal("finishedZStack");
         waitingForFile = 0;
-        QTimer::singleShot(0, this, SLOT(loadScan()));
-
+        emit loadLatestSig(fileString);
     }
     lastFile = fileString;
     //qDebug()<<lastFile;

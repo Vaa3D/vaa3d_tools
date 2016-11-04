@@ -51,7 +51,7 @@ public:
 public slots:
     void pmStatusHandler(bool pmStatus);
     void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
-    void loadLatest();
+    void loadLatest(QString inputString);
     void collectOverview();
     void getCurrentParameters();
     void combinedSmartScan(QString);
@@ -91,7 +91,7 @@ signals:
 
     void loadMIPSignal(double imageNumber, Image4DSimple* mip, QString tileSaveString);
     void waitForDuplicate(TileInfo, LandmarkList, int , int, int, QString);
-
+    void loadLatestSig(QString);
 private slots:
     void runBoundingBox();
     void startS2();
