@@ -581,6 +581,8 @@ template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,
             if (!edgeq.second && i!=j)
             {
                 int Vedge = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
+                if(abs(z1-seeds.at(j).z)> 50)
+                    Vedge = INF;
                 add_edge(i, j, LastVoted(i, WeightNew(Vedge)), *&g);
             }
         }
@@ -622,7 +624,7 @@ template <class T> QList<NeuronSWC> seed_detection(V3DPluginCallback2 &callback,
 
 
     QList<NeuronSWC> marker_MST_sorted;
-    if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+    SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0);
     return marker_MST_sorted;
   //  outimg = pImage;
 
