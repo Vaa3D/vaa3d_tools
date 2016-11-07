@@ -4,7 +4,9 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH =  ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
-INCLUDEPATH	+= $$VAA3DPATH/common_lib/include
+#INCLUDEPATH	+= $$VAA3DPATH/common_lib/include
+INCLUDEPATH     += $$VAA3DPATH/common_lib/include/boost/graph
+
 INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
 INCLUDEPATH     += $$VAA3DPATH/cellseg

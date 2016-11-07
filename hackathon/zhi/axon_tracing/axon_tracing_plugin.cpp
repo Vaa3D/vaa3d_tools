@@ -16,8 +16,6 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 #include <boost/lexical_cast.hpp>
 
-
-
 Q_EXPORT_PLUGIN2(axon_tracing, axon_tracing);
 
 using namespace std;
