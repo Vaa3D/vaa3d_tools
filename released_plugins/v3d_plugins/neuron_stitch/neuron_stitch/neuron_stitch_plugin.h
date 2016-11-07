@@ -32,6 +32,7 @@ private:
     void doadjust(V3DPluginCallback2 &callback, QWidget *parent);
     void printHelp();
     void doperformancetest(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+    void dogmhashtest(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 };
 
 #endif
