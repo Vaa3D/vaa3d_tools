@@ -92,6 +92,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     //mainLayout->addWidget(s2Label, 0, 0);
     //mainLayout->addWidget(s2LineEdit, 0, 1);
     createButtonBox1();
+
+
+
+
     mainLayout->addWidget(startS2PushButton, 0,0, 1, 3);
     mainLayout->addWidget(startScanPushButton, 2,0);
     mainLayout->addWidget(loadScanPushButton, 3,0);
@@ -107,6 +111,9 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(runAllTargetsPB,5,2);
     mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,12,4);
+    for (int ii=0; ii<mainLayout->rowCount(); ii++){
+        mainLayout->setRowMinimumHeight(ii,1);
+    }
     //    mainLayout->addWidget(startStackAnalyzerPB, 9, 0,1,2);
     roiGroupBox->show();
 
@@ -161,7 +168,6 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 
 
     startSmartScanPB->resize(50,40);
-
 
 
 }
@@ -592,18 +598,6 @@ QGroupBox *S2UI::createTracingParameters(){
     bkgSpnBx->setValue(30);
     bkgSpnBx->setObjectName("bkgSpinBox");
 
-    QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
-    QCheckBox *interruptCB = new QCheckBox;
-    useGSDTCB = new QCheckBox;
-    QLabel * labelGSDT = new QLabel(tr("use &GSDT in APP2"));
-    labelGSDT->setBuddy(useGSDTCB);
-    useGSDTCB->setChecked(true);
-
-
-    runContinuousCB = new QCheckBox;
-    runContinuousCB->setChecked(true);
-    QLabel* runContinuousCBLabel = new QLabel(tr("&continuous imaging"));
-    runContinuousCBLabel->setBuddy(runContinuousCB);
 
 
     gridScanCB = new QCheckBox;
@@ -620,8 +614,7 @@ QGroupBox *S2UI::createTracingParameters(){
     gridSizeSBLabel->setBuddy(gridSizeSB);
 
 
-    labelInterrupt->setBuddy(interruptCB);
-    interruptCB->setObjectName("interruptCB");
+
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
@@ -746,23 +739,19 @@ QGroupBox *S2UI::createTracingParameters(){
 
     tileNotes = new QLabel(tr("tracing info: "));
 
-
     tPL->addWidget(labeli,0,0);
     tPL->addWidget(bkgSpnBx,0,1);
+
     tPL->addWidget(s2Label,1,0);
     tPL->addWidget(s2LineEdit,1,1);
     tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
     tPL->addWidget(runSAStuff,3,0,1,2);
     tPL->addWidget(overlapSpinBox,4,1);
     tPL->addWidget(overlapSBLabel,4,0);
-    tPL->addWidget(labelInterrupt,5,0);
-    tPL->addWidget(interruptCB, 5,1);
-    tPL->addWidget(labelGSDT,6,0);
-    tPL->addWidget(useGSDTCB,6,1);
+
     tPL->addWidget(addBoundingBoxScanLabel,7,0);
     tPL->addWidget(addBoundingBoxScan,7,1);
-    tPL->addWidget(runContinuousCBLabel,8,0);
-    tPL->addWidget(runContinuousCB,8,1);
+
 
     tPL->addWidget(gridScanCBLabel,9,0);
     tPL->addWidget(gridScanCB,9,1);
@@ -800,7 +789,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(searchPixelRadiusSB, 23, 0);
     tPL->addWidget(searchPixelRadiusSBLabel,23,1);
     tPL->addWidget(tileNotes,24,0,1,2);
-
+    for (int ii; ii<tPL->rowCount(); ii++) tPL->setRowMinimumHeight(ii,1);
     tPBox->setLayout(tPL);
     return tPBox;
 }
@@ -829,6 +818,19 @@ QGroupBox *S2UI::createConfigPanel(){
     tTracePB = new QPushButton;
     tTracePB->setText("tTrace");
 
+    QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
+    QCheckBox *interruptCB = new QCheckBox;
+    useGSDTCB = new QCheckBox;
+    QLabel * labelGSDT = new QLabel(tr("use &GSDT in APP2"));
+    labelGSDT->setBuddy(useGSDTCB);
+    useGSDTCB->setChecked(true);
+    labelInterrupt->setBuddy(interruptCB);
+    interruptCB->setObjectName("interruptCB");
+    interruptCB->setChecked(false);
+    runContinuousCB = new QCheckBox;
+    runContinuousCB->setChecked(true);
+    QLabel* runContinuousCBLabel = new QLabel(tr("&continuous imaging"));
+    runContinuousCBLabel->setBuddy(runContinuousCB);
 
 
     startZStackDelaySB = new QSpinBox;
@@ -897,6 +899,12 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(tryStageYEdit,11,2);
     cBL->addWidget(sendThemAllCB, 12, 0);
     cBL->addWidget(sendThemAllCBLabel,12,1);
+    cBL->addWidget(labelInterrupt,13,0);
+    cBL->addWidget(interruptCB, 13,1);
+    cBL->addWidget(labelGSDT,14,0);
+    cBL->addWidget(useGSDTCB,14,1);
+    cBL->addWidget(runContinuousCBLabel,15,0);
+    cBL->addWidget(runContinuousCB,15,1);
     configBox->setLayout(cBL);
     return configBox;
 }

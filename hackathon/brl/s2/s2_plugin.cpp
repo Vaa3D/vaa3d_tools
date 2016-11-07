@@ -32,6 +32,7 @@ void S2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
     {
 
         S2UI myS2( callback, parent);
+        myS2.setFont(QFont("Helvetica",10));
         myS2.show();
         myS2.exec();
 	}

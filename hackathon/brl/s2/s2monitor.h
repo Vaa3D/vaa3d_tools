@@ -76,7 +76,7 @@ public slots:
     void writeScanData(int scanNumber);
     void writeAllScanData();
     void setSaveDir(QDir directory);
-    void updateScanData(int scanNumber, TileInfo newTileInfo);
+//    void updateScanData(int scanNumber, TileInfo newTileInfo);
     void startNewScan();
     void addNewTile(TileInfo newTileInfo);
 private:
