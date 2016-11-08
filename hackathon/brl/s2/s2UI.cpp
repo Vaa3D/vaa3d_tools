@@ -783,9 +783,9 @@ QGroupBox *S2UI::createTracingParameters(){
 
     tPL->addWidget(searchPixelRadiusSB, 16, 2);
     tPL->addWidget(searchPixelRadiusSBLabel,16,3);
-    tPL->addWidget(tileNotes,24,0,1,2);
-    tPL->addWidget(analysisRunningLable,23,1);
-    tPL->addWidget(analysisRunning,23,0);
+    tPL->addWidget(tileNotes,22,0,1,2);
+    tPL->addWidget(analysisRunningLable,21,1);
+    tPL->addWidget(analysisRunning,21,0);
     for (int ii; ii<tPL->rowCount(); ii++) tPL->setRowMinimumHeight(ii,1);
     tPBox->setLayout(tPL);
     return tPBox;
