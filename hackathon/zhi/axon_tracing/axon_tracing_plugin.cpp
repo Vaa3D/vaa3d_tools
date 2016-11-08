@@ -12,9 +12,14 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
-#include "stackutil.h"
+//#include "../../v3d_main/common_lib/include/stackutil.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 #include <boost/lexical_cast.hpp>
+
+#define DISTP(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define DOTP(a,b,c) (((b).x-(a).x)*((c).x-(b).x)+((b).y-(a).y)*((c).y-(b).y)+((b).z-(a).z)*((c).z-(b).z))
+
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 Q_EXPORT_PLUGIN2(axon_tracing, axon_tracing);
 
@@ -299,10 +304,31 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     QString tmp_name = PARA.inimg_file + "_mst_only.swc";
     export_list2file(nt_seed,tmp_name,tmp_name);
 
-    return;
+    NeuronTree nt_updated = readSWC_file(tmp_name);
+    for(V3DLONG i = 2; i < nt_updated.listNeuron.size(); i++)
+    {
+        V3DLONG pn_id = getParent(i,nt_updated);
+        if(pn_id==1000000000)
+            continue;
+        V3DLONG pn_pn_id = getParent(pn_id,nt_updated);
+        if(pn_pn_id==1000000000)
+            continue;
+        v3d_msg(QString("i=%1,pn=%2,pn_pn=%3").arg(i).arg(pn_id).arg(pn_pn_id),0);
+        double length1 = DISTP(nt_updated.listNeuron.at(i),nt_updated.listNeuron.at(pn_id));
+        double length2 = DISTP(nt_updated.listNeuron.at(pn_id),nt_updated.listNeuron.at(pn_pn_id));
+        double length3 = DISTP(nt_updated.listNeuron.at(i),nt_updated.listNeuron.at(pn_pn_id));
+        if(0.9*(length1+length2) > length3)
+        // double cosAng=DOTP(nt_updated.listNeuron.at(i),nt_updated.listNeuron.at(pn_id),nt_updated.listNeuron.at(pn_pn_id))/(length1*length2);
+        //if(cosAng > -0.1)
+            nt_updated.listNeuron[i].pn = -1;
+    }
+    QList<NeuronSWC> nt_updated_sorted;
+    SortSWC(nt_updated.listNeuron, nt_updated_sorted ,1, 50);
 
-    NeuronTree nt_tmp;
-    nt_tmp.listNeuron = nt_seed;
+    QString tmp2_name = PARA.inimg_file + "_mst_only_updated.swc";
+    export_list2file(nt_updated_sorted,tmp2_name,tmp2_name);
+
+    //return;
 
     LocationSimple p0;
     vector<LocationSimple> pp;
@@ -342,13 +368,17 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     NeuronSWC S_GD;
 
     V3DLONG id = 1;
-    for(V3DLONG i = 1; i <nt_seed.size(); i++)
+    for(V3DLONG i = 0; i <nt_updated_sorted.size(); i++)
     {
        // v3d_msg(QString("mst_%1.swc").arg(i));
-        NeuronSWC S = nt_seed.at(i);
-        p0.x = nt_seed.at(S.pn-1).x;
-        p0.y = nt_seed.at(S.pn-1).y;
-        p0.z = nt_seed.at(S.pn-1).z;
+        NeuronSWC S = nt_updated_sorted.at(i);
+        if(S.pn <0)
+            continue;
+        if(nt_updated_sorted.at(S.pn-1).pn<0)
+            continue;
+        p0.x = nt_updated_sorted.at(S.pn-1).x;
+        p0.y = nt_updated_sorted.at(S.pn-1).y;
+        p0.z = nt_updated_sorted.at(S.pn-1).z;
         pp.clear();
         LocationSimple tmpp;
         tmpp.x = S.x;
@@ -452,7 +482,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-
     return;
 }
 
