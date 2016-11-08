@@ -1011,13 +1011,29 @@ void assemble_neuron_live_dialog::syncMarker()
 void assemble_neuron_live_dialog::syncMarkerOnly()
 {
     LandmarkList * mList = getMarkerList();
-
+    V3dR_MainWindow * mainwin_roi = 0;
+    QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
+    for(int j=0; j<tmpwinlist.size(); j++){
+        if(callback->getImageName(tmpwinlist[j])==winname_roi){
+            mainwin_roi = tmpwinlist[j];
+            break;
+        }
+    }
+    if(mainwin_roi)
+    {
+        View3DControl *view = callback->getView3DControl_Any3DViewer(mainwin_roi);
+        LocationSimple *p;
+        p = (LocationSimple *)&mList->at(list_marker->currentRow());
+        p->radius = view->getMarkerSize();
+    }
     list_marker->clear();
     for(V3DLONG i=0; i<mList->size(); i++){
         QList<int> info;
         get_marker_info(mList->at(i), info);
-        double radius =  spin_zoomin->value()*atof(mList->at(i).comments.c_str())/1000;
-        if(mList->at(i).comments.size()>0) nodes[info.at(0)]->r = radius;
+       // double radius =  spin_zoomin->value()*atof(mList->at(i).comments.c_str())/1000;
+       // if(mList->at(i).comments.size()>0) nodes[info.at(0)]->r = radius;
+        double radius = spin_zoomin->value()*mList->at(i).radius/1000;
+        if(mList->at(i).radius>0) nodes[info.at(0)]->r = radius;
         QString tmp="Marker "+QString::number(i+1)+" x "+
                 QString::number(i+1)+" (Node "+QString::number(info.at(0))+" x "+
                 QString::number(info.at(0))+" ), " + "radius size: " + QString::number(radius,'f',2);
@@ -1028,6 +1044,47 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
         v3d_msg("Not marker in the 3D viewer.");
     }else{
         list_marker->setCurrentRow(0);
+    }
+
+    if(mainwin_roi)
+    {
+        V3DLONG pid1=-1, pid2=-1;
+        QString tmp="";
+        for(V3DLONG i=0; i<mList->size(); i++)
+        {
+            if(mList->at(i).radius ==5)
+            {
+                list_marker->setCurrentRow(i);
+                tmp=list_marker->currentItem()->text();
+                break;
+            }
+        }
+        QStringList items = tmp.split(" ", QString::SkipEmptyParts);
+        if(items.size()>8){
+            bool check;
+            pid1=items.at(5).toInt(&check);
+            if(!check || !nodes.contains(pid1)){
+                v3d_msg("Encounter unexpected error 4. Plase contact developer.");
+                return;
+            }
+            pid2=items.at(7).toInt(&check);
+            if(!check || !nodes.contains(pid2)){
+                v3d_msg("Encounter unexpected error 4. Plase contact developer.");
+                return;
+            }
+        }
+
+        if(pid1<0 || pid2<0){
+            v3d_msg("All markers are assigned radius information.");
+            return;
+        }
+
+        QList<V3DLONG> pids;
+        pids.push_back(pid1);
+        pids.push_back(pid2);
+
+        //zoom in
+        updateROIWindow(pids);
     }
 }
 
