@@ -1453,8 +1453,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     bool alreadyBeenTraced = tileStatus==1;
 
-
-
     QString swcMOST = saveDirString;
 
     if(methodChoice ==0){
@@ -1470,7 +1468,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         if(methodChoice == 3)
         {
-
             if (background<150){ nt = generate_crossing_swc(total4DImage); }
             export_list2file(nt.listNeuron, swcMOST,swcMOST);
 
@@ -1629,6 +1626,23 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+    QString finaloutputswc = saveDirString + ("/s2.swc");
+    QString finaloutputswc_left = saveDirString + ("/s2_nontraced.swc");
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    NeuronTree finalswc;
+    NeuronTree finalswc_left;
+    vector<QList<NeuronSWC> > nt_list;
+    vector<QList<NeuronSWC> > nt_list_left;
+
+    if(ifs_swc)
+    {
+        finalswc = readSWC_file(finaloutputswc);
+        nt_list.push_back(finalswc.listNeuron);
+        finalswc_left = readSWC_file(finaloutputswc_left);
+        nt_list_left.push_back(finalswc_left.listNeuron);
+    }
+
     LandmarkList tip_left;
     LandmarkList tip_right;
     LandmarkList tip_up ;
@@ -1638,12 +1652,25 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         NeuronSWC curr = list.at(i);
         LocationSimple newTip;
+        bool check_tip = false;
         if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
         {
             newTip.x = curr.x + total4DImage->getOriginX();
             newTip.y = curr.y + total4DImage->getOriginY();
             newTip.z = curr.z + total4DImage->getOriginZ();
+
+            for(V3DLONG j = 0; j < finalswc.listNeuron.size(); j++ )
+            {
+                double dis = sqrt(pow2(newTip.x - finalswc.listNeuron.at(j).x) + pow2(newTip.y - finalswc.listNeuron.at(j).y) + pow2(newTip.z - finalswc.listNeuron.at(j).z));
+                if(dis < 10)
+                {
+                    check_tip = true;
+                    break;
+                }
+            }
         }
+
+        if(check_tip) continue;
         if( curr.x < 0.05* total4DImage->getXDim())
         {
             tip_left.push_back(newTip);
@@ -1659,10 +1686,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         }
 
     }
-
     LocationSimple newTarget;
-
-
     if(tip_left.size()>0)
     {
         newTipsList.push_back(tip_left);
@@ -1711,24 +1735,6 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             newTargetList[i].pixmax = tileLocation.x;
             newTargetList[i].pixval = tileLocation.y;
         }
-    }
-
-
-    QString finaloutputswc = saveDirString + ("/s2.swc");
-    QString finaloutputswc_left = saveDirString + ("/s2_nontraced.swc");
-
-    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
-    NeuronTree finalswc;
-    NeuronTree finalswc_left;
-    vector<QList<NeuronSWC> > nt_list;
-    vector<QList<NeuronSWC> > nt_list_left;
-
-    if(ifs_swc)
-    {
-        finalswc = readSWC_file(finaloutputswc);
-        nt_list.push_back(finalswc.listNeuron);
-        finalswc_left = readSWC_file(finaloutputswc_left);
-        nt_list_left.push_back(finalswc_left.listNeuron);
     }
 
     NeuronTree nt_traced = readSWC_file(swcString);
@@ -1934,10 +1940,6 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
     else if(methodChoice ==1)
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-
-
-
-
 
     nt_most = readSWC_file(swcMOST);
 
