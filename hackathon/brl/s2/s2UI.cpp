@@ -585,12 +585,12 @@ QGroupBox *S2UI::createS2Monitors(){
 
 
 QGroupBox *S2UI::createTracingParameters(){
-    // add fields with data...  currently hardcoding the number of parameters...
     QGroupBox *tPBox = new QGroupBox(tr("Tracing"));
 
     QGridLayout *tPL = new QGridLayout;
     runSAStuff = new QPushButton(tr("process smartScan files"));
     QLabel * labeli = new QLabel(tr("background threshold = "));
+    labeli->setAlignment(Qt::AlignRight);
     QSpinBox *bkgSpnBx = new QSpinBox(0);
     s2Label->setText("input file path:");
     bkgSpnBx->setMaximum(255);
@@ -602,11 +602,11 @@ QGroupBox *S2UI::createTracingParameters(){
 
     gridScanCB = new QCheckBox;
     gridScanCB->setChecked(false);
-    QLabel * gridScanCBLabel = new QLabel(tr("&Grid Scan"));
-    gridScanCBLabel->setBuddy(gridScanCB);
+    gridScanCB->setText("Grid Scan");
 
 
     QLabel * gridSizeSBLabel = new QLabel(tr("Grid Size"));
+    gridSizeSBLabel->setAlignment(Qt::AlignRight);
     gridSizeSB = new QSpinBox;
     gridSizeSB->setMinimum(3);
     gridSizeSB->setMaximum(7);
@@ -623,14 +623,13 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
     overlapSBLabel->setBuddy(overlapSpinBox);
+    overlapSBLabel->setAlignment(Qt::AlignRight);
     overlap = 0.01* ((float) overlapSpinBox->value());
 
 
     addBoundingBoxScan = new QCheckBox;
     addBoundingBoxScan->setChecked(true);
-    addBoundingBoxScanLabel  = new QLabel;
     addBoundingBoxScan->setText("scan &bounding box");
-    addBoundingBoxScanLabel->setBuddy(addBoundingBoxScan);
 
     tracingMethodComboB = new QComboBox;
     tracingMethodComboB->addItem("MOST");
@@ -644,7 +643,7 @@ QGroupBox *S2UI::createTracingParameters(){
     tracingMethodComboB->setCurrentIndex(2);
     methodChoice = 2;
     QLabel * tracingMethodComboBLabel = new QLabel(tr("Tracing Method: "));
-
+    tracingMethodComboBLabel->setAlignment(Qt::AlignRight);
 
 
 
@@ -670,6 +669,7 @@ QGroupBox *S2UI::createTracingParameters(){
 
 
     analysisRunning = new QLabel(tr("0"));
+    analysisRunning->setAlignment(Qt::AlignRight);
     QLabel * analysisRunningLable = new QLabel(tr("tiles being analyzed"));
 
 
@@ -708,8 +708,8 @@ QGroupBox *S2UI::createTracingParameters(){
 
 
     chooseLipoMethod = new QComboBox;
-    chooseLipoMethod->addItem("subtraction: image = G-alpha*R");
-    chooseLipoMethod->addItem("obscuration: image = G where R<threshold, 0 else");
+    chooseLipoMethod->addItem("subtraction: image=G-alpha*R");
+    chooseLipoMethod->addItem("obscuration: image=G if R<thresh");
     chooseLipoMethod->setCurrentIndex(0);
     chooseLipoMethodLabel = new QLabel(tr("Lipofuscin method"));
 
@@ -724,11 +724,11 @@ QGroupBox *S2UI::createTracingParameters(){
 
     stageOnlyCB = new QCheckBox;
     stageOnlyCB->setChecked(false);
-    stageOnlyCBLabel = new QLabel(tr("stage-only S2scan"));
+    stageOnlyCB->setText("stage-only S2scan");
 
     multiThreadTracingCB = new QCheckBox;
     multiThreadTracingCB->setChecked(false);
-    multiThreadTracingCBLabel = new QLabel(tr("multiThread tracing"));
+    multiThreadTracingCB->setText("multiThread tracing");
 
     searchPixelRadiusSB = new QSpinBox;
     searchPixelRadiusSB->setMaximum(1000);
@@ -743,27 +743,24 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(bkgSpnBx,0,1);
 
     tPL->addWidget(s2Label,1,0);
-    tPL->addWidget(s2LineEdit,1,1);
+    tPL->addWidget(s2LineEdit,1,1,1,3);
     tPL->addWidget(startStackAnalyzerPB,2,0,1,2);
-    tPL->addWidget(runSAStuff,3,0,1,2);
-    tPL->addWidget(overlapSpinBox,4,1);
-    tPL->addWidget(overlapSBLabel,4,0);
+    tPL->addWidget(runSAStuff,2,2,1,2);
+    tPL->addWidget(overlapSpinBox,3,3);
+    tPL->addWidget(overlapSBLabel,3,2);
 
-    tPL->addWidget(addBoundingBoxScanLabel,7,0);
-    tPL->addWidget(addBoundingBoxScan,7,1);
+    tPL->addWidget(addBoundingBoxScan,3,1);
 
 
-    tPL->addWidget(gridScanCBLabel,9,0);
-    tPL->addWidget(gridScanCB,9,1);
-    tPL->addWidget(gridSizeSBLabel,10,0);
-    tPL->addWidget(gridSizeSB,10,1);
+    tPL->addWidget(gridScanCB,4,1);
+    tPL->addWidget(gridSizeSBLabel,4,2);
+    tPL->addWidget(gridSizeSB,4,3);
 
-    tPL->addWidget(analysisRunningLable,11,1);
-    tPL->addWidget(analysisRunning,11,0);
+
     tPL->addWidget(tracingMethodComboBLabel,12,0);
     tPL->addWidget(tracingMethodComboB, 12, 1);
-    tPL->addWidget(channelChoiceComboBLabel,13,0);
-    tPL->addWidget(channelChoiceComboB,13,1);
+    tPL->addWidget(channelChoiceComboBLabel,12,2);
+    tPL->addWidget(channelChoiceComboB,12,3);
     tPL->addWidget(tileSizeCBLabel,14,0);
     tPL->addWidget(tileSizeCB,14,1);
     tPL->addWidget(minBlockSizeSB,15,1);
@@ -781,14 +778,14 @@ QGroupBox *S2UI::createTracingParameters(){
     tPL->addWidget(stackZStepSizeSlider,20,0);
     tPL->addWidget(stackZStepSizeLabel,20,1);
 
-    tPL->addWidget(stageOnlyCB,21,0);
-    tPL->addWidget(stageOnlyCBLabel,21,1);
-    tPL->addWidget(multiThreadTracingCB, 22, 0);
-    tPL->addWidget(multiThreadTracingCBLabel, 22,1);
+    tPL->addWidget(stageOnlyCB,14,2);
+    tPL->addWidget(multiThreadTracingCB, 15, 2);
 
-    tPL->addWidget(searchPixelRadiusSB, 23, 0);
-    tPL->addWidget(searchPixelRadiusSBLabel,23,1);
+    tPL->addWidget(searchPixelRadiusSB, 16, 2);
+    tPL->addWidget(searchPixelRadiusSBLabel,16,3);
     tPL->addWidget(tileNotes,24,0,1,2);
+    tPL->addWidget(analysisRunningLable,23,1);
+    tPL->addWidget(analysisRunning,23,0);
     for (int ii; ii<tPL->rowCount(); ii++) tPL->setRowMinimumHeight(ii,1);
     tPBox->setLayout(tPL);
     return tPBox;
@@ -969,8 +966,8 @@ void S2UI::startS2()
     localRemoteCB->setEnabled(false);
     myController.initializeS2();
     myPosMon.initializeS2();
-    QTimer::singleShot(1000,this, SLOT(posMonButtonClicked()));
-    startS2PushButton->setText("s2 running");// should check something..?
+    QTimer::singleShot(2000,this, SLOT(posMonButtonClicked()));
+    startS2PushButton->setText("...initializing...");// should check something..?
 }
 
 void S2UI::startScan()
@@ -1327,6 +1324,7 @@ void S2UI::posMonButtonClicked(){
     // and change button text to 'stop pos mon'
     if (!posMonStatus){
         emit startPM();
+        startS2PushButton->setText("s2 running");
         status("Position Monitor started");
         startPosMonButton->setText(tr("stop position monitor"));
         startSmartScanPB->setEnabled(true);
