@@ -1,6 +1,6 @@
 /* test1_plugin.h
  * This is a test plugin, you can use it as a demo.
- * 2016-11-7 : by YourName
+ * 2016-11-8 : by YourName
  */
  
 #ifndef __TEST1_PLUGIN_H__
