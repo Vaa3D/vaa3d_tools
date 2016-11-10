@@ -190,7 +190,9 @@ void analysisSmartScan(QString fileWithData)
 
     QList<NeuronSWC> list = nt_sort_prune_sort.listNeuron;
     QString AllmarkerfileName = fileWithData + "_tips.marker";
+    QString edgeMarkerFileName = fileWithData + "_edgeTips.marker";
     QList<ImageMarker> tips_marker;
+    QList<ImageMarker> edge_tips_markers;
     int edge_num = 0;
 
     for (int i=0;i<list.size();i++)
@@ -202,8 +204,9 @@ void analysisSmartScan(QString fileWithData)
             t.y = list.at(i).y;
             t.z = list.at(i).z;
             tips_marker.append(t);
-            if(list.at(i).type == 1)
-                edge_num++;
+            if(list.at(i).type == 1){
+                edge_tips_markers.append(t);
+                edge_num++;}
         }
     }
     double ratio =  (double)edge_num/tips_marker.size();
@@ -212,6 +215,7 @@ void analysisSmartScan(QString fileWithData)
 
 //    connectall(&nt_final, neuron_final_connected, 1, 1, 1, angThr, 30, 1, 0, -1);
     writeMarker_file(AllmarkerfileName, tips_marker);
+    writeMarker_file(edgeMarkerFileName, edge_tips_markers);
     export_list2file(nt_sort_prune_sort.listNeuron, fileSaveName,fileSaveName);
     v3d_msg(QString("edge (%1) to tip (%2) ratio is %3,").arg(edge_num).arg(tips_marker.size()).arg((double)ratio));
 }
