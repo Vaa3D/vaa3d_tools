@@ -82,8 +82,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(createTracingParameters(),"tracing");
     lhTabs->addTab(createROIControls(),"ROI Controls");
     lhTabs->addTab(createConfigPanel(),"Configure");
-    localRemoteCB = new QCheckBox;
-    localRemoteCB->setText(tr("Local PrairieView"));
+
 
 
     runAllTargetsPB = new QPushButton;
@@ -107,8 +106,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     mainLayout->addWidget(collectZoomStackPB,4,0);
     //mainLayout->addWidget(startPosMonButton,3,0);
     mainLayout->addWidget(startSmartScanPB, 1,0,1,3);
-    mainLayout->addWidget(localRemoteCB,5,0,1,1);
-    mainLayout->addWidget(runAllTargetsPB,5,2);
+    mainLayout->addWidget(runAllTargetsPB,4,2);
     mainLayout->addWidget(lhTabs, 6,0, 4, 3);
     mainLayout->addWidget(rhTabs,0,5,12,4);
     for (int ii=0; ii<mainLayout->rowCount(); ii++){
@@ -795,6 +793,10 @@ QGroupBox *S2UI::createConfigPanel(){
     QGroupBox *configBox = new QGroupBox(tr("Config"));
 
     QGridLayout *cBL = new QGridLayout;
+
+    localRemoteCB = new QCheckBox;
+    localRemoteCB->setText(tr("Local PrairieView"));
+
     machineSaveDir = new QLabel(tr("microscope not initialized"));
     machineSaveDirLabel = new QLabel(tr("Microscope Save Directory : "));
     resetDirPB = new QPushButton;
@@ -902,6 +904,7 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(useGSDTCB,14,1);
     cBL->addWidget(runContinuousCBLabel,15,0);
     cBL->addWidget(runContinuousCB,15,1);
+    cBL->addWidget(localRemoteCB,16,0);
     configBox->setLayout(cBL);
     return configBox;
 }
