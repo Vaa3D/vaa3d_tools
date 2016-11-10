@@ -213,5 +213,5 @@ void analysisSmartScan(QString fileWithData)
 //    connectall(&nt_final, neuron_final_connected, 1, 1, 1, angThr, 30, 1, 0, -1);
     writeMarker_file(AllmarkerfileName, tips_marker);
     export_list2file(nt_sort_prune_sort.listNeuron, fileSaveName,fileSaveName);
-    v3d_msg(QString("edge to tip ratio is %1").arg((double)ratio));
+    v3d_msg(QString("edge (%1) to tip (%2) ratio is %3,").arg(edge_num).arg(tips_marker.size()).arg((double)ratio));
 }
