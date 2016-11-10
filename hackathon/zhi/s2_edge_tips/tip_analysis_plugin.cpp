@@ -11,6 +11,8 @@
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/eswc_converter/eswc_converter_func.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(tip_analysis, TestPlugin);
@@ -188,6 +190,14 @@ void analysisSmartScan(QString fileWithData)
         childs[nt_sort_prune_sort.hashNeuron.value(par)].push_back(i);
     }
 
+    vector<V3DLONG> segment_id, segment_layer;
+    segment_id, segment_layer;
+    if (!swc2eswc(nt_sort_prune_sort,segment_id, segment_layer))
+    {
+        v3d_msg("Cannot convert swc to eswc.\n");
+        return;
+    }
+
     QList<NeuronSWC> list = nt_sort_prune_sort.listNeuron;
     QString AllmarkerfileName = fileWithData + "_tips.marker";
     QString edgeMarkerFileName = fileWithData + "_edgeTips.marker";
@@ -203,6 +213,17 @@ void analysisSmartScan(QString fileWithData)
             t.x = list.at(i).x;
             t.y = list.at(i).y;
             t.z = list.at(i).z;
+            bool flag = false;
+            for (int j=0;j<list.size();j++)
+            {
+                double dis = sqrt(pow2(t.x - list.at(j).x) + pow2(t.y - list.at(j).y) + pow2(t.z - list.at(j).z));
+                if(dis < 10.0 && segment_id[i]!= segment_id[j])
+                {
+                   flag = true;
+                   break;
+                }
+            }
+            if(flag) continue;
             tips_marker.append(t);
             if(list.at(i).type == 1){
                 edge_tips_markers.append(t);
