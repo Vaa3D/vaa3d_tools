@@ -11,8 +11,8 @@
 
 #include "stackutil.h"
 #include "../../hanchuan/sscope/FlyCapture2/gtk64/include/tiffio.h"
-#include "../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h"
-#include "../../released_plugins/v3d_plugins/gsdt/common_dialog.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h"
+#include "../../../released_plugins/v3d_plugins/gsdt/common_dialog.h"
 
 using namespace std;
 

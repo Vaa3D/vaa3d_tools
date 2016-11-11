@@ -17,7 +17,7 @@ Q_EXPORT_PLUGIN2(Tip_marker_finder, TestPlugin);
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
-        <<tr("run")
+        <<tr("find")
         <<tr("about");
 }
 
