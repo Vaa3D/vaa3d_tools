@@ -1,5 +1,5 @@
 #include "../../zhi/IVSCC_sort_swc/openSWCDialog.h"
-#include "../../zhi/IVSCC_radius_estimation\IVSCC_radius_estimation_plugin.h"
+//#include "../../zhi/IVSCC_radius_estimation/IVSCC_radius_estimation_plugin.h"
 #include <vector>
 #include "Tip_marker_finder_plugin.h"
 
@@ -9,9 +9,9 @@
 #include <vector>
 #include <iostream>
 
-#include "stackutil.h"
-#include "../../hanchuan/sscope/FlyCapture2/gtk64/include/tiffio.h"
-#include "../../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h"
+//#include "stackutil.h"
+//#include "../../hanchuan/sscope/FlyCapture2/gtk64/include/tiffio.h"
+//#include "../../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h"
 #include "../../../released_plugins/v3d_plugins/gsdt/common_dialog.h"
 
 using namespace std;

@@ -4,7 +4,7 @@
  */
 
 #include "../../zhi/IVSCC_sort_swc/openSWCDialog.h"
-#include "../../zhi/IVSCC_radius_estimation\IVSCC_radius_estimation_plugin.h"
+//#include "../../zhi/IVSCC_radius_estimation/IVSCC_radius_estimation_plugin.h"
 #include "v3d_message.h"
 #include <vector>
 #include "Tip_marker_finder_plugin.h"
@@ -30,7 +30,7 @@ QStringList TestPlugin::funclist() const
 
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("run"))
+    if (menu_name == tr("find"))
     {
         SpecDialog(callback,parent);
         v3d_msg(tr("A marker file has been generated."));
