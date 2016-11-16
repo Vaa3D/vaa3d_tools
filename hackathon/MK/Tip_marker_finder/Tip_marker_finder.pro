@@ -9,9 +9,7 @@ HEADERS	+= \
     tip_marker_func.h \
     Tip_marker_finder_plugin.h
 HEADERS += ../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h
-#HEADERS += ../../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h
 HEADERS += ../../../released_plugins/v3d_plugins/gsdt/common_dialog.h
-#HEADERS += ../../hanchuan/sscope/FlyCapture2/gtk64/include/tiffio.h
 
 SOURCES	+= Tip_marker_finder_plugin.cpp \
     tip_marker_func.cpp

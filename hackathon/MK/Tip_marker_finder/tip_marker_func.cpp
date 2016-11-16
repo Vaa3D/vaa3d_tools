@@ -1,5 +1,4 @@
 #include "../../zhi/IVSCC_sort_swc/openSWCDialog.h"
-//#include "../../zhi/IVSCC_radius_estimation/IVSCC_radius_estimation_plugin.h"
 #include <vector>
 #include "Tip_marker_finder_plugin.h"
 
@@ -8,10 +7,6 @@
 #include "tip_marker_func.h"
 #include <vector>
 #include <iostream>
-
-//#include "stackutil.h"
-//#include "../../hanchuan/sscope/FlyCapture2/gtk64/include/tiffio.h"
-//#include "../../../released_plugins/v3d_plugins/bigneuron_chingwei_EnsembleNeuronTracerV2n/fastmarching_dt.h"
 #include "../../../released_plugins/v3d_plugins/gsdt/common_dialog.h"
 
 using namespace std;
@@ -40,17 +35,23 @@ bool SpecDialog(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     vector<string> items;
-    items.push_back("Total number of slices in z dimension");
+    items.push_back("Total number of z slices in the image stack");
     items.push_back("Number of top z slices to be included");
     items.push_back("Number of bottom z slices to be included");
     CommonDialog dialog(items);
     dialog.setWindowTitle(title);
-    if(dialog.exec() != QDialog::Accepted) return 0;
+    if (dialog.exec()!=QDialog::Accepted)
+        return 0;
 
     int top, bottom, num;
-    dialog.get_num("Total number of slices in z dimension", num);
+    dialog.get_num("Total number of z slices in the image stack", num);
     dialog.get_num("Number of top z slices to be included", top);
     dialog.get_num("Number of bottom z slices to be included", bottom);
+    if (num == NULL || top == NULL || bottom == NULL)
+    {
+        v3d_msg("Parameter(s) not specified. Failed to generate marker file.");
+        return 0;
+    }
 
     QList<NeuronSWC> list = nt.listNeuron;
     QList<ImageMarker> bifur_marker;
