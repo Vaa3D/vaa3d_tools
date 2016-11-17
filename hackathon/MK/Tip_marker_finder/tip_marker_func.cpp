@@ -76,6 +76,7 @@ bool SpecDialog(V3DPluginCallback2 &callback, QWidget *parent)
     QString fileSaveName =fileOpenName;
     QString markerfileName = fileSaveName+QString("_TipMarker.marker");
     writeMarker_file(markerfileName, bifur_marker);
+    v3d_msg("A marker file has been generated in the same folder.");
 
 
     return true;

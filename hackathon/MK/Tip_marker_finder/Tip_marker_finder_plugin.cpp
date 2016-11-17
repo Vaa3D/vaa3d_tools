@@ -32,10 +32,6 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     if (menu_name == tr("find"))
     {
         SpecDialog(callback,parent);
-        if (SpecDialog == 0)
-        {
-            v3d_msg(tr("A marker file has been generated."));
-        }
     }
 	else
 	{
