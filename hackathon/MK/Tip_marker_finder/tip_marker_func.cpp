@@ -43,7 +43,7 @@ bool SpecDialog(V3DPluginCallback2 &callback, QWidget *parent)
     if (dialog.exec()!=QDialog::Accepted)
         return 0;
 
-    int top, bottom, num;
+    int top=NULL, bottom=NULL, num=NULL;
     dialog.get_num("Total number of z slices in the image stack", num);
     dialog.get_num("Number of top z slices to be included", top);
     dialog.get_num("Number of bottom z slices to be included", bottom);
