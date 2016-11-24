@@ -1,8 +1,10 @@
 #!/bin/bash
-vaa3d=../../../../v3d_external/bin/vaa3d; # Assume vaa
+export V3DPATH=../../../../v3d_external
+export LD_LIBRARY_PATH=$V3DPATH/v3d_main/common_lib/lib
+export vaa3d=$V3DPATH/bin/vaa3d; # Assume vaa3d
 qmake;
 make -j4;
 echo "Build Finish"
 
-echo "vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold> <length> <gap> <dumpbranch> <connectrate> <percentage> <sigma>"
-$vaa3d -x Rivulet -f tracing_func -i test/2000-1.v3draw -p 1 0 8 15 0 2 0.98 0 
+echo "vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold>"
+$vaa3d -x Rivulet -f tracing_func -i test/test.small.tif -p 1 1 

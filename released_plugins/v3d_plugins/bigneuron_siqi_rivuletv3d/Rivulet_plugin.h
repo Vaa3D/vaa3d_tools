@@ -8,7 +8,6 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include "lib/ImageOperation.h"
 
 class RivuletPlugin : public QObject, public V3DPluginInterface2_1
 {

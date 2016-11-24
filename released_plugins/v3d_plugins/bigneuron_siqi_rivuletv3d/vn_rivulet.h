@@ -6,14 +6,6 @@
 struct PARA_RIVULET
 {
     unsigned char threshold;
-    unsigned char length;
-    unsigned char gap; 
-    unsigned char dumpbranch; 
-    unsigned char connectrate; 
-    double percentage;
-    double sigmavalue;
-    // double alpha_one_value;
-    // double alpha_two_value;
     V3DLONG channel;
 
     
@@ -21,16 +13,7 @@ struct PARA_RIVULET
     
     PARA_RIVULET() 
     {
-        threshold = 10;
-        length = 8;
-        gap = 15; 
-        dumpbranch = 0; 
-        connectrate = 1.5; 
-        percentage = 0.98;
-        sigmavalue = 3;
-        // alpha_one_value = 0.5;
-        // alpha_two_value = 1;
-
+        threshold = 0;
         inimg_file = "";
         inmarker_file = "";
         outswc_file = "";
@@ -126,15 +109,6 @@ struct PARA_RIVULET
             //get the dialog return values
             channel = channel_spinbox->value() - 1;
             threshold = bkgthresh_spinbox->value();
-            gap = gap_spinbox->value();
-            length = length_spinbox->value();
-            dumpbranch = dump_checker->isChecked();
-            connectrate = connectrate_spinbox->value();
-            percentage = percentage_spinbox->value();
-            sigmavalue = sigma->value();
-            // alpha_one_value = alpha_one->value();
-            // alpha_two_value = alpha_two->value();
-
           
             if (dialog) {delete dialog; dialog=0;}
         }
