@@ -35,6 +35,8 @@ bool Branch::is_low_conf() { return this->low_online_conf; }
 
 int Branch::get_touch_idx() { return this->touchidx; }
 
+float Branch::get_curve_length() { return this->branch_len; }
+
 void Branch::set_touch_idx(int idx) { this->touchidx = idx; }
 
 void Branch::reach_soma(){this->reached_soma = true;}
@@ -165,10 +167,10 @@ int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
 
 /* Trace for one step
 */
-void R2Tracer::step(Branch &branch, double *grad) {
+void R2Tracer::step(Branch &branch) {
   // RK4 walk for one step
   double *p = branch.get_head().todouble().make_array();
-  p = rk4(p, grad, this->bimg->get_dims(), 1);
+  p = rk4(p, this->grad, this->bimg->get_dims(), 1);
 
   // Update Branch statas
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
@@ -198,7 +200,6 @@ void R2Tracer::step(Branch &branch, double *grad) {
 R2Tracer::R2Tracer() {}
 
 R2Tracer::~R2Tracer() {
-  cout << "Trying to destroy R2Tracer" << endl;
   if (this->bimg) {
     delete bimg;
     bimg = NULL;
@@ -213,6 +214,11 @@ R2Tracer::~R2Tracer() {
     delete this->t;
     this->t = NULL;
   }
+
+  // cout<<"Try to print the first 10 of tt"<<endl;
+  // for(int i=0;i<10;i++){
+  //   cout<<this->tt->get_1d(i)<<endl;
+  // }
 
   if (this->tt) {
     delete this->tt;
@@ -254,7 +260,7 @@ void R2Tracer::erase(Branch &branch) {
     r_large.push_back(ceil(branch.get_radius_at(i) * eraseratio + 1));
   }
 
-  this->binary_sphere(branch, r_large); // TODO: update bb
+  this->binary_sphere(branch, r_large);
   double start_time = this->tt->get(branch.get_tail().tolong());
   double end_time = this->tt->get(branch.get_head().tolong());
 
@@ -263,7 +269,13 @@ void R2Tracer::erase(Branch &branch) {
     for (int i = 0; i<this->tt->size(); i++) {
       if (this->tt->get_1d(i) >= end_time &&
           this->tt->get_1d(i) <= start_time && this->bb->get_1d(i) == true) {
-        this->tt->set_1d(i, branch.is_low_conf() ? -2 : -1);
+        this->tt->set_1d(i, branch.is_low_conf() ? -2.0 : -1.0);
+      }
+    }
+  } else{ // Simply erase with bb 
+    for (int i = 0; i<this->tt->size(); i++) {
+      if (this->bb->get_1d(i) == true) {
+        this->tt->set_1d(i, branch.is_low_conf() ? -2.0 : -1.0);
       }
     }
   }
@@ -337,7 +349,7 @@ void R2Tracer::prep() {
 }
 
 /* Make the gradients for back-tracking*/
-double *R2Tracer::make_dist_gradient() {
+void R2Tracer::make_dist_gradient() {
   V3DLONG j_in_sz[3]; // matrix for jacobian
   V3DLONG *dims = this->bimg->get_dims();
   V3DLONG nvox = this->bimg->size();
@@ -404,10 +416,10 @@ double *R2Tracer::make_dist_gradient() {
         }
 
   // Change to grad to 1d
-  double *grad4d = new double[nvox * 3];
-  std::copy(Fx, Fx + nvox, grad4d);
-  std::copy(Fy, Fy + nvox, grad4d + nvox);
-  std::copy(Fz, Fz + nvox, grad4d + nvox * 2);
+  this->grad = new double[nvox * 3];
+  std::copy(Fx, Fx + nvox, this->grad);
+  std::copy(Fy, Fy + nvox, this->grad + nvox);
+  std::copy(Fz, Fz + nvox, this->grad + nvox * 2);
   if (Fx) {
     delete[] Fx;
     Fx = 0;
@@ -424,8 +436,6 @@ double *R2Tracer::make_dist_gradient() {
     delete[] J;
     J = 0;
   }
-
-  return grad4d;
 }
 
 void R2Tracer::makespeed(Image3<float> *dt) {
@@ -445,14 +455,14 @@ void R2Tracer::update_coverage() {
   long ctr = 0;
   long nvox = this->bimg->size();
   for (int i = 0; i < nvox; i++) {
-    if (this->tt->get_1d(i) < 0 && this->bimg->get_1d(i) == true) {
+    if (this->tt->get_1d(i) < 0 && this->bimg->get_1d(i) > 0) {
       ctr++;
     }
   }
 
-  this->coverage = ctr / nvox;
-  if (!this->silent)
-    printf("%.2f Completed.", this->coverage);
+  long nforeground = this->bimg->sum();
+  this->coverage = (float) ctr / (float) nforeground;
+  cout<<ctr<<"/"<<(long)nforeground<<endl;
 }
 
 SWC *R2Tracer::iterative_backtrack() {
@@ -461,6 +471,8 @@ SWC *R2Tracer::iterative_backtrack() {
   srand(time(NULL));
   float eps = 1e-5;
   this->bb = new Image3<unsigned char>(this->bimg->get_dims());
+
+  this->dilated_bimg = this->bimg;// TODO: dilation
 
   // Get the gradient of the Time-crossing map
   this->make_dist_gradient();
@@ -471,39 +483,51 @@ SWC *R2Tracer::iterative_backtrack() {
   // Mark background tt to -2, soma region to -3
   for (int i = 0; i < this->bimg->size(); i++) {
     if (this->bimg->get_1d(i) == false) {
-      this->tt->set_1d(i, -2);
+      this->tt->set_1d(i, -2.0);
     } else if (this->soma->get_mask()->get_1d(i) == true) {
-      this->tt->set_1d(i, -3);
+      this->tt->set_1d(i, -3.0);
     }
   }
 
-  // TODO: bimg->dilate();
   Image3<unsigned char> *dilate_bimg = this->bimg;
   SWCNode soma_node(0, 1, soma->centroid, soma->radius, -1);
   swc->add_node(soma_node);
-
   this->bsum = this->bimg->sum(); // The total number of foreground voxels
 
   // Iteration for different branches
   while (this->coverage < this->target_coverage) {
     // Find the geodesic furthest point on foreground time-crossing-map
-    Point<float> srcpt(this->tt->max_idx_1d(), this->bimg->get_dims());
+    long maxtidx = this->tt->max_idx_1d();
+    cout<<"iter"<<endl;
+
+    // if (maxtidx < 0) {
+    //   cout<<"No more postive t left"<<endl;
+    //   break;
+    // }
+
+    Point<float> srcpt(maxtidx, this->bimg->get_dims());
     Branch branch;
     branch.add(srcpt, 1.0); // Add the initial point
+    this->tt->set(srcpt.tolong(), -1.0); // Just in case
+    this->update_coverage();
 
+    bool keep = true;
     // Iteration for one branch
     while (true) {
-      bool keep = true;
-      this->step(branch, grad);
+      this->step(branch);
+      Point<float> head = branch.get_head();
 
       // 1. Check ouf of bound
-      if (!this->bimg->is_in_bound(branch.get_head().tolong())) {
+      if (!this->bimg->is_in_bound(head.tolong())) {
+        branch.slice(0, branch.get_length()-1); // Exclude last node
         break;
       }
 
+      this->tt->set(head.tolong(), -1.0); // Just in case
+
       // 2. Check for the large gap criterion
       unsigned char end_pt_b =
-          this->dilated_bimg->get(branch.get_head().tolong());
+          this->dilated_bimg->get(head.tolong());
       if (branch.get_gap() > branch.mean_radius() * 8) {
         break;
       } else {
@@ -511,9 +535,10 @@ SWC *R2Tracer::iterative_backtrack() {
       }
 
       // 3. Check if soma has been reached
-      if (this->soma->get_mask()->get(branch.get_head().tolong()) > 0) {
-        keep = branch.get_length() > 15 ? true : false;
+      if (this->soma->get_mask()->get(head.tolong()) > 0) {
+        keep = branch.get_curve_length() > 15 ? true : false;
         branch.reach_soma();
+        break;
       }
 
       // 4. If it has not moved for 15 iterations, stop
@@ -531,7 +556,7 @@ SWC *R2Tracer::iterative_backtrack() {
       // Consider reaches previous explored area traced with branch
       // Note: when the area was traced due to noise points
       // (erased with -2), not considered as 'reached'
-      if (this->tt->get(branch.get_head().tolong()) == -1) {
+      if (this->tt->get(head.tolong()) == -1.0) {
         branch.set_touched(true);
 
         // Stop exploring if there has not been any branch yet
@@ -539,7 +564,7 @@ SWC *R2Tracer::iterative_backtrack() {
           break;
         }
 
-        SWCNode n(-1, 1, branch.get_head(),
+        SWCNode n(-1, 1, head,
                   branch.get_radius_at(branch.get_length() - 1), -1);
         long matched_idx = swc->match(n);
         if (matched_idx > 0) {
@@ -565,11 +590,11 @@ SWC *R2Tracer::iterative_backtrack() {
     }
 
     // Add to the SWC if the OC score is high
-    if (!branch.is_low_conf()){
+    cout<<"Keep is "<<keep<<" swc size: "<<swc->size()<<" Cov: "<<this->coverage<<endl;
+    if (keep){
       swc->add_branch(branch, pid);
     }
 
-    this->update_coverage();
   }
 
   return swc;

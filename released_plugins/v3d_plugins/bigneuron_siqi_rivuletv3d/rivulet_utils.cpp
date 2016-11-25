@@ -92,10 +92,8 @@ Soma::Soma(Point<float> centroid, float radius)
 
 Soma::~Soma() {
   if (this->mask){
-    cout<<"Trying to delete soma mask"<<endl;
     delete this->mask;
     this->mask = NULL;
-    cout<<"Finished delete soma mask"<<endl;
   }
 }
 

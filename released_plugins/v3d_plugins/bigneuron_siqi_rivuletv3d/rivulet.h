@@ -174,7 +174,6 @@ public:
   }
 
   ~Image3() {
-    cout << "deleting image:" << typeid(T).name() << endl;
     if (this->data1d && this->destroy) {
       delete[] this->data1d;
       this->data1d = NULL;
@@ -184,8 +183,6 @@ public:
       delete[] this->dims;
       this->dims = NULL;
     }
-
-    cout << "finshed deleting image:" << typeid(T).name() << endl;
   }
 
   bool is_in_bound(Point<long> pt){
@@ -215,11 +212,12 @@ public:
     return m;
   }
 
-  T sum() {
-    T s = 0;
+  long sum() {
+    long s = 0;
     for (int i = 0; i < this->nvox; i++) {
-      s += this->data1d[i];
+      s += (long) this->data1d[i];
     }
+
     return s;
   }
 
@@ -230,6 +228,11 @@ public:
   T get(Point<long> p) {
     long idx = p.make_linear_idx(this->dims);
     return this->data1d[idx];
+  }
+
+  void set(Point<long> p, T val) {
+    long idx = p.make_linear_idx(this->dims);
+    this->data1d[idx] = val;
   }
 
   /* Find the max linear idx of the 3D volume*/
@@ -260,7 +263,7 @@ public:
   long size() { return this->nvox; }
 
   void fill_zero() {
-    memset(this->data1d, 0, sizeof(this->data1d) * this->nvox);
+    memset(this->data1d, 0, sizeof(*this->data1d) * this->nvox);
   }
 };
 
@@ -318,12 +321,12 @@ private:
   // Private functions
   static float exponential_moving_average(float, float, int);
   void update_ma(float oc);
-  void slice(int startidx, int endidx); // Left inclusive, right exclusive
   int estimate_radius(Point<float>, Image3<unsigned char>*);
 
 public:
   Branch(){};
   void add(Point<float>, float, float);
+  void slice(int startidx, int endidx); // Left inclusive, right exclusive
   void update(Point<float>, Image3<unsigned char> *);
   float mean_radius();
   float get_gap();
@@ -343,6 +346,7 @@ public:
   Point<float> get_point(int);
   void reach_soma();
   bool is_reach_soma();
+  float get_curve_length();
 };
 
 class R2Tracer {
@@ -362,9 +366,9 @@ private:
   void prep(); // Distance Transform and MSFM
   void makespeed(Image3<float> *dt);
   SWC *iterative_backtrack();
-  double *make_dist_gradient();
+  void make_dist_gradient();
   void update_coverage();
-  void step(Branch &, double *);
+  void step(Branch &);
   void erase(Branch &);
   void binary_sphere(Branch&, vector<int>&);
 public:
@@ -382,5 +386,7 @@ static float constrain(float x, float low, float high) {
     return high;
   return x;
 }
+
+__inline double norm3(double *a) { return sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]); }
 
 #endif
