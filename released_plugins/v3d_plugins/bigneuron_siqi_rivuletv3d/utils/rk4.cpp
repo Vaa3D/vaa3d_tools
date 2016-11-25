@@ -152,7 +152,7 @@ bool RK4STEP_3D(double *gradientArray, int *gradientArraySize, double *startPoin
 }
 
 double* rk4(double* startPoint, double* grad, V3DLONG* gradientArraySize, unsigned char stepsize) {
-    double nextPoint[3];
+    double* nextPoint = new double[3];
     double stepSize = (double)stepsize;
     int gradsize [3];
     gradsize[0] = gradientArraySize[0]; gradsize[1] = gradientArraySize[1]; gradsize[2] = gradientArraySize[2];

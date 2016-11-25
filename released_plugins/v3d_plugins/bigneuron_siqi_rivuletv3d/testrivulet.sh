@@ -7,4 +7,5 @@ make -j4;
 echo "Build Finish"
 
 echo "vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold>"
-$vaa3d -x Rivulet -f tracing_func -i test/test.small.tif -p 1 1 
+$vaa3d -x Rivulet -f tracing_func -i test/test.tif -o fuck.swc -p 1 1;
+# $vaa3d -v -i fuck.swc;
