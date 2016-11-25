@@ -6,7 +6,7 @@
 
 #include <cmath>
 #include "v3d_basicdatatype.h"
-#include "my_surf_objs.h"
+#include "../fastmarching/my_surf_objs.h"
 
 #ifndef MAX
 #define MAX(x,y) (x > y ? (x) : (y))

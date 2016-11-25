@@ -1,17 +1,33 @@
 #ifndef _RIVULET_H
 #define _RIVULET_H
 
-#include "fastmarching/msfm.h"
+#include "utils/marker_radius.h"
+#include "utils/rk4.h"
+#include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <numeric>
 #include <typeinfo>
 #include <vector>
 #include "fastmarching/fastmarching_dt.h"
+#include "fastmarching/msfm.h"
 
 namespace rivulet {
 class R2Tracer;
+class Branch;
+
+template <typename T> vector<T> slice_vector(const vector<T>& v, int start=0, int end=-1) {
+  int oldlen = v.size() ;
+  int newlen = (end == -1 || end >= oldlen) ? oldlen - start : end - start;
+  vector<T> nv(newlen);
+  for(int i = 0; i<newlen; i++){
+    nv[i] = v[start+i];
+  }
+  return nv;
+}
 
 template <typename T> class Point {
 public:
@@ -39,14 +55,34 @@ public:
     this->z = -1;
   }
 
-  long make_linear_idx(long *dims){
+  long make_linear_idx(long *dims) {
     long xysz = (long)(dims[0] * dims[1]);
-    return (long) this->z * xysz + this->y * dims[0] + this->x;
+    return (long)this->z * xysz + this->y * dims[0] + this->x;
   }
 
   float dist(const Point<T> p) {
     Point d = *this - p;
     return pow(d.x * d.x + d.y * d.y + d.z * d.z, 0.5);
+  }
+
+  Point<long> tolong() {
+    return Point<long>((long)this->x, (long)this->y, (long)this->z);
+  }
+
+  Point<double> todouble() {
+    return Point<double>((double)this->x, (double)this->y, (double)this->z);
+  }
+
+  vector<Point<T> > neighbours_3d(int radius){
+    vector<Point> neighbours;
+    // Return the coordinates of neighbours within a radius
+    for (float xgv = this->x - radius; xgv <= this->x + radius; xgv++)
+      for (float ygv = this->y - radius; ygv <= this->y + radius; ygv++)
+        for (float zgv = this->z - radius; zgv <= this->z + radius; zgv++) {
+          Point<T> p(xgv, ygv, zgv);
+          neighbours.push_back(p);
+        }
+    return neighbours;
   }
 
   Point<T> operator-(const Point &other) {
@@ -75,7 +111,7 @@ public:
   int pid = -2;
   SWCNode(int id, int type, Point<float> p, int radius, int pid)
       : id(id), type(type), p(p), radius(radius), pid(pid) {}
-  SWCNode(){}
+  SWCNode() {}
 };
 
 // Image3 is implemented here since templates cannot be compiled
@@ -152,6 +188,15 @@ public:
     cout << "finshed deleting image:" << typeid(T).name() << endl;
   }
 
+  bool is_in_bound(Point<long> pt){
+    if (pt.x >= 0 && pt.x <= this->dims[0] && pt.y >= 0 && pt.y <= this->dims[1] &&
+      pt.z >= 0 && pt.z <= this->dims[2]) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Image3<unsigned char> *binarize(float threshold) {
     unsigned char *vox = new unsigned char[this->nvox];
     for (int i = 0; i < this->nvox; i++) {
@@ -162,25 +207,32 @@ public:
     return bimg;
   }
 
-  T max(){
+  T max() {
     T m = 0;
-    for (int i = 0; i < this->nvox; i++){
-        m = this->data1d[i] > m ? this->data1d[i] : m;
+    for (int i = 0; i < this->nvox; i++) {
+      m = this->data1d[i] > m ? this->data1d[i] : m;
     }
     return m;
   }
 
-  T sum(){
+  T sum() {
     T s = 0;
-    for (int i = 0; i < this->nvox; i++){
-        s += this->data1d[i];
+    for (int i = 0; i < this->nvox; i++) {
+      s += this->data1d[i];
     }
     return s;
   }
 
   long *get_dims() { return this->dims; }
+
   T *get_data1d_ptr() { return this->data1d; }
 
+  T get(Point<long> p) {
+    long idx = p.make_linear_idx(this->dims);
+    return this->data1d[idx];
+  }
+
+  /* Find the max linear idx of the 3D volume*/
   long max_idx_1d() {
     T max = -1;
     long maxidx = -1;
@@ -206,6 +258,10 @@ public:
   void set_1d(long idx, T v) { this->data1d[idx] = v; }
 
   long size() { return this->nvox; }
+
+  void fill_zero() {
+    memset(this->data1d, 0, sizeof(this->data1d) * this->nvox);
+  }
 };
 
 class Soma {
@@ -215,7 +271,7 @@ private:
 public:
   Point<float> centroid;
   float radius = -1;
-  Image3<unsigned char>* get_mask();
+  Image3<unsigned char> *get_mask();
   Soma(Point<float> centroid, float radius);
   ~Soma();
   void make_mask(Image3<unsigned char> *bimg);
@@ -226,34 +282,105 @@ private:
   vector<SWCNode> nodes;
 
 public:
-  SWC(){} // Initialise with an empty SWC
-  void add_branch(vector<Point<float> > branch, vector<int> rlist, long pid);
+  SWC() {} // Initialise with an empty SWC
+  void add_branch(Branch& branch, long connect_id);
   void add_node(SWCNode n);
   long size();
   long match(SWCNode n);
+  SWCNode get_node(int i);
+};
+
+class Branch {
+private:
+  // Data
+  vector<Point<float> > pts;
+  vector<float> conf;
+  vector<float> radius;
+  float stepsz = 0;
+
+  double velocity[3];
+  // For controlling the tracking
+  float gap = 0;
+  double branch_len = 0.0; // The length of branch measured by voxels
+  bool reached_soma = false;
+  bool touched = false; // Touched previously traced branch
+  bool low_online_conf = false;
+  int touchidx = -2; // The swc index it touched at
+  int steps_after_touch = 0;
+
+  // For online confidence computing
+  int online_voxsum = 0;
+  float ma_short = -1;
+  float ma_long = -1;
+  const static int ma_short_window = 4, ma_long_window = 10;
+  bool in_valley = false;
+
+  // Private functions
+  static float exponential_moving_average(float, float, int);
+  void update_ma(float oc);
+  void slice(int startidx, int endidx); // Left inclusive, right exclusive
+  int estimate_radius(Point<float>, Image3<unsigned char>*);
+
+public:
+  Branch(){};
+  void add(Point<float>, float, float);
+  void update(Point<float>, Image3<unsigned char> *);
+  float mean_radius();
+  float get_gap();
+  int get_length();
+  void reset_gap();
+  void set_touched(bool reached);
+  Point<float> get_head();
+  Point<float> get_tail();
+  vector<float> get_radius();
+  float get_radius_at(int);
+  float get_step_size();
+  bool is_stucked();
+  bool is_low_conf();
+  void set_touch_idx(int idx);
+  int get_touch_idx();
+  int get_steps_after_touch();
+  Point<float> get_point(int);
+  void reach_soma();
+  bool is_reach_soma();
 };
 
 class R2Tracer {
 private:
   Image3<unsigned char> *bimg = NULL;
+  Image3<unsigned char> *dilated_bimg = NULL;
+  long bsum = 0;
+  Image3<unsigned char> *bb = NULL;  // For making the erasing contour
   Image3<double> *t = NULL;  // Original timemap
   Image3<double> *tt = NULL; // The copy of the timemap
   Soma *soma = NULL;
   bool silent = false;
   float coverage = 0.;
-  double* grad = NULL;
+  double *grad = NULL;
+  const static float target_coverage = 0.98;
 
   void prep(); // Distance Transform and MSFM
   void makespeed(Image3<float> *dt);
   SWC *iterative_backtrack();
-  double* make_dist_gradient();
-
+  double *make_dist_gradient();
+  void update_coverage();
+  void step(Branch &, double *);
+  void erase(Branch &);
+  void binary_sphere(Branch&, vector<int>&);
 public:
   R2Tracer();
   ~R2Tracer();
   void reset();
   SWC *trace(Image3<unsigned char> *img, float threshold);
 };
+}
+
+static float constrain(float x, float low, float high) {
+  if (x < low)
+    return low;
+  if (x > high)
+    return high;
+  return x;
 }
 
 #endif

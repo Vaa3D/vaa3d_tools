@@ -30,12 +30,15 @@ SOURCES	+= Rivulet_plugin.cpp
 # Utils
 HEADERS += utils/rk4.h
 SOURCES += utils/rk4.cpp
+HEADERS += utils/marker_radius.h
 
 # Fastmarching
 HEADERS += fastmarching/fastmarching_dt.h
 HEADERS += fastmarching/msfm.h
 SOURCES += fastmarching/msfm.cpp
 SOURCES += fastmarching/common.c
+HEADERS += fastmarching/my_surf_objs.h
+SOURCES += fastmarching/my_surf_objs.cpp
 
 LIBS         += -lm -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
 LIBS         += -lpthread

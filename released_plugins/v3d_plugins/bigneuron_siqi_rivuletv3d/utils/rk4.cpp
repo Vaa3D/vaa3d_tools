@@ -151,9 +151,7 @@ bool RK4STEP_3D(double *gradientArray, int *gradientArraySize, double *startPoin
     return true;
 }
 
-Point<float> rk4(Point<float> sp, double* grad, V3DLONG* gradientArraySize, unsigned char stepsize) {
-    double startPoint[3];
-    startPoint[0] = sp.x; startPoint[1] = sp.y; startPoint[2] = sp.z;
+double* rk4(double* startPoint, double* grad, V3DLONG* gradientArraySize, unsigned char stepsize) {
     double nextPoint[3];
     double stepSize = (double)stepsize;
     int gradsize [3];
@@ -164,6 +162,5 @@ Point<float> rk4(Point<float> sp, double* grad, V3DLONG* gradientArraySize, unsi
         nextPoint[0]=0; nextPoint[1]=0; nextPoint[2]=0;
     }
 
-    Point<float> endpoint(nextPoint[0], nextPoint[1],nextPoint[2]);
-    return endpoint;
+    return nextPoint;
 }
