@@ -1,6 +1,10 @@
 #include "rivulet.h"
 using namespace rivulet;
 
+/* Try to match a node with its closest neighbour in this SWC
+    return a postive index if matched
+    return -2 if unmatched
+*/
 long SWC::match(SWCNode n) {
   float mindist = 1.0e4;
   long minidx = -2;
@@ -25,11 +29,16 @@ void SWC::add_node(SWCNode n){
   this->nodes.push_back(n);
 }
 
-void SWC::add_branch(vector< Point<float> > branch, vector<int> rlist, long pid) {
+SWCNode SWC::get_node(int i){
+  return this->nodes[i];
+}
+
+void SWC::add_branch(Branch &branch, long connect_id) {
   /* generate secret number between 1 and 10: */
   int rand_node_type = rand() % 256 + 0;
+  vector<float> rlist = branch.get_radius();
 
-  vector<SWCNode> swc_branch(branch.size());
+  vector<SWCNode> swc_branch(branch.get_length());
   long idstart;
   if (this->size() == 1) // First branch to add
   {
@@ -39,19 +48,21 @@ void SWC::add_branch(vector< Point<float> > branch, vector<int> rlist, long pid)
   }
 
   // Make the new swc branch
-  for (int i = 0; i < branch.size(); i++) {
+  int pid = -2;
+  for (int i = 0; i < branch.get_length(); i++) {
     if (i == this->size() - 1) {
-      pid = pid > -2 ? pid : -2;
+      pid = connect_id > -2 ? pid : -2;
     } else {
       pid = idstart + i + 1;
     }
 
     swc_branch[i].id = idstart + i;
     swc_branch[i].type = rand_node_type;
-    swc_branch[i].p.x = branch[i].x;
-    swc_branch[i].p.y = branch[i].y;
-    swc_branch[i].p.z = branch[i].z;
-    swc_branch[i].radius = rlist[i];
+    Point<float> p = branch.get_point(i);
+    swc_branch[i].p.x = p.x;
+    swc_branch[i].p.y = p.y;
+    swc_branch[i].p.z = p.z;
+    swc_branch[i].radius = branch.get_radius_at(i);
     swc_branch[i].pid = pid;
   }
 
