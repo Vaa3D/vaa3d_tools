@@ -48,7 +48,6 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 		{
 			phi[i] = inimg1d[i];
 			state[i] = ALIVE;
-			//cout<<"+";cout.flush();
 			bkg_count++;
 		}
 		else
@@ -57,7 +56,6 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 			state[i] = FAR;
 		}
 	}
-	cout<<endl;
 
 	BasicHeap<HeapElem> heap;
 	map<long, HeapElem*> elems;
@@ -126,17 +124,13 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 		}
 	}
 
-	cout<<"bkg_count = "<<bkg_count<<" ("<<bkg_count/(double)tol_sz<<")"<<endl;
-	cout<<"bdr_count = "<<bdr_count<<" ("<<bdr_count/(double)tol_sz<<")"<<endl;
-	cout<<"elems.size() = "<<elems.size()<<endl;
 	// loop
 	int time_counter = bkg_count;
 	double process1 = 0;
 	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*100000.0/tol_sz;
-		if(process2 - process1 >= 100) {cout<<"\r"<<((int)process2)/1000.0<<"%";cout.flush(); process1 = process2;
-		}
+		if(process2 - process1 >= 100) {process1 = process2;}
 
 		HeapElem* min_elem = heap.delete_min();
 		elems.erase(min_elem->img_ind);
@@ -216,7 +210,6 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 		{
 			phi[i] = inimg1d[i];
 			state[i] = ALIVE;
-			//cout<<"+";cout.flush();
 			bkg_count++;
 		}
 		else
@@ -225,7 +218,6 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 			state[i] = FAR;
 		}
 	}
-	cout<<endl;
 	
 	BasicHeap<HeapElem> heap;
 	map<long, HeapElem*> elems;
@@ -294,18 +286,13 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 		}
 	}
 	
-	cout<<"bkg_count = "<<bkg_count<<" ("<<bkg_count/(double)tol_sz<<")"<<endl;
-	cout<<"bdr_count = "<<bdr_count<<" ("<<bdr_count/(double)tol_sz<<")"<<endl;
-	cout<<"elems.size() = "<<elems.size()<<endl;
 	// loop
 	int time_counter = bkg_count;
 	double process1 = 0;
 	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*100000.0/tol_sz;
-		if(process2 - process1 >= 10) {cout<<"\r"<<((int)process2)/1000.0<<"%";cout.flush(); process1 = process2;
-			//SAVE_PHI_IMAGE(phi, sz0, sz1, sz2, string("phi") + num2str((int)process1) + ".tif");
-		}
+		if(process2 - process1 >= 10) {process1 = process2;	}
 		
 		HeapElem* min_elem = heap.delete_min();
 		elems.erase(min_elem->img_ind);
@@ -400,7 +387,6 @@ template<class T> bool fastmarching_dt_tree(T * inimg1d, vector<MyMarker*> &outt
 		{
 			phi[i] = inimg1d[i];
 			state[i] = ALIVE;
-			//cout<<"+";cout.flush();
 			bkg_count++;
 		}
 		else
@@ -409,7 +395,6 @@ template<class T> bool fastmarching_dt_tree(T * inimg1d, vector<MyMarker*> &outt
 			state[i] = FAR;
 		}
 	}
-	cout<<endl;
 
 	BasicHeap<HeapElem> heap;
 	map<long, HeapElem*> elems;
@@ -479,18 +464,13 @@ template<class T> bool fastmarching_dt_tree(T * inimg1d, vector<MyMarker*> &outt
 		}
 	}
 
-	cout<<"bkg_count = "<<bkg_count<<" ("<<bkg_count/(double)tol_sz<<")"<<endl;
-	cout<<"bdr_count = "<<bdr_count<<" ("<<bdr_count/(double)tol_sz<<")"<<endl;
-	cout<<"elems.size() = "<<elems.size()<<endl;
 	// loop
 	int time_counter = bkg_count;
 	double process1 = 0;
 	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*100000.0/tol_sz;
-		if(process2 - process1 >= 10) {cout<<"\r"<<((int)process2)/1000.0<<"%";cout.flush(); process1 = process2;
-			//SAVE_PHI_IMAGE(phi, sz0, sz1, sz2, string("phi") + num2str((int)process1) + ".tif");
-		}
+		if(process2 - process1 >= 10) {process1 = process2;}
 
 		HeapElem* min_elem = heap.delete_min();
 		elems.erase(min_elem->img_ind);
@@ -593,7 +573,6 @@ template<class T> bool fastmarching_dt_tree_XY(T * inimg1d, vector<MyMarker*> & 
 		{
 			phi[i] = inimg1d[i];
 			state[i] = ALIVE;
-			//cout<<"+";cout.flush();
 			bkg_count++;
 		}
 		else
@@ -602,7 +581,6 @@ template<class T> bool fastmarching_dt_tree_XY(T * inimg1d, vector<MyMarker*> & 
 			state[i] = FAR;
 		}
 	}
-	cout<<endl;
 	
 	BasicHeap<HeapElem> heap;
 	map<long, HeapElem*> elems;
@@ -672,18 +650,13 @@ template<class T> bool fastmarching_dt_tree_XY(T * inimg1d, vector<MyMarker*> & 
 		}
 	}
 	
-	cout<<"bkg_count = "<<bkg_count<<" ("<<bkg_count/(double)tol_sz<<")"<<endl;
-	cout<<"bdr_count = "<<bdr_count<<" ("<<bdr_count/(double)tol_sz<<")"<<endl;
-	cout<<"elems.size() = "<<elems.size()<<endl;
 	// loop
 	int time_counter = bkg_count;
 	double process1 = 0;
 	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*100000.0/tol_sz;
-		if(process2 - process1 >= 10) {cout<<"\r"<<((int)process2)/1000.0<<"%";cout.flush(); process1 = process2;
-			//SAVE_PHI_IMAGE(phi, sz0, sz1, sz2, string("phi") + num2str((int)process1) + ".tif");
-		}
+		if(process2 - process1 >= 10) {process1 = process2;}
 		
 		HeapElem* min_elem = heap.delete_min();
 		elems.erase(min_elem->img_ind);
