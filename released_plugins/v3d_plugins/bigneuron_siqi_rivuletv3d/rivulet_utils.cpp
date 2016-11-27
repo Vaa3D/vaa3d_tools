@@ -98,12 +98,13 @@ Soma::~Soma() {
 }
 
 void Soma::make_mask(Image3<unsigned char> *bimg) {
-  unsigned char *mask1d = new unsigned char[bimg->size()];
+  unsigned char *mask1d = new unsigned char[bimg->size()]();
 
+  cout<<"Making soma mask. radius:"<<this->radius<<endl;
   for (int i = 0; i < bimg->size(); i++) {
     Point<float> p(i, bimg->get_dims());
     mask1d[i] =
-        (bimg->get_1d(i) > 0 && p.dist(this->centroid) > 1.5 * this->radius)
+        (bimg->get_1d(i) > 0 && p.dist(this->centroid) < 1.5 * this->radius)
             ? 1
             : 0;
   }

@@ -194,10 +194,17 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   img->set_destroy(false);
 
   // The meaty part
-  R2Tracer tracer;
-  SWC *swc = tracer.trace(img, PARA.threshold);
+  R2Tracer *tracer = new R2Tracer();
+  SWC *swc = tracer->trace(img, PARA.threshold);
+
+  if (tracer) {
+    delete tracer;
+    tracer = NULL; 
+  }
+
   save_swc(swc, PARA.outswc_file);
 
+  // Clean up
   if (in_sz3) {
     delete[] in_sz3;
     in_sz3 = NULL;
