@@ -1,36 +1,38 @@
 #ifndef _RIVULET_H
 #define _RIVULET_H
 
-#include "utils/marker_radius.h"
-#include "utils/rk4.h"
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <numeric>
 #include <typeinfo>
 #include <vector>
 #include "fastmarching/fastmarching_dt.h"
 #include "fastmarching/msfm.h"
+#include "utils/marker_radius.h"
+#include "utils/rk4.h"
 
 namespace rivulet {
 class R2Tracer;
 class Branch;
 
-template <typename T> vector<T> slice_vector(const vector<T>& v, int start=0, int end=-1) {
-  int oldlen = v.size() ;
+template <typename T>
+vector<T> slice_vector(const vector<T> &v, int start = 0, int end = -1) {
+  int oldlen = v.size();
   int newlen = (end == -1 || end >= oldlen) ? oldlen - start : end - start;
   vector<T> nv(newlen);
-  for(int i = 0; i<newlen; i++){
-    nv[i] = v[start+i];
+  for (int i = 0; i < newlen; i++) {
+    nv[i] = v[start + i];
   }
   return nv;
 }
 
-template <typename T> class Point {
-public:
+template <typename T>
+class Point {
+ public:
   T x = 0;
   T y = 0;
   T z = 0;
@@ -41,7 +43,7 @@ public:
     this->z = z;
   }
 
-  Point(long idx1d, long *dims) { // Plays as ind to sub
+  Point(long idx1d, long *dims) {  // Plays as ind to sub
     float xysz = (float)dims[0] * (float)dims[1];
     this->z = (T)(floor((float)idx1d / (float)xysz));
     this->y = (T)(idx1d - this->z * xysz);
@@ -73,7 +75,7 @@ public:
     return Point<double>((double)this->x, (double)this->y, (double)this->z);
   }
 
-  vector<Point<T> > neighbours_3d(int radius){
+  vector<Point<T> > neighbours_3d(int radius) {
     vector<Point> neighbours;
     // Return the coordinates of neighbours within a radius
     for (float xgv = this->x - radius; xgv <= this->x + radius; xgv++)
@@ -103,7 +105,7 @@ public:
 };
 
 class SWCNode {
-public:
+ public:
   int id = -2;
   int type = 2;
   Point<float> p;
@@ -115,14 +117,15 @@ public:
 };
 
 // Image3 is implemented here since templates cannot be compiled
-template <typename T> class Image3 {
-private:
+template <typename T>
+class Image3 {
+ private:
   T *data1d = NULL;
   long *dims;
   int nvox;
   bool destroy = true;
 
-public:
+ public:
   void set_destroy(bool destroy) { this->destroy = destroy; }
 
   Image3() {
@@ -175,10 +178,9 @@ public:
 
   ~Image3() {
     if (this->data1d && this->destroy) {
-      delete [] this->data1d;
+      delete[] this->data1d;
       this->data1d = NULL;
     }
-
 
     if (this->dims) {
       delete[] this->dims;
@@ -186,15 +188,14 @@ public:
     }
   }
 
-  Image3<T>* make_copy(){
-    T* img_p = new T[this->nvox];
-    for (int i=0; i<this->nvox; i++)
-      img_p[i] = this->data1d[i];
-    Image3<T>* img = new Image3<T>(img_p, this->dims);
+  Image3<T> *make_copy() {
+    T *img_p = new T[this->nvox];
+    for (int i = 0; i < this->nvox; i++) img_p[i] = this->data1d[i];
+    Image3<T> *img = new Image3<T>(img_p, this->dims);
     return img;
   }
 
-  void save(char* fname){
+  void save(char *fname) {
     V3DLONG dims_4d[4];
     dims_4d[0] = this->dims[0];
     dims_4d[1] = this->dims[1];
@@ -203,9 +204,9 @@ public:
     saveImage(fname, this->data1d, dims_4d, V3D_UINT8);
   }
 
-  bool is_in_bound(Point<long> pt){
-    if (pt.x >= 0 && pt.x <= this->dims[0] && pt.y >= 0 && pt.y <= this->dims[1] &&
-      pt.z >= 0 && pt.z <= this->dims[2]) {
+  bool is_in_bound(Point<long> pt) {
+    if (pt.x >= 0 && pt.x <= this->dims[0] && pt.y >= 0 &&
+        pt.y <= this->dims[1] && pt.z >= 0 && pt.z <= this->dims[2]) {
       return true;
     } else {
       return false;
@@ -233,7 +234,7 @@ public:
   long sum() {
     long s = 0;
     for (int i = 0; i < this->nvox; i++) {
-      s += (long) this->data1d[i];
+      s += (long)this->data1d[i];
     }
 
     return s;
@@ -275,16 +276,14 @@ public:
     return new Image3<double>(vox, this->get_dims());
   }
 
-  T get_1d(long idx) { 
-    if(idx < this->nvox && idx >= 0)
-      return this->data1d[idx]; 
+  T get_1d(long idx) {
+    if (idx < this->nvox && idx >= 0)
+      return this->data1d[idx];
     else
       return 0;
-    
   }
-  void set_1d(long idx, T v) { 
-    if(idx < this->nvox && idx >= 0)
-      this->data1d[idx] = v;
+  void set_1d(long idx, T v) {
+    if (idx < this->nvox && idx >= 0) this->data1d[idx] = v;
   }
 
   long size() { return this->nvox; }
@@ -295,10 +294,10 @@ public:
 };
 
 class Soma {
-private:
+ private:
   Image3<unsigned char> *mask = NULL;
 
-public:
+ public:
   Point<float> centroid;
   float radius = -1;
   Image3<unsigned char> *get_mask();
@@ -308,12 +307,12 @@ public:
 };
 
 class SWC {
-private:
+ private:
   vector<SWCNode> nodes;
 
-public:
-  SWC() {} // Initialise with an empty SWC
-  void add_branch(Branch& branch, long connect_id);
+ public:
+  SWC() {}  // Initialise with an empty SWC
+  void add_branch(Branch &branch, long connect_id);
   void add_node(SWCNode n);
   long size();
   long match(SWCNode n);
@@ -321,7 +320,7 @@ public:
 };
 
 class Branch {
-private:
+ private:
   // Data
   vector<Point<float> > pts;
   vector<float> conf;
@@ -331,11 +330,11 @@ private:
   double velocity[3];
   // For controlling the tracking
   float gap = 0;
-  double branch_len = 0.0; // The length of branch measured by voxels
+  double branch_len = 0.0;  // The length of branch measured by voxels
   bool reached_soma = false;
-  bool touched = false; // Touched previously traced branch
+  bool touched = false;  // Touched previously traced branch
   bool low_online_conf = false;
-  int touchidx = -2; // The swc index it touched at
+  int touchidx = -2;  // The swc index it touched at
   int steps_after_touch = 0;
 
   // For online confidence computing
@@ -348,12 +347,12 @@ private:
   // Private functions
   static float exponential_moving_average(float, float, int);
   void update_ma(float oc);
-  int estimate_radius(Point<float>, Image3<unsigned char>*);
+  int estimate_radius(Point<float>, Image3<unsigned char> *);
 
-public:
+ public:
   Branch(){};
   void add(Point<float>, float, float);
-  void slice(int startidx, int endidx); // Left inclusive, right exclusive
+  void slice(int startidx, int endidx);  // Left inclusive, right exclusive
   void update(Point<float>, Image3<unsigned char> *);
   float mean_radius();
   float get_gap();
@@ -366,6 +365,7 @@ public:
   float get_radius_at(int);
   float get_step_size();
   bool is_stucked();
+  void set_low_conf(bool);
   bool is_low_conf();
   void set_touch_idx(int idx);
   int get_touch_idx();
@@ -377,28 +377,29 @@ public:
 };
 
 class R2Tracer {
-private:
+ private:
   Image3<unsigned char> *bimg = NULL;
   Image3<unsigned char> *dilated_bimg = NULL;
   long bsum = 0;
   Image3<unsigned char> *bb = NULL;  // For making the erasing contour
-  Image3<double> *t = NULL;  // Original timemap
-  Image3<double> *tt = NULL; // The copy of the timemap
+  Image3<double> *t = NULL;          // Original timemap
+  Image3<double> *tt = NULL;         // The copy of the timemap
   Soma *soma = NULL;
   bool silent = false;
   float coverage = 0.;
   double *grad = NULL;
   const static float target_coverage = 0.98;
 
-  void prep(); // Distance Transform and MSFM
+  void prep();  // Distance Transform and MSFM
   void makespeed(Image3<float> *dt);
   SWC *iterative_backtrack();
   void make_dist_gradient();
   void update_coverage();
   void step(Branch &);
   void erase(Branch &);
-  void binary_sphere(Branch&, vector<int>&);
-public:
+  void binary_sphere(Branch &, vector<int> &);
+
+ public:
   R2Tracer();
   ~R2Tracer();
   void reset();
@@ -407,13 +408,13 @@ public:
 }
 
 static float constrain(float x, float low, float high) {
-  if (x < low)
-    return low;
-  if (x > high)
-    return high;
+  if (x < low) return low;
+  if (x > high) return high;
   return x;
 }
 
-__inline double norm3(double *a) { return sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]); }
+__inline double norm3(double *a) {
+  return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+}
 
 #endif
