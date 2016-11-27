@@ -143,15 +143,11 @@ bool RK4STEP_3D(double *gradientArray, int *gradientArraySize, double *startPoin
      
    /*Check the if are still inside the domain */
     if (!checkBounds3d(nextPoint, gradientArraySize)) return false;
-    // printf("k1: %f, %f, %f\n", k1);
-    // printf("k2: %f, %f, %f\n", k2);
-    // printf("k3: %f, %f, %f\n", k3);
-    // printf("k4: %f, %f, %f\n", k4);
     
     return true;
 }
 
-double* rk4(double* startPoint, double* grad, V3DLONG* gradientArraySize, unsigned char stepsize) {
+double* rk4(double* startPoint, double* grad, V3DLONG* gradientArraySize, double stepsize) {
     double* nextPoint = new double[3];
     double stepSize = (double)stepsize;
     int gradsize [3];
@@ -160,6 +156,10 @@ double* rk4(double* startPoint, double* grad, V3DLONG* gradientArraySize, unsign
    /*Perform the RK4 raytracing step */
     if(!RK4STEP_3D(grad, gradsize, startPoint, nextPoint, stepSize)) {
         nextPoint[0]=0; nextPoint[1]=0; nextPoint[2]=0;
+    }
+    cout<<"Inside rk4:"<<nextPoint[0]<<" "<<nextPoint[1]<<" "<<nextPoint[2]<<endl;
+    if (nextPoint[0] != nextPoint[0] || nextPoint[1] != nextPoint[1] || nextPoint[2] != nextPoint[2]){
+        return startPoint;
     }
 
     return nextPoint;

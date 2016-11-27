@@ -19,6 +19,8 @@ vector<float> Branch::get_radius() { return this->radius; }
 
 float Branch::get_step_size() { return this->stepsz; }
 
+void Branch::set_low_conf(bool low) {this->low_online_conf = low;}
+
 bool Branch::is_stucked() {
   if (this->pts.size() > 15) {
     if (this->get_head().dist(this->pts[this->get_length() - 15]) > 1) {
@@ -170,9 +172,14 @@ int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
 void R2Tracer::step(Branch &branch) {
   // RK4 walk for one step
   double *p = branch.get_head().todouble().make_array();
-  p = rk4(p, this->grad, this->bimg->get_dims(), 1);
+  cout<<"In R2tracer::step:"<<"startpoint:"<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
+  p = rk4(p, this->grad, this->bimg->get_dims(), (double) 1.0);
+  // if (p[0]!=p[0] ||p[1]!=p[1] || p[2] != p[2]){ // nan since gradient 0 
+  //   branch.set_low_conf(true);
+  //   return;
+  // }
 
-  // Update Branch statas
+  // Update Branch stats
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
 
   // Momentum boost: If the velocity is too small, sprint a bit with momentum
@@ -358,58 +365,40 @@ void R2Tracer::make_dist_gradient() {
   j_in_sz[0] = dims[0] + 2;
   j_in_sz[1] = dims[1] + 2;
   j_in_sz[2] = dims[2] + 2;
-  int j_nvox = j_in_sz[0] * j_in_sz[1] * j_in_sz[2];
-  double *Fx = new double[nvox];
-  std::fill(Fx, Fx + nvox, 0.0);
-  double *Fy = new double[nvox];
-  std::fill(Fy, Fy + nvox, 0.0);
-  double *Fz = new double[nvox];
-  std::fill(Fz, Fz + nvox, 0.0);
-  double *J = new double[j_nvox];
-  double maxt = (double)this->t->max();
-  std::fill(J, J + j_nvox, maxt);
+  V3DLONG j_nvox = j_in_sz[0] * j_in_sz[1] * j_in_sz[2];
+  double *Fx = new double[nvox]();
+  double *Fy = new double[nvox]();
+  double *Fz = new double[nvox]();
+  double *J = new double[j_nvox]();
+  std::fill(J, J + j_nvox, this->t->max());
 
   // Assign the center of J to T
   for (int x = 0; x < dims[0]; x++)
     for (int y = 0; y < dims[1]; y++)
       for (int z = 0; z < dims[2]; z++) {
-        Point<long> p(x + 1, y + 1, z + 1);
-        long jloc = p.make_linear_idx(j_in_sz);
-        p.x = x;
-        p.y = y;
-        p.z = z;
-        long tloc = p.make_linear_idx(dims);
+        Point<V3DLONG> pj(x + 1, y + 1, z + 1);
+        long jloc = pj.make_linear_idx(j_in_sz);
+        Point<V3DLONG> pt(x, y, z);
+        long tloc = pt.make_linear_idx(dims);
         J[jloc] = this->t->get_1d(tloc);
       }
 
   // Make the neighbour position kernel
-  short *Ne[27];
-  int ctr = 0;
-  for (int i = -1; i <= 1; i++)
-    for (int j = -1; j <= 1; j++)
-      for (int k = -1; k <= 1; k++) {
-        Ne[ctr] = new short[3];
-        Ne[ctr][0] = i;
-        Ne[ctr][1] = j;
-        Ne[ctr][2] = k;
-        ctr++;
-      }
+  short Ne[27][3] ={{-1, -1, -1}, {-1, -1,  0}, {-1, -1,  1}, {-1,  0, -1}, {-1,  0,  0}, {-1,  0,  1}, {-1,  1, -1}, {-1,  1,  0}, {-1, 1, 1},       
+          { 0, -1, -1}, { 0, -1,  0}, { 0, -1,  1}, { 0,  0, -1},               { 0,  0,  1}, { 0,  1, -1}, { 0,  1,  0}, { 0, 1, 1},
+          { 1, -1, -1}, { 1, -1,  0}, { 1, -1,  1}, { 1,  0, -1}, { 1,  0,  0}, { 1,  0,  1}, { 1,  1, -1}, { 1,  1,  0}, { 1, 1, 1}};
 
   for (int i = 0; i < 27; i++)
     for (int x = 0; x < dims[0]; x++)
       for (int y = 0; y < dims[1]; y++)
         for (int z = 0; z < dims[2]; z++) {
-          Point<V3DLONG> p(1 + x + Ne[i][0], 1 + y + Ne[i][1],
-                           1 + z + Ne[i][2]);
-          V3DLONG jloc = p.make_linear_idx(j_in_sz);
-          p.x = x;
-          p.y = y;
-          p.z = z;
-          V3DLONG tloc = p.make_linear_idx(dims);
+          Point<V3DLONG> pj(x + 1, y + 1, z + 1);
+          long jloc = pj.make_linear_idx(j_in_sz);
+          Point<V3DLONG> pt(x, y, z);
           double in = J[jloc];
-          if (in < this->t->get_1d(tloc)) {
-            this->t->set_1d(tloc, in);
-            float powsum =
+          if (in < this->t->get(pt)) {
+            this->t->set(pt, in);
+            double powsum =
                 Ne[i][0] * Ne[i][0] + Ne[i][1] * Ne[i][1] + Ne[i][2] * Ne[i][2];
             Fx[tloc] = -Ne[i][0] / sqrt(powsum);
             Fy[tloc] = -Ne[i][1] / sqrt(powsum);
@@ -439,25 +428,15 @@ void R2Tracer::make_dist_gradient() {
     J = 0;
   }
 
-  // Clean Ne
-  ctr = 0;
-  for (int i = -1; i <= 1; i++)
-    for (int j = -1; j <= 1; j++)
-      for (int k = -1; k <= 1; k++) {
-        delete [] Ne[ctr];
-        Ne[ctr] = NULL;
-        ctr++;
-      }
 
 }
 
 void R2Tracer::makespeed(Image3<float> *dt) {
-  float *dtptr = dt->get_data1d_ptr();
   for (int i = 0; i < dt->size(); i++) {
     if (this->bimg->get_1d(i) > 0) {
-      dtptr[i] = pow(dtptr[i], 4);
+      dt->set_1d(i, pow(dt->get_1d(i), 4));
     } else {
-      dtptr[i] = 1e-10;
+      dt->set_1d(i, 1e-10);
     }
   }
 }
