@@ -137,7 +137,7 @@ public:
     Initialize an image with all zeros
     */
 
-    this->dims = new long[3];
+    this->dims = new long[3]();
     this->dims[0] = dims[0];
     this->dims[1] = dims[1];
     this->dims[2] = dims[2];
@@ -175,14 +175,32 @@ public:
 
   ~Image3() {
     if (this->data1d && this->destroy) {
-      delete[] this->data1d;
+      delete [] this->data1d;
       this->data1d = NULL;
     }
+
 
     if (this->dims) {
       delete[] this->dims;
       this->dims = NULL;
     }
+  }
+
+  Image3<T>* make_copy(){
+    T* img_p = new T[this->nvox];
+    for (int i=0; i<this->nvox; i++)
+      img_p[i] = this->data1d[i];
+    Image3<T>* img = new Image3<T>(img_p, this->dims);
+    return img;
+  }
+
+  void save(char* fname){
+    V3DLONG dims_4d[4];
+    dims_4d[0] = this->dims[0];
+    dims_4d[1] = this->dims[1];
+    dims_4d[2] = this->dims[2];
+    dims_4d[3] = 1;
+    saveImage(fname, this->data1d, dims_4d, V3D_UINT8);
   }
 
   bool is_in_bound(Point<long> pt){
@@ -227,12 +245,12 @@ public:
 
   T get(Point<long> p) {
     long idx = p.make_linear_idx(this->dims);
-    return this->data1d[idx];
+    return this->get_1d(idx);
   }
 
   void set(Point<long> p, T val) {
     long idx = p.make_linear_idx(this->dims);
-    this->data1d[idx] = val;
+    this->set_1d(idx, val);
   }
 
   /* Find the max linear idx of the 3D volume*/
@@ -257,8 +275,17 @@ public:
     return new Image3<double>(vox, this->get_dims());
   }
 
-  T get_1d(long idx) { return this->data1d[idx]; }
-  void set_1d(long idx, T v) { this->data1d[idx] = v; }
+  T get_1d(long idx) { 
+    if(idx < this->nvox && idx >= 0)
+      return this->data1d[idx]; 
+    else
+      return 0;
+    
+  }
+  void set_1d(long idx, T v) { 
+    if(idx < this->nvox && idx >= 0)
+      this->data1d[idx] = v;
+  }
 
   long size() { return this->nvox; }
 
