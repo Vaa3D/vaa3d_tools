@@ -3,6 +3,5 @@
 
 #include "stackutil.h"
 
-double* rk4(double* startpoint, double* grad, V3DLONG* gradientArraySize, double stepsize);
- __inline double norm3(double *a);
+double* rk4(double*, double*, V3DLONG*, double);
 #endif

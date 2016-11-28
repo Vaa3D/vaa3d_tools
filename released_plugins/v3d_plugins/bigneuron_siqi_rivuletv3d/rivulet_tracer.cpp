@@ -173,12 +173,7 @@ void R2Tracer::step(Branch &branch) {
   // RK4 walk for one step
   double *p = branch.get_head().todouble().make_array();
   cout<<"In R2tracer::step:"<<"startpoint:"<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
-  p = rk4(p, this->grad, this->bimg->get_dims(), (double) 1.0);
-
-  // if (p[0]!=p[0] ||p[1]!=p[1] || p[2] != p[2]){ // nan since gradient 0 
-  //   branch.set_low_conf(true);
-  //   return;
-  // }
+  p = rk4(p, this->grad, this->bimg->get_dims(), 1.0);
 
   // Update Branch stats
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
@@ -325,35 +320,43 @@ void R2Tracer::prep() {
   this->soma->get_mask()->save("soma_mask.v3draw");
 
   // Make Speed Image dt**4 if bimg>0
-  this->makespeed(dt);
+  Image3<double> *speed = this->makespeed(dt);
+  speed->save("speed.v3draw", true);
 
   // Marching on the Speed Image
-  float *sp = this->soma->centroid.make_array();
-  int sp_int[3];
-  sp_int[0] = (int)sp[0];
-  sp_int[1] = (int)sp[1];
-  sp_int[2] = (int)sp[2];
+  printf("soma centroid: %f, %f, %f\n", soma->centroid.x, soma->centroid.y, soma->centroid.z);
+  int *sp = this->soma->centroid.toint().make_array();
 
-  Image3<double> *dt_double = dt->to_double();
-
-  if (!this->silent)
+  if (!this->silent){
     cout << "== MSFM..." << endl;
-  double *t_ptr = msfm(dt_double->get_data1d_ptr(), dims, sp_int, false, false,
+  }
+  printf("sp: %d, %d, %d\n", sp[0], sp[1], sp[2]);
+
+  double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, false, false,
                        false); // Original Timemap
   if (!this->silent)
     cout << "== MSFM finished..." << endl;
 
   this->t = new Image3<double>(t_ptr, this->bimg->get_dims());
+  for (int i=0;i<this->t->size();i++){
+    Point<long> pt(i, this->t->get_dims());
+    if (this->bimg->get(pt) > 0) {
+      printf("bt = %.9f\n", this->t->get(pt));
+    }
+  }
   this->tt = this->t->make_copy();
+
+  // Get the gradient of the Time-crossing map
+  this->make_gradient();
 
   if (dt) {
     delete dt;
     dt = NULL;
   }
 
-  if (dt_double) {
-    delete dt_double;
-    dt_double = NULL;
+  if (speed) {
+    delete speed;
+    speed = NULL;
   }
 
   if (sp) {
@@ -363,20 +366,16 @@ void R2Tracer::prep() {
 }
 
 /* Make the gradients for back-tracking*/
-void R2Tracer::make_dist_gradient() {
-  V3DLONG *dims = this->bimg->get_dims();
-  V3DLONG nvox = this->bimg->size();
-  V3DLONG j_in_sz[3]; // matrix for jacobian
-  j_in_sz[0] = dims[0] + 2;
-  j_in_sz[1] = dims[1] + 2;
-  j_in_sz[2] = dims[2] + 2;
-  V3DLONG j_nvox = j_in_sz[0] * j_in_sz[1] * j_in_sz[2];
-  Image3<double>* Fx = new Image3<double>(dims);
-  Image3<double>* Fy = new Image3<double>(dims);
-  Image3<double>* Fz = new Image3<double>(dims);
-  double *J = new double[j_nvox](); // Will be freed by jacobian image
-  std::fill(J, J + j_nvox, this->t->max());
-  Image3<double>* jacobian = new Image3<double>(J, j_in_sz);
+void R2Tracer::make_gradient() {
+  V3DLONG *dims = this->t->get_dims();
+  V3DLONG nvox = this->t->size();
+  V3DLONG jdims[3]; jdims[0] = dims[0] + 2; jdims[1] = dims[1] + 2; jdims[2] = dims[2] + 2;
+  Image3<double>* jacobian = new Image3<double>(jdims);
+  Image3<double>* fx = new Image3<double>(dims);
+  Image3<double>* fy = new Image3<double>(dims);
+  Image3<double>* fz = new Image3<double>(dims);
+  std::fill(jacobian->get_data1d_ptr(),
+            jacobian->get_data1d_ptr() + jacobian->size(), this->t->max());
 
   // Assign the center of J to T
   for (long v = 0; v < nvox; v++) {
@@ -386,50 +385,87 @@ void R2Tracer::make_dist_gradient() {
   }
 
   // Make the neighbour position kernel
-  double Ne[26][3] = {{-1.0, -1.0, -1.0}, {-1.0, -1.0, 0.0}, {-1.0, -1.0, 1.0},
-                     {-1.0, 0.0, -1.0},  {-1.0, 0.0, 0.0},  {-1.0, 0.0, 1.0},
-                     {-1.0, 1.0, -1.0},  {-1.0, 1.0, 0.0},  {-1.0, 1.0, 1.0},
-                     {0.0, -1.0, -1.0},  {0.0, -1.0, 0.0},  {0.0, -1.0, 1.0},
-                     {0.0, 0.0, -1.0},   {0.0, 0.0, 1.0},   {0.0, 1.0, -1.0},
-                     {0.0, 1.0, 0.0},    {0.0, 1.0, 1.0},   {1.0, -1.0, -1.0},
-                     {1.0, -1.0, 0},     {1.0, -1.0, 1.0},  {1.0, 0.0, -1.0},
-                     {1.0, 0.0, 0.0},    {1.0, 0.0, 1.0},   {1.0, 1.0, -1.0},
-                     {1.0, 1.0, 0.0},    {1.0, 1.0, 1.0}};
+  long ne[26][3] = {{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1},
+                     {-1, 0, -1},  {-1, 0, 0},  {-1, 0, 1},
+                     {-1, 1, -1},  {-1, 1, 0},  {-1, 1, 1},
+                     {0, -1, -1},  {0, -1, 0},  {0, -1, 1},
+                     {0, 0, -1},   {0, 0, 1},   {0, 1, -1},
+                     {0, 1, 0},    {0, 1, 1},   {1, -1, -1},
+                     {1, -1, 0},     {1, -1, 1},  {1, 0, -1},
+                     {1, 0, 0},    {1, 0, 1},   {1, 1, -1},
+                     {1, 1, 0},    {1, 1, 1}};
 
-  for (int i = 0; i < 26; i++)
-    for (long v = 0; v < nvox; v++) {
+  // Make the norms for displacement vectors 
+  double ne_norm[26][3];
+  for (int i = 0; i < 26; i++) { 
+    for (int j = 0; j < 3; j++) {
+      ne_norm[i][j] =
+          sqrt( (double)(ne[i][0] * ne[i][0] + ne[i][1] * ne[i][1] + ne[i][2] * ne[i][2]) );
+    }
+  }
+
+  for (long v = 0; v < nvox; v++) {
+    for (int i = 0; i < 26; i++){
       Point<V3DLONG> pt(v, dims);
-      Point<V3DLONG> pj(pt.x + 1 + Ne[i][0], pt.y + 1 + Ne[i][1],
-                        pt.z + 1 + Ne[i][2]);
-      double in = jacobian->get(pj);
-      if (in < this->t->get(pt)) {
-        double powsum = sqrt(Ne[i][0] * Ne[i][0] + Ne[i][1] * Ne[i][1] +
-                             Ne[i][2] * Ne[i][2]);
-        Fx->set(pt, -Ne[i][0] / powsum);
-        Fy->set(pt, -Ne[i][1] / powsum);
-        Fz->set(pt, -Ne[i][2] / powsum);
+      Point<V3DLONG> pj(pt.x + 1 + ne[i][0], pt.y + 1 + ne[i][1],
+                        pt.z + 1 + ne[i][2]);
+      if (jacobian->get(pj) < this->t->get(pt)) {
+        // this->t->set(pt, jacobian->get(pj)); // Seems useless
+        fx->set(pt, -ne[i][0] / ne_norm[i][0]);
+        fy->set(pt, -ne[i][1] / ne_norm[i][1]);
+        fz->set(pt, -ne[i][2] / ne_norm[i][2]);
       }
     }
+  }
 
-  // Change grad to 1d
+  // Change grad to 1D
   this->grad = new double[nvox * 3];
-  std::copy(Fx->get_data1d_ptr(), Fx->get_data1d_ptr() + nvox, this->grad);
-  std::copy(Fy->get_data1d_ptr(), Fy->get_data1d_ptr() + nvox,
+  std::copy(fx->get_data1d_ptr(), fx->get_data1d_ptr() + nvox, 
+            this->grad);
+  std::copy(fy->get_data1d_ptr(), fy->get_data1d_ptr() + nvox,
             this->grad + nvox);
-  std::copy(Fz->get_data1d_ptr(), Fz->get_data1d_ptr() + nvox,
+  std::copy(fz->get_data1d_ptr(), fz->get_data1d_ptr() + nvox,
             this->grad + nvox * 2);
 
-  if (Fx) {
-    delete Fx;
-    Fx = NULL;
+  long zeroctr = 0;
+  Image3<unsigned char> *pimg = new Image3<unsigned char>(dims);
+  for (int i = 0; i < nvox; i++) {
+    Point<long> p(i, dims);
+    double n = sqrt(fx->get(p) * fx->get(p) + fy->get(p) * fy->get(p) +
+                    fz->get(p) * fz->get(p));
+    if (n == 0.0) {
+      cout << "Gradient is 0  at point:" << p.x << "," << p.y << "," << p.z
+           << endl;
+      printf("t=%.9f\n", this->t->get(p));
+      cout<<"its neighbours:";
+      for(int i=0;i<26;i++){
+        Point<long> pp(p.x+ne[i][0], p.y+ne[i][1], p.z + ne[i][2]);
+        printf("%.9f at %d-%d-%d\n", this->t->get(pp), p.x+ne[i][0], p.y+ne[i][1], p.z+ne[i][2]);
+      }
+      cout<<endl;
+      pimg->set(p, 255);
+      zeroctr++;
+    }
   }
-  if (Fy) {
-    delete Fy;
-    Fy = NULL;
+
+  pimg->save("grad_zeros.v3draw");
+  this->t->save("t_inside.v3draw", true);
+  jacobian->save("jacobian.v3draw", true);
+  printf("%d/%d is zero\n", zeroctr, nvox );
+  if (pimg){delete pimg; pimg = NULL;}
+
+
+  if (fx) {
+    delete fx;
+    fx = NULL;
   }
-  if (Fz) {
-    delete Fz;
-    Fz = NULL;
+  if (fy) {
+    delete fy;
+    fy = NULL;
+  }
+  if (fz) {
+    delete fz;
+    fz = NULL;
   }
   if (jacobian) {
     delete jacobian;
@@ -437,14 +473,14 @@ void R2Tracer::make_dist_gradient() {
   }
 }
 
-void R2Tracer::makespeed(Image3<float> *dt) {
+Image3<double>* R2Tracer::makespeed(Image3<float> *dt) {
+  double dmax = (double) dt->max();
+  Image3<double>* speed = dt->to_double();
   for (int i = 0; i < dt->size(); i++) {
-    if (this->bimg->get_1d(i) > 0) {
-      dt->set_1d(i, pow(dt->get_1d(i), 4));
-    } else {
-      dt->set_1d(i, 1e-10);
-    }
+      double s = (double) dt->get_1d(i) == 0 ? 1e-10 : dt->get_1d(i);
+      speed->set_1d(i, pow(s / dmax, 4));
   }
+  return speed;
 }
 
 /* Update the coverage percentile according to the timecrossing map and the
@@ -458,7 +494,6 @@ void R2Tracer::update_coverage() {
     }
   }
 
-  cout << "ctr/bsum:" << ctr << "/" << bsum << endl;
   this->coverage = (float)ctr / (float)this->bsum;
 }
 
@@ -468,23 +503,21 @@ SWC *R2Tracer::iterative_backtrack() {
   srand(time(NULL));
   float eps = 1e-5;
   this->bb = new Image3<unsigned char>(this->bimg->get_dims());
-
   this->dilated_bimg = this->bimg->make_copy();// TODO: dilation
-
-  // Get the gradient of the Time-crossing map
-  this->make_dist_gradient();
 
   // Count the number of foreground voxels
   V3DLONG nforeground = (V3DLONG) this->bimg->sum();
 
   // Mark background tt to -2, soma region to -3
   for (int i = 0; i < this->bimg->size(); i++) {
-    if (this->bimg->get_1d(i) == 0) {
-      this->tt->set_1d(i, (double) -2.0);
+    if (this->bimg->get_1d(i) <= 0) {
+      this->tt->set_1d(i, -2.0);
     } else if (this->soma->get_mask()->get_1d(i) > 0) {
-      this->tt->set_1d(i, (double) -3.0);
+      this->tt->set_1d(i, -3.0);
     }
   }
+
+  this->tt->save("tt.v3draw", true);
 
   Image3<unsigned char> *dilate_bimg = this->bimg;
   SWCNode soma_node(0, 1, soma->centroid, soma->radius, -1);
@@ -495,8 +528,8 @@ SWC *R2Tracer::iterative_backtrack() {
   while (this->coverage < this->target_coverage) {
     // Find the geodesic furthest point on foreground time-crossing-map
     long maxtidx = this->tt->max_idx_1d();
+    Point<float> srcpt(maxtidx, this->tt->get_dims());
 
-    Point<float> srcpt(maxtidx, this->bimg->get_dims());
     Branch branch;
     branch.add(srcpt, 1.0); // Add the initial point
     this->tt->set(srcpt.tolong(), (double)-1.0); // Just in case
