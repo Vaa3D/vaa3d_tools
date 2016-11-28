@@ -195,16 +195,36 @@ class Image3 {
     return img;
   }
 
-  void save(char *fname) {
+  void save(char *fname, bool normalise=false) {
+    // Normalise need to be set true if T is not unsigned char
     V3DLONG dims_4d[4];
     dims_4d[0] = this->dims[0];
     dims_4d[1] = this->dims[1];
     dims_4d[2] = this->dims[2];
     dims_4d[3] = 1;
-    saveImage(fname, this->data1d, dims_4d, V3D_UINT8);
+
+    if (normalise){
+      T max = this->max();
+      unsigned char* td = new unsigned char[this->nvox];
+      for(int i=0;i<this->nvox;i++){
+        td[i] = (unsigned char)(ceil(this->data1d[i] / max * 255 ));
+      }
+      saveImage(fname, td, dims_4d, V3D_UINT8);
+      if (td){delete td; td = NULL;}
+    }
+    else{
+      unsigned char * td = (unsigned char*) this->data1d;
+      saveImage(fname, td, dims_4d, V3D_UINT8);
+    }
   }
 
   bool is_in_bound(Point<long> pt) {
+    // Check for nan
+    if (pt.x != pt.x || pt.y != pt.y || pt.z != pt.z ){
+      return false;
+    }
+
+    // Check for out of bound
     if (pt.x >= 0 && pt.x <= this->dims[0] && pt.y >= 0 &&
         pt.y <= this->dims[1] && pt.z >= 0 && pt.z <= this->dims[2]) {
       return true;
