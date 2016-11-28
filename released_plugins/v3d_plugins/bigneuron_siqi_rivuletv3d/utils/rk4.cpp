@@ -153,8 +153,6 @@ bool RK4STEP_3D(double *grad, long *dims,
   /*Calculate k1 */
   interpgrad3d(k1, grad, dims, srcpt);
   tempnorm = norm3(k1);
-  cout<<"k1:"<<k1[0]<<","<<k1[1]<<","<<k1[2]<<endl;
-  cout<<"tempnorm k1:"<<tempnorm<<endl;
   k1[0] = k1[0] * stepsize / tempnorm;
   k1[1] = k1[1] * stepsize / tempnorm;
   k1[2] = k1[2] * stepsize / tempnorm;
@@ -170,7 +168,6 @@ bool RK4STEP_3D(double *grad, long *dims,
   /*Calculate k2 */
   interpgrad3d(k2, grad, dims, tp);
   tempnorm = norm3(k2);
-  cout<<"tempnorm k2:"<<tempnorm<<endl;
   k2[0] = k2[0] * stepsize / tempnorm;
   k2[1] = k2[1] * stepsize / tempnorm;
   k2[2] = k2[2] * stepsize / tempnorm;
@@ -186,7 +183,6 @@ bool RK4STEP_3D(double *grad, long *dims,
   /*Calculate k3 */
   interpgrad3d(k3, grad, dims, tp);
   tempnorm = norm3(k3);
-  cout<<"tempnorm k3:"<<tempnorm<<endl;
   k3[0] = k3[0] * stepsize / tempnorm;
   k3[1] = k3[1] * stepsize / tempnorm;
   k3[2] = k3[2] * stepsize / tempnorm;
@@ -202,7 +198,6 @@ bool RK4STEP_3D(double *grad, long *dims,
   /*Calculate k4 */
   interpgrad3d(k4, grad, dims, tp);
   tempnorm = norm3(k4);
-  cout<<"tempnorm k4:"<<tempnorm<<endl;
   k4[0] = k4[0] * stepsize / tempnorm;
   k4[1] = k4[1] * stepsize / tempnorm;
   k4[2] = k4[2] * stepsize / tempnorm;
@@ -229,14 +224,6 @@ double *rk4(double *srcpt, double *grad, V3DLONG *dims,
   /*Perform the RK4 raytracing step */
   if (!RK4STEP_3D(grad, dims, srcpt, endpt, stepsize)) {
     endpt[0] = -1; endpt[1] = -1;endpt[2] = -1;}
-
-  cout << "Inside rk4:" << endpt[0] << " " << endpt[1] << " "
-       << endpt[2] << endl;
-
-  // if (endpt[0] != endpt[0] || endpt[1] != endpt[1] ||
-  //     endpt[2] != endpt[2]) {
-  //   return srcpt;
-  // }
 
   return endpt;
 }
