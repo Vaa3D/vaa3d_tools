@@ -71,6 +71,10 @@ class Point {
     return Point<long>((long)this->x, (long)this->y, (long)this->z);
   }
 
+  Point<int> toint() {
+    return Point<int>((int) this->x, (int) this->y, (int) this->z);
+  }
+
   Point<double> todouble() {
     return Point<double>((double)this->x, (double)this->y, (double)this->z);
   }
@@ -244,7 +248,7 @@ class Image3 {
   }
 
   T max() {
-    T m = 0;
+    T m = -1;
     for (int i = 0; i < this->nvox; i++) {
       m = this->data1d[i] > m ? this->data1d[i] : m;
     }
@@ -291,7 +295,7 @@ class Image3 {
   Image3<double> *to_double() {
     double *vox = new double[this->size()];
     for (int i = 0; i < this->size(); i++) {
-      vox[i] = (double)this->data1d[i];
+      vox[i] = (double) this->data1d[i];
     }
     return new Image3<double>(vox, this->get_dims());
   }
@@ -411,9 +415,9 @@ class R2Tracer {
   const static float target_coverage = 0.98;
 
   void prep();  // Distance Transform and MSFM
-  void makespeed(Image3<float> *dt);
+  Image3<double>* makespeed(Image3<float> *dt);
   SWC *iterative_backtrack();
-  void make_dist_gradient();
+  void make_gradient();
   void update_coverage();
   void step(Branch &);
   void erase(Branch &);
