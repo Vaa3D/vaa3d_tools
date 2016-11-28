@@ -338,6 +338,7 @@ class SWC {
   SWC() {}  // Initialise with an empty SWC
   void add_branch(Branch &branch, long connect_id);
   void add_node(SWCNode n);
+  void plus1();
   long size();
   long match(SWCNode n);
   SWCNode get_node(int i);
