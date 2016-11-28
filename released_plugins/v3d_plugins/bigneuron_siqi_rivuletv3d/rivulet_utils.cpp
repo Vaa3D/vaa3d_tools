@@ -25,15 +25,21 @@ long SWC::match(SWCNode n) {
   }
 }
 
-void SWC::add_node(SWCNode n){
-  this->nodes.push_back(n);
+void SWC::plus1(){
+  for (long i=0; i < this->size(); i++){
+    this->nodes[i].p.x = this->nodes[i].p.x + 1;
+    this->nodes[i].p.y = this->nodes[i].p.y + 1;
+    this->nodes[i].p.z = this->nodes[i].p.z + 1;
+  }
 }
 
-SWCNode SWC::get_node(int i){
-  return this->nodes[i];
-}
+void SWC::add_node(SWCNode n) { this->nodes.push_back(n); }
+
+SWCNode SWC::get_node(int i) { return this->nodes[i]; }
 
 void SWC::add_branch(Branch &branch, long connect_id) {
+  if (branch.get_length() < 5) return;
+  printf("Branch to add:%d\n", branch.get_length());
   /* generate secret number between 1 and 10: */
   int rand_node_type = rand() % 256 + 0;
   vector<float> rlist = branch.get_radius();
@@ -50,8 +56,8 @@ void SWC::add_branch(Branch &branch, long connect_id) {
   // Make the new swc branch
   int pid = -2;
   for (int i = 0; i < branch.get_length(); i++) {
-    if (i == this->size() - 1) {
-      pid = connect_id > -2 ? pid : -2;
+    if (i == branch.get_length() - 1) {
+      pid = connect_id >= 0 ? connect_id : -2;
     } else {
       pid = idstart + i + 1;
     }
@@ -59,18 +65,18 @@ void SWC::add_branch(Branch &branch, long connect_id) {
     swc_branch[i].id = idstart + i;
     swc_branch[i].type = rand_node_type;
     Point<float> p = branch.get_point(i);
-    swc_branch[i].p.x = p.x;
-    swc_branch[i].p.y = p.y;
-    swc_branch[i].p.z = p.z;
+    swc_branch[i].p = p;
     swc_branch[i].radius = branch.get_radius_at(i);
     swc_branch[i].pid = pid;
   }
 
   // Check if any tail should be connected to its head
-  SWCNode head = swc_branch[0];
-  long minidx = this->match(head);
-  if (minidx >= 0 && this->nodes[minidx].pid == -2) {
-    this->nodes[minidx].pid = head.id;
+  SWCNode tail = swc_branch[0];
+  long minidx = this->match(tail);
+  if (minidx > 0 && this->nodes[minidx].pid == -2) {
+    this->nodes[minidx].pid = tail.id;
+    printf("Connect tail to %d. Dist: %.2f\n", minidx,
+           this->nodes[minidx].p.dist(tail.p));
   }
 
   // Stack swc_branch to nodes
@@ -79,9 +85,7 @@ void SWC::add_branch(Branch &branch, long connect_id) {
   this->nodes.insert(this->nodes.end(), swc_branch.begin(), swc_branch.end());
 }
 
-
-Image3<unsigned char>* Soma::get_mask(){return this->mask;}
-
+Image3<unsigned char> *Soma::get_mask() { return this->mask; }
 
 long SWC::size() { return nodes.size(); }
 
@@ -91,7 +95,8 @@ Soma::Soma(Point<float> centroid, float radius)
 }
 
 Soma::~Soma() {
-  if (this->mask){
+
+  if (this->mask) {
     delete this->mask;
     this->mask = NULL;
   }
@@ -100,7 +105,7 @@ Soma::~Soma() {
 void Soma::make_mask(Image3<unsigned char> *bimg) {
   unsigned char *mask1d = new unsigned char[bimg->size()]();
 
-  cout<<"Making soma mask. radius:"<<this->radius<<endl;
+  cout << "Making soma mask. radius:" << this->radius << endl;
   for (int i = 0; i < bimg->size(); i++) {
     Point<float> p(i, bimg->get_dims());
     mask1d[i] =

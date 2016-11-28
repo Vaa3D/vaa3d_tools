@@ -178,17 +178,18 @@ void R2Tracer::step(Branch &branch) {
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
 
   // Momentum boost: If the velocity is too small, sprint a bit with momentum
-  if (branch.get_step_size() < 0.5 && branch.get_length() >= 5) {
-    endpt.x =
-        branch.get_head().x +
-        (branch.get_head().x - branch.get_point(branch.get_length() - 4).x);
-    endpt.y =
-        branch.get_head().y +
-        (branch.get_head().y - branch.get_point(branch.get_length() - 4).y);
-    endpt.z =
-        branch.get_head().z +
-        (branch.get_head().z - branch.get_point(branch.get_length() - 4).z);
-  }
+  // if (branch.get_step_size() < 0.3 && branch.get_length() > 2) {
+  //   cout<<"Boosting"<<endl;
+  //   endpt.x =
+  //       branch.get_head().x +
+  //       (branch.get_head().x - branch.get_point(branch.get_length() - 2).x);
+  //   endpt.y =
+  //       branch.get_head().y +
+  //       (branch.get_head().y - branch.get_point(branch.get_length() - 2).y);
+  //   endpt.z =
+  //       branch.get_head().z +
+  //       (branch.get_head().z - branch.get_point(branch.get_length() - 2).z);
+  // }
 
   // Update the branch stats
   branch.update(endpt, this->bimg);
@@ -255,7 +256,7 @@ void R2Tracer::binary_sphere(Branch& branch, vector<int>& radius){
 
 /* Erase a branch from the time crossing map */
 void R2Tracer::erase(Branch &branch) {
-  float eraseratio = 1.2;
+  float eraseratio = 1.5;
   vector<int> r_large;
   for (int i = 0; i < branch.get_length(); i++) {
     r_large.push_back(ceil(branch.get_radius_at(i) * eraseratio + 1));
@@ -494,7 +495,7 @@ SWC *R2Tracer::iterative_backtrack() {
 
     Branch branch;
     branch.add(srcpt, 1.0); // Add the initial point
-    this->tt->set(srcpt.tolong(), (double)-1.0); // Just in case
+    // this->tt->set(srcpt.tolong(), (double)-1.0); // Just in case
     this->update_coverage();
 
     bool keep = true;
@@ -510,7 +511,7 @@ SWC *R2Tracer::iterative_backtrack() {
         break;
       }
 
-      this->tt->set(head.tolong(), (double) -1.0); // Just in case
+      // this->tt->set(head.tolong(), (double) -1.0); // Just in case
 
       // 2. Check for the large gap criterion
       unsigned char end_pt_b =
@@ -523,7 +524,7 @@ SWC *R2Tracer::iterative_backtrack() {
       }
 
       // 3. Check if soma has been reached
-      if (this->soma->get_mask()->get(head.tolong()) > 0) {
+      if (this->tt->get(branch.get_head().tolong()) == -3) {
         keep = branch.get_curve_length() > 15 ? true : false;
         branch.reach_soma();
         printf("== Reached Soma at %.2f, %.2f,%.2f\n", branch.get_head().x, branch.get_head().y, branch.get_head().z);
@@ -547,11 +548,12 @@ SWC *R2Tracer::iterative_backtrack() {
       // Consider reaches previous explored area traced with branch
       // Note: when the area was traced due to noise points
       // (erased with -2), not considered as 'reached'
-      if (this->tt->get(head.tolong()) == -1.0) {
+      if (this->tt->get(branch.get_head().tolong()) == -1) {
         branch.set_touched(true);
 
         // Stop exploring if there has not been any branch yet
         if (swc->size() == 1) {
+          cout<<"Stop exploring. SWC size:"<<swc->size()<<endl;
           break;
         }
 
@@ -560,10 +562,12 @@ SWC *R2Tracer::iterative_backtrack() {
         long matched_idx = swc->match(n);
         if (matched_idx > 0) {
           branch.set_touch_idx(matched_idx);
+          printf("== Touched at %d\n", matched_idx);
           break;
         }
 
         if (branch.get_steps_after_touch() > 200) {
+          printf("== Not touched after 200\n");
           break;
         }
       }
@@ -572,18 +576,18 @@ SWC *R2Tracer::iterative_backtrack() {
     // Erase it from the timemap
     this->erase(branch);
 
-    // Find the node ID to connect to
-    int pid = -2;
-    if (branch.is_reach_soma()) {
-      pid = 0;
-    } else if (branch.get_touch_idx() > 0) {
-      pid = swc->get_node(branch.get_touch_idx()).id;
-    }
-
-    // Add to the SWC if the OC score is high
+    // Add to the SWC if it was decided to be kept
     if (keep){
+      // Find the node ID to connect to
+      int pid = -2;
+      if (branch.is_reach_soma()) {
+        pid = 0;
+      } else if (branch.get_touch_idx() > 0) {
+        pid = swc->get_node(branch.get_touch_idx()).id;
+      }
       swc->add_branch(branch, pid);
     }
+
 
   }
 
