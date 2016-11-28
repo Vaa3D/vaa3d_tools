@@ -174,6 +174,7 @@ void R2Tracer::step(Branch &branch) {
   double *p = branch.get_head().todouble().make_array();
   cout<<"In R2tracer::step:"<<"startpoint:"<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
   p = rk4(p, this->grad, this->bimg->get_dims(), (double) 1.0);
+
   // if (p[0]!=p[0] ||p[1]!=p[1] || p[2] != p[2]){ // nan since gradient 0 
   //   branch.set_low_conf(true);
   //   return;
@@ -294,6 +295,7 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   this->bimg = img->binarize(threshold);
   this->prep();
+  this->t->save("t.v3draw", true);
   SWC *swc = this->iterative_backtrack();
   return swc;
 }
@@ -305,10 +307,13 @@ void R2Tracer::prep() {
   }
     long *dims = this->bimg->get_dims();
   float *bdist1d = NULL;
-  fastmarching_dt(this->bimg->get_data1d_ptr(), bdist1d, (int)dims[0],
-                  (int)dims[1], (int)dims[2], 2, 0);
+  fastmarching_dt(this->bimg->get_data1d_ptr(), bdist1d, dims[0],
+                  dims[1], dims[2], 2, 0);
+
+  bimg->save("bimg.v3draw");
   Image3<float> *dt = new Image3<float>(bdist1d, this->bimg->get_dims());
-  cout << endl << "--DT finished" << endl;
+
+  dt->save("dt.v3draw", true);
 
   // Find the source point
   long max_dt_idx = dt->max_idx_1d();
@@ -359,76 +364,77 @@ void R2Tracer::prep() {
 
 /* Make the gradients for back-tracking*/
 void R2Tracer::make_dist_gradient() {
-  V3DLONG j_in_sz[3]; // matrix for jacobian
   V3DLONG *dims = this->bimg->get_dims();
   V3DLONG nvox = this->bimg->size();
+  V3DLONG j_in_sz[3]; // matrix for jacobian
   j_in_sz[0] = dims[0] + 2;
   j_in_sz[1] = dims[1] + 2;
   j_in_sz[2] = dims[2] + 2;
   V3DLONG j_nvox = j_in_sz[0] * j_in_sz[1] * j_in_sz[2];
-  double *Fx = new double[nvox]();
-  double *Fy = new double[nvox]();
-  double *Fz = new double[nvox]();
-  double *J = new double[j_nvox]();
+  Image3<double>* Fx = new Image3<double>(dims);
+  Image3<double>* Fy = new Image3<double>(dims);
+  Image3<double>* Fz = new Image3<double>(dims);
+  double *J = new double[j_nvox](); // Will be freed by jacobian image
   std::fill(J, J + j_nvox, this->t->max());
+  Image3<double>* jacobian = new Image3<double>(J, j_in_sz);
 
   // Assign the center of J to T
-  for (int x = 0; x < dims[0]; x++)
-    for (int y = 0; y < dims[1]; y++)
-      for (int z = 0; z < dims[2]; z++) {
-        Point<V3DLONG> pj(x + 1, y + 1, z + 1);
-        long jloc = pj.make_linear_idx(j_in_sz);
-        Point<V3DLONG> pt(x, y, z);
-        long tloc = pt.make_linear_idx(dims);
-        J[jloc] = this->t->get_1d(tloc);
-      }
+  for (long v = 0; v < nvox; v++) {
+    Point<V3DLONG> pt(v, dims);
+    Point<V3DLONG> pj(pt.x + 1, pt.y + 1, pt.z + 1);
+    jacobian->set(pj, this->t->get(pt));
+  }
 
   // Make the neighbour position kernel
-  short Ne[27][3] ={{-1, -1, -1}, {-1, -1,  0}, {-1, -1,  1}, {-1,  0, -1}, {-1,  0,  0}, {-1,  0,  1}, {-1,  1, -1}, {-1,  1,  0}, {-1, 1, 1},       
-          { 0, -1, -1}, { 0, -1,  0}, { 0, -1,  1}, { 0,  0, -1},               { 0,  0,  1}, { 0,  1, -1}, { 0,  1,  0}, { 0, 1, 1},
-          { 1, -1, -1}, { 1, -1,  0}, { 1, -1,  1}, { 1,  0, -1}, { 1,  0,  0}, { 1,  0,  1}, { 1,  1, -1}, { 1,  1,  0}, { 1, 1, 1}};
+  double Ne[26][3] = {{-1.0, -1.0, -1.0}, {-1.0, -1.0, 0.0}, {-1.0, -1.0, 1.0},
+                     {-1.0, 0.0, -1.0},  {-1.0, 0.0, 0.0},  {-1.0, 0.0, 1.0},
+                     {-1.0, 1.0, -1.0},  {-1.0, 1.0, 0.0},  {-1.0, 1.0, 1.0},
+                     {0.0, -1.0, -1.0},  {0.0, -1.0, 0.0},  {0.0, -1.0, 1.0},
+                     {0.0, 0.0, -1.0},   {0.0, 0.0, 1.0},   {0.0, 1.0, -1.0},
+                     {0.0, 1.0, 0.0},    {0.0, 1.0, 1.0},   {1.0, -1.0, -1.0},
+                     {1.0, -1.0, 0},     {1.0, -1.0, 1.0},  {1.0, 0.0, -1.0},
+                     {1.0, 0.0, 0.0},    {1.0, 0.0, 1.0},   {1.0, 1.0, -1.0},
+                     {1.0, 1.0, 0.0},    {1.0, 1.0, 1.0}};
 
-  for (int i = 0; i < 27; i++)
-    for (int x = 0; x < dims[0]; x++)
-      for (int y = 0; y < dims[1]; y++)
-        for (int z = 0; z < dims[2]; z++) {
-          Point<V3DLONG> pj(x + 1, y + 1, z + 1);
-          long jloc = pj.make_linear_idx(j_in_sz);
-          Point<V3DLONG> pt(x, y, z);
-          double in = J[jloc];
-          if (in < this->t->get(pt)) {
-            this->t->set(pt, in);
-            double powsum =
-                Ne[i][0] * Ne[i][0] + Ne[i][1] * Ne[i][1] + Ne[i][2] * Ne[i][2];
-            Fx[tloc] = -Ne[i][0] / sqrt(powsum);
-            Fy[tloc] = -Ne[i][1] / sqrt(powsum);
-            Fz[tloc] = -Ne[i][2] / sqrt(powsum);
-          }
-        }
+  for (int i = 0; i < 26; i++)
+    for (long v = 0; v < nvox; v++) {
+      Point<V3DLONG> pt(v, dims);
+      Point<V3DLONG> pj(pt.x + 1 + Ne[i][0], pt.y + 1 + Ne[i][1],
+                        pt.z + 1 + Ne[i][2]);
+      double in = jacobian->get(pj);
+      if (in < this->t->get(pt)) {
+        double powsum = sqrt(Ne[i][0] * Ne[i][0] + Ne[i][1] * Ne[i][1] +
+                             Ne[i][2] * Ne[i][2]);
+        Fx->set(pt, -Ne[i][0] / powsum);
+        Fy->set(pt, -Ne[i][1] / powsum);
+        Fz->set(pt, -Ne[i][2] / powsum);
+      }
+    }
 
-  // Change to grad to 1d
+  // Change grad to 1d
   this->grad = new double[nvox * 3];
-  std::copy(Fx, Fx + nvox, this->grad);
-  std::copy(Fy, Fy + nvox, this->grad + nvox);
-  std::copy(Fz, Fz + nvox, this->grad + nvox * 2);
+  std::copy(Fx->get_data1d_ptr(), Fx->get_data1d_ptr() + nvox, this->grad);
+  std::copy(Fy->get_data1d_ptr(), Fy->get_data1d_ptr() + nvox,
+            this->grad + nvox);
+  std::copy(Fz->get_data1d_ptr(), Fz->get_data1d_ptr() + nvox,
+            this->grad + nvox * 2);
+
   if (Fx) {
-    delete[] Fx;
-    Fx = 0;
+    delete Fx;
+    Fx = NULL;
   }
   if (Fy) {
-    delete[] Fy;
-    Fy = 0;
+    delete Fy;
+    Fy = NULL;
   }
   if (Fz) {
-    delete[] Fz;
-    Fz = 0;
+    delete Fz;
+    Fz = NULL;
   }
-  if (J) {
-    delete[] J;
-    J = 0;
+  if (jacobian) {
+    delete jacobian;
+    jacobian = NULL;
   }
-
-
 }
 
 void R2Tracer::makespeed(Image3<float> *dt) {
