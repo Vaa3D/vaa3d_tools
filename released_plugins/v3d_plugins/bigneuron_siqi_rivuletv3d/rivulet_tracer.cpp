@@ -401,7 +401,7 @@ void R2Tracer::make_gradient() {
       Point<V3DLONG> pj(pt.x + 1 + ne[i][0], pt.y + 1 + ne[i][1],
                         pt.z + 1 + ne[i][2]);
       if (jacobian->get(pj) < this->t->get(pt)) {
-        // this->t->set(pt, jacobian->get(pj)); // Seems useless
+        this->t->set(pt, jacobian->get(pj));
         fx->set(pt, -ne[i][0] / ne_norm[i][0]);
         fy->set(pt, -ne[i][1] / ne_norm[i][1]);
         fz->set(pt, -ne[i][2] / ne_norm[i][2]);
