@@ -65,7 +65,7 @@ void SWC::add_branch(Branch &branch, long connect_id) {
     swc_branch[i].type = rand_node_type;
     Point<float> p = branch.get_point(i);
     swc_branch[i].p = p;
-    swc_branch[i].radius = branch.get_radius_at(i);
+    swc_branch[i].radius = max2(branch.get_radius_at(i) * 0.6, 1); // The radius estimated for Rivulet2 tracing was a bit too large for visualisation
     swc_branch[i].pid = pid;
   }
 

@@ -15,7 +15,18 @@
 #include "utils/marker_radius.h"
 #include "utils/rk4.h"
 
+#define max2(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a > _b ? _a : _b; })
+
+#define min2(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a < _b ? _a : _b; })
+
 namespace rivulet {
+
 class R2Tracer;
 class Branch;
 
@@ -113,7 +124,7 @@ class SWCNode {
   int id = -2;
   int type = 2;
   Point<float> p;
-  int radius = 1;
+  float radius = 1;
   int pid = -2;
   SWCNode(int id, int type, Point<float> p, int radius, int pid)
       : id(id), type(type), p(p), radius(radius), pid(pid) {}

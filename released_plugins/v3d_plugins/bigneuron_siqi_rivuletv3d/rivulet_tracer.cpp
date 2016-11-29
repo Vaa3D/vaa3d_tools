@@ -1,6 +1,7 @@
 #include "rivulet.h"
 using namespace rivulet;
 
+
 void Branch::add(Point<float> pt, float conf, float radius = 1.0) {
   this->pts.push_back(pt);
   this->conf.push_back(conf);
@@ -159,12 +160,27 @@ Point<float> Branch::get_head() { return this->pts.back(); }
 Point<float> Branch::get_tail() { return this->pts[0]; }
 
 int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
-  MyMarker marker;
-  marker.x = pt.x;
-  marker.y = pt.y;
-  marker.z = pt.z;
-  unsigned char *bimg_ptr = bimg->get_data1d_ptr();
-  return markerRadius(bimg_ptr, bimg->get_dims(), marker, 0.0, 2);
+  int r = 0;
+  long* dims = bimg->get_dims();
+  Point<long> centre(floor(pt.x), floor(pt.y), floor(pt.z));
+  Point<long> p;
+
+  int s = 0;
+  while(1){
+    r++;
+    try{
+      for(p.x = max2(centre.x - r, 0); p.x < min2(centre.x+r+1, dims[0]); p.x++)
+        for(p.y = max2(centre.y - r, 0); p.y < min2(centre.y+r+1, dims[1]); p.y++)
+          for(p.z = max2(centre.z - r, 0); p.z < min2(centre.z+r+1, dims[2]); p.z++){
+            s += bimg->get(p);
+          }
+        if( ((double) s) / (double) pow(2* (double)r+1, 3) < 0.6){break;}
+    }
+    catch(...){
+      break;
+    }
+  }
+  return r;
 }
 
 /* Trace for one step
@@ -172,7 +188,7 @@ int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
 void R2Tracer::step(Branch &branch) {
   // RK4 walk for one step
   double *p = branch.get_head().todouble().make_array();
-  p = rk4(p, this->grad, this->bimg->get_dims(), 1.0);
+  p = rk4(p, this->grad, this->bimg->get_dims(), 1);
 
   // Update Branch stats
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
@@ -257,7 +273,7 @@ void R2Tracer::binary_sphere(Branch &branch, vector<int> &radius) {
 
 /* Erase a branch from the time crossing map */
 void R2Tracer::erase(Branch &branch) {
-  float eraseratio = 1.2;
+  float eraseratio = 1.7;
   vector<int> r_large;
   for (int i = 0; i < branch.get_length(); i++) {
     r_large.push_back(ceil( branch.get_radius_at(i) * eraseratio + 1 ));
@@ -326,8 +342,6 @@ void R2Tracer::prep() {
 
   double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, false, false,
                        false); // Original Timemap
-  if (!this->silent)
-    cout << "== MSFM finished..." << endl;
 
   this->t = new Image3<double>(t_ptr, this->bimg->get_dims());
   this->tt = this->t->make_copy();
