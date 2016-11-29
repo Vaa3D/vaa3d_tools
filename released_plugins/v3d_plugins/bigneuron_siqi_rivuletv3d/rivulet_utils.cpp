@@ -39,7 +39,6 @@ SWCNode SWC::get_node(int i) { return this->nodes[i]; }
 
 void SWC::add_branch(Branch &branch, long connect_id) {
   if (branch.get_length() < 5) return;
-  printf("Branch to add:%d\n", branch.get_length());
   /* generate secret number between 1 and 10: */
   int rand_node_type = rand() % 256 + 0;
   vector<float> rlist = branch.get_radius();
@@ -105,7 +104,6 @@ Soma::~Soma() {
 void Soma::make_mask(Image3<unsigned char> *bimg) {
   unsigned char *mask1d = new unsigned char[bimg->size()]();
 
-  cout << "Making soma mask. radius:" << this->radius << endl;
   for (int i = 0; i < bimg->size(); i++) {
     Point<float> p(i, bimg->get_dims());
     mask1d[i] =
