@@ -44,11 +44,11 @@ class Point {
   }
 
   Point(long idx1d, long *dims) {  // Plays as ind to sub
-    float xysz = (float)dims[0] * (float)dims[1];
-    this->z = (T)(floor((float)idx1d / (float)xysz));
-    this->y = (T)(idx1d - this->z * xysz);
-    this->y = (T)floor((float)this->y / (float)dims[0]);
-    this->x = (T)floor(idx1d - this->z * xysz - this->y * (float)dims[0]);
+    float xysz = (float) dims[0] * (float) dims[1];
+    this->z = (float) floor(((float) idx1d) / (float) xysz);
+    this->y = idx1d - this->z * xysz;
+    this->y = (float) floor((float)this->y / (float)dims[0]);
+    this->x = (float) floor(idx1d - this->z * xysz - this->y * (float)dims[0]);
   }
 
   Point() {
@@ -240,7 +240,7 @@ class Image3 {
   Image3<unsigned char> *binarize(float threshold) {
     unsigned char *vox = new unsigned char[this->nvox];
     for (int i = 0; i < this->nvox; i++) {
-      vox[i] = (unsigned char)(((float)this->data1d[i] > threshold) ? 1 : 0);
+      vox[i] = (unsigned char) ((float) this->data1d[i]) > threshold ? 1 : 0;
     }
 
     Image3<unsigned char> *bimg = new Image3<unsigned char>(vox, this->dims);
