@@ -42,6 +42,7 @@ QStringList RivuletPlugin::funclist() const {
 
 void RivuletPlugin::domenu(const QString &menu_name,
                            V3DPluginCallback2 &callback, QWidget *parent) {
+  cout<<"in domenu"<<endl;
   if (menu_name == tr("tracing")) {
     bool bmenu = true;
     input_PARA PARA;
@@ -51,16 +52,18 @@ void RivuletPlugin::domenu(const QString &menu_name,
       return;
     }
     PARA_RIVULET p;
+
     // fetch parameters from dialog
     if (!p.rivulet_dialog())
       return;
+    PARA.channel = p.channel;
     PARA.threshold = p.threshold;
 
     reconstruction_func(callback, parent, PARA, bmenu);
 
-  } else {
-    v3d_msg(tr("Rivulet algorithm for 3D neuron tracing. . "
-               "Developed by Siqi Liu, Donghao Zhang, 2015-8-25"));
+  } else if (menu_name == tr("about")){
+    cout<<"In it"<<endl;
+    v3d_msg(tr("Rivulet2 tracing algorithm for 3D neuron tracing. \nDeveloped by Siqi Liu, Donghao Zhang, Uni.Sydney, AU, 2016\nCitations:\n\"[1] \"Siqi Liu, Donghao Zhang, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking\", to be submitted\n[2] Rivulet2: Fully Automatic Neuron Tracing with SSM enhanced distance transform and confidence controlled Gradient Back-tracking, Underreview for ISBI2017\n[3] Rivulet: 3D Neuron Morphology Tracing with Iterative Back-Tracking\", Neuroinformatics, 2016.\n [4] Donghao Zhang, Siqi Liu, Sidong Liu, Dagan Feng, Hanchuan Peng, Weidong Cai, \"Reconstruction of 3D Neuron Morphology using Rivulet Back-Tracking\", The IEEE International Symposium on Biomedical Imaging: From Nano to Macro (ISBI 2016), pp598-601, 2016.\nYou can also find the python3 rivuletpy package at https://github.com/lsqshr/rivuletpy"));
   }
 }
 
@@ -99,14 +102,13 @@ bool RivuletPlugin::dofunc(const QString &func_name,
     }
     reconstruction_func(callback, parent, PARA, bmenu);
   } else if (func_name == tr("help")) {
-    printf("**** Usage of Rivulet tracing **** \n");
+    printf("====== Usage of Rivulet tracing ====== \n");
     printf(
-        "vaa3d -x Rivulet -f tracing_func -i <inimg_file> [-o outswc_file] -p "
-        "<channel> <threshold>\n");
-    printf("inimg_file\tThe input image\n");
+        "vaa3d -x Rivulet -f tracing_func -i your_image.v3draw [-o out.swc] -p "
+        "channel threshold\n");
     printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
-    printf(
-        "threshold\tThe background threshold for segmentation (default 10).\n");
+    printf("threshold\tThe background threshold for segmentation (default 0).\n");
+    printf("==================================\n");
   } else {
     return false;
   }
@@ -202,6 +204,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
     tracer = NULL; 
   }
 
+  if(PARA.outswc_file.isEmpty()){
+    PARA.outswc_file = PARA.inimg_file + ".r2.swc";
+  }
   save_swc(swc, PARA.outswc_file);
 
   // Clean up
