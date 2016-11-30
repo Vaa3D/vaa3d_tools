@@ -29,7 +29,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
 	if (menu_name == tr("menu1"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented.");
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -51,15 +51,15 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 	if (func_name == tr("func1"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented1.",0);
 	}
 	else if (func_name == tr("func2"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented2.",0);
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented3.",0);
 	}
 	else return false;
 
