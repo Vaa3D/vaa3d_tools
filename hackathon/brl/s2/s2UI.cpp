@@ -3139,23 +3139,6 @@ void S2UI::processingFinished(){
 
 
 
-void S2UI::activeModeChecker(){
-    // short-circuit here to disable mode changes
-    finalizeZoom();
-    return;
-
-    bool tooLong = activeModeChecks>=200;
-
-    if ((!tooLong)&&(uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK)){
-        activeModeChecks++;
-        QTimer::singleShot(50, this, SLOT(activeModeChecker()));
-    }else{
-        if (tooLong){status("active mode transition timeout"); return;}
-        finalizeZoom();
-    }
-
-
-}
 
 void S2UI::finalizeZoom(){
     qDebug()<<"setting up stack in finalizeZoom...";
@@ -3172,9 +3155,6 @@ void S2UI::finalizeZoom(){
 }
 
 
-
-// then, use LocationSimple.category as an indicator of topological (branch) order.
-// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
 
 
 
@@ -3207,7 +3187,7 @@ void S2UI::updateZoom(){
     //        }
     //    }
     activeModeChecks = 0;
-    activeModeChecker();
+    finalizeZoom();
 
 }
 void S2UI::updateZoomPixelsProduct(int ignore){

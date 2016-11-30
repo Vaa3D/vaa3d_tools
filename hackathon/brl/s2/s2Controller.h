@@ -19,7 +19,13 @@ class QNetworkSession;
 QT_END_NAMESPACE
 
 
-
+/*! \brief simple class to contain microscope information
+ *
+ *  each S2Parameter has a string to send to PV, a current response string from PV and a current value from PV
+ *  along with the expected type of the value, e.g. float for a parameter like the stage position
+ *
+ * this class can more-or-less be used for any hardware implementation, depending on exactly where the microscope controls are wrapped.
+ */
 class S2Parameter
 {
 public:
@@ -50,65 +56,26 @@ private:
 
 
 
-// useful parameters stored in the class S2Data
-class S2Data
-{
-public:
-    int resonantMode;
-    int zMode;
-    float opticalZoom;
-    float pixelSizeX;
-    float pixelSizeY;
-    float pixelSizeZ;
-    int pixelsPerLine;
-    int rowsPerImage;
-    float currentScanX;
-    float currentScanY;
-    float currentStageX;
-    float currentStageY;
-    float currentPiezoZ;
-    float currentStepperZ;
-    float currentPockelsCell;
-    QString messageString;
-
-    S2Data(int resonantMode=0,
-           int zMode=0,
-           float opticalZoom=1.0,
-           float pixelSizeX=1.0,
-           float pixelSizeY=1.0,
-           float pixelSizeZ= 1.0,
-           int pixelsPerLine = 256,
-           int rowsPerImage = 256,
-           float currentScanX = 0.0,
-           float currentScanY = 0.0,
-           float currentStageX = 0.0,
-           float currentStageY = 0.0,
-           float currentPiezoZ = 0.0,
-           float currentStepperZ = 0.0,
-           float currentPockelsCell = 0.0)
-        : resonantMode(0),// 0 = nonresonant, 1 = resonant
-          opticalZoom(1.0),// 0  = stepper , 1 = piezo
-          pixelSizeX(1.0),
-          pixelSizeY(1.0),
-          pixelSizeZ(1.0),
-          pixelsPerLine(256),
-          rowsPerImage(256),
-          currentScanX(0.0),
-          currentScanY(0.0),
-          currentStageX(0.0),
-          currentStageY(0.0),
-          currentPiezoZ(0.0),
-          currentStepperZ(0.0),
-          currentPockelsCell(0.0){}
-};
-
+/*! \brief main class for controlling the microscope
+ *
+ *  the current implementation with PrairieView uses PV's TCP/IP scripting commands
+ *  to communicate with PV.  This class wraps many of those commands and can be extended.
+ * S2Controller operates in 2 modes, switched by S2Controller.inPosMonMode .  S2Controller::startPosMon()
+ * initiates the posMon ("position monitor") mode which cycles through all the parameters in S2UI.s2ParameterMap,
+ * querying PV for each value, updating it and then querying the next value through
+ * S2UI::posMon()
+ * S2UI.tcpSocket::readyRead()
+ * S2UI::checkForMessage()
+ * S2UI::processMessage()
+ * S2UI::newMessage()
+ * S2UI::posMonListener()
+ */
 class S2Controller : public QWidget
 {
     Q_OBJECT
 
 public:
     S2Controller(QWidget *parent = 0);
-    S2Data myS2Data;
     bool okToSend;
     QString stringMessage;
     QString message;
@@ -140,7 +107,6 @@ public slots:
     void cancelQueueSlot();
     void addToQueue(QString cString);
 signals:
-    void newS2Data( S2Data myS2Data);
     void messageIsComplete();
     void newMessage(QString message);
     void newBroadcast(QString message);
