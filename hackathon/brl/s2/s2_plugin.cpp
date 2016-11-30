@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include <QApplication>
-#include "s2Client.h"
 #include "s2UI.h"
 
 

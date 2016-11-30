@@ -9,7 +9,6 @@
 #include <QBitArray>
 #include "s2Controller.h"
 #include "s2UI.h"
-#include "s2plot.h"
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include <QMutex>
@@ -204,7 +203,6 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(zoomSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
     connect(pixelsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
-    connect(setLiveFilePath,SIGNAL(clicked()), this, SLOT(startLiveFile()));
 
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
@@ -363,7 +361,6 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this,SIGNAL(eventSignal(QString)), myEventLogger, SLOT(logEvent(QString)));
 
 
-    connect(tTracePB, SIGNAL(clicked()), this, SLOT(tTrace()));
 }
 
 
@@ -808,14 +805,6 @@ QGroupBox *S2UI::createConfigPanel(){
     setLocalPathToData = new QPushButton;
     setLocalPathToData->setText(tr("set local path to data"));
 
-    liveFileString = new QLabel(tr(""));
-    liveFileStringLabel = new QLabel(tr("LiveFile : "));
-
-    setLiveFilePath = new QPushButton;
-    setLiveFilePath->setText(tr("set LiveFile"));
-
-    tTracePB = new QPushButton;
-    tTracePB->setText("tTrace");
 
     QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
     QCheckBox *interruptCB = new QCheckBox;
@@ -882,9 +871,7 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(localDataDir,2,1);
     cBL->addWidget(setLocalPathToData,3,1);
     cBL->addWidget(resetDirPB, 3,0);
-    cBL->addWidget(liveFileStringLabel, 4,0);
-    cBL->addWidget(liveFileString,4,1);
-    cBL->addWidget(setLiveFilePath,5,0);
+
     cBL->addWidget(startZStackDelayLabel,6,0);
     cBL->addWidget(startZStackDelaySB, 6,1);
     cBL->addWidget(zoomSpinBoxLabel,7,0);
@@ -892,7 +879,6 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(pixelsSpinBoxLabel,8,0);
     cBL->addWidget(pixelsSpinBox,8,1);
     cBL->addWidget(zoomPixelsProductLabel,9,0);
-    cBL->addWidget(tTracePB,10,0);
     cBL->addWidget(tryStageMove,11,0);
     cBL->addWidget(tryStageXEdit,11,1);
     cBL->addWidget(tryStageYEdit,11,2);
@@ -1868,7 +1854,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
         }
     }
     //
-    if (tileStatus !=-1){
+    if (incomingTileStatus !=-1){
         emit loadMIPSignal(scanIndex, mip, tileSaveString);
         QTimer::singleShot(10,this, SLOT(smartScanHandler()));
     }
@@ -2286,17 +2272,6 @@ void S2UI::combinedSmartScan(QString saveFilename){
     cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
     cb->update_NeuronBoundingBox(new3DWindow);
 }
-
-// still a huge mess.  I can bring the stage position along for the ride to stackAnalyzer and back, but that really doesn't solve the problem.
-// when I get back here I have two choices:
-//  ignore the stage position and leave it the same.
-//  set the galvo position to zero and adjust the stageposition to reflect the tilelocation.
-
-//  in either case, you should be able to recreate the tile by going to that stage location and imaging at that galvo location.
-// the trick will be in the (eventual) case of trying to move the stage while doing a galvo scan.  then there will have to be a procedure for
-// moving the stage to an adjacent location, translating the original galvo location to the correct galvo coordinates while moving the stage, etc.
-
-//
 
 
 void S2UI::loadLatest(QString inputString){
@@ -3313,83 +3288,6 @@ QColor S2UI::makeQColorFromIndex(int maxIndex, int index){
 
 
 
-
-
-void S2UI::startLiveFile(){
-    liveFileRunning= !liveFileRunning;
-
-    if (liveFileRunning){
-        QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("vaa3d raw format (*.v3draw);;All Files (*.*)"));
-
-        if (liveFilePath.isNull()){ liveFileRunning = false; return;}
-
-        liveFileString->setText(liveFilePath);
-        liveFile = new QFileInfo(liveFilePath);
-
-
-
-        liveFileStatus = new QFileInfo(liveFile->absolutePath().append(QDir::separator()).append(liveFile->completeBaseName()).append(".status"));
-        liveFile->setCaching(false);
-        liveFileStatus->setCaching(false);
-        liveFileModified = liveFileStatus->lastModified();
-
-
-        //Ulf's code is now spitting out v3draw files, so we can monitor it directly
-
-
-        // read in the file and display in 3D, returning the 3D viewer.
-
-        Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data() );
-        liveFileWindow = cb->newImageWindow();
-        cb->setImage(liveFileWindow,pNewImage);
-        cb->open3DWindow(liveFileWindow);
-        cb->updateImageWindow(liveFileWindow);
-
-        QTimer::singleShot(0, this, SLOT(monitorLiveFile()));//
-    }
-
-}
-
-
-void S2UI::monitorLiveFile(){
-    // monitor the status of the LiveFile.  if the file is modified, updateLiveFile(), otherwise, just repeat.
-
-    if ( liveFileRunning) {
-
-
-        if (liveFileModified < liveFileStatus->lastModified()){
-            qDebug()<<"update liveFile!";
-            liveFileModified=liveFileStatus->lastModified();
-            updateLiveFile();
-        }
-
-
-        QTimer::singleShot(100, this, SLOT(monitorLiveFile()));
-    }
-}
-
-void S2UI::updateLiveFile(){
-    Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data());
-    cb->setImage(liveFileWindow,pNewImage);
-
-    cb->pushImageIn3DWindow(liveFileWindow);
-
-}
-
-
-void S2UI::tTrace(){
-    qDebug()<<"tTrace hooked up";
-    // LocationSimple tileLocation;
-    // for (int tileNumber = 0; tileNumber<604; tileNumber++){
-    //ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
-    //    myTracer->run();
-    //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
-    // QThreadPool::globalInstance()->start(myTracer);
-    // }
-    //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-}
 
 
 

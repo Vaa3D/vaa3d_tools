@@ -13,7 +13,6 @@
 #include <QDir>
 #include <v3d_interface.h>
 #include "s2Controller.h"
-#include "s2plot.h"
 #include "stackAnalyzer.h"
 #include "noteTaker.h"
 #include "targetList.h"
@@ -32,7 +31,6 @@ class QNetworkSession;
 
 QT_END_NAMESPACE
 
-//! [0]
 class S2UI : public QDialog
 {
     Q_OBJECT
@@ -40,7 +38,6 @@ class S2UI : public QDialog
 public:
     S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
     QLineEdit *s2LineEdit;
-
     StackAnalyzer *myStackAnalyzer;
     StackAnalyzer *myStackAnalyzer0;
     StackAnalyzer *myStackAnalyzer1;
@@ -49,16 +46,34 @@ public:
     EventLogger* myEventLogger;
     TileInfoMonitor* myTileInfoMonitor;
 public slots:
+    /*! \brief update posMon status
+     *
+     * handles if posMon monitor is running
+     */
     void pmStatusHandler(bool pmStatus);
+    /*! \brief handle new tile locations and tips coming from StackAnalyzer
+     *
+     * asynchronously processes output of StackAnalyzer, including MIP image data, tip locations, etc.
+     * QMutex inside here is intended to prevent conflicts from multiple threads converging
+     * also the site of critical flow control for un-imaged (or already traced) tiles that are needed
+     * for linking of current structures with future (or past) tiles.
+     */
     void handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
+    /*! \brief load image stack data from series of .tif files at inputString
+     *
+     * this is a rig-specific command to read in the .tif image series output of PrairieView.
+     * future versions will
+     */
     void loadLatest(QString inputString);
     void collectOverview();
     void getCurrentParameters();
+    /*! \brief renders final .swc file from stackAnalyzer
+     *
+     * not always particularly helpful... currently only coming from stackAnalyzer, which is not really
+     * where the 'final' status is determined.
+     */
     void combinedSmartScan(QString);
-    void monitorLiveFile();
-    void updateLiveFile();
-    void startLiveFile();
-    void tTrace();
+
 signals:
     void startPM();
     void stopPM();
@@ -67,10 +82,17 @@ signals:
     void callSALoadAda(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
     void callSALoadAdaSubtractive(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool,int);
     void callSAGridLoad(QString, LocationSimple, QString);
-    void newImageData(Image4DSimple);
+
+    /*! \brief external signal to S2Controller to move to new galvo location
+     */
     void moveToNext(LocationSimple);
+    /*! \brief external signal to S2Controller to move to new stage location
+     */
     void moveToNextWithStage(LocationSimple, float, float);
-	void noteStatus(QString);
+
+    void noteStatus(QString);
+    /*! \brief send scanData.txt filename as string to StackAnalyzer
+     */
     void processSmartScanSig(QString);
     void currentParameters(QMap<int, S2Parameter> currentParameterMap);
     void updateTable(QList<TileInfo> allTargetLocations,QList<LandmarkList> allScanLocations);
@@ -79,17 +101,43 @@ signals:
     void updateLipoFactorInSA(float);
     void updateRedThreshInSA(int);
     void updateLipoModeInSA(int);
-
     void updateMinMaxBlockSizes(int, int);
     void updateSearchRadius(double);
+
+
+    /*! \brief  signal to S2Controller to set up acquisition
+     *
+     * critical, rig-dependent signal here would need to be routed to
+     * a new controller for an alternative hardware implementation
+     */
     void stackSetupSig(float, float, int, int);
+
+    /*! \brief trigger to S2Controller to start stack
+     *
+     * currently delayed by user-defined period to avoid conflicts with commands to PV.
+     * needs optimization or more event-driven approach.
+     */
     void startZStackSig();
+
+
+    /*! \brief call StackAnalyzer::startTracing() method in a particular thread [ , 0, 1, 2]
+     *
+     * currently dedicated and hardcoded QThreads for each StackAnalyzer to get this off the ground. future version should
+     * use the threadpool but there is a lot of setup/update info that would be needed in the constructor
+     * to allow for a simple run() method or similar. Instead the current version updates each StackAnalyzer continuously from the GUI
+     * as needed and sends these signals (with lots of critical info) when it's time to analyze a new tile.
+     */
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
     void callSATrace0(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
     void callSATrace1(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
     void callSATrace2(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
 
     void loadMIPSignal(double imageNumber, Image4DSimple* mip, QString tileSaveString);
+
+    /*! \brief send tile and tip info to TileInfoMonitor to wait until tile tracing is finished
+     *
+     * critical component of re-tracing and pre-tracing flow control.
+     */
     void waitForDuplicate(TileInfo, LandmarkList, int , int, int, QString);
     void loadLatestSig(QString);
 private slots:
@@ -149,7 +197,12 @@ private slots:
 
     void tryXYMove();
 
-
+/*! \brief internal signal that subsequently sends tile info to StackAnalyzer if a tile has already been imaged
+ *
+ * this is similar to S2UI::loadLatest(QString inputString) but designed to handle tiles that have already been imaged
+ * so the .swc file for the tile should already exist. also passes the correct X and Y coordinates (i.e. the coordinates that match the filename
+ * and the scanData.txt file)
+ */
     void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY);
 
 
@@ -293,16 +346,12 @@ private:
     QLabel *localDataDirLabel;
     QDir localDataDirectory;
 
-    QLabel * liveFileStringLabel;
-    QLabel * liveFileString;
-    QPushButton * setLiveFilePath;
+
 
     QSpinBox * startZStackDelaySB;
     QLabel * startZStackDelayLabel;
-    QFileInfo *liveFile;
-    QFileInfo *liveFileStatus;
 
-    QPushButton * tTracePB;
+
 
 
     QPushButton *tryStageMove;
@@ -368,9 +417,7 @@ private:
     bool waitingForLast;
     bool waitingForOverview;
 	bool isLocal;
-    bool liveFileRunning;
     bool haventRunBoundingBox;
-    QDateTime liveFileModified;
 
     int smartScanStatus;
     int gridScanStatus;
@@ -417,7 +464,6 @@ private:
 
 //   vaa3d variables
     v3dhandle previewWindow;
-    v3dhandle liveFileWindow;
 };
 //! [0]
 
