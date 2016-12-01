@@ -68,7 +68,7 @@ float Branch::exponential_moving_average(float p, float ema, int n) {
     ema: the last EMA value
     n: The period window size
 */
-  float alpha = 2.0 / (float)(1.0 + n);
+  float alpha = 2.0 / (float)(1 + n);
   return p * alpha + ema * (1 - alpha);
 }
 
@@ -88,12 +88,13 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
   // The online confidence (OC) starts from 0.5 due to the +1 term,
   // It is helpful to make the OC score from noise points decay fast
   this->online_voxsum += b;
-  float oc = this->online_voxsum / this->pts.size() + 1; // Online confidence
+  float oc = (float) this->online_voxsum / (float)(this->pts.size() + 1); // Online confidence
 
   this->update_ma(oc);
 
+  // printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\n", oc, ma_short, ma_long);
   // We are stepping in a valley
-  if (this->ma_short < ma_long - eps && oc < 0.5 && !this->in_valley) {
+  if (this->get_length() > this->ma_long_window && this->ma_short < this->ma_long - eps && oc < 0.5 && !this->in_valley) {
     this->in_valley = true;
   }
 
@@ -113,6 +114,8 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
     }
   }
 
+  if (oc <= 0.2) {low_online_conf = true;}
+
   // Count steps after touch
   if (this->touched) {
     this->steps_after_touch++;
@@ -126,23 +129,23 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
 /*Update the two MA curves of OC*/
 void Branch::update_ma(float oc) {
   // Compute the two MA curves of OC
-  if (this->pts.size() > ma_long_window) {
+  if (this->get_length() > this->ma_long_window) {
     // Short MA
     if (this->ma_short == -1) {
       this->ma_short = oc;
     } else {
-      int N = (this->pts.size() >= ma_short_window) ? ma_short_window
-                                                    : this->pts.size();
-      this->ma_short = exponential_moving_average(oc, ma_short, N);
+      int N = (this->pts.size() >= this->ma_short_window) ? this->ma_short_window
+                                                    : this->get_length();
+      this->ma_short = exponential_moving_average(oc, this->ma_short, N);
     }
 
     // Long MA
     if (this->ma_long == -1) {
       this->ma_long = oc;
     } else {
-      int N = (this->pts.size() >= ma_long_window) ? ma_long_window
-                                                   : this->pts.size();
-      this->ma_long = exponential_moving_average(oc, ma_long, N);
+      int N = (this->pts.size() >= this->ma_long_window) ? this->ma_long_window
+                                                   : this->get_length();
+      this->ma_long = exponential_moving_average(oc, this->ma_long, N);
     }
   }
 }
@@ -174,7 +177,7 @@ int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
           for(p.z = max2(centre.z - r, 0); p.z < min2(centre.z+r+1, dims[2]); p.z++){
             s += bimg->get(p);
           }
-        if( ((double) s) / (double) pow(2* (double)r+1, 3) < 0.6){break;}
+        if( ((double) s) / (double) pow(2* (double)r+1, 3) < 0.7){break;}
     }
     catch(...){
       break;
@@ -382,11 +385,13 @@ void R2Tracer::make_gradient() {
             jacobian->get_data1d_ptr() + jacobian->size(), this->t->max());
 
   // Assign the center of J to T
-  for (long v = 0; v < nvox; v++) {
-    Point<V3DLONG> pt(v, dims);
-    Point<V3DLONG> pj(pt.x + 1, pt.y + 1, pt.z + 1);
-    jacobian->set(pj, this->t->get(pt));
-  }
+  Point<V3DLONG> pt;
+  Point<V3DLONG> pj;
+  for(pt.x=0, pj.x=1; pt.x < dims[0]; pt.x++, pj.x++)
+    for(pt.y=0, pj.y=1; pt.y < dims[1]; pt.y++, pj.y++)
+      for(pt.z=0, pj.z=1; pt.z < dims[2]; pt.z++, pj.z++){
+        jacobian->set(pj, this->t->get(pt));
+      }
 
   // Make the neighbour position kernel
   long ne[26][3] = {{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, {-1, 0, -1},
@@ -406,19 +411,24 @@ void R2Tracer::make_gradient() {
     }
   }
 
-  for (long v = 0; v < nvox; v++) {
-    for (int i = 0; i < 26; i++) {
-      Point<V3DLONG> pt(v, dims);
-      Point<V3DLONG> pj(pt.x + 1 + ne[i][0], pt.y + 1 + ne[i][1],
-                        pt.z + 1 + ne[i][2]);
-      if (jacobian->get(pj) < this->t->get(pt)) {
-        this->t->set(pt, jacobian->get(pj));
-        fx->set(pt, -ne[i][0] / ne_norm[i][0]);
-        fy->set(pt, -ne[i][1] / ne_norm[i][1]);
-        fz->set(pt, -ne[i][2] / ne_norm[i][2]);
-      }
+  double jac = -1;
+  for(pt.x=0 ; pt.x < dims[0]; pt.x++)
+    for(pt.y=0; pt.y < dims[1]; pt.y++)
+      for(pt.z=0; pt.z < dims[2]; pt.z++)
+        for (int i = 0; i < 26; i++) {
+          pj.x = pt.x + 1 + ne[i][0];
+          pj.y = pt.y + 1 + ne[i][1];
+          pj.z = pt.z + 1 + ne[i][2];
+          jac = jacobian->get(pj);
+          long tidx = pt.make_linear_idx(dims);
+
+          if (jac < this->t->get_1d(tidx)) {
+            this->t->set_1d(tidx, jac);
+            fx->set_1d(tidx, -ne[i][0] / ne_norm[i][0]);
+            fy->set_1d(tidx, -ne[i][1] / ne_norm[i][1]);
+            fz->set_1d(tidx, -ne[i][2] / ne_norm[i][2]);
+          }
     }
-  }
 
   // Change grad to 1D
   this->grad = new double[nvox * 3];

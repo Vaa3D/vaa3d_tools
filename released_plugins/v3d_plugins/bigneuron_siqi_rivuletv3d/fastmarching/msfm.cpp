@@ -334,10 +334,10 @@ double* msfm(double *F, V3DLONG* in_sz, int* SourcePoints, bool usesecond, bool 
     int ne[18]={-1,  0,  0, 1, 0, 0, 0, -1,  0, 0, 1, 0, 0,  0, -1, 0, 0, 1};
     
     /* Loop variables */
-    int s, w, itt, q;
+    int s=0, w=0, itt=0, q=0;
     
     /* Current location */
-    int x, y, z, i, j, k;
+    int x=0, y=0, z=0, i=0, j=0, k=0;
     
     /* Index */
     int IJK_index, XYZ_index, index;
@@ -371,7 +371,7 @@ double* msfm(double *F, V3DLONG* in_sz, int* SourcePoints, bool usesecond, bool 
     }
     
     /*Free memory to store neighbours of the (segmented) region */
-    neg_free = 100000;
+    neg_free = 1000000;
     neg_pos=0;
     
     neg_listx = (double *)malloc( neg_free*sizeof(double) );
@@ -458,7 +458,7 @@ double* msfm(double *F, V3DLONG* in_sz, int* SourcePoints, bool usesecond, bool 
     }
     
     /*Loop through all pixels of the image */
-    for (itt=0; itt<(npixels); itt++) /* */ {
+    for (itt=0; itt<npixels; itt++) /* */ {
         /*Get the pixel from narrow list (boundary list) with smallest */
         /*distance value and set it to current pixel location */
         index=list_minimum(listval, listprop);

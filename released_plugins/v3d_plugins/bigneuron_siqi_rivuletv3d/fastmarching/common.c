@@ -150,7 +150,7 @@ void list_add(double ** listval, int *listprop, double val) {
         list_lengthmax=list_lengthmax*2;
         for (i=list_orde; i>0; i--) {
             listval[i]=listval[i-1];
-            listval[i] = (double *)realloc(listval[i], p2x(i+1)*sizeof(double));
+            listval[i] = (double *) realloc(listval[i], p2x(i+1)*sizeof(double));
             for(j=p2x(i); j<p2x(i+1); j++) { listval[i][j]=listINF;  }
         }
         listval[0]=new double[2];

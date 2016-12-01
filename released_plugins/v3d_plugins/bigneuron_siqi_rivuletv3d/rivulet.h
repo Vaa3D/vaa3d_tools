@@ -375,8 +375,8 @@ class Branch {
 
   // For online confidence computing
   int online_voxsum = 0;
-  float ma_short = -1;
-  float ma_long = -1;
+  float ma_short = -1.;
+  float ma_long = -1.;
   const static int ma_short_window = 4, ma_long_window = 10;
   bool in_valley = false;
 
