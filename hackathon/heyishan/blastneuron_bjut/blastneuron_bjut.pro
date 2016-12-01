@@ -11,6 +11,7 @@ HEADERS	 = blastneuron_bjut_plugin.h \
 SOURCES= blastneuron_bjut_plugin.cpp \
     resample_func.cpp
 SOURCES+= blastneuron_bjut_func.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(blastneuron_bjut)
