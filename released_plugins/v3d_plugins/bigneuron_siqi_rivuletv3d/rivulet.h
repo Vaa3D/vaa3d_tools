@@ -425,6 +425,7 @@ class R2Tracer {
   float coverage = 0.;
   double *grad = NULL;
   const static float target_coverage = 0.98;
+  bool quality = false;
 
   void prep();  // Distance Transform and MSFM
   Image3<double>* makespeed(Image3<float> *dt);
@@ -437,6 +438,7 @@ class R2Tracer {
 
  public:
   R2Tracer();
+  void set_quality(bool);
   ~R2Tracer();
   void reset();
   SWC *trace(Image3<unsigned char> *img, float threshold);

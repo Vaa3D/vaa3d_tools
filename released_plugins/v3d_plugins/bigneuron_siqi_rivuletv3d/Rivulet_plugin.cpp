@@ -16,8 +16,9 @@
 #include <iterator>
 #include <numeric>
 #include <vector>
+#include <fstream>
 
-Q_EXPORT_PLUGIN2(Rivulet, RivuletPlugin);
+Q_EXPORT_PLUGIN2(Rivulet2, RivuletPlugin);
 
 using namespace rivulet;
 
@@ -26,9 +27,11 @@ struct input_PARA {
   QString outswc_file;
   V3DLONG channel;
   unsigned char threshold;
+  bool quality;
 };
 
 void save_swc(SWC* swc, QString fname);
+void show_logo();
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
                          input_PARA &PARA, bool bmenu);
 
@@ -58,11 +61,12 @@ void RivuletPlugin::domenu(const QString &menu_name,
       return;
     PARA.channel = p.channel;
     PARA.threshold = p.threshold;
+    PARA.quality = p.quality;
 
     reconstruction_func(callback, parent, PARA, bmenu);
+    v3d_msg(tr("Rivulet2 finished. You can now drag the result to vaa3d."));
 
   } else if (menu_name == tr("about")){
-    cout<<"In it"<<endl;
     v3d_msg(tr("Rivulet2 tracing algorithm for 3D neuron tracing. \nDeveloped by Siqi Liu, Donghao Zhang, Uni.Sydney, AU, 2016\nCitations:\n\"[1] \"Siqi Liu, Donghao Zhang, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking\", to be submitted\n[2] Rivulet2: Fully Automatic Neuron Tracing with SSM enhanced distance transform and confidence controlled Gradient Back-tracking, Underreview for ISBI2017\n[3] Rivulet: 3D Neuron Morphology Tracing with Iterative Back-Tracking\", Neuroinformatics, 2016.\n [4] Donghao Zhang, Siqi Liu, Sidong Liu, Dagan Feng, Hanchuan Peng, Weidong Cai, \"Reconstruction of 3D Neuron Morphology using Rivulet Back-Tracking\", The IEEE International Symposium on Biomedical Imaging: From Nano to Macro (ISBI 2016), pp598-601, 2016.\nYou can also find the python3 rivuletpy package at https://github.com/lsqshr/rivuletpy"));
   }
 }
@@ -95,6 +99,8 @@ bool RivuletPlugin::dofunc(const QString &func_name,
     k++;
     PARA.threshold = (paras.size() >= k + 1) ? atoi(paras[k]) : 0;
     k++;
+    PARA.quality = (paras.size() >= k + 1) ? atoi(paras[k]) : 0;
+    k++;
     if (!outfiles.empty())
       PARA.outswc_file = outfiles[0];
     else{
@@ -108,6 +114,7 @@ bool RivuletPlugin::dofunc(const QString &func_name,
         "channel threshold\n");
     printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
     printf("threshold\tThe background threshold for segmentation (default 0).\n");
+    printf("quality\tEnhance the quality of tracing, which is more time consuming. If it is set 1, the second derivatives and cross neighbours will be used in multi-stencils fast-marching. (default 0).\n");
     printf("==================================\n");
   } else {
     return false;
@@ -185,7 +192,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   }
 
   // Main neuron reconstruction code
-  cout << "Start Rivulet" << endl;
+  cout << "====== WELCOME TO RIVULET2 ======" << endl;
+  show_logo();
   printf("Image Size: %d, %d, %d\n", in_sz[0], in_sz[1], in_sz[2]);
   long *in_sz3 = new V3DLONG[3];
   in_sz3[0] = in_sz[0];
@@ -197,7 +205,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
 
   // The meaty part
   R2Tracer *tracer = new R2Tracer();
+  tracer->set_quality(PARA.quality);
   SWC *swc = tracer->trace(img, PARA.threshold);
+  cout << "====== END ======" << endl;
 
   if (tracer) {
     delete tracer;
@@ -224,7 +234,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
     delete swc;
     swc = NULL;
   }
-
+  
   return;
 }
 
@@ -242,7 +252,7 @@ void save_swc(SWC *swc, QString fname) {
     S.x = n.p.x;
     S.y = n.p.y;
     S.z = n.p.z;
-    S.r = n.radius;
+    S.r = floor(n.radius);
     S.pn = n.pid;
     listNeuron.append(S);
     hashNeuron.insert(S.n, listNeuron.size() - 1);
@@ -253,4 +263,13 @@ void save_swc(SWC *swc, QString fname) {
   nt.hashNeuron = hashNeuron;
   nt.name = "r2";
   writeSWC_file(fname.toStdString().c_str(), nt);
+}
+
+void show_logo(){
+  cout<<"                                               ____                 \n"
+"|`````````,|`.           .'|         ||       |      `````|````` || \n"
+"|'''|''''' |  `.       .'  |         ||       |______     |      || \n"
+"|    `.    |    `.   .'    |         ||       |           |      || \n"
+"|      `.  |      `.'      `._______.'|_______|___________|      || \n"
+"                                                                    \n";
 }
