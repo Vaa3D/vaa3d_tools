@@ -46,7 +46,7 @@ bool blastneuron_bjutPlugin::dofunc(const QString & func_name, const V3DPluginAr
 
     if (func_name == tr("apply_blastneuron_bjut"))
 	{
-        return blast_bjut_menu(input,output);
+        return blast_bjut_func(input,output);
 	}
 	else if (func_name == tr("help"))
 	{

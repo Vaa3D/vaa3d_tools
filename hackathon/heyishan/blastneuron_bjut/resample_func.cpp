@@ -38,9 +38,8 @@ bool resampling_main(const V3DPluginArgList & input, V3DPluginArgList & output)
         printf("Please specify both input file and step length parameter.\n");
         return false;
     }
-    cout<<"point1"<<endl;
     paralist = (vector<char*>*)(input.at(1).p);
-    cout<<"point2"<<endl;
+    cout<<"point1"<<endl;
     if (paralist->size()!=1)
     {
         printf("Please specify only one parameter - the resampling step length.\n");

@@ -12,10 +12,11 @@
 #include"resample_func.h"
 using namespace std;
 
-bool blast_bjut_menu(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool blast_bjut_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout << "This is blast_bjut_menu."<<endl;
     resampling_main(input, output);
+  //  reset_root_main(input,);
     sort_main();
      blastneuron_main();
     return 1;
