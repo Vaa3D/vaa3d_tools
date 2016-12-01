@@ -4,7 +4,8 @@
 
 struct PARA_RIVULET {
   unsigned char threshold;
-  V3DLONG channel;
+  V3DLONG channel=1;
+  bool quality;
 
   QString inimg_file, inmarker_file, outswc_file;
 
@@ -13,6 +14,7 @@ struct PARA_RIVULET {
     inimg_file = "";
     inmarker_file = "";
     outswc_file = "";
+    quality=0;
   }
 
   bool rivulet_dialog() {
@@ -31,11 +33,19 @@ struct PARA_RIVULET {
       bkgthresh_spinbox->setRange(0, 255);
       bkgthresh_spinbox->setValue(10);
 
-      layout->addWidget(new QLabel("color channel"), 0, 0);
-      layout->addWidget(channel_spinbox, 0, 1, 1, 5);
+      bkgthresh_spinbox->setRange(0, 255);
+      bkgthresh_spinbox->setValue(10);
+
+      QCheckBox * quality_checker = new QCheckBox();
+      quality_checker->setChecked(false);
+
+      // layout->addWidget(new QLabel("color channel"), 0, 0);
+      // layout->addWidget(channel_spinbox, 0, 1, 1, 5);
+      layout->addWidget(new QLabel("The background threshold is needed to segment the image. Tick quality for better tracing quality with slightly longer running time (worth it though)."), 0, 0, 1, 8);
       layout->addWidget(new QLabel("background"), 1, 0);
       layout->addWidget(bkgthresh_spinbox, 1, 1, 1, 5);
-
+      layout->addWidget(new QLabel("quality"), 2, 0);
+      layout->addWidget(quality_checker, 2, 1, 1, 5);
 
       QHBoxLayout *hbox3 = new QHBoxLayout();
       QPushButton *ok = new QPushButton(" ok ");
@@ -56,8 +66,9 @@ struct PARA_RIVULET {
         return false;
 
       // Get the dialog return values
-      channel = channel_spinbox->value() - 1;
+      // channel = channel_spinbox->value() - 1;
       threshold = bkgthresh_spinbox->value();
+      quality = quality_checker->isChecked();
 
       if (dialog) {
         delete dialog;

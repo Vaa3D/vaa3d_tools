@@ -1,4 +1,6 @@
 #include "rivulet.h"
+#include <ctime>
+#include <iomanip>
 using namespace rivulet;
 
 
@@ -308,21 +310,25 @@ void R2Tracer::erase(Branch &branch) {
 }
 
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
+  int start_time = clock();
   this->bimg = img->binarize(threshold);
   this->prep();
   SWC *swc = this->iterative_backtrack();
+
+  if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
   return swc;
 }
 
 void R2Tracer::prep() {
   // // Fast marching distance transform proposed in APP2
-  if (!this->silent) {
-    cout << "== DT..." << endl;
-  }
+  if (!this->silent) cout << "(1/6) == DT...";
   long *dims = this->bimg->get_dims();
   float *bdist1d = NULL;
+  int start_time = -1;
+  start_time = clock();
   fastmarching_dt(this->bimg->get_data1d_ptr(), bdist1d, dims[0], dims[1],
                   dims[2], 2, 0);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
   Image3<float> *dt = new Image3<float>(bdist1d, this->bimg->get_dims());
 
@@ -331,27 +337,45 @@ void R2Tracer::prep() {
   long max_dt = dt->get_1d(max_dt_idx);
   Point<float> max_dt_point(max_dt_idx, this->bimg->get_dims());
   this->soma = new Soma(max_dt_point, max_dt * 2);
+
+  if(!this->silent) cout<<"(2/6) == Making Soma Mask...";
+  start_time = clock();
   this->soma->make_mask(this->bimg);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
   // Make Speed Image dt**4 if bimg>0
+  if (!this->silent) cout << "(3/6) == Making Speed Image...";
+  start_time = clock();
   Image3<double> *speed = this->makespeed(dt);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
 
   // Marching on the Speed Image
   int *sp = this->soma->centroid.toint().make_array();
 
-  if (!this->silent) {
-    cout << "== MSFM..." << endl;
+  if (!this->silent){
+    cout << "(4/6) == Multi-Stencils Fastmarching ";
+    if (this->quality){
+      cout << "with high quality...";
+    }
+    else{
+      cout << "with low quality...";
+    }
+    cout.flush();   
   }
-
-  double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, false, false,
-                       false); // Original Timemap
+  start_time = clock();
+  double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, this->quality, this->quality,
+                                       false); // Original Timemap
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
   this->t = new Image3<double>(t_ptr, this->bimg->get_dims());
   this->tt = this->t->make_copy();
 
   // Get the gradient of the Time-crossing map
-  cout <<  "== Making Gradients of Time map" << endl;
+  if(!this->silent) cout <<  "(5/6) == Making Gradients of Time Crossing Map...";
+  start_time = clock();
   this->make_gradient();
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
   if (dt) {
     delete dt;
@@ -457,10 +481,11 @@ void R2Tracer::make_gradient() {
 }
 
 Image3<double> *R2Tracer::makespeed(Image3<float> *dt) {
-  double dmax = (double)dt->max();
+  double dmax = (double) dt->max();
   Image3<double> *speed = dt->to_double();
   for (int i = 0; i < dt->size(); i++) {
-    double s = (double)dt->get_1d(i) == 0 ? 1e-10 : dt->get_1d(i) / dmax;
+    double v = (double) dt->get_1d(i);
+    double s = v == 0 ? 1e-10 : v / dmax;
     speed->set_1d(i, pow(s, 4));
   }
   return speed;
@@ -481,7 +506,7 @@ void R2Tracer::update_coverage() {
 
   // Show progress bar
   if (!this->silent) {
-    int bar_width = 70;
+    int bar_width = 40;
     std::cout << "[";
     int pos = bar_width * this->coverage;
     for (int i = 0; i < bar_width; ++i) {
@@ -492,13 +517,13 @@ void R2Tracer::update_coverage() {
       else
         std::cout << " ";
     }
-    std::cout << "] " << int(this->coverage * 100.0) << " %\r";
+    std::cout << "] " <<std::setprecision(5)<< this->coverage * 100.0 << " %\r";
     std::cout.flush();
   }
 }
 
 SWC *R2Tracer::iterative_backtrack() {
-  cout << "== Iterative backtrack..." << endl;
+  cout << "(6/6) == Iterative backtrack..." << endl;
   SWC *swc = new SWC();
   srand(time(NULL));
   float eps = 1e-5;
@@ -618,4 +643,8 @@ SWC *R2Tracer::iterative_backtrack() {
   if(this->silent) cout << endl;
 
   return swc;
+}
+
+void R2Tracer::set_quality(bool quality){
+  this->quality = quality;
 }
