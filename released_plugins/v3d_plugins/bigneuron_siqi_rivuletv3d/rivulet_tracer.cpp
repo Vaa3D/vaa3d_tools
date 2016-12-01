@@ -1,6 +1,7 @@
 #include "rivulet.h"
 #include <ctime>
 #include <iomanip>
+// #include "tqdm/tqdm.h"
 using namespace rivulet;
 
 
@@ -319,6 +320,22 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   return swc;
 }
 
+void show_progress(float perc) {
+  int bar_width = 40;
+  std::cout << std::setprecision(5) << perc * 100.0 << "%|";
+  int pos = bar_width * perc;
+  for (int i = 0; i < bar_width; ++i) {
+    if (i < pos)
+      std::cout << "█";
+    else if (i == pos)
+      std::cout << "";
+    else
+      std::cout << " ";
+  }
+  std::cout << "|\r";
+  std::cout.flush();
+}
+
 void R2Tracer::prep() {
   // // Fast marching distance transform proposed in APP2
   if (!this->silent) cout << "(1/6) == DT...";
@@ -506,19 +523,7 @@ void R2Tracer::update_coverage() {
 
   // Show progress bar
   if (!this->silent) {
-    int bar_width = 40;
-    std::cout << "[";
-    int pos = bar_width * this->coverage;
-    for (int i = 0; i < bar_width; ++i) {
-      if (i < pos)
-        std::cout << "=";
-      else if (i == pos)
-        std::cout << ">";
-      else
-        std::cout << " ";
-    }
-    std::cout << "] " <<std::setprecision(5)<< this->coverage * 100.0 << " %\r";
-    std::cout.flush();
+    show_progress(this->coverage);
   }
 }
 
