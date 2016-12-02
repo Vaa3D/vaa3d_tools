@@ -1788,10 +1788,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 int correctY = incomingY;
                 bool foundIt = false;
                 fileFilter.clear();
-                // need to check for +/- 2 due to vaguely rounded tile locations.
+                // need to check for +/- 4 due to vaguely rounded tile locations.
 
-                for (int jj = incomingX-2; jj<=incomingX+2; jj++){
-                    for (int kk = incomingY-2; kk<= incomingY+2; kk++){
+                for (int jj = incomingX-4; jj<=incomingX+4; jj++){
+                    for (int kk = incomingY-4; kk<= incomingY+4; kk++){
                         fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
                         fileFilter.append(fileFinder);
                         fileInfoList = saveDir.entryInfoList(fileFilter);

@@ -1,4 +1,6 @@
-OK
+11/30 fixed the incomingTileStatus in handleNewLocations().  this fixes the MIP problem but still doesn't solve all of the retracing cases.  It seems like it's mostly a problem in dense areas.
+
+what happens if 2 tiles are waiting for a tile's SWC file?
 
 
 11/29

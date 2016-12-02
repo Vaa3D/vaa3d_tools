@@ -313,8 +313,8 @@ void TileInfoMonitor::searchForTiles(){
                 int incomingX = intList.at(i).at(1);
                 int incomingY = intList.at(i).at(2);
                 foundIt = false;
-                for (int jj = incomingX-3; jj<=incomingX+3; jj++){
-                    for (int kk = incomingY-3; kk<= incomingY+3; kk++){
+                for (int jj = incomingX-4; jj<=incomingX+4; jj++){
+                    for (int kk = incomingY-4; kk<= incomingY+4; kk++){
                         fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
                         fileFilter.clear();
                         fileFilter.append(fileFinder);
