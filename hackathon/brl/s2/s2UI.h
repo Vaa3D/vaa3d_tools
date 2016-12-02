@@ -467,8 +467,10 @@ private:
     void checkParameters(QMap<int, S2Parameter> currentParameterMap);
     /*! \brief checks input TileInfo against scanned tiles and queued tiles based on pixelLocation info
      *
-     *  looks for duplicate tiles (xy within 5 pixels) and also checks to see if all 4 corners are within any tile.
+     *  looks for duplicate tiles (xy within 5 pixels) and also checks to see if all 4 corners and 4 interior points are within any tile.
      *  this method (and the associated tile location decisions) currently distribute the decisionmaking across S2UI and StackAnalyzer
+     *  currently, this method does not allow for any fine-tuning of overlap decisions or return any useful information about how much of the tile
+     * area has already been imaged.  that info is currently in S2Monitor and some local info in S2UI::loadMIP()
      */
     bool isDuplicateROI(TileInfo inputTileInfo);
     void closeEvent(QCloseEvent *event);

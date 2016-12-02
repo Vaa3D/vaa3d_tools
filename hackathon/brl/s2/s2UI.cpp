@@ -613,7 +613,7 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
-    overlapSpinBox->setMaximum(50 );
+    overlapSpinBox->setMaximum(25 );
     overlapSpinBox->setValue(10);
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
@@ -1919,14 +1919,7 @@ void S2UI::runBoundingBox(){
 
 
 bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
-    //  I have stage-based scanning working, but it's overscanning because
-    //  the stage-specific coordinate handling here is broken- this stuff isn't catching duplicate tiles because their .x locations in allROIlocations and/or scanList
-    //  are inconsistent with their physical space locations
-    //again, may be time to subclass the location stuff or add locationsimple as an attribute of my own class that can package up ALL the necessary coordinate systems into one tile location.
-    // might work to keep track of this new tileInfo thing in all my lists and internal methods but then when I communicate with external stuff I pass it only the relevant locationsimple.
-
-    // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
-    //check against locations already scanned
+//  mfr.  checking all 4 corners falsely calls duplicates if there is a built-in overlap between ties!
 
     LocationSimple inputLocation = inputTileInfo.getPixelLocation();
 
@@ -1934,11 +1927,15 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
     bool upperRight = false;
     bool lowerLeft = false;
     bool lowerRight = false;
+    bool upperLeftI =false;
+    bool upperRightI = false;
+    bool lowerLeftI = false;
+    bool lowerRightI = false;
     for (int i=0; i<scanList.length(); i++){
         // first check if the xy coordinates are already in scanList  this is IN PIXELS, including stage info.
         if ((qAbs(inputLocation.x - scanList[i].getPixelLocation().x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].getPixelLocation().y)< (float) 5.0)){
             return true;
-        }else{// then check if all 4 corners are in any volume in scanList (critical for adaptive scanning)
+        }else{// then check if all 4 corners and 4 inner points are in any volume in scanList (critical for adaptive scanning)
 
             upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
                                       (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
@@ -1957,7 +1954,29 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
-            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+
+            // and internal locations at central 1/4 of the tile.  this will work as long as overlap isn't 25% or more.
+
+            upperLeftI = upperLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+
+            upperRightI = upperRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerLeftI = lowerLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerRightI = lowerRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+
+
+            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
                 return true;}
         }
     }
@@ -1985,7 +2004,28 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.x+(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
-            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+
+
+            upperLeftI = upperLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+
+            upperRightI = upperRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerLeftI = lowerLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerRightI = lowerRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+
+
+            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
                 return true;}
         }
     }
