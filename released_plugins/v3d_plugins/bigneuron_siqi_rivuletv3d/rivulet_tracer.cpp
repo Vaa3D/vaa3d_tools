@@ -75,7 +75,7 @@ float Branch::exponential_moving_average(float p, float ema, int n) {
   return p * alpha + ema * (1 - alpha);
 }
 
-void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
+void Branch::update(Point<float> pt, Image3<unsigned char> *bimg, Image3<unsigned char> *dilated_bimg) {
   float eps = 1e-5;
   Point<float> head = this->pts.back();
   this->velocity[0] = pt.x - head.x;
@@ -83,21 +83,22 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
   this->velocity[2] = pt.z - head.z;
   this->stepsz = norm3(this->velocity);
   this->branch_len += this->stepsz;
-  unsigned char b = bimg->get(pt.tolong());
+  unsigned char b = dilated_bimg->get(pt.tolong());
   if (b > 0) {
     this->gap += this->stepsz;
   }
 
   // The online confidence (OC) starts from 0.5 due to the +1 term,
   // It is helpful to make the OC score from noise points decay fast
-  this->online_voxsum += b;
+  this->online_voxsum += (long) b;
   float oc = (float) this->online_voxsum / (float)(this->pts.size() + 1); // Online confidence
 
   this->update_ma(oc);
 
-  // printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\n", oc, ma_short, ma_long);
+  printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\tb:%d\n", oc, ma_short, ma_long, b);
   // We are stepping in a valley
   if (this->get_length() > this->ma_long_window && this->ma_short < this->ma_long - eps && oc < 0.5 && !this->in_valley) {
+    cout<<"In valley"<<endl;
     this->in_valley = true;
   }
 
@@ -110,8 +111,10 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg) {
     // Only cut if the valley oc is below 0.5
     if (this->conf[valleyidx] < 0.5) {
       // Slice the branch up to valleyidx
+      cout<<"== Cut - Branch len before " << this->get_length();
       this->slice(0, valleyidx);
       this->low_online_conf = true;
+      cout<<"Branch len after" <<this->get_length()<<endl;
     } else {
       in_valley = false;
     }
@@ -171,16 +174,16 @@ int Branch::estimate_radius(Point<float> pt, Image3<unsigned char> *bimg) {
   Point<long> centre(floor(pt.x), floor(pt.y), floor(pt.z));
   Point<long> p;
 
-  int s = 0;
   while(1){
-    r++;
+    ++r;
     try{
+      int s = 0;
       for(p.x = max2(centre.x - r, 0); p.x < min2(centre.x+r+1, dims[0]); p.x++)
         for(p.y = max2(centre.y - r, 0); p.y < min2(centre.y+r+1, dims[1]); p.y++)
           for(p.z = max2(centre.z - r, 0); p.z < min2(centre.z+r+1, dims[2]); p.z++){
             s += bimg->get(p);
           }
-        if( ((double) s) / (double) pow(2* (double)r+1, 3) < 0.7){break;}
+      if( ((double) s) / (double) pow(2*r+1, 3) < 0.6){break;}
     }
     catch(...){
       break;
@@ -199,22 +202,8 @@ void R2Tracer::step(Branch &branch) {
   // Update Branch stats
   Point<float> endpt((float)p[0], (float)p[1], (float)p[2]);
 
-  // Momentum boost: If the velocity is too small, sprint a bit with momentum
-  // if (branch.get_step_size() < 0.3 && branch.get_length() > 2) {
-  //   cout<<"Boosting"<<endl;
-  //   endpt.x =
-  //       branch.get_head().x +
-  //       (branch.get_head().x - branch.get_point(branch.get_length() - 2).x);
-  //   endpt.y =
-  //       branch.get_head().y +
-  //       (branch.get_head().y - branch.get_point(branch.get_length() - 2).y);
-  //   endpt.z =
-  //       branch.get_head().z +
-  //       (branch.get_head().z - branch.get_point(branch.get_length() - 2).z);
-  // }
-
   // Update the branch stats
-  branch.update(endpt, this->bimg);
+  branch.update(endpt, this->bimg, this->dilated_bimg);
 
   if (p) {
     delete[] p;
@@ -279,10 +268,10 @@ void R2Tracer::binary_sphere(Branch &branch, vector<int> &radius) {
 
 /* Erase a branch from the time crossing map */
 void R2Tracer::erase(Branch &branch) {
-  float eraseratio = 1.7;
+  float eraseratio = 1.5;
   vector<int> r_large;
   for (int i = 0; i < branch.get_length(); i++) {
-    r_large.push_back(ceil( branch.get_radius_at(i) * eraseratio + 1 ));
+    r_large.push_back(ceil(branch.get_radius_at(i) * eraseratio));
   }
 
   this->binary_sphere(branch, r_large);
@@ -320,9 +309,9 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   return swc;
 }
 
-void show_progress(float perc) {
+void show_progress(float perc, long completed, long total) {
   int bar_width = 40;
-  std::cout << std::setprecision(5) << perc * 100.0 << "%|";
+  std::cout << std::setprecision(5) << perc * 100.0 << "%\t|";
   int pos = bar_width * perc;
   for (int i = 0; i < bar_width; ++i) {
     if (i < pos)
@@ -332,7 +321,7 @@ void show_progress(float perc) {
     else
       std::cout << " ";
   }
-  std::cout << "|\r";
+  std::cout << "|\t" << completed << "/" << total << "\r";
   std::cout.flush();
 }
 
@@ -523,7 +512,7 @@ void R2Tracer::update_coverage() {
 
   // Show progress bar
   if (!this->silent) {
-    show_progress(this->coverage);
+    show_progress(this->coverage, ctr, this->bsum);
   }
 }
 
@@ -533,7 +522,8 @@ SWC *R2Tracer::iterative_backtrack() {
   srand(time(NULL));
   float eps = 1e-5;
   this->bb = new Image3<unsigned char>(this->bimg->get_dims());
-  this->dilated_bimg = this->bimg->make_copy(); // TODO: dilation
+  this->dilated_bimg = this->bimg->dilate(); // TODO: dilation
+  this->dilated_bimg->save("dilated_bimg.tif");
 
   // Count the number of foreground voxels
   V3DLONG nforeground = (V3DLONG) this->bimg->sum();
@@ -547,7 +537,6 @@ SWC *R2Tracer::iterative_backtrack() {
     }
   }
 
-  Image3<unsigned char> *dilate_bimg = this->bimg;
   SWCNode soma_node(0, 1, soma->centroid, soma->radius, -1);
   swc->add_node(soma_node);
   this->bsum = this->bimg->sum(); // The total number of foreground voxels
@@ -560,10 +549,10 @@ SWC *R2Tracer::iterative_backtrack() {
 
     Branch branch;
     branch.add(srcpt, 1.0); // Add the initial point
-    // this->tt->set(srcpt.tolong(), (double)-1.0); // Just in case
     this->update_coverage();
 
     bool keep = true;
+    cout<<"============"<<endl;
     // Iteration for one branch
     while (true) {
       this->step(branch);
@@ -575,10 +564,7 @@ SWC *R2Tracer::iterative_backtrack() {
         break;
       }
 
-      // this->tt->set(head.tolong(), (double) -1.0); // Just in case
-
       // 2. Check for the large gap criterion
-      unsigned char end_pt_b = this->dilated_bimg->get(head.tolong());
       if (branch.get_gap() > branch.mean_radius() * 8) {
         break;
       } else {
@@ -587,7 +573,7 @@ SWC *R2Tracer::iterative_backtrack() {
 
       // 3. Check if soma has been reached
       if (this->tt->get(branch.get_head().tolong()) == -3) {
-        keep = branch.get_curve_length() > 15 ? true : false;
+        keep = branch.get_curve_length() > 10 ? true : false;
         branch.reach_soma();
         break;
       }
@@ -600,6 +586,7 @@ SWC *R2Tracer::iterative_backtrack() {
       // 5. Check for low online confidence
       if (branch.is_low_conf()) {
         keep = false;
+        cout<<"Dump due to low conf. brnach len:"<<branch.get_length()<<endl;
         break;
       }
 
@@ -629,11 +616,15 @@ SWC *R2Tracer::iterative_backtrack() {
       }
     }
 
+    if(!branch.is_low_conf()){
+      cout<<"Branch len"<<branch.get_length()<<"not low conf"<<endl;
+    }
+
     // Erase it from the timemap
     this->erase(branch);
 
     // Add to the SWC if it was decided to be kept
-    if (keep && branch.get_curve_length() > 5) {
+    if (keep) {
       // Find the node ID to connect to
       int pid = -2;
       if (branch.is_reach_soma()) {

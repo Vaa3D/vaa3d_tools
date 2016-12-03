@@ -140,6 +140,28 @@ class Image3 {
   int nvox;
   bool destroy = true;
 
+  bool kernelcheck(Point<long> p){
+    Point<long> t;
+    // Make the neighbour position kernel
+    long ne[27][3] = {{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, {-1, 0, -1},
+                      {-1, 0, 0},   {-1, 0, 1},  {-1, 1, -1}, {-1, 1, 0},
+                      {-1, 1, 1},   {0, -1, -1}, {0, -1, 0},  {0, -1, 1},
+                      {0, 0, -1}, {0, 0, 0},  {0, 0, 1},   {0, 1, -1},  {0, 1, 0},
+                      {0, 1, 1},    {1, -1, -1}, {1, -1, 0},  {1, -1, 1},
+                      {1, 0, -1},   {1, 0, 0},   {1, 0, 1},   {1, 1, -1},
+                      {1, 1, 0},    {1, 1, 1}};
+    for(int i=0; i<27; i++){
+      t.x = p.x + ne[i][0];
+      t.y = p.y + ne[i][1];
+      t.z = p.z + ne[i][2];
+      if (this->get(t) > 0){
+        return true;
+      }
+    }
+
+    return false;
+  }
+
  public:
   void set_destroy(bool destroy) { this->destroy = destroy; }
 
@@ -201,6 +223,22 @@ class Image3 {
       delete[] this->dims;
       this->dims = NULL;
     }
+  }
+
+  // Simply dilate the image > 0 with 1 iteration
+  // Skip the border
+  Image3<unsigned char> *dilate() {
+    Point<long> p;
+    Image3<unsigned char> *dilated = new Image3<unsigned char>(this->dims);
+
+    for (p.x = 1; p.x < this->dims[0] - 1; ++p.x)
+      for (p.y = 1; p.y < this->dims[1] - 1; ++p.y)
+        for (p.z = 1; p.z < this->dims[2] - 1; ++p.z) {
+          if (this->kernelcheck(p)) {
+            dilated->set(p, 1);
+          }
+        }
+    return dilated;
   }
 
   Image3<T> *make_copy() {
@@ -389,7 +427,7 @@ class Branch {
   Branch(){};
   void add(Point<float>, float, float);
   void slice(int startidx, int endidx);  // Left inclusive, right exclusive
-  void update(Point<float>, Image3<unsigned char> *);
+  void update(Point<float>, Image3<unsigned char> *, Image3<unsigned char> *);
   float mean_radius();
   float get_gap();
   int get_length();
@@ -421,7 +459,7 @@ class R2Tracer {
   Image3<double> *t = NULL;          // Original timemap
   Image3<double> *tt = NULL;         // The copy of the timemap
   Soma *soma = NULL;
-  bool silent = false;
+  bool silent = true;
   float coverage = 0.;
   double *grad = NULL;
   const static float target_coverage = 0.98;
