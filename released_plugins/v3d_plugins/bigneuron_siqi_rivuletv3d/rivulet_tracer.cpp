@@ -26,6 +26,9 @@ float Branch::get_step_size() { return this->stepsz; }
 void Branch::set_low_conf(bool low) { this->low_online_conf = low; }
 
 bool Branch::is_stucked() {
+  if( this->velocity[0]==0 && this->velocity[1]==0 && this->velocity[2]==0)
+    return true;
+
   if (this->pts.size() > 15) {
     if (this->get_head().dist(this->pts[this->get_length() - 15]) < 1) {
       return true;
@@ -81,6 +84,8 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg, Image3<unsigne
   this->velocity[0] = pt.x - head.x;
   this->velocity[1] = pt.y - head.y;
   this->velocity[2] = pt.z - head.z;
+  // printf("==DEBUG- vel: %.2f, %.2f, %.2f\n", this->velocity[0], this->velocity[1], this->velocity[2]);
+  cout.flush();
   this->stepsz = norm3(this->velocity);
   this->branch_len += this->stepsz;
   unsigned char b = dilated_bimg->get(pt.tolong());
@@ -98,7 +103,6 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg, Image3<unsigne
   // printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\tb:%d\n", oc, ma_short, ma_long, b);
   // We are stepping in a valley
   if (this->get_length() > this->ma_long_window && this->ma_short < this->ma_long - eps && oc < 0.5 && !this->in_valley) {
-    cout<<"In valley"<<endl;
     this->in_valley = true;
   }
 
@@ -111,10 +115,8 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg, Image3<unsigne
     // Only cut if the valley oc is below 0.5
     if (this->conf[valleyidx] < 0.5) {
       // Slice the branch up to valleyidx
-      cout<<"== Cut - Branch len before " << this->get_length();
       this->slice(0, valleyidx);
       this->low_online_conf = true;
-      cout<<"Branch len after" <<this->get_length()<<endl;
     } else {
       in_valley = false;
     }
@@ -547,6 +549,11 @@ SWC *R2Tracer::iterative_backtrack() {
     Point<float> srcpt(maxtidx, this->tt->get_dims());
 
     Branch branch;
+    // Erase the source point just in case
+    this->tt->set_1d(maxtidx, -2);
+    printf("DEBUG: maxidx: %d\tconverted idx:%d\n", maxtidx, srcpt.make_linear_idx(this->tt->get_dims()));
+    printf("debug: tt srcpt after erase: %.2f\n", this->tt->get(srcpt.tolong()));
+    printf("debug: srcpt: %.2f,%.2f,%.2f t:%.2f\n", srcpt.x, srcpt.y, srcpt.z, this->tt->max());
     branch.add(srcpt, 1.0); // Add the initial point
     this->update_coverage();
 
@@ -578,6 +585,7 @@ SWC *R2Tracer::iterative_backtrack() {
 
       // 4. If it has not moved for 15 iterations, stop
       if (branch.is_stucked()) {
+        cout<<"Stucked!!"<<endl;
         break;
       }
 
