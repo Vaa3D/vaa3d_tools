@@ -55,11 +55,14 @@ class Point {
   }
 
   Point(long idx1d, long *dims) {  // Plays as ind to sub
-    float xysz = (float) dims[0] * (float) dims[1];
-    this->z = (float) floor(((float) idx1d) / (float) xysz);
-    this->y = idx1d - this->z * xysz;
-    this->y = (float) floor((float)this->y / (float)dims[0]);
-    this->x = (float) floor(idx1d - this->z * xysz - this->y * (float)dims[0]);
+    long chunk = dims[0] * dims[1];
+    z = idx1d / chunk; 
+    idx1d -= z * chunk; 
+
+    y = idx1d / dims[0]; 
+    idx1d -= y * dims[0]; 
+
+    x = idx1d / 1;
   }
 
   Point() {
@@ -69,8 +72,7 @@ class Point {
   }
 
   long make_linear_idx(long *dims) {
-    long xysz = (long)(dims[0] * dims[1]);
-    return (long)this->z * xysz + this->y * dims[0] + this->x;
+    return (long) (this->z * dims[0] * dims[1] + this->y * dims[0] + this->x);
   }
 
   float dist(const Point<T> p) {
@@ -318,13 +320,11 @@ class Image3 {
   T *get_data1d_ptr() { return this->data1d; }
 
   T get(Point<long> p) {
-    long idx = p.make_linear_idx(this->dims);
-    return this->get_1d(idx);
+    return this->get_1d(p.make_linear_idx(this->dims));
   }
 
   void set(Point<long> p, T val) {
-    long idx = p.make_linear_idx(this->dims);
-    this->set_1d(idx, val);
+    this->set_1d(p.make_linear_idx(this->dims), val);
   }
 
   /* Find the max linear idx of the 3D volume*/
