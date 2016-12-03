@@ -459,7 +459,7 @@ class R2Tracer {
   Image3<double> *t = NULL;          // Original timemap
   Image3<double> *tt = NULL;         // The copy of the timemap
   Soma *soma = NULL;
-  bool silent = true;
+  bool silent = false;
   float coverage = 0.;
   double *grad = NULL;
   const static float target_coverage = 0.98;

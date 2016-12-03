@@ -95,7 +95,7 @@ void Branch::update(Point<float> pt, Image3<unsigned char> *bimg, Image3<unsigne
 
   this->update_ma(oc);
 
-  printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\tb:%d\n", oc, ma_short, ma_long, b);
+  // printf("oc:%.3f\tma_short:%.3f\tma_long:%.3f\tb:%d\n", oc, ma_short, ma_long, b);
   // We are stepping in a valley
   if (this->get_length() > this->ma_long_window && this->ma_short < this->ma_long - eps && oc < 0.5 && !this->in_valley) {
     cout<<"In valley"<<endl;
@@ -523,7 +523,6 @@ SWC *R2Tracer::iterative_backtrack() {
   float eps = 1e-5;
   this->bb = new Image3<unsigned char>(this->bimg->get_dims());
   this->dilated_bimg = this->bimg->dilate(); // TODO: dilation
-  this->dilated_bimg->save("dilated_bimg.tif");
 
   // Count the number of foreground voxels
   V3DLONG nforeground = (V3DLONG) this->bimg->sum();
@@ -552,7 +551,6 @@ SWC *R2Tracer::iterative_backtrack() {
     this->update_coverage();
 
     bool keep = true;
-    cout<<"============"<<endl;
     // Iteration for one branch
     while (true) {
       this->step(branch);
@@ -586,7 +584,6 @@ SWC *R2Tracer::iterative_backtrack() {
       // 5. Check for low online confidence
       if (branch.is_low_conf()) {
         keep = false;
-        cout<<"Dump due to low conf. brnach len:"<<branch.get_length()<<endl;
         break;
       }
 
@@ -614,10 +611,6 @@ SWC *R2Tracer::iterative_backtrack() {
           break;
         }
       }
-    }
-
-    if(!branch.is_low_conf()){
-      cout<<"Branch len"<<branch.get_length()<<"not low conf"<<endl;
     }
 
     // Erase it from the timemap
