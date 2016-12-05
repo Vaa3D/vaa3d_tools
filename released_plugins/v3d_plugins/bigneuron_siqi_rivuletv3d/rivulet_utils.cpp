@@ -84,6 +84,15 @@ void SWC::add_branch(Branch &branch, long connect_id) {
   this->nodes.insert(this->nodes.end(), swc_branch.begin(), swc_branch.end());
 }
 
+void SWC::pad(CropRegion rg){
+  printf("Trying to pad swc with %d, %d, %d\n", rg.xmin, rg.ymin, rg.zmin);
+  for(std::vector<SWCNode>::iterator it=this->nodes.begin(); it != this->nodes.end(); ++it){
+    it->p.x += rg.xmin;
+    it->p.y += rg.ymin;
+    it->p.z += rg.zmin;
+  }
+}
+
 Image3<unsigned char> *Soma::get_mask() { return this->mask; }
 
 long SWC::size() { return nodes.size(); }
