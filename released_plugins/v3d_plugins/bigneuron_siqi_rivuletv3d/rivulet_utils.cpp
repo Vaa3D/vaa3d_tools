@@ -1,4 +1,7 @@
 #include "rivulet.h"
+#include "utils/graph.h"
+#include <map>
+#include <iterator>
 using namespace rivulet;
 
 /* Try to match a node with its closest neighbour in this SWC
@@ -22,14 +25,6 @@ long SWC::match(SWCNode n) {
     return minidx;
   } else {
     return -2;
-  }
-}
-
-void SWC::plus1(){
-  for (long i=0; i < this->size(); i++){
-    this->nodes[i].p.x = this->nodes[i].p.x + 1;
-    this->nodes[i].p.y = this->nodes[i].p.y + 1;
-    this->nodes[i].p.z = this->nodes[i].p.z + 1;
   }
 }
 
@@ -85,12 +80,120 @@ void SWC::add_branch(Branch &branch, long connect_id) {
 }
 
 void SWC::pad(CropRegion rg){
-  printf("Trying to pad swc with %d, %d, %d\n", rg.xmin, rg.ymin, rg.zmin);
   for(std::vector<SWCNode>::iterator it=this->nodes.begin(); it != this->nodes.end(); ++it){
     it->p.x += rg.xmin;
     it->p.y += rg.ymin;
     it->p.z += rg.zmin;
   }
+}
+
+void SWC::prune_unreached(){
+  Graph g(this->size());
+  // Create a graph with the SWC Node IDs
+
+  for (vector<SWCNode>::iterator it = this->nodes.begin();
+       it != this->nodes.end(); ++it) {
+    if (it->pid >= 0) {
+      g.addEdge(it->id, it->pid);
+      g.addEdge(it->pid, it->id);
+    }
+  }
+
+
+  vector<bool> visited = g.scc();
+  std::vector<SWCNode> pruned_nodes; 
+  std::vector<SWCNode>::iterator it;
+  std::vector<bool>::iterator vt;
+
+  for(it=this->nodes.begin(), vt=visited.begin(); it != this->nodes.end(); ++it, ++vt){
+    if(*vt){
+      pruned_nodes.push_back(*it);
+    }
+  }
+
+  this->nodes = pruned_nodes;
+}
+
+void SWC::prune_leaves(){
+  // Count number of children for each node
+  std::vector<int> pid_vec(this->size());
+  std::vector<SWCNode>::iterator it;
+  std::vector<int>::iterator pt;
+  for(it=this->nodes.begin(), pt=pid_vec.begin(); it != this->nodes.end(); ++it, ++pt){
+    *pt = it->pid;
+  }
+
+  std::map<int, int> child_ctr;
+  for(it=this->nodes.begin(); it != this->nodes.end(); ++it){
+    int c = std::count(pid_vec.begin(), pid_vec.end(), it->id);
+    child_ctr[it->id] = c;
+  }
+
+  // Find all leaf node
+  vector<SWCNode> leaf_nodes;
+  for(it=this->nodes.begin(); it != this->nodes.end(); ++it){
+    if (child_ctr[it->id] == 0){
+      leaf_nodes.push_back(*it);
+    }
+  }
+
+  int node_id=-1;
+  vector<SWCNode> nodes_to_dump;
+  // Iterate each leaf node
+  for(it=leaf_nodes.begin(); it != leaf_nodes.end(); ++it){
+    SWCNode node = *it;
+    vector<SWCNode> branch;
+    while(true){ // Get the leaf branch out
+      if(node.id == -2 || child_ctr[node.id] > 1){
+        break;
+      }
+      branch.push_back(node);
+      node = this->get_parent(node);
+    }
+
+    // Calculate the curve length of this branch
+    float blen = 0;
+    for(vector<SWCNode>::iterator bt=branch.begin(); bt!=branch.end()-1; ++bt){
+      blen += bt->p.dist(std::next(bt, 1)->p);
+    }
+
+    // Prune if this branch is too short
+    if(blen < 5){
+      nodes_to_dump.reserve(nodes_to_dump.size() + distance(branch.begin(), branch.end()));
+      nodes_to_dump.insert(nodes_to_dump.end(), branch.begin(), branch.end());
+    }
+  }
+
+  // Only keep the swc nodes not in nodes_to_dump
+  for(it=this->nodes.begin(); it != this->nodes.end();){
+    if (std::find(nodes_to_dump.begin(), nodes_to_dump.end(), *it) != nodes_to_dump.end()){
+      it = this->nodes.erase(it);
+    }
+    else{
+      ++it;
+    }
+  }  
+}
+
+SWCNode SWC::get_parent(SWCNode n) {
+  SWCNode pnode;
+  pnode.id = n.pid;
+  std::vector<SWCNode>::iterator pnode_itr =
+      std::find(this->nodes.begin(), this->nodes.end(), pnode);
+  if (pnode_itr == this->nodes.end()) {  // Not found
+    pnode.id = -2;
+    return pnode;
+  } else {
+    return *pnode_itr;
+  }
+}
+
+void SWC::prune(){
+  // Find the largest connected sub-graph 
+  this->prune_unreached();
+
+  // Remove leaf branches with lengths < 5
+  this->prune_leaves();
 }
 
 Image3<unsigned char> *Soma::get_mask() { return this->mask; }
@@ -123,3 +226,4 @@ void Soma::make_mask(Image3<unsigned char> *bimg) {
 
   this->mask = new Image3<unsigned char>(mask1d, bimg->get_dims());
 }
+

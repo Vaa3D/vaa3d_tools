@@ -131,7 +131,14 @@ class SWCNode {
   SWCNode(int id, int type, Point<float> p, int radius, int pid)
       : id(id), type(type), p(p), radius(radius), pid(pid) {}
   SWCNode() {}
+
 };
+
+// The == operator only cares about the node id
+inline bool operator==(const SWCNode& lhs, const SWCNode& rhs)
+{
+  return lhs.id==rhs.id ? true:false;
+}
 
 struct CropRegion{
     long xmin=-1;
@@ -469,15 +476,18 @@ class Soma {
 class SWC {
  private:
   vector<SWCNode> nodes;
+  void prune_leaves();
+  void prune_unreached();
+  SWCNode get_parent(SWCNode);
 
  public:
   SWC() {}  // Initialise with an empty SWC
   void add_branch(Branch &branch, long connect_id);
   void add_node(SWCNode n);
-  void plus1();
   long size();
   long match(SWCNode n);
   void pad(CropRegion);
+  void prune();
   SWCNode get_node(int i);
 };
 
@@ -550,7 +560,7 @@ class R2Tracer {
   bool silent = false;
   float coverage = 0.;
   double *grad = NULL;
-  const static float target_coverage = 0.98;
+  static constexpr float target_coverage = 0.98;
   bool quality = false;
 
   void prep();  // Distance Transform and MSFM
