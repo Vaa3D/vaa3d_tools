@@ -6,6 +6,7 @@ struct PARA_RIVULET {
   unsigned char threshold;
   V3DLONG channel=1;
   bool quality;
+  bool prune;
 
   QString inimg_file, inmarker_file, outswc_file;
 
@@ -15,6 +16,7 @@ struct PARA_RIVULET {
     inmarker_file = "";
     outswc_file = "";
     quality=0;
+    prune=0;
   }
 
   bool rivulet_dialog() {
@@ -22,7 +24,7 @@ struct PARA_RIVULET {
     {
       // set update the dialog
       QDialog *dialog = new QDialog();
-      dialog->setWindowTitle("Rivulet -- Neuron Tracing");
+      dialog->setWindowTitle("Rivulet2 -- Auto 3D Single Neuron Tracing");
       QGridLayout *layout = new QGridLayout();
 
       QSpinBox *channel_spinbox = new QSpinBox();
@@ -39,13 +41,22 @@ struct PARA_RIVULET {
       QCheckBox * quality_checker = new QCheckBox();
       quality_checker->setChecked(false);
 
+      QCheckBox * prune_checker = new QCheckBox();
+      prune_checker->setChecked(false);
+
       // layout->addWidget(new QLabel("color channel"), 0, 0);
       // layout->addWidget(channel_spinbox, 0, 1, 1, 5);
-      layout->addWidget(new QLabel("The background threshold is needed to segment the image. Tick quality for better tracing quality with slightly longer running time (worth it though)."), 0, 0, 1, 8);
-      layout->addWidget(new QLabel("background"), 1, 0);
-      layout->addWidget(bkgthresh_spinbox, 1, 1, 1, 5);
-      layout->addWidget(new QLabel("quality"), 2, 0);
-      layout->addWidget(quality_checker, 2, 1, 1, 5);
+      const char* helper = "HINTS:\n"
+                           "The background threshold is needed to segment the image.\n"
+                           "Tick quality for better tracing quality with slightly longer running time (worth it though).\n"
+                           "Tick prune to remove the short and unconnected branches.\n";
+      layout->addWidget(new QLabel(helper), 0, 0, 1, 8);
+      layout->addWidget(new QLabel("background:"), 1, 0);
+      layout->addWidget(bkgthresh_spinbox, 1, 1, 1, 1);
+      layout->addWidget(new QLabel("quality:"), 1, 3);
+      layout->addWidget(quality_checker, 1, 4, 1, 1);
+      layout->addWidget(new QLabel("prune:"), 1, 6);
+      layout->addWidget(prune_checker, 1, 7, 1, 1);
 
       QHBoxLayout *hbox3 = new QHBoxLayout();
       QPushButton *ok = new QPushButton(" ok ");
@@ -66,7 +77,6 @@ struct PARA_RIVULET {
         return false;
 
       // Get the dialog return values
-      // channel = channel_spinbox->value() - 1;
       threshold = bkgthresh_spinbox->value();
       quality = quality_checker->isChecked();
 
