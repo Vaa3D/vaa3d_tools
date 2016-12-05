@@ -2113,6 +2113,8 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
     else if(P.method ==5)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+    else if(P.method ==6)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -2183,6 +2185,9 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         tmpstr =  qPrintable( qtstr.setNum(P.seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
+    }else if(P.method ==6)
+    {
+        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NeuroGPSTree")); infostring.push_back(tmpstr);
     }
 
     tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
@@ -2236,6 +2241,12 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
 
+    }
+    else if (P.method ==6)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuroGPSTree");
+        finaloutputswc = P.inimg_file + ("_nc_NeuroGPSTree_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_NeuroGPSTree_adp_left.swc");
     }
 
     QString imageSaveString = saveDirString;
@@ -2308,6 +2319,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 return false;
             }
 
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,0,
+                               end_x,end_y,P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }else
         {
             V3DLONG *in_zz = 0;
@@ -2420,6 +2442,14 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
             full_plugin_name = "mostVesselTracer";
             func_name =  "MOST_trace";
+        }else if(P.method ==6)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            arg_para.push_back("30");
+            full_plugin_name = "NeuroGPSTreeOld";
+            func_name =  "tracing_func";
         }
 
         arg.p = (void *) & arg_para; input << arg;
@@ -2441,6 +2471,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
     else if (P.method ==5)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+    else if (P.method ==6)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
