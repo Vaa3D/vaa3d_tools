@@ -8,6 +8,10 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 
+unix:!macx {
+    QMAKE_CXXFLAGS  += -std=c++11
+}
+
 # From V3D Main
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_memory.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

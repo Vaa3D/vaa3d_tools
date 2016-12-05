@@ -2121,6 +2121,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_TReMAP");
     else if(P.method ==9)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MST");
+    else if(P.method ==10)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronChaser");
+    else if(P.method ==11)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Rivulet2");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -2271,6 +2275,18 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MST");
         finaloutputswc = P.inimg_file + ("_nc_MST_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_MST_adp_left.swc");
+    }
+    else if (P.method ==10)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuronChaser");
+        finaloutputswc = P.inimg_file + ("_nc_NeuronChaser_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_NeuronChaser_adp_left.swc");
+    }
+    else if (P.method ==11)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Rivulet2");
+        finaloutputswc = P.inimg_file + ("_nc_Rivulet2_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_Rivulet2_adp_left.swc");
     }
     QString imageSaveString = saveDirString;
 
@@ -2488,6 +2504,16 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         {
             full_plugin_name = "MST_tracing";
             func_name =  "trace_mst";
+        }else if(P.method ==10)
+        {
+            full_plugin_name = "region_neuron2";
+            func_name =  "trace_neuronchaser";
+        }else if(P.method ==11)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("30");
+            full_plugin_name = "Rivulet";
+            func_name =  "tracing_func";
         }
 
         arg.p = (void *) & arg_para; input << arg;
@@ -2517,6 +2543,10 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
     else if (P.method ==9)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
+    else if (P.method ==10)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_NeuronChaser.swc");
+    else if (P.method ==11)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw.r2.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
