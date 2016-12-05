@@ -28,6 +28,7 @@ struct input_PARA {
   V3DLONG channel;
   unsigned char threshold;
   bool quality;
+  bool prune;
 };
 
 void save_swc(SWC* swc, QString fname);
@@ -101,6 +102,8 @@ bool RivuletPlugin::dofunc(const QString &func_name,
     k++;
     PARA.quality = (paras.size() >= k + 1) ? atoi(paras[k]) : 0;
     k++;
+    PARA.prune = (paras.size() >= k + 1) ? atoi(paras[k]) : 0;
+    k++;
     if (!outfiles.empty())
       PARA.outswc_file = outfiles[0];
     else{
@@ -111,10 +114,11 @@ bool RivuletPlugin::dofunc(const QString &func_name,
     printf("====== Usage of Rivulet tracing ====== \n");
     printf(
         "vaa3d -x Rivulet -f tracing_func -i your_image.v3draw [-o out.swc] -p "
-        "channel threshold\n");
+        "channel threshold quality prune\n");
     printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
     printf("threshold\tThe background threshold for segmentation (default 0).\n");
     printf("quality\tEnhance the quality of tracing, which is more time consuming. If it is set 1, the second derivatives and cross neighbours will be used in multi-stencils fast-marching. (default 0).\n");
+    printf("prune\tPrune the result swc by elliminating the unreachable nodes from the soma. It also prune short branches less than 5 voxels. (default 0).\n");
     printf("==================================\n");
   } else {
     return false;
@@ -206,6 +210,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   // The meaty part
   R2Tracer *tracer = new R2Tracer();
   tracer->set_quality(PARA.quality);
+  tracer->set_prune(PARA.prune);
   SWC *swc = tracer->trace(img, PARA.threshold);
   cout << "====== END ======" << endl;
 

@@ -571,6 +571,7 @@ class R2Tracer {
   void step(Branch &);
   void erase(Branch &);
   void binary_sphere(Branch &, vector<int> &);
+  bool is_prune = false;
 
  public:
   R2Tracer();
@@ -578,6 +579,9 @@ class R2Tracer {
   ~R2Tracer();
   void reset();
   SWC *trace(Image3<unsigned char> *img, float threshold);
+  void set_prune(bool p){
+    this->is_prune = p;
+  };
 };
 }
 
