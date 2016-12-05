@@ -313,7 +313,10 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   SWC *swc = this->iterative_backtrack();
 
   if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
-  swc->prune();
+  if(this->is_prune){
+    swc->prune();
+  }
+
   swc->pad(this->bimg->get_crop_region()); // Pad the swc back
   return swc;
 }
