@@ -133,6 +133,15 @@ class SWCNode {
   SWCNode() {}
 };
 
+struct CropRegion{
+    long xmin=-1;
+    long xmax=-1;
+    long ymin=-1;
+    long ymax=-1;
+    long zmin=-1;
+    long zmax=-1;
+};
+
 // Image3 is implemented here since templates cannot be compiled
 template <typename T>
 class Image3 {
@@ -141,6 +150,7 @@ class Image3 {
   long *dims;
   int nvox;
   bool destroy = true;
+  CropRegion crop_region;
 
   bool kernelcheck(Point<long> p){
     Point<long> t;
@@ -148,11 +158,11 @@ class Image3 {
     long ne[27][3] = {{-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1}, {-1, 0, -1},
                       {-1, 0, 0},   {-1, 0, 1},  {-1, 1, -1}, {-1, 1, 0},
                       {-1, 1, 1},   {0, -1, -1}, {0, -1, 0},  {0, -1, 1},
-                      {0, 0, -1}, {0, 0, 0},  {0, 0, 1},   {0, 1, -1},  {0, 1, 0},
-                      {0, 1, 1},    {1, -1, -1}, {1, -1, 0},  {1, -1, 1},
-                      {1, 0, -1},   {1, 0, 0},   {1, 0, 1},   {1, 1, -1},
-                      {1, 1, 0},    {1, 1, 1}};
-    for(int i=0; i<27; i++){
+                      {0, 0, -1},   {0, 0, 0},   {0, 0, 1},   {0, 1, -1},
+                      {0, 1, 0},    {0, 1, 1},   {1, -1, -1}, {1, -1, 0},
+                      {1, -1, 1},   {1, 0, -1},  {1, 0, 0},   {1, 0, 1},
+                      {1, 1, -1},   {1, 1, 0},   {1, 1, 1}};
+    for (int i = 0; i < 27; i++) {
       t.x = p.x + ne[i][0];
       t.y = p.y + ne[i][1];
       t.z = p.z + ne[i][2];
@@ -241,6 +251,83 @@ class Image3 {
           }
         }
     return dilated;
+  }
+
+  // Crop this image to keep only the region > 0
+  // The original image will be over-written
+  // To get the original image back, call this->restore_crop()
+  Image3<T>* autocrop(){
+    std::vector<Point<long> > pts;
+    Point<long> p;
+    for (p.x = 0; p.x < this->dims[0]; ++p.x)
+      for (p.y = 0; p.y < this->dims[1]; ++p.y)
+        for (p.z = 0; p.z < this->dims[2]; ++p.z) {
+          if (this->get(p) > 0){
+            pts.push_back(p);
+          }
+        }
+
+    CropRegion crop_region;
+    crop_region.xmin = this->dims[0], crop_region.ymin = this->dims[1], crop_region.zmin = this->dims[2],
+    crop_region.xmax = 0, crop_region.ymax = 0, crop_region.zmax = 0;
+
+    for (std::vector<Point<long> >::iterator it = pts.begin(); it != pts.end();
+         ++it) {
+      if (it->x <= crop_region.xmin){
+        crop_region.xmin = it->x;
+      }
+
+      if (it->x >= crop_region.xmax){
+        crop_region.xmax = it->x + 1;
+      }
+
+      if (it->y <= crop_region.ymin){
+        crop_region.ymin = it->y;
+      }
+
+      if (it->y >= crop_region.ymax){
+        crop_region.ymax = it->y + 1;
+      }
+
+      if (it->z <= crop_region.zmin){
+        crop_region.zmin = it->z;
+      }
+
+      if (it->z >= crop_region.zmax){
+        crop_region.zmax = it->z + 1;
+      }
+    }
+
+    // Make the cropped image data
+    long crop_dims[3];
+    crop_dims[0] = crop_region.xmax - crop_region.xmin + 1;
+    crop_dims[1] = crop_region.ymax - crop_region.ymin + 1;
+    crop_dims[2] = crop_region.zmax - crop_region.zmin + 1;
+    long nvox = crop_dims[0] * crop_dims[1] * crop_dims[2];
+    T* croped_data = new T[nvox];
+
+    // Copy the data to the cropped image
+    Point<long> p_crop;
+    for (p.x = crop_region.xmin, p_crop.x = 0; p.x < crop_region.xmax;
+         ++p.x, ++p_crop.x)
+      for (p.y = crop_region.ymin, p_crop.y = 0; p.y < crop_region.ymax;
+           ++p.y, ++p_crop.y)
+        for (p.z = crop_region.zmin, p_crop.z = 0; p.z < crop_region.zmax;
+             ++p.z, ++p_crop.z) {
+          croped_data[p_crop.make_linear_idx(crop_dims)] = this->get(p);
+        }
+
+    Image3<T>* cropped_image = new Image3<T>(croped_data, crop_dims);
+    cropped_image->set_crop_region(crop_region);
+    return cropped_image;
+  }
+
+  void set_crop_region(CropRegion rg){
+    this->crop_region = rg;
+  }
+
+  CropRegion get_crop_region(){
+    return this->crop_region;
   }
 
   Image3<T> *make_copy() {
@@ -390,6 +477,7 @@ class SWC {
   void plus1();
   long size();
   long match(SWCNode n);
+  void pad(CropRegion);
   SWCNode get_node(int i);
 };
 

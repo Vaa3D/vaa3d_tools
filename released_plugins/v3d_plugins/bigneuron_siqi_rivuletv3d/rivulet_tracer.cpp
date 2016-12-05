@@ -302,10 +302,18 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
+  Image3<unsigned char>* timg = this->bimg->autocrop();
+  if (this->bimg){
+    delete this->bimg;
+    this->bimg = 0;
+  }
+  this->bimg = timg;
+
   this->prep();
   SWC *swc = this->iterative_backtrack();
 
   if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+  swc->pad(this->bimg->get_crop_region()); // Pad the swc back
   return swc;
 }
 
