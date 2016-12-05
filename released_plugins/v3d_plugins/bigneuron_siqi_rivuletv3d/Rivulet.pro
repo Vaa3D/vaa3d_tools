@@ -1,7 +1,7 @@
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-#CONFIG	+= x86_64
+QMAKE_CXXFLAGS += -std=c++0x
 
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
@@ -30,6 +30,8 @@ SOURCES	+= Rivulet_plugin.cpp
 # Utils
 HEADERS += utils/rk4.h
 SOURCES += utils/rk4.cpp
+HEADERS += utils/graph.h
+SOURCES += utils/graph.cpp
 HEADERS += utils/marker_radius.h
 
 # Fastmarching
