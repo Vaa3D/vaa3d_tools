@@ -2115,6 +2115,8 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
     else if(P.method ==6)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
+    else if(P.method ==7)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Advantra");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -2247,6 +2249,12 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuroGPSTree");
         finaloutputswc = P.inimg_file + ("_nc_NeuroGPSTree_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_NeuroGPSTree_adp_left.swc");
+    }
+    else if (P.method ==7)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Advantra");
+        finaloutputswc = P.inimg_file + ("_nc_Advantra_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_Advantra_adp_left.swc");
     }
 
     QString imageSaveString = saveDirString;
@@ -2450,6 +2458,10 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             arg_para.push_back("30");
             full_plugin_name = "NeuroGPSTreeOld";
             func_name =  "tracing_func";
+        }else if(P.method ==7)
+        {
+            full_plugin_name = "region_neuron2";
+            func_name =  "trace_advantra";
         }
 
         arg.p = (void *) & arg_para; input << arg;
@@ -2473,6 +2485,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
     else if (P.method ==6)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
+    else if (P.method ==7)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 

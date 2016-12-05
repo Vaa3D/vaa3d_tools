@@ -30,7 +30,8 @@ QStringList neurontracer::menulist() const
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
-      <<tr("about");
+      <<tr("trace_Advantra")
+     <<tr("about");
 }
 
 QStringList neurontracer::funclist() const
@@ -42,7 +43,8 @@ QStringList neurontracer::funclist() const
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
-      <<tr("help");
+      <<tr("trace_Advantra")
+     <<tr("help");
 }
 
 void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -313,6 +315,44 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.method = 6;
+        crawler_raw_all(callback,parent,P,bmenu);
+    }else if (menu_name == tr("trace_Advantra"))
+    {
+        TRACE_LS_PARA P;
+        bool bmenu = true;
+        neurontracer_neutube_raw dialog(callback, parent);
+
+        if (dialog.image && dialog.listLandmarks.size()==0)
+            return;
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
+        if(dialog.rawfilename.isEmpty())
+        {
+            v3d_msg("Please select the image file.");
+            return;
+        }
+
+        if(dialog.markerfilename.isEmpty() && ! dialog.image)
+        {
+            v3d_msg("Please select the marker file.");
+            return;
+        }
+
+        if(!dialog.image)
+        {
+            P.markerfilename = dialog.markerfilename;
+            P.image = 0;
+        }else
+        {
+            P.image = dialog.image;
+            P.listLandmarks = dialog.listLandmarks;
+        }
+        P.inimg_file = dialog.rawfilename;
+        P.block_size = dialog.block_size;
+        P.adap_win = dialog.adap_win;
+        P.method = 7;
         crawler_raw_all(callback,parent,P,bmenu);
     }
 	else
