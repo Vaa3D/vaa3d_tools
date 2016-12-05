@@ -1,3 +1,27 @@
+11/30 fixed the incomingTileStatus in handleNewLocations().  this fixes the MIP problem but still doesn't solve all of the retracing cases.  It seems like it's mostly a problem in dense areas.
+
+what happens if 2 tiles are waiting for a tile's SWC file?
+
+
+11/29
+there is still some case where tiles arent getting added to scanData.txt. I think it's possible for the tile to be 'waited for' but have all of the tips then spoken for, resulting in
+zero tips coming back to handleNewLocations, so the tileStatus isn't changed from -1 to 1.
+There needs to be another check around L1875 in S2UI to update the tileStatus even if the length of the tiplist is zero.  not clear how to do this yet. tileStatus is set based on
+the fileInfoList, which is based on the coordinates.  I suppose that couldbe done before the length of the landmarklist is checked?
+
+also add signal and slot to check how many things are in the s2monitor...
+then 3. below.
+
+
+11/21/2016
+1. work on documentation using doxygen blocks in header files
+2. doublecheck endgame stuff with final stacks that could get sent around with -1 status and therefore miss the loadMIP call.
+3. more endgame stuff with call to new method that does some kind of metacheck on the tiles, who's running analysis (?) and a spot
+to even check on structure, etc.  this should also have the power to load new locations in future versions.
+
+
+
+
 
 current problem:
 1.I'm ending up with multiple nearly-simultaneous returns from stackAnalyzer threads to s2UI, even for basic one-tile-at-a-time scenarios.

@@ -9,7 +9,6 @@
 #include <QBitArray>
 #include "s2Controller.h"
 #include "s2UI.h"
-#include "s2plot.h"
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include <QMutex>
@@ -204,7 +203,6 @@ void S2UI::hookUpSignalsAndSlots(){
 
     connect(zoomSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
     connect(pixelsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateZoomPixelsProduct(int)));
-    connect(setLiveFilePath,SIGNAL(clicked()), this, SLOT(startLiveFile()));
 
     connect(runSAStuff, SIGNAL(clicked()),this,SLOT(runSAStuffClicked()));
     connect(startStackAnalyzerPB, SIGNAL(clicked()),this, SLOT(loadForSA()));
@@ -363,7 +361,6 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(this,SIGNAL(eventSignal(QString)), myEventLogger, SLOT(logEvent(QString)));
 
 
-    connect(tTracePB, SIGNAL(clicked()), this, SLOT(tTrace()));
 }
 
 
@@ -616,7 +613,7 @@ QGroupBox *S2UI::createTracingParameters(){
     overlapSpinBox = new QSpinBox;
     overlapSpinBox->setSuffix(" percent ");
     overlapSpinBox->setMinimum(0);
-    overlapSpinBox->setMaximum(50 );
+    overlapSpinBox->setMaximum(25 );
     overlapSpinBox->setValue(10);
     overlapSBLabel = new QLabel;
     overlapSBLabel->setText(tr("tile &overlap: "));
@@ -808,14 +805,6 @@ QGroupBox *S2UI::createConfigPanel(){
     setLocalPathToData = new QPushButton;
     setLocalPathToData->setText(tr("set local path to data"));
 
-    liveFileString = new QLabel(tr(""));
-    liveFileStringLabel = new QLabel(tr("LiveFile : "));
-
-    setLiveFilePath = new QPushButton;
-    setLiveFilePath->setText(tr("set LiveFile"));
-
-    tTracePB = new QPushButton;
-    tTracePB->setText("tTrace");
 
     QLabel * labelInterrupt = new QLabel(tr("&notify after each trace"));
     QCheckBox *interruptCB = new QCheckBox;
@@ -882,9 +871,7 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(localDataDir,2,1);
     cBL->addWidget(setLocalPathToData,3,1);
     cBL->addWidget(resetDirPB, 3,0);
-    cBL->addWidget(liveFileStringLabel, 4,0);
-    cBL->addWidget(liveFileString,4,1);
-    cBL->addWidget(setLiveFilePath,5,0);
+
     cBL->addWidget(startZStackDelayLabel,6,0);
     cBL->addWidget(startZStackDelaySB, 6,1);
     cBL->addWidget(zoomSpinBoxLabel,7,0);
@@ -892,7 +879,6 @@ QGroupBox *S2UI::createConfigPanel(){
     cBL->addWidget(pixelsSpinBoxLabel,8,0);
     cBL->addWidget(pixelsSpinBox,8,1);
     cBL->addWidget(zoomPixelsProductLabel,9,0);
-    cBL->addWidget(tTracePB,10,0);
     cBL->addWidget(tryStageMove,11,0);
     cBL->addWidget(tryStageXEdit,11,1);
     cBL->addWidget(tryStageYEdit,11,2);
@@ -1802,10 +1788,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 int correctY = incomingY;
                 bool foundIt = false;
                 fileFilter.clear();
-                // need to check for +/- 2 due to vaguely rounded tile locations.
+                // need to check for +/- 4 due to vaguely rounded tile locations.
 
-                for (int jj = incomingX-2; jj<=incomingX+2; jj++){
-                    for (int kk = incomingY-2; kk<= incomingY+2; kk++){
+                for (int jj = incomingX-4; jj<=incomingX+4; jj++){
+                    for (int kk = incomingY-4; kk<= incomingY+4; kk++){
                         fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
                         fileFilter.append(fileFinder);
                         fileInfoList = saveDir.entryInfoList(fileFilter);
@@ -1868,7 +1854,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
         }
     }
     //
-    if (tileStatus !=-1){
+    if (incomingTileStatus !=-1){
         emit loadMIPSignal(scanIndex, mip, tileSaveString);
         QTimer::singleShot(10,this, SLOT(smartScanHandler()));
     }
@@ -1933,14 +1919,7 @@ void S2UI::runBoundingBox(){
 
 
 bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
-    //  I have stage-based scanning working, but it's overscanning because
-    //  the stage-specific coordinate handling here is broken- this stuff isn't catching duplicate tiles because their .x locations in allROIlocations and/or scanList
-    //  are inconsistent with their physical space locations
-    //again, may be time to subclass the location stuff or add locationsimple as an attribute of my own class that can package up ALL the necessary coordinate systems into one tile location.
-    // might work to keep track of this new tileInfo thing in all my lists and internal methods but then when I communicate with external stuff I pass it only the relevant locationsimple.
-
-    // updated to check for any inputLocation whose corners are all within any previously-scanned (or queued) tile.
-    //check against locations already scanned
+//  mfr.  checking all 4 corners falsely calls duplicates if there is a built-in overlap between ties!
 
     LocationSimple inputLocation = inputTileInfo.getPixelLocation();
 
@@ -1948,11 +1927,15 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
     bool upperRight = false;
     bool lowerLeft = false;
     bool lowerRight = false;
+    bool upperLeftI =false;
+    bool upperRightI = false;
+    bool lowerLeftI = false;
+    bool lowerRightI = false;
     for (int i=0; i<scanList.length(); i++){
         // first check if the xy coordinates are already in scanList  this is IN PIXELS, including stage info.
         if ((qAbs(inputLocation.x - scanList[i].getPixelLocation().x)< (float) 5.0) && (qAbs(inputLocation.y - scanList[i].getPixelLocation().y)< (float) 5.0)){
             return true;
-        }else{// then check if all 4 corners are in any volume in scanList (critical for adaptive scanning)
+        }else{// then check if all 4 corners and 4 inner points are in any volume in scanList (critical for adaptive scanning)
 
             upperLeft = upperLeft || ((inputLocation.x-(inputLocation.ev_pc1/2.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
                                       (inputLocation.x-(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
@@ -1971,7 +1954,29 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.x+(inputLocation.ev_pc1/2.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
-            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+
+            // and internal locations at central 1/4 of the tile.  this will work as long as overlap isn't 25% or more.
+
+            upperLeftI = upperLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+
+            upperRightI = upperRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerLeftI = lowerLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+            lowerRightI = lowerRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
+
+
+            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
                 return true;}
         }
     }
@@ -1999,7 +2004,28 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.x+(inputLocation.ev_pc1/2.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
-            if (upperLeft&&upperRight&lowerLeft&lowerRight){
+
+
+            upperLeftI = upperLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y-(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+
+            upperRightI = upperRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y-(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerLeftI = lowerLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.x-(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                      (inputLocation.y+(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+            lowerRightI = lowerRightI || ((inputLocation.x+(inputLocation.ev_pc1/4.0) <= iPixelLoc.x+(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.x+(inputLocation.ev_pc1/4.0) >= iPixelLoc.x-(iPixelLoc.ev_pc1/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) <= iPixelLoc.y+(iPixelLoc.ev_pc2/2.0) ) &&
+                                        (inputLocation.y+(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
+
+
+            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
                 return true;}
         }
     }
@@ -2286,17 +2312,6 @@ void S2UI::combinedSmartScan(QString saveFilename){
     cb->setWindowDataTitle(new3DWindow, "Final reconstruction");
     cb->update_NeuronBoundingBox(new3DWindow);
 }
-
-// still a huge mess.  I can bring the stage position along for the ride to stackAnalyzer and back, but that really doesn't solve the problem.
-// when I get back here I have two choices:
-//  ignore the stage position and leave it the same.
-//  set the galvo position to zero and adjust the stageposition to reflect the tilelocation.
-
-//  in either case, you should be able to recreate the tile by going to that stage location and imaging at that galvo location.
-// the trick will be in the (eventual) case of trying to move the stage while doing a galvo scan.  then there will have to be a procedure for
-// moving the stage to an adjacent location, translating the original galvo location to the correct galvo coordinates while moving the stage, etc.
-
-//
 
 
 void S2UI::loadLatest(QString inputString){
@@ -3164,23 +3179,6 @@ void S2UI::processingFinished(){
 
 
 
-void S2UI::activeModeChecker(){
-    // short-circuit here to disable mode changes
-    finalizeZoom();
-    return;
-
-    bool tooLong = activeModeChecks>=200;
-
-    if ((!tooLong)&&(uiS2ParameterMap[0].getCurrentString().contains("esonant") == !currentTileInfo.resOK)){
-        activeModeChecks++;
-        QTimer::singleShot(50, this, SLOT(activeModeChecker()));
-    }else{
-        if (tooLong){status("active mode transition timeout"); return;}
-        finalizeZoom();
-    }
-
-
-}
 
 void S2UI::finalizeZoom(){
     qDebug()<<"setting up stack in finalizeZoom...";
@@ -3197,9 +3195,6 @@ void S2UI::finalizeZoom(){
 }
 
 
-
-// then, use LocationSimple.category as an indicator of topological (branch) order.
-// once back in this function, the list of tiles to image can either be sorted (dangerous?) or ran through as-is to find the next tile of the same class
 
 
 
@@ -3232,7 +3227,7 @@ void S2UI::updateZoom(){
     //        }
     //    }
     activeModeChecks = 0;
-    activeModeChecker();
+    finalizeZoom();
 
 }
 void S2UI::updateZoomPixelsProduct(int ignore){
@@ -3313,83 +3308,6 @@ QColor S2UI::makeQColorFromIndex(int maxIndex, int index){
 
 
 
-
-
-void S2UI::startLiveFile(){
-    liveFileRunning= !liveFileRunning;
-
-    if (liveFileRunning){
-        QString liveFilePath = QFileDialog::getOpenFileName(this, tr("Choose LiveFile..."), localDataDirectory.absolutePath(), tr("vaa3d raw format (*.v3draw);;All Files (*.*)"));
-
-        if (liveFilePath.isNull()){ liveFileRunning = false; return;}
-
-        liveFileString->setText(liveFilePath);
-        liveFile = new QFileInfo(liveFilePath);
-
-
-
-        liveFileStatus = new QFileInfo(liveFile->absolutePath().append(QDir::separator()).append(liveFile->completeBaseName()).append(".status"));
-        liveFile->setCaching(false);
-        liveFileStatus->setCaching(false);
-        liveFileModified = liveFileStatus->lastModified();
-
-
-        //Ulf's code is now spitting out v3draw files, so we can monitor it directly
-
-
-        // read in the file and display in 3D, returning the 3D viewer.
-
-        Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data() );
-        liveFileWindow = cb->newImageWindow();
-        cb->setImage(liveFileWindow,pNewImage);
-        cb->open3DWindow(liveFileWindow);
-        cb->updateImageWindow(liveFileWindow);
-
-        QTimer::singleShot(0, this, SLOT(monitorLiveFile()));//
-    }
-
-}
-
-
-void S2UI::monitorLiveFile(){
-    // monitor the status of the LiveFile.  if the file is modified, updateLiveFile(), otherwise, just repeat.
-
-    if ( liveFileRunning) {
-
-
-        if (liveFileModified < liveFileStatus->lastModified()){
-            qDebug()<<"update liveFile!";
-            liveFileModified=liveFileStatus->lastModified();
-            updateLiveFile();
-        }
-
-
-        QTimer::singleShot(100, this, SLOT(monitorLiveFile()));
-    }
-}
-
-void S2UI::updateLiveFile(){
-    Image4DSimple * pNewImage = cb->loadImage(liveFile->absoluteFilePath().toLatin1().data());
-    cb->setImage(liveFileWindow,pNewImage);
-
-    cb->pushImageIn3DWindow(liveFileWindow);
-
-}
-
-
-void S2UI::tTrace(){
-    qDebug()<<"tTrace hooked up";
-    // LocationSimple tileLocation;
-    // for (int tileNumber = 0; tileNumber<604; tileNumber++){
-    //ThreadedTracer *myTracer =new  ThreadedTracer(*cb,s2LineEdit->text(),tileLocation , saveDir.absolutePath(), QString("2"), tileNumber);
-    //    myTracer->run();
-    //  connect(myTracer,SIGNAL(done()), this,SLOT(finalizeZoom()));
-    // QThreadPool::globalInstance()->start(myTracer);
-    // }
-    //   (s2LineEdit->text(),overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-    //                      this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice);
-
-}
 
 
 

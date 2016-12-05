@@ -13,7 +13,6 @@ INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 QT           += network
 
 HEADERS  = s2_plugin.h \
-    s2plot.h \
     stackAnalyzer.h \
     noteTaker.h \
     targetList.h \
@@ -36,7 +35,6 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarc
 
 
 SOURCES = s2_plugin.cpp \
-    s2plot.cpp \
     stackAnalyzer.cpp \
     noteTaker.cpp \
     targetList.cpp \
