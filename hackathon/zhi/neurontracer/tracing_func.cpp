@@ -2117,6 +2117,10 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
     else if(P.method ==7)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Advantra");
+    else if(P.method ==8)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_TReMAP");
+    else if(P.method ==9)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MST");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -2256,7 +2260,18 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         finaloutputswc = P.inimg_file + ("_nc_Advantra_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_Advantra_adp_left.swc");
     }
-
+    else if (P.method ==8)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_TReMAP");
+        finaloutputswc = P.inimg_file + ("_nc_TReMAP_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_TReMAP_adp_left.swc");
+    }
+    else if (P.method ==9)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MST");
+        finaloutputswc = P.inimg_file + ("_nc_MST_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_MST_adp_left.swc");
+    }
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -2462,6 +2477,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         {
             full_plugin_name = "region_neuron2";
             func_name =  "trace_advantra";
+        }else if(P.method ==8)
+        {
+            arg_para.push_back("0");
+            arg_para.push_back("1");
+            arg_para.push_back("20");
+            full_plugin_name = "TReMap";
+            func_name =  "trace_mip";
+        }else if(P.method ==9)
+        {
+            full_plugin_name = "MST_tracing";
+            func_name =  "trace_mst";
         }
 
         arg.p = (void *) & arg_para; input << arg;
@@ -2487,6 +2513,10 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
     else if (P.method ==7)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
+    else if (P.method ==8)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
+    else if (P.method ==9)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
