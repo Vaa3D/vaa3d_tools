@@ -1526,7 +1526,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             {
                 arg_para.push_back("1");
                 arg_para.push_back("1");
-                full_plugin_name = "neuTube";
+                full_plugin_name = "neuTube"; //old verson "NEUTUBE"
                 func_name =  "neutube_trace";
                 qDebug()<<"starting neutube";
             }
@@ -1923,7 +1923,7 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
-        full_plugin_name = "neuTube";
+        full_plugin_name = "neuTube";//old verson "NEUTUBE"
         func_name =  "neutube_trace";
         qDebug()<<"starting neutube";
     }
