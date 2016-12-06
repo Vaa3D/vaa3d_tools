@@ -1703,19 +1703,10 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
     tileNotes->setText(QString("tracing info : "));
 
-    //  add end-time for analysis of tile scanIndex
+    //  add end-time for analysis of tile scanIndex here
 
 
     myMutex.lock();
-
-
-
-
-
-
-
-
-
 
     for (int i = 0; i<newLandmarks.length(); i++){
         int incomingX=0;
@@ -1766,7 +1757,6 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
             if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked()){ // this currently ONLY checks based on pixelLocation.
                 qDebug()<<"NOT duplicate tile "<<scanIndex;
-                qDebug()<<QString("NOT dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
 
                 int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
                 allROILocations->append(landmarkTileInfo);
@@ -1825,7 +1815,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 //check for swc file
                 QString putativeSWC;
                 fileFilter.clear();
-                putativeSWC = QString("x_").append(QString::number(correctX)).append("_y_").append(QString::number(correctY)).append("*").append(channelChoiceComboB->currentText()).append(".swc");
+                putativeSWC = QString("x_").append(QString::number(correctX)).append("_y_").append(QString::number(correctY)).append("*").append(channelChoiceComboB->currentText()).append(".swcX");
                 fileFilter.append(putativeSWC);
                 fileInfoList = saveDir.entryInfoList(fileFilter);
 
@@ -1919,7 +1909,6 @@ void S2UI::runBoundingBox(){
 
 
 bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
-//  mfr.  checking all 4 corners falsely calls duplicates if there is a built-in overlap between ties!
 
     LocationSimple inputLocation = inputTileInfo.getPixelLocation();
 
@@ -1955,7 +1944,7 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) <= scanList[i].getPixelLocation().y+(scanList[i].getPixelLocation().ev_pc2/2.0) ) &&
                                         (inputLocation.y+(inputLocation.ev_pc2/2.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
 
-            // and internal locations at central 1/4 of the tile.  this will work as long as overlap isn't 25% or more.
+            // and internal locations at central 1/4 of the tile.  this will work for fixed-tile scans as long as overlap isn't 25% or more.
 
             upperLeftI = upperLeftI || ((inputLocation.x-(inputLocation.ev_pc1/4.0) <= scanList[i].getPixelLocation().x+(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
                                       (inputLocation.x-(inputLocation.ev_pc1/4.0) >= scanList[i].getPixelLocation().x-(scanList[i].getPixelLocation().ev_pc1/2.0) ) &&
@@ -1976,7 +1965,7 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.y+(inputLocation.ev_pc2/4.0) >= scanList[i].getPixelLocation().y-(scanList[i].getPixelLocation().ev_pc2/2.0)));
 
 
-            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
+            if (upperLeft&&upperRight&&lowerLeft&&lowerRight&&upperLeftI&&upperRightI&&lowerLeftI&&lowerRightI){
                 return true;}
         }
     }
@@ -2025,7 +2014,7 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
                                         (inputLocation.y+(inputLocation.ev_pc2/4.0) >= iPixelLoc.y-(iPixelLoc.ev_pc2/2.0)));
 
 
-            if (upperLeft&&upperRight&lowerLeft&lowerRight&upperLeftI&&upperRightI&lowerLeftI&lowerRightI){
+            if (upperLeft&&upperRight&&lowerLeft&&lowerRight&&upperLeftI&&upperRightI&&lowerLeftI&&lowerRightI){
                 return true;}
         }
     }

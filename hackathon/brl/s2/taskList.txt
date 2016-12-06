@@ -1,3 +1,20 @@
+12/5
+key bugfix since below:  isDuplicate was incorrectly identifying tiles with existing tiles on 2 opposite sides or on any three sides as already scanned due to tile overlap.  this is fixed.
+
+the remaining problems are:
+1. corner-of-tile cases.  even with 10% overlap, you still will have one tile that will miss-trace with youtube.  if you start with 2 seeds from the corner, it's OK because the other tile should have more of the segment. Sent question to ZZ about this.
+2. rare dropping of tips/markers. I had a few examples today of tiles with incoming markers written correctly but incorrect (0) outputs.  this may be from some kind of race condition on the .swc file or conflict induced by rapid piling on ofter mutex lock is released
+or when initial tile tracing is done.   there really is a race condition or timing-dependent problem in StackAnalyzer.  Basically, if someone is waiting on a tile, they can get the .swc file at stackAnalyzer_L1544 which is BEFORE the current analysis is done (i.e. no
+segments have been sorted)  this isn't really 'done'- among other things, it could explain the sorting problems and it may result in weird tile ordering.  it makes the most sense for the newly scanned tiles to be the parent of other newly scanned tiles, not to have
+waiting tiles suddenly swoop in and become driving segments.  it's not really a computational problem- it's more of an ease-of-use thing where you rightfully expect the branch that caused a tile to be initiated to further cause the next child tiles to be initiated with priority
+over the tiles that were waiting for that tile to appear.
+
+3. .swc sorting results producing funny .swc files with duplicate branches or nodes.  This may actually explain some s2scan errors too if the sorted .swc files are wrong in some way. in particular
+some cases when you get given a legitimate seed and end with nothing.  what happenns if two seeds start on the same branch?
+
+
+
+
 11/30 fixed the incomingTileStatus in handleNewLocations().  this fixes the MIP problem but still doesn't solve all of the retracing cases.  It seems like it's mostly a problem in dense areas.
 
 what happens if 2 tiles are waiting for a tile's SWC file?

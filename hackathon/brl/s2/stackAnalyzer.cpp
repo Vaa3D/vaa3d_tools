@@ -230,7 +230,8 @@ void StackAnalyzer::processSmartScan(QString fileWithData){
             origin_y = offsetY;
         }
         if (!gridMode){
-            vector<MyMarker*> inputswc = readSWC_file(swcfilepath);;
+            qDebug()<<"reading swc file "<<QString::fromStdString(swcfilepath);
+            vector<MyMarker*> inputswc = readSWC_file(swcfilepath);
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
                 inputswc[d]->x = inputswc[d]->x + offsetX;
@@ -1566,7 +1567,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     if(nt_most.listNeuron.size()<1){
         qDebug()<<"zero size listNeuron!!";
-        export_list2file(nt.listNeuron, swcString,swcMOST);
+        export_list2file(nt_most.listNeuron, swcString,swcMOST);
+        export_list2file(nt_most.listNeuron, swcString+"X",swcMOST);
         emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
         return;
     }
@@ -1583,6 +1585,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         if(inputRootList_pruned.size()<1)
         {
             sAMutex.unlock();
+            export_list2file(nt_most.listNeuron, swcString+"X",swcString);
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
             return;
         }else
@@ -1867,6 +1870,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     markerSaveString2.append("_final.marker");
 
     writeMarker_file(markerSaveString2, tipsToSave);
+    export_list2file(nt_most.listNeuron, swcString+"X",swcString);
     emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
 }
 

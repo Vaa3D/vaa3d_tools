@@ -285,7 +285,7 @@ void TileInfoMonitor::addTileData(TileInfo incomingTile, LandmarkList seedList, 
         running = true;
         QTimer::singleShot(0,this,SLOT(searchForTiles()));
     }
-    qDebug()<<"ADD TILE TO TILEMONITOR: "<<incomingTile.getFileString();
+    qDebug()<<"ADD TILE TO TILEMONITOR: x ="<<correctX<<" y="<<correctY;
 }
 
 QList<TileInfo> TileInfoMonitor::getTileInfoList() const{
@@ -302,75 +302,74 @@ void TileInfoMonitor::searchForTiles(){
     bool useNewXY =false;
     int correctX;
     int correctY;
-    myMutex.lock();
-    if (! tileInfoList.isEmpty()){
-        for (int i =0; i<tileInfoList.length(); i++){
-            useNewXY = false;
-            // if the desired tile hasn't been imaged yet, the actual filename is unknown.
-            if (tileInfoList.at(i).getFileString().contains("*")){
-                // need to check for +/- 3 due to vaguely rounded tile locations.
-                saveDir = QFileInfo(tileInfoList.at(i).getFileString()).absoluteDir();
-                int incomingX = intList.at(i).at(1);
-                int incomingY = intList.at(i).at(2);
-                foundIt = false;
-                for (int jj = incomingX-4; jj<=incomingX+4; jj++){
-                    for (int kk = incomingY-4; kk<= incomingY+4; kk++){
-                        fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
-                        fileFilter.clear();
-                        fileFilter.append(fileFinder);
-                        fileInfoList = saveDir.entryInfoList(fileFilter);
-                        if (!fileInfoList.isEmpty()){
-                            correctX = jj;
-                            correctY = kk;
-                            foundIt=true;
-                            break;
-                        }else{
-                            correctX = incomingX;
-                            correctY = incomingY;
-                        }
+
+
+    for (int i =0; i<tileInfoList.length(); i++){
+        useNewXY = false;
+        // if the desired tile hasn't been imaged yet, the actual filename is unknown.
+        if (tileInfoList.at(i).getFileString().contains("*")){
+            // need to check for +/- 4 due to vaguely rounded tile locations.
+            saveDir = QFileInfo(tileInfoList.at(i).getFileString()).absoluteDir();
+            int incomingX = intList.at(i).at(1);
+            int incomingY = intList.at(i).at(2);
+            foundIt = false;
+            for (int jj = incomingX-4; jj<=incomingX+4; jj++){
+                for (int kk = incomingY-4; kk<= incomingY+4; kk++){
+                    fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
+                    fileFilter.clear();
+                    fileFilter.append(fileFinder);
+                    fileInfoList = saveDir.entryInfoList(fileFilter);
+                    if (!fileInfoList.isEmpty()){
+                        correctX = jj;
+                        correctY = kk;
+                        foundIt=true;
+                        break;
+                    }else{
+                        correctX = incomingX;
+                        correctY = incomingY;
                     }
-                    if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) {
-                        qDebug()<<"original xy location "<<incomingX<<" "<<incomingY<<" final location "<<correctX<<" "<<correctY;
-                        useNewXY = true;
-                        break;}
-                    if (foundIt) break;
                 }
-                if (foundIt){
-                    realFileString = fileInfoList.at(0).absoluteFilePath();
-                }else{
-                    realFileString = "";
-                    continue;
-                }
+                if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) {
+                    qDebug()<<"original xy location "<<incomingX<<" "<<incomingY<<" final location "<<correctX<<" "<<correctY;
+                    useNewXY = true;
+                    break;}
+                if (foundIt) break;
+            }
+            if (foundIt){
+                realFileString = fileInfoList.at(0).absoluteFilePath();
             }else{
-                realFileString = tileInfoList.at(i).getFileString();
+                realFileString = "";
+                continue;
             }
+        }else{
+            realFileString = tileInfoList.at(i).getFileString();
+        }
 
-            QFileInfo iFileInfo(realFileString);
+        QFileInfo iFileInfo(realFileString);
 
-            QString swcString = iFileInfo.absolutePath().append(QDir::separator()).append(iFileInfo.completeBaseName()).append(".swc");
-            iFileInfo = QFileInfo(swcString);
-            if (iFileInfo.isReadable()){
-                TileInfo toEmit= tileInfoList.at(i);
-                toEmit.setFileString(realFileString);
-                if (useNewXY){
-                    emit foundTile(toEmit, seedListList.at(i), 1, correctX, correctY) ;
+        QString swcString = iFileInfo.absolutePath().append(QDir::separator()).append(iFileInfo.completeBaseName()).append(".swcX");
+        iFileInfo = QFileInfo(swcString);
+        if (iFileInfo.isReadable()){
+            TileInfo toEmit= tileInfoList.at(i);
+            toEmit.setFileString(realFileString);
+            if (useNewXY){
+                emit foundTile(toEmit, seedListList.at(i), 1, correctX, correctY) ;
 
-                }else{
-                    emit foundTile(toEmit, seedListList.at(i), 1, intList.at(i).at(1), intList.at(i).at(2)) ;
-                }
-                qDebug()<<"REMOVE tilE FROM TILEMONITOR: "<<toEmit.getFileString();
-
-                seedListList.removeAt(i);
-                intList.removeAt(i);
-                tracingMethodStrings.removeAt(i);
-                tileInfoList.removeAt(i);
-                break;
+            }else{
+                emit foundTile(toEmit, seedListList.at(i), 1, intList.at(i).at(1), intList.at(i).at(2)) ;
             }
+            qDebug()<<"REMOVE tilE FROM TILEMONITOR: "<<toEmit.getFileString();
 
+            seedListList.removeAt(i);
+            intList.removeAt(i);
+            tracingMethodStrings.removeAt(i);
+            tileInfoList.removeAt(i);
+            break;
         }
 
     }
-    myMutex.unlock();
+
+
     if (tileInfoList.isEmpty()){
         running = false;
         return;
