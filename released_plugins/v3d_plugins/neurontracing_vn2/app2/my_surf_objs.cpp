@@ -165,7 +165,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 		if(my_id == -1) break;
 		if(marker_map.find(my_id) != marker_map.end())
 		{
-			cerr<<"Duplicate Node. This is a graph file. Please read is as a graph."<<endl; return vector<MyMarker*>();
+            cerr<<"Duplicate Node. This is a graph file. Please read is as a graph."<<endl; //return vector<MyMarker*>();
 		}
 		marker_map[my_id] = marker;
 

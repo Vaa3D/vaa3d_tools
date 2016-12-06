@@ -1086,13 +1086,16 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         if( curr.x < 0.05* p.p4dImage->getXDim())
         {
             tip_left.push_back(newTip);
-        }else if (curr.x > 0.95 * p.p4dImage->getXDim())
+        }
+        if (curr.x > 0.95 * p.p4dImage->getXDim())
         {
             tip_right.push_back(newTip);
-        }else if (curr.y < 0.05 * p.p4dImage->getYDim())
+        }
+        if (curr.y < 0.05 * p.p4dImage->getYDim())
         {
             tip_up.push_back(newTip);
-        }else if (curr.y > 0.95*p.p4dImage->getYDim())
+        }
+        if (curr.y > 0.95*p.p4dImage->getYDim())
         {
             tip_down.push_back(newTip);
         }
@@ -1348,13 +1351,16 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
         if( curr.x < 0.05* p.p4dImage->getXDim())
         {
             tip_left.push_back(newTip);
-        }else if (curr.x > 0.95 * p.p4dImage->getXDim())
+        }
+        if (curr.x > 0.95 * p.p4dImage->getXDim())
         {
             tip_right.push_back(newTip);
-        }else if (curr.y < 0.05 * p.p4dImage->getYDim())
+        }
+        if (curr.y < 0.05 * p.p4dImage->getYDim())
         {
             tip_up.push_back(newTip);
-        }else if (curr.y > 0.95*p.p4dImage->getYDim())
+        }
+        if (curr.y > 0.95*p.p4dImage->getYDim())
         {
             tip_down.push_back(newTip);
         }
@@ -1674,13 +1680,16 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         if( curr.x < 0.05* total4DImage->getXDim())
         {
             tip_left.push_back(newTip);
-        }else if (curr.x > 0.95 * total4DImage->getXDim())
+        }
+        if (curr.x > 0.95 * total4DImage->getXDim())
         {
             tip_right.push_back(newTip);
-        }else if (curr.y < 0.05 * total4DImage->getYDim())
+        }
+        if (curr.y < 0.05 * total4DImage->getYDim())
         {
             tip_up.push_back(newTip);
-        }else if (curr.y > 0.95*total4DImage->getYDim())
+        }
+        if (curr.y > 0.95*total4DImage->getYDim())
         {
             tip_down.push_back(newTip);
         }
@@ -2042,13 +2051,16 @@ void StackAnalyzer::SubtractiveTracing_adaptive(QString latestString, QString im
             if( curr.x < 0.05* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
-            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            }
+            if (curr.x > 0.95 * total4DImage->getXDim())
             {
                 tip_right.push_back(newTip);
-            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            }
+            if (curr.y < 0.05 * total4DImage->getYDim())
             {
                 tip_up.push_back(newTip);
-            }else if (curr.y > 0.95*total4DImage->getYDim())
+            }
+            if (curr.y > 0.95*total4DImage->getYDim())
             {
                 tip_down.push_back(newTip);
             }
