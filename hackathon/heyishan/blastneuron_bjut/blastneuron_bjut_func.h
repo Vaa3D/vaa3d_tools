@@ -4,7 +4,6 @@
 #include<v3d_interface.h>
 
 bool blast_bjut_func(const V3DPluginArgList & input, V3DPluginArgList & output);
-
 void sort_main();
 void blastneuron_main();
 void printHelp();

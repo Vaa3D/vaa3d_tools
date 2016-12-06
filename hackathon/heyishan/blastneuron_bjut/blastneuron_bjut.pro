@@ -7,9 +7,11 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	 = blastneuron_bjut_plugin.h \
     blastneuron_bjut_func.h \
-    resample_func.h
+    resample_func.h \
+    prune_alignment.h
 SOURCES= blastneuron_bjut_plugin.cpp \
-    resample_func.cpp
+    resample_func.cpp \
+    prune_alignment.cpp
 SOURCES+= blastneuron_bjut_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
