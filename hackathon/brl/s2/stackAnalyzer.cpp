@@ -1527,7 +1527,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             {
                 arg_para.push_back("1");
                 arg_para.push_back("1");
-                full_plugin_name = "neuTube"; //old verson "NEUTUBE"
+                full_plugin_name = "neuTube";//old verson "NEUTUBE", new version "neuTube"
                 func_name =  "neutube_trace";
                 qDebug()<<"starting neutube";
             }

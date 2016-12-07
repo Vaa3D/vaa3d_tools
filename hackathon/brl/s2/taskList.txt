@@ -1,3 +1,14 @@
+
+12/7
+
+
+issues below fixed 12/6:
+1. was addressed by Zhi
+2. was addressed by adding new flag file (.swcX)  that is used to determine if a tile has been traced yet.
+3. was addressed by Zhi
+
+
+
 12/5
 key bugfix since below:  isDuplicate was incorrectly identifying tiles with existing tiles on 2 opposite sides or on any three sides as already scanned due to tile overlap.  this is fixed.
 
