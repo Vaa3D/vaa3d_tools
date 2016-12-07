@@ -2224,7 +2224,6 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString finaloutputswc;
     QString finaloutputswc_left;
 
-
     if(P.method ==3)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");

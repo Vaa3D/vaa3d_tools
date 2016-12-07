@@ -284,6 +284,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 4;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_NeuroGPSTree"))
@@ -322,6 +323,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 6;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_Advantra"))
@@ -360,6 +362,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 7;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_TReMAP"))
@@ -398,6 +401,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 8;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_MST"))
@@ -474,6 +478,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 10;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_Rivulet2"))
@@ -512,6 +517,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 11;
         crawler_raw_all(callback,parent,P,bmenu);
     }
