@@ -440,6 +440,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.inimg_file = dialog.rawfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
+        P.tracing_3D = dialog.tracing_3D;
         P.method = 9;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_NeuronChaser"))

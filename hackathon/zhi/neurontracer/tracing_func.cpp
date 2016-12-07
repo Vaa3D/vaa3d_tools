@@ -2410,26 +2410,6 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
 
     ifstream ifs_image(imageSaveString.toStdString().c_str());
-    QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
-    else if (P.method ==4)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
-    else if (P.method ==5)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
-    else if (P.method ==6)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
-    else if (P.method ==7)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
-    else if (P.method ==8)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
-    else if (P.method ==9)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
-    else if (P.method ==10)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_NeuronChaser.swc");
-    else if (P.method ==11)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw.r2.swc");
-
     if(!ifs_image)
     {
         qDebug()<<scanDataFileString;
@@ -2458,8 +2438,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         arg_input.push_back(fileName_string);
         arg.p = (void *) & arg_input; input<< arg;
 
-        char* char_swcout =  new char[swcNEUTUBE.length() + 1];strcpy(char_swcout, swcNEUTUBE.toStdString().c_str());
-        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+//        char* char_swcout =  new char[swcNEUTUBE.length() + 1];strcpy(char_swcout, swcNEUTUBE.toStdString().c_str());
+//        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
 
         arg.type = "random";
         std::vector<char*> arg_para;
@@ -2546,6 +2526,26 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     }
 
     NeuronTree nt_neutube;
+    QString swcNEUTUBE = saveDirString;
+    if(P.method ==3 || P.method ==2)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
+    else if (P.method ==4)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
+    else if (P.method ==5)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+    else if (P.method ==6)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
+    else if (P.method ==7)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
+    else if (P.method ==8)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
+    else if (P.method ==9)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
+    else if (P.method ==10)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_NeuronChaser.swc");
+    else if (P.method ==11)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw.r2.swc");
+
     nt_neutube = readSWC_file(swcNEUTUBE);
 
     NeuronTree nt;
@@ -2640,101 +2640,127 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     }
 
-   // vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
-
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
-    NeuronTree finalswc;
-    NeuronTree finalswc_left;
-    vector<QList<NeuronSWC> > nt_list;
-    vector<QList<NeuronSWC> > nt_list_left;
+    vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+    vector<MyMarker*> finalswc;
 
     if(ifs_swc)
     {
-       finalswc = readSWC_file(finaloutputswc);
-       nt_list.push_back(finalswc.listNeuron);
-       finalswc_left = readSWC_file(finaloutputswc_left);
-       nt_list_left.push_back(finalswc_left.listNeuron);
-    }
-
-
-    NeuronTree nt_traced = readSWC_file(swcString);
-    NeuronTree nt_left = neuron_sub(nt_neutube, nt_traced);
-
-    if(ifs_swc)
-    {
-        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        finalswc = readSWC_file(finaloutputswc.toStdString());
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+
+            finalswc.push_back(tileswc_file[i]);
         }
-        nt_list.push_back(nt.listNeuron);
-        QList<NeuronSWC> finalswc_updated;
-        if (combine_linker(nt_list, finalswc_updated))
-        {
-            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
-        }
-
-        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
-        {
-            NeuronSWC curr = nt_left.listNeuron.at(i);
-            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
-            {
-                nt_left.listNeuron[i].type = 1;
-            }else
-                nt_left.listNeuron[i].type = 2;
-
-            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
-            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
-            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
-        }
-
-        if(!ifs_image)
-        {
-            QList<NeuronSWC> nt_left_sorted;
-            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
-                nt_list_left.push_back(nt_left_sorted);
-
-            QList<NeuronSWC> finalswc_left_updated_added;
-            if (combine_linker(nt_list_left, finalswc_left_updated_added))
-            {
-                export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
-            }
-        }else
-        {
-            NeuronTree finalswc_left_updated_minus = neuron_sub(finalswc_left, nt);
-            export_list2file(finalswc_left_updated_minus.listNeuron, finaloutputswc_left,finaloutputswc_left);
-        }
+        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
     }
     else
     {
-        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
         {
-            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
-            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
-            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
-            nt.listNeuron[i].type = 3;
+            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
+            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
+            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
         }
-        export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
-
-        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
-        {
-            NeuronSWC curr = nt_left.listNeuron.at(i);
-            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
-            {
-                nt_left.listNeuron[i].type = 1;
-            }else
-                nt_left.listNeuron[i].type = 2;
-
-            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
-            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
-            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
-        }
-        QList<NeuronSWC> nt_left_sorted;
-        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
-            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
     }
+
+
+//    NeuronTree finalswc;
+//    NeuronTree finalswc_left;
+//    vector<QList<NeuronSWC> > nt_list;
+//    vector<QList<NeuronSWC> > nt_list_left;
+
+//    if(ifs_swc)
+//    {
+//       finalswc = readSWC_file(finaloutputswc);
+//       nt_list.push_back(finalswc.listNeuron);
+//       finalswc_left = readSWC_file(finaloutputswc_left);
+//       nt_list_left.push_back(finalswc_left.listNeuron);
+//    }
+
+
+//    NeuronTree nt_traced = readSWC_file(swcString);
+//    NeuronTree nt_left = neuron_sub(nt_neutube, nt_traced);
+
+//    if(ifs_swc)
+//    {
+//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+//        {
+//            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+//            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+//            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+//            nt.listNeuron[i].type = 3;
+//        }
+//        nt_list.push_back(nt.listNeuron);
+//        QList<NeuronSWC> finalswc_updated;
+//        if (combine_linker(nt_list, finalswc_updated))
+//        {
+//            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
+//        }
+
+//        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+//        {
+//            NeuronSWC curr = nt_left.listNeuron.at(i);
+//            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+//            {
+//                nt_left.listNeuron[i].type = 1;
+//            }else
+//                nt_left.listNeuron[i].type = 2;
+
+//            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+//            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+//            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+//        }
+
+//        if(!ifs_image)
+//        {
+//            QList<NeuronSWC> nt_left_sorted;
+//            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+//                nt_list_left.push_back(nt_left_sorted);
+
+//            QList<NeuronSWC> finalswc_left_updated_added;
+//            if (combine_linker(nt_list_left, finalswc_left_updated_added))
+//            {
+//                export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+//            }
+//        }else
+//        {
+//            NeuronTree finalswc_left_updated_minus = neuron_sub(finalswc_left, nt);
+//            export_list2file(finalswc_left_updated_minus.listNeuron, finaloutputswc_left,finaloutputswc_left);
+//        }
+//    }
+//    else
+//    {
+//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+//        {
+//            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+//            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+//            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+//            nt.listNeuron[i].type = 3;
+//        }
+//        export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
+
+//        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+//        {
+//            NeuronSWC curr = nt_left.listNeuron.at(i);
+//            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+//            {
+//                nt_left.listNeuron[i].type = 1;
+//            }else
+//                nt_left.listNeuron[i].type = 2;
+
+//            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+//            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+//            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+//        }
+//        QList<NeuronSWC> nt_left_sorted;
+//        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+//            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+//    }
 
 
     total4DImage->deleteRawDataAndSetPointerToNull();
