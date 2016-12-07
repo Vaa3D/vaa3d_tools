@@ -1656,6 +1656,10 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     LandmarkList tip_right;
     LandmarkList tip_up ;
     LandmarkList tip_down;
+    LandmarkList tip_left_up;
+    LandmarkList tip_right_up;
+    LandmarkList tip_left_down ;
+    LandmarkList tip_right_down;
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
@@ -1696,6 +1700,22 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         {
             tip_down.push_back(newTip);
         }
+        if(curr.x < 0.05* total4DImage->getXDim() && curr.y < 0.05 * total4DImage->getYDim())
+        {
+            tip_left_up.push_back(newTip);
+        }
+        if(curr.x > 0.95 * total4DImage->getXDim() && curr.y < 0.05 * total4DImage->getYDim())
+        {
+            tip_right_up.push_back(newTip);
+        }
+        if(curr.x < 0.05* total4DImage->getXDim() && curr.y > 0.95*total4DImage->getYDim())
+        {
+            tip_left_down.push_back(newTip);
+        }
+        if(curr.x > 0.95 * total4DImage->getXDim() && curr.y > 0.95*total4DImage->getYDim())
+        {
+            tip_right_down.push_back(newTip);
+        }
 
     }
     LocationSimple newTarget;
@@ -1731,6 +1751,39 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
+    if(tip_left_up.size()>0)
+    {
+        newTipsList.push_back(tip_left_up);
+        newTarget.x = -floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.y = -floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.z = 0;
+        newTargetList.push_back(newTarget);
+    }
+    if(tip_right_up.size()>0)
+    {
+        newTipsList.push_back(tip_right_up);
+        newTarget.x = floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.y = -floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.z = 0;
+        newTargetList.push_back(newTarget);
+    }
+    if(tip_left_down.size()>0)
+    {
+        newTipsList.push_back(tip_left_down);
+        newTarget.x = -floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.y = floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.z = 0;
+        newTargetList.push_back(newTarget);
+    }
+    if(tip_right_down.size()>0)
+    {
+        newTipsList.push_back(tip_right_down);
+        newTarget.x = floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.y = floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.z = 0;
+        newTargetList.push_back(newTarget);
+    }
+
 
     if (!newTargetList.empty())
     {
