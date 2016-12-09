@@ -2,11 +2,9 @@
  * This is a plugin to resample neuron swc subject to a fixed step length.
  * 2012-03-02 : by Yinan Wan
  */
-#include"resampling.h"
+#include"blastneuron_bjut_func.h"
 #include"sort_swc.h"
-#include<vector>
-#include"v3d_message.h"
-#include"v3d_interface.h"
+#include "resampling.h"
 #include <iostream>
 #include"openSWCDialog.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"

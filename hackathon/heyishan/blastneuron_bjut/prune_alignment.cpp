@@ -5,8 +5,7 @@
  */
 
 #include<iostream>
-#include<vector>
-#include "prune_alignment.h"
+#include "blastneuron_bjut_func.h"
 using namespace std;
 
 bool export_prune_alignment(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
@@ -78,7 +77,7 @@ bool prune_alignment(const V3DPluginArgList & input, V3DPluginArgList & output)
         dist = sqrt((neuron[i].x-neuron[i+1].x)*(neuron[i].x-neuron[i+1].x)
                 +(neuron[i].y-neuron[i+1].y)*(neuron[i].y-neuron[i+1].y)
                 +(neuron[i].z-neuron[i+1].z)*(neuron[i].z-neuron[i+1].z));
-        if(dist>=0 && dist <=thres){cout << dist <<endl;result.push_back(neuron[i]);result.push_back(neuron[i+1]);}
+        if(dist>=0 && dist <=thres){result.push_back(neuron[i]);result.push_back(neuron[i+1]);}
     }
 
     if(!export_prune_alignment(result, fileSaveName, fileOpenName))
