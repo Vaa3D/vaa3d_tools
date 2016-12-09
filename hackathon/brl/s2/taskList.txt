@@ -1,5 +1,30 @@
+12/8  tried qApp->processEvents() to fix GUI problem... of course it's not a good idea inside a mutex.
+another related idea is to monitor current time between tiles somehow to see how good/bad it's doing.  i could make a pretty cool monitor showing how processing time is distributed across threads, how microscope time is being used, etc.
+
+... but really what I need to do is figure out which bit of code is causing the slowdown.  likely spots:
+1. search for duplicate tiles.  this was running through hundreds of tiles.  my .getLocation() method is called more than necessary.
+2. drawing to graphicsScene.  this could be done in another thread or at least with another signal/slot
+3. searching for similar-named tiles.  this is going through 16 files for each tile. the search list gets larger and larger (it was probably 4-5k files to search through by the end.  clearly that's bad to do 16 times for each tile!) maybe shorten the list by
+searching for the extension 1 time for each tile. the resulting list which should be a few hundred could be searched for the exact xy combo.
+
+unfortunately there's no way to change the mutex- I need it to avoid the possibility of a tile coming back with a bunch of new locations and having another tile come back during the middle of appending the first new locations to the relevant lists.
+If that happened, the second incoming tile would think that a bunch of stuff that will be scanned (from the first tile, headed to allROIList) isnt' queued and will double-up the locations in allROIList.
+
+the only way around this is to make my own list object that has the mutex on itself during append events and has it's own built-in 'isDuplicate' method .  with No mutex, you're relying on the isDuplicate() and append() methods to be evaluated in the correct order
+as tiles come in.
+
+
 
 12/7
+
+NEXT:  for big scans, I'm losing GUI responsiveness and its costing me imaging time.  I think this is because of the frequent use of making the tile map (and related stuff) in the loadMIP method. unfortunately, this can't be put into a separate thread until I find another
+way to label text onto an image.  openCV? is there an imageMagic way to do this?  or other basic image processing lib I can use?
+
+critical addition today:  we added diagonal next tiles for fixed window S2, which kills 2 bugs with 1 stone:
+1. newly-revealed bug where segments entirely within the overlap region, but going from one side to an adjecent side will be counted as 'already scanned', killing the trace.
+2. neutube (and likely other base tracers) in ability to trace segments crossing the very corner of a tile.
+
+
 
 
 issues below fixed 12/6:

@@ -1706,7 +1706,6 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
     //  add end-time for analysis of tile scanIndex here
 
 
-    myMutex.lock();
 
     for (int i = 0; i<newLandmarks.length(); i++){
         int incomingX=0;
@@ -1753,7 +1752,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
             landmarkTileInfo.setFileString(tileSaveString); // careful, this is the parent savestring
 
-
+            myMutex.lock();
 
             if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked()){ // this currently ONLY checks based on pixelLocation.
                 qDebug()<<"NOT duplicate tile "<<scanIndex;
@@ -1841,14 +1840,17 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 }
 
             }
+            myMutex.unlock();
+
         }
+
+
     }
     //
     if (incomingTileStatus !=-1){
         emit loadMIPSignal(scanIndex, mip, tileSaveString);
         QTimer::singleShot(10,this, SLOT(smartScanHandler()));
     }
-    myMutex.unlock();
 
     myNotes->save();
 
