@@ -28,6 +28,8 @@ template <class T> T pow2(T a)
 
 }
 
+QString getAppPath();
+
 using namespace std;
 using namespace iim;
 
@@ -2515,13 +2517,29 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             func_name =  "tracing_func";
         }
 
-        arg.p = (void *) & arg_para; input << arg;
-
-        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        if(P.method ==8)
         {
+        #if  defined(Q_OS_LINUX)
+            QString cmd_tremap = QString("%1/vaa3d -x TReMap -f trace_mip -i %2 -p 0 1 20").arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str());
+            system(qPrintable(cmd_tremap));
+        #elif defined(Q_OS_MAC)
+            QString cmd_tremap = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x TReMap -f trace_mip -i %2 -p 0 1 20").arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str());
+            system(qPrintable(cmd_tremap));
+        #else
+            v3d_msg("The OS is not Linux or Mac. Do nothing.");
+            return;
+        #endif
 
-            printf("Can not find the tracing plugin!\n");
-            return false;
+        }else
+        {
+            arg.p = (void *) & arg_para; input << arg;
+
+            if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+            {
+
+                printf("Can not find the tracing plugin!\n");
+                return false;
+            }
         }
     }
 
@@ -5137,4 +5155,27 @@ NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt)
     nt_left.listNeuron = listNeuron;
     nt_left.hashNeuron = hashNeuron;
     return nt_left;
+}
+
+QString getAppPath()
+{
+    QString v3dAppPath("~/Work/v3d_external/v3d");
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    v3dAppPath = testPluginsDir.absolutePath();
+    return v3dAppPath;
 }

@@ -635,7 +635,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                seg_list.push_back(seg);
            }
        }
-
        vector<MyMarker*> outswc;
 
        for (V3DLONG i=0;i<seg_list.size();i++)
@@ -751,8 +750,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 //       outswc_final.clear();
     }
 
-
-
    if(image_mip) {delete []image_mip; image_mip = 0;}
    if(image_region) {delete []image_region; image_region = 0;}
    if(groupArray) {delete []groupArray; groupArray = 0;}
@@ -769,6 +766,8 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    }
 
    saveSWC_file(final_swc.toStdString(), outswc_final);
+   outswc_final.clear();
+
 
    // system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
@@ -799,7 +798,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
    vector<MyMarker*> temp_out_swc = readSWC_file(final_swc.toStdString());
    saveSWC_file_TreMap(final_swc.toStdString(), temp_out_swc);
-
+   temp_out_swc.clear();
    if(!bmenu)
    {
        if(data1d) {delete []data1d; data1d = 0;}
