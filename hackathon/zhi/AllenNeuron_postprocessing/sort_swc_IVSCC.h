@@ -109,7 +109,7 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 	}
 };
 
-NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, double thres)
+NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, double thres, bool flag = false)
 {
     NeuronTree nt_sorted;
 
@@ -120,7 +120,7 @@ NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, doubl
 	QList<V3DLONG> idlist = ((QSet<V3DLONG>)LUT.values().toSet()).toList();
 
 	//create a child-parent table, both child and parent id refers to the index of idlist
-	QHash<V3DLONG, V3DLONG> cp = ChildParent(neurons,idlist,LUT);
+    QHash<V3DLONG, V3DLONG> cp = ChildParent(neurons,idlist,LUT);
 
 
 	V3DLONG siz = idlist.size();
@@ -201,22 +201,32 @@ NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, doubl
 					if (numbered[jj]!=1)
 					{
 						dist2 = computeDist2(neurons.at(idlist.at(ii)),neurons.at(idlist.at(jj)));
-						if (dist2<min)
+                        if (dist2<min)
 						{
-							min = dist2;
-							mingroup = numbered[jj];
-							m1 = ii;
-							m2 = jj;
+                            if(!flag)
+                            {
+                                min = dist2;
+                                mingroup = numbered[jj];
+                                m1 = ii;
+                                m2 = jj;
+                            }else if(neurons.at(idlist.at(ii)).type != neurons.at(idlist.at(jj)).type)
+                            {
+                                min = dist2;
+                                mingroup = numbered[jj];
+                                m1 = ii;
+                                m2 = jj;
+                            }
 						}
 					}
 		}
 		for (V3DLONG i=0;i<siz;i++)
 			if (numbered[i]==mingroup)
 				numbered[i] = 1;
-		if (min<=thres*thres)
-		{
-			matrix[m1][m2] = true;
-			matrix[m2][m1] = true;
+        if (min<=thres*thres)
+        {
+
+            matrix[m1][m2] = true;
+            matrix[m2][m1] = true;
 		}
 		(*group)--;
 	}

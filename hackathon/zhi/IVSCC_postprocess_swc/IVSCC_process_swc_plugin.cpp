@@ -81,6 +81,7 @@ QStringList IVSCC_process_swc::funclist() const
         <<tr("process")
         <<tr("process_v2")
         <<tr("process_remove_artifacts")
+        <<tr("process_soma_correction")
 		<<tr("help");
 }
 
@@ -556,6 +557,86 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         nt_prunned.hashNeuron = hashNeuron;
 
         writeSWC_file(outswc_file,nt_prunned);
+
+    }else if (func_name == tr("process_soma_correction"))
+    {
+        cout<<"Welcome to IVSCC soma correction processing plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString inswc_file =  infiles[0];
+        QString inmarker_file = infiles[1];
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+
+        QString  outswc_file =  outfiles[0];
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        QVector<QVector<V3DLONG> > childs;
+
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>());
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronTree nt_corrected;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        NeuronSWC S1;
+        vector<MyMarker> center_inmarkers;
+        center_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+        S1.n 	= 1;
+        S1.type 	= 1;
+        S1.x 	= center_inmarkers[0].x;
+        S1.y 	= center_inmarkers[0].y;
+        S1.z 	= center_inmarkers[0].z;
+        S1.r 	= 1;
+        S1.pn 	= -1;
+        listNeuron.append(S1);
+        hashNeuron.insert(S1.n, listNeuron.size()-1);
+
+        //set node
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n+1;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn    = curr.pn;
+            if(S.pn>0) S.pn = curr.pn+1;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+        nt_corrected.n = -1;
+        nt_corrected.on = true;
+        nt_corrected.listNeuron = listNeuron;
+        nt_corrected.hashNeuron = hashNeuron;
+
+        NeuronTree nt_corrected_final = SortSWC_pipeline(nt_corrected.listNeuron, 1, 150,true);
+
+
+        writeSWC_file(outswc_file,nt_corrected_final);
 
     }
     else if (func_name == tr("help"))
