@@ -39,7 +39,10 @@ QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLO
     QHash<V3DLONG, V3DLONG> cp;
     for (V3DLONG i=0;i<neurons.size(); i++)
         if (neurons.at(i).pn==-1) cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
-        else cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), idlist.indexOf(LUT.value(neurons.at(i).pn)));
+        else if(idlist.indexOf(LUT.value(neurons.at(i).pn)) == 0 && neurons.at(i).pn != neurons.at(0).n)
+            cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
+        else
+            cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), idlist.indexOf(LUT.value(neurons.at(i).pn)));
     return cp;
 };
 
