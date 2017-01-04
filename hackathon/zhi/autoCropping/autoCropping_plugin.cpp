@@ -18,7 +18,7 @@ QStringList autoCropping::menulist() const
 {
 	return QStringList() 
         <<tr("Crop")
-		<<tr("about");
+        <<tr("TraingSetGeneration");
 }
 
 QStringList autoCropping::funclist() const
@@ -196,7 +196,110 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         }
         v3d_msg("Done!");
 	}
-	else
+    else if (menu_name == tr("TraingSetGeneration"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imgname = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        bool ok;
+        int winSize = QInputDialog::getInteger(parent, "Please specify the block size","size:",50,0,256,1,&ok);
+        if (!ok)
+            return;
+
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(SWCfileName.isEmpty())
+            return;
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        for (int i=0;i<nt.listNeuron.size();i++)
+        {
+            if(nt.listNeuron.at(i).type == 2)
+            {
+                double tmpx = nt.listNeuron.at(i).x;
+                double tmpy = nt.listNeuron.at(i).y;
+
+                V3DLONG xb = tmpx-1-winSize; if(xb<0) xb = 0;
+                V3DLONG xe = tmpx-1+winSize; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = tmpy-1-winSize; if(yb<0) yb = 0;
+                V3DLONG ye = tmpy-1+winSize; if(ye>=M-1) ye = M-1;
+
+
+                QString outimg_file_swc = imgname + QString("_x%1_x%2_y%3_y%4.swc").arg(xb).arg(xe).arg(yb).arg(ye);
+
+                NeuronTree nt_cropped =  cropSWCfile(nt,xb,xe,yb,ye);
+                NeuronTree nt_sort;
+                if(nt_cropped.listNeuron.size()>0)
+                {
+                    nt_sort = SortSWC_pipeline(nt_cropped.listNeuron,nt_cropped.listNeuron.at(0).n, 0);
+                }
+                else
+                    nt_sort = nt_cropped;
+
+                writeSWC_file(outimg_file_swc,nt_sort);
+
+
+                V3DLONG im_cropped_sz[4];
+                im_cropped_sz[0] = xe - xb + 1;
+                im_cropped_sz[1] = ye - yb + 1;
+                im_cropped_sz[2] = P;
+                im_cropped_sz[3] = sc;
+
+                unsigned char *im_cropped = 0;
+                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                try {im_cropped = new unsigned char [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
+                V3DLONG j = 0;
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    for(V3DLONG iy = yb; iy <= ye; iy++)
+                    {
+                        V3DLONG offsetj = iy*N;
+                        for(V3DLONG ix = xb; ix <= xe; ix++)
+                        {
+                             im_cropped[j] = data1d[offsetk + offsetj + ix];
+                             j++;
+                        }
+                    }
+                }
+                QString outimg_file = imgname + QString("_x%1_x%2_y%3_y%4.tif").arg(xb).arg(xe).arg(yb).arg(ye);
+
+                simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+                if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+            }
+        }
+
+    }
+    else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by YourName, 2016-6-15"));
@@ -219,18 +322,17 @@ NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
-        S.x 	= curr.x;
-        S.y 	= curr.y;
-
         if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb)
         {
-             S.n 	= curr.n;
-             S.type = curr.type;
-             S.z 	= curr.z;
-             S.r 	= curr.r;
-             S.pn 	= curr.pn;
-             listNeuron.append(S);
-             hashNeuron.insert(S.n, listNeuron.size()-1);
+            S.x 	= curr.x-xb;
+            S.y 	= curr.y-yb;
+            S.n 	= curr.n;
+            S.type = curr.type;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
         }
    }
    nt_prunned.n = -1;
