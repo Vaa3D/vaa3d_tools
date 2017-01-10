@@ -1752,7 +1752,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
             landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
             landmarkTileInfo.setFileString(tileSaveString); // careful, this is the parent savestring
 
-            myMutex.lock();
+            myMutex.lock(); // if incoming landmarks from different parent tiles get queued out of order, that's OK, as long as allROILocations is unmodified during  append() and isDuplicateROI() methods for one incoming landmark
 
             if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked()){ // this currently ONLY checks based on pixelLocation.
                 qDebug()<<"NOT duplicate tile "<<scanIndex;
