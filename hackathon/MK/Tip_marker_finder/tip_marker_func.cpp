@@ -70,6 +70,7 @@ bool SpecDialog(V3DPluginCallback2 &callback, QWidget *parent)
                     t.x = nt.listNeuron.at(i).x;
                     t.y = nt.listNeuron.at(i).y;
                     t.z = nt.listNeuron.at(i).z;
+                    t.type = nt.listNeuron.at(i).type;
                     bifur_marker.append(t);
                     printf("%d\n", nt.listNeuron.at(i).type);
                 }
