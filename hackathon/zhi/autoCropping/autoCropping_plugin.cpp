@@ -30,7 +30,7 @@ QStringList autoCropping::funclist() const
 }
 
 NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye);
-NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze);
+NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
 
 template <class T> void cropping3D(V3DPluginCallback2 &callback,
                                    T* data1d,
@@ -339,7 +339,7 @@ NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
    return nt_prunned;
 }
 
-NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze)
+NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze,int type)
 {
     //NeutronTree structure
     NeuronTree nt_prunned;
@@ -355,7 +355,7 @@ NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, 
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
-        if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb && curr.z <= ze && curr.z >=zb)
+        if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb && curr.z <= ze && curr.z >=zb && (type == -1 || curr.type == type))
         {
             S.x 	= curr.x-xb;
             S.y 	= curr.y-yb;
@@ -500,7 +500,7 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             QString outimg_file = outputfolder + QString("/x%1_x%2_y%3_y%4_z%5_z%6.tif").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze);
             QString outimg_file_linker = outputfolder + QString("/x%1_x%2_y%3_y%4_z%5_z%6.ano").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze);
 
-            NeuronTree nt_cropped =  cropSWCfile3D(nt,xb,xe,yb,ye,zb,ze);
+            NeuronTree nt_cropped =  cropSWCfile3D(nt,xb,xe,yb,ye,zb,ze,type);
             NeuronTree nt_sort;
             if(nt_cropped.listNeuron.size()>0)
             {
