@@ -479,7 +479,7 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
                                    int Wy,
                                    int Wz,
                                    int type,
-                                   int offset=0)
+                                   int offset)
 {
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
