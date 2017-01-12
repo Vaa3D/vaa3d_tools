@@ -484,9 +484,9 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
     {
         if(type == -1 || nt.listNeuron.at(i).type == type)
         {
-            double tmpx = nt.listNeuron.at(i).x;
-            double tmpy = nt.listNeuron.at(i).y;
-            double tmpz = nt.listNeuron.at(i).z;
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
 
             V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;
             V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
@@ -495,10 +495,19 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;
             V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
 
+            QString outimg_file = outputfolder + QString("/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+            QString outimg_file_swc = outputfolder + QString("/x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
+            QString outimg_file_linker = outputfolder + QString("/x%1_y%2_z%3.ano").arg(tmpx).arg(tmpy).arg(tmpz);
+            int p = 1;
 
-            QString outimg_file_swc = outputfolder + QString("/x%1_x%2_y%3_y%4_z%5_z%6.swc").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze);
-            QString outimg_file = outputfolder + QString("/x%1_x%2_y%3_y%4_z%5_z%6.tif").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze);
-            QString outimg_file_linker = outputfolder + QString("/x%1_x%2_y%3_y%4_z%5_z%6.ano").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze);
+            while(QFile(outimg_file).exists())
+            {
+                outimg_file = outimg_file + QString("_%1.tif").arg(p);
+                outimg_file_swc = outimg_file_swc + QString("_%1.swc").arg(p);
+                outimg_file_linker = outimg_file_linker + QString("_%1.ano").arg(p);
+                p++;
+            }
+
 
             NeuronTree nt_cropped =  cropSWCfile3D(nt,xb,xe,yb,ye,zb,ze,type);
             NeuronTree nt_sort;
