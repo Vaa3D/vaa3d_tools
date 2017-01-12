@@ -29,7 +29,7 @@ QStringList autoCropping::funclist() const
 		<<tr("help");
 }
 
-NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye);
+NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye, int type);
 NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
 
 template <class T> void cropping3D(V3DPluginCallback2 &callback,
@@ -140,7 +140,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             QString outimg_file_gs = imgname + QString("_x%1_x%2_y%3_y%4_gs.swc").arg(xb).arg(xe).arg(yb).arg(ye);
 
 
-            NeuronTree nt_app2_cropped =  cropSWCfile(nt_app2,xb,xe,yb,ye);
+            NeuronTree nt_app2_cropped =  cropSWCfile(nt_app2,xb,xe,yb,ye,-1);
             NeuronTree nt_app2_sort;
             if(nt_app2_cropped.listNeuron.size()>0)
             {
@@ -149,7 +149,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             else
                 nt_app2_sort = nt_app2_cropped;
 
-            NeuronTree nt_neutube_cropped =  cropSWCfile(nt_neutube,xb,xe,yb,ye);
+            NeuronTree nt_neutube_cropped =  cropSWCfile(nt_neutube,xb,xe,yb,ye,-1);
             NeuronTree nt_neutube_sort;
             if(nt_neutube_cropped.listNeuron.size()>0)
             {
@@ -157,7 +157,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             }else
                 nt_neutube_sort = nt_neutube_cropped;
 
-            NeuronTree nt_gs_cropped =  cropSWCfile(nt_gs,xb,xe,yb,ye);
+            NeuronTree nt_gs_cropped =  cropSWCfile(nt_gs,xb,xe,yb,ye,-1);
             NeuronTree nt_gs_sort;
             if(nt_gs_cropped.listNeuron.size()>0)
             {
@@ -303,7 +303,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	}
 }
 
-NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
+NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye, int type)
 {
     //NeutronTree structure
     NeuronTree nt_prunned;
@@ -319,13 +319,13 @@ NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye)
     for (int i=0;i<list.size();i++)
     {
         NeuronSWC curr = list.at(i);
-        if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb)
+        if(curr.x <= xe && curr.x >=xb && curr.y <= ye && curr.y >=yb && (type == -1 || curr.type == type))
         {
-            S.x 	= curr.x;
-            S.y 	= curr.y;
+            S.x 	= curr.x-xb;
+            S.y 	= curr.y-yb;
             S.n 	= curr.n;
             S.type = curr.type;
-            S.z 	= curr.z;
+            S.z 	= 1;
             S.r 	= curr.r;
             S.pn 	= curr.pn;
             listNeuron.append(S);
@@ -428,6 +428,20 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
             return false;
         }
 
+        //flip the image
+//        if(1)
+//        {
+//            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+
+//            for (int j=0;j<hsz1;j++)
+//                for (int i=0;i<in_sz[0];i++)
+//                {
+//                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
+//                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
+//                    data1d[j*in_sz[0] + i] = tmpv;
+//                }
+//        }
+
 
         QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
         system(qPrintable(QString("mkdir %1").arg(outputfolder.toStdString().c_str())));
@@ -494,11 +508,11 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             V3DLONG tmpy = nt.listNeuron.at(i).y;
             V3DLONG tmpz = nt.listNeuron.at(i).z;
 
-            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
             V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
-            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
             V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
-            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
             V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
 
             QString outimg_file = outputfolder + QString("/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
@@ -515,7 +529,12 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             }
 
 
-            NeuronTree nt_cropped =  cropSWCfile3D(nt,xb,xe,yb,ye,zb,ze,type);
+            NeuronTree nt_cropped;
+            if(P>1)
+                nt_cropped=cropSWCfile3D(nt,xb,xe,yb,ye,zb,ze,type);
+            else
+                nt_cropped=cropSWCfile(nt,xb,xe,yb,ye,type);
+
             NeuronTree nt_sort;
             if(nt_cropped.listNeuron.size()>0)
             {
@@ -545,10 +564,11 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             im_cropped_sz[2] = ze - zb + 1;
             im_cropped_sz[3] = sc;
 
+
             unsigned char *im_cropped = 0;
             V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
             try {im_cropped = new unsigned char [pagesz];}
-            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
             V3DLONG j = 0;
             for(V3DLONG iz = zb; iz <= ze; iz++)
             {
