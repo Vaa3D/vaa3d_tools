@@ -40,7 +40,8 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
                                    int Wx,
                                    int Wy,
                                    int Wz,
-                                   int type);
+                                   int type,
+                                   int offset);
 
 
 
@@ -285,7 +286,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         switch (pixeltype)
         {
-        case V3D_UINT8: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type); break;
+        case V3D_UINT8: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type,0); break;
         default:
             v3d_msg("This plugin only supports 8bit datatype for now.");
             if (data1d) {delete []data1d; data1d=0;}
@@ -404,6 +405,7 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         int Wx = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
         int Wy = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
         int Wz = (paras.size() >= k+1) ? atoi(paras[k]) : 25;  k++;
+        int offset = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         int type = (paras.size() >= k+1) ? atoi(paras[k]) : -1;  k++;
 
 
@@ -412,6 +414,7 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         cout<<"Wx = "<<Wx<<endl;
         cout<<"Wy = "<<Wy<<endl;
         cout<<"Wz = "<<Wz<<endl;
+        cout<<"Flag = "<<offset<<endl;
         cout<<"Type = "<<type<<endl;
 
 
@@ -433,7 +436,7 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         switch (datatype)
         {
-        case 1: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type); break;
+        case 1: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type,offset); break;
         default:
             v3d_msg("This plugin only supports 8bit datatype for now.");
             if (data1d) {delete []data1d; data1d=0;}
@@ -447,14 +450,16 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
 	else if (func_name == tr("help"))
 	{
         {
-            cout<<"Usage : v3d -x autoCropping -f TrainingSetGeneration -i <inimg_file> -p <inswc_file> <wx> <wy> <wz> <type>"<<endl;
+            cout<<"Usage : v3d -x autoCropping -f TrainingSetGeneration -i <inimg_file> -p <inswc_file> <wx> <wy> <wz> <flag> <type>"<<endl;
             cout<<endl;
             cout<<"inimg_file  please specify the path of the input 3D image file, which should be 8 bit image"<<endl;
             cout<<"inswc_file  please specify the path of the input swc file"<<endl;
             cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 50"<<endl;
             cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 50"<<endl;
             cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 25"<<endl;
+            cout<<"flag        export the swc file with original corrdiates(1 for yes and 0 for no. Default 0.)"<<endl;
             cout<<"type        the node type to be cropped, please do NOT specify if you want to crop all nodes"<<endl;
+
             cout<<endl;
             cout<<endl;
             return true;
@@ -473,7 +478,8 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
                                    int Wx,
                                    int Wy,
                                    int Wz,
-                                   int type)
+                                   int type,
+                                   int offset=0)
 {
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -519,6 +525,18 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
                 nt_sort = nt_cropped;
 
             writeSWC_file(outimg_file_swc,nt_sort);
+
+            if(offset)
+            {
+                QString outimg_file_swc_offset = outimg_file_swc + "_offset.swc";
+                for(V3DLONG ii = 0; ii < nt_sort.listNeuron.size(); ii++)
+                {
+                    nt_sort.listNeuron[ii].x += xb;
+                    nt_sort.listNeuron[ii].y += yb;
+                    nt_sort.listNeuron[ii].z += zb;
+                }
+                writeSWC_file(outimg_file_swc_offset,nt_sort);
+            }
 
 
             V3DLONG im_cropped_sz[4];
