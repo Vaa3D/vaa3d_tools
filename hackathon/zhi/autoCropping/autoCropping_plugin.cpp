@@ -6,6 +6,8 @@
 #include "v3d_message.h"
 #include <vector>
 #include "autoCropping_plugin.h"
+#include <QFileInfo>
+
 
 #include "basic_surf_objs.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
@@ -279,7 +281,8 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             return;
 
         QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
-        system(qPrintable(QString("mkdir %1").arg(outputfolder.toStdString().c_str())));
+       // system(qPrintable(QString("mkdir %1").arg(outputfolder.toStdString().c_str())));
+        QDir().mkdir(outputfolder);
 
         NeuronTree nt = readSWC_file(SWCfileName);
         ImagePixelType pixeltype = p4DImage->getDatatype();
@@ -444,7 +447,8 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 
         QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
-        system(qPrintable(QString("mkdir %1").arg(outputfolder.toStdString().c_str())));
+        //system(qPrintable(QString("mkdir %1").arg(outputfolder.toStdString().c_str())));
+        QDir().mkdir(outputfolder);
 
         NeuronTree nt = readSWC_file(SWCfileName);
 
@@ -515,9 +519,9 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
             V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
 
-            QString outimg_file = outputfolder + QString("/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
-            QString outimg_file_swc = outputfolder + QString("/x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
-            QString outimg_file_linker = outputfolder + QString("/x%1_y%2_z%3.ano").arg(tmpx).arg(tmpy).arg(tmpz);
+            QString outimg_file = outputfolder + QString("x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+            QString outimg_file_swc = outputfolder + QString("x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
+            QString outimg_file_linker = outputfolder + QString("x%1_y%2_z%3.ano").arg(tmpx).arg(tmpy).arg(tmpz);
             int p = 1;
 
             while(QFile(outimg_file).exists())
